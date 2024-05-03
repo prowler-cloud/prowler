@@ -90,15 +90,15 @@ class Test_iam_securityaudit_role_created:
 
     @mock_aws(config={"iam": {"load_aws_managed_policies": True}})
     def test_access_denied(self):
-        aws_provider = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
-            return_value=aws_provider,
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_securityaudit_role_created.iam_securityaudit_role_created.iam_client",
-            new=IAM(aws_provider),
+            new=IAM(audit_info),
         ) as service_client:
             from prowler.providers.aws.services.iam.iam_securityaudit_role_created.iam_securityaudit_role_created import (
                 iam_securityaudit_role_created,

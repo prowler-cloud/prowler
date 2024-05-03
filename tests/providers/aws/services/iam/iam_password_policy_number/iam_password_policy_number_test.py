@@ -96,15 +96,15 @@ class Test_iam_password_policy_number:
     def test_access_denied(self):
         from prowler.providers.aws.services.iam.iam_service import IAM
 
-        aws_provider = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
-            return_value=aws_provider,
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=audit_info,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.iam.iam_password_policy_number.iam_password_policy_number.iam_client",
-                new=IAM(aws_provider),
+                new=IAM(audit_info),
             ) as service_client:
                 from prowler.providers.aws.services.iam.iam_password_policy_number.iam_password_policy_number import (
                     iam_password_policy_number,

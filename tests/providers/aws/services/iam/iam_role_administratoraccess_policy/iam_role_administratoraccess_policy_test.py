@@ -273,11 +273,11 @@ class Test_iam_role_administratoraccess_policy:
         iam_client = mock.MagicMock
         iam_client.roles = None
 
-        aws_provider = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
-            return_value=aws_provider,
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_role_administratoraccess_policy.iam_role_administratoraccess_policy.iam_client",
             new=iam_client,

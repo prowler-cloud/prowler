@@ -131,16 +131,16 @@ class Test_cloudtrail_insights_exist:
 
     @mock_aws
     def test_access_denied(self):
-        aws_provider = set_mocked_aws_audit_info(
+        audit_info = set_mocked_aws_audit_info(
             [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
         )
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
-            return_value=aws_provider,
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=audit_info,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.cloudtrail.cloudtrail_insights_exist.cloudtrail_insights_exist.cloudtrail_client",
-                new=Cloudtrail(aws_provider),
+                new=Cloudtrail(audit_info),
             ) as service_client:
                 # Test Check
                 from prowler.providers.aws.services.cloudtrail.cloudtrail_insights_exist.cloudtrail_insights_exist import (

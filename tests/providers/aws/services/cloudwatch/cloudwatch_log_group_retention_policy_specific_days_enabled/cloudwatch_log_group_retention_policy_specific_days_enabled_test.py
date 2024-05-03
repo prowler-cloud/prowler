@@ -219,14 +219,14 @@ class Test_cloudwatch_log_group_retention_policy_specific_days_enabled:
         logs_client.put_retention_policy(logGroupName="test", retentionInDays=7)
         from prowler.providers.aws.services.cloudwatch.cloudwatch_service import Logs
 
-        aws_provider = set_mocked_aws_audit_info(
+        audit_info = set_mocked_aws_audit_info(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
-        aws_provider._audit_config = {"log_group_retention_days": 365}
+        audit_info._audit_config = {"log_group_retention_days": 365}
 
         from prowler.providers.common.models import Audit_Metadata
 
-        aws_provider.audit_metadata = Audit_Metadata(
+        audit_info.audit_metadata = Audit_Metadata(
             services_scanned=0,
             # We need to set this check to call __describe_log_groups__
             expected_checks=["cloudwatch_log_group_no_secrets_in_logs"],
@@ -235,11 +235,11 @@ class Test_cloudwatch_log_group_retention_policy_specific_days_enabled:
         )
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
-            return_value=aws_provider,
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_retention_policy_specific_days_enabled.cloudwatch_log_group_retention_policy_specific_days_enabled.logs_client",
-            new=Logs(aws_provider),
+            new=Logs(audit_info),
         ) as service_client:
             # Test Check
             from prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_retention_policy_specific_days_enabled.cloudwatch_log_group_retention_policy_specific_days_enabled import (
