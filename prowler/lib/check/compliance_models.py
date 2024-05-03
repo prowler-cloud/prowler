@@ -129,7 +129,6 @@ class Mitre_Requirement_Attribute_AWS(BaseModel):
     Comment: str
 
 
-
 # MITRE Requirement Attribute for Azure
 class Mitre_Requirement_Attribute_Azure(BaseModel):
     """MITRE Requirement Attribute"""
@@ -149,8 +148,9 @@ class Mitre_Requirement_Attribute_GCP(BaseModel):
     Value: str
     Comment: str
 
+
 # MITRE Requirement
-class Mitre_Requirement_AWS(BaseModel):
+class Mitre_Requirement(BaseModel):
     """Mitre_Requirement holds the model for every MITRE requirement"""
 
     Name: str
@@ -161,7 +161,9 @@ class Mitre_Requirement_AWS(BaseModel):
     Platforms: list[str]
     TechniqueURL: str
     Attributes: Union[
-        list[Mitre_Requirement_Attribute_AWS], list[Mitre_Requirement_Attribute_Azure]
+        list[Mitre_Requirement_Attribute_AWS],
+        list[Mitre_Requirement_Attribute_Azure],
+        list[Mitre_Requirement_Attribute_GCP],
     ]
     Checks: list[str]
 
@@ -196,9 +198,7 @@ class Compliance_Base_Model(BaseModel):
     Description: str
     Requirements: list[
         Union[
-            Mitre_Requirement_Azure,
-            Mitre_Requirement_AWS,
-            Mitre_Requirement_GCP,
+            Mitre_Requirement,
             Compliance_Requirement,
         ]
     ]
