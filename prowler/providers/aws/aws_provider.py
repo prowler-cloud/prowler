@@ -328,6 +328,15 @@ class AwsProvider(Provider):
                     f"AWS Organizations metadata retrieved for account {aws_account_id}"
                 )
                 return organizations_metadata
+            else:
+                return AWSOrganizationsInfo(
+                    account_email="",
+                    account_name="",
+                    organization_account_arn="",
+                    organization_arn="",
+                    organization_id="",
+                    account_tags=[],
+                )
 
         except Exception as error:
             # If the account is not a delegated administrator for AWS Organizations a credentials error will be thrown
