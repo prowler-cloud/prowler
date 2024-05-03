@@ -587,7 +587,7 @@ class Test_cloudwatch_changes_to_network_acls_alarm_configured:
         )
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_changes_to_network_acls_alarm_configured.logs_client",
