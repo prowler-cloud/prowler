@@ -12,7 +12,7 @@ from prowler.lib.outputs.common_models import FindingOutput
 from prowler.lib.outputs.compliance.mitre_attack.models import (
     MitreAttackAWS,
     MitreAttackAzure,
-    MitreAttackGCP,
+    MitreAttackGCP
 )
 from prowler.lib.outputs.compliance.models import (
     Check_Output_CSV_AWS_CIS,

@@ -16,7 +16,7 @@
       "CLI": "gcloud sql instances patch <INSTANCE_NAME> --database-flags contained database authentication=off",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudSQL/disable-contained-database-authentication-flag.html",
-      "Terraform": "https://docs.bridgecrew.io/docs/bc_gcp_sql_10#terraform"
+      "Terraform": "https://docs.prowler.com/checks/gcp/cloud-sql-policies/bc_gcp_sql_10#terraform"
     },
     "Recommendation": {
       "Text": "It is recommended to set contained database authentication database flag for Cloud SQL on the SQL Server instance to off.",

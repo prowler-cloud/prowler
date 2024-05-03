@@ -139,7 +139,7 @@ The JSON-OCSF output format implements the [Detection Finding](https://schema.oc
             "uid": "arn:aws:cloudtrail:ap-northeast-1:123456789012:trail",
             "data": {
                 "details": ""
-            },     
+            },
         }
     ],
     "category_name": "Findings",
@@ -325,7 +325,7 @@ The following is the mapping between the native JSON and the Detection Finding f
 | ResourceType | resources.type |
 | ResourceDetails | resources.data.details |
 | Description | finding_info.desc |
-| Risk | risk_details _Available from OCSF 1.2_ |
+| Risk | risk_details |
 | RelatedUrl | unmapped.related_url |
 | Remediation.Recommendation.Text | remediation.desc |
 | Remediation.Recommendation.Url | remediation.references |
@@ -344,7 +344,7 @@ The following is the mapping between the native JSON and the Detection Finding f
 | OrganizationsInfo.account_email | _Not mapped yet_ |
 | OrganizationsInfo.account_arn | _Not mapped yet_ |
 | OrganizationsInfo.account_org | cloud.org.name |
-| OrganizationsInfo.account_tags | cloud.account.labels _Available from OCSF 1.2_ |
+| OrganizationsInfo.account_tags | cloud.account.labels |
 | Region | resources.region |
 | ResourceId | resources.name |
 | ResourceArn | resources.uid |

@@ -14,7 +14,7 @@
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-minimized-wildcard-use-in-roles-and-clusterroles",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-minimized-wildcard-use-in-roles-and-clusterroles",
       "Other": "",
       "Terraform": ""
     },

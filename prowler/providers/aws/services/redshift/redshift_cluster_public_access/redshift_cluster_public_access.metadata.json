@@ -14,9 +14,9 @@
   "Remediation": {
     "Code": {
       "CLI": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Redshift/redshift-cluster-publicly-accessible.html",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/public_9#cloudformation",
-      "Other": "https://docs.bridgecrew.io/docs/public_9#aws-console",
-      "Terraform": "https://docs.bridgecrew.io/docs/public_9#terraform"
+      "NativeIaC": "https://docs.prowler.com/checks/aws/public-policies/public_9#cloudformation",
+      "Other": "https://docs.prowler.com/checks/aws/public-policies/public_9#aws-console",
+      "Terraform": "https://docs.prowler.com/checks/aws/public-policies/public_9#terraform"
     },
     "Recommendation": {
       "Text": "List all shared Redshift clusters and make sure there is a business reason for them.",

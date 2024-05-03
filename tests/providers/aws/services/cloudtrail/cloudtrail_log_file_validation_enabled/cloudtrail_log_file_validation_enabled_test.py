@@ -155,3 +155,31 @@ class Test_cloudtrail_log_file_validation_enabled:
                     assert report.resource_arn == trail_eu["TrailARN"]
                     assert report.resource_tags == []
                     assert report.region == AWS_REGION_EU_WEST_1
+
+    @mock_aws
+    def test_access_denied(self):
+        from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
+            Cloudtrail,
+        )
+
+        with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_aws_provider(
+                [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
+            ),
+        ), mock.patch(
+            "prowler.providers.aws.services.cloudtrail.cloudtrail_log_file_validation_enabled.cloudtrail_log_file_validation_enabled.cloudtrail_client",
+            new=Cloudtrail(
+                set_mocked_aws_provider([AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1])
+            ),
+        ) as service_client:
+            # Test Check
+            from prowler.providers.aws.services.cloudtrail.cloudtrail_log_file_validation_enabled.cloudtrail_log_file_validation_enabled import (
+                cloudtrail_log_file_validation_enabled,
+            )
+
+            service_client.trails = None
+
+            check = cloudtrail_log_file_validation_enabled()
+            result = check.execute()
+            assert len(result) == 0

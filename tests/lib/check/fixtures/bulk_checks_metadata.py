@@ -23,7 +23,7 @@ test_bulk_checks_metadata = {
             Code=Code(
                 NativeIaC="",
                 Terraform="",
-                CLI="https://docs.bridgecrew.io/docs/networking_5#cli-command",
+                CLI="https://docs.prowler.com/checks/networking_5#cli-command",
                 Other="",
             ),
             Recommendation=Recommendation(
@@ -107,8 +107,8 @@ test_bulk_checks_metadata = {
         RelatedUrl="https://docs.aws.amazon.com/workspaces/latest/adminguide/encrypt-workspaces.html",
         Remediation=Remediation(
             Code=Code(
-                NativeIaC="https://docs.bridgecrew.io/docs/ensure-that-workspace-root-volumes-are-encrypted#cloudformation",
-                Terraform="https://docs.bridgecrew.io/docs/ensure-that-workspace-root-volumes-are-encrypted#terraform",
+                NativeIaC="https://docs.prowler.com/checks/ensure-that-workspace-root-volumes-are-encrypted#cloudformation",
+                Terraform="https://docs.prowler.com/checks/ensure-that-workspace-root-volumes-are-encrypted#terraform",
                 CLI="",
                 Other="https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/WorkSpaces/storage-encryption.html",
             ),

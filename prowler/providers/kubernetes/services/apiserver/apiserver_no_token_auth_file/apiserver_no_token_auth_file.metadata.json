@@ -14,7 +14,7 @@
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-token-auth-file-parameter-is-not-set",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-token-auth-file-parameter-is-not-set",
       "Other": "",
       "Terraform": ""
     },

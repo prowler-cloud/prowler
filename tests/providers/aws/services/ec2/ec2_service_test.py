@@ -3,6 +3,8 @@ import re
 from base64 import b64decode
 from datetime import datetime
 
+import botocore
+import mock
 from boto3 import client, resource
 from dateutil.tz import tzutc
 from freezegun import freeze_time
@@ -18,6 +20,8 @@ from tests.providers.aws.utils import (
 
 EXAMPLE_AMI_ID = "ami-12c6146b"
 MOCK_DATETIME = datetime(2023, 1, 4, 7, 27, 30, tzinfo=tzutc())
+
+orig = botocore.client.BaseClient._make_api_call
 
 
 class Test_EC2_Service:
@@ -335,6 +339,106 @@ class Test_EC2_Service:
         for result in ec2.ebs_encryption_by_default:
             if result.region == AWS_REGION_US_EAST_1:
                 assert result.status
+
+    # Test EC2 get_snapshot_block_public_access_state
+    def test__get_snapshot_block_public_access_state__(self):
+        from prowler.providers.aws.services.ec2.ec2_service import (
+            EbsSnapshotBlockPublicAccess,
+        )
+
+        ec2_client = mock.MagicMock()
+        ec2_client.ebs_block_public_access_snapshots_states = [
+            EbsSnapshotBlockPublicAccess(
+                status="block-all-sharing", snapshots=True, region=AWS_REGION_US_EAST_1
+            )
+        ]
+        ec2_client.audited_account = AWS_ACCOUNT_NUMBER
+        ec2_client.region = AWS_REGION_US_EAST_1
+
+        with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_aws_provider(),
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_client.ec2_client",
+            new=ec2_client,
+        ):
+            assert (
+                ec2_client.ebs_block_public_access_snapshots_states[0].status
+                == "block-all-sharing"
+            )
+
+    # Test EC2 __get_resources_for_regions__
+    @mock_aws
+    def test__get_resources_for_regions__(self):
+        # Generate EC2 Client
+        ec2_resource = resource("ec2", region_name=AWS_REGION_US_EAST_1)
+        ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
+        # Get AMI image
+        image_response = ec2_client.describe_images()
+        image_id = image_response["Images"][0]["ImageId"]
+        # Create EC2 Instances running
+        ec2_resource.create_instances(
+            MinCount=1,
+            MaxCount=1,
+            ImageId=image_id,
+        )
+        # Create Volume
+        volume_id = ec2_client.create_volume(
+            AvailabilityZone=AWS_REGION_US_EAST_1,
+            Encrypted=False,
+            Size=40,
+            TagSpecifications=[
+                {
+                    "ResourceType": "volume",
+                    "Tags": [
+                        {"Key": "test", "Value": "test"},
+                    ],
+                },
+            ],
+        )["VolumeId"]
+        ec2_client.create_snapshot(
+            VolumeId=volume_id,
+            TagSpecifications=[
+                {
+                    "ResourceType": "snapshot",
+                    "Tags": [
+                        {"Key": "test", "Value": "test"},
+                    ],
+                },
+            ],
+        )
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        )
+        ec2 = EC2(aws_provider)
+        assert ec2.attributes_for_regions[AWS_REGION_US_EAST_1]["has_snapshots"]
+        assert ec2.attributes_for_regions[AWS_REGION_US_EAST_1]["has_instances"]
+        assert ec2.attributes_for_regions[AWS_REGION_US_EAST_1]["has_volumes"]
+
+    # Test __get_instance_metadata_defaults__
+    @mock_aws
+    def test__get_instance_metadata_defaults__(self):
+        from prowler.providers.aws.services.ec2.ec2_service import (
+            InstanceMetadataDefaults,
+        )
+
+        ec2_client = mock.MagicMock()
+        ec2_client.instance_metadata_defaults = [
+            InstanceMetadataDefaults(
+                http_tokens="required", instances=True, region=AWS_REGION_US_EAST_1
+            )
+        ]
+        ec2_client.audited_account = AWS_ACCOUNT_NUMBER
+        ec2_client.region = AWS_REGION_US_EAST_1
+
+        with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_aws_provider(),
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_client.ec2_client",
+            new=ec2_client,
+        ):
+            assert ec2_client.instance_metadata_defaults[0].http_tokens == "required"
 
     # Test EC2 Describe Addresses
     @mock_aws

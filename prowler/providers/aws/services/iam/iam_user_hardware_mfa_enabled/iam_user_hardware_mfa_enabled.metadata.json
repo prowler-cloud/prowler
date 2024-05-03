@@ -23,7 +23,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Enable hardware MFA device for an IAM user from the AWS Management Console; the command line; or the IAM API.",
+      "Text": "Enable hardware MFA device for an IAM user from the AWS Management Console, the command line, or the IAM API.",
       "Url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_mfa_enable_physical.html"
     }
   },

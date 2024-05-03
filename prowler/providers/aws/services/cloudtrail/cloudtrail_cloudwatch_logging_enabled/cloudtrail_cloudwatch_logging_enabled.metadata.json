@@ -13,13 +13,13 @@
   "Severity": "low",
   "ResourceType": "AwsCloudTrailTrail",
   "Description": "Ensure CloudTrail trails are integrated with CloudWatch Logs",
-  "Risk": "Sending CloudTrail logs to CloudWatch Logs will facilitate real-time and historic activity logging based on user; API; resource; and IP address; and provides opportunity to establish alarms and notifications for anomalous or sensitivity account activity.",
+  "Risk": "Sending CloudTrail logs to CloudWatch Logs will facilitate real-time and historic activity logging based on user, API, resource, and IP address, and provides opportunity to establish alarms and notifications for anomalous or sensitivity account activity.",
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
       "CLI": "aws cloudtrail update-trail --name <trail_name> --cloudwatch-logs-log-group- arn <cloudtrail_log_group_arn> --cloudwatch-logs-role-arn <cloudtrail_cloudwatchLogs_role_arn>",
       "NativeIaC": "",
-      "Other": "https://docs.bridgecrew.io/docs/logging_4#aws-console",
+      "Other": "https://docs.prowler.com/checks/aws/logging-policies/logging_4#aws-console",
       "Terraform": ""
     },
     "Recommendation": {

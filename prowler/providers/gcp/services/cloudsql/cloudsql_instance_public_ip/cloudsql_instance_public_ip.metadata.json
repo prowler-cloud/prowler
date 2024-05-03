@@ -13,10 +13,10 @@
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
-      "CLI": "https://docs.bridgecrew.io/docs/bc_gcp_sql_11#cli-command",
+      "CLI": "https://docs.prowler.com/checks/gcp/cloud-sql-policies/bc_gcp_sql_11#cli-command",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudSQL/sql-database-instances-with-public-ips.html",
-      "Terraform": "https://docs.bridgecrew.io/docs/bc_gcp_sql_11#terraform"
+      "Terraform": "https://docs.prowler.com/checks/gcp/cloud-sql-policies/bc_gcp_sql_11#terraform"
     },
     "Recommendation": {
       "Text": "To lower the organization's attack surface, Cloud SQL databases should not have public IPs. Private IPs provide improved network security and lower latency for your application.",

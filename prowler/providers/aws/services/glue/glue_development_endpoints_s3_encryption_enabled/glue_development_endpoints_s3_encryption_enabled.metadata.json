@@ -16,9 +16,9 @@
   "Remediation": {
     "Code": {
       "CLI": "aws glue create-security-configuration --name s3-encrypted-sec-config --encryption-configuration {'S3Encryption': [{'S3EncryptionMode': 'SSE-KMS','KmsKeyArn': <kms_arn>}]}",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/bc_aws_general_41#cloudformation",
+      "NativeIaC": "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_41#cloudformation",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Glue/s3-encryption-enabled.html",
-      "Terraform": "https://docs.bridgecrew.io/docs/bc_aws_general_41#terraform"
+      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_41#terraform"
     },
     "Recommendation": {
       "Text": "Specify AWS KMS keys to use for input and output from S3 and EBS.",

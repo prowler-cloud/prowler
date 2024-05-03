@@ -346,8 +346,10 @@ def prowler():
             global_provider,
             global_provider.output_options,
         )
-        # Only display compliance table if there are findings and it is a default execution
-        if findings and default_execution:
+        # Only display compliance table if there are findings (not all MANUAL) and it is a default execution
+        if (
+            findings and not all(finding.status == "MANUAL" for finding in findings)
+        ) and default_execution:
             compliance_overview = False
             if not compliance_framework:
                 compliance_framework = get_available_compliance_frameworks(provider)

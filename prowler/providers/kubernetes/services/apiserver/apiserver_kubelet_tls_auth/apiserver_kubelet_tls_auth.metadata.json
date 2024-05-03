@@ -14,7 +14,7 @@
   "Remediation": {
     "Code": {
       "CLI": "--kubelet-client-certificate=/path/to/client-certificate-file --kubelet-client-key=/path/to/client-key-file",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-kubelet-client-certificate-and-kubelet-client-key-arguments-are-set-as-appropriate",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-kubelet-client-certificate-and-kubelet-client-key-arguments-are-set-as-appropriate",
       "Other": "",
       "Terraform": ""
     },

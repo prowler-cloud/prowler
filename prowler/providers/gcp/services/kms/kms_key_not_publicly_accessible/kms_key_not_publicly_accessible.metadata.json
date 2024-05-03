@@ -16,7 +16,7 @@
       "CLI": "",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudKMS/publicly-accessible-kms-cryptokeys.html",
-      "Terraform": "https://docs.bridgecrew.io/docs/ensure-that-cloud-kms-cryptokeys-are-not-anonymously-or-publicly-accessible#terraform"
+      "Terraform": "https://docs.prowler.com/checks/gcp/google-cloud-general-policies/ensure-that-cloud-kms-cryptokeys-are-not-anonymously-or-publicly-accessible#terraform"
     },
     "Recommendation": {
       "Text": "To deny access from anonymous and public users, remove the bindings for 'allUsers' and 'allAuthenticatedUsers' members from the KMS key's IAM policy.",

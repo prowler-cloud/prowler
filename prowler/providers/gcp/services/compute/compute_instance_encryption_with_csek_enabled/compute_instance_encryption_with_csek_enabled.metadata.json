@@ -13,10 +13,10 @@
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
-      "CLI": "https://docs.bridgecrew.io/docs/bc_gcp_general_x#cli-command",
+      "CLI": "https://docs.prowler.com/checks/gcp/google-cloud-general-policies/bc_gcp_general_x#cli-command",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/ComputeEngine/enable-encryption-with-csek.html",
-      "Terraform": "https://docs.bridgecrew.io/docs/bc_gcp_general_x#terraform"
+      "Terraform": "https://docs.prowler.com/checks/gcp/google-cloud-general-policies/bc_gcp_general_x#terraform"
     },
     "Recommendation": {
       "Text": "Ensure that the disks attached to your production Google Compute Engine instances are encrypted with Customer-Supplied Encryption Keys (CSEKs) in order to have complete control over the data-at-rest encryption and decryption process, and meet strict compliance requirements. These custom keys, also known as Customer-Supplied Encryption Keys (CSEKs), are used by Google Compute Engine to protect the Google-generated keys used to encrypt and decrypt your instance data. Compute Engine service does not store your CSEKs on its servers and cannot access your protected data unless you provide the required key.",

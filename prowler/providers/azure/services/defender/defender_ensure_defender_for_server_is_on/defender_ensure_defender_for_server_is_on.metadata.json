@@ -16,7 +16,7 @@
       "CLI": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/SecurityCenter/microsoft-defender-vm-server.html",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/SecurityCenter/microsoft-defender-vm-server.html",
-      "Terraform": "https://docs.bridgecrew.io/docs/ensure-that-azure-defender-is-set-to-on-for-servers#terraform"
+      "Terraform": "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-that-azure-defender-is-set-to-on-for-servers#terraform"
     },
     "Recommendation": {
       "Text": "Enabling Microsoft Defender for Cloud standard pricing tier allows for better security assessment with threat detection provided by the Microsoft Security Response Center (MSRC), advanced security policies, adaptive application control, network threat detection, and regulatory compliance management.",

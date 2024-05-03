@@ -26,6 +26,24 @@ class Test_fms_policy_compliant:
 
             assert len(result) == 0
 
+    def test_access_denied(self):
+        fms_client = mock.MagicMock
+        fms_client.region = AWS_REGION_US_EAST_1
+        fms_client.fms_admin_account = None
+        with mock.patch(
+            "prowler.providers.aws.services.fms.fms_service.FMS",
+            new=fms_client,
+        ):
+            # Test Check
+            from prowler.providers.aws.services.fms.fms_policy_compliant.fms_policy_compliant import (
+                fms_policy_compliant,
+            )
+
+            check = fms_policy_compliant()
+            result = check.execute()
+
+            assert len(result) == 0
+
     def test_fms_admin_with_non_compliant_policies(self):
         fms_client = mock.MagicMock
         fms_client.audited_account = AWS_ACCOUNT_NUMBER

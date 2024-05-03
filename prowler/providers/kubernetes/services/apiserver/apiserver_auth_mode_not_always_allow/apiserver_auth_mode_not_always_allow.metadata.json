@@ -14,7 +14,7 @@
   "Remediation": {
     "Code": {
       "CLI": "--authorization-mode=RBAC",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-authorization-mode-argument-is-not-set-to-alwaysallow",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-authorization-mode-argument-is-not-set-to-alwaysallow",
       "Other": "",
       "Terraform": ""
     },

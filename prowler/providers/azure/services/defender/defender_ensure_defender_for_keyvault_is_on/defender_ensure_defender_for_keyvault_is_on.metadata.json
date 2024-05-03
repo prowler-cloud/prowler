@@ -16,7 +16,7 @@
       "CLI": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/SecurityCenter/defender-key-vault.html",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/SecurityCenter/defender-key-vault.html",
-      "Terraform": "https://docs.bridgecrew.io/docs/ensure-that-azure-defender-is-set-to-on-for-key-vault#terraform"
+      "Terraform": "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-that-azure-defender-is-set-to-on-for-key-vault#terraform"
     },
     "Recommendation": {
       "Text": "Ensure that Microsoft Defender for Cloud is enabled for Azure key vaults. Key Vault is the Azure cloud service that safeguards encryption keys and secrets like certificates, connection-based strings, and passwords.",

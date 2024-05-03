@@ -1,6 +1,5 @@
-def unroll_list(listed_items: list):
+def unroll_list(listed_items: list, separator: str = "|"):
     unrolled_items = ""
-    separator = "|"
     if listed_items:
         for item in listed_items:
             if not unrolled_items:

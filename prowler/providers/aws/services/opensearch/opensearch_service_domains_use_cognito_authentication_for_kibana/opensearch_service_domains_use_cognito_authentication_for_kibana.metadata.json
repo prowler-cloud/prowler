@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
   "CheckID": "opensearch_service_domains_use_cognito_authentication_for_kibana",
-  "CheckTitle": "Check if Amazon Elasticsearch/Opensearch Service domains has Amazon Cognito authentication for Kibana enabled",
+  "CheckTitle": "Check if Amazon Elasticsearch/Opensearch Service domains has either Amazon Cognito or SAML authentication for Kibana enabled",
   "CheckType": [
     "Identify",
     "Logging"
@@ -11,8 +11,8 @@
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "high",
   "ResourceType": "AwsOpenSearchDomain",
-  "Description": "Check if Amazon Elasticsearch/Opensearch Service domains has Amazon Cognito authentication for Kibana enabled",
-  "Risk": "Amazon Elasticsearch Service supports Amazon Cognito for Kibana authentication.",
+  "Description": "Check if Amazon Elasticsearch/Opensearch Service domains has Amazon Cognito or SAML authentication for Kibana enabled",
+  "Risk": "Not enabling Amazon Cognito or SAML authentication for Kibana in AWS Elasticsearch/OpenSearch Service domains increases the likelihood of unauthorized access to sensitive data, potentially compromising system integrity.",
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
@@ -22,7 +22,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "If you do not configure Amazon Cognito authentication; you can still protect Kibana using an IP-based access policy and a proxy server; HTTP basic authentication; or SAML.",
+      "Text": "If you do not configure Amazon Cognito or SAML authentication, you can still protect Kibana using an IP-based access policy and a proxy server or HTTP basic authentication.",
       "Url": "https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-ac.html"
     }
   },

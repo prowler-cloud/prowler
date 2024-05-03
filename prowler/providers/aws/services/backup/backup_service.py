@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
+from botocore.client import ClientError
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
@@ -37,6 +38,8 @@ class Backup(AWSService):
                             self.audit_resources,
                         )
                     ):
+                        if self.backup_vaults is None:
+                            self.backup_vaults = []
                         self.backup_vaults.append(
                             BackupVault(
                                 arn=configuration.get("BackupVaultArn"),
@@ -55,7 +58,13 @@ class Backup(AWSService):
                                 ),
                             )
                         )
-
+        except ClientError as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            if error.response["Error"]["Code"] == "AccessDeniedException":
+                if not self.backup_vaults:
+                    self.backup_vaults = None
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

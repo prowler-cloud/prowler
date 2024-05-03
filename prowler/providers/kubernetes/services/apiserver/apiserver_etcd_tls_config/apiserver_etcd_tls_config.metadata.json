@@ -14,7 +14,7 @@
   "Remediation": {
     "Code": {
       "CLI": "--etcd-certfile=<path/to/client-certificate-file> --etcd-keyfile=<path/to/client-key-file>",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-etcd-certfile-and-etcd-keyfile-arguments-are-set-as-appropriate",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-etcd-certfile-and-etcd-keyfile-arguments-are-set-as-appropriate",
       "Other": "",
       "Terraform": ""
     },

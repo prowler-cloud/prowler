@@ -18,7 +18,7 @@
     "Code": {
       "CLI": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Elasticsearch/elasticsearch-domain-exposed.html",
       "NativeIaC": "",
-      "Other": "https://docs.bridgecrew.io/docs/public_3#fix---runtime",
+      "Other": "https://docs.prowler.com/checks/aws/public-policies/public_3#fix---runtime",
       "Terraform": ""
     },
     "Recommendation": {

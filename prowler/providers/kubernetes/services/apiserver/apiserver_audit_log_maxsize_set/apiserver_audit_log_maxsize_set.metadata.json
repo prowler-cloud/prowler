@@ -14,7 +14,7 @@
   "Remediation": {
     "Code": {
       "CLI": "--audit-log-maxsize=100",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-audit-log-maxsize-argument-is-set-to-100-or-as-appropriate#kubernetes",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-audit-log-maxsize-argument-is-set-to-100-or-as-appropriate#kubernetes",
       "Other": "",
       "Terraform": ""
     },

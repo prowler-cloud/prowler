@@ -19,7 +19,7 @@
       "CLI": "gcloud services enable containerscanning.googleapis.com",
       "NativeIaC": "",
       "Other": "",
-      "Terraform": "https://docs.bridgecrew.io/docs/ensure-gcp-gcr-container-vulnerability-scanning-is-enabled#terraform"
+      "Terraform": "https://docs.prowler.com/checks/gcp/google-cloud-networking-policies/ensure-gcp-gcr-container-vulnerability-scanning-is-enabled#terraform"
     },
     "Recommendation": {
       "Text": "Enable vulnerability scanning for images stored in GCR using GCR Container Scanning or a third-party provider.",

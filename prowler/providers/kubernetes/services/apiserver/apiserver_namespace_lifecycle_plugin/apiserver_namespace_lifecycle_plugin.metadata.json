@@ -14,7 +14,7 @@
   "Remediation": {
     "Code": {
       "CLI": "--enable-admission-plugins=...,NamespaceLifecycle,...",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-admission-control-plugin-namespacelifecycle-is-set",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-admission-control-plugin-namespacelifecycle-is-set",
       "Other": "",
       "Terraform": ""
     },
