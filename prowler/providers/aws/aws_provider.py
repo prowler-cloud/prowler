@@ -308,7 +308,7 @@ class AwsProvider(Provider):
         - aws_account_id: is the AWS Account ID from which we want to get the AWS Organizations account metadata
 
         Returns:
-        - None if it is not unable to retrieve that data, and raises a logger.warning()
+        - AWSOrganizationsInfo object with the AWS Organizations metadata for the account to be audited.
         """
         try:
             logger.info(

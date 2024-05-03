@@ -276,6 +276,19 @@ class TestAWSProvider:
         )
 
     @mock_aws
+    def test_aws_provider_organizations_none_organizations_metadata(self):
+        arguments = Namespace()
+        aws_provider = AwsProvider(arguments)
+
+        assert isinstance(aws_provider.organizations_metadata, AWSOrganizationsInfo)
+        assert aws_provider.organizations_metadata.account_email == ""
+        assert aws_provider.organizations_metadata.account_name == ""
+        assert aws_provider.organizations_metadata.account_tags == []
+        assert aws_provider.organizations_metadata.organization_account_arn == ""
+        assert aws_provider.organizations_metadata.organization_id == ""
+        assert aws_provider.organizations_metadata.organization_arn == ""
+
+    @mock_aws
     def test_aws_provider_organizations_with_role(self):
         iam_client = client("iam", region_name=AWS_REGION_EU_WEST_1)
         policy_name = "describe_organizations_policy"
