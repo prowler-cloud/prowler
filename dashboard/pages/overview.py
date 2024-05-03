@@ -8,6 +8,7 @@ from itertools import product
 
 # Third-party imports
 import dash
+import dash_bootstrap_components as dbc
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -1084,6 +1085,50 @@ def filter_data(
             },
         )
 
+        # Imginary data
+        data_imaginary = [
+            {
+                "Check": "Ensure MFA is enabled for the root account",
+                "Resource ID": "<root_account>",
+                "Resource ARN": "arn:aws:iam::7142747078102:root",
+                "Check ID": "iam_root_mfa_enabled",
+                "Types": "Software and Configuration Checks",
+                "Standards": "CIS AWS Foundations Benchmark",
+                "Scan Time": "2024-05-01 at 14:22:00 UTC",
+                "Prowler Finding ID": "9a63f64d-38d3-414b-8c18-de3de62a0362",
+                "Severity": "Critical",
+                "Status": "FAIL",
+                "Region": "eu-west-1",
+                "Service": "iam",
+                "Account": "platform (714274...)",
+                "Details": "MFA is not enabled for root account.",
+                "Risk": "The root account is the most privileged user in an AWS account. MFA adds an extra layer of protection on top of a user name and password.",
+                "Recommendation": "Using IAM console navigate to Dashboard and expand Activate MFA on your root account.",
+            },
+            {
+                "Check": "Ensure MFA is enabled for the root account",
+                "Resource ID": "<root_account>",
+                "Resource ARN": "arn:aws:iam::7142747078102:root",
+                "Check ID": "iam_root_mfa_enabled",
+                "Types": "Software and Configuration Checks",
+                "Standards": "CIS AWS Foundations Benchmark",
+                "Scan Time": "2024-05-01 at 14:22:00 UTC",
+                "Prowler Finding ID": "9a63f64d-38d3-414b-8c18-de3de62a0362",
+                "Severity": "Critical",
+                "Status": "FAIL",
+                "Region": "eu-west-1",
+                "Service": "iam",
+                "Account": "platform (714274...)",
+                "Details": "MFA is not enabled for root account.",
+                "Risk": "The root account is the most privileged user in an AWS account. MFA adds an extra layer of protection on top of a user name and password.",
+                "Recommendation": "Using IAM console navigate to Dashboard and expand Activate MFA on your root account.",
+            },
+        ]
+
+        # Componente Dash
+        for item in data_imaginary:
+            generate_table(item)
+
     # Status Graphic
     status_graph = [
         html.Span(
@@ -1227,3 +1272,63 @@ def filter_data(
             gcp_clicks,
             k8s_clicks,
         )
+
+
+@callback(
+    Output({"type": "collapse", "index": dash.dependencies.ALL}, "is_open"),
+    [Input({"type": "toggle-collapse", "index": dash.dependencies.ALL}, "n_clicks")],
+    [
+        dash.dependencies.State(
+            {"type": "collapse", "index": dash.dependencies.ALL}, "is_open"
+        )
+    ],
+)
+def togle_collapse(n):
+    if n:
+        return not n % 2 == 0
+    return False
+
+
+def generate_table(data):
+    return html.Div(
+        [
+            dbc.Card(
+                [
+                    dbc.CardHeader(
+                        dbc.Button(
+                            data["Check"],
+                            color="link",
+                            id={"type": "toggle-collapse"},
+                            n_clicks=0,
+                        )
+                    ),
+                    dbc.Collapse(
+                        dbc.CardBody(
+                            [
+                                html.H5("Details", className="card-title"),
+                                html.P(data["Details"]),
+                                html.P(data["Risk"]),
+                                html.P(data["Recommendation"]),
+                                html.Table(
+                                    [
+                                        html.Thead(
+                                            html.Tr([html.Th("Name"), html.Th("Value")])
+                                        ),
+                                        html.Tbody(
+                                            [
+                                                html.Tr([html.Td(key), html.Td(value)])
+                                                for key, value in data.items()
+                                            ]
+                                        ),
+                                    ],
+                                    className="table table-bordered table-dark table-hover table-responsive table-striped",
+                                ),
+                            ]
+                        ),
+                        id={"type": "collapse"},
+                        is_open=False,
+                    ),
+                ]
+            )
+        ]
+    )
