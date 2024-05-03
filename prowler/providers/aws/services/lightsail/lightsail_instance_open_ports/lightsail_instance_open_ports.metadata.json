@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "lightsail_instance_open_ports",
+  "CheckTitle": "Scans for open ports to ensure only required ports are accessible.",
+  "CheckType": [
+    "Infrastructure Security"
+  ],
+  "ServiceName": "lightsail",
+  "SubServiceName": "instance",
+  "ResourceIdTemplate": "arn:partition:lightsail:region:account:Instance/instance-id",
+  "Severity": "high",
+  "ResourceType": "Instance",
+  "Description": "Ensure that only required ports are accessible on your Lightsail instances.",
+  "Risk": "If unnecessary ports are open, it can increase the attack surface of your Lightsail instances.",
+  "RelatedUrl": "https://docs.aws.amazon.com/lightsail/latest/userguide/understanding-firewall-and-port-mappings-in-amazon-lightsail.html#specifying-ports",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "We recommend that only open web server ports (80, 443) are accessible on your Lightsail instances. You can configure the firewall settings in the Lightsail console to restrict access to only the required ports.",
+      "Url": "https://docs.aws.amazon.com/lightsail/latest/userguide/understanding-firewall-and-port-mappings-in-amazon-lightsail.html#default-lightsail-firewall-rules"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
