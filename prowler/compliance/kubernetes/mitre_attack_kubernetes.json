@@ -1,0 +1,471 @@
+[
+  {
+    "Name": "Exploit Public-Facing Application",
+    "Id": "T1190",
+    "Tactics": [
+      "Initial Access"
+    ],
+    "SubTechniques": [],
+    "Platforms": [
+      "Containers"
+    ],
+    "Description": "Adversaries may exploit public-facing applications to gain unauthorized access to containerized environments.",
+    "TechniqueURL": "https://attack.mitre.org/techniques/T1190/",
+    "Checks": [],
+    "Attributes": []
+  },
+  {
+    "Name": "External Remote Services",
+    "Id": "T1133",
+    "Tactics": [
+      "Initial Access",
+      "Persistence"
+    ],
+    "SubTechniques": [],
+    "Platforms": [
+      "Containers"
+    ],
+    "Description": "Adversaries may use external remote services to maintain persistent access to containerized environments.",
+    "TechniqueURL": "https://attack.mitre.org/techniques/T1133/",
+    "Checks": [],
+    "Attributes": []
+  },
+  {
+    "Name": "Valid Accounts",
+    "Id": "T1078",
+    "Tactics": [
+      "Initial Access",
+      "Privilege Escalation"
+    ],
+    "SubTechniques": [
+      "T1078.001 - Default Accounts",
+      "T1078.002 - Local Accounts"
+    ],
+    "Platforms": [
+      "Containers"
+    ],
+    "Description": "Adversaries may use valid accounts for initial access or to maintain persistence within container environments.",
+    "TechniqueURL": "https://attack.mitre.org/techniques/T1078/",
+    "Checks": [],
+    "Attributes": []
+  },
+  {
+    "Name": "Container Administration Command",
+    "Id": "T1609",
+    "Tactics": [
+      "Execution"
+    ],
+    "SubTechniques": [],
+    "Platforms": [
+      "Containers"
+    ],
+    "Description": "Adversaries may use container administration tools to execute commands within your cloud environment.",
+    "TechniqueURL": "https://attack.mitre.org/techniques/T1609/",
+    "Checks": [],
+    "Attributes": []
+  },
+  {
+    "Name": "Deploy Container",
+    "Id": "T1610",
+    "Tactics": [
+      "Execution",
+      "Defense Evasion"
+    ],
+    "SubTechniques": [],
+    "Platforms": [
+      "Containers"
+    ],
+    "Description": "Adversaries may deploy additional containers to execute arbitrary tasks.",
+    "TechniqueURL": "https://attack.mitre.org/techniques/T1610/",
+    "Checks": [],
+    "Attributes": []
+  },
+  {
+    "Name": "Scheduled Task/Job",
+    "Id": "T1053",
+    "Tactics": [
+      "Persistence",
+      "Privilege Escalation",
+      "Execution"
+    ],
+    "SubTechniques": [
+      "T1053.007 - Container Orchestration Job"
+    ],
+    "Platforms": [
+      "Containers"
+    ],
+    "Description": "Adversaries may use scheduling tools to perform tasks that could help in maintaining persistence or escalating privileges.",
+    "TechniqueURL": "https://attack.mitre.org/techniques/T1053/",
+    "Checks": [],
+    "Attributes": []
+  },
+  {
+    "Name": "User Execution",
+    "Id": "T1204",
+    "Tactics": [
+      "Execution"
+    ],
+    "SubTechniques": [
+      "T1204.002 - Malicious Image"
+    ],
+    "Platforms": [
+      "Containers"
+    ],
+    "Description": "Adversaries may trick users into executing malicious code via social engineering methods.",
+    "TechniqueURL": "https://attack.mitre.org/techniques/T1204/",
+    "Checks": [],
+    "Attributes": []
+  },
+  {
+    "Name": "Account Manipulation",
+    "Id": "T1098",
+    "Tactics": [
+      "Persistence",
+      "Privilege Escalation"
+    ],
+    "SubTechniques": [
+      "T1098.004- Additional Container Cluster Roles"
+    ],
+    "Platforms": [
+      "Containers"
+    ],
+    "Description": "Adversaries may manipulate account properties or sessions to maintain access to victim's environments.",
+    "TechniqueURL": "https://attack.mitre.org/techniques/T1098/",
+    "Checks": [],
+    "Attributes": []
+  },
+  {
+    "Name": "Create Account",
+    "Id": "T1136",
+    "Tactics": [
+      "Persistence"
+    ],
+    "SubTechniques": [
+      "T1136.001 - Local Account"
+    ],
+    "Platforms": [
+      "Containers"
+    ],
+    "Description": "Adversaries may create user accounts that can be used to establish a foothold allowing them to gain persistent access and control over a system.",
+    "TechniqueURL": "https://attack.mitre.org/techniques/T1136/",
+    "Checks": [],
+    "Attributes": []
+  },
+  {
+    "Name": "Create or Modify System Process",
+    "Id": "T1543",
+    "Tactics": [
+      "Persistence",
+      "Privilege Escalation"
+    ],
+    "SubTechniques": [
+      "T1543.005 - Container Service"
+    ],
+    "Platforms": [
+      "Containers"
+    ],
+    "Description": "Adversaries may create or modify system processes to establish persistence or escalate privileges on a system.",
+    "TechniqueURL": "https://attack.mitre.org/techniques/T1543/",
+    "Checks": [],
+    "Attributes": []
+  },
+  {
+    "Name": "Implant Internal Image",
+    "Id": "T1525",
+    "Tactics": [
+      "Persistence"
+    ],
+    "SubTechniques": [],
+    "Platforms": [
+      "Containers"
+    ],
+    "Description": "Adversaries may implant cloud or container images with malicious code to establish persistence after gaining access to an environment. Amazon Web Services (AWS) Amazon Machine Images (AMIs), Google Cloud Platform (GCP) Images, and Azure Images as well as popular container runtimes such as Docker can be implanted or backdoored. Unlike Upload Malware, this technique focuses on adversaries implanting an image in a registry within a victim’s environment. Depending on how the infrastructure is provisioned, this could provide persistent access if the infrastructure provisioning tool is instructed to always use the latest image.",
+    "TechniqueURL": "https://attack.mitre.org/techniques/T1543/",
+    "Checks": [],
+    "Attributes": []
+  },
+  {
+    "Name": "Escape to Host",
+    "Id": "T1611",
+    "Tactics": [
+      "Privilege Escalation"
+    ],
+    "SubTechniques": [],
+    "Platforms": [
+      "Containers"
+    ],
+    "Description": "Adversaries may exploit vulnerabilities to escape from a container and gain unauthorized access to the host operating system.",
+    "TechniqueURL": "https://attack.mitre.org/techniques/T1611/",
+    "Checks": [],
+    "Attributes": []
+  },
+  {
+    "Name": "Exploitation for Privilege Escalation",
+    "Id": "T1068",
+    "Tactics": [
+      "Privilege Escalation"
+    ],
+    "SubTechniques": [],
+    "Platforms": [
+      "Containers"
+    ],
+    "Description": "Adversaries may exploit system or application vulnerabilities to elevate privileges within a container or the host system.",
+    "TechniqueURL": "https://attack.mitre.org/techniques/T1068/",
+    "Checks": [],
+    "Attributes": []
+  },
+  {
+    "Name": "Build Image on Host",
+    "Id": "T1612",
+    "Tactics": [
+      "Defense Evasion"
+    ],
+    "SubTechniques": [],
+    "Platforms": [
+      "Containers"
+    ],
+    "Description": "Adversaries may build a container image directly on a host to bypass defenses that monitor for the retrieval of malicious images from a public registry. A remote build request may be sent to the Docker API that includes a Dockerfile that pulls a vanilla base image, such as alpine, from a public or local registry and then builds a custom image upon it.",
+    "TechniqueURL": "https://attack.mitre.org/techniques/T1612/",
+    "Checks": [],
+    "Attributes": []
+  },
+  {
+    "Name": "Impair Defenses",
+    "Id": "T1562",
+    "Tactics": [
+      "Defense Evasion"
+    ],
+    "SubTechniques": [
+      "T1562.001 - Impair Defenses: Disable or Modify Tools"
+    ],
+    "Platforms": [
+      "Containers"
+    ],
+    "Description": "Adversaries may maliciously modify components of a victim environment in order to hinder or disable defensive mechanisms. This not only involves impairing preventative defenses, such as firewalls and anti-virus, but also detection capabilities that defenders can use to audit activity and identify malicious behavior. This may also span both native defenses as well as supplemental capabilities installed by users and administrators.",
+    "TechniqueURL": "https://attack.mitre.org/techniques/T1562/",
+    "Checks": [],
+    "Attributes": []
+  },
+  {
+    "Name": "Indicator Removal",
+    "Id": "T1070",
+    "Tactics": [
+      "Defense Evasion"
+    ],
+    "SubTechniques": [],
+    "Platforms": [
+      "Containers"
+    ],
+    "Description": "Adversaries may delete or modify artifacts generated within systems to remove evidence of their presence or hinder defenses. Various artifacts may be created by an adversary or something that can be attributed to an adversary’s actions. Typically these artifacts are used as defensive indicators related to monitored events, such as strings from downloaded files, logs that are generated from user actions, and other data analyzed by defenders. Location, format, and type of artifact (such as command or login history) are often specific to each platform.",
+    "TechniqueURL": "https://attack.mitre.org/techniques/T1070/",
+    "Checks": [],
+    "Attributes": []
+  },
+  {
+    "Name": "Masquerading",
+    "Id": "T1036",
+    "Tactics": [
+      "Defense Evasion"
+    ],
+    "SubTechniques": [
+      "T1036.005 - Match Legitimate Name or Location"
+    ],
+    "Platforms": [
+      "Containers"
+    ],
+    "Description": "Adversaries may attempt to make an executable or operation less obvious to users or administrators by renaming it to a name commonly found on the host.",
+    "TechniqueURL": "https://attack.mitre.org/techniques/T1036/",
+    "Checks": [],
+    "Attributes": []
+  },
+  {
+    "Name": "Use Alternate Authentication Material",
+    "Id": "T1550",
+    "Tactics": [
+      "Defense Evasion",
+      "Lateral Movement"
+    ],
+    "SubTechniques": [
+      "T1550.001 - Application Access Token"
+    ],
+    "Platforms": [
+      "Containers"
+    ],
+    "Description": "Adversaries may use alternate authentication material, such as password hashes, Kerberos tickets, and application access tokens, in order to move laterally within an environment and bypass normal system access controls. Authentication processes generally require a valid identity (e.g., username) along with one or more authentication factors (e.g., password, pin, physical smart card, token generator, etc.). Alternate authentication material is legitimately generated by systems after a user or application successfully authenticates by providing a valid identity and the required authentication factor(s). Alternate authentication material may also be generated during the identity creation process",
+    "TechniqueURL": "https://attack.mitre.org/techniques/T1550/",
+    "Checks": [],
+    "Attributes": []
+  },
+  {
+    "Name": "Brute Force",
+    "Id": "T1110",
+    "Tactics": [
+      "Credential Access"
+    ],
+    "SubTechniques": [
+      "T1110.001 - Password Guessing",
+      "T1110.003 - Password Spraying",
+      "T1110.004 - Credential Stuffing"
+    ],
+    "Platforms": [
+      "Containers"
+    ],
+    "Description": "Adversaries may use brute force techniques to gain access to accounts by trying multiple passwords or using automated methods to try many combinations.",
+    "TechniqueURL": "https://attack.mitre.org/techniques/T1110/",
+    "Checks": [],
+    "Attributes": []
+  },
+  {
+    "Name": "Steal Application Access Token",
+    "Id": "T1528",
+    "Tactics": [
+      "Credential Access"
+    ],
+    "SubTechniques": [],
+    "Platforms": [
+      "Containers"
+    ],
+    "Description": "Adversaries may steal tokens, such as OAuth tokens, to gain access to application resources without needing to directly compromise credentials.",
+    "TechniqueURL": "https://attack.mitre.org/techniques/T1528/",
+    "Checks": [],
+    "Attributes": []
+  },
+  {
+    "Name": "Unsecured Credentials",
+    "Id": "T1552",
+    "Tactics": [
+      "Credential Access"
+    ],
+    "SubTechniques": [
+      "T1552.001 - Credentials In Files",
+      "T1552.002 - Container API"
+    ],
+    "Platforms": [
+      "Containers"
+    ],
+    "Description": "Adversaries may search for credentials that are stored insecurely or unencrypted on system configurations or files.",
+    "TechniqueURL": "https://attack.mitre.org/techniques/T1552/",
+    "Checks": [],
+    "Attributes": []
+  },
+  {
+    "Name": "Container and Resource Discovery",
+    "Id": "T1613",
+    "Tactics": [
+      "Discovery"
+    ],
+    "SubTechniques": [],
+    "Platforms": [
+      "Containers"
+    ],
+    "Description": "Adversaries may attempt to get information about running containers and their configurations on a system.",
+    "TechniqueURL": "https://attack.mitre.org/techniques/T1613/",
+    "Checks": [],
+    "Attributes": []
+  },
+  {
+    "Name": "Network Service Discovery",
+    "Id": "T1046",
+    "Tactics": [
+      "Discovery"
+    ],
+    "SubTechniques": [],
+    "Platforms": [
+      "Containers"
+    ],
+    "Description": "Adversaries may look for network services of interest in their target environment, which can help them shape other actions, such as exploitation.",
+    "TechniqueURL": "https://attack.mitre.org/techniques/T1046/",
+    "Checks": [],
+    "Attributes": []
+  },
+  {
+    "Name": "Permission Groups Discovery",
+    "Id": "T1069",
+    "Tactics": [
+      "Discovery"
+    ],
+    "SubTechniques": [],
+    "Platforms": [
+      "Containers"
+    ],
+    "Description": "Adversaries may attempt to find all permission groups, including administrators, associated with a system or container environment.",
+    "TechniqueURL": "https://attack.mitre.org/techniques/T1069/",
+    "Checks": [],
+    "Attributes": []
+  },
+  {
+    "Name": "Data Destruction",
+    "Id": "T1485",
+    "Tactics": [
+      "Impact"
+    ],
+    "SubTechniques": [],
+    "Platforms": [
+      "Containers"
+    ],
+    "Description": "Adversaries may destroy data and files on specific systems or in large numbers on a network to disrupt organizational operations.",
+    "TechniqueURL": "https://attack.mitre.org/techniques/T1485/",
+    "Checks": [],
+    "Attributes": []
+  },
+  {
+    "Name": "Endpoint Denial of Service",
+    "Id": "T1499",
+    "Tactics": [
+      "Impact"
+    ],
+    "SubTechniques": [],
+    "Platforms": [
+      "Containers"
+    ],
+    "Description": "Adversaries may attempt to cause a denial of service condition by targeting endpoints, including containers, with methods that prevent access to services and resources.",
+    "TechniqueURL": "https://attack.mitre.org/techniques/T1499/",
+    "Checks": [],
+    "Attributes": []
+  },
+  {
+    "Name": "Inhibit System Recovery",
+    "Id": "T1490",
+    "Tactics": [
+      "Impact"
+    ],
+    "SubTechniques": [],
+    "Platforms": [
+      "Containers"
+    ],
+    "Description": "Adversaries may inhibit system recovery processes by disabling or interfering with recovery mechanisms. This might include disabling backup applications or deleting restoration data.",
+    "TechniqueURL": "https://attack.mitre.org/techniques/T1490/",
+    "Checks": [],
+    "Attributes": []
+  },
+  {
+    "Name": "Network Denial of Service",
+    "Id": "T1498",
+    "Tactics": [
+      "Impact"
+    ],
+    "SubTechniques": [],
+    "Platforms": [
+      "Containers"
+    ],
+    "Description": "Adversaries may target networks, including those supporting containerized applications, aiming to overwhelm the network's ability to process traffic, effectively denying service to legitimate users.",
+    "TechniqueURL": "https://attack.mitre.org/techniques/T1498/",
+    "Checks": [],
+    "Attributes": []
+  },
+  {
+    "Name": "Resource Hijacking",
+    "Id": "T1496",
+    "Tactics": [
+      "Impact"
+    ],
+    "SubTechniques": [],
+    "Platforms": [
+      "Containers"
+    ],
+    "Description": "Adversaries may hijack system resources to generate revenue or perform other malicious activity. This includes using containers to mine cryptocurrency or host unauthorized content.",
+    "TechniqueURL": "https://attack.mitre.org/techniques/T1496/",
+    "Checks": [],
+    "Attributes": []
+  }
+]
