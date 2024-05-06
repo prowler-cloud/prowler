@@ -102,7 +102,7 @@ class Test_efs_not_publicly_accessible:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"EFS {file_system_id} has a policy which does not allow access to everyone."
+                == f"EFS {file_system_id} has a policy which does not allow access to any client within the VPC."
             )
             assert result[0].resource_id == file_system_id
             assert result[0].resource_arn == efs_arn
@@ -136,7 +136,7 @@ class Test_efs_not_publicly_accessible:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"EFS {file_system_id} has a policy which does not allow access to everyone."
+                == f"EFS {file_system_id} has a policy which does not allow access to any client within the VPC."
             )
             assert result[0].resource_id == file_system_id
             assert result[0].resource_arn == efs_arn
@@ -170,7 +170,7 @@ class Test_efs_not_publicly_accessible:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"EFS {file_system_id} has a policy which does not allow access to everyone."
+                == f"EFS {file_system_id} has a policy which does not allow access to any client within the VPC."
             )
             assert result[0].resource_id == file_system_id
             assert result[0].resource_arn == efs_arn
@@ -205,7 +205,7 @@ class Test_efs_not_publicly_accessible:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"EFS {file_system_id} has a policy which allows access to everyone."
+                == f"EFS {file_system_id} has a policy which allows access to any client within the VPC."
             )
             assert result[0].resource_id == file_system_id
             assert result[0].resource_arn == efs_arn
@@ -239,7 +239,7 @@ class Test_efs_not_publicly_accessible:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"EFS {file_system_id} doesn't have any policy which means it grants full access to any client."
+                == f"EFS {file_system_id} doesn't have any policy which means it grants full access to any client within the VPC."
             )
             assert result[0].resource_id == file_system_id
             assert result[0].resource_arn == efs_arn
