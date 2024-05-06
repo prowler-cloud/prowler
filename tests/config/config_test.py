@@ -60,6 +60,7 @@ config_aws = {
     ],
     "organizations_enabled_regions": [],
     "organizations_trusted_delegated_administrators": [],
+    "check_rds_replicas": True,
 }
 
 config_azure = {"shodan_api_key": None}
