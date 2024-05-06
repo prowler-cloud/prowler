@@ -13,7 +13,7 @@ import dash_bootstrap_components as dbc
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-from dash import callback, callback_context, ctx, dash_table, dcc, html
+from dash import callback, callback_context, ctx, dcc, html
 from dash.dependencies import Input, Output
 
 # Config import
@@ -783,7 +783,7 @@ def filter_data(
         # Status Pie Chart
         df1 = filtered_data[filtered_data["STATUS"] == "FAIL"]
 
-        color_mapping_pass_fail = {
+        color_mapping_status = {
             "FAIL": fail_color,
             "PASS": pass_color,
             "INFO": info_color,
@@ -795,7 +795,7 @@ def filter_data(
             "MUTED (WARNING)": "#c7a45d",
         }
         # Define custom colors
-        color_mapping = {
+        color_mapping_severity = {
             "critical": critical_color,
             "high": high_color,
             "medium": medium_color,
@@ -809,7 +809,7 @@ def filter_data(
             names="STATUS",
             hole=0.7,
             color="STATUS",
-            color_discrete_map=color_mapping_pass_fail,
+            color_discrete_map=color_mapping_status,
         )
         fig2.update_traces(
             hovertemplate=None,
@@ -834,7 +834,8 @@ def filter_data(
         )
 
         color_bars = [
-            color_mapping[severity] for severity in df1["SEVERITY"].value_counts().index
+            color_mapping_severity[severity]
+            for severity in df1["SEVERITY"].value_counts().index
         ]
 
         figure_bars = go.Figure(
@@ -937,193 +938,16 @@ def filter_data(
 
         table_data["Severity"] = table_data["Severity"].str.capitalize()
 
-        table = dash_table.DataTable(
-            data=table_data.to_dict("records"),
-            style_data={
-                "whiteSpace": "normal",
-                "height": "auto",
-                "color": "black",
-                "fontFamily": "sans-serif",
-            },
-            columns=[
-                {
-                    "name": "Check ID - Resource UID",
-                    "id": "Check ID",
-                    "deletable": False,
-                },
-                {
-                    "name": "Severity",
-                    "id": "Severity",
-                    "deletable": False,
-                },
-                {"name": "Status", "id": "Status", "deletable": False},
-                {"name": "Region", "id": "Region", "deletable": False},
-                {"name": "Service", "id": "Service", "deletable": False},
-                {"name": "Provider", "id": "Provider", "deletable": False},
-                {"name": "Account ID", "id": "Account ID", "deletable": False},
-            ],
-            style_table={"table-layout": "fixed"},
-            style_cell={"textAlign": "left", "layout": "fixed"},
-            style_header={
-                "fontWeight": "bold",
-                "layout": "fixed",
-                "backgroundColor": "rgb(41,37,36)",
-                "fontFamily": "sans-serif",
-            },
-            page_size=table_row_values,
-            style_data_conditional=[
-                {
-                    "if": {"row_index": "odd"},
-                    "backgroundColor": "rgb(200, 200, 200)",
-                    "width": "100%",
-                },
-                {
-                    "if": {
-                        "filter_query": '{Status} = "FAIL"',  # matching rows of a hidden column with the id, `id`
-                        "column_id": "Status",
-                    },
-                    "backgroundColor": fail_color,
-                },
-                {
-                    "if": {
-                        "filter_query": '{Status} = "PASS"',  # matching rows of a hidden column with the id, `id`
-                        "column_id": "Status",
-                    },
-                    "backgroundColor": pass_color,
-                },
-                {
-                    "if": {
-                        "filter_query": '{Status} = "MANUAL"',  # matching rows of a hidden column with the id, `id`
-                        "column_id": "Status",
-                    },
-                    "backgroundColor": manual_color,
-                },
-                {
-                    "if": {
-                        "filter_query": '{Status} = "INFO"',  # matching rows of a hidden column with the id, `id`
-                        "column_id": "Status",
-                    },
-                    "backgroundColor": info_color,
-                },
-                {
-                    "if": {
-                        "filter_query": '{Status} = "MUTED (FAIL)"',  # matching rows of a hidden column with the id, `id`
-                        "column_id": "Status",
-                    },
-                    "backgroundColor": muted_fail_color,
-                },
-                {
-                    "if": {
-                        "filter_query": '{Status} = "MUTED (PASS)"',  # matching rows of a hidden column with the id, `id`
-                        "column_id": "Status",
-                    },
-                    "backgroundColor": muted_pass_color,
-                },
-                {
-                    "if": {
-                        "filter_query": '{Status} = "MUTED (MANUAL)"',  # matching rows of a hidden column with the id, `id`
-                        "column_id": "Status",
-                    },
-                    "backgroundColor": muted_manual_color,
-                },
-                {
-                    "if": {
-                        "column_id": "Severity",
-                    },
-                    "text-transform": "capitalize",
-                },
-            ],
-            style_cell_conditional=[
-                {"if": {"column_id": "Check ID + Resource UID"}, "max-width": "58%"},
-                {
-                    "if": {"column_id": "Severity"},
-                    "max-width": "8%",
-                    "text-align": "center",
-                },
-                {
-                    "if": {"column_id": "Status"},
-                    "max-width": "7%",
-                    "text-align": "center",
-                },
-                {
-                    "if": {"column_id": "Region"},
-                    "max-width": "9%",
-                    "text-align": "center",
-                },
-                {
-                    "if": {"column_id": "Service"},
-                    "max-width": "6%",
-                    "text-align": "center",
-                },
-                {
-                    "if": {"column_id": "Provider"},
-                    "max-width": "7%",
-                    "text-align": "center",
-                },
-                {
-                    "if": {"column_id": "Account ID"},
-                    "max-width": "11%",
-                    "text-align": "center",
-                },
-            ],
-            id="table-overview",
-            sort_action="native",
-            sort_mode="single",
-            style_as_list_view=True,
-            filter_action="native",
-            filter_options={"placeholder_text": "🔍"},
-            style_filter={
-                "background-color": "#3e403f",
-                "color": "white",
-                "fontFamily": "sans-serif",
-            },
-        )
-
-        # Imginary data
-        data_imaginary = [
-            {
-                "Check": "Ensure MFA is enabled for the root account",
-                "Resource ID": "<root_account>",
-                "Resource ARN": "arn:aws:iam::7142747078102:root",
-                "Check ID": "iam_root_mfa_enabled",
-                "Types": "Software and Configuration Checks",
-                "Standards": "CIS AWS Foundations Benchmark",
-                "Scan Time": "2024-05-01 at 14:22:00 UTC",
-                "Prowler Finding ID": "9a63f64d-38d3-414b-8c18-de3de62a0362",
-                "Severity": "Critical",
-                "Status": "FAIL",
-                "Region": "eu-west-1",
-                "Service": "iam",
-                "Account": "platform (714274...)",
-                "Details": "MFA is not enabled for root account.",
-                "Risk": "The root account is the most privileged user in an AWS account. MFA adds an extra layer of protection on top of a user name and password.",
-                "Recommendation": "Using IAM console navigate to Dashboard and expand Activate MFA on your root account.",
-            },
-            {
-                "Check": "Ensure MFA is enabled for the root account",
-                "Resource ID": "<root_account>",
-                "Resource ARN": "arn:aws:iam::7142747078102:root",
-                "Check ID": "iam_root_mfa_enabled",
-                "Types": "Software and Configuration Checks",
-                "Standards": "CIS AWS Foundations Benchmark",
-                "Scan Time": "2024-05-01 at 14:22:00 UTC",
-                "Prowler Finding ID": "9a63f64d-38d3-414b-8c18-de3de62a0362",
-                "Severity": "Critical",
-                "Status": "FAIL",
-                "Region": "eu-west-1",
-                "Service": "iam",
-                "Account": "platform (714274...)",
-                "Details": "MFA is not enabled for root account.",
-                "Risk": "The root account is the most privileged user in an AWS account. MFA adds an extra layer of protection on top of a user name and password.",
-                "Recommendation": "Using IAM console navigate to Dashboard and expand Activate MFA on your root account.",
-            },
-        ]
-
-        # Componente Dash
         table_div = []
         index_count = 0
-        for item in data_imaginary:
-            table_div.append(generate_table(item, index_count))
+        filtered_data = filtered_data.head(table_row_values)
+        print(filtered_data.columns)
+        for item in filtered_data.to_dict("records"):
+            table_div.append(
+                generate_table(
+                    item, index_count, color_mapping_severity, color_mapping_status
+                )
+            )
             index_count += 1
 
         table = html.Div(table_div)
@@ -1291,40 +1115,122 @@ def toggle_collapse(n_clicks, is_open):
     return is_open
 
 
-def generate_table(data, index):
+def generate_table(data, index, color_mapping_severity, color_mapping_status):
     return html.Div(
         [
             dbc.Card(
                 [
                     dbc.CardHeader(
-                        dbc.Button(
-                            data["Check"],
-                            color="link",
-                            id={"type": "toggle-collapse", "index": index},
-                            n_clicks=0,
-                        )
+                        dbc.Row(
+                            [
+                                dbc.Col(
+                                    [
+                                        html.H5(
+                                            data["CHECK_TITLE"],
+                                            className="card-title",
+                                        ),
+                                    ],
+                                    width=6,
+                                ),
+                                dbc.Col(
+                                    [
+                                        html.Span(
+                                            data["SEVERITY"],
+                                            className="text-center text-white uppercase text-xs font-bold rounded-lg px-2 py-1",
+                                            style={
+                                                "background-color": color_mapping_severity[
+                                                    data["SEVERITY"]
+                                                ]
+                                            },
+                                        ),
+                                    ],
+                                    width=1,
+                                ),
+                                dbc.Col(
+                                    [
+                                        html.Span(
+                                            data["STATUS"],
+                                            className="text-center text-white uppercase text-xs font-bold rounded-lg px-2 py-1",
+                                            style={
+                                                "background-color": color_mapping_status[
+                                                    data["STATUS"]
+                                                ]
+                                            },
+                                        ),
+                                    ],
+                                    width=1,
+                                ),
+                                dbc.Col(
+                                    [
+                                        html.Span(
+                                            data["REGION"],
+                                            className="text-center text-white uppercase text-xs font-bold rounded-lg px-2 py-1",
+                                        ),
+                                    ],
+                                    width=1,
+                                ),
+                                dbc.Col(
+                                    [
+                                        html.Span(
+                                            data["SERVICE_NAME"],
+                                            className="text-center text-white uppercase text-xs font-bold rounded-lg px-2 py-1",
+                                        ),
+                                    ],
+                                    width=1,
+                                ),
+                                dbc.Col(
+                                    [
+                                        html.Span(
+                                            data["ACCOUNT_UID"],
+                                            className="text-center text-white uppercase text-xs font-bold rounded-lg px-2 py-1",
+                                        ),
+                                    ],
+                                    width=1,
+                                ),
+                                dbc.Col(
+                                    [
+                                        html.Button(
+                                            "Details",
+                                            id={
+                                                "type": "toggle-collapse",
+                                                "index": index,
+                                            },
+                                            className="btn btn-primary",
+                                        ),
+                                    ],
+                                    width=1,
+                                ),
+                            ],
+                            align="center",
+                            justify="center",
+                            className="g-0",
+                            style={"display": "flex-inline"},
+                        ),
                     ),
                     dbc.Collapse(
                         dbc.CardBody(
                             [
                                 html.H5("Details", className="card-title"),
-                                html.P(data["Details"]),
-                                html.P(data["Risk"]),
-                                html.P(data["Recommendation"]),
-                                html.Table(
-                                    [
-                                        html.Thead(
-                                            html.Tr([html.Th("Name"), html.Th("Value")])
-                                        ),
-                                        html.Tbody(
-                                            [
-                                                html.Tr([html.Td(key), html.Td(value)])
-                                                for key, value in data.items()
-                                            ]
-                                        ),
-                                    ],
-                                    className="table table-bordered table-dark table-hover table-responsive table-striped",
-                                ),
+                                html.P("Resource uid: " + data["RESOURCE_UID"]),
+                                html.P("Check id: " + data["CHECK_ID"]),
+                                html.P("Type: " + data["RESOURCE_TYPE"]),
+                                html.P("Details: " + data["RESOURCE_DETAILS"]),
+                                html.P("Risk: " + data["RISK"]),
+                                html.P("Notes: " + data["NOTES"]),
+                                # html.Table(
+                                #     [
+                                #         html.Thead(
+                                #             html.Tr([html.Th("Name"), html.Th("Value")])
+                                #         ),
+                                #         html.Tbody(
+                                #             [
+                                #                 html.Tr([html.Td(key), html.Td(value)])
+                                #                 for key, value in data.items()
+                                #             ]
+                                #         ),
+                                #     ],
+                                #     className="table table-bordered table-dark table-hover table-responsive table-striped",
+                                # ),
                             ]
                         ),
                         id={"type": "collapse", "index": index},
