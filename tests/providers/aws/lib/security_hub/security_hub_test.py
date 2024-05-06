@@ -161,7 +161,7 @@ class Test_SecurityHub:
                 (
                     "root",
                     WARNING,
-                    f"ClientError -- [66]: An error occurred ({error_code}) when calling the {operation_name} operation: {error_message}",
+                    f"ClientError -- [70]: An error occurred ({error_code}) when calling the {operation_name} operation: {error_message}",
                 )
             ]
 
@@ -221,7 +221,7 @@ class Test_SecurityHub:
                 (
                     "root",
                     ERROR,
-                    f"ClientError -- [66]: An error occurred ({error_code}) when calling the {operation_name} operation: {error_message}",
+                    f"ClientError -- [70]: An error occurred ({error_code}) when calling the {operation_name} operation: {error_message}",
                 )
             ]
 
@@ -247,7 +247,7 @@ class Test_SecurityHub:
                 (
                     "root",
                     ERROR,
-                    f"Exception -- [66]: {error_message}",
+                    f"Exception -- [70]: {error_message}",
                 )
             ]
 
@@ -378,6 +378,25 @@ class Test_SecurityHub:
         output_options = self.set_mocked_output_options(
             send_sh_only_fails=True,
         )
+        findings = [
+            self.generate_finding(
+                status="FAIL", region=AWS_REGION_EU_WEST_1, muted=True
+            )
+        ]
+        aws_provider = set_mocked_aws_provider()
+
+        assert prepare_security_hub_findings(
+            findings,
+            aws_provider,
+            output_options,
+            enabled_regions,
+        ) == {
+            AWS_REGION_EU_WEST_1: [],
+        }
+
+    def test_prepare_security_hub_findings_muted_fail_with_status_FAIL(self):
+        enabled_regions = [AWS_REGION_EU_WEST_1]
+        output_options = self.set_mocked_output_options(status=["FAIL"])
         findings = [
             self.generate_finding(
                 status="FAIL", region=AWS_REGION_EU_WEST_1, muted=True

@@ -32,8 +32,12 @@ def prepare_security_hub_findings(
         ) and output_options.send_sh_only_fails:
             continue
 
-        if output_options.status and finding.status not in output_options.status:
-            continue
+        if output_options.status:
+            if finding.status not in output_options.status:
+                continue
+
+            if finding.muted:
+                continue
 
         # Get the finding region
         region = finding.region
