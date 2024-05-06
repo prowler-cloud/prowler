@@ -19,7 +19,13 @@ class Test_cognito_user_pool_self_registration_enabled:
             "prowler.providers.aws.services.cognito.cognito_service.CognitoIDP",
             cognito_client,
         ), mock.patch(
+            "prowler.providers.aws.services.cognito.cognito_idp_client.cognito_idp_client",
+            cognito_client,
+        ), mock.patch(
             "prowler.providers.aws.services.cognito.cognito_service.CognitoIdentity",
+            cognito_identity_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.cognito.cognito_identity_client.cognito_identity_client",
             cognito_identity_client,
         ):
             from prowler.providers.aws.services.cognito.cognito_user_pool_self_registration_enabled.cognito_user_pool_self_registration_enabled import (
@@ -54,7 +60,13 @@ class Test_cognito_user_pool_self_registration_enabled:
             "prowler.providers.aws.services.cognito.cognito_service.CognitoIDP",
             cognito_client,
         ), mock.patch(
+            "prowler.providers.aws.services.cognito.cognito_idp_client.cognito_idp_client",
+            cognito_client,
+        ), mock.patch(
             "prowler.providers.aws.services.cognito.cognito_service.CognitoIdentity",
+            cognito_identity_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.cognito.cognito_identity_client.cognito_identity_client",
             cognito_identity_client,
         ):
             from prowler.providers.aws.services.cognito.cognito_user_pool_self_registration_enabled.cognito_user_pool_self_registration_enabled import (
@@ -115,7 +127,13 @@ class Test_cognito_user_pool_self_registration_enabled:
             "prowler.providers.aws.services.cognito.cognito_service.CognitoIDP",
             cognito_client,
         ), mock.patch(
+            "prowler.providers.aws.services.cognito.cognito_idp_client.cognito_idp_client",
+            cognito_client,
+        ), mock.patch(
             "prowler.providers.aws.services.cognito.cognito_service.CognitoIdentity",
+            cognito_identity_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.cognito.cognito_identity_client.cognito_identity_client",
             cognito_identity_client,
         ):
             from prowler.providers.aws.services.cognito.cognito_user_pool_self_registration_enabled.cognito_user_pool_self_registration_enabled import (
@@ -176,7 +194,13 @@ class Test_cognito_user_pool_self_registration_enabled:
             "prowler.providers.aws.services.cognito.cognito_service.CognitoIDP",
             cognito_client,
         ), mock.patch(
+            "prowler.providers.aws.services.cognito.cognito_idp_client.cognito_idp_client",
+            cognito_client,
+        ), mock.patch(
             "prowler.providers.aws.services.cognito.cognito_service.CognitoIdentity",
+            cognito_identity_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.cognito.cognito_identity_client.cognito_identity_client",
             cognito_identity_client,
         ):
             from prowler.providers.aws.services.cognito.cognito_user_pool_self_registration_enabled.cognito_user_pool_self_registration_enabled import (

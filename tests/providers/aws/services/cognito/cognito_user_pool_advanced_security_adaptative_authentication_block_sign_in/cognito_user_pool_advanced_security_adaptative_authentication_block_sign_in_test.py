@@ -13,9 +13,13 @@ class Test_cognito_user_pool_advanced_security_adaptative_authentication_block_s
     def test_cognito_no_user_pools(self):
         cognito_client = mock.MagicMock
         cognito_client.user_pools = {}
+
         with mock.patch(
             "prowler.providers.aws.services.cognito.cognito_service.CognitoIDP",
-            cognito_client,
+            new=cognito_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.cognito.cognito_idp_client.cognito_idp_client",
+            new=cognito_client,
         ):
             from prowler.providers.aws.services.cognito.cognito_user_pool_advanced_security_adaptative_authentication_block_sign_in.cognito_user_pool_advanced_security_adaptative_authentication_block_sign_in import (
                 cognito_user_pool_advanced_security_adaptative_authentication_block_sign_in,
@@ -54,7 +58,10 @@ class Test_cognito_user_pool_advanced_security_adaptative_authentication_block_s
         }
         with mock.patch(
             "prowler.providers.aws.services.cognito.cognito_service.CognitoIDP",
-            cognito_client,
+            new=cognito_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.cognito.cognito_idp_client.cognito_idp_client",
+            new=cognito_client,
         ):
             from prowler.providers.aws.services.cognito.cognito_user_pool_advanced_security_adaptative_authentication_block_sign_in.cognito_user_pool_advanced_security_adaptative_authentication_block_sign_in import (
                 cognito_user_pool_advanced_security_adaptative_authentication_block_sign_in,
@@ -100,7 +107,10 @@ class Test_cognito_user_pool_advanced_security_adaptative_authentication_block_s
         }
         with mock.patch(
             "prowler.providers.aws.services.cognito.cognito_service.CognitoIDP",
-            cognito_client,
+            new=cognito_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.cognito.cognito_idp_client.cognito_idp_client",
+            new=cognito_client,
         ):
             from prowler.providers.aws.services.cognito.cognito_user_pool_advanced_security_adaptative_authentication_block_sign_in.cognito_user_pool_advanced_security_adaptative_authentication_block_sign_in import (
                 cognito_user_pool_advanced_security_adaptative_authentication_block_sign_in,
@@ -146,7 +156,10 @@ class Test_cognito_user_pool_advanced_security_adaptative_authentication_block_s
         }
         with mock.patch(
             "prowler.providers.aws.services.cognito.cognito_service.CognitoIDP",
-            cognito_client,
+            new=cognito_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.cognito.cognito_idp_client.cognito_idp_client",
+            new=cognito_client,
         ):
             from prowler.providers.aws.services.cognito.cognito_user_pool_advanced_security_adaptative_authentication_block_sign_in.cognito_user_pool_advanced_security_adaptative_authentication_block_sign_in import (
                 cognito_user_pool_advanced_security_adaptative_authentication_block_sign_in,
@@ -191,7 +204,10 @@ class Test_cognito_user_pool_advanced_security_adaptative_authentication_block_s
         }
         with mock.patch(
             "prowler.providers.aws.services.cognito.cognito_service.CognitoIDP",
-            cognito_client,
+            new=cognito_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.cognito.cognito_idp_client.cognito_idp_client",
+            new=cognito_client,
         ):
             from prowler.providers.aws.services.cognito.cognito_user_pool_advanced_security_adaptative_authentication_block_sign_in.cognito_user_pool_advanced_security_adaptative_authentication_block_sign_in import (
                 cognito_user_pool_advanced_security_adaptative_authentication_block_sign_in,

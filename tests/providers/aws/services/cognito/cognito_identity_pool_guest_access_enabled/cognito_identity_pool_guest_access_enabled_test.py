@@ -14,6 +14,9 @@ class Test_cognito_identity_pool_guest_access_enabled:
         with mock.patch(
             "prowler.providers.aws.services.cognito.cognito_service.CognitoIdentity",
             cognito_identity_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.cognito.cognito_identity_client.cognito_identity_client",
+            new=cognito_identity_client,
         ):
             from prowler.providers.aws.services.cognito.cognito_identity_pool_guest_access_enabled.cognito_identity_pool_guest_access_enabled import (
                 cognito_identity_pool_guest_access_enabled,
@@ -41,6 +44,9 @@ class Test_cognito_identity_pool_guest_access_enabled:
         with mock.patch(
             "prowler.providers.aws.services.cognito.cognito_service.CognitoIdentity",
             cognito_identity_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.cognito.cognito_identity_client.cognito_identity_client",
+            new=cognito_identity_client,
         ):
             from prowler.providers.aws.services.cognito.cognito_identity_pool_guest_access_enabled.cognito_identity_pool_guest_access_enabled import (
                 cognito_identity_pool_guest_access_enabled,
@@ -78,6 +84,9 @@ class Test_cognito_identity_pool_guest_access_enabled:
         with mock.patch(
             "prowler.providers.aws.services.cognito.cognito_service.CognitoIdentity",
             cognito_identity_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.cognito.cognito_identity_client.cognito_identity_client",
+            new=cognito_identity_client,
         ):
             from prowler.providers.aws.services.cognito.cognito_identity_pool_guest_access_enabled.cognito_identity_pool_guest_access_enabled import (
                 cognito_identity_pool_guest_access_enabled,

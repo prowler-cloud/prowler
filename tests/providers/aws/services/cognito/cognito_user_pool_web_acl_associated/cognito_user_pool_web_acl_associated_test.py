@@ -15,10 +15,16 @@ class Test_cognito_user_pool_web_acl_associated:
         wafv2_client.web_acls = []
         with mock.patch(
             "prowler.providers.aws.services.cognito.cognito_service.CognitoIDP",
-            cognito_client,
+            new=cognito_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.cognito.cognito_idp_client.cognito_idp_client",
+            new=cognito_client,
         ), mock.patch(
             "prowler.providers.aws.services.wafv2.wafv2_service.WAFv2",
-            wafv2_client,
+            new=wafv2_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.wafv2.wafv2_client.wafv2_client",
+            new=wafv2_client,
         ):
             from prowler.providers.aws.services.cognito.cognito_user_pool_web_acl_associated.cognito_user_pool_web_acl_associated import (
                 cognito_user_pool_web_acl_associated,
@@ -51,10 +57,16 @@ class Test_cognito_user_pool_web_acl_associated:
 
         with mock.patch(
             "prowler.providers.aws.services.cognito.cognito_service.CognitoIDP",
-            cognito_client,
+            new=cognito_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.cognito.cognito_idp_client.cognito_idp_client",
+            new=cognito_client,
         ), mock.patch(
             "prowler.providers.aws.services.wafv2.wafv2_service.WAFv2",
-            wafv2_client,
+            new=wafv2_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.wafv2.wafv2_client.wafv2_client",
+            new=wafv2_client,
         ):
             from prowler.providers.aws.services.cognito.cognito_user_pool_web_acl_associated.cognito_user_pool_web_acl_associated import (
                 cognito_user_pool_web_acl_associated,
@@ -107,10 +119,16 @@ class Test_cognito_user_pool_web_acl_associated:
 
         with mock.patch(
             "prowler.providers.aws.services.cognito.cognito_service.CognitoIDP",
-            cognito_client,
+            new=cognito_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.cognito.cognito_idp_client.cognito_idp_client",
+            new=cognito_client,
         ), mock.patch(
             "prowler.providers.aws.services.wafv2.wafv2_service.WAFv2",
-            wafv2_client,
+            new=wafv2_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.wafv2.wafv2_client.wafv2_client",
+            new=wafv2_client,
         ):
             from prowler.providers.aws.services.cognito.cognito_user_pool_web_acl_associated.cognito_user_pool_web_acl_associated import (
                 cognito_user_pool_web_acl_associated,

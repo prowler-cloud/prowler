@@ -14,7 +14,10 @@ class Test_cognito_user_pool_token_revocation_enabled:
         cognito_client.user_pools = {}
         with mock.patch(
             "prowler.providers.aws.services.cognito.cognito_service.CognitoIDP",
-            cognito_client,
+            new=cognito_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.cognito.cognito_idp_client.cognito_idp_client",
+            new=cognito_client,
         ):
             from prowler.providers.aws.services.cognito.cognito_user_pool_token_revocation_enabled.cognito_user_pool_token_revocation_enabled import (
                 cognito_user_pool_token_revocation_enabled,
@@ -44,7 +47,10 @@ class Test_cognito_user_pool_token_revocation_enabled:
         }
         with mock.patch(
             "prowler.providers.aws.services.cognito.cognito_service.CognitoIDP",
-            cognito_client,
+            new=cognito_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.cognito.cognito_idp_client.cognito_idp_client",
+            new=cognito_client,
         ):
             from prowler.providers.aws.services.cognito.cognito_user_pool_token_revocation_enabled.cognito_user_pool_token_revocation_enabled import (
                 cognito_user_pool_token_revocation_enabled,
@@ -81,7 +87,10 @@ class Test_cognito_user_pool_token_revocation_enabled:
         }
         with mock.patch(
             "prowler.providers.aws.services.cognito.cognito_service.CognitoIDP",
-            cognito_client,
+            new=cognito_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.cognito.cognito_idp_client.cognito_idp_client",
+            new=cognito_client,
         ):
             from prowler.providers.aws.services.cognito.cognito_user_pool_token_revocation_enabled.cognito_user_pool_token_revocation_enabled import (
                 cognito_user_pool_token_revocation_enabled,

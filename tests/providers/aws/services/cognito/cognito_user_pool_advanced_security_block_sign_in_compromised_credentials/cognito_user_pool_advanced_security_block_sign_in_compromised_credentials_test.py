@@ -15,7 +15,10 @@ class Test_cognito_user_pool_advanced_security_block_sign_in_compromised_credent
         cognito_client.user_pools = {}
         with mock.patch(
             "prowler.providers.aws.services.cognito.cognito_service.CognitoIDP",
-            cognito_client,
+            new=cognito_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.cognito.cognito_idp_client.cognito_idp_client",
+            new=cognito_client,
         ):
             from prowler.providers.aws.services.cognito.cognito_user_pool_advanced_security_block_sign_in_compromised_credentials.cognito_user_pool_advanced_security_block_sign_in_compromised_credentials import (
                 cognito_user_pool_advanced_security_block_sign_in_compromised_credentials,
@@ -53,7 +56,10 @@ class Test_cognito_user_pool_advanced_security_block_sign_in_compromised_credent
         }
         with mock.patch(
             "prowler.providers.aws.services.cognito.cognito_service.CognitoIDP",
-            cognito_client,
+            new=cognito_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.cognito.cognito_idp_client.cognito_idp_client",
+            new=cognito_client,
         ):
             from prowler.providers.aws.services.cognito.cognito_user_pool_advanced_security_block_sign_in_compromised_credentials.cognito_user_pool_advanced_security_block_sign_in_compromised_credentials import (
                 cognito_user_pool_advanced_security_block_sign_in_compromised_credentials,
@@ -98,7 +104,10 @@ class Test_cognito_user_pool_advanced_security_block_sign_in_compromised_credent
         }
         with mock.patch(
             "prowler.providers.aws.services.cognito.cognito_service.CognitoIDP",
-            cognito_client,
+            new=cognito_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.cognito.cognito_idp_client.cognito_idp_client",
+            new=cognito_client,
         ):
             from prowler.providers.aws.services.cognito.cognito_user_pool_advanced_security_block_sign_in_compromised_credentials.cognito_user_pool_advanced_security_block_sign_in_compromised_credentials import (
                 cognito_user_pool_advanced_security_block_sign_in_compromised_credentials,
@@ -143,7 +152,10 @@ class Test_cognito_user_pool_advanced_security_block_sign_in_compromised_credent
         }
         with mock.patch(
             "prowler.providers.aws.services.cognito.cognito_service.CognitoIDP",
-            cognito_client,
+            new=cognito_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.cognito.cognito_idp_client.cognito_idp_client",
+            new=cognito_client,
         ):
             from prowler.providers.aws.services.cognito.cognito_user_pool_advanced_security_block_sign_in_compromised_credentials.cognito_user_pool_advanced_security_block_sign_in_compromised_credentials import (
                 cognito_user_pool_advanced_security_block_sign_in_compromised_credentials,
@@ -188,7 +200,10 @@ class Test_cognito_user_pool_advanced_security_block_sign_in_compromised_credent
         }
         with mock.patch(
             "prowler.providers.aws.services.cognito.cognito_service.CognitoIDP",
-            cognito_client,
+            new=cognito_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.cognito.cognito_idp_client.cognito_idp_client",
+            new=cognito_client,
         ):
             from prowler.providers.aws.services.cognito.cognito_user_pool_advanced_security_block_sign_in_compromised_credentials.cognito_user_pool_advanced_security_block_sign_in_compromised_credentials import (
                 cognito_user_pool_advanced_security_block_sign_in_compromised_credentials,
