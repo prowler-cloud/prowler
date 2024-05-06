@@ -329,7 +329,7 @@ kubectl apply -f kubernetes/job.yaml
 kubectl apply -f kubernetes/prowler-role.yaml
 kubectl apply -f kubernetes/prowler-rolebinding.yaml
 kubectl get pods --namespace prowler-ns --> prowler-XXXXX
-kubectl logs prowler-XXXXX -namespace prowler-ns
+kubectl logs prowler-XXXXX --namespace prowler-ns
 ```
 
 ???+ note
