@@ -5,7 +5,10 @@ def unroll_list(listed_items: list, separator: str = "|"):
             if not unrolled_items:
                 unrolled_items = f"{item}"
             else:
-                unrolled_items = f"{unrolled_items} {separator} {item}"
+                if separator == "|":
+                    unrolled_items = f"{unrolled_items} {separator} {item}"
+                else:
+                    unrolled_items = f"{unrolled_items}{separator} {item}"
 
     return unrolled_items
 
