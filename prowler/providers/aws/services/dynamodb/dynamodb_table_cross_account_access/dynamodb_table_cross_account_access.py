@@ -28,13 +28,13 @@ class dynamodb_table_cross_account_access(Check):
                     policy_statements = [policy_statements]
                 for statement in policy_statements:
                     if not cross_account_access:
-                        if (
-                            statement["Effect"] == "Allow"
-                            and "AWS" in statement["Principal"]
-                        ):
-                            principals = statement["Principal"]["AWS"]
-                            if not isinstance(principals, list):
-                                principals = [principals]
+                        if statement["Effect"] == "Allow":
+                            if "AWS" in statement["Principal"]:
+                                principals = statement["Principal"]["AWS"]
+                                if not isinstance(principals, list):
+                                    principals = [principals]
+                            else:
+                                principals = [statement["Principal"]]
                             for aws_account in principals:
                                 if (
                                     dynamodb_client.audited_account not in aws_account
