@@ -1,0 +1,2367 @@
+{
+  "Framework": "MITRE-ATTACK",
+  "Version": "",
+  "Provider": "GCP",
+  "Description": "MITRE ATT&CK® is a globally-accessible knowledge base of adversary tactics and techniques based on real-world observations. The ATT&CK knowledge base is used as a foundation for the development of specific threat models and methodologies in the private sector, in government, and in the cybersecurity product and service community.",
+  "Requirements": [
+    {
+      "Name": "Exploit Public-Facing Application",
+      "Id": "T1190",
+      "Tactics": [
+        "Initial Access"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "Containers",
+        "IaaS",
+        "Linux",
+        "Network",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may attempt to exploit a weakness in an Internet-facing host or system to initially access a network. The weakness in the system can be a software bug, a temporary glitch, or a misconfiguration.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1190/",
+      "Checks": [
+        "cloudsql_instance_public_access",
+        "cloudsql_instance_public_ip",
+        "cloudstorage_bucket_public_access",
+        "compute_firewall_rdp_access_from_the_internet_allowed",
+        "compute_firewall_ssh_access_from_the_internet_allowed",
+        "compute_instance_public_ip",
+        "compute_public_address_shodan",
+        "kms_key_not_publicly_accessible"
+      ],
+      "Attributes": [
+        {
+          "GCPService": "Artifact Registry",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "Once this control is deployed, it can detect known vulnerabilities in various Linux OS packages. This information can be used to patch, isolate, or remove vulnerable software and machines. This control does not directly protect against exploitation and is not effective against zero day attacks, vulnerabilities with no available patch, and other end-of-life packages."
+        },
+        {
+          "GCPService": "Chronicle",
+          "Category": "Detect",
+          "Value": "Mninimal",
+          "Comment": "Chronicle triggers an alert based on suspicious behavior, such as exploitation attempts against web servers and/or applications (e.g., F5 BIG-IP CVE 2020-5902).This technique was scored as minimal based on low or uncertain detection coverage factor. https://github.com/chronicle/detection-rules/blob/783e0e5947774785db1c55041b70176deeca6f46/soc_prime_rules/proactive_exploit_detection/big_ip/possible_f5_big_ip_tmui_attack_cve_2020_5902_part_1.yaral, https://github.com/chronicle/detection-rules/blob/783e0e5947774785db1c55041b70176deeca6f46/soc_prime_rules/proactive_exploit_detection/big_ip/possible_f5_big_ip_tmui_attack_cve_2020_5902_part_2.yaral"
+        },
+        {
+          "GCPService": "Cloud Armor",
+          "Category": "Detect",
+          "Value": "Significant",
+          "Comment": "Often used by adversaries to take advantage of software weaknesses in web applications, Palo Alto Network's vulnerability signatures are able to detect SQL-injection attacks that attempt to read or modify a system database using common web hacking techniques (e.g., OWASP top 10). Although there are ways an attacker could leverage web application weaknesses to affect the sensitive data and databases, this technique was scored as significant based on Palo Alto Network's advanced threat detection technology which constantly updates to detect against the latest known variations of these attacks."
+        },
+        {
+          "GCPService": "Cloud IDS",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "This control's Fileless Attack Detection identifies shellcode executing within process memory, including shellcode injected to exploit a vulnerability in a public-facing application. Detection is periodic at an unknown rate."
+        },
+        {
+          "GCPService": "Identity Aware Proxy",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "When an application or resource is protected by IAP, it can only be accessed through the proxy by principals, also known as users, who have the correct Identity and Access Management (IAM) role. IAP secures authentication and authorization of all requests to App Engine, Cloud Load Balancing (HTTPS), or internal HTTP load balancing. With adversaries that may try to attempt malicious activity via applications, the application Firewalls may be used to limit exposure of applications to prevent exploit traffic from reaching the application."
+        },
+        {
+          "GCPService": "Security Command Center",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "Using Web Security Scanner, SCC is able to detect and provide guidance for web application security risks (e.g., Cross-Site Scripting, SQL injection, Server Side Request Forgery, Insecure Deserialization). Adversaries may exploit these web app weaknesses in a cloud-based environment to compromise the underlying instance or container. This technique was graded as significant due to the high detect coverage against varying forms of this attack."
+        },
+        {
+          "GCPService": "VMManager",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "VPC security perimeters can segment private resources to further reduce user access and operate in a logically separate hosting environment."
+        }
+      ]
+    },
+    {
+      "Name": "Trusted Relationship",
+      "Id": "T1199",
+      "Tactics": [
+        "Initial Access"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "Office 365",
+        "IaaS",
+        "Linux",
+        "SaaS",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may breach or otherwise leverage organizations who have access to intended victims. Access through trusted third party relationship abuses an existing connection that may not be protected or receives less scrutiny than standard mechanisms of gaining access to a network.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1199/",
+      "Checks": [
+        "compute_firewall_rdp_access_from_the_internet_allowed",
+        "compute_firewall_ssh_access_from_the_internet_allowed"
+      ],
+      "Attributes": [
+        {
+          "GCPService": "Access Transparency",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "This control may expose and detect malicious access of customer data and resources by compromised Google personnel accounts. The trusted relationship between Google personnel who administer and allow customers to host their workloads on the cloud may be abused by insider threats or compromise of Google."
+        }
+      ]
+    },
+    {
+      "Name": "Valid Accounts",
+      "Id": "T1078",
+      "Tactics": [
+        "Defense Evasion",
+        "Persistence",
+        "Privilege Escalation",
+        "Initial Access"
+      ],
+      "SubTechniques": [
+        "T1078.001 - Default Accounts",
+        "T1078.002 - Domain Accounts",
+        "T1078.003 - Local Accounts",
+        "T1078.004 - Cloud Accounts"
+      ],
+      "Platforms": [
+        "Azure AD",
+        "Containers",
+        "Google Workspace",
+        "IaaS",
+        "Linux",
+        "Network",
+        "Office 365",
+        "SaaS",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may obtain and abuse credentials of existing accounts as a means of gaining Initial Access, Persistence, Privilege Escalation, or Defense Evasion. Compromised credentials may be used to bypass access controls placed on various resources on systems within the network and may even be used for persistent access to remote systems and externally available services, such as VPNs, Outlook Web Access, network devices, and remote desktop.[1] Compromised credentials may also grant an adversary increased privilege to specific systems or access to restricted areas of the network. Adversaries may choose not to use malware or tools in conjunction with the legitimate access those credentials provide to make it harder to detect their presence.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1078/",
+      "Checks": [
+        "iam_account_access_approval_enabled",
+        "iam_no_service_roles_at_project_level",
+        "iam_organization_essential_contacts_configured",
+        "iam_role_kms_enforce_separation_of_duties",
+        "iam_role_sa_enforce_separation_of_duties",
+        "iam_sa_no_administrative_privileges",
+        "iam_sa_no_user_managed_keys",
+        "iam_sa_user_managed_key_rotate_90_days",
+        "apikeys_key_rotated_in_90_days",
+        "apikeys_api_restrictions_configured"
+      ],
+      "Attributes": [
+        {
+          "GCPService": "AdvancedProtectionProgram",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "Advanced Protection Program enables the use of a security key for multi-factor authentication. Integrating multi-factor authentication (MFA) as part of organizational policy can greatly reduce the risk of an adversary gaining control of valid credentials that may be used for additional tactics such as initial access, lateral movement, and collecting information."
+        },
+        {
+          "GCPService": "AdvancedProtectionProgram",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "Advanced Protection Program enables the use of a security key for multi-factor authentication. Integrating multi-factor authentication (MFA) as part of organizational policy can greatly reduce the risk of an adversary gaining control of valid credentials that may be used for additional tactics such as initial access, lateral movement, and collecting information."
+        },
+        {
+          "GCPService": "AnthosConfigManagement",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "Anthos Config Management lets you create and manage Kubernetes objects across multiple clusters at once. PodSecurityPolicies can be enforced to prevent Pods from using the root Linux user. Based on the medium detection coverage, this was scored as partial."
+        },
+        {
+          "GCPService": "AnthosConfigManagement",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "Anthos Config Management lets you create and manage Kubernetes objects across multiple clusters at once. PodSecurityPolicies can be enforced to prevent Pods from using the root Linux user. Based on the medium detection coverage, this sub-technique was scored as partial."
+        },
+        {
+          "GCPService": "AnthosConfigManagement",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "Anthos Config Management lets you create and manage Kubernetes objects across multiple clusters at once. PodSecurityPolicies can be enforced to prevent Pods from using the root Linux user. Based on the medium detection coverage, this sub-technique was scored as partial."
+        },
+        {
+          "GCPService": "Chronicle",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "Chronicle is able to trigger an alert based on RDP logons from non-private IP ranges.This technique was scored as minimal based on low or uncertain detection coverage factor.https://github.com/chronicle/detection-rules/blob/783e0e5947774785db1c55041b70176deeca6f46/soc_prime_rules/active_directory_security/security/remote_desktop_from_internet__via_audit.yaral"
+        },
+        {
+          "GCPService": "Cloud Asset Inventory",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "This control may be able to detect when adversaries use valid cloud accounts to elevate privileges through manipulation of IAM or access policies. This monitoring can be fine tuned to specific assets, policies, and organizations."
+        },
+        {
+          "GCPService": "Cloud Identity",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "This control can be used to mitigate malicious attacks of cloud accounts by implementing multi-factor authentication techniques or password policies."
+        },
+        {
+          "GCPService": "Container Registry",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "Using Container Analysis, Container Registry scans the repository for vulnerabilities that could potentially be used to escalate privileges, such as default accounts with root permissions in Docker containers. Due to the medium threat protection coverage and scan results being available 48 hours after completion, this control was scored as partial."
+        },
+        {
+          "GCPService": "Endpoint Management",
+          "Category": "Respond",
+          "Value": "Partial",
+          "Comment": "This control allows for blocking endpoints that have been compromised from accessing company networks or resources. This control also allows for deletion of any compromised accounts and data from compromised endpoints."
+        },
+        {
+          "GCPService": "Identity Aware Proxy",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "IAP applies the relevant IAM policy to check if the user is authorized to access the requested resource. If the user has the IAP-secured Web App User role on the Cloud console project where the resource exists, they're authorized to access the application. This control can mitigate against adversaries that try to obtain credentials of accounts, including cloud accounts."
+        },
+        {
+          "GCPService": "Identity Aware Proxy",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "Adversaries may add adversary-controlled credentials to a cloud account to maintain persistent access to victim accounts and instances within the environment. IAP lets you enforce access control policies for applications and resources. This control may help mitigate against adversaries gaining access through cloud account by the configuration of access controls and firewalls, allowing limited access to systems."
+        },
+        {
+          "GCPService": "Identity and Access Management",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": ""
+        },
+        {
+          "GCPService": "Identity and Access Management",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "This control may mitigate the impact of compromised valid accounts by enabling fine-grained access policies and implementing least-privilege policies. MFA can provide protection against an adversary that obtains valid credentials by requiring the adversary to complete an additional authentication process before access is permitted."
+        },
+        {
+          "GCPService": "Identity and Access Management",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "This control protects against malicious use of cloud accounts and gaining access to them. This control may mitigate the impact of compromised valid accounts by enabling fine-grained access policies and implementing least-privilege policies. MFA can provide protection against an adversary that obtains valid credentials by requiring the adversary to complete an additional authentication process before access is permitted."
+        },
+        {
+          "GCPService": "IdentityPlatform",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "Identity Platform lets you add Google-grade authentication to your apps and services, making it easier to secure user accounts and securely managing credentials. MFA can provide protection against an adversary that obtains valid credentials by requiring the adversary to complete an additional authentication process before access is permitted."
+        },
+        {
+          "GCPService": "Policy Intelligence",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "Adversaries may obtain and abuse credentials of a cloud account by gaining access through means of Initial Access, Persistence, Privilege Escalation, or Defense Evasion. IAM Recommender helps enforce least privilege principals to ensure that permission levels are properly managed."
+        },
+        {
+          "GCPService": "Policy Intelligence",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": ""
+        },
+        {
+          "GCPService": "ReCAPTCHA Enterprise",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "ReCAPTCHA Enterprise allows users to configure Multifactor Authentication (MFA) to verify user's identity by sending a verification code by email or SMS (known as an MFA challenge). When ReCAPTCHA Enterprise assesses that user activity to exceeds a predetermined threshold (by the developer), it can trigger an MFA challenge to verify the user. This increases the likelihood that a compromised account will be prevented from impacting the system. Since ReCAPTCHA Enterprise does not require a MFA challenge for all user activity, it has been given a rating of Partial."
+        },
+        {
+          "GCPService": "ResourceManager",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "Adversaries may attempt to obtain credentials of existing account through privilege escalation or defense evasion. IAM audit logging in GCP can be used to determine roles and permissions, along with routinely checking user permissions to ensure only the expected users have the ability to list IAM identities or otherwise discover cloud accounts."
+        },
+        {
+          "GCPService": "Security Command Center",
+          "Category": "Detect",
+          "Value": "Significant",
+          "Comment": "SCC is able to detect when default service accounts are used. Adversaries may use this attack as a means to gain initial access, privilege escalation, or defense evasion. This subtechnique was graded as significant due to the high detect coverage and near-real time temporal factor."
+        },
+        {
+          "GCPService": "Security Command Center",
+          "Category": "Detect",
+          "Value": "Significant",
+          "Comment": "SCC ingests Cloud Audit logs to detect when an external member is added to a privileged group with sensitive permissions or roles. This security solution protects against compromised cloud accounts used to maintain persistence and harvest sensitive data. Because of the near-real time temporal factor to detect against this cyber-attack the control was graded as significant."
+        },
+        {
+          "GCPService": "VPC Service Controls",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "This control is able to mitigate against abuse of compromised valid accounts by restricting access from those accounts to resources contained within the VPC perimeter the account belongs to. Resources and services contained in other VPC networks also cannot be accessed by user accounts that are not within the VPC network perimeter."
+        }
+      ]
+    },
+    {
+      "Name": "Command and Scripting Interpreter",
+      "Id": "T1059",
+      "Tactics": [
+        "Execution"
+      ],
+      "SubTechniques": [
+        "T1059.009 - Cloud API",
+        "T1059.003 - Windows Command Shell",
+        "T1059.007 - JavaScript"
+      ],
+      "Platforms": [
+        "Azure AD",
+        "IaaS",
+        "Google Workspace",
+        "Linux",
+        "Network",
+        "Office 365",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may abuse command and script interpreters to execute commands, scripts, or binaries. These interfaces and languages provide ways of interacting with computer systems and are a common feature across many different platforms. Most systems come with some built-in command-line interface and scripting capabilities, for example, macOS and Linux distributions include some flavor of Unix Shell while Windows installations include the Windows Command Shell and PowerShell.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1059/",
+      "Checks": [
+        "compute_instance_shielded_vm_enabled"
+      ],
+      "Attributes": [
+        {
+          "GCPService": "Chronicle",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "Chronicle is able to trigger an alert  based on system events of interest, for example: decoding Windows payloads using \"certutil.exe\" functionality.This technique was scored as minimal based on low or uncertain detection coverage factor.https://github.com/chronicle/detection-rules/blob/783e0e5947774785db1c55041b70176deeca6f46/soc_prime_rules/threat_hunting/process_creation/suspicious_certutil_command.yaral"
+        },
+        {
+          "GCPService": "Chronicle",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "Chronicle is able to trigger an alert based on suspicious behavior seen in the Windows command line.This technique was scored as minimal based on low or uncertain detection coverage factor.https://github.com/chronicle/detection-rules/tree/main/soc_prime_rules/threat_hunting/windowshttps://github.com/chronicle/detection-rules/blob/783e0e5947774785db1c55041b70176deeca6f46/soc_prime_rules/threat_hunting/process_creation/suspicious_certutil_command.yaral"
+        },
+        {
+          "GCPService": "Chronicle",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "Chronicle triggers an alert based on webshell connections which are used to establish persistent access to a compromised machine [backdoor]. (e.g., `.<em>/config/keystore/.</em>.js.*).This technique was scored as minimal based on low or uncertain detection coverage factor.https://github.com/chronicle/detection-rules/blob/783e0e5947774785db1c55041b70176deeca6f46/soc_prime_rules/proactive_exploit_detection/webserver/oracle_weblogic_exploit.yaral"
+        },
+        {
+          "GCPService": "Security Command Center",
+          "Category": "Detect",
+          "Value": "Significant",
+          "Comment": "SCC uses machine learning [NLP techniques] to evaluate content of an executed bash script. This security solution protects against potentially malicious scripts that are used to execute commands in compromised systems. Because of the high threat detection coverage provided by the ML model and near-real time temporal factor this control was graded as significant."
+        },
+        {
+          "GCPService": "Virus Total",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "VirusTotal, now part of Google Cloud, provides threat context and reputation data to help analyze suspicious files, URLs, domains, and IP addresses to detect cybersecurity threats."
+        }
+      ]
+    },
+    {
+      "Name": "Serverless Execution",
+      "Id": "T1648",
+      "Tactics": [
+        "Execution"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "IaaS",
+        "Office 365",
+        "SaaS"
+      ],
+      "Description": "Adversaries may abuse serverless computing, integration, and automation services to execute arbitrary code in cloud environments. Many cloud providers offer a variety of serverless resources, including compute engines, application integration services, and web servers.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1648/",
+      "Checks": [],
+      "Attributes": []
+    },
+    {
+      "Name": "User Execution",
+      "Id": "T1204",
+      "Tactics": [
+        "Execution"
+      ],
+      "SubTechniques": [
+        "T1204.003 - Malicious Image",
+        "T1204.002 - Malicious File",
+        "T1204.001 - Malicious Link"
+      ],
+      "Platforms": [
+        "IaaS",
+        "Containers",
+        "Linux",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "An adversary may rely upon specific actions by a user in order to gain execution. Users may be subjected to social engineering to get them to execute malicious code by, for example, opening a malicious document file or link. These user actions will typically be observed as follow-on behavior from forms of Phishing.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1204/",
+      "Checks": [
+        "compute_instance_shielded_vm_enabled"
+      ],
+      "Attributes": [
+        {
+          "GCPService": "Binary Authorization",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "Each image has a signer digitally sign using a private key. At deploy time, the enforcer uses the attester's public key to verify the signature in the attestation."
+        },
+        {
+          "GCPService": "Chronicle",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "Chronicle is able to trigger an alert based on suspicious user activity (e.g., clicking on a malicious links).This technique was scored as minimal based on low or uncertain detection coverage factor.https://github.com/chronicle/detection-rules/blob/783e0e5947774785db1c55041b70176deeca6f46/soc_prime_rules/threat_hunting/proxy/microsoft_teams_phishing_email.yaral, https://github.com/chronicle/detection-rules/blob/783e0e5947774785db1c55041b70176deeca6f46/soc_prime_rules/threat_hunting/process_creation/detect_possible_execution_of_phishing_attachment.yaral"
+        },
+        {
+          "GCPService": "Cloud IDS",
+          "Category": "Detect",
+          "Value": "Significant",
+          "Comment": "Often used by adversaries to establish persistence, Palo Alto Network's antivirus signatures is able to detect malware found in portable document formats (PDF). Although there are ways an attacker could modify the signature and deliver a malicious file, this technique was scored as significant based on Palo Alto Network's advanced threat detection technology which constantly updates to detect against the latest known variations of these attacks."
+        },
+        {
+          "GCPService": "Cloud IDS",
+          "Category": "Detect",
+          "Value": "Significant",
+          "Comment": "Often used by adversaries to establish persistence, Palo Alto Network's antivirus signatures is able to detect download attempts or traffic generated from malicious programs designed to mine cryptocurrency without the user's knowledge. Although there are ways an attacker could modify the attack to avoid detection, this technique was scored as significant based on Palo Alto Network's advanced threat detection technology which constantly updates to detect against the latest known variations of these crypto-mining attacks"
+        },
+        {
+          "GCPService": "Cloud IDS",
+          "Category": "Detect",
+          "Value": "Significant",
+          "Comment": "SCC is able to detect a potentially malicious binary being executed that was not part of the original container image. Because of the high threat detection coverage and near-real time temporal factor this control was graded as significant."
+        },
+        {
+          "GCPService": "Security Command Center",
+          "Category": "Detect",
+          "Value": "Significant",
+          "Comment": "SCC is able to detect a potentially malicious binary being executed that was not part of the original container image. Because of the high threat detection coverage and near-real time temporal factor this control was graded as significant."
+        },
+        {
+          "GCPService": "Web Risk",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "Web Risk allows client applications to check URLs against Google's list of unsafe web resources. It also can provide warnings when attempting to access potentially unsafe sites. However, Google cannot guarantee that its information is comprehensive and error-free: some risky sites may not be identified, and some safe sites may be classified in error. This has resulted in an overall score of Partial."
+        }
+      ]
+    },
+    {
+      "Name": "Account Manipulation",
+      "Id": "T1098",
+      "Tactics": [
+        "Persistence"
+      ],
+      "SubTechniques": [
+        "T1098.001 - Additional Cloud Credentials",
+        "T1098.002 - Exchange Email Delegate Permissions",
+        "T1098.003 - Additional Cloud Roles",
+        "T1098.004 - SSH Authorized Keys"
+      ],
+      "Platforms": [
+        "IaaS",
+        "Office 365",
+        "SaaS"
+      ],
+      "Description": "Adversaries may manipulate accounts to maintain access to victim systems. Account manipulation may consist of any action that preserves adversary access to a compromised account, such as modifying credentials or permission groups. These actions could also include account activity designed to subvert security policies, such as performing iterative password updates to bypass password duration policies and preserve the life of compromised credentials.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1098/",
+      "Checks": [
+        "apikeys_key_exists",
+        "apikeys_key_rotated_in_90_days",
+        "iam_account_access_approval_enabled",
+        "iam_cloud_asset_inventory_enabled",
+        "iam_no_service_roles_at_project_level",
+        "iam_organization_essential_contacts_configured",
+        "iam_role_kms_enforce_separation_of_duties",
+        "iam_role_sa_enforce_separation_of_duties",
+        "iam_sa_no_administrative_privileges",
+        "iam_sa_no_user_managed_keys",
+        "iam_sa_user_managed_key_rotate_90_days"
+      ],
+      "Attributes": [
+        {
+          "GCPService": "AdvancedProtectionProgram",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "Advanced Protection Program enables the use of a security key for multi-factor authentication. This provides significant protection against unauthorized users from accessing and manipulating accounts to retain access."
+        },
+        {
+          "GCPService": "Chronicle",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "Chronicle is able to trigger an alert to ensure multi-factor authentication is enabled for all non-service and administrator accounts.This technique was scored as minimal based on low or uncertain detection coverage factor.https://github.com/chronicle/detection-rules/blob/main/gcp_cloudaudit/gcp_multifactor_authentication.yaral"
+        },
+        {
+          "GCPService": "Chronicle",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "Chronicle is able to trigger an alert based on changes to Cloud Storage IAM permissions.This technique was scored as minimal based on low or uncertain detection coverage factor.https://github.com/chronicle/detection-rules/blob/main/gcp_cloudaudit/gcp_gcs_iam_changes.yaral"
+        },
+        {
+          "GCPService": "Cloud Asset Inventory",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "This control may be able to detect when adversaries use cloud accounts to elevate privileges through manipulation of IAM or access policies. This monitoring can be fine tuned to specific assets, policies, and organizations."
+        },
+        {
+          "GCPService": "Cloud Asset Inventory",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "This control may be able to detect when adversaries use cloud accounts to elevate privileges through manipulation of IAM or access policies for the creation of additional accounts. This monitoring can be fine tuned to specific assets, policies, and organizations."
+        },
+        {
+          "GCPService": "Identity Aware Proxy",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "Adversaries may add adversary-controlled credentials to a cloud account to maintain persistent access to victim accounts and instances within the environment. IAP lets you enforce access control policies for applications and resources. This control may help mitigate against adversaries gaining access through cloud account by the configuration of access controls and firewalls, allowing limited access to systems."
+        },
+        {
+          "GCPService": "Identity and Access Management",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "Privileged roles and permissions can be granted to entire groups of users by default, and admins can control unwanted access by utilizing machine learning to recommend smart access control permissions within an organization. This control can  help mitigate adversaries from gaining access to unwanted account."
+        },
+        {
+          "GCPService": "Identity and Access Management",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "Privileged roles and permissions can be granted to entire groups of users by default, and admins can control unwanted access by utilizing machine learning to recommend smart access control permissions within an organization. This control can  help mitigate adversaries from gaining access to unwanted account."
+        },
+        {
+          "GCPService": "IdentityPlatform",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "Identity Platform can help protect your app's users and prevent account takeovers by offering multi-factor authentication (MFA) and integrating with Google's intelligence for account protection. This will help mitigate adversaries from gaining access to permission levels."
+        },
+        {
+          "GCPService": "IdentityPlatform",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "Identity Platform can help protect your app's users and prevent account takeovers by offering multi-factor authentication (MFA) and integrating with Google's intelligence for account protection. This will help mitigate adversaries from gaining access to permission levels."
+        },
+        {
+          "GCPService": "IdentityPlatform",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "Identity Platform can help protect your app's users and prevent account takeovers by offering multi-factor authentication (MFA) and integrating with Google's intelligence for account protection. This will help mitigate adversaries from gaining access to permission levels."
+        },
+        {
+          "GCPService": "IdentityPlatform",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "Identity Platform can help protect your app's users and prevent account takeovers by offering multi-factor authentication (MFA) and integrating with Google's intelligence for account protection. This will help mitigate adversaries from gaining access to permission levels."
+        },
+        {
+          "GCPService": "IdentityPlatform",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "Identity Platform can help protect your app's users and prevent account takeovers by offering multi-factor authentication (MFA) and integrating with Google's intelligence for account protection. This will help mitigate adversaries from gaining access to permission levels via files."
+        },
+        {
+          "GCPService": "Policy Intelligence",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "Utilization and enforcement of MFA for user accounts to ensure that IAM policies are implemented properly shall mitigate adversaries so that they may not gain access to user accounts. Enforce the principle of least privilege by ensuring that principals have only the permissions that they actually need."
+        },
+        {
+          "GCPService": "Policy Intelligence",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "Utilization and enforcement of MFA for user accounts to ensure that IAM policies are implemented properly shall mitigate adversaries so that they may not gain access to user accounts. Enforce the principle of least privilege by ensuring that principals have only the permissions that they actually need."
+        },
+        {
+          "GCPService": "ResourceManager",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "GCP offers Identity and Access Management (IAM), which lets admins give more granular access to specific Google Cloud resources and prevents unwanted access to other resources. This allows configuration of access controls and firewalls to limit access to critical systems and domain controllers."
+        },
+        {
+          "GCPService": "ResourceManager",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "GCP offers Identity and Access Management (IAM), which lets admins give more granular access to specific Google Cloud resources and prevents unwanted access to other resources. This allows configuration of access controls and firewalls to limit access to critical systems and domain controllers."
+        },
+        {
+          "GCPService": "Security Command Center",
+          "Category": "Detect",
+          "Value": "Significant",
+          "Comment": "SCC ingests Cloud Audit logs to detect when permissions are changed in a privileged group (i.e., modify group to public) with sensitive permissions or roles. This security solution protects against compromised cloud accounts used to maintain persistence. Because of the near-real time temporal factor to detect against this cyber-attack the control was graded as significant."
+        },
+        {
+          "GCPService": "Virtual Private Cloud",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "VPC further segments the environment by providing configurable granular access controls which help limit user communications to critical systems."
+        },
+        {
+          "GCPService": "Virtual Private Cloud",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "VPC further segments the environment by providing configurable granular access controls which help limit user permissions to communicate with critical systems."
+        }
+      ]
+    },
+    {
+      "Name": "Create Account",
+      "Id": "T1136",
+      "Tactics": [
+        "Persistence"
+      ],
+      "SubTechniques": [
+        "T1136.001 - Local Account",
+        "T1136.002 - Domain Account",
+        "T1136.003 - Cloud Account"
+      ],
+      "Platforms": [
+        "Azure AD",
+        "Google Workspace",
+        "IaaS",
+        "Linux",
+        "Network",
+        "Office 365",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may create an account to maintain access to victim systems. With a sufficient level of access, creating such accounts may be used to establish secondary credentialed access that do not require persistent remote access tools to be deployed on the system.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1136/",
+      "Checks": [],
+      "Attributes": [
+        {
+          "GCPService": "AdvancedProtectionProgram",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "Advanced Protection Program enables the use of a security key for multi-factor authentication. Enabling Advanced Protection Program for all users at an organization can prevent adversaries from maintaining access via created accounts because any accounts they create won't have the required security keys for MFA."
+        },
+        {
+          "GCPService": "Chronicle",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "Chronicle is able to trigger based on suspicious system event logs, such as newly created local user accounts on Windows machines.This technique was scored as minimal based on low or uncertain detection coverage factor.https://github.com/chronicle/detection-rules/blob/783e0e5947774785db1c55041b70176deeca6f46/soc_prime_rules/threat_hunting/windows/detects_local_user_creation.yaral"
+        },
+        {
+          "GCPService": "Chronicle",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "Chronicle is able to trigger based on suspicious system event logs, such as newly created local user accounts in Windows AD environments (e.g., event 4720).This technique was scored as minimal based on low or uncertain detection coverage factor.https://github.com/chronicle/detection-rules/blob/783e0e5947774785db1c55041b70176deeca6f46/soc_prime_rules/threat_hunting/windows/detects_local_user_creation.yaral"
+        },
+        {
+          "GCPService": "IdentityPlatform",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "Identity Platform multi-tenancy uses tenants to create unique silos of users and configurations within a single Identity Platform project. It provides provides secure, easy-to-use authentication if you're building a service on Google Cloud, on your own backend or on another platform; thereby, helping to mitigate adversaries from gaining access to systems."
+        },
+        {
+          "GCPService": "IdentityPlatform",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "Identity Platform multi-tenancy uses tenants to create unique silos of users and configurations within a single Identity Platform project. It provides provides secure, easy-to-use authentication if you're building a service on Google Cloud, on your own backend or on another platform; thereby, helping to mitigate adversaries from gaining access to systems and accounts."
+        },
+        {
+          "GCPService": "IdentityPlatform",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "Identity Platform multi-tenancy uses tenants to create unique silos of users and configurations within a single Identity Platform project. It provides provides secure, easy-to-use authentication if you're building a service on Google Cloud, on your own backend or on another platform; thereby, helping to mitigate adversaries from gaining access to systems."
+        },
+        {
+          "GCPService": "IdentityPlatform",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "Identity Platform multi-tenancy uses tenants to create unique silos of users and configurations within a single Identity Platform project. It provides provides secure, easy-to-use authentication if you're building a service on Google Cloud, on your own backend or on another platform; thereby, helping to mitigate adversaries from gaining access to systems."
+        },
+        {
+          "GCPService": "ReCAPTCHA Enterprise",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "ReCAPTCHA Enterprise can implement a number of mitigations to prevent the automated creation of multiple accounts such as adding checkbox challenges on pages where end users need to enter their credentials and assessing user activity for potential misuses on all pages where accounts are created.Since this control doesn't prevent the manual creation of accounts, it has been given a rating of Partial."
+        },
+        {
+          "GCPService": "Security Command Center",
+          "Category": "Detect",
+          "Value": "Significant",
+          "Comment": "SCC ingests admin activity from Cloud Audit logs to detect when new service accounts are created. This security solution protects against potential adversary generated accounts used for initial access or to maintain persistence. Because of the temporal factor to detect this attack the control was graded as significant."
+        }
+      ]
+    },
+    {
+      "Name": "Event Triggered Execution",
+      "Id": "T1546",
+      "Tactics": [
+        "Privilege Escalation",
+        "Persistence"
+      ],
+      "SubTechniques": [
+        "T1546.001 - Change Default File Association",
+        "T1546.003 - Windows Management Instrumentation Event Subscription",
+        "T1546.007 - Netsh Helper DLL",
+        "T1546.008 - Accessibility Features"
+      ],
+      "Platforms": [
+        "Google Workspace",
+        "IaaS",
+        "Linux",
+        "Office 365",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may establish persistence and/or elevate privileges using system mechanisms that trigger execution based on specific events. Various operating systems have means to monitor and subscribe to events such as logons or other user activity such as running specific applications/binaries. Cloud environments may also support various functions and services that monitor and can be invoked in response to specific cloud events.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1546/",
+      "Checks": [],
+      "Attributes": [
+        {
+          "GCPService": "Chronicle",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "Chronicle is able to trigger an alert based on manipulation of default programs.This technique was scored as minimal based on low or uncertain detection coverage factor.https://github.com/chronicle/detection-rules/blob/783e0e5947774785db1c55041b70176deeca6f46/mitre_attack/T1546_001_windows_change_default_file_association.yaral"
+        },
+        {
+          "GCPService": "Chronicle",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "Chronicle is able to trigger an alert based on manipulation of default programs used for a given extension found on Windows platforms (e.g., \"cmd.exe /c assoc\").This technique was scored as minimal based on low or uncertain detection coverage factor.https://github.com/chronicle/detection-rules/blob/783e0e5947774785db1c55041b70176deeca6f46/mitre_attack/T1546_001_windows_change_default_file_association.yaral"
+        },
+        {
+          "GCPService": "Chronicle",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "Chronicle is able to trigger an alert based on suspicious events used by adversary's to establish persistence using Windows Management Instrumentation (WMI) command-line events (e.g. \"C:\\Windows\\System32\\wbem\\WmiPrvSE.exe\").This technique was scored as minimal based on low or uncertain detection coverage factor.https://github.com/chronicle/detection-rules/blob/783e0e5947774785db1c55041b70176deeca6f46/soc_prime_rules/threat_hunting/process_creation/wmi_spawning_windows_powershell.yaral"
+        },
+        {
+          "GCPService": "Chronicle",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "Chronicle is able to generate alerts based off suspicious events, for example: execution of arbitrary code triggered by Netsh Helper DLLs (Netshell (Netsh.exe)).This technique was scored as minimal based on low or uncertain detection coverage factor.https://github.com/chronicle/detection-rules/blob/783e0e5947774785db1c55041b70176deeca6f46/soc_prime_rules/threat_hunting/windows/possible_system_network_configuration_discovery__sysmon_windows_logs.yaral"
+        },
+        {
+          "GCPService": "Chronicle",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "Chronicle is able to trigger an alert based off suspicious system processes that indicate usage and installation of a backdoor using built-in tools that are accessible from the login screen (e.g., sticky-keys attack).This technique was scored as minimal based on low or uncertain detection coverage factor.https://github.com/chronicle/detection-rules/blob/783e0e5947774785db1c55041b70176deeca6f46/soc_prime_rules/threat_hunting/windows/sticky_key_like_backdoor_usage.yaral"
+        },
+        {
+          "GCPService": "Cloud IDS",
+          "Category": "Detect",
+          "Value": "Significant",
+          "Comment": "Often used by adversaries to  execute malicious content and establish persistence, Palo Alto Network's antivirus signatures is able to detect malicious content found in Mach object files (Mach-O). These are used by the adversary to load and execute malicious dynamic libraries after the binary is executed.This technique was scored as significant based on Palo Alto Network's advanced threat detection technology which constantly updates to detect against variations of these cyber-attacks."
+        }
+      ]
+    },
+    {
+      "Name": "Cloud Administration Command",
+      "Id": "T1651",
+      "Tactics": [
+        "Privilege Escalation",
+        "Persistence"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "Azure AD",
+        "IaaS"
+      ],
+      "Description": "Adversaries may abuse cloud management services to execute commands within virtual machines or hybrid-joined devices. Resources such as AWS Systems Manager, Azure RunCommand, and Runbooks allow users to remotely run scripts in virtual machines by leveraging installed virtual machine agents. Similarly, in Azure AD environments, Microsoft Endpoint Manager allows Global or Intune Administrators to run scripts as SYSTEM on on-premises devices joined to the Azure AD.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1651/",
+      "Checks": [],
+      "Attributes": []
+    },
+    {
+      "Name": "Implant Internal Image",
+      "Id": "T1525",
+      "Tactics": [
+        "Persistence"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "IaaS",
+        "Containers"
+      ],
+      "Description": "Adversaries may implant cloud or container images with malicious code to establish persistence after gaining access to an environment. Amazon Web Services (AWS) Amazon Machine Images (AMIs), Google Cloud Platform (GCP) Images, and Azure Images as well as popular container runtimes such as Docker can be implanted or backdoored. Unlike Upload Malware, this technique focuses on adversaries implanting an image in a registry within a victim’s environment. Depending on how the infrastructure is provisioned, this could provide persistent access if the infrastructure provisioning tool is instructed to always use the latest image.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1525/",
+      "Checks": [
+        "artifacts_container_analysis_enabled"
+      ],
+      "Attributes": [
+        {
+          "GCPService": "AnthosConfigManagement",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": ""
+        },
+        {
+          "GCPService": "AnthosConfigManagement",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "Prevent configuration drift with continuous monitoring of your cluster state, using the declarative model to apply policies that enforce compliance. This control can periodically check the integrity of images and containers used in cloud deployments to ensure that adversaries cannot implant malicious code to gain access to an environment."
+        },
+        {
+          "GCPService": "Artifact Registry",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "Once this control is deployed, it can detect known vulnerabilities in Docker containers. This information can be used to detect malicious implanted images in the environment. This control does not directly protect against exploitation."
+        },
+        {
+          "GCPService": "Binary Authorization",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "Each image has a signer digitally sign using a private key. At deploy time, the enforcer uses the attester's public key to verify the signature in the attestation."
+        },
+        {
+          "GCPService": "Container Registry",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "Using Container Analysis and Vulnerability scanning, this security solution can detect known vulnerabilities in Docker containers. This information can be used to detect images that deviate from the baseline norm, and could indicate a malicious implanted images in the environment. Due to the medium threat detection coverage and temporal factor, the control was scored as partial."
+        },
+        {
+          "GCPService": "Google Kubernetes Engine",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "After scanning for vulnerabilities, this control may alert personnel of tampered container images that could be running in a Kubernetes cluster."
+        },
+        {
+          "GCPService": "Security Command Center",
+          "Category": "Detect",
+          "Value": "Significant",
+          "Comment": "SCC is able to detect modifications that were not not part of the original container image. Because of the high threat detection coverage and near-real time temporal factor this control was graded as significant."
+        }
+      ]
+    },
+    {
+      "Name": "Modify Authentication Process",
+      "Id": "T1556",
+      "Tactics": [
+        "Credential Access",
+        "Defense Evasion",
+        "Persistence"
+      ],
+      "SubTechniques": [
+        "T1556.006 - Multi-Factor Authentication",
+        "T1556.007 - Hybrid Identity"
+      ],
+      "Platforms": [
+        "Azure AD",
+        "Google Workspace",
+        "IaaS",
+        "Linux",
+        "Network",
+        "Office 365",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may modify authentication mechanisms and processes to access user credentials or enable otherwise unwarranted access to accounts. The authentication process is handled by mechanisms, such as the Local Security Authentication Server (LSASS) process and the Security Accounts Manager (SAM) on Windows, pluggable authentication modules (PAM) on Unix-based systems, and authorization plugins on MacOS systems, responsible for gathering, storing, and validating credentials. By modifying an authentication process, an adversary may be able to authenticate to a service or system without using Valid Accounts.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1556/",
+      "Checks": [
+        "iam_account_access_approval_enabled",
+        "iam_no_service_roles_at_project_level",
+        "iam_role_kms_enforce_separation_of_duties",
+        "iam_role_sa_enforce_separation_of_duties",
+        "iam_sa_no_administrative_privileges",
+        "iam_sa_no_user_managed_keys"
+      ],
+      "Attributes": [
+        {
+          "GCPService": "AdvancedProtectionProgram",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "Advanced Protection Program enables the use of a security key for multi-factor authentication. Integrating multi-factor authentication as part of organizational policy can greatly reduce the risk of an adversary gaining control of valid credentials that may be used for additional tactics such as initial access, lateral movement, and collecting information."
+        },
+        {
+          "GCPService": "IdentityPlatform",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "Identity Platform lets you add Google-grade authentication to your apps and services, making it easier to secure user accounts and securely managing credentials. MFA can be used to restrict access to cloud resources and APIs and provide protection against an adversaries that try to access  user credentials."
+        }
+      ]
+    },
+    {
+      "Name": "Impair Defenses",
+      "Id": "T1562",
+      "Tactics": [
+        "Defense Evasion"
+      ],
+      "SubTechniques": [
+        "T1562.001 - Disable or Modify Tools",
+        "T1562.002 - Disable Windows Event Logging",
+        "T1562.006 - Disable or Modify Tools",
+        "T1562.007 - Disable or Modify Cloud Firewall",
+        "T1562.008 - Disable Cloud Logs",
+        "T1562.004 - Disable or Modify System Firewall"
+      ],
+      "Platforms": [
+        "Containers",
+        "IaaS",
+        "Linux",
+        "Network",
+        "Office 365",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may maliciously modify components of a victim environment in order to hinder or disable defensive mechanisms. This not only involves impairing preventative defenses, such as firewalls and anti-virus, but also detection capabilities that defenders can use to audit activity and identify malicious behavior. This may also span both native defenses as well as supplemental capabilities installed by users and administrators.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1562/",
+      "Checks": [
+        "compute_instance_shielded_vm_enabled",
+        "logging_sink_created"
+      ],
+      "Attributes": [
+        {
+          "GCPService": "Chronicle",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "Chronicle is able to trigger an alert based on processes, such as  VPC Network Firewall rule changes. This technique was scored as minimal based on low or uncertain detection coverage factor.https://github.com/chronicle/detection-rules/blob/783e0e5947774785db1c55041b70176deeca6f46/gcp_cloudaudit/gcp_firewall_rule_changes.yaral"
+        },
+        {
+          "GCPService": "IdentityPlatform",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "Identity Platform provides Admin APIs to manage  users and authentication tokens. To prevent unwanted access to your users and tokens through these APIs, Identity Platform leverages IAM to manage permission to specific Identity Platform APIs. This control will ensure proper process and file permissions are in place to prevent adversaries from disabling or interfering with security/logging services."
+        },
+        {
+          "GCPService": "IdentityPlatform",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "Identity Platform provides Admin APIs to manage  users and authentication tokens. To prevent unwanted access to your users and tokens through these APIs, Identity Platform leverages IAM to manage permission to specific Identity Platform APIs. This control will ensure proper process and file permissions are in place to prevent adversaries from disabling or interfering with security/logging services."
+        },
+        {
+          "GCPService": "Policy Intelligence",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "Adversaries that try to disable cloud logging capabilities have the advantage to limit the amount of the data that can be collected and can possibly control not being detected. This control may be used to ensure that permissions are in place to prevent adversaries from disabling or interfering with security/logging services."
+        },
+        {
+          "GCPService": "Policy Intelligence",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "Adversaries that try to disable cloud logging capabilities have the advantage to limit the amount of the data that can be collected and can possibly control not being detected. This control may be used to routinely check role account permissions in IAM audit logs."
+        },
+        {
+          "GCPService": "ResourceManager",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "An adversary may disable cloud logging capabilities and integrations to limit what data is collected on their activities and avoid detection. GCP allows configuration of account policies to enable logging and IAM permissions and roles to determine your ability to access audit logs data in Google Cloud resources."
+        },
+        {
+          "GCPService": "ResourceManager",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "This control adopts the security principle of least privilege, which grants necessary access to user's resources when justified and needed. This control manages access control and ensures proper user permissions are in place to prevent adversaries that try to modify and/or disable security tools."
+        },
+        {
+          "GCPService": "ResourceManager",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "This control adopts the security principle of least privilege, which grants necessary access to user's resources when justified and needed. This control manages access control and ensures proper user permissions are in place to prevent adversaries that try to interfere with logging."
+        },
+        {
+          "GCPService": "ResourceManager",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "An adversary may disable cloud logging capabilities and integrations to limit what data is collected on their activities and avoid detection. GCP allows configuration of account policies to enable logging and IAM permissions and roles to determine your ability to access audit logs data in Google Cloud resources."
+        },
+        {
+          "GCPService": "ResourceManager",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "This control adopts the security principle of least privilege, which grants necessary access to user's resources when justified and needed. This control manages access control and ensures proper user permissions are in place to prevent adversaries that try to modify and/or disable firewall."
+        },
+        {
+          "GCPService": "ResourceManager",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "This control adopts the security principle of least privilege, which grants necessary access to user's resources when justified and needed. This control manages access control and ensures proper user permissions are in place to prevent adversaries that try to modify and/or disable cloud logging capabilities."
+        },
+        {
+          "GCPService": "Security Command Center",
+          "Category": "Detect",
+          "Value": "Significant",
+          "Comment": "SCC ingests VPC Audit logs to detect changes which would lead to changes in the security posture. This security solution protects against network modifications that are used to reduce the security perimeter, disable logs, and evade cyber-defense of a target environment. Because of the near-real time temporal factor this control was graded as significant."
+        },
+        {
+          "GCPService": "Security Command Center",
+          "Category": "Detect",
+          "Value": "Significant",
+          "Comment": "SCC is able to detect changes to VPC service controls that could modify and reduced the secured perimeter. This security solution protects against modifications that could lead to a lower security posture and defense evasion. Because of the near-real time temporal factor to detect against this cyber-attack the control was graded as significant."
+        },
+        {
+          "GCPService": "Security Command Center",
+          "Category": "Detect",
+          "Value": "Significant",
+          "Comment": "SCC detect changes to the configuration which would lead to disable logging on an instance or container. This security solution protects against system modifications used to remove evidence and evade defenses. Because of the near-real time temporal factor this control was graded as significant."
+        }
+      ]
+    },
+    {
+      "Name": "Modify Cloud Compute Infrastructure",
+      "Id": "T1578",
+      "Tactics": [
+        "Defense Evasion"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "IaaS"
+      ],
+      "Description": "An adversary may attempt to modify a cloud account's compute service infrastructure to evade defenses. A modification to the compute service infrastructure can include the creation, deletion, or modification of one or more components such as compute instances, virtual machines, and snapshots.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1578/",
+      "Checks": [
+        "iam_account_access_approval_enabled",
+        "iam_no_service_roles_at_project_level",
+        "iam_role_kms_enforce_separation_of_duties",
+        "iam_role_sa_enforce_separation_of_duties",
+        "iam_sa_no_administrative_privileges",
+        "iam_sa_no_user_managed_keys"
+      ],
+      "Attributes": [
+        {
+          "GCPService": "Chronicle",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "Chronicle is able to trigger an alert based on changes to the infrastructure (e.g., VPC network changes).This technique was scored as minimal based on low or uncertain detection coverage factor.https://github.com/chronicle/detection-rules/blob/783e0e5947774785db1c55041b70176deeca6f46/gcp_cloudaudit/gcp_vpc_network_changes.yaral"
+        },
+        {
+          "GCPService": "Policy Intelligence",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "IAM Recommender helps admins remove unwanted access to GCP resources by using machine learning to make smart access control recommendations. With Recommender, security teams can automatically detect overly permissive access and rightsize them based on similar users in the organization and their access patterns. This control may mitigate adversaries that try to gain access to permissions from modifying infrastructure components."
+        },
+        {
+          "GCPService": "Security Command Center",
+          "Category": "Detect",
+          "Value": "Significant",
+          "Comment": "SCC detect changes to the cloud infrastructure and resources which could indicate malicious behavior (e.g., delete instances, create snapshot, revert cloud instance). This security solution protects against modifications potentially used to remove evidence and evade defenses. Because of the near-real time temporal factor and high detection coverage this control was graded as significant."
+        }
+      ]
+    },
+    {
+      "Name": "Unused/Unsupported Cloud Regions",
+      "Id": "T1535",
+      "Tactics": [
+        "Defense Evasion"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "IaaS"
+      ],
+      "Description": "Adversaries may create cloud instances in unused geographic service regions in order to evade detection. Access is usually obtained through compromising accounts used to manage cloud infrastructure.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1535/",
+      "Checks": [],
+      "Attributes": []
+    },
+    {
+      "Name": "Use Alternate Authentication Material",
+      "Id": "T1550",
+      "Tactics": [
+        "Defense Evasion",
+        "Lateral Movement"
+      ],
+      "SubTechniques": [
+        "T1550.001 - Application Access Token"
+      ],
+      "Platforms": [
+        "IaaS"
+      ],
+      "Description": "Adversaries may use alternate authentication material, such as password hashes, Kerberos tickets, and application access tokens, in order to move laterally within an environment and bypass normal system access controls.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1550/",
+      "Checks": [
+        "iam_account_access_approval_enabled",
+        "iam_no_service_roles_at_project_level",
+        "iam_role_kms_enforce_separation_of_duties",
+        "iam_role_sa_enforce_separation_of_duties",
+        "iam_sa_no_administrative_privileges",
+        "iam_sa_no_user_managed_keys"
+      ],
+      "Attributes": [
+        {
+          "GCPService": "Identity Aware Proxy",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "This control may mitigate or prevent stolen application access tokens from occurring."
+        },
+        {
+          "GCPService": "IdentityPlatform",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "This control may mitigate application access token theft if the application is  configured to retrieve temporary security credentials using an IAM role."
+        },
+        {
+          "GCPService": "IdentityPlatform",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "This control may mitigate application access token theft if the application is  configured to retrieve temporary security credentials using an IAM role."
+        }
+      ]
+    },
+    {
+      "Name": "Brute Force",
+      "Id": "T1110",
+      "Tactics": [
+        "Credential Access"
+      ],
+      "SubTechniques": [
+        "T1110.001 - Password Guessing",
+        "T1110.002 - Password Cracking",
+        "T1110.003 - Password Spraying",
+        "T1110.004 - Credential Stuffing"
+      ],
+      "Platforms": [
+        "Azure AD",
+        "Containers",
+        "Google Workspace",
+        "IaaS",
+        "Linux",
+        "Network",
+        "Office 365",
+        "SaaS",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may use brute force techniques to gain access to accounts when passwords are unknown or when password hashes are obtained. Without knowledge of the password for an account or set of accounts, an adversary may systematically guess the password using a repetitive or iterative mechanism. Brute forcing passwords can take place via interaction with a service that will check the validity of those credentials or offline against previously acquired credential data, such as password hashes.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1110/",
+      "Checks": [],
+      "Attributes": [
+        {
+          "GCPService": "Actifio Go",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "Actifio uses two command line (CLI) interfaces for customer end-users and Actifio support personnel. All CLI access is via key based authentication only. This provides significant protection against brute force password attacks. However, this only provides protection for Actifio components, rather than all components for a system. This has resulted in a score of Partial."
+        },
+        {
+          "GCPService": "AdvancedProtectionProgram",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "Advanced Protection Program enables the use of a security key for multi-factor authentication. This provides significant protection against Brute Force techniques attempting to gain access to accounts."
+        },
+        {
+          "GCPService": "AdvancedProtectionProgram",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "Advanced Protection Program enables the use of a security key for multi-factor authentication. This provides significant protection against Brute Force techniques attempting to gain access to accounts."
+        },
+        {
+          "GCPService": "AdvancedProtectionProgram",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "Advanced Protection Program enables the use of a security key for multi-factor authentication. This provides significant protection against Brute Force techniques attempting to gain access to accounts."
+        },
+        {
+          "GCPService": "AdvancedProtectionProgram",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "Advanced Protection Program enables the use of a security key for multi-factor authentication. This provides significant protection against Brute Force techniques attempting to gain access to accounts."
+        },
+        {
+          "GCPService": "AdvancedProtectionProgram",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "Advanced Protection Program enables the use of a security key for multi-factor authentication. This provides significant protection against Brute Force techniques attempting to gain access to accounts."
+        },
+        {
+          "GCPService": "Cloud IDS",
+          "Category": "Detect",
+          "Value": "Significant",
+          "Comment": "Often used by adversaries to gain access to a system, Palo Alto Network's vulnerability signature is able to detect multiple repetitive occurrences of a condition in a particular time that could indicate a brute force attack (e.g., failed logins).Although there are ways an attacker could brute force a system while avoiding detection, this technique was scored as significant based on Palo Alto Network's advanced threat detection technology which constantly updates to detect against the latest known variations of these attacks."
+        },
+        {
+          "GCPService": "Cloud Identity",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "This control may mitigate brute force attacks by enforcing multi-factor authentication, enforcing strong password policies, and rotating credentials periodically. These recommendations are IAM best practices but must be explicitly implemented by a cloud administrator."
+        },
+        {
+          "GCPService": "Cloud Identity",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "This control may mitigate brute force attacks by enforcing multi-factor authentication, enforcing strong password policies, and rotating credentials periodically. These recommendations are IAM best practices but must be explicitly implemented by a cloud administrator."
+        },
+        {
+          "GCPService": "Cloud Identity",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "This control may mitigate brute force attacks by enforcing multi-factor authentication, enforcing strong password policies, and rotating credentials periodically. These recommendations are IAM best practices but must be explicitly implemented by a cloud administrator."
+        },
+        {
+          "GCPService": "Cloud Identity",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "This control may mitigate brute force attacks by enforcing multi-factor authentication, enforcing strong password policies, and rotating credentials periodically. These recommendations are IAM best practices but must be explicitly implemented by a cloud administrator."
+        },
+        {
+          "GCPService": "Cloud Identity",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "This control may mitigate brute force attacks by enforcing multi-factor authentication, enforcing strong password policies, and rotating credentials periodically. These recommendations are IAM best practices but must be explicitly implemented by a cloud administrator."
+        },
+        {
+          "GCPService": "Endpoint Management",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "This control allows for enforcement of strong password requirements for all mobile devices, desktops, laptops, and other endpoints. This control also allows for use of Google Credential Provider for Windows (GCPW) to utilize Google single sign on for Windows devices that can leverage two-factor authentication and login challenges."
+        },
+        {
+          "GCPService": "IdentityPlatform",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "Multi-factor authentication (MFA) methods, such as SMS, can also be used to help protect user accounts from phishing attacks. MFA provides significant protection against password compromises, requiring the adversary to complete an additional authentication method before their access is permitted."
+        },
+        {
+          "GCPService": "IdentityPlatform",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "Multi-factor authentication (MFA) methods, such as SMS, can also be used to help protect user accounts from phishing attacks. MFA provides significant protection against password compromises, requiring the adversary to complete an additional authentication method before their access is permitted."
+        },
+        {
+          "GCPService": "IdentityPlatform",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "Multi-factor authentication (MFA) methods, such as SMS, can also be used to help protect user accounts from phishing attacks. MFA provides significant protection against password compromises, requiring the adversary to complete an additional authentication method before their access is permitted."
+        },
+        {
+          "GCPService": "IdentityPlatform",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "Multi-factor authentication (MFA) methods, such as SMS, can also be used to help protect user accounts from phishing attacks. MFA provides significant protection against password compromises, requiring the adversary to complete an additional authentication method before their access is permitted."
+        },
+        {
+          "GCPService": "ReCAPTCHA Enterprise",
+          "Category": "Detect",
+          "Value": "Significant",
+          "Comment": "Password Checkup extension for Chrome displays a warning whenever a user signs in to a site using one of over 4 billion usernames and passwords that Google knows to be unsafe due to a third-party data breach. With reCAPTCHA Enterprise, you can identify credential stuffing attacks by utilizing Password Checkup to detect password leaks and breached credentials. Developers can factor this information into their score calculation for score-based site keys to help identify suspicious activity and take appropriate action."
+        },
+        {
+          "GCPService": "Security Command Center",
+          "Category": "Detect",
+          "Value": "Significant",
+          "Comment": "SCC uses syslog to detect successful brute force attacks [via SSH] on a host. Because of the near-real time temporal factor when detecting cyber-attacks this control was graded as significant."
+        }
+      ]
+    },
+    {
+      "Name": "Forge Web Credentials",
+      "Id": "T1606",
+      "Tactics": [
+        "Credential Access"
+      ],
+      "SubTechniques": [
+        "T1606.001 - Web Cookies",
+        "T1606.002 - SAML Tokens"
+      ],
+      "Platforms": [
+        "Azure AD",
+        "Google Workspace",
+        "IaaS",
+        "Linux",
+        "Office 365",
+        "SaaS",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may forge credential materials that can be used to gain access to web applications or Internet services. Web applications and services (hosted in cloud SaaS environments or on-premise servers) often use session cookies, tokens, or other materials to authenticate and authorize user access.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1606/",
+      "Checks": [
+        "iam_account_access_approval_enabled",
+        "iam_no_service_roles_at_project_level",
+        "iam_role_kms_enforce_separation_of_duties",
+        "iam_role_sa_enforce_separation_of_duties",
+        "iam_sa_no_administrative_privileges"
+      ],
+      "Attributes": []
+    },
+    {
+      "Name": "Multi-Factor Authentication Request Generation",
+      "Id": "T1621",
+      "Tactics": [
+        "Credential Access"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "Azure AD",
+        "Google Workspace",
+        "IaaS",
+        "Linux",
+        "Office 365",
+        "SaaS",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may attempt to bypass multi-factor authentication (MFA) mechanisms and gain access to accounts by generating MFA requests sent to users.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1621/",
+      "Checks": [],
+      "Attributes": []
+    },
+    {
+      "Name": "Network Sniffing",
+      "Id": "T1040",
+      "Tactics": [
+        "Credential Access",
+        "Discovery"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "IaaS",
+        "Linux",
+        "Network",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may sniff network traffic to capture information about an environment, including authentication material passed over the network. Network sniffing refers to using the network interface on a system to monitor or capture information sent over a wired or wireless connection. An adversary may place a network interface into promiscuous mode to passively access data in transit over the network, or use span ports to capture a larger amount of data.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1040/",
+      "Checks": [
+        "iam_account_access_approval_enabled",
+        "iam_no_service_roles_at_project_level",
+        "iam_role_kms_enforce_separation_of_duties",
+        "iam_role_sa_enforce_separation_of_duties",
+        "iam_sa_no_administrative_privileges",
+        "bigquery_dataset_cmk_encryption",
+        "bigquery_table_cmk_encryption",
+        "cloudsql_instance_ssl_connections",
+        "dataproc_encrypted_with_cmks_disabled",
+        "dns_rsasha1_in_use_to_key_sign_in_dnssec",
+        "dns_rsasha1_in_use_to_zone_sign_in_dnssec"
+      ],
+      "Attributes": [
+        {
+          "GCPService": "Actifio Go",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "Actifio provides encryption in transit for data traveling between Actifio appliances, Actifio and VMware environments, and for data traversing the control channel utilizing the Actifio connector. This provides significant protection against Network Sniffing since adversaries would be unable to read encrypted traffic. However, Actifio only encrypts data in transit that interacts with Actifio components, rather than all traffic for a system. This is also only relevant when traffic is being backed up, which is a small amount of the time. In this case, it has been given a rating of Minimal."
+        },
+        {
+          "GCPService": "Certificate Authority Service",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "This control may mitigate against Network Sniffing by providing certificates for internal endpoints and applications to use with asymmetric encryption. This control helps protect the issuing Certificate Authority with the use of Google's IAM and policy controls."
+        },
+        {
+          "GCPService": "CloudVPN",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "Cloud VPN enables traffic traveling between the two networks, and it is encrypted by one VPN gateway and then decrypted by the other VPN gateway. This action protects users' data as it travels over the internet. This control may prevent adversaries from sniffing network traffic."
+        },
+        {
+          "GCPService": "Secret Manager",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "This control provides secure methods for accessing secrets and passwords. This can reduce the incidents of credentials and other authentication material being transmitted in clear-text or by insecure encryption methods. Any communication between applications or endpoints after access to Secret Manager may not be secure."
+        },
+        {
+          "GCPService": "Security Command Center",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "Using Web Security Scanner, SCC is able to detect when passwords are transmitted in cleartext. Adversaries may use this traffic mirroring services to sniff traffic and intercept unencrypted credentials. This technique was graded as partial due to the low protect coverage when transmitting passwords in clear-text and there is more information that could be gathered during a network sniffing attacks."
+        }
+      ]
+    },
+    {
+      "Name": "Unsecured Credentials",
+      "Id": "T1552",
+      "Tactics": [
+        "Credential Access"
+      ],
+      "SubTechniques": [
+        "T1552.001 - Credentials In Files",
+        "T1552.004 - Private Keys",
+        "T1552.007 - Container API",
+        "T1552.005 - Cloud Instance Metadata API"
+      ],
+      "Platforms": [
+        "Azure AD",
+        "Containers",
+        "Google Workspace",
+        "IaaS",
+        "Linux",
+        "Network",
+        "Office 365",
+        "SaaS",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may search compromised systems to find and obtain insecurely stored credentials. These credentials can be stored and/or misplaced in many locations on a system, including plaintext files (e.g. Bash History), operating system or application-specific repositories (e.g. Credentials in Registry), or other specialized files/artifacts (e.g. Private Keys).",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1552/",
+      "Checks": [],
+      "Attributes": [
+        {
+          "GCPService": "Actifio Go",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "Actifio Sky can be configured with optional storage pool encryption. Administrative end-user credentials are hashed with a strong one-way salted SHA256 hash in the appliance database. Credentials used by the appliance to access other systems (vCenters, databases,) are stored in an AES256 encrypted form. This provides significant protection against adversaries searching compromised Actifio systems for insecurely stored credentials. However, this does not provide protection for other credentials stored on non-Actifio components. This has resulted in a score of partial."
+        },
+        {
+          "GCPService": "AnthosConfigManagement",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "Adversaries may gather credentials via APIs within a containers environment. APIs in these environments, such as the Docker API and Kubernetes APIs. Anthos Config Management can manage configuration for any Kubernetes API, including policies for the Istio service mesh, resource quotas, and access control policies."
+        },
+        {
+          "GCPService": "Chronicle",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "Chronicle detects an attempt to scan registry hives for unsecured passwords.This technique was scored as minimal based on low or uncertain detection coverage factor.https://github.com/chronicle/detection-rules/blob/783e0e5947774785db1c55041b70176deeca6f46/soc_prime_rules/ioc_sigma/process_creation/t1214___credentials_in_registry.yaral"
+        },
+        {
+          "GCPService": "Cloud Hardware Security Module (HSM)",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "Google Cloud's HSM may protect against adversary's attempts to leverage unsecured credentials found on compromised systems. Variations of this technique are difficult to mitigate, so a partial score was granted for this control's medium to high coverage factor."
+        },
+        {
+          "GCPService": "Cloud Hardware Security Module (HSM)",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "Google Cloud's HSM may protect against adversary's attempts to leverage passwords and unsecure credentials found in files on compromised systems.Variations of this technique are difficult to mitigate, so a partial score was granted for this control's medium to high coverage factor."
+        },
+        {
+          "GCPService": "Cloud Hardware Security Module (HSM)",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "Google Cloud's HSM may protect against adversary's attempts to compromise private key certificate files (e.g., .key, .pgp, .ppk, .p12). Variations of this technique are difficult to mitigate, so a partial score was granted for this control's medium to high coverage factor."
+        },
+        {
+          "GCPService": "Cloud Key Management",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": ""
+        },
+        {
+          "GCPService": "Cloud Key Management",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "This control's protection is specific to a minority of this technique's sub-techniques and procedure examples resulting in a Minimal Coverage score and consequently an overall score of Minimal."
+        },
+        {
+          "GCPService": "Cloud Key Management",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "This control's protection is specific to a minority of this technique's sub-techniques and procedure examples resulting in a Minimal Coverage score and consequently an overall score of Minimal."
+        },
+        {
+          "GCPService": "Cloud Key Management",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "This control's protection is specific to a minority of this technique's sub-techniques and procedure examples resulting in a Minimal Coverage score and consequently an overall score of Minimal."
+        },
+        {
+          "GCPService": "ResourceManager",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "To control access to resources, GCP requires that accounts making API requests have appropriate IAM roles. IAM roles include permissions that allow users to perform specific actions on Google Cloud resources. This control may mitigate adversaries that gather credentials via APIs within a containers environment. Since this covers only one of the sub-techniques, it is given a Minimal scoring."
+        },
+        {
+          "GCPService": "Secret Manager",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "This control provides a central, secure location for storage of credentials to reduce the possibility of attackers discovering unsecured credentials."
+        },
+        {
+          "GCPService": "Virtual Private Cloud",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "VPC security perimeters can segment private resources to provide access based on user identity or organizational ingress/egress policies (e.g., instance, subnet)."
+        }
+      ]
+    },
+    {
+      "Name": "Exfiltration Over Alternative Protocol",
+      "Id": "T1048",
+      "Tactics": [
+        "Exfiltration"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "Google Workspace",
+        "IaaS",
+        "Linux",
+        "Network",
+        "Office 365",
+        "SaaS",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may steal data by exfiltrating it over a different protocol than that of the existing command and control channel. The data may also be sent to an alternate network location from the main command and control server.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1048/",
+      "Checks": [
+        "compute_firewall_rdp_access_from_the_internet_allowed",
+        "compute_firewall_ssh_access_from_the_internet_allowed"
+      ],
+      "Attributes": [
+        {
+          "GCPService": "BeyondCorp Enterprise",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "This control can help mitigate adversaries that may try to steal data over network protocols.  Data loss prevention can detect and block sensitive data being uploaded via web browsers. In Beyond Corp Enterprise, Data Loss Prevention (DLP) features to use with Chrome to implement sensitive data detection for files that are uploaded and downloaded, and for content that is pasted or dragged and dropped. An example includes a rule setting that is used to block files from being uploaded via Chrome browser."
+        },
+        {
+          "GCPService": "Chronicle",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "Chronicle is able to trigger an alert based off suspicious system processes that could indicate exfiltration attempts using cURL from Windows machines (e.g., C:\\Windows\\System32\\curl.exe).This technique was scored as minimal based on low or uncertain detection coverage factor.https://github.com/chronicle/detection-rules/blob/783e0e5947774785db1c55041b70176deeca6f46/soc_prime_rules/threat_hunting/windows/suspicious_curl_usage.yaral"
+        },
+        {
+          "GCPService": "Cloud IDS",
+          "Category": "Detect",
+          "Value": "Significant",
+          "Comment": "Often used by adversaries to compromise sensitive data, Palo Alto Network's spyware signatures is able to detect data exfiltration attempts over command and control communications.Although there are ways an attacker could still exfiltrate data from a compromised system, this technique was scored as significant based on  Palo Alto Network's advanced threat detection technology which constantly updates to detect against the latest known variations of these attacks."
+        },
+        {
+          "GCPService": "Firewalls",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "Google Cloud Firewalls can allow or deny traffic based on the traffic's protocol, destination ports, sources, and destinations. This functionality can be used to block adversaries from accessing resources from which to exfiltrate data as well as prevent resources from communicating with known-bad IP addresses and domains that might be used to receive exfiltrated data. This mapping is given a score of Partial because the known-bad IP addresses and domains would need to be known in advance and AWS Network Firewall wouldn't have deep packet inspection visibility into encrypted non-C2 protocols."
+        }
+      ]
+    },
+    {
+      "Name": "Transfer Data to Cloud Account",
+      "Id": "T1537",
+      "Tactics": [
+        "Exfiltration"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "IaaS"
+      ],
+      "Description": "Adversaries may exfiltrate data by transferring the data, including backups of cloud environments, to another cloud account they control on the same service to avoid typical file transfers/downloads and network-based exfiltration detection.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1537/",
+      "Checks": [],
+      "Attributes": [
+        {
+          "GCPService": "VPC Service Controls",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "This control may mitigate against exfiltration attempts to external cloud accounts by limiting egress of data from accounts and services contained within the VPC network perimeter."
+        }
+      ]
+    },
+    {
+      "Name": "Automated Collection",
+      "Id": "T1119",
+      "Tactics": [
+        "Collection"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "IaaS",
+        "Linux",
+        "SaaS",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Once established within a system or network, an adversary may use automated techniques for collecting internal data. Methods for performing this technique could include use of a Command and Scripting Interpreter to search for and copy information fitting set criteria such as file type, location, or name at specific time intervals. In cloud-based environments, adversaries may also use cloud APIs, command line interfaces, or extract, transform, and load (ETL) services to automatically collect data. This functionality could also be built into remote access tools.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1119/",
+      "Checks": [],
+      "Attributes": []
+    },
+    {
+      "Name": "Data from Cloud Storage",
+      "Id": "T1530",
+      "Tactics": [
+        "Collection"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "IaaS",
+        "SaaS"
+      ],
+      "Description": "Adversaries may collect sensitive data from these cloud storage solutions. Providers typically offer security guides to help end users configure systems, though misconfigurations are a common problem.[5][6][7] There have been numerous incidents where cloud storage has been improperly secured, typically by unintentionally allowing public access to unauthenticated users, overly-broad access by all users, or even access for any anonymous person outside the control of the Identity Access Management system without even needing basic user permissions.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1530/",
+      "Checks": [
+        "bigquery_dataset_cmk_encryption",
+        "bigquery_table_cmk_encryption",
+        "cloudsql_instance_ssl_connections",
+        "dataproc_encrypted_with_cmks_disabled",
+        "dns_rsasha1_in_use_to_key_sign_in_dnssec",
+        "dns_rsasha1_in_use_to_zone_sign_in_dnssec"
+      ],
+      "Attributes": [
+        {
+          "GCPService": "Access Transparency",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "This control may expose and detect malicious access of data from cloud storage by compromised Google personnel accounts."
+        },
+        {
+          "GCPService": "AdvancedProtectionProgram",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "Advanced Protection Program enables the use of a security key for multi-factor authentication. Restricting access via MFA provides significant protection against adversaries accessing data objects from cloud storage."
+        },
+        {
+          "GCPService": "BeyondCorp Enterprise",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "Access Context Manager allows Google Cloud organization administrators to define fine-grained, attribute based access control for projects and resources. Access levels applied on resources with IAM Conditions enforce fine-grained access control based on a variety of attributes, including IP subnetworks. Adversaries may obtain leaked credentials; however, this control can block specific  adversaries from gaining access permission controls by admins granting an access level based on the IP address of the originating request."
+        },
+        {
+          "GCPService": "Chronicle",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "Chronicle is able to trigger an alert to notify personnel of GCP resources (e.g., storage buckets) that are publicly accessible to unauthenticated users. This technique was scored as minimal based on low or uncertain detection coverage factor.https://github.com/chronicle/detection-rules/blob/main/gcp_cloudaudit/gcp_gcs_public_accessible.yaral"
+        },
+        {
+          "GCPService": "Cloud Data Loss Prevention",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "This control is able to scan cloud storage objects for sensitive data and transform that data into a secure or nonsensitive form. It is able to scan for a variety of common sensitive data types, such as API keys, credentials, or credit card numbers. This control is able to be scheduled daily, weekly, etc and can scan new changes to data. This control is able to scan Google Cloud Storage, BigQuery tables, and Datastore."
+        },
+        {
+          "GCPService": "Cloud Storage",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "The cloud service provider's default encryption setting for data stored and written to disk in the cloud may protect against adversary's attempt to access data from improperly secured cloud storage. This technique was rated as significant due to the high protect coverage factor."
+        },
+        {
+          "GCPService": "Firewalls",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "Google Cloud Firewalls can allow or deny traffic based on the traffic's protocol, destination ports, sources, and destinations. This functionality can be used to block adversaries from accessing resources such as cloud storage objects by implementing restrictions on which IP addresses and domains can access the resources (e.g., allow lists). However, since cloud storage objects are located outside the virtual private cloud where Google Cloud Firewalls protect, the mapping is only given a score of Partial."
+        },
+        {
+          "GCPService": "Policy Intelligence",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "Adversaries may attempt to implant cloud or container images with malicious code to gain access to an environment. The IAM audit logs can be used to receive data access and activity logs who has accessed to certain resources."
+        },
+        {
+          "GCPService": "Policy Intelligence",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "Recommender generates policy insights by comparing the permissions that each principal used during the past 90 days with the total permissions the principal has. This can be used to limit the permissions associated with creating and modifying platform images or containers that adversaries may try to access."
+        },
+        {
+          "GCPService": "Security Command Center",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "SCC detect suspicious activity when accessing cloud storage objects (e.g.,  new IPs accessing storage objects or enumeration from unfamiliar user identities). Because of the real time temporal factor when detecting access to secure storage objects this control was graded as partial."
+        },
+        {
+          "GCPService": "VPC Service Controls",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "This control may mitigate against access to cloud storage objects by limiting access to accounts and services contained within the VPC network perimeter that contains those cloud storage objects."
+        }
+      ]
+    },
+    {
+      "Name": "Data from Information Repositories",
+      "Id": "T1213",
+      "Tactics": [
+        "Collection"
+      ],
+      "SubTechniques": [
+        "T1213.003 - Code Repositories"
+      ],
+      "Platforms": [
+        "Google Workspace",
+        "IaaS",
+        "Linux",
+        "Office 365",
+        "SaaS",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may leverage information repositories to mine valuable information. Information repositories are tools that allow for storage of information, typically to facilitate collaboration or information sharing between users, and can store a wide variety of data that may aid adversaries in further objectives, or direct access to the target information. Adversaries may also abuse external sharing features to share sensitive documents with recipients outside of the organization.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1213/",
+      "Checks": [],
+      "Attributes": [
+        {
+          "GCPService": "Cloud Identity",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "MFA and enforcing the principal of least privilege can be used to control adversaries and possibly hinder them from gaining access to a victim network or a private code repository."
+        },
+        {
+          "GCPService": "Cloud Identity",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "MFA and enforcing the principal of least privilege can be used to control adversaries and possibly hinder them from gaining access to a victim network or a private code repository."
+        },
+        {
+          "GCPService": "Security Command Center",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "Using Web Security Scanner, SCC is able to detect repositories (e.g., Git or SVN) that are exposed to the public. Adversaries may use this lapse in security configuration to collect information about the target. Because of the near-real time temporal factor to detect against this cyber-attack this was graded as significant."
+        }
+      ]
+    },
+    {
+      "Name": "Data from Cloud Storage",
+      "Id": "T1074",
+      "Tactics": [
+        "Collection"
+      ],
+      "SubTechniques": [
+        "T1074.002 - Remote Data Staging"
+      ],
+      "Platforms": [
+        "IaaS",
+        "Linux",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may stage collected data in a central location or directory prior to Exfiltration. Data may be kept in separate files or combined into one file through techniques such as Archive Collected Data. Interactive command shells may be used, and common functionality within cmd and bash may be used to copy data into a staging location.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1074/",
+      "Checks": [],
+      "Attributes": []
+    },
+    {
+      "Name": "Data Destruction",
+      "Id": "T1485",
+      "Tactics": [
+        "Impact"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "IaaS",
+        "Linux",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may destroy data and files on specific systems or in large numbers on a network to interrupt availability to systems, services, and network resources. Data destruction is likely to render stored data irrecoverable by forensic techniques through overwriting files or data on local and remote drives.[1][2][3][4][5][6] Common operating system file deletion commands such as del and rm often only remove pointers to files without wiping the contents of the files themselves, making the files recoverable by proper forensic methodology. This behavior is distinct from Disk Content Wipe and Disk Structure Wipe because individual files are destroyed rather than sections of a storage disk or the disk's logical structure.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1485/",
+      "Checks": [
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled"
+      ],
+      "Attributes": [
+        {
+          "GCPService": "Actifio Go",
+          "Category": "Respond",
+          "Value": "Significant",
+          "Comment": "Actifio is a copy data management plaform that virtualizes application data to improve an organizations resiliency and cloud mobility. Actifio allows an organization to take regular backups and provides several methods of restoring applications and/or VM data to a previous state. This provide significant capability to respond to a Data Destruction event since an organization could easily restore lost data back to the latest backup."
+        }
+      ]
+    },
+    {
+      "Name": "Data Encrypted for Impact",
+      "Id": "T1486",
+      "Tactics": [
+        "Impact"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "IaaS",
+        "Linux",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may encrypt data on target systems or on large numbers of systems in a network to interrupt availability to system and network resources. They can attempt to render stored data inaccessible by encrypting files or data on local and remote drives and withholding access to a decryption key. This may be done in order to extract monetary compensation from a victim in exchange for decryption or a decryption key (ransomware) or to render data permanently inaccessible in cases where the key is not saved or transmitted.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1486/",
+      "Checks": [],
+      "Attributes": [
+        {
+          "GCPService": "Actifio Go",
+          "Category": "Respond",
+          "Value": "Significant",
+          "Comment": "Actifio is a copy data management plaform that virtualizes application data to improve an organizations resiliency and cloud mobility. Actifio allows an organization to take regular backups and provides several methods of restoring applications and/or VM data to a previous state. This provide significant capability to respond to an adversary maliciously encrypting  system data since an organization could restore encrypted data back to the latest backup."
+        },
+        {
+          "GCPService": "Chronicle",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "Chronicle is able to trigger an alert based on suspicious events related to ransomware campaigns (e.g., $selection.target.file.md5 = \"0c3ef20ede53efbe5eebca50171a589731a17037147102838bdb4a41c33f94e5\").This technique was scored as minimal based on low or uncertain detection coverage factor.https://github.com/chronicle/detection-rules/blob/783e0e5947774785db1c55041b70176deeca6f46/soc_prime_rules/ioc_sigma/sysmon/darkgate_cryptocurrency_mining_and_ransomware_campaign__sysmon.yaralhttps://github.com/chronicle/detection-rules/blob/783e0e5947774785db1c55041b70176deeca6f46/soc_prime_rules/ioc_sigma/windows/formbook_malware__sysmon.yaral"
+        }
+      ]
+    },
+    {
+      "Name": "Defacement",
+      "Id": "T1491",
+      "Tactics": [
+        "Impact"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "IaaS",
+        "Linux",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may modify visual content available internally or externally to an enterprise network, thus affecting the integrity of the original content. Reasons for Defacement include delivering messaging, intimidation, or claiming (possibly false) credit for an intrusion. Disturbing or offensive images may be used as a part of Defacement in order to cause user discomfort, or to pressure compliance with accompanying messages.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1491/",
+      "Checks": [],
+      "Attributes": [
+        {
+          "GCPService": "Actifio Go",
+          "Category": "Respond",
+          "Value": "Significant",
+          "Comment": "Actifio is a copy data management plaform that virtualizes application data to improve an organizations resiliency and cloud mobility. Actifio allows an organization to take regular backups and provides several methods of restoring applications and/or VM data to a previous state. This provide significant capability to respond to Defacement since an organization could easily restore defaced images back to the latest backup."
+        }
+      ]
+    },
+    {
+      "Name": "Endpoint Denial of Service",
+      "Id": "T1499",
+      "Tactics": [
+        "Impact"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "Azure AD",
+        "Containers",
+        "Google Workspace",
+        "IaaS",
+        "Linux",
+        "Office 365",
+        "SaaS",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may perform Endpoint Denial of Service (DoS) attacks to degrade or block the availability of services to users. Endpoint DoS can be performed by exhausting the system resources those services are hosted on or exploiting the system to cause a persistent crash condition. Example services include websites, email services, DNS, and web-based applications. Adversaries have been observed conducting DoS attacks for political purposes[1] and to support other malicious activities, including distraction[2], hacktivism, and extortion.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1499/",
+      "Checks": [
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled"
+      ],
+      "Attributes": [
+        {
+          "GCPService": "Cloud Armor",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "Google Cloud Armor provides always-on DDoS protection against network or protocol-based volumetric DDoS attacks. It allows users to allow/deny traffic at the Google Cloud edge, closest to the source of traffic. This prevents unwelcome traffic from consuming resources."
+        },
+        {
+          "GCPService": "Cloud IDS",
+          "Category": "Detect",
+          "Value": "Significant",
+          "Comment": "Often used by adversaries to affect availability and deprive legitimate user access, Palo Alto Network's vulnerability signatures are able to detect denial-of-service (DoS) attacks that attempt to render a target system unavailable by flooding the resources with traffic.This technique was scored as significant based on  Palo Alto Network's advanced threat detection technology which constantly updates to detect against a variety of denial-of-service attacks."
+        },
+        {
+          "GCPService": "Cloud IDS",
+          "Category": "Detect",
+          "Value": "Significant",
+          "Comment": "Often used by adversaries to affect availability and deprive legitimate user access, Palo Alto Network's vulnerability signatures are able to detect denial-of-service (DoS) attacks that attempt to crash a target system by flooding it with application traffic.This was scored as minimal because there are other ways adversaries couldThis technique was scored as significant based on  Palo Alto Network's advanced threat detection technology which constantly updates to detect against variations of these cyber-attacks."
+        },
+        {
+          "GCPService": "Firewalls",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "Google Cloud Firewalls can allow or deny traffic based on the traffic's protocol, destination ports, sources, and destinations. This functionality can be used to block adversaries from carrying out denial of service attacks by implementing restrictions on which IP addresses and domains can access the resources (e.g., allow lists) as well as which protocol traffic is permitted. That is, Google Cloud Firewalls could block the source of the denial-of-service attack. This mapping is given a score of Partial because it only supports a subset of the sub-techniques (3 of 4) and because the source of the attack would have to be known before rules could be put in place to protect against it."
+        }
+      ]
+    },
+    {
+      "Name": "Inhibit System Recovery",
+      "Id": "T1490",
+      "Tactics": [
+        "Impact"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "IaaS",
+        "Linux",
+        "Network",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may delete or remove built-in data and turn off services designed to aid in the recovery of a corrupted system to prevent recovery.[1][2] This may deny access to available backups and recovery options.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1490/",
+      "Checks": [],
+      "Attributes": [
+        {
+          "GCPService": "Actifio Go",
+          "Category": "Respond",
+          "Value": "Significant",
+          "Comment": "Actifio is a copy data management plaform that virtualizes application data to improve an organizations resiliency and cloud mobility. Actifio allows an organization to take regular backups and provides several methods of restoring applications and/or VM data to a previous state. This provide significant capability to respond to an adversary deleting or removing built-in operating system data and services since an organization could restore system and services back to the latest backup."
+        }
+      ]
+    },
+    {
+      "Name": "Resource Hijacking",
+      "Id": "T1496",
+      "Tactics": [
+        "Impact"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "IaaS",
+        "Linux",
+        "Containers",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may leverage the resources of co-opted systems in order to solve resource intensive problems, which may impact system and/or hosted service availability.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1496/",
+      "Checks": [
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled"
+      ],
+      "Attributes": []
+    },
+    {
+      "Name": "Network Denial of Service",
+      "Id": "T1498",
+      "Tactics": [
+        "Impact"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "Azure AD",
+        "Containers",
+        "Google Workspace",
+        "IaaS",
+        "Linux",
+        "Office 365",
+        "SaaS",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may perform Network Denial of Service (DoS) attacks to degrade or block the availability of targeted resources to users. Network DoS can be performed by exhausting the network bandwidth services rely on. Example resources include specific websites, email services, DNS, and web-based applications. Adversaries have been observed conducting network DoS attacks for political purposes[1] and to support other malicious activities, including distraction[2], hacktivism, and extortion.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1498/",
+      "Checks": [
+        "compute_firewall_rdp_access_from_the_internet_allowed",
+        "compute_firewall_ssh_access_from_the_internet_allowed",
+        "compute_network_not_legacy"
+      ],
+      "Attributes": [
+        {
+          "GCPService": "Cloud Armor",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "Google Cloud Armor provides always-on DDoS protection against network or protocol-based volumetric DDoS attacks. It allows users to allow/deny traffic at the Google Cloud edge, closest to the source of traffic. This prevents unwelcome traffic from consuming resources."
+        },
+        {
+          "GCPService": "Cloud CDN",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "Cloud CDN acts as a proxy between clients and origin servers. Cloud CDN can distribute requests for cacheable content across multiple points-of-presence (POPs), thereby providing a larger set of locations to absorb a DOS attack.However, Cloud CDN doesn't provide protection against DOS attacks for uncached content."
+        },
+        {
+          "GCPService": "Firewalls",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "Google Cloud Firewalls can allow or deny traffic based on the traffic's protocol, destination ports, sources, and destinations. This functionality can be used to block the sources of smaller-scale network denial of service attacks. While Google Cloud Firewalls support both sub-techniques (2 of 2), this mapping is given a score of Minimal because often times it is necessary to block the traffic at an Internet Service Provider or Content Provider Network level."
+        }
+      ]
+    },
+    {
+      "Name": "Account Discovery",
+      "Id": "T1087",
+      "Tactics": [
+        "Discovery"
+      ],
+      "SubTechniques": [
+        "T1087.004 - Cloud Account"
+      ],
+      "Platforms": [
+        "Azure AD",
+        "Google Workspace",
+        "IaaS",
+        "Linux",
+        "Office 365",
+        "SaaS",
+        "Network",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may attempt to get a listing of valid accounts, usernames, or email addresses on a system or within a compromised environment. This information can help adversaries determine which accounts exist, which can aid in follow-on behavior such as brute-forcing, spear-phishing attacks, or account takeovers (e.g., Valid Accounts).",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1087/",
+      "Checks": [
+        "iam_account_access_approval_enabled",
+        "iam_role_kms_enforce_separation_of_duties",
+        "iam_role_sa_enforce_separation_of_duties",
+        "iam_sa_no_administrative_privileges"
+      ],
+      "Attributes": [
+        {
+          "GCPService": "Chronicle",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "Chronicle is able to trigger an alert based off command line arguments and suspicious system processes that could indicate adversary's account discovery techniques.This technique was scored as minimal based on low or uncertain detection coverage factor.https://github.com/chronicle/detection-rules/blob/783e0e5947774785db1c55041b70176deeca6f46/soc_prime_rules/threat_hunting/windows/account_discovery_activity_detector__sysmon_behavior.yaral"
+        },
+        {
+          "GCPService": "Chronicle",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "Chronicle is able to trigger an alert based off command line arguments and suspicious system processes that could indicate adversary's account discovery techniques (e.g., \"net user /domain\", \"C:\\Windows\\System32\net.exe\", \"C:\\Windows\\System32\\query.exe).This technique was scored as minimal based on low or uncertain detection coverage factor.https://github.com/chronicle/detection-rules/blob/783e0e5947774785db1c55041b70176deeca6f46/soc_prime_rules/threat_hunting/windows/account_discovery_activity_detector__sysmon_behavior.yaral"
+        },
+        {
+          "GCPService": "Identity and Access Management",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "This control protects against adversaries gaining access to accounts within a specific environment or determining which accounts exists to follow on with malicious behavior. The usage of GCP IAM enables admins to grant access to cloud resources at fine-grained levels, possibly preventing adversaries of malicious use of cloud accounts and gaining access to them.  This control receives a minimal score since it only covers one of the few sub-techniques."
+        },
+        {
+          "GCPService": "Identity and Access Management",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "This control can be used to implement the least-privilege principle for account management and thereby limit the accounts that can be used for account discovery. This control receives a minimal score since it only covers one of the few sub-techniques."
+        },
+        {
+          "GCPService": "IdentityPlatform",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "Identity Platform is a customer identity and access management (CIAM) platform that helps organizations add identity and access management functionality to their applications, protect user accounts, and scale with confidence on Google Cloud. With this, permissions are limited to discover cloud accounts in accordance with least privilege and adversaries may be prevented from getting access to a listing of domain accounts."
+        },
+        {
+          "GCPService": "IdentityPlatform",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "Identity Platform is a customer identity and access management (CIAM) platform that helps organizations add identity and access management functionality to their applications, protect user accounts, and scale with confidence on Google Cloud. With this, permissions are limited to discover cloud accounts in accordance with least privilege and adversaries may be prevented from getting access to a listing of domain accounts."
+        },
+        {
+          "GCPService": "IdentityPlatform",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "Identity Platform is a customer identity and access management (CIAM) platform that helps organizations add identity and access management functionality to their applications, protect user accounts, and scale with confidence on Google Cloud. With this, permissions are limited to discover cloud accounts in accordance with least privilege and adversaries may be prevented from getting access to a listing of cloud accounts."
+        },
+        {
+          "GCPService": "Policy Intelligence",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "This control can be used to limit permissions to discover user accounts in accordance with least privilege principles and thereby limits the accounts that can be used for account discovery."
+        },
+        {
+          "GCPService": "Policy Intelligence",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "This control can be used to limit permissions to discover cloud accounts in accordance with least privilege principles and thereby limits the accounts that can be used for account discovery."
+        },
+        {
+          "GCPService": "ResourceManager",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "Adversaries may attempt to get a listing of cloud accounts that are created and configured by an organization or admin. IAM audit logging in GCP can be used to determine roles and permissions, along with routinely checking user permissions to ensure only the expected users have the ability to list IAM identities or otherwise discover cloud accounts."
+        },
+        {
+          "GCPService": "ResourceManager",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "Adversaries may attempt to get a listing of cloud accounts that are created and configured by an organization or admin. IAM audit logging in GCP can be used to determine roles and permissions, along with routinely checking user permissions to ensure only the expected users have the ability to list IAM identities or otherwise discover cloud accounts."
+        },
+        {
+          "GCPService": "ResourceManager",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "This control may mitigate adversaries that attempt to get a listing of cloud accounts, such as use of calls to cloud APIs that perform account discovery."
+        }
+      ]
+    },
+    {
+      "Name": "Cloud Infrastructure Discovery",
+      "Id": "T1580",
+      "Tactics": [
+        "Discovery"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "IaaS"
+      ],
+      "Description": "An adversary may attempt to discover infrastructure and resources that are available within an infrastructure-as-a-service (IaaS) environment. This includes compute service resources such as instances, virtual machines, and snapshots as well as resources of other services including the storage and database services.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1580/",
+      "Checks": [
+        "iam_account_access_approval_enabled",
+        "iam_cloud_asset_inventory_enabled",
+        "iam_no_service_roles_at_project_level",
+        "iam_role_kms_enforce_separation_of_duties",
+        "iam_role_sa_enforce_separation_of_duties",
+        "iam_sa_no_administrative_privileges",
+        "iam_sa_no_user_managed_keys"
+      ],
+      "Attributes": [
+        {
+          "GCPService": "IdentityPlatform",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "Identity Platform is a customer identity and access management (CIAM) platform that helps organizations add identity and access management functionality to their applications, protect user accounts, and scale with confidence on Google Cloud. With this, permissions are limited to discover cloud accounts in accordance with least privilege."
+        },
+        {
+          "GCPService": "Policy Intelligence",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "IAM Recommender helps admins remove unwanted access to GCP resources by using machine learning to make smart access control recommendations. With Recommender, security teams can automatically detect overly permissive access and rightsize them based on similar users in the organization and their access patterns. This control may mitigate adversaries that try to enumerate users access keys through VM or snapshots."
+        },
+        {
+          "GCPService": "ResourceManager",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "GCP allows configuration of account policies to enable logging and IAM permissions and roles that may detect compromised user attempts to discover infrastructure and resources."
+        },
+        {
+          "GCPService": "ResourceManager",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "Resource Manager can easily modify your Cloud Identity and Access Management policies for your organization and folders, and the changes will apply across all the projects and resources. Create and manage IAM access control policies for your organization and projects. This control may prevent adversaries that try to discover resources by placing a limit on discovery of these resources with least privilege."
+        }
+      ]
+    },
+    {
+      "Name": "Cloud Service Dashboard",
+      "Id": "T1538",
+      "Tactics": [
+        "Discovery"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "Azure AD",
+        "Google Workspace",
+        "IaaS",
+        "Office 365"
+      ],
+      "Description": "An adversary may use a cloud service dashboard GUI with stolen credentials to gain useful information from an operational cloud environment, such as specific services, resources, and features. For example, the GCP Command Center can be used to view all assets, findings of potential security risks, and to run additional queries, such as finding public IP addresses and open ports.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1538/",
+      "Checks": [
+        "iam_account_access_approval_enabled",
+        "iam_no_service_roles_at_project_level",
+        "iam_role_kms_enforce_separation_of_duties",
+        "iam_role_sa_enforce_separation_of_duties",
+        "iam_sa_no_administrative_privileges",
+        "iam_sa_no_user_managed_keys"
+      ],
+      "Attributes": [
+        {
+          "GCPService": "Policy Intelligence",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "This control may limit the number of users that have privileges to discover cloud infrastructure and may limit the discovery value of the dashboard in the event of a compromised account."
+        }
+      ]
+    },
+    {
+      "Name": "Cloud Service Discovery",
+      "Id": "T1526",
+      "Tactics": [
+        "Discovery"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "Azure AD",
+        "Google Workspace",
+        "IaaS",
+        "Office 365",
+        "SaaS"
+      ],
+      "Description": "An adversary may attempt to enumerate the cloud services running on a system after gaining access. These methods can differ from platform-as-a-service (PaaS), to infrastructure-as-a-service (IaaS), or software-as-a-service (SaaS). Many services exist throughout the various cloud providers and can include Continuous Integration and Continuous Delivery (CI/CD), Lambda Functions, Azure AD, etc. They may also include security services, such as AWS GuardDuty and Microsoft Defender for Cloud, and logging services, such as AWS CloudTrail and Google Cloud Audit Logs.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1526/",
+      "Checks": [],
+      "Attributes": []
+    },
+    {
+      "Name": "Cloud Storage Object Discovery",
+      "Id": "T1619",
+      "Tactics": [
+        "Discovery"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "IaaS"
+      ],
+      "Description": "Adversaries may enumerate objects in cloud storage infrastructure. Adversaries may use this information during automated discovery to shape follow-on behaviors, including requesting all or specific objects from cloud storage. Similar to File and Directory Discovery on a local host, after identifying available storage services (i.e. Cloud Infrastructure Discovery) adversaries may access the contents/objects stored in cloud infrastructure.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1619/",
+      "Checks": [],
+      "Attributes": [
+        {
+          "GCPService": "VPC Service Controls",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "This control may mitigate against discovery of cloud storage objects. This control is not able to protect metadata, such as cloud storage bucket names but can protect against discovery of the contents of a storage bucket."
+        }
+      ]
+    },
+    {
+      "Name": "Network Service Discovery",
+      "Id": "T1046",
+      "Tactics": [
+        "Discovery"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "Containers",
+        "IaaS",
+        "Linux",
+        "Network",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may attempt to get a listing of services running on remote hosts and local network infrastructure devices, including those that may be vulnerable to remote software exploitation. Common methods to acquire this information include port and/or vulnerability scans using tools that are brought onto a system.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1046/",
+      "Checks": [
+        "compute_firewall_rdp_access_from_the_internet_allowed",
+        "compute_firewall_ssh_access_from_the_internet_allowed",
+        "compute_network_default_in_use",
+        "compute_network_dns_logging_enabled",
+        "compute_network_not_legacy"
+      ],
+      "Attributes": [
+        {
+          "GCPService": "Cloud Armor",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "This control typically filters external network traffic and therefore can be effective for preventing external network service scanning. Network service scanning originating from inside the trusted network is not mitigated."
+        },
+        {
+          "GCPService": "Firewalls",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "Google Cloud Firewalls can allow or deny traffic based on the traffic's protocol, destination ports, sources, and destinations. This functionality can be used to restrict access to the endpoints within the virtual private cloud and protect against network service scanning. This mapping is given a score of Partial because it only protects against network service scanning attacks that originate from outside the firewall and not from within network protected by the firewall."
+        },
+        {
+          "GCPService": "Virtual Private Cloud",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "VPC security perimeters can limit the impact from active scanning and lateral movement techniques used to exploit the target environment."
+        }
+      ]
+    },
+    {
+      "Name": "Password Policy Discovery",
+      "Id": "T1201",
+      "Tactics": [
+        "Discovery"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "IaaS",
+        "Linux",
+        "Network",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may attempt to access detailed information about the password policy used within an enterprise network or cloud environment. Password policies are a way to enforce complex passwords that are difficult to guess or crack through Brute Force. This information may help the adversary to create a list of common passwords and launch dictionary and/or brute force attacks which adheres to the policy (e.g. if the minimum password length should be 8, then not trying passwords such as 'pass123'; not checking for more than 3-4 passwords per account if the lockout is set to 6 as to not lock out accounts).",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1201/",
+      "Checks": [],
+      "Attributes": [
+        {
+          "GCPService": "Microsoft Defender for Identity",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "This control's \"Active Directory attributes reconnaissance (LDAP) (external ID 2210)\" alert may be able to detect this operation. There are statements in the documentation for the alert, such as: \"Active Directory LDAP reconnaissance is used by attackers to gain critical information about the domain environment. This information can help attackers map the domain structure ...\", that may indicate support for detecting this technique. The level of detection though is unknown and therefore a conservative assessment of a Minimal score is assigned."
+        }
+      ]
+    },
+    {
+      "Name": "System Network Connections Discovery",
+      "Id": "T1049",
+      "Tactics": [
+        "Discovery"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "IaaS",
+        "Linux",
+        "Network",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may attempt to get a listing of network connections to or from the compromised system they are currently accessing or from remote systems by querying for information over the network.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1049/",
+      "Checks": [
+        "logging_sink_created",
+        "compute_instance_shielded_vm_enabled"
+      ],
+      "Attributes": [
+        {
+          "GCPService": "Chronicle",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "Chronicle is able to trigger an alert based off command-line arguments that could indicate adversary's attempting to get information about network connections (e.g., \"net config\", \"net use\", \"net file\").This technique was scored as minimal based on low or uncertain detection coverage factor.https://github.com/chronicle/detection-rules/blob/783e0e5947774785db1c55041b70176deeca6f46/soc_prime_rules/threat_hunting/windows/possible_system_network_connections_discovery__sysmon_windows_logs.yaral"
+        }
+      ]
+    },
+    {
+      "Name": "System Location Discovery",
+      "Id": "T1614",
+      "Tactics": [
+        "Discovery"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "IaaS",
+        "Linux",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may gather information in an attempt to calculate the geographical location of a victim host. Adversaries may use the information from System Location Discovery during automated discovery to shape follow-on behaviors, including whether or not the adversary fully infects the target and/or attempts specific actions.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1614/",
+      "Checks": [],
+      "Attributes": []
+    },
+    {
+      "Name": "System Information Discovery",
+      "Id": "T1082",
+      "Tactics": [
+        "Discovery"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "IaaS",
+        "Linux",
+        "Network",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "An adversary may attempt to get detailed information about the operating system and hardware, including version, patches, hotfixes, service packs, and architecture. Adversaries may use the information from System Information Discovery during automated discovery to shape follow-on behaviors, including whether or not the adversary fully infects the target and/or attempts specific actions.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1082/",
+      "Checks": [
+        "compute_instance_shielded_vm_enabled"
+      ],
+      "Attributes": [
+        {
+          "GCPService": "Chronicle",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "Chronicle is able to trigger an alert based on suspicious network behavior seen in malware RAT, such as Netwire activity via WScript or detect the utilization of wmic.exe in order to obtain specific system information.This technique was scored as minimal based on low or uncertain detection coverage factor.https://github.com/chronicle/detection-rules/blob/783e0e5947774785db1c55041b70176deeca6f46/soc_prime_rules/threat_hunting/process_creation/detect_enumeration_via_wmi.yaral"
+        }
+      ]
+    },
+    {
+      "Name": "Software Discovery",
+      "Id": "T1518",
+      "Tactics": [
+        "Discovery"
+      ],
+      "SubTechniques": [
+        "T1518.001 - Security Software Discovery"
+      ],
+      "Platforms": [
+        "Azure AD",
+        "Google Workspace",
+        "IaaS",
+        "Linux",
+        "Office 365",
+        "SaaS",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may attempt to get a listing of software and software versions that are installed on a system or in a cloud environment. Adversaries may use the information from Software Discovery during automated discovery to shape follow-on behaviors, including whether or not the adversary fully infects the target and/or attempts specific actions.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1518/",
+      "Checks": [],
+      "Attributes": []
+    },
+    {
+      "Name": "Permission Groups Discovery",
+      "Id": "T1069",
+      "Tactics": [
+        "Discovery"
+      ],
+      "SubTechniques": [
+        "T1069.003 - Cloud Groups"
+      ],
+      "Platforms": [
+        "Azure AD",
+        "Containers",
+        "Google Workspace",
+        "IaaS",
+        "Linux",
+        "Office 365",
+        "SaaS",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may attempt to discover group and permission settings. This information can help adversaries determine which user accounts and groups are available, the membership of users in particular groups, and which users and groups have elevated permissions.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1069/",
+      "Checks": [
+        "iam_account_access_approval_enabled",
+        "iam_no_service_roles_at_project_level",
+        "iam_role_kms_enforce_separation_of_duties",
+        "iam_role_sa_enforce_separation_of_duties",
+        "iam_sa_no_administrative_privileges",
+        "iam_sa_no_user_managed_keys"
+      ],
+      "Attributes": [
+        {
+          "GCPService": "Identity and Access Management",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "Group permissions and settings are inherited using the IAM roles that are specifically granted to that group by admins. This control provides protection of possible adversaries that may determine which user accounts and groups memberships are available in cloud accounts. Received a score of Minimal because it only covers one of the sub-techniques."
+        }
+      ]
+    }
+  ]
+}

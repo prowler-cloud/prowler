@@ -12,6 +12,7 @@ from prowler.lib.outputs.common_models import FindingOutput
 from prowler.lib.outputs.compliance.mitre_attack.models import (
     MitreAttackAWS,
     MitreAttackAzure,
+    MitreAttackGCP,
 )
 from prowler.lib.outputs.compliance.models import (
     Check_Output_CSV_AWS_CIS,
@@ -86,6 +87,13 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, provi
                     if "cis_" in output_mode:
                         file_descriptor = initialize_file_descriptor(
                             filename, output_mode, Check_Output_CSV_GCP_CIS
+                        )
+                        file_descriptors.update({output_mode: file_descriptor})
+                    elif output_mode == "mitre_attack_gcp":
+                        file_descriptor = initialize_file_descriptor(
+                            filename,
+                            output_mode,
+                            MitreAttackGCP,
                         )
                         file_descriptors.update({output_mode: file_descriptor})
                     else:
@@ -192,14 +200,6 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, provi
                                 Check_Output_CSV_Generic_Compliance,
                             )
                             file_descriptors.update({output_mode: file_descriptor})
-                elif provider.type == "azure":
-                    filename = f"{output_directory}/compliance/{output_filename}_{output_mode}{csv_file_suffix}"
-                    file_descriptor = initialize_file_descriptor(
-                        filename,
-                        output_mode,
-                        Check_Output_CSV_Generic_Compliance,
-                    )
-                    file_descriptors.update({output_mode: file_descriptor})
 
     except Exception as error:
         logger.error(
