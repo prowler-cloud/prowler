@@ -53,7 +53,7 @@ nav:
       - Reporting: tutorials/reporting.md
       - Compliance: tutorials/compliance.md
       - Dashboard: tutorials/dashboard.md
-      - Fixer: tutorials/fixer.md
+      - Fixer (remediations): tutorials/fixer.md
       - Quick Inventory: tutorials/quick-inventory.md
       - Slack Integration: tutorials/integrations.md
       - Configuration File: tutorials/configuration_file.md
