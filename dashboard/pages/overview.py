@@ -1,6 +1,7 @@
 # Standard library imports
 import csv
 import glob
+import json
 import os
 import warnings
 from datetime import datetime, timedelta
@@ -12,7 +13,7 @@ import dash_bootstrap_components as dbc
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-from dash import callback, ctx, dash_table, dcc, html
+from dash import callback, callback_context, ctx, dash_table, dcc, html
 from dash.dependencies import Input, Output
 
 # Config import
@@ -1122,8 +1123,8 @@ def filter_data(
         table_div = []
         index_count = 0
         for item in data_imaginary:
-            index_count += 1
             table_div.append(generate_table(item, index_count))
+            index_count += 1
 
         table = html.Div(table_div)
 
@@ -1281,11 +1282,12 @@ def filter_data(
         )
     ],
 )
-def togle_collapse(n, is_open):
-    ctx = dash.callback_context
-    button_id = ctx.triggered[0]["prop_id"].split(".")[0]
-    index = int(button_id.split('"')[-2])
-    is_open[index] = not is_open[index]
+def toggle_collapse(n_clicks, is_open):
+    n_clicks = n_clicks or 0
+    triggered = callback_context.triggered[0]["prop_id"].split(".")[0]
+    if triggered:
+        idx = json.loads(triggered)["index"]
+        is_open[idx] = not is_open[idx]
     return is_open
 
 
