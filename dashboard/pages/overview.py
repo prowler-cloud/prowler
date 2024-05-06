@@ -948,7 +948,67 @@ def filter_data(
         table_div = []
         index_count = 0
         filtered_data = filtered_data.head(table_row_values)
-        print(filtered_data.columns)
+
+        # For the account_id, we are going to add the provider name
+        if "ACCOUNT_UID" in filtered_data.columns:
+            for account in filtered_data["ACCOUNT_UID"].unique():
+                if "aws" in list(data[data["ACCOUNT_UID"] == account]["PROVIDER"]):
+                    filtered_data.loc[
+                        filtered_data["ACCOUNT_UID"] == account, "ACCOUNT_UID"
+                    ] = (account + " - AWS")
+                if "kubernetes" in list(
+                    data[data["ACCOUNT_UID"] == account]["PROVIDER"]
+                ):
+                    filtered_data.loc[
+                        filtered_data["ACCOUNT_UID"] == account, "ACCOUNT_UID"
+                    ] = (account + " - K8S")
+                if "azure" in list(data[data["ACCOUNT_UID"] == account]["PROVIDER"]):
+                    filtered_data.loc[
+                        filtered_data["ACCOUNT_UID"] == account, "ACCOUNT_UID"
+                    ] = (account + " - AZURE")
+                if "gcp" in list(data[data["ACCOUNT_UID"] == account]["PROVIDER"]):
+                    filtered_data.loc[
+                        filtered_data["ACCOUNT_UID"] == account, "ACCOUNT_UID"
+                    ] = (account + " - GCP")
+
+        table_div.append(
+            html.Div(
+                [
+                    html.Span(
+                        "Check Name",
+                        className="text-center text-prowler-stone-900 uppercase text-xl font-bold",
+                        style={"width": "60%"},
+                    ),
+                    html.Span(
+                        "Severity",
+                        className="text-center text-prowler-stone-900 uppercase text-xl font-bold",
+                        style={"width": "10%"},
+                    ),
+                    html.Span(
+                        "Status",
+                        className="text-center text-prowler-stone-900 uppercase text-xl font-bold",
+                        style={"width": "8%"},
+                    ),
+                    html.Span(
+                        "Region",
+                        className="text-center text-prowler-stone-900 uppercase text-xl font-bold",
+                        style={"width": "10%"},
+                    ),
+                    html.Span(
+                        "Service",
+                        className="text-center text-prowler-stone-900 uppercase text-xl font-bold",
+                        style={"width": "10%"},
+                    ),
+                    html.Span(
+                        "Account ID",
+                        className="text-center text-prowler-stone-900 uppercase text-xl font-bold",
+                        style={"width": "10%"},
+                    ),
+                ],
+                className="grid grid-cols-auto w-full",
+                style={"display": "flex", "justify-content": "space-between"},
+            )
+        )
         for item in filtered_data.to_dict("records"):
             table_div.append(
                 generate_table(
@@ -1132,6 +1192,27 @@ def generate_table(data, index, color_mapping_severity, color_mapping_status):
                             [
                                 dbc.Col(
                                     [
+                                        html.Button(
+                                            html.Img(
+                                                src="assets/images/icons/dropdown.svg",
+                                                className="w-5",
+                                            ),
+                                            id={
+                                                "type": "toggle-collapse",
+                                                "index": index,
+                                            },
+                                            className="btn",
+                                            style={
+                                                "display": "flex",
+                                                "align-items": "center",
+                                                "justify-content": "center",
+                                            },
+                                        ),
+                                    ],
+                                    style={"width": "0.4rem"},
+                                ),
+                                dbc.Col(
+                                    [
                                         html.H5(
                                             data["CHECK_TITLE"],
                                             className="card-title",
@@ -1147,7 +1228,7 @@ def generate_table(data, index, color_mapping_severity, color_mapping_status):
                                             style={
                                                 "background-color": color_mapping_severity[
                                                     data["SEVERITY"]
-                                                ]
+                                                ],
                                             },
                                         ),
                                     ],
@@ -1161,7 +1242,7 @@ def generate_table(data, index, color_mapping_severity, color_mapping_status):
                                             style={
                                                 "background-color": color_mapping_status[
                                                     data["STATUS"]
-                                                ]
+                                                ],
                                             },
                                         ),
                                     ],
@@ -1172,6 +1253,11 @@ def generate_table(data, index, color_mapping_severity, color_mapping_status):
                                         html.Span(
                                             data["REGION"],
                                             className="text-center text-white uppercase text-xs font-bold rounded-lg px-2 py-1",
+                                            style={
+                                                "display": "flex",
+                                                "align-items": "center",
+                                                "justify-content": "center",
+                                            },
                                         ),
                                     ],
                                     width=1,
@@ -1181,28 +1267,25 @@ def generate_table(data, index, color_mapping_severity, color_mapping_status):
                                         html.Span(
                                             data["SERVICE_NAME"],
                                             className="text-center text-white uppercase text-xs font-bold rounded-lg px-2 py-1",
+                                            style={
+                                                "display": "flex",
+                                                "align-items": "center",
+                                                "justify-content": "center",
+                                            },
                                         ),
                                     ],
-                                    width=1,
+                                    style={"width": "1.rem"},
                                 ),
                                 dbc.Col(
                                     [
                                         html.Span(
                                             data["ACCOUNT_UID"],
                                             className="text-center text-white uppercase text-xs font-bold rounded-lg px-2 py-1",
-                                        ),
-                                    ],
-                                    width=1,
-                                ),
-                                dbc.Col(
-                                    [
-                                        html.Button(
-                                            "Details",
-                                            id={
-                                                "type": "toggle-collapse",
-                                                "index": index,
+                                            style={
+                                                "display": "flex",
+                                                "align-items": "center",
+                                                "justify-content": "center",
                                             },
-                                            className="btn btn-primary",
                                         ),
                                     ],
                                     width=1,
@@ -1211,19 +1294,23 @@ def generate_table(data, index, color_mapping_severity, color_mapping_status):
                             align="center",
                             justify="center",
                             className="g-0",
-                            style={"display": "flex-inline"},
+                            # style={"display": "flex"},
                         ),
                     ),
                     dbc.Collapse(
                         dbc.CardBody(
                             [
                                 html.H5("Details", className="card-title"),
-                                html.P("Resource uid: " + data["RESOURCE_UID"]),
-                                html.P("Check id: " + data["CHECK_ID"]),
-                                html.P("Type: " + data["RESOURCE_TYPE"]),
-                                html.P("Details: " + data["RESOURCE_DETAILS"]),
-                                html.P("Risk: " + data["RISK"]),
-                                html.P("Notes: " + data["NOTES"]),
+                                html.P("Resource uid: " + data.get("RESOURCE_UID", "")),
+                                html.P(
+                                    "Finding uid: " + str(data.get("FINDING_UID", ""))
+                                ),
+                                html.P("Check id: " + data.get("CHECK_ID", "")),
+                                html.P("Type: " + data.get("RESOURCE_TYPE", "")),
+                                html.P("Details: " + data.get("DETAILS", "")),
+                                html.P("Risk: " + data.get("RISK", "")),
+                                html.P("Notes: " + data.get("NOTES", "")),
+                                html.P("Provider: " + data.get("PROVIDER", "")),
                                 # html.Table(
                                 #     [
                                 #         html.Thead(
