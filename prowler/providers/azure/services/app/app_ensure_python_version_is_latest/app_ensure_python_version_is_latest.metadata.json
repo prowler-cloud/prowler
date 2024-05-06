@@ -16,7 +16,7 @@
       "CLI": "az webapp config set --resource-group <RESOURCE_GROUP_NAME> --name <APP_NAME> [--linux-fx-version 'PYTHON|3.12']",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/AppService/latest-version-of-python.html",
-      "Terraform": "https://docs.bridgecrew.io/docs/ensure-that-python-version-is-the-latest-if-used-to-run-the-web-app"
+      "Terraform": "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-that-python-version-is-the-latest-if-used-to-run-the-web-app"
     },
     "Recommendation": {
       "Text": "From Azure Portal 1. From Azure Home open the Portal Menu in the top left 2. Go to App Services 3. Click on each App 4. Under Settings section, click on Configuration 5. Click on the General settings pane and ensure that the Major Version and the Minor Version is set to the latest stable version available (Python 3.11, at the time of writing) NOTE: No action is required if Python version is set to Off, as Python is not used by your web app.",

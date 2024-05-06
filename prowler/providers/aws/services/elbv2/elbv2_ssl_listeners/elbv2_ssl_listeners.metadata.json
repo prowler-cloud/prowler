@@ -17,7 +17,7 @@
     "Code": {
       "CLI": "aws elbv2 create-listener --load-balancer-arn <lb_arn> --protocol HTTPS --port 443 --ssl-policy <ssl_policy> --certificates CertificateArn=<certificate_arn>,IsDefault=true",
       "NativeIaC": "",
-      "Other": "https://docs.bridgecrew.io/docs/networking_36#aws-ec2-console",
+      "Other": "https://docs.prowler.com/checks/aws/networking-policies/networking_36#aws-ec2-console",
       "Terraform": ""
     },
     "Recommendation": {

@@ -9,7 +9,7 @@
   "Severity": "low",
   "ResourceType": "AwsCloudFrontDistribution",
   "Description": "Check if Geo restrictions are enabled in CloudFront distributions.",
-  "Risk": "Consider countries where service should not be accessed; by legal or compliance requirements. Additionally if not restricted the attack vector is increased.",
+  "Risk": "Consider countries where service should not be accessed, by legal or compliance requirements. Additionally if not restricted the attack vector is increased.",
   "RelatedUrl": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/georestrictions.html",
   "Remediation": {
     "Code": {
@@ -19,7 +19,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "If possible; define and enable Geo restrictions for this service.",
+      "Text": "If possible, define and enable Geo restrictions for this service.",
       "Url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/georestrictions.html"
     }
   },

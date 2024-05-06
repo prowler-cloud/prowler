@@ -18,9 +18,9 @@
   "Remediation": {
     "Code": {
       "CLI": "aws efs create-file-system --creation-token $(uuidgen) --performance-mode generalPurpose --encrypted --kms-key-id user/customer-managedCMKalias",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/general_17#cloudformation",
+      "NativeIaC": "https://docs.prowler.com/checks/aws/general-policies/general_17#cloudformation",
       "Other": "",
-      "Terraform": "https://docs.bridgecrew.io/docs/general_17#terraform"
+      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/general_17#terraform"
     },
     "Recommendation": {
       "Text": "Ensure that encryption at rest is enabled for EFS file systems. Encryption at rest can only be enabled during the file system creation.",

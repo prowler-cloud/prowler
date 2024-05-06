@@ -263,10 +263,11 @@ def display_data(
     # Rename the column PROJECTID to ACCOUNTID for GCP
     if data.columns.str.contains("PROJECTID").any():
         data.rename(columns={"PROJECTID": "ACCOUNTID"}, inplace=True)
-
+        data["REGION"] = "-"
     # Rename the column SUBSCRIPTIONID to ACCOUNTID for Azure
     if data.columns.str.contains("SUBSCRIPTIONID").any():
         data.rename(columns={"SUBSCRIPTIONID": "ACCOUNTID"}, inplace=True)
+        data["REGION"] = "-"
     # Handle v3 azure cis compliance
     if data.columns.str.contains("SUBSCRIPTION").any():
         data.rename(columns={"SUBSCRIPTION": "ACCOUNTID"}, inplace=True)
@@ -433,6 +434,12 @@ def display_data(
         ):
             pie_2 = get_bar_graph(df, "REQUIREMENTS_ATTRIBUTES_SERVICE")
             current_filter = "services"
+        elif (
+            "REQUIREMENTS_ID" in df.columns
+            and not df["REQUIREMENTS_ID"].isnull().values.any()
+        ):
+            pie_2 = get_bar_graph(df, "REQUIREMENTS_ID")
+            current_filter = "techniques"
         else:
             fig = px.pie()
             fig.update_layout(

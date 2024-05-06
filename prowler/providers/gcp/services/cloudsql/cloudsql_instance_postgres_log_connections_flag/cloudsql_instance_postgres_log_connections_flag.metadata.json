@@ -16,7 +16,7 @@
       "CLI": "gcloud sql instances patch INSTANCE_NAME --database-flags log_connections=on",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudSQL/enable-log-connections-flag.html",
-      "Terraform": "https://docs.bridgecrew.io/docs/bc_gcp_sql_3#terraform"
+      "Terraform": "https://docs.prowler.com/checks/gcp/cloud-sql-policies/bc_gcp_sql_3#terraform"
     },
     "Recommendation": {
       "Text": "PostgreSQL does not log attempted connections by default. Enabling the log_connections setting will create log entries for each attempted connection as well as successful completion of client authentication which can be useful in troubleshooting issues and to determine any unusual connection attempts to the server.",

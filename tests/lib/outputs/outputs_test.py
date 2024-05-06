@@ -157,10 +157,15 @@ class TestOutputs:
 
         assert generate_csv_fields(FindingOutput) == expected
 
-    def test_unroll_list(self):
+    def test_unroll_list_no_separator(self):
         list = ["test", "test1", "test2"]
 
         assert unroll_list(list) == "test | test1 | test2"
+
+    def test_unroll_list_separator(self):
+        list = ["test", "test1", "test2"]
+
+        assert unroll_list(list, ",") == "test, test1, test2"
 
     def test_unroll_tags(self):
         dict_list = [

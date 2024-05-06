@@ -1,5 +1,6 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.efs.efs_client import efs_client
+from prowler.providers.aws.services.efs.lib.lib import is_public_access_allowed
 
 
 class efs_not_publicly_accessible(Check):
@@ -12,30 +13,17 @@ class efs_not_publicly_accessible(Check):
             report.resource_arn = fs.arn
             report.resource_tags = fs.tags
             report.status = "PASS"
-            report.status_extended = (
-                f"EFS {fs.id} has a policy which does not allow access to everyone."
-            )
+            report.status_extended = f"EFS {fs.id} has a policy which does not allow access to any client within the VPC."
             if not fs.policy:
                 report.status = "FAIL"
-                report.status_extended = f"EFS {fs.id} doesn't have any policy which means it grants full access to any client."
+                report.status_extended = f"EFS {fs.id} doesn't have any policy which means it grants full access to any client within the VPC."
             else:
-                for statement in fs.policy["Statement"]:
-                    if statement["Effect"] == "Allow":
-                        if (
-                            ("Principal" in statement and statement["Principal"] == "*")
-                            or (
-                                "Principal" in statement
-                                and "AWS" in statement["Principal"]
-                                and statement["Principal"]["AWS"] == "*"
-                            )
-                            or (
-                                "CanonicalUser" in statement["Principal"]
-                                and statement["Principal"]["CanonicalUser"] == "*"
-                            )
-                        ):
-                            report.status = "FAIL"
-                            report.status_extended = f"EFS {fs.id} has a policy which allows access to everyone."
-                            break
+                for statement in fs.policy.get("Statement", []):
+                    if statement.get("Effect") == "Allow" and is_public_access_allowed(
+                        statement
+                    ):
+                        report.status = "FAIL"
+                        report.status_extended = f"EFS {fs.id} has a policy which allows access to any client within the VPC."
+                        break
             findings.append(report)
-
         return findings

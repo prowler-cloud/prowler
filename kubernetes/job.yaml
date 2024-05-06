@@ -1,13 +1,28 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: prowler-ns
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: prowler-sa
+  namespace: prowler-ns
+
+---
 apiVersion: batch/v1
 kind: Job
 metadata:
   name: prowler
+  namespace: prowler-ns
 spec:
   template:
     metadata:
       labels:
         app: prowler
     spec:
+      serviceAccountName: prowler-sa
       containers:
       - name: prowler
         image: toniblyx/prowler:stable

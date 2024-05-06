@@ -14,7 +14,7 @@
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-clusterroles-that-grant-permissions-to-approve-certificatesigningrequests-are-minimized",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-clusterroles-that-grant-permissions-to-approve-certificatesigningrequests-are-minimized",
       "Other": "",
       "Terraform": ""
     },

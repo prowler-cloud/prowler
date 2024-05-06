@@ -99,3 +99,39 @@ class Test_cloudwatch_cross_account_sharing_disabled:
                 == "CloudWatch has allowed cross-account sharing."
             )
             assert result[0].resource_id == "CloudWatch-CrossAccountSharingRole"
+
+    @mock_aws
+    def test_access_denied(self):
+        from prowler.providers.aws.services.iam.iam_service import IAM
+
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        )
+
+        from prowler.providers.common.models import Audit_Metadata
+
+        aws_provider.audit_metadata = Audit_Metadata(
+            services_scanned=0,
+            # We need to set this check to call __describe_log_groups__
+            expected_checks=["cloudwatch_log_group_no_secrets_in_logs"],
+            completed_checks=0,
+            audit_progress=0,
+        )
+
+        with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.cloudwatch.cloudwatch_cross_account_sharing_disabled.cloudwatch_cross_account_sharing_disabled.iam_client",
+            new=IAM(aws_provider),
+        ) as iam_client:
+            # Test Check
+            from prowler.providers.aws.services.cloudwatch.cloudwatch_cross_account_sharing_disabled.cloudwatch_cross_account_sharing_disabled import (
+                cloudwatch_cross_account_sharing_disabled,
+            )
+
+            iam_client.roles = None
+            check = cloudwatch_cross_account_sharing_disabled()
+            result = check.execute()
+
+            assert len(result) == 0

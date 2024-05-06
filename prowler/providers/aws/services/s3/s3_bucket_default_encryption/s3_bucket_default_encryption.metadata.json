@@ -16,9 +16,9 @@
   "Remediation": {
     "Code": {
       "CLI": "aws s3api put-bucket-encryption --bucket <bucket_name> --server-side-encryption-configuration '{'Rules': [{'ApplyServerSideEncryptionByDefault': {'SSEAlgorithm': 'AES256'}}]}'",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/s3_14-data-encrypted-at-rest#cloudformation",
+      "NativeIaC": "https://docs.prowler.com/checks/aws/s3-policies/s3_14-data-encrypted-at-rest#cloudformation",
       "Other": "",
-      "Terraform": "https://docs.bridgecrew.io/docs/s3_14-data-encrypted-at-rest#terraform"
+      "Terraform": "https://docs.prowler.com/checks/aws/s3-policies/s3_14-data-encrypted-at-rest#terraform"
     },
     "Recommendation": {
       "Text": "Ensure that S3 buckets have encryption at rest enabled.",

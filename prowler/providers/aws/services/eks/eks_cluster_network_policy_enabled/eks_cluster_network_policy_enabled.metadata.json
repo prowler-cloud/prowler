@@ -19,7 +19,7 @@
       "CLI": "",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/EKS/security-groups.html",
-      "Terraform": "https://docs.bridgecrew.io/docs/bc_aws_kubernetes_1#terraform"
+      "Terraform": "https://docs.prowler.com/checks/aws/kubernetes-policies-1/bc_aws_kubernetes_1#terraform"
     },
     "Recommendation": {
       "Text": "Enable and configure Network Policy to enhance network security within the EKS cluster.",

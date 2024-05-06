@@ -711,6 +711,12 @@ class Test_Parser:
         parsed = self.parser.parse(command)
         assert parsed.list_fixer
 
+    def test_list_checks_parser_list_remediations(self):
+        argument = "--list-remediations"
+        command = [prowler_command, argument]
+        parsed = self.parser.parse(command)
+        assert parsed.list_fixer
+
     def test_list_checks_parser_list_compliance_requirements_no_arguments(self):
         argument = "--list-compliance-requirements"
         command = [prowler_command, argument]

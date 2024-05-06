@@ -561,3 +561,51 @@ class Test_cloudwatch_changes_to_network_acls_alarm_configured:
                 == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:metric-filter/test-filter"
             )
             assert result[0].region == AWS_REGION_US_EAST_1
+
+    @mock_aws
+    def test_access_denied(self):
+        from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
+            Cloudtrail,
+        )
+        from prowler.providers.aws.services.cloudwatch.cloudwatch_service import (
+            CloudWatch,
+            Logs,
+        )
+
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
+        )
+
+        from prowler.providers.common.models import Audit_Metadata
+
+        aws_provider.audit_metadata = Audit_Metadata(
+            services_scanned=0,
+            # We need to set this check to call __describe_log_groups__
+            expected_checks=["cloudwatch_log_group_no_secrets_in_logs"],
+            completed_checks=0,
+            audit_progress=0,
+        )
+
+        with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_changes_to_network_acls_alarm_configured.logs_client",
+            new=Logs(aws_provider),
+        ), mock.patch(
+            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_client",
+            new=CloudWatch(aws_provider),
+        ), mock.patch(
+            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_changes_to_network_acls_alarm_configured.cloudtrail_client",
+            new=Cloudtrail(aws_provider),
+        ) as cloudtrail_client:
+            # Test Check
+            from prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_changes_to_network_acls_alarm_configured import (
+                cloudwatch_changes_to_network_acls_alarm_configured,
+            )
+
+            cloudtrail_client.trails = None
+            check = cloudwatch_changes_to_network_acls_alarm_configured()
+            result = check.execute()
+
+            assert len(result) == 0

@@ -17,8 +17,8 @@
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "https://docs.bridgecrew.io/docs/logging_9-enable-vpc-flow-logging#aws-console",
-      "Terraform": "https://docs.bridgecrew.io/docs/logging_9-enable-vpc-flow-logging#terraform"
+      "Other": "https://docs.prowler.com/checks/aws/logging-policies/logging_9-enable-vpc-flow-logging#aws-console",
+      "Terraform": "https://docs.prowler.com/checks/aws/logging-policies/logging_9-enable-vpc-flow-logging#terraform"
     },
     "Recommendation": {
       "Text": "It is recommended that VPC Flow Logs be enabled for packet Rejects for VPCs.",

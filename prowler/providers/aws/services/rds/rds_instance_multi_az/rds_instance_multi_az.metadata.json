@@ -14,9 +14,9 @@
   "Remediation": {
     "Code": {
       "CLI": "aws rds create-db-instance --db-instance-identifier <db_instance_id> --multi-az true",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/general_73#cloudformation",
+      "NativeIaC": "https://docs.prowler.com/checks/aws/general-policies/general_73#cloudformation",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/rds-multi-az.html",
-      "Terraform": "https://docs.bridgecrew.io/docs/general_73#terraform"
+      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/general_73#terraform"
     },
     "Recommendation": {
       "Text": "Enable multi-AZ deployment for production databases.",

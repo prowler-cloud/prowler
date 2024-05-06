@@ -14,7 +14,7 @@
   "Remediation": {
     "Code": {
       "CLI": "--peer-auto-tls=false",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-peer-auto-tls-argument-is-not-set-to-true",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-peer-auto-tls-argument-is-not-set-to-true",
       "Other": "",
       "Terraform": ""
     },

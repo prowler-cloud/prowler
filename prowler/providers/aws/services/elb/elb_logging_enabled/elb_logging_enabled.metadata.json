@@ -16,9 +16,9 @@
   "Remediation": {
     "Code": {
       "CLI": "aws elb modify-load-balancer-attributes --load-balancer-name <lb_name> --load-balancer-attributes '{AccessLog:{Enabled:true,EmitInterval:60,S3BucketName:<bucket_name>}}'",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/bc_aws_logging_23#cloudformation",
+      "NativeIaC": "https://docs.prowler.com/checks/aws/logging-policies/bc_aws_logging_23#cloudformation",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ELB/elb-access-log.html",
-      "Terraform": "https://docs.bridgecrew.io/docs/bc_aws_logging_23#terraform"
+      "Terraform": "https://docs.prowler.com/checks/aws/logging-policies/bc_aws_logging_23#terraform"
     },
     "Recommendation": {
       "Text": "Enable ELB logging, create a log lifecycle and define use cases.",

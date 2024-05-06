@@ -13,10 +13,10 @@
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
-      "CLI": "https://docs.bridgecrew.io/docs/bc_gcp_iam_4#cli-command",
+      "CLI": "https://docs.prowler.com/checks/gcp/google-cloud-iam-policies/bc_gcp_iam_4#cli-command",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudIAM/restrict-admin-access-for-service-accounts.html",
-      "Terraform": "https://docs.bridgecrew.io/docs/bc_gcp_iam_4#terraform"
+      "Terraform": "https://docs.prowler.com/checks/gcp/google-cloud-iam-policies/bc_gcp_iam_4#terraform"
     },
     "Recommendation": {
       "Text": "Ensure that your Google Cloud user-managed service accounts are not using privileged (administrator) roles, in order to implement the principle of least privilege and prevent any accidental or intentional modifications that may lead to data leaks and/or data loss.",

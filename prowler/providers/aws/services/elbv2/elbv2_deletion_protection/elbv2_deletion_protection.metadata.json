@@ -18,7 +18,7 @@
       "CLI": "aws elbv2 modify-load-balancer-attributes --load-balancer-arn <lb_arn> --attributes Key=deletion_protection.enabled,Value=true",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ELBv2/deletion-protection.html",
-      "Terraform": "https://docs.bridgecrew.io/docs/bc_aws_networking_62#terraform"
+      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/bc_aws_networking_62#terraform"
     },
     "Recommendation": {
       "Text": "Enable deletion protection attribute, this is not enabled by default.",

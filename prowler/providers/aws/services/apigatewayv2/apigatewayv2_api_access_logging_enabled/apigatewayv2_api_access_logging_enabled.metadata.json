@@ -20,8 +20,8 @@
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "https://docs.bridgecrew.io/docs/bc_aws_logging_30#aws-console",
-      "Terraform": "https://docs.bridgecrew.io/docs/bc_aws_logging_30#cloudformation"
+      "Other": "https://docs.prowler.com/checks/aws/logging-policies/bc_aws_logging_30#aws-console",
+      "Terraform": "https://docs.prowler.com/checks/aws/logging-policies/bc_aws_logging_30#cloudformation"
     },
     "Recommendation": {
       "Text": "Monitoring is an important part of maintaining the reliability, availability and performance of API Gateway and your AWS solutions. You should collect monitoring data from all of the parts of your AWS solution. CloudTrail provides a record of actions taken by a user, role, or an AWS service in API Gateway. Using the information collected by CloudTrail, you can determine the request that was made to API Gateway, the IP address from which the request was made, who made the request, etc.",

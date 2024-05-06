@@ -18,12 +18,12 @@
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/elasticsearch_6#fix---builtime",
-      "Other": "https://docs.bridgecrew.io/docs/elasticsearch_6#aws-console",
+      "NativeIaC": "https://docs.prowler.com/checks/aws/elasticsearch-policies/elasticsearch_6#fix---builtime",
+      "Other": "https://docs.prowler.com/checks/aws/elasticsearch-policies/elasticsearch_6#aws-console",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "When creating ES Domains; enable 'Require HTTPS fo all traffic to the domain'",
+      "Text": "When creating ES Domains, enable 'Require HTTPS fo all traffic to the domain'",
       "Url": "https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-createupdatedomains.html"
     }
   },

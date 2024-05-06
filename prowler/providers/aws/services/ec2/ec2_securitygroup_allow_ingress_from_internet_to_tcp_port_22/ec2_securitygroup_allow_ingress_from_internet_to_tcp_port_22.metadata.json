@@ -15,10 +15,10 @@
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
-      "CLI": "https://docs.bridgecrew.io/docs/networking_1-port-security#cli-command",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/networking_1-port-security#cloudformation",
-      "Other": "https://docs.bridgecrew.io/docs/networking_1-port-security#aws-console",
-      "Terraform": "https://docs.bridgecrew.io/docs/networking_1-port-security#terraform"
+      "CLI": "https://docs.prowler.com/checks/aws/networking-policies/networking_1-port-security#cli-command",
+      "NativeIaC": "https://docs.prowler.com/checks/aws/networking-policies/networking_1-port-security#cloudformation",
+      "Other": "https://docs.prowler.com/checks/aws/networking-policies/networking_1-port-security#aws-console",
+      "Terraform": "https://docs.prowler.com/checks/aws/networking-policies/networking_1-port-security#terraform"
     },
     "Recommendation": {
       "Text": "Use a Zero Trust approach. Narrow ingress traffic as much as possible. Consider north-south as well as east-west traffic.",

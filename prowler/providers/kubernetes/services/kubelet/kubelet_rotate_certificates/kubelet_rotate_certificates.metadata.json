@@ -14,7 +14,7 @@
   "Remediation": {
     "Code": {
       "CLI": "--rotate-certificates=true",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-rotate-certificates-argument-is-not-set-to-false",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-rotate-certificates-argument-is-not-set-to-false",
       "Other": "",
       "Terraform": ""
     },

@@ -14,7 +14,7 @@
   "Remediation": {
     "Code": {
       "CLI": "--tls-cert-file=<path/to/tls-certificate-file> --tls-private-key-file=<path/to/tls-key-file>",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-tls-cert-file-and-tls-private-key-file-arguments-are-set-as-appropriate",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-tls-cert-file-and-tls-private-key-file-arguments-are-set-as-appropriate",
       "Other": "",
       "Terraform": ""
     },

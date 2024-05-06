@@ -16,7 +16,7 @@
       "CLI": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/SageMaker/notebook-direct-internet-access.html",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/SageMaker/notebook-direct-internet-access.html",
-      "Terraform": "https://docs.bridgecrew.io/docs/ensure-that-direct-internet-access-is-disabled-for-an-amazon-sagemaker-notebook-instance#fix---buildtime"
+      "Terraform": "https://docs.prowler.com/checks/aws/networking-policies/ensure-that-direct-internet-access-is-disabled-for-an-amazon-sagemaker-notebook-instance#fix---buildtime"
     },
     "Recommendation": {
       "Text": "Restrict which traffic can access by launching Studio in a Virtual Private Cloud (VPC) of your choosing.",

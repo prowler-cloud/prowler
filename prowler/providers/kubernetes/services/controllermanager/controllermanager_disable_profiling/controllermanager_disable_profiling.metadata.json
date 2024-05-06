@@ -14,7 +14,7 @@
   "Remediation": {
     "Code": {
       "CLI": "--profiling=false",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-profiling-argument-is-set-to-false",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-profiling-argument-is-set-to-false",
       "Other": "",
       "Terraform": ""
     },

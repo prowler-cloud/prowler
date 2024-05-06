@@ -15,7 +15,7 @@
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
-      "CLI": "https://docs.bridgecrew.io/docs/networking_5#cli-command",
+      "CLI": "https://docs.prowler.com/checks/aws/networking-policies/networking_5#cli-command",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/VPC/vpc-peering-access.html#",
       "Terraform": ""

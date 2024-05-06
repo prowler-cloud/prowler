@@ -261,7 +261,7 @@ class EC2(AWSService):
                         id=interface["NetworkInterfaceId"],
                         association=interface.get("Association", {}),
                         attachment=interface.get("Attachment", {}),
-                        private_ip=interface["PrivateIpAddress"],
+                        private_ip=interface.get("PrivateIpAddress"),
                         type=interface["InterfaceType"],
                         subnet_id=interface["SubnetId"],
                         vpc_id=interface["VpcId"],
@@ -524,7 +524,7 @@ class NetworkInterface(BaseModel):
     id: str
     association: dict
     attachment: dict
-    private_ip: str
+    private_ip: Optional[str]
     type: str
     subnet_id: str
     vpc_id: str

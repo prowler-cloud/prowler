@@ -16,7 +16,7 @@
       "CLI": "",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/Dataproc/enable-encryption-with-cmks-for-dataproc-clusters.html",
-      "Terraform": "https://docs.bridgecrew.io/docs/ensure-gcp-dataproc-cluster-is-encrypted-with-customer-supplied-encryption-keys-cseks#terraform"
+      "Terraform": "https://docs.prowler.com/checks/gcp/google-cloud-general-policies/ensure-gcp-dataproc-cluster-is-encrypted-with-customer-supplied-encryption-keys-cseks#terraform"
     },
     "Recommendation": {
       "Text": "Ensure that your Google Cloud Dataproc clusters on Compute Engine are encrypted with Customer-Managed Keys (CMKs) in order to control the cluster data encryption/decryption process. You can create and manage your own Customer-Managed Keys (CMKs) with Cloud Key Management Service (Cloud KMS). Cloud KMS provides secure and efficient encryption key management, controlled key rotation, and revocation mechanisms.",

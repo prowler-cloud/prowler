@@ -16,7 +16,7 @@
       "CLI": "",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/VirtualMachines/sse-boot-disk-cmk.html#",
-      "Terraform": "https://docs.bridgecrew.io/docs/bc_azr_general_1#terraform"
+      "Terraform": "https://docs.prowler.com/checks/azure/azure-general-policies/bc_azr_general_1#terraform"
     },
     "Recommendation": {
       "Text": "Note: Disks must be detached from VMs to have encryption changed. 1. Go to Virtual machines 2. For each virtual machine, go to Settings 3. Click on Disks 4. Click the ellipsis (...), then click Detach to detach the disk from the VM 5. Now search for Disks and locate the unattached disk 6. Click the disk then select Encryption 7. Change your encryption type, then select your encryption set 8. Click Save 9. Go back to the VM and re-attach the disk",

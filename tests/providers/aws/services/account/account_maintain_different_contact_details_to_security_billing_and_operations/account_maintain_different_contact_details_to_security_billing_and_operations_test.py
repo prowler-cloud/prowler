@@ -101,3 +101,29 @@ class Test_account_maintain_different_contact_details_to_security_billing_and_op
             assert result[0].region == AWS_REGION
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
             assert result[0].resource_arn == AWS_ACCOUNT_ARN
+
+    def test_access_denied(self):
+        account_client = mock.MagicMock
+        account_client.region = AWS_REGION
+        account_client.audited_account = AWS_ACCOUNT_NUMBER
+        account_client.audited_account_arn = AWS_ACCOUNT_ARN
+        account_client.contact_base = None
+
+        with mock.patch(
+            "prowler.providers.aws.services.account.account_service.Account",
+            new=account_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.account.account_client.account_client",
+            new=account_client,
+        ):
+            # Test Check
+            from prowler.providers.aws.services.account.account_maintain_different_contact_details_to_security_billing_and_operations.account_maintain_different_contact_details_to_security_billing_and_operations import (
+                account_maintain_different_contact_details_to_security_billing_and_operations,
+            )
+
+            check = (
+                account_maintain_different_contact_details_to_security_billing_and_operations()
+            )
+            result = check.execute()
+
+            assert len(result) == 0

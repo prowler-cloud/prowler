@@ -16,9 +16,9 @@
   "Remediation": {
     "Code": {
       "CLI": "aws elbv2 modify-load-balancer-attributes --load-balancer-arn <lb_arn> --attributes Key=access_logs.s3.enabled,Value=true Key=access_logs.s3.bucket,Value=<bucket_name> Key=access_logs.s3.prefix,Value=<prefix>",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/bc_aws_logging_22#cloudformation",
+      "NativeIaC": "https://docs.prowler.com/checks/aws/logging-policies/bc_aws_logging_22#cloudformation",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ELBv2/access-log.html",
-      "Terraform": "https://docs.bridgecrew.io/docs/bc_aws_logging_22#terraform"
+      "Terraform": "https://docs.prowler.com/checks/aws/logging-policies/bc_aws_logging_22#terraform"
     },
     "Recommendation": {
       "Text": "Enable ELB logging, create a log lifecycle and define use cases.",

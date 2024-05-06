@@ -14,7 +14,7 @@
   "Remediation": {
     "Code": {
       "CLI": "--peer-client-file=</path/to/peer-cert-file> --peer-key-file=</path/to/peer-key-file>",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-peer-cert-file-and-peer-key-file-arguments-are-set-as-appropriate",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-peer-cert-file-and-peer-key-file-arguments-are-set-as-appropriate",
       "Other": "",
       "Terraform": ""
     },

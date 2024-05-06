@@ -17,7 +17,7 @@
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "https://docs.bridgecrew.io/docs/s3_15-secure-data-transport#aws-console",
+      "Other": "https://docs.prowler.com/checks/aws/s3-policies/s3_15-secure-data-transport#aws-console",
       "Terraform": ""
     },
     "Recommendation": {

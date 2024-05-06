@@ -124,6 +124,7 @@ def prowler():
     bulk_checks_metadata = update_checks_metadata_with_compliance(
         bulk_compliance_frameworks, bulk_checks_metadata
     )
+
     # Update checks metadata if the --custom-checks-metadata-file is present
     custom_checks_metadata = None
     if custom_checks_metadata_file:
@@ -345,8 +346,10 @@ def prowler():
             global_provider,
             global_provider.output_options,
         )
-        # Only display compliance table if there are findings and it is a default execution
-        if findings and default_execution:
+        # Only display compliance table if there are findings (not all MANUAL) and it is a default execution
+        if (
+            findings and not all(finding.status == "MANUAL" for finding in findings)
+        ) and default_execution:
             compliance_overview = False
             if not compliance_framework:
                 compliance_framework = get_available_compliance_frameworks(provider)

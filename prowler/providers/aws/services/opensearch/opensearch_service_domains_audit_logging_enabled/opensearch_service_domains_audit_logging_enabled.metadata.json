@@ -12,7 +12,7 @@
   "Severity": "low",
   "ResourceType": "AwsOpenSearchDomain",
   "Description": "Check if Amazon Elasticsearch/Opensearch Service domains have audit logging enabled",
-  "Risk": "If logs are not enabled; monitoring of service use and threat analysis is not possible.",
+  "Risk": "If logs are not enabled, monitoring of service use and threat analysis is not possible.",
   "RelatedUrl": "",
   "Remediation": {
     "Code": {

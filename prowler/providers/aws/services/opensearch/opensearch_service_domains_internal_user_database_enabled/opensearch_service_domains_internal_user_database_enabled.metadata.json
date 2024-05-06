@@ -12,7 +12,7 @@
   "Severity": "medium",
   "ResourceType": "AwsOpenSearchDomain",
   "Description": "Check if Amazon Elasticsearch/Opensearch Service domains have internal user database enabled",
-  "Risk": "Internal User Database is convenient for demos; for production environment use Federated authentication.",
+  "Risk": "Internal User Database is convenient for demos, for production environment use Federated authentication.",
   "RelatedUrl": "",
   "Remediation": {
     "Code": {

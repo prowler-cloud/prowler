@@ -13,10 +13,10 @@
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
-      "CLI": "https://docs.bridgecrew.io/docs/bc_gcp_networking_1#cli-command",
+      "CLI": "https://docs.prowler.com/checks/gcp/google-cloud-networking-policies/bc_gcp_networking_1#cli-command",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudVPC/unrestricted-ssh-access.html",
-      "Terraform": "https://docs.bridgecrew.io/docs/bc_gcp_networking_1#terraform"
+      "Terraform": "https://docs.prowler.com/checks/gcp/google-cloud-networking-policies/bc_gcp_networking_1#terraform"
     },
     "Recommendation": {
       "Text": "Check your Google Cloud Virtual Private Cloud (VPC) firewall rules for inbound rules that allow unrestricted access (i.e. 0.0.0.0/0) on TCP port 22 and restrict the access to trusted IP addresses or IP ranges only in order to implement the principle of least privilege and reduce the attack surface. TCP port 22 is used for secure remote login by connecting an SSH client application with an SSH server. It is strongly recommended to configure your Google Cloud VPC firewall rules to limit inbound traffic on TCP port 22 to known IP addresses only.",

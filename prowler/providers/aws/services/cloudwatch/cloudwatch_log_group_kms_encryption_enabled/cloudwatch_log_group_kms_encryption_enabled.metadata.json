@@ -17,7 +17,7 @@
     "Code": {
       "CLI": "associate-kms-key --log-group-name <value> --kms-key-id <value>",
       "NativeIaC": "",
-      "Other": "https://docs.bridgecrew.io/docs/logging_21#aws-console",
+      "Other": "https://docs.prowler.com/checks/aws/logging-policies/logging_21#aws-console",
       "Terraform": ""
     },
     "Recommendation": {
