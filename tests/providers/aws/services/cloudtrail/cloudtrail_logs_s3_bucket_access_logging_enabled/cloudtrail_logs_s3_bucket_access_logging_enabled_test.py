@@ -229,9 +229,7 @@ class Test_cloudtrail_logs_s3_bucket_access_logging_enabled:
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            return_value=set_mocked_aws_audit_info(
-                [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
-            ),
+            new=set_mocked_aws_audit_info([AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]),
         ), mock.patch(
             "prowler.providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_access_logging_enabled.cloudtrail_logs_s3_bucket_access_logging_enabled.cloudtrail_client",
             new=Cloudtrail(
