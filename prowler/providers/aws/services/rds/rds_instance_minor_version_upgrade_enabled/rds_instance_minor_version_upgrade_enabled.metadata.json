@@ -14,9 +14,9 @@
   "Remediation": {
     "Code": {
       "CLI": "aws rds modify-db-instance --db-instance-identifier <db_instance_id> --auto-minor-version-upgrade --apply-immediately",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-aws-db-instance-gets-all-minor-upgrades-automatically#cloudformation",
+      "NativeIaC": "https://docs.prowler.com/checks/aws/general-policies/ensure-aws-db-instance-gets-all-minor-upgrades-automatically#cloudformation",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/rds-auto-minor-version-upgrade.html",
-      "Terraform": "https://docs.bridgecrew.io/docs/ensure-aws-db-instance-gets-all-minor-upgrades-automatically#terraform"
+      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/ensure-aws-db-instance-gets-all-minor-upgrades-automatically#terraform"
     },
     "Recommendation": {
       "Text": "Enable auto minor version upgrade for all databases and environments.",

@@ -18,7 +18,7 @@
       "CLI": "aws elb set-load-balancer-policies-of-listener --load-balancer-name <lb_name> --load-balancer-port 443 --policy-names ELBSecurityPolicy-TLS-1-2-2017-01",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ELB/elb-security-policy.html",
-      "Terraform": "https://docs.bridgecrew.io/docs/bc_aws_general_43#terraform"
+      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_43#terraform"
     },
     "Recommendation": {
       "Text": "Use a Security policy with ciphers that are as strong as possible. Drop legacy and insecure ciphers.",

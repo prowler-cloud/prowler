@@ -22,7 +22,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "The Notifications panel in the console is the easiest way to see if an update is available or check the status of an update. You can also receive these notifications through Amazon EventBridge. If you take no action on required updates; Amazon ES still updates your domain service software automatically after a certain timeframe (typically two weeks). In this situation; Amazon ES sends notifications when it starts the update and when the update is complete.",
+      "Text": "The Notifications panel in the console is the easiest way to see if an update is available or check the status of an update. You can also receive these notifications through Amazon EventBridge. If you take no action on required updates, Amazon ES still updates your domain service software automatically after a certain timeframe (typically two weeks). In this situation, Amazon ES sends notifications when it starts the update and when the update is complete.",
       "Url": "https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-service-software.html"
     }
   },

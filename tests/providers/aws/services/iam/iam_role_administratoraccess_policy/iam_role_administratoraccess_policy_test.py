@@ -267,3 +267,26 @@ class Test_iam_role_administratoraccess_policy:
             check = iam_role_administratoraccess_policy()
             result = check.execute()
             assert len(result) == 0
+
+    @mock_aws(config={"iam": {"load_aws_managed_policies": True}})
+    def test_access_denied(self):
+        iam_client = mock.MagicMock
+        iam_client.roles = None
+
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+
+        with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=audit_info,
+        ), mock.patch(
+            "prowler.providers.aws.services.iam.iam_role_administratoraccess_policy.iam_role_administratoraccess_policy.iam_client",
+            new=iam_client,
+        ):
+            # Test Check
+            from prowler.providers.aws.services.iam.iam_role_administratoraccess_policy.iam_role_administratoraccess_policy import (
+                iam_role_administratoraccess_policy,
+            )
+
+            check = iam_role_administratoraccess_policy()
+            result = check.execute()
+            assert len(result) == 0

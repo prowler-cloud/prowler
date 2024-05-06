@@ -14,9 +14,9 @@
   "Remediation": {
     "Code": {
       "CLI": "aws sqs set-queue-attributes --queue-url <QUEUE_URL> --attributes KmsMasterKeyId=<KEY>",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/general_16-encrypt-sqs-queue#cloudformation",
+      "NativeIaC": "https://docs.prowler.com/checks/aws/general-policies/general_16-encrypt-sqs-queue#cloudformation",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/SQS/queue-encrypted-with-kms-customer-master-keys.html",
-      "Terraform": "https://docs.bridgecrew.io/docs/general_16-encrypt-sqs-queue#terraform"
+      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/general_16-encrypt-sqs-queue#terraform"
     },
     "Recommendation": {
       "Text": "Enable Encryption. Use a CMK where possible. It will provide additional management and privacy benefits",

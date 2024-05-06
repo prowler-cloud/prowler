@@ -15,10 +15,10 @@
   "RelatedUrl": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/AWS_Logs.html",
   "Remediation": {
     "Code": {
-      "CLI": "https://docs.bridgecrew.io/docs/logging_13#cli-command",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/logging_13#cloudformation",
+      "CLI": "https://docs.prowler.com/checks/aws/logging-policies/logging_13#cli-command",
+      "NativeIaC": "https://docs.prowler.com/checks/aws/logging-policies/logging_13#cloudformation",
       "Other": "",
-      "Terraform": "https://docs.bridgecrew.io/docs/logging_13#terraform"
+      "Terraform": "https://docs.prowler.com/checks/aws/logging-policies/logging_13#terraform"
     },
     "Recommendation": {
       "Text": "Add Log Retention policy of specific days to log groups. This will persist logs and traces for a long time.",

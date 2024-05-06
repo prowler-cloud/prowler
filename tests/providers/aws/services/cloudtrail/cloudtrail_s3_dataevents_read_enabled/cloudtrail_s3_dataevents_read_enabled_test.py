@@ -391,3 +391,33 @@ class Test_cloudtrail_s3_dataevents_read_enabled:
             assert result[0].resource_arn == trail_us["TrailARN"]
             assert result[0].resource_tags == []
             assert result[0].region == AWS_REGION_US_EAST_1
+
+    @mock_aws
+    def test_access_denied(self):
+        from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
+            Cloudtrail,
+        )
+        from prowler.providers.aws.services.s3.s3_service import S3
+
+        audit_info = set_mocked_aws_audit_info()
+
+        with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=audit_info,
+        ), mock.patch(
+            "prowler.providers.aws.services.cloudtrail.cloudtrail_s3_dataevents_read_enabled.cloudtrail_s3_dataevents_read_enabled.cloudtrail_client",
+            new=Cloudtrail(audit_info),
+        ) as cloudtrail_client, mock.patch(
+            "prowler.providers.aws.services.cloudtrail.cloudtrail_s3_dataevents_read_enabled.cloudtrail_s3_dataevents_read_enabled.s3_client",
+            new=S3(audit_info),
+        ):
+            # Test Check
+            from prowler.providers.aws.services.cloudtrail.cloudtrail_s3_dataevents_read_enabled.cloudtrail_s3_dataevents_read_enabled import (
+                cloudtrail_s3_dataevents_read_enabled,
+            )
+
+            cloudtrail_client.trails = None
+            check = cloudtrail_s3_dataevents_read_enabled()
+            result = check.execute()
+
+            assert len(result) == 0

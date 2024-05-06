@@ -15,9 +15,9 @@
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
-      "CLI": "https://docs.bridgecrew.io/docs/public_7#cli-command",
+      "CLI": "https://docs.prowler.com/checks/aws/public-policies/public_7#cli-command",
       "NativeIaC": "",
-      "Other": "https://docs.bridgecrew.io/docs/public_7#aws-console",
+      "Other": "https://docs.prowler.com/checks/aws/public-policies/public_7#aws-console",
       "Terraform": ""
     },
     "Recommendation": {

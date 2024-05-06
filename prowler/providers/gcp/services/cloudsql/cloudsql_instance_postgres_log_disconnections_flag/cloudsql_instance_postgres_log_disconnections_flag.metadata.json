@@ -16,7 +16,7 @@
       "CLI": "gcloud sql instances patch INSTANCE_NAME --database-flags log_disconnections=on",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudSQL/enable-log-connections-flag.html",
-      "Terraform": "https://docs.bridgecrew.io/docs/bc_gcp_sql_4#terraform"
+      "Terraform": "https://docs.prowler.com/checks/gcp/cloud-sql-policies/bc_gcp_sql_4#terraform"
     },
     "Recommendation": {
       "Text": "Enabling the log_disconnections setting logs the end of each session, including the session duration.",

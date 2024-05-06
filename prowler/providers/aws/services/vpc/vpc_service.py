@@ -345,7 +345,8 @@ class VPC(AWSService):
                                 if (
                                     "GatewayId" in route
                                     and "igw" in route["GatewayId"]
-                                    and route["DestinationCidrBlock"] == "0.0.0.0/0"
+                                    and route.get("DestinationCidrBlock", "")
+                                    == "0.0.0.0/0"
                                 ):
                                     # If the route table has a default route to an internet gateway, the subnet is public
                                     public = True

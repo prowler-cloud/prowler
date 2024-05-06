@@ -16,7 +16,7 @@
       "CLI": "gsutil uniformbucketlevelaccess set on gs://BUCKET_NAME/",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudStorage/enable-uniform-bucket-level-access.html",
-      "Terraform": "https://docs.bridgecrew.io/docs/bc_gcp_gcs_2#terraform"
+      "Terraform": "https://docs.prowler.com/checks/gcp/google-cloud-storage-gcs-policies/bc_gcp_gcs_2#terraform"
     },
     "Recommendation": {
       "Text": "It is recommended that uniform bucket-level access is enabled on Cloud Storage buckets.",

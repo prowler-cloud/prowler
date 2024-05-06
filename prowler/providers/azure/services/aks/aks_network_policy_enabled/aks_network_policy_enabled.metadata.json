@@ -16,7 +16,7 @@
       "CLI": "",
       "NativeIaC": "",
       "Other": "",
-      "Terraform": "https://docs.bridgecrew.io/docs/bc_azr_kubernetes_4#terraform"
+      "Terraform": "https://docs.prowler.com/checks/azure/azure-kubernetes-policies/bc_azr_kubernetes_4#terraform"
     },
     "Recommendation": {
       "Text": "",

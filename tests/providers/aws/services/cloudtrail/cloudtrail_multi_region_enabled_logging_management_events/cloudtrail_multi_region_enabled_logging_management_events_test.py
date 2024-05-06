@@ -273,3 +273,29 @@ class Test_cloudtrail_multi_region_enabled_logging_management_events:
                     result[0].status_extended
                     == "No trail found with multi-region enabled and logging management events."
                 )
+
+    @mock_aws
+    def test_access_denied(self):
+        from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
+            Cloudtrail,
+        )
+
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+
+        with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=audit_info,
+        ):
+            with mock.patch(
+                "prowler.providers.aws.services.cloudtrail.cloudtrail_multi_region_enabled_logging_management_events.cloudtrail_multi_region_enabled_logging_management_events.cloudtrail_client",
+                new=Cloudtrail(audit_info),
+            ) as cloudtrail_client:
+                # Test Check
+                from prowler.providers.aws.services.cloudtrail.cloudtrail_multi_region_enabled_logging_management_events.cloudtrail_multi_region_enabled_logging_management_events import (
+                    cloudtrail_multi_region_enabled_logging_management_events,
+                )
+
+                cloudtrail_client.trails = None
+                check = cloudtrail_multi_region_enabled_logging_management_events()
+                result = check.execute()
+                assert len(result) == 0

@@ -18,9 +18,9 @@
   "Remediation": {
     "Code": {
       "CLI": "aws cloudtrail update-trail --name <trail_name>  --enable-log-file-validation",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/logging_2#cloudformation",
+      "NativeIaC": "https://docs.prowler.com/checks/aws/logging-policies/logging_2#cloudformation",
       "Other": "",
-      "Terraform": "https://docs.bridgecrew.io/docs/logging_2#terraform"
+      "Terraform": "https://docs.prowler.com/checks/aws/logging-policies/logging_2#terraform"
     },
     "Recommendation": {
       "Text": "Ensure LogFileValidationEnabled is set to true for each trail.",

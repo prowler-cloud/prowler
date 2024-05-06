@@ -509,7 +509,113 @@ class Test_compute_firewall_rdp_access_from_the_internet_allowed:
 
 ### Services
 
-Coming soon ...
+For testing Google Cloud Services, we have to follow the same logic as with the Google Cloud checks. We still mocking all API calls, but in this case, every API call to set up an attribute is defined in [fixtures file](https://github.com/prowler-cloud/prowler/blob/master/tests/providers/gcp/gcp_fixtures.py) in `mock_api_client` function. Remember that EVERY method of a service must be tested.
+
+The following code shows a real example of a testing class, but it has more comments than usual for educational purposes.
+
+```python title="BigQuery Service Test"
+# We need to import the unittest.mock.patch to allow us to patch some objects
+# not to use shared ones between test, hence to isolate the test
+from unittest.mock import patch
+# Import the class needed from the service file
+from prowler.providers.gcp.services.bigquery.bigquery_service import BigQuery
+# Necessary constans and functions from fixtures file
+from tests.providers.gcp.gcp_fixtures import (
+    GCP_PROJECT_ID,
+    mock_api_client,
+    mock_is_api_active,
+    set_mocked_gcp_audit_info,
+)
+
+
+class TestBigQueryService:
+    # Only method needed to test full service
+    def test_service(self):
+        # In this case we are mocking the __is_api_active__ to ensure our mocked project is used
+        # And all the client to use our mocked API calls
+        with patch(
+            "prowler.providers.gcp.lib.service.service.GCPService.__is_api_active__",
+            new=mock_is_api_active,
+        ), patch(
+            "prowler.providers.gcp.lib.service.service.GCPService.__generate_client__",
+            new=mock_api_client,
+        ):
+            # Instantiate an object of class with the mocked provider
+            bigquery_client = BigQuery(
+                set_mocked_gcp_audit_info(project_ids=[GCP_PROJECT_ID])
+            )
+            # Check all attributes of the tested class is well set up according API calls mocked from GCP fixture file
+            assert bigquery_client.service == "bigquery"
+            assert bigquery_client.project_ids == [GCP_PROJECT_ID]
+
+            assert len(bigquery_client.datasets) == 2
+
+            assert bigquery_client.datasets[0].name == "unique_dataset1_name"
+            assert bigquery_client.datasets[0].id.__class__.__name__ == "str"
+            assert bigquery_client.datasets[0].region == "US"
+            assert bigquery_client.datasets[0].cmk_encryption
+            assert bigquery_client.datasets[0].public
+            assert bigquery_client.datasets[0].project_id == GCP_PROJECT_ID
+
+            assert bigquery_client.datasets[1].name == "unique_dataset2_name"
+            assert bigquery_client.datasets[1].id.__class__.__name__ == "str"
+            assert bigquery_client.datasets[1].region == "EU"
+            assert not bigquery_client.datasets[1].cmk_encryption
+            assert not bigquery_client.datasets[1].public
+            assert bigquery_client.datasets[1].project_id == GCP_PROJECT_ID
+
+            assert len(bigquery_client.tables) == 2
+
+            assert bigquery_client.tables[0].name == "unique_table1_name"
+            assert bigquery_client.tables[0].id.__class__.__name__ == "str"
+            assert bigquery_client.tables[0].region == "US"
+            assert bigquery_client.tables[0].cmk_encryption
+            assert bigquery_client.tables[0].project_id == GCP_PROJECT_ID
+
+            assert bigquery_client.tables[1].name == "unique_table2_name"
+            assert bigquery_client.tables[1].id.__class__.__name__ == "str"
+            assert bigquery_client.tables[1].region == "US"
+            assert not bigquery_client.tables[1].cmk_encryption
+            assert bigquery_client.tables[1].project_id == GCP_PROJECT_ID
+```
+As it can be confusing where all these values come from, I'll give an example to make this clearer. First we need to check
+what is the API call used to obtain the datasets. In this case if we check the service the call is
+`self.client.datasets().list(projectId=project_id)`.
+
+Now in the fixture file we have to mock this call in our `MagicMock` client in the function `mock_api_client`. The best way to mock
+is following the actual format, add one function where the client is passed to be changed, the format of this function name must be
+`mock_api_<endpoint>_calls` (*endpoint* refers to the first attribute pointed after *client*).
+
+In the example of BigQuery the function is called `mock_api_dataset_calls`. And inside of this function we found an assignation to
+be used in the `__get_datasets__` method in BigQuery class:
+
+```python
+# Mocking datasets
+dataset1_id = str(uuid4())
+dataset2_id = str(uuid4())
+
+client.datasets().list().execute.return_value = {
+    "datasets": [
+        {
+            "datasetReference": {
+                "datasetId": "unique_dataset1_name",
+                "projectId": GCP_PROJECT_ID,
+            },
+            "id": dataset1_id,
+            "location": "US",
+        },
+        {
+            "datasetReference": {
+                "datasetId": "unique_dataset2_name",
+                "projectId": GCP_PROJECT_ID,
+            },
+            "id": dataset2_id,
+            "location": "EU",
+        },
+    ]
+}
+```
+
 
 ## Azure
 

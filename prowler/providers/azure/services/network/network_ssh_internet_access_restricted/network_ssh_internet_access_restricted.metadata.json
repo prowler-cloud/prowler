@@ -16,7 +16,7 @@
       "CLI": "",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/Network/unrestricted-ssh-access.html",
-      "Terraform": "https://docs.bridgecrew.io/docs/bc_azr_networking_3#terraform"
+      "Terraform": "https://docs.prowler.com/checks/azure/azure-networking-policies/bc_azr_networking_3#terraform"
     },
     "Recommendation": {
       "Text": "Where SSH is not explicitly required and narrowly configured for resources attached to the Network Security Group, Internet-level access to your Azure resources should be restricted or eliminated. For internal access to relevant resources, configure an encrypted network tunnel such as: ExpressRoute Site-to-site VPN Point-to-site VPN",

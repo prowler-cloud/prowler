@@ -13,10 +13,10 @@
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
-      "CLI": "https://docs.bridgecrew.io/docs/bc_gcp_networking_9#cli-command",
+      "CLI": "https://docs.prowler.com/checks/gcp/google-cloud-networking-policies/bc_gcp_networking_9#cli-command",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/ComputeEngine/enable-os-login.html",
-      "Terraform": "https://docs.bridgecrew.io/docs/bc_gcp_networking_9#terraform"
+      "Terraform": "https://docs.prowler.com/checks/gcp/google-cloud-networking-policies/bc_gcp_networking_9#terraform"
     },
     "Recommendation": {
       "Text": "Ensure that the OS Login feature is enabled at the Google Cloud Platform (GCP) project level in order to provide you with centralized and automated SSH key pair management.",

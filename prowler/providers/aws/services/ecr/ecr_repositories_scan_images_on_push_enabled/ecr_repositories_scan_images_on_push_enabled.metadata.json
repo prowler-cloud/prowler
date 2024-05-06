@@ -17,9 +17,9 @@
   "Remediation": {
     "Code": {
       "CLI": "aws ecr create-repository --repository-name <repo_name> --image-scanning-configuration scanOnPush=true--region <region_name>",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/general_8#cli-command",
+      "NativeIaC": "https://docs.prowler.com/checks/aws/general-policies/general_8#cli-command",
       "Other": "",
-      "Terraform": "https://docs.bridgecrew.io/docs/general_8#fix---buildtime"
+      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/general_8#fix---buildtime"
     },
     "Recommendation": {
       "Text": "Enable ECR image scanning and review the scan findings for information about the security of the container images that are being deployed.",
