@@ -263,7 +263,7 @@ def display_data(
     # Rename the column PROJECTID to ACCOUNTID for GCP
     if data.columns.str.contains("PROJECTID").any():
         data.rename(columns={"PROJECTID": "ACCOUNTID"}, inplace=True)
-
+        data["REGION"] = "-"
     # Rename the column SUBSCRIPTIONID to ACCOUNTID for Azure
     if data.columns.str.contains("SUBSCRIPTIONID").any():
         data.rename(columns={"SUBSCRIPTIONID": "ACCOUNTID"}, inplace=True)
