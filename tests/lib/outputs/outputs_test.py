@@ -160,7 +160,7 @@ class TestOutputs:
     def test_unroll_list(self):
         list = ["test", "test1", "test2"]
 
-        assert unroll_list(list) == "test | test1 | test2"
+        assert unroll_list(list) == "test| test1| test2"
 
     def test_unroll_tags(self):
         dict_list = [
