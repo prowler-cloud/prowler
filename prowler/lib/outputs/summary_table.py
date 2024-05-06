@@ -40,8 +40,7 @@ def display_summary_table(
             entity_type = "Project ID/s"
             audited_entities = ", ".join(audit_info.project_ids)
 
-        # Check if there are findings and that they are not all MANUAL
-        if findings and not all(finding.status == "MANUAL" for finding in findings):
+        if findings:
             current = {
                 "Service": "",
                 "Provider": "",
@@ -70,9 +69,9 @@ def display_summary_table(
                 ):
                     add_service_to_table(findings_table, current)
 
-                    current["Total"] = current["Pass"] = current["Muted"] = current[
-                        "Critical"
-                    ] = current["High"] = current["Medium"] = current["Low"] = 0
+                    current["Total"] = current["Critical"] = current["High"] = current[
+                        "Medium"
+                    ] = current["Low"] = 0
 
                 current["Service"] = finding.check_metadata.ServiceName
                 current["Provider"] = finding.check_metadata.Provider
