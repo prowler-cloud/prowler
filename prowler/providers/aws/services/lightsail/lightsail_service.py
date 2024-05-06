@@ -58,7 +58,7 @@ class Lightsail(AWSService):
                         static_ip=instance.get("isStaticIp", ""),
                         public_ip=instance.get("publicIpAddress", ""),
                         private_ip=instance.get("privateIpAddress", ""),
-                        ipv6_address=instance.get("ipv6Addresses", []),
+                        ipv6_addresses=instance.get("ipv6Addresses", []),
                         ip_address_type=instance.get("ipAddressType", "ipv4"),
                         ports=ports,
                         auto_snapshot=auto_snapshot_enabled,
@@ -78,7 +78,7 @@ class Lightsail(AWSService):
         try:
             databases = self.client.get_relational_databases()
 
-            for database in databases["relationalDatabases"]:
+            for database in databases.get("relationalDatabases", []):
                 database_list.append(
                     Database(
                         name=database.get("name", ""),
@@ -116,7 +116,7 @@ class Instance(BaseModel):
     static_ip: bool
     public_ip: str
     private_ip: str
-    ipv6_address: List[str]
+    ipv6_addresses: List[str]
     ip_address_type: str
     ports: List[PortRange]
     auto_snapshot: bool
