@@ -1,4 +1,4 @@
-# Prowler Fixer
+# Prowler Fixer (remediation)
 Prowler allows you to fix some of the failed findings it identifies. You can use the `--fixer` flag to run the fixes that are available for the checks that failed.
 
 ```sh
@@ -8,10 +8,10 @@ prowler <provider> -c <check_to_fix_1> <check_to_fix_2> ... --fixer
 <img src="../img/fixer.png">
 
 ???+ note
-    You can see all the available fixes for each provider with the `--list-fixers` flag.
+    You can see all the available fixes for each provider with the `--list-remediations` or `--list-fixers flag.
 
     ```sh
-    prowler <provider> --list-fixer
+    prowler <provider> --list-fixers
     ```
 
 ## Writing a Fixer
