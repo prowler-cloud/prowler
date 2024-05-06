@@ -11,7 +11,7 @@ prowler <provider> -c <check_to_fix_1> <check_to_fix_2> ... --fixer
     You can see all the available fixes for each provider with the `--list-remediations` or `--list-fixers flag.
 
     ```sh
-    prowler <provider> --list-remediations
+    prowler <provider> --list-fixers
     ```
 
 ## Writing a Fixer
