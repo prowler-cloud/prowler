@@ -1119,8 +1119,13 @@ def filter_data(
         ]
 
         # Componente Dash
+        table_div = []
+        index_count = 0
         for item in data_imaginary:
-            generate_table(item)
+            index_count += 1
+            table_div.append(generate_table(item, index_count))
+
+        table = html.Div(table_div)
 
     # Status Graphic
     status_graph = [
@@ -1276,13 +1281,15 @@ def filter_data(
         )
     ],
 )
-def togle_collapse(n):
-    if n:
-        return not n % 2 == 0
-    return False
+def togle_collapse(n, is_open):
+    ctx = dash.callback_context
+    button_id = ctx.triggered[0]["prop_id"].split(".")[0]
+    index = int(button_id.split('"')[-2])
+    is_open[index] = not is_open[index]
+    return is_open
 
 
-def generate_table(data):
+def generate_table(data, index):
     return html.Div(
         [
             dbc.Card(
@@ -1291,7 +1298,7 @@ def generate_table(data):
                         dbc.Button(
                             data["Check"],
                             color="link",
-                            id={"type": "toggle-collapse"},
+                            id={"type": "toggle-collapse", "index": index},
                             n_clicks=0,
                         )
                     ),
@@ -1318,7 +1325,7 @@ def generate_table(data):
                                 ),
                             ]
                         ),
-                        id={"type": "collapse"},
+                        id={"type": "collapse", "index": index},
                         is_open=False,
                     ),
                 ]
