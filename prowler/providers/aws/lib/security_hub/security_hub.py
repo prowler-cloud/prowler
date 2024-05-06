@@ -27,11 +27,17 @@ def prepare_security_hub_findings(
         if finding.region not in enabled_regions:
             continue
 
-        # Handle status filters, if any
-        if (finding.status != "FAIL" and output_options.send_sh_only_fails) or (
-            output_options.status and finding.status not in output_options.status
-        ):
+        if (
+            finding.status != "FAIL" or finding.muted
+        ) and output_options.send_sh_only_fails:
             continue
+
+        if output_options.status:
+            if finding.status not in output_options.status:
+                continue
+
+            if finding.muted:
+                continue
 
         # Get the finding region
         region = finding.region
