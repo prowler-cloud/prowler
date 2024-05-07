@@ -59,9 +59,9 @@ class Test_cognito_user_pool_temporary_password_expiration:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].status_extended == (
-                f"User pool {user_pool_id} has temporary password expiration set to 8 days."
+                f"User pool {user_pool_name} has temporary password expiration set to 8 days."
             )
-            assert result[0].resource_name == user_pool_name
+
             assert result[0].resource_id == user_pool_id
             assert result[0].resource_arn == user_pool_arn
 
@@ -99,8 +99,8 @@ class Test_cognito_user_pool_temporary_password_expiration:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert result[0].status_extended == (
-                f"User pool {user_pool_id} has temporary password expiration set to 7 days."
+                f"User pool {user_pool_name} has temporary password expiration set to 7 days."
             )
-            assert result[0].resource_name == user_pool_name
+
             assert result[0].resource_id == user_pool_id
             assert result[0].resource_arn == user_pool_arn

@@ -100,16 +100,15 @@ class Test_Cognito_Service:
             assert user_pool.tags is not None
 
     @mock_aws
-    def test_get_user_pool_client(self):
+    def test_list_user_pool_clients(self):
         cognito_client = mock.MagicMock()
         user_pool_arn = "user_pool_test_1"
         cognito_client[user_pool_arn].id = "user_pool_id"
         cognito_client[user_pool_arn].arn = user_pool_arn
         cognito_client[user_pool_arn].name = "user_pool_name"
         cognito_client[user_pool_arn].region = "eu-west-1"
-        cognito_client[user_pool_arn].user_pool_client = UserPoolClient(
-            prevent_user_existence_errors="ENABLED",
-            enable_token_revocation=True,
+        cognito_client[user_pool_arn].user_pool_clients["user_pool_client_id"] = (
+            UserPoolClient(id="user_pool_client_id", name="user_pool_client_name")
         )
 
         with mock.patch(
@@ -124,13 +123,61 @@ class Test_Cognito_Service:
                 assert user_pool.name == "user_pool_name"
                 assert user_pool.id == "user_pool_id"
                 assert (
-                    user_pool.user_pool_client.prevent_user_existence_errors
+                    user_pool.user_pool_clients["user_pool_client_id"].id
+                    == "user_pool_client_id"
+                )
+                assert (
+                    user_pool.user_pool_clients["user_pool_client_id"].name
+                    == "user_pool_client_name"
+                )
+
+    @mock_aws
+    def test_describe_user_pool_clients(self):
+        cognito_client = mock.MagicMock()
+        user_pool_arn = "user_pool_test_1"
+        cognito_client[user_pool_arn].id = "user_pool_id"
+        cognito_client[user_pool_arn].arn = user_pool_arn
+        cognito_client[user_pool_arn].name = "user_pool_name"
+        cognito_client[user_pool_arn].region = "eu-west-1"
+        cognito_client[user_pool_arn].user_pool_clients["user_pool_client_id"] = (
+            UserPoolClient(
+                id="user_pool_client_id",
+                name="user_pool_client_name",
+                prevent_user_existence_errors="ENABLED",
+                enable_token_revocation=True,
+            )
+        )
+
+        with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_aws_provider(),
+        ), mock.patch(
+            "prowler.providers.aws.services.cognito.cognito_idp_client.cognito_idp_client",
+            new=cognito_client,
+        ):
+            for user_pool in cognito_client.user_pools.values():
+                assert user_pool.region == "eu-west-1"
+                assert user_pool.name == "user_pool_name"
+                assert user_pool.id == "user_pool_id"
+                assert (
+                    user_pool.user_pool_clients["user_pool_client_id"].id
+                    == "user_pool_client_id"
+                )
+                assert (
+                    user_pool.user_pool_clients["user_pool_client_id"].name
+                    == "user_pool_client_name"
+                )
+                assert (
+                    user_pool.user_pool_clients[
+                        "user_pool_client_id"
+                    ].prevent_user_existence_errors
                     == "ENABLED"
                 )
-                assert user_pool.user_pool_client.enable_token_revocation is True
                 assert (
-                    user_pool.user_pool_client.prevent_user_existence_errors
-                    == "ENABLED"
+                    user_pool.user_pool_clients[
+                        "user_pool_client_id"
+                    ].enable_token_revocation
+                    is True
                 )
 
     @mock_aws
@@ -174,9 +221,9 @@ class Test_Cognito_Service:
                 actions={"EventAction": "BLOCK"},
             ),
             account_takeover_risk_configuration=AccountTakeoverRiskConfiguration(
-                low_action={"Notify": False, "EventAction": "BLOCK"},
-                medium_action={"Notify": False, "EventAction": "BLOCK"},
-                high_action={"Notify": False, "EventAction": "BLOCK"},
+                low_action="BLOCK",
+                medium_action="BLOCK",
+                high_action="BLOCK",
             ),
         )
 
@@ -200,18 +247,15 @@ class Test_Cognito_Service:
                 )
                 assert (
                     user_pool.risk_configuration.account_takeover_risk_configuration.low_action
-                    == {
-                        "Notify": False,
-                        "EventAction": "BLOCK",
-                    }
+                    == "BLOCK"
                 )
                 assert (
                     user_pool.risk_configuration.account_takeover_risk_configuration.medium_action
-                    == {"Notify": False, "EventAction": "BLOCK"}
+                    == "BLOCK"
                 )
                 assert (
                     user_pool.risk_configuration.account_takeover_risk_configuration.high_action
-                    == {"Notify": False, "EventAction": "BLOCK"}
+                    == "BLOCK"
                 )
 
     @mock_aws

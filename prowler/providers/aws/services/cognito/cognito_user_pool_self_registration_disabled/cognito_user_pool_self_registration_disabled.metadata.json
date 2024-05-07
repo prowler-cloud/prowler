@@ -1,0 +1,30 @@
+{
+  "Provider": "aws",
+  "CheckID": "cognito_user_pool_self_registration_disabled",
+  "CheckTitle": "Ensure self registration is disabled for Amazon Cognito User Pools",
+  "CheckType": [],
+  "ServiceName": "cognito",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:cognito-idp:region:account:userpool/userpool-id",
+  "Severity": "medium",
+  "ResourceType": "AwsCognitoUserPool",
+  "Description": "Checks whether self registration is disabled for the Amazon Cognito User Pool. Self registration allows users to sign up for an account in the user pool. If self registration is enabled, users can sign up for an account in the user pool without any intervention from the administrator. This can lead to unauthorized access to the application.",
+  "Risk": "If self registration is enabled, users can sign up for an account in the user pool without any intervention from the administrator. This can lead to unauthorized access to the application.",
+  "RelatedUrl": "https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_SignUp.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "To disable self registration for the Amazon Cognito User Pool, perform the following actions:",
+      "Url": "https://docs.aws.amazon.com/cognito/latest/developerguide/signing-up-users-in-your-app.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
