@@ -10,6 +10,7 @@ from itertools import product
 # Third-party imports
 import dash
 import dash_bootstrap_components as dbc
+import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -876,71 +877,42 @@ def filter_data(
         filtered_data["SEVERITY"] = filtered_data["SEVERITY"].replace(
             {4: "critical", 3: "high", 2: "medium", 1: "low", 0: "informational"}
         )
-        table_data = filtered_data.copy()
-
-        if "ACCOUNT_NAME" in table_data.columns:
-            for subscription in table_data["ACCOUNT_NAME"].unique():
-                if "nan" not in str(subscription):
-                    table_data.loc[
-                        table_data["ACCOUNT_NAME"] == subscription, "ACCOUNT_UID"
-                    ] = subscription
-
-        table_data["RISK"] = table_data["RISK"].str.slice(0, 50)
-        table_data["CHECK_ID"] = (
-            table_data["CHECK_ID"] + " - " + table_data["RESOURCE_UID"]
-        )
-        # if the region is empty, we are going to fill it with '-'
-        table_data["REGION"] = table_data["REGION"].fillna("-")
-        table_data = table_data[
-            [
-                "CHECK_ID",
-                "SEVERITY",
-                "STATUS",
-                "REGION",
-                "SERVICE_NAME",
-                "PROVIDER",
-                "ACCOUNT_UID",
-            ]
-        ]
-        table_data = table_data.rename(
-            columns={
-                "CHECK_ID": "Check ID",
-                "SEVERITY": "Severity",
-                "STATUS": "Status",
-                "REGION": "Region",
-                "SERVICE_NAME": "Service",
-                "PROVIDER": "Provider",
-                "ACCOUNT_UID": "Account ID",
-            }
-        )
 
         table_row_options = []
 
         # Take the values from the table_row_values
         if table_row_values == -1:
-            if len(table_data) < 25:
-                table_row_values = len(table_data)
+            if len(filtered_data) < 25:
+                table_row_values = len(filtered_data)
             else:
                 table_row_values = 25
 
-        if len(table_data) < 25:
-            table_row_values = len(table_data)
+        if len(filtered_data) < 25:
+            table_row_values = len(filtered_data)
 
-        if len(table_data) >= 25:
+        if len(filtered_data) >= 25:
             table_row_options.append(25)
-        if len(table_data) >= 50:
+        if len(filtered_data) >= 50:
             table_row_options.append(50)
-        if len(table_data) >= 75:
+        if len(filtered_data) >= 75:
             table_row_options.append(75)
-        if len(table_data) >= 100:
+        if len(filtered_data) >= 100:
             table_row_options.append(100)
-        table_row_options.append(len(table_data))
+        table_row_options.append(len(filtered_data))
 
-        table_data["Severity"] = table_data["Severity"].str.capitalize()
+        # For the values that are nan or none, replace them with ""
+        filtered_data = filtered_data.replace({np.nan: ""})
+        filtered_data = filtered_data.replace({None: ""})
+        filtered_data = filtered_data.replace({"nan": ""})
 
         table_div = []
         index_count = 0
+        full_filtered_data = filtered_data.copy()
         filtered_data = filtered_data.head(table_row_values)
+
+        # Remove column "assessment_time", this is done to undo the changes made in the data
+        if "TIMESTAMP_AUX" in filtered_data.columns:
+            filtered_data.drop(columns=["TIMESTAMP_AUX"], inplace=True)
 
         # For the account_id, we are going to add the provider name
         if "ACCOUNT_UID" in filtered_data.columns:
@@ -980,12 +952,12 @@ def filter_data(
                     html.Span(
                         "Status",
                         className="text-center text-prowler-stone-900 uppercase text-xl font-bold",
-                        style={"width": "8%"},
+                        style={"width": "8%", "padding-right": "1rem"},
                     ),
                     html.Span(
                         "Region",
                         className="text-center text-prowler-stone-900 uppercase text-xl font-bold",
-                        style={"width": "10%"},
+                        style={"width": "10%", "padding-left": "3rem"},
                     ),
                     html.Span(
                         "Service",
@@ -1002,6 +974,7 @@ def filter_data(
                 style={"display": "flex", "justify-content": "space-between"},
             )
         )
+
         for item in filtered_data.to_dict("records"):
             table_div.append(
                 generate_table(
@@ -1055,13 +1028,17 @@ def filter_data(
     ]
 
     # Create Provider Cards
-    aws_card = create_provider_card("aws", aws_provider_logo, "Accounts", filtered_data)
-    azure_card = create_provider_card(
-        "azure", azure_provider_logo, "Subscriptions", filtered_data
+    aws_card = create_provider_card(
+        "aws", aws_provider_logo, "Accounts", full_filtered_data
     )
-    gcp_card = create_provider_card("gcp", gcp_provider_logo, "Projects", filtered_data)
+    azure_card = create_provider_card(
+        "azure", azure_provider_logo, "Subscriptions", full_filtered_data
+    )
+    gcp_card = create_provider_card(
+        "gcp", gcp_provider_logo, "Projects", full_filtered_data
+    )
     k8s_card = create_provider_card(
-        "kubernetes", ks8_provider_logo, "Clusters", filtered_data
+        "kubernetes", ks8_provider_logo, "Clusters", full_filtered_data
     )
 
     # Subscribe to prowler SaaS card
@@ -1082,15 +1059,13 @@ def filter_data(
         ctx.triggered_id == "download_link_csv"
         or ctx.triggered_id == "download_link_xlsx"
     ):
-        # Cut the data to the wanted rows
-        table_data = table_data.head(table_row_values)
         if ctx.triggered_id == "download_link_csv":
             csv_data = dcc.send_data_frame(
-                table_data.to_csv, "prowler-dashboard-export.csv", index=False
+                filtered_data.to_csv, "prowler-dashboard-export.csv", index=False
             )
         if ctx.triggered_id == "download_link_xlsx":
             csv_data = dcc.send_data_frame(
-                table_data.to_excel,
+                filtered_data.to_excel,
                 "prowler-dashboard-export.xlsx",
                 index=False,
             )
@@ -1240,6 +1215,7 @@ def generate_table(data, index, color_mapping_severity, color_mapping_status):
                                         ),
                                     ],
                                     width=1,
+                                    style={"padding-right": "1rem"},
                                 ),
                                 dbc.Col(
                                     [
@@ -1294,30 +1270,154 @@ def generate_table(data, index, color_mapping_severity, color_mapping_status):
                         dbc.CardBody(
                             [
                                 html.H5("Details", className="card-title"),
-                                html.P("Resource uid: " + data.get("RESOURCE_UID", "")),
-                                html.P(
-                                    "Finding uid: " + str(data.get("FINDING_UID", ""))
+                                html.Div(
+                                    [
+                                        html.P(
+                                            html.Strong(
+                                                "Resource uid: ",
+                                                style={"margin-right": "5px"},
+                                            )
+                                        ),
+                                        html.P(str(data.get("RESOURCE_UID", ""))),
+                                    ],
+                                    style={"display": "flex"},
                                 ),
-                                html.P("Check id: " + data.get("CHECK_ID", "")),
-                                html.P("Type: " + data.get("RESOURCE_TYPE", "")),
-                                html.P("Details: " + data.get("DETAILS", "")),
-                                html.P("Risk: " + data.get("RISK", "")),
-                                html.P("Notes: " + data.get("NOTES", "")),
-                                html.P("Provider: " + data.get("PROVIDER", "")),
-                                # html.Table(
-                                #     [
-                                #         html.Thead(
-                                #             html.Tr([html.Th("Name"), html.Th("Value")])
-                                #         ),
-                                #         html.Tbody(
-                                #             [
-                                #                 html.Tr([html.Td(key), html.Td(value)])
-                                #                 for key, value in data.items()
-                                #             ]
-                                #         ),
-                                #     ],
-                                #     className="table table-bordered table-dark table-hover table-responsive table-striped",
-                                # ),
+                                html.Div(
+                                    [
+                                        html.P(
+                                            html.Strong(
+                                                "Finding uid: ",
+                                                style={"margin-right": "5px"},
+                                            )
+                                        ),
+                                        html.P(str(data.get("FINDING_UID", ""))),
+                                    ],
+                                    style={"display": "flex"},
+                                ),
+                                html.Div(
+                                    [
+                                        html.P(
+                                            html.Strong(
+                                                "Check id: ",
+                                                style={"margin-right": "5px"},
+                                            )
+                                        ),
+                                        html.P(str(data.get("CHECK_ID", ""))),
+                                    ],
+                                    style={"display": "flex"},
+                                ),
+                                html.Div(
+                                    [
+                                        html.P(
+                                            html.Strong(
+                                                "Type: ", style={"margin-right": "5px"}
+                                            )
+                                        ),
+                                        html.P(str(data.get("RESOURCE_TYPE", ""))),
+                                    ],
+                                    style={"display": "flex"},
+                                ),
+                                html.Div(
+                                    [
+                                        html.P(
+                                            html.Strong(
+                                                "Details: ",
+                                                style={"margin-right": "5px"},
+                                            )
+                                        ),
+                                        html.P(str(data.get("RESOURCE_DETAILS", ""))),
+                                    ],
+                                    style={"display": "flex"},
+                                ),
+                                html.Div(
+                                    [
+                                        html.P(
+                                            html.Strong(
+                                                "Risk: ", style={"margin-right": "5px"}
+                                            )
+                                        ),
+                                        html.P(str(data.get("RISK", ""))),
+                                    ],
+                                    style={"display": "flex"},
+                                ),
+                                html.Div(
+                                    [
+                                        html.P(
+                                            html.Strong(
+                                                "Notes: ", style={"margin-right": "5px"}
+                                            )
+                                        ),
+                                        html.P(str(data.get("NOTES", ""))),
+                                    ],
+                                    style={"display": "flex"},
+                                ),
+                                html.Div(
+                                    [
+                                        html.P(
+                                            html.Strong(
+                                                "Provider: ",
+                                                style={"margin-right": "5px"},
+                                            )
+                                        ),
+                                        html.P(str(data.get("PROVIDER", ""))),
+                                    ],
+                                    style={"display": "flex"},
+                                ),
+                                html.Div(
+                                    [
+                                        html.P(
+                                            html.Strong(
+                                                "Recomendation: ",
+                                                style={"margin-right": "5px"},
+                                            )
+                                        ),
+                                        html.P(
+                                            str(
+                                                data.get(
+                                                    "REMEDIATION_RECOMMENDATION_TEXT",
+                                                    "",
+                                                )
+                                            )
+                                        ),
+                                    ],
+                                    style={"display": "flex"},
+                                ),
+                                html.Div(
+                                    [
+                                        html.P(
+                                            html.Strong(
+                                                "Recomendation url: ",
+                                                style={"margin-right": "5px"},
+                                            )
+                                        ),
+                                        html.A(
+                                            str(
+                                                data.get(
+                                                    "REMEDIATION_RECOMMENDATION_URL", ""
+                                                )
+                                            ),
+                                            href=str(
+                                                data.get(
+                                                    "REMEDIATION_RECOMMENDATION_URL", ""
+                                                )
+                                            ),
+                                            style={"color": "#3182ce"},
+                                        ),
+                                    ],
+                                    style={"display": "flex"},
+                                ),
+                                html.Div(
+                                    [
+                                        html.P(
+                                            html.Strong(
+                                                "Scan Time: ",
+                                                style={"margin-right": "5px"},
+                                            )
+                                        ),
+                                        html.P(str(data.get("ASSESSMENT_TIME", ""))),
+                                    ],
+                                    style={"display": "flex"},
+                                ),
                             ]
                         ),
                         id={"type": "collapse", "index": index},
