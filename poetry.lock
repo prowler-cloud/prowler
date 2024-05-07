@@ -514,19 +514,19 @@ msrest = ">=0.6.21"
 
 [[package]]
 name = "azure-mgmt-resource"
-version = "23.0.1"
+version = "23.1.0"
 description = "Microsoft Azure Resource Management Client Library for Python"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "azure-mgmt-resource-23.0.1.zip", hash = "sha256:c2ba6cfd99df95f55f36eadc4245e3dc713257302a1fd0277756d94bd8cb28e0"},
-    {file = "azure_mgmt_resource-23.0.1-py3-none-any.whl", hash = "sha256:f185eec72bbc39f42bcb83ae6f1bad744f0e3f20a12d9b2b3e70d16c74ad9cc0"},
+    {file = "azure-mgmt-resource-23.1.0.tar.gz", hash = "sha256:fecc3fe1685dd6a27a56e033becccc798464af5be25f55138539cef49d876028"},
+    {file = "azure_mgmt_resource-23.1.0-py3-none-any.whl", hash = "sha256:12726627037de3623d3c4a140a08d9eb97502e33ef4680243f310d5004df5e96"},
 ]
 
 [package.dependencies]
-azure-common = ">=1.1,<2.0"
-azure-mgmt-core = ">=1.3.2,<2.0.0"
-isodate = ">=0.6.1,<1.0.0"
+azure-common = ">=1.1"
+azure-mgmt-core = ">=1.3.2"
+isodate = ">=0.6.1"
 
 [[package]]
 name = "azure-mgmt-security"
@@ -4922,4 +4922,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "b3660c0666eb4d7103df5a11f716b3d6a6f479a0d16d33eb0c48118697981e5f"
+content-hash = "a455310db92ca2f0d591fdabd6bc9d0a69caaa9815378cdb1d644564d2e27b92"
