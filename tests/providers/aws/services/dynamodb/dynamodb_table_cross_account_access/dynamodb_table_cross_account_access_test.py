@@ -234,7 +234,6 @@ class Test_dynamodb_table_cross_account_access:
         dynamodb_client = mock.MagicMock
         from prowler.providers.aws.services.dynamodb.dynamodb_service import Table
 
-        dynamodb_client.audited_account = AWS_ACCOUNT_NUMBER
         dynamodb_client.tables = []
         dynamodb_client.audited_account = AWS_ACCOUNT_NUMBER
         dynamodb_client.tables.append(
@@ -273,7 +272,6 @@ class Test_dynamodb_table_cross_account_access:
         dynamodb_client = mock.MagicMock
         from prowler.providers.aws.services.dynamodb.dynamodb_service import Table
 
-        dynamodb_client.audited_account = AWS_ACCOUNT_NUMBER
         dynamodb_client.tables = []
         dynamodb_client.audited_account = AWS_ACCOUNT_NUMBER
         dynamodb_client.tables.append(
@@ -311,7 +309,6 @@ class Test_dynamodb_table_cross_account_access:
         dynamodb_client = mock.MagicMock
         from prowler.providers.aws.services.dynamodb.dynamodb_service import Table
 
-        dynamodb_client.audited_account = AWS_ACCOUNT_NUMBER
         dynamodb_client.tables = []
         dynamodb_client.audited_account = AWS_ACCOUNT_NUMBER
         dynamodb_client.tables.append(
@@ -349,7 +346,6 @@ class Test_dynamodb_table_cross_account_access:
         dynamodb_client = mock.MagicMock
         from prowler.providers.aws.services.dynamodb.dynamodb_service import Table
 
-        dynamodb_client.audited_account = AWS_ACCOUNT_NUMBER
         dynamodb_client.tables = []
         dynamodb_client.audited_account = AWS_ACCOUNT_NUMBER
         dynamodb_client.tables.append(
