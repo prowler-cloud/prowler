@@ -50,6 +50,10 @@ Mutelist:
             - "AWSControlTowerAdminPolicy"
             - "AWSLoadBalancerControllerIAMPolicy"
             - "AWSControlTowerCloudTrailRolePolicy"
+            - "aws-controltower-AdministratorExecutionRole"
+            - "AWSAFTExecution"
+            - "AWSAFTService"
+            - "AWSControlTowerExecution"
         "iam_role_*":
           Regions:
             - "*"
