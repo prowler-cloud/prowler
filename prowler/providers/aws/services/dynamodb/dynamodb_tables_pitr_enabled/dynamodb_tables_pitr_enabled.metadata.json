@@ -7,7 +7,7 @@
   ],
   "ServiceName": "dynamodb",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:dynamodb:region:account-id:certificate/resource-id",
+  "ResourceIdTemplate": "arn:partition:dynamodb:region:account-id:table/resource-id",
   "Severity": "medium",
   "ResourceType": "AwsDynamoDBTable",
   "Description": "Check if DynamoDB tables point-in-time recovery (PITR) is enabled.",
