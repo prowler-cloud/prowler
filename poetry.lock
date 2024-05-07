@@ -1154,13 +1154,13 @@ dev = ["PyTest", "PyTest-Cov", "bump2version (<1)", "sphinx (<2)", "tox"]
 
 [[package]]
 name = "detect-secrets"
-version = "1.4.0"
+version = "1.5.0"
 description = "Tool for detecting secrets in the codebase"
 optional = false
 python-versions = "*"
 files = [
-    {file = "detect_secrets-1.4.0-py3-none-any.whl", hash = "sha256:d08ecabeee8b68c0acb0e8a354fb98d822a653f6ed05e520cead4c6fc1fc02cd"},
-    {file = "detect_secrets-1.4.0.tar.gz", hash = "sha256:d56787e339758cef48c9ccd6692f7a094b9963c979c9813580b0169e41132833"},
+    {file = "detect_secrets-1.5.0-py3-none-any.whl", hash = "sha256:e24e7b9b5a35048c313e983f76c4bd09dad89f045ff059e354f9943bf45aa060"},
+    {file = "detect_secrets-1.5.0.tar.gz", hash = "sha256:6bb46dcc553c10df51475641bb30fd69d25645cc12339e46c824c1e0c388898a"},
 ]
 
 [package.dependencies]
@@ -4542,4 +4542,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "f78043e5dc4cf9d131e8b2336b0ac5ada2bb5a186405977e5b6863ec6252483d"
+content-hash = "eca48ba1f24af155879651222953aa9aaab35ababd7201dbaf1ba6c4c7f4136f"
