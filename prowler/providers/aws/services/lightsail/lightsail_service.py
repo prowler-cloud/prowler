@@ -12,7 +12,7 @@ class Lightsail(AWSService):
         self.instances = self.__list_instances__()
         self.databases = self.__list_databases__()
 
-    def __list_instances__(self):
+    def __list_instances__(self) -> list:
         logger.info("Lightsail - Listing instances...")
         instance_list = []
         try:
@@ -72,7 +72,7 @@ class Lightsail(AWSService):
 
         return instance_list
 
-    def __list_databases__(self):
+    def __list_databases__(self) -> list:
         logger.info("Lightsail - Listing databases...")
         database_list = []
         try:
