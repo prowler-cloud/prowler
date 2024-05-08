@@ -33,7 +33,11 @@ class S3(AWSService):
     def __threading_call__(self, call):
         threads = []
         for bucket in self.buckets:
-            threads.append(threading.Thread(target=call, args=(bucket,)))
+            if bucket.region in self.regional_clients:
+                regional_client = self.regional_clients[bucket.region]
+                threads.append(
+                    threading.Thread(target=call, args=(bucket, regional_client))
+                )
         for t in threads:
             t.start()
         for t in threads:
@@ -90,10 +94,9 @@ class S3(AWSService):
             )
         return buckets
 
-    def __get_bucket_versioning__(self, bucket):
+    def __get_bucket_versioning__(self, bucket, regional_client):
         logger.info("S3 - Get buckets versioning...")
         try:
-            regional_client = self.regional_clients[bucket.region]
             bucket_versioning = regional_client.get_bucket_versioning(
                 Bucket=bucket.name
             )
@@ -122,10 +125,9 @@ class S3(AWSService):
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
-    def __get_bucket_encryption__(self, bucket):
+    def __get_bucket_encryption__(self, bucket, regional_client):
         logger.info("S3 - Get buckets encryption...")
         try:
-            regional_client = self.regional_clients[bucket.region]
             bucket.encryption = regional_client.get_bucket_encryption(
                 Bucket=bucket.name
             )["ServerSideEncryptionConfiguration"]["Rules"][0][
@@ -154,10 +156,9 @@ class S3(AWSService):
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
-    def __get_bucket_logging__(self, bucket):
+    def __get_bucket_logging__(self, bucket, regional_client):
         logger.info("S3 - Get buckets logging...")
         try:
-            regional_client = self.regional_clients[bucket.region]
             bucket_logging = regional_client.get_bucket_logging(Bucket=bucket.name)
             if "LoggingEnabled" in bucket_logging:
                 bucket.logging = True
@@ -183,10 +184,9 @@ class S3(AWSService):
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
-    def __get_public_access_block__(self, bucket):
+    def __get_public_access_block__(self, bucket, regional_client):
         logger.info("S3 - Get buckets public access block...")
         try:
-            regional_client = self.regional_clients[bucket.region]
             public_access_block = regional_client.get_public_access_block(
                 Bucket=bucket.name
             )["PublicAccessBlockConfiguration"]
@@ -226,11 +226,10 @@ class S3(AWSService):
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
-    def __get_bucket_acl__(self, bucket):
+    def __get_bucket_acl__(self, bucket, regional_client):
         logger.info("S3 - Get buckets acl...")
         try:
             grantees = []
-            regional_client = self.regional_clients[bucket.region]
             acl_grants = regional_client.get_bucket_acl(Bucket=bucket.name)["Grants"]
             for grant in acl_grants:
                 grantee = ACL_Grantee(type=grant["Grantee"]["Type"])
@@ -263,10 +262,9 @@ class S3(AWSService):
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
-    def __get_bucket_policy__(self, bucket):
+    def __get_bucket_policy__(self, bucket, regional_client):
         logger.info("S3 - Get buckets policy...")
         try:
-            regional_client = self.regional_clients[bucket.region]
             bucket.policy = json.loads(
                 regional_client.get_bucket_policy(Bucket=bucket.name)["Policy"]
             )
@@ -291,10 +289,9 @@ class S3(AWSService):
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
-    def __get_bucket_ownership_controls__(self, bucket):
+    def __get_bucket_ownership_controls__(self, bucket, regional_client):
         logger.info("S3 - Get buckets ownership controls...")
         try:
-            regional_client = self.regional_clients[bucket.region]
             bucket.ownership = regional_client.get_bucket_ownership_controls(
                 Bucket=bucket.name
             )["OwnershipControls"]["Rules"][0]["ObjectOwnership"]
@@ -319,10 +316,9 @@ class S3(AWSService):
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
-    def __get_object_lock_configuration__(self, bucket):
+    def __get_object_lock_configuration__(self, bucket, regional_client):
         logger.info("S3 - Get buckets ownership controls...")
         try:
-            regional_client = self.regional_clients[bucket.region]
             regional_client.get_object_lock_configuration(Bucket=bucket.name)
             bucket.object_lock = True
         except Exception as error:
@@ -349,10 +345,9 @@ class S3(AWSService):
                         f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
 
-    def __get_bucket_tagging__(self, bucket):
+    def __get_bucket_tagging__(self, bucket, regional_client):
         logger.info("S3 - Get buckets logging...")
         try:
-            regional_client = self.regional_clients[bucket.region]
             bucket_tags = regional_client.get_bucket_tagging(Bucket=bucket.name)[
                 "TagSet"
             ]
