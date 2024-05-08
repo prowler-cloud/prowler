@@ -309,7 +309,7 @@ aws:
 
   # aws.rds_instance_backup_enabled
   # Whether to check RDS instance replicas or not
-  check_rds_replicas: True
+  check_rds_replicas: False
 
 # Azure Configuration
 azure:
