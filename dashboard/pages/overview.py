@@ -21,6 +21,7 @@ from dash.dependencies import Input, Output
 from dashboard.config import (
     critical_color,
     encoding_format,
+    error_action,
     fail_color,
     folder_path_overview,
     high_color,
@@ -45,6 +46,7 @@ from dashboard.lib.dropdowns import (
     create_table_row_dropdown,
 )
 from dashboard.lib.layouts import create_layout_overview
+from prowler.lib.logger import logger
 
 # Suppress warnings
 warnings.filterwarnings("ignore")
@@ -54,11 +56,16 @@ warnings.filterwarnings("ignore")
 csv_files = []
 
 for file in glob.glob(os.path.join(folder_path_overview, "*.csv")):
-    with open(file, "r", newline="", encoding=encoding_format) as csvfile:
-        reader = csv.reader(csvfile)
-        num_rows = sum(1 for row in reader)
-        if num_rows > 1:
-            csv_files.append(file)
+    with open(
+        file, "r", newline="", encoding=encoding_format, errors=error_action
+    ) as csvfile:
+        try:
+            reader = csv.reader(csvfile)
+            num_rows = sum(1 for row in reader)
+            if num_rows > 1:
+                csv_files.append(file)
+        except UnicodeDecodeError:
+            logger.error(f"Error decoding file: {file}")
 
 
 # Import logos providers
@@ -80,7 +87,7 @@ def load_csv_files(csv_files):
     """Load CSV files into a single pandas DataFrame."""
     dfs = []
     for file in csv_files:
-        df = pd.read_csv(file, sep=";", on_bad_lines="skip")
+        df = pd.read_csv(file, sep=";", on_bad_lines="skip", encoding=encoding_format)
         if "CHECK_ID" in df.columns:
             if "TIMESTAMP" in df.columns or df["PROVIDER"].unique() == "aws":
                 dfs.append(df.astype(str))
@@ -617,7 +624,7 @@ def filter_data(
     # Select the files in the list_files that have the same date as the selected date
     list_files = []
     for file in csv_files:
-        df = pd.read_csv(file, sep=";", on_bad_lines="skip")
+        df = pd.read_csv(file, sep=";", on_bad_lines="skip", encoding=encoding_format)
         if "CHECK_ID" in df.columns:
             if "TIMESTAMP" in df.columns or df["PROVIDER"].unique() == "aws":
                 # This handles the case where we are using v3 outputs
