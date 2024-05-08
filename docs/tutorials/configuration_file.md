@@ -33,7 +33,7 @@ The following list includes all the AWS checks with configurable variables that 
 | `drs_job_exist`                                               | `allowlist_non_default_regions`                  | Boolean         |
 | `guardduty_is_enabled`                                        | `allowlist_non_default_regions`                  | Boolean         |
 | `securityhub_enabled`                                         | `allowlist_non_default_regions`                  | Boolean         |
-
+| `rds_instance_backup_enabled`                                  | `check_rds_instance_replicas`      | Boolean        |
 ## Azure
 
 ### Configurable Checks
@@ -143,6 +143,11 @@ aws:
   # AWS Trusted Advisor
   # trustedadvisor_premium_support_plan_subscribed
   verify_premium_support_plans: True
+
+  # AWS RDS
+  # aws.rds_instance_backup_enabled
+  # Whether to check RDS instance replicas or not
+  check_rds_instance_replicas: False
 
 # Azure Configuration
 azure:
