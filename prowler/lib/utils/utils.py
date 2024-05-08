@@ -28,7 +28,7 @@ from prowler.lib.logger import logger
 def open_file(input_file: str, mode: str = "r") -> TextIOWrapper:
     """open_file returns a handler to the file using the specified mode."""
     try:
-        f = open(input_file, mode)
+        f = open(input_file, mode, encoding="utf-8")
     except OSError as os_error:
         if os_error.strerror == "Too many open files":
             logger.critical(
