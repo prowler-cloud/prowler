@@ -16,19 +16,32 @@ class rds_instance_transport_encrypted(Check):
             report.status_extended = (
                 f"RDS Instance {db_instance.id} connections are not encrypted."
             )
-            # Check only RDS SQL Server or PostgreSQL engines (Aurora not supported)
-            if (
-                any(engine in db_instance.engine for engine in supported_engines)
-                and "aurora" not in db_instance.engine
-            ):
-                for parameter in db_instance.parameters:
-                    if (
-                        parameter["ParameterName"] == "rds.force_ssl"
-                        and parameter["ParameterValue"] == "1"
-                    ):
-                        report.status = "PASS"
-                        report.status_extended = f"RDS Instance {db_instance.id} connections use SSL encryption."
 
+            # Check only RDS DB instances that support parameter group encryption
+            if not db_instance.cluster_id and any(engine in db_instance.engine for engine in supported_engines):
+                if db_instance.engine in [
+                    "sqlserver-se",
+                    "sqlserver-ee",
+                    "sqlserver-ex",
+                    "sqlserver-web",
+                    "postgres",
+                    "aurora-postgresql",
+                ]:
+                    for parameter in db_instance.parameters:
+                        if (
+                            parameter["ParameterName"] == "rds.force_ssl"
+                            and parameter["ParameterValue"] == "1"
+                        ):
+                            report.status = "PASS"
+                            report.status_extended = f"RDS Instance {db_instance.id} connections use SSL encryption."
+                else:
+                    for parameter in db_instance.parameters:
+                        if (
+                            parameter["ParameterName"] == "require_secure_transport"
+                            and parameter["ParameterValue"] == "1"
+                        ):
+                            report.status = "PASS"
+                            report.status_extended = f"RDS Instance {db_instance.id} connections use SSL encryption."
                 findings.append(report)
 
         return findings
