@@ -77,6 +77,9 @@ class RDS(AWSService):
                                     cluster_arn=f"arn:{self.audited_partition}:rds:{regional_client.region}:{self.audited_account}:cluster:{instance.get('DBClusterIdentifier')}",
                                     region=regional_client.region,
                                     tags=instance.get("TagList", []),
+                                    replica_source=instance.get(
+                                        "ReadReplicaSourceDBInstanceIdentifier"
+                                    ),
                                 )
                             )
         except Exception as error:
@@ -305,6 +308,7 @@ class DBInstance(BaseModel):
     cluster_arn: Optional[str]
     region: str
     tags: Optional[list] = []
+    replica_source: Optional[str]
 
 
 class DBCluster(BaseModel):
