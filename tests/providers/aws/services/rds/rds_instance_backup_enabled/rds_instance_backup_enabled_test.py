@@ -172,7 +172,7 @@ class Test_rds_instance_backup_enabled:
         from prowler.providers.aws.services.rds.rds_service import RDS
 
         aws_provider = set_mocked_aws_provider(
-            [AWS_REGION_US_EAST_1], audit_config={"check_rds_replicas": True}
+            [AWS_REGION_US_EAST_1], audit_config={"check_rds_instance_replicas": True}
         )
 
         with mock.patch(

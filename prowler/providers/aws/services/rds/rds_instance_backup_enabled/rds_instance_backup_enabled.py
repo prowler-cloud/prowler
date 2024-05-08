@@ -21,7 +21,7 @@ class rds_instance_backup_enabled(Check):
                 )
 
             if db_instance.replica_source and not rds_client.audit_config.get(
-                "check_rds_replicas", False
+                "check_rds_instance_replicas", False
             ):
                 continue
             findings.append(report)

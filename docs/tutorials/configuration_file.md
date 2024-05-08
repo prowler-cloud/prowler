@@ -39,7 +39,7 @@ The following list includes all the AWS checks with configurable variables that 
 | `cloudtrail_threat_detection_enumeration`                      | `threat_detection_enumeration_entropy`      | Integer         |
 | `cloudtrail_threat_detection_enumeration`                      | `threat_detection_enumeration_minutes`      | Integer         |
 | `cloudtrail_threat_detection_enumeration`                      | `threat_detection_enumeration_actions`      | List of Strings         |
-| `rds_instance_backup_enabled`                                  | `check_rds_replicas`      | Boolean        |
+| `rds_instance_backup_enabled`                                  | `check_rds_instance_replicas`      | Boolean        |
 ## Azure
 
 ### Configurable Checks
@@ -309,7 +309,7 @@ aws:
 
   # aws.rds_instance_backup_enabled
   # Whether to check RDS instance replicas or not
-  check_rds_replicas: False
+  check_rds_instance_replicas: False
 
 # Azure Configuration
 azure:
