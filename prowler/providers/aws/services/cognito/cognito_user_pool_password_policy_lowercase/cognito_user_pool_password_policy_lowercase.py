@@ -12,7 +12,7 @@ class cognito_user_pool_password_policy_lowercase(Check):
             report.resource_arn = pool.arn
             report.resource_tags = pool.tags
             if pool.password_policy:
-                if pool.password_policy.get("RequireLowercase", False):
+                if pool.password_policy.require_lowercase:
                     report.status = "PASS"
                     report.status_extended = f"User pool {pool.name} has a password policy with a lowercase requirement."
                 else:

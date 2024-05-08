@@ -108,7 +108,12 @@ class Test_Cognito_Service:
         cognito_client[user_pool_arn].name = "user_pool_name"
         cognito_client[user_pool_arn].region = "eu-west-1"
         cognito_client[user_pool_arn].user_pool_clients["user_pool_client_id"] = (
-            UserPoolClient(id="user_pool_client_id", name="user_pool_client_name")
+            UserPoolClient(
+                id="user_pool_client_id",
+                name="user_pool_client_name",
+                arn=f"{user_pool_arn}/client/user_pool_client_id",
+                region="eu-west-1",
+            )
         )
 
         with mock.patch(
@@ -130,6 +135,14 @@ class Test_Cognito_Service:
                     user_pool.user_pool_clients["user_pool_client_id"].name
                     == "user_pool_client_name"
                 )
+                assert (
+                    user_pool.user_pool_clients["user_pool_client_id"].region
+                    == "eu-west-1"
+                )
+                assert (
+                    user_pool.user_pool_clients["user_pool_client_id"].arn
+                    == f"{user_pool_arn}/client/user_pool_client_id"
+                )
 
     @mock_aws
     def test_describe_user_pool_clients(self):
@@ -143,6 +156,8 @@ class Test_Cognito_Service:
             UserPoolClient(
                 id="user_pool_client_id",
                 name="user_pool_client_name",
+                region="eu-west-1",
+                arn=f"{user_pool_arn}/client/user_pool_client_id",
                 prevent_user_existence_errors="ENABLED",
                 enable_token_revocation=True,
             )
@@ -166,6 +181,14 @@ class Test_Cognito_Service:
                 assert (
                     user_pool.user_pool_clients["user_pool_client_id"].name
                     == "user_pool_client_name"
+                )
+                assert (
+                    user_pool.user_pool_clients["user_pool_client_id"].region
+                    == "eu-west-1"
+                )
+                assert (
+                    user_pool.user_pool_clients["user_pool_client_id"].arn
+                    == f"{user_pool_arn}/client/user_pool_client_id"
                 )
                 assert (
                     user_pool.user_pool_clients[
@@ -218,7 +241,7 @@ class Test_Cognito_Service:
         cognito_client.user_pools[user_pool_arn].risk_configuration = RiskConfiguration(
             compromised_credentials_risk_configuration=CompromisedCredentialsRiskConfiguration(
                 event_filter=["PASSWORD_CHANGE", "SIGN_UP", "SIGN_IN"],
-                actions={"EventAction": "BLOCK"},
+                actions="BLOCK",
             ),
             account_takeover_risk_configuration=AccountTakeoverRiskConfiguration(
                 low_action="BLOCK",
@@ -240,10 +263,10 @@ class Test_Cognito_Service:
                 assert user_pool.id == "user_pool_id"
                 assert (
                     user_pool.risk_configuration.compromised_credentials_risk_configuration
-                    == {
-                        "EventFilter": ["PASSWORD_CHANGE", "SIGN_UP", "SIGN_IN"],
-                        "Actions": {"EventAction": "BLOCK"},
-                    }
+                    == CompromisedCredentialsRiskConfiguration(
+                        event_filter=["PASSWORD_CHANGE", "SIGN_UP", "SIGN_IN"],
+                        actions="BLOCK",
+                    )
                 )
                 assert (
                     user_pool.risk_configuration.account_takeover_risk_configuration.low_action

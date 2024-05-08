@@ -2,6 +2,7 @@ from datetime import datetime
 from unittest import mock
 
 from prowler.providers.aws.services.cognito.cognito_service import (
+    AdminCreateUserConfig,
     IdentityPool,
     IdentityPoolRoles,
     UserPool,
@@ -44,7 +45,9 @@ class Test_cognito_user_pool_self_registration_disabled:
         user_pool_name = "eu-west-1_123456789"
         cognito_client.user_pools = {
             user_pool_arn: UserPool(
-                admin_create_user_config={"AllowAdminCreateUserOnly": False},
+                admin_create_user_config=AdminCreateUserConfig(
+                    allow_admin_create_user_only=False
+                ),
                 region=AWS_REGION_US_EAST_1,
                 id=user_pool_id,
                 arn=user_pool_arn,
@@ -92,7 +95,9 @@ class Test_cognito_user_pool_self_registration_disabled:
         user_pool_name = "eu-west-1_123456789"
         cognito_client.user_pools = {
             user_pool_arn: UserPool(
-                admin_create_user_config={"AllowAdminCreateUserOnly": True},
+                admin_create_user_config=AdminCreateUserConfig(
+                    allow_admin_create_user_only=True
+                ),
                 region=AWS_REGION_US_EAST_1,
                 id=user_pool_id,
                 arn=user_pool_arn,
@@ -159,7 +164,9 @@ class Test_cognito_user_pool_self_registration_disabled:
         user_pool_id = "eu-west-1_123456789"
         cognito_client.user_pools = {
             user_pool_arn: UserPool(
-                admin_create_user_config={"AllowAdminCreateUserOnly": False},
+                admin_create_user_config=AdminCreateUserConfig(
+                    allow_admin_create_user_only=False
+                ),
                 region=AWS_REGION_US_EAST_1,
                 id=user_pool_id,
                 arn=user_pool_arn,

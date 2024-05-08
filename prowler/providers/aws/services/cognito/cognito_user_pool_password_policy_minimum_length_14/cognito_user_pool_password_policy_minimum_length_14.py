@@ -12,7 +12,7 @@ class cognito_user_pool_password_policy_minimum_length_14(Check):
             report.resource_arn = pool.arn
             report.resource_tags = pool.tags
             if pool.password_policy:
-                if pool.password_policy.get("MinimumLength", 8) >= 14:
+                if pool.password_policy.minimum_length >= 14:
                     report.status = "PASS"
                     report.status_extended = f"User pool {pool.name} has a password policy with a minimum length of 14 characters."
                 else:

@@ -12,7 +12,7 @@ class cognito_user_pool_password_policy_uppercase(Check):
             report.resource_arn = pool.arn
             report.resource_tags = pool.tags
             if pool.password_policy:
-                if pool.password_policy.get("RequireUppercase", False):
+                if pool.password_policy.require_uppercase:
                     report.status = "PASS"
                     report.status_extended = f"User pool {pool.name} has a password policy with an uppercase requirement."
                 else:

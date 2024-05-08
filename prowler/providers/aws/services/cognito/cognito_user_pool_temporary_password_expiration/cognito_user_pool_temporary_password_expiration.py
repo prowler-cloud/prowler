@@ -12,12 +12,12 @@ class cognito_user_pool_temporary_password_expiration(Check):
             report.resource_arn = pool.arn
             report.resource_tags = pool.tags
             if pool.password_policy:
-                if pool.password_policy.get("TemporaryPasswordValidityDays", 8) <= 7:
+                if pool.password_policy.temporary_password_validity_days <= 7:
                     report.status = "PASS"
-                    report.status_extended = f"User pool {pool.name} has temporary password expiration set to {pool.password_policy['TemporaryPasswordValidityDays']} days."
+                    report.status_extended = f"User pool {pool.name} has temporary password expiration set to {pool.password_policy.temporary_password_validity_days} days."
                 else:
                     report.status = "FAIL"
-                    report.status_extended = f"User pool {pool.name} has temporary password expiration set to {pool.password_policy['TemporaryPasswordValidityDays']} days."
+                    report.status_extended = f"User pool {pool.name} has temporary password expiration set to {pool.password_policy.temporary_password_validity_days} days."
             else:
                 report.status = "FAIL"
                 report.status_extended = (

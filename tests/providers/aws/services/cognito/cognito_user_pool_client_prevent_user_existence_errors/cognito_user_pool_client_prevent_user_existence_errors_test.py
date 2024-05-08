@@ -31,6 +31,7 @@ class Test_cognito_user_pool_client_prevent_user_existence_errors:
     def test_cognito_user_pools_prevent_user_existence_errors_disabled(self):
         cognito_client = mock.MagicMock
         user_pool_arn = f"arn:aws:cognito-idp:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:userpool/eu-west-1_123456789"
+        user_pool_client_arn = f"{user_pool_arn}/client/eu-west-1_123456789"
         user_pool_id = "eu-west-1_123456789"
         user_pool_name = "eu-west-1_123456789"
         user_pool_client_id = "eu-west-1_123456789"
@@ -41,6 +42,8 @@ class Test_cognito_user_pool_client_prevent_user_existence_errors:
                     user_pool_client_id: UserPoolClient(
                         id=user_pool_client_id,
                         name=user_pool_client_name,
+                        region=AWS_REGION_US_EAST_1,
+                        arn=user_pool_client_arn,
                         prevent_user_existence_errors="DISABLED",
                     )
                 },
@@ -69,15 +72,16 @@ class Test_cognito_user_pool_client_prevent_user_existence_errors:
 
             assert len(result) == 1
             assert result[0].resource_id == user_pool_client_id
-            assert result[0].resource_arn == user_pool_arn
+            assert result[0].resource_arn == user_pool_client_arn
             assert result[0].status == "FAIL"
             assert result[0].status_extended == (
-                f"User pool client {user_pool_client_name} has prevent user existence reveal disabled."
+                f"User pool client {user_pool_client_name} does not prevent revealing users in existence errors."
             )
 
     def test_cognito_user_pools_prevent_user_existence_errors_enabled(self):
         cognito_client = mock.MagicMock
         user_pool_arn = f"arn:aws:cognito-idp:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:userpool/eu-west-1_123456789"
+        user_pool_client_arn = f"{user_pool_arn}/client/eu-west-1_123456789"
         user_pool_id = "eu-west-1_123456789"
         user_pool_name = "user_pool_name"
         user_pool_client_id = "eu-west-1_123456789"
@@ -88,6 +92,8 @@ class Test_cognito_user_pool_client_prevent_user_existence_errors:
                     user_pool_client_id: UserPoolClient(
                         id=user_pool_client_id,
                         name=user_pool_client_name,
+                        region=AWS_REGION_US_EAST_1,
+                        arn=user_pool_client_arn,
                         prevent_user_existence_errors="ENABLED",
                     )
                 },
@@ -117,8 +123,8 @@ class Test_cognito_user_pool_client_prevent_user_existence_errors:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert result[0].status_extended == (
-                f"User pool client {user_pool_client_name} has prevent user existence reveal enabled."
+                f"User pool client {user_pool_client_name} prevents revealing users in existence errors."
             )
 
             assert result[0].resource_id == user_pool_client_id
-            assert result[0].resource_arn == user_pool_arn
+            assert result[0].resource_arn == user_pool_client_arn

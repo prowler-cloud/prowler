@@ -15,13 +15,11 @@ class cognito_user_pool_blocks_compromised_credentials_sign_in_attempts(Check):
                 pool.advanced_security_mode == "ENFORCED"
                 and "SIGN_IN"
                 in pool.risk_configuration.compromised_credentials_risk_configuration.event_filter
-                and pool.risk_configuration.compromised_credentials_risk_configuration.actions.get(
-                    "EventAction", ""
-                )
+                and pool.risk_configuration.compromised_credentials_risk_configuration.actions
                 == "BLOCK"
             ):
                 report.status = "PASS"
-                report.status_extended = f"User pool {pool.name} block sign-in attempts with suspected compromised credentials."
+                report.status_extended = f"User pool {pool.name} blocks sign-in attempts with suspected compromised credentials."
             else:
                 report.status = "FAIL"
                 report.status_extended = f"User pool {pool.name} does not block sign-in attempts with suspected compromised credentials."

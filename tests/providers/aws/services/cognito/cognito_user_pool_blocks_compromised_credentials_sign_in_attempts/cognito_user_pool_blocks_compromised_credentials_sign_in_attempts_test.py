@@ -40,7 +40,7 @@ class Test_cognito_user_pool_blocks_compromised_credentials_sign_in_attempts:
                 risk_configuration=RiskConfiguration(
                     compromised_credentials_risk_configuration=CompromisedCredentialsRiskConfiguration(
                         event_filter=["SIGN_IN"],
-                        actions={"EventAction": "BLOCK"},
+                        actions="BLOCK",
                     )
                 ),
                 region=AWS_REGION_US_EAST_1,
@@ -85,7 +85,7 @@ class Test_cognito_user_pool_blocks_compromised_credentials_sign_in_attempts:
                 risk_configuration=RiskConfiguration(
                     compromised_credentials_risk_configuration=CompromisedCredentialsRiskConfiguration(
                         event_filter=["SIGN_IN"],
-                        actions={"EventAction": "BLOCK"},
+                        actions="BLOCK",
                     )
                 ),
                 region=AWS_REGION_US_EAST_1,
@@ -130,7 +130,7 @@ class Test_cognito_user_pool_blocks_compromised_credentials_sign_in_attempts:
                 risk_configuration=RiskConfiguration(
                     compromised_credentials_risk_configuration=CompromisedCredentialsRiskConfiguration(
                         event_filter=["SIGN_IN"],
-                        actions={"EventAction": "BLOCK"},
+                        actions="BLOCK",
                     )
                 ),
                 region=AWS_REGION_US_EAST_1,
@@ -159,7 +159,7 @@ class Test_cognito_user_pool_blocks_compromised_credentials_sign_in_attempts:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert result[0].status_extended == (
-                f"User pool {user_pool_name} block sign-in attempts with suspected compromised credentials."
+                f"User pool {user_pool_name} blocks sign-in attempts with suspected compromised credentials."
             )
             assert result[0].resource_id == user_pool_id
             assert result[0].resource_arn == user_pool_arn
@@ -175,7 +175,7 @@ class Test_cognito_user_pool_blocks_compromised_credentials_sign_in_attempts:
                 risk_configuration=RiskConfiguration(
                     compromised_credentials_risk_configuration=CompromisedCredentialsRiskConfiguration(
                         event_filter=[],
-                        actions={"EventAction": "BLOCK"},
+                        actions="BLOCK",
                     )
                 ),
                 region=AWS_REGION_US_EAST_1,

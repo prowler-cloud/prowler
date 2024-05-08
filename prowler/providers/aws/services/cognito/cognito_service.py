@@ -59,8 +59,27 @@ class CognitoIDP(AWSService):
                     user_pool_details = self.regional_clients[
                         user_pool.region
                     ].describe_user_pool(UserPoolId=user_pool.id)["UserPool"]
-                    self.user_pools[user_pool.arn].password_policy = (
-                        user_pool_details.get("Policies", {}).get("PasswordPolicy", {})
+                    self.user_pools[user_pool.arn].password_policy = PasswordPolicy(
+                        minimum_length=user_pool_details.get("Policies", {})
+                        .get("PasswordPolicy", {})
+                        .get("MinimumLength", 0),
+                        require_lowercase=user_pool_details.get("Policies", {})
+                        .get("PasswordPolicy", {})
+                        .get("RequireLowercase", False),
+                        require_numbers=user_pool_details.get("Policies", {})
+                        .get("PasswordPolicy", {})
+                        .get("RequireNumbers", False),
+                        require_symbols=user_pool_details.get("Policies", {})
+                        .get("PasswordPolicy", {})
+                        .get("RequireSymbols", False),
+                        require_uppercase=user_pool_details.get("Policies", {})
+                        .get("PasswordPolicy", {})
+                        .get("RequireUppercase", False),
+                        temporary_password_validity_days=user_pool_details.get(
+                            "Policies", {}
+                        )
+                        .get("PasswordPolicy", {})
+                        .get("TemporaryPasswordValidityDays", 0),
                     )
                     self.user_pools[user_pool.arn].deletion_protection = (
                         user_pool_details.get("DeletionProtection", "INACTIVE")
@@ -77,7 +96,11 @@ class CognitoIDP(AWSService):
                         user_pool_details.get("AccountRecoverySetting", {})
                     )
                     self.user_pools[user_pool.arn].admin_create_user_config = (
-                        user_pool_details.get("AdminCreateUserConfig", {})
+                        AdminCreateUserConfig(
+                            allow_admin_create_user_only=user_pool_details.get(
+                                "AdminCreateUserConfig", {}
+                            ).get("AllowAdminCreateUserOnly", False)
+                        )
                     )
                     self.user_pools[user_pool.arn].tags = user_pool_details.get(
                         "UserPoolTags", []
@@ -100,11 +123,16 @@ class CognitoIDP(AWSService):
                         user_pool.region
                     ].list_user_pool_clients(UserPoolId=user_pool.id)
                     for user_pool_client in user_pool_clients["UserPoolClients"]:
+                        user_pool_client_arn = (
+                            f"{user_pool.arn}/client/{user_pool_client['ClientId']}"
+                        )
                         self.user_pools[user_pool.arn].user_pool_clients[
                             user_pool_client["ClientId"]
                         ] = UserPoolClient(
                             id=user_pool_client["ClientId"],
                             name=user_pool_client["ClientName"],
+                            arn=user_pool_client_arn,
+                            region=user_pool.region,
                         )
                 except Exception as error:
                     logger.error(
@@ -195,7 +223,8 @@ class CognitoIDP(AWSService):
                                         "RiskConfiguration", {}
                                     )
                                     .get("CompromisedCredentialsRiskConfiguration", {})
-                                    .get("Actions", {}),
+                                    .get("Actions", {})
+                                    .get("EventAction", ""),
                                 ),
                                 account_takeover_risk_configuration=AccountTakeoverRiskConfiguration(
                                     low_action=risk_configuration.get(
@@ -336,7 +365,7 @@ class AccountTakeoverRiskConfiguration(BaseModel):
 
 class CompromisedCredentialsRiskConfiguration(BaseModel):
     event_filter: Optional[list]
-    actions: Optional[dict]
+    actions: Optional[str]
 
 
 class RiskConfiguration(BaseModel):
@@ -349,8 +378,23 @@ class RiskConfiguration(BaseModel):
 class UserPoolClient(BaseModel):
     id: str
     name: str
+    arn: str
+    region: str
     prevent_user_existence_errors: Optional[str]
     enable_token_revocation: Optional[bool]
+
+
+class PasswordPolicy(BaseModel):
+    minimum_length: Optional[int]
+    require_lowercase: Optional[bool]
+    require_numbers: Optional[bool]
+    require_symbols: Optional[bool]
+    require_uppercase: Optional[bool]
+    temporary_password_validity_days: Optional[int]
+
+
+class AdminCreateUserConfig(BaseModel):
+    allow_admin_create_user_only: bool
 
 
 class UserPool(BaseModel):
@@ -363,13 +407,13 @@ class UserPool(BaseModel):
     last_modified: datetime
     creation_date: datetime
     status: str
-    password_policy: Optional[dict]
+    password_policy: Optional[PasswordPolicy]
     mfa_config: Optional[MFAConfig]
     tags: Optional[dict]
     account_recovery_settings: Optional[dict]
     user_pool_clients: Optional[dict]
     risk_configuration: Optional[RiskConfiguration]
-    admin_create_user_config: Optional[dict] = {}
+    admin_create_user_config: Optional[AdminCreateUserConfig]
     tags: Optional[list]
 
 

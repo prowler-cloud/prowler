@@ -1,7 +1,10 @@
 from datetime import datetime
 from unittest import mock
 
-from prowler.providers.aws.services.cognito.cognito_service import UserPool
+from prowler.providers.aws.services.cognito.cognito_service import (
+    PasswordPolicy,
+    UserPool,
+)
 from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, AWS_REGION_US_EAST_1
 
 
@@ -32,7 +35,9 @@ class Test_cognito_user_pool_temporary_password_expiration:
         user_pool_name = "user_pool_name"
         cognito_client.user_pools = {
             user_pool_arn: UserPool(
-                password_policy={"TemporaryPasswordValidityDays": 8},
+                password_policy=PasswordPolicy(
+                    temporary_password_validity_days=8,
+                ),
                 region=AWS_REGION_US_EAST_1,
                 id=user_pool_id,
                 arn=user_pool_arn,
@@ -72,7 +77,9 @@ class Test_cognito_user_pool_temporary_password_expiration:
         user_pool_id = "eu-west-1_123456789"
         cognito_client.user_pools = {
             user_pool_arn: UserPool(
-                password_policy={"TemporaryPasswordValidityDays": 7},
+                password_policy=PasswordPolicy(
+                    temporary_password_validity_days=7,
+                ),
                 region=AWS_REGION_US_EAST_1,
                 id=user_pool_id,
                 arn=user_pool_arn,

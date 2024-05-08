@@ -35,12 +35,15 @@ class Test_cognito_user_pool_client_token_revocation_enabled:
         user_pool_id = "eu-west-1_123456789"
         user_pool_client_id = "eu-west-1_123456789"
         user_pool_client_name = "eu-west-1_123456789"
+        user_pool_client_arn = f"{user_pool_arn}/client/{user_pool_client_id}"
         cognito_client.user_pools = {
             user_pool_arn: UserPool(
                 user_pool_clients={
                     user_pool_client_id: UserPoolClient(
                         id=user_pool_client_id,
                         name=user_pool_client_name,
+                        region=AWS_REGION_US_EAST_1,
+                        arn=user_pool_client_arn,
                         enable_token_revocation=False,
                     )
                 },
@@ -74,7 +77,7 @@ class Test_cognito_user_pool_client_token_revocation_enabled:
             )
 
             assert result[0].resource_id == user_pool_client_id
-            assert result[0].resource_arn == user_pool_arn
+            assert result[0].resource_arn == user_pool_client_arn
 
     def test_project_user_pools_token_revocation_enabled(self):
         cognito_client = mock.MagicMock
@@ -83,12 +86,15 @@ class Test_cognito_user_pool_client_token_revocation_enabled:
         user_pool_id = "eu-west-1_123456789"
         user_pool_client_id = "eu-west-1_123456789"
         user_pool_client_name = "eu-west-1_123456789"
+        user_pool_client_arn = f"{user_pool_arn}/client/{user_pool_client_id}"
         cognito_client.user_pools = {
             user_pool_arn: UserPool(
                 user_pool_clients={
                     user_pool_client_id: UserPoolClient(
                         id=user_pool_client_id,
                         name=user_pool_client_name,
+                        arn=user_pool_client_arn,
+                        region=AWS_REGION_US_EAST_1,
                         enable_token_revocation=True,
                     )
                 },
@@ -122,4 +128,4 @@ class Test_cognito_user_pool_client_token_revocation_enabled:
             )
 
             assert result[0].resource_id == user_pool_client_id
-            assert result[0].resource_arn == user_pool_arn
+            assert result[0].resource_arn == user_pool_client_arn
