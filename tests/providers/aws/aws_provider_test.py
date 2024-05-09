@@ -839,32 +839,38 @@ aws:
         arguments.send_sh_only_fails = True
 
         aws_provider = AwsProvider(arguments)
+        # This is needed since the output_options requires to get the global provider to get the audit config
+        with patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ):
 
-        aws_provider.output_options = arguments, {}
+            aws_provider.output_options = arguments, {}
 
-        assert isinstance(aws_provider.output_options, AWSOutputOptions)
-        assert aws_provider.output_options.security_hub_enabled
-        assert aws_provider.output_options.send_sh_only_fails
-        assert aws_provider.output_options.status == ["FAIL"]
-        assert aws_provider.output_options.output_modes == ["csv", "json-asff"]
-        assert (
-            aws_provider.output_options.output_directory == arguments.output_directory
-        )
-        assert aws_provider.output_options.bulk_checks_metadata == {}
-        assert aws_provider.output_options.verbose
-        assert (
-            f"prowler-output-{AWS_ACCOUNT_NUMBER}"
-            in aws_provider.output_options.output_filename
-        )
-        # Flaky due to the millisecond part of the timestamp
-        # assert (
-        #     aws_provider.output_options.output_filename
-        #     == f"prowler-output-{AWS_ACCOUNT_NUMBER}-{datetime.today().strftime('%Y%m%d%H%M%S')}"
-        # )
+            assert isinstance(aws_provider.output_options, AWSOutputOptions)
+            assert aws_provider.output_options.security_hub_enabled
+            assert aws_provider.output_options.send_sh_only_fails
+            assert aws_provider.output_options.status == ["FAIL"]
+            assert aws_provider.output_options.output_modes == ["csv", "json-asff"]
+            assert (
+                aws_provider.output_options.output_directory
+                == arguments.output_directory
+            )
+            assert aws_provider.output_options.bulk_checks_metadata == {}
+            assert aws_provider.output_options.verbose
+            assert (
+                f"prowler-output-{AWS_ACCOUNT_NUMBER}"
+                in aws_provider.output_options.output_filename
+            )
+            # Flaky due to the millisecond part of the timestamp
+            # assert (
+            #     aws_provider.output_options.output_filename
+            #     == f"prowler-output-{AWS_ACCOUNT_NUMBER}-{datetime.today().strftime('%Y%m%d%H%M%S')}"
+            # )
 
-        # Delete testing directory
-        rmdir(f"{arguments.output_directory}/compliance")
-        rmdir(arguments.output_directory)
+            # Delete testing directory
+            rmdir(f"{arguments.output_directory}/compliance")
+            rmdir(arguments.output_directory)
 
     @mock_aws
     @freeze_time(datetime.today())
@@ -882,24 +888,32 @@ aws:
         arguments.send_sh_only_fails = True
 
         aws_provider = AwsProvider(arguments)
+        # This is needed since the output_options requires to get the global provider to get the audit config
+        with patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ):
 
-        aws_provider.output_options = arguments, {}
+            aws_provider.output_options = arguments, {}
 
-        assert isinstance(aws_provider.output_options, AWSOutputOptions)
-        assert aws_provider.output_options.security_hub_enabled
-        assert aws_provider.output_options.send_sh_only_fails
-        assert aws_provider.output_options.status == []
-        assert aws_provider.output_options.output_modes == ["csv", "json-asff"]
-        assert (
-            aws_provider.output_options.output_directory == arguments.output_directory
-        )
-        assert aws_provider.output_options.bulk_checks_metadata == {}
-        assert aws_provider.output_options.verbose
-        assert aws_provider.output_options.output_filename == arguments.output_filename
+            assert isinstance(aws_provider.output_options, AWSOutputOptions)
+            assert aws_provider.output_options.security_hub_enabled
+            assert aws_provider.output_options.send_sh_only_fails
+            assert aws_provider.output_options.status == []
+            assert aws_provider.output_options.output_modes == ["csv", "json-asff"]
+            assert (
+                aws_provider.output_options.output_directory
+                == arguments.output_directory
+            )
+            assert aws_provider.output_options.bulk_checks_metadata == {}
+            assert aws_provider.output_options.verbose
+            assert (
+                aws_provider.output_options.output_filename == arguments.output_filename
+            )
 
-        # Delete testing directory
-        rmdir(f"{arguments.output_directory}/compliance")
-        rmdir(arguments.output_directory)
+            # Delete testing directory
+            rmdir(f"{arguments.output_directory}/compliance")
+            rmdir(arguments.output_directory)
 
     @mock_aws
     def test_validate_credentials_commercial_partition_with_regions(self):
