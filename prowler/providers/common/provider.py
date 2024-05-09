@@ -226,12 +226,13 @@ class Provider(ABC):
                 providers.append(provider)
         return providers
 
-    # TODO: revisit this function
-    def update_provider_config(self, variable: str, value: str):
+    @staticmethod
+    def update_provider_config(audit_config: dict, variable: str, value: str):
         try:
-            if self.audit_config and variable in self.audit_config:
-                self.audit_config[variable] = value
+            if audit_config and variable in audit_config:
+                audit_config[variable] = value
 
+            return audit_config
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
