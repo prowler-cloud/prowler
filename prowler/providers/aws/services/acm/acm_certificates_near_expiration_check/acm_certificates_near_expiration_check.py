@@ -4,10 +4,11 @@ from prowler.providers.aws.services.acm.acm_client import acm_client
 DAYS_TO_EXPIRE_THRESHOLD = 7
 
 
-class acm_certificates_expiration_check(Check):
+class acm_certificates_near_expiration_check(Check):
     def execute(self):
         findings = []
         for certificate in acm_client.certificates:
+            print("\n\nCertificate: ", certificate, "\nExpiration Days: ", certificate.expiration_days, "\n")
             report = Check_Report_AWS(self.metadata())
             report.region = certificate.region
             if certificate.expiration_days > DAYS_TO_EXPIRE_THRESHOLD:
@@ -20,7 +21,7 @@ class acm_certificates_expiration_check(Check):
             else:
                 report.status = "FAIL"
                 if certificate.expiration_days < 0:
-                    report.status_extended = f"ACM Certificate {certificate.id} for {certificate.name} has expired ({abs(certificate.expiration_days)} days ago)."
+                    continue
                 else:
                     report.status_extended = f"ACM Certificate {certificate.id} for {certificate.name} is about to expire in {certificate.expiration_days} days."
 
