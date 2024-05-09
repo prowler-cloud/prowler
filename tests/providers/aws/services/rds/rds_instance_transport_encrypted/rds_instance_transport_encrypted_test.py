@@ -1,4 +1,3 @@
-from re import search
 from unittest import mock
 
 import botocore
@@ -92,6 +91,18 @@ class Test_rds_instance_transport_encrypted:
                 result = check.execute()
 
                 assert len(result) == 1
+                assert result[0].status == "FAIL"
+                assert (
+                    result[0].status_extended
+                    == "RDS Instance db-master-1 connections are not encrypted."
+                )
+                assert result[0].resource_id == "db-master-1"
+                assert result[0].region == AWS_REGION_US_EAST_1
+                assert (
+                    result[0].resource_arn
+                    == f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:db:db-master-1"
+                )
+                assert result[0].resource_tags == []
 
     @mock_aws
     def test_rds_clustered_instance(self):
@@ -182,9 +193,9 @@ class Test_rds_instance_transport_encrypted:
 
                 assert len(result) == 1
                 assert result[0].status == "FAIL"
-                assert search(
-                    "connections are not encrypted",
-                    result[0].status_extended,
+                assert (
+                    result[0].status_extended
+                    == "RDS Instance db-master-1 connections are not encrypted."
                 )
                 assert result[0].resource_id == "db-master-1"
                 assert result[0].region == AWS_REGION_US_EAST_1
@@ -244,9 +255,9 @@ class Test_rds_instance_transport_encrypted:
 
                 assert len(result) == 1
                 assert result[0].status == "FAIL"
-                assert search(
-                    "connections are not encrypted",
-                    result[0].status_extended,
+                assert (
+                    result[0].status_extended
+                    == "RDS Instance db-master-1 connections are not encrypted."
                 )
                 assert result[0].resource_id == "db-master-1"
                 assert result[0].region == AWS_REGION_US_EAST_1
@@ -306,9 +317,9 @@ class Test_rds_instance_transport_encrypted:
 
                 assert len(result) == 1
                 assert result[0].status == "PASS"
-                assert search(
-                    "connections use SSL encryption",
-                    result[0].status_extended,
+                assert (
+                    result[0].status_extended
+                    == "RDS Instance db-master-1 connections use SSL encryption."
                 )
                 assert result[0].resource_id == "db-master-1"
                 assert result[0].region == AWS_REGION_US_EAST_1
@@ -368,9 +379,9 @@ class Test_rds_instance_transport_encrypted:
 
                 assert len(result) == 1
                 assert result[0].status == "PASS"
-                assert search(
-                    "connections use SSL encryption",
-                    result[0].status_extended,
+                assert (
+                    result[0].status_extended
+                    == "RDS Instance db-master-1 connections use SSL encryption."
                 )
                 assert result[0].resource_id == "db-master-1"
                 assert result[0].region == AWS_REGION_US_EAST_1

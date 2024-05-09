@@ -8,7 +8,7 @@
   "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-instance",
   "Severity": "high",
   "ResourceType": "AwsRdsDbInstance",
-"Description": "Check if RDS instances client connections are encrypted (Microsoft SQL Server, PostgreSQL, MySQL, MariaDB, Aurora PostgreSQL, and Aurora MySQL).",
+  "Description": "For SQL Server, PostgreSQL and Aurora PostgreSQL databases, if the rds.force_ssl parameter value is set to 0, the Transport Encryption feature is not enabled. For MySQL, Aurora MySQL and MariaDB databases, if the require_secure_transport parameter value is set to OFF, the Transport Encryption feature is not enabled.",
   "Risk": "If not enabled sensitive information at transit is not protected.",
   "RelatedUrl": "https://aws.amazon.com/premiumsupport/knowledge-center/rds-connect-ssl-connection/",
   "Remediation": {
@@ -23,7 +23,9 @@
       "Url": "https://aws.amazon.com/premiumsupport/knowledge-center/rds-connect-ssl-connection/"
     }
   },
-  "Categories": [ "encryption" ],
+  "Categories": [
+    "encryption"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
