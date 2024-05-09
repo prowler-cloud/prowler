@@ -481,10 +481,12 @@ class AwsProvider(Provider):
             "token": current_credentials["aws_session_token"],
             "expiry_time": current_credentials.get(
                 "expiration", current_credentials.get("expiry_time")
-            ),
+            ).isoformat(),
         }
 
-        if refreshed_credentials["expiry_time"] <= datetime.now(get_localzone()):
+        if datetime.fromisoformat(refreshed_credentials["expiry_time"]) <= datetime.now(
+            get_localzone()
+        ):
             response = self.assume_role(
                 self._session.original_session, self._assumed_role_configuration.info
             )
@@ -501,10 +503,6 @@ class AwsProvider(Provider):
             )
             logger.info(f"Refreshed Credentials: {refreshed_credentials}")
 
-        # TODO: review this
-        refreshed_credentials["expiry_time"] = refreshed_credentials[
-            "expiry_time"
-        ].isoformat()
         return refreshed_credentials
 
     def print_credentials(self):
