@@ -1,6 +1,6 @@
 {
     "Provider": "aws",
-    "CheckID": "acm_certificates_near_expiration_check",
+    "CheckID": "acm_certificates_expiration_check",
     "CheckTitle": "Check if ACM Certificates are about to expire in specific days or less",
     "CheckType": [
       "Data Protection"

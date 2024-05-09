@@ -4,7 +4,7 @@ from prowler.providers.aws.services.acm.acm_client import acm_client
 DAYS_TO_EXPIRE_THRESHOLD = 7
 
 
-class acm_certificates_near_expiration_check(Check):
+class acm_certificates_expiration_check(Check):
     def execute(self):
         findings = []
         for certificate in acm_client.certificates:
