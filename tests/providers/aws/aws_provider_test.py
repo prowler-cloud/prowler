@@ -34,6 +34,7 @@ from prowler.providers.aws.models import (
     AWSOrganizationsInfo,
     AWSOutputOptions,
 )
+from prowler.providers.common.provider import Provider
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_ARN,
     AWS_ACCOUNT_NUMBER,
@@ -50,6 +51,7 @@ from tests.providers.aws.utils import (
     AWS_REGION_US_EAST_1,
     AWS_REGION_US_EAST_2,
     EXAMPLE_AMI_ID,
+    set_mocked_aws_provider,
 )
 
 # Mocking GetCallerIdentity for China and GovCloud
@@ -1370,3 +1372,33 @@ aws:
         aws_provider.get_checks_to_execute_by_audit_resources() == {
             "ec2_networkacl_allow_ingress_any_port"
         }
+
+    def test_update_provider_config_aws(self):
+        aws_provider = set_mocked_aws_provider(
+            audit_config={"shodan_api_key": "DEFAULT-KEY"}
+        )
+
+        with patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ):
+
+            assert {
+                "shodan_api_key": "TEST-API-KEY"
+            } == Provider.update_provider_config(
+                aws_provider.audit_config, "shodan_api_key", "TEST-API-KEY"
+            )
+
+    def test_update_provider_config_aws_not_present(self):
+        aws_provider = set_mocked_aws_provider(
+            audit_config={"shodan_api_key": "DEFAULT-KEY"}
+        )
+
+        with patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ):
+
+            assert {"shodan_api_key": "DEFAULT-KEY"} == Provider.update_provider_config(
+                aws_provider.audit_config, "not_found", "not_value"
+            )

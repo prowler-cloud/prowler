@@ -5,8 +5,6 @@ from pydantic import BaseModel
 
 from prowler.providers.common.provider import Provider
 
-# from prowler.config.config import update_provider_config
-
 
 # TODO: include this for all the providers
 class Audit_Metadata(BaseModel):
