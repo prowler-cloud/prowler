@@ -278,11 +278,9 @@ class AwsProvider(Provider):
     @output_options.setter
     def output_options(self, options: tuple):
         arguments, bulk_checks_metadata = options
-        print(self.audit_config)
         self._output_options = AWSOutputOptions(
             arguments, bulk_checks_metadata, self._identity
         )
-        print(self.audit_config)
 
     @property
     def get_output_mapping(self):
