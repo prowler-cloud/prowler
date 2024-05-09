@@ -344,10 +344,10 @@ from prowler.providers.<provider>.services.<service>.<service>_client import <se
 ```
 2. `<service>_client.py`:
 ```python
-from prowler.providers.common.common import get_global_provider
+from prowler.providers.common.provider import Provider
 from prowler.providers.<provider>.services.<service>.<service>_service import <SERVICE>
 
-<service>_client = <SERVICE>(mocked_provider)
+<service>_client = <SERVICE>(Provider.get_global_provider())
 ```
 
 Due to the above import path it's not the same to patch the following objects because if you run a bunch of tests, either in parallel or not, some clients can be already instantiated by another check, hence your test execution will be using another test's service instance:
