@@ -1,0 +1,30 @@
+{
+  "Provider": "aws",
+  "CheckID": "cognito_user_pool_deletion_protection_enabled",
+  "CheckTitle": "Ensure cognito user pools deletion protection enabled to prevent accidental deletion",
+  "CheckType": [],
+  "ServiceName": "cognito",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:cognito-idp:region:account:userpool/userpool-id",
+  "Severity": "medium",
+  "ResourceType": "AwsCognitoUserPool",
+  "Description": "Deletion protection is a feature that allows you to lock a user pool to prevent it from being deleted. When deletion protection is enabled, you cannot delete the user pool. By default, deletion protection is disabled",
+  "Risk": "If deletion protection is not enabled, the user pool can be deleted by any user with the necessary permissions. This can lead to loss of data and service disruption",
+  "RelatedUrl": "https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-settings-deletion-protection.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Deletion protection should be enabled for the user pool to prevent accidental deletion",
+      "Url": "https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-settings-deletion-protection.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

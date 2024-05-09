@@ -60,6 +60,7 @@ Resources:
                 - 'appstream:List*'
                 - 'codeartifact:List*'
                 - 'codebuild:BatchGet*'
+                - 'cognito-idp:GetUserPoolMfaConfig'
                 - 'dlm:Get*'
                 - 'ds:Get*'
                 - 'ds:Describe*'

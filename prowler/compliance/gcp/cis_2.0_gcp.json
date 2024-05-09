@@ -397,7 +397,7 @@
       "Id": "2.13",
       "Description": "GCP Cloud Asset Inventory is services that provides a historical view of GCP resources and IAM policies through a time-series database. The information recorded includes metadata on Google Cloud resources, metadata on policies set on Google Cloud projects or resources, and runtime information gathered within a Google Cloud resource.",
       "Checks": [
-        "serviceusage_cloudasset_inventory_enabled"
+        "iam_cloud_asset_inventory_enabled"
       ],
       "Attributes": [
         {

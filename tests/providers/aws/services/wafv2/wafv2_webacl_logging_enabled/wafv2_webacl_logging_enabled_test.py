@@ -38,6 +38,7 @@ class Test_wafv2_webacl_logging_enabled:
                 name=waf_name,
                 id=waf_id,
                 albs=[],
+                user_pools=[],
                 region=AWS_REGION_EU_WEST_1,
                 logging_enabled=True,
             )
@@ -75,6 +76,7 @@ class Test_wafv2_webacl_logging_enabled:
                 name=waf_name,
                 id=waf_id,
                 albs=[],
+                user_pools=[],
                 region=AWS_REGION_EU_WEST_1,
                 logging_enabled=False,
             )

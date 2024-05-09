@@ -61,9 +61,9 @@ It contains hundreds of controls covering CIS, NIST 800, NIST CSF, CISA, RBI, Fe
 
 | Provider | Checks | Services | [Compliance Frameworks](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/compliance/) | [Categories](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/misc/#categories) |
 |---|---|---|---|---|
-| AWS | 304 | 61 -> `prowler aws --list-services` | 28 -> `prowler aws --list-compliance` | 6 -> `prowler aws --list-categories` |
-| GCP | 75 | 11 -> `prowler gcp --list-services` | 1 -> `prowler gcp --list-compliance` | 2 -> `prowler gcp --list-categories`|
-| Azure | 127 | 16 -> `prowler azure --list-services` | 2 -> `prowler azure --list-compliance` | 2 -> `prowler azure --list-categories` |
+| AWS | 322 | 62 -> `prowler aws --list-services` | 28 -> `prowler aws --list-compliance` | 7 -> `prowler aws --list-categories` |
+| GCP | 77 | 13 -> `prowler gcp --list-services` | 2 -> `prowler gcp --list-compliance` | 2 -> `prowler gcp --list-categories`|
+| Azure | 127 | 16 -> `prowler azure --list-services` | 3 -> `prowler azure --list-compliance` | 2 -> `prowler azure --list-categories` |
 | Kubernetes | 83 | 7 -> `prowler kubernetes --list-services` | 1 -> `prowler kubernetes --list-compliance` | 7 -> `prowler kubernetes --list-categories` |
 
 # 💻 Installation

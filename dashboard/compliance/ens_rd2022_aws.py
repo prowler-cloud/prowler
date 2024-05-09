@@ -6,6 +6,13 @@ warnings.filterwarnings("ignore")
 
 
 def get_table(data):
+    # append the requirements_description to idgrupocontrol
+    data["REQUIREMENTS_ATTRIBUTES_IDGRUPOCONTROL"] = (
+        data["REQUIREMENTS_ATTRIBUTES_IDGRUPOCONTROL"]
+        + " - "
+        + data["REQUIREMENTS_DESCRIPTION"]
+    )
+
     aux = data[
         [
             "REQUIREMENTS_ATTRIBUTES_MARCO",

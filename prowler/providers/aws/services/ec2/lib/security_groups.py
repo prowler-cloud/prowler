@@ -28,12 +28,14 @@ def check_security_group(
         'ToPort': 123,
     }
 
-    @param procotol: Protocol to check.
+    @param protocol: Protocol to check. If -1, all protocols will be checked.
 
 
-    @param ports: List of ports to check. (Default: [])
+    @param ports: List of ports to check. If empty, any port will be checked. If None, any port will be checked. (Default: [])
 
     @param any_address: If True, only 0.0.0.0/0 or "::/0" will be public and do not search for public addresses. (Default: False)
+
+    @return: True if the security group has public access to the check_ports using the protocol
     """
     # Check for all traffic ingress rules regardless of the protocol
     if ingress_rule["IpProtocol"] == "-1":
@@ -70,8 +72,11 @@ def check_security_group(
                             and ingress_rule["IpProtocol"] == protocol
                         ):
                             return True
-                # If no input ports check if all ports are open
+                # If empty input ports check if all ports are open
                 if len(set(ingress_port_range)) == 65536:
+                    return True
+                # If None input ports check if any port is open
+                if ports is None:
                     return True
 
         # IPv6
@@ -85,8 +90,11 @@ def check_security_group(
                             and ingress_rule["IpProtocol"] == protocol
                         ):
                             return True
-                # If no input ports check if all ports are open
+                # If empty input ports check if all ports are open
                 if len(set(ingress_port_range)) == 65536:
+                    return True
+                # If None input ports check if any port is open
+                if ports is None:
                     return True
 
     return False
