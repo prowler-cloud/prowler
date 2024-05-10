@@ -12,23 +12,6 @@ files = [
 ]
 
 [[package]]
-name = "adal"
-version = "1.2.7"
-description = "Note: This library is already replaced by MSAL Python, available here: https://pypi.org/project/msal/ .ADAL Python remains available here as a legacy. The ADAL for Python library makes it easy for python application to authenticate to Azure Active Directory (AAD) in order to access AAD protected web resources."
-optional = false
-python-versions = "*"
-files = [
-    {file = "adal-1.2.7-py2.py3-none-any.whl", hash = "sha256:2a7451ed7441ddbc57703042204a3e30ef747478eea022c70f789fc7f084bc3d"},
-    {file = "adal-1.2.7.tar.gz", hash = "sha256:d74f45b81317454d96e982fd1c50e6fb5c99ac2223728aea8764433a39f566f1"},
-]
-
-[package.dependencies]
-cryptography = ">=1.1.0"
-PyJWT = ">=1.0.0,<3"
-python-dateutil = ">=2.1.0,<3"
-requests = ">=2.0.0,<3"
-
-[[package]]
 name = "aiohttp"
 version = "3.9.5"
 description = "Async http client/server framework (asyncio)"
@@ -2706,22 +2689,6 @@ requests-oauthlib = ">=0.5.0"
 
 [package.extras]
 async = ["aiodns", "aiohttp (>=3.0)"]
-
-[[package]]
-name = "msrestazure"
-version = "0.6.4"
-description = "AutoRest swagger generator Python client runtime. Azure-specific module."
-optional = false
-python-versions = "*"
-files = [
-    {file = "msrestazure-0.6.4-py2.py3-none-any.whl", hash = "sha256:3de50f56147ef529b31e099a982496690468ecef33f0544cb0fa0cfe1e1de5b9"},
-    {file = "msrestazure-0.6.4.tar.gz", hash = "sha256:a06f0dabc9a6f5efe3b6add4bd8fb623aeadacf816b7a35b0f89107e0544d189"},
-]
-
-[package.dependencies]
-adal = ">=0.6.0,<2.0.0"
-msrest = ">=0.6.0,<2.0.0"
-six = "*"
 
 [[package]]
 name = "multidict"
