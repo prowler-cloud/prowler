@@ -11,6 +11,18 @@ You can utilize `--custom-checks-metadata-file` followed by the path to your cus
 The list of supported check's metadata fields that can be override are listed as follows:
 
 - Severity
+- CheckTitle
+- Risk
+- RelatedUrl
+- Remediation
+  - Code
+    - CLI
+    - NativeIaC
+    - Other
+    - Terraform
+  - Recommendation
+    - Text
+    - Url
 
 ## File Syntax
 
