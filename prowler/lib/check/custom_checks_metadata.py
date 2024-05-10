@@ -18,9 +18,71 @@ custom_checks_metadata_schema = {
                         "Severity": {
                             "type": "string",
                             "enum": valid_severities,
-                        }
+                        },
+                        "CheckTitle": {
+                            "type": "string",
+                        },
+                        "Description": {
+                            "type": "string",
+                        },
+                        "Risk": {
+                            "type": "string",
+                        },
+                        "RelatedUrl": {
+                            "type": "string",
+                        },
+                        "Remediation": {
+                            "type": "object",
+                            "properties": {
+                                "Code": {
+                                    "type": "object",
+                                    "properties": {
+                                        "CLI": {
+                                            "type": "string",
+                                        },
+                                        "NativeIaC": {
+                                            "type": "string",
+                                        },
+                                        "Other": {
+                                            "type": "string",
+                                        },
+                                        "Terraform": {
+                                            "type": "string",
+                                        },
+                                    },
+                                    "required": [
+                                        "CLI",
+                                        "NativeIaC",
+                                        "Other",
+                                        "Terraform",
+                                    ],
+                                },
+                                "Recommendation": {
+                                    "type": "object",
+                                    "properties": {
+                                        "Text": {
+                                            "type": "string",
+                                        },
+                                        "Url": {
+                                            "type": "string",
+                                        },
+                                    },
+                                    "required": ["Text", "Url"],
+                                    "additionalProperties": False,
+                                },
+                            },
+                            "required": ["Code", "Recommendation"],
+                            "additionalProperties": False,
+                        },
                     },
-                    "required": ["Severity"],
+                    "required": [
+                        "Severity",
+                        "CheckTitle",
+                        "Description",
+                        "Risk",
+                        "RelatedUrl",
+                        "Remediation",
+                    ],
                     "additionalProperties": False,
                 }
             },
