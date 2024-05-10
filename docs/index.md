@@ -90,6 +90,8 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), 
     poetry install
     python prowler.py -v
     ```
+    ???+ note
+        If you want to clone Prowler from Windows, use `git config core.longpaths true` to allow long file paths.
 
 === "Amazon Linux 2"
 

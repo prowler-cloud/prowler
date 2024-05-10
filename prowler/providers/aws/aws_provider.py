@@ -2,6 +2,7 @@ import os
 import pathlib
 import sys
 from argparse import Namespace
+from datetime import datetime
 
 from boto3 import client, session
 from boto3.session import Session
@@ -9,6 +10,8 @@ from botocore.config import Config
 from botocore.credentials import RefreshableCredentials
 from botocore.session import get_session
 from colorama import Fore, Style
+from pytz import utc
+from tzlocal import get_localzone
 
 from prowler.config.config import (
     aws_services_json_file,
@@ -437,8 +440,6 @@ class AwsProvider(Provider):
         self,
         assumed_role_credentials: AWSCredentials,
     ) -> Session:
-        # FIXME: Boto3 returns the timestamp in UTC and the local TZ could be different so the expiration time could not work as expected
-        # PRWLR-3305
         try:
             # From botocore we can use RefreshableCredentials class, which has an attribute (refresh_using)
             # that needs to be a method without arguments that retrieves a new set of fresh credentials
@@ -466,25 +467,45 @@ class AwsProvider(Provider):
             )
             sys.exit(1)
 
-    # Refresh credentials method using assume role
-    # This method is called "adding ()" to the name, so it cannot accept arguments
-    # https://github.com/boto/botocore/blob/098cc255f81a25b852e1ecdeb7adebd94c7b1b73/botocore/credentials.py#L570
     # TODO: maybe this can be improved with botocore.credentials.DeferredRefreshableCredentials https://stackoverflow.com/a/75576540
     def refresh_credentials(self) -> dict:
+        """
+        Refresh credentials method using AWS STS Assume Role.
+
+        This method is called adding "()" to the name, so it cannot accept arguments
+        https://github.com/boto/botocore/blob/098cc255f81a25b852e1ecdeb7adebd94c7b1b73/botocore/credentials.py#L570
+        """
         logger.info("Refreshing assumed credentials...")
+
         # Since this method does not accept arguments, we need to get the original_session and the assumed role credentials
-        response = self.assume_role(
-            self._session.original_session, self._assumed_role_configuration.info
-        )
-        refreshed_credentials = dict(
-            # Keys of the dict has to be the same as those that are being searched in the parent class
-            # https://github.com/boto/botocore/blob/098cc255f81a25b852e1ecdeb7adebd94c7b1b73/botocore/credentials.py#L609
-            access_key=response.aws_access_key_id,
-            secret_key=response.aws_secret_access_key,
-            token=response.aws_session_token,
-            expiry_time=response.expiration.isoformat(),
-        )
-        logger.info(f"Refreshed Credentials: {refreshed_credentials}")
+        current_credentials = self._assumed_role_configuration.credentials
+        refreshed_credentials = {
+            "access_key": current_credentials.aws_access_key_id,
+            "secret_key": current_credentials.aws_secret_access_key,
+            "token": current_credentials.aws_session_token,
+            "expiry_time": (
+                current_credentials.expiration.isoformat()
+                if hasattr(current_credentials, "expiration")
+                else current_credentials.expiry_time.isoformat()
+            ),
+        }
+
+        if datetime.fromisoformat(refreshed_credentials["expiry_time"]) <= datetime.now(
+            get_localzone()
+        ):
+            assume_role_response = self.assume_role(
+                self._session.original_session, self._assumed_role_configuration.info
+            )
+            refreshed_credentials = dict(
+                # Keys of the dict has to be the same as those that are being searched in the parent class
+                # https://github.com/boto/botocore/blob/098cc255f81a25b852e1ecdeb7adebd94c7b1b73/botocore/credentials.py#L609
+                access_key=assume_role_response.aws_access_key_id,
+                secret_key=assume_role_response.aws_secret_access_key,
+                token=assume_role_response.aws_session_token,
+                expiry_time=assume_role_response.expiration.isoformat(),
+            )
+            logger.info(f"Refreshed Credentials: {refreshed_credentials}")
+
         return refreshed_credentials
 
     def print_credentials(self):
@@ -774,21 +795,22 @@ class AwsProvider(Provider):
                 assume_role_arguments["SerialNumber"] = mfa_info.arn
                 assume_role_arguments["TokenCode"] = mfa_info.totp
 
-            # Set the STS Endpoint Region
-            # TODO: review the STS endpoint region removal
-            # https://github.com/prowler-cloud/prowler/pull/3046
-            # if sts_endpoint_region is None:
-            #     sts_endpoint_region = AWS_STS_GLOBAL_ENDPOINT_REGION
-
             sts_client = create_sts_session(session, AWS_STS_GLOBAL_ENDPOINT_REGION)
             assumed_credentials = sts_client.assume_role(**assume_role_arguments)
+            # Convert the UTC datetime object to your local timezone
+            credentials_expiration_local_time = (
+                assumed_credentials["Credentials"]["Expiration"]
+                .replace(tzinfo=utc)
+                .astimezone(get_localzone())
+            )
+
             return AWSCredentials(
                 aws_access_key_id=assumed_credentials["Credentials"]["AccessKeyId"],
                 aws_session_token=assumed_credentials["Credentials"]["SessionToken"],
                 aws_secret_access_key=assumed_credentials["Credentials"][
                     "SecretAccessKey"
                 ],
-                expiration=assumed_credentials["Credentials"]["Expiration"],
+                expiration=credentials_expiration_local_time,
             )
         except Exception as error:
             logger.critical(
