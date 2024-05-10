@@ -467,39 +467,42 @@ class AwsProvider(Provider):
             )
             sys.exit(1)
 
-    # Refresh credentials method using assume role
-    # This method is called "adding ()" to the name, so it cannot accept arguments
-    # https://github.com/boto/botocore/blob/098cc255f81a25b852e1ecdeb7adebd94c7b1b73/botocore/credentials.py#L570
     # TODO: maybe this can be improved with botocore.credentials.DeferredRefreshableCredentials https://stackoverflow.com/a/75576540
     def refresh_credentials(self) -> dict:
+        """
+        Refresh credentials method using AWS STS Assume Role.
+
+        This method is called adding "()" to the name, so it cannot accept arguments
+        https://github.com/boto/botocore/blob/098cc255f81a25b852e1ecdeb7adebd94c7b1b73/botocore/credentials.py#L570
+        """
         logger.info("Refreshing assumed credentials...")
+
         # Since this method does not accept arguments, we need to get the original_session and the assumed role credentials
-        current_credentials = self._assumed_role_configuration.credentials.__dict__
+        current_credentials = self._assumed_role_configuration.credentials
         refreshed_credentials = {
-            "access_key": current_credentials["aws_access_key_id"],
-            "secret_key": current_credentials["aws_secret_access_key"],
-            "token": current_credentials["aws_session_token"],
-            "expiry_time": current_credentials.get(
-                "expiration", current_credentials.get("expiry_time")
-            ).isoformat(),
+            "access_key": current_credentials.aws_access_key_id,
+            "secret_key": current_credentials.aws_secret_access_key,
+            "token": current_credentials.aws_session_token,
+            "expiry_time": (
+                current_credentials.expiration.isoformat()
+                if hasattr(current_credentials, "expiration")
+                else current_credentials.expiry_time.isoformat()
+            ),
         }
 
         if datetime.fromisoformat(refreshed_credentials["expiry_time"]) <= datetime.now(
             get_localzone()
         ):
-            response = self.assume_role(
+            assume_role_response = self.assume_role(
                 self._session.original_session, self._assumed_role_configuration.info
-            )
-            print(
-                f"Expiration in refresh_credentials from assume_role {response.expiration.isoformat()}"
             )
             refreshed_credentials = dict(
                 # Keys of the dict has to be the same as those that are being searched in the parent class
                 # https://github.com/boto/botocore/blob/098cc255f81a25b852e1ecdeb7adebd94c7b1b73/botocore/credentials.py#L609
-                access_key=response.aws_access_key_id,
-                secret_key=response.aws_secret_access_key,
-                token=response.aws_session_token,
-                expiry_time=response.expiration.isoformat(),
+                access_key=assume_role_response.aws_access_key_id,
+                secret_key=assume_role_response.aws_secret_access_key,
+                token=assume_role_response.aws_session_token,
+                expiry_time=assume_role_response.expiration.isoformat(),
             )
             logger.info(f"Refreshed Credentials: {refreshed_credentials}")
 
