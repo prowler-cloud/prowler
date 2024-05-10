@@ -292,6 +292,183 @@ else:
     status = [x for x in status if str(x) != "nan" and x.__class__.__name__ == "str"]
 
     status_dropdown = create_status_dropdown(status)
+    table_div_header = []
+    table_div_header.append(
+        html.Div(
+            [
+                html.Div(
+                    [
+                        html.Span(
+                            "Check Name",
+                            className="text-center text-prowler-stone-900 uppercase text-xl font-bold",
+                        ),
+                        html.Button(
+                            html.Img(
+                                src="assets/images/icons/arrows.svg",
+                                style={
+                                    "width": "1rem",
+                                    "height": "1rem",
+                                    "margin-left": "0.2rem",
+                                    "margin-top": "0.2rem",
+                                },
+                            ),
+                            id="sort_button_check_name",
+                            n_clicks=0,
+                        ),
+                    ],
+                    style={
+                        "width": "60%",
+                        "text-align": "center",
+                        "align-items": "center",
+                    },
+                ),
+                html.Div(
+                    [
+                        html.Span(
+                            "Severity",
+                            className="text-center text-prowler-stone-900 uppercase text-xl font-bold",
+                            style={"width": "10%"},
+                        ),
+                        html.Button(
+                            html.Img(
+                                src="assets/images/icons/arrows.svg",
+                                style={
+                                    "width": "1rem",
+                                    "height": "1rem",
+                                    "margin-left": "0.2rem",
+                                    "margin-top": "0.2rem",
+                                },
+                            ),
+                            id="sort_button_severity",
+                            n_clicks=0,
+                        ),
+                    ],
+                    style={
+                        "width": "10%",
+                        "text-align": "center",
+                        "align-items": "center",
+                    },
+                ),
+                html.Div(
+                    [
+                        html.Span(
+                            "Status",
+                            className="text-center text-prowler-stone-900 uppercase text-xl font-bold",
+                            style={"width": "10%"},
+                        ),
+                        html.Button(
+                            html.Img(
+                                src="assets/images/icons/arrows.svg",
+                                style={
+                                    "width": "1rem",
+                                    "height": "1rem",
+                                    "margin-left": "0.2rem",
+                                    "margin-top": "0.2rem",
+                                },
+                            ),
+                            id="sort_button_status",
+                            n_clicks=0,
+                        ),
+                    ],
+                    style={
+                        "width": "8%",
+                        "text-align": "center",
+                        "align-items": "center",
+                        "margin-left": "0.5rem",
+                        "margin-right": "0.5rem",
+                    },
+                ),
+                html.Div(
+                    [
+                        html.Span(
+                            "Region",
+                            className="text-center text-prowler-stone-900 uppercase text-xl font-bold",
+                            style={"width": "10%"},
+                        ),
+                        html.Button(
+                            html.Img(
+                                src="assets/images/icons/arrows.svg",
+                                style={
+                                    "width": "1rem",
+                                    "height": "1rem",
+                                    "margin-left": "0.2rem",
+                                    "margin-top": "0.2rem",
+                                },
+                            ),
+                            id="sort_button_region",
+                            n_clicks=0,
+                        ),
+                    ],
+                    style={
+                        "width": "10%",
+                        "text-align": "center",
+                        "align-items": "center",
+                    },
+                ),
+                html.Div(
+                    [
+                        html.Span(
+                            "Service",
+                            className="text-center text-prowler-stone-900 uppercase text-xl font-bold",
+                            style={"width": "10%"},
+                        ),
+                        html.Button(
+                            html.Img(
+                                src="assets/images/icons/arrows.svg",
+                                style={
+                                    "width": "1rem",
+                                    "height": "1rem",
+                                    "margin-left": "0.2rem",
+                                    "margin-top": "0.2rem",
+                                },
+                            ),
+                            id="sort_button_service",
+                            n_clicks=0,
+                        ),
+                    ],
+                    style={
+                        "width": "10%",
+                        "text-align": "center",
+                        "align-items": "center",
+                    },
+                ),
+                html.Div(
+                    [
+                        html.Span(
+                            "Account",
+                            className="text-center text-prowler-stone-900 uppercase text-xl font-bold",
+                            style={"width": "10%"},
+                        ),
+                        html.Button(
+                            html.Img(
+                                src="assets/images/icons/arrows.svg",
+                                style={
+                                    "width": "1rem",
+                                    "height": "1rem",
+                                    "margin-left": "0.2rem",
+                                    "margin-top": "0.2rem",
+                                },
+                            ),
+                            id="sort_button_account",
+                            n_clicks=0,
+                        ),
+                    ],
+                    style={
+                        "width": "10%",
+                        "text-align": "center",
+                        "align-items": "center",
+                    },
+                ),
+            ],
+            className="grid grid-cols-auto w-full",
+            style={
+                "display": "flex",
+                "justify-content": "space-between",
+            },
+        )
+    )
+
+    table_div_header = html.Div(table_div_header, id="table-div-header")
 
     # Initializing the Dash App
     dash.register_page(__name__, path="/")
@@ -307,6 +484,7 @@ else:
         service_dropdown,
         table_row_dropdown,
         status_dropdown,
+        table_div_header,
     )
 
 
@@ -355,6 +533,12 @@ else:
     Input("azure_card", "n_clicks"),
     Input("gcp_card", "n_clicks"),
     Input("k8s_card", "n_clicks"),
+    Input("sort_button_check_name", "n_clicks"),
+    Input("sort_button_severity", "n_clicks"),
+    Input("sort_button_status", "n_clicks"),
+    Input("sort_button_region", "n_clicks"),
+    Input("sort_button_service", "n_clicks"),
+    Input("sort_button_account", "n_clicks"),
 )
 def filter_data(
     cloud_account_values,
@@ -370,6 +554,12 @@ def filter_data(
     azure_clicks,
     gcp_clicks,
     k8s_clicks,
+    sort_button_check_name,
+    sort_button_severity,
+    sort_button_status,
+    sort_button_region,
+    sort_button_service,
+    sort_button_account,
 ):
     # Use n_clicks for vulture
     n_clicks_csv = n_clicks_csv
@@ -881,7 +1071,7 @@ def filter_data(
         table_row_options = []
 
         # Take the values from the table_row_values
-        if table_row_values == -1:
+        if not table_row_values or table_row_values == -1:
             if len(filtered_data) < 25:
                 table_row_values = len(filtered_data)
             else:
@@ -905,10 +1095,140 @@ def filter_data(
         filtered_data = filtered_data.replace({None: ""})
         filtered_data = filtered_data.replace({"nan": ""})
 
-        table_div = []
+        severity_mapping = {
+            "low": 1,
+            "medium": 2,
+            "high": 3,
+            "critical": 4,
+            "informational": 0,
+        }
+
+        severity_mapping_reverse = {
+            1: "low",
+            2: "medium",
+            3: "high",
+            4: "critical",
+            0: "informational",
+        }
+
+        status_mapping = {
+            "MANUAL": 0,
+            "INFO": 1,
+            "MUTED (MANUAL)": 2,
+            "MUTED (PASS)": 3,
+            "PASS": 4,
+            "MUTED (FAIL)": 5,
+            "FAIL": 6,
+        }
+
+        status_mapping_reverse = {
+            0: "MANUAL",
+            1: "INFO",
+            2: "MUTED (MANUAL)",
+            3: "MUTED (PASS)",
+            4: "PASS",
+            5: "MUTED (FAIL)",
+            6: "FAIL",
+        }
+
         index_count = 0
         full_filtered_data = filtered_data.copy()
         filtered_data = filtered_data.head(table_row_values)
+        # Sort the filtered_data
+        if sort_button_check_name > 0:
+            if sort_button_check_name % 2 != 0:
+                filtered_data = filtered_data.sort_values(
+                    by=["CHECK_TITLE"], ascending=True
+                )
+            else:
+                filtered_data = filtered_data.sort_values(
+                    by=["CHECK_TITLE"], ascending=False
+                )
+                sort_button_check_name = 0
+            sort_button_severity = 0
+            sort_button_status = 0
+            sort_button_region = 0
+            sort_button_service = 0
+            sort_button_account = 0
+        if sort_button_severity > 0:
+            filtered_data["SEVERITY"] = filtered_data["SEVERITY"].map(severity_mapping)
+            if sort_button_severity % 2 != 0:
+                filtered_data = filtered_data.sort_values(
+                    by=["SEVERITY"], ascending=True
+                )
+            else:
+                filtered_data = filtered_data.sort_values(
+                    by=["SEVERITY"], ascending=False
+                )
+                sort_button_severity = 0
+            filtered_data["SEVERITY"] = filtered_data["SEVERITY"].map(
+                severity_mapping_reverse
+            )
+            sort_button_check_name = 0
+            sort_button_status = 0
+            sort_button_region = 0
+            sort_button_service = 0
+            sort_button_account = 0
+        if sort_button_status > 0:
+            filtered_data["STATUS"] = filtered_data["STATUS"].map(status_mapping)
+            if sort_button_status % 2 != 0:
+                filtered_data = filtered_data.sort_values(by=["STATUS"], ascending=True)
+            else:
+                filtered_data = filtered_data.sort_values(
+                    by=["STATUS"], ascending=False
+                )
+                sort_button_status = 0
+            filtered_data["STATUS"] = filtered_data["STATUS"].map(
+                status_mapping_reverse
+            )
+            sort_button_check_name = 0
+            sort_button_severity = 0
+            sort_button_region = 0
+            sort_button_service = 0
+            sort_button_account = 0
+        if sort_button_region > 0:
+            if sort_button_region % 2 != 0:
+                filtered_data = filtered_data.sort_values(by=["REGION"], ascending=True)
+            else:
+                filtered_data = filtered_data.sort_values(
+                    by=["REGION"], ascending=False
+                )
+                sort_button_region = 0
+            sort_button_check_name = 0
+            sort_button_severity = 0
+            sort_button_status = 0
+            sort_button_service = 0
+            sort_button_account = 0
+        if sort_button_service > 0:
+            if sort_button_service % 2 != 0:
+                filtered_data = filtered_data.sort_values(
+                    by=["SERVICE_NAME"], ascending=True
+                )
+            else:
+                filtered_data = filtered_data.sort_values(
+                    by=["SERVICE_NAME"], ascending=False
+                )
+                sort_button_service = 0
+            sort_button_check_name = 0
+            sort_button_severity = 0
+            sort_button_status = 0
+            sort_button_region = 0
+            sort_button_account = 0
+        if sort_button_account > 0:
+            if sort_button_account % 2 != 0:
+                filtered_data = filtered_data.sort_values(
+                    by=["ACCOUNT_UID"], ascending=True
+                )
+            else:
+                filtered_data = filtered_data.sort_values(
+                    by=["ACCOUNT_UID"], ascending=False
+                )
+                sort_button_account = 0
+            sort_button_check_name = 0
+            sort_button_severity = 0
+            sort_button_status = 0
+            sort_button_region = 0
+            sort_button_service = 0
 
         # Remove column "assessment_time", this is done to undo the changes made in the data
         if "TIMESTAMP_AUX" in filtered_data.columns:
@@ -936,209 +1256,16 @@ def filter_data(
                         filtered_data["ACCOUNT_UID"] == account, "ACCOUNT_UID"
                     ] = (account + " - GCP")
 
-        table_div.append(
-            html.Div(
-                [
-                    html.Div(
-                        [
-                            html.Span(
-                                "Check Name",
-                                className="text-center text-prowler-stone-900 uppercase text-xl font-bold",
-                            ),
-                            html.Button(
-                                html.Img(
-                                    src="assets/images/icons/arrows.svg",
-                                    style={
-                                        "width": "1rem",
-                                        "height": "1rem",
-                                        "margin-left": "0.2rem",
-                                        "margin-top": "0.2rem",
-                                    },
-                                ),
-                                id={
-                                    "type": "sort_button",
-                                    "index": "check_name",
-                                },
-                                n_clicks=0,
-                            ),
-                        ],
-                        style={
-                            "width": "60%",
-                            "text-align": "center",
-                            "align-items": "center",
-                        },
-                    ),
-                    html.Div(
-                        [
-                            html.Span(
-                                "Severity",
-                                className="text-center text-prowler-stone-900 uppercase text-xl font-bold",
-                                style={"width": "10%"},
-                            ),
-                            html.Button(
-                                html.Img(
-                                    src="assets/images/icons/arrows.svg",
-                                    style={
-                                        "width": "1rem",
-                                        "height": "1rem",
-                                        "margin-left": "0.2rem",
-                                        "margin-top": "0.2rem",
-                                    },
-                                ),
-                                id={
-                                    "type": "sort_button",
-                                    "index": "severity",
-                                },
-                                n_clicks=0,
-                            ),
-                        ],
-                        style={
-                            "width": "10%",
-                            "text-align": "center",
-                            "align-items": "center",
-                        },
-                    ),
-                    html.Div(
-                        [
-                            html.Span(
-                                "Status",
-                                className="text-center text-prowler-stone-900 uppercase text-xl font-bold",
-                                style={"width": "10%"},
-                            ),
-                            html.Button(
-                                html.Img(
-                                    src="assets/images/icons/arrows.svg",
-                                    style={
-                                        "width": "1rem",
-                                        "height": "1rem",
-                                        "margin-left": "0.2rem",
-                                        "margin-top": "0.2rem",
-                                    },
-                                ),
-                                id={
-                                    "type": "sort_button",
-                                    "index": "status",
-                                },
-                                n_clicks=0,
-                            ),
-                        ],
-                        style={
-                            "width": "8%",
-                            "text-align": "center",
-                            "align-items": "center",
-                            "margin-left": "0.5rem",
-                            "margin-right": "0.5rem",
-                        },
-                    ),
-                    html.Div(
-                        [
-                            html.Span(
-                                "Region",
-                                className="text-center text-prowler-stone-900 uppercase text-xl font-bold",
-                                style={"width": "10%"},
-                            ),
-                            html.Button(
-                                html.Img(
-                                    src="assets/images/icons/arrows.svg",
-                                    style={
-                                        "width": "1rem",
-                                        "height": "1rem",
-                                        "margin-left": "0.2rem",
-                                        "margin-top": "0.2rem",
-                                    },
-                                ),
-                                id={
-                                    "type": "sort_button",
-                                    "index": "region",
-                                },
-                                n_clicks=0,
-                            ),
-                        ],
-                        style={
-                            "width": "10%",
-                            "text-align": "center",
-                            "align-items": "center",
-                        },
-                    ),
-                    html.Div(
-                        [
-                            html.Span(
-                                "Service",
-                                className="text-center text-prowler-stone-900 uppercase text-xl font-bold",
-                                style={"width": "10%"},
-                            ),
-                            html.Button(
-                                html.Img(
-                                    src="assets/images/icons/arrows.svg",
-                                    style={
-                                        "width": "1rem",
-                                        "height": "1rem",
-                                        "margin-left": "0.2rem",
-                                        "margin-top": "0.2rem",
-                                    },
-                                ),
-                                id={
-                                    "type": "sort_button",
-                                    "index": "service",
-                                },
-                                n_clicks=0,
-                            ),
-                        ],
-                        style={
-                            "width": "10%",
-                            "text-align": "center",
-                            "align-items": "center",
-                        },
-                    ),
-                    html.Div(
-                        [
-                            html.Span(
-                                "Account",
-                                className="text-center text-prowler-stone-900 uppercase text-xl font-bold",
-                                style={"width": "10%"},
-                            ),
-                            html.Button(
-                                html.Img(
-                                    src="assets/images/icons/arrows.svg",
-                                    style={
-                                        "width": "1rem",
-                                        "height": "1rem",
-                                        "margin-left": "0.2rem",
-                                        "margin-top": "0.2rem",
-                                    },
-                                ),
-                                id={
-                                    "type": "sort_button",
-                                    "index": "account",
-                                },
-                                n_clicks=0,
-                            ),
-                        ],
-                        style={
-                            "width": "10%",
-                            "text-align": "center",
-                            "align-items": "center",
-                        },
-                    ),
-                ],
-                className="grid grid-cols-auto w-full",
-                style={
-                    "display": "flex",
-                    "justify-content": "space-between",
-                    "margin-bottom": "0.7rem",
-                },
-            )
-        )
-
+        table_collapsible = []
         for item in filtered_data.to_dict("records"):
-            table_div.append(
+            table_collapsible.append(
                 generate_table(
                     item, index_count, color_mapping_severity, color_mapping_status
                 )
             )
             index_count += 1
 
-        table = html.Div(table_div)
+        table = html.Div(table_collapsible, id="table")
 
     # Status Graphic
     status_graph = [
@@ -1418,7 +1545,6 @@ def generate_table(data, index, color_mapping_severity, color_mapping_status):
                             align="center",
                             justify="center",
                             className="g-0",
-                            # style={"display": "flex"},
                         ),
                     ),
                     dbc.Collapse(
