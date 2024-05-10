@@ -103,7 +103,8 @@ poetry shell
 poetry install
 python prowler.py -v
 ```
-
+???+ note
+  If you want to run Prowler from windows, use `git config core.longpaths true` to allow longpaths.
 # 📐✏️ High level architecture
 
 You can run Prowler from your workstation, a Kubernetes Job, a Google Compute Engine, an Azure VM, an EC2 instance, Fargate or any other container, CloudShell and many more.
