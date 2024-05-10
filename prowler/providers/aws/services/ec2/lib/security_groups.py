@@ -76,7 +76,7 @@ def check_security_group(
                 if len(set(ingress_port_range)) == 65536:
                     return True
                 # If None input ports check if any port is open
-                if ports is None:
+                if ports is None or not ports:
                     return True
 
         # IPv6
@@ -94,7 +94,7 @@ def check_security_group(
                 if len(set(ingress_port_range)) == 65536:
                     return True
                 # If None input ports check if any port is open
-                if ports is None:
+                if ports is None or not ports:
                     return True
 
     return False
