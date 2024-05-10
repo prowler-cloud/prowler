@@ -1,38 +1,32 @@
 from azure.identity import AzureAuthorityHosts
-from msrestazure.azure_cloud import (
-    AZURE_CHINA_CLOUD,
-    AZURE_GERMAN_CLOUD,
-    AZURE_US_GOV_CLOUD,
-)
+
+AZURE_CHINA_CLOUD = "https://management.chinacloudapi.cn"
+AZURE_US_GOV_CLOUD = "https://management.usgovcloudapi.net"
+AZURE_GERMAN_CLOUD = "https://management.microsoftazure.de"
+AZURE_GENERIC_CLOUD = "https://management.azure.com"
 
 
 def get_regions_config(region):
     allowed_regions = {
         "AzureCloud": {
             "authority": None,
-            "base_url": "https://management.azure.com",
-            "credential_scopes": ["https://management.azure.com/.default"],
+            "base_url": AZURE_GENERIC_CLOUD,
+            "credential_scopes": [AZURE_GENERIC_CLOUD + "/.default"],
         },
         "AzureChinaCloud": {
             "authority": AzureAuthorityHosts.AZURE_CHINA,
-            "base_url": AZURE_CHINA_CLOUD.endpoints.resource_manager,
-            "credential_scopes": [
-                AZURE_CHINA_CLOUD.endpoints.resource_manager + "/.default"
-            ],
+            "base_url": AZURE_CHINA_CLOUD,
+            "credential_scopes": [AZURE_CHINA_CLOUD + "/.default"],
         },
         "AzureUSGovernment": {
             "authority": AzureAuthorityHosts.AZURE_GOVERNMENT,
-            "base_url": AZURE_US_GOV_CLOUD.endpoints.resource_manager,
-            "credential_scopes": [
-                AZURE_US_GOV_CLOUD.endpoints.resource_manager + "/.default"
-            ],
+            "base_url": AZURE_US_GOV_CLOUD,
+            "credential_scopes": [AZURE_US_GOV_CLOUD + "/.default"],
         },
         "AzureGermanCloud": {
             "authority": AzureAuthorityHosts.AZURE_GERMANY,
-            "base_url": AZURE_GERMAN_CLOUD.endpoints.resource_manager,
-            "credential_scopes": [
-                AZURE_GERMAN_CLOUD.endpoints.resource_manager + "/.default"
-            ],
+            "base_url": AZURE_GERMAN_CLOUD,
+            "credential_scopes": [AZURE_GERMAN_CLOUD + "/.default"],
         },
     }
     return allowed_regions[region]
