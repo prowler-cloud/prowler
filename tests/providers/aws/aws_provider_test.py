@@ -52,8 +52,8 @@ from tests.providers.aws.utils import (
     AWS_REGION_US_EAST_1,
     AWS_REGION_US_EAST_2,
     EXAMPLE_AMI_ID,
+    create_role,
     set_mocked_aws_provider,
-    create_role
 )
 
 # Mocking GetCallerIdentity for China and GovCloud
