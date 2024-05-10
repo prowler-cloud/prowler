@@ -946,39 +946,194 @@ def filter_data(
         table_div.append(
             html.Div(
                 [
-                    html.Span(
-                        "Check Name",
-                        className="text-center text-prowler-stone-900 uppercase text-xl font-bold",
-                        style={"width": "60%"},
+                    html.Div(
+                        [
+                            html.Span(
+                                "Check Name",
+                                className="text-center text-prowler-stone-900 uppercase text-xl font-bold",
+                            ),
+                            html.Button(
+                                html.Img(
+                                    src="assets/images/icons/arrows.svg",
+                                    style={
+                                        "width": "1rem",
+                                        "height": "1rem",
+                                        "margin-left": "0.2rem",
+                                        "margin-top": "0.2rem",
+                                    },
+                                ),
+                                id={
+                                    "type": "sort_button",
+                                    "index": "check_name",
+                                },
+                                n_clicks=0,
+                            ),
+                        ],
+                        style={
+                            "width": "60%",
+                            "text-align": "center",
+                            "align-items": "center",
+                        },
                     ),
-                    html.Span(
-                        "Severity",
-                        className="text-center text-prowler-stone-900 uppercase text-xl font-bold",
-                        style={"width": "10%"},
+                    html.Div(
+                        [
+                            html.Span(
+                                "Severity",
+                                className="text-center text-prowler-stone-900 uppercase text-xl font-bold",
+                                style={"width": "10%"},
+                            ),
+                            html.Button(
+                                html.Img(
+                                    src="assets/images/icons/arrows.svg",
+                                    style={
+                                        "width": "1rem",
+                                        "height": "1rem",
+                                        "margin-left": "0.2rem",
+                                        "margin-top": "0.2rem",
+                                    },
+                                ),
+                                id={
+                                    "type": "sort_button",
+                                    "index": "severity",
+                                },
+                                n_clicks=0,
+                            ),
+                        ],
+                        style={
+                            "width": "10%",
+                            "text-align": "center",
+                            "align-items": "center",
+                        },
                     ),
-                    html.Span(
-                        "Status",
-                        className="text-center text-prowler-stone-900 uppercase text-xl font-bold",
-                        style={"width": "8%", "padding-right": "1rem"},
+                    html.Div(
+                        [
+                            html.Span(
+                                "Status",
+                                className="text-center text-prowler-stone-900 uppercase text-xl font-bold",
+                                style={"width": "10%"},
+                            ),
+                            html.Button(
+                                html.Img(
+                                    src="assets/images/icons/arrows.svg",
+                                    style={
+                                        "width": "1rem",
+                                        "height": "1rem",
+                                        "margin-left": "0.2rem",
+                                        "margin-top": "0.2rem",
+                                    },
+                                ),
+                                id={
+                                    "type": "sort_button",
+                                    "index": "status",
+                                },
+                                n_clicks=0,
+                            ),
+                        ],
+                        style={
+                            "width": "8%",
+                            "text-align": "center",
+                            "align-items": "center",
+                            "margin-left": "0.5rem",
+                            "margin-right": "0.5rem",
+                        },
                     ),
-                    html.Span(
-                        "Region",
-                        className="text-center text-prowler-stone-900 uppercase text-xl font-bold",
-                        style={"width": "10%", "padding-left": "3rem"},
+                    html.Div(
+                        [
+                            html.Span(
+                                "Region",
+                                className="text-center text-prowler-stone-900 uppercase text-xl font-bold",
+                                style={"width": "10%"},
+                            ),
+                            html.Button(
+                                html.Img(
+                                    src="assets/images/icons/arrows.svg",
+                                    style={
+                                        "width": "1rem",
+                                        "height": "1rem",
+                                        "margin-left": "0.2rem",
+                                        "margin-top": "0.2rem",
+                                    },
+                                ),
+                                id={
+                                    "type": "sort_button",
+                                    "index": "region",
+                                },
+                                n_clicks=0,
+                            ),
+                        ],
+                        style={
+                            "width": "10%",
+                            "text-align": "center",
+                            "align-items": "center",
+                        },
                     ),
-                    html.Span(
-                        "Service",
-                        className="text-center text-prowler-stone-900 uppercase text-xl font-bold",
-                        style={"width": "10%"},
+                    html.Div(
+                        [
+                            html.Span(
+                                "Service",
+                                className="text-center text-prowler-stone-900 uppercase text-xl font-bold",
+                                style={"width": "10%"},
+                            ),
+                            html.Button(
+                                html.Img(
+                                    src="assets/images/icons/arrows.svg",
+                                    style={
+                                        "width": "1rem",
+                                        "height": "1rem",
+                                        "margin-left": "0.2rem",
+                                        "margin-top": "0.2rem",
+                                    },
+                                ),
+                                id={
+                                    "type": "sort_button",
+                                    "index": "service",
+                                },
+                                n_clicks=0,
+                            ),
+                        ],
+                        style={
+                            "width": "10%",
+                            "text-align": "center",
+                            "align-items": "center",
+                        },
                     ),
-                    html.Span(
-                        "Account ID",
-                        className="text-center text-prowler-stone-900 uppercase text-xl font-bold",
-                        style={"width": "10%"},
+                    html.Div(
+                        [
+                            html.Span(
+                                "Account",
+                                className="text-center text-prowler-stone-900 uppercase text-xl font-bold",
+                                style={"width": "10%"},
+                            ),
+                            html.Button(
+                                html.Img(
+                                    src="assets/images/icons/arrows.svg",
+                                    style={
+                                        "width": "1rem",
+                                        "height": "1rem",
+                                        "margin-left": "0.2rem",
+                                        "margin-top": "0.2rem",
+                                    },
+                                ),
+                                id={
+                                    "type": "sort_button",
+                                    "index": "account",
+                                },
+                                n_clicks=0,
+                            ),
+                        ],
+                        style={
+                            "width": "10%",
+                            "text-align": "center",
+                            "align-items": "center",
+                        },
                     ),
                 ],
                 className="grid grid-cols-auto w-full",
-                style={"display": "flex", "justify-content": "space-between"},
+                style={
+                    "display": "flex",
+                    "justify-content": "space-between",
+                    "margin-bottom": "0.7rem",
+                },
             )
         )
 
@@ -1417,7 +1572,7 @@ def generate_table(data, index, color_mapping_severity, color_mapping_status):
                                     [
                                         html.P(
                                             html.Strong(
-                                                "Scan Time: ",
+                                                "Scan Day: ",
                                                 style={"margin-right": "5px"},
                                             )
                                         ),
