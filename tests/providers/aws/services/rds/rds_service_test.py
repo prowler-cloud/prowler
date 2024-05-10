@@ -88,6 +88,7 @@ class Test_RDS_Service:
             EnableCloudwatchLogsExports=["audit", "error"],
             MultiAZ=True,
             DBParameterGroupName="test",
+            DBClusterIdentifier="cluster-postgres",
             Tags=[
                 {"Key": "test", "Value": "test"},
             ],
@@ -110,6 +111,7 @@ class Test_RDS_Service:
         assert rds.db_instances[0].deletion_protection
         assert rds.db_instances[0].auto_minor_version_upgrade
         assert rds.db_instances[0].multi_az
+        assert rds.db_instances[0].cluster_id
         assert rds.db_instances[0].tags == [
             {"Key": "test", "Value": "test"},
         ]
