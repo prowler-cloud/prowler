@@ -3,7 +3,7 @@ import os
 import re
 import tempfile
 from argparse import Namespace
-from datetime import datetime
+from datetime import datetime, timedelta
 from json import dumps
 from os import rmdir
 from re import search
@@ -13,6 +13,7 @@ from boto3 import client, session
 from freezegun import freeze_time
 from mock import patch
 from moto import mock_aws
+from tzlocal import get_localzone
 
 from prowler.providers.aws.aws_provider import (
     AwsProvider,
@@ -50,6 +51,7 @@ from tests.providers.aws.utils import (
     AWS_REGION_US_EAST_1,
     AWS_REGION_US_EAST_2,
     EXAMPLE_AMI_ID,
+    create_role,
 )
 
 # Mocking GetCallerIdentity for China and GovCloud
@@ -310,7 +312,7 @@ class TestAWSProvider:
             PolicyName=policy_name,
             PolicyDocument=dumps(policy_document),
         )["Policy"]
-        print(policy)
+
         assume_policy_document = {
             "Version": "2012-10-17",
             "Statement": [
@@ -1383,3 +1385,68 @@ aws:
         aws_provider.get_checks_to_execute_by_audit_resources() == {
             "ec2_networkacl_allow_ingress_any_port"
         }
+
+    @mock_aws
+    def test_refresh_credentials_before_expiration(self):
+        role_arn = create_role(AWS_REGION_EU_WEST_1)
+        arguments = Namespace()
+        arguments.role = role_arn
+        arguments.session_duration = 900
+        aws_provider = AwsProvider(arguments)
+
+        current_credentials = (
+            aws_provider._assumed_role_configuration.credentials.__dict__
+        )
+        refreshed_credentials = {
+            "access_key": current_credentials["aws_access_key_id"],
+            "secret_key": current_credentials["aws_secret_access_key"],
+            "token": current_credentials["aws_session_token"],
+            "expiry_time": current_credentials.get(
+                "expiration", current_credentials.get("expiry_time")
+            ).isoformat(),
+        }
+
+        assert aws_provider.refresh_credentials() == refreshed_credentials
+
+    @mock_aws
+    def test_refresh_credentials_after_expiration(self):
+        role_arn = create_role(AWS_REGION_EU_WEST_1)
+        session_duration_in_seconds = 900
+        arguments = Namespace()
+        arguments.role = role_arn
+        arguments.session_duration = session_duration_in_seconds
+        aws_provider = AwsProvider(arguments)
+
+        # Manually expire credentials
+        aws_provider._assumed_role_configuration.credentials.expiration = datetime.now(
+            get_localzone()
+        ) - timedelta(seconds=session_duration_in_seconds)
+
+        current_credentials = aws_provider._assumed_role_configuration.credentials
+
+        # Refresh credentials
+        refreshed_credentials = aws_provider.refresh_credentials()
+
+        # Assert that the refreshed credentials are different
+        access_key = refreshed_credentials.get("access_key")
+        assert access_key != current_credentials.aws_access_key_id
+
+        secret_key = refreshed_credentials.get("secret_key")
+        assert secret_key != current_credentials.aws_secret_access_key
+
+        session_token = refreshed_credentials.get("token")
+        assert session_token != current_credentials.aws_session_token
+
+        expiry_time = refreshed_credentials.get("expiry_time")
+        expiry_time_formatted = datetime.fromisoformat(expiry_time)
+        assert expiry_time != current_credentials.expiration
+        assert datetime.now(get_localzone()) < expiry_time_formatted
+
+        # Assert credentials format
+        assert len(access_key) == 20
+        assert search(r"^ASIA.*$", access_key)
+
+        assert len(secret_key) == 40
+
+        assert len(session_token) == 356
+        assert search(r"^FQoGZXIvYXdzE.*$", session_token)
