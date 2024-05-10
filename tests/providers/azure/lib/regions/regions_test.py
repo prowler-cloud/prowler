@@ -1,11 +1,12 @@
 from azure.identity import AzureAuthorityHosts
 
-from prowler.providers.azure.lib.regions.regions import get_regions_config
-
-AZURE_CHINA_CLOUD = "https://management.chinacloudapi.cn"
-AZURE_US_GOV_CLOUD = "https://management.usgovcloudapi.net"
-AZURE_GERMAN_CLOUD = "https://management.microsoftazure.de"
-AZURE_GENERIC_CLOUD = "https://management.azure.com"
+from prowler.providers.azure.lib.regions.regions import (
+    AZURE_CHINA_CLOUD,
+    AZURE_GENERIC_CLOUD,
+    AZURE_GERMAN_CLOUD,
+    AZURE_US_GOV_CLOUD,
+    get_regions_config,
+)
 
 
 class Test_azure_regions:
