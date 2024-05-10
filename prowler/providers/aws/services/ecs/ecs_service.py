@@ -82,22 +82,22 @@ class ECS(AWSService):
                     is_resource_filtered(container, self.audit_resources)
                 ):
                     cont = Containers(
-                        arn=container['containerInstanceArn'],
-                        tags=container['tags'],
+                        arn=container["containerInstanceArn"],
+                        tags=container["tags"],
                     )
-                    for attachment in container['attachments']:
-                        if attachment['type'] == 'ElasticNetworkInterface':
-                            for detail in attachment['details']:
-                                if detail['name'] == 'networkInterfaceId':
-                                    for eni in regional_client.describe_network_interfaces(NetworkInterfaceIds=detail['value'])["NetworkInterfaces"]:
-                                        cont.availability_zone = eni['AvailabilityZone']
+                    for attachment in container["attachments"]:
+                        if attachment["type"] == "ElasticNetworkInterface":
+                            for detail in attachment["details"]:
+                                if detail["name"] == "networkInterfaceId":
+                                    for eni in regional_client.describe_network_interfaces(NetworkInterfaceIds=detail["value"])["NetworkInterfaces"]:
+                                        cont.availability_zone = eni["AvailabilityZone"]
                                         for ipv6 in eni["Ipv6Addresses"]:
-                                            if ipv6['Primary']:
-                                                cont.ipv6 = ipv6['Ipv6Addresses']
+                                            if ipv6["Primary"]:
+                                                cont.ipv6 = ipv6["Ipv6Addresses"]
                                                 break
                                         for ipv4 in eni["PrivateIpAddresses"]:
-                                            if ipv4['Primary']:
-                                                cont.ipv4 = ipv4['PrivateIpAddress']
+                                            if ipv4["Primary"]:
+                                                cont.ipv4 = ipv4["PrivateIpAddress"]
                                                 break
 
                     self.containers.append(cont)

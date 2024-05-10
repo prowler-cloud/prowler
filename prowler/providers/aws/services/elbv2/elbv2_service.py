@@ -81,6 +81,13 @@ class ELBv2(AWSService):
                                         arn=target_group["TargetGroupArn"],
                                         target_type=target_group["TargetType"],
                                         target=target_health["Target"]["Id"],
+                                        public=(
+                                            True
+                                            if lb.scheme == "internet-facing"
+                                            and lb.type == "application"
+                                            and len(lb.security_groups) > 0
+                                            else False
+                                        )
                                     )
                                     if "DNSName" in lb:
                                         tg.lbdns = lb.dns
@@ -294,4 +301,5 @@ class TargetGroups(BaseModel):
     arn: str
     target_type: str
     target: str
+    public: bool
     lbdns: Optional[str]

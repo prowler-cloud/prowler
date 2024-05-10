@@ -1,4 +1,3 @@
-from re import search
 from unittest import mock
 
 from boto3 import client, resource
@@ -20,14 +19,16 @@ class Test_ec2_instance_not_directly_publicly_accessible_via_elbv2:
     def test_no_elbsv2(self):
         from prowler.providers.aws.services.elbv2.elbv2_service import ELBv2
 
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        )
+
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]),
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.elbv2.elbv2_insecure_ssl_ciphers.elbv2_insecure_ssl_ciphers.elbv2_client",
-            new=ELBv2(
-                set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
-            ),
+            new=ELBv2(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.elbv2.elbv2_insecure_ssl_ciphers.elbv2_insecure_ssl_ciphers import (
@@ -128,19 +129,19 @@ class Test_ec2_instance_not_directly_publicly_accessible_via_elbv2:
         from prowler.providers.aws.services.ec2.ec2_service import EC2
         from prowler.providers.aws.services.elbv2.elbv2_service import ELBv2
 
-        current_audit_info = set_mocked_aws_provider(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_instance_not_directly_publicly_accessible_via_elbv2.ec2_instance_not_directly_publicly_accessible_via_elbv2.ec2_client",
-            new=EC2(current_audit_info),
+            new=EC2(aws_provider),
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_instance_not_directly_publicly_accessible_via_elbv2.ec2_instance_not_directly_publicly_accessible_via_elbv2.elbv2_client",
-            new=ELBv2(current_audit_info),
+            new=ELBv2(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_instance_not_directly_publicly_accessible_via_elbv2.ec2_instance_not_directly_publicly_accessible_via_elbv2 import (
@@ -148,14 +149,20 @@ class Test_ec2_instance_not_directly_publicly_accessible_via_elbv2:
             )
 
             check = ec2_instance_not_directly_publicly_accessible_via_elbv2()
-            findings = check.execute()
-
-            assert len(findings) == 1
-            assert findings[0].status == "FAIL"
-            assert search(
-                "is behind a internet facing load balancer",
-                findings[0].status_extended,
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == f"EC2 Instance {instance.id} is behind an Internet facing Load Balancer through target group {target_group_arn}."
             )
+            assert result[0].region == AWS_REGION_EU_WEST_1
+            assert result[0].resource_id == instance.id
+            assert (
+                result[0].resource_arn
+                == f"arn:{aws_provider.identity.partition}:ec2:{AWS_REGION_EU_WEST_1}:{aws_provider.identity.account}:instance/{instance.id}"
+            )
+            assert result[0].resource_tags is None
 
     @mock_aws
     def test_ec2_behind_private_elbv2(self):
@@ -245,19 +252,19 @@ class Test_ec2_instance_not_directly_publicly_accessible_via_elbv2:
         from prowler.providers.aws.services.ec2.ec2_service import EC2
         from prowler.providers.aws.services.elbv2.elbv2_service import ELBv2
 
-        current_audit_info = set_mocked_aws_provider(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_instance_not_directly_publicly_accessible_via_elbv2.ec2_instance_not_directly_publicly_accessible_via_elbv2.ec2_client",
-            new=EC2(current_audit_info),
+            new=EC2(aws_provider),
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_instance_not_directly_publicly_accessible_via_elbv2.ec2_instance_not_directly_publicly_accessible_via_elbv2.elbv2_client",
-            new=ELBv2(current_audit_info),
+            new=ELBv2(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_instance_not_directly_publicly_accessible_via_elbv2.ec2_instance_not_directly_publicly_accessible_via_elbv2 import (
@@ -265,11 +272,18 @@ class Test_ec2_instance_not_directly_publicly_accessible_via_elbv2:
             )
 
             check = ec2_instance_not_directly_publicly_accessible_via_elbv2()
-            findings = check.execute()
+            result = check.execute()
 
-            assert len(findings) == 1
-            assert findings[0].status == "PASS"
-            assert search(
-                "is not behind a internet facing load balancer.",
-                findings[0].status_extended,
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == f"EC2 Instance {instance.id} is not behind an Internet facing Load Balancer."
             )
+            assert result[0].region == AWS_REGION_EU_WEST_1
+            assert result[0].resource_id == instance.id
+            assert (
+                result[0].resource_arn
+                == f"arn:{aws_provider.identity.partition}:ec2:{AWS_REGION_EU_WEST_1}:{aws_provider.identity.account}:instance/{instance.id}"
+            )
+            assert result[0].resource_tags is None
