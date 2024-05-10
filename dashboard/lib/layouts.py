@@ -11,6 +11,7 @@ def create_layout_overview(
     service_dropdown: html.Div,
     table_row_dropdown: html.Div,
     status_dropdown: html.Div,
+    table_div_header: html.Div,
 ) -> html.Div:
     """
     Create the layout of the dashboard.
@@ -105,6 +106,7 @@ def create_layout_overview(
                 ],
                 className="flex justify-between items-center",
             ),
+            table_div_header,
             html.Div(id="table", className="grid"),
         ],
         className="grid gap-x-8 gap-y-8 2xl:container mx-auto",
