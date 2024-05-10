@@ -1071,7 +1071,7 @@ def filter_data(
         table_row_options = []
 
         # Take the values from the table_row_values
-        if not table_row_values or table_row_values == -1:
+        if table_row_values is None or table_row_values == -1:
             if len(filtered_data) < 25:
                 table_row_values = len(filtered_data)
             else:
