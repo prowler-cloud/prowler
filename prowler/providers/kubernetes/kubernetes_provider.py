@@ -137,15 +137,29 @@ class KubernetesProvider(Provider):
                 else:
                     context = config.list_kube_config_contexts()[1]
             else:
-                logger.info("Using in-cluster config")
-                config.load_incluster_config()
-                context = {
-                    "name": "In-Cluster",
-                    "context": {
-                        "cluster": "in-cluster",  # Placeholder, as the real cluster name is not available
-                        "user": "service-account-name",  # Also a placeholder
-                    },
-                }
+                kubeconfig_file = "~/.kube/config"
+                try:
+                    config.load_kube_config(
+                        config_file=os.path.expanduser(kubeconfig_file)
+                    )
+                    if config:
+                        if input_context:
+                            contexts = config.list_kube_config_contexts()[0]
+                            for context_item in contexts:
+                                if context_item["name"] == input_context:
+                                    context = context_item
+                        else:
+                            context = config.list_kube_config_contexts()[1]
+                except Exception:
+                    logger.info("Using in-cluster config")
+                    config.load_incluster_config()
+                    context = {
+                        "name": "In-Cluster",
+                        "context": {
+                            "cluster": "in-cluster",  # Placeholder, as the real cluster name is not available
+                            "user": "service-account-name",  # Also a placeholder
+                        },
+                    }
             return KubernetesSession(api_client=client.ApiClient(), context=context)
         except Exception as error:
             logger.critical(
