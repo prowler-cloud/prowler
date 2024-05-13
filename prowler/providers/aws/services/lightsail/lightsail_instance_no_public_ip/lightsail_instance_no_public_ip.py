@@ -8,16 +8,16 @@ class lightsail_instance_no_public_ip(Check):
         for instance in lightsail_client.instances:
             report = Check_Report_AWS(self.metadata())
             report.region = instance.location.get("regionName", "")
-            report.resource_id = instance.id
+            report.resource_id = instance.name
             report.resource_arn = instance.arn
             report.resource_tags = instance.tags
             report.status = "PASS"
             report.status_extended = (
-                f"Instance {instance.id} does not have a public IP."
+                f"Instance {instance.name} does not have a public IP."
             )
             if instance.public_ip != "":
                 report.status = "FAIL"
-                report.status_extended = f"Instance {instance.id} has a public IP."
+                report.status_extended = f"Instance {instance.name} has a public IP."
 
             findings.append(report)
 
