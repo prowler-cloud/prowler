@@ -9,53 +9,57 @@ from prowler.providers.aws.lib.service.service import AWSService
 class Lightsail(AWSService):
     def __init__(self, provider):
         super().__init__(__class__.__name__, provider)
-        self.instances = self.__list_instances__()
-        self.databases = self.__list_databases__()
+        self.instances = {}
+        self.__threading_call__(self.__get_instances__)
+        self.databases = {}
+        self.__threading_call__(self.__get_databases__)
 
-    def __list_instances__(self) -> list:
-        logger.info("Lightsail - Listing instances...")
-        instance_list = []
+    def __get_instances__(self, regional_client):
+        logger.info("Lightsail - Getting instances...")
         try:
-            instances = self.client.get_instances()
+            instance_paginator = regional_client.get_paginator("get_instances")
+            for page in instance_paginator.paginate():
+                for instance in page["instances"]:
+                    ports = []
 
-            for instance in instances["instances"]:
-                ports = []
-
-                for port_range in instance.get("networking", {}).get("ports", []):
-                    ports.append(
-                        PortRange(
-                            range=(
-                                (
-                                    port_range.get("fromPort", "")
+                    for port_range in instance.get("networking", {}).get("ports", []):
+                        ports.append(
+                            PortRange(
+                                range=(
+                                    (
+                                        port_range.get("fromPort", "")
+                                        if port_range.get("fromPort", "")
+                                        == port_range.get("toPort", "")
+                                        else f"{port_range.get('fromPort', '')}-{port_range.get('toPort', '')}"
+                                    )
                                     if port_range.get("fromPort", "")
-                                    == port_range.get("toPort", "")
-                                    else f"{port_range.get('fromPort', '')}-{port_range.get('toPort', '')}"
-                                )
-                                if port_range.get("fromPort", "")
-                                else ""
-                            ),
-                            protocol=port_range.get("protocol", ""),
-                            access_from=port_range.get("accessFrom", ""),
-                            access_type=port_range.get("accessType", ""),
+                                    else ""
+                                ),
+                                protocol=port_range.get("protocol", ""),
+                                access_from=port_range.get("accessFrom", ""),
+                                access_type=port_range.get("accessType", ""),
+                            )
                         )
-                    )
 
-                auto_snapshot_enabled = False
-                for add_on in instance.get("addOns", []):
-                    if (
-                        add_on.get("name") == "AutoSnapshot"
-                        and add_on.get("status") == "Enabled"
-                    ):
-                        auto_snapshot_enabled = True
-                        break
+                    auto_snapshot_enabled = False
+                    for add_on in instance.get("addOns", []):
+                        if (
+                            add_on.get("name") == "AutoSnapshot"
+                            and add_on.get("status") == "Enabled"
+                        ):
+                            auto_snapshot_enabled = True
+                            break
 
-                instance_list.append(
-                    Instance(
+                    self.instances[
+                        instance.get(
+                            "arn",
+                            f"arn:{self.audited_partition}:lightsail:{regional_client.region}:{self.audited_account}:Instance",
+                        )
+                    ] = Instance(
                         name=instance.get("name", ""),
-                        arn=instance.get("arn", ""),
                         tags=instance.get("tags", []),
-                        location=instance.get("location", ""),
-                        static_ip=instance.get("isStaticIp", ""),
+                        location=instance.get("location", regional_client.region),
+                        static_ip=instance.get("isStaticIp", True),
                         public_ip=instance.get("publicIpAddress", ""),
                         private_ip=instance.get("privateIpAddress", ""),
                         ipv6_addresses=instance.get("ipv6Addresses", []),
@@ -63,42 +67,40 @@ class Lightsail(AWSService):
                         ports=ports,
                         auto_snapshot=auto_snapshot_enabled,
                     )
-                )
 
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-        return instance_list
-
-    def __list_databases__(self) -> list:
-        logger.info("Lightsail - Listing databases...")
-        database_list = []
+    def __get_databases__(self, regional_client):
+        logger.info("Lightsail - Getting databases...")
         try:
-            databases = self.client.get_relational_databases()
-
-            for database in databases.get("relationalDatabases", []):
-                database_list.append(
-                    Database(
+            databases_paginator = regional_client.get_paginator(
+                "get_relational_databases"
+            )
+            for page in databases_paginator.paginate():
+                for database in page["relationalDatabases"]:
+                    self.databases[
+                        database.get(
+                            "arn",
+                            f"arn:{self.audited_partition}:lightsail:{regional_client.region}:{self.audited_account}:RelationalDatabase",
+                        )
+                    ] = Database(
                         name=database.get("name", ""),
-                        arn=database.get("arn", ""),
                         tags=database.get("tags", []),
-                        location=database.get("location", ""),
+                        location=database.get("location", regional_client.region),
                         engine=database.get("engine", ""),
                         engine_version=database.get("engineVersion", ""),
-                        status=database.get("state", ""),
-                        username=database.get("masterUsername", ""),
-                        public_access=database.get("publiclyAccessible", ""),
+                        status=database.get("state", "unknown"),
+                        master_username=database.get("masterUsername", "admin"),
+                        public_access=database.get("publiclyAccessible", True),
                     )
-                )
 
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-
-        return database_list
 
 
 class PortRange(BaseModel):
@@ -110,7 +112,6 @@ class PortRange(BaseModel):
 
 class Instance(BaseModel):
     name: str
-    arn: str
     tags: List[Dict[str, str]]
     location: dict
     static_ip: bool
@@ -124,11 +125,10 @@ class Instance(BaseModel):
 
 class Database(BaseModel):
     name: str
-    arn: str
     tags: List[Dict[str, str]]
     location: dict
     engine: str
     engine_version: str
     status: str
-    username: str
+    master_username: str
     public_access: bool
