@@ -75,14 +75,6 @@ custom_checks_metadata_schema = {
                             "additionalProperties": False,
                         },
                     },
-                    "required": [
-                        "Severity",
-                        "CheckTitle",
-                        "Description",
-                        "Risk",
-                        "RelatedUrl",
-                        "Remediation",
-                    ],
                     "additionalProperties": False,
                 }
             },
