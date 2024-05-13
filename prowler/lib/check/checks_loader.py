@@ -6,6 +6,7 @@ from prowler.lib.check.check import (
     parse_checks_from_file,
     recover_checks_from_provider,
     recover_checks_from_service,
+    recover_checks_from_subservice,
 )
 from prowler.lib.logger import logger
 
@@ -17,6 +18,7 @@ def load_checks_to_execute(
     checks_file: str,
     check_list: list,
     service_list: list,
+    sub_service_list: list,
     severities: list,
     compliance_frameworks: list,
     categories: set,
@@ -76,6 +78,12 @@ def load_checks_to_execute(
         # Handle if there are services passed using -s/--services
         elif service_list:
             checks_to_execute = recover_checks_from_service(service_list, provider)
+
+        # Handle if there are sub-services passed using -u/--sub-services
+        elif sub_service_list:
+            checks_to_execute = recover_checks_from_subservice(
+                sub_service_list, provider
+            )
 
         # Handle if there are compliance frameworks passed using --compliance
         elif compliance_frameworks:

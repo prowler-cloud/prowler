@@ -6,7 +6,7 @@
     "Infrastructure Security"
   ],
   "ServiceName": "ec2",
-  "SubServiceName": "securitygroups",
+  "SubServiceName": "securitygroup",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "high",
   "ResourceType": "AwsEc2SecurityGroup",

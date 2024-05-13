@@ -693,6 +693,12 @@ class Test_Parser:
         parsed = self.parser.parse(command)
         assert parsed.list_services
 
+    def test_list_checks_parser_list_subservices(self):
+        argument = "--list-subservices"
+        command = [prowler_command, argument]
+        parsed = self.parser.parse(command)
+        assert parsed.list_subservices
+
     def test_list_checks_parser_list_compliance(self):
         argument = "--list-compliance"
         command = [prowler_command, argument]

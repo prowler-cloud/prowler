@@ -18,6 +18,7 @@ from prowler.lib.check.check import (
     list_checks_json,
     list_fixers,
     list_services,
+    list_subservices,
     parse_checks_from_folder,
     print_categories,
     print_checks,
@@ -25,6 +26,7 @@ from prowler.lib.check.check import (
     print_compliance_requirements,
     print_fixers,
     print_services,
+    print_subservices,
     remove_custom_checks_module,
     run_fixer,
 )
@@ -69,6 +71,7 @@ def prowler():
     excluded_checks = args.excluded_check
     excluded_services = args.excluded_service
     services = args.service
+    subservices = args.subservice
     categories = args.category
     checks_file = args.checks_file
     checks_folder = args.checks_folder
@@ -78,6 +81,7 @@ def prowler():
     default_execution = (
         not checks
         and not services
+        and not subservices
         and not categories
         and not excluded_checks
         and not excluded_services
@@ -102,7 +106,9 @@ def prowler():
     if args.list_services:
         print_services(list_services(provider))
         sys.exit()
-
+    if args.list_subservices:
+        print_subservices(list_subservices(provider))
+        sys.exit()
     if args.list_fixer:
         print_fixers(list_fixers(provider))
         sys.exit()
@@ -151,6 +157,7 @@ def prowler():
         checks_file,
         checks,
         services,
+        subservices,
         severities,
         compliance_framework,
         categories,

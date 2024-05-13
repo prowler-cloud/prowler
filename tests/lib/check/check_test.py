@@ -20,6 +20,7 @@ from prowler.lib.check.check import (
     parse_checks_from_folder,
     recover_checks_from_provider,
     recover_checks_from_service,
+    recover_checks_from_subservice,
     remove_custom_checks_module,
     update_audit_metadata,
 )
@@ -643,6 +644,20 @@ class TestCheck:
             "ec2_securitygroup_allow_ingress_from_internet_to_any_port",
         }
         recovered_checks = recover_checks_from_service(service_list, provider)
+        assert recovered_checks == expected_checks
+
+    @patch(
+        "prowler.lib.check.check.recover_checks_from_provider",
+        new=mock_recover_checks_from_aws_provider,
+    )
+    def test_recover_checks_from_subservice(self):
+        subservice_list = ["securitygroup"]
+        provider = "aws"
+        expected_checks = {
+            "ec2_securitygroup_allow_ingress_from_internet_to_any_port",
+        }
+
+        recovered_checks = recover_checks_from_subservice(subservice_list, provider)
         assert recovered_checks == expected_checks
 
     # def test_parse_checks_from_compliance_framework_two(self):

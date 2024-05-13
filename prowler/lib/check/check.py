@@ -204,6 +204,18 @@ def list_services(provider: str) -> set:
     return sorted(available_services)
 
 
+def list_subservices(provider: str) -> set:
+    available_subservices = set()
+    checks_tuple = recover_checks_from_provider(provider)
+    for _, check_path in checks_tuple:
+        check_name = check_path.split("/")[-1]
+        check_path = f"{check_path}/{check_name}.metadata.json"
+        check_metadata = load_check_metadata(check_path)
+        if check_metadata.SubServiceName:
+            available_subservices.add(check_metadata.SubServiceName)
+    return sorted(available_subservices)
+
+
 def list_fixers(provider: str) -> set:
     available_fixers = set()
     checks = recover_checks_from_provider(provider, include_fixers=True)
@@ -252,6 +264,19 @@ def print_services(service_list: set):
 
     for service in service_list:
         print(f"- {service}")
+
+    print(message)
+
+
+def print_subservices(sub_service_list: set):
+    subservices_num = len(sub_service_list)
+    plural_string = f"\nThere are {Fore.YELLOW}{subservices_num}{Style.RESET_ALL} available subservices.\n"
+    singular_string = f"\nThere is {Fore.YELLOW}{subservices_num}{Style.RESET_ALL} available subservice.\n"
+
+    message = plural_string if subservices_num > 1 else singular_string
+
+    for subservice in sub_service_list:
+        print(f"- {subservice}")
 
     print(message)
 
@@ -790,6 +815,36 @@ def recover_checks_from_service(service_list: list, provider: str) -> set:
                     # if service_name in group_list: checks_from_arn.add(check_name)
                     checks.add(check_name)
         return checks
+    except Exception as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+        )
+
+
+def recover_checks_from_subservice(sub_service_list: list, provider: str) -> set:
+    """
+    Recover all checks from the selected provider and subservices
+
+    Returns a set of checks from the given subservices
+    """
+    # Get all the services available for the provider
+    try:
+        checks = set()
+        available_services = list_services(provider)
+        available_subservices = list_subservices(provider)
+        # Check if the subservice is valid
+        for sub_service in sub_service_list:
+            if sub_service not in available_subservices:
+                logger.error(f"SubService '{sub_service}' does not have checks.")
+                continue
+        checks_names = recover_checks_from_service(available_services, provider)
+        for sub_service in sub_service_list:
+            for check in checks_names:
+                check_name = check.split("_")[1]
+                if check_name == sub_service:
+                    checks.add(check)
+        return checks
+
     except Exception as error:
         logger.error(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
