@@ -5,19 +5,19 @@ from prowler.providers.aws.services.lightsail.lightsail_client import lightsail_
 class lightsail_instance_no_public_ip(Check):
     def execute(self):
         findings = []
-        for instance in lightsail_client.instances:
+        for arn_instance, instance in lightsail_client.instances.items():
             report = Check_Report_AWS(self.metadata())
             report.region = instance.location.get("regionName", "")
-            report.resource_id = instance.name
-            report.resource_arn = instance.arn
+            report.resource_id = instance.id
+            report.resource_arn = arn_instance
             report.resource_tags = instance.tags
             report.status = "PASS"
             report.status_extended = (
-                f"Instance {instance.name} does not have a public IP."
+                f"Instance '{instance.name}' does not have a public IP."
             )
             if instance.public_ip != "":
                 report.status = "FAIL"
-                report.status_extended = f"Instance {instance.name} has a public IP."
+                report.status_extended = f"Instance '{instance.name}' has a public IP."
 
             findings.append(report)
 

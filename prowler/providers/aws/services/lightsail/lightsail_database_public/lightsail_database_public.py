@@ -6,18 +6,18 @@ class lightsail_database_public(Check):
     def execute(self):
         findings = []
 
-        for database in lightsail_client.databases:
+        for arn_database, database in lightsail_client.databases.items():
             report = Check_Report_AWS(self.metadata())
             report.region = database.location.get("regionName", "")
-            report.resource_id = database.name
-            report.resource_arn = database.arn
+            report.resource_id = database.id
+            report.resource_arn = arn_database
             report.resource_tags = database.tags
             report.status = "FAIL"
-            report.status_extended = f"Database {database.name} is public."
+            report.status_extended = f"Database '{database.name}' is public."
 
             if not database.public_access:
                 report.status = "PASS"
-                report.status_extended = f"Database {database.name} is not public."
+                report.status_extended = f"Database '{database.name}' is not public."
 
             findings.append(report)
 
