@@ -4,6 +4,7 @@ from prowler.providers.aws.services.lightsail.lightsail_service import Database
 from tests.providers.aws.utils import (
     AWS_REGION_US_EAST_1,
     AWS_REGION_US_EAST_1_AZA,
+    BASE_LIGHTSAIL_ARN,
     set_mocked_aws_provider,
 )
 
@@ -11,7 +12,7 @@ from tests.providers.aws.utils import (
 class Test_lightsail_database_public:
     def test_lightsail_no_databases(self):
         lightsail_client = MagicMock
-        lightsail_client.databases = []
+        lightsail_client.databases = {}
 
         with patch(
             "prowler.providers.common.common.get_global_provider",
@@ -31,10 +32,10 @@ class Test_lightsail_database_public:
 
     def test_lightsail_database_public(self):
         lightsail_client = MagicMock
-        lightsail_client.databases = [
-            Database(
+        lightsail_client.databases = {
+            f"{BASE_LIGHTSAIL_ARN}:Database/test-database": Database(
                 name="test-database",
-                arn=f"arn:aws:lightsail:{AWS_REGION_US_EAST_1}:123456789012:Database/test-database",
+                id="1234/5678",
                 tags=[],
                 location={
                     "regionName": AWS_REGION_US_EAST_1,
@@ -44,10 +45,10 @@ class Test_lightsail_database_public:
                 engine_version="5.7",
                 size="nano",
                 status="running",
-                username="admin",
+                master_username="admin",
                 public_access=True,
             )
-        ]
+        }
 
         with patch(
             "prowler.providers.common.common.get_global_provider",
@@ -65,21 +66,20 @@ class Test_lightsail_database_public:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert result[0].status_extended == "Database test-database is public."
-            assert result[0].resource_id == "test-database"
+            assert result[0].status_extended == "Database 'test-database' is public."
+            assert result[0].resource_id == "1234/5678"
             assert (
-                result[0].resource_arn
-                == f"arn:aws:lightsail:{AWS_REGION_US_EAST_1}:123456789012:Database/test-database"
+                result[0].resource_arn == f"{BASE_LIGHTSAIL_ARN}:Database/test-database"
             )
             assert result[0].resource_tags == []
             assert result[0].region == AWS_REGION_US_EAST_1
 
     def test_lightsail_database_private(self):
         lightsail_client = MagicMock
-        lightsail_client.databases = [
-            Database(
+        lightsail_client.databases = {
+            f"{BASE_LIGHTSAIL_ARN}:Database/test-database": Database(
                 name="test-database",
-                arn=f"arn:aws:lightsail:{AWS_REGION_US_EAST_1}:123456789012:Database/test-database",
+                id="1234/5678",
                 tags=[],
                 location={
                     "regionName": AWS_REGION_US_EAST_1,
@@ -89,10 +89,10 @@ class Test_lightsail_database_public:
                 engine_version="5.7",
                 size="nano",
                 status="running",
-                username="admin",
+                master_username="admin",
                 public_access=False,
             )
-        ]
+        }
 
         with patch(
             "prowler.providers.common.common.get_global_provider",
@@ -110,11 +110,12 @@ class Test_lightsail_database_public:
 
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert result[0].status_extended == "Database test-database is not public."
-            assert result[0].resource_id == "test-database"
             assert (
-                result[0].resource_arn
-                == f"arn:aws:lightsail:{AWS_REGION_US_EAST_1}:123456789012:Database/test-database"
+                result[0].status_extended == "Database 'test-database' is not public."
+            )
+            assert result[0].resource_id == "1234/5678"
+            assert (
+                result[0].resource_arn == f"{BASE_LIGHTSAIL_ARN}:Database/test-database"
             )
             assert result[0].resource_tags == []
             assert result[0].region == AWS_REGION_US_EAST_1

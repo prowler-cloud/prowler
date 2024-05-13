@@ -7,6 +7,7 @@ from prowler.providers.aws.services.lightsail.lightsail_service import (
 from tests.providers.aws.utils import (
     AWS_REGION_US_EAST_1,
     AWS_REGION_US_EAST_1_AZA,
+    BASE_LIGHTSAIL_ARN,
     set_mocked_aws_provider,
 )
 
@@ -14,7 +15,7 @@ from tests.providers.aws.utils import (
 class Test_lightsail_instance_automated_snapshots:
     def test_no_instances(self):
         lightsail_client = MagicMock
-        lightsail_client.instances = []
+        lightsail_client.instances = {}
 
         with patch(
             "prowler.providers.common.common.get_global_provider",
@@ -34,10 +35,10 @@ class Test_lightsail_instance_automated_snapshots:
 
     def test_no_automated_snapshots(self):
         lightsail_client = MagicMock
-        lightsail_client.instances = [
-            Instance(
+        lightsail_client.instances = {
+            f"{BASE_LIGHTSAIL_ARN}:Instance/test-instance": Instance(
                 name="test-instance",
-                arn=f"arn:aws:lightsail:{AWS_REGION_US_EAST_1}:123456789012:Instance/test-instance",
+                id="1234/5678",
                 tags=[],
                 location={
                     "regionName": AWS_REGION_US_EAST_1,
@@ -64,7 +65,7 @@ class Test_lightsail_instance_automated_snapshots:
                 ],
                 auto_snapshot=False,
             )
-        ]
+        }
 
         with patch(
             "prowler.providers.common.common.get_global_provider",
@@ -84,22 +85,21 @@ class Test_lightsail_instance_automated_snapshots:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Instance test-instance does not have automated snapshots enabled."
+                == "Instance 'test-instance' does not have automated snapshots enabled."
             )
-            assert result[0].resource_id == "test-instance"
+            assert result[0].resource_id == "1234/5678"
             assert (
-                result[0].resource_arn
-                == f"arn:aws:lightsail:{AWS_REGION_US_EAST_1}:123456789012:Instance/test-instance"
+                result[0].resource_arn == f"{BASE_LIGHTSAIL_ARN}:Instance/test-instance"
             )
             assert result[0].resource_tags == []
             assert result[0].region == AWS_REGION_US_EAST_1
 
     def test_automated_snapshots(self):
         lightsail_client = MagicMock
-        lightsail_client.instances = [
-            Instance(
+        lightsail_client.instances = {
+            f"{BASE_LIGHTSAIL_ARN}:Instance/test-instance": Instance(
                 name="test-instance",
-                arn=f"arn:aws:lightsail:{AWS_REGION_US_EAST_1}:123456789012:Instance/test-instance",
+                id="1234/5678",
                 tags=[],
                 location={
                     "regionName": AWS_REGION_US_EAST_1,
@@ -126,7 +126,7 @@ class Test_lightsail_instance_automated_snapshots:
                 ],
                 auto_snapshot=True,
             )
-        ]
+        }
 
         with patch(
             "prowler.providers.common.common.get_global_provider",
@@ -146,12 +146,11 @@ class Test_lightsail_instance_automated_snapshots:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "Instance test-instance has automated snapshots enabled."
+                == "Instance 'test-instance' has automated snapshots enabled."
             )
-            assert result[0].resource_id == "test-instance"
+            assert result[0].resource_id == "1234/5678"
             assert (
-                result[0].resource_arn
-                == f"arn:aws:lightsail:{AWS_REGION_US_EAST_1}:123456789012:Instance/test-instance"
+                result[0].resource_arn == f"{BASE_LIGHTSAIL_ARN}:Instance/test-instance"
             )
             assert result[0].resource_tags == []
             assert result[0].region == AWS_REGION_US_EAST_1

@@ -7,6 +7,7 @@ from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
     AWS_REGION_US_EAST_1_AZA,
+    BASE_LIGHTSAIL_ARN,
     set_mocked_aws_provider,
 )
 
@@ -25,7 +26,7 @@ def mock_make_api_call(self, operation_name, kwarg):
                             "status": "Enabled",
                         }
                     ],
-                    "arn": f"arn:aws:lightsail:{AWS_REGION_US_EAST_1}:106908755756:Instance/test-id",
+                    "arn": f"{BASE_LIGHTSAIL_ARN}:Instance/test-id",
                     "blueprintId": "wordpress",
                     "blueprintName": "WordPress",
                     "bundleId": "nano_3_0",
@@ -43,7 +44,7 @@ def mock_make_api_call(self, operation_name, kwarg):
                                 "sizeInGb": 20,
                             },
                             {
-                                "arn": f"arn:aws:lightsail:{AWS_REGION_US_EAST_1}:106908755756:Disk/028e6d56-8ab8-41cf-b681-df41911eaeac",
+                                "arn": f"{BASE_LIGHTSAIL_ARN}:Disk/00000000-0000-0000-0000-000000000000",
                                 "attachedTo": "WordPress-1",
                                 "attachmentState": "attached",
                                 "createdAt": "2024-04-30T11:01:08.869000-04:00",
@@ -136,7 +137,7 @@ def mock_make_api_call(self, operation_name, kwarg):
         return {
             "relationalDatabases": [
                 {
-                    "arn": f"arn:aws:lightsail:{AWS_REGION_US_EAST_1}:106908755756:Database/test-id",
+                    "arn": f"{BASE_LIGHTSAIL_ARN}:Database/test-id",
                     "backupRetention": 7,
                     "backupRetentionCount": 7,
                     "createdAt": "2024-04-30T10:56:00.273000-04:00",
@@ -172,48 +173,149 @@ class TestLightsailService:
         assert lightsail.session.__class__.__name__ == "Session"
         assert lightsail.audited_account == AWS_ACCOUNT_NUMBER
         # Instances assertions
-        assert lightsail.instances[0].name == "WordPress-1"
         assert (
-            lightsail.instances[0].arn
-            == "arn:aws:lightsail:us-east-1:106908755756:Instance/test-id"
+            list(lightsail.instances.keys())[0]
+            == f"{BASE_LIGHTSAIL_ARN}:Instance/test-id"
         )
-        assert lightsail.instances[0].tags == []
-        assert lightsail.instances[0].location == {
+        assert (
+            lightsail.instances[f"{BASE_LIGHTSAIL_ARN}:Instance/test-id"].name
+            == "WordPress-1"
+        )
+        assert lightsail.instances[f"{BASE_LIGHTSAIL_ARN}:Instance/test-id"].tags == []
+        assert lightsail.instances[
+            f"{BASE_LIGHTSAIL_ARN}:Instance/test-id"
+        ].location == {
             "availabilityZone": "us-east-1a",
             "regionName": "us-east-1",
         }
-        assert not lightsail.instances[0].static_ip
-        assert lightsail.instances[0].public_ip == "1.2.3.4"
-        assert lightsail.instances[0].private_ip == "172.26.7.65"
-        assert lightsail.instances[0].ipv6_addresses == []
-        assert lightsail.instances[0].ip_address_type == "ipv4"
-        assert len(lightsail.instances[0].ports) == 3
-        assert lightsail.instances[0].ports[0].range == "80"
-        assert lightsail.instances[0].ports[0].protocol == "tcp"
-        assert lightsail.instances[0].ports[0].access_from == "Anywhere (::/0)"
-        assert lightsail.instances[0].ports[0].access_type == "public"
-        assert lightsail.instances[0].ports[1].range == "22"
-        assert lightsail.instances[0].ports[1].protocol == "tcp"
-        assert lightsail.instances[0].ports[1].access_from == "Anywhere (::/0)"
-        assert lightsail.instances[0].ports[1].access_type == "public"
-        assert lightsail.instances[0].ports[2].range == "443"
-        assert lightsail.instances[0].ports[2].protocol == "tcp"
-        assert lightsail.instances[0].ports[2].access_from == "Anywhere (::/0)"
-        assert lightsail.instances[0].ports[2].access_type == "public"
-        assert lightsail.instances[0].auto_snapshot
+        assert not lightsail.instances[
+            f"{BASE_LIGHTSAIL_ARN}:Instance/test-id"
+        ].static_ip
+        assert (
+            lightsail.instances[f"{BASE_LIGHTSAIL_ARN}:Instance/test-id"].public_ip
+            == "1.2.3.4"
+        )
+        assert (
+            lightsail.instances[f"{BASE_LIGHTSAIL_ARN}:Instance/test-id"].private_ip
+            == "172.26.7.65"
+        )
+        assert (
+            lightsail.instances[f"{BASE_LIGHTSAIL_ARN}:Instance/test-id"].ipv6_addresses
+            == []
+        )
+        assert (
+            lightsail.instances[
+                f"{BASE_LIGHTSAIL_ARN}:Instance/test-id"
+            ].ip_address_type
+            == "ipv4"
+        )
+        assert (
+            len(lightsail.instances[f"{BASE_LIGHTSAIL_ARN}:Instance/test-id"].ports)
+            == 3
+        )
+        assert (
+            lightsail.instances[f"{BASE_LIGHTSAIL_ARN}:Instance/test-id"].ports[0].range
+            == "80"
+        )
+        assert (
+            lightsail.instances[f"{BASE_LIGHTSAIL_ARN}:Instance/test-id"]
+            .ports[0]
+            .protocol
+            == "tcp"
+        )
+        assert (
+            lightsail.instances[f"{BASE_LIGHTSAIL_ARN}:Instance/test-id"]
+            .ports[0]
+            .access_from
+            == "Anywhere (::/0)"
+        )
+        assert (
+            lightsail.instances[f"{BASE_LIGHTSAIL_ARN}:Instance/test-id"]
+            .ports[0]
+            .access_type
+            == "public"
+        )
+        assert (
+            lightsail.instances[f"{BASE_LIGHTSAIL_ARN}:Instance/test-id"].ports[1].range
+            == "22"
+        )
+        assert (
+            lightsail.instances[f"{BASE_LIGHTSAIL_ARN}:Instance/test-id"]
+            .ports[1]
+            .protocol
+            == "tcp"
+        )
+        assert (
+            lightsail.instances[f"{BASE_LIGHTSAIL_ARN}:Instance/test-id"]
+            .ports[1]
+            .access_from
+            == "Anywhere (::/0)"
+        )
+        assert (
+            lightsail.instances[f"{BASE_LIGHTSAIL_ARN}:Instance/test-id"]
+            .ports[1]
+            .access_type
+            == "public"
+        )
+        assert (
+            lightsail.instances[f"{BASE_LIGHTSAIL_ARN}:Instance/test-id"].ports[2].range
+            == "443"
+        )
+        assert (
+            lightsail.instances[f"{BASE_LIGHTSAIL_ARN}:Instance/test-id"]
+            .ports[2]
+            .protocol
+            == "tcp"
+        )
+        assert (
+            lightsail.instances[f"{BASE_LIGHTSAIL_ARN}:Instance/test-id"]
+            .ports[2]
+            .access_from
+            == "Anywhere (::/0)"
+        )
+        assert (
+            lightsail.instances[f"{BASE_LIGHTSAIL_ARN}:Instance/test-id"]
+            .ports[2]
+            .access_type
+            == "public"
+        )
+        assert lightsail.instances[
+            f"{BASE_LIGHTSAIL_ARN}:Instance/test-id"
+        ].auto_snapshot
         # Databases assertions
-        assert lightsail.databases[0].name == "test-db"
         assert (
-            lightsail.databases[0].arn
-            == "arn:aws:lightsail:us-east-1:106908755756:Database/test-id"
+            list(lightsail.databases.keys())[0]
+            == f"{BASE_LIGHTSAIL_ARN}:Database/test-id"
         )
-        assert lightsail.databases[0].tags == []
-        assert lightsail.databases[0].location == {
+        assert (
+            lightsail.databases[f"{BASE_LIGHTSAIL_ARN}:Database/test-id"].name
+            == "test-db"
+        )
+        assert lightsail.databases[f"{BASE_LIGHTSAIL_ARN}:Database/test-id"].tags == []
+        assert lightsail.databases[
+            f"{BASE_LIGHTSAIL_ARN}:Database/test-id"
+        ].location == {
             "availabilityZone": "us-east-1a",
             "regionName": "us-east-1",
         }
-        assert lightsail.databases[0].engine == "mysql"
-        assert lightsail.databases[0].engine_version == "8.0.23"
-        assert lightsail.databases[0].status == "running"
-        assert lightsail.databases[0].username == "admin"
-        assert not lightsail.databases[0].public_access
+        assert (
+            lightsail.databases[f"{BASE_LIGHTSAIL_ARN}:Database/test-id"].engine
+            == "mysql"
+        )
+        assert (
+            lightsail.databases[f"{BASE_LIGHTSAIL_ARN}:Database/test-id"].engine_version
+            == "8.0.23"
+        )
+        assert (
+            lightsail.databases[f"{BASE_LIGHTSAIL_ARN}:Database/test-id"].status
+            == "running"
+        )
+        assert (
+            lightsail.databases[
+                f"{BASE_LIGHTSAIL_ARN}:Database/test-id"
+            ].master_username
+            == "admin"
+        )
+        assert not lightsail.databases[
+            f"{BASE_LIGHTSAIL_ARN}:Database/test-id"
+        ].public_access

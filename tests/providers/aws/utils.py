@@ -50,6 +50,9 @@ AWS_ISO_PARTITION = "aws-iso"
 # EC2
 EXAMPLE_AMI_ID = "ami-12c6146b"
 
+# Lightsail
+BASE_LIGHTSAIL_ARN = f"arn:aws:lightsail:{AWS_REGION_US_EAST_1}:0000000000000:"
+
 
 # Mocked AWS Provider
 # This here causes to call this function mocking the AWS calls

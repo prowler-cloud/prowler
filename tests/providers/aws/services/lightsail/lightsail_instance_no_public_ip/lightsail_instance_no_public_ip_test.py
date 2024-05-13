@@ -7,6 +7,7 @@ from prowler.providers.aws.services.lightsail.lightsail_service import (
 from tests.providers.aws.utils import (
     AWS_REGION_US_EAST_1,
     AWS_REGION_US_EAST_1_AZA,
+    BASE_LIGHTSAIL_ARN,
     set_mocked_aws_provider,
 )
 
@@ -14,7 +15,7 @@ from tests.providers.aws.utils import (
 class Test_lightsail_instance_public_ip:
     def test_no_instances(self):
         lightsail_client = MagicMock
-        lightsail_client.instances = []
+        lightsail_client.instances = {}
 
         with patch(
             "prowler.providers.common.common.get_global_provider",
@@ -34,10 +35,10 @@ class Test_lightsail_instance_public_ip:
 
     def test_public_ip(self):
         lightsail_client = MagicMock
-        lightsail_client.instances = [
-            Instance(
+        lightsail_client.instances = {
+            f"{BASE_LIGHTSAIL_ARN}:Instance/test-instance": Instance(
                 name="test-instance",
-                arn=f"arn:aws:lightsail:{AWS_REGION_US_EAST_1}:123456789012:Instance/test-instance",
+                id="1234/5678",
                 tags=[],
                 location={
                     "regionName": AWS_REGION_US_EAST_1,
@@ -64,7 +65,7 @@ class Test_lightsail_instance_public_ip:
                 ],
                 auto_snapshot=False,
             )
-        ]
+        }
 
         with patch(
             "prowler.providers.common.common.get_global_provider",
@@ -83,22 +84,21 @@ class Test_lightsail_instance_public_ip:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
-                result[0].status_extended == "Instance test-instance has a public IP."
+                result[0].status_extended == "Instance 'test-instance' has a public IP."
             )
-            assert result[0].resource_id == "test-instance"
+            assert result[0].resource_id == "1234/5678"
             assert (
-                result[0].resource_arn
-                == f"arn:aws:lightsail:{AWS_REGION_US_EAST_1}:123456789012:Instance/test-instance"
+                result[0].resource_arn == f"{BASE_LIGHTSAIL_ARN}:Instance/test-instance"
             )
             assert result[0].resource_tags == []
             assert result[0].region == AWS_REGION_US_EAST_1
 
     def test_no_public_ip(self):
         lightsail_client = MagicMock
-        lightsail_client.instances = [
-            Instance(
+        lightsail_client.instances = {
+            f"{BASE_LIGHTSAIL_ARN}:Instance/test-instance": Instance(
                 name="test-instance",
-                arn=f"arn:aws:lightsail:{AWS_REGION_US_EAST_1}:123456789012:Instance/test-instance",
+                id="1234/5678",
                 tags=[],
                 location={
                     "regionName": AWS_REGION_US_EAST_1,
@@ -106,26 +106,26 @@ class Test_lightsail_instance_public_ip:
                 },
                 static_ip=False,
                 public_ip="",
-                private_ip="172.16.1.3",
+                private_ip="10.0.0.2",
                 ipv6_addresses=[],
                 ip_address_type="ipv4",
                 ports=[
                     PortRange(
                         range="80",
                         protocol="tcp",
-                        access_from="",
-                        access_type="Private",
+                        access_from="0.0.0.0/0",
+                        access_type="Public",
                     ),
                     PortRange(
                         range="443",
                         protocol="tcp",
-                        access_from="",
-                        access_type="Private",
+                        access_from="0.0.0.0/0",
+                        access_type="Public",
                     ),
                 ],
                 auto_snapshot=False,
             )
-        ]
+        }
 
         with patch(
             "prowler.providers.common.common.get_global_provider",
@@ -145,12 +145,11 @@ class Test_lightsail_instance_public_ip:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "Instance test-instance does not have a public IP."
+                == "Instance 'test-instance' does not have a public IP."
             )
-            assert result[0].resource_id == "test-instance"
+            assert result[0].resource_id == "1234/5678"
             assert (
-                result[0].resource_arn
-                == f"arn:aws:lightsail:{AWS_REGION_US_EAST_1}:123456789012:Instance/test-instance"
+                result[0].resource_arn == f"{BASE_LIGHTSAIL_ARN}:Instance/test-instance"
             )
             assert result[0].resource_tags == []
             assert result[0].region == AWS_REGION_US_EAST_1
