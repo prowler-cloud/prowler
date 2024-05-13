@@ -20,6 +20,10 @@ class rds_instance_backup_enabled(Check):
                     f"RDS Instance {db_instance.id} does not have backup enabled."
                 )
 
+            if db_instance.replica_source and not rds_client.audit_config.get(
+                "check_rds_instance_replicas", False
+            ):
+                continue
             findings.append(report)
 
         return findings

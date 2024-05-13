@@ -39,6 +39,10 @@ def write_compliance_row_mitre_attack(file_descriptors, finding, compliance, pro
                 attributes_services = ", ".join(
                     attribute.AzureService for attribute in requirement.Attributes
                 )
+            elif compliance.Provider == "GCP":
+                attributes_services = ", ".join(
+                    attribute.GCPService for attribute in requirement.Attributes
+                )
             requirement_description = requirement.Description
             requirement_id = requirement.Id
             requirement_name = requirement.Name
@@ -82,6 +86,8 @@ def write_compliance_row_mitre_attack(file_descriptors, finding, compliance, pro
                 common_data["SubscriptionId"] = unroll_list(
                     provider.identity.subscriptions
                 )
+            elif compliance.Provider == "GCP":
+                common_data["ProjectId"] = unroll_list(provider.projects)
 
             compliance_row = mitre_attack_model(**common_data)
 
@@ -148,10 +154,9 @@ def get_mitre_attack_table(
             mitre_compliance_table["Status"].append(
                 f"{Fore.GREEN}PASS({tactics[tactic]['PASS']}){Style.RESET_ALL}"
             )
-        if tactics[tactic]["Muted"] > 0:
-            mitre_compliance_table["Muted"].append(
-                f"{orange_color}{tactics[tactic]['Muted']}{Style.RESET_ALL}"
-            )
+        mitre_compliance_table["Muted"].append(
+            f"{orange_color}{tactics[tactic]['Muted']}{Style.RESET_ALL}"
+        )
     if (
         len(fail_count) + len(pass_count) + len(muted_count) > 1
     ):  # If there are no resources, don't print the compliance table

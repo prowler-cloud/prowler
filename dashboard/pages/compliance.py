@@ -16,6 +16,7 @@ from dash.dependencies import Input, Output
 # Config import
 from dashboard.config import (
     encoding_format,
+    error_action,
     fail_color,
     folder_path_compliance,
     info_color,
@@ -29,6 +30,7 @@ from dashboard.lib.dropdowns import (
     create_region_dropdown_compliance,
 )
 from dashboard.lib.layouts import create_layout_compliance
+from prowler.lib.logger import logger
 
 # Suppress warnings
 warnings.filterwarnings("ignore")
@@ -38,11 +40,16 @@ warnings.filterwarnings("ignore")
 
 csv_files = []
 for file in glob.glob(os.path.join(folder_path_compliance, "*.csv")):
-    with open(file, "r", newline="", encoding=encoding_format) as csvfile:
-        reader = csv.reader(csvfile)
-        num_rows = sum(1 for row in reader)
-        if num_rows > 1:
-            csv_files.append(file)
+    try:
+        with open(
+            file, "r", newline="", encoding=encoding_format, errors=error_action
+        ) as csvfile:
+            reader = csv.reader(csvfile)
+            num_rows = sum(1 for row in reader)
+            if num_rows > 1:
+                csv_files.append(file)
+    except UnicodeDecodeError:
+        logger.error(f"Error decoding file: {file}")
 
 
 def load_csv_files(csv_files):
@@ -50,7 +57,7 @@ def load_csv_files(csv_files):
     dfs = []
     results = []
     for file in csv_files:
-        df = pd.read_csv(file, sep=";", on_bad_lines="skip")
+        df = pd.read_csv(file, sep=";", on_bad_lines="skip", encoding=encoding_format)
         if "CHECKID" in df.columns:
             dfs.append(df)
             result = file
@@ -238,7 +245,9 @@ def display_data(
         """Load CSV files into a single pandas DataFrame."""
         dfs = []
         for file in files:
-            df = pd.read_csv(file, sep=";", on_bad_lines="skip")
+            df = pd.read_csv(
+                file, sep=";", on_bad_lines="skip", encoding=encoding_format
+            )
             dfs.append(df.astype(str))
         return pd.concat(dfs, ignore_index=True)
 
@@ -263,7 +272,7 @@ def display_data(
     # Rename the column PROJECTID to ACCOUNTID for GCP
     if data.columns.str.contains("PROJECTID").any():
         data.rename(columns={"PROJECTID": "ACCOUNTID"}, inplace=True)
-
+        data["REGION"] = "-"
     # Rename the column SUBSCRIPTIONID to ACCOUNTID for Azure
     if data.columns.str.contains("SUBSCRIPTIONID").any():
         data.rename(columns={"SUBSCRIPTIONID": "ACCOUNTID"}, inplace=True)

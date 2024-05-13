@@ -7,7 +7,7 @@
   ],
   "ServiceName": "dynamodb",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:dynamodb:region:account-id:certificate/resource-id",
+  "ResourceIdTemplate": "arn:partition:dax:region:account-id:cache/resource-id",
   "Severity": "medium",
   "ResourceType": "AwsDaxCluster",
   "Description": "Check if DynamoDB DAX Clusters are encrypted at rest.",

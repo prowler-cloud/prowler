@@ -93,7 +93,7 @@ def mock_make_api_call(self, operation_name, kwarg):
 
 
 class Test_SecurityHub:
-    def generate_finding(self, status, region):
+    def generate_finding(self, status, region, muted=False):
         finding = Check_Report(
             load_check_metadata(
                 f"{path.dirname(path.realpath(__file__))}/fixtures/metadata.json"
@@ -104,6 +104,7 @@ class Test_SecurityHub:
         finding.resource_id = "test"
         finding.resource_arn = "test"
         finding.region = region
+        finding.muted = muted
 
         return finding
 
@@ -160,7 +161,7 @@ class Test_SecurityHub:
                 (
                     "root",
                     WARNING,
-                    f"ClientError -- [64]: An error occurred ({error_code}) when calling the {operation_name} operation: {error_message}",
+                    f"ClientError -- [70]: An error occurred ({error_code}) when calling the {operation_name} operation: {error_message}",
                 )
             ]
 
@@ -220,7 +221,7 @@ class Test_SecurityHub:
                 (
                     "root",
                     ERROR,
-                    f"ClientError -- [64]: An error occurred ({error_code}) when calling the {operation_name} operation: {error_message}",
+                    f"ClientError -- [70]: An error occurred ({error_code}) when calling the {operation_name} operation: {error_message}",
                 )
             ]
 
@@ -246,7 +247,7 @@ class Test_SecurityHub:
                 (
                     "root",
                     ERROR,
-                    f"Exception -- [64]: {error_message}",
+                    f"Exception -- [70]: {error_message}",
                 )
             ]
 
@@ -370,6 +371,46 @@ class Test_SecurityHub:
             enabled_regions,
         ) == {
             AWS_REGION_EU_WEST_1: [get_security_hub_finding("PASSED")],
+        }
+
+    def test_prepare_security_hub_findings_muted_fail_with_send_sh_only_fails(self):
+        enabled_regions = [AWS_REGION_EU_WEST_1]
+        output_options = self.set_mocked_output_options(
+            send_sh_only_fails=True,
+        )
+        findings = [
+            self.generate_finding(
+                status="FAIL", region=AWS_REGION_EU_WEST_1, muted=True
+            )
+        ]
+        aws_provider = set_mocked_aws_provider()
+
+        assert prepare_security_hub_findings(
+            findings,
+            aws_provider,
+            output_options,
+            enabled_regions,
+        ) == {
+            AWS_REGION_EU_WEST_1: [],
+        }
+
+    def test_prepare_security_hub_findings_muted_fail_with_status_FAIL(self):
+        enabled_regions = [AWS_REGION_EU_WEST_1]
+        output_options = self.set_mocked_output_options(status=["FAIL"])
+        findings = [
+            self.generate_finding(
+                status="FAIL", region=AWS_REGION_EU_WEST_1, muted=True
+            )
+        ]
+        aws_provider = set_mocked_aws_provider()
+
+        assert prepare_security_hub_findings(
+            findings,
+            aws_provider,
+            output_options,
+            enabled_regions,
+        ) == {
+            AWS_REGION_EU_WEST_1: [],
         }
 
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)

@@ -90,6 +90,8 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), 
     poetry install
     python prowler.py -v
     ```
+    ???+ note
+        If you want to clone Prowler from Windows, use `git config core.longpaths true` to allow long file paths.
 
 === "Amazon Linux 2"
 
@@ -323,16 +325,17 @@ For non in-cluster execution, you can provide the location of the KubeConfig fil
 prowler kubernetes --kubeconfig-file path
 ```
 
-For in-cluster execution, you can use the supplied yaml to run Prowler as a job:
+For in-cluster execution, you can use the supplied yaml to run Prowler as a job within a new Prowler namespace:
 ```console
 kubectl apply -f kubernetes/job.yaml
 kubectl apply -f kubernetes/prowler-role.yaml
 kubectl apply -f kubernetes/prowler-rolebinding.yaml
-kubectl get pods --> prowler-XXXXX
-kubectl logs prowler-XXXXX
+kubectl get pods --namespace prowler-ns --> prowler-XXXXX
+kubectl logs prowler-XXXXX --namespace prowler-ns
 ```
 
-> By default, `prowler` will scan all namespaces in your active Kubernetes context, use flag `--context` to specify the context to be scanned and `--namespaces` to specify the namespaces to be scanned.
+???+ note
+    By default, `prowler` will scan all namespaces in your active Kubernetes context. Use the flag `--context` to specify the context to be scanned and `--namespaces` to specify the namespaces to be scanned.
 
 ## Prowler v2 Documentation
 For **Prowler v2 Documentation**, please check it out [here](https://github.com/prowler-cloud/prowler/blob/8818f47333a0c1c1a457453c87af0ea5b89a385f/README.md).

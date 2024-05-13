@@ -319,6 +319,7 @@ Detailed documentation at https://docs.prowler.com
         list_group.add_argument(
             "--list-fixer",
             "--list-fixers",
+            "--list-remediations",
             action="store_true",
             help="List fixers available for the provider",
         )

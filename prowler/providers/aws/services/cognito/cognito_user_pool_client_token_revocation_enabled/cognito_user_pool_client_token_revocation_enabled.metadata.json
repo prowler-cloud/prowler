@@ -1,0 +1,30 @@
+{
+  "Provider": "aws",
+  "CheckID": "cognito_user_pool_client_token_revocation_enabled",
+  "CheckTitle": "Ensure that token revocation is enabled for Amazon Cognito User Pools",
+  "CheckType": [],
+  "ServiceName": "cognito",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:cognito-idp:region:account:userpool/userpool-id",
+  "Severity": "medium",
+  "ResourceType": "AwsCognitoUserPoolClient",
+  "Description": "Token revocation is a security feature that allows you to revoke tokens and end sessions for users. When you enable token revocation, Amazon Cognito automatically revokes tokens for users who sign out or are deleted. This helps protect your users' data and prevent unauthorized access to your resources.",
+  "Risk": "If token revocation is not enabled, users' tokens will not be revoked when they sign out or are deleted. This can lead to unauthorized access to your resources.",
+  "RelatedUrl": "https://docs.aws.amazon.com/cognito/latest/developerguide/token-revocation.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "To enable token revocation for an Amazon Cognito User Pool, use the Amazon Cognito console or the AWS CLI. For more information, see the Amazon Cognito documentation.",
+      "Url": "https://docs.aws.amazon.com/cognito/latest/developerguide/token-revocation.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
