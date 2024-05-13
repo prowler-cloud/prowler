@@ -128,7 +128,7 @@ class EC2(AWSService):
                                 check_security_group(
                                     ingress_rule, "-1", any_address=True
                                 )
-                                and "ec2_securitygroup_allow_ingress_from_internet_to_any_port"
+                                and "ec2_securitygroup_allow_ingress_from_internet_to_all_ports"
                                 in self.audited_checks
                             ):
                                 all_public_ports = True
