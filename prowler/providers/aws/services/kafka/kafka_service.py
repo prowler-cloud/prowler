@@ -1,0 +1,80 @@
+from pydantic import BaseModel
+
+from prowler.lib.logger import logger
+from prowler.providers.aws.lib.service.service import AWSService
+
+
+class Kafka(AWSService):
+    def __init__(self, provider):
+        super().__init__(__class__.__name__, provider)
+        self.account_arn_template = f"arn:{self.audited_partition}:kafka:{self.region}:{self.audited_account}:cluster"
+        self.clusters = {}
+        self.__threading_call__(self.__list_clusters__)
+        self.kafka_versions = []
+        self.__threading_call__(self.__list_kafka_versions__)
+
+    def __list_clusters__(self, regional_client):
+        try:
+            cluster_paginator = regional_client.get_paginator("list_clusters")
+
+            for page in cluster_paginator.paginate():
+                for cluster in page["ClusterInfoList"]:
+                    self.clusters[cluster.get("ClusterArn", "")] = Cluster(
+                        id=cluster["ClusterArn"].split(":")[-1].split("/")[-1],
+                        name=cluster.get("ClusterName", ""),
+                        region=regional_client.region,
+                        tags=list(cluster.get("Tags", {})),
+                        state=cluster.get("State", ""),
+                        kafka_version=cluster.get("CurrentBrokerSoftwareInfo", {}).get(
+                            "KafkaVersion", ""
+                        ),
+                        encryption_at_rest=cluster.get("EncryptionInfo", {}).get(
+                            "EncryptionAtRest", {}
+                        ),
+                        encryption_in_transit=cluster.get("EncryptionInfo", {}).get(
+                            "EncryptionInTransit", {}
+                        ),
+                        enhanced_monitoring=cluster.get(
+                            "EnhancedMonitoring", "DEFAULT"
+                        ),
+                    )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def __list_kafka_versions__(self, regional_client):
+        try:
+            kafka_versions_paginator = regional_client.get_paginator(
+                "list_kafka_versions"
+            )
+
+            for page in kafka_versions_paginator.paginate():
+                for version in page["KafkaVersions"]:
+                    self.kafka_versions.append(
+                        KafkaVersion(
+                            version=version.get("Version", "UNKNOWN"),
+                            status=version.get("Status", "UNKNOWN"),
+                        )
+                    )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+
+class Cluster(BaseModel):
+    id: str
+    name: str
+    region: str
+    tags: list
+    kafka_version: str
+    state: str
+    encryption_at_rest: dict
+    encryption_in_transit: dict
+    enhanced_monitoring: str
+
+
+class KafkaVersion(BaseModel):
+    version: str
+    status: str
