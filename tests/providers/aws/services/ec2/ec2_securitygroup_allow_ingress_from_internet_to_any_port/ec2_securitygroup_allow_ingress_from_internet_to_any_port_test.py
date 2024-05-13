@@ -22,9 +22,6 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
 
         current_audit_info = set_mocked_aws_audit_info(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1],
-            expected_checks=[
-                "ec2_securitygroup_allow_ingress_from_internet_to_any_port"
-            ],
         )
 
         with mock.patch(
@@ -76,9 +73,6 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
 
         current_audit_info = set_mocked_aws_audit_info(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1],
-            expected_checks=[
-                "ec2_securitygroup_allow_ingress_from_internet_to_any_port"
-            ],
         )
 
         with mock.patch(
@@ -141,9 +135,6 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
 
         current_audit_info = set_mocked_aws_audit_info(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1],
-            expected_checks=[
-                "ec2_securitygroup_allow_ingress_from_internet_to_any_port"
-            ],
         )
 
         with mock.patch(
@@ -211,9 +202,6 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
 
         current_audit_info = set_mocked_aws_audit_info(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1],
-            expected_checks=[
-                "ec2_securitygroup_allow_ingress_from_internet_to_any_port"
-            ],
         )
 
         with mock.patch(
@@ -262,9 +250,6 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
 
         current_audit_info = set_mocked_aws_audit_info(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1],
-            expected_checks=[
-                "ec2_securitygroup_allow_ingress_from_internet_to_any_port"
-            ],
             ignore_unused_services=True,
         )
 
@@ -305,9 +290,48 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
 
         current_audit_info = set_mocked_aws_audit_info(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1],
-            expected_checks=[
-                "ec2_securitygroup_allow_ingress_from_internet_to_any_port"
-            ],
+            ignore_unused_services=True,
+        )
+
+        with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=current_audit_info,
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_client",
+            new=EC2(current_audit_info),
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_securitygroup_allow_ingress_from_internet_to_any_port.vpc_client",
+            new=VPC(current_audit_info),
+        ):
+            # Test Check
+            from prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_securitygroup_allow_ingress_from_internet_to_any_port import (
+                ec2_securitygroup_allow_ingress_from_internet_to_any_port,
+            )
+
+            check = ec2_securitygroup_allow_ingress_from_internet_to_any_port()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert result[0].region == AWS_REGION_US_EAST_1
+
+    @mock_aws
+    def test_ec2_default_sgs_with_all_ports_check(self):
+        # Create EC2 Mocked Resources
+        ec2 = resource("ec2", region_name=AWS_REGION_US_EAST_1)
+        vpc = ec2.create_vpc(CidrBlock="10.0.0.0/16")
+        subnet = ec2.create_subnet(VpcId=vpc.id, CidrBlock="10.0.0.0/18")
+        ec2.create_network_interface(SubnetId=subnet.id)
+        ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
+        default_sg = ec2_client.describe_security_groups(GroupNames=["default"])[
+            "SecurityGroups"
+        ][0]
+        default_sg["GroupId"]
+        default_sg["GroupName"]
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
+
+        current_audit_info = set_mocked_aws_audit_info(
+            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1],
             ignore_unused_services=True,
         )
 
