@@ -40,7 +40,7 @@ class ELB(AWSService):
 
                         instance_ids = []
                         for id in elb["Instances"]:
-                            instance_ids.append(id['InstanceId'])
+                            instance_ids.append(id["InstanceId"])
 
                         self.loadbalancers.append(
                             LoadBalancer(

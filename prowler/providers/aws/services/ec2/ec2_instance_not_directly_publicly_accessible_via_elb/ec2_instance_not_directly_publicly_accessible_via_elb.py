@@ -30,3 +30,4 @@ class ec2_instance_not_directly_publicly_accessible_via_elb(Check):
                     findings.append(report)
 
         return findings
+

@@ -13,6 +13,7 @@ class awslambda_function_not_directly_publicly_accessible_via_elbv2(Check):
                 if target_group.public and target_group.target_type == "lambda":
                     public_lambda_functions[target_group.target] = target_group.arn
             
+
             for function in awslambda_client.functions.values():
                 report = Check_Report_AWS(self.metadata())
                 report.region = function.region
@@ -26,5 +27,5 @@ class awslambda_function_not_directly_publicly_accessible_via_elbv2(Check):
                     report.status = "FAIL"
                     report.status_extended = f"Lambda function {function.name} is behind an Internet facing Load Balancer through target group {public_lambda_functions[function.arn]}."
                 findings.append(report)
-                
+
         return findings

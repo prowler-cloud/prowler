@@ -27,4 +27,5 @@ class ec2_instance_not_directly_publicly_accessible_via_elbv2(Check):
                         report.status = "FAIL"
                         report.status_extended = f"EC2 Instance {instance.id} is behind an Internet facing Load Balancer through target group {public_instances[instance.id]}."
                     findings.append(report)
+                    
         return findings
