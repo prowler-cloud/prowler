@@ -3,6 +3,7 @@ import sys
 from argparse import Namespace
 
 from colorama import Fore, Style
+from kubernetes.config.config_exception import ConfigException
 
 from kubernetes import client, config
 from prowler.config.config import load_and_validate_config_file
@@ -150,7 +151,7 @@ class KubernetesProvider(Provider):
                                     context = context_item
                         else:
                             context = config.list_kube_config_contexts()[1]
-                except Exception:
+                except ConfigException:
                     logger.info("Using in-cluster config")
                     config.load_incluster_config()
                     context = {
