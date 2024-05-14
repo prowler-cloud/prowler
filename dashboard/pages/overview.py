@@ -300,7 +300,7 @@ else:
                     [
                         html.Span(
                             "Check Name",
-                            className="text-center text-prowler-stone-900 uppercase text-xl font-bold",
+                            className="text-prowler-stone-900 uppercase text-sm xl:text-md font-bold",
                         ),
                         html.Button(
                             html.Img(
@@ -316,18 +316,13 @@ else:
                             n_clicks=0,
                         ),
                     ],
-                    style={
-                        "width": "60%",
-                        "text-align": "center",
-                        "align-items": "center",
-                    },
+                    className="w-[40.5%] xl:w-[71.5%]"
                 ),
                 html.Div(
                     [
                         html.Span(
                             "Severity",
-                            className="text-center text-prowler-stone-900 uppercase text-xl font-bold",
-                            style={"width": "10%"},
+                            className="text-prowler-stone-900 uppercase text-sm xl:text-md font-bold",
                         ),
                         html.Button(
                             html.Img(
@@ -343,18 +338,13 @@ else:
                             n_clicks=0,
                         ),
                     ],
-                    style={
-                        "width": "10%",
-                        "text-align": "center",
-                        "align-items": "center",
-                    },
+                    className="w-[11%] xl:w-[15.5%]"
                 ),
                 html.Div(
                     [
                         html.Span(
                             "Status",
-                            className="text-center text-prowler-stone-900 uppercase text-xl font-bold",
-                            style={"width": "10%"},
+                            className="text-prowler-stone-900 uppercase text-sm xl:text-md font-bold",
                         ),
                         html.Button(
                             html.Img(
@@ -370,20 +360,13 @@ else:
                             n_clicks=0,
                         ),
                     ],
-                    style={
-                        "width": "8%",
-                        "text-align": "center",
-                        "align-items": "center",
-                        "margin-left": "0.5rem",
-                        "margin-right": "0.5rem",
-                    },
+                    className="w-[9%] xl:w-[12.5%]"
                 ),
                 html.Div(
                     [
                         html.Span(
                             "Region",
-                            className="text-center text-prowler-stone-900 uppercase text-xl font-bold",
-                            style={"width": "10%"},
+                            className="text-prowler-stone-900 uppercase text-sm xl:text-md font-bold",
                         ),
                         html.Button(
                             html.Img(
@@ -399,18 +382,13 @@ else:
                             n_clicks=0,
                         ),
                     ],
-                    style={
-                        "width": "10%",
-                        "text-align": "center",
-                        "align-items": "center",
-                    },
+                    className="w-[10%] xl:w-[14%]"
                 ),
                 html.Div(
                     [
                         html.Span(
                             "Service",
-                            className="text-center text-prowler-stone-900 uppercase text-xl font-bold",
-                            style={"width": "10%"},
+                            className="text-prowler-stone-900 uppercase text-sm xl:text-md font-bold",
                         ),
                         html.Button(
                             html.Img(
@@ -426,18 +404,13 @@ else:
                             n_clicks=0,
                         ),
                     ],
-                    style={
-                        "width": "10%",
-                        "text-align": "center",
-                        "align-items": "center",
-                    },
+                    className="w-[13.5%] xl:w-[14%]"
                 ),
                 html.Div(
                     [
                         html.Span(
                             "Account",
-                            className="text-center text-prowler-stone-900 uppercase text-xl font-bold",
-                            style={"width": "10%"},
+                            className="text-prowler-stone-900 uppercase text-sm xl:text-md font-bold",
                         ),
                         html.Button(
                             html.Img(
@@ -453,17 +426,12 @@ else:
                             n_clicks=0,
                         ),
                     ],
-                    style={
-                        "width": "10%",
-                        "text-align": "center",
-                        "align-items": "center",
-                    },
+                    className="w-[15%] xl:w-[15.5%]"
                 ),
             ],
             className="grid grid-cols-auto w-full",
             style={
                 "display": "flex",
-                "justify-content": "space-between",
             },
         )
     )
@@ -1265,7 +1233,7 @@ def filter_data(
             )
             index_count += 1
 
-        table = html.Div(table_collapsible, id="table")
+        table = html.Div(table_collapsible, id="table", style={"position": "relative", "top": "-25px"}, className="overview-table")
 
     # Status Graphic
     status_graph = [
@@ -1445,36 +1413,34 @@ def generate_table(data, index, color_mapping_severity, color_mapping_status):
                                         html.Button(
                                             html.Img(
                                                 src="assets/images/icons/dropdown.svg",
-                                                className="w-5",
+                                                className="w-3",
                                             ),
                                             id={
                                                 "type": "toggle-collapse",
                                                 "index": index,
                                             },
                                             className="btn",
-                                            style={
-                                                "display": "flex",
-                                                "align-items": "center",
-                                                "justify-content": "center",
-                                            },
+                                            style={"position": "relative", "top": "3px", "padding": "0"},
                                         ),
                                     ],
-                                    style={"width": "0.4rem"},
+                                    width=1,
+                                    className="w-[4%] xl:w-[2%]"
                                 ),
                                 dbc.Col(
                                     [
                                         html.H5(
                                             data["CHECK_TITLE"],
-                                            className="card-title",
+                                            className="card-title mb-0",
                                         ),
                                     ],
-                                    width=6,
+                                    width=4,
+                                    className="pr-2 w-[36%] xl:w-[48%]",
                                 ),
                                 dbc.Col(
                                     [
                                         html.Span(
                                             data["SEVERITY"],
-                                            className="text-center text-white uppercase text-xs font-bold rounded-lg px-2 py-1",
+                                            className="text-white uppercase text-xs font-bold rounded-lg px-2 py-1",
                                             style={
                                                 "background-color": color_mapping_severity[
                                                     data["SEVERITY"]
@@ -1482,13 +1448,14 @@ def generate_table(data, index, color_mapping_severity, color_mapping_status):
                                             },
                                         ),
                                     ],
+                                    className="w-[11%]",
                                     width=1,
                                 ),
                                 dbc.Col(
                                     [
                                         html.Span(
                                             data["STATUS"],
-                                            className="text-center text-white uppercase text-xs font-bold rounded-lg px-2 py-1",
+                                            className="text-white uppercase text-xs font-bold rounded-lg px-2 py-1",
                                             style={
                                                 "background-color": color_mapping_status[
                                                     data["STATUS"]
@@ -1496,54 +1463,53 @@ def generate_table(data, index, color_mapping_severity, color_mapping_status):
                                             },
                                         ),
                                     ],
+                                    className="w-[9.5%] xl:w-[9%]",
                                     width=1,
-                                    style={"padding-right": "1rem"},
                                 ),
                                 dbc.Col(
                                     [
                                         html.Span(
                                             data["REGION"],
-                                            className="text-center text-white uppercase text-xs font-bold rounded-lg px-2 py-1",
+                                            className="uppercase text-xs font-bold",
                                             style={
                                                 "display": "flex",
                                                 "align-items": "center",
-                                                "justify-content": "center",
                                             },
                                         ),
                                     ],
+                                    className="w-[10.5%] xl:w-[10%]",
                                     width=1,
                                 ),
                                 dbc.Col(
                                     [
                                         html.Span(
                                             data["SERVICE_NAME"],
-                                            className="text-center text-white uppercase text-xs font-bold rounded-lg px-2 py-1",
+                                            className="uppercase text-xs font-bold",
                                             style={
                                                 "display": "flex",
                                                 "align-items": "center",
-                                                "justify-content": "center",
                                             },
                                         ),
                                     ],
-                                    style={"width": "1.rem"},
+                                    className="w-[14.5%] xl:w-[10%]",
+                                    width=1
                                 ),
                                 dbc.Col(
                                     [
                                         html.Span(
                                             data["ACCOUNT_UID"],
-                                            className="text-center text-white uppercase text-xs font-bold rounded-lg px-2 py-1",
+                                            className="uppercase text-xs font-bold",
                                             style={
                                                 "display": "flex",
                                                 "align-items": "center",
-                                                "justify-content": "center",
                                             },
                                         ),
                                     ],
-                                    width=1,
+                                    className="w-[14.5%] xl:w-[10%]",
+                                    width=2,
                                 ),
                             ],
                             align="center",
-                            justify="center",
                             className="g-0",
                         ),
                     ),

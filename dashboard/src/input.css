@@ -8,10 +8,6 @@
 @tailwind components;
 @tailwind utilities;
 
-#_dash-app-content {
-  @apply bg-prowler-stone-500;
-}
-
 @layer components {
   .custom-grid {
     grid-template-columns: minmax(0, 16fr) repeat(11, minmax(0, 11fr));
@@ -20,6 +16,24 @@
   .custom-grid-large {
     grid-template-columns: minmax(0, 10fr) repeat(11, minmax(0, 11fr));
   }
+}
+
+@layer utilities {
+  /* Hide scrollbar for Chrome, Safari and Opera */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  /* Hide scrollbar for IE, Edge and Firefox */
+  .no-scrollbar {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+}
+
+#_dash-app-content {
+  @apply bg-prowler-stone-500;
+}
+
 /* Styles for the accordion in the compliance page */
 #_dash-app-content .accordion .accordion-header .accordion-button {
   @apply text-prowler-stone-900 inline-block px-4 text-xs font-bold uppercase transition-all rounded-lg bg-prowler-stone-300 hover:bg-prowler-stone-900/10;
@@ -27,6 +41,10 @@
 
 #_dash-app-content .accordion .accordion-item {
   @apply text-prowler-stone-900 bg-prowler-white rounded-lg;
+}
+
+#_dash-app-content .accordion .accordion-collapse.collapse {
+  @apply visible
 }
 
 #_dash-app-content .accordion .accordion-button:not(.collapsed) {
@@ -99,14 +117,6 @@
   @apply absolute right-6 top-2 w-auto h-8 z-50;
 }
 
-@layer utilities {
-  /* Hide scrollbar for Chrome, Safari and Opera */
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
-  }
-  /* Hide scrollbar for IE, Edge and Firefox */
-  .no-scrollbar {
-    -ms-overflow-style: none; /* IE and Edge */
-    scrollbar-width: none; /* Firefox */
-  }
+.overview-table .card .collapse {
+ @apply visible
 }
