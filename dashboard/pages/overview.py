@@ -323,7 +323,7 @@ else:
                             n_clicks=0,
                         ),
                     ],
-                    className="w-[40.5%] xl:w-[71.5%]"
+                    className="w-[40.5%] 2xl:w-[71.5%]"
                 ),
                 html.Div(
                     [
@@ -345,7 +345,7 @@ else:
                             n_clicks=0,
                         ),
                     ],
-                    className="w-[11%] xl:w-[15.5%]"
+                    className="w-[11%] 2xl:w-[15.5%]"
                 ),
                 html.Div(
                     [
@@ -367,7 +367,7 @@ else:
                             n_clicks=0,
                         ),
                     ],
-                    className="w-[9%] xl:w-[12.5%]"
+                    className="w-[9%] 2xl:w-[12.5%]"
                 ),
                 html.Div(
                     [
@@ -389,7 +389,7 @@ else:
                             n_clicks=0,
                         ),
                     ],
-                    className="w-[10%] xl:w-[14%]"
+                    className="w-[10%] 2xl:w-[14%]"
                 ),
                 html.Div(
                     [
@@ -411,7 +411,7 @@ else:
                             n_clicks=0,
                         ),
                     ],
-                    className="w-[13.5%] xl:w-[14%]"
+                    className="w-[13.5%] 2xl:w-[14%]"
                 ),
                 html.Div(
                     [
@@ -433,7 +433,7 @@ else:
                             n_clicks=0,
                         ),
                     ],
-                    className="w-[15%] xl:w-[15.5%]"
+                    className="w-[15%] 2xl:w-[15.5%]"
                 ),
             ],
             className="grid grid-cols-auto w-full",
@@ -1431,7 +1431,7 @@ def generate_table(data, index, color_mapping_severity, color_mapping_status):
                                         ),
                                     ],
                                     width=1,
-                                    className="w-[4%] xl:w-[2%]"
+                                    className="w-[4%] 2xl:w-[2%]"
                                 ),
                                 dbc.Col(
                                     [
@@ -1441,7 +1441,7 @@ def generate_table(data, index, color_mapping_severity, color_mapping_status):
                                         ),
                                     ],
                                     width=4,
-                                    className="pr-2 w-[36%] xl:w-[48%]",
+                                    className="pr-2 w-[36%] 2xl:w-[48%]",
                                 ),
                                 dbc.Col(
                                     [
@@ -1470,7 +1470,7 @@ def generate_table(data, index, color_mapping_severity, color_mapping_status):
                                             },
                                         ),
                                     ],
-                                    className="w-[9.5%] xl:w-[9%]",
+                                    className="w-[9.5%] 2xl:w-[9%]",
                                     width=1,
                                 ),
                                 dbc.Col(
@@ -1484,7 +1484,7 @@ def generate_table(data, index, color_mapping_severity, color_mapping_status):
                                             },
                                         ),
                                     ],
-                                    className="w-[10.5%] xl:w-[10%]",
+                                    className="w-[10.5%] 2xl:w-[10%]",
                                     width=1,
                                 ),
                                 dbc.Col(
@@ -1498,7 +1498,7 @@ def generate_table(data, index, color_mapping_severity, color_mapping_status):
                                             },
                                         ),
                                     ],
-                                    className="w-[14.5%] xl:w-[10%]",
+                                    className="w-[14.5%] 2xl:w-[10%]",
                                     width=1
                                 ),
                                 dbc.Col(
@@ -1512,7 +1512,7 @@ def generate_table(data, index, color_mapping_severity, color_mapping_status):
                                             },
                                         ),
                                     ],
-                                    className="w-[14.5%] xl:w-[10%]",
+                                    className="w-[14.5%] 2xl:w-[10%]",
                                     width=2,
                                 ),
                             ],
