@@ -1233,7 +1233,7 @@ def filter_data(
             )
             index_count += 1
 
-        table = html.Div(table_collapsible, id="table", style={"position": "relative", "top": "-25px"}, className="overview-table")
+        table = html.Div(table_collapsible, id="table", className="overview-table")
 
     # Status Graphic
     status_graph = [
