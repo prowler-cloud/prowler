@@ -87,6 +87,10 @@ class Test_rds_instance_storage_encrypted:
 
                 assert len(result) == 1
                 assert result[0].status == "FAIL"
+                assert (
+                    result[0].status_extended
+                    == "RDS Instance db-master-1 is not encrypted."
+                )
                 assert search(
                     "is not encrypted",
                     result[0].status_extended,
@@ -133,9 +137,9 @@ class Test_rds_instance_storage_encrypted:
 
                 assert len(result) == 1
                 assert result[0].status == "PASS"
-                assert search(
-                    "is encrypted",
-                    result[0].status_extended,
+                assert (
+                    result[0].status_extended
+                    == "RDS Instance db-master-1 is encrypted."
                 )
                 assert result[0].resource_id == "db-master-1"
                 assert result[0].region == AWS_REGION_US_EAST_1
