@@ -4,6 +4,7 @@ from typing import Any
 
 from prowler.config.config import (
     csv_file_suffix,
+    html_file_suffix,
     json_asff_file_suffix,
     json_ocsf_file_suffix,
 )
@@ -25,11 +26,15 @@ from prowler.lib.outputs.compliance.models import (
     Check_Output_CSV_KUBERNETES_CIS,
 )
 from prowler.lib.outputs.csv.csv import generate_csv_fields
+from prowler.lib.outputs.html.html import add_html_header
 from prowler.lib.utils.utils import file_exists, open_file
 
 
 def initialize_file_descriptor(
-    filename: str, output_mode: str, format: Any = FindingOutput
+    filename: str,
+    output_mode: str,
+    provider: Any,
+    format: Any = FindingOutput,
 ) -> TextIOWrapper:
     """Open/Create the output file. If needed include headers or the required format, by default will use the FindingOutput"""
     try:
@@ -46,6 +51,8 @@ def initialize_file_descriptor(
 
             if output_mode in ("json-asff", "json-ocsf"):
                 file_descriptor.write("[")
+            elif "html" in output_mode:
+                add_html_header(file_descriptor, provider)
             else:
                 # Format is the class model of the CSV format to print the headers
                 csv_header = [x.upper() for x in generate_csv_fields(format)]
@@ -72,6 +79,13 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, provi
                         filename,
                         output_mode,
                         output_model,
+                    )
+                    file_descriptors.update({output_mode: file_descriptor})
+
+                elif output_mode == "html":
+                    filename = f"{output_directory}/{output_filename}{html_file_suffix}"
+                    file_descriptor = initialize_file_descriptor(
+                        filename, output_mode, provider
                     )
                     file_descriptors.update({output_mode: file_descriptor})
 

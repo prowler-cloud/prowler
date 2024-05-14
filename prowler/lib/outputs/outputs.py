@@ -18,6 +18,7 @@ from prowler.lib.outputs.compliance.compliance import (
 )
 from prowler.lib.outputs.csv.csv import generate_csv_fields
 from prowler.lib.outputs.file_descriptors import fill_file_descriptors
+from prowler.lib.outputs.html.html import fill_html
 from prowler.lib.outputs.json_asff.json_asff import fill_json_asff
 from prowler.lib.outputs.json_ocsf.json_ocsf import fill_json_ocsf
 from prowler.lib.outputs.utils import unroll_dict, unroll_list
@@ -138,6 +139,12 @@ def report(check_findings, provider):
                                 detection_finding.json(exclude_none=True, indent=4)
                             )
                             file_descriptors["json-ocsf"].write(",")
+
+                        if "html" in file_descriptors:
+                            fill_html(
+                                file_descriptors["html"], finding_output, output_options
+                            )
+                            file_descriptors["html"].write("")
 
                         # CSV
                         if "csv" in file_descriptors:

@@ -147,7 +147,7 @@ Detailed documentation at https://docs.prowler.com
             nargs="+",
             help="Output modes, by default csv and json-oscf are saved. When using AWS Security Hub integration, json-asff output is also saved.",
             default=["csv", "json-ocsf"],
-            choices=["csv", "json-asff", "json-ocsf"],
+            choices=["csv", "json-asff", "json-ocsf", "html"],
         )
         common_outputs_parser.add_argument(
             "--output-filename",
