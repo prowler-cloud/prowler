@@ -11,9 +11,8 @@ from prowler.config.config import (
     timestamp,
 )
 from prowler.lib.logger import logger
-from prowler.lib.outputs.common_models import FindingOutput
 from prowler.lib.outputs.compliance.compliance import get_check_compliance
-from prowler.lib.outputs.utils import parse_html_string, unroll_dict, unroll_list
+from prowler.lib.outputs.utils import parse_html_string, unroll_dict
 from prowler.lib.utils.utils import open_file
 
 
@@ -136,6 +135,7 @@ def add_html_header(file_descriptor, provider):
 def fill_html(file_descriptor, finding, output_options):
     try:
         row_class = "p-3 mb-2 bg-success-custom"
+        finding.status = finding.status.split(".")[0]
         if finding.status == "INFO":
             row_class = "table-info"
         elif finding.status == "FAIL":
@@ -147,13 +147,13 @@ def fill_html(file_descriptor, finding, output_options):
             f"""
                 <tr class="{row_class}">
                     <td>{finding.status}</td>
-                    <td>{finding.severity}</td>
+                    <td>{finding.severity.split(".")[0]}</td>
                     <td>{finding.service_name}</td>
                     <td>{finding.region.lower()}</td>
                     <td>{finding.check_id.replace("_", "<wbr />_")}</td>
                     <td>{finding.check_title}</td>
                     <td>{finding.resource_uid.replace("<", "&lt;").replace(">", "&gt;").replace("_", "<wbr />_")}</td>
-                    <td>{parse_html_string(unroll_list(finding.resource_tags))}</td>
+                    <td>{parse_html_string(finding.resource_tags)}</td>
                     <td>{finding.status_extended.replace("<", "&lt;").replace(">", "&gt;").replace("_", "<wbr />_")}</td>
                     <td><p class="show-read-more">{html.escape(finding.risk)}</p></td>
                     <td><p class="show-read-more">{html.escape(finding.remediation_recommendation_text)}</p> <a class="read-more" href="{finding.remediation_recommendation_url}"><i class="fas fa-external-link-alt"></i></a></td>
@@ -301,18 +301,20 @@ def add_html_footer(output_filename, output_directory):
         sys.exit(1)
 
 
-def get_aws_html_assessment_summary(audit_info):
+def get_aws_html_assessment_summary(provider):
     try:
-        if isinstance(audit_info, FindingOutput):
+        if provider.__class__.__name__ == "AwsProvider":
             profile = (
-                audit_info.profile if audit_info.profile is not None else "default"
+                provider._identity.profile
+                if provider._identity.profile is not None
+                else "default"
             )
-            if isinstance(audit_info.audited_regions, list):
-                audited_regions = " ".join(audit_info.audited_regions)
-            elif not audit_info.audited_regions:
+            if isinstance(provider._identity.audited_regions, list):
+                audited_regions = " ".join(provider._identity.audited_regions)
+            elif not provider._identity.audited_regions:
                 audited_regions = "All Regions"
             else:
-                audited_regions = ", ".join(audit_info.audited_regions)
+                audited_regions = ", ".join(provider._identity.audited_regions)
             return (
                 """
             <div class="col-md-2">
@@ -323,7 +325,7 @@ def get_aws_html_assessment_summary(audit_info):
                     <ul class="list-group list-group-flush">
                         <li class="list-group-item">
                             <b>AWS Account:</b> """
-                + audit_info.audited_account
+                + provider._identity.account
                 + """
                         </li>
                         <li class="list-group-item">
@@ -347,12 +349,12 @@ def get_aws_html_assessment_summary(audit_info):
                 <ul class="list-group list-group-flush">
                     <li class="list-group-item">
                         <b>User Id:</b> """
-                + audit_info.audited_user_id
+                + provider._identity.user_id
                 + """
                         </li>
                         <li class="list-group-item">
                             <b>Caller Identity ARN:</b> """
-                + audit_info.audited_identity_arn
+                + provider._identity.identity_arn
                 + """
                         </li>
                     </ul>
@@ -368,21 +370,21 @@ def get_aws_html_assessment_summary(audit_info):
         sys.exit(1)
 
 
-def get_azure_html_assessment_summary(audit_info):
+def get_azure_html_assessment_summary(provider):
     try:
-        if isinstance(audit_info, FindingOutput):
+        if provider.__class__.__name__ == "AzureProvider":
             printed_subscriptions = []
-            for key, value in audit_info.identity.subscriptions.items():
+            for key, value in provider._identity.subscriptions.items():
                 intermediate = f"{key} : {value}"
                 printed_subscriptions.append(intermediate)
 
             # check if identity is str(coming from SP) or dict(coming from browser or)
-            if isinstance(audit_info.identity.identity_id, dict):
-                html_identity = audit_info.identity.identity_id.get(
+            if isinstance(provider._identity.identity_id, dict):
+                html_identity = provider._identity.identity_id.get(
                     "userPrincipalName", "Identity not found"
                 )
             else:
-                html_identity = audit_info.identity.identity_id
+                html_identity = provider._identity.identity_id
             return (
                 """
             <div class="col-md-2">
@@ -393,12 +395,12 @@ def get_azure_html_assessment_summary(audit_info):
                     <ul class="list-group list-group-flush">
                         <li class="list-group-item">
                             <b>Azure Tenant IDs:</b> """
-                + " ".join(audit_info.identity.tenant_ids)
+                + " ".join(provider._identity.tenant_ids)
                 + """
                         </li>
                         <li class="list-group-item">
                             <b>Azure Tenant Domain:</b> """
-                + audit_info.identity.domain
+                + provider._identity.tenant_domain
                 + """
                         </li>
                         <li class="list-group-item">
@@ -417,7 +419,7 @@ def get_azure_html_assessment_summary(audit_info):
                 <ul class="list-group list-group-flush">
                     <li class="list-group-item">
                         <b>Azure Identity Type:</b> """
-                + audit_info.identity.identity_type
+                + provider._identity.identity_type
                 + """
                         </li>
                         <li class="list-group-item">
@@ -437,14 +439,14 @@ def get_azure_html_assessment_summary(audit_info):
         sys.exit(1)
 
 
-def get_gcp_html_assessment_summary(audit_info):
+def get_gcp_html_assessment_summary(provider):
     try:
-        if isinstance(audit_info, FindingOutput):
+        if provider.__class__.__name__ == "GcpProvider":
             try:
-                getattr(audit_info.credentials, "_service_account_email")
+                getattr(provider.credentials, "_service_account_email")
                 profile = (
-                    audit_info.credentials._service_account_email
-                    if audit_info.credentials._service_account_email is not None
+                    provider.credentials._service_account_email
+                    if provider.credentials._service_account_email is not None
                     else "default"
                 )
             except AttributeError:
@@ -459,7 +461,7 @@ def get_gcp_html_assessment_summary(audit_info):
                     <ul class="list-group list-group-flush">
                         <li class="list-group-item">
                             <b>GCP Project IDs:</b> """
-                + ", ".join(audit_info.project_ids)
+                + ", ".join(provider.project_ids)
                 + """
                         </li>
                     </ul>
@@ -493,11 +495,11 @@ def get_assessment_summary(provider):
     get_assessment_summary gets the HTML assessment summary for the provider
     """
     try:
-        # This is based in the Provider_Audit_Info class
+        # This is based in the Provider_provider class
         # It is not pretty but useful
-        # AWS_Audit_Info --> aws
-        # GCP_Audit_Info --> gcp
-        # Azure_Audit_Info --> azure
+        # AWS_provider --> aws
+        # GCP_provider --> gcp
+        # Azure_provider --> azure
 
         # Dynamically get the Provider quick inventory handler
         provider_html_assessment_summary_function = (

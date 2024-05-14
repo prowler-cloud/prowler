@@ -33,7 +33,7 @@ from prowler.lib.utils.utils import file_exists, open_file
 def initialize_file_descriptor(
     filename: str,
     output_mode: str,
-    provider: Any,
+    provider: Any = None,
     format: Any = FindingOutput,
 ) -> TextIOWrapper:
     """Open/Create the output file. If needed include headers or the required format, by default will use the FindingOutput"""
