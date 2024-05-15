@@ -60,7 +60,9 @@ def generate_nav_links(current_path):
         link_content = html.Span(
             [
                 html.Img(src=icon_url, className="w-5"),
-                html.Span(page["name"], className="font-medium text-base leading-6 text-white"),
+                html.Span(
+                    page["name"], className="font-medium text-base leading-6 text-white"
+                ),
             ],
             className="flex justify-center lg:justify-normal items-center gap-x-3 py-2 px-3",
         )
@@ -96,7 +98,8 @@ def generate_help_menu():
                     [
                         html.Img(src=link["icon"], className="w-5"),
                         html.Span(
-                            link["title"], className="font-medium text-base leading-6 text-white"
+                            link["title"],
+                            className="font-medium text-base leading-6 text-white",
                         ),
                     ],
                     className="flex items-center gap-x-3 py-2 px-3",
