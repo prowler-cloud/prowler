@@ -17,9 +17,7 @@ class kafka_cluster_use_latest_version(Check):
                 f"Kafka cluster '{cluster.name}' is using the latest version."
             )
 
-            if cluster.kafka_version != getattr(
-                kafka_client.kafka_versions[-1], "version", ""
-            ):
+            if cluster.kafka_version != kafka_client.kafka_versions[-1].version:
                 report.status = "FAIL"
                 report.status_extended = (
                     f"Kafka cluster '{cluster.name}' is not using the latest version."
