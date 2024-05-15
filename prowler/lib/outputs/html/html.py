@@ -490,6 +490,52 @@ def get_gcp_html_assessment_summary(provider):
         sys.exit(1)
 
 
+def get_kubernetes_html_assessment_summary(provider):
+    try:
+        if provider.__class__.__name__ == "KubernetesProvider":
+            return (
+                """
+            <div class="col-md-2">
+                <div class="card">
+                    <div class="card-header">
+                        Kubernetes Assessment Summary
+                    </div>
+                    <ul class="list-group
+                    list-group-flush">
+                        <li class="list-group
+                        -item">
+                            <b>Kubernetes Cluster:</b> """
+                + provider._identity.cluster
+                + """
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        Kubernetes Credentials
+                    </div>
+                    <ul class="list-group
+                    list-group-flush">
+                        <li class="list-group
+                        -item">
+                            <b>Kubernetes Context:</b> """
+                + provider._identity.context
+                + """
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            """
+            )
+    except Exception as error:
+        logger.critical(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+        )
+        sys.exit(1)
+
+
 def get_assessment_summary(provider):
     """
     get_assessment_summary gets the HTML assessment summary for the provider
