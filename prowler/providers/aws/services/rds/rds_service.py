@@ -14,7 +14,7 @@ class RDS(AWSService):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.db_instances = []
-        self.db_clusters = {}
+        self.db_clusters = []
         self.db_snapshots = []
         self.db_engines = {}
         self.db_cluster_snapshots = []
@@ -23,6 +23,7 @@ class RDS(AWSService):
         self.__threading_call__(self.__describe_db_snapshots__)
         self.__threading_call__(self.__describe_db_snapshot_attributes__)
         self.__threading_call__(self.__describe_db_clusters__)
+        self.__threading_call__(self.__describe_db_cluster_parameters__)
         self.__threading_call__(self.__describe_db_cluster_snapshots__)
         self.__threading_call__(self.__describe_db_cluster_snapshot_attributes__)
         self.__threading_call__(self.__describe_db_engine_versions__)
@@ -169,31 +170,53 @@ class RDS(AWSService):
                         is_resource_filtered(db_cluster_arn, self.audit_resources)
                     ):
                         if cluster["Engine"] != "docdb":
-                            db_cluster = DBCluster(
-                                id=cluster["DBClusterIdentifier"],
-                                arn=db_cluster_arn,
-                                endpoint=cluster.get("Endpoint"),
-                                engine=cluster["Engine"],
-                                status=cluster["Status"],
-                                public=cluster.get("PubliclyAccessible", False),
-                                encrypted=cluster["StorageEncrypted"],
-                                auto_minor_version_upgrade=cluster.get(
-                                    "AutoMinorVersionUpgrade", False
-                                ),
-                                backup_retention_period=cluster.get(
-                                    "BackupRetentionPeriod"
-                                ),
-                                cloudwatch_logs=cluster.get(
-                                    "EnabledCloudwatchLogsExports"
-                                ),
-                                deletion_protection=cluster["DeletionProtection"],
-                                parameter_group=cluster["DBClusterParameterGroup"],
-                                multi_az=cluster["MultiAZ"],
-                                region=regional_client.region,
-                                tags=cluster.get("TagList", []),
+                            self.db_clusters.append(
+                                DBCluster(
+                                    id=cluster["DBClusterIdentifier"],
+                                    arn=db_cluster_arn,
+                                    endpoint=cluster.get("Endpoint"),
+                                    engine=cluster["Engine"],
+                                    status=cluster["Status"],
+                                    public=cluster.get("PubliclyAccessible", False),
+                                    encrypted=cluster["StorageEncrypted"],
+                                    auto_minor_version_upgrade=cluster.get(
+                                        "AutoMinorVersionUpgrade", False
+                                    ),
+                                    backup_retention_period=cluster.get(
+                                        "BackupRetentionPeriod"
+                                    ),
+                                    cloudwatch_logs=cluster.get(
+                                        "EnabledCloudwatchLogsExports"
+                                    ),
+                                    deletion_protection=cluster["DeletionProtection"],
+                                    parameter_group=cluster["DBClusterParameterGroup"],
+                                    multi_az=cluster["MultiAZ"],
+                                    region=regional_client.region,
+                                    tags=cluster.get("TagList", []),
+                                )
                             )
                             # We must use a unique value as the dict key to have unique keys
+                            db_cluster = []
                             self.db_clusters[db_cluster_arn] = db_cluster
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def __describe_db_cluster_parameters__(self, regional_client):
+        logger.info("RDS - Describe DB Parameters...")
+        try:
+            for cluster in self.db_clusters:
+                if cluster.region == regional_client.region:
+                    describe_db_parameters_paginator = regional_client.get_paginator(
+                        "describe_db_parameters"
+                    )
+                    for page in describe_db_parameters_paginator.paginate(
+                        DBParameterGroupName=cluster.parameter_group
+                    ):
+                        for parameter in page["Parameters"]:
+                            cluster.parameters.append(parameter)
+
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -325,6 +348,7 @@ class DBCluster(BaseModel):
     auto_minor_version_upgrade: bool
     multi_az: bool
     parameter_group: Optional[str]
+    parameters: list[dict] = []
     region: str
     tags: Optional[list] = []
 
