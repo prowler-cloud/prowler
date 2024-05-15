@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
-
+from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
@@ -20,25 +20,33 @@ class Kafka(AWSService):
 
             for page in cluster_paginator.paginate():
                 for cluster in page["ClusterInfoList"]:
-                    self.clusters[cluster.get("ClusterArn", "")] = Cluster(
-                        id=cluster["ClusterArn"].split(":")[-1].split("/")[-1],
-                        name=cluster.get("ClusterName", ""),
-                        region=regional_client.region,
-                        tags=list(cluster.get("Tags", {})),
-                        state=cluster.get("State", ""),
-                        kafka_version=cluster.get("CurrentBrokerSoftwareInfo", {}).get(
-                            "KafkaVersion", ""
-                        ),
-                        encryption_at_rest=cluster.get("EncryptionInfo", {}).get(
-                            "EncryptionAtRest", {}
-                        ),
-                        encryption_in_transit=cluster.get("EncryptionInfo", {}).get(
-                            "EncryptionInTransit", {}
-                        ),
-                        enhanced_monitoring=cluster.get(
-                            "EnhancedMonitoring", "DEFAULT"
-                        ),
+                    arn = cluster.get(
+                        "ClusterArn",
+                        f"{self.account_arn_template}/{cluster.get('ClusterName', '')}",
                     )
+
+                    if not self.audit_resources or is_resource_filtered(
+                        arn, self.audit_resources
+                    ):
+                        self.clusters[cluster.get("ClusterArn", "")] = Cluster(
+                            id=cluster["ClusterArn"].split(":")[-1].split("/")[-1],
+                            name=cluster.get("ClusterName", ""),
+                            region=regional_client.region,
+                            tags=list(cluster.get("Tags", {})),
+                            state=cluster.get("State", ""),
+                            kafka_version=cluster.get(
+                                "CurrentBrokerSoftwareInfo", {}
+                            ).get("KafkaVersion", ""),
+                            encryption_at_rest=cluster.get("EncryptionInfo", {}).get(
+                                "EncryptionAtRest", {}
+                            ),
+                            encryption_in_transit=cluster.get("EncryptionInfo", {}).get(
+                                "EncryptionInTransit", {}
+                            ),
+                            enhanced_monitoring=cluster.get(
+                                "EnhancedMonitoring", "DEFAULT"
+                            ),
+                        )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
