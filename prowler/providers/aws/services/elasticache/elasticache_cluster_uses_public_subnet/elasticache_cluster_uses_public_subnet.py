@@ -22,7 +22,10 @@ class elasticache_cluster_uses_public_subnet(Check):
 
             public_subnets = []
             for subnet in cluster.subnets:
-                if vpc_client.vpc_subnets[subnet].public:
+                if (
+                    subnet in vpc_client.vpc_subnets
+                    and vpc_client.vpc_subnets[subnet].public
+                ):
                     public_subnets.append(vpc_client.vpc_subnets[subnet].id)
 
             if len(public_subnets) > 0:
