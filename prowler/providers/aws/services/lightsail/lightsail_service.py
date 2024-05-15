@@ -3,6 +3,7 @@ from typing import Dict, List
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
+from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
@@ -22,59 +23,64 @@ class Lightsail(AWSService):
             instance_paginator = regional_client.get_paginator("get_instances")
             for page in instance_paginator.paginate():
                 for instance in page["instances"]:
-                    ports = []
-
-                    for port_range in instance.get("networking", {}).get("ports", []):
-                        ports.append(
-                            PortRange(
-                                range=(
-                                    (
-                                        port_range.get("fromPort", "")
-                                        if port_range.get("fromPort", "")
-                                        == port_range.get("toPort", "")
-                                        else f"{port_range.get('fromPort', '')}-{port_range.get('toPort', '')}"
-                                    )
-                                    if port_range.get("fromPort", "")
-                                    else ""
-                                ),
-                                protocol=port_range.get("protocol", ""),
-                                access_from=port_range.get("accessFrom", ""),
-                                access_type=port_range.get("accessType", ""),
-                            )
-                        )
-
-                    auto_snapshot_enabled = False
-                    for add_on in instance.get("addOns", []):
-                        if (
-                            add_on.get("name") == "AutoSnapshot"
-                            and add_on.get("status") == "Enabled"
-                        ):
-                            auto_snapshot_enabled = True
-                            break
-
-                    self.instances[
-                        instance.get(
-                            "arn",
-                            f"arn:{self.audited_partition}:lightsail:{regional_client.region}:{self.audited_account}:Instance",
-                        )
-                    ] = Instance(
-                        name=instance.get("name", ""),
-                        id=instance.get("supportCode", ""),
-                        tags=instance.get("tags", []),
-                        region=instance.get(
-                            "location", {"regionName": regional_client.region}
-                        ).get("regionName", ""),
-                        availability_zone=instance.get("location", {}).get(
-                            "availabilityZone", ""
-                        ),
-                        static_ip=instance.get("isStaticIp", True),
-                        public_ip=instance.get("publicIpAddress", ""),
-                        private_ip=instance.get("privateIpAddress", ""),
-                        ipv6_addresses=instance.get("ipv6Addresses", []),
-                        ip_address_type=instance.get("ipAddressType", "ipv4"),
-                        ports=ports,
-                        auto_snapshot=auto_snapshot_enabled,
+                    arn = instance.get(
+                        "arn",
+                        f"arn:{self.audited_partition}:lightsail:{regional_client.region}:{self.audited_account}:Instance",
                     )
+
+                    if not self.audit_resources or is_resource_filtered(
+                        is_resource_filtered(arn, self.audit_resources)
+                    ):
+                        ports = []
+
+                        for port_range in instance.get("networking", {}).get(
+                            "ports", []
+                        ):
+                            ports.append(
+                                PortRange(
+                                    range=(
+                                        (
+                                            port_range.get("fromPort", "")
+                                            if port_range.get("fromPort", "")
+                                            == port_range.get("toPort", "")
+                                            else f"{port_range.get('fromPort', '')}-{port_range.get('toPort', '')}"
+                                        )
+                                        if port_range.get("fromPort", "")
+                                        else ""
+                                    ),
+                                    protocol=port_range.get("protocol", ""),
+                                    access_from=port_range.get("accessFrom", ""),
+                                    access_type=port_range.get("accessType", ""),
+                                )
+                            )
+
+                        auto_snapshot_enabled = False
+                        for add_on in instance.get("addOns", []):
+                            if (
+                                add_on.get("name") == "AutoSnapshot"
+                                and add_on.get("status") == "Enabled"
+                            ):
+                                auto_snapshot_enabled = True
+                                break
+
+                        self.instances[arn] = Instance(
+                            name=instance.get("name", ""),
+                            id=instance.get("supportCode", ""),
+                            tags=instance.get("tags", []),
+                            region=instance.get(
+                                "location", {"regionName": regional_client.region}
+                            ).get("regionName", ""),
+                            availability_zone=instance.get("location", {}).get(
+                                "availabilityZone", ""
+                            ),
+                            static_ip=instance.get("isStaticIp", True),
+                            public_ip=instance.get("publicIpAddress", ""),
+                            private_ip=instance.get("privateIpAddress", ""),
+                            ipv6_addresses=instance.get("ipv6Addresses", []),
+                            ip_address_type=instance.get("ipAddressType", "ipv4"),
+                            ports=ports,
+                            auto_snapshot=auto_snapshot_enabled,
+                        )
 
         except Exception as error:
             logger.error(
@@ -89,27 +95,30 @@ class Lightsail(AWSService):
             )
             for page in databases_paginator.paginate():
                 for database in page["relationalDatabases"]:
-                    self.databases[
-                        database.get(
-                            "arn",
-                            f"arn:{self.audited_partition}:lightsail:{regional_client.region}:{self.audited_account}:RelationalDatabase",
-                        )
-                    ] = Database(
-                        name=database.get("name", ""),
-                        id=database.get("supportCode", ""),
-                        tags=database.get("tags", []),
-                        region=database.get(
-                            "location", {"regionName": regional_client.region}
-                        ).get("regionName", ""),
-                        availability_zone=database.get("location", {}).get(
-                            "availabilityZone", ""
-                        ),
-                        engine=database.get("engine", ""),
-                        engine_version=database.get("engineVersion", ""),
-                        status=database.get("state", "unknown"),
-                        master_username=database.get("masterUsername", "admin"),
-                        public_access=database.get("publiclyAccessible", True),
+                    arn = database.get(
+                        "arn",
+                        f"arn:{self.audited_partition}:lightsail:{regional_client.region}:{self.audited_account}:RelationalDatabase",
                     )
+
+                    if not self.audit_resources or is_resource_filtered(
+                        is_resource_filtered(arn, self.audit_resources)
+                    ):
+                        self.databases[arn] = Database(
+                            name=database.get("name", ""),
+                            id=database.get("supportCode", ""),
+                            tags=database.get("tags", []),
+                            region=database.get(
+                                "location", {"regionName": regional_client.region}
+                            ).get("regionName", ""),
+                            availability_zone=database.get("location", {}).get(
+                                "availabilityZone", ""
+                            ),
+                            engine=database.get("engine", ""),
+                            engine_version=database.get("engineVersion", ""),
+                            status=database.get("state", "unknown"),
+                            master_username=database.get("masterUsername", "admin"),
+                            public_access=database.get("publiclyAccessible", True),
+                        )
 
         except Exception as error:
             logger.error(
@@ -122,23 +131,26 @@ class Lightsail(AWSService):
             static_ips_paginator = regional_client.get_paginator("get_static_ips")
             for page in static_ips_paginator.paginate():
                 for static_ip in page["staticIps"]:
-                    self.static_ips[
-                        static_ip.get(
-                            "arn",
-                            f"arn:{self.audited_partition}:lightsail:{regional_client.region}:{self.audited_account}:StaticIp",
-                        )
-                    ] = StaticIP(
-                        name=static_ip.get("name", ""),
-                        id=static_ip.get("supportCode", ""),
-                        region=static_ip.get(
-                            "location", {"regionName": regional_client.region}
-                        ).get("regionName", ""),
-                        availability_zone=static_ip.get("location", {}).get(
-                            "availabilityZone", ""
-                        ),
-                        ip_address=static_ip.get("ipAddress", ""),
-                        is_attached=static_ip.get("isAttached", True),
+                    arn = static_ip.get(
+                        "arn",
+                        f"arn:{self.audited_partition}:lightsail:{regional_client.region}:{self.audited_account}:StaticIp",
                     )
+
+                    if not self.audit_resources or is_resource_filtered(
+                        is_resource_filtered(arn, self.audit_resources)
+                    ):
+                        self.static_ips[arn] = StaticIP(
+                            name=static_ip.get("name", ""),
+                            id=static_ip.get("supportCode", ""),
+                            region=static_ip.get(
+                                "location", {"regionName": regional_client.region}
+                            ).get("regionName", ""),
+                            availability_zone=static_ip.get("location", {}).get(
+                                "availabilityZone", ""
+                            ),
+                            ip_address=static_ip.get("ipAddress", ""),
+                            is_attached=static_ip.get("isAttached", True),
+                        )
 
         except Exception as error:
             logger.error(
