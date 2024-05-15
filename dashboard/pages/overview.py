@@ -21,7 +21,6 @@ from dash.dependencies import Input, Output
 from dashboard.config import (
     critical_color,
     encoding_format,
-    error_action,
     fail_color,
     folder_path_overview,
     high_color,
@@ -46,7 +45,6 @@ from dashboard.lib.dropdowns import (
     create_table_row_dropdown,
 )
 from dashboard.lib.layouts import create_layout_overview
-from prowler.lib.logger import logger
 
 # Suppress warnings
 warnings.filterwarnings("ignore")
@@ -56,16 +54,11 @@ warnings.filterwarnings("ignore")
 csv_files = []
 
 for file in glob.glob(os.path.join(folder_path_overview, "*.csv")):
-    with open(
-        file, "r", newline="", encoding=encoding_format, errors=error_action
-    ) as csvfile:
-        try:
-            reader = csv.reader(csvfile)
-            num_rows = sum(1 for row in reader)
-            if num_rows > 1:
-                csv_files.append(file)
-        except UnicodeDecodeError:
-            logger.error(f"Error decoding file: {file}")
+    with open(file, "r", newline="", encoding=encoding_format) as csvfile:
+        reader = csv.reader(csvfile)
+        num_rows = sum(1 for row in reader)
+        if num_rows > 1:
+            csv_files.append(file)
 
 
 # Import logos providers
@@ -87,7 +80,7 @@ def load_csv_files(csv_files):
     """Load CSV files into a single pandas DataFrame."""
     dfs = []
     for file in csv_files:
-        df = pd.read_csv(file, sep=";", on_bad_lines="skip", encoding=encoding_format)
+        df = pd.read_csv(file, sep=";", on_bad_lines="skip")
         if "CHECK_ID" in df.columns:
             if "TIMESTAMP" in df.columns or df["PROVIDER"].unique() == "aws":
                 dfs.append(df.astype(str))
@@ -323,7 +316,7 @@ else:
                             n_clicks=0,
                         ),
                     ],
-                    className="w-[40.5%] 2xl:w-[71.5%]"
+                    className="w-[40.5%] 2xl:w-[71.5%]",
                 ),
                 html.Div(
                     [
@@ -345,7 +338,7 @@ else:
                             n_clicks=0,
                         ),
                     ],
-                    className="w-[11%] 2xl:w-[15.5%]"
+                    className="w-[11%] 2xl:w-[15.5%]",
                 ),
                 html.Div(
                     [
@@ -367,7 +360,7 @@ else:
                             n_clicks=0,
                         ),
                     ],
-                    className="w-[9%] 2xl:w-[12.5%]"
+                    className="w-[9%] 2xl:w-[12.5%]",
                 ),
                 html.Div(
                     [
@@ -389,7 +382,7 @@ else:
                             n_clicks=0,
                         ),
                     ],
-                    className="w-[10%] 2xl:w-[14%]"
+                    className="w-[10%] 2xl:w-[14%]",
                 ),
                 html.Div(
                     [
@@ -411,7 +404,7 @@ else:
                             n_clicks=0,
                         ),
                     ],
-                    className="w-[13.5%] 2xl:w-[14%]"
+                    className="w-[13.5%] 2xl:w-[14%]",
                 ),
                 html.Div(
                     [
@@ -433,7 +426,7 @@ else:
                             n_clicks=0,
                         ),
                     ],
-                    className="w-[15%] 2xl:w-[15.5%]"
+                    className="w-[15%] 2xl:w-[15.5%]",
                 ),
             ],
             className="grid grid-cols-auto w-full",
@@ -624,7 +617,7 @@ def filter_data(
     # Select the files in the list_files that have the same date as the selected date
     list_files = []
     for file in csv_files:
-        df = pd.read_csv(file, sep=";", on_bad_lines="skip", encoding=encoding_format)
+        df = pd.read_csv(file, sep=";", on_bad_lines="skip")
         if "CHECK_ID" in df.columns:
             if "TIMESTAMP" in df.columns or df["PROVIDER"].unique() == "aws":
                 # This handles the case where we are using v3 outputs
@@ -1427,11 +1420,15 @@ def generate_table(data, index, color_mapping_severity, color_mapping_status):
                                                 "index": index,
                                             },
                                             className="btn",
-                                            style={"position": "relative", "top": "3px", "padding": "0"},
+                                            style={
+                                                "position": "relative",
+                                                "top": "3px",
+                                                "padding": "0",
+                                            },
                                         ),
                                     ],
                                     width=1,
-                                    className="w-[4%] 2xl:w-[2%]"
+                                    className="w-[4%] 2xl:w-[2%]",
                                 ),
                                 dbc.Col(
                                     [
@@ -1499,7 +1496,7 @@ def generate_table(data, index, color_mapping_severity, color_mapping_status):
                                         ),
                                     ],
                                     className="w-[14.5%] 2xl:w-[10%]",
-                                    width=1
+                                    width=1,
                                 ),
                                 dbc.Col(
                                     [
@@ -1523,154 +1520,250 @@ def generate_table(data, index, color_mapping_severity, color_mapping_status):
                     dbc.Collapse(
                         dbc.CardBody(
                             [
-                                html.H5("Details", className="card-title"),
-                                html.Div(
-                                    [
-                                        html.P(
-                                            html.Strong(
-                                                "Resource uid: ",
-                                                style={"margin-right": "5px"},
-                                            )
-                                        ),
-                                        html.P(str(data.get("RESOURCE_UID", ""))),
-                                    ],
-                                    style={"display": "flex"},
+                                html.H5(
+                                    "Details",
+                                    className="card-title",
+                                    style={"font-weight": "bold"},
                                 ),
                                 html.Div(
                                     [
-                                        html.P(
-                                            html.Strong(
-                                                "Finding uid: ",
-                                                style={"margin-right": "5px"},
-                                            )
+                                        html.Div(
+                                            [
+                                                html.Div(
+                                                    [
+                                                        html.P(
+                                                            html.Strong(
+                                                                "Resource uid: ",
+                                                                style={
+                                                                    "margin-right": "5px"
+                                                                },
+                                                            )
+                                                        ),
+                                                        html.P(
+                                                            str(
+                                                                data.get(
+                                                                    "RESOURCE_UID", ""
+                                                                )
+                                                            )
+                                                        ),
+                                                    ],
+                                                    style={"display": "flex"},
+                                                ),
+                                                html.Div(
+                                                    [
+                                                        html.P(
+                                                            html.Strong(
+                                                                "Finding uid: ",
+                                                                style={
+                                                                    "margin-right": "5px"
+                                                                },
+                                                            )
+                                                        ),
+                                                        html.P(
+                                                            str(
+                                                                data.get(
+                                                                    "FINDING_UID", ""
+                                                                )
+                                                            )
+                                                        ),
+                                                    ],
+                                                    style={"display": "flex"},
+                                                ),
+                                                html.Div(
+                                                    [
+                                                        html.P(
+                                                            html.Strong(
+                                                                "Check id: ",
+                                                                style={
+                                                                    "margin-right": "5px"
+                                                                },
+                                                            )
+                                                        ),
+                                                        html.P(
+                                                            str(
+                                                                data.get("CHECK_ID", "")
+                                                            )
+                                                        ),
+                                                    ],
+                                                    style={"display": "flex"},
+                                                ),
+                                                html.Div(
+                                                    [
+                                                        html.P(
+                                                            html.Strong(
+                                                                "Type: ",
+                                                                style={
+                                                                    "margin-right": "5px"
+                                                                },
+                                                            )
+                                                        ),
+                                                        html.P(
+                                                            str(
+                                                                data.get(
+                                                                    "RESOURCE_TYPE", ""
+                                                                )
+                                                            )
+                                                        ),
+                                                    ],
+                                                    style={"display": "flex"},
+                                                ),
+                                                html.Div(
+                                                    [
+                                                        html.P(
+                                                            html.Strong(
+                                                                "Details: ",
+                                                                style={
+                                                                    "margin-right": "5px"
+                                                                },
+                                                            )
+                                                        ),
+                                                        html.P(
+                                                            str(
+                                                                data.get(
+                                                                    "RESOURCE_DETAILS",
+                                                                    "",
+                                                                )
+                                                            )
+                                                        ),
+                                                    ],
+                                                    style={"display": "flex"},
+                                                ),
+                                            ],
+                                            style={
+                                                "width": "50%",
+                                                "display": "inline-block",
+                                            },
                                         ),
-                                        html.P(str(data.get("FINDING_UID", ""))),
+                                        html.Div(
+                                            [
+                                                html.Div(
+                                                    [
+                                                        html.P(
+                                                            html.Strong(
+                                                                "Risk: ",
+                                                                style={
+                                                                    "margin-right": "5px"
+                                                                },
+                                                            )
+                                                        ),
+                                                        html.P(
+                                                            str(data.get("RISK", ""))
+                                                        ),
+                                                    ],
+                                                    style={"display": "flex"},
+                                                ),
+                                                html.Div(
+                                                    [
+                                                        html.P(
+                                                            html.Strong(
+                                                                "Notes: ",
+                                                                style={
+                                                                    "margin-right": "5px"
+                                                                },
+                                                            )
+                                                        ),
+                                                        html.P(
+                                                            str(data.get("NOTES", ""))
+                                                        ),
+                                                    ],
+                                                    style={"display": "flex"},
+                                                ),
+                                                html.Div(
+                                                    [
+                                                        html.P(
+                                                            html.Strong(
+                                                                "Provider: ",
+                                                                style={
+                                                                    "margin-right": "5px"
+                                                                },
+                                                            )
+                                                        ),
+                                                        html.P(
+                                                            str(
+                                                                data.get("PROVIDER", "")
+                                                            )
+                                                        ),
+                                                    ],
+                                                    style={"display": "flex"},
+                                                ),
+                                                html.Div(
+                                                    [
+                                                        html.P(
+                                                            html.Strong(
+                                                                "Recomendation: ",
+                                                                style={
+                                                                    "margin-right": "5px"
+                                                                },
+                                                            )
+                                                        ),
+                                                        html.P(
+                                                            str(
+                                                                data.get(
+                                                                    "REMEDIATION_RECOMMENDATION_TEXT",
+                                                                    "",
+                                                                )
+                                                            )
+                                                        ),
+                                                    ],
+                                                    style={"display": "flex"},
+                                                ),
+                                                html.Div(
+                                                    [
+                                                        html.P(
+                                                            html.Strong(
+                                                                "RecomendationUrl: ",
+                                                                style={
+                                                                    "margin-right": "5px"
+                                                                },
+                                                            )
+                                                        ),
+                                                        html.A(
+                                                            str(
+                                                                data.get(
+                                                                    "REMEDIATION_RECOMMENDATION_URL",
+                                                                    "",
+                                                                )
+                                                            ),
+                                                            href=str(
+                                                                data.get(
+                                                                    "REMEDIATION_RECOMMENDATION_URL",
+                                                                    "",
+                                                                )
+                                                            ),
+                                                            style={"color": "#3182ce"},
+                                                        ),
+                                                    ],
+                                                    style={"display": "flex"},
+                                                ),
+                                                html.Div(
+                                                    [
+                                                        html.P(
+                                                            html.Strong(
+                                                                "Scan Day: ",
+                                                                style={
+                                                                    "margin-right": "5px"
+                                                                },
+                                                            )
+                                                        ),
+                                                        html.P(
+                                                            str(
+                                                                data.get(
+                                                                    "ASSESSMENT_TIME",
+                                                                    "",
+                                                                )
+                                                            )
+                                                        ),
+                                                    ],
+                                                    style={"display": "flex"},
+                                                ),
+                                            ],
+                                            style={
+                                                "width": "50%",
+                                                "display": "inline-block",
+                                            },
+                                        ),
                                     ],
-                                    style={"display": "flex"},
-                                ),
-                                html.Div(
-                                    [
-                                        html.P(
-                                            html.Strong(
-                                                "Check id: ",
-                                                style={"margin-right": "5px"},
-                                            )
-                                        ),
-                                        html.P(str(data.get("CHECK_ID", ""))),
-                                    ],
-                                    style={"display": "flex"},
-                                ),
-                                html.Div(
-                                    [
-                                        html.P(
-                                            html.Strong(
-                                                "Type: ", style={"margin-right": "5px"}
-                                            )
-                                        ),
-                                        html.P(str(data.get("RESOURCE_TYPE", ""))),
-                                    ],
-                                    style={"display": "flex"},
-                                ),
-                                html.Div(
-                                    [
-                                        html.P(
-                                            html.Strong(
-                                                "Details: ",
-                                                style={"margin-right": "5px"},
-                                            )
-                                        ),
-                                        html.P(str(data.get("RESOURCE_DETAILS", ""))),
-                                    ],
-                                    style={"display": "flex"},
-                                ),
-                                html.Div(
-                                    [
-                                        html.P(
-                                            html.Strong(
-                                                "Risk: ", style={"margin-right": "5px"}
-                                            )
-                                        ),
-                                        html.P(str(data.get("RISK", ""))),
-                                    ],
-                                    style={"display": "flex"},
-                                ),
-                                html.Div(
-                                    [
-                                        html.P(
-                                            html.Strong(
-                                                "Notes: ", style={"margin-right": "5px"}
-                                            )
-                                        ),
-                                        html.P(str(data.get("NOTES", ""))),
-                                    ],
-                                    style={"display": "flex"},
-                                ),
-                                html.Div(
-                                    [
-                                        html.P(
-                                            html.Strong(
-                                                "Provider: ",
-                                                style={"margin-right": "5px"},
-                                            )
-                                        ),
-                                        html.P(str(data.get("PROVIDER", ""))),
-                                    ],
-                                    style={"display": "flex"},
-                                ),
-                                html.Div(
-                                    [
-                                        html.P(
-                                            html.Strong(
-                                                "Recomendation: ",
-                                                style={"margin-right": "5px"},
-                                            )
-                                        ),
-                                        html.P(
-                                            str(
-                                                data.get(
-                                                    "REMEDIATION_RECOMMENDATION_TEXT",
-                                                    "",
-                                                )
-                                            )
-                                        ),
-                                    ],
-                                    style={"display": "flex"},
-                                ),
-                                html.Div(
-                                    [
-                                        html.P(
-                                            html.Strong(
-                                                "Recomendation url: ",
-                                                style={"margin-right": "5px"},
-                                            )
-                                        ),
-                                        html.A(
-                                            str(
-                                                data.get(
-                                                    "REMEDIATION_RECOMMENDATION_URL", ""
-                                                )
-                                            ),
-                                            href=str(
-                                                data.get(
-                                                    "REMEDIATION_RECOMMENDATION_URL", ""
-                                                )
-                                            ),
-                                            style={"color": "#3182ce"},
-                                        ),
-                                    ],
-                                    style={"display": "flex"},
-                                ),
-                                html.Div(
-                                    [
-                                        html.P(
-                                            html.Strong(
-                                                "Scan Day: ",
-                                                style={"margin-right": "5px"},
-                                            )
-                                        ),
-                                        html.P(str(data.get("ASSESSMENT_TIME", ""))),
-                                    ],
-                                    style={"display": "flex"},
+                                    style={"display": "flex", "width": "100%"},
                                 ),
                             ]
                         ),
