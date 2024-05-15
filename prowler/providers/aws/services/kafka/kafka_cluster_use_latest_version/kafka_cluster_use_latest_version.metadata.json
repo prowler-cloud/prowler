@@ -17,12 +17,12 @@
     "Code": {
       "CLI": "aws kafka update-cluster-configuration --cluster-arn <arn_cluster> --current-version <current_version> --target-version <latest_version>",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/MSK/enable-apache-kafka-latest-security-features.html",
       "Terraform": ""
     },
     "Recommendation": {
       "Text": "Change the database to private mode.",
-      "Url": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/MSK/enable-apache-kafka-latest-security-features.html"
+      "Url": "https://docs.aws.amazon.com/msk/latest/developerguide/version-support.html#version-upgrades"
     }
   },
   "Categories": [],

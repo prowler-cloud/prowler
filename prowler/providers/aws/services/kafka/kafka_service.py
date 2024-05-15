@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
+
 from prowler.providers.aws.lib.service.service import AWSService
 
 
