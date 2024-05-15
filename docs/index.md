@@ -324,6 +324,8 @@ For non in-cluster execution, you can provide the location of the KubeConfig fil
 ```console
 prowler kubernetes --kubeconfig-file path
 ```
+???+ note
+    If no `--kubeconfig-file` is provided, Prowler will use the default KubeConfig file location (`~/.kube/config`).
 
 For in-cluster execution, you can use the supplied yaml to run Prowler as a job within a new Prowler namespace:
 ```console

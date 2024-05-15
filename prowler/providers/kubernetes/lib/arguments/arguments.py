@@ -12,6 +12,7 @@ def init_parser(self):
         nargs="?",
         metavar="FILE_PATH",
         help="Path to the kubeconfig file to use for CLI requests. Not necessary for in-cluster execution.",
+        default="~/.kube/config",
     )
     k8s_auth_subparser.add_argument(
         "--context",

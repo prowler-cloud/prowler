@@ -125,11 +125,28 @@ class KubernetesProvider(Provider):
             Tuple: A tuple containing the API client and the context.
         """
         try:
-            if kubeconfig_file:
-                logger.info(f"Using kubeconfig file: {kubeconfig_file}")
+            logger.info(f"Using kubeconfig file: {kubeconfig_file}")
+            try:
                 config.load_kube_config(
-                    config_file=os.path.abspath(kubeconfig_file), context=input_context
+                    config_file=(
+                        os.path.abspath(kubeconfig_file)
+                        if kubeconfig_file != "~/.kube/config"
+                        else os.path.expanduser(kubeconfig_file)
+                    ),
+                    context=input_context,
                 )
+            except ConfigException:
+                # If the kubeconfig file is not found, try to use the in-cluster config
+                logger.info("Using in-cluster config")
+                config.load_incluster_config()
+                context = {
+                    "name": "In-Cluster",
+                    "context": {
+                        "cluster": "in-cluster",  # Placeholder, as the real cluster name is not available
+                        "user": "service-account-name",  # Also a placeholder
+                    },
+                }
+            else:
                 if input_context:
                     contexts = config.list_kube_config_contexts()[0]
                     for context_item in contexts:
@@ -137,30 +154,6 @@ class KubernetesProvider(Provider):
                             context = context_item
                 else:
                     context = config.list_kube_config_contexts()[1]
-            else:
-                kubeconfig_file = "~/.kube/config"
-                try:
-                    config.load_kube_config(
-                        config_file=os.path.expanduser(kubeconfig_file)
-                    )
-                    if config:
-                        if input_context:
-                            contexts = config.list_kube_config_contexts()[0]
-                            for context_item in contexts:
-                                if context_item["name"] == input_context:
-                                    context = context_item
-                        else:
-                            context = config.list_kube_config_contexts()[1]
-                except ConfigException:
-                    logger.info("Using in-cluster config")
-                    config.load_incluster_config()
-                    context = {
-                        "name": "In-Cluster",
-                        "context": {
-                            "cluster": "in-cluster",  # Placeholder, as the real cluster name is not available
-                            "user": "service-account-name",  # Also a placeholder
-                        },
-                    }
             return KubernetesSession(api_client=client.ApiClient(), context=context)
         except Exception as error:
             logger.critical(
