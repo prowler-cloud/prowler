@@ -18,6 +18,14 @@ from prowler.lib.utils.utils import open_file
 
 def add_html_header(file_descriptor, provider):
     try:
+        parameters = sys.argv[1:]
+        for index, parameter in enumerate(parameters):
+            if (
+                parameter == "--kubeconfig-file"
+                and "/.kube/config" in parameters[index + 1]
+            ):
+                parameters[index + 1] = "~/.kube/config"
+
         file_descriptor.write(
             f"""
         <!DOCTYPE html>
@@ -72,7 +80,7 @@ def add_html_header(file_descriptor, provider):
                 </div>
                 </li>
                 <li class="list-group-item">
-                <b>Parameters used:</b> {" ".join(sys.argv[1:])}
+                <b>Parameters used:</b> {" ".join(parameters)}
                 </li>
                 <li class="list-group-item">
                 <b>Date:</b> {timestamp.isoformat()}
