@@ -8,7 +8,7 @@ class lightsail_database_public(Check):
 
         for arn_database, database in lightsail_client.databases.items():
             report = Check_Report_AWS(self.metadata())
-            report.region = database.location.get("regionName", "")
+            report.region = database.region
             report.resource_id = database.id
             report.resource_arn = arn_database
             report.resource_tags = database.tags

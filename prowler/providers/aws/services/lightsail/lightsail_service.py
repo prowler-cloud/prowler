@@ -13,6 +13,8 @@ class Lightsail(AWSService):
         self.__threading_call__(self.__get_instances__)
         self.databases = {}
         self.__threading_call__(self.__get_databases__)
+        self.static_ips = {}
+        self.__threading_call__(self.__get_static_ips__)
 
     def __get_instances__(self, regional_client):
         logger.info("Lightsail - Getting instances...")
@@ -59,7 +61,12 @@ class Lightsail(AWSService):
                         name=instance.get("name", ""),
                         id=instance.get("supportCode", ""),
                         tags=instance.get("tags", []),
-                        location=instance.get("location", regional_client.region),
+                        region=instance.get(
+                            "location", {"regionName": regional_client.region}
+                        ).get("regionName", ""),
+                        availability_zone=instance.get("location", {}).get(
+                            "availabilityZone", ""
+                        ),
                         static_ip=instance.get("isStaticIp", True),
                         public_ip=instance.get("publicIpAddress", ""),
                         private_ip=instance.get("privateIpAddress", ""),
@@ -91,12 +98,46 @@ class Lightsail(AWSService):
                         name=database.get("name", ""),
                         id=database.get("supportCode", ""),
                         tags=database.get("tags", []),
-                        location=database.get("location", regional_client.region),
+                        region=database.get(
+                            "location", {"regionName": regional_client.region}
+                        ).get("regionName", ""),
+                        availability_zone=database.get("location", {}).get(
+                            "availabilityZone", ""
+                        ),
                         engine=database.get("engine", ""),
                         engine_version=database.get("engineVersion", ""),
                         status=database.get("state", "unknown"),
                         master_username=database.get("masterUsername", "admin"),
                         public_access=database.get("publiclyAccessible", True),
+                    )
+
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def __get_static_ips__(self, regional_client):
+        logger.info("Lightsail - Getting static IPs...")
+        try:
+            static_ips_paginator = regional_client.get_paginator("get_static_ips")
+            for page in static_ips_paginator.paginate():
+                for static_ip in page["staticIps"]:
+                    self.static_ips[
+                        static_ip.get(
+                            "arn",
+                            f"arn:{self.audited_partition}:lightsail:{regional_client.region}:{self.audited_account}:StaticIp",
+                        )
+                    ] = StaticIP(
+                        name=static_ip.get("name", ""),
+                        id=static_ip.get("supportCode", ""),
+                        region=static_ip.get(
+                            "location", {"regionName": regional_client.region}
+                        ).get("regionName", ""),
+                        availability_zone=static_ip.get("location", {}).get(
+                            "availabilityZone", ""
+                        ),
+                        ip_address=static_ip.get("ipAddress", ""),
+                        is_attached=static_ip.get("isAttached", True),
                     )
 
         except Exception as error:
@@ -116,7 +157,8 @@ class Instance(BaseModel):
     name: str
     id: str
     tags: List[Dict[str, str]]
-    location: dict
+    region: str
+    availability_zone: str
     static_ip: bool
     public_ip: str
     private_ip: str
@@ -130,9 +172,19 @@ class Database(BaseModel):
     name: str
     id: str
     tags: List[Dict[str, str]]
-    location: dict
+    region: str
+    availability_zone: str
     engine: str
     engine_version: str
     status: str
     master_username: str
     public_access: bool
+
+
+class StaticIP(BaseModel):
+    name: str
+    id: str
+    region: str
+    availability_zone: str
+    ip_address: str
+    is_attached: bool

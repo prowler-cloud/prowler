@@ -7,7 +7,7 @@ class lightsail_instance_automated_snapshots(Check):
         findings = []
         for arn_instance, instance in lightsail_client.instances.items():
             report = Check_Report_AWS(self.metadata())
-            report.region = instance.location.get("regionName", "")
+            report.region = instance.region
             report.resource_id = instance.id
             report.resource_arn = arn_instance
             report.resource_tags = instance.tags

@@ -158,6 +158,25 @@ def mock_make_api_call(self, operation_name, kwarg):
                 }
             ]
         }
+    elif operation_name == "GetStaticIps":
+        return {
+            "staticIps": [
+                {
+                    "arn": f"{BASE_LIGHTSAIL_ARN}:StaticIp/test-id",
+                    "attachedTo": "test-id",
+                    "isAttached": True,
+                    "createdAt": "2024-04-30T10:56:00.273000-04:00",
+                    "ipAddress": "1.2.3.4",
+                    "location": {
+                        "availabilityZone": AWS_REGION_US_EAST_1_AZA,
+                        "regionName": AWS_REGION_US_EAST_1,
+                    },
+                    "name": "test-static-ip",
+                    "resourceType": "StaticIp",
+                    "supportCode": "578520385941/ip-0a0f5d4e2b3a4e4f",
+                }
+            ]
+        }
 
     return make_api_call(self, operation_name, kwarg)
 
@@ -173,21 +192,22 @@ class TestLightsailService:
         assert lightsail.session.__class__.__name__ == "Session"
         assert lightsail.audited_account == AWS_ACCOUNT_NUMBER
         # Instances assertions
-        assert (
-            list(lightsail.instances.keys())[0]
-            == f"{BASE_LIGHTSAIL_ARN}:Instance/test-id"
-        )
+        assert f"{BASE_LIGHTSAIL_ARN}:Instance/test-id" in lightsail.instances
         assert (
             lightsail.instances[f"{BASE_LIGHTSAIL_ARN}:Instance/test-id"].name
             == "WordPress-1"
         )
         assert lightsail.instances[f"{BASE_LIGHTSAIL_ARN}:Instance/test-id"].tags == []
-        assert lightsail.instances[
-            f"{BASE_LIGHTSAIL_ARN}:Instance/test-id"
-        ].location == {
-            "availabilityZone": "us-east-1a",
-            "regionName": "us-east-1",
-        }
+        assert (
+            lightsail.instances[f"{BASE_LIGHTSAIL_ARN}:Instance/test-id"].region
+            == AWS_REGION_US_EAST_1
+        )
+        assert (
+            lightsail.instances[
+                f"{BASE_LIGHTSAIL_ARN}:Instance/test-id"
+            ].availability_zone
+            == AWS_REGION_US_EAST_1_AZA
+        )
         assert not lightsail.instances[
             f"{BASE_LIGHTSAIL_ARN}:Instance/test-id"
         ].static_ip
@@ -283,21 +303,22 @@ class TestLightsailService:
             f"{BASE_LIGHTSAIL_ARN}:Instance/test-id"
         ].auto_snapshot
         # Databases assertions
-        assert (
-            list(lightsail.databases.keys())[0]
-            == f"{BASE_LIGHTSAIL_ARN}:Database/test-id"
-        )
+        assert f"{BASE_LIGHTSAIL_ARN}:Database/test-id" in lightsail.databases
         assert (
             lightsail.databases[f"{BASE_LIGHTSAIL_ARN}:Database/test-id"].name
             == "test-db"
         )
         assert lightsail.databases[f"{BASE_LIGHTSAIL_ARN}:Database/test-id"].tags == []
-        assert lightsail.databases[
-            f"{BASE_LIGHTSAIL_ARN}:Database/test-id"
-        ].location == {
-            "availabilityZone": "us-east-1a",
-            "regionName": "us-east-1",
-        }
+        assert (
+            lightsail.databases[f"{BASE_LIGHTSAIL_ARN}:Database/test-id"].region
+            == AWS_REGION_US_EAST_1
+        )
+        assert (
+            lightsail.databases[
+                f"{BASE_LIGHTSAIL_ARN}:Database/test-id"
+            ].availability_zone
+            == AWS_REGION_US_EAST_1_AZA
+        )
         assert (
             lightsail.databases[f"{BASE_LIGHTSAIL_ARN}:Database/test-id"].engine
             == "mysql"
@@ -319,3 +340,30 @@ class TestLightsailService:
         assert not lightsail.databases[
             f"{BASE_LIGHTSAIL_ARN}:Database/test-id"
         ].public_access
+        # Assertions for statics IPs
+        assert f"{BASE_LIGHTSAIL_ARN}:StaticIp/test-id" in lightsail.static_ips
+        assert (
+            lightsail.static_ips[f"{BASE_LIGHTSAIL_ARN}:StaticIp/test-id"].name
+            == "test-static-ip"
+        )
+        assert (
+            lightsail.static_ips[f"{BASE_LIGHTSAIL_ARN}:StaticIp/test-id"].id
+            == "578520385941/ip-0a0f5d4e2b3a4e4f"
+        )
+        assert (
+            lightsail.static_ips[f"{BASE_LIGHTSAIL_ARN}:StaticIp/test-id"].region
+            == AWS_REGION_US_EAST_1
+        )
+        assert (
+            lightsail.static_ips[
+                f"{BASE_LIGHTSAIL_ARN}:StaticIp/test-id"
+            ].availability_zone
+            == AWS_REGION_US_EAST_1_AZA
+        )
+        assert (
+            lightsail.static_ips[f"{BASE_LIGHTSAIL_ARN}:StaticIp/test-id"].ip_address
+            == "1.2.3.4"
+        )
+        assert lightsail.static_ips[
+            f"{BASE_LIGHTSAIL_ARN}:StaticIp/test-id"
+        ].is_attached
