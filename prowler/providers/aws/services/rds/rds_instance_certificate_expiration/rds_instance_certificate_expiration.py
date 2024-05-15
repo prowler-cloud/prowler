@@ -16,7 +16,7 @@ class rds_instance_certificate_expiration(Check):
             report.resource_arn = db_instance.arn
             report.resource_tags = db_instance.tags
             report.status = "FAIL"
-            report.severity = "critical"
+            report.check_metadata.Severity = "critical"
             report.status_extended = (
                 f"RDS Instance {db_instance.id} certificate has expired."
             )
@@ -25,12 +25,11 @@ class rds_instance_certificate_expiration(Check):
             for cert in db_instance.cert:
                 if cert["CustomerOverride"] == 0:
                     valid_till = parser.parse(cert["ValidTill"])
-                    print(valid_till)
                     if valid_till > datetime.utcnow() + relativedelta.relativedelta(
                         months=6
                     ):
                         report.status = "PASS"
-                        report.severity = "informational"
+                        report.check_metadata.Severity = "informational"
                         report.status_extended = f"RDS Instance {db_instance.id} certificate has over 6 months of validity left."
                     elif valid_till < datetime.utcnow() + relativedelta.relativedelta(
                         months=6
@@ -38,7 +37,7 @@ class rds_instance_certificate_expiration(Check):
                         months=3
                     ):
                         report.status = "PASS"
-                        report.severity = "informational"
+                        report.check_metadata.Severity = "informational"
                         report.status_extended = f"RDS Instance {db_instance.id} certificate has between 3 and 6 months of validity."
                     elif (
                         valid_till
@@ -46,11 +45,11 @@ class rds_instance_certificate_expiration(Check):
                         and valid_till > datetime.utcnow()
                     ):
                         report.status = "FAIL"
-                        report.severity = "medium"
+                        report.check_metadata.Severity = "medium"
                         report.status_extended = f"RDS Instance {db_instance.id} certificate less then 3 months of validity."
                     else:
                         report.status = "FAIL"
-                        report.severity = "critical"
+                        report.check_metadata.Severity = "critical"
                         report.status_extended = (
                             f"RDS Instance {db_instance.id} certificate has expired."
                         )
@@ -63,7 +62,7 @@ class rds_instance_certificate_expiration(Check):
                         > datetime.utcnow() + relativedelta.relativedelta(months=6)
                     ):
                         report.status = "PASS"
-                        report.severity = "informational"
+                        report.check_metadata.Severity = "informational"
                         report.status_extended = f"RDS Instance {db_instance.id} custom certificate has over 6 months of validity left."
                     elif (
                         customer_override_valid_till
@@ -72,7 +71,7 @@ class rds_instance_certificate_expiration(Check):
                         > datetime.utcnow() + relativedelta.relativedelta(months=3)
                     ):
                         report.status = "PASS"
-                        report.severity = "informational"
+                        report.check_metadata.Severity = "informational"
                         report.status_extended = f"RDS Instance {db_instance.id} custom certificate has between 3 and 6 months of validity."
                     elif (
                         customer_override_valid_till
@@ -80,11 +79,11 @@ class rds_instance_certificate_expiration(Check):
                         and customer_override_valid_till > datetime.utcnow()
                     ):
                         report.status = "FAIL"
-                        report.severity = "medium"
+                        report.check_metadata.Severity = "medium"
                         report.status_extended = f"RDS Instance {db_instance.id} custom certificate less then 3 months of validity."
                     else:
                         report.status = "FAIL"
-                        report.severity = "critical"
+                        report.check_metadata.Severity = "critical"
                         report.status_extended = f"RDS Instance {db_instance.id} custom certificate has expired."
             findings.append(report)
 

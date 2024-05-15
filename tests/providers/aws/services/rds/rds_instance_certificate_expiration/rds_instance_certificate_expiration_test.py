@@ -107,7 +107,7 @@ class Test_rds_instance_certificate_expiration:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert result[0].severity == "critical"
+            assert result[0].check_metadata.Severity == "critical"
             assert (
                 result[0].status_extended
                 == "RDS Instance db-master-1 certificate has expired."
@@ -175,7 +175,7 @@ class Test_rds_instance_certificate_expiration:
 
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert result[0].severity == "informational"
+            assert result[0].check_metadata.Severity == "informational"
             assert (
                 result[0].status_extended
                 == "RDS Instance db-master-1 certificate has over 6 months of validity left."
@@ -242,7 +242,7 @@ class Test_rds_instance_certificate_expiration:
 
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert result[0].severity == "informational"
+            assert result[0].check_metadata.Severity == "informational"
             assert (
                 result[0].status_extended
                 == "RDS Instance db-master-1 certificate has between 3 and 6 months of validity."
@@ -309,7 +309,7 @@ class Test_rds_instance_certificate_expiration:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert result[0].severity == "medium"
+            assert result[0].check_metadata.Severity == "medium"
             assert (
                 result[0].status_extended
                 == "RDS Instance db-master-1 certificate less then 3 months of validity."
@@ -376,7 +376,7 @@ class Test_rds_instance_certificate_expiration:
 
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert result[0].severity == "informational"
+            assert result[0].check_metadata.Severity == "informational"
             assert (
                 result[0].status_extended
                 == "RDS Instance db-master-1 custom certificate has over 6 months of validity left."
@@ -443,7 +443,7 @@ class Test_rds_instance_certificate_expiration:
 
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert result[0].severity == "informational"
+            assert result[0].check_metadata.Severity == "informational"
             assert (
                 result[0].status_extended
                 == "RDS Instance db-master-1 custom certificate has between 3 and 6 months of validity."
@@ -510,7 +510,7 @@ class Test_rds_instance_certificate_expiration:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert result[0].severity == "medium"
+            assert result[0].check_metadata.Severity == "medium"
             assert (
                 result[0].status_extended
                 == "RDS Instance db-master-1 custom certificate less then 3 months of validity."
@@ -577,7 +577,7 @@ class Test_rds_instance_certificate_expiration:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert result[0].severity == "critical"
+            assert result[0].check_metadata.Severity == "critical"
             assert (
                 result[0].status_extended
                 == "RDS Instance db-master-1 custom certificate has expired."

@@ -114,15 +114,14 @@ class RDS(AWSService):
         try:
             for instance in self.db_instances:
                 if instance.region == regional_client.region:
-                    for certificate in instance.ca_cert:
-                        describe_db_certificates_paginator = (
-                            regional_client.get_paginator("describe_certificates")
-                        )
-                        for page in describe_db_certificates_paginator.paginate(
-                            CertificateIdentifier=certificate
-                        ):
-                            for certificate in page["Certificates"]:
-                                instance.cert.append(certificate)
+                    describe_db_certificates_paginator = regional_client.get_paginator(
+                        "describe_certificates"
+                    )
+                    for page in describe_db_certificates_paginator.paginate(
+                        CertificateIdentifier=instance.ca_cert
+                    ):
+                        for certificate in page["Certificates"]:
+                            instance.cert.append(certificate)
 
         except Exception as error:
             logger.error(
