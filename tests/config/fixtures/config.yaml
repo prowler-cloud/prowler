@@ -65,6 +65,10 @@ aws:
   organizations_enabled_regions: []
   organizations_trusted_delegated_administrators: []
 
+  # aws.rds_instance_backup_enabled
+  # Whether to check RDS instance replicas or not
+  check_rds_instance_replicas: False
+
 # Azure Configuration
 azure:
   # Azure Network Configuration

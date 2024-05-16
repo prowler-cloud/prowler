@@ -11,7 +11,7 @@
   "Severity": "medium",
   "ResourceType": "AwsEksCluster",
   "Description": "Restrict Access to the EKS Control Plane Endpoint",
-  "Risk": "By default; this API server endpoint is public to the internet; and access to the API server is secured using a combination of AWS Identity and Access Management (IAM) and native Kubernetes Role Based Access Control (RBAC).",
+  "Risk": "By default, this API server endpoint is public to the internet, and access to the API server is secured using a combination of AWS Identity and Access Management (IAM) and native Kubernetes Role Based Access Control (RBAC).",
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
@@ -21,7 +21,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "You should enable private access to the Kubernetes API server so that all communication between your nodes and the API server stays within your VPC. You can limit the IP addresses that can access your API server from the internet; or completely disable internet access to the API server.",
+      "Text": "You should enable private access to the Kubernetes API server so that all communication between your nodes and the API server stays within your VPC. You can limit the IP addresses that can access your API server from the internet, or completely disable internet access to the API server.",
       "Url": "https://docs.aws.amazon.com/eks/latest/userguide/cluster-endpoint.html"
     }
   },

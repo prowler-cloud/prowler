@@ -21,7 +21,7 @@
       "Terraform": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/S3/s3-bucket-public-write-access.html"
     },
     "Recommendation": {
-      "Text": "You can enable block public access settings only for access points, buckets and AWS accounts. Amazon S3 does not support block public access settings on a per-object basis. When you apply block public access settings to an account; the settings apply to all AWS Regions globally. The settings might not take effect in all Regions immediately or simultaneously, but they eventually propagate to all Regions.",
+      "Text": "You can enable block public access settings only for access points, buckets and AWS accounts. Amazon S3 does not support block public access settings on a per-object basis. When you apply block public access settings to an account, the settings apply to all AWS Regions globally. The settings might not take effect in all Regions immediately or simultaneously, but they eventually propagate to all Regions.",
       "Url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html"
     }
   },

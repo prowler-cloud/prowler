@@ -115,8 +115,8 @@ If you want to mute failed findings only in specific regions, create a file with
               - "*"
 
 ### Default Mutelist
-For the AWS Provider, Prowler is executed with a Default AWS Mutelist with the AWS Resources that should be muted such as all resources created by AWS Control Tower when setting up a landing zone.
-You can see this Mutelist file in [`prowler/config/aws_mutelist.yaml`](https://github.com/prowler-cloud/prowler/blob/master/prowler/config/aws_allowlist.yaml).
+For the AWS Provider, Prowler is executed with a default AWS Mutelist with the AWS Resources that should be muted such as all resources created by AWS Control Tower when setting up a landing zone that can be found in [AWS Documentation](https://docs.aws.amazon.com/controltower/latest/userguide/shared-account-resources.html).
+You can see this Mutelist file in [`prowler/config/aws_mutelist.yaml`](https://github.com/prowler-cloud/prowler/blob/master/prowler/config/aws_mutelist.yaml).
 
 ### Supported Mutelist Locations
 

@@ -119,11 +119,31 @@ class ISO27001_2013_Requirement_Attribute(BaseModel):
     Check_Summary: str
 
 
-# MITRE Requirement Attribute
-class Mitre_Requirement_Attribute(BaseModel):
+# MITRE Requirement Attribute for AWS
+class Mitre_Requirement_Attribute_AWS(BaseModel):
     """MITRE Requirement Attribute"""
 
     AWSService: str
+    Category: str
+    Value: str
+    Comment: str
+
+
+# MITRE Requirement Attribute for Azure
+class Mitre_Requirement_Attribute_Azure(BaseModel):
+    """MITRE Requirement Attribute"""
+
+    AzureService: str
+    Category: str
+    Value: str
+    Comment: str
+
+
+# MITRE Requirement Attribute for GCP
+class Mitre_Requirement_Attribute_GCP(BaseModel):
+    """MITRE Requirement Attribute"""
+
+    GCPService: str
     Category: str
     Value: str
     Comment: str
@@ -140,7 +160,11 @@ class Mitre_Requirement(BaseModel):
     Description: str
     Platforms: list[str]
     TechniqueURL: str
-    Attributes: list[Mitre_Requirement_Attribute]
+    Attributes: Union[
+        list[Mitre_Requirement_Attribute_AWS],
+        list[Mitre_Requirement_Attribute_Azure],
+        list[Mitre_Requirement_Attribute_GCP],
+    ]
     Checks: list[str]
 
 
@@ -172,7 +196,12 @@ class Compliance_Base_Model(BaseModel):
     Provider: str
     Version: Optional[str]
     Description: str
-    Requirements: list[Union[Mitre_Requirement, Compliance_Requirement]]
+    Requirements: list[
+        Union[
+            Mitre_Requirement,
+            Compliance_Requirement,
+        ]
+    ]
 
     @root_validator(pre=True)
     # noqa: F841 - since vulture raises unused variable 'cls'

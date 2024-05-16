@@ -9,6 +9,11 @@ from prowler.config.config import (
 )
 from prowler.lib.logger import logger
 from prowler.lib.outputs.common_models import FindingOutput
+from prowler.lib.outputs.compliance.mitre_attack.models import (
+    MitreAttackAWS,
+    MitreAttackAzure,
+    MitreAttackGCP,
+)
 from prowler.lib.outputs.compliance.models import (
     Check_Output_CSV_AWS_CIS,
     Check_Output_CSV_AWS_ISO27001_2013,
@@ -18,7 +23,6 @@ from prowler.lib.outputs.compliance.models import (
     Check_Output_CSV_GCP_CIS,
     Check_Output_CSV_Generic_Compliance,
     Check_Output_CSV_KUBERNETES_CIS,
-    Check_Output_MITRE_ATTACK,
 )
 from prowler.lib.outputs.csv.csv import generate_csv_fields
 from prowler.lib.utils.utils import file_exists, open_file
@@ -85,6 +89,13 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, provi
                             filename, output_mode, Check_Output_CSV_GCP_CIS
                         )
                         file_descriptors.update({output_mode: file_descriptor})
+                    elif output_mode == "mitre_attack_gcp":
+                        file_descriptor = initialize_file_descriptor(
+                            filename,
+                            output_mode,
+                            MitreAttackGCP,
+                        )
+                        file_descriptors.update({output_mode: file_descriptor})
                     else:
                         file_descriptor = initialize_file_descriptor(
                             filename,
@@ -115,6 +126,13 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, provi
                             filename,
                             output_mode,
                             Check_Output_CSV_AZURE_CIS,
+                        )
+                        file_descriptors.update({output_mode: file_descriptor})
+                    elif output_mode == "mitre_attack_azure":
+                        file_descriptor = initialize_file_descriptor(
+                            filename,
+                            output_mode,
+                            MitreAttackAzure,
                         )
                         file_descriptors.update({output_mode: file_descriptor})
                     else:
@@ -170,7 +188,7 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, provi
                             file_descriptor = initialize_file_descriptor(
                                 filename,
                                 output_mode,
-                                Check_Output_MITRE_ATTACK,
+                                MitreAttackAWS,
                             )
                             file_descriptors.update({output_mode: file_descriptor})
 
@@ -182,14 +200,6 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, provi
                                 Check_Output_CSV_Generic_Compliance,
                             )
                             file_descriptors.update({output_mode: file_descriptor})
-                elif provider.type == "azure":
-                    filename = f"{output_directory}/compliance/{output_filename}_{output_mode}{csv_file_suffix}"
-                    file_descriptor = initialize_file_descriptor(
-                        filename,
-                        output_mode,
-                        Check_Output_CSV_Generic_Compliance,
-                    )
-                    file_descriptors.update({output_mode: file_descriptor})
 
     except Exception as error:
         logger.error(

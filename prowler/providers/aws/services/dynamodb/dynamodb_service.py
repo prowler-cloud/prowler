@@ -1,3 +1,4 @@
+import json
 from typing import Optional
 
 from botocore.client import ClientError
@@ -17,6 +18,7 @@ class DynamoDB(AWSService):
         self.__threading_call__(self.__list_tables__)
         self.__describe_table__()
         self.__describe_continuous_backups__()
+        self.__get_resource_policy__()
         self.__list_tags_for_resource__()
 
     def __list_tables__(self, regional_client):
@@ -91,6 +93,35 @@ class DynamoDB(AWSService):
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
+            )
+
+    def __get_resource_policy__(self):
+        logger.info("DynamoDB - Get Resource Policy...")
+        try:
+            for table in self.tables:
+                try:
+                    regional_client = self.regional_clients[table.region]
+                    response = regional_client.get_resource_policy(
+                        ResourceArn=table.arn
+                    )
+                    table.policy = json.loads(response["Policy"])
+                except ClientError as error:
+                    if error.response["Error"]["Code"] == "ResourceNotFoundException":
+                        logger.warning(
+                            f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+                    elif error.response["Error"]["Code"] == "PolicyNotFoundException":
+                        logger.warning(
+                            f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+                    else:
+                        logger.error(
+                            f"{regional_client.region} -- {error.__class__.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+                    continue
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
     def __list_tags_for_resource__(self):
@@ -186,6 +217,7 @@ class Table(BaseModel):
     encryption_type: Optional[str]
     kms_arn: Optional[str]
     pitr: bool = False
+    policy: Optional[dict] = None
     region: str
     tags: Optional[list] = []
 

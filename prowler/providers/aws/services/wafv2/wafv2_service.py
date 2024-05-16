@@ -29,6 +29,7 @@ class WAFv2(AWSService):
                             name=wafv2["Name"],
                             id=wafv2["Id"],
                             albs=[],
+                            user_pools=[],
                             region=regional_client.region,
                         )
                     )
@@ -73,6 +74,11 @@ class WAFv2(AWSService):
                     )["ResourceArns"]:
                         acl.albs.append(resource)
 
+                    for resource in regional_client.list_resources_for_web_acl(
+                        WebACLArn=acl.arn, ResourceType="COGNITO_USER_POOL"
+                    )["ResourceArns"]:
+                        acl.user_pools.append(resource)
+
                 except Exception as error:
                     logger.error(
                         f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -84,5 +90,6 @@ class WebAclv2(BaseModel):
     name: str
     id: str
     albs: list[str]
+    user_pools: list[str]
     region: str
     logging_enabled: bool = False

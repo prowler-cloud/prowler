@@ -189,7 +189,7 @@ class Test_Parser:
         assert not parsed.list_compliance
         assert not parsed.list_compliance_requirements
         assert not parsed.list_categories
-        assert not parsed.kubeconfig_file
+        assert parsed.kubeconfig_file == "~/.kube/config"
         assert not parsed.context
         assert not parsed.namespace
 
@@ -707,6 +707,12 @@ class Test_Parser:
 
     def test_list_checks_parser_list_fixers(self):
         argument = "--list-fixers"
+        command = [prowler_command, argument]
+        parsed = self.parser.parse(command)
+        assert parsed.list_fixer
+
+    def test_list_checks_parser_list_remediations(self):
+        argument = "--list-remediations"
         command = [prowler_command, argument]
         parsed = self.parser.parse(command)
         assert parsed.list_fixer

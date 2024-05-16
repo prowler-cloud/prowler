@@ -19,7 +19,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Check Identified IPs; Consider changing them to private ones and delete them from Shodan.",
+      "Text": "Check Identified IPs, Consider changing them to private ones and delete them from Shodan.",
       "Url": "https://www.shodan.io/"
     }
   },

@@ -191,9 +191,6 @@ class Test_iam_password_policy_uppercase:
         expiration=True,
     )
 
-    # We set a mocked aws_provider to unify providers, this way will isolate each test not to step on other tests configuration
-    aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
-
     # In this scenario we have to mock also the IAM service and the iam_client from the check to enforce    # that the iam_client used is the one created within this check because patch != import, and if you     # execute tests in parallel some objects can be already initialised hence the check won't be isolated.
     # In this case we don't use the Moto decorator, we use the mocked IAM client for both objects
     with mock.patch(
@@ -410,7 +407,7 @@ Then, at the check_level when Python tries to import the client with `from prowl
 
 ### Services
 
-For testing the AWS services we have to follow the same logic as with the AWS checks, we have to check if the AWS API calls made by the service are covered by Moto and we have to test the service `__init__` to verifiy that the information is being correctly retrieved.
+For testing the AWS services we have to follow the same logic as with the AWS checks, we have to check if the AWS API calls made by the service are covered by Moto and we have to test the service `__init__` to verify that the information is being correctly retrieved.
 
 The service tests could act as *Integration Tests* since we test how the service retrieves the information from the provider, but since Moto or the custom mock objects mocks that calls this test will fall into *Unit Tests*.
 

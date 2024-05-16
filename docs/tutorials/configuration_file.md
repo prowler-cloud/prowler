@@ -39,6 +39,7 @@ The following list includes all the AWS checks with configurable variables that 
 | `cloudtrail_threat_detection_enumeration`                      | `threat_detection_enumeration_entropy`      | Integer         |
 | `cloudtrail_threat_detection_enumeration`                      | `threat_detection_enumeration_minutes`      | Integer         |
 | `cloudtrail_threat_detection_enumeration`                      | `threat_detection_enumeration_actions`      | List of Strings         |
+| `rds_instance_backup_enabled`                                  | `check_rds_instance_replicas`      | Boolean        |
 ## Azure
 
 ### Configurable Checks
@@ -209,7 +210,7 @@ aws:
     "UpdateFunctionCode",
     "UpdateJob",
     "UpdateLoginProfile",
-]
+  ]
   # aws.cloudtrail_threat_detection_enumeration
   threat_detection_enumeration_entropy: 0.7 # Percentage of actions found to decide if it is an enumeration attack event, by default is 0.7 (70%)
   threat_detection_enumeration_minutes: 1440 # Past minutes to search from now for enumeration attacks, by default is 1440 minutes (24 hours)
@@ -304,7 +305,11 @@ aws:
     "ListUsers",
     "LookupEvents",
     "Search",
-]
+  ]
+
+  # aws.rds_instance_backup_enabled
+  # Whether to check RDS instance replicas or not
+  check_rds_instance_replicas: False
 
 # Azure Configuration
 azure:
