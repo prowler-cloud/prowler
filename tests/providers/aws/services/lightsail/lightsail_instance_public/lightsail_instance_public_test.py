@@ -83,7 +83,7 @@ class Test_lightsail_instance_public:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "Instance 'test-instance' has no public access"
+                == "Instance 'test-instance' is not publicly exposed."
             )
             assert result[0].resource_tags == []
             assert (
@@ -139,7 +139,7 @@ class Test_lightsail_instance_public:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Instance 'test-instance' has public access"
+                == "Instance 'test-instance' is publicly exposed. The open ports are: 80, 443"
             )
             assert result[0].resource_tags == []
             assert (
