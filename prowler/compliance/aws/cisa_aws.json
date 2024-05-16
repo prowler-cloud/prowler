@@ -134,7 +134,7 @@
         "vpc_endpoint_connections_trust_boundaries",
         "ec2_securitygroup_default_restrict_traffic",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
-        "ec2_securitygroup_allow_ingress_from_internet_to_any_port"
+        "ec2_securitygroup_allow_ingress_from_internet_to_all_ports"
       ]
     },
     {
@@ -297,7 +297,7 @@
         "vpc_flow_logs_enabled",
         "ec2_networkacl_allow_ingress_any_port",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
-        "ec2_securitygroup_allow_ingress_from_internet_to_any_port"
+        "ec2_securitygroup_allow_ingress_from_internet_to_all_ports"
       ]
     },
     {
