@@ -38,6 +38,10 @@ def mock_make_api_call(self, operation_name, kwarg):
                             "InCluster": True,
                         },
                     },
+                    "ClientAuthentication": {
+                        "Tls": {"CertificateAuthorityArnList": [], "Enabled": True},
+                        "Unauthenticated": {"Enabled": False},
+                    },
                     "EnhancedMonitoring": "DEFAULT",
                     "OpenMonitoring": {
                         "Prometheus": {
@@ -84,14 +88,19 @@ class TestKafkaService:
         assert kafka.clusters[cluster_arn].tags == []
         assert kafka.clusters[cluster_arn].state == "ACTIVE"
         assert kafka.clusters[cluster_arn].kafka_version == "2.2.1"
-        assert kafka.clusters[cluster_arn].encryption_at_rest == {
-            "DataVolumeKMSKeyId": f"arn:aws:kms:{AWS_REGION_US_EAST_1}:123456789012:key/a7ca56d5-0768-4b64-a670-339a9fbef81c"
-        }
-        assert kafka.clusters[cluster_arn].encryption_in_transit == {
-            "ClientBroker": "TLS_PLAINTEXT",
-            "InCluster": True,
-        }
+        assert (
+            kafka.clusters[cluster_arn].data_volume_kms_key_id
+            == f"arn:aws:kms:{AWS_REGION_US_EAST_1}:123456789012:key/a7ca56d5-0768-4b64-a670-339a9fbef81c"
+        )
+        assert (
+            kafka.clusters[cluster_arn].encryption_in_transit.client_broker
+            == "TLS_PLAINTEXT"
+        )
+        assert kafka.clusters[cluster_arn].encryption_in_transit.in_cluster
         assert kafka.clusters[cluster_arn].enhanced_monitoring == "DEFAULT"
+        assert kafka.clusters[cluster_arn].tls_authentication
+        assert kafka.clusters[cluster_arn].public_access
+        assert not kafka.clusters[cluster_arn].unauthentication_access
         # Kafka versions assertions
         assert len(kafka.kafka_versions) == 2
         assert kafka.kafka_versions[0].version == "1.0.0"

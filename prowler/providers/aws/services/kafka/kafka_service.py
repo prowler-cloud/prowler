@@ -37,12 +37,30 @@ class Kafka(AWSService):
                             kafka_version=cluster.get(
                                 "CurrentBrokerSoftwareInfo", {}
                             ).get("KafkaVersion", ""),
-                            encryption_at_rest=cluster.get("EncryptionInfo", {}).get(
-                                "EncryptionAtRest", {}
+                            data_volume_kms_key_id=cluster.get("EncryptionInfo", {})
+                            .get("EncryptionAtRest", {})
+                            .get("DataVolumeKMSKeyId", ""),
+                            encryption_in_transit=EncryptionInTransit(
+                                client_broker=cluster.get("EncryptionInfo", {})
+                                .get("EncryptionInTransit", {})
+                                .get("ClientBroker", "PLAINTEXT"),
+                                in_cluster=cluster.get("EncryptionInfo", {})
+                                .get("EncryptionInTransit", {})
+                                .get("InCluster", False),
                             ),
-                            encryption_in_transit=cluster.get("EncryptionInfo", {}).get(
-                                "EncryptionInTransit", {}
-                            ),
+                            tls_authentication=cluster.get("ClientAuthentication", {})
+                            .get("Tls", {})
+                            .get("Enabled", False),
+                            public_access=cluster.get("BrokerNodeGroupInfo", {})
+                            .get("ConenctivityInfo", {})
+                            .get("PublicAccess", {})
+                            .get("Type", "SERVICE_PROVIDED_EIPS")
+                            != "DISABLED",
+                            unauthentication_access=cluster.get(
+                                "ClientAuthentication", {}
+                            )
+                            .get("Unauthenticated", {})
+                            .get("Enabled", False),
                             enhanced_monitoring=cluster.get(
                                 "EnhancedMonitoring", "DEFAULT"
                             ),
@@ -72,6 +90,11 @@ class Kafka(AWSService):
             )
 
 
+class EncryptionInTransit(BaseModel):
+    client_broker: str
+    in_cluster: bool
+
+
 class Cluster(BaseModel):
     id: str
     name: str
@@ -79,8 +102,11 @@ class Cluster(BaseModel):
     tags: list
     kafka_version: str
     state: str
-    encryption_at_rest: dict
-    encryption_in_transit: dict
+    data_volume_kms_key_id: str
+    encryption_in_transit: EncryptionInTransit
+    tls_authentication: bool
+    public_access: bool
+    unauthentication_access: bool
     enhanced_monitoring: str
 
 

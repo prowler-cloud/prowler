@@ -1,6 +1,10 @@
 from unittest.mock import MagicMock, patch
 
-from prowler.providers.aws.services.kafka.kafka_service import Cluster, KafkaVersion
+from prowler.providers.aws.services.kafka.kafka_service import (
+    Cluster,
+    EncryptionInTransit,
+    KafkaVersion,
+)
 from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provider
 
 
@@ -35,13 +39,14 @@ class Test_kafka_cluster_latest_version:
                 tags=[],
                 state="ACTIVE",
                 kafka_version="2.2.1",
-                encryption_at_rest={
-                    "DataVolumeKMSKeyId": f"arn:aws:kms:{AWS_REGION_US_EAST_1}:123456789012:key/a7ca56d5-0768-4b64-a670-339a9fbef81c"
-                },
-                encryption_in_transit={
-                    "ClientBroker": "TLS_PLAINTEXT",
-                    "InCluster": True,
-                },
+                data_volume_kms_key_id=f"arn:aws:kms:{AWS_REGION_US_EAST_1}:123456789012:key/a7ca56d5-0768-4b64-a670-339a9fbef81c",
+                encryption_in_transit=EncryptionInTransit(
+                    client_broker="TLS_PLAINTEXT",
+                    in_cluster=True,
+                ),
+                tls_authentication=True,
+                public_access=True,
+                unauthentication_access=False,
                 enhanced_monitoring="DEFAULT",
             )
         }
@@ -89,13 +94,14 @@ class Test_kafka_cluster_latest_version:
                 tags=[],
                 state="ACTIVE",
                 kafka_version="2.8.0",
-                encryption_at_rest={
-                    "DataVolumeKMSKeyId": f"arn:aws:kms:{AWS_REGION_US_EAST_1}:123456789012:key/a7ca56d5-0768-4b64-a670-339a9fbef81c"
-                },
-                encryption_in_transit={
-                    "ClientBroker": "TLS_PLAINTEXT",
-                    "InCluster": True,
-                },
+                data_volume_kms_key_id=f"arn:aws:kms:{AWS_REGION_US_EAST_1}:123456789012:key/a7ca56d5-0768-4b64-a670-339a9fbef81c",
+                encryption_in_transit=EncryptionInTransit(
+                    client_broker="TLS_PLAINTEXT",
+                    in_cluster=True,
+                ),
+                tls_authentication=True,
+                public_access=True,
+                unauthentication_access=False,
                 enhanced_monitoring="DEFAULT",
             )
         }
