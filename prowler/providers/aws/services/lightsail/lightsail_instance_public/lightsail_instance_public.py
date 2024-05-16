@@ -12,15 +12,18 @@ class lightsail_instance_public(Check):
             report.resource_id = instance.id
             report.resource_arn = arn_instance
             report.resource_tags = instance.tags
-            report.status = "FAIL"
-            report.status_extended = f"Instance '{instance.name}' has public access"
-            if instance.public_ip == "" and not any(
-                port.access_type == "public" for port in instance.ports
-            ):
-                report.status = "PASS"
-                report.status_extended = (
-                    f"Instance '{instance.name}' has no public access"
-                )
+            report.status = "PASS"
+            report.status_extended = (
+                f"Instance '{instance.name}' is not publicly exposed."
+            )
+
+            open_public_ports = [
+                port for port in instance.ports if port.access_type == "public"
+            ]
+
+            if instance.public_ip != "" and len(open_public_ports) > 0:
+                report.status = "FAIL"
+                report.status_extended = f"Instance '{instance.name}' is publicly exposed. The open ports are: {', '.join(open_port.range for open_port in open_public_ports)}"
 
             findings.append(report)
 
