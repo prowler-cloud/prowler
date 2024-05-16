@@ -29,7 +29,7 @@ class Kafka(AWSService):
                         arn, self.audit_resources
                     ):
                         self.clusters[cluster.get("ClusterArn", "")] = Cluster(
-                            id=cluster["ClusterArn"].split(":")[-1].split("/")[-1],
+                            id=arn.split(":")[-1].split("/")[-1],
                             name=cluster.get("ClusterName", ""),
                             region=regional_client.region,
                             tags=list(cluster.get("Tags", {})),
