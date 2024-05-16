@@ -127,7 +127,6 @@ class EC2(AWSService):
                     ):
                         associated_sgs = []
                         # check if sg has public access to all ports
-                        all_public_ports = False
                         for ingress_rule in sg["IpPermissions"]:
                             # check associated security groups
                             for sg_group in ingress_rule.get("UserIdGroupPairs", []):
