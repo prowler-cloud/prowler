@@ -21,7 +21,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Change the database to private mode.",
+      "Text": "To upgrade your Amazon MSK cluster to the latest version, use the AWS Management Console, AWS CLI, or SDKs to update the cluster configuration. For more information, refer to the official Amazon MSK documentation.",
       "Url": "https://docs.aws.amazon.com/msk/latest/developerguide/version-support.html#version-upgrades"
     }
   },
