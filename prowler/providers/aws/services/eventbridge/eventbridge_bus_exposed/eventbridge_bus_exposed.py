@@ -22,7 +22,10 @@ class eventbridge_bus_exposed(Check):
                 for statement in bus.policy["Statement"]:
                     if (
                         "Principal" in statement
-                        and "*" == statement["Principal"]
+                        and (
+                            "*" == statement["Principal"]
+                            or "arn:aws:iam::*:root" in statement["Principal"]
+                        )
                         and "Condition" not in statement
                     ):
                         report.status = "FAIL"
@@ -35,7 +38,10 @@ class eventbridge_bus_exposed(Check):
                         else:
                             principals = statement["Principal"]["AWS"]
                         for principal_arn in principals:
-                            if principal_arn == "*" and "Condition" not in statement:
+                            if (
+                                principal_arn == "*"
+                                or principal_arn == "arn:aws:iam::*:root"
+                            ) and "Condition" not in statement:
                                 report.status = "FAIL"
                                 report.status_extended = f"EventBridge event bus {bus.name} is exposed to everyone."
             findings.append(report)
