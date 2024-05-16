@@ -3,7 +3,7 @@
   "CheckID": "ssm_documents_set_as_public",
   "CheckTitle": "Check if there are SSM Documents set as public.",
   "CheckType": [],
-  "ServiceName": "ssm",
+  "ServiceName": "SSM",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:ssm:region:account-id:document/document-name",
   "Severity": "high",

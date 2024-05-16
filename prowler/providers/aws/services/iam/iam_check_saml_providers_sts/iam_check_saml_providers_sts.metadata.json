@@ -7,8 +7,8 @@
     "Industry and Regulatory Standards",
     "CIS AWS Foundations Benchmark"
   ],
-  "ServiceName": "iam",
-  "SubServiceName": "",
+  "ServiceName": "IAM",
+  "SubServiceName": "AccessManagement",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "low",
   "ResourceType": "Other",

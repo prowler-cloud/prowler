@@ -6,8 +6,8 @@
     "Identify",
     "Logging"
   ],
-  "ServiceName": "opensearch",
-  "SubServiceName": "",
+  "ServiceName": "OpenSearch",
+  "SubServiceName": "Domains",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "high",
   "ResourceType": "AwsOpenSearchDomain",

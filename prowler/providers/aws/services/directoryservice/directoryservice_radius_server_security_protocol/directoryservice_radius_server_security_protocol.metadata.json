@@ -3,7 +3,7 @@
   "CheckID": "directoryservice_radius_server_security_protocol",
   "CheckTitle": "Ensure Radius server in DS is using the recommended security protocol.",
   "CheckType": [],
-  "ServiceName": "directoryservice",
+  "ServiceName": "DirectoryService",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:codeartifact:region:account-id:directory/directory-id",
   "Severity": "medium",

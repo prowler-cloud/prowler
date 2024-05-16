@@ -5,8 +5,8 @@
   "CheckType": [
     "IAM"
   ],
-  "ServiceName": "cloudfront",
-  "SubServiceName": "",
+  "ServiceName": "CloudFront",
+  "SubServiceName": "Distributions",
   "ResourceIdTemplate": "arn:partition:cloudfront:region:account-id:distribution/resource-id",
   "Severity": "medium",
   "ResourceType": "AwsCloudFrontDistribution",

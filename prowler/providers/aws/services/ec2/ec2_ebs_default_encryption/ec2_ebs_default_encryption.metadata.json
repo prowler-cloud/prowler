@@ -5,8 +5,8 @@
   "CheckType": [
     "Data Protection"
   ],
-  "ServiceName": "ec2",
-  "SubServiceName": "ebs",
+  "ServiceName": "EC2",
+  "SubServiceName": "EBS",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
   "ResourceType": "Other",

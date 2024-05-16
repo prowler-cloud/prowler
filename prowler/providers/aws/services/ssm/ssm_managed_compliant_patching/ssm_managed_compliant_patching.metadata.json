@@ -3,7 +3,7 @@
   "CheckID": "ssm_managed_compliant_patching",
   "CheckTitle": "Check if EC2 instances managed by Systems Manager are compliant with patching requirements.",
   "CheckType": [],
-  "ServiceName": "ssm",
+  "ServiceName": "SSM",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:ec2:region:account-id:instance/instance-id",
   "Severity": "high",

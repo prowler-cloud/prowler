@@ -5,7 +5,7 @@
   "CheckType": [
     "Infrastructure Security"
   ],
-  "ServiceName": "appstream",
+  "ServiceName": "AppStream",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:appstream:region:account-id:fleet/resource-id",
   "Severity": "medium",

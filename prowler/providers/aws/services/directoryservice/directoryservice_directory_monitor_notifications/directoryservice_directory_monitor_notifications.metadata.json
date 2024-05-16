@@ -3,7 +3,7 @@
   "CheckID": "directoryservice_directory_monitor_notifications",
   "CheckTitle": "Directory Service has SNS Notifications enabled.",
   "CheckType": [],
-  "ServiceName": "directoryservice",
+  "ServiceName": "DirectoryService",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:codeartifact:region:account-id:directory/directory-id",
   "Severity": "medium",

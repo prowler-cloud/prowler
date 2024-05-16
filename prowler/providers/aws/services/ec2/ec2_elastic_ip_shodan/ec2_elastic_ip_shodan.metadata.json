@@ -5,7 +5,7 @@
   "CheckType": [
     "Infrastructure Security"
   ],
-  "ServiceName": "ec2",
+  "ServiceName": "EC2",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "high",

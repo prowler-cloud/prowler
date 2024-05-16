@@ -5,8 +5,8 @@
   "CheckType": [
     "Logging and Monitoring"
   ],
-  "ServiceName": "wafv2",
-  "SubServiceName": "",
+  "ServiceName": "WAFv2",
+  "SubServiceName": "WebACL",
   "ResourceIdTemplate": "arn:partition:wafv2:region:account-id:webacl/webacl-id",
   "Severity": "medium",
   "ResourceType": "AwsWafv2WebAcl",

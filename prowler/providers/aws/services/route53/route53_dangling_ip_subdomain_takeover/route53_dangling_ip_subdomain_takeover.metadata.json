@@ -3,7 +3,7 @@
   "CheckID": "route53_dangling_ip_subdomain_takeover",
   "CheckTitle": "Check if Route53 Records contains dangling IPs.",
   "CheckType": [],
-  "ServiceName": "route53",
+  "ServiceName": "Route53",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

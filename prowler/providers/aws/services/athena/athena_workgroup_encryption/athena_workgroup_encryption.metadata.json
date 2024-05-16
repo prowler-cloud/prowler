@@ -5,7 +5,7 @@
   "CheckType": [
     "Software and Configuration Checks"
   ],
-  "ServiceName": "athena",
+  "ServiceName": "Athena",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:athena:region:account-id:workgroup/resource-id",
   "Severity": "medium",

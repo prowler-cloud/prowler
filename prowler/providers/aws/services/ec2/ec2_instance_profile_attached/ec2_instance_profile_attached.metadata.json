@@ -5,8 +5,8 @@
   "CheckType": [
     "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
   ],
-  "ServiceName": "ec2",
-  "SubServiceName": "",
+  "ServiceName": "EC2",
+  "SubServiceName": "Instance",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
   "ResourceType": "AwsEc2Instance",

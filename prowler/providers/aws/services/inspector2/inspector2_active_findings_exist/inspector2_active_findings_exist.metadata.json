@@ -6,7 +6,7 @@
     "inspector2_findings_exist"
   ],
   "CheckType": [],
-  "ServiceName": "inspector2",
+  "ServiceName": "Inspector2",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:inspector2:region:account-id/detector-id",
   "Severity": "medium",

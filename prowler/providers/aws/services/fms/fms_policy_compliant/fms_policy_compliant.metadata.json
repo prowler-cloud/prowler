@@ -3,7 +3,7 @@
   "CheckID": "fms_policy_compliant",
   "CheckTitle": "Ensure that all FMS policies inside an admin account are compliant",
   "CheckType": [],
-  "ServiceName": "fms",
+  "ServiceName": "FMS",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:fms:region:account-id:policy/policy",
   "Severity": "medium",

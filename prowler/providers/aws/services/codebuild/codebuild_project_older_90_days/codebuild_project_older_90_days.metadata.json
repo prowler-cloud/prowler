@@ -6,8 +6,8 @@
     "Software and Configuration Checks",
     "Industry and Regulatory Standards"
   ],
-  "ServiceName": "codebuild",
-  "SubServiceName": "",
+  "ServiceName": "CodeBuild",
+  "SubServiceName": "Projects",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
   "ResourceType": "AwsCodeBuildProject",

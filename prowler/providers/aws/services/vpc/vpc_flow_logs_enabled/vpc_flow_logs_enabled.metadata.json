@@ -5,8 +5,8 @@
   "CheckType": [
     "Logging and Monitoring"
   ],
-  "ServiceName": "vpc",
-  "SubServiceName": "flow_log",
+  "ServiceName": "VPC",
+  "SubServiceName": "FlowLogs",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
   "ResourceType": "AwsEc2Vpc",

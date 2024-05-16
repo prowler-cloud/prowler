@@ -3,7 +3,7 @@
   "CheckID": "wellarchitected_workload_no_high_or_medium_risks",
   "CheckTitle": "Check for medium and high risks identified in workloads defined in the AWS Well-Architected Tool.",
   "CheckType": [],
-  "ServiceName": "wellarchitected",
+  "ServiceName": "WellArchitected",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:wellarchitected:region:account-id:workload/workload-id",
   "Severity": "medium",

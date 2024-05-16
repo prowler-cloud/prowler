@@ -3,7 +3,7 @@
   "CheckID": "sagemaker_models_network_isolation_enabled",
   "CheckTitle": "Check if Amazon SageMaker Models have network isolation enabled",
   "CheckType": [],
-  "ServiceName": "sagemaker",
+  "ServiceName": "SageMaker",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:sagemaker:region:account-id:model",
   "Severity": "medium",

@@ -5,7 +5,7 @@
   "CheckType": [
     "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
   ],
-  "ServiceName": "glue",
+  "ServiceName": "Glue",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:glue:region:account-id:certificate/resource-id",
   "Severity": "medium",

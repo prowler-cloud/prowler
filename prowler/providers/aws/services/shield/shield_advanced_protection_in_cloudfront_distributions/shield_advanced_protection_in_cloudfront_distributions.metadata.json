@@ -3,7 +3,7 @@
   "CheckID": "shield_advanced_protection_in_cloudfront_distributions",
   "CheckTitle": "Check if Cloudfront distributions are protected by AWS Shield Advanced.",
   "CheckType": [],
-  "ServiceName": "shield",
+  "ServiceName": "Shield",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",

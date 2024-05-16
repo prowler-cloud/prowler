@@ -3,7 +3,7 @@
   "CheckID": "guardduty_is_enabled",
   "CheckTitle": "Check if GuardDuty is enabled",
   "CheckType": [],
-  "ServiceName": "guardduty",
+  "ServiceName": "GuardDuty",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:guardduty:region:account-id/detector-id",
   "Severity": "medium",

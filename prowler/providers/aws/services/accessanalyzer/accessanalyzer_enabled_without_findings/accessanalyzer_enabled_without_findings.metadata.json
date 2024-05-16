@@ -5,7 +5,7 @@
   "CheckType": [
     "IAM"
   ],
-  "ServiceName": "accessanalyzer",
+  "ServiceName": "AccessAnalyzer",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:access-analyzer:region:account-id:analyzer/resource-id",
   "Severity": "low",

@@ -7,8 +7,8 @@
     "Resilience",
     "Backup"
   ],
-  "ServiceName": "backup",
-  "SubServiceName": "",
+  "ServiceName": "Backup",
+  "SubServiceName": "Plans",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:backup-plan:backup-plan-id",
   "Severity": "low",
   "ResourceType": "AwsBackupBackupPlan",

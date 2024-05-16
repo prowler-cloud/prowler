@@ -5,8 +5,8 @@
   "CheckType": [
     "Data Protection"
   ],
-  "ServiceName": "s3",
-  "SubServiceName": "",
+  "ServiceName": "S3",
+  "SubServiceName": "Bucket",
   "ResourceIdTemplate": "arn:partition:s3:::bucket_name",
   "Severity": "low",
   "ResourceType": "AwsS3Bucket",

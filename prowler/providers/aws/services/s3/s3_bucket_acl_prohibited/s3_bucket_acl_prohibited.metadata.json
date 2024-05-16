@@ -5,8 +5,8 @@
   "CheckType": [
     "Logging and Monitoring"
   ],
-  "ServiceName": "s3",
-  "SubServiceName": "",
+  "ServiceName": "S3",
+  "SubServiceName": "Bucket",
   "ResourceIdTemplate": "arn:partition:s3:::bucket_name",
   "Severity": "medium",
   "ResourceType": "AwsS3Bucket",

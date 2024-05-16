@@ -5,7 +5,7 @@
   "CheckType": [
     "Logging and Monitoring"
   ],
-  "ServiceName": "securityhub",
+  "ServiceName": "SecurityHub",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:securityhub:region:account-id:hub/hub-id",
   "Severity": "medium",

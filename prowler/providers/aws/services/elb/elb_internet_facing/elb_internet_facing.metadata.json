@@ -5,7 +5,7 @@
   "CheckType": [
     "Data Protection"
   ],
-  "ServiceName": "elb",
+  "ServiceName": "ELB",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",

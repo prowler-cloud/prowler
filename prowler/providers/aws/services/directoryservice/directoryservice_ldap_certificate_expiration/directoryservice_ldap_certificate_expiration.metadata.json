@@ -3,7 +3,7 @@
   "CheckID": "directoryservice_ldap_certificate_expiration",
   "CheckTitle": "Directory Service LDAP Certificates expiration.",
   "CheckType": [],
-  "ServiceName": "directoryservice",
+  "ServiceName": "DirectoryService",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:codeartifact:region:account-id:directory/directory-id",
   "Severity": "medium",

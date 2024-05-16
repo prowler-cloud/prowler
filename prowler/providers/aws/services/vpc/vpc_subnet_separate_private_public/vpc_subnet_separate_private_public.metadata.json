@@ -5,8 +5,8 @@
   "CheckType": [
     "Infrastructure Security"
   ],
-  "ServiceName": "vpc",
-  "SubServiceName": "subnet",
+  "ServiceName": "VPC",
+  "SubServiceName": "Subnet",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
   "ResourceType": "AwsEc2Vpc",

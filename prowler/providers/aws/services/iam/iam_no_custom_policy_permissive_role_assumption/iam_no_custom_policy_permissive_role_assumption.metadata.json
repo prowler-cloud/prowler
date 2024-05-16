@@ -5,8 +5,8 @@
   "CheckType": [
     "Software and Configuration Checks"
   ],
-  "ServiceName": "iam",
-  "SubServiceName": "",
+  "ServiceName": "IAM",
+  "SubServiceName": "AccessManagement",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "critical",
   "ResourceType": "AwsIamPolicy",

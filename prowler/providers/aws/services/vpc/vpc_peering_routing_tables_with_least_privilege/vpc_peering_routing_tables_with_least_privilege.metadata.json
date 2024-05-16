@@ -5,8 +5,8 @@
   "CheckType": [
     "Infrastructure Security"
   ],
-  "ServiceName": "vpc",
-  "SubServiceName": "route_table",
+  "ServiceName": "VPC",
+  "SubServiceName": "RouteTable",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
   "ResourceType": "AwsEc2VpcPeeringConnection",

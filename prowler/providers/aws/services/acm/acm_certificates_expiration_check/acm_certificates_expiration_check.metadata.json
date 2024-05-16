@@ -5,7 +5,7 @@
   "CheckType": [
     "Data Protection"
   ],
-  "ServiceName": "acm",
+  "ServiceName": "ACM",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:acm:region:account-id:certificate/resource-id",
   "Severity": "high",

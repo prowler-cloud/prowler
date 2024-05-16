@@ -5,8 +5,8 @@
   "CheckType": [
     "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
   ],
-  "ServiceName": "cloudwatch",
-  "SubServiceName": "",
+  "ServiceName": "CloudWatch",
+  "SubServiceName": "Logs",
   "ResourceIdTemplate": "arn:partition:cloudwatch:region:account-id:certificate/resource-id",
   "Severity": "medium",
   "ResourceType": "AwsCloudTrailTrail",

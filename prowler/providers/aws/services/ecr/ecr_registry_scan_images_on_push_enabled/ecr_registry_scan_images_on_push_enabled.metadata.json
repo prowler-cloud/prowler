@@ -6,7 +6,7 @@
     "Identify",
     "Vulnerability, patch, and version management"
   ],
-  "ServiceName": "ecr",
+  "ServiceName": "ECR",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:ecr:region:account-id:resource-id",
   "Severity": "medium",
