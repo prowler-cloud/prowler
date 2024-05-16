@@ -4,7 +4,7 @@
   "CheckTitle": "Ensure that the --authorization-mode argument is not set to AlwaysAllow",
   "CheckType": [],
   "ServiceName": "APIServer",
-  "SubServiceName": "Authorization",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "KubernetesAPIServer",

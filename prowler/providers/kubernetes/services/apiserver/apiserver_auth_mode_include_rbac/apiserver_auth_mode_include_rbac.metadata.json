@@ -4,7 +4,7 @@
   "CheckTitle": "Ensure that the --authorization-mode argument includes RBAC",
   "CheckType": [],
   "ServiceName": "APIServer",
-  "SubServiceName": "Authorization",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "KubernetesAPIServer",

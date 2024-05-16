@@ -4,7 +4,7 @@
   "CheckTitle": "Ensure that the --audit-log-maxage argument is set to 30 or as appropriate",
   "CheckType": [],
   "ServiceName": "APIServer",
-  "SubServiceName": "AuditLog",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "KubernetesAPIServer",

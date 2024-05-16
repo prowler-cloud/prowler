@@ -4,7 +4,7 @@
   "CheckTitle": "Ensure that the --authorization-mode argument includes Node",
   "CheckType": [],
   "ServiceName": "APIServer",
-  "SubServiceName": "Authorization",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "KubernetesAPIServer",

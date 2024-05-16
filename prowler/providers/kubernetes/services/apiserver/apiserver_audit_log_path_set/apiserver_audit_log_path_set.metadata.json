@@ -4,7 +4,7 @@
   "CheckTitle": "Ensure that the --audit-log-path argument is set",
   "CheckType": [],
   "ServiceName": "APIServer",
-  "SubServiceName": "AuditLog",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "KubernetesAPIServer",
