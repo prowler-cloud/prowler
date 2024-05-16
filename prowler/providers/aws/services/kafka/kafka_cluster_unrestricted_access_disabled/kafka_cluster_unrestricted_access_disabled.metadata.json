@@ -1,0 +1,30 @@
+{
+  "Provider": "aws",
+  "CheckID": "kafka_cluster_unrestricted_access_disabled",
+  "CheckTitle": "Ensure Kafka Cluster is not publicly accessible",
+  "CheckType": [],
+  "ServiceName": "kafka",
+  "SubServiceName": "cluster",
+  "ResourceIdTemplate": "arn:partition:kafka:region:account-id:cluster",
+  "Severity": "high",
+  "ResourceType": "AWS::MSK::Cluster",
+  "Description": "Kafka Clusters should not be publicly accessible to prevent unauthorized access and potential data breaches.",
+  "Risk": "Publicly accessible Kafka Clusters can expose sensitive data and be targeted by malicious actors for data breaches or unauthorized modifications.",
+  "RelatedUrl": "https://docs.aws.amazon.com/msk/latest/developerguide/msk-configure-security.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws kafka update-security --region region_name --cluster-arn cluster_arn --current-version kafka_version_of_cluster --client-authentication 'Unauthenticated={Enabled=false}'",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/MSK/unrestricted-access-to-brokers.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "It is recommended to restrict access to Kafka Clusters to only authorized entities. Ensure that the Kafka Cluster's security settings are properly configured to prevent unauthorized access.",
+      "Url": "https://docs.aws.amazon.com/msk/latest/developerguide/security.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
