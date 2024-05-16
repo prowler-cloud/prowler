@@ -2,7 +2,7 @@ from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.kafka.kafka_client import kafka_client
 
 
-class kafka_cluster_use_latest_version(Check):
+class kafka_cluster_uses_latest_version(Check):
     def execute(self):
         findings = []
 

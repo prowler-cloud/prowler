@@ -20,11 +20,11 @@ class Test_kafka_cluster_latest_version:
             "prowler.providers.aws.services.kafka.kafka_service.Kafka",
             new=kafka_client,
         ):
-            from prowler.providers.aws.services.kafka.kafka_cluster_use_latest_version.kafka_cluster_use_latest_version import (
-                kafka_cluster_use_latest_version,
+            from prowler.providers.aws.services.kafka.kafka_cluster_uses_latest_version.kafka_cluster_uses_latest_version import (
+                kafka_cluster_uses_latest_version,
             )
 
-            check = kafka_cluster_use_latest_version()
+            check = kafka_cluster_uses_latest_version()
             result = check.execute()
 
             assert len(result) == 0
@@ -63,11 +63,11 @@ class Test_kafka_cluster_latest_version:
             "prowler.providers.aws.services.kafka.kafka_service.Kafka",
             new=kafka_client,
         ):
-            from prowler.providers.aws.services.kafka.kafka_cluster_use_latest_version.kafka_cluster_use_latest_version import (
-                kafka_cluster_use_latest_version,
+            from prowler.providers.aws.services.kafka.kafka_cluster_uses_latest_version.kafka_cluster_uses_latest_version import (
+                kafka_cluster_uses_latest_version,
             )
 
-            check = kafka_cluster_use_latest_version()
+            check = kafka_cluster_uses_latest_version()
             result = check.execute()
 
             assert len(result) == 1
@@ -118,11 +118,11 @@ class Test_kafka_cluster_latest_version:
             "prowler.providers.aws.services.kafka.kafka_service.Kafka",
             new=kafka_client,
         ):
-            from prowler.providers.aws.services.kafka.kafka_cluster_use_latest_version.kafka_cluster_use_latest_version import (
-                kafka_cluster_use_latest_version,
+            from prowler.providers.aws.services.kafka.kafka_cluster_uses_latest_version.kafka_cluster_uses_latest_version import (
+                kafka_cluster_uses_latest_version,
             )
 
-            check = kafka_cluster_use_latest_version()
+            check = kafka_cluster_uses_latest_version()
             result = check.execute()
 
             assert len(result) == 1

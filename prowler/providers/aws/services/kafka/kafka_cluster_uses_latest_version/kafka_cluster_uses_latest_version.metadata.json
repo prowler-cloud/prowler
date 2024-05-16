@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "kafka_cluster_use_latest_version",
+  "CheckID": "kafka_cluster_uses_latest_version",
   "CheckTitle": "MSK cluster should use the latest version.",
   "CheckType": [
     "Infrastructure Security"
