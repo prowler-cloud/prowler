@@ -150,6 +150,7 @@ class Lightsail(AWSService):
                             ),
                             ip_address=static_ip.get("ipAddress", ""),
                             is_attached=static_ip.get("isAttached", True),
+                            attached_to=static_ip.get("attachedTo", ""),
                         )
 
         except Exception as error:
@@ -200,3 +201,4 @@ class StaticIP(BaseModel):
     availability_zone: str
     ip_address: str
     is_attached: bool
+    attached_to: str

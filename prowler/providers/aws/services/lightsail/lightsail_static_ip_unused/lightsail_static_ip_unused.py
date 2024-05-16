@@ -19,9 +19,7 @@ class lightsail_static_ip_unused(Check):
 
             if static_ip.is_attached:
                 report.status = "PASS"
-                report.status_extended = (
-                    f"Static IP '{static_ip.name}' is associated with any instance."
-                )
+                report.status_extended = f"Static IP '{static_ip.name}' is associated with the instance '{static_ip.attached_to}'."
 
             findings.append(report)
 

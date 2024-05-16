@@ -40,6 +40,7 @@ class Test_lightsail_static_ip_unused:
                 availability_zone=AWS_REGION_US_EAST_1_AZA,
                 ip_address="1.2.3.4",
                 is_attached=False,
+                attached_to="",
             )
         }
 
@@ -81,6 +82,7 @@ class Test_lightsail_static_ip_unused:
                 availability_zone=AWS_REGION_US_EAST_1_AZA,
                 ip_address="1.2.3.4",
                 is_attached=True,
+                attached_to="test-instance",
             )
         }
 
@@ -102,7 +104,7 @@ class Test_lightsail_static_ip_unused:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "Static IP 'test-static-ip' is associated with any instance."
+                == "Static IP 'test-static-ip' is associated with the instance 'test-instance'."
             )
             assert result[0].resource_id == "1234/5678"
             assert (

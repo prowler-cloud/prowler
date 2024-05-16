@@ -367,3 +367,7 @@ class TestLightsailService:
         assert lightsail.static_ips[
             f"{BASE_LIGHTSAIL_ARN}:StaticIp/test-id"
         ].is_attached
+        assert (
+            lightsail.static_ips[f"{BASE_LIGHTSAIL_ARN}:StaticIp/test-id"].attached_to
+            == "test-id"
+        )
