@@ -3,7 +3,7 @@
   "CheckID": "keyvault_private_endpoints",
   "CheckTitle": "Ensure that Private Endpoints are Used for Azure Key Vault",
   "CheckType": [],
-  "ServiceName": "keyvault",
+  "ServiceName": "Keyvault",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

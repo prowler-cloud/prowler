@@ -3,7 +3,7 @@
   "CheckID": "sqlserver_va_periodic_recurring_scans_enabled",
   "CheckTitle": "Ensure that Vulnerability Assessment (VA) setting 'Periodic recurring scans' is set to 'on' for each SQL server",
   "CheckType": [],
-  "ServiceName": "sqlserver",
+  "ServiceName": "SQLServer",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",

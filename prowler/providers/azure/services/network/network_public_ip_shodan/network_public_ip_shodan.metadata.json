@@ -3,7 +3,7 @@
   "CheckID": "network_public_ip_shodan",
   "CheckTitle": "Check if an Azure Public IP is exposed in Shodan (requires Shodan API KEY).",
   "CheckType": [],
-  "ServiceName": "network",
+  "ServiceName": "Network",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

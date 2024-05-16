@@ -3,7 +3,7 @@
   "CheckID": "core_minimize_allowPrivilegeEscalation_containers",
   "CheckTitle": "Minimize the admission of containers with allowPrivilegeEscalation",
   "CheckType": [],
-  "ServiceName": "core",
+  "ServiceName": "Core",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

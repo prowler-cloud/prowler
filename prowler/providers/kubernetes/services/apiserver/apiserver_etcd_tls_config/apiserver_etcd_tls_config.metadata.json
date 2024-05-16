@@ -3,7 +3,7 @@
   "CheckID": "apiserver_etcd_tls_config",
   "CheckTitle": "Ensure that the --etcd-certfile and --etcd-keyfile arguments are set as appropriate",
   "CheckType": [],
-  "ServiceName": "apiserver",
+  "ServiceName": "APIServer",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

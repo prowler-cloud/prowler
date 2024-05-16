@@ -3,7 +3,7 @@
   "CheckID": "apiserver_kubelet_cert_auth",
   "CheckTitle": "Ensure that the --kubelet-certificate-authority argument is set as appropriate",
   "CheckType": [],
-  "ServiceName": "apiserver",
+  "ServiceName": "APIServer",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

@@ -3,7 +3,7 @@
   "CheckID": "app_http_logs_enabled",
   "CheckTitle": "Ensure that logging for Azure AppService 'HTTP logs' is enabled",
   "CheckType": [],
-  "ServiceName": "app",
+  "ServiceName": "App",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "low",

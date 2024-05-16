@@ -3,7 +3,7 @@
   "CheckID": "app_ensure_http_is_redirected_to_https",
   "CheckTitle": "Ensure Web App Redirects All HTTP traffic to HTTPS in Azure App Service",
   "CheckType": [],
-  "ServiceName": "app",
+  "ServiceName": "App",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",

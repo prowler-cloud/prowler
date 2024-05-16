@@ -3,7 +3,7 @@
   "CheckID": "kubelet_conf_file_permissions",
   "CheckTitle": "Ensure kubelet.conf file permissions are set to 600 or more restrictive",
   "CheckType": [],
-  "ServiceName": "kubelet",
+  "ServiceName": "Kubelet",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

@@ -3,7 +3,7 @@
   "CheckID": "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
   "CheckTitle": "Ensure Log Metric Filter and Alerts Exist for Project Ownership Assignments/Changes.",
   "CheckType": [],
-  "ServiceName": "logging",
+  "ServiceName": "Logging",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",

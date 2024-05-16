@@ -3,7 +3,7 @@
   "CheckID": "logging_sink_created",
   "CheckTitle": "Ensure there is at least one sink used to export copies of all the log entries.",
   "CheckType": [],
-  "ServiceName": "logging",
+  "ServiceName": "Logging",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",

@@ -3,7 +3,7 @@
   "CheckID": "sqlserver_tde_encryption_enabled",
   "CheckTitle": "Ensure SQL server's Transparent Data Encryption (TDE) protector is encrypted",
   "CheckType": [],
-  "ServiceName": "sqlserver",
+  "ServiceName": "SQLServer",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",

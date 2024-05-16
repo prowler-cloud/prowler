@@ -3,7 +3,7 @@
   "CheckID": "scheduler_profiling",
   "CheckTitle": "Ensure that the --profiling argument is set to false",
   "CheckType": [],
-  "ServiceName": "scheduler",
+  "ServiceName": "Scheduler",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",

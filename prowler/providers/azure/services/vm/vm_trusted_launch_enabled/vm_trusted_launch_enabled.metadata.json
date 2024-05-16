@@ -3,7 +3,7 @@
   "CheckID": "vm_trusted_launch_enabled",
   "CheckTitle": "Ensure Trusted Launch is enabled on Virtual Machines",
   "CheckType": [],
-  "ServiceName": "vm",
+  "ServiceName": "VM",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

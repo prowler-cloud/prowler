@@ -3,7 +3,7 @@
   "CheckID": "sqlserver_azuread_administrator_enabled",
   "CheckTitle": "Ensure that SQL Servers have an Azure Active Directory administrator",
   "CheckType": [],
-  "ServiceName": "sqlserver",
+  "ServiceName": "SQLServer",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",

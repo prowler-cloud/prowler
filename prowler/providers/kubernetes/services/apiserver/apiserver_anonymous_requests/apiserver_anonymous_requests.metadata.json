@@ -3,7 +3,7 @@
   "CheckID": "apiserver_anonymous_requests",
   "CheckTitle": "Ensure that the --anonymous-auth argument is set to false",
   "CheckType": [],
-  "ServiceName": "apiserver",
+  "ServiceName": "APIServer",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

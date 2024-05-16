@@ -5,7 +5,7 @@
   "CheckType": [
     "Infrastructure Security"
   ],
-  "ServiceName": "compute",
+  "ServiceName": "Compute",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

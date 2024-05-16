@@ -3,7 +3,7 @@
   "CheckID": "defender_ensure_iot_hub_defender_is_on",
   "CheckTitle": "Ensure That Microsoft Defender for IoT Hub Is Set To 'On'",
   "CheckType": [],
-  "ServiceName": "defender",
+  "ServiceName": "Defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

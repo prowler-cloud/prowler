@@ -3,7 +3,7 @@
   "CheckID": "kubelet_disable_read_only_port",
   "CheckTitle": "Verify that the kubelet --read-only-port argument is set to 0",
   "CheckType": [],
-  "ServiceName": "kubelet",
+  "ServiceName": "Kubelet",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

@@ -3,7 +3,7 @@
   "CheckID": "etcd_tls_encryption",
   "CheckTitle": "Ensure that the --cert-file and --key-file arguments are set as appropriate for etcd",
   "CheckType": [],
-  "ServiceName": "etcd",
+  "ServiceName": "Etcd",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

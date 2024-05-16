@@ -3,7 +3,7 @@
   "CheckID": "keyvault_logging_enabled",
   "CheckTitle": "Ensure that logging for Azure Key Vault is 'Enabled'",
   "CheckType": [],
-  "ServiceName": "keyvault",
+  "ServiceName": "Keyvault",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",

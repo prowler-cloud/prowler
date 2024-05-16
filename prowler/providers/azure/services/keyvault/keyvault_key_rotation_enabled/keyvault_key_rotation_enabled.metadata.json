@@ -3,7 +3,7 @@
   "CheckID": "keyvault_key_rotation_enabled",
   "CheckTitle": "Ensure Automatic Key Rotation is Enabled Within Azure Key Vault for the Supported Services",
   "CheckType": [],
-  "ServiceName": "keyvault",
+  "ServiceName": "Keyvault",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

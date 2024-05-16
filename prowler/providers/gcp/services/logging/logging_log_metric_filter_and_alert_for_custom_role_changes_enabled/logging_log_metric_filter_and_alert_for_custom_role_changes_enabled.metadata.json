@@ -3,7 +3,7 @@
   "CheckID": "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
   "CheckTitle": "Ensure That the Log Metric Filter and Alerts Exist for Custom Role Changes.",
   "CheckType": [],
-  "ServiceName": "logging",
+  "ServiceName": "Logging",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",

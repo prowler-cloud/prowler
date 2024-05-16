@@ -3,7 +3,7 @@
   "CheckID": "iam_role_sa_enforce_separation_of_duties",
   "CheckTitle": "Enforce Separation of Duties for Service-Account Related Roles",
   "CheckType": [],
-  "ServiceName": "iam",
+  "ServiceName": "IAM",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",

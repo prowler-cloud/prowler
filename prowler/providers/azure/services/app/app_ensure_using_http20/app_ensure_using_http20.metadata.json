@@ -3,7 +3,7 @@
   "CheckID": "app_ensure_using_http20",
   "CheckTitle": "Ensure that 'HTTP Version' is the Latest, if Used to Run the Web App",
   "CheckType": [],
-  "ServiceName": "app",
+  "ServiceName": "App",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "low",

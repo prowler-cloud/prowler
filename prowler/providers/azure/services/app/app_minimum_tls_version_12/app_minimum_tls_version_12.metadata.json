@@ -3,7 +3,7 @@
   "CheckID": "app_minimum_tls_version_12",
   "CheckTitle": "Ensure Web App is using the latest version of TLS encryption",
   "CheckType": [],
-  "ServiceName": "app",
+  "ServiceName": "App",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

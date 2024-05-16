@@ -3,7 +3,7 @@
   "CheckID": "core_minimize_hostIPC_containers",
   "CheckTitle": "Minimize the admission of containers wishing to share the host IPC namespace",
   "CheckType": [],
-  "ServiceName": "core",
+  "ServiceName": "Core",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

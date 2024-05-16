@@ -3,7 +3,7 @@
   "CheckID": "app_client_certificates_on",
   "CheckTitle": "Ensure the web app has 'Client Certificates (Incoming client certificates)' set to 'On'",
   "CheckType": [],
-  "ServiceName": "app",
+  "ServiceName": "App",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",

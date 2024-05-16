@@ -3,7 +3,7 @@
   "CheckID": "apiserver_strong_ciphers_only",
   "CheckTitle": "Ensure that the API Server only makes use of Strong Cryptographic Ciphers",
   "CheckType": [],
-  "ServiceName": "apiserver",
+  "ServiceName": "APIServer",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

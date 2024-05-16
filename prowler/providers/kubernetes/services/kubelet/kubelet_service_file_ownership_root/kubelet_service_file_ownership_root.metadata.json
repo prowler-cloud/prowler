@@ -3,7 +3,7 @@
   "CheckID": "kubelet_service_file_ownership_root",
   "CheckTitle": "Ensure that the kubelet service file ownership is set to root:root",
   "CheckType": [],
-  "ServiceName": "kubelet",
+  "ServiceName": "Kubelet",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

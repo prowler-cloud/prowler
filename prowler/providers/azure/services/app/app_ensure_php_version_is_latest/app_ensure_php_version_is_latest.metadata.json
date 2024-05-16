@@ -3,7 +3,7 @@
   "CheckID": "app_ensure_php_version_is_latest",
   "CheckTitle": "Ensure That 'PHP version' is the Latest, If Used to Run the Web App",
   "CheckType": [],
-  "ServiceName": "app",
+  "ServiceName": "App",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "low",

@@ -3,7 +3,7 @@
   "CheckID": "kubelet_client_ca_file_set",
   "CheckTitle": "Ensure that the kubelet --client-ca-file argument is set as appropriate",
   "CheckType": [],
-  "ServiceName": "kubelet",
+  "ServiceName": "Kubelet",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

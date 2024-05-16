@@ -3,7 +3,7 @@
   "CheckID": "apiserver_deny_service_external_ips",
   "CheckTitle": "Ensure that the DenyServiceExternalIPs is set",
   "CheckType": [],
-  "ServiceName": "apiserver",
+  "ServiceName": "APIServer",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",

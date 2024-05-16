@@ -3,7 +3,7 @@
   "CheckID": "apiserver_kubelet_tls_auth",
   "CheckTitle": "Ensure that the --kubelet-client-certificate and --kubelet-client-key arguments are set as appropriate",
   "CheckType": [],
-  "ServiceName": "apiserver",
+  "ServiceName": "APIServer",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

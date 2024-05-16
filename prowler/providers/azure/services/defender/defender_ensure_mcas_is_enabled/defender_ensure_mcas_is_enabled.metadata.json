@@ -3,7 +3,7 @@
   "CheckID": "defender_ensure_mcas_is_enabled",
   "CheckTitle": "Ensure that Microsoft Defender for Cloud Apps integration with Microsoft Defender for Cloud is Selected",
   "CheckType": [],
-  "ServiceName": "defender",
+  "ServiceName": "Defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",

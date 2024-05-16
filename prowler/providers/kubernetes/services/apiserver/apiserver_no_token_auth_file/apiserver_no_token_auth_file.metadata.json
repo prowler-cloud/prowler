@@ -3,7 +3,7 @@
   "CheckID": "apiserver_no_token_auth_file",
   "CheckTitle": "Ensure that the --token-auth-file parameter is not set",
   "CheckType": [],
-  "ServiceName": "apiserver",
+  "ServiceName": "APIServer",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

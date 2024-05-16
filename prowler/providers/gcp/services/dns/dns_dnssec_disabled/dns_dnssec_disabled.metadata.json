@@ -3,7 +3,7 @@
   "CheckID": "dns_dnssec_disabled",
   "CheckTitle": "Ensure That DNSSEC Is Enabled for Cloud DNS",
   "CheckType": [],
-  "ServiceName": "dns",
+  "ServiceName": "DNS",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",

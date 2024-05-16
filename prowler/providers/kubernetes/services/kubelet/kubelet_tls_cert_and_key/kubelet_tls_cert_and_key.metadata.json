@@ -3,7 +3,7 @@
   "CheckID": "kubelet_tls_cert_and_key",
   "CheckTitle": "Ensure that the kubelet TLS certificate and private key are set appropriately",
   "CheckType": [],
-  "ServiceName": "kubelet",
+  "ServiceName": "Kubelet",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

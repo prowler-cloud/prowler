@@ -3,7 +3,7 @@
   "CheckID": "kms_key_not_publicly_accessible",
   "CheckTitle": "Check for Publicly Accessible Cloud KMS Keys",
   "CheckType": [],
-  "ServiceName": "kms",
+  "ServiceName": "KMS",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

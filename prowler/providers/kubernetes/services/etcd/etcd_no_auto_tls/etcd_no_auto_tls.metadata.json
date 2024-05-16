@@ -3,7 +3,7 @@
   "CheckID": "etcd_no_auto_tls",
   "CheckTitle": "Ensure that the --auto-tls argument is not set to true for etcd",
   "CheckType": [],
-  "ServiceName": "etcd",
+  "ServiceName": "Etcd",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

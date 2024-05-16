@@ -3,7 +3,7 @@
   "CheckID": "apiserver_tls_config",
   "CheckTitle": "Ensure that the --tls-cert-file and --tls-private-key-file arguments are set as appropriate",
   "CheckType": [],
-  "ServiceName": "apiserver",
+  "ServiceName": "APIServer",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

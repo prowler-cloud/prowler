@@ -3,7 +3,7 @@
   "CheckID": "app_ftp_deployment_disabled",
   "CheckTitle": "Ensure FTP deployments are Disabled",
   "CheckType": [],
-  "ServiceName": "app",
+  "ServiceName": "App",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",

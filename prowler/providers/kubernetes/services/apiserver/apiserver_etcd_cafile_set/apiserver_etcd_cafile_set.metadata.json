@@ -3,7 +3,7 @@
   "CheckID": "apiserver_etcd_cafile_set",
   "CheckTitle": "Ensure that the --etcd-cafile argument is set as appropriate",
   "CheckType": [],
-  "ServiceName": "apiserver",
+  "ServiceName": "APIServer",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

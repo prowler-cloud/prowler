@@ -3,7 +3,7 @@
   "CheckID": "apiserver_event_rate_limit",
   "CheckTitle": "Ensure that the admission control plugin EventRateLimit is set",
   "CheckType": [],
-  "ServiceName": "apiserver",
+  "ServiceName": "APIServer",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",

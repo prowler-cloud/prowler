@@ -3,7 +3,7 @@
   "CheckID": "defender_ensure_wdatp_is_enabled",
   "CheckTitle": "Ensure that Microsoft Defender for Endpoint integration with Microsoft Defender for Cloud is selected",
   "CheckType": [],
-  "ServiceName": "defender",
+  "ServiceName": "Defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",

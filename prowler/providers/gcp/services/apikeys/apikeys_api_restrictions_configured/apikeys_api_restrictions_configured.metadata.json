@@ -3,7 +3,7 @@
   "CheckID": "apikeys_api_restrictions_configured",
   "CheckTitle": "Ensure API Keys Are Restricted to Only APIs That Application Needs Access",
   "CheckType": [],
-  "ServiceName": "apikeys",
+  "ServiceName": "APIKeys",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",

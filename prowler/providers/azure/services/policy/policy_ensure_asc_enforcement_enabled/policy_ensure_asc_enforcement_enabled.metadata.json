@@ -3,7 +3,7 @@
   "CheckID": "policy_ensure_asc_enforcement_enabled",
   "CheckTitle": "Ensure Any of the ASC Default Policy Settings are Not Set to 'Disabled'",
   "CheckType": [],
-  "ServiceName": "policy",
+  "ServiceName": "Policy",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",

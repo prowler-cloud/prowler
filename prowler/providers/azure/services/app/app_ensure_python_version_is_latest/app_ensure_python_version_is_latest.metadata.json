@@ -3,7 +3,7 @@
   "CheckID": "app_ensure_python_version_is_latest",
   "CheckTitle": "Ensure that 'Python version' is the Latest Stable Version, if Used to Run the Web App",
   "CheckType": [],
-  "ServiceName": "app",
+  "ServiceName": "App",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "low",

@@ -3,7 +3,7 @@
   "CheckID": "sqlserver_auditing_enabled",
   "CheckTitle": "Ensure that SQL Servers have an audit policy configured",
   "CheckType": [],
-  "ServiceName": "sqlserver",
+  "ServiceName": "SQLServer",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",

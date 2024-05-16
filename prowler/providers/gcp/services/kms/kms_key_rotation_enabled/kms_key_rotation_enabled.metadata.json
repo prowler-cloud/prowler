@@ -3,7 +3,7 @@
   "CheckID": "kms_key_rotation_enabled",
   "CheckTitle": "Ensure KMS keys are rotated within a period of 90 days",
   "CheckType": [],
-  "ServiceName": "kms",
+  "ServiceName": "KMS",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "low",

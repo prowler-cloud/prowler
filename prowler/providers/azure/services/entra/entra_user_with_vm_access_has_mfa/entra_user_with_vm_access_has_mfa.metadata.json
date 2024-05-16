@@ -3,7 +3,7 @@
   "CheckID": "entra_user_with_vm_access_has_mfa",
   "CheckTitle": "Ensure only MFA enabled identities can access privileged Virtual Machine",
   "CheckType": [],
-  "ServiceName": "iam",
+  "ServiceName": "IAM",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",

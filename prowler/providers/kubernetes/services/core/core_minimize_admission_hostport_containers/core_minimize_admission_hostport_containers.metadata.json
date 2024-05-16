@@ -3,7 +3,7 @@
   "CheckID": "core_minimize_admission_hostport_containers",
   "CheckTitle": "Minimize the admission of containers which use HostPorts",
   "CheckType": [],
-  "ServiceName": "core",
+  "ServiceName": "Core",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

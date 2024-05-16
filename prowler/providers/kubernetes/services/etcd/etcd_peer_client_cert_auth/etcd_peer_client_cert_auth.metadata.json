@@ -3,7 +3,7 @@
   "CheckID": "etcd_peer_client_cert_auth",
   "CheckTitle": "Ensure that the --peer-client-cert-auth argument is set to true for etcd",
   "CheckType": [],
-  "ServiceName": "etcd",
+  "ServiceName": "Etcd",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
