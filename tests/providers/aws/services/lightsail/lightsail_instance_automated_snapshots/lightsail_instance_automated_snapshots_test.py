@@ -24,11 +24,11 @@ class Test_lightsail_instance_automated_snapshots:
             "prowler.providers.aws.services.lightsail.lightsail_service.Lightsail",
             new=lightsail_client,
         ):
-            from prowler.providers.aws.services.lightsail.lightsail_instance_open_ports.lightsail_instance_open_ports import (
-                lightsail_instance_open_ports,
+            from prowler.providers.aws.services.lightsail.lightsail_instance_automated_snapshots.lightsail_instance_automated_snapshots import (
+                lightsail_instance_automated_snapshots,
             )
 
-            check = lightsail_instance_open_ports()
+            check = lightsail_instance_automated_snapshots()
             result = check.execute()
 
             assert len(result) == 0
