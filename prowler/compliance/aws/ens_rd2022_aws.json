@@ -2157,7 +2157,7 @@
         }
       ],
       "Checks": [
-        "ec2_securitygroup_allow_ingress_from_internet_to_any_port"
+        "ec2_securitygroup_allow_ingress_from_internet_to_all_ports"
       ]
     },
     {

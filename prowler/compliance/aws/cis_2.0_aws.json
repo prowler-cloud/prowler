@@ -1250,7 +1250,7 @@
       "Id": "5.2",
       "Description": "Ensure no security groups allow ingress from 0.0.0.0/0 to remote server administration ports",
       "Checks": [
-        "ec2_securitygroup_allow_ingress_from_internet_to_any_port",
+        "ec2_securitygroup_allow_ingress_from_internet_to_all_ports",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389"
       ],
@@ -1273,7 +1273,7 @@
       "Id": "5.3",
       "Description": "Ensure no security groups allow ingress from ::/0 to remote server administration ports",
       "Checks": [
-        "ec2_securitygroup_allow_ingress_from_internet_to_any_port",
+        "ec2_securitygroup_allow_ingress_from_internet_to_all_ports",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389"
       ],
