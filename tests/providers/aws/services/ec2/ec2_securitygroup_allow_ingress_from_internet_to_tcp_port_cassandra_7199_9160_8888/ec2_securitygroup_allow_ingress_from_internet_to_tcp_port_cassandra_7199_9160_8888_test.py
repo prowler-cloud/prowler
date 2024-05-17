@@ -261,3 +261,57 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert result[0].region == AWS_REGION_US_EAST_1
+
+    @mock_aws
+    def test_ec2_is_failed_check_when_no_findings(self):
+        # Mock AWS Resources
+        ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
+        ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
+
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
+
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1],
+        )
+
+        with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888.ec2_client",
+            new=EC2(aws_provider),
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888.vpc_client",
+            new=VPC(aws_provider),
+        ):
+            from prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888 import (
+                ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888,
+            )
+
+            check = (
+                ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888()
+            )
+            result = check.execute()
+
+            # Ensure that is_failed_check is False initially
+            security_group_id = result[0].resource_id
+            region = result[0].region
+            assert not EC2.is_failed_check(
+                ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888.__name__,
+                security_group_id,
+                region,
+            )
+
+            # Simulate a failed check
+            EC2.set_failed_check(
+                ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888.__name__,
+                security_group_id,
+                region,
+            )
+
+            # Ensure that is_failed_check returns True
+            assert EC2.is_failed_check(
+                ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888.__name__,
+                security_group_id,
+                region,
+            )
