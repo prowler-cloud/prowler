@@ -2,7 +2,6 @@ from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 from prowler.providers.aws.services.ec2.lib.security_groups import check_security_group
 from prowler.providers.aws.services.vpc.vpc_client import vpc_client
-from prowler.providers.aws.services.ec2.lib.state_manager import state_manager
 from prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_all_ports import (
     ec2_securitygroup_allow_ingress_from_internet_to_all_ports,
 )
@@ -30,7 +29,7 @@ class ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_sql_server_1433_
                 report.status = "PASS"
                 report.status_extended = f"Security group {security_group.name} ({security_group.id}) does not have Microsoft SQL Server ports 1433 and 1434 open to the Internet."
                 # only proceed if check "..._to_all_ports" did not run or did not FAIL to avoid to report open ports twice
-                if not state_manager.is_failed(
+                if not ec2_client.is_failed_check(
                     ec2_securitygroup_allow_ingress_from_internet_to_all_ports.__name__
                 ):
                     # Loop through every security group's ingress rule and check it

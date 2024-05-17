@@ -2,7 +2,6 @@ from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 from prowler.providers.aws.services.vpc.vpc_client import vpc_client
 from prowler.providers.aws.services.ec2.lib.security_groups import check_security_group
-from prowler.providers.aws.services.ec2.lib.state_manager import state_manager
 
 
 class ec2_securitygroup_allow_ingress_from_internet_to_all_ports(Check):
@@ -25,7 +24,7 @@ class ec2_securitygroup_allow_ingress_from_internet_to_all_ports(Check):
                 report.resource_tags = security_group.tags
                 for ingress_rule in security_group.ingress_rules:
                     if check_security_group(ingress_rule, "-1", any_address=True):
-                        state_manager.set_failed(self.__class__.__name__)
+                        ec2_client.set_failed_check(self.__class__.__name__)
                         report.status = "FAIL"
                         report.status_extended = f"Security group {security_group.name} ({security_group.id}) has all ports open to the Internet."
                         break

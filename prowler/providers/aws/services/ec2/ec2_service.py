@@ -11,6 +11,17 @@ from prowler.providers.aws.lib.service.service import AWSService
 
 ################## EC2
 class EC2(AWSService):
+    check_ids = set()
+
+    @classmethod
+    def set_failed_check(cls, check_id=None):
+        if check_id is not None:
+            cls.check_ids.add(check_id)
+
+    @classmethod
+    def is_failed_check(cls, check_id):
+        return check_id in cls.check_ids
+
     def __init__(self, provider):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
