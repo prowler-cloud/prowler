@@ -453,7 +453,7 @@ class TestMutelist:
         )
 
     def test_is_muted_exceptions_before_match(self):
-        # Allowlist example
+        # Mutelist example
         mutelist = {
             "Accounts": {
                 "*": {
