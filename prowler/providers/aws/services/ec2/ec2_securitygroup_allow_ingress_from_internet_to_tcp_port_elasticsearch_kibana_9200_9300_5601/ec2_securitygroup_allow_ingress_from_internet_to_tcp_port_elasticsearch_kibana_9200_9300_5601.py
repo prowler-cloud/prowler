@@ -42,6 +42,9 @@ class ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_elasticsearch_ki
                             report.status = "FAIL"
                             report.status_extended = f"Security group {security_group.name} ({security_group.id}) has Elasticsearch/Kibana ports 9200, 9300 and 5601 open to the Internet."
                             break
+                else:
+                    report.status_extended = f"Security group {security_group.name} ({security_group.id}) has all ports open to the Internet and therefore was not checked against the specific Elasticsearch/Kibana ports 9200, 9300 and 5601."
+
                 findings.append(report)
 
         return findings

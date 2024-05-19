@@ -40,6 +40,9 @@ class ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389(Check):
                             report.status = "FAIL"
                             report.status_extended = f"Security group {security_group.name} ({security_group.id}) has Microsoft RDP port 3389 open to the Internet."
                             break
+                else:
+                    report.status_extended = f"Security group {security_group.name} ({security_group.id}) has all ports open to the Internet and therefore was not checked against the specific Microsoft RDP port 3389."
+
                 findings.append(report)
 
         return findings

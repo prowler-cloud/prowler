@@ -42,6 +42,9 @@ class ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_mysql_3306(Check
                             report.resource_details = security_group.name
                             report.resource_id = security_group.id
                             break
+                else:
+                    report.status_extended = f"Security group {security_group.name} ({security_group.id}) has all ports open to the Internet and therefore was not checked against the specific MySQL port 3306."
+
                 findings.append(report)
 
         return findings

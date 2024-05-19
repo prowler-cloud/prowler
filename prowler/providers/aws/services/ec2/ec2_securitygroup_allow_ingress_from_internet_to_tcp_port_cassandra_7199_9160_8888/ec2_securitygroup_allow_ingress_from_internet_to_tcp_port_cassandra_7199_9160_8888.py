@@ -42,6 +42,9 @@ class ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9
                             report.status = "FAIL"
                             report.status_extended = f"Security group {security_group.name} ({security_group.id}) has Casandra ports 7199, 8888 and 9160 open to the Internet."
                             break
+                else:
+                    report.status_extended = f"Security group {security_group.name} ({security_group.id}) has all ports open to the Internet and therefore was not checked against the specific Cassandra ports 7199, 8888 and 9160."
+
                 findings.append(report)
 
         return findings

@@ -40,6 +40,9 @@ class ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_memcached_11211(
                             report.status = "FAIL"
                             report.status_extended = f"Security group {security_group.name} ({security_group.id}) has Memcached port 11211 open to the Internet."
                             break
+                else:
+                    report.status_extended = f"Security group {security_group.name} ({security_group.id}) has all ports open to the Internet and therefore was not checked against the specific Memcached port 11211."
+
                 findings.append(report)
 
         return findings

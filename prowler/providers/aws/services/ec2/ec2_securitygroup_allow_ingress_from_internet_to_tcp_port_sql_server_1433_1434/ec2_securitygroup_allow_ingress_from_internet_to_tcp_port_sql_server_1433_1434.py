@@ -42,6 +42,9 @@ class ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_sql_server_1433_
                             report.status = "FAIL"
                             report.status_extended = f"Security group {security_group.name} ({security_group.id}) has Microsoft SQL Server ports 1433 and 1434 open to the Internet."
                             break
+                else:
+                    report.status_extended = f"Security group {security_group.name} ({security_group.id}) has all ports open to the Internet and therefore was not checked against the specific Microsoft SQL Server ports 1433 and 1434."
+
                 findings.append(report)
 
         return findings

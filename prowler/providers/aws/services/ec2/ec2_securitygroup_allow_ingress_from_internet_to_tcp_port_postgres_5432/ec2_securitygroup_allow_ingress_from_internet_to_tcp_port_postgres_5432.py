@@ -40,6 +40,9 @@ class ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432(Ch
                             report.status = "FAIL"
                             report.status_extended = f"Security group {security_group.name} ({security_group.id}) has Postgres port 5432 open to the Internet."
                             break
+                else:
+                    report.status_extended = f"Security group {security_group.name} ({security_group.id}) has all ports open to the Internet and therefore was not checked against the specific Postgres port 5432."
+
                 findings.append(report)
 
         return findings

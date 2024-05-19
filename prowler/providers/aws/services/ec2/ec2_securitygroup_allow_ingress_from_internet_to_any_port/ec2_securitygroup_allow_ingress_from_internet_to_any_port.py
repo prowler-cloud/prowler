@@ -38,6 +38,9 @@ class ec2_securitygroup_allow_ingress_from_internet_to_any_port(Check):
                         ):
                             report.status = "FAIL"
                             report.status_extended = f"Security group {security_group.name} ({security_group.id}) has at least one port open to the Internet."
+                else:
+                    report.status_extended = f"Security group {security_group.name} ({security_group.id}) has all ports open to the Internet and therefore was not checked against a specific port."
+
                 findings.append(report)
 
         return findings
