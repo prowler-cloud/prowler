@@ -50,12 +50,6 @@ custom_checks_metadata_schema = {
                                             "type": "string",
                                         },
                                     },
-                                    "required": [
-                                        "CLI",
-                                        "NativeIaC",
-                                        "Other",
-                                        "Terraform",
-                                    ],
                                 },
                                 "Recommendation": {
                                     "type": "object",
@@ -67,11 +61,9 @@ custom_checks_metadata_schema = {
                                             "type": "string",
                                         },
                                     },
-                                    "required": ["Text", "Url"],
                                     "additionalProperties": False,
                                 },
                             },
-                            "required": ["Code", "Recommendation"],
                             "additionalProperties": False,
                         },
                     },
@@ -123,9 +115,40 @@ def update_check_metadata(check_metadata, custom_metadata):
     try:
         if custom_metadata:
             for attribute in custom_metadata:
-                try:
-                    setattr(check_metadata, attribute, custom_metadata[attribute])
-                except ValueError:
-                    pass
+                if attribute == "Remediation":
+                    for remediation_attribute in custom_metadata[attribute]:
+                        if remediation_attribute == "Code":
+                            for code_attribute in custom_metadata[attribute][
+                                remediation_attribute
+                            ]:
+                                try:
+                                    setattr(
+                                        check_metadata.Remediation.Code,
+                                        code_attribute,
+                                        custom_metadata[attribute][
+                                            remediation_attribute
+                                        ][code_attribute],
+                                    )
+                                except ValueError:
+                                    pass
+                        elif remediation_attribute == "Recommendation":
+                            for recommendation_attribute in custom_metadata[attribute][
+                                remediation_attribute
+                            ]:
+                                try:
+                                    setattr(
+                                        check_metadata.Remediation.Recommendation,
+                                        recommendation_attribute,
+                                        custom_metadata[attribute][
+                                            remediation_attribute
+                                        ][recommendation_attribute],
+                                    )
+                                except ValueError:
+                                    pass
+                else:
+                    try:
+                        setattr(check_metadata, attribute, custom_metadata[attribute])
+                    except ValueError:
+                        pass
     finally:
         return check_metadata

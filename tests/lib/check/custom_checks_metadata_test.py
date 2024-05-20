@@ -25,6 +25,14 @@ KUBERNETES_PROVIDER = "kubernetes"
 
 S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME = "s3_bucket_level_public_access_block"
 S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_SEVERITY = "medium"
+S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_REMEDIATION_TERRAFORM = (
+    "https://docs.prowler.com/checks/aws/s3-policies/bc_aws_s3_20#terraform"
+)
+S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_REMEDIATION_OTHER = "https://github.com/cloudmatos/matos/tree/master/remediations/aws/s3/s3/block-public-access"
+S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_REMEDIATION_TEXT = (
+    "Enable the S3 bucket level public access block."
+)
+S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_REMEDIATION_URL = "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html"
 
 
 class TestCustomChecksMetadata:
@@ -46,13 +54,13 @@ class TestCustomChecksMetadata:
             Remediation=Remediation(
                 Code=Code(
                     NativeIaC="",
-                    Terraform="https://docs.prowler.com/checks/aws/s3-policies/bc_aws_s3_20#terraform",
+                    Terraform=S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_REMEDIATION_TERRAFORM,
                     CLI="aws s3api put-public-access-block --region <REGION_NAME> --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true --bucket <BUCKET_NAME>",
-                    Other="https://github.com/cloudmatos/matos/tree/master/remediations/aws/s3/s3/block-public-access",
+                    Other=S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_REMEDIATION_OTHER,
                 ),
                 Recommendation=Recommendation(
-                    Text="You can enable Public Access Block at the bucket level to prevent the exposure of your data stored in S3.",
-                    Url="https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html",
+                    Text=S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_REMEDIATION_TEXT,
+                    Url=S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_REMEDIATION_URL,
                 ),
             ),
             Categories=[],
@@ -163,12 +171,6 @@ class TestCustomChecksMetadata:
         }
 
     def test_parse_custom_checks_metadata_file_for_kubernetes(self):
-        print(
-            parse_custom_checks_metadata_file(
-                KUBERNETES_PROVIDER, CUSTOM_CHECKS_METADATA_FIXTURE_FILE
-            )
-        )
-
         assert parse_custom_checks_metadata_file(
             KUBERNETES_PROVIDER, CUSTOM_CHECKS_METADATA_FIXTURE_FILE
         ) == {
@@ -224,6 +226,46 @@ class TestCustomChecksMetadata:
         ).get(S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME)
 
         assert bulk_checks_metadata_updated.Severity == updated_severity
+
+    def test_update_checks_metadata_one_field(self):
+        updated_terraform = (
+            "https://docs.prowler.com/checks/aws/s3-policies/bc_aws_s3_21/#terraform"
+        )
+        updated_text = "You can enable Public Access Block at the bucket level to prevent the exposure of your data stored in S3."
+        bulk_checks_metadata = {
+            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME: self.get_custom_check_metadata(),
+        }
+
+        custom_checks_metadata = {
+            "Checks": {
+                S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME: {
+                    "Remediation": {
+                        "Code": {"Terraform": updated_terraform},
+                        "Recommendation": {
+                            "Text": updated_text,
+                        },
+                    },
+                },
+            }
+        }
+
+        bulk_checks_metadata_updated = update_checks_metadata(
+            bulk_checks_metadata, custom_checks_metadata
+        ).get(S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME)
+        assert (
+            bulk_checks_metadata_updated.Remediation.Code.Terraform == updated_terraform
+        )
+        assert (
+            bulk_checks_metadata_updated.Remediation.Code.Other
+            == S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_REMEDIATION_OTHER
+        )
+        assert (
+            bulk_checks_metadata_updated.Remediation.Recommendation.Text == updated_text
+        )
+        assert (
+            bulk_checks_metadata_updated.Remediation.Recommendation.Url
+            == S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_REMEDIATION_URL
+        )
 
     def test_update_checks_metadata_not_present_field(self):
         bulk_checks_metadata = {
