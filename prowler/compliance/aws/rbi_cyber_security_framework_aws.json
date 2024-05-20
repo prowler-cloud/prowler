@@ -197,7 +197,6 @@
         "dynamodb_tables_pitr_enabled",
         "efs_have_backup_enabled",
         "rds_instance_backup_enabled",
-        "rds_instance_backup_enabled",
         "redshift_cluster_automated_snapshot",
         "s3_bucket_object_versioning"
       ]
