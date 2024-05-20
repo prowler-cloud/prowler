@@ -13,7 +13,7 @@
   "RelatedUrl": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/CWE_GettingStarted.html",
   "Remediation": {
     "Code": {
-      "CLI": "aws events remove-permission --statement-id aaaabbbb-aaaa-bbbb-cccc-1234567890123456789012345",
+      "CLI": "aws events remove-permission --event-bus-name <event_bus_name> --statement-id <statement_id>",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudWatchEvents/event-bus-exposed.html",
       "Terraform": ""

@@ -28,7 +28,7 @@ class EventBridge(AWSService):
                     is_resource_filtered(bus_arn, self.audit_resources)
                 ):
                     self.buses[bus_arn] = Bus(
-                        name=bus["Name"],
+                        name=bus.get("Name", ""),
                         arn=bus_arn,
                         region=regional_client.region,
                     )
@@ -107,13 +107,13 @@ class Schema(AWSService):
             for registry in regional_client.list_registries()["Registries"]:
                 registry_arn = registry.get(
                     "RegistryArn",
-                    f"arn:aws:schemas:{regional_client.region}:{self.audited_account}:registry/{registry['RegistryName']}",
+                    f"arn:aws:schemas:{regional_client.region}:{self.audited_account}:registry/{registry.get('RegistryName', '')}",
                 )
                 if not self.audit_resources or (
                     is_resource_filtered(registry_arn, self.audit_resources)
                 ):
                     self.registries[registry_arn] = Registry(
-                        name=registry["RegistryName"],
+                        name=registry.get("RegistryName", ""),
                         arn=registry_arn,
                         region=regional_client.region,
                         tags=[registry["Tags"]],
