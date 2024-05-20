@@ -1,4 +1,3 @@
-from re import search
 from unittest import mock
 
 import botocore
@@ -47,7 +46,7 @@ class Test_rds_snapshots_public_access:
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
             with mock.patch(
@@ -85,7 +84,7 @@ class Test_rds_snapshots_public_access:
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
             with mock.patch(
@@ -102,9 +101,9 @@ class Test_rds_snapshots_public_access:
 
                 assert len(result) == 1
                 assert result[0].status == "PASS"
-                assert search(
-                    "is not shared",
-                    result[0].status_extended,
+                assert (
+                    result[0].status_extended
+                    == "RDS Instance Snapshot snapshot-1 is not shared."
                 )
                 assert result[0].resource_id == "snapshot-1"
 
@@ -129,7 +128,7 @@ class Test_rds_snapshots_public_access:
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
             with mock.patch(
@@ -147,9 +146,9 @@ class Test_rds_snapshots_public_access:
 
                 assert len(result) == 1
                 assert result[0].status == "FAIL"
-                assert search(
-                    "is public",
-                    result[0].status_extended,
+                assert (
+                    result[0].status_extended
+                    == "RDS Instance Snapshot snapshot-1 is public."
                 )
                 assert result[0].resource_id == "snapshot-1"
                 assert result[0].region == AWS_REGION_US_EAST_1
@@ -180,7 +179,7 @@ class Test_rds_snapshots_public_access:
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
             with mock.patch(
@@ -197,9 +196,9 @@ class Test_rds_snapshots_public_access:
 
                 assert len(result) == 1
                 assert result[0].status == "PASS"
-                assert search(
-                    "is not shared",
-                    result[0].status_extended,
+                assert (
+                    result[0].status_extended
+                    == "RDS Cluster Snapshot snapshot-1 is not shared."
                 )
                 assert result[0].resource_id == "snapshot-1"
                 assert result[0].region == AWS_REGION_US_EAST_1
@@ -230,7 +229,7 @@ class Test_rds_snapshots_public_access:
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
             with mock.patch(
@@ -248,9 +247,9 @@ class Test_rds_snapshots_public_access:
 
                 assert len(result) == 1
                 assert result[0].status == "FAIL"
-                assert search(
-                    "is public",
-                    result[0].status_extended,
+                assert (
+                    result[0].status_extended
+                    == "RDS Cluster Snapshot snapshot-1 is public."
                 )
                 assert result[0].resource_id == "snapshot-1"
                 assert result[0].region == AWS_REGION_US_EAST_1

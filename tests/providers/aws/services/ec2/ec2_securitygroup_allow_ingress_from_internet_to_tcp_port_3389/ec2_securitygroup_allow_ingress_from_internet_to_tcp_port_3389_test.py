@@ -25,7 +25,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389:
         )
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389.ec2_client",
@@ -63,7 +63,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389:
         )
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389.ec2_client",
@@ -103,7 +103,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389:
         )
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389.ec2_client",
@@ -153,7 +153,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389:
         )
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389.ec2_client",
@@ -217,7 +217,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389:
         )
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389.ec2_client",

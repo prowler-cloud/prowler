@@ -14,7 +14,7 @@ class Test_monitor_alert_delete_policy_assignment:
         monitor_client.alert_rules = {}
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
             "prowler.providers.azure.services.monitor.monitor_alert_delete_policy_assignment.monitor_alert_delete_policy_assignment.monitor_client",
@@ -32,7 +32,7 @@ class Test_monitor_alert_delete_policy_assignment:
         monitor_client = mock.MagicMock
         monitor_client.alert_rules = {AZURE_SUBSCRIPTION_ID: []}
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
             "prowler.providers.azure.services.monitor.monitor_alert_delete_policy_assignment.monitor_alert_delete_policy_assignment.monitor_client",
@@ -58,7 +58,7 @@ class Test_monitor_alert_delete_policy_assignment:
         monitor_client = mock.MagicMock
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
             "prowler.providers.azure.services.monitor.monitor_alert_delete_policy_assignment.monitor_alert_delete_policy_assignment.monitor_client",

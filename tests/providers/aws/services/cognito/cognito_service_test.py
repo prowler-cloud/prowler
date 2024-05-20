@@ -117,7 +117,7 @@ class Test_Cognito_Service:
         )
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_aws_provider(),
         ), mock.patch(
             "prowler.providers.aws.services.cognito.cognito_idp_client.cognito_idp_client",
@@ -164,7 +164,7 @@ class Test_Cognito_Service:
         )
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_aws_provider(),
         ), mock.patch(
             "prowler.providers.aws.services.cognito.cognito_idp_client.cognito_idp_client",
@@ -251,7 +251,7 @@ class Test_Cognito_Service:
         )
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_aws_provider(),
         ), mock.patch(
             "prowler.providers.aws.services.cognito.cognito_idp_client.cognito_idp_client",
@@ -382,7 +382,7 @@ class Test_Cognito_Service:
         )
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_aws_provider(),
         ), mock.patch(
             "prowler.providers.aws.services.cognito.cognito_identity_client.cognito_identity_client",

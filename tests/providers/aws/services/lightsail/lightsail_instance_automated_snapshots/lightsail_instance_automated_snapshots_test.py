@@ -18,7 +18,7 @@ class Test_lightsail_instance_automated_snapshots:
         lightsail_client.instances = {}
 
         with patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
         ), patch(
             "prowler.providers.aws.services.lightsail.lightsail_service.Lightsail",
@@ -66,7 +66,7 @@ class Test_lightsail_instance_automated_snapshots:
         }
 
         with patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
         ), patch(
             "prowler.providers.aws.services.lightsail.lightsail_service.Lightsail",
@@ -125,7 +125,7 @@ class Test_lightsail_instance_automated_snapshots:
         }
 
         with patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
         ), patch(
             "prowler.providers.aws.services.lightsail.lightsail_service.Lightsail",

@@ -29,7 +29,7 @@ class Test_organizations_scp_check_deny_regions:
             "organizations_enabled_regions": [AWS_REGION_EU_WEST_1]
         }
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
             with mock.patch(
@@ -66,7 +66,7 @@ class Test_organizations_scp_check_deny_regions:
         response = conn.create_organization()
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
             with mock.patch(
@@ -110,7 +110,7 @@ class Test_organizations_scp_check_deny_regions:
         aws_provider._audit_config = {"organizations_enabled_regions": ["eu-central-1"]}
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
             with mock.patch(
@@ -154,7 +154,7 @@ class Test_organizations_scp_check_deny_regions:
         aws_provider._audit_config = {"organizations_enabled_regions": ["us-east-1"]}
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
             with mock.patch(
@@ -203,7 +203,7 @@ class Test_organizations_scp_check_deny_regions:
         aws_provider._audit_config = {"organizations_enabled_regions": ["eu-central-1"]}
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
             with mock.patch(
