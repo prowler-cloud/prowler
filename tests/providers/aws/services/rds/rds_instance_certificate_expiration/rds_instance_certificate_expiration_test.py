@@ -1,9 +1,10 @@
-from datetime import UTC, datetime
+from datetime import datetime
 from unittest import mock
 
 import botocore
 from dateutil import relativedelta
 from moto import mock_aws
+from pytz import utc
 
 from prowler.providers.aws.services.rds.rds_service import DBInstance
 
@@ -55,9 +56,9 @@ class Test_rds_instance_certificate_expiration:
     @mock_aws
     def test_rds_certificate_expired(self):
 
-        valid_from = datetime.now(UTC) - relativedelta.relativedelta(months=7)
-        valid_till = datetime.now(UTC) - relativedelta.relativedelta(months=7)
-        customer_override_valid = datetime.now(UTC) - relativedelta.relativedelta(
+        valid_from = datetime.now(utc) - relativedelta.relativedelta(months=7)
+        valid_till = datetime.now(utc) - relativedelta.relativedelta(months=7)
+        customer_override_valid = datetime.now(utc) - relativedelta.relativedelta(
             months=7
         )
 
@@ -123,9 +124,9 @@ class Test_rds_instance_certificate_expiration:
     @mock_aws
     def test_rds_certificate_not_expired(self):
 
-        valid_from = datetime.now(UTC) - relativedelta.relativedelta(months=7)
-        valid_till = datetime.now(UTC) + relativedelta.relativedelta(months=7)
-        customer_override_valid = datetime.now(UTC) + relativedelta.relativedelta(
+        valid_from = datetime.now(utc) - relativedelta.relativedelta(months=7)
+        valid_till = datetime.now(utc) + relativedelta.relativedelta(months=7)
+        customer_override_valid = datetime.now(utc) + relativedelta.relativedelta(
             months=7
         )
 
@@ -190,9 +191,9 @@ class Test_rds_instance_certificate_expiration:
 
     @mock_aws
     def test_rds_certificate_between_three_and_six_months(self):
-        valid_from = datetime.now(UTC) - relativedelta.relativedelta(months=7)
-        valid_till = datetime.now(UTC) + relativedelta.relativedelta(months=4)
-        customer_override_valid = datetime.now(UTC) + relativedelta.relativedelta(
+        valid_from = datetime.now(utc) - relativedelta.relativedelta(months=7)
+        valid_till = datetime.now(utc) + relativedelta.relativedelta(months=4)
+        customer_override_valid = datetime.now(utc) + relativedelta.relativedelta(
             months=4
         )
 
@@ -257,9 +258,9 @@ class Test_rds_instance_certificate_expiration:
 
     @mock_aws
     def test_rds_certificate_less_than_three_months(self):
-        valid_from = datetime.now(UTC) - relativedelta.relativedelta(months=7)
-        valid_till = datetime.now(UTC) + relativedelta.relativedelta(months=3)
-        customer_override_valid = datetime.now(UTC) + relativedelta.relativedelta(
+        valid_from = datetime.now(utc) - relativedelta.relativedelta(months=7)
+        valid_till = datetime.now(utc) + relativedelta.relativedelta(months=3)
+        customer_override_valid = datetime.now(utc) + relativedelta.relativedelta(
             months=3
         )
 
@@ -324,9 +325,9 @@ class Test_rds_instance_certificate_expiration:
 
     @mock_aws
     def test_custom_rds_certificate_over_six_months(self):
-        valid_from = datetime.now(UTC) - relativedelta.relativedelta(months=7)
-        valid_till = datetime.now(UTC) + relativedelta.relativedelta(months=7)
-        customer_override_valid = datetime.now(UTC) + relativedelta.relativedelta(
+        valid_from = datetime.now(utc) - relativedelta.relativedelta(months=7)
+        valid_till = datetime.now(utc) + relativedelta.relativedelta(months=7)
+        customer_override_valid = datetime.now(utc) + relativedelta.relativedelta(
             months=7
         )
 
@@ -391,9 +392,9 @@ class Test_rds_instance_certificate_expiration:
 
     @mock_aws
     def test_custom_rds_certificate_between_three_and_six_months(self):
-        valid_from = datetime.now(UTC) - relativedelta.relativedelta(months=7)
-        valid_till = datetime.now(UTC) + relativedelta.relativedelta(months=4)
-        customer_override_valid = datetime.now(UTC) + relativedelta.relativedelta(
+        valid_from = datetime.now(utc) - relativedelta.relativedelta(months=7)
+        valid_till = datetime.now(utc) + relativedelta.relativedelta(months=4)
+        customer_override_valid = datetime.now(utc) + relativedelta.relativedelta(
             months=4
         )
 
@@ -458,9 +459,9 @@ class Test_rds_instance_certificate_expiration:
 
     @mock_aws
     def test_custom_rds_certificate_less_than_three_months(self):
-        valid_from = datetime.now(UTC) - relativedelta.relativedelta(months=7)
-        valid_till = datetime.now(UTC) + relativedelta.relativedelta(months=3)
-        customer_override_valid = datetime.now(UTC) + relativedelta.relativedelta(
+        valid_from = datetime.now(utc) - relativedelta.relativedelta(months=7)
+        valid_till = datetime.now(utc) + relativedelta.relativedelta(months=3)
+        customer_override_valid = datetime.now(utc) + relativedelta.relativedelta(
             months=3
         )
 
@@ -525,9 +526,9 @@ class Test_rds_instance_certificate_expiration:
 
     @mock_aws
     def test_custom_rds_certificate_less_than_one_month(self):
-        valid_from = datetime.now(UTC) - relativedelta.relativedelta(months=7)
-        valid_till = datetime.now(UTC) + relativedelta.relativedelta(weeks=2)
-        customer_override_valid = datetime.now(UTC) + relativedelta.relativedelta(
+        valid_from = datetime.now(utc) - relativedelta.relativedelta(months=7)
+        valid_till = datetime.now(utc) + relativedelta.relativedelta(weeks=2)
+        customer_override_valid = datetime.now(utc) + relativedelta.relativedelta(
             weeks=2
         )
 
@@ -592,9 +593,9 @@ class Test_rds_instance_certificate_expiration:
 
     @mock_aws
     def test_custom_rds_certificate_expired(self):
-        valid_from = datetime.now(UTC) - relativedelta.relativedelta(months=7)
-        valid_till = datetime.now(UTC) - relativedelta.relativedelta(months=7)
-        customer_override_valid = datetime.now(UTC) - relativedelta.relativedelta(
+        valid_from = datetime.now(utc) - relativedelta.relativedelta(months=7)
+        valid_till = datetime.now(utc) - relativedelta.relativedelta(months=7)
+        customer_override_valid = datetime.now(utc) - relativedelta.relativedelta(
             months=7
         )
 
