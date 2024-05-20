@@ -15,7 +15,7 @@ from prowler.lib.outputs.utils import parse_html_string, unroll_dict
 from prowler.lib.utils.utils import open_file
 
 
-def add_html_header(file_descriptor, provider, parameters):
+def add_html_header(file_descriptor, provider):
     try:
         file_descriptor.write(
             f"""
@@ -71,7 +71,7 @@ def add_html_header(file_descriptor, provider, parameters):
                 </div>
                 </li>
                 <li class="list-group-item">
-                <b>Parameters used:</b> {" ".join(parameters)}
+                <b>Parameters used:</b> {" ".join(sys.argv[1:])}
                 </li>
                 <li class="list-group-item">
                 <b>Date:</b> {timestamp.isoformat()}

@@ -44,7 +44,7 @@ class Test_Parser:
         parsed = self.parser.parse(command)
         assert parsed.provider == provider
         assert not parsed.status
-        assert len(parsed.output_formats) == 2
+        assert len(parsed.output_formats) == 3
         assert "csv" in parsed.output_formats
         assert "json-ocsf" in parsed.output_formats
         assert "html" in parsed.output_formats
@@ -91,7 +91,7 @@ class Test_Parser:
         parsed = self.parser.parse(command)
         assert parsed.provider == provider
         assert not parsed.status
-        assert len(parsed.output_formats) == 2
+        assert len(parsed.output_formats) == 3
         assert "csv" in parsed.output_formats
         assert "json-ocsf" in parsed.output_formats
         assert "html" in parsed.output_formats
@@ -131,7 +131,7 @@ class Test_Parser:
         parsed = self.parser.parse(command)
         assert parsed.provider == provider
         assert not parsed.status
-        assert len(parsed.output_formats) == 2
+        assert len(parsed.output_formats) == 3
         assert "csv" in parsed.output_formats
         assert "json-ocsf" in parsed.output_formats
         assert "html" in parsed.output_formats
@@ -166,7 +166,7 @@ class Test_Parser:
         parsed = self.parser.parse(command)
         assert parsed.provider == provider
         assert not parsed.severity
-        assert len(parsed.output_formats) == 2
+        assert len(parsed.output_formats) == 3
         assert "csv" in parsed.output_formats
         assert "json-ocsf" in parsed.output_formats
         assert "html" in parsed.output_formats
