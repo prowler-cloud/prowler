@@ -3,7 +3,7 @@ from os.path import isdir
 
 from pydantic import BaseModel
 
-from prowler.config.config import update_provider_config
+from prowler.providers.common.provider import Provider
 
 
 # TODO: include this for all the providers
@@ -39,7 +39,13 @@ class ProviderOutputOptions:
 
         # Shodan API Key
         if arguments.shodan:
-            update_provider_config("shodan_api_key", arguments.shodan)
+            # TODO: revisit this logic
+            provider = Provider.get_global_provider()
+            updated_audit_config = Provider.update_provider_config(
+                provider.audit_config, "shodan_api_key", arguments.shodan
+            )
+            if updated_audit_config:
+                provider._audit_config = updated_audit_config
 
         # Check output directory, if it is not created -> create it
         if arguments.output_directory and not self.fixer:

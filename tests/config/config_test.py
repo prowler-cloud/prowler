@@ -10,10 +10,8 @@ from prowler.config.config import (
     get_available_compliance_frameworks,
     load_and_validate_config_file,
     load_and_validate_fixer_config_file,
-    update_provider_config,
 )
 from prowler.providers.aws.aws_provider import get_aws_available_regions
-from tests.providers.aws.utils import set_mocked_aws_provider
 
 MOCK_PROWLER_VERSION = "3.3.0"
 MOCK_OLD_PROWLER_VERSION = "0.0.0"
@@ -89,31 +87,6 @@ class Test_Config:
             check_current_version()
             == f"Prowler {MOCK_OLD_PROWLER_VERSION} (latest is {MOCK_PROWLER_VERSION}, upgrade for the latest features)"
         )
-
-    def test_update_provider_config_aws(self):
-        aws_provider = set_mocked_aws_provider(
-            audit_config={"shodan_api_key": "DEFAULT-KEY"}
-        )
-
-        with mock.patch(
-            "prowler.config.config.get_global_provider",
-            return_value=aws_provider,
-        ):
-            update_provider_config("shodan_api_key", "TEST-API-KEY")
-            assert aws_provider.audit_config.get("shodan_api_key") == "TEST-API-KEY"
-
-    def test_update_provider_config_aws_not_present(self):
-        aws_provider = set_mocked_aws_provider(
-            audit_config={"shodan_api_key": "DEFAULT-KEY"}
-        )
-
-        with mock.patch(
-            "prowler.config.config.get_global_provider",
-            return_value=aws_provider,
-        ):
-
-            update_provider_config("not_found", "no_value")
-            assert aws_provider.audit_config.get("not_found") is None
 
     def test_get_available_compliance_frameworks(self):
         compliance_frameworks = [
