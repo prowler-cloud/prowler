@@ -67,3 +67,4 @@ def is_policy_public(policy: dict) -> bool:
                         principal_arn == "*" or principal_arn == "arn:aws:iam::*:root"
                     ) and "Condition" not in statement:
                         return True
+    return False
