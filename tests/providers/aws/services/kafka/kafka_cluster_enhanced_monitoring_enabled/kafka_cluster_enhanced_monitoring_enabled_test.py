@@ -78,7 +78,7 @@ class Test_kafka_cluster_enhanced_monitoring_enabled:
             assert result[0].resource_tags == []
             assert result[0].region == AWS_REGION_US_EAST_1
 
-    def test_kafka_cluster_using_latest_version_pass(self):
+    def test_kafka_cluster_per_broker_monitoring(self):
         kafka_client = MagicMock
         kafka_client.clusters = {
             "arn:aws:kafka:us-east-1:123456789012:cluster/demo-cluster-1/6357e0b2-0e6a-4b86-a0b4-70df934c2e31-5": Cluster(
