@@ -8,7 +8,6 @@ import requests
 import yaml
 
 from prowler.lib.logger import logger
-from prowler.providers.common.common import get_global_provider
 
 timestamp = datetime.today()
 timestamp_utc = datetime.now(timezone.utc).replace(tzinfo=timezone.utc)
@@ -94,19 +93,6 @@ def check_current_version():
         return f"{prowler_version_string}"
     except Exception:
         return f"{prowler_version_string}"
-
-
-# TODO: revisit this function
-def update_provider_config(variable: str, value: str):
-    try:
-        global_provider = get_global_provider()
-        if global_provider.audit_config and variable in global_provider.audit_config:
-            global_provider.audit_config[variable] = value
-
-    except Exception as error:
-        logger.error(
-            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
-        )
 
 
 def load_and_validate_config_file(provider: str, config_file_path: str) -> dict:

@@ -1,6 +1,7 @@
 # Standard library imports
 import csv
 import glob
+import json
 import os
 import warnings
 from datetime import datetime, timedelta
@@ -8,17 +9,18 @@ from itertools import product
 
 # Third-party imports
 import dash
+import dash_bootstrap_components as dbc
+import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-from dash import callback, ctx, dash_table, dcc, html
+from dash import callback, callback_context, ctx, dcc, html
 from dash.dependencies import Input, Output
 
 # Config import
 from dashboard.config import (
     critical_color,
     encoding_format,
-    error_action,
     fail_color,
     folder_path_overview,
     high_color,
@@ -43,7 +45,6 @@ from dashboard.lib.dropdowns import (
     create_table_row_dropdown,
 )
 from dashboard.lib.layouts import create_layout_overview
-from prowler.lib.logger import logger
 
 # Suppress warnings
 warnings.filterwarnings("ignore")
@@ -53,16 +54,11 @@ warnings.filterwarnings("ignore")
 csv_files = []
 
 for file in glob.glob(os.path.join(folder_path_overview, "*.csv")):
-    with open(
-        file, "r", newline="", encoding=encoding_format, errors=error_action
-    ) as csvfile:
-        try:
-            reader = csv.reader(csvfile)
-            num_rows = sum(1 for row in reader)
-            if num_rows > 1:
-                csv_files.append(file)
-        except UnicodeDecodeError:
-            logger.error(f"Error decoding file: {file}")
+    with open(file, "r", newline="", encoding=encoding_format) as csvfile:
+        reader = csv.reader(csvfile)
+        num_rows = sum(1 for row in reader)
+        if num_rows > 1:
+            csv_files.append(file)
 
 
 # Import logos providers
@@ -84,7 +80,7 @@ def load_csv_files(csv_files):
     """Load CSV files into a single pandas DataFrame."""
     dfs = []
     for file in csv_files:
-        df = pd.read_csv(file, sep=";", on_bad_lines="skip", encoding=encoding_format)
+        df = pd.read_csv(file, sep=";", on_bad_lines="skip")
         if "CHECK_ID" in df.columns:
             if "TIMESTAMP" in df.columns or df["PROVIDER"].unique() == "aws":
                 dfs.append(df.astype(str))
@@ -296,6 +292,151 @@ else:
     status = [x for x in status if str(x) != "nan" and x.__class__.__name__ == "str"]
 
     status_dropdown = create_status_dropdown(status)
+    table_div_header = []
+    table_div_header.append(
+        html.Div(
+            [
+                html.Div(
+                    [
+                        html.Span(
+                            "Check Name",
+                            className="text-prowler-stone-900 uppercase text-sm xl:text-md font-bold",
+                        ),
+                        html.Button(
+                            html.Img(
+                                src="assets/images/icons/arrows.svg",
+                                style={
+                                    "width": "1rem",
+                                    "height": "1rem",
+                                    "margin-left": "0.2rem",
+                                    "margin-top": "0.2rem",
+                                },
+                            ),
+                            id="sort_button_check_name",
+                            n_clicks=0,
+                        ),
+                    ],
+                    className="w-[40.5%] 2xl:w-[71.5%]",
+                ),
+                html.Div(
+                    [
+                        html.Span(
+                            "Severity",
+                            className="text-prowler-stone-900 uppercase text-sm xl:text-md font-bold",
+                        ),
+                        html.Button(
+                            html.Img(
+                                src="assets/images/icons/arrows.svg",
+                                style={
+                                    "width": "1rem",
+                                    "height": "1rem",
+                                    "margin-left": "0.2rem",
+                                    "margin-top": "0.2rem",
+                                },
+                            ),
+                            id="sort_button_severity",
+                            n_clicks=0,
+                        ),
+                    ],
+                    className="w-[11%] 2xl:w-[15.5%]",
+                ),
+                html.Div(
+                    [
+                        html.Span(
+                            "Status",
+                            className="text-prowler-stone-900 uppercase text-sm xl:text-md font-bold",
+                        ),
+                        html.Button(
+                            html.Img(
+                                src="assets/images/icons/arrows.svg",
+                                style={
+                                    "width": "1rem",
+                                    "height": "1rem",
+                                    "margin-left": "0.2rem",
+                                    "margin-top": "0.2rem",
+                                },
+                            ),
+                            id="sort_button_status",
+                            n_clicks=0,
+                        ),
+                    ],
+                    className="w-[9%] 2xl:w-[12.5%]",
+                ),
+                html.Div(
+                    [
+                        html.Span(
+                            "Region",
+                            className="text-prowler-stone-900 uppercase text-sm xl:text-md font-bold",
+                        ),
+                        html.Button(
+                            html.Img(
+                                src="assets/images/icons/arrows.svg",
+                                style={
+                                    "width": "1rem",
+                                    "height": "1rem",
+                                    "margin-left": "0.2rem",
+                                    "margin-top": "0.2rem",
+                                },
+                            ),
+                            id="sort_button_region",
+                            n_clicks=0,
+                        ),
+                    ],
+                    className="w-[10%] 2xl:w-[14%]",
+                ),
+                html.Div(
+                    [
+                        html.Span(
+                            "Service",
+                            className="text-prowler-stone-900 uppercase text-sm xl:text-md font-bold",
+                        ),
+                        html.Button(
+                            html.Img(
+                                src="assets/images/icons/arrows.svg",
+                                style={
+                                    "width": "1rem",
+                                    "height": "1rem",
+                                    "margin-left": "0.2rem",
+                                    "margin-top": "0.2rem",
+                                },
+                            ),
+                            id="sort_button_service",
+                            n_clicks=0,
+                        ),
+                    ],
+                    className="w-[13.5%] 2xl:w-[14%]",
+                ),
+                html.Div(
+                    [
+                        html.Span(
+                            "Account",
+                            className="text-prowler-stone-900 uppercase text-sm xl:text-md font-bold",
+                        ),
+                        html.Button(
+                            html.Img(
+                                src="assets/images/icons/arrows.svg",
+                                style={
+                                    "width": "1rem",
+                                    "height": "1rem",
+                                    "margin-left": "0.2rem",
+                                    "margin-top": "0.2rem",
+                                },
+                            ),
+                            id="sort_button_account",
+                            n_clicks=0,
+                        ),
+                    ],
+                    className="w-[15%] 2xl:w-[15.5%]",
+                ),
+            ],
+            className="grid grid-cols-auto w-full",
+            style={
+                "display": "flex",
+            },
+        )
+    )
+
+    table_div_header = html.Div(table_div_header, id="table-div-header")
 
     # Initializing the Dash App
     dash.register_page(__name__, path="/")
@@ -311,6 +452,7 @@ else:
         service_dropdown,
         table_row_dropdown,
         status_dropdown,
+        table_div_header,
     )
 
 
@@ -359,6 +501,12 @@ else:
     Input("azure_card", "n_clicks"),
     Input("gcp_card", "n_clicks"),
     Input("k8s_card", "n_clicks"),
+    Input("sort_button_check_name", "n_clicks"),
+    Input("sort_button_severity", "n_clicks"),
+    Input("sort_button_status", "n_clicks"),
+    Input("sort_button_region", "n_clicks"),
+    Input("sort_button_service", "n_clicks"),
+    Input("sort_button_account", "n_clicks"),
 )
 def filter_data(
     cloud_account_values,
@@ -374,6 +522,12 @@ def filter_data(
     azure_clicks,
     gcp_clicks,
     k8s_clicks,
+    sort_button_check_name,
+    sort_button_severity,
+    sort_button_status,
+    sort_button_region,
+    sort_button_service,
+    sort_button_account,
 ):
     # Use n_clicks for vulture
     n_clicks_csv = n_clicks_csv
@@ -463,7 +617,7 @@ def filter_data(
     # Select the files in the list_files that have the same date as the selected date
     list_files = []
     for file in csv_files:
-        df = pd.read_csv(file, sep=";", on_bad_lines="skip", encoding=encoding_format)
+        df = pd.read_csv(file, sep=";", on_bad_lines="skip")
         if "CHECK_ID" in df.columns:
             if "TIMESTAMP" in df.columns or df["PROVIDER"].unique() == "aws":
                 # This handles the case where we are using v3 outputs
@@ -788,7 +942,7 @@ def filter_data(
         # Status Pie Chart
         df1 = filtered_data[filtered_data["STATUS"] == "FAIL"]
 
-        color_mapping_pass_fail = {
+        color_mapping_status = {
             "FAIL": fail_color,
             "PASS": pass_color,
             "INFO": info_color,
@@ -800,7 +954,7 @@ def filter_data(
             "MUTED (WARNING)": "#c7a45d",
         }
         # Define custom colors
-        color_mapping = {
+        color_mapping_severity = {
             "critical": critical_color,
             "high": high_color,
             "medium": medium_color,
@@ -814,7 +968,7 @@ def filter_data(
             names="STATUS",
             hole=0.7,
             color="STATUS",
-            color_discrete_map=color_mapping_pass_fail,
+            color_discrete_map=color_mapping_status,
         )
         fig2.update_traces(
             hovertemplate=None,
@@ -839,7 +993,8 @@ def filter_data(
         )
 
         color_bars = [
-            color_mapping[severity] for severity in df1["SEVERITY"].value_counts().index
+            color_mapping_severity[severity]
+            for severity in df1["SEVERITY"].value_counts().index
         ]
 
         figure_bars = go.Figure(
@@ -880,209 +1035,205 @@ def filter_data(
         filtered_data["SEVERITY"] = filtered_data["SEVERITY"].replace(
             {4: "critical", 3: "high", 2: "medium", 1: "low", 0: "informational"}
         )
-        table_data = filtered_data.copy()
-
-        if "ACCOUNT_NAME" in table_data.columns:
-            for subscription in table_data["ACCOUNT_NAME"].unique():
-                if "nan" not in str(subscription):
-                    table_data.loc[
-                        table_data["ACCOUNT_NAME"] == subscription, "ACCOUNT_UID"
-                    ] = subscription
-
-        table_data["RISK"] = table_data["RISK"].str.slice(0, 50)
-        table_data["CHECK_ID"] = (
-            table_data["CHECK_ID"] + " - " + table_data["RESOURCE_UID"]
-        )
-        # if the region is empty, we are going to fill it with '-'
-        table_data["REGION"] = table_data["REGION"].fillna("-")
-        table_data = table_data[
-            [
-                "CHECK_ID",
-                "SEVERITY",
-                "STATUS",
-                "REGION",
-                "SERVICE_NAME",
-                "PROVIDER",
-                "ACCOUNT_UID",
-            ]
-        ]
-        table_data = table_data.rename(
-            columns={
-                "CHECK_ID": "Check ID",
-                "SEVERITY": "Severity",
-                "STATUS": "Status",
-                "REGION": "Region",
-                "SERVICE_NAME": "Service",
-                "PROVIDER": "Provider",
-                "ACCOUNT_UID": "Account ID",
-            }
-        )
 
         table_row_options = []
 
         # Take the values from the table_row_values
-        if table_row_values == -1:
-            if len(table_data) < 25:
-                table_row_values = len(table_data)
+        if table_row_values is None or table_row_values == -1:
+            if len(filtered_data) < 25:
+                table_row_values = len(filtered_data)
             else:
                 table_row_values = 25
 
-        if len(table_data) < 25:
-            table_row_values = len(table_data)
+        if len(filtered_data) < 25:
+            table_row_values = len(filtered_data)
 
-        if len(table_data) >= 25:
+        if len(filtered_data) >= 25:
             table_row_options.append(25)
-        if len(table_data) >= 50:
+        if len(filtered_data) >= 50:
             table_row_options.append(50)
-        if len(table_data) >= 75:
+        if len(filtered_data) >= 75:
             table_row_options.append(75)
-        if len(table_data) >= 100:
+        if len(filtered_data) >= 100:
             table_row_options.append(100)
-        table_row_options.append(len(table_data))
+        table_row_options.append(len(filtered_data))
 
-        table_data["Severity"] = table_data["Severity"].str.capitalize()
+        # For the values that are nan or none, replace them with ""
+        filtered_data = filtered_data.replace({np.nan: ""})
+        filtered_data = filtered_data.replace({None: ""})
+        filtered_data = filtered_data.replace({"nan": ""})
 
-        table = dash_table.DataTable(
-            data=table_data.to_dict("records"),
-            style_data={
-                "whiteSpace": "normal",
-                "height": "auto",
-                "color": "black",
-                "fontFamily": "sans-serif",
-            },
-            columns=[
-                {
-                    "name": "Check ID - Resource UID",
-                    "id": "Check ID",
-                    "deletable": False,
-                },
-                {
-                    "name": "Severity",
-                    "id": "Severity",
-                    "deletable": False,
-                },
-                {"name": "Status", "id": "Status", "deletable": False},
-                {"name": "Region", "id": "Region", "deletable": False},
-                {"name": "Service", "id": "Service", "deletable": False},
-                {"name": "Provider", "id": "Provider", "deletable": False},
-                {"name": "Account ID", "id": "Account ID", "deletable": False},
-            ],
-            style_table={"table-layout": "fixed"},
-            style_cell={"textAlign": "left", "layout": "fixed"},
-            style_header={
-                "fontWeight": "bold",
-                "layout": "fixed",
-                "backgroundColor": "rgb(41,37,36)",
-                "fontFamily": "sans-serif",
-            },
-            page_size=table_row_values,
-            style_data_conditional=[
-                {
-                    "if": {"row_index": "odd"},
-                    "backgroundColor": "rgb(200, 200, 200)",
-                    "width": "100%",
-                },
-                {
-                    "if": {
-                        "filter_query": '{Status} = "FAIL"',  # matching rows of a hidden column with the id, `id`
-                        "column_id": "Status",
-                    },
-                    "backgroundColor": fail_color,
-                },
-                {
-                    "if": {
-                        "filter_query": '{Status} = "PASS"',  # matching rows of a hidden column with the id, `id`
-                        "column_id": "Status",
-                    },
-                    "backgroundColor": pass_color,
-                },
-                {
-                    "if": {
-                        "filter_query": '{Status} = "MANUAL"',  # matching rows of a hidden column with the id, `id`
-                        "column_id": "Status",
-                    },
-                    "backgroundColor": manual_color,
-                },
-                {
-                    "if": {
-                        "filter_query": '{Status} = "INFO"',  # matching rows of a hidden column with the id, `id`
-                        "column_id": "Status",
-                    },
-                    "backgroundColor": info_color,
-                },
-                {
-                    "if": {
-                        "filter_query": '{Status} = "MUTED (FAIL)"',  # matching rows of a hidden column with the id, `id`
-                        "column_id": "Status",
-                    },
-                    "backgroundColor": muted_fail_color,
-                },
-                {
-                    "if": {
-                        "filter_query": '{Status} = "MUTED (PASS)"',  # matching rows of a hidden column with the id, `id`
-                        "column_id": "Status",
-                    },
-                    "backgroundColor": muted_pass_color,
-                },
-                {
-                    "if": {
-                        "filter_query": '{Status} = "MUTED (MANUAL)"',  # matching rows of a hidden column with the id, `id`
-                        "column_id": "Status",
-                    },
-                    "backgroundColor": muted_manual_color,
-                },
-                {
-                    "if": {
-                        "column_id": "Severity",
-                    },
-                    "text-transform": "capitalize",
-                },
-            ],
-            style_cell_conditional=[
-                {"if": {"column_id": "Check ID + Resource UID"}, "max-width": "58%"},
-                {
-                    "if": {"column_id": "Severity"},
-                    "max-width": "8%",
-                    "text-align": "center",
-                },
-                {
-                    "if": {"column_id": "Status"},
-                    "max-width": "7%",
-                    "text-align": "center",
-                },
-                {
-                    "if": {"column_id": "Region"},
-                    "max-width": "9%",
-                    "text-align": "center",
-                },
-                {
-                    "if": {"column_id": "Service"},
-                    "max-width": "6%",
-                    "text-align": "center",
-                },
-                {
-                    "if": {"column_id": "Provider"},
-                    "max-width": "7%",
-                    "text-align": "center",
-                },
-                {
-                    "if": {"column_id": "Account ID"},
-                    "max-width": "11%",
-                    "text-align": "center",
-                },
-            ],
-            id="table-overview",
-            sort_action="native",
-            sort_mode="single",
-            style_as_list_view=True,
-            filter_action="native",
-            filter_options={"placeholder_text": "🔍"},
-            style_filter={
-                "background-color": "#3e403f",
-                "color": "white",
-                "fontFamily": "sans-serif",
-            },
-        )
+        severity_mapping = {
+            "low": 1,
+            "medium": 2,
+            "high": 3,
+            "critical": 4,
+            "informational": 0,
+        }
+
+        severity_mapping_reverse = {
+            1: "low",
+            2: "medium",
+            3: "high",
+            4: "critical",
+            0: "informational",
+        }
+
+        status_mapping = {
+            "MANUAL": 0,
+            "INFO": 1,
+            "MUTED (MANUAL)": 2,
+            "MUTED (PASS)": 3,
+            "PASS": 4,
+            "MUTED (FAIL)": 5,
+            "FAIL": 6,
+        }
+
+        status_mapping_reverse = {
+            0: "MANUAL",
+            1: "INFO",
+            2: "MUTED (MANUAL)",
+            3: "MUTED (PASS)",
+            4: "PASS",
+            5: "MUTED (FAIL)",
+            6: "FAIL",
+        }
+
+        index_count = 0
+        full_filtered_data = filtered_data.copy()
+        filtered_data = filtered_data.head(table_row_values)
+        # Sort the filtered_data
+        if sort_button_check_name > 0:
+            if sort_button_check_name % 2 != 0:
+                filtered_data = filtered_data.sort_values(
+                    by=["CHECK_TITLE"], ascending=True
+                )
+            else:
+                filtered_data = filtered_data.sort_values(
+                    by=["CHECK_TITLE"], ascending=False
+                )
+                sort_button_check_name = 0
+            sort_button_severity = 0
+            sort_button_status = 0
+            sort_button_region = 0
+            sort_button_service = 0
+            sort_button_account = 0
+        if sort_button_severity > 0:
+            filtered_data["SEVERITY"] = filtered_data["SEVERITY"].map(severity_mapping)
+            if sort_button_severity % 2 != 0:
+                filtered_data = filtered_data.sort_values(
+                    by=["SEVERITY"], ascending=True
+                )
+            else:
+                filtered_data = filtered_data.sort_values(
+                    by=["SEVERITY"], ascending=False
+                )
+                sort_button_severity = 0
+            filtered_data["SEVERITY"] = filtered_data["SEVERITY"].map(
+                severity_mapping_reverse
+            )
+            sort_button_check_name = 0
+            sort_button_status = 0
+            sort_button_region = 0
+            sort_button_service = 0
+            sort_button_account = 0
+        if sort_button_status > 0:
+            filtered_data["STATUS"] = filtered_data["STATUS"].map(status_mapping)
+            if sort_button_status % 2 != 0:
+                filtered_data = filtered_data.sort_values(by=["STATUS"], ascending=True)
+            else:
+                filtered_data = filtered_data.sort_values(
+                    by=["STATUS"], ascending=False
+                )
+                sort_button_status = 0
+            filtered_data["STATUS"] = filtered_data["STATUS"].map(
+                status_mapping_reverse
+            )
+            sort_button_check_name = 0
+            sort_button_severity = 0
+            sort_button_region = 0
+            sort_button_service = 0
+            sort_button_account = 0
+        if sort_button_region > 0:
+            if sort_button_region % 2 != 0:
+                filtered_data = filtered_data.sort_values(by=["REGION"], ascending=True)
+            else:
+                filtered_data = filtered_data.sort_values(
+                    by=["REGION"], ascending=False
+                )
+                sort_button_region = 0
+            sort_button_check_name = 0
+            sort_button_severity = 0
+            sort_button_status = 0
+            sort_button_service = 0
+            sort_button_account = 0
+        if sort_button_service > 0:
+            if sort_button_service % 2 != 0:
+                filtered_data = filtered_data.sort_values(
+                    by=["SERVICE_NAME"], ascending=True
+                )
+            else:
+                filtered_data = filtered_data.sort_values(
+                    by=["SERVICE_NAME"], ascending=False
+                )
+                sort_button_service = 0
+            sort_button_check_name = 0
+            sort_button_severity = 0
+            sort_button_status = 0
+            sort_button_region = 0
+            sort_button_account = 0
+        if sort_button_account > 0:
+            if sort_button_account % 2 != 0:
+                filtered_data = filtered_data.sort_values(
+                    by=["ACCOUNT_UID"], ascending=True
+                )
+            else:
+                filtered_data = filtered_data.sort_values(
+                    by=["ACCOUNT_UID"], ascending=False
+                )
+                sort_button_account = 0
+            sort_button_check_name = 0
+            sort_button_severity = 0
+            sort_button_status = 0
+            sort_button_region = 0
+            sort_button_service = 0
+
+        # Remove column "assessment_time", this is done to undo the changes made in the data
+        if "TIMESTAMP_AUX" in filtered_data.columns:
+            filtered_data.drop(columns=["TIMESTAMP_AUX"], inplace=True)
+
+        # For the account_id, we are going to add the provider name
+        if "ACCOUNT_UID" in filtered_data.columns:
+            for account in filtered_data["ACCOUNT_UID"].unique():
+                if "aws" in list(data[data["ACCOUNT_UID"] == account]["PROVIDER"]):
+                    filtered_data.loc[
+                        filtered_data["ACCOUNT_UID"] == account, "ACCOUNT_UID"
+                    ] = (account + " - AWS")
+                if "kubernetes" in list(
+                    data[data["ACCOUNT_UID"] == account]["PROVIDER"]
+                ):
+                    filtered_data.loc[
+                        filtered_data["ACCOUNT_UID"] == account, "ACCOUNT_UID"
+                    ] = (account + " - K8S")
+                if "azure" in list(data[data["ACCOUNT_UID"] == account]["PROVIDER"]):
+                    filtered_data.loc[
+                        filtered_data["ACCOUNT_UID"] == account, "ACCOUNT_UID"
+                    ] = (account + " - AZURE")
+                if "gcp" in list(data[data["ACCOUNT_UID"] == account]["PROVIDER"]):
+                    filtered_data.loc[
+                        filtered_data["ACCOUNT_UID"] == account, "ACCOUNT_UID"
+                    ] = (account + " - GCP")
+
+        table_collapsible = []
+        for item in filtered_data.to_dict("records"):
+            table_collapsible.append(
+                generate_table(
+                    item, index_count, color_mapping_severity, color_mapping_status
+                )
+            )
+            index_count += 1
+
+        table = html.Div(table_collapsible, id="table", className="overview-table")
 
     # Status Graphic
     status_graph = [
@@ -1127,13 +1278,17 @@ def filter_data(
     ]
 
     # Create Provider Cards
-    aws_card = create_provider_card("aws", aws_provider_logo, "Accounts", filtered_data)
-    azure_card = create_provider_card(
-        "azure", azure_provider_logo, "Subscriptions", filtered_data
+    aws_card = create_provider_card(
+        "aws", aws_provider_logo, "Accounts", full_filtered_data
     )
-    gcp_card = create_provider_card("gcp", gcp_provider_logo, "Projects", filtered_data)
+    azure_card = create_provider_card(
+        "azure", azure_provider_logo, "Subscriptions", full_filtered_data
+    )
+    gcp_card = create_provider_card(
+        "gcp", gcp_provider_logo, "Projects", full_filtered_data
+    )
     k8s_card = create_provider_card(
-        "kubernetes", ks8_provider_logo, "Clusters", filtered_data
+        "kubernetes", ks8_provider_logo, "Clusters", full_filtered_data
     )
 
     # Subscribe to prowler SaaS card
@@ -1154,15 +1309,13 @@ def filter_data(
         ctx.triggered_id == "download_link_csv"
         or ctx.triggered_id == "download_link_xlsx"
     ):
-        # Cut the data to the wanted rows
-        table_data = table_data.head(table_row_values)
         if ctx.triggered_id == "download_link_csv":
             csv_data = dcc.send_data_frame(
-                table_data.to_csv, "prowler-dashboard-export.csv", index=False
+                filtered_data.to_csv, "prowler-dashboard-export.csv", index=False
             )
         if ctx.triggered_id == "download_link_xlsx":
             csv_data = dcc.send_data_frame(
-                table_data.to_excel,
+                filtered_data.to_excel,
                 "prowler-dashboard-export.xlsx",
                 index=False,
             )
@@ -1227,3 +1380,397 @@ def filter_data(
             gcp_clicks,
             k8s_clicks,
         )
+
+
+@callback(
+    Output({"type": "collapse", "index": dash.dependencies.ALL}, "is_open"),
+    [Input({"type": "toggle-collapse", "index": dash.dependencies.ALL}, "n_clicks")],
+    [
+        dash.dependencies.State(
+            {"type": "collapse", "index": dash.dependencies.ALL}, "is_open"
+        )
+    ],
+)
+def toggle_collapse(n_clicks, is_open):
+    n_clicks = n_clicks or 0
+    triggered = callback_context.triggered[0]["prop_id"].split(".")[0]
+    if triggered:
+        idx = json.loads(triggered)["index"]
+        is_open[idx] = not is_open[idx]
+    return is_open
+
+
+def generate_table(data, index, color_mapping_severity, color_mapping_status):
+    return html.Div(
+        [
+            dbc.Card(
+                [
+                    dbc.CardHeader(
+                        dbc.Row(
+                            [
+                                dbc.Col(
+                                    [
+                                        html.Button(
+                                            html.Img(
+                                                src="assets/images/icons/dropdown.svg",
+                                                className="w-3",
+                                            ),
+                                            id={
+                                                "type": "toggle-collapse",
+                                                "index": index,
+                                            },
+                                            className="btn",
+                                            style={
+                                                "position": "relative",
+                                                "top": "3px",
+                                                "padding": "0",
+                                            },
+                                        ),
+                                    ],
+                                    width=1,
+                                    className="w-[4%] 2xl:w-[2%]",
+                                ),
+                                dbc.Col(
+                                    [
+                                        html.H5(
+                                            data["CHECK_TITLE"],
+                                            className="card-title mb-0",
+                                        ),
+                                    ],
+                                    width=4,
+                                    className="pr-2 w-[36%] 2xl:w-[48%]",
+                                ),
+                                dbc.Col(
+                                    [
+                                        html.Span(
+                                            data["SEVERITY"],
+                                            className="text-white uppercase text-xs font-bold rounded-lg px-2 py-1",
+                                            style={
+                                                "background-color": color_mapping_severity[
+                                                    data["SEVERITY"]
+                                                ],
+                                            },
+                                        ),
+                                    ],
+                                    className="w-[11%]",
+                                    width=1,
+                                ),
+                                dbc.Col(
+                                    [
+                                        html.Span(
+                                            data["STATUS"],
+                                            className="text-white uppercase text-xs font-bold rounded-lg px-2 py-1",
+                                            style={
+                                                "background-color": color_mapping_status[
+                                                    data["STATUS"]
+                                                ],
+                                            },
+                                        ),
+                                    ],
+                                    className="w-[9.5%] 2xl:w-[9%]",
+                                    width=1,
+                                ),
+                                dbc.Col(
+                                    [
+                                        html.Span(
+                                            data["REGION"],
+                                            className="uppercase text-xs font-bold",
+                                            style={
+                                                "display": "flex",
+                                                "align-items": "center",
+                                            },
+                                        ),
+                                    ],
+                                    className="w-[10.5%] 2xl:w-[10%]",
+                                    width=1,
+                                ),
+                                dbc.Col(
+                                    [
+                                        html.Span(
+                                            data["SERVICE_NAME"],
+                                            className="uppercase text-xs font-bold",
+                                            style={
+                                                "display": "flex",
+                                                "align-items": "center",
+                                            },
+                                        ),
+                                    ],
+                                    className="w-[14.5%] 2xl:w-[10%]",
+                                    width=1,
+                                ),
+                                dbc.Col(
+                                    [
+                                        html.Span(
+                                            data["ACCOUNT_UID"],
+                                            className="uppercase text-xs font-bold",
+                                            style={
+                                                "display": "flex",
+                                                "align-items": "center",
+                                            },
+                                        ),
+                                    ],
+                                    className="w-[14.5%] 2xl:w-[10%]",
+                                    width=2,
+                                ),
+                            ],
+                            align="center",
+                            className="g-0",
+                        ),
+                    ),
+                    dbc.Collapse(
+                        dbc.CardBody(
+                            [
+                                html.H5(
+                                    "Details",
+                                    className="card-title",
+                                    style={"font-weight": "bold"},
+                                ),
+                                html.Div(
+                                    [
+                                        html.Div(
+                                            [
+                                                html.Div(
+                                                    [
+                                                        html.P(
+                                                            html.Strong(
+                                                                "Resource uid: ",
+                                                                style={
+                                                                    "margin-right": "5px"
+                                                                },
+                                                            )
+                                                        ),
+                                                        html.P(
+                                                            str(
+                                                                data.get(
+                                                                    "RESOURCE_UID", ""
+                                                                )
+                                                            )
+                                                        ),
+                                                    ],
+                                                    style={"display": "flex"},
+                                                ),
+                                                html.Div(
+                                                    [
+                                                        html.P(
+                                                            html.Strong(
+                                                                "Finding uid: ",
+                                                                style={
+                                                                    "margin-right": "5px"
+                                                                },
+                                                            )
+                                                        ),
+                                                        html.P(
+                                                            str(
+                                                                data.get(
+                                                                    "FINDING_UID", ""
+                                                                )
+                                                            )
+                                                        ),
+                                                    ],
+                                                    style={"display": "flex"},
+                                                ),
+                                                html.Div(
+                                                    [
+                                                        html.P(
+                                                            html.Strong(
+                                                                "Check id: ",
+                                                                style={
+                                                                    "margin-right": "5px"
+                                                                },
+                                                            )
+                                                        ),
+                                                        html.P(
+                                                            str(
+                                                                data.get("CHECK_ID", "")
+                                                            )
+                                                        ),
+                                                    ],
+                                                    style={"display": "flex"},
+                                                ),
+                                                html.Div(
+                                                    [
+                                                        html.P(
+                                                            html.Strong(
+                                                                "Type: ",
+                                                                style={
+                                                                    "margin-right": "5px"
+                                                                },
+                                                            )
+                                                        ),
+                                                        html.P(
+                                                            str(
+                                                                data.get(
+                                                                    "RESOURCE_TYPE", ""
+                                                                )
+                                                            )
+                                                        ),
+                                                    ],
+                                                    style={"display": "flex"},
+                                                ),
+                                                html.Div(
+                                                    [
+                                                        html.P(
+                                                            html.Strong(
+                                                                "Details: ",
+                                                                style={
+                                                                    "margin-right": "5px"
+                                                                },
+                                                            )
+                                                        ),
+                                                        html.P(
+                                                            str(
+                                                                data.get(
+                                                                    "RESOURCE_DETAILS",
+                                                                    "",
+                                                                )
+                                                            )
+                                                        ),
+                                                    ],
+                                                    style={"display": "flex"},
+                                                ),
+                                            ],
+                                            style={
+                                                "width": "50%",
+                                                "display": "inline-block",
+                                            },
+                                        ),
+                                        html.Div(
+                                            [
+                                                html.Div(
+                                                    [
+                                                        html.P(
+                                                            html.Strong(
+                                                                "Risk: ",
+                                                                style={
+                                                                    "margin-right": "5px"
+                                                                },
+                                                            )
+                                                        ),
+                                                        html.P(
+                                                            str(data.get("RISK", ""))
+                                                        ),
+                                                    ],
+                                                    style={"display": "flex"},
+                                                ),
+                                                html.Div(
+                                                    [
+                                                        html.P(
+                                                            html.Strong(
+                                                                "Notes: ",
+                                                                style={
+                                                                    "margin-right": "5px"
+                                                                },
+                                                            )
+                                                        ),
+                                                        html.P(
+                                                            str(data.get("NOTES", ""))
+                                                        ),
+                                                    ],
+                                                    style={"display": "flex"},
+                                                ),
+                                                html.Div(
+                                                    [
+                                                        html.P(
+                                                            html.Strong(
+                                                                "Provider: ",
+                                                                style={
+                                                                    "margin-right": "5px"
+                                                                },
+                                                            )
+                                                        ),
+                                                        html.P(
+                                                            str(
+                                                                data.get("PROVIDER", "")
+                                                            )
+                                                        ),
+                                                    ],
+                                                    style={"display": "flex"},
+                                                ),
+                                                html.Div(
+                                                    [
+                                                        html.P(
+                                                            html.Strong(
+                                                                "Recomendation: ",
+                                                                style={
+                                                                    "margin-right": "5px"
+                                                                },
+                                                            )
+                                                        ),
+                                                        html.P(
+                                                            str(
+                                                                data.get(
+                                                                    "REMEDIATION_RECOMMENDATION_TEXT",
+                                                                    "",
+                                                                )
+                                                            )
+                                                        ),
+                                                    ],
+                                                    style={"display": "flex"},
+                                                ),
+                                                html.Div(
+                                                    [
+                                                        html.P(
+                                                            html.Strong(
+                                                                "RecomendationUrl: ",
+                                                                style={
+                                                                    "margin-right": "5px"
+                                                                },
+                                                            )
+                                                        ),
+                                                        html.A(
+                                                            str(
+                                                                data.get(
+                                                                    "REMEDIATION_RECOMMENDATION_URL",
+                                                                    "",
+                                                                )
+                                                            ),
+                                                            href=str(
+                                                                data.get(
+                                                                    "REMEDIATION_RECOMMENDATION_URL",
+                                                                    "",
+                                                                )
+                                                            ),
+                                                            style={"color": "#3182ce"},
+                                                        ),
+                                                    ],
+                                                    style={"display": "flex"},
+                                                ),
+                                                html.Div(
+                                                    [
+                                                        html.P(
+                                                            html.Strong(
+                                                                "Scan Day: ",
+                                                                style={
+                                                                    "margin-right": "5px"
+                                                                },
+                                                            )
+                                                        ),
+                                                        html.P(
+                                                            str(
+                                                                data.get(
+                                                                    "ASSESSMENT_TIME",
+                                                                    "",
+                                                                )
+                                                            )
+                                                        ),
+                                                    ],
+                                                    style={"display": "flex"},
+                                                ),
+                                            ],
+                                            style={
+                                                "width": "50%",
+                                                "display": "inline-block",
+                                            },
+                                        ),
+                                    ],
+                                    style={"display": "flex", "width": "100%"},
+                                ),
+                            ]
+                        ),
+                        id={"type": "collapse", "index": index},
+                        is_open=False,
+                    ),
+                ]
+            )
+        ]
+    )

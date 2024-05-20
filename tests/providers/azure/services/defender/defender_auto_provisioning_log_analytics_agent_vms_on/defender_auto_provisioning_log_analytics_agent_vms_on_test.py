@@ -16,7 +16,7 @@ class Test_defender_auto_provisioning_log_analytics_agent_vms_on:
         defender_client.auto_provisioning_settings = {}
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
             "prowler.providers.azure.services.defender.defender_auto_provisioning_log_analytics_agent_vms_on.defender_auto_provisioning_log_analytics_agent_vms_on.defender_client",
@@ -45,7 +45,7 @@ class Test_defender_auto_provisioning_log_analytics_agent_vms_on:
         }
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
             "prowler.providers.azure.services.defender.defender_auto_provisioning_log_analytics_agent_vms_on.defender_auto_provisioning_log_analytics_agent_vms_on.defender_client",
@@ -82,7 +82,7 @@ class Test_defender_auto_provisioning_log_analytics_agent_vms_on:
         }
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
             "prowler.providers.azure.services.defender.defender_auto_provisioning_log_analytics_agent_vms_on.defender_auto_provisioning_log_analytics_agent_vms_on.defender_client",
@@ -125,7 +125,7 @@ class Test_defender_auto_provisioning_log_analytics_agent_vms_on:
         }
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
             "prowler.providers.azure.services.defender.defender_auto_provisioning_log_analytics_agent_vms_on.defender_auto_provisioning_log_analytics_agent_vms_on.defender_client",

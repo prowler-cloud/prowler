@@ -1,6 +1,6 @@
 from prowler.providers.aws.services.cloudformation.cloudformation_service import (
     CloudFormation,
 )
-from prowler.providers.common.common import get_global_provider
+from prowler.providers.common.provider import Provider
 
-cloudformation_client = CloudFormation(get_global_provider())
+cloudformation_client = CloudFormation(Provider.get_global_provider())

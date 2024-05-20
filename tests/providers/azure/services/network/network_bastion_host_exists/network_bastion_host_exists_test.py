@@ -14,7 +14,7 @@ class Test_network_bastion_host_exists:
         network_client.bastion_hosts = {AZURE_SUBSCRIPTION_ID: []}
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
             "prowler.providers.azure.services.network.network_service.Network",
@@ -55,7 +55,7 @@ class Test_network_bastion_host_exists:
         }
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
             "prowler.providers.azure.services.network.network_service.Network",

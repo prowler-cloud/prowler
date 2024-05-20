@@ -106,28 +106,33 @@ class TestKubernetesProvider:
         ):
 
             kubernetes_provider = KubernetesProvider(arguments)
+            # This is needed since the output_options requires to get the global provider to get the audit config
+            with patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=kubernetes_provider,
+            ):
 
-            kubernetes_provider.output_options = arguments, {}
+                kubernetes_provider.output_options = arguments, {}
 
-            assert isinstance(
-                kubernetes_provider.output_options, KubernetesOutputOptions
-            )
-            assert kubernetes_provider.output_options.status == []
-            assert kubernetes_provider.output_options.output_modes == ["csv"]
-            assert (
-                kubernetes_provider.output_options.output_directory
-                == arguments.output_directory
-            )
-            assert kubernetes_provider.output_options.bulk_checks_metadata == {}
-            assert kubernetes_provider.output_options.verbose
-            assert (
-                kubernetes_provider.output_options.output_filename
-                == arguments.output_filename
-            )
+                assert isinstance(
+                    kubernetes_provider.output_options, KubernetesOutputOptions
+                )
+                assert kubernetes_provider.output_options.status == []
+                assert kubernetes_provider.output_options.output_modes == ["csv"]
+                assert (
+                    kubernetes_provider.output_options.output_directory
+                    == arguments.output_directory
+                )
+                assert kubernetes_provider.output_options.bulk_checks_metadata == {}
+                assert kubernetes_provider.output_options.verbose
+                assert (
+                    kubernetes_provider.output_options.output_filename
+                    == arguments.output_filename
+                )
 
-            # Delete testing directory
-            rmdir(f"{arguments.output_directory}/compliance")
-            rmdir(arguments.output_directory)
+                # Delete testing directory
+                rmdir(f"{arguments.output_directory}/compliance")
+                rmdir(arguments.output_directory)
 
     # @patch("kubernetes.client.RbacAuthorizationV1Api")
     # @patch("kubernetes.config.list_kube_config_contexts")

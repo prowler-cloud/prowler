@@ -1,4 +1,4 @@
 from prowler.providers.aws.services.account.account_service import Account
-from prowler.providers.common.common import get_global_provider
+from prowler.providers.common.provider import Provider
 
-account_client = Account(get_global_provider())
+account_client = Account(Provider.get_global_provider())
