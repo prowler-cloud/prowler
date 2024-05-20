@@ -142,7 +142,6 @@ def report(check_findings, provider):
 
                         if "html" in file_descriptors:
                             fill_html(file_descriptors["html"], finding_output)
-                            file_descriptors["html"].write("")
 
                         # CSV
                         if "csv" in file_descriptors:
