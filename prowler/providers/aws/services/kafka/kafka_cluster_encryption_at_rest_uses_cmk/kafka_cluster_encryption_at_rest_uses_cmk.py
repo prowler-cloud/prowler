@@ -2,7 +2,7 @@ from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.kafka.kafka_client import kafka_client
 
 
-class kafka_cluster_encryption_at_rest_use_cmk(Check):
+class kafka_cluster_encryption_at_rest_uses_cmk(Check):
     def execute(self):
         findings = []
 

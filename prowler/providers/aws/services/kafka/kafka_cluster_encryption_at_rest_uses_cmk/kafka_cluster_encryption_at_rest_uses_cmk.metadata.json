@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "kafka_cluster_encryption_at_rest_use_cmk",
+  "CheckID": "kafka_cluster_encryption_at_rest_uses_cmk",
   "CheckTitle": "Ensure Kafka Cluster Encryption at Rest Uses Customer Managed Keys (CMK)",
   "CheckType": [
     "Infrastructure Security"
