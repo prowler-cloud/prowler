@@ -1,8 +1,8 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
-from prowler.providers.aws.lib.iam.iam import is_policy_public
 from prowler.providers.aws.services.eventbridge.eventbridge_client import (
     eventbridge_client,
 )
+from prowler.providers.aws.services.iam.lib.policy import is_policy_public
 
 
 class eventbridge_bus_exposed(Check):
