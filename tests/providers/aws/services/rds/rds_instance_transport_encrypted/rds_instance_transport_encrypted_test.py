@@ -123,15 +123,15 @@ class Test_rds_instance_transport_encrypted:
         )
         from prowler.providers.aws.services.rds.rds_service import RDS
 
-        aws_provider = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
-            return_value=aws_provider,
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=audit_info,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.rds.rds_instance_transport_encrypted.rds_instance_transport_encrypted.rds_client",
-                new=RDS(aws_provider),
+                new=RDS(audit_info),
             ):
                 # Test Check
                 from prowler.providers.aws.services.rds.rds_instance_transport_encrypted.rds_instance_transport_encrypted import (
@@ -235,15 +235,15 @@ class Test_rds_instance_transport_encrypted:
 
         from prowler.providers.aws.services.rds.rds_service import RDS
 
-        aws_provider = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
-            return_value=aws_provider,
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=audit_info,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.rds.rds_instance_transport_encrypted.rds_instance_transport_encrypted.rds_client",
-                new=RDS(aws_provider),
+                new=RDS(audit_info),
             ):
                 # Test Check
                 from prowler.providers.aws.services.rds.rds_instance_transport_encrypted.rds_instance_transport_encrypted import (
@@ -297,15 +297,15 @@ class Test_rds_instance_transport_encrypted:
 
         from prowler.providers.aws.services.rds.rds_service import RDS
 
-        aws_provider = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
-            return_value=aws_provider,
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=audit_info,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.rds.rds_instance_transport_encrypted.rds_instance_transport_encrypted.rds_client",
-                new=RDS(aws_provider),
+                new=RDS(audit_info),
             ):
                 # Test Check
                 from prowler.providers.aws.services.rds.rds_instance_transport_encrypted.rds_instance_transport_encrypted import (
