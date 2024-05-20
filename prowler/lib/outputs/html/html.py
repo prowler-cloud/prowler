@@ -314,8 +314,7 @@ def get_aws_html_assessment_summary(provider):
                 audited_regions = "All Regions"
             else:
                 audited_regions = ", ".join(provider._identity.audited_regions)
-            return (
-                """
+            return f"""
             <div class="col-md-2">
                 <div class="card">
                     <div class="card-header">
@@ -323,19 +322,13 @@ def get_aws_html_assessment_summary(provider):
                     </div>
                     <ul class="list-group list-group-flush">
                         <li class="list-group-item">
-                            <b>AWS Account:</b> """
-                + provider._identity.account
-                + """
+                            <b>AWS Account:</b> {provider._identity.account}
                         </li>
                         <li class="list-group-item">
-                            <b>AWS-CLI Profile:</b> """
-                + profile
-                + """
+                            <b>AWS-CLI Profile:</b> {profile}
                         </li>
                         <li class="list-group-item">
-                            <b>Audited Regions:</b> """
-                + audited_regions
-                + """
+                            <b>Audited Regions:</b> {audited_regions}
                         </li>
                     </ul>
                 </div>
@@ -347,20 +340,15 @@ def get_aws_html_assessment_summary(provider):
                 </div>
                 <ul class="list-group list-group-flush">
                     <li class="list-group-item">
-                        <b>User Id:</b> """
-                + provider._identity.user_id
-                + """
+                        <b>User Id:</b> {provider._identity.user_id}
                         </li>
                         <li class="list-group-item">
-                            <b>Caller Identity ARN:</b> """
-                + provider._identity.identity_arn
-                + """
+                            <b>Caller Identity ARN:</b> {provider._identity.identity_arn}
                         </li>
                     </ul>
                 </div>
             </div>
             """
-            )
 
     except Exception as error:
         logger.critical(
@@ -384,8 +372,7 @@ def get_azure_html_assessment_summary(provider):
                 )
             else:
                 html_identity = provider._identity.identity_id
-            return (
-                """
+            return f"""
             <div class="col-md-2">
                 <div class="card">
                     <div class="card-header">
@@ -393,19 +380,13 @@ def get_azure_html_assessment_summary(provider):
                     </div>
                     <ul class="list-group list-group-flush">
                         <li class="list-group-item">
-                            <b>Azure Tenant IDs:</b> """
-                + " ".join(provider._identity.tenant_ids)
-                + """
+                            <b>Azure Tenant IDs:</b> {" ".join(provider._identity.tenant_ids)}
                         </li>
                         <li class="list-group-item">
-                            <b>Azure Tenant Domain:</b> """
-                + provider._identity.tenant_domain
-                + """
+                            <b>Azure Tenant Domain:</b> {provider._identity.tenant_domain}
                         </li>
                         <li class="list-group-item">
-                            <b>Azure Subscriptions:</b> """
-                + " ".join(printed_subscriptions)
-                + """
+                            <b>Azure Subscriptions:</b> {" ".join(printed_subscriptions)}
                         </li>
                     </ul>
                 </div>
@@ -417,20 +398,15 @@ def get_azure_html_assessment_summary(provider):
                 </div>
                 <ul class="list-group list-group-flush">
                     <li class="list-group-item">
-                        <b>Azure Identity Type:</b> """
-                + provider._identity.identity_type
-                + """
+                        <b>Azure Identity Type:</b> {provider._identity.identity_type}
                         </li>
                         <li class="list-group-item">
-                            <b>Azure Identity ID:</b> """
-                + html_identity
-                + """
+                            <b>Azure Identity ID:</b> {html_identity}
                         </li>
                     </ul>
                 </div>
             </div>
             """
-            )
     except Exception as error:
         logger.critical(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
@@ -450,8 +426,7 @@ def get_gcp_html_assessment_summary(provider):
                 )
             except AttributeError:
                 profile = "default"
-            return (
-                """
+            return f"""
             <div class="col-md-2">
                 <div class="card">
                     <div class="card-header">
@@ -459,9 +434,7 @@ def get_gcp_html_assessment_summary(provider):
                     </div>
                     <ul class="list-group list-group-flush">
                         <li class="list-group-item">
-                            <b>GCP Project IDs:</b> """
-                + ", ".join(provider.project_ids)
-                + """
+                            <b>GCP Project IDs:</b> {", ".join(provider.project_ids)}
                         </li>
                     </ul>
                 </div>
@@ -473,15 +446,12 @@ def get_gcp_html_assessment_summary(provider):
                     </div>
                     <ul class="list-group list-group-flush">
                         <li class="list-group-item">
-                            <b>GCP Account:</b> """
-                + profile
-                + """
+                            <b>GCP Account:</b> {profile}
                         </li>
                     </ul>
                 </div>
             </div>
             """
-            )
     except Exception as error:
         logger.critical(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
@@ -492,8 +462,7 @@ def get_gcp_html_assessment_summary(provider):
 def get_kubernetes_html_assessment_summary(provider):
     try:
         if provider.__class__.__name__ == "KubernetesProvider":
-            return (
-                """
+            return f"""
             <div class="col-md-2">
                 <div class="card">
                     <div class="card-header">
@@ -502,9 +471,7 @@ def get_kubernetes_html_assessment_summary(provider):
                     <ul class="list-group
                     list-group-flush">
                         <li class="list-group-item">
-                            <b>Kubernetes Cluster:</b> """
-                + provider._identity.cluster
-                + """
+                            <b>Kubernetes Cluster:</b> {provider._identity.cluster}
                         </li>
                     </ul>
                 </div>
@@ -517,15 +484,12 @@ def get_kubernetes_html_assessment_summary(provider):
                     <ul class="list-group
                     list-group-flush">
                         <li class="list-group-item">
-                            <b>Kubernetes Context:</b> """
-                + provider._identity.context
-                + """
+                            <b>Kubernetes Context:</b> {provider._identity.context}
                         </li>
                     </ul>
                 </div>
             </div>
             """
-            )
     except Exception as error:
         logger.critical(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
