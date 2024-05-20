@@ -117,34 +117,12 @@ def update_check_metadata(check_metadata, custom_metadata):
             for attribute in custom_metadata:
                 if attribute == "Remediation":
                     for remediation_attribute in custom_metadata[attribute]:
-                        if remediation_attribute == "Code":
-                            for code_attribute in custom_metadata[attribute][
-                                remediation_attribute
-                            ]:
-                                try:
-                                    setattr(
-                                        check_metadata.Remediation.Code,
-                                        code_attribute,
-                                        custom_metadata[attribute][
-                                            remediation_attribute
-                                        ][code_attribute],
-                                    )
-                                except ValueError:
-                                    pass
-                        elif remediation_attribute == "Recommendation":
-                            for recommendation_attribute in custom_metadata[attribute][
-                                remediation_attribute
-                            ]:
-                                try:
-                                    setattr(
-                                        check_metadata.Remediation.Recommendation,
-                                        recommendation_attribute,
-                                        custom_metadata[attribute][
-                                            remediation_attribute
-                                        ][recommendation_attribute],
-                                    )
-                                except ValueError:
-                                    pass
+                        update_check_metadata_remediation(
+                            check_metadata,
+                            custom_metadata,
+                            attribute,
+                            remediation_attribute,
+                        )
                 else:
                     try:
                         setattr(check_metadata, attribute, custom_metadata[attribute])
@@ -152,3 +130,32 @@ def update_check_metadata(check_metadata, custom_metadata):
                         pass
     finally:
         return check_metadata
+
+
+def update_check_metadata_remediation(
+    check_metadata, custom_metadata, attribute, remediation_attribute
+):
+    if remediation_attribute == "Code":
+        for code_attribute in custom_metadata[attribute][remediation_attribute]:
+            try:
+                setattr(
+                    check_metadata.Remediation.Code,
+                    code_attribute,
+                    custom_metadata[attribute][remediation_attribute][code_attribute],
+                )
+            except ValueError:
+                pass
+    elif remediation_attribute == "Recommendation":
+        for recommendation_attribute in custom_metadata[attribute][
+            remediation_attribute
+        ]:
+            try:
+                setattr(
+                    check_metadata.Remediation.Recommendation,
+                    recommendation_attribute,
+                    custom_metadata[attribute][remediation_attribute][
+                        recommendation_attribute
+                    ],
+                )
+            except ValueError:
+                pass
