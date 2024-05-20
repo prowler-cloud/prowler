@@ -17,6 +17,7 @@ class RDS(AWSService):
         self.db_clusters = {}
         self.db_snapshots = []
         self.db_engines = {}
+        self.db_cluster_parameters = {}
         self.db_cluster_snapshots = []
         self.__threading_call__(self.__describe_db_instances__)
         self.__threading_call__(self.__describe_db_certificate__)
@@ -190,6 +191,9 @@ class RDS(AWSService):
                         is_resource_filtered(db_cluster_arn, self.audit_resources)
                     ):
                         if cluster["Engine"] != "docdb":
+                            describe_db_parameters_paginator = (
+                                regional_client.get_paginator("describe_db_parameters")
+                            )
                             db_cluster = DBCluster(
                                 id=cluster["DBClusterIdentifier"],
                                 arn=db_cluster_arn,
@@ -213,6 +217,22 @@ class RDS(AWSService):
                                 region=regional_client.region,
                                 tags=cluster.get("TagList", []),
                             )
+                            for page in describe_db_parameters_paginator.paginate(
+                                DBParameterGroupName=cluster["DBClusterParameterGroup"]
+                            ):
+                                for parameter in page["Parameters"]:
+                                    if (
+                                        parameter["ParameterName"] == "rds.force_ssl"
+                                        and parameter["ParameterValue"] == "1"
+                                    ):
+                                        db_cluster.force_ssl = True
+                                    if (
+                                        parameter["ParameterName"]
+                                        == "require_secure_transport"
+                                        and parameter["ParameterValue"] == "ON"
+                                    ):
+                                        db_cluster.require_secure_transport = "ON"
+
                             # We must use a unique value as the dict key to have unique keys
                             self.db_clusters[db_cluster_arn] = db_cluster
         except Exception as error:
@@ -347,7 +367,9 @@ class DBCluster(BaseModel):
     deletion_protection: bool
     auto_minor_version_upgrade: bool
     multi_az: bool
-    parameter_group: Optional[str]
+    parameter_group: str
+    force_ssl: Optional[bool]
+    require_secure_transport: Optional[str]
     region: str
     tags: Optional[list] = []
 
