@@ -123,7 +123,7 @@ class Test_rds_instance_transport_encrypted:
         )
         from prowler.providers.aws.services.rds.rds_service import RDS
 
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
@@ -235,7 +235,7 @@ class Test_rds_instance_transport_encrypted:
 
         from prowler.providers.aws.services.rds.rds_service import RDS
 
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
@@ -297,7 +297,7 @@ class Test_rds_instance_transport_encrypted:
 
         from prowler.providers.aws.services.rds.rds_service import RDS
 
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
