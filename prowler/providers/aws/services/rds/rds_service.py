@@ -19,6 +19,7 @@ class RDS(AWSService):
         self.db_engines = {}
         self.db_cluster_snapshots = []
         self.__threading_call__(self.__describe_db_instances__)
+        self.__threading_call__(self.__describe_db_certificate__)
         self.__threading_call__(self.__describe_db_parameters__)
         self.__threading_call__(self.__describe_db_snapshots__)
         self.__threading_call__(self.__describe_db_snapshot_attributes__)
@@ -80,6 +81,7 @@ class RDS(AWSService):
                                     replica_source=instance.get(
                                         "ReadReplicaSourceDBInstanceIdentifier"
                                     ),
+                                    ca_cert=instance.get("CACertificateIdentifier"),
                                 )
                             )
         except Exception as error:
@@ -101,6 +103,25 @@ class RDS(AWSService):
                         ):
                             for parameter in page["Parameters"]:
                                 instance.parameters.append(parameter)
+
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def __describe_db_certificate__(self, regional_client):
+        logger.info("RDS - Describe DB Certificate...")
+        try:
+            for instance in self.db_instances:
+                if instance.region == regional_client.region:
+                    describe_db_certificates_paginator = regional_client.get_paginator(
+                        "describe_certificates"
+                    )
+                    for page in describe_db_certificates_paginator.paginate(
+                        CertificateIdentifier=instance.ca_cert
+                    ):
+                        for certificate in page["Certificates"]:
+                            instance.cert.append(certificate)
 
         except Exception as error:
             logger.error(
@@ -309,6 +330,8 @@ class DBInstance(BaseModel):
     region: str
     tags: Optional[list] = []
     replica_source: Optional[str]
+    ca_cert: Optional[str]
+    cert: list[dict] = []
 
 
 class DBCluster(BaseModel):
