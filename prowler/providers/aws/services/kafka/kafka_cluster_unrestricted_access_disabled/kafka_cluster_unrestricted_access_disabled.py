@@ -13,13 +13,13 @@ class kafka_cluster_unrestricted_access_disabled(Check):
             report.resource_arn = arn_cluster
             report.resource_tags = cluster.tags
             report.status = "FAIL"
-            report.status_extended = f"Kafka cluster '{cluster.name}' does not have unrestricted access disabled."
+            report.status_extended = (
+                f"Kafka cluster '{cluster.name}' has unrestricted access enabled."
+            )
 
-            if cluster.unauthentication_access:
+            if not cluster.unauthentication_access:
                 report.status = "PASS"
-                report.status_extended = (
-                    f"Kafka cluster '{cluster.name}' has unrestricted access disabled."
-                )
+                report.status_extended = f"Kafka cluster '{cluster.name}' does not have unrestricted access enabled."
 
             findings.append(report)
 
