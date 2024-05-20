@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 from unittest import mock
 
 import botocore
@@ -55,9 +55,9 @@ class Test_rds_instance_certificate_expiration:
     @mock_aws
     def test_rds_certificate_expired(self):
 
-        valid_from = datetime.utcnow() - relativedelta.relativedelta(months=7)
-        valid_till = datetime.utcnow() - relativedelta.relativedelta(months=7)
-        customer_override_valid = datetime.utcnow() - relativedelta.relativedelta(
+        valid_from = datetime.now(UTC) - relativedelta.relativedelta(months=7)
+        valid_till = datetime.now(UTC) - relativedelta.relativedelta(months=7)
+        customer_override_valid = datetime.now(UTC) - relativedelta.relativedelta(
             months=7
         )
 
@@ -123,9 +123,9 @@ class Test_rds_instance_certificate_expiration:
     @mock_aws
     def test_rds_certificate_not_expired(self):
 
-        valid_from = datetime.utcnow() - relativedelta.relativedelta(months=7)
-        valid_till = datetime.utcnow() + relativedelta.relativedelta(months=7)
-        customer_override_valid = datetime.utcnow() + relativedelta.relativedelta(
+        valid_from = datetime.now(UTC) - relativedelta.relativedelta(months=7)
+        valid_till = datetime.now(UTC) + relativedelta.relativedelta(months=7)
+        customer_override_valid = datetime.now(UTC) + relativedelta.relativedelta(
             months=7
         )
 
@@ -190,9 +190,9 @@ class Test_rds_instance_certificate_expiration:
 
     @mock_aws
     def test_rds_certificate_between_three_and_six_months(self):
-        valid_from = datetime.utcnow() - relativedelta.relativedelta(months=7)
-        valid_till = datetime.utcnow() + relativedelta.relativedelta(months=4)
-        customer_override_valid = datetime.utcnow() + relativedelta.relativedelta(
+        valid_from = datetime.now(UTC) - relativedelta.relativedelta(months=7)
+        valid_till = datetime.now(UTC) + relativedelta.relativedelta(months=4)
+        customer_override_valid = datetime.now(UTC) + relativedelta.relativedelta(
             months=4
         )
 
@@ -242,7 +242,7 @@ class Test_rds_instance_certificate_expiration:
 
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert result[0].check_metadata.Severity == "informational"
+            assert result[0].check_metadata.Severity == "low"
             assert (
                 result[0].status_extended
                 == "RDS Instance db-master-1 certificate has between 3 and 6 months of validity."
@@ -257,10 +257,10 @@ class Test_rds_instance_certificate_expiration:
 
     @mock_aws
     def test_rds_certificate_less_than_three_months(self):
-        valid_from = datetime.utcnow() - relativedelta.relativedelta(months=7)
-        valid_till = datetime.utcnow() + relativedelta.relativedelta(months=1)
-        customer_override_valid = datetime.utcnow() + relativedelta.relativedelta(
-            months=1
+        valid_from = datetime.now(UTC) - relativedelta.relativedelta(months=7)
+        valid_till = datetime.now(UTC) + relativedelta.relativedelta(months=3)
+        customer_override_valid = datetime.now(UTC) + relativedelta.relativedelta(
+            months=3
         )
 
         rds_client = mock.MagicMock
@@ -312,7 +312,7 @@ class Test_rds_instance_certificate_expiration:
             assert result[0].check_metadata.Severity == "medium"
             assert (
                 result[0].status_extended
-                == "RDS Instance db-master-1 certificate less then 3 months of validity."
+                == "RDS Instance db-master-1 certificate less than 3 months of validity."
             )
             assert result[0].resource_id == "db-master-1"
             assert result[0].region == AWS_REGION
@@ -324,9 +324,9 @@ class Test_rds_instance_certificate_expiration:
 
     @mock_aws
     def test_custom_rds_certificate_over_six_months(self):
-        valid_from = datetime.utcnow() - relativedelta.relativedelta(months=7)
-        valid_till = datetime.utcnow() + relativedelta.relativedelta(months=7)
-        customer_override_valid = datetime.utcnow() + relativedelta.relativedelta(
+        valid_from = datetime.now(UTC) - relativedelta.relativedelta(months=7)
+        valid_till = datetime.now(UTC) + relativedelta.relativedelta(months=7)
+        customer_override_valid = datetime.now(UTC) + relativedelta.relativedelta(
             months=7
         )
 
@@ -391,9 +391,9 @@ class Test_rds_instance_certificate_expiration:
 
     @mock_aws
     def test_custom_rds_certificate_between_three_and_six_months(self):
-        valid_from = datetime.utcnow() - relativedelta.relativedelta(months=7)
-        valid_till = datetime.utcnow() + relativedelta.relativedelta(months=4)
-        customer_override_valid = datetime.utcnow() + relativedelta.relativedelta(
+        valid_from = datetime.now(UTC) - relativedelta.relativedelta(months=7)
+        valid_till = datetime.now(UTC) + relativedelta.relativedelta(months=4)
+        customer_override_valid = datetime.now(UTC) + relativedelta.relativedelta(
             months=4
         )
 
@@ -443,7 +443,7 @@ class Test_rds_instance_certificate_expiration:
 
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert result[0].check_metadata.Severity == "informational"
+            assert result[0].check_metadata.Severity == "low"
             assert (
                 result[0].status_extended
                 == "RDS Instance db-master-1 custom certificate has between 3 and 6 months of validity."
@@ -458,10 +458,10 @@ class Test_rds_instance_certificate_expiration:
 
     @mock_aws
     def test_custom_rds_certificate_less_than_three_months(self):
-        valid_from = datetime.utcnow() - relativedelta.relativedelta(months=7)
-        valid_till = datetime.utcnow() + relativedelta.relativedelta(months=1)
-        customer_override_valid = datetime.utcnow() + relativedelta.relativedelta(
-            months=1
+        valid_from = datetime.now(UTC) - relativedelta.relativedelta(months=7)
+        valid_till = datetime.now(UTC) + relativedelta.relativedelta(months=3)
+        customer_override_valid = datetime.now(UTC) + relativedelta.relativedelta(
+            months=3
         )
 
         rds_client = mock.MagicMock
@@ -513,7 +513,74 @@ class Test_rds_instance_certificate_expiration:
             assert result[0].check_metadata.Severity == "medium"
             assert (
                 result[0].status_extended
-                == "RDS Instance db-master-1 custom certificate less then 3 months of validity."
+                == "RDS Instance db-master-1 custom certificate less than 3 months of validity."
+            )
+            assert result[0].resource_id == "db-master-1"
+            assert result[0].region == AWS_REGION
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:rds:{AWS_REGION}:{AWS_ACCOUNT_NUMBER_CON}:db:db-master-1"
+            )
+            assert result[0].resource_tags == []
+
+    @mock_aws
+    def test_custom_rds_certificate_less_than_one_month(self):
+        valid_from = datetime.now(UTC) - relativedelta.relativedelta(months=7)
+        valid_till = datetime.now(UTC) + relativedelta.relativedelta(weeks=2)
+        customer_override_valid = datetime.now(UTC) + relativedelta.relativedelta(
+            weeks=2
+        )
+
+        rds_client = mock.MagicMock
+        rds_client.db_instances = []
+        rds_client.db_instances = [
+            DBInstance(
+                id="db-master-1",
+                arn=f"arn:aws:rds:{AWS_REGION}:{AWS_ACCOUNT_NUMBER_CON}:db:db-master-1",
+                engine="aurora-postgresql",
+                engine_version="aurora14",
+                status="available",
+                public=False,
+                encrypted=True,
+                deletion_protection=True,
+                auto_minor_version_upgrade=False,
+                multi_az=True,
+                region=AWS_REGION,
+                ca_cert="rds-ca-rsa2048-g1",
+                cert=[
+                    {
+                        "CertificateIdentifier": "rds-ca-rsa2048-g1",
+                        "CertificateType": "CA",
+                        "ValidFrom": f"{valid_from}",
+                        "ValidTill": f"{valid_till}",
+                        "CustomerOverride": True,
+                        "CustomerOverrideValidTill": f"{customer_override_valid}",
+                    }
+                ],
+            )
+        ]
+
+        with mock.patch(
+            "prowler.providers.aws.services.rds.rds_service.RDS",
+            new=rds_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.rds.rds_client.rds_client",
+            new=rds_client,
+        ):
+            # Test Check
+            from prowler.providers.aws.services.rds.rds_instance_certificate_expiration.rds_instance_certificate_expiration import (
+                rds_instance_certificate_expiration,
+            )
+
+            check = rds_instance_certificate_expiration()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert result[0].check_metadata.Severity == "high"
+            assert (
+                result[0].status_extended
+                == "RDS Instance db-master-1 custom certificate less than 1 month of validity."
             )
             assert result[0].resource_id == "db-master-1"
             assert result[0].region == AWS_REGION
@@ -525,9 +592,9 @@ class Test_rds_instance_certificate_expiration:
 
     @mock_aws
     def test_custom_rds_certificate_expired(self):
-        valid_from = datetime.utcnow() - relativedelta.relativedelta(months=7)
-        valid_till = datetime.utcnow() - relativedelta.relativedelta(months=7)
-        customer_override_valid = datetime.utcnow() - relativedelta.relativedelta(
+        valid_from = datetime.now(UTC) - relativedelta.relativedelta(months=7)
+        valid_till = datetime.now(UTC) - relativedelta.relativedelta(months=7)
+        customer_override_valid = datetime.now(UTC) - relativedelta.relativedelta(
             months=7
         )
 
