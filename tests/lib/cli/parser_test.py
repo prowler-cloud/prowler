@@ -47,6 +47,7 @@ class Test_Parser:
         assert len(parsed.output_formats) == 2
         assert "csv" in parsed.output_formats
         assert "json-ocsf" in parsed.output_formats
+        assert "html" in parsed.output_formats
         assert not parsed.output_filename
         assert "output" in parsed.output_directory
         assert not parsed.verbose
@@ -93,6 +94,7 @@ class Test_Parser:
         assert len(parsed.output_formats) == 2
         assert "csv" in parsed.output_formats
         assert "json-ocsf" in parsed.output_formats
+        assert "html" in parsed.output_formats
         assert not parsed.output_filename
         assert "output" in parsed.output_directory
         assert not parsed.verbose
@@ -132,6 +134,7 @@ class Test_Parser:
         assert len(parsed.output_formats) == 2
         assert "csv" in parsed.output_formats
         assert "json-ocsf" in parsed.output_formats
+        assert "html" in parsed.output_formats
         assert not parsed.output_filename
         assert "output" in parsed.output_directory
         assert not parsed.verbose
@@ -166,6 +169,7 @@ class Test_Parser:
         assert len(parsed.output_formats) == 2
         assert "csv" in parsed.output_formats
         assert "json-ocsf" in parsed.output_formats
+        assert "html" in parsed.output_formats
         assert not parsed.output_filename
         assert "output" in parsed.output_directory
         assert not parsed.verbose
@@ -264,9 +268,10 @@ class Test_Parser:
     def test_root_parser_default_output_formats(self):
         command = [prowler_command]
         parsed = self.parser.parse(command)
-        assert len(parsed.output_formats) == 2
+        assert len(parsed.output_formats) == 3
         assert "csv" in parsed.output_formats
         assert "json-ocsf" in parsed.output_formats
+        assert "html" in parsed.output_formats
 
     def test_root_parser_output_formats_short(self):
         command = [prowler_command, "-M", "csv"]
@@ -291,6 +296,18 @@ class Test_Parser:
         parsed = self.parser.parse(command)
         assert len(parsed.output_formats) == 1
         assert "json-ocsf" in parsed.output_formats
+
+    def test_root_parser_output_formats_short_html(self):
+        command = [prowler_command, "-M", "html"]
+        parsed = self.parser.parse(command)
+        assert len(parsed.output_formats) == 1
+        assert "html" in parsed.output_formats
+
+    def test_root_parser_output_formats_long_html(self):
+        command = [prowler_command, "--output-modes", "html"]
+        parsed = self.parser.parse(command)
+        assert len(parsed.output_formats) == 1
+        assert "html" in parsed.output_formats
 
     def test_root_parser_output_filename_short(self):
         filename = "test_output.txt"

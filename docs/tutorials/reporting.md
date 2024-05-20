@@ -296,7 +296,7 @@ The following code is an example output of the [JSON-ASFF](https://docs.aws.amaz
 
 ### HTML
 
-The following photo is an example of the HTML output:
+The following image is an example of the HTML output:
 
 <img src="../img/reporting/html-output.png">
 

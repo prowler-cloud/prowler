@@ -11,21 +11,12 @@ from prowler.config.config import (
     timestamp,
 )
 from prowler.lib.logger import logger
-from prowler.lib.outputs.compliance.compliance import get_check_compliance
 from prowler.lib.outputs.utils import parse_html_string, unroll_dict
 from prowler.lib.utils.utils import open_file
 
 
-def add_html_header(file_descriptor, provider):
+def add_html_header(file_descriptor, provider, parameters):
     try:
-        parameters = sys.argv[1:]
-        for index, parameter in enumerate(parameters):
-            if (
-                parameter == "--kubeconfig-file"
-                and "/.kube/config" in parameters[index + 1]
-            ):
-                parameters[index + 1] = "~/.kube/config"
-
         file_descriptor.write(
             f"""
         <!DOCTYPE html>
@@ -140,7 +131,7 @@ def add_html_header(file_descriptor, provider):
         sys.exit(1)
 
 
-def fill_html(file_descriptor, finding, output_options):
+def fill_html(file_descriptor, finding):
     try:
         row_class = "p-3 mb-2 bg-success-custom"
         finding.status = finding.status.split(".")[0]
@@ -165,7 +156,7 @@ def fill_html(file_descriptor, finding, output_options):
                     <td>{finding.status_extended.replace("<", "&lt;").replace(">", "&gt;").replace("_", "<wbr />_")}</td>
                     <td><p class="show-read-more">{html.escape(finding.risk)}</p></td>
                     <td><p class="show-read-more">{html.escape(finding.remediation_recommendation_text)}</p> <a class="read-more" href="{finding.remediation_recommendation_url}"><i class="fas fa-external-link-alt"></i></a></td>
-                    <td><p class="show-read-more">{parse_html_string(unroll_dict(get_check_compliance(finding, finding.provider, output_options)))}</p></td>
+                    <td><p class="show-read-more">{parse_html_string(unroll_dict(finding.compliance))}</p></td>
                 </tr>
                 """
         )

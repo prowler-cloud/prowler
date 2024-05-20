@@ -2,7 +2,6 @@ import sys
 
 from prowler.lib.check.models import Check_Report
 from prowler.lib.logger import logger
-from prowler.lib.outputs.common_models import FindingOutput
 from prowler.lib.outputs.compliance.aws_well_architected_framework import (
     write_compliance_row_aws_well_architected_framework,
 )
@@ -204,14 +203,12 @@ def get_check_compliance(finding, provider_type, output_options) -> dict:
     }
     """
     try:
-        if not isinstance(finding, FindingOutput):
-            check_id = finding.check_metadata.CheckID
-        else:
-            check_id = finding.check_id
         check_compliance = {}
         # We have to retrieve all the check's compliance requirements
-        if check_id in output_options.bulk_checks_metadata:
-            for compliance in output_options.bulk_checks_metadata[check_id].Compliance:
+        if finding.check_metadata.CheckID in output_options.bulk_checks_metadata:
+            for compliance in output_options.bulk_checks_metadata[
+                finding.check_metadata.CheckID
+            ].Compliance:
                 compliance_fw = compliance.Framework
                 if compliance.Version:
                     compliance_fw = f"{compliance_fw}-{compliance.Version}"

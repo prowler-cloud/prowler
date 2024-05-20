@@ -266,19 +266,19 @@ def prowler():
             if "json" in mode:
                 close_json(
                     global_provider.output_options.output_filename,
-                    args.output_directory,
+                    global_provider.output_options.output_directory,
                     mode,
                 )
 
             if "html" in mode:
                 add_html_footer(
                     global_provider.output_options.output_filename,
-                    args.output_directory,
+                    global_provider.output_options.output_directory,
                 )
                 fill_html_overview_statistics(
                     stats,
                     global_provider.output_options.output_filename,
-                    args.output_directory,
+                    global_provider.output_options.output_directory,
                 )
 
             # Send output to S3 if needed (-B / -D)

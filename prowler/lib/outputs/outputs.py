@@ -141,9 +141,7 @@ def report(check_findings, provider):
                             file_descriptors["json-ocsf"].write(",")
 
                         if "html" in file_descriptors:
-                            fill_html(
-                                file_descriptors["html"], finding_output, output_options
-                            )
+                            fill_html(file_descriptors["html"], finding_output)
                             file_descriptors["html"].write("")
 
                         # CSV

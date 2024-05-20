@@ -1,3 +1,4 @@
+import sys
 from csv import DictWriter
 from io import TextIOWrapper
 from typing import Any
@@ -52,7 +53,14 @@ def initialize_file_descriptor(
             if output_mode in ("json-asff", "json-ocsf"):
                 file_descriptor.write("[")
             elif "html" in output_mode:
-                add_html_header(file_descriptor, provider)
+                parameters = sys.argv[1:]
+                for index, parameter in enumerate(parameters):
+                    if (
+                        parameter == "--kubeconfig-file"
+                        and "/.kube/config" in parameters[index + 1]
+                    ):
+                        parameters[index + 1] = "~/.kube/config"
+                add_html_header(file_descriptor, provider, parameters)
             else:
                 # Format is the class model of the CSV format to print the headers
                 csv_header = [x.upper() for x in generate_csv_fields(format)]
