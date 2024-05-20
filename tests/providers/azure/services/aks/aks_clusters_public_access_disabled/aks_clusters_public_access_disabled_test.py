@@ -14,7 +14,7 @@ class Test_aks_clusters_public_access_disabled:
         aks_client.clusters = {}
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
             "prowler.providers.azure.services.aks.aks_clusters_public_access_disabled.aks_clusters_public_access_disabled.aks_client",
@@ -33,7 +33,7 @@ class Test_aks_clusters_public_access_disabled:
         aks_client.clusters = {AZURE_SUBSCRIPTION_ID: {}}
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
             "prowler.providers.azure.services.aks.aks_clusters_public_access_disabled.aks_clusters_public_access_disabled.aks_client",
@@ -65,7 +65,7 @@ class Test_aks_clusters_public_access_disabled:
         }
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
             "prowler.providers.azure.services.aks.aks_clusters_public_access_disabled.aks_clusters_public_access_disabled.aks_client",
@@ -106,7 +106,7 @@ class Test_aks_clusters_public_access_disabled:
         }
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
             "prowler.providers.azure.services.aks.aks_clusters_public_access_disabled.aks_clusters_public_access_disabled.aks_client",
@@ -147,7 +147,7 @@ class Test_aks_clusters_public_access_disabled:
         }
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
             "prowler.providers.azure.services.aks.aks_clusters_public_access_disabled.aks_clusters_public_access_disabled.aks_client",

@@ -15,7 +15,7 @@ class Test_lightsail_static_ip_unused:
         lightsail_client.static_ips = {}
 
         with patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
         ), patch(
             "prowler.providers.aws.services.lightsail.lightsail_service.Lightsail",
@@ -45,7 +45,7 @@ class Test_lightsail_static_ip_unused:
         }
 
         with patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
         ), patch(
             "prowler.providers.aws.services.lightsail.lightsail_service.Lightsail",
@@ -87,7 +87,7 @@ class Test_lightsail_static_ip_unused:
         }
 
         with patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
         ), patch(
             "prowler.providers.aws.services.lightsail.lightsail_service.Lightsail",

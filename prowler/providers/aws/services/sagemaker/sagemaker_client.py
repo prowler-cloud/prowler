@@ -1,4 +1,4 @@
 from prowler.providers.aws.services.sagemaker.sagemaker_service import SageMaker
-from prowler.providers.common.common import get_global_provider
+from prowler.providers.common.provider import Provider
 
-sagemaker_client = SageMaker(get_global_provider())
+sagemaker_client = SageMaker(Provider.get_global_provider())

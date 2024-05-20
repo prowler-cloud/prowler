@@ -9,7 +9,7 @@ class Test_bigquery_dataset_public_access:
         bigquery_client.datasets = []
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_gcp_provider(),
         ), mock.patch(
             "prowler.providers.gcp.services.bigquery.bigquery_dataset_public_access.bigquery_dataset_public_access.bigquery_client",
@@ -40,7 +40,7 @@ class Test_bigquery_dataset_public_access:
         bigquery_client.datasets = [dataset]
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_gcp_provider(),
         ), mock.patch(
             "prowler.providers.gcp.services.bigquery.bigquery_dataset_public_access.bigquery_dataset_public_access.bigquery_client",
@@ -81,7 +81,7 @@ class Test_bigquery_dataset_public_access:
         bigquery_client.datasets = [dataset]
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_gcp_provider(),
         ), mock.patch(
             "prowler.providers.gcp.services.bigquery.bigquery_dataset_public_access.bigquery_dataset_public_access.bigquery_client",

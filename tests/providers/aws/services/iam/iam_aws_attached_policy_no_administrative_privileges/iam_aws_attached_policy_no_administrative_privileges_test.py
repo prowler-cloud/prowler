@@ -22,7 +22,7 @@ class Test_iam_aws_attached_policy_no_administrative_privileges_test:
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_aws_attached_policy_no_administrative_privileges.iam_aws_attached_policy_no_administrative_privileges.iam_client",
@@ -61,7 +61,7 @@ class Test_iam_aws_attached_policy_no_administrative_privileges_test:
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_aws_attached_policy_no_administrative_privileges.iam_aws_attached_policy_no_administrative_privileges.iam_client",
@@ -103,7 +103,7 @@ class Test_iam_aws_attached_policy_no_administrative_privileges_test:
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_aws_attached_policy_no_administrative_privileges.iam_aws_attached_policy_no_administrative_privileges.iam_client",
