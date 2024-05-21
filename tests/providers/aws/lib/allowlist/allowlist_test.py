@@ -447,6 +447,41 @@ class Test_Allowlist:
             )
         )
 
+    def test_is_allowlisted_exceptions_before_match(self):
+        # Allowlist example
+        allowlist = {
+            "Accounts": {
+                "*": {
+                    "Checks": {
+                        "accessanalyzer_enabled": {
+                            "Exceptions": {
+                                "Accounts": [],
+                                "Regions": [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1],
+                                "Resources": [],
+                                "Tags": [],
+                            },
+                            "Regions": ["*"],
+                            "Resources": ["*"],
+                            "Tags": ["*"],
+                        },
+                        "sns_*": {
+                            "Regions": ["*"],
+                            "Resources": ["aws-controltower-*"],
+                        },
+                    }
+                }
+            }
+        }
+
+        assert is_allowlisted(
+            allowlist,
+            AWS_ACCOUNT_NUMBER,
+            "sns_topics_not_publicly_accessible",
+            AWS_REGION_EU_WEST_1,
+            "aws-controltower-AggregateSecurityNotifications",
+            "",
+        )
+
     def test_is_allowlisted_all_and_single_account(self):
         # Allowlist example
         allowlist = {

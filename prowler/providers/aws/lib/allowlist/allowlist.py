@@ -185,14 +185,23 @@ def is_allowlisted_in_check(
             # map lambda to awslambda
             allowlisted_check = re.sub("^lambda", "awslambda", allowlisted_check)
 
+            check_match = (
+                "*" == allowlisted_check
+                or check == allowlisted_check
+                or re.search(allowlisted_check, check)
+            )
+
             # Check if the finding is excepted
             exceptions = allowlisted_check_info.get("Exceptions")
-            if is_excepted(
-                exceptions,
-                audited_account,
-                finding_region,
-                finding_resource,
-                finding_tags,
+            if (
+                is_excepted(
+                    exceptions,
+                    audited_account,
+                    finding_region,
+                    finding_resource,
+                    finding_tags,
+                )
+                and check_match
             ):
                 # Break loop and return default value since is excepted
                 break
@@ -205,11 +214,7 @@ def is_allowlisted_in_check(
                 allowlisted_tags = "*"
 
             # If there is a *, it affects to all checks
-            if (
-                "*" == allowlisted_check
-                or check == allowlisted_check
-                or re.search(allowlisted_check, check)
-            ):
+            if check_match:
                 allowlisted_in_check = True
                 allowlisted_in_region = is_allowlisted_in_region(
                     allowlisted_regions, finding_region
