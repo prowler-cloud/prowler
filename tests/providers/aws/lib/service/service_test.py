@@ -81,15 +81,12 @@ class TestAWSService:
         check_id = "ec2_securitygroup_allow_ingress_from_internet_to_all_ports"
         arn = "arn:aws:ec2:eu-central-1:123456789:security-group/sg-12345678"
 
-        assert AWSService.is_failed_check(check_id, arn) == False
+        assert not AWSService.is_failed_check(check_id, arn)
 
         AWSService.set_failed_check(check_id, arn)
 
-        assert AWSService.is_failed_check(check_id, arn) == True
-        assert (
-            AWSService.is_failed_check(
-                check_id,
-                "arn:aws:ec2:eu-central-1:123456789:security-group/sg-87654321",
-            )
-            == False
+        assert AWSService.is_failed_check(check_id, arn)
+        assert not AWSService.is_failed_check(
+            check_id,
+            "arn:aws:ec2:eu-central-1:123456789:security-group/sg-87654321",
         )
