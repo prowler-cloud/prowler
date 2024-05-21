@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
-  "CheckID": "ec2_instance_port_rdp_exposed_to_internet",
-  "CheckTitle": "Ensure no EC2 instances allow ingress from the internet to TCP port 3389 (RDP)",
+  "CheckID": "ec2_instance_port_mongodb_exposed_to_internet",
+  "CheckTitle": "Ensure no EC2 instances allow ingress from the internet to TCP port 27017 or 27018 (MongoDB)",
   "CheckType": [
     "Infrastructure Security"
   ],
@@ -10,8 +10,8 @@
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "critical",
   "ResourceType": "AwsEc2Instance",
-  "Description": "Ensure no EC2 instances allow ingress from the internet to TCP port 3389 (RDP).",
-  "Risk": "This EC2 instance allows ingress from the internet to TCP port 3389 (RDP). This could allow unauthorized access to the instance.",
+  "Description": "Ensure no EC2 instances allow ingress from the internet to TCP port 27017 or 27018 (MongoDB).",
+  "Risk": "The security group rule allows ingress from the internet to TCP port 27017 or 27018 (MongoDB). This could allow an attacker to access the MongoDB service running on the EC2 instance.",
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
@@ -21,7 +21,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Modify the security group associated with the EC2 instance to remove the rule that allows ingress from the internet to TCP port 3389 (RDP).",
+      "Text": "Modify the security group to remove the rule that allows ingress from the internet to TCP port 27017 or 27018 (MongoDB).",
       "Url": "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
     }
   },

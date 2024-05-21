@@ -10,8 +10,8 @@
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "critical",
   "ResourceType": "AwsEc2Instance",
-  "Description": "This check determines if any EC2 instances allow ingress from the internet to TCP port 22. SSH is a common target for brute force attacks.",
-  "Risk": "Exposing an EC2 directly to internet increases the attack surface and therefore the risk of compromise.",
+  "Description": "Ensure no EC2 instances allow ingress from the internet to TCP port 22 (SSH).",
+  "Risk": "SSH is a common target for brute force attacks. If an EC2 instance allows ingress from the internet to TCP port 22, it is at risk of being compromised.",
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
