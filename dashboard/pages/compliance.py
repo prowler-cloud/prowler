@@ -474,7 +474,7 @@ def display_data(
     overall_status_result_graph = get_graph(pie_1, "Overall Status Result")
 
     security_level_graph = get_graph(
-        pie_2, f"Top 5 failed {current_filter} by findings"
+        pie_2, f"Top 5 failed sections by {current_filter}"
     )
 
     return (
