@@ -38,7 +38,7 @@ class Test_macie_is_enabled:
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.macie.macie_is_enabled.macie_is_enabled.macie_client",
@@ -90,7 +90,7 @@ class Test_macie_is_enabled:
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.macie.macie_is_enabled.macie_is_enabled.macie_client",
@@ -144,7 +144,7 @@ class Test_macie_is_enabled:
         macie_client.provider._scan_unused_services = False
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.macie.macie_is_enabled.macie_is_enabled.macie_client",
@@ -196,7 +196,7 @@ class Test_macie_is_enabled:
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.macie.macie_is_enabled.macie_is_enabled.macie_client",
@@ -247,7 +247,7 @@ class Test_macie_is_enabled:
             return_value=macie_client.session_arn_template
         )
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.macie.macie_is_enabled.macie_is_enabled.macie_client",

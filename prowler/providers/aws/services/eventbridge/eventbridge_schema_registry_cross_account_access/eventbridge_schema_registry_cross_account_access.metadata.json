@@ -1,0 +1,30 @@
+{
+  "Provider": "aws",
+  "CheckID": "eventbridge_schema_registry_cross_account_access",
+  "CheckTitle": "Ensure that AWS EventBridge schema registries do not allow unknown cross-account access for delivery of events.",
+  "CheckType": [],
+  "ServiceName": "eventbridge",
+  "SubServiceName": "Schemas",
+  "ResourceIdTemplate": "arn:partition:events:region:account-id:event-bus/resource-id",
+  "Severity": "high",
+  "ResourceType": "AwsEventSchemasRegistry",
+  "Description": "Ensure that AWS EventBridge schema registries do not allow unknown cross-account access for delivery of events.",
+  "Risk": "The schema registry is a central location for storing and managing schemas. If the schema registry is not properly secured, it can lead to unauthorized access to the schema registry and the schemas stored within it.",
+  "RelatedUrl": "https://aws.amazon.com/about-aws/whats-new/2021/09/cross-account-discovery-amazon-eventbridge-schema/",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "To remediate this issue, ensure that the schema registry is not publicly accessible and that only authorized accounts have access to the schema registry.",
+      "Url": "https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-schema.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

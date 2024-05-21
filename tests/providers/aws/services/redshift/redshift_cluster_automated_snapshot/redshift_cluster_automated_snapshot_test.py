@@ -1,4 +1,3 @@
-from re import search
 from unittest import mock
 from uuid import uuid4
 
@@ -49,7 +48,10 @@ class Test_redshift_cluster_automated_snapshot:
             check = redshift_cluster_automated_snapshot()
             result = check.execute()
             assert result[0].status == "FAIL"
-            assert search("has automated snapshots disabled", result[0].status_extended)
+            assert (
+                result[0].status_extended
+                == f"Redshift Cluster {CLUSTER_ID} has automated snapshots disabled."
+            )
             assert result[0].resource_id == CLUSTER_ID
             assert result[0].resource_arn == CLUSTER_ARN
 
@@ -75,6 +77,9 @@ class Test_redshift_cluster_automated_snapshot:
             check = redshift_cluster_automated_snapshot()
             result = check.execute()
             assert result[0].status == "PASS"
-            assert search("has automated snapshots", result[0].status_extended)
+            assert (
+                result[0].status_extended
+                == f"Redshift Cluster {CLUSTER_ID} has automated snapshots enabled."
+            )
             assert result[0].resource_id == CLUSTER_ID
             assert result[0].resource_arn == CLUSTER_ARN

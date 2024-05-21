@@ -37,6 +37,7 @@ from prowler.lib.check.custom_checks_metadata import (
 from prowler.lib.cli.parser import ProwlerArgumentParser
 from prowler.lib.logger import logger, set_logging_config
 from prowler.lib.outputs.compliance.compliance import display_compliance_table
+from prowler.lib.outputs.html.html import add_html_footer, fill_html_overview_statistics
 from prowler.lib.outputs.json.json import close_json
 from prowler.lib.outputs.outputs import extract_findings_statistics
 from prowler.lib.outputs.slack import send_slack_message
@@ -48,11 +49,12 @@ from prowler.providers.aws.lib.security_hub.security_hub import (
     resolve_security_hub_previous_findings,
     verify_security_hub_integration_enabled_per_region,
 )
-from prowler.providers.common.common import set_global_provider_object
+from prowler.providers.common.provider import Provider
 from prowler.providers.common.quick_inventory import run_provider_quick_inventory
 
 
 def prowler():
+
     # Parse Arguments
     parser = ProwlerArgumentParser()
     args = parser.parse()
@@ -168,7 +170,8 @@ def prowler():
         sys.exit()
 
     # Provider to scan
-    global_provider = set_global_provider_object(args)
+    Provider.set_global_provider(args)
+    global_provider = Provider.get_global_provider()
 
     # Print Provider Credentials
     if not args.only_logs:
@@ -265,8 +268,19 @@ def prowler():
             if "json" in mode:
                 close_json(
                     global_provider.output_options.output_filename,
-                    args.output_directory,
+                    global_provider.output_options.output_directory,
                     mode,
+                )
+
+            if "html" in mode:
+                add_html_footer(
+                    global_provider.output_options.output_filename,
+                    global_provider.output_options.output_directory,
+                )
+                fill_html_overview_statistics(
+                    stats,
+                    global_provider.output_options.output_filename,
+                    global_provider.output_options.output_directory,
                 )
 
             # Send output to S3 if needed (-B / -D)

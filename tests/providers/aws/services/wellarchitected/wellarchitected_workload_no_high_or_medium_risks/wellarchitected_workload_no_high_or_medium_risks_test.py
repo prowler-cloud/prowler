@@ -1,4 +1,3 @@
-from re import search
 from unittest import mock
 from uuid import uuid4
 
@@ -58,8 +57,9 @@ class Test_wellarchitected_workload_no_high_or_medium_risks:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert search(
-                "does not contain high or medium risks", result[0].status_extended
+            assert (
+                result[0].status_extended
+                == "Well Architected workload test does not contain high or medium risks."
             )
             assert result[0].resource_id == workload_id
             assert (
@@ -99,8 +99,9 @@ class Test_wellarchitected_workload_no_high_or_medium_risks:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert search(
-                "does not contain high or medium risks", result[0].status_extended
+            assert (
+                result[0].status_extended
+                == "Well Architected workload test does not contain high or medium risks."
             )
             assert result[0].resource_id == workload_id
             assert (
@@ -142,8 +143,9 @@ class Test_wellarchitected_workload_no_high_or_medium_risks:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert search(
-                "contains 10 high and 20 medium risks", result[0].status_extended
+            assert (
+                result[0].status_extended
+                == "Well Architected workload test contains 10 high and 20 medium risks."
             )
             assert result[0].resource_id == workload_id
             assert (

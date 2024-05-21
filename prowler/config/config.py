@@ -8,12 +8,12 @@ import requests
 import yaml
 
 from prowler.lib.logger import logger
-from prowler.providers.common.common import get_global_provider
 
 timestamp = datetime.today()
 timestamp_utc = datetime.now(timezone.utc).replace(tzinfo=timezone.utc)
 prowler_version = "4.1.0"
-square_logo_img = "https://user-images.githubusercontent.com/38561120/235905862-9ece5bd7-9aa3-4e48-807a-3a9035eb8bfb.png"
+html_logo_url = "https://github.com/prowler-cloud/prowler/"
+square_logo_img = "https://raw.githubusercontent.com/prowler-cloud/prowler/master/docs/img/prowler-logo-black.png#gh-light-mode-onlyg"
 aws_logo = "https://user-images.githubusercontent.com/38561120/235953920-3e3fba08-0795-41dc-b480-9bea57db9f2e.png"
 azure_logo = "https://user-images.githubusercontent.com/38561120/235927375-b23e2e0f-8932-49ec-b59c-d89f61c8041d.png"
 gcp_logo = "https://user-images.githubusercontent.com/38561120/235928332-eb4accdc-c226-4391-8e97-6ca86a91cf50.png"
@@ -58,6 +58,7 @@ csv_file_suffix = ".csv"
 json_file_suffix = ".json"
 json_asff_file_suffix = ".asff.json"
 json_ocsf_file_suffix = ".ocsf.json"
+html_file_suffix = ".html"
 default_config_file_path = (
     f"{pathlib.Path(os.path.dirname(os.path.realpath(__file__)))}/config.yaml"
 )
@@ -94,19 +95,6 @@ def check_current_version():
         return f"{prowler_version_string}"
     except Exception:
         return f"{prowler_version_string}"
-
-
-# TODO: revisit this function
-def update_provider_config(variable: str, value: str):
-    try:
-        global_provider = get_global_provider()
-        if global_provider.audit_config and variable in global_provider.audit_config:
-            global_provider.audit_config[variable] = value
-
-    except Exception as error:
-        logger.error(
-            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
-        )
 
 
 def load_and_validate_config_file(provider: str, config_file_path: str) -> dict:

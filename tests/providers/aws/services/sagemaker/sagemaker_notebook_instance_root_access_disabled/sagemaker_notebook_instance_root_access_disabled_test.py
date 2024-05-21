@@ -1,4 +1,3 @@
-from re import search
 from unittest import mock
 
 from prowler.providers.aws.services.sagemaker.sagemaker_service import NotebookInstance
@@ -47,7 +46,10 @@ class Test_sagemaker_notebook_instance_root_access_disabled:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert search("has root access disabled", result[0].status_extended)
+            assert (
+                result[0].status_extended
+                == f"Sagemaker notebook instance {test_notebook_instance} has root access disabled."
+            )
             assert result[0].resource_id == test_notebook_instance
             assert result[0].resource_arn == notebook_instance_arn
 
@@ -74,6 +76,9 @@ class Test_sagemaker_notebook_instance_root_access_disabled:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert search("has root access enabled", result[0].status_extended)
+            assert (
+                result[0].status_extended
+                == f"Sagemaker notebook instance {test_notebook_instance} has root access enabled."
+            )
             assert result[0].resource_id == test_notebook_instance
             assert result[0].resource_arn == notebook_instance_arn

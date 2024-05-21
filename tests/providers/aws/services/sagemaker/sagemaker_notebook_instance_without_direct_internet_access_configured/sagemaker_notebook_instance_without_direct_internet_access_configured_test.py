@@ -1,4 +1,3 @@
-from re import search
 from unittest import mock
 
 from prowler.providers.aws.services.sagemaker.sagemaker_service import NotebookInstance
@@ -51,8 +50,9 @@ class Test_sagemaker_notebook_instance_without_direct_internet_access_configured
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert search(
-                "has direct internet access disabled", result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"Sagemaker notebook instance {test_notebook_instance} has direct internet access disabled."
             )
             assert result[0].resource_id == test_notebook_instance
             assert result[0].resource_arn == notebook_instance_arn
@@ -82,8 +82,9 @@ class Test_sagemaker_notebook_instance_without_direct_internet_access_configured
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert search(
-                "has direct internet access enabled", result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"Sagemaker notebook instance {test_notebook_instance} has direct internet access enabled."
             )
             assert result[0].resource_id == test_notebook_instance
             assert result[0].resource_arn == notebook_instance_arn

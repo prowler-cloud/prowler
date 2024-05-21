@@ -16,7 +16,7 @@ class Test_sqlserver_unrestricted_inbound_access:
         sqlserver_client.sql_servers = {}
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
             "prowler.providers.azure.services.sqlserver.sqlserver_unrestricted_inbound_access.sqlserver_unrestricted_inbound_access.sqlserver_client",
@@ -54,7 +54,7 @@ class Test_sqlserver_unrestricted_inbound_access:
         }
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
             "prowler.providers.azure.services.sqlserver.sqlserver_unrestricted_inbound_access.sqlserver_unrestricted_inbound_access.sqlserver_client",
@@ -101,7 +101,7 @@ class Test_sqlserver_unrestricted_inbound_access:
         }
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
             "prowler.providers.azure.services.sqlserver.sqlserver_unrestricted_inbound_access.sqlserver_unrestricted_inbound_access.sqlserver_client",

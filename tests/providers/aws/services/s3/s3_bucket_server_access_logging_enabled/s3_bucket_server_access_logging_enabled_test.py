@@ -1,4 +1,3 @@
-from re import search
 from unittest import mock
 
 from boto3 import client
@@ -19,7 +18,7 @@ class Test_s3_bucket_server_access_logging_enabled:
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
             with mock.patch(
@@ -36,9 +35,9 @@ class Test_s3_bucket_server_access_logging_enabled:
 
                 assert len(result) == 1
                 assert result[0].status == "FAIL"
-                assert search(
-                    "server access logging disabled",
-                    result[0].status_extended,
+                assert (
+                    result[0].status_extended
+                    == f"S3 Bucket {bucket_name_us} has server access logging disabled."
                 )
                 assert result[0].resource_id == bucket_name_us
                 assert (
@@ -112,7 +111,7 @@ class Test_s3_bucket_server_access_logging_enabled:
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
             with mock.patch(
@@ -129,9 +128,9 @@ class Test_s3_bucket_server_access_logging_enabled:
 
                 assert len(result) == 1
                 assert result[0].status == "PASS"
-                assert search(
-                    "server access logging enabled",
-                    result[0].status_extended,
+                assert (
+                    result[0].status_extended
+                    == f"S3 Bucket {bucket_name_us} has server access logging enabled."
                 )
                 assert result[0].resource_id == bucket_name_us
                 assert (

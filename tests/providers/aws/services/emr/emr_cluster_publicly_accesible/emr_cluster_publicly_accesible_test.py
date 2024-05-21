@@ -81,7 +81,7 @@ class Test_emr_cluster_publicly_accesible:
             "prowler.providers.aws.services.emr.emr_service.EMR",
             new=emr_client,
         ), mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_aws_provider(),
         ), mock.patch(
             "prowler.providers.aws.services.emr.emr_cluster_publicly_accesible.emr_cluster_publicly_accesible.ec2_client",
@@ -147,7 +147,7 @@ class Test_emr_cluster_publicly_accesible:
             "prowler.providers.aws.services.emr.emr_service.EMR",
             new=emr_client,
         ), mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_aws_provider(),
         ), mock.patch(
             "prowler.providers.aws.services.emr.emr_cluster_publicly_accesible.emr_cluster_publicly_accesible.ec2_client",
@@ -230,7 +230,7 @@ class Test_emr_cluster_publicly_accesible:
             "prowler.providers.aws.services.emr.emr_service.EMR",
             new=emr_client,
         ), mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_aws_provider(),
         ), mock.patch(
             "prowler.providers.aws.services.emr.emr_cluster_publicly_accesible.emr_cluster_publicly_accesible.ec2_client",
@@ -316,7 +316,7 @@ class Test_emr_cluster_publicly_accesible:
             "prowler.providers.aws.services.emr.emr_service.EMR",
             new=emr_client,
         ), mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_aws_provider(),
         ), mock.patch(
             "prowler.providers.aws.services.emr.emr_cluster_publicly_accesible.emr_cluster_publicly_accesible.ec2_client",
@@ -399,7 +399,7 @@ class Test_emr_cluster_publicly_accesible:
             "prowler.providers.aws.services.emr.emr_service.EMR",
             new=emr_client,
         ), mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_aws_provider(),
         ), mock.patch(
             "prowler.providers.aws.services.emr.emr_cluster_publicly_accesible.emr_cluster_publicly_accesible.ec2_client",

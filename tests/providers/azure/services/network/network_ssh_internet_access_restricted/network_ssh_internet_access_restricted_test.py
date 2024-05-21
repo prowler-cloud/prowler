@@ -16,7 +16,7 @@ class Test_network_ssh_internet_access_restricted:
         network_client.security_groups = {}
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
             "prowler.providers.azure.services.network.network_service.Network",
@@ -50,7 +50,7 @@ class Test_network_ssh_internet_access_restricted:
         }
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
             "prowler.providers.azure.services.network.network_service.Network",
@@ -101,7 +101,7 @@ class Test_network_ssh_internet_access_restricted:
         }
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
             "prowler.providers.azure.services.network.network_service.Network",
@@ -152,7 +152,7 @@ class Test_network_ssh_internet_access_restricted:
         }
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
             "prowler.providers.azure.services.network.network_service.Network",
@@ -203,7 +203,7 @@ class Test_network_ssh_internet_access_restricted:
         }
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
             "prowler.providers.azure.services.network.network_service.Network",

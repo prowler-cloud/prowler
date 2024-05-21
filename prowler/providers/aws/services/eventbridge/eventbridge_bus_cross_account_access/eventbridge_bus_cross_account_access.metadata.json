@@ -1,0 +1,30 @@
+{
+  "Provider": "aws",
+  "CheckID": "eventbridge_bus_cross_account_access",
+  "CheckTitle": "Ensure that AWS EventBridge event buses do not allow unknown cross-account access for delivery of events.",
+  "CheckType": [],
+  "ServiceName": "eventbridge",
+  "SubServiceName": "eventbus",
+  "ResourceIdTemplate": "arn:partition:events:region:account-id:event-bus/resource-id",
+  "Severity": "high",
+  "ResourceType": "AwsEventsEventbus",
+  "Description": "Ensure that AWS EventBridge event buses do not allow unknown cross-account access for delivery of events.",
+  "Risk": "If an AWS EventBridge event bus allows unknown cross-account access for delivery of events, it can lead to unauthorized access to the event bus and its events.",
+  "RelatedUrl": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/CWE_GettingStarted.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws events remove-permission --event-bus-name <event_bus_name> --statement-id <statement_id>",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudWatchEvents/event-bus-cross-account-access.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "To remediate this issue, remove the unknown cross-account access for delivery of events from the AWS EventBridge event bus.",
+      "Url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/CloudWatchEvents-CrossAccountEventDelivery.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

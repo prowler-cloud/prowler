@@ -19,7 +19,7 @@ class Test_cloudtrail_insights_exist:
         )
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
             with mock.patch(
@@ -55,7 +55,7 @@ class Test_cloudtrail_insights_exist:
         cloudtrail_client_us_east_1.get_trail_status(Name=trail_name_us)
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
             with mock.patch(
@@ -104,7 +104,7 @@ class Test_cloudtrail_insights_exist:
         )
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
             with mock.patch(
@@ -135,7 +135,7 @@ class Test_cloudtrail_insights_exist:
             [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
         )
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
             with mock.patch(

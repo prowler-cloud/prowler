@@ -11,6 +11,7 @@ def create_layout_overview(
     service_dropdown: html.Div,
     table_row_dropdown: html.Div,
     status_dropdown: html.Div,
+    table_div_header: html.Div,
 ) -> html.Div:
     """
     Create the layout of the dashboard.
@@ -40,7 +41,7 @@ def create_layout_overview(
                     html.Div([account_dropdown], className=""),
                     html.Div([region_dropdown], className=""),
                 ],
-                className="grid gap-x-4 gap-y-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-y-0",
+                className="grid gap-x-4 mt-[30px] mb-[30px] sm:grid-cols-2 lg:grid-cols-3",
             ),
             html.Div(
                 [
@@ -48,7 +49,7 @@ def create_layout_overview(
                     html.Div([service_dropdown], className=""),
                     html.Div([status_dropdown], className=""),
                 ],
-                className="grid gap-x-4 gap-y-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-y-0",
+                className="grid gap-x-4 mb-[30px] sm:grid-cols-2 lg:grid-cols-3",
             ),
             html.Div(
                 [
@@ -57,11 +58,11 @@ def create_layout_overview(
                     html.Div(className="flex", id="gcp_card", n_clicks=0),
                     html.Div(className="flex", id="k8s_card", n_clicks=0),
                 ],
-                className="grid gap-x-4 gap-y-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-y-0",
+                className="grid gap-x-4 mb-[30px] sm:grid-cols-2 lg:grid-cols-4",
             ),
             html.H4(
                 "Count of Findings by severity",
-                className="text-prowler-stone-900 text-lg font-bold",
+                className="text-prowler-stone-900 text-lg font-bold mb-[30px]",
             ),
             html.Div(
                 [
@@ -78,7 +79,7 @@ def create_layout_overview(
                         id="line_plot",
                     ),
                 ],
-                className="grid gap-x-4 gap-y-4 grid-cols-12 lg:gap-y-0",
+                className="grid gap-x-4 grid-cols-12 mb-[30px]",
             ),
             html.Div(
                 [
@@ -105,9 +106,10 @@ def create_layout_overview(
                 ],
                 className="flex justify-between items-center",
             ),
+            table_div_header,
             html.Div(id="table", className="grid"),
         ],
-        className="grid gap-x-8 gap-y-8 2xl:container mx-auto",
+        className="grid gap-x-8 2xl:container mx-auto",
     )
 
 

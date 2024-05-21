@@ -10,7 +10,7 @@ class Test_dns_rsasha1_in_use_to_zone_sign_in_dnssec:
         dns_client.managed_zones = []
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_gcp_provider(),
         ), mock.patch(
             "prowler.providers.gcp.services.dns.dns_rsasha1_in_use_to_zone_sign_in_dnssec.dns_rsasha1_in_use_to_zone_sign_in_dnssec.dns_client",
@@ -53,7 +53,7 @@ class Test_dns_rsasha1_in_use_to_zone_sign_in_dnssec:
         dns_client.managed_zones = [managed_zone]
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_gcp_provider(),
         ), mock.patch(
             "prowler.providers.gcp.services.dns.dns_rsasha1_in_use_to_zone_sign_in_dnssec.dns_rsasha1_in_use_to_zone_sign_in_dnssec.dns_client",
@@ -103,7 +103,7 @@ class Test_dns_rsasha1_in_use_to_zone_sign_in_dnssec:
         dns_client.managed_zones = [managed_zone]
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_gcp_provider(),
         ), mock.patch(
             "prowler.providers.gcp.services.dns.dns_rsasha1_in_use_to_zone_sign_in_dnssec.dns_rsasha1_in_use_to_zone_sign_in_dnssec.dns_client",

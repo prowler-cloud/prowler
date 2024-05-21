@@ -16,7 +16,7 @@ class Test_storage_ensure_private_endpoints_in_storage_accounts:
         storage_client.storage_accounts = {}
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
             "prowler.providers.azure.services.storage.storage_ensure_private_endpoints_in_storage_accounts.storage_ensure_private_endpoints_in_storage_accounts.storage_client",
@@ -56,7 +56,7 @@ class Test_storage_ensure_private_endpoints_in_storage_accounts:
         }
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
             "prowler.providers.azure.services.storage.storage_ensure_private_endpoints_in_storage_accounts.storage_ensure_private_endpoints_in_storage_accounts.storage_client",
@@ -105,7 +105,7 @@ class Test_storage_ensure_private_endpoints_in_storage_accounts:
         }
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
             "prowler.providers.azure.services.storage.storage_ensure_private_endpoints_in_storage_accounts.storage_ensure_private_endpoints_in_storage_accounts.storage_client",

@@ -22,7 +22,7 @@ class Test_apigateway_restapi_logging_enabled:
         )
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.apigateway.apigateway_restapi_logging_enabled.apigateway_restapi_logging_enabled.apigateway_client",
@@ -92,7 +92,7 @@ class Test_apigateway_restapi_logging_enabled:
         )
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.apigateway.apigateway_restapi_logging_enabled.apigateway_restapi_logging_enabled.apigateway_client",
@@ -165,7 +165,7 @@ class Test_apigateway_restapi_logging_enabled:
         )
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.apigateway.apigateway_restapi_logging_enabled.apigateway_restapi_logging_enabled.apigateway_client",

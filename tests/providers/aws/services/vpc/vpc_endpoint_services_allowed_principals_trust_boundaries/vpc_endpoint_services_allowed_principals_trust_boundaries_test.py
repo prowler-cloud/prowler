@@ -24,7 +24,7 @@ class Test_vpc_endpoint_services_allowed_principals_trust_boundaries:
         aws_provider._audit_config = {"trusted_account_ids": []}
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
             with mock.patch(
@@ -76,7 +76,7 @@ class Test_vpc_endpoint_services_allowed_principals_trust_boundaries:
         aws_provider._audit_config = {"trusted_account_ids": []}
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
             with mock.patch(
@@ -142,7 +142,7 @@ class Test_vpc_endpoint_services_allowed_principals_trust_boundaries:
         aws_provider._audit_config = {"trusted_account_ids": []}
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
             with mock.patch(
@@ -208,7 +208,7 @@ class Test_vpc_endpoint_services_allowed_principals_trust_boundaries:
         aws_provider._audit_config = {"trusted_account_ids": []}
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
             with mock.patch(
@@ -274,7 +274,7 @@ class Test_vpc_endpoint_services_allowed_principals_trust_boundaries:
         aws_provider._audit_config = {"trusted_account_ids": []}
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
             with mock.patch(
@@ -342,7 +342,7 @@ class Test_vpc_endpoint_services_allowed_principals_trust_boundaries:
         aws_provider._audit_config = {"trusted_account_ids": [AWS_ACCOUNT_NUMBER_2]}
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
             with mock.patch(

@@ -16,7 +16,7 @@ class Test_iam_custom_role_has_permissions_to_administer_resource_locks:
         defender_client.custom_roles = {}
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
             "prowler.providers.azure.services.iam.iam_custom_role_has_permissions_to_administer_resource_locks.iam_custom_role_has_permissions_to_administer_resource_locks.iam_client",
@@ -55,7 +55,7 @@ class Test_iam_custom_role_has_permissions_to_administer_resource_locks:
         }
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
             "prowler.providers.azure.services.iam.iam_custom_role_has_permissions_to_administer_resource_locks.iam_custom_role_has_permissions_to_administer_resource_locks.iam_client",
@@ -98,7 +98,7 @@ class Test_iam_custom_role_has_permissions_to_administer_resource_locks:
         }
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
             "prowler.providers.azure.services.iam.iam_custom_role_has_permissions_to_administer_resource_locks.iam_custom_role_has_permissions_to_administer_resource_locks.iam_client",

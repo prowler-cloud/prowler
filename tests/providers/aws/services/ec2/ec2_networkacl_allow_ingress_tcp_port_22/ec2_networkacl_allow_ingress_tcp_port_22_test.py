@@ -20,7 +20,7 @@ class Test_ec2_networkacl_allow_ingress_tcp_port_22:
         )
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_networkacl_allow_ingress_tcp_port_22.ec2_networkacl_allow_ingress_tcp_port_22.ec2_client",
@@ -46,7 +46,7 @@ class Test_ec2_networkacl_allow_ingress_tcp_port_22:
         )
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_networkacl_allow_ingress_tcp_port_22.ec2_networkacl_allow_ingress_tcp_port_22.ec2_client",
@@ -97,7 +97,7 @@ class Test_ec2_networkacl_allow_ingress_tcp_port_22:
         )
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_networkacl_allow_ingress_tcp_port_22.ec2_networkacl_allow_ingress_tcp_port_22.ec2_client",
@@ -153,7 +153,7 @@ class Test_ec2_networkacl_allow_ingress_tcp_port_22:
         )
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_networkacl_allow_ingress_tcp_port_22.ec2_networkacl_allow_ingress_tcp_port_22.ec2_client",
@@ -209,7 +209,7 @@ class Test_ec2_networkacl_allow_ingress_tcp_port_22:
         )
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_networkacl_allow_ingress_tcp_port_22.ec2_networkacl_allow_ingress_tcp_port_22.ec2_client",
@@ -251,7 +251,7 @@ class Test_ec2_networkacl_allow_ingress_tcp_port_22:
         )
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_networkacl_allow_ingress_tcp_port_22.ec2_networkacl_allow_ingress_tcp_port_22.ec2_client",

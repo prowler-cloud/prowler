@@ -5,6 +5,7 @@ from tabulate import tabulate
 
 from prowler.config.config import (
     csv_file_suffix,
+    html_file_suffix,
     json_asff_file_suffix,
     json_ocsf_file_suffix,
     orange_color,
@@ -133,6 +134,10 @@ def display_summary_table(
                 )
             if "csv" in output_options.output_modes:
                 print(f" - CSV: {output_directory}/{output_filename}{csv_file_suffix}")
+            if "html" in output_options.output_modes:
+                print(
+                    f" - HTML: {output_directory}/{output_filename}{html_file_suffix}"
+                )
 
         else:
             print(

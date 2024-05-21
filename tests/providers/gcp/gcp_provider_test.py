@@ -88,33 +88,38 @@ class TestGCPProvider:
             return_value=None,
         ):
             gcp_provider = GcpProvider(arguments)
-            gcp_provider.output_options = arguments, {}
+            # This is needed since the output_options requires to get the global provider to get the audit config
+            with patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=gcp_provider,
+            ):
+                gcp_provider.output_options = arguments, {}
 
-            assert isinstance(gcp_provider.output_options, GCPOutputOptions)
-            assert gcp_provider.output_options.status == []
-            assert gcp_provider.output_options.output_modes == [
-                "csv",
-            ]
-            assert (
-                gcp_provider.output_options.output_directory
-                == arguments.output_directory
-            )
-            assert gcp_provider.output_options.bulk_checks_metadata == {}
-            assert gcp_provider.output_options.verbose
-            assert (
-                f"prowler-output-{gcp_provider.identity.profile}"
-                in gcp_provider.output_options.output_filename
-            )
-            # Flaky due to the millisecond part of the timestamp
-            # assert (
-            #     gcp_provider.output_options.output_filename
-            #     == f"prowler-output-{gcp_provider.identity.profile}-{datetime.today().strftime('%Y%m%d%H%M%S')}"
-            # )
+                assert isinstance(gcp_provider.output_options, GCPOutputOptions)
+                assert gcp_provider.output_options.status == []
+                assert gcp_provider.output_options.output_modes == [
+                    "csv",
+                ]
+                assert (
+                    gcp_provider.output_options.output_directory
+                    == arguments.output_directory
+                )
+                assert gcp_provider.output_options.bulk_checks_metadata == {}
+                assert gcp_provider.output_options.verbose
+                assert (
+                    f"prowler-output-{gcp_provider.identity.profile}"
+                    in gcp_provider.output_options.output_filename
+                )
+                # Flaky due to the millisecond part of the timestamp
+                # assert (
+                #     gcp_provider.output_options.output_filename
+                #     == f"prowler-output-{gcp_provider.identity.profile}-{datetime.today().strftime('%Y%m%d%H%M%S')}"
+                # )
 
-            # Delete testing directory
-            # TODO: move this to a fixtures file
-            rmdir(f"{arguments.output_directory}/compliance")
-            rmdir(arguments.output_directory)
+                # Delete testing directory
+                # TODO: move this to a fixtures file
+                rmdir(f"{arguments.output_directory}/compliance")
+                rmdir(arguments.output_directory)
 
     @freeze_time(datetime.today())
     def test_is_project_matching(self):
@@ -155,19 +160,19 @@ class TestGCPProvider:
             return_value=None,
         ):
             gcp_provider = GcpProvider(arguments)
-            gcp_provider.output_options = arguments, {}
-        input_project = "sys-*"
-        project_to_match = "sys-12345678"
-        assert gcp_provider.is_project_matching(input_project, project_to_match)
-        input_project = "*prowler"
-        project_to_match = "test-prowler"
-        assert gcp_provider.is_project_matching(input_project, project_to_match)
-        input_project = "test-project"
-        project_to_match = "test-project"
-        assert gcp_provider.is_project_matching(input_project, project_to_match)
-        input_project = "*test*"
-        project_to_match = "prowler-test-project"
-        assert gcp_provider.is_project_matching(input_project, project_to_match)
-        input_project = "prowler-test-project"
-        project_to_match = "prowler-test"
-        assert not gcp_provider.is_project_matching(input_project, project_to_match)
+
+            input_project = "sys-*"
+            project_to_match = "sys-12345678"
+            assert gcp_provider.is_project_matching(input_project, project_to_match)
+            input_project = "*prowler"
+            project_to_match = "test-prowler"
+            assert gcp_provider.is_project_matching(input_project, project_to_match)
+            input_project = "test-project"
+            project_to_match = "test-project"
+            assert gcp_provider.is_project_matching(input_project, project_to_match)
+            input_project = "*test*"
+            project_to_match = "prowler-test-project"
+            assert gcp_provider.is_project_matching(input_project, project_to_match)
+            input_project = "prowler-test-project"
+            project_to_match = "prowler-test"
+            assert not gcp_provider.is_project_matching(input_project, project_to_match)

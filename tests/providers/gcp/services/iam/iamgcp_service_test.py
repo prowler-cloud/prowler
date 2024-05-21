@@ -21,7 +21,7 @@ class TestIAMService:
             "prowler.providers.gcp.lib.service.service.GCPService.__generate_client__",
             new=mock_api_client,
         ), patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_gcp_provider(),
         ):
             from prowler.providers.gcp.services.iam.iam_service import IAM
@@ -83,7 +83,7 @@ class TestAccessApproval:
             "prowler.providers.gcp.lib.service.service.GCPService.__generate_client__",
             new=mock_api_client,
         ), patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_gcp_provider(),
         ):
             from prowler.providers.gcp.services.iam.iam_service import AccessApproval
@@ -114,7 +114,7 @@ class TestEssentialContacts:
             "prowler.providers.gcp.lib.service.service.GCPService.__generate_client__",
             new=mock_api_client,
         ), patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_gcp_provider(),
         ), patch(  # Reinstancing the CloudResourceManager client to secure that is not instancied first by a test
             "prowler.providers.gcp.services.iam.iam_service.cloudresourcemanager_client",

@@ -29,7 +29,7 @@ class Test_cloudtrail_multi_region_enabled_fixer:
         s3.create_bucket(Bucket="test-bucket")
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
             with mock.patch(

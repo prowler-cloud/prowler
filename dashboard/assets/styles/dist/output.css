@@ -5,7 +5,7 @@
 /* Use this file to add custom styles using Tailwind's utility classes. */
 
 /*
-! tailwindcss v3.4.1 | MIT License | https://tailwindcss.com */
+! tailwindcss v3.4.3 | MIT License | https://tailwindcss.com */
 
 /*
 1. Prevent padding and border from affecting element width. (https://github.com/mozdevs/cssremedy/issues/4)
@@ -216,6 +216,8 @@ textarea {
   /* 1 */
   line-height: inherit;
   /* 1 */
+  letter-spacing: inherit;
+  /* 1 */
   color: inherit;
   /* 1 */
   margin: 0;
@@ -239,9 +241,9 @@ select {
 */
 
 button,
-[type='button'],
-[type='reset'],
-[type='submit'] {
+input:where([type='button']),
+input:where([type='reset']),
+input:where([type='submit']) {
   -webkit-appearance: button;
   /* 1 */
   background-color: transparent;
@@ -497,6 +499,10 @@ video {
   --tw-backdrop-opacity:  ;
   --tw-backdrop-saturate:  ;
   --tw-backdrop-sepia:  ;
+  --tw-contain-size:  ;
+  --tw-contain-layout:  ;
+  --tw-contain-paint:  ;
+  --tw-contain-style:  ;
 }
 
 ::backdrop {
@@ -547,14 +553,18 @@ video {
   --tw-backdrop-opacity:  ;
   --tw-backdrop-saturate:  ;
   --tw-backdrop-sepia:  ;
+  --tw-contain-size:  ;
+  --tw-contain-layout:  ;
+  --tw-contain-paint:  ;
+  --tw-contain-style:  ;
 }
 
 .custom-grid {
   grid-template-columns: minmax(0, 16fr) repeat(11, minmax(0, 11fr));
 }
 
-.visible {
-  visibility: visible;
+.collapse {
+  visibility: collapse;
 }
 
 .relative {
@@ -594,6 +604,10 @@ video {
   margin-right: auto;
 }
 
+.mb-0 {
+  margin-bottom: 0px;
+}
+
 .mb-2 {
   margin-bottom: 0.5rem;
 }
@@ -618,6 +632,14 @@ video {
   margin-top: auto;
 }
 
+.mb-\[30px\] {
+  margin-bottom: 30px;
+}
+
+.mt-\[30px\] {
+  margin-top: 30px;
+}
+
 .block {
   display: block;
 }
@@ -632,14 +654,6 @@ video {
 
 .inline-flex {
   display: inline-flex;
-}
-
-.min-w-36 {
-  min-width: 9rem;
-}
-
-.min-w-44 {
-  min-width: 11rem;
 }
 
 .table {
@@ -662,12 +676,60 @@ video {
   max-height: 300px;
 }
 
+.w-3 {
+  width: 0.75rem;
+}
+
 .w-5 {
   width: 1.25rem;
 }
 
 .w-8 {
   width: 2rem;
+}
+
+.w-\[10\%\] {
+  width: 10%;
+}
+
+.w-\[10\.5\%\] {
+  width: 10.5%;
+}
+
+.w-\[11\%\] {
+  width: 11%;
+}
+
+.w-\[13\.5\%\] {
+  width: 13.5%;
+}
+
+.w-\[14\.5\%\] {
+  width: 14.5%;
+}
+
+.w-\[15\%\] {
+  width: 15%;
+}
+
+.w-\[36\%\] {
+  width: 36%;
+}
+
+.w-\[4\%\] {
+  width: 4%;
+}
+
+.w-\[40\.5\%\] {
+  width: 40.5%;
+}
+
+.w-\[9\%\] {
+  width: 9%;
+}
+
+.w-\[9\.5\%\] {
+  width: 9.5%;
 }
 
 .w-fit {
@@ -677,6 +739,10 @@ video {
 
 .w-full {
   width: 100%;
+}
+
+.min-w-36 {
+  min-width: 9rem;
 }
 
 .grid-cols-12 {
@@ -796,28 +862,29 @@ video {
 }
 
 .bg-gradient-failed {
-  background-image: linear-gradient(127.43deg, #F1F5F8 -177.68%, #e67272 87.35%);
+  background-image: linear-gradient(127.43deg, #F1F5F8 -177.68%, #EF4444 87.35%);
 }
 
 .bg-gradient-passed {
-  background-image: linear-gradient(127.43deg, #F1F5F8 -177.68%, #54d283 87.35%);
-}
-
-.bg-gradient-muted {
-    background-image: linear-gradient(127.43deg, #F1F5F8 -177.68%, #636c78 87.35%);
-}
-
-.p-3 {
-  padding: 0.75rem;
+  background-image: linear-gradient(127.43deg, #F1F5F8 -177.68%, #4ADE80 87.35%);
 }
 
 .p-2 {
   padding: 0.5rem;
 }
 
+.p-3 {
+  padding: 0.75rem;
+}
+
 .px-10 {
   padding-left: 2.5rem;
   padding-right: 2.5rem;
+}
+
+.px-2 {
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
 }
 
 .px-3 {
@@ -852,6 +919,10 @@ video {
 
 .pb-3 {
   padding-bottom: 0.75rem;
+}
+
+.pr-2 {
+  padding-right: 0.5rem;
 }
 
 .text-center {
@@ -929,6 +1000,11 @@ video {
   color: rgb(41 37 36 / var(--tw-text-opacity));
 }
 
+.text-white {
+  --tw-text-opacity: 1;
+  color: rgb(255 255 255 / var(--tw-text-opacity));
+}
+
 .opacity-90 {
   opacity: 0.9;
 }
@@ -992,19 +1068,6 @@ video {
   /* Firefox */
 }
 
-/*Styles for previous-vext-container from table*/
-.previous-next-container {
-  margin-top: 1rem;
-  color: #000;
-}
-
-/*Style for input in filter table*/
-.dash-table-container .dash-spreadsheet-container .dash-spreadsheet-inner input:not([type=radio]):not([type=checkbox]) {
-  color: #FFF !important;
-  opacity: 1 !important;
-}
-
-
 #_dash-app-content {
   --tw-bg-opacity: 1;
   background-color: rgb(231 229 228 / var(--tw-bg-opacity));
@@ -1039,6 +1102,10 @@ video {
   background-color: rgb(255 255 255 / var(--tw-bg-opacity));
   --tw-text-opacity: 1;
   color: rgb(41 37 36 / var(--tw-text-opacity));
+}
+
+#_dash-app-content .accordion .accordion-collapse.collapse {
+  visibility: visible;
 }
 
 #_dash-app-content .accordion .accordion-button:not(.collapsed) {
@@ -1155,6 +1222,10 @@ video {
   z-index: 50;
   height: 2rem;
   width: auto;
+}
+
+.overview-table .card .collapse {
+  visibility: visible;
 }
 
 @media (min-width: 1536px) {
@@ -1297,5 +1368,39 @@ video {
 
   .lg\:gap-y-0 {
     row-gap: 0px;
+  }
+}
+
+@media (min-width: 1536px) {
+  .\32xl\:w-\[10\%\] {
+    width: 10%;
+  }
+
+  .\32xl\:w-\[12\.5\%\] {
+    width: 12.5%;
+  }
+
+  .\32xl\:w-\[14\%\] {
+    width: 14%;
+  }
+
+  .\32xl\:w-\[15\.5\%\] {
+    width: 15.5%;
+  }
+
+  .\32xl\:w-\[2\%\] {
+    width: 2%;
+  }
+
+  .\32xl\:w-\[48\%\] {
+    width: 48%;
+  }
+
+  .\32xl\:w-\[71\.5\%\] {
+    width: 71.5%;
+  }
+
+  .\32xl\:w-\[9\%\] {
+    width: 9%;
   }
 }

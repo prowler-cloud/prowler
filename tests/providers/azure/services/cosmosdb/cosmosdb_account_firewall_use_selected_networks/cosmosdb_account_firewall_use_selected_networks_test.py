@@ -14,7 +14,7 @@ class Test_cosmosdb_account_firewall_use_selected_networks:
         cosmosdb_client.accounts = {}
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
             "prowler.providers.azure.services.cosmosdb.cosmosdb_account_firewall_use_selected_networks.cosmosdb_account_firewall_use_selected_networks.cosmosdb_client",
@@ -48,7 +48,7 @@ class Test_cosmosdb_account_firewall_use_selected_networks:
         }
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
             "prowler.providers.azure.services.cosmosdb.cosmosdb_account_firewall_use_selected_networks.cosmosdb_account_firewall_use_selected_networks.cosmosdb_client",
@@ -91,7 +91,7 @@ class Test_cosmosdb_account_firewall_use_selected_networks:
         }
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
             "prowler.providers.azure.services.cosmosdb.cosmosdb_account_firewall_use_selected_networks.cosmosdb_account_firewall_use_selected_networks.cosmosdb_client",

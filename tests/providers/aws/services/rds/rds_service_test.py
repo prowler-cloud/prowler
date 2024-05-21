@@ -1,3 +1,4 @@
+from datetime import datetime
 from unittest.mock import patch
 
 import botocore
@@ -153,6 +154,33 @@ class Test_RDS_Service:
         for parameter in rds.db_instances[0].parameters:
             if parameter["ParameterName"] == "rds.force_ssl":
                 assert parameter["ParameterValue"] == "1"
+
+    @mock_aws
+    def test__describe_db_certificate__(self):
+        conn = client("rds", region_name=AWS_REGION_US_EAST_1)
+        conn.create_db_parameter_group(
+            DBParameterGroupName="test",
+            DBParameterGroupFamily="default.postgres9.3",
+            Description="test parameter group",
+        )
+        conn.create_db_instance(
+            DBInstanceIdentifier="db-master-1",
+            AllocatedStorage=10,
+            Engine="postgres",
+            DBName="staging-postgres",
+            DBInstanceClass="db.m1.small",
+            DBParameterGroupName="test",
+            CACertificateIdentifier="rds-cert-2015",
+        )
+
+        # RDS client for this test class
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        rds = RDS(aws_provider)
+        assert len(rds.db_instances) == 1
+        assert rds.db_instances[0].id == "db-master-1"
+        assert rds.db_instances[0].region == AWS_REGION_US_EAST_1
+        for cert in rds.db_instances[0].cert:
+            assert cert["ValidTill"] < datetime.now()
 
     # Test RDS Describe DB Snapshots
     @mock_aws

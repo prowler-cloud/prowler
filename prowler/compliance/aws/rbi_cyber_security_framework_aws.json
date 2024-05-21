@@ -11,11 +11,12 @@
       "Attributes": [
         {
           "ItemId": "annex_i_1_1",
-          "Service": "ec2"
+          "Service": "aws"
         }
       ],
       "Checks": [
-        "ec2_instance_managed_by_ssm"
+        "ec2_instance_managed_by_ssm",
+        "organizations_account_part_of_organizations"
       ]
     },
     {
@@ -35,13 +36,14 @@
         "dynamodb_tables_kms_cmk_encryption_enabled",
         "ec2_ebs_volume_encryption",
         "ec2_ebs_public_snapshot",
-        "ec2_ebs_volume_encryption",
         "ec2_instance_public_ip",
         "efs_encryption_at_rest_enabled",
         "elbv2_insecure_ssl_ciphers",
         "elb_ssl_listeners",
+        "ec2_ebs_default_encryption",
         "emr_cluster_master_nodes_no_public_ip",
         "opensearch_service_domains_encryption_at_rest_enabled",
+        "opensearch_service_domains_https_communications_enforced",
         "opensearch_service_domains_node_to_node_encryption_enabled",
         "kms_cmk_rotation_enabled",
         "awslambda_function_not_publicly_accessible",
@@ -49,20 +51,25 @@
         "cloudwatch_log_group_kms_encryption_enabled",
         "rds_instance_storage_encrypted",
         "rds_instance_no_public_access",
-        "rds_instance_storage_encrypted",
         "rds_snapshots_public_access",
         "redshift_cluster_audit_logging",
         "redshift_cluster_public_access",
         "s3_bucket_default_encryption",
-        "s3_bucket_default_encryption",
         "s3_bucket_secure_transport_policy",
         "s3_bucket_public_access",
         "s3_bucket_policy_public_write_access",
-        "s3_bucket_public_access",
         "sagemaker_notebook_instance_without_direct_internet_access_configured",
         "sagemaker_notebook_instance_encryption_enabled",
         "sns_topics_kms_encryption_at_rest_enabled",
-        "ec2_networkacl_allow_ingress_any_port"
+        "ec2_networkacl_allow_ingress_any_port",
+        "backup_vaults_encrypted",
+        "elbv2_ssl_listeners",
+        "ssm_documents_set_as_public",
+        "vpc_subnet_no_public_ip_by_default",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_ftp_port_20_21",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_mysql_3306",
+        "s3_account_level_public_access_blocks"
       ]
     },
     {
@@ -80,8 +87,7 @@
         "elbv2_waf_acl_attached",
         "ec2_securitygroup_default_restrict_traffic",
         "ec2_networkacl_allow_ingress_any_port",
-        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
-        "ec2_networkacl_allow_ingress_any_port"
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22"
       ]
     },
     {
@@ -99,7 +105,8 @@
         "rds_instance_minor_version_upgrade_enabled",
         "redshift_cluster_automatic_upgrades",
         "ssm_managed_compliant_patching",
-        "ssm_managed_compliant_patching"
+        "ssm_managed_compliant_patching",
+        "rds_instance_minor_version_upgrade_enabled"
       ]
     },
     {
@@ -163,7 +170,6 @@
         "cloudtrail_multi_region_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
-        "cloudtrail_multi_region_enabled",
         "cloudtrail_cloudwatch_logging_enabled",
         "cloudwatch_log_group_retention_policy_specific_days_enabled",
         "elbv2_logging_enabled",
@@ -173,7 +179,8 @@
         "redshift_cluster_audit_logging",
         "s3_bucket_server_access_logging_enabled",
         "securityhub_enabled",
-        "vpc_flow_logs_enabled"
+        "vpc_flow_logs_enabled",
+        "opensearch_service_domains_audit_logging_enabled"
       ]
     },
     {
@@ -189,7 +196,6 @@
       "Checks": [
         "dynamodb_tables_pitr_enabled",
         "efs_have_backup_enabled",
-        "rds_instance_backup_enabled",
         "rds_instance_backup_enabled",
         "redshift_cluster_automated_snapshot",
         "s3_bucket_object_versioning"

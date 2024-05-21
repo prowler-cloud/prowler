@@ -24,7 +24,7 @@ class Test_ecr_registry_scan_images_on_push_enabled:
         ecr_client.registries = {}
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_aws_provider(),
         ), mock.patch(
             "prowler.providers.aws.services.ecr.ecr_registry_scan_images_on_push_enabled.ecr_registry_scan_images_on_push_enabled.ecr_client",
@@ -50,7 +50,7 @@ class Test_ecr_registry_scan_images_on_push_enabled:
         )
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_aws_provider(),
         ), mock.patch(
             "prowler.providers.aws.services.ecr.ecr_registry_scan_images_on_push_enabled.ecr_registry_scan_images_on_push_enabled.ecr_client",
@@ -91,7 +91,7 @@ class Test_ecr_registry_scan_images_on_push_enabled:
         )
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_aws_provider(),
         ), mock.patch(
             "prowler.providers.aws.services.ecr.ecr_registry_scan_images_on_push_enabled.ecr_registry_scan_images_on_push_enabled.ecr_client",
@@ -136,7 +136,7 @@ class Test_ecr_registry_scan_images_on_push_enabled:
         )
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_aws_provider(),
         ), mock.patch(
             "prowler.providers.aws.services.ecr.ecr_registry_scan_images_on_push_enabled.ecr_registry_scan_images_on_push_enabled.ecr_client",
@@ -179,7 +179,7 @@ class Test_ecr_registry_scan_images_on_push_enabled:
         )
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_aws_provider(),
         ), mock.patch(
             "prowler.providers.aws.services.ecr.ecr_registry_scan_images_on_push_enabled.ecr_registry_scan_images_on_push_enabled.ecr_client",

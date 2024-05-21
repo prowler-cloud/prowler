@@ -38,7 +38,7 @@ class Test_rds_instance_storage_encrypted:
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
             with mock.patch(
@@ -70,7 +70,7 @@ class Test_rds_instance_storage_encrypted:
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
             with mock.patch(
@@ -87,6 +87,10 @@ class Test_rds_instance_storage_encrypted:
 
                 assert len(result) == 1
                 assert result[0].status == "FAIL"
+                assert (
+                    result[0].status_extended
+                    == "RDS Instance db-master-1 is not encrypted."
+                )
                 assert search(
                     "is not encrypted",
                     result[0].status_extended,
@@ -116,7 +120,7 @@ class Test_rds_instance_storage_encrypted:
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
             with mock.patch(
@@ -133,9 +137,9 @@ class Test_rds_instance_storage_encrypted:
 
                 assert len(result) == 1
                 assert result[0].status == "PASS"
-                assert search(
-                    "is encrypted",
-                    result[0].status_extended,
+                assert (
+                    result[0].status_extended
+                    == "RDS Instance db-master-1 is encrypted."
                 )
                 assert result[0].resource_id == "db-master-1"
                 assert result[0].region == AWS_REGION_US_EAST_1

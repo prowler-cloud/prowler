@@ -211,14 +211,22 @@ def is_muted_in_check(
             # map lambda to awslambda
             muted_check = re.sub("^lambda", "awslambda", muted_check)
 
+            check_match = (
+                "*" == muted_check
+                or check == muted_check
+                or re.search(muted_check, check)
+            )
             # Check if the finding is excepted
             exceptions = muted_check_info.get("Exceptions")
-            if is_excepted(
-                exceptions,
-                audited_account,
-                finding_region,
-                finding_resource,
-                finding_tags,
+            if (
+                is_excepted(
+                    exceptions,
+                    audited_account,
+                    finding_region,
+                    finding_resource,
+                    finding_tags,
+                )
+                and check_match
             ):
                 # Break loop and return default value since is excepted
                 break
@@ -230,11 +238,7 @@ def is_muted_in_check(
             if not muted_tags:
                 muted_tags = "*"
             # If there is a *, it affects to all checks
-            if (
-                "*" == muted_check
-                or check == muted_check
-                or re.search(muted_check, check)
-            ):
+            if check_match:
                 muted_in_check = True
                 muted_in_region = is_muted_in_region(muted_regions, finding_region)
                 muted_in_resource = is_muted_in_resource(

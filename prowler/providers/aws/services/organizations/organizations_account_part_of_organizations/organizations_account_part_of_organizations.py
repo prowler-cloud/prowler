@@ -12,7 +12,7 @@ class organizations_account_part_of_organizations(Check):
             if org.status == "ACTIVE":
                 report.status = "PASS"
                 report.status_extended = (
-                    f"Account is part of AWS Organization: {org.id}."
+                    f"AWS Organization {org.id} contains this AWS account."
                 )
             else:
                 report.status = "FAIL"

@@ -12,7 +12,7 @@ class Test_artifacts_container_analysis_enabled:
         serviceusage_client.region = "global"
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_gcp_provider(),
         ), mock.patch(
             "prowler.providers.gcp.services.artifacts.artifacts_container_analysis_enabled.artifacts_container_analysis_enabled.serviceusage_client",
@@ -50,7 +50,7 @@ class Test_artifacts_container_analysis_enabled:
         serviceusage_client.region = "global"
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_gcp_provider(),
         ), mock.patch(
             "prowler.providers.gcp.services.artifacts.artifacts_container_analysis_enabled.artifacts_container_analysis_enabled.serviceusage_client",

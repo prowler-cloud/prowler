@@ -35,6 +35,7 @@ from prowler.providers.aws.models import (
     AWSOrganizationsInfo,
     AWSOutputOptions,
 )
+from prowler.providers.common.provider import Provider
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_ARN,
     AWS_ACCOUNT_NUMBER,
@@ -52,6 +53,7 @@ from tests.providers.aws.utils import (
     AWS_REGION_US_EAST_2,
     EXAMPLE_AMI_ID,
     create_role,
+    set_mocked_aws_provider,
 )
 
 # Mocking GetCallerIdentity for China and GovCloud
@@ -839,32 +841,38 @@ aws:
         arguments.send_sh_only_fails = True
 
         aws_provider = AwsProvider(arguments)
+        # This is needed since the output_options requires to get the global provider to get the audit config
+        with patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ):
 
-        aws_provider.output_options = arguments, {}
+            aws_provider.output_options = arguments, {}
 
-        assert isinstance(aws_provider.output_options, AWSOutputOptions)
-        assert aws_provider.output_options.security_hub_enabled
-        assert aws_provider.output_options.send_sh_only_fails
-        assert aws_provider.output_options.status == ["FAIL"]
-        assert aws_provider.output_options.output_modes == ["csv", "json-asff"]
-        assert (
-            aws_provider.output_options.output_directory == arguments.output_directory
-        )
-        assert aws_provider.output_options.bulk_checks_metadata == {}
-        assert aws_provider.output_options.verbose
-        assert (
-            f"prowler-output-{AWS_ACCOUNT_NUMBER}"
-            in aws_provider.output_options.output_filename
-        )
-        # Flaky due to the millisecond part of the timestamp
-        # assert (
-        #     aws_provider.output_options.output_filename
-        #     == f"prowler-output-{AWS_ACCOUNT_NUMBER}-{datetime.today().strftime('%Y%m%d%H%M%S')}"
-        # )
+            assert isinstance(aws_provider.output_options, AWSOutputOptions)
+            assert aws_provider.output_options.security_hub_enabled
+            assert aws_provider.output_options.send_sh_only_fails
+            assert aws_provider.output_options.status == ["FAIL"]
+            assert aws_provider.output_options.output_modes == ["csv", "json-asff"]
+            assert (
+                aws_provider.output_options.output_directory
+                == arguments.output_directory
+            )
+            assert aws_provider.output_options.bulk_checks_metadata == {}
+            assert aws_provider.output_options.verbose
+            assert (
+                f"prowler-output-{AWS_ACCOUNT_NUMBER}"
+                in aws_provider.output_options.output_filename
+            )
+            # Flaky due to the millisecond part of the timestamp
+            # assert (
+            #     aws_provider.output_options.output_filename
+            #     == f"prowler-output-{AWS_ACCOUNT_NUMBER}-{datetime.today().strftime('%Y%m%d%H%M%S')}"
+            # )
 
-        # Delete testing directory
-        rmdir(f"{arguments.output_directory}/compliance")
-        rmdir(arguments.output_directory)
+            # Delete testing directory
+            rmdir(f"{arguments.output_directory}/compliance")
+            rmdir(arguments.output_directory)
 
     @mock_aws
     @freeze_time(datetime.today())
@@ -882,24 +890,32 @@ aws:
         arguments.send_sh_only_fails = True
 
         aws_provider = AwsProvider(arguments)
+        # This is needed since the output_options requires to get the global provider to get the audit config
+        with patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ):
 
-        aws_provider.output_options = arguments, {}
+            aws_provider.output_options = arguments, {}
 
-        assert isinstance(aws_provider.output_options, AWSOutputOptions)
-        assert aws_provider.output_options.security_hub_enabled
-        assert aws_provider.output_options.send_sh_only_fails
-        assert aws_provider.output_options.status == []
-        assert aws_provider.output_options.output_modes == ["csv", "json-asff"]
-        assert (
-            aws_provider.output_options.output_directory == arguments.output_directory
-        )
-        assert aws_provider.output_options.bulk_checks_metadata == {}
-        assert aws_provider.output_options.verbose
-        assert aws_provider.output_options.output_filename == arguments.output_filename
+            assert isinstance(aws_provider.output_options, AWSOutputOptions)
+            assert aws_provider.output_options.security_hub_enabled
+            assert aws_provider.output_options.send_sh_only_fails
+            assert aws_provider.output_options.status == []
+            assert aws_provider.output_options.output_modes == ["csv", "json-asff"]
+            assert (
+                aws_provider.output_options.output_directory
+                == arguments.output_directory
+            )
+            assert aws_provider.output_options.bulk_checks_metadata == {}
+            assert aws_provider.output_options.verbose
+            assert (
+                aws_provider.output_options.output_filename == arguments.output_filename
+            )
 
-        # Delete testing directory
-        rmdir(f"{arguments.output_directory}/compliance")
-        rmdir(arguments.output_directory)
+            # Delete testing directory
+            rmdir(f"{arguments.output_directory}/compliance")
+            rmdir(arguments.output_directory)
 
     @mock_aws
     def test_validate_credentials_commercial_partition_with_regions(self):
@@ -1385,6 +1401,36 @@ aws:
         aws_provider.get_checks_to_execute_by_audit_resources() == {
             "ec2_networkacl_allow_ingress_any_port"
         }
+
+    def test_update_provider_config_aws(self):
+        aws_provider = set_mocked_aws_provider(
+            audit_config={"shodan_api_key": "DEFAULT-KEY"}
+        )
+
+        with patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ):
+
+            assert {
+                "shodan_api_key": "TEST-API-KEY"
+            } == Provider.update_provider_config(
+                aws_provider.audit_config, "shodan_api_key", "TEST-API-KEY"
+            )
+
+    def test_update_provider_config_aws_not_present(self):
+        aws_provider = set_mocked_aws_provider(
+            audit_config={"shodan_api_key": "DEFAULT-KEY"}
+        )
+
+        with patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ):
+
+            assert {"shodan_api_key": "DEFAULT-KEY"} == Provider.update_provider_config(
+                aws_provider.audit_config, "not_found", "not_value"
+            )
 
     @mock_aws
     def test_refresh_credentials_before_expiration(self):

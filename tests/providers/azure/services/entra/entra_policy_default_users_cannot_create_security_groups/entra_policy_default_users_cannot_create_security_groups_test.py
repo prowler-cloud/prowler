@@ -10,7 +10,7 @@ class Test_entra_policy_default_users_cannot_create_security_groups:
         entra_client.authorization_policy = {}
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
             "prowler.providers.azure.services.entra.entra_policy_default_users_cannot_create_security_groups.entra_policy_default_users_cannot_create_security_groups.entra_client",
@@ -29,7 +29,7 @@ class Test_entra_policy_default_users_cannot_create_security_groups:
         entra_client.authorization_policy = {DOMAIN: {}}
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
             "prowler.providers.azure.services.entra.entra_policy_default_users_cannot_create_security_groups.entra_policy_default_users_cannot_create_security_groups.entra_client",
@@ -58,7 +58,7 @@ class Test_entra_policy_default_users_cannot_create_security_groups:
         id = str(uuid4())
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
             "prowler.providers.azure.services.entra.entra_policy_default_users_cannot_create_security_groups.entra_policy_default_users_cannot_create_security_groups.entra_client",
@@ -103,7 +103,7 @@ class Test_entra_policy_default_users_cannot_create_security_groups:
         id = str(uuid4())
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
             "prowler.providers.azure.services.entra.entra_policy_default_users_cannot_create_security_groups.entra_policy_default_users_cannot_create_security_groups.entra_client",

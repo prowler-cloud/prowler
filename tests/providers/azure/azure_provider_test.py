@@ -192,31 +192,36 @@ class TestAzureProvider:
             return_value=DefaultAzureCredential(),
         ):
             azure_provider = AzureProvider(arguments)
+            # This is needed since the output_options requires to get the global provider to get the audit config
+            with patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=azure_provider,
+            ):
 
-            azure_provider.output_options = arguments, {}
+                azure_provider.output_options = arguments, {}
 
-            assert isinstance(azure_provider.output_options, AzureOutputOptions)
-            assert azure_provider.output_options.status == []
-            assert azure_provider.output_options.output_modes == [
-                "csv",
-            ]
-            assert (
-                azure_provider.output_options.output_directory
-                == arguments.output_directory
-            )
-            assert azure_provider.output_options.bulk_checks_metadata == {}
-            assert azure_provider.output_options.verbose
-            # Flaky due to the millisecond part of the timestamp
-            # assert (
-            #     azure_provider.output_options.output_filename
-            #     == f"prowler-output-{azure_provider.identity.tenant_domain}-{datetime.today().strftime('%Y%m%d%H%M%S')}"
-            # )
-            assert (
-                f"prowler-output-{azure_provider.identity.tenant_domain}"
-                in azure_provider.output_options.output_filename
-            )
+                assert isinstance(azure_provider.output_options, AzureOutputOptions)
+                assert azure_provider.output_options.status == []
+                assert azure_provider.output_options.output_modes == [
+                    "csv",
+                ]
+                assert (
+                    azure_provider.output_options.output_directory
+                    == arguments.output_directory
+                )
+                assert azure_provider.output_options.bulk_checks_metadata == {}
+                assert azure_provider.output_options.verbose
+                # Flaky due to the millisecond part of the timestamp
+                # assert (
+                #     azure_provider.output_options.output_filename
+                #     == f"prowler-output-{azure_provider.identity.tenant_domain}-{datetime.today().strftime('%Y%m%d%H%M%S')}"
+                # )
+                assert (
+                    f"prowler-output-{azure_provider.identity.tenant_domain}"
+                    in azure_provider.output_options.output_filename
+                )
 
-            # Delete testing directory
-            # TODO: move this to a fixtures file
-            rmdir(f"{arguments.output_directory}/compliance")
-            rmdir(arguments.output_directory)
+                # Delete testing directory
+                # TODO: move this to a fixtures file
+                rmdir(f"{arguments.output_directory}/compliance")
+                rmdir(arguments.output_directory)

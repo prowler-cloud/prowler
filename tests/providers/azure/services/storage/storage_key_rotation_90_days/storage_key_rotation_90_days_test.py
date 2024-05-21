@@ -14,7 +14,7 @@ class Test_storage_key_rotation_90_dayss:
         storage_client.storage_accounts = {}
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
             "prowler.providers.azure.services.storage.storage_key_rotation_90_days.storage_key_rotation_90_days.storage_client",
@@ -53,7 +53,7 @@ class Test_storage_key_rotation_90_dayss:
         }
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
             "prowler.providers.azure.services.storage.storage_key_rotation_90_days.storage_key_rotation_90_days.storage_client",
@@ -101,7 +101,7 @@ class Test_storage_key_rotation_90_dayss:
         }
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
             "prowler.providers.azure.services.storage.storage_key_rotation_90_days.storage_key_rotation_90_days.storage_client",
@@ -148,7 +148,7 @@ class Test_storage_key_rotation_90_dayss:
         }
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
             "prowler.providers.azure.services.storage.storage_key_rotation_90_days.storage_key_rotation_90_days.storage_client",

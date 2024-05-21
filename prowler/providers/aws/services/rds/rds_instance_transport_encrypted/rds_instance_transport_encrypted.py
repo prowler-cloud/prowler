@@ -54,6 +54,25 @@ class rds_instance_transport_encrypted(Check):
                         ):
                             report.status = "PASS"
                             report.status_extended = f"RDS Instance {db_instance.id} connections use SSL encryption."
+
                 findings.append(report)
+
+        for db_cluster in rds_client.db_clusters:
+            report = Check_Report_AWS(self.metadata())
+            report.region = rds_client.db_clusters[db_cluster].region
+            report.resource_id = rds_client.db_clusters[db_cluster].id
+            report.resource_arn = db_cluster
+            report.resource_tags = rds_client.db_clusters[db_cluster].tags
+            report.status = "FAIL"
+            report.status_extended = f"RDS Cluster {rds_client.db_clusters[db_cluster].id} connections are not encrypted."
+            # Check RDS Clusters that support TLS encryption
+            if rds_client.db_clusters[db_cluster].force_ssl == "1":
+                report.status = "PASS"
+                report.status_extended = f"RDS Cluster {rds_client.db_clusters[db_cluster].id} connections use SSL encryption."
+            if rds_client.db_clusters[db_cluster].require_secure_transport == "ON":
+                report.status = "PASS"
+                report.status_extended = f"RDS Cluster {rds_client.db_clusters[db_cluster].id} connections use SSL encryption."
+
+            findings.append(report)
 
         return findings

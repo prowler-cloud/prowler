@@ -1,4 +1,4 @@
 from prowler.providers.azure.services.app.app_service import App
-from prowler.providers.common.common import get_global_provider
+from prowler.providers.common.provider import Provider
 
-app_client = App(get_global_provider())
+app_client = App(Provider.get_global_provider())

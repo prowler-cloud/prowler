@@ -44,7 +44,7 @@ class Test_iam_support_role_created:
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_support_role_created.iam_support_role_created.iam_client",
@@ -73,7 +73,7 @@ class Test_iam_support_role_created:
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_support_role_created.iam_support_role_created.iam_client",
@@ -102,7 +102,7 @@ class Test_iam_support_role_created:
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_support_role_created.iam_support_role_created.iam_client",

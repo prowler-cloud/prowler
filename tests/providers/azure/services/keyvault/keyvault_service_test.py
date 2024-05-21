@@ -67,7 +67,7 @@ from tests.providers.azure.azure_fixtures import (
 class Test_keyvault_service:
     def test_keyvault_service_(self):
         with patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), patch(
             "prowler.providers.azure.services.monitor.monitor_service.Monitor",

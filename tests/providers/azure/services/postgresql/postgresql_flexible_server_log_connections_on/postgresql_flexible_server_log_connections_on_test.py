@@ -14,7 +14,7 @@ class Test_postgresql_flexible_server_log_connections_on:
         postgresql_client.flexible_servers = {}
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
             "prowler.providers.azure.services.postgresql.postgresql_flexible_server_log_connections_on.postgresql_flexible_server_log_connections_on.postgresql_client",
@@ -51,7 +51,7 @@ class Test_postgresql_flexible_server_log_connections_on:
         }
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
             "prowler.providers.azure.services.postgresql.postgresql_flexible_server_log_connections_on.postgresql_flexible_server_log_connections_on.postgresql_client",
@@ -97,7 +97,7 @@ class Test_postgresql_flexible_server_log_connections_on:
         }
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
             "prowler.providers.azure.services.postgresql.postgresql_flexible_server_log_connections_on.postgresql_flexible_server_log_connections_on.postgresql_client",

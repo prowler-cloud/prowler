@@ -294,14 +294,16 @@ The following code is an example output of the [JSON-ASFF](https://docs.aws.amaz
 ???+ note
     Each finding is a `json` object within a list.
 
+### HTML
+
+The following image is an example of the HTML output:
+
+<img src="../img/reporting/html-output.png">
 
 ## V4 Deprecations
 
 Some deprecations have been made to unify formats and improve outputs.
 
-### HTML
-
-HTML output format has been deprecated in favor of the new dashboard, use it with `prowler dashboard`. You can read more about it at [here](dashboard.md).
 
 ### JSON
 

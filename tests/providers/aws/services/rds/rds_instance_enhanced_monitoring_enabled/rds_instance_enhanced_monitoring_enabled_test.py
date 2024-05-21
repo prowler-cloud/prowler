@@ -1,4 +1,3 @@
-from re import search
 from unittest import mock
 
 import botocore
@@ -38,7 +37,7 @@ class Test_rds_instance_enhanced_monitoring_enabled:
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
             with mock.patch(
@@ -71,7 +70,7 @@ class Test_rds_instance_enhanced_monitoring_enabled:
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
             with mock.patch(
@@ -88,9 +87,9 @@ class Test_rds_instance_enhanced_monitoring_enabled:
 
                 assert len(result) == 1
                 assert result[0].status == "FAIL"
-                assert search(
-                    "does not have enhanced monitoring enabled",
-                    result[0].status_extended,
+                assert (
+                    result[0].status_extended
+                    == "RDS Instance db-master-1 does not have enhanced monitoring enabled."
                 )
                 assert result[0].resource_id == "db-master-1"
                 assert result[0].region == AWS_REGION_US_EAST_1
@@ -116,7 +115,7 @@ class Test_rds_instance_enhanced_monitoring_enabled:
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
             with mock.patch(
@@ -134,9 +133,9 @@ class Test_rds_instance_enhanced_monitoring_enabled:
 
                 assert len(result) == 1
                 assert result[0].status == "PASS"
-                assert search(
-                    "has enhanced monitoring enabled",
-                    result[0].status_extended,
+                assert (
+                    result[0].status_extended
+                    == "RDS Instance db-master-1 has enhanced monitoring enabled."
                 )
                 assert result[0].resource_id == "db-master-1"
                 assert result[0].region == AWS_REGION_US_EAST_1

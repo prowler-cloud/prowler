@@ -37,7 +37,7 @@ class Test_cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_c
         )
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled.cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled.logs_client",
@@ -102,7 +102,7 @@ class Test_cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_c
         )
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled.cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled.logs_client",
@@ -173,7 +173,7 @@ class Test_cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_c
         )
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled.cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled.logs_client",
@@ -256,7 +256,7 @@ class Test_cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_c
         )
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled.cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled.logs_client",
@@ -351,7 +351,7 @@ class Test_cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_c
         )
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled.cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled.logs_client",
@@ -446,7 +446,7 @@ class Test_cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_c
         )
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled.cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled.logs_client",
@@ -541,7 +541,7 @@ class Test_cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_c
         )
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled.cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled.logs_client",

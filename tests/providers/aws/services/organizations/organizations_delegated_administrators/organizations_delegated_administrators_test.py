@@ -1,4 +1,3 @@
-from re import search
 from unittest import mock
 
 from boto3 import client
@@ -20,7 +19,7 @@ class Test_organizations_delegated_administrators:
             "organizations_trusted_delegated_administrators": []
         }
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
             with mock.patch(
@@ -47,9 +46,10 @@ class Test_organizations_delegated_administrators:
         # Create Organization
         conn = client("organizations", region_name=AWS_REGION_EU_WEST_1)
         response = conn.create_organization()
+        org_id = response["Organization"]["Id"]
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
             with mock.patch(
@@ -68,9 +68,9 @@ class Test_organizations_delegated_administrators:
                 assert result[0].status == "PASS"
                 assert result[0].resource_id == response["Organization"]["Id"]
                 assert result[0].resource_arn == response["Organization"]["Arn"]
-                assert search(
-                    "No Delegated Administrators",
-                    result[0].status_extended,
+                assert (
+                    result[0].status_extended
+                    == f"AWS Organization {org_id} has no Delegated Administrators."
                 )
                 assert result[0].region == AWS_REGION_EU_WEST_1
 
@@ -91,6 +91,8 @@ class Test_organizations_delegated_administrators:
             AccountId=account["CreateAccountStatus"]["AccountId"],
             ServicePrincipal="config-multiaccountsetup.amazonaws.com",
         )
+        org_id = response["Organization"]["Id"]
+        account_id = account["CreateAccountStatus"]["AccountId"]
 
         # Set config variable
         aws_provider._audit_config = {
@@ -100,7 +102,7 @@ class Test_organizations_delegated_administrators:
         }
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
             with mock.patch(
@@ -119,9 +121,9 @@ class Test_organizations_delegated_administrators:
                 assert result[0].status == "PASS"
                 assert result[0].resource_id == response["Organization"]["Id"]
                 assert result[0].resource_arn == response["Organization"]["Arn"]
-                assert search(
-                    "Trusted Delegated Administrator",
-                    result[0].status_extended,
+                assert (
+                    result[0].status_extended
+                    == f"AWS Organization {org_id} has a trusted Delegated Administrator: {account_id}."
                 )
                 assert result[0].region == AWS_REGION_EU_WEST_1
 
@@ -142,6 +144,8 @@ class Test_organizations_delegated_administrators:
             AccountId=account["CreateAccountStatus"]["AccountId"],
             ServicePrincipal="config-multiaccountsetup.amazonaws.com",
         )
+        org_id = response["Organization"]["Id"]
+        account_id = account["CreateAccountStatus"]["AccountId"]
 
         # Set config variable
         aws_provider._audit_config = {
@@ -149,7 +153,7 @@ class Test_organizations_delegated_administrators:
         }
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
             with mock.patch(
@@ -168,8 +172,8 @@ class Test_organizations_delegated_administrators:
                 assert result[0].status == "FAIL"
                 assert result[0].resource_id == response["Organization"]["Id"]
                 assert result[0].resource_arn == response["Organization"]["Arn"]
-                assert search(
-                    "Untrusted Delegated Administrator",
-                    result[0].status_extended,
+                assert (
+                    result[0].status_extended
+                    == f"AWS Organization {org_id} has an untrusted Delegated Administrator: {account_id}."
                 )
                 assert result[0].region == AWS_REGION_EU_WEST_1

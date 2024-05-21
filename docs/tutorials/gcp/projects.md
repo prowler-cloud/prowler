@@ -18,11 +18,11 @@ prowler gcp --project-ids project-id1 project-id2
 
 ### Exclude Projects
 
-If you want to exclude some projects from the scan, you can use the `--exclude-project-ids` argument.
+If you want to exclude some projects from the scan, you can use the `--excluded-project-ids` argument.
 
 ```console
-prowler gcp --exclude-project-ids project-id1 project-id2
+prowler gcp --excluded-project-ids project-id1 project-id2
 ```
 
 ???+ note
-    You can use asterisk `*` to exclude projects that match a pattern. For example, `prowler gcp --exclude-project-ids "sys*"` will exclude all the projects that start with `sys`.
+    You can use asterisk `*` to exclude projects that match a pattern. For example, `prowler gcp --excluded-project-ids "sys*"` will exclude all the projects that start with `sys`.

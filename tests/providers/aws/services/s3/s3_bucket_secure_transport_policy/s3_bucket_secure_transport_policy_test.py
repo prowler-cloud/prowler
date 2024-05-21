@@ -1,4 +1,3 @@
-from re import search
 from unittest import mock
 
 from boto3 import client
@@ -19,7 +18,7 @@ class Test_s3_bucket_secure_transport_policy:
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
             with mock.patch(
@@ -36,9 +35,9 @@ class Test_s3_bucket_secure_transport_policy:
 
                 assert len(result) == 1
                 assert result[0].status == "FAIL"
-                assert search(
-                    "does not have a bucket policy",
-                    result[0].status_extended,
+                assert (
+                    result[0].status_extended
+                    == f"S3 Bucket {bucket_name_us} does not have a bucket policy, thus it allows HTTP requests."
                 )
                 assert result[0].resource_id == bucket_name_us
                 assert (
@@ -82,7 +81,7 @@ class Test_s3_bucket_secure_transport_policy:
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
             with mock.patch(
@@ -99,9 +98,9 @@ class Test_s3_bucket_secure_transport_policy:
 
                 assert len(result) == 1
                 assert result[0].status == "PASS"
-                assert search(
-                    "bucket policy to deny requests over insecure transport",
-                    result[0].status_extended,
+                assert (
+                    result[0].status_extended
+                    == f"S3 Bucket {bucket_name_us} has a bucket policy to deny requests over insecure transport."
                 )
                 assert result[0].resource_id == bucket_name_us
                 assert (
@@ -145,7 +144,7 @@ class Test_s3_bucket_secure_transport_policy:
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
             with mock.patch(
@@ -162,9 +161,9 @@ class Test_s3_bucket_secure_transport_policy:
 
                 assert len(result) == 1
                 assert result[0].status == "FAIL"
-                assert search(
-                    "allows requests over insecure transport in the bucket policy",
-                    result[0].status_extended,
+                assert (
+                    result[0].status_extended
+                    == f"S3 Bucket {bucket_name_us} allows requests over insecure transport in the bucket policy."
                 )
                 assert result[0].resource_id == bucket_name_us
                 assert (

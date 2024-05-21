@@ -363,7 +363,7 @@
       "Checks": [
         "ec2_ami_public",
         "ec2_instance_public_ip",
-        "ec2_securitygroup_allow_ingress_from_internet_to_any_port",
+        "ec2_securitygroup_allow_ingress_from_internet_to_all_ports",
         "ec2_securitygroup_allow_ingress_from_internet_to_port_mongodb_27017_27018",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_ftp_port_20_21",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",

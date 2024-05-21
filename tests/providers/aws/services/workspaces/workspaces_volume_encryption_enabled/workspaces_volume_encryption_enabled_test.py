@@ -1,4 +1,3 @@
-from re import search
 from unittest import mock
 from uuid import uuid4
 
@@ -56,8 +55,9 @@ class Test_workspaces_volume_encryption_enabled:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert search(
-                "without root or user unencrypted volumes", result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"WorkSpaces workspace {WORKSPACE_ID} root and user volumes are encrypted."
             )
             assert result[0].resource_id == WORKSPACE_ID
             assert result[0].resource_arn == WORKSPACE_ARN
@@ -91,7 +91,10 @@ class Test_workspaces_volume_encryption_enabled:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert search("user unencrypted volumes", result[0].status_extended)
+            assert (
+                result[0].status_extended
+                == f"WorkSpaces workspace {WORKSPACE_ID} with user unencrypted volumes."
+            )
             assert result[0].resource_id == WORKSPACE_ID
             assert result[0].resource_arn == WORKSPACE_ARN
             assert result[0].region == AWS_REGION_EU_WEST_1
@@ -124,7 +127,10 @@ class Test_workspaces_volume_encryption_enabled:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert search("root unencrypted volumes", result[0].status_extended)
+            assert (
+                result[0].status_extended
+                == f"WorkSpaces workspace {WORKSPACE_ID} with root unencrypted volumes."
+            )
             assert result[0].resource_id == WORKSPACE_ID
             assert result[0].resource_arn == WORKSPACE_ARN
             assert result[0].region == AWS_REGION_EU_WEST_1
@@ -157,8 +163,9 @@ class Test_workspaces_volume_encryption_enabled:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert search(
-                "with root and user unencrypted volumes", result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"WorkSpaces workspace {WORKSPACE_ID} with root and user unencrypted volumes."
             )
             assert result[0].resource_id == WORKSPACE_ID
             assert result[0].resource_arn == WORKSPACE_ARN

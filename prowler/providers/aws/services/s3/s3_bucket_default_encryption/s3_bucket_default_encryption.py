@@ -16,6 +16,6 @@ class s3_bucket_default_encryption(Check):
                 report.status_extended = f"S3 Bucket {bucket.name} has Server Side Encryption with {bucket.encryption}."
             else:
                 report.status = "FAIL"
-                report.status_extended = f"Server Side Encryption is not configured for S3 Bucket {bucket.name}."
+                report.status_extended = f"S3 Bucket {bucket.name} does not have Server Side Encryption enabled."
             findings.append(report)
         return findings
