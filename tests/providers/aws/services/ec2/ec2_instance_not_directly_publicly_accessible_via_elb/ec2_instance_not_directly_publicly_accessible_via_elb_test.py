@@ -24,7 +24,7 @@ class Test_ec2_instance_not_directly_publicly_accessible_via_elb:
         )
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_instance_not_directly_publicly_accessible_via_elb.ec2_instance_not_directly_publicly_accessible_via_elb.ec2_client",
@@ -106,7 +106,7 @@ class Test_ec2_instance_not_directly_publicly_accessible_via_elb:
         )
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_instance_not_directly_publicly_accessible_via_elb.ec2_instance_not_directly_publicly_accessible_via_elb.ec2_client",
@@ -126,7 +126,7 @@ class Test_ec2_instance_not_directly_publicly_accessible_via_elb:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"EC2 Instance {instance.id} is behind an Internet facing Classic Load Balancer {LOAD_BALANCER_DNS}."
+                == f"EC2 Instance {instance.id} is publicly accesible through an Internet facing Classic Load Balancer through load balancer {LOAD_BALANCER_DNS}."
             )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == instance.id
@@ -202,7 +202,7 @@ class Test_ec2_instance_not_directly_publicly_accessible_via_elb:
         )
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_instance_not_directly_publicly_accessible_via_elb.ec2_instance_not_directly_publicly_accessible_via_elb.ec2_client",
@@ -221,7 +221,7 @@ class Test_ec2_instance_not_directly_publicly_accessible_via_elb:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"EC2 Instance {instance.id} is not behind an Internet facing Classic Load Balancer."
+                == f"EC2 Instance {instance.id} is not publicly accesible through an Internet facing Classic Load Balancer."
             )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == instance.id
@@ -239,6 +239,7 @@ class Test_ec2_instance_not_directly_publicly_accessible_via_elb:
         security_group = ec2.create_security_group(
             GroupName="sg01", Description="Test security group sg01"
         )
+
 
         elb.create_load_balancer(
             LoadBalancerName="my-lb",
@@ -296,7 +297,7 @@ class Test_ec2_instance_not_directly_publicly_accessible_via_elb:
         )
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_instance_not_directly_publicly_accessible_via_elb.ec2_instance_not_directly_publicly_accessible_via_elb.ec2_client",
@@ -317,7 +318,7 @@ class Test_ec2_instance_not_directly_publicly_accessible_via_elb:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"EC2 Instance {instances[0].id} is behind an Internet facing Classic Load Balancer {LOAD_BALANCER_DNS}."
+                == f"EC2 Instance {instances[0].id} is publicly accesible through an Internet facing Classic Load Balancer through load balancer {LOAD_BALANCER_DNS}."
             )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == instances[0].id
@@ -330,7 +331,7 @@ class Test_ec2_instance_not_directly_publicly_accessible_via_elb:
             assert result[1].status == "FAIL"
             assert (
                 result[1].status_extended
-                == f"EC2 Instance {instances[1].id} is behind an Internet facing Classic Load Balancer {LOAD_BALANCER_DNS}."
+                == f"EC2 Instance {instances[1].id} is publicly accesible through an Internet facing Classic Load Balancer through load balancer {LOAD_BALANCER_DNS}."
             )
             assert result[1].region == AWS_REGION_US_EAST_1
             assert result[1].resource_id == instances[1].id

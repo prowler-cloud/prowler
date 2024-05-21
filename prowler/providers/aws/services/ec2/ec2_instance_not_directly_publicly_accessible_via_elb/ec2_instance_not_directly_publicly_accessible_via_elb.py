@@ -7,27 +7,29 @@ class ec2_instance_not_directly_publicly_accessible_via_elb(Check):
     def execute(self):
         findings = []
 
-        if ec2_client.instances:
-            public_instances = {}
-            for lb in elb_client.loadbalancers:
-                if lb.scheme == "internet-facing" and len(lb.security_groups) > 0:
-                    for instance in lb.instances:
-                        public_instances[instance] = lb
+        public_instances = {}
+        for lb in elb_client.loadbalancers:
+            if lb.public:
+                for instance in lb.instances_ids:
+                    public_instances[instance] = lb
 
-            for instance in ec2_client.instances:
-                if instance.state != "terminated":
-                    report = Check_Report_AWS(self.metadata())
-                    report.region = instance.region
-                    report.resource_id = instance.id
-                    report.resource_arn = instance.arn
-                    report.resource_tags = instance.tags
-                    report.status = "PASS"
-                    report.status_extended = f"EC2 Instance {instance.id} is not behind an Internet facing Classic Load Balancer."
+        for instance in ec2_client.instances:
+            if instance.state != "terminated":
+                report = Check_Report_AWS(self.metadata())
+                report.region = instance.region
+                report.resource_id = instance.id
+                report.resource_arn = instance.arn
+                report.resource_tags = instance.tags
+                report.status = "PASS"
+                report.status_extended = f"EC2 Instance {instance.id} is not publicly accesible through an Internet facing Classic Load Balancer."
 
-                    if instance.id in public_instances:
-                        report.status = "FAIL"
-                        report.status_extended = f"EC2 Instance {instance.id} is behind an Internet facing Classic Load Balancer {public_instances[instance.id].dns}."
-                    findings.append(report)
+                if instance.id in public_instances:
+                    for sg in ec2_client.security_groups:
+                        if sg.id in public_instances[instance.id].security_groups:
+                            report.status = "FAIL"
+                            report.status_extended = f"EC2 Instance {instance.id} is publicly accesible through an Internet facing Classic Load Balancer through load balancer {public_instances[instance.id].dns}."
+                            break
+                findings.append(report)
 
         return findings
 

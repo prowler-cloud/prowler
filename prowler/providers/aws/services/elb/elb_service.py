@@ -39,8 +39,8 @@ class ELB(AWSService):
                             )
 
                         instance_ids = []
-                        for id in elb["Instances"]:
-                            instance_ids.append(id["InstanceId"])
+                        for instance_attached in elb["Instances"]:
+                            instance_ids.append(instance_attached["InstanceId"])
 
                         self.loadbalancers.append(
                             LoadBalancer(
@@ -51,7 +51,13 @@ class ELB(AWSService):
                                 scheme=elb["Scheme"],
                                 listeners=listeners,
                                 security_groups=elb["SecurityGroups"],
-                                instances=instance_ids
+                                instances_ids=instance_ids,
+                                public=(
+                                    True
+                                    if elb["Scheme"] == "internet-facing"
+                                    and len(elb["SecurityGroups"]) == 1
+                                    else False
+                                )
                             )
                         )
 
@@ -106,4 +112,5 @@ class LoadBalancer(BaseModel):
     listeners: list[Listener]
     tags: Optional[list] = []
     security_groups: list[str]
-    instances: list[str]
+    instances_ids: list[str]
+    public: bool

@@ -42,7 +42,14 @@ class ELBv2(AWSService):
                             arn=elbv2["LoadBalancerArn"],
                             type=elbv2["Type"],
                             listeners=[],
-                            security_groups=elbv2["SecurityGroups"]
+                            security_groups=elbv2["SecurityGroups"],
+                            public=(
+                                True
+                                if elbv2["Scheme"] == "internet-facing"
+                                and elbv2["Type"] == "application"
+                                and len(elbv2["SecurityGroups"]) == 1
+                                else False
+                            )
                         )
                         if "DNSName" in elbv2:
                             lb.dns = elbv2["DNSName"]
@@ -54,62 +61,6 @@ class ELBv2(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
     
-    def __describe_target_groups__(self, regional_client):
-        logger.info("ELBv2 - Describing target groups...")
-        try:
-            for lb in self.loadbalancersv2:
-                try:
-                    if (
-                        lb.scheme == "internet-facing"
-                        and lb.type == "application"
-                        and len(lb.security_groups) > 0
-                    ):
-                        describe_target_groups_paginator = (
-                            regional_client.get_paginator("describe_target_groups")
-                        )
-                        for page in describe_target_groups_paginator.paginate(
-                            LoadBalancerArn=lb.arn
-                        ):
-                            for target_group in page["TargetGroups"]:
-                                for target_health in regional_client.describe_target_health(
-                                    TargetGroupArn=target_group["TargetGroupArn"]
-                                )[
-                                    "TargetHealthDescriptions"
-                                ]:
-                                    tg = TargetGroups(
-                                        name=target_group["TargetGroupName"],
-                                        arn=target_group["TargetGroupArn"],
-                                        target_type=target_group["TargetType"],
-                                        target=target_health["Target"]["Id"],
-                                        public=(
-                                            True
-                                            if lb.scheme == "internet-facing"
-                                            and lb.type == "application"
-                                            and len(lb.security_groups) > 0
-                                            else False
-                                        )
-                                    )
-                                    if "DNSName" in lb:
-                                        tg.lbdns = lb.dns
-                                    self.target_groups.append(tg)
-                except ClientError as error:
-                    if error.response["Error"]["Code"] == "LoadBalancerNotFound":
-                        logger.warning(
-                            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                        )
-                    else:
-                        logger.error(
-                            f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                        )
-                except Exception as error:
-                    logger.error(
-                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                    )
-        except Exception as error:
-            logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-
     def __describe_target_groups__(self, regional_client):
         logger.info("ELBv2 - Describing target groups...")
         try:
@@ -130,16 +81,9 @@ class ELBv2(AWSService):
                                     arn=target_group["TargetGroupArn"],
                                     target_type=target_group["TargetType"],
                                     target=target_health["Target"]["Id"],
-                                    public=(
-                                        True
-                                        if lb.scheme == "internet-facing"
-                                        and lb.type == "application"
-                                        and len(lb.security_groups) > 0
-                                        else False
-                                    ),
+                                    public=lb.public,
+                                    loadbalancer=lb,
                                 )
-                                if "DNSName" in lb:
-                                    tg.lbdns = lb.dns
                                 self.target_groups.append(tg)
                 except ClientError as error:
                     if error.response["Error"]["Code"] == "LoadBalancerNotFound":
@@ -344,6 +288,7 @@ class LoadBalancerv2(BaseModel):
     scheme: Optional[str]
     tags: Optional[list] = []
     security_groups: list[str]
+    public: bool
 
 
 class TargetGroups(BaseModel):
@@ -352,4 +297,4 @@ class TargetGroups(BaseModel):
     target_type: str
     target: str
     public: bool
-    lbdns: Optional[str]
+    loadbalancer: LoadBalancerv2

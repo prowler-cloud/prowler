@@ -38,7 +38,7 @@ class Test_ecs_container_not_directly_publicly_accessible_via_elbv2:
         ecs_client.containers = []
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_aws_provider(),
         ), mock.patch(
             "prowler.providers.aws.services.ecs.ecs_container_not_directly_publicly_accessible_via_elbv2.ecs_container_not_directly_publicly_accessible_via_elbv2.ecs_client",
@@ -137,7 +137,7 @@ class Test_ecs_container_not_directly_publicly_accessible_via_elbv2:
         )
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.ecs.ecs_container_not_directly_publicly_accessible_via_elbv2.ecs_container_not_directly_publicly_accessible_via_elbv2.ecs_client",
@@ -156,7 +156,7 @@ class Test_ecs_container_not_directly_publicly_accessible_via_elbv2:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"ECS Container {CONTAINER_ARN} is behind an Internet facing Load Balancer through target group {target_group_arn}."
+                == f"ECS Container {CONTAINER_ARN} is publicly accesible through an Internet facing Load Balancer through target group {target_group_arn}."
             )
             assert (
                 result[0].resource_arn
@@ -246,7 +246,7 @@ class Test_ecs_container_not_directly_publicly_accessible_via_elbv2:
         )
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.ecs.ecs_container_not_directly_publicly_accessible_via_elbv2.ecs_container_not_directly_publicly_accessible_via_elbv2.ecs_client",
@@ -265,7 +265,7 @@ class Test_ecs_container_not_directly_publicly_accessible_via_elbv2:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"ECS Container {CONTAINER_ARN} is behind an Internet facing Load Balancer through target group {target_group_arn}."
+                == f"ECS Container {CONTAINER_ARN} is publicly accesible through an Internet facing Load Balancer through target group {target_group_arn}."
             )
             assert (
                 result[0].resource_arn
@@ -355,7 +355,7 @@ class Test_ecs_container_not_directly_publicly_accessible_via_elbv2:
         )
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.ecs.ecs_container_not_directly_publicly_accessible_via_elbv2.ecs_container_not_directly_publicly_accessible_via_elbv2.ecs_client",
@@ -374,7 +374,7 @@ class Test_ecs_container_not_directly_publicly_accessible_via_elbv2:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"ECS Container {CONTAINER_ARN} is not behind an Internet facing Load Balancer."
+                == f"ECS Container {CONTAINER_ARN} is not publicly accesible through an Internet facing Load Balancer."
             )
             assert (
                 result[0].resource_arn

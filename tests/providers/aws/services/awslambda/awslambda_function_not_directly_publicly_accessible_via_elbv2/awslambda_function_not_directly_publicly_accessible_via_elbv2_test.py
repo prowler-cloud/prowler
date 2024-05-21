@@ -36,7 +36,7 @@ class Test_awslambda_function_not_directly_publicly_accessible_via_elbv2:
         lambda_client.functions = {}
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_aws_provider(),
         ), mock.patch(
             "prowler.providers.aws.services.awslambda.awslambda_function_no_secrets_in_variables.awslambda_function_no_secrets_in_variables.awslambda_client",
@@ -77,7 +77,7 @@ class Test_awslambda_function_not_directly_publicly_accessible_via_elbv2:
         from prowler.providers.aws.services.elbv2.elbv2_service import ELBv2
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_aws_provider(),
         ), mock.patch(
             "prowler.providers.aws.services.awslambda.awslambda_function_not_directly_publicly_accessible_via_elbv2.awslambda_function_not_directly_publicly_accessible_via_elbv2.awslambda_client",
@@ -98,7 +98,7 @@ class Test_awslambda_function_not_directly_publicly_accessible_via_elbv2:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Lambda function {function_name} is not behind an Internet facing Load Balancer."
+                == f"Lambda function {function_name} is not publicly accesible through an Internet facing Load Balancer."
             )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == function_name
@@ -182,7 +182,7 @@ class Test_awslambda_function_not_directly_publicly_accessible_via_elbv2:
         from prowler.providers.aws.services.elbv2.elbv2_service import ELBv2
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_aws_provider(),
         ), mock.patch(
             "prowler.providers.aws.services.awslambda.awslambda_function_not_directly_publicly_accessible_via_elbv2.awslambda_function_not_directly_publicly_accessible_via_elbv2.awslambda_client",
@@ -203,7 +203,7 @@ class Test_awslambda_function_not_directly_publicly_accessible_via_elbv2:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Lambda function {function_name} is not behind an Internet facing Load Balancer."
+                == f"Lambda function {function_name} is not publicly accesible through an Internet facing Load Balancer."
             )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == function_name
@@ -287,7 +287,7 @@ class Test_awslambda_function_not_directly_publicly_accessible_via_elbv2:
         from prowler.providers.aws.services.elbv2.elbv2_service import ELBv2
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_aws_provider(),
         ), mock.patch(
             "prowler.providers.aws.services.awslambda.awslambda_function_not_directly_publicly_accessible_via_elbv2.awslambda_function_not_directly_publicly_accessible_via_elbv2.awslambda_client",
@@ -308,7 +308,7 @@ class Test_awslambda_function_not_directly_publicly_accessible_via_elbv2:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Lambda function {function_name} is behind an Internet facing Load Balancer through target group {target_group_arn}."
+                == f"Lambda function {function_name} is publicly accesible through an Internet facing Load Balancer through target group {target_group_arn}."
             )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == function_name
