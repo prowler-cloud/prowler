@@ -68,7 +68,7 @@ class Test_kafka_cluster_in_transit_encryption_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Kafka cluster 'demo-cluster-1' does not have encryption in transit enabled"
+                == "Kafka cluster 'demo-cluster-1' does not have encryption in transit enabled."
             )
             assert result[0].resource_id == "6357e0b2-0e6a-4b86-a0b4-70df934c2e31-5"
             assert (
@@ -118,7 +118,7 @@ class Test_kafka_cluster_in_transit_encryption_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "Kafka cluster 'demo-cluster-1' has encryption in transit enabled"
+                == "Kafka cluster 'demo-cluster-1' has encryption in transit enabled."
             )
             assert result[0].resource_id == "6357e0b2-0e6a-4b86-a0b4-70df934c2e31-5"
             assert (
@@ -168,7 +168,7 @@ class Test_kafka_cluster_in_transit_encryption_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Kafka cluster 'demo-cluster-1' does not have encryption in transit enabled"
+                == "Kafka cluster 'demo-cluster-1' does not have encryption in transit enabled."
             )
             assert result[0].resource_id == "6357e0b2-0e6a-4b86-a0b4-70df934c2e31-5"
             assert (

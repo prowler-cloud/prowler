@@ -13,7 +13,7 @@ class kafka_cluster_in_transit_encryption_enabled(Check):
             report.resource_arn = arn_cluster
             report.resource_tags = cluster.tags
             report.status = "FAIL"
-            report.status_extended = f"Kafka cluster '{cluster.name}' does not have encryption in transit enabled"
+            report.status_extended = f"Kafka cluster '{cluster.name}' does not have encryption in transit enabled."
 
             if (
                 cluster.encryption_in_transit.client_broker == "TLS"
@@ -21,7 +21,7 @@ class kafka_cluster_in_transit_encryption_enabled(Check):
             ):
                 report.status = "PASS"
                 report.status_extended = (
-                    f"Kafka cluster '{cluster.name}' has encryption in transit enabled"
+                    f"Kafka cluster '{cluster.name}' has encryption in transit enabled."
                 )
 
             findings.append(report)
