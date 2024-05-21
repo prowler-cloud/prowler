@@ -15,7 +15,7 @@
   "RelatedUrl": "https://docs.aws.amazon.com/msk/latest/developerguide/msk-encryption.html",
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_32/#cli",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/MSK/encryption-in-transit-for-msk.html",
       "Terraform": "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_32/#terraform"
