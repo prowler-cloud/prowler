@@ -16,7 +16,7 @@ class Test_defender_ensure_iot_hub_defender_is_on:
         defender_client.iot_security_solutions = {}
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
             "prowler.providers.azure.services.defender.defender_ensure_iot_hub_defender_is_on.defender_ensure_iot_hub_defender_is_on.defender_client",
@@ -35,7 +35,7 @@ class Test_defender_ensure_iot_hub_defender_is_on:
         defender_client.iot_security_solutions = {AZURE_SUBSCRIPTION_ID: {}}
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
             "prowler.providers.azure.services.defender.defender_ensure_iot_hub_defender_is_on.defender_ensure_iot_hub_defender_is_on.defender_client",
@@ -68,7 +68,7 @@ class Test_defender_ensure_iot_hub_defender_is_on:
         }
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
             "prowler.providers.azure.services.defender.defender_ensure_iot_hub_defender_is_on.defender_ensure_iot_hub_defender_is_on.defender_client",
@@ -101,7 +101,7 @@ class Test_defender_ensure_iot_hub_defender_is_on:
         }
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
             "prowler.providers.azure.services.defender.defender_ensure_iot_hub_defender_is_on.defender_ensure_iot_hub_defender_is_on.defender_client",
@@ -139,7 +139,7 @@ class Test_defender_ensure_iot_hub_defender_is_on:
         }
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
             "prowler.providers.azure.services.defender.defender_ensure_iot_hub_defender_is_on.defender_ensure_iot_hub_defender_is_on.defender_client",

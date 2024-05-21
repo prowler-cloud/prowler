@@ -14,7 +14,7 @@ class Test_keyvault_logging_enabled:
         keyvault_client.key_vaults = {}
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
             "prowler.providers.azure.services.monitor.monitor_service.Monitor",
@@ -36,7 +36,7 @@ class Test_keyvault_logging_enabled:
         keyvault_client = mock.MagicMock
         keyvault_client.key_vaults = {AZURE_SUBSCRIPTION_ID: []}
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
             "prowler.providers.azure.services.monitor.monitor_service.Monitor",
@@ -57,7 +57,7 @@ class Test_keyvault_logging_enabled:
         keyvault_client = mock.MagicMock
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
             "prowler.providers.azure.services.monitor.monitor_service.Monitor",

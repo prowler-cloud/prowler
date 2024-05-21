@@ -18,9 +18,55 @@ custom_checks_metadata_schema = {
                         "Severity": {
                             "type": "string",
                             "enum": valid_severities,
-                        }
+                        },
+                        "CheckTitle": {
+                            "type": "string",
+                        },
+                        "Description": {
+                            "type": "string",
+                        },
+                        "Risk": {
+                            "type": "string",
+                        },
+                        "RelatedUrl": {
+                            "type": "string",
+                        },
+                        "Remediation": {
+                            "type": "object",
+                            "properties": {
+                                "Code": {
+                                    "type": "object",
+                                    "properties": {
+                                        "CLI": {
+                                            "type": "string",
+                                        },
+                                        "NativeIaC": {
+                                            "type": "string",
+                                        },
+                                        "Other": {
+                                            "type": "string",
+                                        },
+                                        "Terraform": {
+                                            "type": "string",
+                                        },
+                                    },
+                                },
+                                "Recommendation": {
+                                    "type": "object",
+                                    "properties": {
+                                        "Text": {
+                                            "type": "string",
+                                        },
+                                        "Url": {
+                                            "type": "string",
+                                        },
+                                    },
+                                    "additionalProperties": False,
+                                },
+                            },
+                            "additionalProperties": False,
+                        },
                     },
-                    "required": ["Severity"],
                     "additionalProperties": False,
                 }
             },
@@ -69,9 +115,47 @@ def update_check_metadata(check_metadata, custom_metadata):
     try:
         if custom_metadata:
             for attribute in custom_metadata:
-                try:
-                    setattr(check_metadata, attribute, custom_metadata[attribute])
-                except ValueError:
-                    pass
+                if attribute == "Remediation":
+                    for remediation_attribute in custom_metadata[attribute]:
+                        update_check_metadata_remediation(
+                            check_metadata,
+                            custom_metadata,
+                            attribute,
+                            remediation_attribute,
+                        )
+                else:
+                    try:
+                        setattr(check_metadata, attribute, custom_metadata[attribute])
+                    except ValueError:
+                        pass
     finally:
         return check_metadata
+
+
+def update_check_metadata_remediation(
+    check_metadata, custom_metadata, attribute, remediation_attribute
+):
+    if remediation_attribute == "Code":
+        for code_attribute in custom_metadata[attribute][remediation_attribute]:
+            try:
+                setattr(
+                    check_metadata.Remediation.Code,
+                    code_attribute,
+                    custom_metadata[attribute][remediation_attribute][code_attribute],
+                )
+            except ValueError:
+                pass
+    elif remediation_attribute == "Recommendation":
+        for recommendation_attribute in custom_metadata[attribute][
+            remediation_attribute
+        ]:
+            try:
+                setattr(
+                    check_metadata.Remediation.Recommendation,
+                    recommendation_attribute,
+                    custom_metadata[attribute][remediation_attribute][
+                        recommendation_attribute
+                    ],
+                )
+            except ValueError:
+                pass

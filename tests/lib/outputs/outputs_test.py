@@ -7,6 +7,7 @@ from colorama import Fore
 
 from prowler.config.config import (
     csv_file_suffix,
+    html_file_suffix,
     json_asff_file_suffix,
     json_ocsf_file_suffix,
     output_file_timestamp,
@@ -23,6 +24,7 @@ from prowler.lib.outputs.csv.csv import generate_csv_fields
 from prowler.lib.outputs.file_descriptors import fill_file_descriptors
 from prowler.lib.outputs.outputs import extract_findings_statistics, set_report_color
 from prowler.lib.outputs.utils import (
+    parse_html_string,
     parse_json_tags,
     unroll_dict,
     unroll_dict_to_list,
@@ -42,7 +44,8 @@ class TestOutputs:
             ["csv"],
             ["json-asff"],
             ["json-ocsf"],
-            ["csv", "json-asff", "json-ocsf"],
+            ["html"],
+            ["csv", "json-asff", "json-ocsf", "html"],
         ]
         output_filename = f"prowler-output-{audited_account}-{output_file_timestamp}"
         expected = [
@@ -65,6 +68,12 @@ class TestOutputs:
                 )
             },
             {
+                "html": open_file(
+                    f"{output_directory}/{output_filename}{html_file_suffix}",
+                    "a",
+                )
+            },
+            {
                 "csv": open_file(
                     f"{output_directory}/{output_filename}{csv_file_suffix}",
                     "a",
@@ -75,6 +84,10 @@ class TestOutputs:
                 ),
                 "json-ocsf": open_file(
                     f"{output_directory}/{output_filename}{json_ocsf_file_suffix}",
+                    "a",
+                ),
+                "html": open_file(
+                    f"{output_directory}/{output_filename}{html_file_suffix}",
                     "a",
                 ),
             },
@@ -166,6 +179,49 @@ class TestOutputs:
         list = ["test", "test1", "test2"]
 
         assert unroll_list(list, ",") == "test, test1, test2"
+
+    def test_parse_html_string(self):
+        string = "CISA: your-systems-3, your-data-1, your-data-2 | CIS-1.4: 2.1.1 | CIS-1.5: 2.1.1 | GDPR: article_32 | AWS-Foundational-Security-Best-Practices: s3 | HIPAA: 164_308_a_1_ii_b, 164_308_a_4_ii_a, 164_312_a_2_iv, 164_312_c_1, 164_312_c_2, 164_312_e_2_ii | GxP-21-CFR-Part-11: 11.10-c, 11.30 | GxP-EU-Annex-11: 7.1-data-storage-damage-protection | NIST-800-171-Revision-2: 3_3_8, 3_5_10, 3_13_11, 3_13_16 | NIST-800-53-Revision-4: sc_28 | NIST-800-53-Revision-5: au_9_3, cm_6_a, cm_9_b, cp_9_d, cp_9_8, pm_11_b, sc_8_3, sc_8_4, sc_13_a, sc_16_1, sc_28_1, si_19_4 | ENS-RD2022: mp.si.2.aws.s3.1 | NIST-CSF-1.1: ds_1 | RBI-Cyber-Security-Framework: annex_i_1_3 | FFIEC: d3-pc-am-b-12 | PCI-3.2.1: s3 | FedRamp-Moderate-Revision-4: sc-13, sc-28 | FedRAMP-Low-Revision-4: sc-13"
+        assert (
+            parse_html_string(string)
+            == """
+&#x2022;CISA: your-systems-3, your-data-1, your-data-2
+
+&#x2022;CIS-1.4: 2.1.1
+
+&#x2022;CIS-1.5: 2.1.1
+
+&#x2022;GDPR: article_32
+
+&#x2022;AWS-Foundational-Security-Best-Practices: s3
+
+&#x2022;HIPAA: 164_308_a_1_ii_b, 164_308_a_4_ii_a, 164_312_a_2_iv, 164_312_c_1, 164_312_c_2, 164_312_e_2_ii
+
+&#x2022;GxP-21-CFR-Part-11: 11.10-c, 11.30
+
+&#x2022;GxP-EU-Annex-11: 7.1-data-storage-damage-protection
+
+&#x2022;NIST-800-171-Revision-2: 3_3_8, 3_5_10, 3_13_11, 3_13_16
+
+&#x2022;NIST-800-53-Revision-4: sc_28
+
+&#x2022;NIST-800-53-Revision-5: au_9_3, cm_6_a, cm_9_b, cp_9_d, cp_9_8, pm_11_b, sc_8_3, sc_8_4, sc_13_a, sc_16_1, sc_28_1, si_19_4
+
+&#x2022;ENS-RD2022: mp.si.2.aws.s3.1
+
+&#x2022;NIST-CSF-1.1: ds_1
+
+&#x2022;RBI-Cyber-Security-Framework: annex_i_1_3
+
+&#x2022;FFIEC: d3-pc-am-b-12
+
+&#x2022;PCI-3.2.1: s3
+
+&#x2022;FedRamp-Moderate-Revision-4: sc-13, sc-28
+
+&#x2022;FedRAMP-Low-Revision-4: sc-13
+"""
+        )
 
     def test_unroll_tags(self):
         dict_list = [

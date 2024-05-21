@@ -17,7 +17,7 @@ class TestDataprocService:
             "prowler.providers.gcp.lib.service.service.GCPService.__generate_client__",
             new=mock_api_client,
         ), patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_gcp_provider(),
         ), patch(
             "prowler.providers.gcp.services.dataproc.dataproc_service.compute_client.regions",

@@ -19,7 +19,7 @@ class Test_iam_role_cross_service_confused_deputy_prevention:
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         aws_provider.identity.account = AWS_ACCOUNT_ID
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_role_cross_service_confused_deputy_prevention.iam_role_cross_service_confused_deputy_prevention.iam_client",
@@ -60,7 +60,7 @@ class Test_iam_role_cross_service_confused_deputy_prevention:
         aws_provider.identity.account = AWS_ACCOUNT_ID
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_role_cross_service_confused_deputy_prevention.iam_role_cross_service_confused_deputy_prevention.iam_client",
@@ -98,7 +98,7 @@ class Test_iam_role_cross_service_confused_deputy_prevention:
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         aws_provider.identity.account = AWS_ACCOUNT_ID
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_role_cross_service_confused_deputy_prevention.iam_role_cross_service_confused_deputy_prevention.iam_client",
@@ -146,7 +146,7 @@ class Test_iam_role_cross_service_confused_deputy_prevention:
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         aws_provider.identity.account = AWS_ACCOUNT_ID
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_role_cross_service_confused_deputy_prevention.iam_role_cross_service_confused_deputy_prevention.iam_client",
@@ -196,7 +196,7 @@ class Test_iam_role_cross_service_confused_deputy_prevention:
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         aws_provider.identity.account = AWS_ACCOUNT_ID
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_role_cross_service_confused_deputy_prevention.iam_role_cross_service_confused_deputy_prevention.iam_client",
@@ -246,7 +246,7 @@ class Test_iam_role_cross_service_confused_deputy_prevention:
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         aws_provider.identity.account = AWS_ACCOUNT_ID
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_role_cross_service_confused_deputy_prevention.iam_role_cross_service_confused_deputy_prevention.iam_client",
@@ -296,7 +296,7 @@ class Test_iam_role_cross_service_confused_deputy_prevention:
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         aws_provider.identity.account = AWS_ACCOUNT_ID
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_role_cross_service_confused_deputy_prevention.iam_role_cross_service_confused_deputy_prevention.iam_client",

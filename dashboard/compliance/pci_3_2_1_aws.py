@@ -1,6 +1,6 @@
 import warnings
 
-from dashboard.common_methods import get_section_containers_pci
+from dashboard.common_methods import get_section_containers_format4
 
 warnings.filterwarnings("ignore")
 
@@ -17,4 +17,4 @@ def get_table(data):
         ]
     ]
 
-    return get_section_containers_pci(aux, "REQUIREMENTS_ID")
+    return get_section_containers_format4(aux, "REQUIREMENTS_ID")

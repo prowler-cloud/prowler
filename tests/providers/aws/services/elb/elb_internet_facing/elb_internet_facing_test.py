@@ -23,7 +23,7 @@ class Test_elb_request_smugling:
         from prowler.providers.aws.services.elb.elb_service import ELB
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_aws_provider(
                 [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
             ),
@@ -66,7 +66,7 @@ class Test_elb_request_smugling:
         from prowler.providers.aws.services.elb.elb_service import ELB
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_aws_provider(
                 [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
             ),
@@ -113,7 +113,7 @@ class Test_elb_request_smugling:
         from prowler.providers.aws.services.elb.elb_service import ELB
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_aws_provider(
                 [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
             ),

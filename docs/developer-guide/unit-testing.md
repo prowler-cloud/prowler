@@ -115,7 +115,7 @@ class Test_iam_password_policy_uppercase:
     # Prowler for AWS uses a shared object called aws_provider where it stores
     # the info related with the provider
     with mock.patch(
-        "prowler.providers.common.common.get_global_provider",
+        "prowler.providers.common.provider.Provider.get_global_provider",
         return_value=aws_provider,
     ),
     # We have to mock also the iam_client from the check to enforce that the iam_client used is the one
@@ -313,7 +313,7 @@ If the test your are creating belongs to a check that uses more than one provide
 
 ```python
 with mock.patch(
-    "prowler.providers.common.common.get_global_provider",
+    "prowler.providers.common.provider.Provider.get_global_provider",
     return_value=set_mocked_aws_provider(
         [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
     ),
@@ -344,10 +344,10 @@ from prowler.providers.<provider>.services.<service>.<service>_client import <se
 ```
 2. `<service>_client.py`:
 ```python
-from prowler.providers.common.common import get_global_provider
+from prowler.providers.common.provider import Provider
 from prowler.providers.<provider>.services.<service>.<service>_service import <SERVICE>
 
-<service>_client = <SERVICE>(mocked_provider)
+<service>_client = <SERVICE>(Provider.get_global_provider())
 ```
 
 Due to the above import path it's not the same to patch the following objects because if you run a bunch of tests, either in parallel or not, some clients can be already instantiated by another check, hence your test execution will be using another test's service instance:
@@ -368,7 +368,7 @@ Mocking a service client using the following code ...
 Once the needed attributes are set for the mocked provider, you can use the mocked provider:
 ```python title="Mocking the service_client"
 with mock.patch(
-    "prowler.providers.common.common.get_global_provider",
+    "prowler.providers.common.provider.Provider.get_global_provider",
     new=set_mocked_aws_provider([<region>]),
 ), mock.patch(
     "prowler.providers.<provider>.services.<service>.<check>.<check>.<service>_client",
@@ -390,7 +390,7 @@ Mocking a service client using the following code ...
 
 ```python title="Mocking the service and the service_client"
 with mock.patch(
-    "prowler.providers.common.common.get_global_provider",
+    "prowler.providers.common.provider.Provider.get_global_provider",
     new=set_mocked_aws_provider([<region>]),
 ), mock.patch(
     "prowler.providers.<provider>.services.<service>.<SERVICE>",
@@ -447,7 +447,7 @@ class Test_compute_project_os_login_enabled:
         # In this scenario we have to mock the app_client from the check to enforce that the compute_client used is the one created above
         # And also is mocked the return value of get_global_provider function to return our GCP mocked provider defined in fixtures
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_gcp_provider(),
         ), mock.patch(
             "prowler.providers.gcp.services.compute.compute_project_os_login_enabled.compute_project_os_login_enabled.compute_client",
@@ -487,7 +487,7 @@ class Test_compute_project_os_login_enabled:
         compute_client.projects = [project]
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_gcp_provider(),
         ), mock.patch(
             "prowler.providers.gcp.services.compute.compute_project_os_login_enabled.compute_project_os_login_enabled.compute_client",
@@ -655,7 +655,7 @@ class Test_app_ensure_http_is_redirected_to_https:
         # In this scenario we have to mock the app_client from the check to enforce that the app_client used is the one created above
         # And also is mocked the return value of get_global_provider function to return our Azure mocked provider defined in fixtures
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
             "prowler.providers.azure.services.app.app_ensure_http_is_redirected_to_https.app_ensure_http_is_redirected_to_https.app_client",
@@ -705,7 +705,7 @@ class Test_app_ensure_http_is_redirected_to_https:
         app_client = mock.MagicMock
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
             "prowler.providers.azure.services.app.app_ensure_http_is_redirected_to_https.app_ensure_http_is_redirected_to_https.app_client",

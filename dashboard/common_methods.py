@@ -1535,7 +1535,7 @@ def get_section_container_iso(data, section_1, section_2):
     return html.Div(section_containers, className="compliance-data-layout")
 
 
-def get_section_containers_pci(data, section_1):
+def get_section_containers_format4(data, section_1):
 
     data["STATUS"] = data["STATUS"].apply(map_status_to_icon)
     data[section_1] = data[section_1].astype(str)
@@ -1654,9 +1654,13 @@ def get_section_containers_pci(data, section_1):
         )
 
         graph_div_service = html.Div(graph_service, className="graph-section-req")
+        if "REQUIREMENTS_NAME" not in specific_data.columns:
+            title_internal = f"{service}"
+        else:
+            title_internal = f"{service} - {specific_data['REQUIREMENTS_NAME'].iloc[0]}"
 
         internal_accordion_item = dbc.AccordionItem(
-            title=service,
+            title=title_internal,
             children=[html.Div([data_table], className="inner-accordion-content")],
         )
 
