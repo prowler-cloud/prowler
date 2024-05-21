@@ -212,6 +212,8 @@ def get_check_compliance(finding, provider_type, output_options) -> dict:
                 compliance_fw = compliance.Framework
                 if compliance.Version:
                     compliance_fw = f"{compliance_fw}-{compliance.Version}"
+                # compliance.Provider == "Azure" or "Kubernetes"
+                # provider_type == "azure" or "kubernetes"
                 if compliance.Provider.upper() == provider_type.upper():
                     if compliance_fw not in check_compliance:
                         check_compliance[compliance_fw] = []
