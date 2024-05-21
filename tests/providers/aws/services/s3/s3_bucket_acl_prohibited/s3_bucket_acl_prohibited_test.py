@@ -1,4 +1,3 @@
-from re import search
 from unittest import mock
 
 from boto3 import client
@@ -36,9 +35,9 @@ class Test_s3_bucket_acl_prohibited:
 
                 assert len(result) == 1
                 assert result[0].status == "FAIL"
-                assert search(
-                    "ACLs enabled",
-                    result[0].status_extended,
+                assert (
+                    result[0].status_extended
+                    == f"S3 Bucket {bucket_name_us} has bucket ACLs enabled."
                 )
                 assert result[0].resource_id == bucket_name_us
                 assert (
@@ -75,9 +74,9 @@ class Test_s3_bucket_acl_prohibited:
 
                 assert len(result) == 1
                 assert result[0].status == "FAIL"
-                assert search(
-                    "ACLs enabled",
-                    result[0].status_extended,
+                assert (
+                    result[0].status_extended
+                    == f"S3 Bucket {bucket_name_us} has bucket ACLs enabled."
                 )
                 assert result[0].resource_id == bucket_name_us
                 assert (
@@ -116,9 +115,9 @@ class Test_s3_bucket_acl_prohibited:
 
                 assert len(result) == 1
                 assert result[0].status == "PASS"
-                assert search(
-                    "ACLs disabled",
-                    result[0].status_extended,
+                assert (
+                    result[0].status_extended
+                    == f"S3 Bucket {bucket_name_us} has bucket ACLs disabled."
                 )
                 assert result[0].resource_id == bucket_name_us
                 assert (

@@ -23,7 +23,7 @@ class organizations_scp_check_deny_regions(Check):
                 if not org.policies:
                     report.status = "FAIL"
                     report.status_extended = (
-                        f"No SCP policies exist at the organization {org.id} level."
+                        f"AWS Organization {org.id} has no SCP policies."
                     )
                 else:
                     # We use this flag if we find a statement that is restricting regions but not all the configured ones:
@@ -57,14 +57,14 @@ class organizations_scp_check_deny_regions(Check):
                                 ):
                                     # All defined regions are restricted, we exit here, no need to continue.
                                     report.status = "PASS"
-                                    report.status_extended = f"SCP policy {policy.id} restricting all configured regions found."
+                                    report.status_extended = f"AWS Organization {org.id} has SCP policy {policy.id} restricting all configured regions found."
                                     findings.append(report)
                                     return findings
                                 else:
                                     # Regions are restricted, but not the ones defined, we keep this finding, but we continue analyzing:
                                     is_region_restricted_statement = True
                                     report.status = "FAIL"
-                                    report.status_extended = f"SCP policies exist {policy.id} restricting some AWS Regions, but not all the configured ones, please check config."
+                                    report.status_extended = f"AWS Organization {org.id} has SCP policies {policy.id} restricting some AWS Regions, but not all the configured ones, please check config."
 
                             # Allow if Condition = {"StringEquals": {"aws:RequestedRegion": [region1, region2]}}
                             if (
@@ -83,18 +83,18 @@ class organizations_scp_check_deny_regions(Check):
                                 ):
                                     # All defined regions are restricted, we exit here, no need to continue.
                                     report.status = "PASS"
-                                    report.status_extended = f"SCP policy {policy.id} restricting all configured regions found."
+                                    report.status_extended = f"AWS Organization {org.id} has SCP policy {policy.id} restricting all configured regions found."
                                     findings.append(report)
                                     return findings
                                 else:
                                     # Regions are restricted, but not the ones defined, we keep this finding, but we continue analyzing:
                                     is_region_restricted_statement = True
                                     report.status = "FAIL"
-                                    report.status_extended = f"SCP policies exist {policy.id} restricting some AWS Regions, but not all the configured ones, please check config."
+                                    report.status_extended = f"AWS Organization {org.id} has SCP policies {policy.id} restricting some AWS Regions, but not all the configured ones, please check config."
 
                     if not is_region_restricted_statement:
                         report.status = "FAIL"
-                        report.status_extended = f"SCP policies exist at the organization {org.id} level but don't restrict AWS Regions."
+                        report.status_extended = f"AWS Organization {org.id} has SCP policies but don't restrict AWS Regions."
 
             else:
                 report.status = "FAIL"
