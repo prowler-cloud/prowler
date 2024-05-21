@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "ec2_securitygroup_allow_ingress_from_internet_to_all_ports",
+  "CheckTitle": "Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to all ports.",
+  "CheckType": [
+    "Infrastructure Security"
+  ],
+  "ServiceName": "ec2",
+  "SubServiceName": "securitygroup",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "high",
+  "ResourceType": "AwsEc2SecurityGroup",
+  "Description": "Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to all ports.",
+  "Risk": "If Security groups are not properly configured the attack surface is increased. An attacker could exploit this misconfiguration to gain unauthorized access to resources.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": "https://docs.prowler.com/checks/aws/networking-policies/ensure-aws-security-group-does-not-allow-all-traffic-on-all-ports/"
+    },
+    "Recommendation": {
+      "Text": "Use a Zero Trust approach. Narrow ingress traffic as much as possible. Consider north-south as well as east-west traffic.",
+      "Url": "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

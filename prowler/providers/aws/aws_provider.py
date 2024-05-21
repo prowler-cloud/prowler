@@ -1,10 +1,13 @@
 import os
 import pathlib
 import sys
+from datetime import datetime
 
 from boto3 import client, session
 from botocore.credentials import RefreshableCredentials
 from botocore.session import get_session
+from pytz import utc
+from tzlocal import get_localzone
 
 from prowler.config.config import aws_services_json_file
 from prowler.lib.check.check import list_modules, recover_checks_from_service
@@ -14,6 +17,7 @@ from prowler.providers.aws.config import (
     AWS_STS_GLOBAL_ENDPOINT_REGION,
     ROLE_SESSION_NAME,
 )
+from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
 from prowler.providers.aws.lib.audit_info.models import AWS_Assume_Role, AWS_Audit_Info
 from prowler.providers.aws.lib.credentials.credentials import create_sts_session
 
@@ -98,18 +102,31 @@ class AWS_Provider:
     # https://github.com/boto/botocore/blob/098cc255f81a25b852e1ecdeb7adebd94c7b1b73/botocore/credentials.py#L570
     def refresh_credentials(self):
         logger.info("Refreshing assumed credentials...")
-
-        response = assume_role(self.aws_session, self.role_info)
-        refreshed_credentials = dict(
-            # Keys of the dict has to be the same as those that are being searched in the parent class
-            # https://github.com/boto/botocore/blob/098cc255f81a25b852e1ecdeb7adebd94c7b1b73/botocore/credentials.py#L609
-            access_key=response["Credentials"]["AccessKeyId"],
-            secret_key=response["Credentials"]["SecretAccessKey"],
-            token=response["Credentials"]["SessionToken"],
-            expiry_time=response["Credentials"]["Expiration"].isoformat(),
-        )
-        logger.info("Refreshed Credentials:")
-        logger.info(refreshed_credentials)
+        current_credentials = current_audit_info.credentials
+        refreshed_credentials = {
+            "access_key": current_credentials.aws_access_key_id,
+            "secret_key": current_credentials.aws_secret_access_key,
+            "token": current_credentials.aws_session_token,
+            "expiry_time": (
+                current_credentials.expiration.isoformat()
+                if hasattr(current_credentials, "expiration")
+                else current_credentials.expiry_time.isoformat()
+            ),
+        }
+        if datetime.fromisoformat(refreshed_credentials["expiry_time"]) <= datetime.now(
+            get_localzone()
+        ):
+            response = assume_role(self.aws_session, self.role_info)
+            refreshed_credentials = dict(
+                # Keys of the dict has to be the same as those that are being searched in the parent class
+                # https://github.com/boto/botocore/blob/098cc255f81a25b852e1ecdeb7adebd94c7b1b73/botocore/credentials.py#L609
+                access_key=response["Credentials"]["AccessKeyId"],
+                secret_key=response["Credentials"]["SecretAccessKey"],
+                token=response["Credentials"]["SessionToken"],
+                expiry_time=response["Credentials"]["Expiration"].isoformat(),
+            )
+            logger.info("Refreshed Credentials:")
+            logger.info(refreshed_credentials)
         return refreshed_credentials
 
 
@@ -146,6 +163,17 @@ def assume_role(
 
         sts_client = create_sts_session(session, sts_endpoint_region)
         assumed_credentials = sts_client.assume_role(**assume_role_arguments)
+
+        # Convert the UTC datetime object to your local timezone
+        credentials_expiration_local_time = (
+            assumed_credentials["Credentials"]["Expiration"]
+            .replace(tzinfo=utc)
+            .astimezone(get_localzone())
+        )
+        assumed_credentials["Credentials"][
+            "Expiration"
+        ] = credentials_expiration_local_time
+
     except Exception as error:
         logger.critical(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"

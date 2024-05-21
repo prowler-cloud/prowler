@@ -338,7 +338,9 @@ class Test_check_security_group:
         ingress_rule = self.ingress_rule_generator(
             0, 65535, TRANSPORT_PROTOCOL_TCP, [IP_V4_ALL_CIDRS], []
         )
-        assert check_security_group(ingress_rule, TRANSPORT_PROTOCOL_TCP, None, True)
+        assert check_security_group(
+            ingress_rule, TRANSPORT_PROTOCOL_TCP, any_address=True
+        )
 
     # TCP Protocol - IP_V6_ALL_CIDRS - All Ports - check None - Any Address - Open
     def test_all_public_ipv6_address_open_all_ports_check_all_tcp_any_address(
@@ -347,4 +349,44 @@ class Test_check_security_group:
         ingress_rule = self.ingress_rule_generator(
             0, 65535, TRANSPORT_PROTOCOL_TCP, [], [IP_V6_ALL_CIDRS]
         )
-        assert check_security_group(ingress_rule, TRANSPORT_PROTOCOL_TCP, None, True)
+        assert check_security_group(
+            ingress_rule, TRANSPORT_PROTOCOL_TCP, any_address=True
+        )
+
+    # ALL (-1) Protocol - IP_V4_ALL_CIDRS - Any Port - check None - Any Address - Open
+    def test_all_public_ipv4_address_open_any_port_check_none_any_address(
+        self,
+    ):
+        ingress_rule = self.ingress_rule_generator(
+            0, 65535, TRANSPORT_PROTOCOL_ALL, [IP_V4_ALL_CIDRS], []
+        )
+        assert check_security_group(ingress_rule, TRANSPORT_PROTOCOL_ALL, None, True)
+
+    # ALL (-1) Protocol - IP_V6_ALL_CIDRS - Any Port - check None - Any Address - Open
+    def test_all_public_ipv6_address_open_any_port_check_none_any_address(
+        self,
+    ):
+        ingress_rule = self.ingress_rule_generator(
+            0, 65535, TRANSPORT_PROTOCOL_ALL, [], [IP_V6_ALL_CIDRS]
+        )
+        assert check_security_group(ingress_rule, TRANSPORT_PROTOCOL_ALL, None, True)
+
+    # ALL (-1) Protocol - IP_V4_ALL_CIDRS - Any Port - check None - Any Address - Open
+    def test_all_public_ipv4_address_open_22_port_check_none_any_address(
+        self,
+    ):
+        port = 22
+        ingress_rule = self.ingress_rule_generator(
+            port, port, TRANSPORT_PROTOCOL_ALL, [IP_V4_ALL_CIDRS], []
+        )
+        assert check_security_group(ingress_rule, TRANSPORT_PROTOCOL_ALL, None, True)
+
+    # ALL (-1) Protocol - IP_V6_ALL_CIDRS - Any Port - check None - Any Address - Open
+    def test_all_public_ipv6_address_open_22_port_check_none_any_address(
+        self,
+    ):
+        port = 22
+        ingress_rule = self.ingress_rule_generator(
+            port, port, TRANSPORT_PROTOCOL_ALL, [], [IP_V6_ALL_CIDRS]
+        )
+        assert check_security_group(ingress_rule, TRANSPORT_PROTOCOL_ALL, None, True)

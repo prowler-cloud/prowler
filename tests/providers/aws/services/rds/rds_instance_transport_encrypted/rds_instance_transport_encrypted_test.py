@@ -1,4 +1,3 @@
-from re import search
 from unittest import mock
 
 import botocore
@@ -91,10 +90,61 @@ class Test_rds_instance_transport_encrypted:
                 check = rds_instance_transport_encrypted()
                 result = check.execute()
 
+                assert len(result) == 1
+                assert result[0].status == "FAIL"
+                assert (
+                    result[0].status_extended
+                    == "RDS Instance db-master-1 connections are not encrypted."
+                )
+                assert result[0].resource_id == "db-master-1"
+                assert result[0].region == AWS_REGION_US_EAST_1
+                assert (
+                    result[0].resource_arn
+                    == f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:db:db-master-1"
+                )
+                assert result[0].resource_tags == []
+
+    @mock_aws
+    def test_rds_clustered_instance(self):
+        conn = client("rds", region_name=AWS_REGION_US_EAST_1)
+        conn.create_db_parameter_group(
+            DBParameterGroupName="test",
+            DBParameterGroupFamily="default.aurora-postgresql14",
+            Description="test parameter group",
+        )
+        conn.create_db_instance(
+            DBInstanceIdentifier="db-master-1",
+            AllocatedStorage=10,
+            Engine="aurora-postgresql",
+            DBName="aurora-postgres",
+            DBInstanceClass="db.m1.small",
+            DBParameterGroupName="test",
+            DBClusterIdentifier="cluster-postgres",
+        )
+        from prowler.providers.aws.services.rds.rds_service import RDS
+
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+
+        with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=audit_info,
+        ):
+            with mock.patch(
+                "prowler.providers.aws.services.rds.rds_instance_transport_encrypted.rds_instance_transport_encrypted.rds_client",
+                new=RDS(audit_info),
+            ):
+                # Test Check
+                from prowler.providers.aws.services.rds.rds_instance_transport_encrypted.rds_instance_transport_encrypted import (
+                    rds_instance_transport_encrypted,
+                )
+
+                check = rds_instance_transport_encrypted()
+                result = check.execute()
+
                 assert len(result) == 0
 
     @mock_aws
-    def test_rds_instance_no_ssl(self):
+    def test_postgres_rds_instance_no_ssl(self):
         conn = client("rds", region_name=AWS_REGION_US_EAST_1)
         conn.create_db_parameter_group(
             DBParameterGroupName="test",
@@ -143,9 +193,9 @@ class Test_rds_instance_transport_encrypted:
 
                 assert len(result) == 1
                 assert result[0].status == "FAIL"
-                assert search(
-                    "connections are not encrypted",
-                    result[0].status_extended,
+                assert (
+                    result[0].status_extended
+                    == "RDS Instance db-master-1 connections are not encrypted."
                 )
                 assert result[0].resource_id == "db-master-1"
                 assert result[0].region == AWS_REGION_US_EAST_1
@@ -156,7 +206,131 @@ class Test_rds_instance_transport_encrypted:
                 assert result[0].resource_tags == []
 
     @mock_aws
-    def test_rds_instance_with_ssl(self):
+    def test_mysql_rds_instance_no_ssl(self):
+        conn = client("rds", region_name=AWS_REGION_US_EAST_1)
+        conn.create_db_parameter_group(
+            DBParameterGroupName="test",
+            DBParameterGroupFamily="default.mysql8.0",
+            Description="test parameter group",
+        )
+        conn.create_db_instance(
+            DBInstanceIdentifier="db-master-1",
+            AllocatedStorage=10,
+            Engine="mysql",
+            DBName="staging-mysql",
+            DBInstanceClass="db.m1.small",
+            DBParameterGroupName="test",
+        )
+
+        conn.modify_db_parameter_group(
+            DBParameterGroupName="test",
+            Parameters=[
+                {
+                    "ParameterName": "require_secure_transport",
+                    "ParameterValue": "0",
+                    "ApplyMethod": "immediate",
+                },
+            ],
+        )
+
+        from prowler.providers.aws.services.rds.rds_service import RDS
+
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+
+        with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=audit_info,
+        ):
+            with mock.patch(
+                "prowler.providers.aws.services.rds.rds_instance_transport_encrypted.rds_instance_transport_encrypted.rds_client",
+                new=RDS(audit_info),
+            ):
+                # Test Check
+                from prowler.providers.aws.services.rds.rds_instance_transport_encrypted.rds_instance_transport_encrypted import (
+                    rds_instance_transport_encrypted,
+                )
+
+                check = rds_instance_transport_encrypted()
+                result = check.execute()
+
+                assert len(result) == 1
+                assert result[0].status == "FAIL"
+                assert (
+                    result[0].status_extended
+                    == "RDS Instance db-master-1 connections are not encrypted."
+                )
+                assert result[0].resource_id == "db-master-1"
+                assert result[0].region == AWS_REGION_US_EAST_1
+                assert (
+                    result[0].resource_arn
+                    == f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:db:db-master-1"
+                )
+                assert result[0].resource_tags == []
+
+    @mock_aws
+    def test_mysql_rds_instance_with_ssl(self):
+        conn = client("rds", region_name=AWS_REGION_US_EAST_1)
+        conn.create_db_parameter_group(
+            DBParameterGroupName="test",
+            DBParameterGroupFamily="default.mysql8.0",
+            Description="test parameter group",
+        )
+        conn.create_db_instance(
+            DBInstanceIdentifier="db-master-1",
+            AllocatedStorage=10,
+            Engine="mysql",
+            DBName="staging-mysql",
+            DBInstanceClass="db.m1.small",
+            DBParameterGroupName="test",
+        )
+
+        conn.modify_db_parameter_group(
+            DBParameterGroupName="test",
+            Parameters=[
+                {
+                    "ParameterName": "require_secure_transport",
+                    "ParameterValue": "1",
+                    "ApplyMethod": "immediate",
+                },
+            ],
+        )
+
+        from prowler.providers.aws.services.rds.rds_service import RDS
+
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+
+        with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=audit_info,
+        ):
+            with mock.patch(
+                "prowler.providers.aws.services.rds.rds_instance_transport_encrypted.rds_instance_transport_encrypted.rds_client",
+                new=RDS(audit_info),
+            ):
+                # Test Check
+                from prowler.providers.aws.services.rds.rds_instance_transport_encrypted.rds_instance_transport_encrypted import (
+                    rds_instance_transport_encrypted,
+                )
+
+                check = rds_instance_transport_encrypted()
+                result = check.execute()
+
+                assert len(result) == 1
+                assert result[0].status == "PASS"
+                assert (
+                    result[0].status_extended
+                    == "RDS Instance db-master-1 connections use SSL encryption."
+                )
+                assert result[0].resource_id == "db-master-1"
+                assert result[0].region == AWS_REGION_US_EAST_1
+                assert (
+                    result[0].resource_arn
+                    == f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:db:db-master-1"
+                )
+                assert result[0].resource_tags == []
+
+    @mock_aws
+    def test_postgres_rds_instance_with_ssl(self):
         conn = client("rds", region_name=AWS_REGION_US_EAST_1)
         conn.create_db_parameter_group(
             DBParameterGroupName="test",
@@ -205,9 +379,9 @@ class Test_rds_instance_transport_encrypted:
 
                 assert len(result) == 1
                 assert result[0].status == "PASS"
-                assert search(
-                    "connections use SSL encryption",
-                    result[0].status_extended,
+                assert (
+                    result[0].status_extended
+                    == "RDS Instance db-master-1 connections use SSL encryption."
                 )
                 assert result[0].resource_id == "db-master-1"
                 assert result[0].region == AWS_REGION_US_EAST_1

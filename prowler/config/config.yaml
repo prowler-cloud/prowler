@@ -96,6 +96,11 @@ aws:
   # trustedadvisor_premium_support_plan_subscribed
   verify_premium_support_plans: True
 
+  # AWS RDS
+  # aws.rds_instance_backup_enabled
+  # Whether to check RDS instance replicas or not
+  check_rds_instance_replicas: False
+
 # Azure Configuration
 azure:
   # Azure Network Configuration

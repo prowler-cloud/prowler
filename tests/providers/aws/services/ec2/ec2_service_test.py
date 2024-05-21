@@ -139,7 +139,7 @@ class Test_EC2_Service:
         audit_info = set_mocked_aws_audit_info(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1],
             expected_checks=[
-                "ec2_securitygroup_allow_ingress_from_internet_to_any_port"
+                "ec2_securitygroup_allow_ingress_from_internet_to_all_ports"
             ],
         )
         ec2 = EC2(audit_info)
