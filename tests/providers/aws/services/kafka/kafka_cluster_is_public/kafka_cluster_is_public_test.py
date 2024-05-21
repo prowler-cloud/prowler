@@ -68,7 +68,7 @@ class Test_kafka_cluster_is_public:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Kafka cluster 'demo-cluster-1' does not have public access disabled."
+                == "Kafka cluster 'demo-cluster-1' is publicly accessible."
             )
             assert (
                 result[0].resource_arn
@@ -118,7 +118,7 @@ class Test_kafka_cluster_is_public:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "Kafka cluster 'demo-cluster-1' has public access disabled."
+                == "Kafka cluster 'demo-cluster-1' is not publicly accessible."
             )
             assert (
                 result[0].resource_arn
