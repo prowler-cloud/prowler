@@ -212,7 +212,7 @@ def get_check_compliance(finding, provider_type, output_options) -> dict:
                 compliance_fw = compliance.Framework
                 if compliance.Version:
                     compliance_fw = f"{compliance_fw}-{compliance.Version}"
-                if compliance.Provider == provider_type.upper():
+                if compliance.Provider.upper() == provider_type.upper():
                     if compliance_fw not in check_compliance:
                         check_compliance[compliance_fw] = []
                     for requirement in compliance.Requirements:
