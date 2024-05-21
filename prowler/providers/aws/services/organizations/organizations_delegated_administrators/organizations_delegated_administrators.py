@@ -30,13 +30,15 @@ class organizations_delegated_administrators(Check):
                             not in organizations_trusted_delegated_administrators
                         ):
                             report.status = "FAIL"
-                            report.status_extended = f"Untrusted Delegated Administrators: {delegated_administrator.id}."
+                            report.status_extended = f"AWS Organization {org.id} has an untrusted Delegated Administrator: {delegated_administrator.id}."
                         else:
                             report.status = "PASS"
-                            report.status_extended = f"Trusted Delegated Administrator: {delegated_administrator.id}."
+                            report.status_extended = f"AWS Organization {org.id} has a trusted Delegated Administrator: {delegated_administrator.id}."
                 else:
                     report.status = "PASS"
-                    report.status_extended = f"No Delegated Administrators: {org.id}."
+                    report.status_extended = (
+                        f"AWS Organization {org.id} has no Delegated Administrators."
+                    )
 
                 findings.append(report)
 
