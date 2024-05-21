@@ -11,7 +11,7 @@ from tests.providers.aws.utils import (
 )
 
 
-class Test_ec2_instance_ssh_port_exposed_to_internet:
+class Test_ec2_instance_port_ssh_exposed_to_internet:
     @mock_aws
     def test_no_ec2_instances(self):
         # Create EC2 Mocked Resources
@@ -28,18 +28,18 @@ class Test_ec2_instance_ssh_port_exposed_to_internet:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_instance_ssh_port_exposed_to_internet.ec2_instance_ssh_port_exposed_to_internet.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_instance_port_ssh_exposed_to_internet.ec2_instance_port_ssh_exposed_to_internet.ec2_client",
             new=EC2(aws_provider),
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_instance_ssh_port_exposed_to_internet.ec2_instance_ssh_port_exposed_to_internet.vpc_client",
+            "prowler.providers.aws.services.ec2.ec2_instance_port_ssh_exposed_to_internet.ec2_instance_port_ssh_exposed_to_internet.vpc_client",
             new=VPC(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.ec2.ec2_instance_ssh_port_exposed_to_internet.ec2_instance_ssh_port_exposed_to_internet import (
-                ec2_instance_ssh_port_exposed_to_internet,
+            from prowler.providers.aws.services.ec2.ec2_instance_port_ssh_exposed_to_internet.ec2_instance_port_ssh_exposed_to_internet import (
+                ec2_instance_port_ssh_exposed_to_internet,
             )
 
-            check = ec2_instance_ssh_port_exposed_to_internet()
+            check = ec2_instance_port_ssh_exposed_to_internet()
             result = check.execute()
 
             assert len(result) == 0
@@ -90,18 +90,18 @@ class Test_ec2_instance_ssh_port_exposed_to_internet:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_instance_ssh_port_exposed_to_internet.ec2_instance_ssh_port_exposed_to_internet.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_instance_port_ssh_exposed_to_internet.ec2_instance_port_ssh_exposed_to_internet.ec2_client",
             new=EC2(aws_provider),
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_instance_ssh_port_exposed_to_internet.ec2_instance_ssh_port_exposed_to_internet.vpc_client",
+            "prowler.providers.aws.services.ec2.ec2_instance_port_ssh_exposed_to_internet.ec2_instance_port_ssh_exposed_to_internet.vpc_client",
             new=VPC(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.ec2.ec2_instance_ssh_port_exposed_to_internet.ec2_instance_ssh_port_exposed_to_internet import (
-                ec2_instance_ssh_port_exposed_to_internet,
+            from prowler.providers.aws.services.ec2.ec2_instance_port_ssh_exposed_to_internet.ec2_instance_port_ssh_exposed_to_internet import (
+                ec2_instance_port_ssh_exposed_to_internet,
             )
 
-            check = ec2_instance_ssh_port_exposed_to_internet()
+            check = ec2_instance_port_ssh_exposed_to_internet()
             result = check.execute()
 
             assert len(result) == 1
@@ -165,18 +165,18 @@ class Test_ec2_instance_ssh_port_exposed_to_internet:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_instance_ssh_port_exposed_to_internet.ec2_instance_ssh_port_exposed_to_internet.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_instance_port_ssh_exposed_to_internet.ec2_instance_port_ssh_exposed_to_internet.ec2_client",
             new=EC2(aws_provider),
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_instance_ssh_port_exposed_to_internet.ec2_instance_ssh_port_exposed_to_internet.vpc_client",
+            "prowler.providers.aws.services.ec2.ec2_instance_port_ssh_exposed_to_internet.ec2_instance_port_ssh_exposed_to_internet.vpc_client",
             new=VPC(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.ec2.ec2_instance_ssh_port_exposed_to_internet.ec2_instance_ssh_port_exposed_to_internet import (
-                ec2_instance_ssh_port_exposed_to_internet,
+            from prowler.providers.aws.services.ec2.ec2_instance_port_ssh_exposed_to_internet.ec2_instance_port_ssh_exposed_to_internet import (
+                ec2_instance_port_ssh_exposed_to_internet,
             )
 
-            check = ec2_instance_ssh_port_exposed_to_internet()
+            check = ec2_instance_port_ssh_exposed_to_internet()
             result = check.execute()
 
             assert len(result) == 1
@@ -246,18 +246,18 @@ class Test_ec2_instance_ssh_port_exposed_to_internet:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_instance_ssh_port_exposed_to_internet.ec2_instance_ssh_port_exposed_to_internet.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_instance_port_ssh_exposed_to_internet.ec2_instance_port_ssh_exposed_to_internet.ec2_client",
             new=EC2(aws_provider),
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_instance_ssh_port_exposed_to_internet.ec2_instance_ssh_port_exposed_to_internet.vpc_client",
+            "prowler.providers.aws.services.ec2.ec2_instance_port_ssh_exposed_to_internet.ec2_instance_port_ssh_exposed_to_internet.vpc_client",
             new=VPC(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.ec2.ec2_instance_ssh_port_exposed_to_internet.ec2_instance_ssh_port_exposed_to_internet import (
-                ec2_instance_ssh_port_exposed_to_internet,
+            from prowler.providers.aws.services.ec2.ec2_instance_port_ssh_exposed_to_internet.ec2_instance_port_ssh_exposed_to_internet import (
+                ec2_instance_port_ssh_exposed_to_internet,
             )
 
-            check = ec2_instance_ssh_port_exposed_to_internet()
+            check = ec2_instance_port_ssh_exposed_to_internet()
             result = check.execute()
 
             assert len(result) == 1
@@ -347,18 +347,18 @@ class Test_ec2_instance_ssh_port_exposed_to_internet:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_instance_ssh_port_exposed_to_internet.ec2_instance_ssh_port_exposed_to_internet.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_instance_port_ssh_exposed_to_internet.ec2_instance_port_ssh_exposed_to_internet.ec2_client",
             new=EC2(aws_provider),
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_instance_ssh_port_exposed_to_internet.ec2_instance_ssh_port_exposed_to_internet.vpc_client",
+            "prowler.providers.aws.services.ec2.ec2_instance_port_ssh_exposed_to_internet.ec2_instance_port_ssh_exposed_to_internet.vpc_client",
             new=VPC(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.ec2.ec2_instance_ssh_port_exposed_to_internet.ec2_instance_ssh_port_exposed_to_internet import (
-                ec2_instance_ssh_port_exposed_to_internet,
+            from prowler.providers.aws.services.ec2.ec2_instance_port_ssh_exposed_to_internet.ec2_instance_port_ssh_exposed_to_internet import (
+                ec2_instance_port_ssh_exposed_to_internet,
             )
 
-            check = ec2_instance_ssh_port_exposed_to_internet()
+            check = ec2_instance_port_ssh_exposed_to_internet()
             result = check.execute()
 
             assert len(result) == 1
