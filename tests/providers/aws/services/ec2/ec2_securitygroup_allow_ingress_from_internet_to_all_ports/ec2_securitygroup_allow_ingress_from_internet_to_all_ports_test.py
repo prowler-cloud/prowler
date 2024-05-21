@@ -334,16 +334,33 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_all_ports:
             assert result[0].region == AWS_REGION_US_EAST_1
 
     @mock_aws
-    def test_ec2_is_failed_check_when_no_findings(self):
-        # Mock AWS Resources
+    def test_set_failed_check_called_correctly(self):
+        # Create EC2 Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
         ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
-
-        from prowler.providers.aws.services.ec2.ec2_service import EC2
+        default_sg = ec2_client.describe_security_groups(GroupNames=["default"])[
+            "SecurityGroups"
+        ][0]
+        default_sg_id = default_sg["GroupId"]
+        default_sg_name = default_sg["GroupName"]
+        ec2_client.authorize_security_group_ingress(
+            GroupId=default_sg_id,
+            IpPermissions=[
+                {
+                    "IpProtocol": "-1",
+                    "IpRanges": [{"CidrIp": "0.0.0.0/0"}],
+                }
+            ],
+        )
 
         aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1],
+            expected_checks=[
+                "ec2_securitygroup_allow_ingress_from_internet_to_all_ports"
+            ],
         )
+
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
@@ -352,9 +369,12 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_all_ports:
             "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_all_ports.ec2_securitygroup_allow_ingress_from_internet_to_all_ports.ec2_client",
             new=EC2(aws_provider),
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_all_ports.ec2_securitygroup_allow_ingress_from_internet_to_all_ports.vpc_client",
+            "prowler.providers.aws.services.vpc.vpc_service.VPC",
             new=VPC(aws_provider),
-        ):
+        ), mock.patch(
+            "prowler.providers.aws.lib.service.service.AWSService.set_failed_check"
+        ) as mock_set_failed_check:
+
             from prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_all_ports.ec2_securitygroup_allow_ingress_from_internet_to_all_ports import (
                 ec2_securitygroup_allow_ingress_from_internet_to_all_ports,
             )
@@ -362,25 +382,25 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_all_ports:
             check = ec2_securitygroup_allow_ingress_from_internet_to_all_ports()
             result = check.execute()
 
-            # Ensure that is_failed_check is False initially
-            security_group_id = result[0].resource_id
-            region = result[0].region
-            assert not EC2.is_failed_check(
-                ec2_securitygroup_allow_ingress_from_internet_to_all_ports.__name__,
-                security_group_id,
-                region,
+            # Verify set_failed_check was called with the correct arguments
+            mock_set_failed_check.assert_called_with(
+                "ec2_securitygroup_allow_ingress_from_internet_to_all_ports",
+                f"arn:{aws_provider.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{aws_provider.identity.account}:security-group/{default_sg_id}",
             )
 
-            # Simulate a failed check
-            EC2.set_failed_check(
-                ec2_securitygroup_allow_ingress_from_internet_to_all_ports.__name__,
-                security_group_id,
-                region,
-            )
-
-            # Ensure that is_failed_check returns True
-            assert EC2.is_failed_check(
-                ec2_securitygroup_allow_ingress_from_internet_to_all_ports.__name__,
-                security_group_id,
-                region,
-            )
+            # Additional assertions to verify the check result
+            assert len(result) == 3
+            for sg in result:
+                if sg.resource_id == default_sg_id:
+                    assert sg.status == "FAIL"
+                    assert sg.region == AWS_REGION_US_EAST_1
+                    assert (
+                        sg.status_extended
+                        == f"Security group {default_sg_name} ({default_sg_id}) has all ports open to the Internet."
+                    )
+                    assert (
+                        sg.resource_arn
+                        == f"arn:{aws_provider.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{aws_provider.identity.account}:security-group/{default_sg_id}"
+                    )
+                    assert sg.resource_details == default_sg_name
+                    assert sg.resource_tags == []

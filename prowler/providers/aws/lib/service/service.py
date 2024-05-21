@@ -24,13 +24,13 @@ class AWSService:
     failed_checks = set()
 
     @classmethod
-    def set_failed_check(cls, check_id=None, resource_id=None, region=None):
-        if check_id is not None and resource_id is not None and region is not None:
-            cls.failed_checks.add((check_id.split(".")[-1], resource_id, region))
+    def set_failed_check(cls, check_id=None, arn=None):
+        if check_id is not None and arn is not None:
+            cls.failed_checks.add((check_id.split(".")[-1], arn))
 
     @classmethod
-    def is_failed_check(cls, check_id, resource_id, region):
-        return (check_id.split(".")[-1], resource_id, region) in cls.failed_checks
+    def is_failed_check(cls, check_id, arn):
+        return (check_id.split(".")[-1], arn) in cls.failed_checks
 
     def __init__(self, service: str, provider: AwsProvider, global_service=False):
         # Audit Information

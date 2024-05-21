@@ -29,8 +29,7 @@ class ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_telnet_23(Check)
                 # only proceed if check "..._to_all_ports" did not run or did not FAIL to avoid to report open ports twice
                 if not ec2_client.is_failed_check(
                     ec2_securitygroup_allow_ingress_from_internet_to_all_ports.__name__,
-                    security_group.id,
-                    security_group.region,
+                    security_group.arn,
                 ):
                     # Loop through every security group's ingress rule and check it
                     for ingress_rule in security_group.ingress_rules:
