@@ -5,6 +5,7 @@ from prowler.providers.aws.services.vpc.vpc_client import vpc_client
 
 
 class ec2_instance_ssh_port_exposed_to_internet(Check):
+    # EC2 Instances with SSH port 22 open to the Internet will be flagged as FAIL with a severity of medium if the instance has no public IP, high if the instance has a public IP but is in a private subnet, and critical if the instance has a public IP and is in a public subnet.
     def execute(self):
         findings = []
         check_ports = [22]
