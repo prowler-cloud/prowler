@@ -1,4 +1,3 @@
-from re import search
 from unittest import mock
 from uuid import uuid4
 

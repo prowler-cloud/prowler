@@ -1,4 +1,3 @@
-from re import search
 from unittest import mock
 from uuid import uuid4
 
@@ -49,11 +48,7 @@ class Test_sns_topics_kms_encryption_at_rest_enabled:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert (
-                result[0].status_extended
-                == f"SNS topic {topic_name} is encrypted."
-            )
-            assert search("is encrypted", result[0].status_extended)
+            assert result[0].status_extended == f"SNS topic {topic_name} is encrypted."
             assert result[0].resource_id == topic_name
             assert result[0].resource_arn == topic_arn
 
@@ -76,8 +71,7 @@ class Test_sns_topics_kms_encryption_at_rest_enabled:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
-                result[0].status_extended
-                == f"SNS topic {topic_name} is not encrypted."
+                result[0].status_extended == f"SNS topic {topic_name} is not encrypted."
             )
             assert result[0].resource_id == topic_name
             assert result[0].resource_arn == topic_arn

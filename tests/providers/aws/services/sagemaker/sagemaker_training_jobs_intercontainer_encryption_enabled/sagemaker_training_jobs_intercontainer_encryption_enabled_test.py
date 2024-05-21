@@ -1,4 +1,3 @@
-from re import search
 from unittest import mock
 
 from prowler.providers.aws.services.sagemaker.sagemaker_service import TrainingJob
