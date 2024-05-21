@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
-  "CheckID": "ec2_instance_port_ssh_exposed_to_internet",
-  "CheckTitle": "Ensure no EC2 instances allow ingress from the internet to TCP port 22 (SSH)",
+  "CheckID": "ec2_instance_port_rdp_exposed_to_internet",
+  "CheckTitle": "Ensure no EC2 instances allow ingress from the internet to TCP port 3389 (RDP)",
   "CheckType": [
     "Infrastructure Security"
   ],
@@ -10,7 +10,7 @@
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "critical",
   "ResourceType": "AwsEc2Instance",
-  "Description": "This check determines if any EC2 instances allow ingress from the internet to TCP port 22. SSH is a common target for brute force attacks.",
+  "Description": "This check ensures that no EC2 instances allow ingress from the internet to TCP port 3389 (RDP).",
   "Risk": "Exposing an EC2 directly to internet increases the attack surface and therefore the risk of compromise.",
   "RelatedUrl": "",
   "Remediation": {
@@ -21,7 +21,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Modify the security group associated with the EC2 instance to remove the rule that allows ingress from the internet to TCP port 22.",
+      "Text": "Modify the security group associated with the EC2 instance to remove the rule that allows ingress from the internet to TCP port 3389 (RDP).",
       "Url": "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
     }
   },
