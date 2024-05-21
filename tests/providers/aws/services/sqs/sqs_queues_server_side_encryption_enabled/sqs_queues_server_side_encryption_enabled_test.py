@@ -53,6 +53,10 @@ class Test_sqs_queues_server_side_encryption_enabled:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == f"SQS queue {test_queue_url} is using Server Side Encryption."
+            )
             assert search("is using Server Side Encryption", result[0].status_extended)
             assert result[0].resource_id == test_queue_url
             assert result[0].resource_arn == test_queue_arn
@@ -80,8 +84,9 @@ class Test_sqs_queues_server_side_encryption_enabled:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert search(
-                "is not using Server Side Encryption", result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"SQS queue {test_queue_url} is not using Server Side Encryption."
             )
             assert result[0].resource_id == test_queue_url
             assert result[0].resource_arn == test_queue_arn
