@@ -4021,17 +4021,17 @@ files = [
 
 [[package]]
 name = "slack-sdk"
-version = "3.27.1"
+version = "3.27.2"
 description = "The Slack API Platform SDK for Python"
 optional = false
 python-versions = ">=3.6"
 files = [
-    {file = "slack_sdk-3.27.1-py2.py3-none-any.whl", hash = "sha256:c108e509160cf1324c5c8b1f47ca52fb5e287021b8caf9f4ec78ad737ab7b1d9"},
-    {file = "slack_sdk-3.27.1.tar.gz", hash = "sha256:85d86b34d807c26c8bb33c1569ec0985876f06ae4a2692afba765b7a5490d28c"},
+    {file = "slack_sdk-3.27.2-py2.py3-none-any.whl", hash = "sha256:af97158e6ac7f667e158e8036e63dc1f79db9bd36216a33c10fcc49be7c2f30c"},
+    {file = "slack_sdk-3.27.2.tar.gz", hash = "sha256:bb145bf2bd93b60a17cd55c05cb15868c9a07d845b6fb608c798b50bce21cb99"},
 ]
 
 [package.extras]
-optional = ["SQLAlchemy (>=1.4,<3)", "aiodns (>1.0)", "aiohttp (>=3.7.3,<4)", "boto3 (<=2)", "websocket-client (>=1,<2)", "websockets (>=10,<11)", "websockets (>=9.1,<10)"]
+optional = ["SQLAlchemy (>=1.4,<3)", "aiodns (>1.0)", "aiohttp (>=3.7.3,<4)", "boto3 (<=2)", "websocket-client (>=1,<2)", "websockets (>=9.1,<13)"]
 
 [[package]]
 name = "smmap"
@@ -4528,4 +4528,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "7ff54749abb420f516fbfdb5bd5a82d713a74ab40e90afad85d917c385e97497"
+content-hash = "90cf50605014e228e346f81ac7702c9079b9c1dca3b1daf401db779ce9a58d28"
