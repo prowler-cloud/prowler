@@ -221,20 +221,21 @@ class RDS(AWSService):
                                 DBParameterGroupName=cluster["DBClusterParameterGroup"]
                             ):
                                 for parameter in page["Parameters"]:
-                                    if (
-                                        parameter["ParameterName"] == "rds.force_ssl"
-                                        and parameter["ParameterValue"] == "1"
-                                    ):
-                                        db_cluster.force_ssl = True
+                                    if parameter["ParameterName"] == "rds.force_ssl":
+                                        db_cluster.force_ssl = parameter[
+                                            "ParameterValue"
+                                        ]
                                     if (
                                         parameter["ParameterName"]
                                         == "require_secure_transport"
-                                        and parameter["ParameterValue"] == "ON"
                                     ):
-                                        db_cluster.require_secure_transport = "ON"
+                                        db_cluster.require_secure_transport = parameter[
+                                            "ParameterValue"
+                                        ]
 
                             # We must use a unique value as the dict key to have unique keys
                             self.db_clusters[db_cluster_arn] = db_cluster
+
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
