@@ -513,19 +513,19 @@ isodate = ">=0.6.1,<1.0.0"
 
 [[package]]
 name = "azure-mgmt-security"
-version = "6.0.0"
+version = "7.0.0"
 description = "Microsoft Azure Security Center Management Client Library for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "azure-mgmt-security-6.0.0.tar.gz", hash = "sha256:ceafc1869899067110bd830c5cc98bc9b8f32d8ea840ca1f693b1a5f52a5f8b0"},
-    {file = "azure_mgmt_security-6.0.0-py3-none-any.whl", hash = "sha256:c88570003ac8138c59e6e549e2d8bb6a6c7057c496303d8c33392fdfe05f294c"},
+    {file = "azure-mgmt-security-7.0.0.tar.gz", hash = "sha256:5912eed7e9d3758fdca8d26e1dc26b41943dc4703208a1184266e2c252e1ad66"},
+    {file = "azure_mgmt_security-7.0.0-py3-none-any.whl", hash = "sha256:85a6d8b7a5cd74884a548ed53fed034449f54a9989edd64e9020c5837db96933"},
 ]
 
 [package.dependencies]
-azure-common = ">=1.1,<2.0"
-azure-mgmt-core = ">=1.3.2,<2.0.0"
-isodate = ">=0.6.1,<1.0.0"
+azure-common = ">=1.1"
+azure-mgmt-core = ">=1.3.2"
+isodate = ">=0.6.1"
 
 [[package]]
 name = "azure-mgmt-sql"
@@ -4906,4 +4906,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "7829d33df54d315c440de2c35d32be1483b0e7081c82fc5824dfb5dd290b8b88"
+content-hash = "cd0a89cb05e210701e6db240a6ca0e16864e4128df3b1fcd15c4e7efc52fc238"
