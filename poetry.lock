@@ -2646,13 +2646,13 @@ dev = ["bumpver", "isort", "mypy", "pylint", "pytest", "yapf"]
 
 [[package]]
 name = "msgraph-sdk"
-version = "1.3.0"
+version = "1.4.0"
 description = "The Microsoft Graph Python SDK"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "msgraph_sdk-1.3.0-py3-none-any.whl", hash = "sha256:b8636e4f3957bad35958c1578d1610ed4e1edf71c4fdb3423396868cab84e156"},
-    {file = "msgraph_sdk-1.3.0.tar.gz", hash = "sha256:a0a0f529800e528a455e2ace31660d9d3697a8cc87b0789e30147ce4c4e9c268"},
+    {file = "msgraph_sdk-1.4.0-py3-none-any.whl", hash = "sha256:24f99082475ea129c3d45e44269bd64a7c6bfef8dda4f8ea692bbc9e47b71b78"},
+    {file = "msgraph_sdk-1.4.0.tar.gz", hash = "sha256:715907272c240e579d7669a690504488e25ae15fec904e2918c49ca328dc4a14"},
 ]
 
 [package.dependencies]
@@ -4906,4 +4906,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "28047ad50ea561966f4691f4f80bdcf4f8899b3af4c2ba36a3524a5a5917cdc9"
+content-hash = "00b69cac4929d19973c6b67703d998f99fd2eb5ca6dbbd21419df714442cda60"
