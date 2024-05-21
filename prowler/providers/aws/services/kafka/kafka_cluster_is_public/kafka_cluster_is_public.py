@@ -14,13 +14,13 @@ class kafka_cluster_is_public(Check):
             report.resource_tags = cluster.tags
             report.status = "FAIL"
             report.status_extended = (
-                f"Kafka cluster '{cluster.name}' does not have public access disabled."
+                f"Kafka cluster '{cluster.name}' is publicly accessible."
             )
 
             if cluster.public_access:
                 report.status = "PASS"
                 report.status_extended = (
-                    f"Kafka cluster '{cluster.name}' has public access disabled."
+                    f"Kafka cluster '{cluster.name}' is not publicly accessible."
                 )
 
             findings.append(report)
