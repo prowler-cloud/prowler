@@ -23,12 +23,9 @@ class ec2_instance_not_directly_publicly_accessible_via_elb(Check):
                 report.status = "PASS"
                 report.status_extended = f"EC2 Instance {instance.id} is not publicly accesible through an Internet facing Classic Load Balancer."
 
-                if instance.id in public_instances:
-                    for sg in ec2_client.security_groups:
-                        if sg.id in public_instances[instance.id].security_groups:
-                            report.status = "FAIL"
-                            report.status_extended = f"EC2 Instance {instance.id} is publicly accesible through an Internet facing Classic Load Balancer through load balancer {public_instances[instance.id].dns}."
-                            break
+                if instance.id in public_instances and instance.security_groups <= 1:
+                    report.status = "FAIL"
+                    report.status_extended = f"EC2 Instance {instance.id} is publicly accesible through an Internet facing Classic Load Balancer through load balancer {public_instances[instance.id].dns}."
                 findings.append(report)
 
         return findings
