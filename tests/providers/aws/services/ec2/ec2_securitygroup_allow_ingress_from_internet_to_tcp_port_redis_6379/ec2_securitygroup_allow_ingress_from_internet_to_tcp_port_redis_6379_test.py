@@ -319,3 +319,95 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_redis_6379:
                     )
                     assert result[0].resource_details == sg["GroupName"]
                     assert result[0].resource_tags == []
+
+    @mock_aws
+    def test_ec2_non_compliant_default_sg_pass_to_avoid_fail_twice(self):
+        # Create EC2 Mocked Resources
+        ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
+        ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
+        default_sg = ec2_client.describe_security_groups(GroupNames=["default"])[
+            "SecurityGroups"
+        ][0]
+        default_sg_id = default_sg["GroupId"]
+        default_sg_name = default_sg["GroupName"]
+        ec2_client.authorize_security_group_ingress(
+            GroupId=default_sg_id,
+            IpPermissions=[
+                {
+                    "IpProtocol": "-1",
+                    "FromPort": -1,
+                    "ToPort": -1,
+                    "IpRanges": [{"CidrIp": "0.0.0.0/0"}],
+                },
+                {
+                    "IpProtocol": "tcp",
+                    "FromPort": 22,
+                    "ToPort": 22,
+                    "IpRanges": [{"CidrIp": "0.0.0.0/0"}],
+                },
+            ],
+        )
+
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
+
+        current_audit_info = set_mocked_aws_audit_info(
+            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        )
+
+        with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=current_audit_info,
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_all_ports.ec2_securitygroup_allow_ingress_from_internet_to_all_ports.ec2_client",
+            new=EC2(current_audit_info),
+        ) as ec2_client_instance, mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_all_ports.ec2_securitygroup_allow_ingress_from_internet_to_all_ports.vpc_client",
+            new=VPC(current_audit_info),
+        ) as vpc_client_instance:
+            # Run check for all ports
+            from prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_all_ports.ec2_securitygroup_allow_ingress_from_internet_to_all_ports import (
+                ec2_securitygroup_allow_ingress_from_internet_to_all_ports,
+            )
+
+            check_all_ports = (
+                ec2_securitygroup_allow_ingress_from_internet_to_all_ports()
+            )
+            result_all_ports = check_all_ports.execute()
+
+            # Verify that the all ports check has detected the issue
+            assert any(
+                sg.status == "FAIL" and sg.resource_id == default_sg_id
+                for sg in result_all_ports
+            )
+
+            # use the same mock objects for the specific port check
+            with mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_redis_6379.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_redis_6379.ec2_client",
+                new=ec2_client_instance,
+            ), mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_redis_6379.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_redis_6379.vpc_client",
+                new=vpc_client_instance,
+            ):
+                # Now run the specific port check
+                from prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_redis_6379.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_redis_6379 import (
+                    ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_redis_6379,
+                )
+
+                check_specific_port = (
+                    ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_redis_6379()
+                )
+                result_specific_port = check_specific_port.execute()
+
+                # One default sg per region
+                assert len(result_specific_port) == 3
+                # Search changed sg
+                for sg in result_specific_port:
+                    if sg.resource_id == default_sg_id:
+                        assert sg.status == "PASS"
+                        assert sg.region == AWS_REGION_US_EAST_1
+                        assert (
+                            sg.status_extended
+                            == f"Security group {sg.resource_details} ({sg.resource_id}) has all ports open to the Internet and therefore was not checked against the specific Redis port 6379."
+                        )
+                        assert sg.resource_tags == []
+                        assert sg.resource_details == default_sg_name
