@@ -1,4 +1,3 @@
-from re import search
 from unittest import mock
 
 from prowler.providers.aws.services.sagemaker.sagemaker_service import TrainingJob
@@ -47,8 +46,9 @@ class Test_sagemaker_training_jobs_intercontainer_encryption_enabled:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert search(
-                "has intercontainer encryption enabled", result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"Sagemaker training job {test_training_job} has intercontainer encryption enabled."
             )
             assert result[0].resource_id == test_training_job
             assert result[0].resource_arn == training_job_arn
@@ -75,8 +75,9 @@ class Test_sagemaker_training_jobs_intercontainer_encryption_enabled:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert search(
-                "has intercontainer encryption disabled", result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"Sagemaker training job {test_training_job} has intercontainer encryption disabled."
             )
             assert result[0].resource_id == test_training_job
             assert result[0].resource_arn == training_job_arn

@@ -1,4 +1,3 @@
-from re import search
 from unittest import mock
 from uuid import uuid4
 
@@ -145,7 +144,10 @@ class Test_sqs_queues_not_publicly_accessible:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert search("is not public", result[0].status_extended)
+            assert (
+                result[0].status_extended
+                == f"SQS queue {test_queue_url} is not public."
+            )
             assert result[0].resource_id == test_queue_url
             assert result[0].resource_arn == test_queue_arn
             assert result[0].resource_tags == []
@@ -175,9 +177,9 @@ class Test_sqs_queues_not_publicly_accessible:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert search(
-                "is public because its policy allows public access",
-                result[0].status_extended,
+            assert (
+                result[0].status_extended
+                == f"SQS queue {test_queue_url} is public because its policy allows public access."
             )
             assert result[0].resource_id == test_queue_url
             assert result[0].resource_arn == test_queue_arn
@@ -209,9 +211,9 @@ class Test_sqs_queues_not_publicly_accessible:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert search(
-                "is public because its policy allows public access",
-                result[0].status_extended,
+            assert (
+                result[0].status_extended
+                == f"SQS queue {test_queue_url} is public because its policy allows public access, and the condition does not limit access to resources within the same account."
             )
             assert result[0].resource_id == test_queue_url
             assert result[0].resource_arn == test_queue_arn
