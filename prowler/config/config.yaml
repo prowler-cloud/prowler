@@ -253,6 +253,13 @@ aws:
   # aws.rds_instance_backup_enabled
   # Whether to check RDS instance replicas or not
   check_rds_instance_replicas: False
+  #
+  check_ec2_securitygroup_allow_ingress_from_internet_to_any_port_allowed_interface_types:
+      [
+          "amazon-elb",
+          "api_gateway_managed",
+          "vpc_endpoint",
+      ]
 
 # Azure Configuration
 azure:

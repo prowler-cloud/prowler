@@ -126,7 +126,7 @@ class EC2(AWSService):
                         is_resource_filtered(arn, self.audit_resources)
                     ):
                         associated_sgs = []
-                        # check if sg has public access to all ports
+
                         for ingress_rule in sg["IpPermissions"]:
                             # check associated security groups
                             for sg_group in ingress_rule.get("UserIdGroupPairs", []):
@@ -143,6 +143,7 @@ class EC2(AWSService):
                                 associated_sgs=associated_sgs,
                                 vpc_id=sg["VpcId"],
                                 tags=sg.get("Tags"),
+                                network_interfaces=[]  # Placeholder, will be filled in __describe_network_interfaces__
                             )
                         )
                         if sg["GroupName"] != "default":
@@ -256,6 +257,9 @@ class EC2(AWSService):
                         vpc_id=interface["VpcId"],
                         region=regional_client.region,
                         tags=interface.get("TagSet"),
+                        instance_owner_id=interface.get("OwnerId"),
+                        interface_type=interface["InterfaceType"],
+                        groups=interface.get("Groups", [])
                     )
                     self.network_interfaces.append(eni)
                     # Add Network Interface to Security Group
@@ -265,20 +269,16 @@ class EC2(AWSService):
                     #         'GroupName': 'default',
                     #     },
                     # ],
-                    self.__add_network_interfaces_to_security_groups__(
-                        eni, interface.get("Groups", [])
-                    )
+                    self.__add_network_interfaces_to_security_groups__(eni)
 
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __add_network_interfaces_to_security_groups__(
-        self, interface, interface_security_groups
-    ):
+    def __add_network_interfaces_to_security_groups__(self, interface):
         try:
-            for sg in interface_security_groups:
+            for sg in interface.groups:
                 for security_group in self.security_groups:
                     if security_group.id == sg["GroupId"]:
                         security_group.network_interfaces.append(interface)
@@ -519,6 +519,9 @@ class NetworkInterface(BaseModel):
     vpc_id: str
     region: str
     tags: Optional[list] = []
+    instance_owner_id: Optional[str] = None
+    interface_type: Optional[str] = None
+    groups: Optional[list] = []
 
 
 class SecurityGroup(BaseModel):

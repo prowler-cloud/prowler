@@ -520,6 +520,9 @@ class Test_EC2_Service:
         assert ec2.network_interfaces[0].tags == [
             {"Key": "string", "Value": "string"},
         ]
+        assert ec2.network_interfaces[0].instance_owner_id == eni.owner_id
+        assert ec2.network_interfaces[0].interface_type == eni.interface_type
+        assert ec2.network_interfaces[0].groups == eni.groups
         # Check if ENI was added to security group
         for sg in ec2.security_groups:
             if sg.id == eni.groups[0]["GroupId"]:
