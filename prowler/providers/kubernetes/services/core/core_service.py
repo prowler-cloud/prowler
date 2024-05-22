@@ -2,10 +2,10 @@ import socket
 from dataclasses import dataclass
 from typing import List, Optional
 
-from kubernetes import client
 from kubernetes.client.models import V1PodSecurityContext, V1SecurityContext
 from pydantic import BaseModel
 
+from kubernetes import client
 from prowler.lib.logger import logger
 from prowler.providers.kubernetes.kubernetes_provider import KubernetesProvider
 from prowler.providers.kubernetes.lib.service.service import KubernetesService
@@ -177,7 +177,7 @@ class ConfigMap(BaseModel):
     name: str
     namespace: str
     uid: str
-    data: dict = {}
+    data: Optional[dict]
     labels: Optional[dict]
     kubelet_args: list = []
     annotations: Optional[dict]
