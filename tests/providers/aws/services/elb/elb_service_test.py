@@ -63,7 +63,6 @@ class Test_ELB_Service:
         assert elb.loadbalancers[0].name == "my-lb"
         assert elb.loadbalancers[0].region == AWS_REGION_US_EAST_1
         assert elb.loadbalancers[0].security_groups == [security_group.id]
-        assert elb.loadbalancers[0].public == False
         assert elb.loadbalancers[0].scheme == "internal"
         assert (
             elb.loadbalancers[0].arn

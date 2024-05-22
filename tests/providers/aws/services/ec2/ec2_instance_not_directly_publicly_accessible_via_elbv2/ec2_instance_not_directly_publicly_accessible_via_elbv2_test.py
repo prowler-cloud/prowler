@@ -155,7 +155,7 @@ class Test_ec2_instance_not_directly_publicly_accessible_via_elbv2:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"EC2 Instance {instance.id} is publicly accesible through an Internet facing Load Balancer through load balancer {lb["DNSName"]}."
+                == f'EC2 Instance {instance.id} is publicly accessible through an Internet facing Load Balancer with DNS name {lb["DNSName"]}.'
             )
             assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_id == instance.id
