@@ -3,6 +3,7 @@ import sys
 
 from google import auth
 from googleapiclient import discovery
+from googleapiclient.errors import HttpError
 
 from prowler.lib.logger import logger
 
@@ -80,18 +81,25 @@ class GCP_Provider:
                     previous_request=request, previous_response=response
                 )
 
-            return project_ids
+        except HttpError as http_error:
+            if "Cloud Resource Manager API has not been used" in str(http_error):
+                logger.critical(
+                    "Cloud Resource Manager API has not been used before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/cloudresourcemanager.googleapis.com/ then retry."
+                )
+                sys.exit(1)
+            else:
+                logger.error(
+                    f"{http_error.__class__.__name__}[{http_error.__traceback__.tb_lineno}]: {http_error}"
+                )
         except Exception as error:
             if error.__class__.__name__ == "RefreshError":
                 logger.critical(
                     "Google Cloud SDK has not been authenticated or the credentials have expired. Authenticate by running 'gcloud auth application-default login' then retry."
-                )
-            elif "Cloud Resource Manager API has not been used" in str(error):
-                logger.critical(
-                    "Cloud Resource Manager API has not been used before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/cloudresourcemanager.googleapis.com/ then retry."
                 )
             else:
                 logger.critical(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
             sys.exit(1)
+        finally:
+            return project_ids
