@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "ec2_instance_port_sqlserver_exposed_to_internet",
+  "CheckTitle": "Ensure no EC2 instances allow ingress from the internet to TCP port 1433 or 1434 (SQL Server).",
+  "CheckType": [
+    "Infrastructure Security"
+  ],
+  "ServiceName": "ec2",
+  "SubServiceName": "instance",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "critical",
+  "ResourceType": "AwsEc2Instance",
+  "Description": "Ensure no EC2 instances allow ingress from the internet to TCP port 1433 or 1434 (SQL Server).",
+  "Risk": "SQL Server is a database management system that is used to store and retrieve data. If an EC2 instance allows ingress from the internet to TCP port 1433 or 1434, it may be vulnerable to unauthorized access and data exfiltration.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Modify the security group to remove the rule that allows ingress from the internet to TCP port 1433 or 1434 (SQL Server).",
+      "Url": "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
