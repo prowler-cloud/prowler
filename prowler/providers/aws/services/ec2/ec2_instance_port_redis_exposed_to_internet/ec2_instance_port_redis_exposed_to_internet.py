@@ -4,16 +4,16 @@ from prowler.providers.aws.services.ec2.lib.security_groups import check_securit
 from prowler.providers.aws.services.vpc.vpc_client import vpc_client
 
 
-class ec2_instance_port_postgresql_exposed_to_internet(Check):
-    # EC2 Instances with PostgreSQL port 5432 open to the Internet will be flagged as FAIL with a severity of medium if the instance has no public IP, high if the instance has a public IP but is in a private subnet, and critical if the instance has a public IP and is in a public subnet.
+class ec2_instance_port_redis_exposed_to_internet(Check):
+    # EC2 Instances with Redis port 6379 open to the Internet will be flagged as FAIL with a severity of medium if the instance has no public IP, high if the instance has a public IP but is in a private subnet, and critical if the instance has a public IP and is in a public subnet.
     def execute(self):
         findings = []
-        check_ports = [5432]
+        check_ports = [6379]
         for instance in ec2_client.instances:
             report = Check_Report_AWS(self.metadata())
             report.region = instance.region
             report.status = "PASS"
-            report.status_extended = f"Instance {instance.id} does not have PostgreSQL port 5432 open to the Internet."
+            report.status_extended = f"Instance {instance.id} does not have Redis port 6379 open to the Internet."
             report.resource_id = instance.id
             report.resource_arn = instance.arn
             report.resource_tags = instance.tags
@@ -28,15 +28,15 @@ class ec2_instance_port_postgresql_exposed_to_internet(Check):
                                     # The port is open, now check if the instance is in a public subnet with a public IP
                                     report.status = "FAIL"
                                     if instance.public_ip:
-                                        report.status_extended = f"Instance {instance.id} has PostgreSQL exposed to 0.0.0.0/0 on public ip address {instance.public_ip} but in private subnet {instance.subnet_id}."
+                                        report.status_extended = f"Instance {instance.id} has Redis exposed to 0.0.0.0/0 on public ip address {instance.public_ip} but in private subnet {instance.subnet_id}."
                                         report.check_metadata.Severity = "high"
                                         if vpc_client.vpc_subnets[
                                             instance.subnet_id
                                         ].public:
-                                            report.status_extended = f"Instance {instance.id} has PostgreSQL exposed to 0.0.0.0/0 on public ip address {instance.public_ip} in public subnet {instance.subnet_id}."
+                                            report.status_extended = f"Instance {instance.id} has Redis exposed to 0.0.0.0/0 on public ip address {instance.public_ip} in public subnet {instance.subnet_id}."
                                             report.check_metadata.Severity = "critical"
                                     else:
-                                        report.status_extended = f"Instance {instance.id} has PostgreSQL exposed to 0.0.0.0/0 but with no public ip address."
+                                        report.status_extended = f"Instance {instance.id} has Redis exposed to 0.0.0.0/0 but with no public ip address."
                                         report.check_metadata.Severity = "medium"
                                     break
             findings.append(report)
