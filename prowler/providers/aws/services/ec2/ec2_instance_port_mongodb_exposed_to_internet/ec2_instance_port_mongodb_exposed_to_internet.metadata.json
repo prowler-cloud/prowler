@@ -11,7 +11,7 @@
   "Severity": "critical",
   "ResourceType": "AwsEc2Instance",
   "Description": "Ensure no EC2 instances allow ingress from the internet to TCP port 27017 or 27018 (MongoDB).",
-  "Risk": "The security group rule allows ingress from the internet to TCP port 27017 or 27018 (MongoDB). This could allow an attacker to access the MongoDB service running on the EC2 instance.",
+  "Risk": "MongoDB is a popular NoSQL database that is often used in web applications. If an EC2 instance allows ingress from the internet to TCP port 27017 or 27018, it may be vulnerable to unauthorized access and data exfiltration.",
   "RelatedUrl": "",
   "Remediation": {
     "Code": {

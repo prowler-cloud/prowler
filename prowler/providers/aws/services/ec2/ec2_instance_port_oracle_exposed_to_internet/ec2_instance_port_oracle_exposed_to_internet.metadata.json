@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
-  "CheckID": "ec2_instance_port_ftp_exposed_to_internet",
-  "CheckTitle": "Ensure no EC2 instances allow ingress from the internet to TCP port 20 or 21 (FTP)",
+  "CheckID": "ec2_instance_port_oracle_exposed_to_internet",
+  "CheckTitle": "Ensure no EC2 instances allow ingress from the internet to TCP port 1521, 2483 or 2484 (Oracle).",
   "CheckType": [
     "Infrastructure Security"
   ],
@@ -10,8 +10,8 @@
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "critical",
   "ResourceType": "AwsEc2Instance",
-  "Description": "Ensure no EC2 instances allow ingress from the internet to TCP port 20 or 21 (FTP).",
-  "Risk": "FTP is an insecure protocol and should not be used. If FTP is required, it should be used over a secure channel such as FTPS or SFTP.",
+  "Description": "Ensure no EC2 instances allow ingress from the internet to TCP port 1521, 2483 or 2484 (Oracle).",
+  "Risk": "Oracle database servers are a high value target for attackers. Allowing internet access to these ports could lead to unauthorized access to the database.",
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
@@ -21,7 +21,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Modify the security group to remove the rule that allows ingress from the internet to TCP port 20 or 21 (FTP).",
+      "Text": "Modify the security group to remove the rule that allows ingress from the internet to TCP port 1521, 2483 or 2484.",
       "Url": "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
     }
   },

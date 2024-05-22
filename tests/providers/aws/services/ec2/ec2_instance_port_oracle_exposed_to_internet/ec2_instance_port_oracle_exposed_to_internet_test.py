@@ -11,7 +11,7 @@ from tests.providers.aws.utils import (
 )
 
 
-class Test_ec2_instance_port_mysql_exposed_to_internet:
+class Test_ec2_instance_port_oracle_exposed_to_internet:
     @mock_aws
     def test_no_ec2_instances(self):
         # Create EC2 Mocked Resources
@@ -28,18 +28,18 @@ class Test_ec2_instance_port_mysql_exposed_to_internet:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_instance_port_mysql_exposed_to_internet.ec2_instance_port_mysql_exposed_to_internet.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_instance_port_oracle_exposed_to_internet.ec2_instance_port_oracle_exposed_to_internet.ec2_client",
             new=EC2(aws_provider),
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_instance_port_mysql_exposed_to_internet.ec2_instance_port_mysql_exposed_to_internet.vpc_client",
+            "prowler.providers.aws.services.ec2.ec2_instance_port_oracle_exposed_to_internet.ec2_instance_port_oracle_exposed_to_internet.vpc_client",
             new=VPC(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.ec2.ec2_instance_port_mysql_exposed_to_internet.ec2_instance_port_mysql_exposed_to_internet import (
-                ec2_instance_port_mysql_exposed_to_internet,
+            from prowler.providers.aws.services.ec2.ec2_instance_port_oracle_exposed_to_internet.ec2_instance_port_oracle_exposed_to_internet import (
+                ec2_instance_port_oracle_exposed_to_internet,
             )
 
-            check = ec2_instance_port_mysql_exposed_to_internet()
+            check = ec2_instance_port_oracle_exposed_to_internet()
             result = check.execute()
 
             assert len(result) == 0
@@ -59,8 +59,8 @@ class Test_ec2_instance_port_mysql_exposed_to_internet:
             IpPermissions=[
                 {
                     "IpProtocol": "tcp",
-                    "FromPort": 3306,
-                    "ToPort": 3306,
+                    "FromPort": 1521,
+                    "ToPort": 1521,
                     "IpRanges": [{"CidrIp": "123.123.123.123/32"}],
                 }
             ],
@@ -90,25 +90,25 @@ class Test_ec2_instance_port_mysql_exposed_to_internet:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_instance_port_mysql_exposed_to_internet.ec2_instance_port_mysql_exposed_to_internet.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_instance_port_oracle_exposed_to_internet.ec2_instance_port_oracle_exposed_to_internet.ec2_client",
             new=EC2(aws_provider),
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_instance_port_mysql_exposed_to_internet.ec2_instance_port_mysql_exposed_to_internet.vpc_client",
+            "prowler.providers.aws.services.ec2.ec2_instance_port_oracle_exposed_to_internet.ec2_instance_port_oracle_exposed_to_internet.vpc_client",
             new=VPC(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.ec2.ec2_instance_port_mysql_exposed_to_internet.ec2_instance_port_mysql_exposed_to_internet import (
-                ec2_instance_port_mysql_exposed_to_internet,
+            from prowler.providers.aws.services.ec2.ec2_instance_port_oracle_exposed_to_internet.ec2_instance_port_oracle_exposed_to_internet import (
+                ec2_instance_port_oracle_exposed_to_internet,
             )
 
-            check = ec2_instance_port_mysql_exposed_to_internet()
+            check = ec2_instance_port_oracle_exposed_to_internet()
             result = check.execute()
 
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Instance {instance_id} does not have MySQL port 3306 open to the Internet."
+                == f"Instance {instance_id} does not have Oracle ports open to the Internet."
             )
             assert result[0].resource_id == instance_id
             assert (
@@ -134,8 +134,8 @@ class Test_ec2_instance_port_mysql_exposed_to_internet:
             IpPermissions=[
                 {
                     "IpProtocol": "tcp",
-                    "FromPort": 3306,
-                    "ToPort": 3306,
+                    "FromPort": 1521,
+                    "ToPort": 1521,
                     "IpRanges": [{"CidrIp": "0.0.0.0/0"}],
                 }
             ],
@@ -165,25 +165,25 @@ class Test_ec2_instance_port_mysql_exposed_to_internet:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_instance_port_mysql_exposed_to_internet.ec2_instance_port_mysql_exposed_to_internet.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_instance_port_oracle_exposed_to_internet.ec2_instance_port_oracle_exposed_to_internet.ec2_client",
             new=EC2(aws_provider),
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_instance_port_mysql_exposed_to_internet.ec2_instance_port_mysql_exposed_to_internet.vpc_client",
+            "prowler.providers.aws.services.ec2.ec2_instance_port_oracle_exposed_to_internet.ec2_instance_port_oracle_exposed_to_internet.vpc_client",
             new=VPC(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.ec2.ec2_instance_port_mysql_exposed_to_internet.ec2_instance_port_mysql_exposed_to_internet import (
-                ec2_instance_port_mysql_exposed_to_internet,
+            from prowler.providers.aws.services.ec2.ec2_instance_port_oracle_exposed_to_internet.ec2_instance_port_oracle_exposed_to_internet import (
+                ec2_instance_port_oracle_exposed_to_internet,
             )
 
-            check = ec2_instance_port_mysql_exposed_to_internet()
+            check = ec2_instance_port_oracle_exposed_to_internet()
             result = check.execute()
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Instance {instance_id} has MySQL exposed to 0.0.0.0/0 but with no public ip address."
+                == f"Instance {instance_id} has Oracle exposed to 0.0.0.0/0 but with no public ip address."
             )
             assert result[0].resource_id == instance_id
             assert (
@@ -209,8 +209,8 @@ class Test_ec2_instance_port_mysql_exposed_to_internet:
             IpPermissions=[
                 {
                     "IpProtocol": "tcp",
-                    "FromPort": 3306,
-                    "ToPort": 3306,
+                    "FromPort": 1521,
+                    "ToPort": 1521,
                     "IpRanges": [{"CidrIp": "0.0.0.0/0"}],
                 }
             ],
@@ -246,25 +246,25 @@ class Test_ec2_instance_port_mysql_exposed_to_internet:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_instance_port_mysql_exposed_to_internet.ec2_instance_port_mysql_exposed_to_internet.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_instance_port_oracle_exposed_to_internet.ec2_instance_port_oracle_exposed_to_internet.ec2_client",
             new=EC2(aws_provider),
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_instance_port_mysql_exposed_to_internet.ec2_instance_port_mysql_exposed_to_internet.vpc_client",
+            "prowler.providers.aws.services.ec2.ec2_instance_port_oracle_exposed_to_internet.ec2_instance_port_oracle_exposed_to_internet.vpc_client",
             new=VPC(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.ec2.ec2_instance_port_mysql_exposed_to_internet.ec2_instance_port_mysql_exposed_to_internet import (
-                ec2_instance_port_mysql_exposed_to_internet,
+            from prowler.providers.aws.services.ec2.ec2_instance_port_oracle_exposed_to_internet.ec2_instance_port_oracle_exposed_to_internet import (
+                ec2_instance_port_oracle_exposed_to_internet,
             )
 
-            check = ec2_instance_port_mysql_exposed_to_internet()
+            check = ec2_instance_port_oracle_exposed_to_internet()
             result = check.execute()
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Instance {instance.id} has MySQL exposed to 0.0.0.0/0 on public ip address {instance.public_ip_address} but in private subnet {subnet_id}."
+                == f"Instance {instance.id} has Oracle exposed to 0.0.0.0/0 on public ip address {instance.public_ip_address} but in private subnet {subnet_id}."
             )
             assert result[0].resource_id == instance.id
             assert (
@@ -290,8 +290,8 @@ class Test_ec2_instance_port_mysql_exposed_to_internet:
             IpPermissions=[
                 {
                     "IpProtocol": "tcp",
-                    "FromPort": 3306,
-                    "ToPort": 3306,
+                    "FromPort": 1521,
+                    "ToPort": 1521,
                     "IpRanges": [{"CidrIp": "0.0.0.0/0"}],
                 }
             ],
@@ -347,25 +347,25 @@ class Test_ec2_instance_port_mysql_exposed_to_internet:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_instance_port_mysql_exposed_to_internet.ec2_instance_port_mysql_exposed_to_internet.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_instance_port_oracle_exposed_to_internet.ec2_instance_port_oracle_exposed_to_internet.ec2_client",
             new=EC2(aws_provider),
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_instance_port_mysql_exposed_to_internet.ec2_instance_port_mysql_exposed_to_internet.vpc_client",
+            "prowler.providers.aws.services.ec2.ec2_instance_port_oracle_exposed_to_internet.ec2_instance_port_oracle_exposed_to_internet.vpc_client",
             new=VPC(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.ec2.ec2_instance_port_mysql_exposed_to_internet.ec2_instance_port_mysql_exposed_to_internet import (
-                ec2_instance_port_mysql_exposed_to_internet,
+            from prowler.providers.aws.services.ec2.ec2_instance_port_oracle_exposed_to_internet.ec2_instance_port_oracle_exposed_to_internet import (
+                ec2_instance_port_oracle_exposed_to_internet,
             )
 
-            check = ec2_instance_port_mysql_exposed_to_internet()
+            check = ec2_instance_port_oracle_exposed_to_internet()
             result = check.execute()
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Instance {instance.id} has MySQL exposed to 0.0.0.0/0 on public ip address {instance.public_ip_address} in public subnet {subnet_id}."
+                == f"Instance {instance.id} has Oracle exposed to 0.0.0.0/0 on public ip address {instance.public_ip_address} in public subnet {subnet_id}."
             )
             assert result[0].resource_id == instance.id
             assert (
