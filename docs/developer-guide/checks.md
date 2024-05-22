@@ -120,6 +120,42 @@ All the checks MUST fill the `report.region` with the following criteria:
 - If the audited resource is regional use the `region` (the name changes depending on the provider: `location` in Azure and GCP and `namespace` in K8s) attribute within the resource object.
 - If the audited resource is global use the `service_client.region` within the service client object.
 
+### Check Severity
+
+The severity of the checks are defined in the metadata file with the `Severity` field. The severity is always in lowercase and can be one of the following values:
+
+- `critical`
+- `high`
+- `medium`
+- `low`
+- `informational`
+
+You may need to change it in the check's code if the check has different scenarios that could change the severity. This can be done by using the `report.check_metadata.Severity` attribute:
+
+```python
+if <valid for more than 6 months>:
+    report.status = "PASS"
+    report.check_metadata.Severity = "informational"
+    report.status_extended = f"RDS Instance {db_instance.id} certificate has over 6 months of validity left."
+elif <valid for more than 3 months>:
+    report.status = "PASS"
+    report.check_metadata.Severity = "low"
+    report.status_extended = f"RDS Instance {db_instance.id} certificate has between 3 and 6 months of validity."
+elif <valid for more than 1 month>:
+    report.status = "FAIL"
+    report.check_metadata.Severity = "medium"
+    report.status_extended = f"RDS Instance {db_instance.id} certificate less than 3 months of validity."
+elif <valid for less than 1 month>:
+    report.status = "FAIL"
+    report.check_metadata.Severity = "high"
+    report.status_extended = f"RDS Instance {db_instance.id} certificate less than 1 month of validity."
+else:
+    report.status = "FAIL"
+    report.check_metadata.Severity = "critical"
+    report.status_extended = (
+        f"RDS Instance {db_instance.id} certificate has expired."
+    )
+```
 ### Resource ID, Name and ARN
 All the checks MUST fill the `report.resource_id` and `report.resource_arn` with the following criteria:
 

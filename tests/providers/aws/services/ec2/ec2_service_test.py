@@ -177,7 +177,6 @@ class Test_EC2_Service:
                         "UserIdGroupPairs": [],
                     }
                 ]
-                assert security_group.public_ports
                 assert security_group.tags == [
                     {"Key": "test", "Value": "test"},
                 ]

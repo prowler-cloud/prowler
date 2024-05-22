@@ -54,8 +54,8 @@ from prowler.providers.common.quick_inventory import run_provider_quick_inventor
 
 
 def prowler():
-
     # Parse Arguments
+    # Refactor(CLI)
     parser = ProwlerArgumentParser()
     args = parser.parse()
 
@@ -219,7 +219,6 @@ def prowler():
             checks_to_execute,
             global_provider,
             custom_checks_metadata,
-            global_provider.mutelist_file_path,
             args.config_file,
         )
     else:

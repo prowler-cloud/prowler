@@ -408,7 +408,7 @@ class TestOutputs:
         assert stats["findings_count"] == 2
         assert not stats["all_fails_are_muted"]
 
-    def test_get_check_compliance(self):
+    def test_get_check_compliance_aws(self):
         bulk_check_metadata = [
             Compliance_Base_Model(
                 Framework="CIS",
@@ -490,4 +490,256 @@ class TestOutputs:
         assert get_check_compliance(finding, "aws", output_options) == {
             "CIS-1.4": ["2.1.3"],
             "CIS-1.5": ["2.1.3"],
+        }
+
+    def test_get_check_compliance_gcp(self):
+        bulk_check_metadata = [
+            Compliance_Base_Model(
+                Framework="CIS",
+                Provider="GCP",
+                Version="2.0",
+                Description="This CIS Benchmark is the product of a community consensus process and consists of secure configuration guidelines developed for Google Cloud Computing Platform",
+                Requirements=[
+                    Compliance_Requirement(
+                        Checks=[],
+                        Id="2.1.3",
+                        Description="Ensure compute instances do not use the default service account with full access to all Cloud APIs",
+                        Attributes=[
+                            CIS_Requirement_Attribute(
+                                Section="2.1. Compute Engine",
+                                Profile="Level 1",
+                                AssessmentStatus="Automated",
+                                Description="The default service account should not be used for compute instances as it has full access to all Cloud APIs.",
+                                RationaleStatement="The default service account has full access to all Cloud APIs and should not be used for compute instances.",
+                                ImpactStatement="",
+                                RemediationProcedure="Perform the following to ensure compute instances do not use the default service account with full access to all Cloud APIs:\n\n1. Navigate to the 'Compute Engine' section of the Google Cloud Console at `https://console.cloud.google.com/compute/instances`\n2. Click on the instance to be modified\n3. Click the 'Edit' button\n4. In the 'Service account' section, select a service account that has the least privilege necessary for the instance\n5. Click 'Save' to apply the changes",
+                                AuditProcedure="Perform the following to ensure compute instances do not use the default service account with full access to all Cloud APIs:\n\n1. Navigate to the section of the Google Cloud Console at `https://console.cloud.google.com/compute/instances`\n2. Click on the instance to be audited\n3. In the section, verify that the service account selected has the least privilege necessary for the instance",
+                                AdditionalInformation="",
+                                References="https://cloud.google.com/compute/docs/access/service-accounts#default_service_account",
+                            )
+                        ],
+                    )
+                ],
+            ),
+            Compliance_Base_Model(
+                Framework="CIS",
+                Provider="GCP",
+                Version="2.1",
+                Description="This CIS Benchmark is the product of a community consensus process and consists of secure configuration guidelines developed for Google Cloud Computing Platform",
+                Requirements=[
+                    Compliance_Requirement(
+                        Checks=[],
+                        Id="2.1.3",
+                        Description="Ensure compute instances do not use the default service account with full access to all Cloud APIs",
+                        Attributes=[
+                            CIS_Requirement_Attribute(
+                                Section="2.1. Compute Engine",
+                                Profile="Level 1",
+                                AssessmentStatus="Automated",
+                                Description="The default service account should not be used for compute instances as it has full access to all Cloud APIs.",
+                                RationaleStatement="The default service account has full access to all Cloud APIs and should not be used for compute instances.",
+                                ImpactStatement="",
+                                RemediationProcedure="Perform the following to ensure compute instances do not use the default service account with full access to all Cloud APIs:\n\n1. Navigate to the 'Compute Engine' section of the Google Cloud Console at `https://console.cloud.google.com/compute/instances`\n2. Click on the instance to be modified\n3. Click the 'Edit' button\n4. In the 'Service account' section, select a service account that has the least privilege necessary for the instance\n5. Click 'Save' to apply the changes",
+                                AuditProcedure="Perform the following to ensure compute instances do not use the default service account with full access to all Cloud APIs:\n\n1. Navigate to the section of the Google Cloud Console at `https://console.cloud.google.com/compute/instances`\n2. Click on the instance to be audited\n3. In the section, verify that the service account selected has the least privilege necessary for the instance",
+                                AdditionalInformation="",
+                                References="https://cloud.google.com/compute/docs/access/service-accounts#default_service_account",
+                            )
+                        ],
+                    )
+                ],
+            ),
+        ]
+
+        finding = Check_Report(
+            load_check_metadata(
+                f"{path.dirname(path.realpath(__file__))}/fixtures/metadata.json"
+            ).json()
+        )
+        finding.resource_details = "Test resource details"
+        finding.resource_id = "test-resource"
+        finding.resource_arn = "test-arn"
+        finding.region = "eu-west-1"
+        finding.status = "PASS"
+        finding.status_extended = "This is a test"
+
+        output_options = mock.MagicMock()
+        output_options.bulk_checks_metadata = {}
+        output_options.bulk_checks_metadata["iam_user_accesskey_unused"] = (
+            mock.MagicMock()
+        )
+        output_options.bulk_checks_metadata["iam_user_accesskey_unused"].Compliance = (
+            bulk_check_metadata
+        )
+
+        assert get_check_compliance(finding, "gcp", output_options) == {
+            "CIS-2.0": ["2.1.3"],
+            "CIS-2.1": ["2.1.3"],
+        }
+
+    def test_get_check_compliance_azure(self):
+        bulk_check_metadata = [
+            Compliance_Base_Model(
+                Framework="CIS",
+                Provider="Azure",
+                Version="2.0",
+                Description="This CIS Benchmark is the product of a community consensus process and consists of secure configuration guidelines developed for Azuee Platform",
+                Requirements=[
+                    Compliance_Requirement(
+                        Checks=[],
+                        Id="2.1.3",
+                        Description="Ensure compute instances do not use the default service account with full access to all Cloud APIs",
+                        Attributes=[
+                            CIS_Requirement_Attribute(
+                                Section="2.1. Compute Engine",
+                                Profile="Level 1",
+                                AssessmentStatus="Automated",
+                                Description="The default service account should not be used for compute instances as it has full access to all Cloud APIs.",
+                                RationaleStatement="The default service account has full access to all Cloud APIs and should not be used for compute instances.",
+                                ImpactStatement="",
+                                RemediationProcedure="Perform the following to ensure compute instances do not use the default service account with full access to all Cloud APIs:\n\n1. Navigate to the 'Compute Engine' section of the Google Cloud Console at `https://console.cloud.google.com/compute/instances`\n2. Click on the instance to be modified\n3. Click the 'Edit' button\n4. In the 'Service account' section, select a service account that has the least privilege necessary for the instance\n5. Click 'Save' to apply the changes",
+                                AuditProcedure="Perform the following to ensure compute instances do not use the default service account with full access to all Cloud APIs:\n\n1. Navigate to the section of the Google Cloud Console at `https://console.cloud.google.com/compute/instances`\n2. Click on the instance to be audited\n3. In the section, verify that the service account selected has the least privilege necessary for the instance",
+                                AdditionalInformation="",
+                                References="https://cloud.google.com/compute/docs/access/service-accounts#default_service_account",
+                            )
+                        ],
+                    )
+                ],
+            ),
+            Compliance_Base_Model(
+                Framework="CIS",
+                Provider="Azure",
+                Version="2.1",
+                Description="This CIS Benchmark is the product of a community consensus process and consists of secure configuration guidelines developed for Azure Platform",
+                Requirements=[
+                    Compliance_Requirement(
+                        Checks=[],
+                        Id="2.1.3",
+                        Description="Ensure compute instances do not use the default service account with full access to all Cloud APIs",
+                        Attributes=[
+                            CIS_Requirement_Attribute(
+                                Section="2.1. Compute Engine",
+                                Profile="Level 1",
+                                AssessmentStatus="Automated",
+                                Description="The default service account should not be used for compute instances as it has full access to all Cloud APIs.",
+                                RationaleStatement="The default service account has full access to all Cloud APIs and should not be used for compute instances.",
+                                ImpactStatement="",
+                                RemediationProcedure="Perform the following to ensure compute instances do not use the default service account with full access to all Cloud APIs:\n\n1. Navigate to the 'Compute Engine' section of the Google Cloud Console at `https://console.cloud.google.com/compute/instances`\n2. Click on the instance to be modified\n3. Click the 'Edit' button\n4. In the 'Service account' section, select a service account that has the least privilege necessary for the instance\n5. Click 'Save' to apply the changes",
+                                AuditProcedure="Perform the following to ensure compute instances do not use the default service account with full access to all Cloud APIs:\n\n1. Navigate to the section of the Google Cloud Console at `https://console.cloud.google.com/compute/instances`\n2. Click on the instance to be audited\n3. In the section, verify that the service account selected has the least privilege necessary for the instance",
+                                AdditionalInformation="",
+                                References="https://cloud.google.com/compute/docs/access/service-accounts#default_service_account",
+                            )
+                        ],
+                    )
+                ],
+            ),
+        ]
+
+        finding = Check_Report(
+            load_check_metadata(
+                f"{path.dirname(path.realpath(__file__))}/fixtures/metadata.json"
+            ).json()
+        )
+        finding.resource_details = "Test resource details"
+        finding.resource_id = "test-resource"
+        finding.resource_arn = "test-arn"
+        finding.region = "eu-west-1"
+        finding.status = "PASS"
+        finding.status_extended = "This is a test"
+
+        output_options = mock.MagicMock()
+        output_options.bulk_checks_metadata = {}
+        output_options.bulk_checks_metadata["iam_user_accesskey_unused"] = (
+            mock.MagicMock()
+        )
+        output_options.bulk_checks_metadata["iam_user_accesskey_unused"].Compliance = (
+            bulk_check_metadata
+        )
+
+        assert get_check_compliance(finding, "azure", output_options) == {
+            "CIS-2.0": ["2.1.3"],
+            "CIS-2.1": ["2.1.3"],
+        }
+
+    def test_get_check_compliance_kubernetes(self):
+        bulk_check_metadata = [
+            Compliance_Base_Model(
+                Framework="CIS",
+                Provider="Kubernetes",
+                Version="2.0",
+                Description="This CIS Benchmark is the product of a community consensus process and consists of secure configuration guidelines developed for Kubernetes Platform",
+                Requirements=[
+                    Compliance_Requirement(
+                        Checks=[],
+                        Id="2.1.3",
+                        Description="Ensure compute instances do not use the default service account with full access to all Cloud APIs",
+                        Attributes=[
+                            CIS_Requirement_Attribute(
+                                Section="2.1. Compute Engine",
+                                Profile="Level 1",
+                                AssessmentStatus="Automated",
+                                Description="The default service account should not be used for compute instances as it has full access to all Cloud APIs.",
+                                RationaleStatement="The default service account has full access to all Cloud APIs and should not be used for compute instances.",
+                                ImpactStatement="",
+                                RemediationProcedure="Perform the following to ensure compute instances do not use the default service account with full access to all Cloud APIs:\n\n1. Navigate to the 'Compute Engine' section of the Google Cloud Console at `https://console.cloud.google.com/compute/instances`\n2. Click on the instance to be modified\n3. Click the 'Edit' button\n4. In the 'Service account' section, select a service account that has the least privilege necessary for the instance\n5. Click 'Save' to apply the changes",
+                                AuditProcedure="Perform the following to ensure compute instances do not use the default service account with full access to all Cloud APIs:\n\n1. Navigate to the section of the Google Cloud Console at `https://console.cloud.google.com/compute/instances`\n2. Click on the instance to be audited\n3. In the section, verify that the service account selected has the least privilege necessary for the instance",
+                                AdditionalInformation="",
+                                References="https://cloud.google.com/compute/docs/access/service-accounts#default_service_account",
+                            )
+                        ],
+                    )
+                ],
+            ),
+            Compliance_Base_Model(
+                Framework="CIS",
+                Provider="Kubernetes",
+                Version="2.1",
+                Description="This CIS Benchmark is the product of a community consensus process and consists of secure configuration guidelines developed for Kubernetes Platform",
+                Requirements=[
+                    Compliance_Requirement(
+                        Checks=[],
+                        Id="2.1.3",
+                        Description="Ensure compute instances do not use the default service account with full access to all Cloud APIs",
+                        Attributes=[
+                            CIS_Requirement_Attribute(
+                                Section="2.1. Compute Engine",
+                                Profile="Level 1",
+                                AssessmentStatus="Automated",
+                                Description="The default service account should not be used for compute instances as it has full access to all Cloud APIs.",
+                                RationaleStatement="The default service account has full access to all Cloud APIs and should not be used for compute instances.",
+                                ImpactStatement="",
+                                RemediationProcedure="Perform the following to ensure compute instances do not use the default service account with full access to all Cloud APIs:\n\n1. Navigate to the 'Compute Engine' section of the Google Cloud Console at `https://console.cloud.google.com/compute/instances`\n2. Click on the instance to be modified\n3. Click the 'Edit' button\n4. In the 'Service account' section, select a service account that has the least privilege necessary for the instance\n5. Click 'Save' to apply the changes",
+                                AuditProcedure="Perform the following to ensure compute instances do not use the default service account with full access to all Cloud APIs:\n\n1. Navigate to the section of the Google Cloud Console at `https://console.cloud.google.com/compute/instances`\n2. Click on the instance to be audited\n3. In the section, verify that the service account selected has the least privilege necessary for the instance",
+                                AdditionalInformation="",
+                                References="https://cloud.google.com/compute/docs/access/service-accounts#default_service_account",
+                            )
+                        ],
+                    )
+                ],
+            ),
+        ]
+
+        finding = Check_Report(
+            load_check_metadata(
+                f"{path.dirname(path.realpath(__file__))}/fixtures/metadata.json"
+            ).json()
+        )
+        finding.resource_details = "Test resource details"
+        finding.resource_id = "test-resource"
+        finding.resource_arn = "test-arn"
+        finding.region = "eu-west-1"
+        finding.status = "PASS"
+        finding.status_extended = "This is a test"
+
+        output_options = mock.MagicMock()
+        output_options.bulk_checks_metadata = {}
+        output_options.bulk_checks_metadata["iam_user_accesskey_unused"] = (
+            mock.MagicMock()
+        )
+        output_options.bulk_checks_metadata["iam_user_accesskey_unused"].Compliance = (
+            bulk_check_metadata
+        )
+
+        assert get_check_compliance(finding, "kubernetes", output_options) == {
+            "CIS-2.0": ["2.1.3"],
+            "CIS-2.1": ["2.1.3"],
         }
