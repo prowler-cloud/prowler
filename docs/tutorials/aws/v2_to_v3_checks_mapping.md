@@ -1,6 +1,6 @@
 # Check mapping between Prowler v4/v3 and v2
 
-Prowler v3 comes with different identifiers but we maintained the same checks that were implemented in v2. The reason for this change is because in previous versions of Prowler, check names were mostly based on CIS Benchmark for AWS. In v4 and v3 all checks are independent from any security framework and they have its own name and ID.
+Prowler v3 and v4 comes with different identifiers but we maintained the same checks that were implemented in v2. The reason for this change is because in previous versions of Prowler, check names were mostly based on CIS Benchmark for AWS. In v4 and v3 all checks are independent from any security framework and they have its own name and ID.
 
 If you need more information about how new compliance implementation works in Prowler v4 and v3 see [Compliance](../compliance.md) section.
 
@@ -95,7 +95,8 @@ checks_v4_v3_to_v2_mapping = {
     "ec2_networkacl_allow_ingress_any_port": "extra7138",
     "ec2_networkacl_allow_ingress_tcp_port_22": "check45",
     "ec2_networkacl_allow_ingress_tcp_port_3389": "check46",
-    "ec2_securitygroup_allow_ingress_from_internet_to_any_port": "extra748",
+    "ec2_securitygroup_allow_ingress_from_internet_to_all_ports": "extra748",
+    "ec2_securitygroup_allow_ingress_from_internet_to_any_port": "extra74",
     "ec2_securitygroup_allow_ingress_from_internet_to_port_mongodb_27017_27018": "extra753",
     "ec2_securitygroup_allow_ingress_from_internet_to_tcp_ftp_port_20_21": "extra7134",
     "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22": "check41",
