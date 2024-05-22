@@ -1,4 +1,3 @@
-from re import search
 from unittest import mock
 from moto import mock_aws
 from unittest.mock import patch
