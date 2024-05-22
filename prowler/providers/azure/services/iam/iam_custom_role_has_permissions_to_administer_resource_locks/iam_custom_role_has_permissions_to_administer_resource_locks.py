@@ -3,6 +3,8 @@ from re import search
 from prowler.lib.check.models import Check, Check_Report_Azure
 from prowler.providers.azure.services.iam.iam_client import iam_client
 
+# ONLY ONE FINDING FOR SUBSCRIPTION, NOT ONE FOR EACH ROLE
+
 
 class iam_custom_role_has_permissions_to_administer_resource_locks(Check):
     def execute(self) -> Check_Report_Azure:
