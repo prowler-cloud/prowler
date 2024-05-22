@@ -21,6 +21,17 @@ class AWSService:
     - Also handles if the AWS Service is Global
     """
 
+    failed_checks = set()
+
+    @classmethod
+    def set_failed_check(cls, check_id=None, arn=None):
+        if check_id is not None and arn is not None:
+            cls.failed_checks.add((check_id.split(".")[-1], arn))
+
+    @classmethod
+    def is_failed_check(cls, check_id, arn):
+        return (check_id.split(".")[-1], arn) in cls.failed_checks
+
     def __init__(self, service: str, provider: AwsProvider, global_service=False):
         # Audit Information
         # Do we need to store the whole provider?
