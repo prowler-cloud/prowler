@@ -240,7 +240,6 @@ class Test_ec2_instance_not_directly_publicly_accessible_via_elb:
             GroupName="sg01", Description="Test security group sg01"
         )
 
-
         elb.create_load_balancer(
             LoadBalancerName="my-lb",
             Listeners=[

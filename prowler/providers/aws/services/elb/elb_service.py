@@ -57,7 +57,7 @@ class ELB(AWSService):
                                     if elb["Scheme"] == "internet-facing"
                                     and len(elb["SecurityGroups"]) == 1
                                     else False
-                                )
+                                ),
                             )
                         )
 

@@ -77,7 +77,9 @@ class ECS(AWSService):
     def __describe_container_instances__(self, regional_client):
         logger.info("ECS - Describing Container Instances...")
         try:
-            for container in regional_client.describe_container_instances()["containerInstances"]:
+            for container in regional_client.describe_container_instances()[
+                "containerInstances"
+            ]:
                 if not self.audit_resources or (
                     is_resource_filtered(container, self.audit_resources)
                 ):
@@ -89,7 +91,13 @@ class ECS(AWSService):
                         if attachment["type"] == "ElasticNetworkInterface":
                             for detail in attachment["details"]:
                                 if detail["name"] == "networkInterfaceId":
-                                    for eni in regional_client.describe_network_interfaces(NetworkInterfaceIds=detail["value"])["NetworkInterfaces"]:
+                                    for (
+                                        eni
+                                    ) in regional_client.describe_network_interfaces(
+                                        NetworkInterfaceIds=detail["value"]
+                                    )[
+                                        "NetworkInterfaces"
+                                    ]:
                                         cont.availability_zone = eni["AvailabilityZone"]
                                         for ipv6 in eni["Ipv6Addresses"]:
                                             if ipv6["Primary"]:
@@ -120,6 +128,7 @@ class TaskDefinition(BaseModel):
     environment_variables: list[ContainerEnvVariable]
     tags: Optional[list] = []
     network_mode: Optional[str]
+
 
 class Containers(BaseModel):
     arn: str

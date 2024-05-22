@@ -49,7 +49,7 @@ class ELBv2(AWSService):
                                 and elbv2["Type"] == "application"
                                 and len(elbv2["SecurityGroups"]) == 1
                                 else False
-                            )
+                            ),
                         )
                         if "DNSName" in elbv2:
                             lb.dns = elbv2["DNSName"]
@@ -60,7 +60,7 @@ class ELBv2(AWSService):
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-    
+
     def __describe_target_groups__(self, regional_client):
         logger.info("ELBv2 - Describing target groups...")
         try:

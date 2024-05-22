@@ -55,7 +55,7 @@ class Test_ELB_Service:
             Scheme="internal",
             SecurityGroups=[security_group.id],
         )
-        
+
         # ELB client for this test class
         aws_provider = set_mocked_aws_provider()
         elb = ELB(aws_provider)
