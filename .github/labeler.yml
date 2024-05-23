@@ -25,3 +25,7 @@ provider/kubernetes:
 github_actions:
   - changed-files:
       - any-glob-to-any-file: ".github/workflows/*"
+
+cli:
+  - changed-files:
+      - any-glob-to-any-file: "cli/**"

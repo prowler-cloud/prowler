@@ -3,7 +3,7 @@
 By default, Prowler will generate the CSV and JSON-[OCSF](https://schema.ocsf.io/) report.
 
 ```console
-prowler <provider> -M csv json-ocsf json-asff
+prowler <provider> -M csv json-ocsf json-asff html
 ```
 
 If you want to generate the JSON-ASFF (used by AWS Security Hub) report you can set it using the `-M/--output-modes/--output-formats`, like:
@@ -43,6 +43,7 @@ Prowler supports natively the following output formats:
 - CSV
 - JSON-OCSF
 - JSON-ASFF
+- HTML
 
 Hereunder is the structure for each of the supported report formats by Prowler:
 
