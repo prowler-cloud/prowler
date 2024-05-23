@@ -18,6 +18,7 @@ from prowler.providers.aws.lib.security_hub.security_hub import (
 from prowler.providers.common.provider import Provider
 
 
+# TODO: Child classes of JSON_ASFF, JSON_OCSF, CSV, COMPLIANCE, SLACK
 class Output:
     _provider: Provider
     _stats: dict[str, Any]
