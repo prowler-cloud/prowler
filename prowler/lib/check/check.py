@@ -564,6 +564,7 @@ def execute_checks(
         audit_progress=0,
     )
 
+    # Refactor(CLI): This needs to be moved somewhere in the CLI
     if os.name != "nt":
         try:
             from resource import RLIMIT_NOFILE, getrlimit, setrlimit
@@ -591,8 +592,7 @@ def execute_checks(
                 check_findings = execute(
                     service,
                     check_name,
-                    global_provider.type,
-                    global_provider.identity,
+                    global_provider,
                     services_executed,
                     checks_executed,
                     custom_checks_metadata,
