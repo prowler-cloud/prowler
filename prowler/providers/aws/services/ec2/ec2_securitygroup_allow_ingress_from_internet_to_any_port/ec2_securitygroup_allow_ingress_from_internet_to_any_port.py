@@ -37,7 +37,7 @@ class ec2_securitygroup_allow_ingress_from_internet_to_any_port(Check):
                         ):
                             report.status_extended = f"Security group {security_group.name} ({security_group.id}) has at least one port open to the Internet but is exclusively attached to an allowed network interface type."
                             for eni in security_group.network_interfaces:
-                                if eni.interface_type not in ec2_client.audit_config.get(
+                                if eni.type not in ec2_client.audit_config.get(
                                     "check_ec2_securitygroup_allow_ingress_from_internet_to_any_port_allowed_interface_types", []
                                 ):
                                     report.status = "FAIL"

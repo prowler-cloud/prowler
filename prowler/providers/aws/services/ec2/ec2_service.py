@@ -258,8 +258,6 @@ class EC2(AWSService):
                         region=regional_client.region,
                         tags=interface.get("TagSet"),
                         instance_owner_id=interface.get("OwnerId"),
-                        interface_type=interface["InterfaceType"],
-                        groups=interface.get("Groups", [])
                     )
                     self.network_interfaces.append(eni)
                     # Add Network Interface to Security Group
@@ -269,16 +267,20 @@ class EC2(AWSService):
                     #         'GroupName': 'default',
                     #     },
                     # ],
-                    self.__add_network_interfaces_to_security_groups__(eni)
+                    self.__add_network_interfaces_to_security_groups__(
+                        eni, interface.get("Groups", [])
+                    )
 
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __add_network_interfaces_to_security_groups__(self, interface):
+    def __add_network_interfaces_to_security_groups__(
+        self, interface, interface_security_groups
+    ):
         try:
-            for sg in interface.groups:
+            for sg in interface_security_groups:
                 for security_group in self.security_groups:
                     if security_group.id == sg["GroupId"]:
                         security_group.network_interfaces.append(interface)
@@ -520,8 +522,6 @@ class NetworkInterface(BaseModel):
     region: str
     tags: Optional[list] = []
     instance_owner_id: Optional[str] = None
-    interface_type: Optional[str] = None
-    groups: Optional[list] = []
 
 
 class SecurityGroup(BaseModel):
