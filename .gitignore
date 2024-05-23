@@ -30,7 +30,7 @@ tags
 *.DS_Store
 
 # Prowler output
-output/
+/output/
 
 # Prowler found secrets
 secrets-*/
