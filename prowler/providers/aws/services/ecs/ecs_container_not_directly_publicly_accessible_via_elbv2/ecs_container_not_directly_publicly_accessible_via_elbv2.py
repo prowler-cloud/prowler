@@ -1,12 +1,13 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.ecs.ecs_client import ecs_client
 from prowler.providers.aws.services.elbv2.elbv2_client import elbv2_client
-from prowler.providers.aws.services.ec2.ec2_client import ec2_client
-from prowler.providers.aws.services.vpc.vpc_client import vpc_client
-from prowler.providers.aws.services.ec2.lib.security_groups import check_security_group
-from prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_all_ports import (
-    ec2_securitygroup_allow_ingress_from_internet_to_all_ports,
-)
+
+# from prowler.providers.aws.services.ec2.ec2_client import ec2_client
+# from prowler.providers.aws.services.vpc.vpc_client import vpc_client
+# from prowler.providers.aws.services.ec2.lib.security_groups import check_security_group
+# from prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_all_ports import (
+#    ec2_securitygroup_allow_ingress_from_internet_to_all_ports,
+# )
 
 
 class ecs_container_not_directly_publicly_accessible_via_elbv2(Check):
