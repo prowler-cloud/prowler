@@ -50,7 +50,7 @@ class ec2_find_secrets_launch_template(Check):
 
             if len(versions_with_secrets) > 0:
                 report.status = "FAIL"
-                report.status_extended = f"Potential secret found in User Data for EC2 Launch Template {template.name} in template versions: {", ".join(versions_with_secrets)}."
+                report.status_extended = f"Potential secret found in User Data for EC2 Launch Template {template.name} in template versions: {', '.join(versions_with_secrets)}."
             else:
                 report.status = "PASS"
                 report.status_extended = f"No secrets found in User Data of any version for EC2 Launch Template {template.name}."
