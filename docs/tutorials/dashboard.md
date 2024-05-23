@@ -6,7 +6,7 @@ prowler dashboard
 ```
 ???+ note
     You can expose the `dashboard` server in another address using the `HOST` environment variable.
-    
+
 To run Prowler local dashboard with Docker, use:
 
 ```sh
@@ -15,7 +15,7 @@ docker run --env HOST=0.0.0.0 --publish 127.0.0.1:11666:11666 toniblyx/prowler:l
 
 ???+ note
     **Remember that the `dashboard` server is not authenticated, if you expose it to the internet, you are running it at your own risk.**
-    
+
 The banner and additional info about the dashboard will be shown on your console:
 <img src="../img/dashboard/dashboard-banner.png">
 
@@ -27,10 +27,20 @@ The overview page provides a full impression of your findings obtained from Prow
 
 In this page you can do multiple functions:
 
-* Apply filters (Assessment Date / Account / Region)
+* Apply filters:
+    * Assesment Date
+    * Account
+    * Region
+    * Severity
+    * Service
+    * Status
 * See wich files has been scanned to generate the dashboard placing your mouse on the `?` icon:
     <img src="../img/dashboard/dashboard-files-scanned.png">
-* Download the `Top 25 Failed Findings by Severity` table using the button `DOWNLOAD THIS TABLE AS CSV`
+* Download the `Top Findings by Severity` table using the button `DOWNLOAD THIS TABLE AS CSV` or `DOWNLOAD THIS TABLE AS XLSX`
+* Click on the provider cards to filter by provider.
+* On the dropdowns under `Top Findings by Severity` you can apply multiple sorts to see the information, also you will get a detailed view of each finding using the dropdowns:
+<img src="../img/dashboard/dropdown.png">
+
 
 ## Compliance Page
 
@@ -83,6 +93,9 @@ to load the dashboard with the new files.
 Prowler will use the outputs from the folder `/output` (for common prowler outputs) and `/output/compliance` (for prowler compliance outputs) to generate the dashboard.
 
 To change the path modify the values `folder_path_overview` or `folder_path_compliance` from `/dashboard/config.py`
+
+???+ note
+    If you have any issue related with dashboards, check that the output path where the dashboard is getting the outputs is correct.
 
 ## Output Support
 
