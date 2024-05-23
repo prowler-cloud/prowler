@@ -1,5 +1,6 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.ec2.ec2_client import ec2_client
+from prowler.providers.aws.services.ec2.lib.instance import get_instance_public_status
 from prowler.providers.aws.services.ec2.lib.security_groups import check_security_group
 from prowler.providers.aws.services.vpc.vpc_client import vpc_client
 
@@ -27,17 +28,12 @@ class ec2_instance_port_memcached_exposed_to_internet(Check):
                                 ):
                                     # The port is open, now check if the instance is in a public subnet with a public IP
                                     report.status = "FAIL"
-                                    if instance.public_ip:
-                                        report.status_extended = f"Instance {instance.id} has Memcached exposed to 0.0.0.0/0 on public ip address {instance.public_ip} but in private subnet {instance.subnet_id}."
-                                        report.check_metadata.Severity = "high"
-                                        if vpc_client.vpc_subnets[
-                                            instance.subnet_id
-                                        ].public:
-                                            report.status_extended = f"Instance {instance.id} has Memcached exposed to 0.0.0.0/0 on public ip address {instance.public_ip} in public subnet {instance.subnet_id}."
-                                            report.check_metadata.Severity = "critical"
-                                    else:
-                                        report.status_extended = f"Instance {instance.id} has Memcached exposed to 0.0.0.0/0 but with no public ip address."
-                                        report.check_metadata.Severity = "medium"
+                                    (
+                                        report.status_extended,
+                                        report.check_metadata.Severity,
+                                    ) = get_instance_public_status(
+                                        vpc_client.vpc_subnets, instance, "Memcached"
+                                    )
                                     break
             findings.append(report)
         return findings

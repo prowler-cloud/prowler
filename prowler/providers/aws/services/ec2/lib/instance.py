@@ -1,0 +1,26 @@
+from prowler.providers.aws.services.ec2.ec2_service import Instance
+from prowler.providers.aws.services.vpc.vpc_service import VpcSubnet
+
+
+def get_instance_public_status(
+    vpc_subnets: dict[VpcSubnet], instance: Instance, service: str
+) -> tuple:
+    """
+    Get the status and severity of an instance based on the service exposed to internet.
+    Args:
+        instance (Instance): The instance to check.
+        service (str): The service to verify if it is exposed to internet.
+    Returns:
+        tuple: The status and severity of the instance status.
+    """
+    status = f"Instance {instance.id} has {service} exposed to 0.0.0.0/0 but with no public ip address."
+    severity = "medium"
+
+    if instance.public_ip:
+        status = f"Instance {instance.id} has {service} exposed to 0.0.0.0/0 on public ip address {instance.public_ip} but in private subnet {instance.subnet_id}."
+        severity = "high"
+        if vpc_subnets[instance.subnet_id].public:
+            status = f"Instance {instance.id} has {service} exposed to 0.0.0.0/0 on public ip address {instance.public_ip} in public subnet {instance.subnet_id}."
+            severity = "critical"
+
+    return status, severity
