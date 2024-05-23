@@ -1,4 +1,3 @@
-from re import search
 from unittest import mock
 from uuid import uuid4
 
@@ -49,7 +48,10 @@ class Test_redshift_cluster_automatic_upgrades:
             check = redshift_cluster_automatic_upgrades()
             result = check.execute()
             assert result[0].status == "FAIL"
-            assert search("has AllowVersionUpgrade disabled", result[0].status_extended)
+            assert (
+                result[0].status_extended
+                == f"Redshift Cluster {CLUSTER_ID} has AllowVersionUpgrade disabled."
+            )
             assert result[0].resource_id == CLUSTER_ID
             assert result[0].resource_arn == CLUSTER_ARN
 
@@ -75,6 +77,9 @@ class Test_redshift_cluster_automatic_upgrades:
             check = redshift_cluster_automatic_upgrades()
             result = check.execute()
             assert result[0].status == "PASS"
-            assert search("has AllowVersionUpgrade enabled", result[0].status_extended)
+            assert (
+                result[0].status_extended
+                == f"Redshift Cluster {CLUSTER_ID} has AllowVersionUpgrade enabled."
+            )
             assert result[0].resource_id == CLUSTER_ID
             assert result[0].resource_arn == CLUSTER_ARN

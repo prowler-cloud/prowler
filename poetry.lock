@@ -727,13 +727,13 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "botocore"
-version = "1.34.105"
+version = "1.34.109"
 description = "Low-level, data-driven core of boto 3."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "botocore-1.34.105-py3-none-any.whl", hash = "sha256:a459d060b541beecb50681e6e8a39313cca981e146a59ba7c5229d62f631a016"},
-    {file = "botocore-1.34.105.tar.gz", hash = "sha256:727d5d3e800ac8b705fca6e19b6fefa1e728a81d62a712df9bd32ed0117c740b"},
+    {file = "botocore-1.34.109-py3-none-any.whl", hash = "sha256:647059a81acbfab85c694b9b57b0ef200dde071449fb8837f10aef9c6472730d"},
+    {file = "botocore-1.34.109.tar.gz", hash = "sha256:804821252597821f7223cb3bfca2a2a513ae0bb9a71e8e22605aff6866e13e71"},
 ]
 
 [package.dependencies]
@@ -2646,13 +2646,13 @@ dev = ["bumpver", "isort", "mypy", "pylint", "pytest", "yapf"]
 
 [[package]]
 name = "msgraph-sdk"
-version = "1.3.0"
+version = "1.4.0"
 description = "The Microsoft Graph Python SDK"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "msgraph_sdk-1.3.0-py3-none-any.whl", hash = "sha256:b8636e4f3957bad35958c1578d1610ed4e1edf71c4fdb3423396868cab84e156"},
-    {file = "msgraph_sdk-1.3.0.tar.gz", hash = "sha256:a0a0f529800e528a455e2ace31660d9d3697a8cc87b0789e30147ce4c4e9c268"},
+    {file = "msgraph_sdk-1.4.0-py3-none-any.whl", hash = "sha256:24f99082475ea129c3d45e44269bd64a7c6bfef8dda4f8ea692bbc9e47b71b78"},
+    {file = "msgraph_sdk-1.4.0.tar.gz", hash = "sha256:715907272c240e579d7669a690504488e25ae15fec904e2918c49ca328dc4a14"},
 ]
 
 [package.dependencies]
@@ -3317,13 +3317,13 @@ files = [
 
 [[package]]
 name = "py-ocsf-models"
-version = "0.1.0"
+version = "0.1.1"
 description = "This is a Python implementation of the OCSF models. The models are used to represent the data of the OCSF Schema defined in https://schema.ocsf.io/."
 optional = false
 python-versions = "<3.13,>=3.9"
 files = [
-    {file = "py_ocsf_models-0.1.0-py3-none-any.whl", hash = "sha256:c615887b43fb066651dd656b5259ae14f3bb125370b8add0fc3b7e0a799bd508"},
-    {file = "py_ocsf_models-0.1.0.tar.gz", hash = "sha256:64a717a1d064aa6d9ba4d8e2a6d57c8eca12bf9a977cf634e1484ca23151c0c9"},
+    {file = "py_ocsf_models-0.1.1-py3-none-any.whl", hash = "sha256:c6ea465fda85470b938a48da65b1f19664f6d83820ebe849ef5551094e6768de"},
+    {file = "py_ocsf_models-0.1.1.tar.gz", hash = "sha256:b0f2d4495a2596793f75e61a1ba218edea3a2d17a2b9911d46ee0fa623cc657b"},
 ]
 
 [package.dependencies]
@@ -4352,17 +4352,17 @@ files = [
 
 [[package]]
 name = "slack-sdk"
-version = "3.27.1"
+version = "3.27.2"
 description = "The Slack API Platform SDK for Python"
 optional = false
 python-versions = ">=3.6"
 files = [
-    {file = "slack_sdk-3.27.1-py2.py3-none-any.whl", hash = "sha256:c108e509160cf1324c5c8b1f47ca52fb5e287021b8caf9f4ec78ad737ab7b1d9"},
-    {file = "slack_sdk-3.27.1.tar.gz", hash = "sha256:85d86b34d807c26c8bb33c1569ec0985876f06ae4a2692afba765b7a5490d28c"},
+    {file = "slack_sdk-3.27.2-py2.py3-none-any.whl", hash = "sha256:af97158e6ac7f667e158e8036e63dc1f79db9bd36216a33c10fcc49be7c2f30c"},
+    {file = "slack_sdk-3.27.2.tar.gz", hash = "sha256:bb145bf2bd93b60a17cd55c05cb15868c9a07d845b6fb608c798b50bce21cb99"},
 ]
 
 [package.extras]
-optional = ["SQLAlchemy (>=1.4,<3)", "aiodns (>1.0)", "aiohttp (>=3.7.3,<4)", "boto3 (<=2)", "websocket-client (>=1,<2)", "websockets (>=10,<11)", "websockets (>=9.1,<10)"]
+optional = ["SQLAlchemy (>=1.4,<3)", "aiodns (>1.0)", "aiohttp (>=3.7.3,<4)", "boto3 (<=2)", "websocket-client (>=1,<2)", "websockets (>=9.1,<13)"]
 
 [[package]]
 name = "smmap"
@@ -4906,4 +4906,5 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "626bd859d1f3adbf3ebddfea73ad7ef9e28878b4fbff3f34aaf3da8856f5f7a6"
+
+content-hash = "c16653be42dc00bf447aa564768a27c5836d245d8d7a71a1915fcddc94e5302b"
