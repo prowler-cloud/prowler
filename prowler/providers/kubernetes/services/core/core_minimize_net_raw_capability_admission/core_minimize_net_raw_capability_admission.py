@@ -18,7 +18,7 @@ class core_minimize_net_raw_capability_admission(Check):
                     capabilities = getattr(security_context, "capabilities", None)
                     if capabilities:
                         add_capabilities = getattr(capabilities, "add", [])
-                        if "NET_RAW" in add_capabilities:
+                        if add_capabilities and "NET_RAW" in add_capabilities:
                             report.status = "FAIL"
                             report.status_extended = f"Pod {pod.name} has NET_RAW capability in container {container.name}."
                             break
