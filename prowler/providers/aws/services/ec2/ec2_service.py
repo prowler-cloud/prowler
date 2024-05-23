@@ -142,8 +142,7 @@ class EC2(AWSService):
                                 egress_rules=sg["IpPermissionsEgress"],
                                 associated_sgs=associated_sgs,
                                 vpc_id=sg["VpcId"],
-                                tags=sg.get("Tags"),
-                                network_interfaces=[]  # Placeholder, will be filled in __describe_network_interfaces__
+                                tags=sg.get("Tags")
                             )
                         )
                         if sg["GroupName"] != "default":
