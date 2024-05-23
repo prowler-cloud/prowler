@@ -1,7 +1,4 @@
-import time
-
 import typer
-from rich.progress import track
 
 from prowler.lib.banner import print_banner
 from prowler.lib.check.check import list_services, print_services
@@ -20,10 +17,6 @@ def listServices(provider: str = "aws"):
 
 @app.command("banner", help="Prints the banner of the tool.")
 def banner(show: bool = True):
-    total = 0
-    for value in track(range(100), description="Processing..."):
-        time.sleep(0.01)
-        total += 1
     if show:
         print_banner(show)
     else:
