@@ -89,6 +89,10 @@ class EC2(AWSService):
                             if "IamInstanceProfile" in instance:
                                 instance_profile = instance["IamInstanceProfile"]
 
+                            security_groups = []
+                            for security_group in instance["SecurityGroups"]:
+                                security_groups.append(security_group["GroupId"])
+
                             self.instances.append(
                                 Instance(
                                     id=instance["InstanceId"],
@@ -107,7 +111,7 @@ class EC2(AWSService):
                                     instance_profile=instance_profile,
                                     monitoring_state=monitoring_state,
                                     tags=instance.get("Tags"),
-                                    security_groups=len(instance["SecurityGroups"]),
+                                    security_groups=security_groups,
                                 )
                             )
         except Exception as error:
@@ -490,7 +494,7 @@ class Instance(BaseModel):
     monitoring_state: str
     instance_profile: Optional[dict]
     tags: Optional[list] = []
-    security_groups: int
+    security_groups: list
 
 
 class Snapshot(BaseModel):

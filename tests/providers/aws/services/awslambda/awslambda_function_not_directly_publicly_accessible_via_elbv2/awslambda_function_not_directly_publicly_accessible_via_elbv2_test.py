@@ -64,6 +64,20 @@ class Test_awslambda_function_not_directly_publicly_accessible_via_elbv2:
         function_name = "test-lambda"
         function_runtime = "nodejs4.3"
         function_arn = f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:function/{function_name}"
+        lambda_policy = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Sid": "public-access",
+                    "Principal": {"AWS": [AWS_ACCOUNT_NUMBER]},
+                    "Effect": "Allow",
+                    "Action": [
+                        "lambda:InvokeFunction",
+                    ],
+                    "Resource": [function_arn],
+                }
+            ],
+        }
         lambda_client.functions = {
             "function_name": Function(
                 name=function_name,
@@ -71,6 +85,7 @@ class Test_awslambda_function_not_directly_publicly_accessible_via_elbv2:
                 arn=function_arn,
                 region=AWS_REGION_US_EAST_1,
                 runtime=function_runtime,
+                policy=lambda_policy,
             )
         }
 
@@ -114,6 +129,20 @@ class Test_awslambda_function_not_directly_publicly_accessible_via_elbv2:
         function_name = "test-lambda"
         function_runtime = "nodejs4.3"
         function_arn = f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:function/{function_name}"
+        lambda_policy = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Sid": "public-access",
+                    "Principal": {"AWS": [AWS_ACCOUNT_NUMBER]},
+                    "Effect": "Allow",
+                    "Action": [
+                        "lambda:InvokeFunction",
+                    ],
+                    "Resource": [function_arn],
+                }
+            ],
+        }
         lambda_client.functions = {
             "function_name": Function(
                 name=function_name,
@@ -121,6 +150,7 @@ class Test_awslambda_function_not_directly_publicly_accessible_via_elbv2:
                 arn=function_arn,
                 region=AWS_REGION_US_EAST_1,
                 runtime=function_runtime,
+                policy=lambda_policy,
             )
         }
 
@@ -219,6 +249,21 @@ class Test_awslambda_function_not_directly_publicly_accessible_via_elbv2:
         function_name = "test-lambda"
         function_runtime = "nodejs4.3"
         function_arn = f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:function/{function_name}"
+        lambda_policy = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Sid": "public-access",
+                    "Principal": {"CanonicalUser": ["*"]},
+                    "Effect": "Allow",
+                    "Action": [
+                        "lambda:InvokeFunction",
+                    ],
+                    "Resource": [function_arn],
+                }
+            ],
+        }
+
         lambda_client.functions = {
             "function_name": Function(
                 name=function_name,
@@ -226,6 +271,7 @@ class Test_awslambda_function_not_directly_publicly_accessible_via_elbv2:
                 arn=function_arn,
                 region=AWS_REGION_US_EAST_1,
                 runtime=function_runtime,
+                policy=lambda_policy,
             )
         }
 
@@ -308,7 +354,7 @@ class Test_awslambda_function_not_directly_publicly_accessible_via_elbv2:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Lambda function {function_name} is publicly accesible through an Internet facing Load Balancer through target group {target_group_arn}."
+                == f'Lambda function {function_name} is publicly accesible through an Internet facing Load Balancer through load balancer {lb["DNSName"]}.'
             )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == function_name

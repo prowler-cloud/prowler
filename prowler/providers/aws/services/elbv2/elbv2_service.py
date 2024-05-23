@@ -81,7 +81,6 @@ class ELBv2(AWSService):
                                     arn=target_group["TargetGroupArn"],
                                     target_type=target_group["TargetType"],
                                     target=target_health["Target"]["Id"],
-                                    public=lb.public,
                                     loadbalancer=lb,
                                 )
                                 self.target_groups.append(tg)
@@ -296,5 +295,4 @@ class TargetGroups(BaseModel):
     arn: str
     target_type: str
     target: str
-    public: bool
     loadbalancer: LoadBalancerv2

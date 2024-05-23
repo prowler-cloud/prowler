@@ -49,6 +49,10 @@ class Test_ec2_instance_not_directly_publicly_accessible_via_elbv2:
             GroupName="a-security-group", Description="First One"
         )
 
+        security_group2 = ec2.create_security_group(
+            GroupName="a-security-group2", Description="Second one"
+        )
+
         vpc = ec2.create_vpc(CidrBlock="172.28.7.0/24", InstanceTenancy="default")
         subnet1 = ec2.create_subnet(
             VpcId=vpc.id,
@@ -64,8 +68,8 @@ class Test_ec2_instance_not_directly_publicly_accessible_via_elbv2:
         lb = conn.create_load_balancer(
             Name="my-lb",
             Subnets=[subnet1.id, subnet2.id],
-            SecurityGroups=[security_group.id],
             Scheme="internet-facing",
+            SecurityGroups=[security_group.id],
             Type="application",
         )["LoadBalancers"][0]
 
@@ -83,37 +87,37 @@ class Test_ec2_instance_not_directly_publicly_accessible_via_elbv2:
             TargetType="instance",
         )["TargetGroups"][0]
 
-        target_group_arn = target_group["TargetGroupArn"]
-
-        security_group_instance = ec2.create_security_group(
-            GroupName="sg01_instance",
-            Description="Test security group for EC2 instance",
-        )
-
         iam = client("iam", "us-west-1")
         profile_name = "fake_profile"
         iam.create_instance_profile(
             InstanceProfileName=profile_name,
         )
+        
         vpc = ec2.create_vpc(CidrBlock="10.0.0.0/16")
-        subnet = ec2.create_subnet(VpcId=vpc.id, CidrBlock="10.0.0.0/18")
+
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
+        ec2_client.authorize_security_group_ingress(
+            GroupId=security_group2.id,
+            IpPermissions=[
+                {
+                    "IpProtocol": "-1",
+                    "IpRanges": [{"CidrIp": "0.0.0.0/0"}],
+                }
+            ],
+        )
+
         instance = ec2.create_instances(
             ImageId=EXAMPLE_AMI_ID,
             MinCount=1,
             MaxCount=1,
             IamInstanceProfile={"Name": profile_name},
-            NetworkInterfaces=[
-                {
-                    "DeviceIndex": 0,
-                    "SubnetId": subnet.id,
-                    "AssociatePublicIpAddress": False,
-                    "Groups": [security_group_instance.id],
-                }
-            ],
+            SecurityGroupIds=[
+                security_group2.id
+            ]
         )[0]
 
         conn.register_targets(
-            TargetGroupArn=target_group_arn,
+            TargetGroupArn=target_group["TargetGroupArn"],
             Targets=[
                 {"Id": instance.id},
             ],
@@ -123,11 +127,12 @@ class Test_ec2_instance_not_directly_publicly_accessible_via_elbv2:
             LoadBalancerArn=lb["LoadBalancerArn"],
             Protocol="HTTP",
             Port=80,
-            DefaultActions=[{"Type": "forward", "TargetGroupArn": target_group_arn}],
+            DefaultActions=[{"Type": "forward", "TargetGroupArn": target_group["TargetGroupArn"]}],
         )
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
         from prowler.providers.aws.services.elbv2.elbv2_service import ELBv2
+        from prowler.providers.aws.services.vpc.vpc_service import VPC
 
         aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
@@ -142,6 +147,11 @@ class Test_ec2_instance_not_directly_publicly_accessible_via_elbv2:
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_instance_not_directly_publicly_accessible_via_elbv2.ec2_instance_not_directly_publicly_accessible_via_elbv2.elbv2_client",
             new=ELBv2(aws_provider),
+        ), mock.patch(
+            "prowler.providers.aws.services.vpc.vpc_service.VPC",
+            new=VPC(aws_provider),
+        ), mock.patch(
+            "prowler.providers.aws.lib.service.service.AWSService.set_failed_check"
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_instance_not_directly_publicly_accessible_via_elbv2.ec2_instance_not_directly_publicly_accessible_via_elbv2 import (
@@ -208,8 +218,6 @@ class Test_ec2_instance_not_directly_publicly_accessible_via_elbv2:
             TargetType="instance",
         )["TargetGroups"][0]
 
-        target_group_arn = target_group["TargetGroupArn"]
-
         security_group_instance = ec2.create_security_group(
             GroupName="sg01_instance",
             Description="Test security group for EC2 instance",
@@ -238,7 +246,7 @@ class Test_ec2_instance_not_directly_publicly_accessible_via_elbv2:
         )[0]
 
         conn.register_targets(
-            TargetGroupArn=target_group_arn,
+            TargetGroupArn=target_group["TargetGroupArn"],
             Targets=[
                 {"Id": instance.id},
             ],
@@ -248,7 +256,7 @@ class Test_ec2_instance_not_directly_publicly_accessible_via_elbv2:
             LoadBalancerArn=lb["LoadBalancerArn"],
             Protocol="HTTP",
             Port=80,
-            DefaultActions=[{"Type": "forward", "TargetGroupArn": target_group_arn}],
+            DefaultActions=[{"Type": "forward", "TargetGroupArn": target_group["TargetGroupArn"]}],
         )
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2

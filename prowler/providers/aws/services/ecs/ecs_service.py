@@ -87,6 +87,20 @@ class ECS(AWSService):
                         arn=container["containerInstanceArn"],
                         tags=container["tags"],
                     )
+                    describe_instances_paginator = regional_client.get_paginator(
+                        "describe_instances"
+                    )
+                    for page in describe_instances_paginator.paginate(
+                        InstanceIds=container["ec2InstanceId"]
+                    ):
+                        for reservation in page["Reservations"]:
+                            for instance in reservation["Instances"]:
+                                security_group_ids = []
+                                for security_groups in instance["SecurityGroups"]:
+                                    security_group_ids.append(
+                                        security_groups["GroupId"]
+                                    )
+                                cont.security_groups = security_group_ids
                     for attachment in container["attachments"]:
                         if attachment["type"] == "ElasticNetworkInterface":
                             for detail in attachment["details"]:
@@ -133,6 +147,7 @@ class TaskDefinition(BaseModel):
 class Containers(BaseModel):
     arn: str
     availability_zone: str
+    security_groups: list
     ipv6: Optional[str]
     ipv4: Optional[str]
     tags: Optional[list] = []
