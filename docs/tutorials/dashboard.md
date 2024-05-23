@@ -95,7 +95,7 @@ Prowler will use the outputs from the folder `/output` (for common prowler outpu
 To change the path modify the values `folder_path_overview` or `folder_path_compliance` from `/dashboard/config.py`
 
 ???+ note
-    If you have any issue related with dashboard, check that the output path where dashboard it's getting the outputs it's correct.
+    If you have any issue related with dashboards, check that the output path where the dashboard is getting the outputs is correct.
 
 ## Output Support
 
