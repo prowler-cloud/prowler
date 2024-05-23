@@ -1,4 +1,3 @@
-from re import search
 from unittest import mock
 from uuid import uuid4
 
@@ -49,7 +48,10 @@ class Test_sagemaker_models_network_isolation_enabled:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert search("has network isolation enabled", result[0].status_extended)
+            assert (
+                result[0].status_extended
+                == f"Sagemaker notebook instance {test_notebook_instance} has network isolation enabled."
+            )
             assert result[0].resource_id == test_notebook_instance
             assert result[0].resource_arn == notebook_instance_arn
 
@@ -76,6 +78,9 @@ class Test_sagemaker_models_network_isolation_enabled:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert search("has network isolation disabled", result[0].status_extended)
+            assert (
+                result[0].status_extended
+                == f"Sagemaker notebook instance {test_notebook_instance} has network isolation disabled."
+            )
             assert result[0].resource_id == test_notebook_instance
             assert result[0].resource_arn == notebook_instance_arn

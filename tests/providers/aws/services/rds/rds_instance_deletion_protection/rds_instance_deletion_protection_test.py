@@ -147,12 +147,18 @@ class Test_rds_instance_deletion_protection:
     @mock_aws
     def test_rds_instance_without_cluster_deletion_protection(self):
         conn = client("rds", region_name=AWS_REGION_US_EAST_1)
+        conn.create_db_parameter_group(
+            DBParameterGroupName="test",
+            DBParameterGroupFamily="default.mysql8.0",
+            Description="test parameter group",
+        )
         conn.create_db_cluster(
             DBClusterIdentifier="db-cluster-1",
             AllocatedStorage=10,
             Engine="postgres",
             DatabaseName="staging-postgres",
             DeletionProtection=False,
+            DBClusterParameterGroupName="test",
             MasterUsername="test",
             MasterUserPassword="password",
             Tags=[
@@ -205,12 +211,18 @@ class Test_rds_instance_deletion_protection:
     @mock_aws
     def test_rds_instance_with_cluster_deletion_protection(self):
         conn = client("rds", region_name=AWS_REGION_US_EAST_1)
+        conn.create_db_parameter_group(
+            DBParameterGroupName="test",
+            DBParameterGroupFamily="default.mysql8.0",
+            Description="test parameter group",
+        )
         conn.create_db_cluster(
             DBClusterIdentifier="db-cluster-1",
             AllocatedStorage=10,
             Engine="postgres",
             DatabaseName="staging-postgres",
             DeletionProtection=True,
+            DBClusterParameterGroupName="test",
             MasterUsername="test",
             MasterUserPassword="password",
             Tags=[

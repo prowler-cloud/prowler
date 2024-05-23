@@ -547,7 +547,6 @@ def execute_checks(
     checks_to_execute: list,
     global_provider: Any,
     custom_checks_metadata: Any,
-    mutelist_file: str,
     config_file: str,
 ) -> list:
     # List to store all the check's findings
@@ -613,9 +612,9 @@ def execute_checks(
     else:
         # Prepare your messages
         messages = [f"Config File: {Fore.YELLOW}{config_file}{Style.RESET_ALL}"]
-        if mutelist_file:
+        if global_provider.mutelist_file_path:
             messages.append(
-                f"Mutelist File: {Fore.YELLOW}{mutelist_file}{Style.RESET_ALL}"
+                f"Mutelist File: {Fore.YELLOW}{global_provider.mutelist_file_path}{Style.RESET_ALL}"
             )
         if global_provider.type == "aws":
             messages.append(
@@ -771,9 +770,11 @@ def execute(
                 check_findings,
             )
 
+        # Refactor(Outputs)
         # Report the check's findings
         report(check_findings, global_provider)
 
+        # Refactor(Outputs)
         if os.environ.get("PROWLER_REPORT_LIB_PATH"):
             try:
                 logger.info("Using custom report interface ...")

@@ -1,4 +1,3 @@
-from re import search
 from unittest import mock
 
 from boto3 import client
@@ -36,9 +35,9 @@ class Test_s3_bucket_server_access_logging_enabled:
 
                 assert len(result) == 1
                 assert result[0].status == "FAIL"
-                assert search(
-                    "server access logging disabled",
-                    result[0].status_extended,
+                assert (
+                    result[0].status_extended
+                    == f"S3 Bucket {bucket_name_us} has server access logging disabled."
                 )
                 assert result[0].resource_id == bucket_name_us
                 assert (
@@ -129,9 +128,9 @@ class Test_s3_bucket_server_access_logging_enabled:
 
                 assert len(result) == 1
                 assert result[0].status == "PASS"
-                assert search(
-                    "server access logging enabled",
-                    result[0].status_extended,
+                assert (
+                    result[0].status_extended
+                    == f"S3 Bucket {bucket_name_us} has server access logging enabled."
                 )
                 assert result[0].resource_id == bucket_name_us
                 assert (

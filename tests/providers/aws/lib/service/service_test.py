@@ -60,3 +60,33 @@ class TestAWSService:
         assert not hasattr(service, "regional_clients")
         assert service.region == AWS_REGION_US_EAST_1
         assert service.client.__class__.__name__ == "CloudFront"
+
+    def test_AWSService_set_failed_check(self):
+
+        AWSService.failed_checks.clear()
+
+        check_id = "ec2_securitygroup_allow_ingress_from_internet_to_all_ports"
+        arn = "arn:aws:ec2:eu-central-1:123456789:security-group/sg-12345678"
+
+        assert (check_id, arn) not in AWSService.failed_checks
+
+        AWSService.set_failed_check(check_id, arn)
+
+        assert (check_id, arn) in AWSService.failed_checks
+
+    def test_AWSService_is_failed_check(self):
+
+        AWSService.failed_checks.clear()
+
+        check_id = "ec2_securitygroup_allow_ingress_from_internet_to_all_ports"
+        arn = "arn:aws:ec2:eu-central-1:123456789:security-group/sg-12345678"
+
+        assert not AWSService.is_failed_check(check_id, arn)
+
+        AWSService.set_failed_check(check_id, arn)
+
+        assert AWSService.is_failed_check(check_id, arn)
+        assert not AWSService.is_failed_check(
+            check_id,
+            "arn:aws:ec2:eu-central-1:123456789:security-group/sg-87654321",
+        )
