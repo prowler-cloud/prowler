@@ -87,9 +87,7 @@ class Test_ec2_instance_not_directly_publicly_accessible_via_elb:
             MinCount=1,
             MaxCount=1,
             IamInstanceProfile={"Name": profile_name},
-            SecurityGroupIds=[
-                security_group_instance.id
-            ],
+            SecurityGroupIds=[security_group_instance.id],
         )[0]
 
         # Register the instance with the load balancer

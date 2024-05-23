@@ -92,7 +92,7 @@ class Test_ec2_instance_not_directly_publicly_accessible_via_elbv2:
         iam.create_instance_profile(
             InstanceProfileName=profile_name,
         )
-        
+
         vpc = ec2.create_vpc(CidrBlock="10.0.0.0/16")
 
         ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
@@ -111,9 +111,7 @@ class Test_ec2_instance_not_directly_publicly_accessible_via_elbv2:
             MinCount=1,
             MaxCount=1,
             IamInstanceProfile={"Name": profile_name},
-            SecurityGroupIds=[
-                security_group2.id
-            ]
+            SecurityGroupIds=[security_group2.id],
         )[0]
 
         conn.register_targets(
@@ -127,7 +125,9 @@ class Test_ec2_instance_not_directly_publicly_accessible_via_elbv2:
             LoadBalancerArn=lb["LoadBalancerArn"],
             Protocol="HTTP",
             Port=80,
-            DefaultActions=[{"Type": "forward", "TargetGroupArn": target_group["TargetGroupArn"]}],
+            DefaultActions=[
+                {"Type": "forward", "TargetGroupArn": target_group["TargetGroupArn"]}
+            ],
         )
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
@@ -256,7 +256,9 @@ class Test_ec2_instance_not_directly_publicly_accessible_via_elbv2:
             LoadBalancerArn=lb["LoadBalancerArn"],
             Protocol="HTTP",
             Port=80,
-            DefaultActions=[{"Type": "forward", "TargetGroupArn": target_group["TargetGroupArn"]}],
+            DefaultActions=[
+                {"Type": "forward", "TargetGroupArn": target_group["TargetGroupArn"]}
+            ],
         )
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
