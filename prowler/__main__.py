@@ -13,6 +13,7 @@ from prowler.lib.check.check import (
     bulk_load_compliance_frameworks,
     exclude_checks_to_run,
     exclude_services_to_run,
+    execute_checks,
     list_categories,
     list_checks_json,
     list_fixers,
@@ -26,7 +27,6 @@ from prowler.lib.check.check import (
     print_services,
     remove_custom_checks_module,
     run_fixer,
-    scan,
 )
 from prowler.lib.check.checks_loader import load_checks_to_execute
 from prowler.lib.check.compliance import update_checks_metadata_with_compliance
@@ -214,20 +214,18 @@ def prowler():
     # Execute checks
     findings = []
 
-    # if len(checks_to_execute):
-    #     findings = execute_checks(
-    #         checks_to_execute,
-    #         global_provider,
-    #         custom_checks_metadata,
-    #         global_provider.mutelist_file_path,
-    #         args.config_file,
-    #     )
-    # else:
-    #     logger.error(
-    #         "There are no checks to execute. Please, check your input arguments"
-    #     )
-    findings = scan(checks_to_execute, global_provider, custom_checks_metadata)
-    print(findings)
+    if len(checks_to_execute):
+        findings = execute_checks(
+            checks_to_execute,
+            global_provider,
+            custom_checks_metadata,
+            global_provider.mutelist_file_path,
+            args.config_file,
+        )
+    else:
+        logger.error(
+            "There are no checks to execute. Please, check your input arguments"
+        )
 
     # Prowler Fixer
     if global_provider.output_options.fixer:
