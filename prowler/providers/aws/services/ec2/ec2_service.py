@@ -257,7 +257,6 @@ class EC2(AWSService):
                         vpc_id=interface["VpcId"],
                         region=regional_client.region,
                         tags=interface.get("TagSet"),
-                        instance_owner_id=interface.get("OwnerId"),
                     )
                     self.network_interfaces.append(eni)
                     # Add Network Interface to Security Group
@@ -521,7 +520,6 @@ class NetworkInterface(BaseModel):
     vpc_id: str
     region: str
     tags: Optional[list] = []
-    instance_owner_id: Optional[str] = None
 
 
 class SecurityGroup(BaseModel):
