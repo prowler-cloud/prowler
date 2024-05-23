@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 
 from botocore.client import ClientError
 from pydantic import BaseModel
@@ -73,17 +73,20 @@ class ELBv2(AWSService):
                         LoadBalancerArn=lb.arn
                     ):
                         for target_group in page["TargetGroups"]:
+                            targets_ids = []
                             for target_health in regional_client.describe_target_health(
                                 TargetGroupArn=target_group["TargetGroupArn"]
                             )["TargetHealthDescriptions"]:
-                                tg = TargetGroups(
-                                    name=target_group["TargetGroupName"],
-                                    arn=target_group["TargetGroupArn"],
-                                    target_type=target_group["TargetType"],
-                                    target=target_health["Target"]["Id"],
-                                    loadbalancer=lb,
-                                )
-                                self.target_groups.append(tg)
+                                targets_ids.append(target_health["Target"]["Id"])
+
+                            tg = TargetGroups(
+                                name=target_group["TargetGroupName"],
+                                arn=target_group["TargetGroupArn"],
+                                target_type=target_group["TargetType"],
+                                targets=targets_ids,
+                                load_balancer_arn=lb.arn,
+                            )
+                            self.target_groups.append(tg)
                 except ClientError as error:
                     if error.response["Error"]["Code"] == "LoadBalancerNotFound":
                         logger.warning(
@@ -294,5 +297,5 @@ class TargetGroups(BaseModel):
     name: str
     arn: str
     target_type: str
-    target: str
-    loadbalancer: LoadBalancerv2
+    targets: List[str]
+    load_balancer_arn: str
