@@ -126,7 +126,6 @@ class EC2(AWSService):
                         is_resource_filtered(arn, self.audit_resources)
                     ):
                         associated_sgs = []
-
                         for ingress_rule in sg["IpPermissions"]:
                             # check associated security groups
                             for sg_group in ingress_rule.get("UserIdGroupPairs", []):
@@ -142,7 +141,7 @@ class EC2(AWSService):
                                 egress_rules=sg["IpPermissionsEgress"],
                                 associated_sgs=associated_sgs,
                                 vpc_id=sg["VpcId"],
-                                tags=sg.get("Tags")
+                                tags=sg.get("Tags"),
                             )
                         )
                         if sg["GroupName"] != "default":
