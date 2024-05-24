@@ -78,6 +78,7 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, provi
                     file_descriptor = initialize_file_descriptor(
                         filename,
                         output_mode,
+                        provider.type,
                         output_model,
                     )
                     file_descriptors.update({output_mode: file_descriptor})
@@ -100,13 +101,17 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, provi
                     filename = f"{output_directory}/compliance/{output_filename}_{output_mode}{csv_file_suffix}"
                     if "cis_" in output_mode:
                         file_descriptor = initialize_file_descriptor(
-                            filename, output_mode, Check_Output_CSV_GCP_CIS
+                            filename,
+                            output_mode,
+                            provider.type,
+                            Check_Output_CSV_GCP_CIS,
                         )
                         file_descriptors.update({output_mode: file_descriptor})
                     elif output_mode == "mitre_attack_gcp":
                         file_descriptor = initialize_file_descriptor(
                             filename,
                             output_mode,
+                            provider.type,
                             MitreAttackGCP,
                         )
                         file_descriptors.update({output_mode: file_descriptor})
@@ -114,6 +119,7 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, provi
                         file_descriptor = initialize_file_descriptor(
                             filename,
                             output_mode,
+                            provider.type,
                             Check_Output_CSV_Generic_Compliance,
                         )
                         file_descriptors.update({output_mode: file_descriptor})
@@ -122,13 +128,17 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, provi
                     filename = f"{output_directory}/compliance/{output_filename}_{output_mode}{csv_file_suffix}"
                     if "cis_" in output_mode:
                         file_descriptor = initialize_file_descriptor(
-                            filename, output_mode, Check_Output_CSV_KUBERNETES_CIS
+                            filename,
+                            output_mode,
+                            provider.type,
+                            Check_Output_CSV_KUBERNETES_CIS,
                         )
                         file_descriptors.update({output_mode: file_descriptor})
                     else:
                         file_descriptor = initialize_file_descriptor(
                             filename,
                             output_mode,
+                            provider.type,
                             Check_Output_CSV_Generic_Compliance,
                         )
                         file_descriptors.update({output_mode: file_descriptor})
@@ -139,6 +149,7 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, provi
                         file_descriptor = initialize_file_descriptor(
                             filename,
                             output_mode,
+                            provider.type,
                             Check_Output_CSV_AZURE_CIS,
                         )
                         file_descriptors.update({output_mode: file_descriptor})
@@ -146,6 +157,7 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, provi
                         file_descriptor = initialize_file_descriptor(
                             filename,
                             output_mode,
+                            provider.type,
                             MitreAttackAzure,
                         )
                         file_descriptors.update({output_mode: file_descriptor})
@@ -153,6 +165,7 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, provi
                         file_descriptor = initialize_file_descriptor(
                             filename,
                             output_mode,
+                            provider.type,
                             Check_Output_CSV_Generic_Compliance,
                         )
                         file_descriptors.update({output_mode: file_descriptor})
@@ -170,6 +183,7 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, provi
                             file_descriptor = initialize_file_descriptor(
                                 filename,
                                 output_mode,
+                                provider.type,
                                 Check_Output_CSV_ENS_RD2022,
                             )
                             file_descriptors.update({output_mode: file_descriptor})
@@ -178,6 +192,7 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, provi
                             file_descriptor = initialize_file_descriptor(
                                 filename,
                                 output_mode,
+                                provider.type,
                                 Check_Output_CSV_AWS_CIS,
                             )
                             file_descriptors.update({output_mode: file_descriptor})
@@ -186,6 +201,7 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, provi
                             file_descriptor = initialize_file_descriptor(
                                 filename,
                                 output_mode,
+                                provider.type,
                                 Check_Output_CSV_AWS_Well_Architected,
                             )
                             file_descriptors.update({output_mode: file_descriptor})
@@ -194,6 +210,7 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, provi
                             file_descriptor = initialize_file_descriptor(
                                 filename,
                                 output_mode,
+                                provider.type,
                                 Check_Output_CSV_AWS_ISO27001_2013,
                             )
                             file_descriptors.update({output_mode: file_descriptor})
@@ -202,6 +219,7 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, provi
                             file_descriptor = initialize_file_descriptor(
                                 filename,
                                 output_mode,
+                                provider.type,
                                 MitreAttackAWS,
                             )
                             file_descriptors.update({output_mode: file_descriptor})
@@ -211,6 +229,7 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, provi
                             file_descriptor = initialize_file_descriptor(
                                 filename,
                                 output_mode,
+                                provider.type,
                                 Check_Output_CSV_Generic_Compliance,
                             )
                             file_descriptors.update({output_mode: file_descriptor})

@@ -52,7 +52,7 @@ class Kafka(AWSService):
                             .get("Tls", {})
                             .get("Enabled", False),
                             public_access=cluster.get("BrokerNodeGroupInfo", {})
-                            .get("ConenctivityInfo", {})
+                            .get("ConnectivityInfo", {})
                             .get("PublicAccess", {})
                             .get("Type", "SERVICE_PROVIDED_EIPS")
                             != "DISABLED",
