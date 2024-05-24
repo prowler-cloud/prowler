@@ -2,8 +2,11 @@ import typer
 
 from prowler.lib.banner import print_banner
 from prowler.lib.check.check import (
+    bulk_load_checks_metadata,
+    list_categories,
     list_fixers,
     list_services,
+    print_categories,
     print_fixers,
     print_services,
 )
@@ -25,6 +28,8 @@ def list_resources(provider: str, resource_type: str):
         print_services(list_services(provider))
     elif resource_type == "fixers":
         print_fixers(list_fixers(provider))
+    elif resource_type == "categories":
+        print_categories(list_categories(bulk_load_checks_metadata(provider)))
 
 
 def create_list_commands(provider_typer: typer.Typer):
@@ -43,6 +48,13 @@ def create_list_commands(provider_typer: typer.Typer):
     )
     def list_fixers_command():
         list_resources(provider_name, "fixers")
+
+    @provider_typer.command(
+        "list-categories",
+        help=f"List the {provider_name} categories that are supported by Prowler.",
+    )
+    def list_categories_command():
+        list_resources(provider_name, "categories")
 
 
 create_list_commands(aws)
