@@ -483,15 +483,19 @@ class EC2(AWSService):
 
             for page in describe_launch_templates_paginator.paginate():
                 for template in page["LaunchTemplates"]:
-                    self.launch_templates.append(
-                        LaunchTemplate(
-                            name=template["LaunchTemplateName"],
-                            id=template["LaunchTemplateId"],
-                            arn=f"arn:aws:ec2:{regional_client.region}:{self.audited_account}:launch-template/{template['LaunchTemplateId']}",
-                            region=regional_client.region,
-                            versions=[],
+                    template_arn = f"arn:aws:ec2:{regional_client.region}:{self.audited_account}:launch-template/{template['LaunchTemplateId']}"
+                    if not self.audit_resources or (
+                        is_resource_filtered(template_arn, self.audit_resources)
+                    ):
+                        self.launch_templates.append(
+                            LaunchTemplate(
+                                name=template["LaunchTemplateName"],
+                                id=template["LaunchTemplateId"],
+                                arn=template_arn,
+                                region=regional_client.region,
+                                versions=[],
+                            )
                         )
-                    )
 
         except Exception as error:
             logger.error(
