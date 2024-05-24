@@ -28,39 +28,42 @@ class awslambda_function_not_directly_publicly_accessible_via_elbv2(Check):
                         if lb.arn == target_group.load_balancer_arn and lb.public:
                             # Find for the lambda listener port and protocol
                             listen_port = None
-                            listen_protocol = None
                             for listener in lb.listeners:
                                 for rule in listener.rules:
                                     for action in getattr(rule, "actions", []):
-                                        if (
-                                            action.get("Type", "") == "forward"
-                                            and action.get("TargetGroupArn", "")
+                                        if action.get("Type", "") == "forward" and (
+                                            any(
+                                                tg.get("TargetGroupArn", "")
+                                                == target_group.arn
+                                                for tg in action["ForwardConfig"][
+                                                    "TargetGroups"
+                                                ]
+                                            )
+                                            if "TargetGroups"
+                                            in action.get("ForwardConfig", {})
+                                            else action.get("TargetGroupArn", "")
                                             == target_group.arn
                                         ):
                                             listen_port = listener.port
-                                            listen_protocol = (
-                                                "tcp"
-                                                if listener.protocol.upper() == "HTTP"
-                                                else listener.protocol
-                                            )
                                             break
 
-                            # Check lb security groups
-                            if listen_port and listen_protocol:
-                                for lb_sg in lb.security_groups:
-                                    for sg in ec2_client.security_groups:
-                                        if lb_sg == sg.id:
-                                            for rule in sg.ingress_rules:
-                                                # Check if some listener is open in the range of the lambda function
-                                                if check_security_group(
-                                                    rule,
-                                                    listen_protocol,
-                                                    [listen_port],
-                                                    True,
-                                                ):
-                                                    report.status = "FAIL"
-                                                    report.status_extended = f"Lambda function '{function.name}' is publicly accesible through an Internet facing Load Balancer {lb.dns}."
-                                                    break
+                            if listen_port:
+                                # Check for lb security groups in every sg
+                                for sg in ec2_client.security_groups:
+                                    if any(
+                                        sg.id == lb_sg for lb_sg in lb.security_groups
+                                    ):
+                                        for rule in sg.ingress_rules:
+                                            # Check if some listener is open in the range of the lambda function
+                                            if check_security_group(
+                                                ingress_rule=rule,
+                                                protocol=rule.get("IpProtocol", "tcp"),
+                                                ports=[listen_port],
+                                                any_address=True,
+                                            ):
+                                                report.status = "FAIL"
+                                                report.status_extended = f"Lambda function '{function.name}' is publicly accesible through an Internet facing Load Balancer '{lb.dns}'."
+                                                break
 
             findings.append(report)
 
