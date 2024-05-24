@@ -487,6 +487,7 @@ class EC2(AWSService):
                         LaunchTemplate(
                             name=template["LaunchTemplateName"],
                             id=template["LaunchTemplateId"],
+                            arn=f"arn:aws:ec2:{regional_client.region}:{self.audited_account}:launch-template/{template['LaunchTemplateId']}",
                             region=regional_client.region,
                             versions=[],
                         )
@@ -637,5 +638,6 @@ class LaunchTemplateVersion(BaseModel):
 class LaunchTemplate(BaseModel):
     name: str
     id: str
+    arn: str
     region: str
     versions: list[LaunchTemplateVersion] = []

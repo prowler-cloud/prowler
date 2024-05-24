@@ -17,6 +17,7 @@ class ec2_find_secrets_launch_template(Check):
             report = Check_Report_AWS(self.metadata())
             report.region = template.region
             report.resource_id = template.id
+            report.resource_arn = template.arn
 
             versions_with_secrets = []
 

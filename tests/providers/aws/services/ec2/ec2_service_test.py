@@ -647,6 +647,10 @@ class Test_EC2_Service:
         assert len(ec2.launch_templates) == 1
         assert ec2.launch_templates[0].name == TEMPLATE_NAME
         assert ec2.launch_templates[0].region == AWS_REGION_US_EAST_1
+        assert (
+            ec2.launch_templates[0].arn
+            == f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:launch-template/{ec2.launch_templates[0].id}"
+        )
 
     # Test EC2 Describe Launch Templates
     @mock_aws
