@@ -1,5 +1,7 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.awslambda.awslambda_client import awslambda_client
+from prowler.providers.aws.services.ec2.ec2_client import ec2_client
+from prowler.providers.aws.services.ec2.lib.security_groups import check_security_group
 from prowler.providers.aws.services.elbv2.elbv2_client import elbv2_client
 
 
@@ -24,24 +26,41 @@ class awslambda_function_not_directly_publicly_accessible_via_elbv2(Check):
                 ):
                     for lb in elbv2_client.loadbalancersv2:
                         if lb.arn == target_group.load_balancer_arn and lb.public:
-                            # Check that function policy is not public
-                            for statement in function.policy.get("Statement", []):
-                                if statement["Effect"] == "Allow":
-                                    if (
-                                        "*" in statement["Principal"]
-                                        or (
-                                            "*" in statement["Principal"].get("AWS", "")
-                                        )
-                                        or (
-                                            "*"
-                                            in statement["Principal"].get(
-                                                "CanonicalUser", ""
+                            # Find for the lambda listener port and protocol
+                            listen_port = None
+                            listen_protocol = None
+                            for listener in lb.listeners:
+                                for rule in listener.rules:
+                                    for action in getattr(rule, "actions", []):
+                                        if (
+                                            action.get("Type", "") == "forward"
+                                            and action.get("TargetGroupArn", "")
+                                            == target_group.arn
+                                        ):
+                                            listen_port = listener.port
+                                            listen_protocol = (
+                                                "tcp"
+                                                if listener.protocol.upper() == "HTTP"
+                                                else listener.protocol
                                             )
-                                        )
-                                    ):
-                                        report.status = "FAIL"
-                                        report.status_extended = f"Lambda function {function.name} is publicly accesible through an Internet facing Load Balancer through load balancer {lb.dns}."
-                                        break
+                                            break
+
+                            # Check lb security groups
+                            if listen_port and listen_protocol:
+                                for lb_sg in lb.security_groups:
+                                    for sg in ec2_client.security_groups:
+                                        if lb_sg == sg.id:
+                                            for rule in sg.ingress_rules:
+                                                # Check if some listener is open in the range of the lambda function
+                                                if check_security_group(
+                                                    rule,
+                                                    listen_protocol,
+                                                    [listen_port],
+                                                    True,
+                                                ):
+                                                    report.status = "FAIL"
+                                                    report.status_extended = f"Lambda function {function.name} is publicly accesible through an Internet facing Load Balancer through load balancer {lb.dns}."
+                                                    break
 
             findings.append(report)
 
