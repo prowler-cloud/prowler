@@ -3,10 +3,12 @@ import typer
 from prowler.lib.banner import print_banner
 from prowler.lib.check.check import (
     bulk_load_checks_metadata,
+    bulk_load_compliance_frameworks,
     list_categories,
     list_fixers,
     list_services,
     print_categories,
+    print_compliance_frameworks,
     print_fixers,
     print_services,
 )
@@ -30,6 +32,8 @@ def list_resources(provider: str, resource_type: str):
         print_fixers(list_fixers(provider))
     elif resource_type == "categories":
         print_categories(list_categories(bulk_load_checks_metadata(provider)))
+    elif resource_type == "compliance":
+        print_compliance_frameworks(bulk_load_compliance_frameworks(provider))
 
 
 def create_list_commands(provider_typer: typer.Typer):
@@ -55,6 +59,13 @@ def create_list_commands(provider_typer: typer.Typer):
     )
     def list_categories_command():
         list_resources(provider_name, "categories")
+
+    @provider_typer.command(
+        "list-compliance",
+        help=f"List the {provider_name} compliance frameworks that are supported by Prowler.",
+    )
+    def list_compliance_command():
+        list_resources(provider_name, "compliance")
 
 
 create_list_commands(aws)
