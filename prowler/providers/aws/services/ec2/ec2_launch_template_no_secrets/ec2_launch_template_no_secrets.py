@@ -10,7 +10,7 @@ from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 
 
-class ec2_find_secrets_launch_template(Check):
+class ec2_launch_template_no_secrets(Check):
     def execute(self):
         findings = []
         for template in ec2_client.launch_templates:

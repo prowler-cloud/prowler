@@ -12,7 +12,7 @@ ACTUAL_DIRECTORY = Path(path.dirname(path.realpath(__file__)))
 FIXTURES_DIR_NAME = "fixtures"
 
 
-class Test_ec2_find_secrets_launch_template:
+class Test_ec2_launch_template_no_secrets:
     @mock_aws
     def test_no_launch_templates(self):
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
@@ -26,15 +26,15 @@ class Test_ec2_find_secrets_launch_template:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_find_secrets_launch_template.ec2_find_secrets_launch_template.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_launch_template_no_secrets.ec2_launch_template_no_secrets.ec2_client",
             new=EC2(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.ec2.ec2_find_secrets_launch_template.ec2_find_secrets_launch_template import (
-                ec2_find_secrets_launch_template,
+            from prowler.providers.aws.services.ec2.ec2_launch_template_no_secrets.ec2_launch_template_no_secrets import (
+                ec2_launch_template_no_secrets,
             )
 
-            check = ec2_find_secrets_launch_template()
+            check = ec2_launch_template_no_secrets()
             result = check.execute()
 
             assert len(result) == 0
@@ -67,15 +67,15 @@ class Test_ec2_find_secrets_launch_template:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_find_secrets_launch_template.ec2_find_secrets_launch_template.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_launch_template_no_secrets.ec2_launch_template_no_secrets.ec2_client",
             new=EC2(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.ec2.ec2_find_secrets_launch_template.ec2_find_secrets_launch_template import (
-                ec2_find_secrets_launch_template,
+            from prowler.providers.aws.services.ec2.ec2_launch_template_no_secrets.ec2_launch_template_no_secrets import (
+                ec2_launch_template_no_secrets,
             )
 
-            check = ec2_find_secrets_launch_template()
+            check = ec2_launch_template_no_secrets()
             result = check.execute()
 
             assert len(result) == 1
@@ -123,15 +123,15 @@ class Test_ec2_find_secrets_launch_template:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_find_secrets_launch_template.ec2_find_secrets_launch_template.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_launch_template_no_secrets.ec2_launch_template_no_secrets.ec2_client",
             new=EC2(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.ec2.ec2_find_secrets_launch_template.ec2_find_secrets_launch_template import (
-                ec2_find_secrets_launch_template,
+            from prowler.providers.aws.services.ec2.ec2_launch_template_no_secrets.ec2_launch_template_no_secrets import (
+                ec2_launch_template_no_secrets,
             )
 
-            check = ec2_find_secrets_launch_template()
+            check = ec2_launch_template_no_secrets()
             result = check.execute()
 
             assert len(result) == 1
@@ -191,15 +191,15 @@ class Test_ec2_find_secrets_launch_template:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_find_secrets_launch_template.ec2_find_secrets_launch_template.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_launch_template_no_secrets.ec2_launch_template_no_secrets.ec2_client",
             new=EC2(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.ec2.ec2_find_secrets_launch_template.ec2_find_secrets_launch_template import (
-                ec2_find_secrets_launch_template,
+            from prowler.providers.aws.services.ec2.ec2_launch_template_no_secrets.ec2_launch_template_no_secrets import (
+                ec2_launch_template_no_secrets,
             )
 
-            check = ec2_find_secrets_launch_template()
+            check = ec2_launch_template_no_secrets()
             result = check.execute()
 
             assert len(result) == 1
@@ -255,15 +255,15 @@ class Test_ec2_find_secrets_launch_template:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_find_secrets_launch_template.ec2_find_secrets_launch_template.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_launch_template_no_secrets.ec2_launch_template_no_secrets.ec2_client",
             new=EC2(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.ec2.ec2_find_secrets_launch_template.ec2_find_secrets_launch_template import (
-                ec2_find_secrets_launch_template,
+            from prowler.providers.aws.services.ec2.ec2_launch_template_no_secrets.ec2_launch_template_no_secrets import (
+                ec2_launch_template_no_secrets,
             )
 
-            check = ec2_find_secrets_launch_template()
+            check = ec2_launch_template_no_secrets()
             result = check.execute()
 
             assert len(result) == 1
@@ -311,15 +311,15 @@ class Test_ec2_find_secrets_launch_template:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_find_secrets_launch_template.ec2_find_secrets_launch_template.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_launch_template_no_secrets.ec2_launch_template_no_secrets.ec2_client",
             new=EC2(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.ec2.ec2_find_secrets_launch_template.ec2_find_secrets_launch_template import (
-                ec2_find_secrets_launch_template,
+            from prowler.providers.aws.services.ec2.ec2_launch_template_no_secrets.ec2_launch_template_no_secrets import (
+                ec2_launch_template_no_secrets,
             )
 
-            check = ec2_find_secrets_launch_template()
+            check = ec2_launch_template_no_secrets()
             result = check.execute()
 
             assert len(result) == 1
@@ -356,15 +356,15 @@ class Test_ec2_find_secrets_launch_template:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_find_secrets_launch_template.ec2_find_secrets_launch_template.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_launch_template_no_secrets.ec2_launch_template_no_secrets.ec2_client",
             new=EC2(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.ec2.ec2_find_secrets_launch_template.ec2_find_secrets_launch_template import (
-                ec2_find_secrets_launch_template,
+            from prowler.providers.aws.services.ec2.ec2_launch_template_no_secrets.ec2_launch_template_no_secrets import (
+                ec2_launch_template_no_secrets,
             )
 
-            check = ec2_find_secrets_launch_template()
+            check = ec2_launch_template_no_secrets()
             result = check.execute()
 
             assert len(result) == 1
@@ -422,15 +422,15 @@ class Test_ec2_find_secrets_launch_template:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_find_secrets_launch_template.ec2_find_secrets_launch_template.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_launch_template_no_secrets.ec2_launch_template_no_secrets.ec2_client",
             new=EC2(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.ec2.ec2_find_secrets_launch_template.ec2_find_secrets_launch_template import (
-                ec2_find_secrets_launch_template,
+            from prowler.providers.aws.services.ec2.ec2_launch_template_no_secrets.ec2_launch_template_no_secrets import (
+                ec2_launch_template_no_secrets,
             )
 
-            check = ec2_find_secrets_launch_template()
+            check = ec2_launch_template_no_secrets()
             result = check.execute()
 
             assert len(result) == 2
