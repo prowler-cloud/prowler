@@ -1,45 +1,52 @@
 import typer
 
 from prowler.lib.banner import print_banner
-from prowler.lib.check.check import list_services, print_services
+from prowler.lib.check.check import (
+    list_fixers,
+    list_services,
+    print_fixers,
+    print_services,
+)
 
 app = typer.Typer()
 aws = typer.Typer()
 azure = typer.Typer()
 gcp = typer.Typer()
 kubernetes = typer.Typer()
+
 app.add_typer(aws, name="aws")
 app.add_typer(azure, name="azure")
 app.add_typer(gcp, name="gcp")
 app.add_typer(kubernetes, name="kubernetes")
 
 
-@aws.command(
-    "list-services", help="List the AWS services that are supported by Prowler."
-)
-def list_services_aws():
-    print_services(list_services("aws"))
+def list_resources(provider: str, resource_type: str):
+    if resource_type == "services":
+        print_services(list_services(provider))
+    elif resource_type == "fixers":
+        print_fixers(list_fixers(provider))
 
 
-@azure.command(
-    "list-services", help="List the Azure services that are supported by Prowler."
-)
-def list_services_azure():
-    print_services(list_services("azure"))
+def create_list_commands(provider_typer: typer.Typer, provider_name: str):
+    @provider_typer.command(
+        "list-services",
+        help=f"List the {provider_name} services that are supported by Prowler.",
+    )
+    def list_services_command():
+        list_resources(provider_name, "services")
+
+    @provider_typer.command(
+        "list-fixers",
+        help=f"List the {provider_name} fixers that are supported by Prowler.",
+    )
+    def list_fixers_command():
+        list_resources(provider_name, "fixers")
 
 
-@gcp.command(
-    "list-services", help="List the GCP services that are supported by Prowler."
-)
-def list_services_gcp():
-    print_services(list_services("gcp"))
-
-
-@kubernetes.command(
-    "list-services", help="List the Kubernetes services that are supported by Prowler."
-)
-def list_services_kubernetes():
-    print_services(list_services("kubernetes"))
+create_list_commands(aws, "aws")
+create_list_commands(azure, "azure")
+create_list_commands(gcp, "gcp")
+create_list_commands(kubernetes, "kubernetes")
 
 
 @app.command("banner", help="Prints the banner of the tool.")
