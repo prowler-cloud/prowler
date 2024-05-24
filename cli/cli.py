@@ -9,6 +9,7 @@ from prowler.lib.check.check import (
     list_services,
     print_categories,
     print_compliance_frameworks,
+    print_compliance_requirements,
     print_fixers,
     print_services,
 )
@@ -34,6 +35,14 @@ def list_resources(provider: str, resource_type: str):
         print_categories(list_categories(bulk_load_checks_metadata(provider)))
     elif resource_type == "compliance":
         print_compliance_frameworks(bulk_load_compliance_frameworks(provider))
+
+
+def list_compliance_requirements(
+    provider: str, compliance_frameworks: list[str] = None
+):
+    print_compliance_requirements(
+        bulk_load_compliance_frameworks(provider), compliance_frameworks
+    )
 
 
 def create_list_commands(provider_typer: typer.Typer):
@@ -66,6 +75,15 @@ def create_list_commands(provider_typer: typer.Typer):
     )
     def list_compliance_command():
         list_resources(provider_name, "compliance")
+
+    @provider_typer.command(
+        "list-compliance-requirements",
+        help=f"List the {provider_name} compliance frameworks requirements that are supported by Prowler.",
+    )
+    def list_compliance_requirements_command(
+        list_compliance_frameworks: list[str] = typer.Argument(None),
+    ):
+        list_compliance_requirements(provider_name, list_compliance_frameworks)
 
 
 create_list_commands(aws)
