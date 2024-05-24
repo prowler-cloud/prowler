@@ -16,7 +16,7 @@ class awslambda_function_not_directly_publicly_accessible_via_elbv2(Check):
             report.resource_arn = function.arn
             report.resource_tags = function.tags
             report.status = "PASS"
-            report.status_extended = f"Lambda function {function.name} is not publicly accesible through an Internet facing Load Balancer."
+            report.status_extended = f"Lambda function '{function.name}' is not publicly accesible through an Internet facing Load Balancer."
 
             for target_group in elbv2_client.target_groups:
                 # Lambda targets group len must be 1 by definition
@@ -59,7 +59,7 @@ class awslambda_function_not_directly_publicly_accessible_via_elbv2(Check):
                                                     True,
                                                 ):
                                                     report.status = "FAIL"
-                                                    report.status_extended = f"Lambda function {function.name} is publicly accesible through an Internet facing Load Balancer through load balancer {lb.dns}."
+                                                    report.status_extended = f"Lambda function '{function.name}' is publicly accesible through an Internet facing Load Balancer {lb.dns}."
                                                     break
 
             findings.append(report)
