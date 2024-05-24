@@ -1,16 +1,33 @@
+import sys
 from typing import Any
 
 from boto3.session import Session
 from botocore.client import ClientError
+from slack_sdk import WebClient
 
 from prowler.config.config import (
+    aws_logo,
+    azure_logo,
     csv_file_suffix,
+    gcp_logo,
     json_asff_file_suffix,
     json_ocsf_file_suffix,
+    square_logo_img,
     timestamp_utc,
 )
 from prowler.lib.check.models import Check_Report
 from prowler.lib.logger import logger
+from prowler.lib.outputs.compliance.compliance import get_check_compliance
+from prowler.lib.outputs.json_asff.models import (
+    Check_Output_JSON_ASFF,
+    Compliance,
+    ProductFields,
+    Recommendation,
+    Remediation,
+    Resource,
+    Severity,
+)
+from prowler.lib.utils.utils import hash_sha512
 from prowler.providers.aws.lib.security_hub.security_hub import (
     SECURITY_HUB_INTEGRATION_NAME,
     SECURITY_HUB_MAX_BATCH,
@@ -18,7 +35,7 @@ from prowler.providers.aws.lib.security_hub.security_hub import (
 from prowler.providers.common.provider import Provider
 
 
-# TODO: Child classes of JSON_ASFF, JSON_OCSF, CSV, COMPLIANCE, SLACK
+# TODO: Child classes of JSON_ASFF, JSON_OCSF, CSV, COMPLIANCE
 class Output:
     _provider: Provider
     _stats: dict[str, Any]
@@ -80,6 +97,136 @@ class Output:
         stats["all_fails_are_muted"] = all_fails_are_muted
 
         return stats
+
+    class JSON_ASFF:
+
+        def __init__(self, finding: Check_Report) -> "Check_Output_JSON_ASFF":
+            return self.__convert__(finding)
+
+        def __convert__(self, finding) -> Check_Output_JSON_ASFF:
+            """
+            Fill the finding's output in JSON ASFF format.
+
+            Parameters:
+            - provider: The provider object containing information about the provider (e.g., AWS) and the output options object containing information about the desired output format.
+            - finding: The finding object containing information about the specific finding.
+
+            Returns:
+            - finding_output: The filled finding's output in JSON ASFF format.
+            """
+
+            try:
+                # Check if there are no resources in the finding
+                if finding.resource_arn == "":
+                    if finding.resource_id == "":
+                        finding.resource_id = "NONE_PROVIDED"
+                    finding.resource_arn = finding.resource_id
+
+                timestamp = timestamp_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+                resource_tags = self.__generate_json_asff_resource_tags__(
+                    finding.resource_tags
+                )
+
+                # Iterate for each compliance framework
+                compliance_summary = []
+                associated_standards = []
+                check_compliance = get_check_compliance(
+                    finding, Output.provider.type, Output.provider.output_options
+                )
+                for key, value in check_compliance.items():
+                    if (
+                        len(associated_standards) < 20
+                    ):  # AssociatedStandards should NOT have more than 20 items
+                        associated_standards.append({"StandardsId": key})
+                        item = f"{key} {' '.join(value)}"
+                        if len(item) > 64:
+                            item = item[0:63]
+                        compliance_summary.append(item)
+
+                # Ensures finding_status matches allowed values in ASFF
+                finding_status = self.__generate_json_asff_status__(
+                    finding.status, finding.muted
+                )
+
+                json_asff_output = Check_Output_JSON_ASFF(
+                    # The following line cannot be changed because it is the format we use to generate unique findings for AWS Security Hub
+                    # If changed some findings could be lost because the unique identifier will be different
+                    # TODO: get this from the provider output
+                    Id=f"prowler-{finding.check_metadata.CheckID}-{Output.provider.identity.account}-{finding.region}-{hash_sha512(finding.resource_id)}",
+                    ProductArn=f"arn:{Output.provider.identity.partition}:securityhub:{finding.region}::product/prowler/prowler",
+                    ProductFields=ProductFields(
+                        ProwlerResourceName=finding.resource_arn,
+                    ),
+                    GeneratorId="prowler-" + finding.check_metadata.CheckID,
+                    AwsAccountId=Output.provider.identity.account,
+                    Types=finding.check_metadata.CheckType,
+                    FirstObservedAt=timestamp,
+                    UpdatedAt=timestamp,
+                    CreatedAt=timestamp,
+                    Severity=Severity(Label=finding.check_metadata.Severity.upper()),
+                    Title=finding.check_metadata.CheckTitle,
+                    Description=finding.status_extended,
+                    Resources=[
+                        Resource(
+                            Id=finding.resource_arn,
+                            Type=finding.check_metadata.ResourceType,
+                            Partition=Output.provider.identity.partition,
+                            Region=finding.region,
+                            Tags=resource_tags,
+                        )
+                    ],
+                    Compliance=Compliance(
+                        Status=finding_status,
+                        AssociatedStandards=associated_standards,
+                        RelatedRequirements=compliance_summary,
+                    ),
+                    Remediation=Remediation(
+                        Recommendation=Recommendation(
+                            Text=finding.check_metadata.Remediation.Recommendation.Text,
+                            Url=finding.check_metadata.Remediation.Recommendation.Url,
+                        )
+                    ),
+                )
+                return json_asff_output
+            except Exception as error:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
+        def __generate_json_asff_status__(status: str, muted: bool = False) -> str:
+            json_asff_status = ""
+            if muted:
+                # Per AWS Security Hub "MUTED" is not a valid status
+                # https://docs.aws.amazon.com/securityhub/1.0/APIReference/API_Compliance.html
+                json_asff_status = "WARNING"
+            else:
+                if status == "PASS":
+                    json_asff_status = "PASSED"
+                elif status == "FAIL":
+                    json_asff_status = "FAILED"
+                else:
+                    json_asff_status = "NOT_AVAILABLE"
+
+            return json_asff_status
+
+        def __generate_json_asff_resource_tags__(tags):
+            try:
+                resource_tags = {}
+                if tags and tags != [None]:
+                    for tag in tags:
+                        if "Key" in tag and "Value" in tag:
+                            resource_tags[tag["Key"]] = tag["Value"]
+                        else:
+                            resource_tags.update(tag)
+                    if len(resource_tags) == 0:
+                        return None
+                else:
+                    return None
+                return resource_tags
+            except Exception as error:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
 
     class S3:
         _aws_session: Session
@@ -201,7 +348,7 @@ class Output:
 
                     # Format the finding in the JSON ASFF format
                     # TODO: Output.JSON_ASFF
-                    finding_json_asff = Output.JSON_ASFF(Output.provider, finding)
+                    finding_json_asff = Output.JSON_ASFF(finding)
 
                     # Include that finding within their region in the JSON format
                     findings_per_region[region].append(
@@ -401,3 +548,186 @@ class Output:
                 )
             finally:
                 return success_count
+
+    class Slack:
+        _token: str
+        _channel: str
+
+        def __init__(self, token: str, channel: str) -> "Output.Slack":
+            self._token = token
+            self._channel = channel
+
+        @property
+        def token(self):
+            return self._token
+
+        @property
+        def channel(self):
+            return self._channel
+
+        def send(self) -> Any:
+            """
+            Sends the findings to Slack.
+            Returns:
+                Any: Slack response.
+            """
+            try:
+                client = WebClient(token=self.token)
+                identity, logo = self.__create_message_identity__(Output.provider)
+                response = client.chat_postMessage(
+                    username="Prowler",
+                    icon_url=square_logo_img,
+                    channel=f"#{self.channel}",
+                    blocks=self.__create_message_blocks__(identity, logo, Output.stats),
+                )
+                return response
+            except Exception as error:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
+        def __create_message_identity__(self, provider):
+            """
+            Create a Slack message identity based on the provider type.
+
+            Parameters:
+            - provider (Provider): The Provider (e.g. "AwsProvider", "GcpProvider", "AzureProvide").
+
+            Returns:
+            - identity (str): The message identity based on the provider type.
+            - logo (str): The logo URL associated with the provider type.
+            """
+            try:
+                identity = ""
+                logo = aws_logo
+                if provider.type == "aws":
+                    identity = f"AWS Account *{provider.identity.account}*"
+                elif provider.type == "gcp":
+                    identity = f"GCP Projects *{', '.join(provider.project_ids)}*"
+                    logo = gcp_logo
+                elif provider.type == "azure":
+                    printed_subscriptions = []
+                    for key, value in provider.identity.subscriptions.items():
+                        intermediate = f"- *{key}: {value}*\n"
+                        printed_subscriptions.append(intermediate)
+                    identity = f"Azure Subscriptions:\n{''.join(printed_subscriptions)}"
+                    logo = azure_logo
+                return identity, logo
+            except Exception as error:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
+        def __create_message_blocks__(self, identity, logo, stats) -> list:
+            """
+            Create the Slack message blocks.
+            Args:
+                identity: message identity.
+                logo: logo URL.
+                stats: audit statistics.
+            Returns:
+                list: list of Slack message blocks.
+            """
+            try:
+                blocks = [
+                    {
+                        "type": "section",
+                        "text": {
+                            "type": "mrkdwn",
+                            "text": self.__create_title__(identity, stats),
+                        },
+                        "accessory": {
+                            "type": "image",
+                            "image_url": logo,
+                            "alt_text": "Provider Logo",
+                        },
+                    },
+                    {"type": "divider"},
+                    {
+                        "type": "section",
+                        "text": {
+                            "type": "mrkdwn",
+                            "text": f"\n:white_check_mark: *{stats['total_pass']} Passed findings* ({round(stats['total_pass'] / stats['findings_count'] * 100 , 2)}%)\n",
+                        },
+                    },
+                    {
+                        "type": "section",
+                        "text": {
+                            "type": "mrkdwn",
+                            "text": f"\n:x: *{stats['total_fail']} Failed findings* ({round(stats['total_fail'] / stats['findings_count'] * 100 , 2)}%)\n ",
+                        },
+                    },
+                    {
+                        "type": "section",
+                        "text": {
+                            "type": "mrkdwn",
+                            "text": f"\n:bar_chart: *{stats['resources_count']} Scanned Resources*\n",
+                        },
+                    },
+                    {"type": "divider"},
+                    {
+                        "type": "context",
+                        "elements": [
+                            {
+                                "type": "mrkdwn",
+                                "text": f"Used parameters: `prowler {' '.join(sys.argv[1:])} `",
+                            }
+                        ],
+                    },
+                    {"type": "divider"},
+                    {
+                        "type": "section",
+                        "text": {"type": "mrkdwn", "text": "Join our Slack Community!"},
+                        "accessory": {
+                            "type": "button",
+                            "text": {"type": "plain_text", "text": "Prowler :slack:"},
+                            "url": "https://join.slack.com/t/prowler-workspace/shared_invite/zt-1hix76xsl-2uq222JIXrC7Q8It~9ZNog",
+                        },
+                    },
+                    {
+                        "type": "section",
+                        "text": {
+                            "type": "mrkdwn",
+                            "text": "Feel free to contact us in our repo",
+                        },
+                        "accessory": {
+                            "type": "button",
+                            "text": {"type": "plain_text", "text": "Prowler :github:"},
+                            "url": "https://github.com/prowler-cloud/prowler",
+                        },
+                    },
+                    {
+                        "type": "section",
+                        "text": {
+                            "type": "mrkdwn",
+                            "text": "See all the things you can do with ProwlerPro",
+                        },
+                        "accessory": {
+                            "type": "button",
+                            "text": {"type": "plain_text", "text": "Prowler Pro"},
+                            "url": "https://prowler.pro",
+                        },
+                    },
+                ]
+                return blocks
+            except Exception as error:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
+        def __create_title__(self, identity, stats) -> str:
+            """
+            Create the Slack message title.
+            Args:
+                identity: message identity.
+                stats: audit statistics.
+            Returns:
+                str: Slack message title.
+            """
+            try:
+                title = f"Hey there 👋 \n I'm *Prowler*, _the handy multi-cloud security tool_ :cloud::key:\n\n I have just finished the security assessment on your {identity} with a total of *{stats['findings_count']}* findings."
+                return title
+            except Exception as error:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
