@@ -9,10 +9,10 @@ from prowler.lib.check.check import (
 )
 
 app = typer.Typer()
-aws = typer.Typer()
-azure = typer.Typer()
-gcp = typer.Typer()
-kubernetes = typer.Typer()
+aws = typer.Typer(name="aws")
+azure = typer.Typer(name="azure")
+gcp = typer.Typer(name="gcp")
+kubernetes = typer.Typer(name="kubernetes")
 
 app.add_typer(aws, name="aws")
 app.add_typer(azure, name="azure")
@@ -27,7 +27,9 @@ def list_resources(provider: str, resource_type: str):
         print_fixers(list_fixers(provider))
 
 
-def create_list_commands(provider_typer: typer.Typer, provider_name: str):
+def create_list_commands(provider_typer: typer.Typer):
+    provider_name = provider_typer.info.name
+
     @provider_typer.command(
         "list-services",
         help=f"List the {provider_name} services that are supported by Prowler.",
@@ -43,10 +45,10 @@ def create_list_commands(provider_typer: typer.Typer, provider_name: str):
         list_resources(provider_name, "fixers")
 
 
-create_list_commands(aws, "aws")
-create_list_commands(azure, "azure")
-create_list_commands(gcp, "gcp")
-create_list_commands(kubernetes, "kubernetes")
+create_list_commands(aws)
+create_list_commands(azure)
+create_list_commands(gcp)
+create_list_commands(kubernetes)
 
 
 @app.command("banner", help="Prints the banner of the tool.")
