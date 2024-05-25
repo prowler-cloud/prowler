@@ -36,10 +36,10 @@ class Test_storagegateway_fileshare_encryption_enabled:
         storagegateway_client.fileshares.append(
             FileShare(
                 id=test_share_nfs,
-                file_share_arn=test_share_arn_nfs,
+                arn=test_share_arn_nfs,
                 gateway_arn=test_gateway_arn,
                 region=AWS_REGION_US_EAST_1,
-                file_share_type="NFS",
+                fs_type="NFS",
                 status="AVAILABLE",
                 kms=True,
                 kms_key=test_kms_key,
@@ -80,10 +80,10 @@ class Test_storagegateway_fileshare_encryption_enabled:
         storagegateway_client.fileshares.append(
             FileShare(
                 id=test_share_nfs,
-                file_share_arn=test_share_arn_nfs,
+                arn=test_share_arn_nfs,
                 gateway_arn=test_gateway_arn,
                 region=AWS_REGION_US_EAST_1,
-                file_share_type="NFS",
+                fs_type="NFS",
                 status="AVAILABLE",
                 kms=False,
             )
@@ -118,10 +118,10 @@ class Test_storagegateway_fileshare_encryption_enabled:
         storagegateway_client.fileshares.append(
             FileShare(
                 id=test_share_smb,
-                file_share_arn=test_share_arn_smb,
+                arn=test_share_arn_smb,
                 gateway_arn=test_gateway_arn,
                 region=AWS_REGION_US_EAST_1,
-                file_share_type="SMB",
+                fs_type="SMB",
                 status="AVAILABLE",
                 kms=True,
                 kms_key=test_kms_key,
@@ -162,10 +162,10 @@ class Test_storagegateway_fileshare_encryption_enabled:
         storagegateway_client.fileshares.append(
             FileShare(
                 id=test_share_smb,
-                file_share_arn=test_share_arn_smb,
+                arn=test_share_arn_smb,
                 gateway_arn=test_gateway_arn,
                 region=AWS_REGION_US_EAST_1,
-                file_share_type="SMB",
+                fs_type="SMB",
                 status="AVAILABLE",
                 kms=False,
             )

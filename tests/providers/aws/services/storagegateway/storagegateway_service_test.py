@@ -97,21 +97,12 @@ class Test_StorageGateway_Service:
     # Test SGW Describe FileShares
     @mock_aws
     def test__describe_file_shares__(self):
-        conn = client("storagegateway", region_name=AWS_REGION_US_EAST_1)
-        conn.create_nfs_file_share(
-            ClientToken="123456789",
-            GatewayARN=test_gateway_arn,
-            KMSEncrypted=True,
-            KMSKey=test_kms_key,
-            Role=test_iam_role,
-            LocationARN="arn:aws:s3:::my-bucket-alpha/test/",
-        )
-        # RDS client for this test class
+        # StorageGateway client for this test class
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         sgw = StorageGateway(aws_provider)
         assert len(sgw.fileshares) == 2
         assert sgw.fileshares[0].id == "share-nfs2wwe"
-        assert sgw.fileshares[0].file_share_type == "NFS"
+        assert sgw.fileshares[0].fs_type == "NFS"
         assert sgw.fileshares[0].status == "AVAILABLE"
         assert (
             sgw.fileshares[0].gateway_arn
@@ -126,7 +117,7 @@ class Test_StorageGateway_Service:
             {"Key": "test", "Value": "test"},
         ]
         assert sgw.fileshares[1].id == "share-smb2wwe"
-        assert sgw.fileshares[1].file_share_type == "SMB"
+        assert sgw.fileshares[1].fs_type == "SMB"
         assert sgw.fileshares[1].status == "AVAILABLE"
         assert (
             sgw.fileshares[1].gateway_arn

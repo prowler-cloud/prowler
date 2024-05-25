@@ -11,7 +11,7 @@ class storagegateway_fileshare_encryption_enabled(Check):
             report = Check_Report_AWS(self.metadata())
             report.region = fileshare.region
             report.resource_id = fileshare.id
-            report.resource_arn = fileshare.file_share_arn
+            report.resource_arn = fileshare.arn
             report.resource_tags = fileshare.tags
             report.status = "FAIL"
             report.status_extended = (

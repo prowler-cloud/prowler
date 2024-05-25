@@ -3,6 +3,7 @@ from typing import Optional
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
+from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
@@ -23,16 +24,21 @@ class StorageGateway(AWSService):
             )
             for page in list_file_share_paginator.paginate():
                 for fileshare in page["FileShareInfoList"]:
-                    self.fileshares.append(
-                        FileShare(
-                            id=fileshare["FileShareId"],
-                            file_share_arn=fileshare["FileShareARN"],
-                            gateway_arn=fileshare["GatewayARN"],
-                            region=regional_client.region,
-                            file_share_type=fileshare["FileShareType"],
-                            status=fileshare["FileShareStatus"],
+                    if not self.audit_resources or (
+                        is_resource_filtered(
+                            fileshare["FileShareARN"], self.audit_resources
                         )
-                    )
+                    ):
+                        self.fileshares.append(
+                            FileShare(
+                                id=fileshare["FileShareId"],
+                                arn=fileshare["FileShareARN"],
+                                gateway_arn=fileshare["GatewayARN"],
+                                region=regional_client.region,
+                                fs_type=fileshare["FileShareType"],
+                                status=fileshare["FileShareStatus"],
+                            )
+                        )
 
         except Exception as error:
             logger.error(
@@ -43,23 +49,15 @@ class StorageGateway(AWSService):
         logger.info("StorageGateway - Describe NFS FileShares...")
         try:
             for fileshare in self.fileshares:
-                if fileshare.file_share_type == "NFS":
-                    filesharelist = []
-                    filesharelist.append(fileshare.file_share_arn)
+                if fileshare.fs_type == "NFS":
                     response = regional_client.describe_nfs_file_shares(
-                        FileShareARNList=filesharelist
+                        FileShareARNList=[fileshare.arn]
                     )
-                    if "Tags" in response["NFSFileShareInfoList"][0]:
-                        fileshare.tags = response["NFSFileShareInfoList"][0]["Tags"]
-                    else:
-                        fileshare.tags = []
+                    fileshare.tags = response["NFSFileShareInfoList"][0].get("Tags", [])
                     fileshare.kms = response["NFSFileShareInfoList"][0]["KMSEncrypted"]
-                    if response["NFSFileShareInfoList"][0]["KMSEncrypted"]:
-                        fileshare.kms_key = response["NFSFileShareInfoList"][0][
-                            "KMSKey"
-                        ]
-                    else:
-                        fileshare.kms_key = ""
+                    fileshare.kms_key = response["NFSFileShareInfoList"][0].get(
+                        "KMSKey", ""
+                    )
 
         except Exception as error:
             logger.error(
@@ -70,23 +68,15 @@ class StorageGateway(AWSService):
         logger.info("StorageGateway - Describe SMB FileShares...")
         try:
             for fileshare in self.fileshares:
-                if fileshare.file_share_type == "SMB":
-                    filesharelist = []
-                    filesharelist.append(fileshare.file_share_arn)
+                if fileshare.fs_type == "SMB":
                     response = regional_client.describe_smb_file_shares(
-                        FileShareARNList=filesharelist
+                        FileShareARNList=[fileshare.arn]
                     )
-                    if "Tags" in response["SMBFileShareInfoList"][0]:
-                        fileshare.tags = response["SMBFileShareInfoList"][0]["Tags"]
-                    else:
-                        fileshare.tags = []
+                    fileshare.tags = response["SMBFileShareInfoList"][0].get("Tags", [])
                     fileshare.kms = response["SMBFileShareInfoList"][0]["KMSEncrypted"]
-                    if response["SMBFileShareInfoList"][0]["KMSEncrypted"]:
-                        fileshare.kms_key = response["SMBFileShareInfoList"][0][
-                            "KMSKey"
-                        ]
-                    else:
-                        fileshare.kms_key = ""
+                    fileshare.kms_key = response["SMBFileShareInfoList"][0].get(
+                        "KMSKey", ""
+                    )
 
         except Exception as error:
             logger.error(
@@ -96,10 +86,10 @@ class StorageGateway(AWSService):
 
 class FileShare(BaseModel):
     id: str
-    file_share_arn: str
+    arn: str
     gateway_arn: str
     region: str
-    file_share_type: str
+    fs_type: str
     status: str
     kms: Optional[bool]
     kms_key: Optional[str]
