@@ -1,7 +1,6 @@
 from unittest.mock import patch
 
 import botocore
-from boto3 import client
 from moto import mock_aws
 
 from prowler.providers.aws.services.storagegateway.storagegateway_service import (
