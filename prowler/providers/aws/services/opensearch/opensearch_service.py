@@ -117,9 +117,11 @@ class OpenSearchService(AWSService):
                 domain.internal_user_database = describe_domain["DomainStatus"][
                     "AdvancedSecurityOptions"
                 ]["InternalUserDatabaseEnabled"]
-                domain.saml_enabled = describe_domain["DomainStatus"][
-                    "AdvancedSecurityOptions"
-                ]["SAMLOptions"]["Enabled"]
+                domain.saml_enabled = (
+                    describe_domain["DomainStatus"]["AdvancedSecurityOptions"]
+                    .get("SAMLOptions", {})
+                    .get("Enabled", False)
+                )
                 domain.update_available = describe_domain["DomainStatus"][
                     "ServiceSoftwareOptions"
                 ]["UpdateAvailable"]
