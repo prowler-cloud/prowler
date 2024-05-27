@@ -38,7 +38,7 @@ def list_resources(provider: str, resource_type: str):
         print_categories(list_categories(bulk_load_checks_metadata(provider)))
     elif resource_type == "compliance":
         print_compliance_frameworks(bulk_load_compliance_frameworks(provider))
-    elif resource_type == "checks":
+    elif resource_type in ["checks", "checks-json"]:
         bulk_checks_metadata = bulk_load_checks_metadata(provider)
         checks_to_execute = load_checks_to_execute(
             bulk_checks_metadata,
@@ -51,21 +51,10 @@ def list_resources(provider: str, resource_type: str):
             [],
             provider,
         )
-        print_checks(provider, sorted(checks_to_execute), bulk_checks_metadata)
-    elif resource_type == "checks-json":
-        bulk_checks_metadata = bulk_load_checks_metadata(provider)
-        checks_to_execute = load_checks_to_execute(
-            bulk_checks_metadata,
-            bulk_load_compliance_frameworks(provider),
-            None,
-            [],
-            [],
-            [],
-            [],
-            [],
-            provider,
-        )
-        print(list_checks_json(provider, sorted(checks_to_execute)))
+        if resource_type == "checks":
+            print_checks(provider, sorted(checks_to_execute), bulk_checks_metadata)
+        elif resource_type == "checks-json":
+            print(list_checks_json(provider, sorted(checks_to_execute)))
 
 
 def list_compliance_requirements(
