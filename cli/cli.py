@@ -8,11 +8,13 @@ from prowler.lib.check.check import (
     list_fixers,
     list_services,
     print_categories,
+    print_checks,
     print_compliance_frameworks,
     print_compliance_requirements,
     print_fixers,
     print_services,
 )
+from prowler.lib.check.checks_loader import load_checks_to_execute
 
 app = typer.Typer()
 aws = typer.Typer(name="aws")
@@ -35,6 +37,20 @@ def list_resources(provider: str, resource_type: str):
         print_categories(list_categories(bulk_load_checks_metadata(provider)))
     elif resource_type == "compliance":
         print_compliance_frameworks(bulk_load_compliance_frameworks(provider))
+    elif resource_type == "checks":
+        bulk_checks_metadata = bulk_load_checks_metadata(provider)
+        checks_to_execute = load_checks_to_execute(
+            bulk_checks_metadata,
+            bulk_load_compliance_frameworks(provider),
+            None,
+            [],
+            [],
+            [],
+            [],
+            [],
+            provider,
+        )
+        print_checks(provider, sorted(checks_to_execute), bulk_checks_metadata)
 
 
 def list_compliance_requirements(
@@ -84,6 +100,13 @@ def create_list_commands(provider_typer: typer.Typer):
         list_compliance_frameworks: list[str] = typer.Argument(None),
     ):
         list_compliance_requirements(provider_name, list_compliance_frameworks)
+
+    @provider_typer.command(
+        "list-checks",
+        help=f"List the {provider_name} checks that are supported by Prowler.",
+    )
+    def list_checks_command():
+        list_resources(provider_name, "checks")
 
 
 create_list_commands(aws)
