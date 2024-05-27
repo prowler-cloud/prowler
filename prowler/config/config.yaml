@@ -255,11 +255,14 @@ aws:
   check_rds_instance_replicas: False
   #
   check_ec2_securitygroup_allow_ingress_from_internet_to_any_port_allowed_interface_types:
-      [
-          "amazon-elb",
-          "api_gateway_managed",
-          "vpc_endpoint",
-      ]
+    [
+        "api_gateway_managed",
+        "vpc_endpoint",
+    ]
+  check_ec2_securitygroup_allow_ingress_from_internet_to_any_port_allowed_instance_owners:
+    [
+        "amazon-elb"
+    ]
 
 # Azure Configuration
 azure:
