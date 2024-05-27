@@ -88,7 +88,7 @@ class SNS(AWSService):
                         Subscription(**sub)
                         for sub in response["Subscriptions"]
                         if sub["SubscriptionArn"]
-                        != "PendingConfirmation"  #  PendingConfirmation is the default name for a subscription that has not been confirmed
+                        != "PendingConfirmation"  # PendingConfirmation is the default name for a subscription that has not been confirmed
                     ]
                     topic.subscriptions = subscriptions
                 except Exception as error:
