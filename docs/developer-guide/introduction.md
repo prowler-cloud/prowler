@@ -40,6 +40,7 @@ Before we merge any of your pull requests we pass checks to the code, we use the
 - [`hadolint`](https://github.com/hadolint/hadolint) and [`dockle`](https://github.com/goodwithtech/dockle) for our containers security.
 - [`Snyk`](https://docs.snyk.io/integrations/snyk-container-integrations/container-security-with-docker-hub-integration) in Docker Hub.
 - [`clair`](https://github.com/quay/clair) in Amazon ECR.
+- [`trufflehog`](https://github.com/trufflesecurity/trufflehog) for secrets.
 - [`vulture`](https://pypi.org/project/vulture/), [`flake8`](https://pypi.org/project/flake8/), [`black`](https://pypi.org/project/black/) and [`pylint`](https://pypi.org/project/pylint/) for formatting and best practices.
 
 You can see all dependencies in file `pyproject.toml`.
