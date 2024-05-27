@@ -1,5 +1,6 @@
 import typer
 
+from prowler.config.config import available_compliance_frameworks
 from prowler.lib.banner import print_banner
 from prowler.lib.check.check import (
     bulk_load_checks_metadata,
@@ -65,6 +66,15 @@ def list_compliance_requirements(
     )
 
 
+def validate_frameworks(compliance_frameworks: list[str] = None):
+    if not compliance_frameworks:
+        raise typer.BadParameter("Expected at least one argument")
+    for framework in compliance_frameworks:
+        if framework not in available_compliance_frameworks:
+            print(f"{framework} is not a valid Compliance Framework\n")
+    return compliance_frameworks
+
+
 def create_list_commands(provider_typer: typer.Typer):
     provider_name = provider_typer.info.name
 
@@ -96,12 +106,17 @@ def create_list_commands(provider_typer: typer.Typer):
     def list_compliance_command():
         list_resources(provider_name, "compliance")
 
+    # The compliance requirements should be inside available_compliance_frameworks
     @provider_typer.command(
         "list-compliance-requirements",
         help=f"List the {provider_name} compliance frameworks requirements that are supported by Prowler.",
     )
     def list_compliance_requirements_command(
-        list_compliance_frameworks: list[str] = typer.Argument(None),
+        list_compliance_frameworks: list[str] = typer.Argument(
+            help="List requirements and checks per compliance framework",
+            callback=validate_frameworks,
+            default=None,
+        ),
     ):
         list_compliance_requirements(provider_name, list_compliance_frameworks)
 

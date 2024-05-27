@@ -54,8 +54,18 @@ def test_list_compliance_requirements_aws():
 
 def test_list_compliance_requirements_no_compliance_aws():
     result = runner.invoke(app, ["aws", "list-compliance-requirements"])
+    assert result.exit_code == 2
+    assert "Expected at least one" in result.output
+
+
+def test_list_compliance_requirements_one_invalid_aws():
+    invalid_name = "invalid"
+    result = runner.invoke(
+        app, ["aws", "list-compliance-requirements", "cis_2.0_aws", invalid_name]
+    )
     assert result.exit_code == 0
-    assert "No compliance frameworks specified." in result.output
+    assert "Listing CIS 2.0 AWS Compliance Requirements:" in result.output
+    assert f"{invalid_name} is not a valid Compliance Framework" in result.output
 
 
 def test_list_checks_aws():
