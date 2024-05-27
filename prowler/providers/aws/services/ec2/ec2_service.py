@@ -44,6 +44,11 @@ class EC2(AWSService):
         self.__threading_call__(self.__get_snapshot_block_public_access_state__)
         self.instance_metadata_defaults = []
         self.__threading_call__(self.__get_instance_metadata_defaults__)
+        self.launch_templates = []
+        self.__threading_call__(self.__describe_launch_templates)
+        self.__threading_call__(
+            self.__get_launch_template_versions__, self.launch_templates
+        )
 
     def __get_volume_arn_template__(self, region):
         return (
@@ -470,6 +475,56 @@ class EC2(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def __describe_launch_templates(self, regional_client):
+        try:
+            describe_launch_templates_paginator = regional_client.get_paginator(
+                "describe_launch_templates"
+            )
+
+            for page in describe_launch_templates_paginator.paginate():
+                for template in page["LaunchTemplates"]:
+                    template_arn = f"arn:aws:ec2:{regional_client.region}:{self.audited_account}:launch-template/{template['LaunchTemplateId']}"
+                    if not self.audit_resources or (
+                        is_resource_filtered(template_arn, self.audit_resources)
+                    ):
+                        self.launch_templates.append(
+                            LaunchTemplate(
+                                name=template["LaunchTemplateName"],
+                                id=template["LaunchTemplateId"],
+                                arn=template_arn,
+                                region=regional_client.region,
+                                versions=[],
+                            )
+                        )
+
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def __get_launch_template_versions__(self, launch_template):
+        try:
+            regional_client = self.regional_clients[launch_template.region]
+            describe_launch_template_versions_paginator = regional_client.get_paginator(
+                "describe_launch_template_versions"
+            )
+
+            for page in describe_launch_template_versions_paginator.paginate(
+                LaunchTemplateId=launch_template.id
+            ):
+                for template_version in page["LaunchTemplateVersions"]:
+                    launch_template.versions.append(
+                        LaunchTemplateVersion(
+                            version_number=template_version["VersionNumber"],
+                            template_data=template_version["LaunchTemplateData"],
+                        )
+                    )
+
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class Instance(BaseModel):
     id: str
@@ -577,3 +632,16 @@ class InstanceMetadataDefaults(BaseModel):
     http_tokens: Optional[str]
     instances: bool
     region: str
+
+
+class LaunchTemplateVersion(BaseModel):
+    version_number: int
+    template_data: dict
+
+
+class LaunchTemplate(BaseModel):
+    name: str
+    id: str
+    arn: str
+    region: str
+    versions: list[LaunchTemplateVersion] = []
