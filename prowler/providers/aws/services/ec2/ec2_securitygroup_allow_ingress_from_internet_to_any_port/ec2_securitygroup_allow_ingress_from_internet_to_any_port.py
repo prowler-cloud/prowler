@@ -41,7 +41,7 @@ class ec2_securitygroup_allow_ingress_from_internet_to_any_port(Check):
                                     "check_ec2_securitygroup_allow_ingress_from_internet_to_any_port_allowed_interface_types", []
                                 ):
                                     report.status = "FAIL"
-                                    report.status_extended = f"Security group {security_group.name} ({security_group.id}) has at least one port open to the Internet and not exclusively attached to an allowed network interface type."
+                                    report.status_extended = f"Security group {security_group.name} ({security_group.id}) has at least one port open to the Internet and is not exclusively attached to an allowed network interface type."
                                     break
                         if report.status == "FAIL":
                             break
