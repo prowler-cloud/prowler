@@ -1,7 +1,7 @@
 from unittest import mock
 from uuid import uuid4
 
-from prowler.providers.aws.services.sns.sns_service import Topic, Subscription
+from prowler.providers.aws.services.sns.sns_service import Subscription, Topic
 from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, AWS_REGION_EU_WEST_1
 
 kms_key_id = str(uuid4())
@@ -37,7 +37,7 @@ class Test_sns_topics_no_http_subscriptions:
                 name=topic_name,
                 kms_master_key_id=kms_key_id,
                 region=AWS_REGION_EU_WEST_1,
-                subscriptions=subscriptions
+                subscriptions=subscriptions,
             )
         )
 
@@ -62,9 +62,9 @@ class Test_sns_topics_no_http_subscriptions:
                 Owner=AWS_ACCOUNT_NUMBER,
                 Protocol="https",
                 Endpoint="https://www.endpoint.com",
-                TopicArn=topic_arn
-
-            ))
+                TopicArn=topic_arn,
+            )
+        )
         sns_client.topics = []
         sns_client.topics.append(
             Topic(
@@ -72,7 +72,7 @@ class Test_sns_topics_no_http_subscriptions:
                 name=topic_name,
                 kms_master_key_id=kms_key_id,
                 region=AWS_REGION_EU_WEST_1,
-                subscriptions=subscriptions
+                subscriptions=subscriptions,
             )
         )
 
@@ -88,8 +88,6 @@ class Test_sns_topics_no_http_subscriptions:
             result = check.execute()
             assert len(result) == 0
 
-
-
     def test_subscriptions_with_https(self):
         sns_client = mock.MagicMock
         subscriptions = []
@@ -99,9 +97,9 @@ class Test_sns_topics_no_http_subscriptions:
                 Owner=AWS_ACCOUNT_NUMBER,
                 Protocol="https",
                 Endpoint="https://www.endpoint.com",
-                TopicArn=topic_arn
-
-            ))
+                TopicArn=topic_arn,
+            )
+        )
         sns_client.topics = []
         sns_client.topics.append(
             Topic(
@@ -109,7 +107,7 @@ class Test_sns_topics_no_http_subscriptions:
                 name=topic_name,
                 kms_master_key_id=kms_key_id,
                 region=AWS_REGION_EU_WEST_1,
-                subscriptions=subscriptions
+                subscriptions=subscriptions,
             )
         )
 
@@ -125,7 +123,10 @@ class Test_sns_topics_no_http_subscriptions:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert result[0].status_extended == f"Subscription {subscription_arn_1} is HTTPS."
+            assert (
+                result[0].status_extended
+                == f"Subscription {subscription_arn_1} is HTTPS."
+            )
             assert result[0].resource_id == topic_name
             assert result[0].resource_arn == topic_arn
 
@@ -138,9 +139,9 @@ class Test_sns_topics_no_http_subscriptions:
                 Owner=AWS_ACCOUNT_NUMBER,
                 Protocol="http",
                 Endpoint="http://www.endpoint.com",
-                TopicArn=topic_arn
-
-            ))
+                TopicArn=topic_arn,
+            )
+        )
         sns_client.topics = []
         sns_client.topics.append(
             Topic(
@@ -148,7 +149,7 @@ class Test_sns_topics_no_http_subscriptions:
                 name=topic_name,
                 kms_master_key_id=kms_key_id,
                 region=AWS_REGION_EU_WEST_1,
-                subscriptions=subscriptions
+                subscriptions=subscriptions,
             )
         )
 
@@ -164,10 +165,12 @@ class Test_sns_topics_no_http_subscriptions:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert result[0].status_extended == f"Subscription {subscription_arn_2} is HTTP."
+            assert (
+                result[0].status_extended
+                == f"Subscription {subscription_arn_2} is HTTP."
+            )
             assert result[0].resource_id == topic_name
             assert result[0].resource_arn == topic_arn
-
 
     def test_subscriptions_with_http_and_https(self):
         sns_client = mock.MagicMock
@@ -178,18 +181,18 @@ class Test_sns_topics_no_http_subscriptions:
                 Owner=AWS_ACCOUNT_NUMBER,
                 Protocol="https",
                 Endpoint="https://www.endpoint.com",
-                TopicArn=topic_arn
-
-            ))
+                TopicArn=topic_arn,
+            )
+        )
         subscriptions.append(
             Subscription(
                 SubscriptionArn=subscription_arn_2,
                 Owner=AWS_ACCOUNT_NUMBER,
                 Protocol="http",
                 Endpoint="http://www.endpoint.com",
-                TopicArn=topic_arn
-
-            ))
+                TopicArn=topic_arn,
+            )
+        )
         sns_client.topics = []
         sns_client.topics.append(
             Topic(
@@ -197,7 +200,7 @@ class Test_sns_topics_no_http_subscriptions:
                 name=topic_name,
                 kms_master_key_id=kms_key_id,
                 region=AWS_REGION_EU_WEST_1,
-                subscriptions=subscriptions
+                subscriptions=subscriptions,
             )
         )
 
@@ -213,11 +216,17 @@ class Test_sns_topics_no_http_subscriptions:
             result = check.execute()
             assert len(result) == 2
             assert result[0].status == "PASS"
-            assert result[0].status_extended == f"Subscription {subscription_arn_1} is HTTPS."
+            assert (
+                result[0].status_extended
+                == f"Subscription {subscription_arn_1} is HTTPS."
+            )
             assert result[0].resource_id == topic_name
             assert result[0].resource_arn == topic_arn
 
             assert result[1].status == "FAIL"
-            assert result[1].status_extended == f"Subscription {subscription_arn_2} is HTTP."
+            assert (
+                result[1].status_extended
+                == f"Subscription {subscription_arn_2} is HTTP."
+            )
             assert result[1].resource_id == topic_name
             assert result[1].resource_arn == topic_arn

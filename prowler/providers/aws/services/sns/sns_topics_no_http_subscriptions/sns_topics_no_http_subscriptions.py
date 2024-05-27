@@ -8,7 +8,7 @@ class sns_topics_no_http_subscriptions(Check):
         for topic in sns_client.topics:
             for subscription in topic.subscriptions:
                 if subscription.SubscriptionArn == "PendingConfirmation":
-                    continue 
+                    continue
                 report = Check_Report_AWS(self.metadata())
                 report.region = topic.region
                 report.resource_id = topic.name
@@ -24,7 +24,7 @@ class sns_topics_no_http_subscriptions(Check):
                     report.status_extended = (
                         f"Subscription {subscription.SubscriptionArn} is HTTP."
                     )
-                
+
                 findings.append(report)
 
         return findings
