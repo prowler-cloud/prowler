@@ -5,6 +5,7 @@ from prowler.lib.check.check import (
     bulk_load_checks_metadata,
     bulk_load_compliance_frameworks,
     list_categories,
+    list_checks_json,
     list_fixers,
     list_services,
     print_categories,
@@ -51,6 +52,20 @@ def list_resources(provider: str, resource_type: str):
             provider,
         )
         print_checks(provider, sorted(checks_to_execute), bulk_checks_metadata)
+    elif resource_type == "checks-json":
+        bulk_checks_metadata = bulk_load_checks_metadata(provider)
+        checks_to_execute = load_checks_to_execute(
+            bulk_checks_metadata,
+            bulk_load_compliance_frameworks(provider),
+            None,
+            [],
+            [],
+            [],
+            [],
+            [],
+            provider,
+        )
+        print(list_checks_json(provider, sorted(checks_to_execute)))
 
 
 def list_compliance_requirements(
@@ -107,6 +122,13 @@ def create_list_commands(provider_typer: typer.Typer):
     )
     def list_checks_command():
         list_resources(provider_name, "checks")
+
+    @provider_typer.command(
+        "list-checks-json",
+        help=f"List the {provider_name} checks that are supported by Prowler in JSON format.",
+    )
+    def list_checks_json_command():
+        list_resources(provider_name, "checks-json")
 
 
 create_list_commands(aws)
