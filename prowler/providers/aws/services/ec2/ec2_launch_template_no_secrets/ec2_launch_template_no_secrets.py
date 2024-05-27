@@ -22,7 +22,6 @@ class ec2_launch_template_no_secrets(Check):
             versions_with_secrets = []
 
             for version in template.versions:
-                print(version.template_data)
                 if "UserData" not in version.template_data:
                     continue
 
