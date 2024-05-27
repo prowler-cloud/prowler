@@ -20,7 +20,7 @@ List compliance by provider
 
 List compliance requirements by provider
 
-`python cli/cli.py <provider> list-compliance-requirements`
+`python cli/cli.py <provider> list-compliance-requirements [compliance(s)]`
 
 List checks by provider
 
