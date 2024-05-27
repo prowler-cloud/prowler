@@ -6,15 +6,6 @@ runner = CliRunner()
 
 
 class TestCLI:
-    def test_banner_show(self):
-        result = runner.invoke(app, ["banner", "--show"])
-        assert result.exit_code == 0
-        assert "Banner is not shown." not in result.output
-
-    def test_banner_no_show(self):
-        result = runner.invoke(app, ["banner", "--no-show"])
-        assert result.exit_code == 0
-        assert "Banner is not shown." in result.output
 
     def test_list_services_aws(self):
         result = runner.invoke(app, ["aws", "list-services"])
@@ -31,12 +22,12 @@ class TestCLI:
         assert result.exit_code == 0
         assert "available categories." in result.output
 
-    def test_list_compliance_aws():
+    def test_list_compliance_aws(self):
         result = runner.invoke(app, ["aws", "list-compliance"])
         assert result.exit_code == 0
         assert "available Compliance Frameworks." in result.output
 
-    def test_list_compliance_requirements_aws():
+    def test_list_compliance_requirements_aws(self):
         result = runner.invoke(
             app, ["aws", "list-compliance-requirements", "cis_2.0_aws", "soc2_aws"]
         )
@@ -44,12 +35,12 @@ class TestCLI:
         assert "Listing CIS 2.0 AWS Compliance Requirements:" in result.output
         assert "Listing SOC2  AWS Compliance Requirements:" in result.output
 
-    def test_list_compliance_requirements_no_compliance_aws():
+    def test_list_compliance_requirements_no_compliance_aws(self):
         result = runner.invoke(app, ["aws", "list-compliance-requirements"])
         assert result.exit_code == 2
         assert "Expected at least one" in result.output
 
-    def test_list_compliance_requirements_one_invalid_aws():
+    def test_list_compliance_requirements_one_invalid_aws(self):
         invalid_name = "invalid"
         result = runner.invoke(
             app, ["aws", "list-compliance-requirements", "cis_2.0_aws", invalid_name]
@@ -58,12 +49,12 @@ class TestCLI:
         assert "Listing CIS 2.0 AWS Compliance Requirements:" in result.output
         assert f"{invalid_name} is not a valid Compliance Framework" in result.output
 
-    def test_list_checks_aws():
+    def test_list_checks_aws(self):
         result = runner.invoke(app, ["aws", "list-checks"])
         assert result.exit_code == 0
         assert "available checks." in result.output
 
-    def test_list_checks_json_aws():
+    def test_list_checks_json_aws(self):
         result = runner.invoke(app, ["aws", "list-checks-json"])
         assert result.exit_code == 0
         assert "aws" in result.output

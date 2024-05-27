@@ -1,7 +1,6 @@
 import typer
 
 from prowler.config.config import available_compliance_frameworks
-from prowler.lib.banner import print_banner
 from prowler.lib.check.check import (
     bulk_load_checks_metadata,
     bulk_load_compliance_frameworks,
@@ -41,6 +40,7 @@ def list_resources(provider: str, resource_type: str):
         print_compliance_frameworks(bulk_load_compliance_frameworks(provider))
     elif resource_type in ["checks", "checks-json"]:
         bulk_checks_metadata = bulk_load_checks_metadata(provider)
+        # TODO fill the rest of the arguments
         checks_to_execute = load_checks_to_execute(
             bulk_checks_metadata,
             bulk_load_compliance_frameworks(provider),
@@ -139,14 +139,6 @@ create_list_commands(aws)
 create_list_commands(azure)
 create_list_commands(gcp)
 create_list_commands(kubernetes)
-
-
-@app.command("banner", help="Prints the banner of the tool.")
-def banner(show: bool = True):
-    if show:
-        print_banner(show)
-    else:
-        print("Banner is not shown.")
 
 
 if __name__ == "__main__":
