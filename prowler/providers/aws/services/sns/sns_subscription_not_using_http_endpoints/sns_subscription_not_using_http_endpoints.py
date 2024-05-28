@@ -2,7 +2,7 @@ from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.sns.sns_client import sns_client
 
 
-class sns_topics_no_http_subscriptions(Check):
+class sns_subscription_not_using_http_endpoints(Check):
     def execute(self):
         findings = []
         for topic in sns_client.topics:
@@ -11,9 +11,10 @@ class sns_topics_no_http_subscriptions(Check):
                     continue
                 report = Check_Report_AWS(self.metadata())
                 report.region = topic.region
-                report.resource_id = subscription.arn
+                report.resource_id = subscription.id
                 report.resource_arn = subscription.arn
                 report.resource_tags = topic.tags
+                report.resource_details = topic.arn
                 report.status = "PASS"
                 report.status_extended = (
                     f"Subscription {subscription.arn} is using an HTTPS endpoint."

@@ -86,6 +86,7 @@ class SNS(AWSService):
                     )
                     subscriptions: list[Subscription] = [
                         Subscription(
+                            id=sub["SubscriptionArn"].split(":")[-1],
                             arn=sub["SubscriptionArn"],
                             owner=sub["Owner"],
                             protocol=sub["Protocol"],
@@ -105,6 +106,7 @@ class SNS(AWSService):
 
 
 class Subscription(BaseModel):
+    id: str
     arn: str
     owner: str
     protocol: str
