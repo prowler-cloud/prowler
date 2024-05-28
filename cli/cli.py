@@ -16,7 +16,7 @@ from prowler.lib.check.check import (
     print_services,
 )
 from prowler.lib.check.checks_loader import load_checks_to_execute
-from prowler.lib.logger import logger, set_logging_config
+from prowler.lib.logger import logger, logging_levels, set_logging_config
 
 app = typer.Typer()
 aws = typer.Typer(name="aws")
@@ -76,12 +76,9 @@ def validate_frameworks(compliance_frameworks: list[str] = None):
     return compliance_frameworks
 
 
-valid_log_levels = ["CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"]
-
-
 def validate_log_level(log_level: str):
-    if log_level not in valid_log_levels:
-        raise typer.BadParameter(f"Log level must be one of {valid_log_levels}")
+    if log_level not in logging_levels.keys():
+        raise typer.BadParameter(f"Log level must be one of {logging_levels.keys()}")
     return log_level
 
 
