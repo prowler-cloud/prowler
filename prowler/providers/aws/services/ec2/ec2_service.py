@@ -67,33 +67,6 @@ class EC2(AWSService):
                         if not self.audit_resources or (
                             is_resource_filtered(arn, self.audit_resources)
                         ):
-                            http_tokens = None
-                            http_endpoint = None
-                            public_dns = None
-                            public_ip = None
-                            private_ip = None
-                            instance_profile = None
-                            monitoring_state = "disabled"
-                            if "MetadataOptions" in instance:
-                                http_tokens = instance["MetadataOptions"]["HttpTokens"]
-                                http_endpoint = instance["MetadataOptions"][
-                                    "HttpEndpoint"
-                                ]
-                            if (
-                                "PublicDnsName" in instance
-                                and "PublicIpAddress" in instance
-                            ):
-                                public_dns = instance["PublicDnsName"]
-                                public_ip = instance["PublicIpAddress"]
-                            if "Monitoring" in instance:
-                                monitoring_state = instance.get(
-                                    "Monitoring", {"State": "disabled"}
-                                ).get("State", "disabled")
-                            if "PrivateIpAddress" in instance:
-                                private_ip = instance["PrivateIpAddress"]
-                            if "IamInstanceProfile" in instance:
-                                instance_profile = instance["IamInstanceProfile"]
-
                             self.instances.append(
                                 Instance(
                                     id=instance["InstanceId"],
@@ -104,13 +77,24 @@ class EC2(AWSService):
                                     image_id=instance["ImageId"],
                                     launch_time=instance["LaunchTime"],
                                     private_dns=instance["PrivateDnsName"],
-                                    private_ip=private_ip,
-                                    public_dns=public_dns,
-                                    public_ip=public_ip,
-                                    http_tokens=http_tokens,
-                                    http_endpoint=http_endpoint,
-                                    instance_profile=instance_profile,
-                                    monitoring_state=monitoring_state,
+                                    private_ip=instance.get("PrivateIpAddress"),
+                                    public_dns=instance.get("PublicDnsName"),
+                                    public_ip=instance.get("PublicIpAddress"),
+                                    http_tokens=instance.get("MetadataOptions", {}).get(
+                                        "HttpTokens"
+                                    ),
+                                    http_endpoint=instance.get(
+                                        "MetadataOptions", {}
+                                    ).get("HttpEndpoint"),
+                                    instance_profile=instance.get("IamInstanceProfile"),
+                                    monitoring_state=instance.get(
+                                        "Monitoring", {"State": "disabled"}
+                                    ).get("State", "disabled"),
+                                    security_groups=[
+                                        sg["GroupId"]
+                                        for sg in instance.get("SecurityGroups", [])
+                                    ],
+                                    subnet_id=instance.get("SubnetId", ""),
                                     tags=instance.get("Tags"),
                                 )
                             )
@@ -542,6 +526,8 @@ class Instance(BaseModel):
     http_tokens: Optional[str]
     http_endpoint: Optional[str]
     monitoring_state: str
+    security_groups: list[str]
+    subnet_id: str
     instance_profile: Optional[dict]
     tags: Optional[list] = []
 
