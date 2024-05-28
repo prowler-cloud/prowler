@@ -112,3 +112,28 @@ class Test_SNS_Service:
         assert sns.topics[0].region == AWS_REGION_EU_WEST_1
         assert sns.topics[0].policy
         assert sns.topics[0].kms_master_key_id == kms_key_id
+
+    @mock_aws
+    def test__list_subscriptions_by_topic__(self):
+        sns_client = client("sns", region_name=AWS_REGION_EU_WEST_1)
+        topic_response = sns_client.create_topic(Name=topic_name)
+        topic_arn = topic_response["TopicArn"]
+
+        # Create subscriptions for the topic
+        sns_client.subscribe(
+            TopicArn=topic_arn, Protocol="http", Endpoint="http://www.endpoint.com"
+        )
+        sns_client.subscribe(
+            TopicArn=topic_arn, Protocol="https", Endpoint="https://www.endpoint.com"
+        )
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        sns = SNS(aws_provider)
+
+        assert len(sns.topics) == 1
+        assert sns.topics[0].arn == topic_arn
+        assert len(sns.topics[0].subscriptions) == 2
+        assert sns.topics[0].subscriptions[0].protocol == "http"
+        assert sns.topics[0].subscriptions[1].protocol == "https"
+        assert sns.topics[0].subscriptions[0].endpoint == "http://www.endpoint.com"
+        assert sns.topics[0].subscriptions[1].endpoint == "https://www.endpoint.com"
