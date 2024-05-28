@@ -183,7 +183,7 @@ class Test_ec2_instance_port_rdp_exposed_to_internet:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Instance {instance_id} has RDP exposed to 0.0.0.0/0 but with no public ip address."
+                == f"Instance {instance_id} has RDP exposed to 0.0.0.0/0 but with no public IP address."
             )
             assert result[0].resource_id == instance_id
             assert (
@@ -264,7 +264,7 @@ class Test_ec2_instance_port_rdp_exposed_to_internet:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Instance {instance.id} has RDP exposed to 0.0.0.0/0 on public ip address {instance.public_ip_address} but in private subnet {subnet_id}."
+                == f"Instance {instance.id} has RDP exposed to 0.0.0.0/0 on public IP address {instance.public_ip_address} but it is placed in a private subnet {subnet_id}."
             )
             assert result[0].resource_id == instance.id
             assert (
@@ -365,7 +365,7 @@ class Test_ec2_instance_port_rdp_exposed_to_internet:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Instance {instance.id} has RDP exposed to 0.0.0.0/0 on public ip address {instance.public_ip_address} in public subnet {subnet_id}."
+                == f"Instance {instance.id} has RDP exposed to 0.0.0.0/0 on public IP address {instance.public_ip_address} in public subnet {subnet_id}."
             )
             assert result[0].resource_id == instance.id
             assert (

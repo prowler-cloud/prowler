@@ -85,7 +85,10 @@ class EC2(AWSService):
                                     monitoring_state=instance.get(
                                         "Monitoring", {"State": "disabled"}
                                     ).get("State", "disabled"),
-                                    security_groups=instance["SecurityGroups"],
+                                    security_groups=[
+                                        sg["GroupId"]
+                                        for sg in instance.get("SecurityGroups", [])
+                                    ],
                                     subnet_id=instance["SubnetId"],
                                     tags=instance.get("Tags"),
                                 )
@@ -468,7 +471,7 @@ class Instance(BaseModel):
     http_tokens: Optional[str]
     http_endpoint: Optional[str]
     monitoring_state: str
-    security_groups: list[dict]
+    security_groups: list[str]
     subnet_id: str
     instance_profile: Optional[dict]
     tags: Optional[list] = []

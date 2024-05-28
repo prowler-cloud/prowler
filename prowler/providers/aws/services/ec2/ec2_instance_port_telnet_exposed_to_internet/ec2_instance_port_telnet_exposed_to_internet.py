@@ -19,21 +19,20 @@ class ec2_instance_port_telnet_exposed_to_internet(Check):
             report.resource_arn = instance.arn
             report.resource_tags = instance.tags
             if instance.security_groups:
-                for instance_sg in instance.security_groups:
-                    for sg in ec2_client.security_groups:
-                        if sg.id == instance_sg["GroupId"]:
-                            for ingress_rule in sg.ingress_rules:
-                                if check_security_group(
-                                    ingress_rule, "tcp", check_ports, any_address=True
-                                ):
-                                    # The port is open, now check if the instance is in a public subnet with a public IP
-                                    report.status = "FAIL"
-                                    (
-                                        report.status_extended,
-                                        report.check_metadata.Severity,
-                                    ) = get_instance_public_status(
-                                        vpc_client.vpc_subnets, instance, "Telnet"
-                                    )
-                                    break
+                for sg in ec2_client.security_groups:
+                    if sg.id in instance.security_groups:
+                        for ingress_rule in sg.ingress_rules:
+                            if check_security_group(
+                                ingress_rule, "tcp", check_ports, any_address=True
+                            ):
+                                # The port is open, now check if the instance is in a public subnet with a public IP
+                                report.status = "FAIL"
+                                (
+                                    report.status_extended,
+                                    report.check_metadata.Severity,
+                                ) = get_instance_public_status(
+                                    vpc_client.vpc_subnets, instance, "Telnet"
+                                )
+                                break
             findings.append(report)
         return findings

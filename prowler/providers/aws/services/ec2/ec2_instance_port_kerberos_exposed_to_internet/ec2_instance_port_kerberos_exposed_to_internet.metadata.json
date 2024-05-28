@@ -21,7 +21,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Modify the security group to remove the rule that allows ingress from the internet to TCP port 88 or 464 (Kerberos).",
+      "Text": "Modify the security group to remove the rule that allows ingress from the internet to TCP port 88, 464, 749 or 750 (Kerberos).",
       "Url": "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
     }
   },
