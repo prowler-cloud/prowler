@@ -18,9 +18,10 @@ class ec2_instance_port_ssh_exposed_to_internet(Check):
             report.resource_id = instance.id
             report.resource_arn = instance.arn
             report.resource_tags = instance.tags
+            is_open_port = False
             if instance.security_groups:
                 for sg in ec2_client.security_groups:
-                    if sg.id in instance.security_groups:
+                    if not is_open_port and sg.id in instance.security_groups:
                         for ingress_rule in sg.ingress_rules:
                             if check_security_group(
                                 ingress_rule, "tcp", check_ports, any_address=True
@@ -33,6 +34,7 @@ class ec2_instance_port_ssh_exposed_to_internet(Check):
                                 ) = get_instance_public_status(
                                     vpc_client.vpc_subnets, instance, "SSH"
                                 )
+                                is_open_port = True
                                 break
             findings.append(report)
         return findings
