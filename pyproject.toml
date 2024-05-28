@@ -79,7 +79,7 @@ typer = "0.12.3"
 [tool.poetry.group.dev.dependencies]
 bandit = "1.7.8"
 black = "24.4.2"
-coverage = "7.5.1"
+coverage = "7.5.2"
 docker = "7.0.0"
 flake8 = "7.0.0"
 freezegun = "1.5.1"
