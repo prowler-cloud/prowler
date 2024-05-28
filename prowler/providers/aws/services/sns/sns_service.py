@@ -85,10 +85,13 @@ class SNS(AWSService):
                         TopicArn=topic.arn
                     )
                     subscriptions: list[Subscription] = [
-                        Subscription(**sub)
+                        Subscription(
+                            arn=sub["SubscriptionArn"],
+                            owner=sub["Owner"],
+                            protocol=sub["Protocol"],
+                            endpoint=sub["Endpoint"],
+                        )
                         for sub in response["Subscriptions"]
-                        if sub["SubscriptionArn"]
-                        != "PendingConfirmation"  # PendingConfirmation is the default name for a subscription that has not been confirmed
                     ]
                     topic.subscriptions = subscriptions
                 except Exception as error:

@@ -11,8 +11,8 @@ class sns_topics_no_http_subscriptions(Check):
                     continue
                 report = Check_Report_AWS(self.metadata())
                 report.region = topic.region
-                report.resource_id = topic.name
-                report.resource_arn = topic.arn
+                report.resource_id = subscription.arn
+                report.resource_arn = subscription.arn
                 report.resource_tags = topic.tags
                 report.status = "PASS"
                 report.status_extended = (

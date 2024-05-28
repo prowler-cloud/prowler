@@ -125,8 +125,8 @@ class Test_sns_topics_no_http_subscriptions:
                 result[0].status_extended
                 == f"Subscription {subscription_arn_1} is using an HTTPS endpoint."
             )
-            assert result[0].resource_id == topic_name
-            assert result[0].resource_arn == topic_arn
+            assert result[0].resource_id == subscription_arn_1
+            assert result[0].resource_arn == subscription_arn_1
 
     def test_subscriptions_with_http(self):
         sns_client = mock.MagicMock
@@ -166,8 +166,8 @@ class Test_sns_topics_no_http_subscriptions:
                 result[0].status_extended
                 == f"Subscription {subscription_arn_2} is using an HTTP endpoint."
             )
-            assert result[0].resource_id == topic_name
-            assert result[0].resource_arn == topic_arn
+            assert result[0].resource_id == subscription_arn_2
+            assert result[0].resource_arn == subscription_arn_2
 
     def test_subscriptions_with_http_and_https(self):
         sns_client = mock.MagicMock
@@ -215,13 +215,13 @@ class Test_sns_topics_no_http_subscriptions:
                 result[0].status_extended
                 == f"Subscription {subscription_arn_1} is using an HTTPS endpoint."
             )
-            assert result[0].resource_id == topic_name
-            assert result[0].resource_arn == topic_arn
+            assert result[0].resource_id == subscription_arn_1
+            assert result[0].resource_arn == subscription_arn_1
 
             assert result[1].status == "FAIL"
             assert (
                 result[1].status_extended
                 == f"Subscription {subscription_arn_2} is using an HTTP endpoint."
             )
-            assert result[1].resource_id == topic_name
-            assert result[1].resource_arn == topic_arn
+            assert result[1].resource_id == subscription_arn_2
+            assert result[1].resource_arn == subscription_arn_2
