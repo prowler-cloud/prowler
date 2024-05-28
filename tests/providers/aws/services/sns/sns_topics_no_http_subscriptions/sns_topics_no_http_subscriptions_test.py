@@ -58,11 +58,10 @@ class Test_sns_topics_no_http_subscriptions:
         subscriptions = []
         subscriptions.append(
             Subscription(
-                SubscriptionArn="PendingConfirmation",
-                Owner=AWS_ACCOUNT_NUMBER,
-                Protocol="https",
-                Endpoint="https://www.endpoint.com",
-                TopicArn=topic_arn,
+                arn="PendingConfirmation",
+                owner=AWS_ACCOUNT_NUMBER,
+                protocol="https",
+                endpoint="https://www.endpoint.com",
             )
         )
         sns_client.topics = []
@@ -93,11 +92,10 @@ class Test_sns_topics_no_http_subscriptions:
         subscriptions = []
         subscriptions.append(
             Subscription(
-                SubscriptionArn=subscription_arn_1,
-                Owner=AWS_ACCOUNT_NUMBER,
-                Protocol="https",
-                Endpoint="https://www.endpoint.com",
-                TopicArn=topic_arn,
+                arn=subscription_arn_1,
+                owner=AWS_ACCOUNT_NUMBER,
+                protocol="https",
+                endpoint="https://www.endpoint.com",
             )
         )
         sns_client.topics = []
@@ -125,7 +123,7 @@ class Test_sns_topics_no_http_subscriptions:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Subscription {subscription_arn_1} is HTTPS."
+                == f"Subscription {subscription_arn_1} is using an HTTPS endpoint."
             )
             assert result[0].resource_id == topic_name
             assert result[0].resource_arn == topic_arn
@@ -135,11 +133,10 @@ class Test_sns_topics_no_http_subscriptions:
         subscriptions = []
         subscriptions.append(
             Subscription(
-                SubscriptionArn=subscription_arn_2,
-                Owner=AWS_ACCOUNT_NUMBER,
-                Protocol="http",
-                Endpoint="http://www.endpoint.com",
-                TopicArn=topic_arn,
+                arn=subscription_arn_2,
+                owner=AWS_ACCOUNT_NUMBER,
+                protocol="http",
+                endpoint="http://www.endpoint.com",
             )
         )
         sns_client.topics = []
@@ -167,7 +164,7 @@ class Test_sns_topics_no_http_subscriptions:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Subscription {subscription_arn_2} is HTTP."
+                == f"Subscription {subscription_arn_2} is using an HTTP endpoint."
             )
             assert result[0].resource_id == topic_name
             assert result[0].resource_arn == topic_arn
@@ -177,20 +174,18 @@ class Test_sns_topics_no_http_subscriptions:
         subscriptions = []
         subscriptions.append(
             Subscription(
-                SubscriptionArn=subscription_arn_1,
-                Owner=AWS_ACCOUNT_NUMBER,
-                Protocol="https",
-                Endpoint="https://www.endpoint.com",
-                TopicArn=topic_arn,
+                arn=subscription_arn_1,
+                owner=AWS_ACCOUNT_NUMBER,
+                protocol="https",
+                endpoint="https://www.endpoint.com",
             )
         )
         subscriptions.append(
             Subscription(
-                SubscriptionArn=subscription_arn_2,
-                Owner=AWS_ACCOUNT_NUMBER,
-                Protocol="http",
-                Endpoint="http://www.endpoint.com",
-                TopicArn=topic_arn,
+                arn=subscription_arn_2,
+                owner=AWS_ACCOUNT_NUMBER,
+                protocol="http",
+                endpoint="http://www.endpoint.com",
             )
         )
         sns_client.topics = []
@@ -218,7 +213,7 @@ class Test_sns_topics_no_http_subscriptions:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Subscription {subscription_arn_1} is HTTPS."
+                == f"Subscription {subscription_arn_1} is using an HTTPS endpoint."
             )
             assert result[0].resource_id == topic_name
             assert result[0].resource_arn == topic_arn
@@ -226,7 +221,7 @@ class Test_sns_topics_no_http_subscriptions:
             assert result[1].status == "FAIL"
             assert (
                 result[1].status_extended
-                == f"Subscription {subscription_arn_2} is HTTP."
+                == f"Subscription {subscription_arn_2} is using an HTTP endpoint."
             )
             assert result[1].resource_id == topic_name
             assert result[1].resource_arn == topic_arn

@@ -17,7 +17,7 @@ class SNS(AWSService):
         self.__threading_call__(self.__list_topics__)
         self.__get_topic_attributes__(self.regional_clients)
         self.__list_tags_for_resource__()
-        self.__get_subscriptions__()
+        self.__list_subscriptions_by_topic__()
 
     def __list_topics__(self, regional_client):
         logger.info("SNS - listing topics...")
@@ -75,8 +75,8 @@ class SNS(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_subscriptions__(self):
-        logger.info("SNS - Getting subscriptions...")
+    def __list_subscriptions_by_topic__(self):
+        logger.info("SNS - Listing subscriptions by topic...")
         try:
             for topic in self.topics:
                 try:
@@ -102,11 +102,10 @@ class SNS(AWSService):
 
 
 class Subscription(BaseModel):
-    SubscriptionArn: str
-    Owner: str
-    Protocol: str
-    Endpoint: str
-    TopicArn: str
+    arn: str
+    owner: str
+    protocol: str
+    endpoint: str
 
 
 class Topic(BaseModel):
