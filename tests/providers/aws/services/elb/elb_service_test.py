@@ -55,12 +55,14 @@ class Test_ELB_Service:
             Scheme="internal",
             SecurityGroups=[security_group.id],
         )
+
         # ELB client for this test class
         aws_provider = set_mocked_aws_provider()
         elb = ELB(aws_provider)
         assert len(elb.loadbalancers) == 1
         assert elb.loadbalancers[0].name == "my-lb"
         assert elb.loadbalancers[0].region == AWS_REGION_US_EAST_1
+        assert elb.loadbalancers[0].security_groups == [security_group.id]
         assert elb.loadbalancers[0].scheme == "internal"
         assert (
             elb.loadbalancers[0].arn

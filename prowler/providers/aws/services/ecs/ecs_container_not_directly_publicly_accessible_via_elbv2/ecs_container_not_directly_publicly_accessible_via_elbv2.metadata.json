@@ -1,0 +1,35 @@
+{
+    "Provider": "aws",
+    "CheckID": "ecs_container_not_directly_publicly_accessible_via_elbv2",
+    "CheckTitle": "Check for ECS containers behind internet facing ALB/NLB/GLB.",
+    "CheckType": [
+      "Infrastructure Security"
+    ],
+    "ServiceName": "ecs",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+    "Severity": "critical",
+    "ResourceType": "AwsEcsService",
+    "Description": "Check for ECS container behind internet facing ALB/NLB/GLB.",
+    "Risk": "Exposing an ECS container to a ALB/NLB/GLB that is internet facing can lead to comprimisation",
+    "RelatedUrl": "",
+    "Remediation": {
+      "Code": {
+        "CLI": "",
+        "NativeIaC": "",
+        "Other": "",
+        "Terraform": ""
+      },
+      "Recommendation": {
+        "Text": "Apply security groups to load balancers",
+        "Url": ""
+      }
+    },
+    "Categories": [
+      "internet-facing"
+    ],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": ""
+  }
+  
