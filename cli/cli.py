@@ -76,10 +76,14 @@ def validate_frameworks(compliance_frameworks: list[str] = None):
     return compliance_frameworks
 
 
-def validate_log_level(log_level: str):
-    if log_level not in logging_levels.keys():
-        raise typer.BadParameter(f"Log level must be one of {logging_levels.keys()}")
-    return log_level
+def validate_log_level(log_level: str = None):
+    if not log_level:
+        raise typer.BadParameter("Error: Missing argument 'LOG_LEVEL'.")
+    else:
+        keys_list = list(logging_levels.keys())
+        if log_level not in keys_list:
+            raise typer.BadParameter(f"Log level must be one of {keys_list}")
+        return log_level
 
 
 def create_list_commands(provider_typer: typer.Typer):
@@ -158,7 +162,7 @@ def create_logging_commands(provider_typer: typer.Typer):
     def log_level_command(
         log_level: str = typer.Argument(
             help="Set the log level for the provider",
-            default="INFO",
+            default=None,
             callback=validate_log_level,
         ),
     ):

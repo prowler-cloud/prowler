@@ -59,3 +59,21 @@ class TestCLI:
         assert result.exit_code == 0
         assert "aws" in result.output
         assert result.output.startswith("{") and result.output.endswith("}\n")
+
+    def test_logging_level_aws(self):
+        result = runner.invoke(app, ["aws", "log-level", "DEBUG"])
+        assert result.exit_code == 0
+
+    def test_logging_level_invalid_aws(self):
+        result = runner.invoke(app, ["aws", "log-level", "INVALID"])
+        assert result.exit_code == 2
+        assert "Invalid value for" in result.output
+        assert "ERROR" in result.output
+        assert "WARNING" in result.output
+        assert "INFO" in result.output
+        assert "DEBUG" in result.output
+
+    def test_logging_level_no_value_aws(self):
+        result = runner.invoke(app, ["aws", "log-level"])
+        assert result.exit_code == 2
+        assert "Error: Missing argument 'LOG_LEVEL'." in result.output
