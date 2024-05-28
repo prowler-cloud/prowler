@@ -89,7 +89,7 @@ class EC2(AWSService):
                                         sg["GroupId"]
                                         for sg in instance.get("SecurityGroups", [])
                                     ],
-                                    subnet_id=instance["SubnetId"],
+                                    subnet_id=instance.get("SubnetId", ""),
                                     tags=instance.get("Tags"),
                                 )
                             )
