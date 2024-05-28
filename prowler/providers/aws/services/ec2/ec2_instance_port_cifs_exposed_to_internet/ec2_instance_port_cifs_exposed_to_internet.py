@@ -23,7 +23,7 @@ class ec2_instance_port_cifs_exposed_to_internet(Check):
             is_open_port = False
             if instance.security_groups:
                 for sg in ec2_client.security_groups:
-                    if not is_open_port and sg.id in instance.security_groups:
+                    if sg.id in instance.security_groups:
                         for ingress_rule in sg.ingress_rules:
                             if check_security_group(
                                 ingress_rule, "tcp", check_ports, any_address=True
@@ -38,5 +38,7 @@ class ec2_instance_port_cifs_exposed_to_internet(Check):
                                 )
                                 is_open_port = True
                                 break
+                        if is_open_port:
+                            break
             findings.append(report)
         return findings
