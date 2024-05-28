@@ -148,7 +148,7 @@ def create_list_commands(provider_typer: typer.Typer):
 
 def validate_log_file(log_file: str):
     if not log_file:
-        raise typer.BadParameter("Log file must be a valid file")
+        raise typer.BadParameter("Error: Missing argument 'LOG_FILE'")
     return log_file
 
 

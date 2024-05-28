@@ -77,3 +77,16 @@ class TestCLI:
         result = runner.invoke(app, ["aws", "log-level"])
         assert result.exit_code == 2
         assert "Error: Missing argument 'LOG_LEVEL'." in result.output
+
+    def test_log_file_aws(self):
+        result = runner.invoke(app, ["aws", "log-file", "test.log"])
+        assert result.exit_code == 0
+
+    def test_log_file_no_value_aws(self):
+        result = runner.invoke(app, ["aws", "log-file"])
+        assert result.exit_code == 2
+        assert "Error: Missing argument 'LOG_FILE'" in result.output
+
+    def test_only_logs_aws(self):
+        result = runner.invoke(app, ["aws", "only-logs"])
+        assert result.exit_code == 0
