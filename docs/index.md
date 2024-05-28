@@ -189,7 +189,6 @@ You can run Prowler from your workstation, a Kubernetes Job, a Google Compute En
 
 We have deprecated some of our outputs formats:
 
-- The HTML is replaced for the new Prowler Dashboard, run `prowler dashboard`.
 - The native JSON is replaced for the JSON [OCSF](https://schema.ocsf.io/) v1.1.0, common for all the providers.
 
 ### AWS
