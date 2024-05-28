@@ -16,6 +16,7 @@ from prowler.lib.check.check import (
     print_services,
 )
 from prowler.lib.check.checks_loader import load_checks_to_execute
+from prowler.lib.logger import logger, set_logging_config
 
 app = typer.Typer()
 aws = typer.Typer(name="aws")
@@ -73,6 +74,15 @@ def validate_frameworks(compliance_frameworks: list[str] = None):
         if framework not in available_compliance_frameworks:
             print(f"{framework} is not a valid Compliance Framework\n")
     return compliance_frameworks
+
+
+valid_log_levels = ["CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"]
+
+
+def validate_log_level(log_level: str):
+    if log_level not in valid_log_levels:
+        raise typer.BadParameter(f"Log level must be one of {valid_log_levels}")
+    return log_level
 
 
 def create_list_commands(provider_typer: typer.Typer):
@@ -135,10 +145,62 @@ def create_list_commands(provider_typer: typer.Typer):
         list_resources(provider_name, "checks-json")
 
 
+def validate_log_file(log_file: str):
+    if not log_file:
+        raise typer.BadParameter("Log file must be a valid file")
+    return log_file
+
+
+def create_logging_commands(provider_typer: typer.Typer):
+    provider_name = provider_typer.info.name
+
+    @provider_typer.command(
+        "log-level",
+        help=f"Set the log level for the {provider_name} provider.",
+    )
+    def log_level_command(
+        log_level: str = typer.Argument(
+            help="Set the log level for the provider",
+            default="INFO",
+            callback=validate_log_level,
+        ),
+    ):
+        set_logging_config(log_level)
+        logger.info(f"Log level set to {log_level}")
+
+    @provider_typer.command(
+        "log-file",
+        help=f"Set the log file for the {provider_name} provider.",
+    )
+    # Make the comprobation of the file it's passed
+    def log_file_command(
+        log_file: str = typer.Argument(
+            help="Set the log file for the provider",
+            default=None,
+            callback=validate_log_file,
+        ),
+    ):
+        set_logging_config("INFO", log_file)
+        logger.info(f"Log file set to {log_file}")
+
+    @provider_typer.command(
+        "only-logs",
+        help=f"Print only Prowler logs by the stdout for the {provider_name} provider.",
+    )
+    def only_logs_command():
+        set_logging_config("INFO", only_logs=True)
+        logger.info("Only logs set to stdout")
+
+
 create_list_commands(aws)
 create_list_commands(azure)
 create_list_commands(gcp)
 create_list_commands(kubernetes)
+
+create_logging_commands(aws)
+create_logging_commands(azure)
+create_logging_commands(gcp)
+create_logging_commands(kubernetes)
 
 
 if __name__ == "__main__":
