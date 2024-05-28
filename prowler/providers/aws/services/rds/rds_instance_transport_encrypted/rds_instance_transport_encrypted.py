@@ -50,7 +50,7 @@ class rds_instance_transport_encrypted(Check):
                     for parameter in db_instance.parameters:
                         if (
                             parameter["ParameterName"] == "require_secure_transport"
-                            and parameter.get("ParameterValue", "OFF") == "ON"
+                            and parameter.get("ParameterValue", "0") == "1"
                         ):
                             report.status = "PASS"
                             report.status_extended = f"RDS Instance {db_instance.id} connections use SSL encryption."
