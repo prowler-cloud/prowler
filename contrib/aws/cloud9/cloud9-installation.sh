@@ -14,4 +14,4 @@ cd ~ || exit
 python3.9 -m pip install prowler-cloud
 prowler -v
 # Run Prowler
-prowler
+prowler aws
