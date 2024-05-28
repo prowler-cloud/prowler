@@ -40,7 +40,7 @@ class ec2_securitygroup_allow_ingress_from_internet_to_any_port(Check):
                                 if (
                                     eni.type
                                     not in ec2_client.audit_config.get(
-                                        "check_ec2_securitygroup_allow_ingress_from_internet_to_any_port_allowed_interface_types",
+                                        "ec2_allowed_interface_types",
                                         [],
                                     )
                                     and hasattr(eni, "attachment")
@@ -48,7 +48,7 @@ class ec2_securitygroup_allow_ingress_from_internet_to_any_port(Check):
                                     and "InstanceOwnerId" in eni.attachment
                                     and eni.attachment["InstanceOwnerId"]
                                     not in ec2_client.audit_config.get(
-                                        "check_ec2_securitygroup_allow_ingress_from_internet_to_any_port_allowed_instance_owners",
+                                        "ec2_allowed_instance_owners",
                                         [],
                                     )
                                 ):

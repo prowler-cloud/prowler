@@ -254,12 +254,12 @@ aws:
   # Whether to check RDS instance replicas or not
   check_rds_instance_replicas: False
   #
-  check_ec2_securitygroup_allow_ingress_from_internet_to_any_port_allowed_interface_types:
+  ec2_allowed_interface_types:
     [
         "api_gateway_managed",
         "vpc_endpoint",
     ]
-  check_ec2_securitygroup_allow_ingress_from_internet_to_any_port_allowed_instance_owners:
+  ec2_allowed_instance_owners:
     [
         "amazon-elb"
     ]
