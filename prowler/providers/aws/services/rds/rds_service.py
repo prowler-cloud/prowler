@@ -19,6 +19,7 @@ class RDS(AWSService):
         self.db_engines = {}
         self.db_cluster_parameters = {}
         self.db_cluster_snapshots = []
+        self.db_event_subscriptions = []
         self.__threading_call__(self.__describe_db_instances__)
         self.__threading_call__(self.__describe_db_certificate__)
         self.__threading_call__(self.__describe_db_parameters__)
@@ -28,6 +29,7 @@ class RDS(AWSService):
         self.__threading_call__(self.__describe_db_cluster_snapshots__)
         self.__threading_call__(self.__describe_db_cluster_snapshot_attributes__)
         self.__threading_call__(self.__describe_db_engine_versions__)
+        self.__threading_call__(self.__describe_db_event_subscriptions__)
 
     def __describe_db_instances__(self, regional_client):
         logger.info("RDS - Describe Instances...")
@@ -326,6 +328,33 @@ class RDS(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def __describe_db_event_subscriptions__(self, regional_client):
+        logger.info("RDS - Describe Event Subscriptions...")
+        try:
+            describe_event_subscriptions_paginator = regional_client.get_paginator(
+                "describe_event_subscriptions"
+            )
+            for page in describe_event_subscriptions_paginator.paginate():
+                for event in page["EventSubscriptionsList"]:
+                    self.db_event_subscriptions.append(
+                        DBEvent(
+                            id=event["CustSubscriptionId"],
+                            sns_topic_arn=event["SnsTopicArn"],
+                            status=event["Status"],
+                            source_type=event["SourceType"],
+                            source_id=event.get("SourceIdsList", []),
+                            event_list=event.get("EventCategoriesList", []),
+                            enabled=event["Enabled"],
+                            event_arn=event["EventSubscriptionArn"],
+                            region=regional_client.region,
+                        )
+                    )
+
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class DBInstance(BaseModel):
     id: str
@@ -400,3 +429,15 @@ class DBEngine(BaseModel):
     engine: str
     engine_versions: list[str]
     engine_description: str
+
+
+class DBEvent(BaseModel):
+    id: str
+    sns_topic_arn: str
+    status: str
+    source_type: str
+    source_id: list
+    event_list: list
+    enabled: bool
+    event_arn: str
+    region: str
