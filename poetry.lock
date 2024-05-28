@@ -2324,13 +2324,13 @@ test = ["pytest", "pytest-cov"]
 
 [[package]]
 name = "moto"
-version = "5.0.7"
+version = "5.0.8"
 description = ""
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "moto-5.0.7-py2.py3-none-any.whl", hash = "sha256:c0214c1361fb1dc85f587d9ce17cd988c6f69ff0ed54d43789654022e0e744f2"},
-    {file = "moto-5.0.7.tar.gz", hash = "sha256:f2cde691dc4bc675e318a65f018902ac7f89d61bf2646052f7df215d212f069e"},
+    {file = "moto-5.0.8-py2.py3-none-any.whl", hash = "sha256:7d1035e366434bfa9fcc0621f07d5aa724b6846408071d540137a0554c46f214"},
+    {file = "moto-5.0.8.tar.gz", hash = "sha256:517fb808dc718bcbdda54c6ffeaca0adc34cf6e10821bfb01216ce420a31765c"},
 ]
 
 [package.dependencies]
@@ -4499,4 +4499,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "jaraco.test", "more
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "17490aa448faaaf8a1a9d32f7540256b25ddffada1a1344370b2533e3b634f72"
+content-hash = "9da5752de8331490e5e2be014c34c19e1ef7f7410b91c000be814aed221899ed"
