@@ -29,20 +29,19 @@ APIS=(
 enable_apis_for_project() {
     local PROJECT_ID=$1
 
-    echo "Enabling APIs for project: $PROJECT_ID"
+    echo "Enabling APIs for project: ${PROJECT_ID}"
 
     for API in "${APIS[@]}"; do
-        echo "Enabling API: $API for project: $PROJECT_ID"
-        gcloud services enable $API --project=$PROJECT_ID
-        if [ $? -eq 0 ]; then
-            echo "Successfully enabled API $API for project $PROJECT_ID."
+        echo "Enabling API: $API for project: ${PROJECT_ID}"
+        if gcloud services enable "${API}" --project="${PROJECT_ID}"; then
+            echo "Successfully enabled API $API for project ${PROJECT_ID}."
         else
-            echo "Failed to enable API $API for project $PROJECT_ID."
+            echo "Failed to enable API $API for project ${PROJECT_ID}."
         fi
     done
 }
 
 # Loop over each project and enable the APIs
 for PROJECT_ID in "${PROJECT_IDS[@]}"; do
-    enable_apis_for_project $PROJECT_ID
+    enable_apis_for_project "${PROJECT_ID}"
 done
