@@ -250,7 +250,7 @@ class Test_rds_instance_transport_encrypted:
             Parameters=[
                 {
                     "ParameterName": "require_secure_transport",
-                    "ParameterValue": "OFF",
+                    "ParameterValue": "0",
                     "ApplyMethod": "immediate",
                 },
             ],
@@ -312,7 +312,7 @@ class Test_rds_instance_transport_encrypted:
             Parameters=[
                 {
                     "ParameterName": "require_secure_transport",
-                    "ParameterValue": "ON",
+                    "ParameterValue": "1",
                     "ApplyMethod": "immediate",
                 },
             ],
