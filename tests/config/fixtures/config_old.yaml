@@ -64,3 +64,14 @@ organizations_trusted_delegated_administrators: []
 # aws.rds_instance_backup_enabled
 # Whether to check RDS instance replicas or not
 check_rds_instance_replicas: False
+# allowed network interface types for security groups open to the Internet
+ec2_allowed_interface_types:
+    [
+    "api_gateway_managed",
+    "vpc_endpoint",
+    ]
+# allowed network interface owners for security groups open to the Internet
+ec2_allowed_instance_owners:
+  [
+      "amazon-elb"
+  ]

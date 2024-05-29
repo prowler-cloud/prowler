@@ -40,6 +40,8 @@ The following list includes all the AWS checks with configurable variables that 
 | `cloudtrail_threat_detection_enumeration`                      | `threat_detection_enumeration_minutes`      | Integer         |
 | `cloudtrail_threat_detection_enumeration`                      | `threat_detection_enumeration_actions`      | List of Strings         |
 | `rds_instance_backup_enabled`                                  | `check_rds_instance_replicas`      | Boolean        |
+| `ec2_securitygroup_allow_ingress_from_internet_to_any_port`    | `ec2_allowed_interface_types`      | List of Strings        |
+| `ec2_securitygroup_allow_ingress_from_internet_to_any_port`    | `ec2_allowed_instance_owners`      | List of Strings        |
 ## Azure
 
 ### Configurable Checks
@@ -310,6 +312,17 @@ aws:
   # aws.rds_instance_backup_enabled
   # Whether to check RDS instance replicas or not
   check_rds_instance_replicas: False
+  # allowed network interface types for security groups open to the Internet
+  ec2_allowed_interface_types:
+    [
+      "api_gateway_managed",
+      "vpc_endpoint",
+    ]
+  # allowed network interface owners for security groups open to the Internet
+  ec2_allowed_instance_owners:
+    [
+      "amazon-elb"
+    ]
 
 # Azure Configuration
 azure:

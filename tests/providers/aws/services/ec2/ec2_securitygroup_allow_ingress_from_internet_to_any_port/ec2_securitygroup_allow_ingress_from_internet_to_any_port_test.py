@@ -185,13 +185,11 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
             "InterfaceType"
         ]
 
-        # Modify the audit_config to simulate the allowed interface types
-        mock_audit_config = {"ec2_allowed_interface_types": [network_interface_type]}
-
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1],
+            audit_config={"ec2_allowed_interface_types": [network_interface_type]},
         )
 
         with mock.patch(
@@ -200,11 +198,9 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_client",
             new=EC2(aws_provider),
-        ) as ec2_client_mock, mock.patch(
+        ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_securitygroup_allow_ingress_from_internet_to_any_port.vpc_client",
             new=VPC(aws_provider),
-        ), mock.patch.object(
-            ec2_client_mock, "audit_config", mock_audit_config
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_securitygroup_allow_ingress_from_internet_to_any_port import (
