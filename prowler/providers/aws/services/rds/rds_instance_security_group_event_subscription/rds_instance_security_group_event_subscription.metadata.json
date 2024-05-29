@@ -1,26 +1,26 @@
 {
   "Provider": "aws",
   "CheckID": "rds_instance_security_group_event_subscription",
-  "CheckTitle": "Check if RDS events have subscriptions enabled.",
+  "CheckTitle": "Check if RDS Security Group events are subscribed.",
   "CheckType": [],
   "ServiceName": "rds",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-instance",
+  "ResourceIdTemplate": "arn:aws:rds:region:account-id:es",
   "Severity": "medium",
-  "ResourceType": "AwsRdsDbInstance",
-  "Description": "Ensure that your Amazon RDS resources have event notifications enabled in order to get notifications when an event occurs for a given database instance, database snapshot, database security group, or database parameter group.",
-  "Risk": "Monitoring is an essential part of maintaining the availability, reliability, and performance of your Amazon RDS resources. Enabling event notifications will keep you up-to-date on everything that's going with your Amazon RDS database resources.",
-  "RelatedUrl": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_Events.Messages.html",
+  "ResourceType": "AwsRdsEventSubscription",
+  "Description": "Ensure that Amazon RDS event notification subscriptions are enabled for database security groups events.",
+  "Risk": "Amazon RDS event subscriptions for database security groups are designed to provide incident notification of events that may affect the security, availability, and reliability of the RDS database instances associated with these security groups.",
+  "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-22",
   "Remediation": {
     "Code": {
-      "CLI": "aws rds create-event-subscription --region us-east-1 --subscription-name cc-database-backups --sns-topic-arn arn:aws:sns:us-east-1:12345678901:cc-rds-backup-alarm-topic --source-type db-instance --event-categories \"backup\" --source-ids cc-project5-mysql-database --enabled",
+      "CLI": "aws rds create-event-subscription --region us-east-1 --subscription-name cc-security-group-event-subscription --sns-topic-arn arn:aws:sns:us-east-1:12345678901:cc-security-group-alarm-topic --source-type db-security-group --event-categories \"failure\" \"configuration change\" --enabled",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/notifications.html#",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/rds-db-security-groups-events.html#",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "To use Enhanced Monitoring, you must create an IAM role, and then enable Enhanced Monitoring.",
-      "Url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_Events.Messages.html"
+      "Text": "To subscribe to RDS instance event notifications, see Subscribing to Amazon RDS event notification in the Amazon RDS User Guide.",
+      "Url": "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-22"
     }
   },
   "Categories": [],
