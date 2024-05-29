@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "rds_instance_event_subscriptions",
+  "CheckID": "rds_instance_security_group_event_subscription",
   "CheckTitle": "Check if RDS events have subscriptions enabled.",
   "CheckType": [],
   "ServiceName": "rds",
