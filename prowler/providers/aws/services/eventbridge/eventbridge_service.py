@@ -156,5 +156,5 @@ class Registry(BaseModel):
     name: str
     arn: str
     region: str
-    policy: Optional[str]
+    policy: Optional[dict]
     tags: Optional[list]
