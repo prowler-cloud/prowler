@@ -53,8 +53,6 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
     def test_ec2_non_compliant_default_sg(self):
         # Create EC2 Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
-
-        # Create VPC
         vpc_response = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
         vpc_id = vpc_response["Vpc"]["VpcId"]
 
@@ -64,13 +62,10 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
         )
         subnet_id = subnet_response["Subnet"]["SubnetId"]
 
-        # Get default security group
-        default_sg = ec2_client.describe_security_groups(
-            Filters=[
-                {"Name": "vpc-id", "Values": [vpc_id]},
-                {"Name": "group-name", "Values": ["default"]},
-            ]
-        )["SecurityGroups"][0]
+        default_sg = ec2_client.describe_security_groups(GroupNames=["default"])[
+            "SecurityGroups"
+        ][0]
+
         default_sg_id = default_sg["GroupId"]
         default_sg_name = default_sg["GroupName"]
 
@@ -304,13 +299,10 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
         )
         subnet_id = subnet_response["Subnet"]["SubnetId"]
 
-        # Get default security group
-        default_sg = ec2_client.describe_security_groups(
-            Filters=[
-                {"Name": "vpc-id", "Values": [vpc_id]},
-                {"Name": "group-name", "Values": ["default"]},
-            ]
-        )["SecurityGroups"][0]
+        default_sg = ec2_client.describe_security_groups(GroupNames=["default"])[
+            "SecurityGroups"
+        ][0]
+
         default_sg_id = default_sg["GroupId"]
         default_sg_name = default_sg["GroupName"]
 
