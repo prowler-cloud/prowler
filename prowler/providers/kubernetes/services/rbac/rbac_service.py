@@ -1,8 +1,8 @@
 from typing import Any, List, Optional
 
-from kubernetes import client
 from pydantic import BaseModel
 
+from kubernetes import client
 from prowler.lib.logger import logger
 from prowler.providers.kubernetes.kubernetes_provider import KubernetesProvider
 from prowler.providers.kubernetes.lib.service.service import KubernetesService
@@ -51,7 +51,7 @@ class Rbac(KubernetesService):
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            return []
+            return {}
 
     def __list_role_bindings__(self):
         try:
@@ -80,7 +80,7 @@ class Rbac(KubernetesService):
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            return []
+            return {}
 
     def __list_roles__(self):
         try:
@@ -105,7 +105,7 @@ class Rbac(KubernetesService):
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            return []
+            return {}
 
     def __list_cluster_roles__(self):
         try:
@@ -115,14 +115,18 @@ class Rbac(KubernetesService):
                     "uid": role.metadata.uid,
                     "name": role.metadata.name,
                     "metadata": role.metadata,
-                    "rules": [
-                        {
-                            "apiGroups": rule.api_groups,
-                            "resources": rule.resources,
-                            "verbs": rule.verbs,
-                        }
-                        for rule in role.rules
-                    ],
+                    "rules": (
+                        [
+                            {
+                                "apiGroups": rule.api_groups,
+                                "resources": rule.resources,
+                                "verbs": rule.verbs,
+                            }
+                            for rule in role.rules
+                        ]
+                        if role.rules
+                        else []
+                    ),
                 }
                 cluster_roles[role.metadata.uid] = ClusterRole(**formatted_role)
             return cluster_roles
@@ -130,7 +134,7 @@ class Rbac(KubernetesService):
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            return []
+            return {}
 
 
 class Subject(BaseModel):

@@ -3,7 +3,7 @@
 By default, Prowler will generate the CSV and JSON-[OCSF](https://schema.ocsf.io/) report.
 
 ```console
-prowler <provider> -M csv json-ocsf json-asff
+prowler <provider> -M csv json-ocsf json-asff html
 ```
 
 If you want to generate the JSON-ASFF (used by AWS Security Hub) report you can set it using the `-M/--output-modes/--output-formats`, like:
@@ -43,6 +43,7 @@ Prowler supports natively the following output formats:
 - CSV
 - JSON-OCSF
 - JSON-ASFF
+- HTML
 
 Hereunder is the structure for each of the supported report formats by Prowler:
 
@@ -92,8 +93,25 @@ The CSV format has a common format for all the providers. The following are the 
 - NOTES
 - PROWLER_VERSION
 
-???+ note
-    Since Prowler v3 the CSV column delimiter is the semicolon (`;`)
+#### CSV Headers Mapping
+
+The following table shows the mapping between the CSV headers and the the providers fields:
+
+| Open Source Consolidated    | AWS                         | GCP                          | AZURE                       | KUBERNETES                 |
+|-----------------------------|-----------------------------|------------------------------|-----------------------------|----------------------------|
+| auth_method                 | profile                     | principal                    | identity_type : identity_id | in-cluster/kube-config     |
+| provider                    | provider                    | provider                     | provider                    | provider                   |
+| account_uid                 | account_id / account_arn    | project_id                   | subscription_id             | cluster                    |
+| account_name                | account_name                | project_name                 | subscription_name           | context:context            |
+| account_email               | account_email               | N/A                          | N/A                         | N/A                        |
+| account_organization_uid    | account_organizations_arn   | project_organization_id      | tenant_id                   | N/A                        |
+| account_organization_name   | account_org                 | project_organization_display_name | tenant_domain          | N/A                        |
+| account_tags                | account_tags                | project_labels               | subscription_tags           | N/A                        |
+| partition                   | partition                   | N/A                          | region_config.name          | N/A                        |
+| region                      | region                      | location                     | location                    | namespace:namespace        |
+| resource_name               | resource_id                 | resource_name                | resource_name               | resource_name              |
+| resource_uid                | resource_arn                | resource_id                  | resource_id                 | resource_id                |
+| finding_uid                 | finding_unique_id           | finding_unique_id            | finding_unique_id           | finding_unique_id          |
 
 
 ### JSON-OCSF
@@ -107,7 +125,7 @@ The JSON-OCSF output format implements the [Detection Finding](https://schema.oc
         "product": {
             "name": "Prowler",
             "vendor_name": "Prowler",
-            "version": "4.1.0"
+            "version": "4.2.0"
         },
         "version": "1.1.0"
     },

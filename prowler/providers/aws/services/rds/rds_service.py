@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Optional
 
 from botocore.client import ClientError
@@ -122,7 +123,19 @@ class RDS(AWSService):
                         CertificateIdentifier=instance.ca_cert
                     ):
                         for certificate in page["Certificates"]:
-                            instance.cert.append(certificate)
+                            instance.cert.append(
+                                Certificate(
+                                    id=certificate["CertificateIdentifier"],
+                                    arn=certificate["CertificateArn"],
+                                    type=certificate["CertificateType"],
+                                    valid_from=certificate["ValidFrom"],
+                                    valid_till=certificate["ValidTill"],
+                                    customer_override=certificate["CustomerOverride"],
+                                    customer_override_valid_till=certificate.get(
+                                        "CustomerOverrideValidTill"
+                                    ),
+                                )
+                            )
 
         except Exception as error:
             logger.error(
@@ -327,6 +340,16 @@ class RDS(AWSService):
             )
 
 
+class Certificate(BaseModel):
+    id: str
+    arn: str
+    type: str
+    valid_from: datetime
+    valid_till: datetime
+    customer_override: bool
+    customer_override_valid_till: Optional[datetime]
+
+
 class DBInstance(BaseModel):
     id: str
     # arn:{partition}:rds:{region}:{account}:db:{resource_id}
@@ -352,7 +375,7 @@ class DBInstance(BaseModel):
     tags: Optional[list] = []
     replica_source: Optional[str]
     ca_cert: Optional[str]
-    cert: list[dict] = []
+    cert: list[Certificate] = []
 
 
 class DBCluster(BaseModel):

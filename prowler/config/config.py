@@ -11,9 +11,9 @@ from prowler.lib.logger import logger
 
 timestamp = datetime.today()
 timestamp_utc = datetime.now(timezone.utc).replace(tzinfo=timezone.utc)
-prowler_version = "4.1.0"
+prowler_version = "4.2.0"
 html_logo_url = "https://github.com/prowler-cloud/prowler/"
-square_logo_img = "https://raw.githubusercontent.com/prowler-cloud/prowler/master/docs/img/prowler-logo-black.png#gh-light-mode-onlyg"
+square_logo_img = "https://prowler.com/wp-content/uploads/logo-html.png"
 aws_logo = "https://user-images.githubusercontent.com/38561120/235953920-3e3fba08-0795-41dc-b480-9bea57db9f2e.png"
 azure_logo = "https://user-images.githubusercontent.com/38561120/235927375-b23e2e0f-8932-49ec-b59c-d89f61c8041d.png"
 gcp_logo = "https://user-images.githubusercontent.com/38561120/235928332-eb4accdc-c226-4391-8e97-6ca86a91cf50.png"

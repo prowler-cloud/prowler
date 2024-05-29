@@ -57,7 +57,8 @@ def add_html_header(file_descriptor, provider):
         <div class="col-md-4">
             <a href="{html_logo_url}"><img class="float-left card-img-left mt-4 mr-4 ml-4"
                         src={square_logo_img}
-                        alt="prowler-logo" /></a>
+                        alt="prowler-logo"
+                        style="width: 300px; height:auto;"/></a>
             <div class="card">
             <div class="card-header">
                 Report Information

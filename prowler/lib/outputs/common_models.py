@@ -1,6 +1,6 @@
 from datetime import datetime
 from enum import Enum
-from typing import Optional
+from typing import Optional, Union
 
 from pydantic import BaseModel
 
@@ -29,7 +29,7 @@ class FindingOutput(BaseModel):
     """
 
     auth_method: str
-    timestamp: datetime
+    timestamp: Union[int, datetime]
     account_uid: str
     # Optional since depends on permissions
     account_name: Optional[str]

@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "ec2_instance_port_ldap_exposed_to_internet",
+  "CheckTitle": "Ensure no EC2 instances allow ingress from the internet to TCP port 389 or 636 (LDAP).",
+  "CheckType": [
+    "Infrastructure Security"
+  ],
+  "ServiceName": "ec2",
+  "SubServiceName": "instance",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "critical",
+  "ResourceType": "AwsEc2Instance",
+  "Description": "Ensure no EC2 instances allow ingress from the internet to TCP port 389 or 636 (LDAP).",
+  "Risk": "LDAP is a protocol used for authentication and authorization. Exposing LDAP to the internet can lead to unauthorized access to the LDAP server and the data it contains.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Modify the security group to remove the rule that allows ingress from the internet to TCP port 389 or 636 (LDAP).",
+      "Url": "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

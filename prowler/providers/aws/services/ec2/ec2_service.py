@@ -44,6 +44,11 @@ class EC2(AWSService):
         self.__threading_call__(self.__get_snapshot_block_public_access_state__)
         self.instance_metadata_defaults = []
         self.__threading_call__(self.__get_instance_metadata_defaults__)
+        self.launch_templates = []
+        self.__threading_call__(self.__describe_launch_templates)
+        self.__threading_call__(
+            self.__get_launch_template_versions__, self.launch_templates
+        )
 
     def __get_volume_arn_template__(self, region):
         return (
@@ -62,33 +67,6 @@ class EC2(AWSService):
                         if not self.audit_resources or (
                             is_resource_filtered(arn, self.audit_resources)
                         ):
-                            http_tokens = None
-                            http_endpoint = None
-                            public_dns = None
-                            public_ip = None
-                            private_ip = None
-                            instance_profile = None
-                            monitoring_state = "disabled"
-                            if "MetadataOptions" in instance:
-                                http_tokens = instance["MetadataOptions"]["HttpTokens"]
-                                http_endpoint = instance["MetadataOptions"][
-                                    "HttpEndpoint"
-                                ]
-                            if (
-                                "PublicDnsName" in instance
-                                and "PublicIpAddress" in instance
-                            ):
-                                public_dns = instance["PublicDnsName"]
-                                public_ip = instance["PublicIpAddress"]
-                            if "Monitoring" in instance:
-                                monitoring_state = instance.get(
-                                    "Monitoring", {"State": "disabled"}
-                                ).get("State", "disabled")
-                            if "PrivateIpAddress" in instance:
-                                private_ip = instance["PrivateIpAddress"]
-                            if "IamInstanceProfile" in instance:
-                                instance_profile = instance["IamInstanceProfile"]
-
                             self.instances.append(
                                 Instance(
                                     id=instance["InstanceId"],
@@ -99,13 +77,24 @@ class EC2(AWSService):
                                     image_id=instance["ImageId"],
                                     launch_time=instance["LaunchTime"],
                                     private_dns=instance["PrivateDnsName"],
-                                    private_ip=private_ip,
-                                    public_dns=public_dns,
-                                    public_ip=public_ip,
-                                    http_tokens=http_tokens,
-                                    http_endpoint=http_endpoint,
-                                    instance_profile=instance_profile,
-                                    monitoring_state=monitoring_state,
+                                    private_ip=instance.get("PrivateIpAddress"),
+                                    public_dns=instance.get("PublicDnsName"),
+                                    public_ip=instance.get("PublicIpAddress"),
+                                    http_tokens=instance.get("MetadataOptions", {}).get(
+                                        "HttpTokens"
+                                    ),
+                                    http_endpoint=instance.get(
+                                        "MetadataOptions", {}
+                                    ).get("HttpEndpoint"),
+                                    instance_profile=instance.get("IamInstanceProfile"),
+                                    monitoring_state=instance.get(
+                                        "Monitoring", {"State": "disabled"}
+                                    ).get("State", "disabled"),
+                                    security_groups=[
+                                        sg["GroupId"]
+                                        for sg in instance.get("SecurityGroups", [])
+                                    ],
+                                    subnet_id=instance.get("SubnetId", ""),
                                     tags=instance.get("Tags"),
                                 )
                             )
@@ -469,6 +458,56 @@ class EC2(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def __describe_launch_templates(self, regional_client):
+        try:
+            describe_launch_templates_paginator = regional_client.get_paginator(
+                "describe_launch_templates"
+            )
+
+            for page in describe_launch_templates_paginator.paginate():
+                for template in page["LaunchTemplates"]:
+                    template_arn = f"arn:aws:ec2:{regional_client.region}:{self.audited_account}:launch-template/{template['LaunchTemplateId']}"
+                    if not self.audit_resources or (
+                        is_resource_filtered(template_arn, self.audit_resources)
+                    ):
+                        self.launch_templates.append(
+                            LaunchTemplate(
+                                name=template["LaunchTemplateName"],
+                                id=template["LaunchTemplateId"],
+                                arn=template_arn,
+                                region=regional_client.region,
+                                versions=[],
+                            )
+                        )
+
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def __get_launch_template_versions__(self, launch_template):
+        try:
+            regional_client = self.regional_clients[launch_template.region]
+            describe_launch_template_versions_paginator = regional_client.get_paginator(
+                "describe_launch_template_versions"
+            )
+
+            for page in describe_launch_template_versions_paginator.paginate(
+                LaunchTemplateId=launch_template.id
+            ):
+                for template_version in page["LaunchTemplateVersions"]:
+                    launch_template.versions.append(
+                        LaunchTemplateVersion(
+                            version_number=template_version["VersionNumber"],
+                            template_data=template_version["LaunchTemplateData"],
+                        )
+                    )
+
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class Instance(BaseModel):
     id: str
@@ -486,6 +525,8 @@ class Instance(BaseModel):
     http_tokens: Optional[str]
     http_endpoint: Optional[str]
     monitoring_state: str
+    security_groups: list[str]
+    subnet_id: str
     instance_profile: Optional[dict]
     tags: Optional[list] = []
 
@@ -576,3 +617,16 @@ class InstanceMetadataDefaults(BaseModel):
     http_tokens: Optional[str]
     instances: bool
     region: str
+
+
+class LaunchTemplateVersion(BaseModel):
+    version_number: int
+    template_data: dict
+
+
+class LaunchTemplate(BaseModel):
+    name: str
+    id: str
+    arn: str
+    region: str
+    versions: list[LaunchTemplateVersion] = []
