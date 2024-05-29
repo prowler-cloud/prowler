@@ -1,6 +1,6 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
-from prowler.providers.aws.lib.iam.iam import is_policy_cross_account
 from prowler.providers.aws.services.eventbridge.schema_client import schema_client
+from prowler.providers.aws.services.iam.lib.policy import is_policy_cross_account
 
 
 class eventbridge_schema_registry_cross_account_access(Check):
