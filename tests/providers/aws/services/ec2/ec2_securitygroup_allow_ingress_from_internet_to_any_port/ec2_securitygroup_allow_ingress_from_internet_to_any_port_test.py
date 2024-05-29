@@ -53,12 +53,28 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
     def test_ec2_non_compliant_default_sg(self):
         # Create EC2 Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
-        ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
-        default_sg = ec2_client.describe_security_groups(GroupNames=["default"])[
-            "SecurityGroups"
-        ][0]
+
+        # Create VPC
+        vpc_response = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
+        vpc_id = vpc_response["Vpc"]["VpcId"]
+
+        # Create Subnet
+        subnet_response = ec2_client.create_subnet(
+            VpcId=vpc_id, CidrBlock="10.0.1.0/24"
+        )
+        subnet_id = subnet_response["Subnet"]["SubnetId"]
+
+        # Get default security group
+        default_sg = ec2_client.describe_security_groups(
+            Filters=[
+                {"Name": "vpc-id", "Values": [vpc_id]},
+                {"Name": "group-name", "Values": ["default"]},
+            ]
+        )["SecurityGroups"][0]
         default_sg_id = default_sg["GroupId"]
         default_sg_name = default_sg["GroupName"]
+
+        # Authorize ingress rule
         ec2_client.authorize_security_group_ingress(
             GroupId=default_sg_id,
             IpPermissions=[
@@ -67,6 +83,15 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
                     "IpRanges": [{"CidrIp": "0.0.0.0/0"}],
                 }
             ],
+        )
+
+        # Create Network Interface
+        ec2_client.create_network_interface(
+            SubnetId=subnet_id,
+            Groups=[
+                default_sg_id
+            ],  # Associating the network interface with the default security group
+            Description="Test Network Interface",
         )
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
@@ -102,7 +127,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
                     assert sg.region == AWS_REGION_US_EAST_1
                     assert (
                         sg.status_extended
-                        == f"Security group {default_sg_name} ({default_sg_id}) has at least one port open to the Internet."
+                        == f"Security group {default_sg_name} ({default_sg_id}) has at least one port open to the Internet and is not exclusively attached to an allowed network interface type."
                     )
                     assert (
                         sg.resource_arn
@@ -177,12 +202,27 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
     def test_ec2_compliant_default_sg_only_open_to_one_port(self):
         # Create EC2 Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
-        ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
-        default_sg = ec2_client.describe_security_groups(GroupNames=["default"])[
-            "SecurityGroups"
-        ][0]
+        # Create VPC
+        vpc_response = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
+        vpc_id = vpc_response["Vpc"]["VpcId"]
+
+        # Create Subnet
+        subnet_response = ec2_client.create_subnet(
+            VpcId=vpc_id, CidrBlock="10.0.1.0/24"
+        )
+        subnet_id = subnet_response["Subnet"]["SubnetId"]
+
+        # Get default security group
+        default_sg = ec2_client.describe_security_groups(
+            Filters=[
+                {"Name": "vpc-id", "Values": [vpc_id]},
+                {"Name": "group-name", "Values": ["default"]},
+            ]
+        )["SecurityGroups"][0]
         default_sg_id = default_sg["GroupId"]
         default_sg_name = default_sg["GroupName"]
+
+        # Authorize ingress rule
         ec2_client.authorize_security_group_ingress(
             GroupId=default_sg_id,
             IpPermissions=[
@@ -196,6 +236,15 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
                     "UserIdGroupPairs": [],
                 }
             ],
+        )
+
+        # Create Network Interface
+        ec2_client.create_network_interface(
+            SubnetId=subnet_id,
+            Groups=[
+                default_sg_id
+            ],  # Associating the network interface with the default security group
+            Description="Test Network Interface",
         )
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
@@ -231,7 +280,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
                     assert sg.region == AWS_REGION_US_EAST_1
                     assert (
                         sg.status_extended
-                        == f"Security group {default_sg_name} ({default_sg_id}) has at least one port open to the Internet."
+                        == f"Security group {default_sg_name} ({default_sg_id}) has at least one port open to the Internet and is not exclusively attached to an allowed network interface type."
                     )
                     assert (
                         sg.resource_arn
