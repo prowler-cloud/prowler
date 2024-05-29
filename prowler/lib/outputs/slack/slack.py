@@ -25,11 +25,16 @@ class Slack:
     def channel(self):
         return self._channel
 
-    def send(self, stats, args) -> SlackResponse:
+    def send(self, stats: dict, args: str) -> SlackResponse:
         """
         Sends the findings to Slack.
+
+        Args:
+            stats (dict): A dictionary containing audit statistics.
+            args (str): Command line arguments used for the audit.
+
         Returns:
-            SlackResponse: Slack response.
+            SlackResponse: Slack response if successful, error object if an exception occurs.
         """
         try:
             client = WebClient(token=self.token)
@@ -84,11 +89,13 @@ class Slack:
     def __create_message_blocks__(self, identity, logo, stats, args) -> list:
         """
         Create the Slack message blocks.
+
         Args:
             identity: message identity.
             logo: logo URL.
             stats: audit statistics.
             args: command line arguments used.
+
         Returns:
             list: list of Slack message blocks.
         """
@@ -182,9 +189,11 @@ class Slack:
     def __create_title__(self, identity, stats) -> str:
         """
         Create the Slack message title.
+
         Args:
             identity: message identity.
             stats: audit statistics.
+
         Returns:
             str: Slack message title.
         """
