@@ -7,7 +7,7 @@ class rds_instance_security_group_event_subscription(Check):
         findings = []
         report = Check_Report_AWS(self.metadata())
         report.status = "FAIL"
-        report.check_metadata.Severity = "high"
+        report.check_metadata.Severity = "medium"
         report.status_extended = 'RDS security group event categories of "configuration change" and "failure" are not subscribed.'
         report.region = rds_client.region
         if rds_client.db_event_subscriptions != []:
@@ -18,7 +18,6 @@ class rds_instance_security_group_event_subscription(Check):
                     report.resource_arn = db_event.event_arn
                     if db_event.event_list == []:
                         report.status = "PASS"
-                        report.check_metadata.Severity = "low"
                         report.status_extended = (
                             "RDS security group events are subscribed."
                         )
