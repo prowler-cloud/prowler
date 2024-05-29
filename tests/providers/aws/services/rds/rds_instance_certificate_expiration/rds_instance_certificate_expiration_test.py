@@ -6,7 +6,7 @@ from dateutil import relativedelta
 from moto import mock_aws
 from pytz import utc
 
-from prowler.providers.aws.services.rds.rds_service import DBInstance
+from prowler.providers.aws.services.rds.rds_service import Certificate, DBInstance
 
 AWS_ACCOUNT_NUMBER_CON = "123456789012"
 AWS_REGION = "us-east-1"
@@ -79,14 +79,15 @@ class Test_rds_instance_certificate_expiration:
                 region=AWS_REGION,
                 ca_cert="rds-ca-rsa2048-g1",
                 cert=[
-                    {
-                        "CertificateIdentifier": "rds-ca-rsa2048-g1",
-                        "CertificateType": "CA",
-                        "ValidFrom": f"{valid_from}",
-                        "ValidTill": f"{valid_till}",
-                        "CustomerOverride": False,
-                        "CustomerOverrideValidTill": f"{customer_override_valid}",
-                    }
+                    Certificate(
+                        id="rds-ca-rsa2048-g1",
+                        arn=f"arn:aws:rds:{AWS_REGION}::cert:rds-ca-2019",
+                        type="CA",
+                        valid_from=valid_from,
+                        valid_till=valid_till,
+                        customer_override=False,
+                        customer_override_valid_till=customer_override_valid,
+                    )
                 ],
             )
         ]
@@ -147,14 +148,15 @@ class Test_rds_instance_certificate_expiration:
                 region=AWS_REGION,
                 ca_cert="rds-ca-rsa2048-g1",
                 cert=[
-                    {
-                        "CertificateIdentifier": "rds-ca-rsa2048-g1",
-                        "CertificateType": "CA",
-                        "ValidFrom": f"{valid_from}",
-                        "ValidTill": f"{valid_till}",
-                        "CustomerOverride": False,
-                        "CustomerOverrideValidTill": f"{customer_override_valid}",
-                    }
+                    Certificate(
+                        id="rds-ca-rsa2048-g1",
+                        arn=f"arn:aws:rds:{AWS_REGION}::cert:rds-ca-2019",
+                        type="CA",
+                        valid_from=valid_from,
+                        valid_till=valid_till,
+                        customer_override=False,
+                        customer_override_valid_till=customer_override_valid,
+                    )
                 ],
             )
         ]
@@ -214,14 +216,15 @@ class Test_rds_instance_certificate_expiration:
                 region=AWS_REGION,
                 ca_cert="rds-ca-rsa2048-g1",
                 cert=[
-                    {
-                        "CertificateIdentifier": "rds-ca-rsa2048-g1",
-                        "CertificateType": "CA",
-                        "ValidFrom": f"{valid_from}",
-                        "ValidTill": f"{valid_till}",
-                        "CustomerOverride": False,
-                        "CustomerOverrideValidTill": f"{customer_override_valid}",
-                    }
+                    Certificate(
+                        id="rds-ca-rsa2048-g1",
+                        arn=f"arn:aws:rds:{AWS_REGION}::cert:rds-ca-2019",
+                        type="CA",
+                        valid_from=valid_from,
+                        valid_till=valid_till,
+                        customer_override=False,
+                        customer_override_valid_till=customer_override_valid,
+                    )
                 ],
             )
         ]
@@ -281,14 +284,15 @@ class Test_rds_instance_certificate_expiration:
                 region=AWS_REGION,
                 ca_cert="rds-ca-rsa2048-g1",
                 cert=[
-                    {
-                        "CertificateIdentifier": "rds-ca-rsa2048-g1",
-                        "CertificateType": "CA",
-                        "ValidFrom": f"{valid_from}",
-                        "ValidTill": f"{valid_till}",
-                        "CustomerOverride": False,
-                        "CustomerOverrideValidTill": f"{customer_override_valid}",
-                    }
+                    Certificate(
+                        id="rds-ca-rsa2048-g1",
+                        arn=f"arn:aws:rds:{AWS_REGION}::cert:rds-ca-2019",
+                        type="CA",
+                        valid_from=valid_from,
+                        valid_till=valid_till,
+                        customer_override=False,
+                        customer_override_valid_till=customer_override_valid,
+                    )
                 ],
             )
         ]
@@ -348,14 +352,15 @@ class Test_rds_instance_certificate_expiration:
                 region=AWS_REGION,
                 ca_cert="rds-ca-rsa2048-g1",
                 cert=[
-                    {
-                        "CertificateIdentifier": "rds-ca-rsa2048-g1",
-                        "CertificateType": "CA",
-                        "ValidFrom": f"{valid_from}",
-                        "ValidTill": f"{valid_till}",
-                        "CustomerOverride": True,
-                        "CustomerOverrideValidTill": f"{customer_override_valid}",
-                    }
+                    Certificate(
+                        id="rds-ca-rsa2048-g1",
+                        arn=f"arn:aws:rds:{AWS_REGION}::cert:rds-ca-2019",
+                        type="CA",
+                        valid_from=valid_from,
+                        valid_till=valid_till,
+                        customer_override=True,
+                        customer_override_valid_till=customer_override_valid,
+                    )
                 ],
             )
         ]
@@ -415,14 +420,15 @@ class Test_rds_instance_certificate_expiration:
                 region=AWS_REGION,
                 ca_cert="rds-ca-rsa2048-g1",
                 cert=[
-                    {
-                        "CertificateIdentifier": "rds-ca-rsa2048-g1",
-                        "CertificateType": "CA",
-                        "ValidFrom": f"{valid_from}",
-                        "ValidTill": f"{valid_till}",
-                        "CustomerOverride": True,
-                        "CustomerOverrideValidTill": f"{customer_override_valid}",
-                    }
+                    Certificate(
+                        id="rds-ca-rsa2048-g1",
+                        arn=f"arn:aws:rds:{AWS_REGION}::cert:rds-ca-2019",
+                        type="CA",
+                        valid_from=valid_from,
+                        valid_till=valid_till,
+                        customer_override=True,
+                        customer_override_valid_till=customer_override_valid,
+                    )
                 ],
             )
         ]
@@ -482,14 +488,15 @@ class Test_rds_instance_certificate_expiration:
                 region=AWS_REGION,
                 ca_cert="rds-ca-rsa2048-g1",
                 cert=[
-                    {
-                        "CertificateIdentifier": "rds-ca-rsa2048-g1",
-                        "CertificateType": "CA",
-                        "ValidFrom": f"{valid_from}",
-                        "ValidTill": f"{valid_till}",
-                        "CustomerOverride": True,
-                        "CustomerOverrideValidTill": f"{customer_override_valid}",
-                    }
+                    Certificate(
+                        id="rds-ca-rsa2048-g1",
+                        arn=f"arn:aws:rds:{AWS_REGION}::cert:rds-ca-2019",
+                        type="CA",
+                        valid_from=valid_from,
+                        valid_till=valid_till,
+                        customer_override=True,
+                        customer_override_valid_till=customer_override_valid,
+                    )
                 ],
             )
         ]
@@ -549,14 +556,15 @@ class Test_rds_instance_certificate_expiration:
                 region=AWS_REGION,
                 ca_cert="rds-ca-rsa2048-g1",
                 cert=[
-                    {
-                        "CertificateIdentifier": "rds-ca-rsa2048-g1",
-                        "CertificateType": "CA",
-                        "ValidFrom": f"{valid_from}",
-                        "ValidTill": f"{valid_till}",
-                        "CustomerOverride": True,
-                        "CustomerOverrideValidTill": f"{customer_override_valid}",
-                    }
+                    Certificate(
+                        id="rds-ca-rsa2048-g1",
+                        arn=f"arn:aws:rds:{AWS_REGION}::cert:rds-ca-2019",
+                        type="CA",
+                        valid_from=valid_from,
+                        valid_till=valid_till,
+                        customer_override=True,
+                        customer_override_valid_till=customer_override_valid,
+                    )
                 ],
             )
         ]
@@ -616,14 +624,15 @@ class Test_rds_instance_certificate_expiration:
                 region=AWS_REGION,
                 ca_cert="rds-ca-rsa2048-g1",
                 cert=[
-                    {
-                        "CertificateIdentifier": "rds-ca-rsa2048-g1",
-                        "CertificateType": "CA",
-                        "ValidFrom": f"{valid_from}",
-                        "ValidTill": f"{valid_till}",
-                        "CustomerOverride": True,
-                        "CustomerOverrideValidTill": f"{customer_override_valid}",
-                    }
+                    Certificate(
+                        id="rds-ca-rsa2048-g1",
+                        arn=f"arn:aws:rds:{AWS_REGION}::cert:rds-ca-2019",
+                        type="CA",
+                        valid_from=valid_from,
+                        valid_till=valid_till,
+                        customer_override=True,
+                        customer_override_valid_till=customer_override_valid,
+                    )
                 ],
             )
         ]
