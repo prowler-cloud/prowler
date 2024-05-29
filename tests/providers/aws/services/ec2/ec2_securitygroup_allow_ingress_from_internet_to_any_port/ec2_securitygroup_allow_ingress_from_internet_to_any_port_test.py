@@ -137,6 +137,102 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
                     assert sg.resource_tags == []
 
     @mock_aws
+    def test_ec2_open_sg_attached_to_allowed_eni(self):
+        # Create EC2 Mocked Resources
+        ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
+
+        # Create VPC
+        vpc_response = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
+        vpc_id = vpc_response["Vpc"]["VpcId"]
+
+        # Create Subnet
+        subnet_response = ec2_client.create_subnet(
+            VpcId=vpc_id, CidrBlock="10.0.1.0/24"
+        )
+        subnet_id = subnet_response["Subnet"]["SubnetId"]
+
+        # Get default security group
+        default_sg = ec2_client.describe_security_groups(
+            Filters=[
+                {"Name": "vpc-id", "Values": [vpc_id]},
+                {"Name": "group-name", "Values": ["default"]},
+            ]
+        )["SecurityGroups"][0]
+        default_sg_id = default_sg["GroupId"]
+        default_sg_name = default_sg["GroupName"]
+
+        # Authorize ingress rule
+        ec2_client.authorize_security_group_ingress(
+            GroupId=default_sg_id,
+            IpPermissions=[
+                {
+                    "IpProtocol": "-1",
+                    "IpRanges": [{"CidrIp": "0.0.0.0/0"}],
+                }
+            ],
+        )
+
+        # Create Network Interface
+        network_interface_response = ec2_client.create_network_interface(
+            SubnetId=subnet_id,
+            Groups=[
+                default_sg_id
+            ],  # Associating the network interface with the default security group
+            Description="Test Network Interface",
+        )
+
+        network_interface_type = network_interface_response["NetworkInterface"][
+            "InterfaceType"
+        ]
+
+        # Modify the audit_config to simulate the allowed interface types
+        mock_audit_config = {"ec2_allowed_interface_types": [network_interface_type]}
+
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
+
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1],
+        )
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_client",
+            new=EC2(aws_provider),
+        ) as ec2_client_mock, mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_securitygroup_allow_ingress_from_internet_to_any_port.vpc_client",
+            new=VPC(aws_provider),
+        ), mock.patch.object(
+            ec2_client_mock, "audit_config", mock_audit_config
+        ):
+            # Test Check
+            from prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_securitygroup_allow_ingress_from_internet_to_any_port import (
+                ec2_securitygroup_allow_ingress_from_internet_to_any_port,
+            )
+
+            check = ec2_securitygroup_allow_ingress_from_internet_to_any_port()
+            result = check.execute()
+
+            # One default sg per region
+            assert len(result) == 3
+            # Search changed sg
+            for sg in result:
+                if sg.resource_id == default_sg_id:
+                    assert sg.status == "PASS"
+                    assert sg.region == AWS_REGION_US_EAST_1
+                    assert (
+                        sg.status_extended
+                        == f"Security group {default_sg_name} ({default_sg_id}) has at least one port open to the Internet but is exclusively attached to none or to an allowed network interface type."
+                    )
+                    assert (
+                        sg.resource_arn
+                        == f"arn:{aws_provider.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{aws_provider.identity.account}:security-group/{default_sg_id}"
+                    )
+                    assert sg.resource_details == default_sg_name
+                    assert sg.resource_tags == []
+
+    @mock_aws
     def test_ec2_compliant_default_sg(self):
         # Create EC2 Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
