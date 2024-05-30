@@ -76,13 +76,12 @@ class Test_rds_instance__no_event_subscriptions:
                     result[0].status_extended
                     == "RDS security group events are subscribed."
                 )
-                # assert result[0].resource_id == "db-master-1"
+                assert result[0].resource_id == "TestSub"
                 assert result[0].region == AWS_REGION_US_EAST_1
-                # assert (
-                #    result[0].resource_arn
-                #    == f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:db:db-master-1"
-                # )
-                # assert result[0].resource_tags == []
+                assert (
+                    result[0].resource_arn
+                    == f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:es:TestSub"
+                )
 
     @mock_aws
     def test_rds_security_event_failure_only_subscription(self):
@@ -123,13 +122,13 @@ class Test_rds_instance__no_event_subscriptions:
                     result[0].status_extended
                     == 'RDS security group event category of "configuration change" is not subscribed.'
                 )
-                # assert result[0].resource_id == "db-master-1"
+                assert result[0].resource_id == "TestSub"
                 assert result[0].region == AWS_REGION_US_EAST_1
-                # assert (
-                #    result[0].resource_arn
-                #    == f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:db:db-master-1"
-                # )
-                # assert result[0].resource_tags == []
+                assert (
+                    result[0].resource_arn
+                    == f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:es:TestSub"
+                )
+                assert result[0].resource_tags == []
 
     @mock_aws
     def test_rds_security_event_configuration_change_only_subscription(self):
@@ -140,9 +139,6 @@ class Test_rds_instance__no_event_subscriptions:
             SourceType="db-security-group",
             EventCategories=["configuration change"],
             Enabled=True,
-            Tags=[
-                {"Key": "test", "Value": "testing"},
-            ],
         )
         from prowler.providers.aws.services.rds.rds_service import RDS
 
@@ -170,13 +166,12 @@ class Test_rds_instance__no_event_subscriptions:
                     result[0].status_extended
                     == 'RDS security group event category of "failure" is not subscribed.'
                 )
-                # assert result[0].resource_id == "db-master-1"
+                assert result[0].resource_id == "TestSub"
                 assert result[0].region == AWS_REGION_US_EAST_1
-                # assert (
-                #    result[0].resource_arn
-                #    == f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:db:db-master-1"
-                # )
-                # assert result[0].resource_tags == []
+                assert (
+                    result[0].resource_arn
+                    == f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:es:TestSub"
+                )
 
     @mock_aws
     def test_rds_security_event_no_subscription(self):
@@ -187,9 +182,6 @@ class Test_rds_instance__no_event_subscriptions:
             SourceType="db-instance",
             EventCategories=["configuration change"],
             Enabled=True,
-            Tags=[
-                {"Key": "test", "Value": "testing"},
-            ],
         )
         from prowler.providers.aws.services.rds.rds_service import RDS
 
@@ -217,10 +209,4 @@ class Test_rds_instance__no_event_subscriptions:
                     result[0].status_extended
                     == 'RDS security group event categories of "configuration change" and "failure" are not subscribed.'
                 )
-                # assert result[0].resource_id == "db-master-1"
                 assert result[0].region == AWS_REGION_US_EAST_1
-                # assert (
-                #    result[0].resource_arn
-                #    == f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:db:db-master-1"
-                # )
-                # assert result[0].resource_tags == []

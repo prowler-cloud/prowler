@@ -336,19 +336,26 @@ class RDS(AWSService):
             )
             for page in describe_event_subscriptions_paginator.paginate():
                 for event in page["EventSubscriptionsList"]:
-                    self.db_event_subscriptions.append(
-                        DBEvent(
-                            id=event["CustSubscriptionId"],
-                            sns_topic_arn=event["SnsTopicArn"],
-                            status=event["Status"],
-                            source_type=event["SourceType"],
-                            source_id=event.get("SourceIdsList", []),
-                            event_list=event.get("EventCategoriesList", []),
-                            enabled=event["Enabled"],
-                            event_arn=event["EventSubscriptionArn"],
-                            region=regional_client.region,
+                    arn = f"arn:{self.audited_partition}:rds:{regional_client.region}:{self.audited_account}:es:{event['CustSubscriptionId']}"
+                    if not self.audit_resources or (
+                        is_resource_filtered(
+                            arn,
+                            self.audit_resources,
                         )
-                    )
+                    ):
+                        self.db_event_subscriptions.append(
+                            DBEvent(
+                                id=event["CustSubscriptionId"],
+                                sns_topic_arn=event["SnsTopicArn"],
+                                status=event["Status"],
+                                source_type=event["SourceType"],
+                                source_id=event.get("SourceIdsList", []),
+                                event_list=event.get("EventCategoriesList", []),
+                                enabled=event["Enabled"],
+                                event_arn=arn,
+                                region=regional_client.region,
+                            )
+                        )
 
         except Exception as error:
             logger.error(
