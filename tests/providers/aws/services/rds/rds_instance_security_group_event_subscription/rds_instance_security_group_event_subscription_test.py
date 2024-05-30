@@ -36,11 +36,25 @@ class Test_rds_instance__no_event_subscriptions:
                 check = rds_instance_security_group_event_subscription()
                 result = check.execute()
 
-                assert len(result) == 1
+                assert len(result) == 0
 
     @mock_aws
     def test_rds_security_event_subscription(self):
         conn = client("rds", region_name=AWS_REGION_US_EAST_1)
+        conn.create_db_parameter_group(
+            DBParameterGroupName="test",
+            DBParameterGroupFamily="default.aurora-postgresql14",
+            Description="test parameter group",
+        )
+        conn.create_db_instance(
+            DBInstanceIdentifier="db-master-1",
+            AllocatedStorage=10,
+            Engine="aurora-postgresql",
+            DBName="aurora-postgres",
+            DBInstanceClass="db.m1.small",
+            DBParameterGroupName="test",
+            DBClusterIdentifier="db-cluster-1",
+        )
         conn.create_event_subscription(
             SubscriptionName="TestSub",
             SnsTopicArn=f"arn:aws:sns:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:test",
@@ -86,6 +100,20 @@ class Test_rds_instance__no_event_subscriptions:
     @mock_aws
     def test_rds_security_event_failure_only_subscription(self):
         conn = client("rds", region_name=AWS_REGION_US_EAST_1)
+        conn.create_db_parameter_group(
+            DBParameterGroupName="test",
+            DBParameterGroupFamily="default.aurora-postgresql14",
+            Description="test parameter group",
+        )
+        conn.create_db_instance(
+            DBInstanceIdentifier="db-master-1",
+            AllocatedStorage=10,
+            Engine="aurora-postgresql",
+            DBName="aurora-postgres",
+            DBInstanceClass="db.m1.small",
+            DBParameterGroupName="test",
+            DBClusterIdentifier="db-cluster-1",
+        )
         conn.create_event_subscription(
             SubscriptionName="TestSub",
             SnsTopicArn=f"arn:aws:sns:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:test",
@@ -133,6 +161,20 @@ class Test_rds_instance__no_event_subscriptions:
     @mock_aws
     def test_rds_security_event_configuration_change_only_subscription(self):
         conn = client("rds", region_name=AWS_REGION_US_EAST_1)
+        conn.create_db_parameter_group(
+            DBParameterGroupName="test",
+            DBParameterGroupFamily="default.aurora-postgresql14",
+            Description="test parameter group",
+        )
+        conn.create_db_instance(
+            DBInstanceIdentifier="db-master-1",
+            AllocatedStorage=10,
+            Engine="aurora-postgresql",
+            DBName="aurora-postgres",
+            DBInstanceClass="db.m1.small",
+            DBParameterGroupName="test",
+            DBClusterIdentifier="db-cluster-1",
+        )
         conn.create_event_subscription(
             SubscriptionName="TestSub",
             SnsTopicArn=f"arn:aws:sns:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:test",
@@ -176,6 +218,20 @@ class Test_rds_instance__no_event_subscriptions:
     @mock_aws
     def test_rds_security_event_no_subscription(self):
         conn = client("rds", region_name=AWS_REGION_US_EAST_1)
+        conn.create_db_parameter_group(
+            DBParameterGroupName="test",
+            DBParameterGroupFamily="default.aurora-postgresql14",
+            Description="test parameter group",
+        )
+        conn.create_db_instance(
+            DBInstanceIdentifier="db-master-1",
+            AllocatedStorage=10,
+            Engine="aurora-postgresql",
+            DBName="aurora-postgres",
+            DBInstanceClass="db.m1.small",
+            DBParameterGroupName="test",
+            DBClusterIdentifier="db-cluster-1",
+        )
         conn.create_event_subscription(
             SubscriptionName="TestSub",
             SnsTopicArn=f"arn:aws:sns:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:test",

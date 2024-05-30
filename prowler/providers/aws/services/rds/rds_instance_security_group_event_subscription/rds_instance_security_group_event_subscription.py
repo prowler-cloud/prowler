@@ -6,29 +6,28 @@ class rds_instance_security_group_event_subscription(Check):
     def execute(self):
         findings = []
         report = Check_Report_AWS(self.metadata())
-        report.status = "FAIL"
-        report.check_metadata.Severity = "medium"
-        report.status_extended = 'RDS security group event categories of "configuration change" and "failure" are not subscribed.'
-        report.region = rds_client.region
-        for db_event in rds_client.db_event_subscriptions:
-            if (
-                db_event.source_type == "db-security-group"
-                and db_event.enabled
-                and db_event.region == rds_client.region
-            ):
-                report.resource_id = db_event.id
-                report.resource_arn = db_event.event_arn
-                if db_event.event_list == []:
-                    report.status = "PASS"
-                    report.status_extended = "RDS security group events are subscribed."
-                elif db_event.event_list == ["configuration change"]:
-                    report.status = "FAIL"
-                    report.status_extended = 'RDS security group event category of "failure" is not subscribed.'
+        if rds_client.db_instances != []:
+            report.status = "FAIL"
+            report.status_extended = 'RDS security group event categories of "configuration change" and "failure" are not subscribed.'
+            report.region = rds_client.db_instances[0].region
+            for db_event in rds_client.db_event_subscriptions:
+                if db_event.source_type == "db-security-group" and db_event.enabled:
+                    report.resource_id = db_event.id
+                    report.resource_arn = db_event.event_arn
+                    if db_event.event_list == []:
+                        report.status = "PASS"
+                        report.status_extended = (
+                            "RDS security group events are subscribed."
+                        )
 
-                elif db_event.event_list == ["failure"]:
-                    report.status = "FAIL"
-                    report.status_extended = 'RDS security group event category of "configuration change" is not subscribed.'
+                    elif db_event.event_list == ["configuration change"]:
+                        report.status = "FAIL"
+                        report.status_extended = 'RDS security group event category of "failure" is not subscribed.'
 
-        findings.append(report)
+                    elif db_event.event_list == ["failure"]:
+                        report.status = "FAIL"
+                        report.status_extended = 'RDS security group event category of "configuration change" is not subscribed.'
+
+            findings.append(report)
 
         return findings

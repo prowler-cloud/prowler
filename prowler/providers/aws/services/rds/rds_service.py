@@ -331,32 +331,33 @@ class RDS(AWSService):
     def __describe_db_event_subscriptions__(self, regional_client):
         logger.info("RDS - Describe Event Subscriptions...")
         try:
-            describe_event_subscriptions_paginator = regional_client.get_paginator(
-                "describe_event_subscriptions"
-            )
-            for page in describe_event_subscriptions_paginator.paginate():
-                for event in page["EventSubscriptionsList"]:
-                    arn = f"arn:{self.audited_partition}:rds:{regional_client.region}:{self.audited_account}:es:{event['CustSubscriptionId']}"
-                    if not self.audit_resources or (
-                        is_resource_filtered(
-                            arn,
-                            self.audit_resources,
-                        )
-                    ):
-                        self.db_event_subscriptions.append(
-                            DBEvent(
-                                id=event["CustSubscriptionId"],
-                                sns_topic_arn=event["SnsTopicArn"],
-                                status=event["Status"],
-                                source_type=event["SourceType"],
-                                source_id=event.get("SourceIdsList", []),
-                                event_list=event.get("EventCategoriesList", []),
-                                enabled=event["Enabled"],
-                                event_arn=arn,
-                                region=regional_client.region,
-                            )
-                        )
-
+            if self.db_instances != []:
+                if self.db_instances[0].region == regional_client.region:
+                    describe_event_subscriptions_paginator = (
+                        regional_client.get_paginator("describe_event_subscriptions")
+                    )
+                    for page in describe_event_subscriptions_paginator.paginate():
+                        for event in page["EventSubscriptionsList"]:
+                            arn = f"arn:{self.audited_partition}:rds:{regional_client.region}:{self.audited_account}:es:{event['CustSubscriptionId']}"
+                            if not self.audit_resources or (
+                                is_resource_filtered(
+                                    arn,
+                                    self.audit_resources,
+                                )
+                            ):
+                                self.db_event_subscriptions.append(
+                                    EventSubscription(
+                                        id=event["CustSubscriptionId"],
+                                        sns_topic_arn=event["SnsTopicArn"],
+                                        status=event["Status"],
+                                        source_type=event["SourceType"],
+                                        source_id=event.get("SourceIdsList", []),
+                                        event_list=event.get("EventCategoriesList", []),
+                                        enabled=event["Enabled"],
+                                        event_arn=arn,
+                                        region=regional_client.region,
+                                    )
+                                )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -438,7 +439,7 @@ class DBEngine(BaseModel):
     engine_description: str
 
 
-class DBEvent(BaseModel):
+class EventSubscription(BaseModel):
     id: str
     sns_topic_arn: str
     status: str
