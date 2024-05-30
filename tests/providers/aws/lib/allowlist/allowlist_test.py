@@ -1318,3 +1318,8 @@ class Test_Allowlist:
         assert is_allowlisted_in_resource(allowlist_resources, "prowler-test")
         assert is_allowlisted_in_resource(allowlist_resources, "test-prowler")
         assert not is_allowlisted_in_resource(allowlist_resources, "random")
+
+    def test_is_allowlisted_in_resource_starting_by_star(self):
+        allowlist_resources = ["*.es"]
+
+        assert is_allowlisted_in_resource(allowlist_resources, "google.es")
