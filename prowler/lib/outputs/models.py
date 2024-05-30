@@ -24,7 +24,8 @@ def get_check_compliance(finding, provider, output_options):
                 compliance_fw = compliance.Framework
                 if compliance.Version:
                     compliance_fw = f"{compliance_fw}-{compliance.Version}"
-                if compliance.Provider == provider.upper():
+                # compliance.Provider == "Azure" or "GCP" or "AWS"
+                if compliance.Provider.upper() == provider.upper():
                     if compliance_fw not in check_compliance:
                         check_compliance[compliance_fw] = []
                     for requirement in compliance.Requirements:
