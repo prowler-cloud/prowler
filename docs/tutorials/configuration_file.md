@@ -312,6 +312,7 @@ aws:
   # aws.rds_instance_backup_enabled
   # Whether to check RDS instance replicas or not
   check_rds_instance_replicas: False
+  # aws.ec2_securitygroup_allow_ingress_from_internet_to_any_port
   # allowed network interface types for security groups open to the Internet
   ec2_allowed_interface_types:
     [
