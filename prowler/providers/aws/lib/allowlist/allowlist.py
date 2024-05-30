@@ -118,8 +118,8 @@ def parse_allowlist_file(audit_info, allowlist_file):
 def allowlist_findings(
     allowlist: dict,
     audited_account: str,
-    check_findings: [Any],
-):
+    check_findings: list[Any],
+) -> list[Any]:
     # Check if finding is allowlisted
     for finding in check_findings:
         if is_allowlisted(
@@ -141,7 +141,21 @@ def is_allowlisted(
     finding_region: str,
     finding_resource: str,
     finding_tags,
-):
+) -> bool:
+    """
+    Check if the provided finding is allowlisted for the audited account, check, region, resource and tags.
+
+    Args:
+        mutelist (dict): Dictionary containing information about allowlisted checks for different accounts.
+        audited_account (str): The account being audited.
+        check (str): The check to be evaluated for allowlisting.
+        finding_region (str): The region where the finding occurred.
+        finding_resource (str): The resource related to the finding.
+        finding_tags: The tags associated with the finding.
+
+    Returns:
+        bool: True if the finding is allowlisted for the audited account, check, region, resource and tags., otherwise False.
+    """
     try:
         # By default is not allowlisted
         is_finding_allowlisted = False
@@ -163,10 +177,10 @@ def is_allowlisted(
 
         return is_finding_allowlisted
     except Exception as error:
-        logger.critical(
+        logger.error(
             f"{error.__class__.__name__} -- {error}[{error.__traceback__.tb_lineno}]"
         )
-        sys.exit(1)
+        return False
 
 
 def is_allowlisted_in_check(
@@ -176,7 +190,21 @@ def is_allowlisted_in_check(
     finding_region,
     finding_resource,
     finding_tags,
-):
+) -> bool:
+    """
+    Check if the provided check is allowlisted.
+
+    Args:
+        allowlisted_checks (dict): Dictionary containing information about allowlisted checks.
+        audited_account (str): The account to be audited.
+        check (str): The check to be evaluated for allowlisting.
+        finding_region (str): The region where the finding occurred.
+        finding_resource (str): The resource related to the finding.
+        finding_tags (str): The tags associated with the finding.
+
+    Returns:
+        bool: True if the check is allowlisted, otherwise False.
+    """
     try:
         # Default value is not allowlisted
         is_check_allowlisted = False
@@ -243,44 +271,74 @@ def is_allowlisted_in_check(
 
         return is_check_allowlisted
     except Exception as error:
-        logger.critical(
+        logger.error(
             f"{error.__class__.__name__} -- {error}[{error.__traceback__.tb_lineno}]"
         )
-        sys.exit(1)
+        return False
 
 
 def is_allowlisted_in_region(
     allowlisted_regions,
     finding_region,
-):
+) -> bool:
+    """
+    Check if the finding_region is present in the allowlisted_regions.
+
+    Args:
+        allowlisted_regions (list): List of regions in the allowlist.
+        finding_region (str): Region to check if it is allowlisted.
+
+    Returns:
+        bool: True if the finding_region is present in any of the allowlisted_regions, otherwise False.
+    """
     try:
         return __is_item_matched__(allowlisted_regions, finding_region)
     except Exception as error:
-        logger.critical(
+        logger.error(
             f"{error.__class__.__name__} -- {error}[{error.__traceback__.tb_lineno}]"
         )
-        sys.exit(1)
+        return False
 
 
-def is_allowlisted_in_tags(allowlisted_tags, finding_tags):
+def is_allowlisted_in_tags(allowlisted_tags, finding_tags) -> bool:
+    """
+    Check if any of the allowlisted tags are present in the finding tags.
+
+    Args:
+        allowlisted_tags (list): List of allowlisted tags to be checked.
+        finding_tags (str): String containing tags to search for allowlisted tags.
+
+    Returns:
+        bool: True if any of the allowlisted tags are present in the finding tags, otherwise False.
+    """
     try:
         return __is_item_matched__(allowlisted_tags, finding_tags)
     except Exception as error:
-        logger.critical(
+        logger.error(
             f"{error.__class__.__name__} -- {error}[{error.__traceback__.tb_lineno}]"
         )
-        sys.exit(1)
+        return False
 
 
-def is_allowlisted_in_resource(allowlisted_resources, finding_resource):
+def is_allowlisted_in_resource(allowlisted_resources, finding_resource) -> bool:
+    """
+    Check if any of the allowlisted_resources are present in the finding_resource.
+
+    Args:
+        allowlisted_resources (list): List of allowlisted resources to be checked.
+        finding_resource (str): Resource to search for allowlisted resources.
+
+    Returns:
+        bool: True if any of the allowlisted_resources are present in the finding_resource, otherwise False.
+    """
     try:
         return __is_item_matched__(allowlisted_resources, finding_resource)
 
     except Exception as error:
-        logger.critical(
+        logger.error(
             f"{error.__class__.__name__} -- {error}[{error.__traceback__.tb_lineno}]"
         )
-        sys.exit(1)
+        return False
 
 
 def is_excepted(
@@ -289,8 +347,20 @@ def is_excepted(
     finding_region,
     finding_resource,
     finding_tags,
-):
-    """is_excepted returns True if the account, region, resource and tags are excepted"""
+) -> bool:
+    """
+    Check if the provided account, region, resource, and tags are excepted based on the exceptions dictionary.
+
+    Args:
+        exceptions (dict): Dictionary containing exceptions for different attributes like Accounts, Regions, Resources, and Tags.
+        audited_account (str): The account to be audited.
+        finding_region (str): The region where the finding occurred.
+        finding_resource (str): The resource related to the finding.
+        finding_tags (str): The tags associated with the finding.
+
+    Returns:
+        bool: True if the account, region, resource, and tags are excepted based on the exceptions, otherwise False.
+    """
     try:
         excepted = False
         is_account_excepted = False
@@ -330,14 +400,23 @@ def is_excepted(
                 excepted = True
         return excepted
     except Exception as error:
-        logger.critical(
+        logger.error(
             f"{error.__class__.__name__} -- {error}[{error.__traceback__.tb_lineno}]"
         )
-        sys.exit(1)
+        return False
 
 
 def __is_item_matched__(matched_items, finding_items):
-    """__is_item_matched__ return True if any of the matched_items are present in the finding_items, otherwise returns False."""
+    """
+    Check if any of the items in matched_items are present in finding_items.
+
+    Args:
+        matched_items (list): List of items to be matched.
+        finding_items (str): String to search for matched items.
+
+    Returns:
+        bool: True if any of the matched_items are present in finding_items, otherwise False.
+    """
     try:
         is_item_matched = False
         if matched_items and (finding_items or finding_items == ""):
