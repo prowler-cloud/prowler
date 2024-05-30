@@ -100,8 +100,8 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
     ):
         eni = network_interface_response.get("NetworkInterface", {})
         att = eni.get("Attachment", {})
-        eni_type = eni.get("InterfaceType", None)
-        eni_owner = att.get("InstanceOwnerId", None)
+        eni_type = eni.get("InterfaceType", "")
+        eni_owner = att.get("InstanceOwnerId", "")
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         aws_provider = set_mocked_aws_provider(
@@ -357,7 +357,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
 
         eni = network_interface_response.get("NetworkInterface", {})
         att = eni.get("Attachment", {})
-        eni_owner = att.get("InstanceOwnerId", None)
+        eni_owner = att.get("InstanceOwnerId", "")
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 

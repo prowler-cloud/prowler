@@ -62,13 +62,13 @@ class ec2_securitygroup_allow_ingress_from_internet_to_any_port(Check):
         report.status_extended = f"Security group {security_group_name} ({security_group_id}) has at least one port open to the Internet but is exclusively not attached to any network interface."
         for eni in enis:
 
-            if self.is_allowed_eni_type(eni=eni):
+            if self.is_allowed_eni_type(eni_type=eni.type):
                 report.status = "PASS"
                 report.status_extended = f"Security group {security_group_name} ({security_group_id}) has at least one port open to the Internet but is exclusively attached to an allowed network interface type ({eni.type})."
                 continue
 
             eni_owner = self.get_eni_owner(eni=eni)
-            if self.is_allowed_eni_owner(eni=eni, eni_owner=eni_owner):
+            if self.is_allowed_eni_owner(eni_owner=eni_owner):
                 report.status = "PASS"
                 report.status_extended = f"Security group {security_group_name} ({security_group_id}) has at least one port open to the Internet but is exclusively attached to an allowed network interface instance owner ({eni_owner})."
                 continue
@@ -79,14 +79,14 @@ class ec2_securitygroup_allow_ingress_from_internet_to_any_port(Check):
             break  # no need to check other network interfaces because at least one failed already
 
     @staticmethod
-    def is_allowed_eni_type(eni) -> bool:
-        return eni.type in ec2_client.audit_config.get(
+    def is_allowed_eni_type(eni_type: str) -> bool:
+        return eni_type in ec2_client.audit_config.get(
             "ec2_allowed_interface_types", []
         )
 
     @staticmethod
-    def get_eni_owner(eni) -> str | None:
-        eni_owner = None
+    def get_eni_owner(eni) -> str:
+        eni_owner = ""
         if (
             hasattr(eni, "attachment")
             and isinstance(eni.attachment, dict)
@@ -97,7 +97,7 @@ class ec2_securitygroup_allow_ingress_from_internet_to_any_port(Check):
         return eni_owner
 
     @staticmethod
-    def is_allowed_eni_owner(eni, eni_owner: str) -> bool:
+    def is_allowed_eni_owner(eni_owner: str) -> bool:
         return eni_owner in ec2_client.audit_config.get(
             "ec2_allowed_instance_owners", []
         )
