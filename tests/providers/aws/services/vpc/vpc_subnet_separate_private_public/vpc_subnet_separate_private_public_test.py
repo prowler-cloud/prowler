@@ -153,17 +153,17 @@ class Test_vpc_subnet_separate_private_public:
 
         from prowler.providers.aws.services.vpc.vpc_service import VPC
 
-        aws_provider = set_mocked_aws_provider(
-            audited_regions=[AWS_REGION_US_EAST_1], scan_unused_services=False
+        current_audit_info = set_mocked_aws_audit_info(
+            audited_regions=[AWS_REGION_US_EAST_1], ignore_unused_services=True
         )
 
         with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=current_audit_info,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.vpc.vpc_subnet_separate_private_public.vpc_subnet_separate_private_public.vpc_client",
-                new=VPC(aws_provider),
+                new=VPC(current_audit_info),
             ):
                 from prowler.providers.aws.services.vpc.vpc_subnet_separate_private_public.vpc_subnet_separate_private_public import (
                     vpc_subnet_separate_private_public,
