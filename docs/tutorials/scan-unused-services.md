@@ -73,3 +73,11 @@ VPC Flow Logs provide visibility into network traffic that traverses the VPC and
 VPC subnets must not have public IP addresses by default to prevent the exposure of your resources to the internet. Prowler will only check this configuration for those VPCs that are in use, in other words, only the VPCs where you have ENIs (network interfaces).
 
   - `vpc_subnet_no_public_ip_by_default`
+
+VPCs should have separate private and public subnets to prevent the exposure of your resources to the internet. Prowler will only check this configuration for those VPCs that are in use, in other words, only the VPCs where you have ENIs (network interfaces).
+
+  - `vpc_subnet_separate_private_public`
+
+VPCs should have subnets in different availability zones to prevent a single point of failure. Prowler will only check this configuration for those VPCs that are in use, in other words, only the VPCs where you have ENIs (network interfaces).
+
+  - `vpc_subnet_different_az`
