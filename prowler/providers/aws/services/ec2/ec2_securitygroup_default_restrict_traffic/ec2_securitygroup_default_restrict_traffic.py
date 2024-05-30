@@ -9,7 +9,7 @@ class ec2_securitygroup_default_restrict_traffic(Check):
         for security_group in ec2_client.security_groups:
             # Check if ignoring flag is set and if the VPC and the default SG are in used
             if security_group.name == "default" and (
-                ec2_client.provider.scan_unused_services
+                not ec2_client.audit_info.ignore_unused_services
                 or (
                     security_group.vpc_id in vpc_client.vpcs
                     and vpc_client.vpcs[security_group.vpc_id].in_use

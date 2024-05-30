@@ -160,16 +160,16 @@ class Test_ec2_securitygroup_default_restrict_traffic:
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-        aws_provider = set_mocked_aws_provider(
-            audited_regions=[AWS_REGION_US_EAST_1], scan_unused_services=False
+        current_audit_info = set_mocked_aws_audit_info(
+            audited_regions=[AWS_REGION_US_EAST_1], ignore_unused_services=True
         )
 
         with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_default_restrict_traffic.ec2_securitygroup_default_restrict_traffic.ec2_client",
-            new=EC2(aws_provider),
+            new=EC2(current_audit_info),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_securitygroup_default_restrict_traffic.ec2_securitygroup_default_restrict_traffic import (
