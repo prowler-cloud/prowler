@@ -33,8 +33,19 @@ class ELB(AWSService):
                         for listener in elb["ListenerDescriptions"]:
                             listeners.append(
                                 Listener(
-                                    protocol=listener["Listener"]["Protocol"],
-                                    policies=listener["PolicyNames"],
+                                    port=listener.get("Listener", {}).get(
+                                        "LoadBalancerPort", 0
+                                    ),
+                                    protocol=listener.get("Listener", {}).get(
+                                        "Protocol", ""
+                                    ),
+                                    instance_port=listener.get("Listener", {}).get(
+                                        "InstancePort", 0
+                                    ),
+                                    instance_protocol=listener.get("Listener", {}).get(
+                                        "InstanceProtocol", ""
+                                    ),
+                                    policies=listener.get("PolicyNames", []),
                                 )
                             )
 
@@ -98,7 +109,10 @@ class ELB(AWSService):
 
 
 class Listener(BaseModel):
+    port: int
     protocol: str
+    instance_port: int
+    instance_protocol: str
     policies: list[str]
 
 
