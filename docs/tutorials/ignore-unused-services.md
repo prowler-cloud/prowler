@@ -30,9 +30,10 @@ If EBS default encyption is not enabled, sensitive information at rest is not pr
 
   - `ec2_ebs_default_encryption`
 
-If your Security groups are not properly configured the attack surface is increased, nonetheless, Prowler will detect those security groups that are being used (they are attached) to only notify those that are being used. This logic applies to the 15 checks related to open ports in security groups.
+If your Security groups are not properly configured the attack surface is increased, nonetheless, Prowler will detect those security groups that are being used (they are attached) to only notify those that are being used. This logic applies to the 15 checks related to open ports in security groups and the check for the default security group.
 
   - `ec2_securitygroup_allow_ingress_from_internet_to_port_X` (15 checks)
+  - `ec2_securitygroup_default_restrict_traffic`
 
 Prowler will also check for used Network ACLs to only alerts those with open ports that are being used.
 
@@ -69,3 +70,15 @@ You should enable Public Access Block at the account level to prevent the exposu
 VPC Flow Logs provide visibility into network traffic that traverses the VPC and can be used to detect anomalous traffic or insight during security workflows. Nevertheless, Prowler will only check if the Flow Logs are enabled for those VPCs that are in use, in other words, only the VPCs where you have ENIs (network interfaces).
 
   - `vpc_flow_logs_enabled`
+
+VPC subnets must not have public IP addresses by default to prevent the exposure of your resources to the internet. Prowler will only check this configuration for those VPCs that are in use, in other words, only the VPCs where you have ENIs (network interfaces).
+
+  - `vpc_subnet_no_public_ip_by_default`
+
+VPCs should have separate private and public subnets to prevent the exposure of your resources to the internet. Prowler will only check this configuration for those VPCs that are in use, in other words, only the VPCs where you have ENIs (network interfaces).
+
+  - `vpc_subnet_separate_private_public`
+
+VPCs should have subnets in different availability zones to prevent a single point of failure. Prowler will only check this configuration for those VPCs that are in use, in other words, only the VPCs where you have ENIs (network interfaces).
+
+  - `vpc_subnet_different_az`
