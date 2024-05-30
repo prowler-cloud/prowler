@@ -1,5 +1,5 @@
 from re import sub
-from typing import Optional
+from typing import Dict, Optional
 
 from pydantic import BaseModel
 
@@ -8,16 +8,17 @@ from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################################ ECS
 class ECS(AWSService):
     def __init__(self, provider):
-        # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.task_definitions = []
-        self.containers = []
         self.__threading_call__(self.__list_task_definitions__)
-        self.__threading_call__(self.__describe_container_instances__)
         self.__describe_task_definition__()
+        self.clusters = {}
+        self.__threading_call__(self.__list_clusters__)
+        self.__describe_clusters__()
+        self.__list_services__()
+        self.__describe_services__()
 
     def __list_task_definitions__(self, regional_client):
         logger.info("ECS - Listing Task Definitions...")
@@ -74,45 +75,97 @@ class ECS(AWSService):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_container_instances__(self, regional_client):
-        logger.info("ECS - Describing Container Instances...")
+    def __list_clusters__(self, regional_client):
+        logger.info("ECS - Listing Clusters...")
         try:
-            for container in regional_client.describe_container_instances()[
-                "containerInstances"
-            ]:
-                if not self.audit_resources or (
-                    is_resource_filtered(container, self.audit_resources)
-                ):
-                    cont = Containers(
-                        arn=container["containerInstanceArn"],
-                        tags=container["tags"],
-                    )
-
-                    for attachment in container["attachments"]:
-                        if attachment["type"] == "ElasticNetworkInterface":
-                            for detail in attachment["details"]:
-                                if detail["name"] == "networkInterfaceId":
-                                    for (
-                                        eni
-                                    ) in regional_client.describe_network_interfaces(
-                                        NetworkInterfaceIds=detail["value"]
-                                    )[
-                                        "NetworkInterfaces"
-                                    ]:
-                                        cont.availability_zone = eni["AvailabilityZone"]
-                                        for ipv6 in eni["Ipv6Addresses"]:
-                                            if ipv6["Primary"]:
-                                                cont.ipv6 = ipv6["Ipv6Addresses"]
-                                                break
-                                        for ipv4 in eni["PrivateIpAddresses"]:
-                                            if ipv4["Primary"]:
-                                                cont.ipv4 = ipv4["PrivateIpAddress"]
-                                                break
-
-                    self.containers.append(cont)
+            cluster_paginator = regional_client.get_paginator("list_clusters")
+            for cluster in cluster_paginator.paginate():
+                for cluster_arn in cluster["clusterArns"]:
+                    if not self.audit_resources or (
+                        is_resource_filtered(cluster, self.audit_resources)
+                    ):
+                        self.clusters[cluster_arn] = Cluster(
+                            name=cluster_arn.split("/")[-1],
+                            region=regional_client.region,
+                            status="",
+                            services={},
+                        )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def __describe_clusters__(self):
+        logger.info("ECS - Describing Clusters...")
+        try:
+            for cluster_arn, cluster in self.clusters.items():
+                client = self.regional_clients[cluster.region]
+                response = client.describe_clusters(clusters=[cluster_arn])
+                cluster.status = response["clusters"][0]["status"]
+                cluster.tags = response["clusters"][0].get("tags")
+
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def __list_services__(self):
+        logger.info("ECS - Listing Services...")
+        try:
+            for cluster_arn, cluster in self.clusters.items():
+                client = self.regional_clients[cluster.region]
+                service_paginator = client.get_paginator("list_services")
+                for service in service_paginator.paginate(cluster=cluster_arn):
+                    for service_arn in service["serviceArns"]:
+                        if not self.audit_resources or (
+                            is_resource_filtered(service_arn, self.audit_resources)
+                        ):
+                            self.clusters[cluster_arn].services[service_arn] = Service(
+                                name=service_arn.split("/")[-1],
+                                status="",
+                                load_balancers_target_groups=[],
+                                security_groups=[],
+                                tags=[],
+                            )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def __describe_services__(self):
+        logger.info("ECS - Describing Services...")
+        try:
+            for cluster_arn, cluster in self.clusters.items():
+                client = self.regional_clients[cluster.region]
+
+                service_arns = [service_arn for service_arn in cluster.services.keys()]
+                # API sets maximum of 10 services per call
+                for i in range(0, len(service_arns), 10):
+                    response = client.describe_services(
+                        cluster=cluster_arn, services=service_arns[i : i + 10]
+                    )
+                    for service in response["services"]:
+                        cluster.services[service["serviceArn"]].status = service[
+                            "status"
+                        ]
+                        cluster.services[
+                            service["serviceArn"]
+                        ].load_balancers_target_groups = [
+                            lb["targetGroupArn"]
+                            for lb in service.get("loadBalancers", [])
+                        ]
+                        cluster.services[service["serviceArn"]].security_groups = (
+                            service.get("networkConfiguration", {})
+                            .get("awsvpcConfiguration", {})
+                            .get("securityGroups", [])
+                        )
+                        cluster.services[service["serviceArn"]].tags = service.get(
+                            "tags", []
+                        )
+
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
 
@@ -131,9 +184,17 @@ class TaskDefinition(BaseModel):
     network_mode: Optional[str]
 
 
-class Containers(BaseModel):
-    arn: str
-    availability_zone: str
-    ipv6: Optional[str]
-    ipv4: Optional[str]
+class Service(BaseModel):
+    name: str
+    status: str
+    load_balancers_target_groups: list
+    security_groups: list
     tags: Optional[list] = []
+
+
+class Cluster(BaseModel):
+    name: str
+    region: str
+    status: str
+    tags: Optional[list] = []
+    services: Dict[str, Service]
