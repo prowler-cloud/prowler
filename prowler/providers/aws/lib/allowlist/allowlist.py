@@ -342,14 +342,15 @@ def __is_item_matched__(matched_items, finding_items):
         is_item_matched = False
         if matched_items and (finding_items or finding_items == ""):
             for item in matched_items:
-                if item == "*":
-                    item = ".*"
+                if item.startswith("*"):
+                    item = ".*" + item[1:]
                 if re.search(item, finding_items):
                     is_item_matched = True
                     break
         return is_item_matched
     except Exception as error:
-        logger.critical(
+        logger.error(
             f"{error.__class__.__name__} -- {error}[{error.__traceback__.tb_lineno}]"
         )
-        sys.exit(1)
+        # If something unexpected happens return not matched, thus False
+        return False
