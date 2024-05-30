@@ -69,3 +69,7 @@ You should enable Public Access Block at the account level to prevent the exposu
 VPC Flow Logs provide visibility into network traffic that traverses the VPC and can be used to detect anomalous traffic or insight during security workflows. Nevertheless, Prowler will only check if the Flow Logs are enabled for those VPCs that are in use, in other words, only the VPCs where you have ENIs (network interfaces).
 
   - `vpc_flow_logs_enabled`
+
+VPC subnets must not have public IP addresses by default to prevent the exposure of your resources to the internet. Prowler will only check this configuration for those VPCs that are in use, in other words, only the VPCs where you have ENIs (network interfaces).
+
+  - `vpc_subnet_no_public_ip_by_default`
