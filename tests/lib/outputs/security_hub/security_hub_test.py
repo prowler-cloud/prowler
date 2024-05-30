@@ -3,9 +3,8 @@ from logging import ERROR, WARNING
 from os import path
 
 import botocore
-from boto3 import session
 from botocore.client import ClientError
-from mock import MagicMock, patch
+from mock import patch
 
 from prowler.config.config import prowler_version, timestamp_utc
 from prowler.lib.check.models import Check_Report, load_check_metadata
@@ -103,22 +102,6 @@ class Test_SecurityHub:
         finding.muted = muted
 
         return finding
-
-    def set_mocked_output_options(
-        self, status: list[str] = [], send_sh_only_fails: bool = False
-    ):
-        output_options = MagicMock
-        output_options.bulk_checks_metadata = {}
-        output_options.status = status
-        output_options.send_sh_only_fails = send_sh_only_fails
-
-        return output_options
-
-    def set_mocked_session(self, region):
-        # Create mock session
-        return session.Session(
-            region_name=region,
-        )
 
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     def test_verify_security_hub_integration_enabled_per_region(self):
