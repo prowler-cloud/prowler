@@ -1323,3 +1323,8 @@ class TestMutelist:
         assert is_muted_in_resource(mutelist_resources, "prowler-test")
         assert is_muted_in_resource(mutelist_resources, "test-prowler")
         assert not is_muted_in_resource(mutelist_resources, "random")
+
+    def test_is_muted_in_resource_starting_by_star(self):
+        allowlist_resources = ["*.es"]
+
+        assert is_muted_in_resource(allowlist_resources, "google.es")

@@ -362,8 +362,8 @@ def __is_item_matched__(matched_items, finding_items):
         is_item_matched = False
         if matched_items and (finding_items or finding_items == ""):
             for item in matched_items:
-                if item == "*":
-                    item = ".*"
+                if item.startswith("*"):
+                    item = ".*" + item[1:]
                 if re.search(item, finding_items):
                     is_item_matched = True
                     break
