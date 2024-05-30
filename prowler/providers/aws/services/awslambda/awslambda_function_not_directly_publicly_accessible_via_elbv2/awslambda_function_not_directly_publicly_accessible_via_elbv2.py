@@ -50,9 +50,7 @@ class awslambda_function_not_directly_publicly_accessible_via_elbv2(Check):
                             if listen_port:
                                 # Check for lb security groups in every sg
                                 for sg in ec2_client.security_groups:
-                                    if any(
-                                        sg.id == lb_sg for lb_sg in lb.security_groups
-                                    ):
+                                    if sg.id in lb.security_groups:
                                         for rule in sg.ingress_rules:
                                             # Check if some listener is open in the range of the lambda function
                                             if check_security_group(

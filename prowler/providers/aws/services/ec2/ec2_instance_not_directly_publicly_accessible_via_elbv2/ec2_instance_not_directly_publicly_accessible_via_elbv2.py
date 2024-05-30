@@ -19,8 +19,9 @@ class ec2_instance_not_directly_publicly_accessible_via_elbv2(Check):
                 report.status_extended = f"EC2 Instance {instance.id} is not publicly accesible through an Internet facing Load Balancer."
 
                 for target_group in elbv2_client.target_groups:
-                    if target_group.target_type == "instance" and any(
-                        target == instance.id for target in target_group.targets
+                    if (
+                        target_group.target_type == "instance"
+                        and instance.id in target_group.targets
                     ):
                         for lb in elbv2_client.loadbalancersv2:
                             if lb.arn == target_group.load_balancer_arn and lb.public:
@@ -49,12 +50,9 @@ class ec2_instance_not_directly_publicly_accessible_via_elbv2(Check):
                                 if listen_port:
                                     safe_sgs = []
                                     for sg in ec2_client.security_groups:
-                                        if any(
-                                            sg.id == lb_sg
-                                            for lb_sg in lb.security_groups
-                                        ) or any(
-                                            sg.id == instance_sg
-                                            for instance_sg in instance.security_groups
+                                        if (
+                                            sg.id in lb.security_groups
+                                            or sg.id in instance.security_groups
                                         ):
                                             for rule in sg.ingress_rules:
                                                 if check_security_group(
@@ -67,6 +65,7 @@ class ec2_instance_not_directly_publicly_accessible_via_elbv2(Check):
                                                 ):
                                                     safe_sgs.append(False)
                                                     break
+                                            else:
                                                 safe_sgs.append(True)
                                     # If there is not any security group safe, the instance is publicly accessible
                                     if not any(safe_sgs):
