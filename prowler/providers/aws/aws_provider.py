@@ -15,11 +15,13 @@ from tzlocal import get_localzone
 
 from prowler.config.config import (
     aws_services_json_file,
+    get_default_mute_file_path,
     load_and_validate_config_file,
     load_and_validate_fixer_config_file,
 )
 from prowler.lib.check.check import list_modules, recover_checks_from_service
 from prowler.lib.logger import logger
+from prowler.lib.mutelist.mutelist import parse_mutelist_file
 from prowler.lib.utils.utils import open_file, parse_json_file, print_boxes
 from prowler.providers.aws.config import (
     AWS_STS_GLOBAL_ENDPOINT_REGION,
@@ -284,6 +286,31 @@ class AwsProvider(Provider):
         self._output_options = AWSOutputOptions(
             arguments, bulk_checks_metadata, self._identity
         )
+
+    @property
+    def mutelist(self):
+        """
+        mutelist method returns the provider's mutelist.
+        """
+        return self._mutelist
+
+    @mutelist.setter
+    def mutelist(self, mutelist_path):
+        """
+        mutelist.setter sets the provider's mutelist.
+        """
+        # Set default mutelist path if none is set
+        if not mutelist_path:
+            mutelist_path = get_default_mute_file_path(self.type)
+        if mutelist_path:
+            mutelist = parse_mutelist_file(
+                mutelist_path, self._session.current_session, self._identity.account
+            )
+        else:
+            mutelist = {}
+
+        self._mutelist = mutelist
+        self._mutelist_file_path = mutelist_path
 
     @property
     def get_output_mapping(self):
