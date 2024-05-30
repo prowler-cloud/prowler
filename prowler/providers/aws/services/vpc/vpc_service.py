@@ -28,9 +28,9 @@ class VPC(AWSService):
         self.__describe_flow_logs__()
         self.__describe_peering_route_tables__()
         self.__describe_vpc_endpoint_service_permissions__()
-        self.__describe_network_interfaces__()
         self.vpc_subnets = {}
         self.__threading_call__(self.__describe_vpc_subnets__)
+        self.__describe_network_interfaces__()
 
     def __describe_vpcs__(self, regional_client):
         logger.info("VPC - Describing VPCs...")
@@ -192,6 +192,19 @@ class VPC(AWSService):
                     )["NetworkInterfaces"]
                     if enis:
                         vpc.in_use = True
+                    for subnet in vpc.subnets:
+                        enis = regional_client.describe_network_interfaces(
+                            Filters=[
+                                {
+                                    "Name": "subnet-id",
+                                    "Values": [
+                                        subnet.id,
+                                    ],
+                                },
+                            ]
+                        )["NetworkInterfaces"]
+                        if enis:
+                            subnet.in_use = True
                 except Exception as error:
                     logger.error(
                         f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -395,6 +408,7 @@ class VpcSubnet(BaseModel):
     cidr_block: Optional[str]
     availability_zone: str
     public: bool
+    in_use: bool = False
     nat_gateway: bool
     region: str
     mapPublicIpOnLaunch: bool
