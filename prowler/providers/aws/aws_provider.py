@@ -315,7 +315,7 @@ class AwsProvider(Provider):
             # Mutelist from S3 URI
             if re.search("^s3://([^/]+)/(.*?([^/]+))$", mutelist_path):
                 mutelist = get_mutelist_file_from_s3(
-                    mutelist_path, self._session.current_session, self._identity.account
+                    mutelist_path, self._session.current_session
                 )
             # Mutelist from Lambda Function ARN
             elif re.search(r"^arn:(\w+):lambda:", mutelist_path):
