@@ -3,7 +3,7 @@
   "CheckID": "kubelet_config_yaml_ownership",
   "CheckTitle": "Validate kubelet config.yaml File Ownership",
   "CheckType": [],
-  "ServiceName": "kubelet",
+  "ServiceName": "Kubelet",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

@@ -3,7 +3,7 @@
   "CheckID": "core_minimize_containers_capabilities_assigned",
   "CheckTitle": "Minimize the admission of containers with capabilities assigned",
   "CheckType": [],
-  "ServiceName": "core",
+  "ServiceName": "Core",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

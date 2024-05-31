@@ -1,10 +1,10 @@
 {
   "Provider": "aws",
   "CheckID": "elasticache_cluster_uses_public_subnet",
-  "CheckTitle": "Ensure Elasticache Cluster is not using a public subnet",
+  "CheckTitle": "Ensure ElastiCache Cluster is not using a public subnet",
   "CheckType": [],
-  "ServiceName": "elasticache",
-  "SubServiceName": "",
+  "ServiceName": "ElastiCache",
+  "SubServiceName": "Cluster",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
   "ResourceType": "AWSElastiCacheCacheCluster",

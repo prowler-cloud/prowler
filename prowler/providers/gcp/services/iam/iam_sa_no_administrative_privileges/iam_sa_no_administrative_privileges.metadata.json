@@ -3,7 +3,7 @@
   "CheckID": "iam_sa_no_administrative_privileges",
   "CheckTitle": "Ensure Service Account does not have admin privileges",
   "CheckType": [],
-  "ServiceName": "iam",
+  "ServiceName": "IAM",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

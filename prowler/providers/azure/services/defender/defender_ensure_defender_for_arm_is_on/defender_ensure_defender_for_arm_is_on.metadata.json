@@ -3,7 +3,7 @@
   "CheckID": "defender_ensure_defender_for_arm_is_on",
   "CheckTitle": "Ensure That Microsoft Defender for Azure Resource Manager Is Set To 'On' ",
   "CheckType": [],
-  "ServiceName": "defender",
+  "ServiceName": "Defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

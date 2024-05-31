@@ -5,8 +5,8 @@
   "CheckType": [
     "Infrastructure Security"
   ],
-  "ServiceName": "dynamodb",
-  "SubServiceName": "",
+  "ServiceName": "DynamoDB",
+  "SubServiceName": "Table",
   "ResourceIdTemplate": "arn:partition:dynamodb:region:account-id:table/resource-id",
   "Severity": "medium",
   "ResourceType": "AwsDynamoDBTable",

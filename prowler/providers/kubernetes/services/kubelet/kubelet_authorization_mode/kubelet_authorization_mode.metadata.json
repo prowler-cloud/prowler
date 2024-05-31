@@ -3,7 +3,7 @@
   "CheckID": "kubelet_authorization_mode",
   "CheckTitle": "Ensure that the kubelet --authorization-mode argument is not set to AlwaysAllow",
   "CheckType": [],
-  "ServiceName": "kubelet",
+  "ServiceName": "Kubelet",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

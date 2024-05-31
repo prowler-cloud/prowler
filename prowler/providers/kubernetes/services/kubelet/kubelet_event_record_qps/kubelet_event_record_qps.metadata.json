@@ -3,7 +3,7 @@
   "CheckID": "kubelet_event_record_qps",
   "CheckTitle": "Ensure that the kubelet eventRecordQPS argument is set to an appropriate level",
   "CheckType": [],
-  "ServiceName": "kubelet",
+  "ServiceName": "Kubelet",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",

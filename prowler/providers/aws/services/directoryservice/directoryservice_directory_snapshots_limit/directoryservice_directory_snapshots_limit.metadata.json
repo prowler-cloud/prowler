@@ -3,7 +3,7 @@
   "CheckID": "directoryservice_directory_snapshots_limit",
   "CheckTitle": "Directory Service Manual Snapshots limit reached.",
   "CheckType": [],
-  "ServiceName": "directoryservice",
+  "ServiceName": "DirectoryService",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:codeartifact:region:account-id:directory/directory-id",
   "Severity": "low",

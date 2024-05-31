@@ -3,7 +3,7 @@
   "CheckID": "trustedadvisor_errors_and_warnings",
   "CheckTitle": "Check Trusted Advisor for errors and warnings.",
   "CheckType": [],
-  "ServiceName": "trustedadvisor",
+  "ServiceName": "TrustedAdvisor",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:service:region:account-id",
   "Severity": "medium",

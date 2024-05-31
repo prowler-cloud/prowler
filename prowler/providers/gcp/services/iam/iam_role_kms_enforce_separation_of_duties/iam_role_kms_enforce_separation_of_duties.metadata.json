@@ -3,7 +3,7 @@
   "CheckID": "iam_role_kms_enforce_separation_of_duties",
   "CheckTitle": "Enforce Separation of Duties for KMS-Related Roles",
   "CheckType": [],
-  "ServiceName": "iam",
+  "ServiceName": "IAM",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",

@@ -5,8 +5,8 @@
   "CheckType": [
     "Logging and Monitoring"
   ],
-  "ServiceName": "cloudtrail",
-  "SubServiceName": "",
+  "ServiceName": "CloudTrail",
+  "SubServiceName": "Trails",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "low",
   "ResourceType": "AwsS3Bucket",

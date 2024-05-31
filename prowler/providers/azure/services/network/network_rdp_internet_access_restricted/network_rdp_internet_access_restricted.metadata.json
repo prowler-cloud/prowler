@@ -3,7 +3,7 @@
   "CheckID": "network_rdp_internet_access_restricted",
   "CheckTitle": "Ensure that RDP access from the Internet is evaluated and restricted",
   "CheckType": [],
-  "ServiceName": "network",
+  "ServiceName": "Network",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

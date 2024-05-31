@@ -5,7 +5,7 @@
   "CheckType": [
     "Data Protection"
   ],
-  "ServiceName": "documentdb",
+  "ServiceName": "DocumentDB",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",

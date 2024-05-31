@@ -6,8 +6,8 @@
     "Identify",
     "Vulnerability, patch, and version management"
   ],
-  "ServiceName": "ecr",
-  "SubServiceName": "",
+  "ServiceName": "ECR",
+  "SubServiceName": "Repositories",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
   "ResourceType": "AwsEcrRepository",

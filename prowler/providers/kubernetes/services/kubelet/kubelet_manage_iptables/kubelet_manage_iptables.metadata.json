@@ -3,7 +3,7 @@
   "CheckID": "kubelet_manage_iptables",
   "CheckTitle": "Ensure that the kubelet --make-iptables-util-chains argument is set to true",
   "CheckType": [],
-  "ServiceName": "kubelet",
+  "ServiceName": "Kubelet",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",

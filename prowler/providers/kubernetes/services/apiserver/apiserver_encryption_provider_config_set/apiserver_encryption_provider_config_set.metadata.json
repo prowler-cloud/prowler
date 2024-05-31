@@ -3,7 +3,7 @@
   "CheckID": "apiserver_encryption_provider_config_set",
   "CheckTitle": "Ensure that the --encryption-provider-config argument is set as appropriate",
   "CheckType": [],
-  "ServiceName": "apiserver",
+  "ServiceName": "APIServer",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

@@ -3,7 +3,7 @@
   "CheckID": "core_seccomp_profile_docker_default",
   "CheckTitle": "Ensure that the seccomp profile is set to docker/default in your pod definitions",
   "CheckType": [],
-  "ServiceName": "core",
+  "ServiceName": "Core",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

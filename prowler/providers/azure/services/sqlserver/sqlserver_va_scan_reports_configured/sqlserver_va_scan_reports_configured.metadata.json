@@ -3,7 +3,7 @@
   "CheckID": "sqlserver_va_scan_reports_configured",
   "CheckTitle": "Ensure that Vulnerability Assessment (VA) setting 'Send scan reports to' is configured for a SQL server",
   "CheckType": [],
-  "ServiceName": "sqlserver",
+  "ServiceName": "SQLServer",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",

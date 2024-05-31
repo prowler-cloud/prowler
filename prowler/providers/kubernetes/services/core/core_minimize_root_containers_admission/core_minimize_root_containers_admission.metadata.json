@@ -3,7 +3,7 @@
   "CheckID": "core_minimize_root_containers_admission",
   "CheckTitle": "Minimize the admission of root containers",
   "CheckType": [],
-  "ServiceName": "core",
+  "ServiceName": "Core",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

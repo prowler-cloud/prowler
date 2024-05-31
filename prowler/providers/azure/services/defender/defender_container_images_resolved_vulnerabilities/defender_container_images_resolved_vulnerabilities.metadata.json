@@ -3,7 +3,7 @@
   "CheckID": "defender_container_images_resolved_vulnerabilities",
   "CheckTitle": "Container images used by containers should have vulnerabilities resolved",
   "CheckType": [],
-  "ServiceName": "defender",
+  "ServiceName": "Defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",

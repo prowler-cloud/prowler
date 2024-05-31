@@ -3,7 +3,7 @@
   "CheckID": "defender_additional_email_configured_with_a_security_contact",
   "CheckTitle": "Ensure 'Additional email addresses' is Configured with a Security Contact Email",
   "CheckType": [],
-  "ServiceName": "defender",
+  "ServiceName": "Defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",

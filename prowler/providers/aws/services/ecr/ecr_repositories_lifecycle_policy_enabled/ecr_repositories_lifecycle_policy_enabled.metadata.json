@@ -6,8 +6,8 @@
     "Identify",
     "Resource configuration"
   ],
-  "ServiceName": "ecr",
-  "SubServiceName": "",
+  "ServiceName": "ECR",
+  "SubServiceName": "Repositories",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "low",
   "ResourceType": "AwsEcrRepository",

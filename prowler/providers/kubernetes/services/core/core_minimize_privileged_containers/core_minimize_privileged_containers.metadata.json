@@ -3,7 +3,7 @@
   "CheckID": "core_minimize_privileged_containers",
   "CheckTitle": "Minimize the admission of privileged containers",
   "CheckType": [],
-  "ServiceName": "core",
+  "ServiceName": "Core",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

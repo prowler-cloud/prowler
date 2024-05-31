@@ -3,7 +3,7 @@
   "CheckID": "shield_advanced_protection_in_global_accelerators",
   "CheckTitle": "Check if Global Accelerators are protected by AWS Shield Advanced.",
   "CheckType": [],
-  "ServiceName": "shield",
+  "ServiceName": "Shield",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",

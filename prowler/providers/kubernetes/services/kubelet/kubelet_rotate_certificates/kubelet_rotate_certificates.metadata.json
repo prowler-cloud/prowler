@@ -3,7 +3,7 @@
   "CheckID": "kubelet_rotate_certificates",
   "CheckTitle": "Ensure that the kubelet client certificate rotation is enabled",
   "CheckType": [],
-  "ServiceName": "kubelet",
+  "ServiceName": "Kubelet",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

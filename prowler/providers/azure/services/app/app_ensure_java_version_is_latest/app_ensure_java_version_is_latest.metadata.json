@@ -3,7 +3,7 @@
   "CheckID": "app_ensure_java_version_is_latest",
   "CheckTitle": "Ensure that 'Java version' is the latest, if used to run the Web App",
   "CheckType": [],
-  "ServiceName": "app",
+  "ServiceName": "App",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "low",

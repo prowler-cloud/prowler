@@ -3,7 +3,7 @@
   "CheckID": "defender_ensure_defender_for_sql_servers_is_on",
   "CheckTitle": "Ensure That Microsoft Defender for SQL Servers on Machines Is Set To 'On' ",
   "CheckType": [],
-  "ServiceName": "defender",
+  "ServiceName": "Defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

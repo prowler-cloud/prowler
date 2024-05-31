@@ -204,6 +204,26 @@ def list_services(provider: str) -> set:
     return sorted(available_services)
 
 
+def list_subservices(provider: str) -> dict:
+    available_subservices = dict()
+    checks_tuple = recover_checks_from_provider(provider)
+    for _, check_path in checks_tuple:
+        check_name = check_path.split("/")[-1]
+        check_path = f"{check_path}/{check_name}.metadata.json"
+        check_metadata = load_check_metadata(check_path)
+        if check_metadata.SubServiceName:
+            if check_metadata.ServiceName not in available_subservices:
+                available_subservices[check_metadata.ServiceName] = []
+            if (
+                check_metadata.SubServiceName
+                not in available_subservices[check_metadata.ServiceName]
+            ):
+                available_subservices[check_metadata.ServiceName].append(
+                    check_metadata.SubServiceName
+                )
+    return available_subservices
+
+
 def list_fixers(provider: str) -> set:
     available_fixers = set()
     checks = recover_checks_from_provider(provider, include_fixers=True)
@@ -252,6 +272,23 @@ def print_services(service_list: set):
 
     for service in service_list:
         print(f"- {service}")
+
+    print(message)
+
+
+def print_subservices(sub_service_dict: dict):
+    subservices_num = 0
+    for service, sub_service_list in sub_service_dict.items():
+        subservices_num += len(sub_service_list)
+    plural_string = f"\nThere are {Fore.YELLOW}{subservices_num}{Style.RESET_ALL} available subservices.\n"
+    singular_string = f"\nThere is {Fore.YELLOW}{subservices_num}{Style.RESET_ALL} available subservice.\n"
+
+    message = plural_string if subservices_num > 1 else singular_string
+
+    for service, sub_service_list in sub_service_dict.items():
+        print(f"- {service}")
+        for sub_service in sub_service_list:
+            print(f"\t- {sub_service}")
 
     print(message)
 
@@ -791,6 +828,34 @@ def recover_checks_from_service(service_list: list, provider: str) -> set:
                     # if service_name in group_list: checks_from_arn.add(check_name)
                     checks.add(check_name)
         return checks
+    except Exception as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+        )
+
+
+def recover_checks_from_subservice(sub_service_list: list, provider: str) -> set:
+    """
+    Recover all checks from the selected provider and subservices
+
+    Returns a set of checks from the given subservices
+    """
+    # Get all the services available for the provider
+    try:
+        checks = set()
+        checks_tuple = recover_checks_from_provider(provider)
+        for _, check_path in checks_tuple:
+            check_name = check_path.split("/")[-1]
+            check_path = f"{check_path}/{check_name}.metadata.json"
+            check_metadata = load_check_metadata(check_path)
+            if (
+                check_metadata.SubServiceName in sub_service_list
+                or check_metadata.SubServiceName.lower() in sub_service_list
+            ):
+                checks.add(check_metadata.CheckID)
+
+        return checks
+
     except Exception as error:
         logger.error(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

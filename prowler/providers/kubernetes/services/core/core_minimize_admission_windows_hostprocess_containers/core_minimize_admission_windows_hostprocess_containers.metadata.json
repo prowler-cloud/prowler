@@ -3,7 +3,7 @@
   "CheckID": "core_minimize_admission_windows_hostprocess_containers",
   "CheckTitle": "Minimize the admission of Windows HostProcess Containers",
   "CheckType": [],
-  "ServiceName": "core",
+  "ServiceName": "Core",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

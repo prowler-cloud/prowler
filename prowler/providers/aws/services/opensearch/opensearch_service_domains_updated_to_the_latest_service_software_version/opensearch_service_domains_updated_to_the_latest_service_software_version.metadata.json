@@ -6,8 +6,8 @@
     "Detect",
     "Vulnerability, patch, and version management"
   ],
-  "ServiceName": "opensearch",
-  "SubServiceName": "",
+  "ServiceName": "OpenSearch",
+  "SubServiceName": "Domains",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "low",
   "ResourceType": "AwsOpenSearchDomain",

@@ -64,6 +64,7 @@ class TestCheckLoader:
         checks_file = None
         check_list = None
         service_list = None
+        sub_service_list = None
         severities = None
         compliance_frameworks = None
         categories = None
@@ -83,6 +84,7 @@ class TestCheckLoader:
                 checks_file,
                 check_list,
                 service_list,
+                sub_service_list,
                 severities,
                 compliance_frameworks,
                 categories,
@@ -97,6 +99,7 @@ class TestCheckLoader:
         checks_file = None
         check_list = [S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME]
         service_list = None
+        sub_service_list = None
         severities = None
         compliance_frameworks = None
         categories = None
@@ -107,6 +110,7 @@ class TestCheckLoader:
             checks_file,
             check_list,
             service_list,
+            sub_service_list,
             severities,
             compliance_frameworks,
             categories,
@@ -121,6 +125,7 @@ class TestCheckLoader:
         checks_file = None
         check_list = []
         service_list = None
+        sub_service_list = None
         severities = [S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_SEVERITY]
         compliance_frameworks = None
         categories = None
@@ -131,6 +136,7 @@ class TestCheckLoader:
             checks_file,
             check_list,
             service_list,
+            sub_service_list,
             severities,
             compliance_frameworks,
             categories,
@@ -145,6 +151,7 @@ class TestCheckLoader:
         checks_file = None
         check_list = []
         service_list = [S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME_SERVICE]
+        sub_service_list = None
         severities = [S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_SEVERITY]
         compliance_frameworks = None
         categories = None
@@ -159,6 +166,7 @@ class TestCheckLoader:
                 checks_file,
                 check_list,
                 service_list,
+                sub_service_list,
                 severities,
                 compliance_frameworks,
                 categories,
@@ -175,6 +183,7 @@ class TestCheckLoader:
         checks_file = None
         check_list = []
         service_list = ["ec2"]
+        sub_service_list = None
         severities = [S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_SEVERITY]
         compliance_frameworks = None
         categories = None
@@ -189,6 +198,7 @@ class TestCheckLoader:
                 checks_file,
                 check_list,
                 service_list,
+                sub_service_list,
                 severities,
                 compliance_frameworks,
                 categories,
@@ -205,6 +215,7 @@ class TestCheckLoader:
         checks_file = "path/to/test_file"
         check_list = []
         service_list = []
+        sub_service_list = []
         severities = []
         compliance_frameworks = None
         categories = None
@@ -219,6 +230,7 @@ class TestCheckLoader:
                 checks_file,
                 check_list,
                 service_list,
+                sub_service_list,
                 severities,
                 compliance_frameworks,
                 categories,
@@ -235,6 +247,7 @@ class TestCheckLoader:
         checks_file = None
         check_list = []
         service_list = [S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME_SERVICE]
+        sub_service_list = []
         severities = []
         compliance_frameworks = None
         categories = None
@@ -249,6 +262,7 @@ class TestCheckLoader:
                 checks_file,
                 check_list,
                 service_list,
+                sub_service_list,
                 severities,
                 compliance_frameworks,
                 categories,
@@ -265,6 +279,7 @@ class TestCheckLoader:
         checks_file = None
         check_list = []
         service_list = []
+        sub_service_list = []
         severities = []
         compliance_frameworks = ["test-compliance-framework"]
         categories = None
@@ -279,6 +294,7 @@ class TestCheckLoader:
                 checks_file,
                 check_list,
                 service_list,
+                sub_service_list,
                 severities,
                 compliance_frameworks,
                 categories,
@@ -295,6 +311,7 @@ class TestCheckLoader:
         checks_file = None
         check_list = []
         service_list = []
+        sub_service_list = []
         severities = []
         compliance_frameworks = []
         categories = {"internet-exposed"}
@@ -305,6 +322,7 @@ class TestCheckLoader:
             checks_file,
             check_list,
             service_list,
+            sub_service_list,
             severities,
             compliance_frameworks,
             categories,

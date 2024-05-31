@@ -5,8 +5,8 @@
   "CheckType": [
     "Data Protection"
   ],
-  "ServiceName": "dlm",
-  "SubServiceName": "ebs",
+  "ServiceName": "DLM",
+  "SubServiceName": "EBS",
   "ResourceIdTemplate": "arn:aws:iam::account-id:resource-id",
   "Severity": "medium",
   "ResourceType": "Other",

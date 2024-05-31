@@ -3,7 +3,7 @@
   "CheckID": "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
   "CheckTitle": "Ensure That the Log Metric Filter and Alerts Exist for Cloud Storage IAM Permission Changes.",
   "CheckType": [],
-  "ServiceName": "logging",
+  "ServiceName": "Logging",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",

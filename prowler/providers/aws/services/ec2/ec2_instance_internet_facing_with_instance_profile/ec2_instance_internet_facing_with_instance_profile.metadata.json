@@ -5,8 +5,8 @@
   "CheckType": [
     "Infrastructure Security"
   ],
-  "ServiceName": "ec2",
-  "SubServiceName": "",
+  "ServiceName": "EC2",
+  "SubServiceName": "Instance",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
   "ResourceType": "AwsEc2Instance",

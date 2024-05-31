@@ -3,7 +3,7 @@
   "CheckID": "etcd_peer_tls_config",
   "CheckTitle": "Ensure that the --peer-cert-file and --peer-key-file arguments are set as appropriate for etcd",
   "CheckType": [],
-  "ServiceName": "etcd",
+  "ServiceName": "Etcd",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

@@ -3,7 +3,7 @@
   "CheckID": "drs_job_exist",
   "CheckTitle": "Ensure DRS is enabled with jobs.",
   "CheckType": [],
-  "ServiceName": "drs",
+  "ServiceName": "DRS",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:drs:region:account-id:job/job-id",
   "Severity": "medium",

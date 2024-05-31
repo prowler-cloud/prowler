@@ -8,7 +8,7 @@
   "CheckType": [
     "IAM"
   ],
-  "ServiceName": "apigateway",
+  "ServiceName": "APIGatewayV2",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",

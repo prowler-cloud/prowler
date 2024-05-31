@@ -3,7 +3,7 @@
   "CheckID": "kubelet_streaming_connection_timeout",
   "CheckTitle": "Ensure that the kubelet --streaming-connection-idle-timeout argument is not set to 0",
   "CheckType": [],
-  "ServiceName": "kubelet",
+  "ServiceName": "Kubelet",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",

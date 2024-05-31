@@ -3,7 +3,7 @@
   "CheckID": "defender_auto_provisioning_vulnerabilty_assessments_machines_on",
   "CheckTitle": "Ensure that Auto provisioning of 'Vulnerability assessment for machines' is Set to 'On'",
   "CheckType": [],
-  "ServiceName": "defender",
+  "ServiceName": "Defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",

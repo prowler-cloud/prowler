@@ -5,8 +5,8 @@
   "CheckType": [
     "Data Protection"
   ],
-  "ServiceName": "ec2",
-  "SubServiceName": "volume",
+  "ServiceName": "EC2",
+  "SubServiceName": "Volumes",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
   "ResourceType": "AwsEc2Volume",

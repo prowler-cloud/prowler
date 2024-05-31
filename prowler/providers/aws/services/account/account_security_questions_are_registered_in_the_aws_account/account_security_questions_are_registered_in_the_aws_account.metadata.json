@@ -5,7 +5,7 @@
   "CheckType": [
     "IAM"
   ],
-  "ServiceName": "account",
+  "ServiceName": "Account",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:access-recorder:region:account-id:recorder/resource-id",
   "Severity": "medium",

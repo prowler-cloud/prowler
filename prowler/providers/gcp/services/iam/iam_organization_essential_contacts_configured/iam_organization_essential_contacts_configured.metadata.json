@@ -3,7 +3,7 @@
   "CheckID": "iam_organization_essential_contacts_configured",
   "CheckTitle": "Ensure Essential Contacts is Configured for Organization",
   "CheckType": [],
-  "ServiceName": "iam",
+  "ServiceName": "IAM",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",

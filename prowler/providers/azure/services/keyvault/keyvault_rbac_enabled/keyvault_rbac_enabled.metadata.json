@@ -3,7 +3,7 @@
   "CheckID": "keyvault_rbac_enabled",
   "CheckTitle": "Enable Role Based Access Control for Azure Key Vault",
   "CheckType": [],
-  "ServiceName": "keyvault",
+  "ServiceName": "Keyvault",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

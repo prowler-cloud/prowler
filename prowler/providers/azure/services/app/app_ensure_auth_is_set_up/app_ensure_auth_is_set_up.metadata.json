@@ -3,7 +3,7 @@
   "CheckID": "app_ensure_auth_is_set_up",
   "CheckTitle": "Ensure App Service Authentication is set up for apps in Azure App Service",
   "CheckType": [],
-  "ServiceName": "app",
+  "ServiceName": "App",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",

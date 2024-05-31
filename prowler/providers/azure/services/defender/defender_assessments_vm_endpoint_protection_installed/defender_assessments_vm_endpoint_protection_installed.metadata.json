@@ -3,7 +3,7 @@
   "CheckID": "defender_assessments_vm_endpoint_protection_installed",
   "CheckTitle": "Ensure that Endpoint Protection for all Virtual Machines is installed",
   "CheckType": [],
-  "ServiceName": "defender",
+  "ServiceName": "Defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

@@ -3,7 +3,7 @@
   "CheckID": "defender_ensure_defender_for_storage_is_on",
   "CheckTitle": "Ensure That Microsoft Defender for Storage Is Set To 'On' ",
   "CheckType": [],
-  "ServiceName": "defender",
+  "ServiceName": "Defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

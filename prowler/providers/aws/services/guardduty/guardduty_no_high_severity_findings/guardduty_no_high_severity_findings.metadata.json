@@ -3,7 +3,7 @@
   "CheckID": "guardduty_no_high_severity_findings",
   "CheckTitle": "There are High severity GuardDuty findings ",
   "CheckType": [],
-  "ServiceName": "guardduty",
+  "ServiceName": "GuardDuty",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:guardduty:region:account-id/detector-id",
   "Severity": "high",

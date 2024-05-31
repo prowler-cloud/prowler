@@ -3,7 +3,7 @@
   "CheckID": "apiserver_auth_mode_not_always_allow",
   "CheckTitle": "Ensure that the --authorization-mode argument is not set to AlwaysAllow",
   "CheckType": [],
-  "ServiceName": "apiserver",
+  "ServiceName": "APIServer",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

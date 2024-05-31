@@ -3,7 +3,7 @@
   "CheckID": "apiserver_client_ca_file_set",
   "CheckTitle": "Ensure that the --client-ca-file argument is set as appropriate",
   "CheckType": [],
-  "ServiceName": "apiserver",
+  "ServiceName": "APIServer",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

@@ -3,7 +3,7 @@
   "CheckID": "apiserver_auth_mode_include_node",
   "CheckTitle": "Ensure that the --authorization-mode argument includes Node",
   "CheckType": [],
-  "ServiceName": "apiserver",
+  "ServiceName": "APIServer",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",

@@ -3,7 +3,7 @@
   "CheckID": "autoscaling_group_multiple_az",
   "CheckTitle": "EC2 Auto Scaling Group should use multiple Availability Zones",
   "CheckType": [],
-  "ServiceName": "autoscaling",
+  "ServiceName": "AutoScaling",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:autoscaling:region:account-id:autoScalingGroupName/resource-name",
   "Severity": "medium",

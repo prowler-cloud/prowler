@@ -252,6 +252,13 @@ Detailed documentation at https://docs.prowler.com
             nargs="+",
             help="List of services to be executed.",
         )
+        group.add_argument(
+            "--subservice",
+            "--subservices",
+            "-u",
+            nargs="+",
+            help="List of subservices to be executed.",
+        )
         common_checks_parser.add_argument(
             "--severity",
             "--severities",
@@ -298,6 +305,11 @@ Detailed documentation at https://docs.prowler.com
             "--list-services",
             action="store_true",
             help="List covered services by given provider",
+        )
+        list_group.add_argument(
+            "--list-subservices",
+            action="store_true",
+            help="List covered subservices by given provider",
         )
         list_group.add_argument(
             "--list-compliance",

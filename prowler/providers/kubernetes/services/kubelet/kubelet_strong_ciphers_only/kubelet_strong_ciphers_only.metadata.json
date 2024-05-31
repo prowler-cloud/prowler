@@ -3,7 +3,7 @@
   "CheckID": "kubelet_strong_ciphers_only",
   "CheckTitle": "Ensure that the Kubelet only makes use of Strong Cryptographic Ciphers",
   "CheckType": [],
-  "ServiceName": "kubelet",
+  "ServiceName": "Kubelet",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

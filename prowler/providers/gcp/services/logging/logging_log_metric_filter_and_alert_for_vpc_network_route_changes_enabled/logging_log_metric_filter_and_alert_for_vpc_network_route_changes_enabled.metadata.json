@@ -3,7 +3,7 @@
   "CheckID": "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled",
   "CheckTitle": "Ensure That the Log Metric Filter and Alerts Exist for VPC Network Route Changes.",
   "CheckType": [],
-  "ServiceName": "logging",
+  "ServiceName": "Logging",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",

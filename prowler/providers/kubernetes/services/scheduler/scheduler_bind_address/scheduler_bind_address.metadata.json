@@ -3,7 +3,7 @@
   "CheckID": "scheduler_bind_address",
   "CheckTitle": "Ensure that the --bind-address argument is set to 127.0.0.1 for the Scheduler",
   "CheckType": [],
-  "ServiceName": "scheduler",
+  "ServiceName": "Scheduler",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",

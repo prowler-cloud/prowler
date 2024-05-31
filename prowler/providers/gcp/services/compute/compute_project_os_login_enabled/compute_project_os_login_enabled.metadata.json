@@ -3,7 +3,7 @@
   "CheckID": "compute_project_os_login_enabled",
   "CheckTitle": "Ensure Os Login Is Enabled for a Project",
   "CheckType": [],
-  "ServiceName": "compute",
+  "ServiceName": "Compute",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "low",

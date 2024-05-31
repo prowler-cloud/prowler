@@ -3,7 +3,7 @@
   "CheckID": "core_minimize_net_raw_capability_admission",
   "CheckTitle": "Minimize the admission of containers with the NET_RAW capability",
   "CheckType": [],
-  "ServiceName": "core",
+  "ServiceName": "Core",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

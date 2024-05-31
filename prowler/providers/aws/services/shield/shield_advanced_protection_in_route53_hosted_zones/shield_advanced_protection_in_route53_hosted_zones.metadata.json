@@ -3,7 +3,7 @@
   "CheckID": "shield_advanced_protection_in_route53_hosted_zones",
   "CheckTitle": "Check if Route53 hosted zones are protected by AWS Shield Advanced.",
   "CheckType": [],
-  "ServiceName": "shield",
+  "ServiceName": "Shield",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",

@@ -3,7 +3,7 @@
   "CheckID": "appinsights_ensure_is_configured",
   "CheckTitle": "Ensure Application Insights are Configured.",
   "CheckType": [],
-  "ServiceName": "appinsights",
+  "ServiceName": "AppInsights",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "low",

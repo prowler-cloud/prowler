@@ -7,7 +7,7 @@
     "Resilience",
     "Backup"
   ],
-  "ServiceName": "efs",
+  "ServiceName": "EFS",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",

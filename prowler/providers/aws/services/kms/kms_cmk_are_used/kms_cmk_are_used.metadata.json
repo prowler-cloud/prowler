@@ -5,8 +5,8 @@
   "CheckType": [
     "Data Protection"
   ],
-  "ServiceName": "kms",
-  "SubServiceName": "",
+  "ServiceName": "KMS",
+  "SubServiceName": "CMK",
   "ResourceIdTemplate": "arn:partition:kms:region:account-id:certificate/resource-id",
   "Severity": "medium",
   "ResourceType": "AwsKmsKey",

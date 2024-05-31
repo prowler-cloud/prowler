@@ -5,8 +5,8 @@
   "CheckType": [
     "Logging and Monitoring"
   ],
-  "ServiceName": "config",
-  "SubServiceName": "",
+  "ServiceName": "Config",
+  "SubServiceName": "Recorder",
   "ResourceIdTemplate": "arn:partition:access-recorder:region:account-id:recorder/resource-id",
   "Severity": "medium",
   "ResourceType": "Other",

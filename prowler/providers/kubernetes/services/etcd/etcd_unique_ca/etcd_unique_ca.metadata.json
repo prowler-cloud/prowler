@@ -3,7 +3,7 @@
   "CheckID": "etcd_unique_ca",
   "CheckTitle": "Ensure that a unique Certificate Authority is used for etcd",
   "CheckType": [],
-  "ServiceName": "etcd",
+  "ServiceName": "Etcd",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

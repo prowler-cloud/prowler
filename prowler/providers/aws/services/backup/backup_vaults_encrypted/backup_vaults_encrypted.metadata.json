@@ -8,8 +8,8 @@
     "Backup",
     "Data Protection"
   ],
-  "ServiceName": "backup",
-  "SubServiceName": "",
+  "ServiceName": "Backup",
+  "SubServiceName": "Vaults",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:backup-vault:backup-vault-id",
   "Severity": "medium",
   "ResourceType": "AwsBackupBackupVault",

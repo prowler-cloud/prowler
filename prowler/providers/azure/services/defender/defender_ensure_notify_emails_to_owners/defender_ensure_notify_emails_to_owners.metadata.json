@@ -3,7 +3,7 @@
   "CheckID": "defender_ensure_notify_emails_to_owners",
   "CheckTitle": "Ensure That 'All users with the following roles' is set to 'Owner'",
   "CheckType": [],
-  "ServiceName": "defender",
+  "ServiceName": "Defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",

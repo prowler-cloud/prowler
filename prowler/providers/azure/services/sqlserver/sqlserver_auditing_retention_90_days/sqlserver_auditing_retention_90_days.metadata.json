@@ -3,7 +3,7 @@
   "CheckID": "sqlserver_auditing_retention_90_days",
   "CheckTitle": "Ensure that 'Auditing' Retention is 'greater than 90 days'",
   "CheckType": [],
-  "ServiceName": "sqlserver",
+  "ServiceName": "SQLServer",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",

@@ -20,10 +20,17 @@ from prowler.lib.check.check import (
     parse_checks_from_folder,
     recover_checks_from_provider,
     recover_checks_from_service,
+    recover_checks_from_subservice,
     remove_custom_checks_module,
     update_audit_metadata,
 )
-from prowler.lib.check.models import load_check_metadata
+from prowler.lib.check.models import (
+    Check_Metadata_Model,
+    Code,
+    Recommendation,
+    Remediation,
+    load_check_metadata,
+)
 from prowler.providers.aws.aws_provider import AwsProvider
 from tests.providers.aws.utils import AWS_REGION_US_EAST_1
 
@@ -388,6 +395,40 @@ def mock_recover_checks_from_aws_provider(*_):
     ]
 
 
+def mock_load_check_metadata(*_):
+    return Check_Metadata_Model(
+        Provider="aws",
+        CheckID="ec2_securitygroup_allow_ingress_from_internet_to_any_port",
+        CheckTitle="Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to any port.",
+        CheckType=["Static"],
+        ServiceName="ec2",
+        SubServiceName="SecurityGroup",
+        ResourceIdTemplate="",
+        Severity="low",
+        ResourceType="SecurityGroup",
+        Description="Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to any port.",
+        Risk="This check is LOW risk",
+        RelatedUrl="",
+        Remediation=Remediation(
+            Code=Code(
+                NativeIaC="",
+                Terraform="",
+                CLI="",
+                Other="",
+            ),
+            Recommendation=Recommendation(
+                Text="",
+                Url="",
+            ),
+        ),
+        Categories=["secrets"],
+        DependsOn=[],
+        RelatedTo=[],
+        Notes="",
+        Compliance=None,
+    )
+
+
 class TestCheck:
     def test_load_check_metadata(self):
         test_cases = [
@@ -643,6 +684,21 @@ class TestCheck:
             "ec2_securitygroup_allow_ingress_from_internet_to_any_port",
         }
         recovered_checks = recover_checks_from_service(service_list, provider)
+        assert recovered_checks == expected_checks
+
+    @patch(
+        "prowler.lib.check.check.recover_checks_from_provider",
+        new=mock_recover_checks_from_aws_provider,
+    )
+    @patch("prowler.lib.check.check.load_check_metadata", new=mock_load_check_metadata)
+    def test_recover_checks_from_subservice(self):
+        subservice_list = ["SecurityGroup"]
+        provider = "aws"
+        expected_checks = {
+            "ec2_securitygroup_allow_ingress_from_internet_to_any_port",
+        }
+
+        recovered_checks = recover_checks_from_subservice(subservice_list, provider)
         assert recovered_checks == expected_checks
 
     # def test_parse_checks_from_compliance_framework_two(self):

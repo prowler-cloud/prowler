@@ -5,8 +5,8 @@
   "CheckType": [
     "Data Protection"
   ],
-  "ServiceName": "cloudwatch",
-  "SubServiceName": "logs",
+  "ServiceName": "CloudWatch",
+  "SubServiceName": "Logs",
   "ResourceIdTemplate": "arn:partition:cloudwatch:region:account-id:certificate/resource-id",
   "Severity": "medium",
   "ResourceType": "AwsLogsLogGroup",

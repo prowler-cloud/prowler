@@ -3,7 +3,7 @@
   "CheckID": "apiserver_request_timeout_set",
   "CheckTitle": "Ensure that the --request-timeout argument is set as appropriate",
   "CheckType": [],
-  "ServiceName": "apiserver",
+  "ServiceName": "APIServer",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",

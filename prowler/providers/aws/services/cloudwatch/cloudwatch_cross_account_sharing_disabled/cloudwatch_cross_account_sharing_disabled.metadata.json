@@ -5,7 +5,7 @@
   "CheckType": [
     "Logging and Monitoring"
   ],
-  "ServiceName": "cloudwatch",
+  "ServiceName": "CloudWatch",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:cloudwatch:region:account-id:certificate/resource-id",
   "Severity": "medium",

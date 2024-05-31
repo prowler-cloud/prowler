@@ -3,7 +3,7 @@
   "CheckID": "core_minimize_hostPID_containers",
   "CheckTitle": "Minimize the admission of containers wishing to share the host process ID namespace",
   "CheckType": [],
-  "ServiceName": "core",
+  "ServiceName": "Core",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

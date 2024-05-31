@@ -3,7 +3,7 @@
   "CheckID": "iam_sa_no_user_managed_keys",
   "CheckTitle": "Ensure That There Are Only GCP-Managed Service Account Keys for Each Service Account",
   "CheckType": [],
-  "ServiceName": "iam",
+  "ServiceName": "IAM",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",

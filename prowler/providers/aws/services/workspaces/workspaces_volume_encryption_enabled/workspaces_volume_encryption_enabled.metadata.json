@@ -3,7 +3,7 @@
   "CheckID": "workspaces_volume_encryption_enabled",
   "CheckTitle": "Ensure that your Amazon WorkSpaces storage volumes are encrypted in order to meet security and compliance requirements",
   "CheckType": [],
-  "ServiceName": "workspaces",
+  "ServiceName": "WorkSpaces",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:workspaces:region:account-id:workspace",
   "Severity": "high",

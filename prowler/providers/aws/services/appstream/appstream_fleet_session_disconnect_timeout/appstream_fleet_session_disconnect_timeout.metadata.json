@@ -7,7 +7,7 @@
     "Industry and Regulatory Standards",
     "CIS AWS Foundations Benchmark"
   ],
-  "ServiceName": "appstream",
+  "ServiceName": "AppStream",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:appstream:region:account-id:fleet/resource-id",
   "Severity": "medium",

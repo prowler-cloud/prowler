@@ -3,7 +3,7 @@
   "CheckID": "directoryservice_directory_log_forwarding_enabled",
   "CheckTitle": "Directory Service monitoring with CloudWatch logs.",
   "CheckType": [],
-  "ServiceName": "directoryservice",
+  "ServiceName": "DirectoryService",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:codeartifact:region:account-id:directory/directory-id",
   "Severity": "medium",

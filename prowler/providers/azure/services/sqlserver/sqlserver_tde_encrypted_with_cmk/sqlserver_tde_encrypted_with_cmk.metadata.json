@@ -3,7 +3,7 @@
   "CheckID": "sqlserver_tde_encrypted_with_cmk",
   "CheckTitle": "Ensure SQL server's Transparent Data Encryption (TDE) protector is encrypted with Customer-managed key",
   "CheckType": [],
-  "ServiceName": "sqlserver",
+  "ServiceName": "SQLServer",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",

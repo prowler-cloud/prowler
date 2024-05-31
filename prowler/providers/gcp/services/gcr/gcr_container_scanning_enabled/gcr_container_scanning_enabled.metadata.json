@@ -6,8 +6,8 @@
     "Security",
     "Configuration"
   ],
-  "ServiceName": "gcr",
-  "SubServiceName": "Container Scanning",
+  "ServiceName": "GCR",
+  "SubServiceName": "ContainerScanning",
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Service",

@@ -5,7 +5,7 @@
   "CheckType": [
     "Infrastructure Security"
   ],
-  "ServiceName": "eks",
+  "ServiceName": "EKS",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",

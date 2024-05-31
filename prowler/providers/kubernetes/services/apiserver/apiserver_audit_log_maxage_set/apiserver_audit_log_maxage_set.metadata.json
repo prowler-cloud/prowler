@@ -3,7 +3,7 @@
   "CheckID": "apiserver_audit_log_maxage_set",
   "CheckTitle": "Ensure that the --audit-log-maxage argument is set to 30 or as appropriate",
   "CheckType": [],
-  "ServiceName": "apiserver",
+  "ServiceName": "APIServer",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",

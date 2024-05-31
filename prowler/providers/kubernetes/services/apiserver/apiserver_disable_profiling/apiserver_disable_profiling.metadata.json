@@ -3,7 +3,7 @@
   "CheckID": "apiserver_disable_profiling",
   "CheckTitle": "Ensure that the --profiling argument is set to false",
   "CheckType": [],
-  "ServiceName": "apiserver",
+  "ServiceName": "APIServer",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",

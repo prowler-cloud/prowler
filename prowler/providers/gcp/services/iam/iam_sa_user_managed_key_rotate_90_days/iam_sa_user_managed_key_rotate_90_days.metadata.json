@@ -3,7 +3,7 @@
   "CheckID": "iam_sa_user_managed_key_rotate_90_days",
   "CheckTitle": "Ensure User-Managed/External Keys for Service Accounts Are Rotated Every 90 Days",
   "CheckType": [],
-  "ServiceName": "iam",
+  "ServiceName": "IAM",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "low",

@@ -3,7 +3,7 @@
   "CheckID": "apiserver_audit_log_path_set",
   "CheckTitle": "Ensure that the --audit-log-path argument is set",
   "CheckType": [],
-  "ServiceName": "apiserver",
+  "ServiceName": "APIServer",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

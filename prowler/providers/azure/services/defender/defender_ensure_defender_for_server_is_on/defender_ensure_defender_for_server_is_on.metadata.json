@@ -3,7 +3,7 @@
   "CheckID": "defender_ensure_defender_for_server_is_on",
   "CheckTitle": "Ensure That Microsoft Defender for Servers Is Set to 'On'",
   "CheckType": [],
-  "ServiceName": "defender",
+  "ServiceName": "Defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

@@ -6,7 +6,7 @@
     "Security",
     "Configuration"
   ],
-  "ServiceName": "eks",
+  "ServiceName": "EKS",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

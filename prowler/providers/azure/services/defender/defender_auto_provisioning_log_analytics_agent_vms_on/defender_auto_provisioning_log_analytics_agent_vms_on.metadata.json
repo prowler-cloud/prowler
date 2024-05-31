@@ -3,7 +3,7 @@
   "CheckID": "defender_auto_provisioning_log_analytics_agent_vms_on",
   "CheckTitle": "Ensure that Auto provisioning of 'Log Analytics agent for Azure VMs' is Set to 'On'",
   "CheckType": [],
-  "ServiceName": "defender",
+  "ServiceName": "Defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",

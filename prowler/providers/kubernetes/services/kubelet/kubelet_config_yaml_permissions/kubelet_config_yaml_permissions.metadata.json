@@ -3,7 +3,7 @@
   "CheckID": "kubelet_config_yaml_permissions",
   "CheckTitle": "Validate kubelet config.yaml File Permissions",
   "CheckType": [],
-  "ServiceName": "kubelet",
+  "ServiceName": "Kubelet",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

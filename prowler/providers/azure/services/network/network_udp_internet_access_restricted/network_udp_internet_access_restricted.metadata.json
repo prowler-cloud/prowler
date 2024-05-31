@@ -3,7 +3,7 @@
   "CheckID": "network_udp_internet_access_restricted",
   "CheckTitle": "Ensure that UDP access from the Internet is evaluated and restricted",
   "CheckType": [],
-  "ServiceName": "network",
+  "ServiceName": "Network",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

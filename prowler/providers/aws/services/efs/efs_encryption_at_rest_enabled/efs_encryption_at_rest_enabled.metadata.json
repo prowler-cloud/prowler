@@ -7,7 +7,7 @@
     "Data protection",
     "Encryption of data at rest"
   ],
-  "ServiceName": "efs",
+  "ServiceName": "EFS",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",

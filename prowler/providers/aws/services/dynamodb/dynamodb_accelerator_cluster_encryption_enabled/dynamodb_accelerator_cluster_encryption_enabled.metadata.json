@@ -5,7 +5,7 @@
   "CheckType": [
     "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
   ],
-  "ServiceName": "dynamodb",
+  "ServiceName": "DynamoDB",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:dax:region:account-id:cache/resource-id",
   "Severity": "medium",

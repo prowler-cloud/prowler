@@ -3,7 +3,7 @@
   "CheckID": "kubelet_disable_anonymous_auth",
   "CheckTitle": "Ensure that the --anonymous-auth argument is set to false",
   "CheckType": [],
-  "ServiceName": "kubelet",
+  "ServiceName": "Kubelet",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

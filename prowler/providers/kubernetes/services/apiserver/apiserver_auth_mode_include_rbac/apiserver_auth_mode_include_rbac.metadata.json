@@ -3,7 +3,7 @@
   "CheckID": "apiserver_auth_mode_include_rbac",
   "CheckTitle": "Ensure that the --authorization-mode argument includes RBAC",
   "CheckType": [],
-  "ServiceName": "apiserver",
+  "ServiceName": "APIServer",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

@@ -3,7 +3,7 @@
   "CheckID": "iam_custom_role_has_permissions_to_administer_resource_locks",
   "CheckTitle": "Ensure an IAM custom role has permissions to administer resource locks",
   "CheckType": [],
-  "ServiceName": "iam",
+  "ServiceName": "IAM",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

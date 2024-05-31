@@ -3,7 +3,7 @@
   "CheckID": "shield_advanced_protection_in_associated_elastic_ips",
   "CheckTitle": "Check if Elastic IP addresses with associations are protected by AWS Shield Advanced.",
   "CheckType": [],
-  "ServiceName": "shield",
+  "ServiceName": "Shield",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",

@@ -5,7 +5,7 @@
   "CheckType": [
     "Logging and Monitoring"
   ],
-  "ServiceName": "organizations",
+  "ServiceName": "Organizations",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service::account-id:organization/organization-id",
   "Severity": "high",

@@ -3,7 +3,7 @@
   "CheckID": "shield_advanced_protection_in_internet_facing_load_balancers",
   "CheckTitle": "Check if internet-facing Application Load Balancers are protected by AWS Shield Advanced.",
   "CheckType": [],
-  "ServiceName": "shield",
+  "ServiceName": "Shield",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",

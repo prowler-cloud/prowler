@@ -3,7 +3,7 @@
   "CheckID": "iam_subscription_roles_owner_custom_not_created",
   "CheckTitle": "Ensure that no custom subscription owner roles are created",
   "CheckType": [],
-  "ServiceName": "iam",
+  "ServiceName": "IAM",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

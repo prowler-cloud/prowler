@@ -3,7 +3,7 @@
   "CheckID": "iam_account_access_approval_enabled",
   "CheckTitle": "Ensure Access Approval is Enabled in your account",
   "CheckType": [],
-  "ServiceName": "iam",
+  "ServiceName": "IAM",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

@@ -8,8 +8,8 @@
   "CheckType": [
     "Data Protection"
   ],
-  "ServiceName": "apigateway",
-  "SubServiceName": "rest_api",
+  "ServiceName": "APIGateway",
+  "SubServiceName": "RestApi",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
   "ResourceType": "AwsApiGatewayStage",
