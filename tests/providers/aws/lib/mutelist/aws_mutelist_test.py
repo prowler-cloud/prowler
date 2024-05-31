@@ -22,7 +22,6 @@ from tests.providers.aws.utils import (
     set_mocked_aws_provider,
 )
 
-# Mocking Security Hub Get Findings
 make_api_call = botocore.client.BaseClient._make_api_call
 
 
