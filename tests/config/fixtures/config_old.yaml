@@ -5,6 +5,18 @@ shodan_api_key: null
 max_security_group_rules: 50
 # aws.ec2_instance_older_than_specific_days --> by default is 6 months (180 days)
 max_ec2_instance_age_in_days: 180
+# aws.ec2_securitygroup_allow_ingress_from_internet_to_any_port
+# allowed network interface types for security groups open to the Internet
+ec2_allowed_interface_types:
+    [
+    "api_gateway_managed",
+    "vpc_endpoint",
+    ]
+# allowed network interface owners for security groups open to the Internet
+ec2_allowed_instance_owners:
+  [
+      "amazon-elb"
+  ]
 
 # AWS VPC Configuration (vpc_endpoint_connections_trust_boundaries, vpc_endpoint_services_allowed_principals_trust_boundaries)
 # Single account environment: No action required. The AWS account number will be automatically added by the checks.
