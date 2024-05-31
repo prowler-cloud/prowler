@@ -567,7 +567,7 @@ aws:
         aws_provider = AwsProvider(arguments)
 
         with patch(
-            "prowler.providers.common.provider.get_default_mute_file_path",
+            "prowler.providers.aws.aws_provider.get_default_mute_file_path",
             return_value=None,
         ):
             aws_provider.mutelist = None
