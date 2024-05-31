@@ -1,22 +1,56 @@
-# from json import dumps
+import io
+from json import dumps
+
+import botocore
 import yaml
-from boto3 import resource
+from boto3 import client, resource
+from mock import patch
 from moto import mock_aws
 
-from prowler.providers.aws.lib.mutelist.mutelist import (  # get_mutelist_file_from_lambda,
+from prowler.providers.aws.lib.mutelist.mutelist import (
     get_mutelist_file_from_dynamodb,
+    get_mutelist_file_from_lambda,
     get_mutelist_file_from_s3,
 )
-
-# from tests.providers.aws.services.awslambda.awslambda_service_test import (
-#     create_zip_file,
-# )
+from tests.providers.aws.services.awslambda.awslambda_service_test import (
+    create_zip_file,
+)
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
     AWS_REGION_US_EAST_1,
     set_mocked_aws_provider,
 )
+
+# Mocking Security Hub Get Findings
+make_api_call = botocore.client.BaseClient._make_api_call
+
+
+def mock_make_api_call(self, operation_name, kwarg):
+    if operation_name == "Invoke":
+        return {
+            "Payload": io.BytesIO(
+                dumps(
+                    {
+                        "Mutelist": {
+                            "Accounts": {
+                                "*": {
+                                    "Checks": {
+                                        "*": {
+                                            "Regions": ["*"],
+                                            "Resources": ["*"],
+                                            "Tags": ["key:value"],
+                                        },
+                                    }
+                                },
+                            }
+                        }
+                    }
+                ).encode("utf-8")
+            )
+        }
+
+    return make_api_call(self, operation_name, kwarg)
 
 
 class TestMutelistAWS:
@@ -178,43 +212,72 @@ class TestMutelistAWS:
             == {}
         )
 
+    @mock_aws(config={"lambda": {"use_docker": False}})
+    @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
+    def test_get_mutelist_file_from_lambda(self):
+        aws_provider = set_mocked_aws_provider()
+        lambda_name = "mutelist"
+        lambda_role = "lambda_role"
+        lambda_client = client("lambda", region_name=AWS_REGION_US_EAST_1)
+        iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
+        lambda_role_assume_policy = {
+            "Version": "2012-10-17",
+            "Statement": {
+                "Sid": "test",
+                "Effect": "Allow",
+                "Principal": {"AWS": f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"},
+                "Action": "sts:AssumeRole",
+            },
+        }
+        lambda_role_arn = iam_client.create_role(
+            RoleName=lambda_role,
+            AssumeRolePolicyDocument=dumps(lambda_role_assume_policy),
+        )["Role"]["Arn"]
+        lambda_code = """def handler(event, context):
+  checks = {}
+  checks["*"] = { "Regions": [ "*" ], "Resources": [ "" ], Optional("Tags"): [ "key:value" ] }
 
-#     @mock_aws
-#     def test_get_mutelist_file_from_lambda(self):
-#         aws_provider = set_mocked_aws_provider()
-#         lambda_name = "mutelist"
-#         lambda_role = "lambda_role"
-#         lambda_client = client("lambda", region_name=AWS_REGION_US_EAST_1)
-#         iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
-#         lambda_role_assume_policy = {
-#             "Version": "2012-10-17",
-#             "Statement": {
-#                 "Sid": "test",
-#                 "Effect": "Allow",
-#                 "Principal": {"AWS": f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"},
-#                 "Action": "sts:AssumeRole",
-#             },
-#         }
-#         lambda_role_arn = iam_client.create_role(
-#             RoleName=lambda_role,
-#             AssumeRolePolicyDocument=dumps(lambda_role_assume_policy),
-#         )["Role"]["Arn"]
-#         lambda_code = """def handler(event, context):
-#   checks = {}
-#   checks["*"] = { "Regions": [ "*" ], "Resources": [ "" ], Optional("Tags"): [ "key:value" ] }
+  al = { "Mutelist": { "Accounts": { "*": { "Checks": checks } } } }
+  return al"""
 
-#   al = { "Mutelist": { "Accounts": { "*": { "Checks": checks } } } }
-#   return al"""
+        lambda_function = lambda_client.create_function(
+            FunctionName=lambda_name,
+            Runtime="3.9",
+            Role=lambda_role_arn,
+            Handler="lambda_function.lambda_handler",
+            Code={"ZipFile": create_zip_file(code=lambda_code).read()},
+            Description="test lambda function",
+        )
+        lambda_function_arn = lambda_function["FunctionArn"]
+        mutelist = {
+            "Accounts": {
+                "*": {
+                    "Checks": {
+                        "*": {
+                            "Regions": ["*"],
+                            "Resources": ["*"],
+                            "Tags": ["key:value"],
+                        },
+                    }
+                },
+            }
+        }
 
-#         lambda_function = lambda_client.create_function(
-#             FunctionName=lambda_name,
-#             Runtime="3.9",
-#             Role=lambda_role_arn,
-#             Handler="lambda_function.lambda_handler",
-#             Code={"ZipFile": create_zip_file(code=lambda_code).read()},
-#             Description="test lambda function",
-#         )
-#         lambda_function_arn = lambda_function["FunctionArn"]
-#         assert get_mutelist_file_from_lambda(
-#             lambda_function_arn, aws_provider.session.current_session
-#         )
+        assert (
+            get_mutelist_file_from_lambda(
+                lambda_function_arn, aws_provider.session.current_session
+            )
+            == mutelist
+        )
+
+    @mock_aws
+    def test_get_mutelist_file_from_lambda_invalid_arn(self):
+        aws_provider = set_mocked_aws_provider()
+        lambda_function_arn = "invalid_arn"
+
+        assert (
+            get_mutelist_file_from_lambda(
+                lambda_function_arn, aws_provider.session.current_session
+            )
+            == {}
+        )
