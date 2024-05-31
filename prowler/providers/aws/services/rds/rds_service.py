@@ -244,43 +244,47 @@ class RDS(AWSService):
                                             "describe_db_parameters"
                                         )
                                     )
-                                    for (
-                                        page
-                                    ) in describe_db_parameters_paginator.paginate(
-                                        DBParameterGroupName=cluster[
-                                            "DBClusterParameterGroup"
-                                        ]
-                                    ):
-                                        try:
-                                            for parameter in page["Parameters"]:
-                                                if (
-                                                    parameter["ParameterName"]
-                                                    == "rds.force_ssl"
-                                                ):
-                                                    db_cluster.force_ssl = parameter[
-                                                        "ParameterValue"
-                                                    ]
-                                                if (
-                                                    parameter["ParameterName"]
-                                                    == "require_secure_transport"
-                                                ):
-                                                    db_cluster.require_secure_transport = parameter[
-                                                        "ParameterValue"
-                                                    ]
+                                    try:
+                                        for (
+                                            page
+                                        ) in describe_db_parameters_paginator.paginate(
+                                            DBParameterGroupName=cluster[
+                                                "DBClusterParameterGroup"
+                                            ]
+                                        ):
+                                            try:
+                                                for parameter in page["Parameters"]:
+                                                    if (
+                                                        parameter["ParameterName"]
+                                                        == "rds.force_ssl"
+                                                    ):
+                                                        db_cluster.force_ssl = (
+                                                            parameter["ParameterValue"]
+                                                        )
+                                                    if (
+                                                        parameter["ParameterName"]
+                                                        == "require_secure_transport"
+                                                    ):
+                                                        db_cluster.require_secure_transport = parameter[
+                                                            "ParameterValue"
+                                                        ]
 
-                                        except Exception as error:
-                                            logger.error(
+                                            except Exception as error:
+                                                logger.error(
+                                                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                                                )
+                                    except ClientError as error:
+                                        if (
+                                            error.response["Error"]["Code"]
+                                            == "DBParameterGroupNotFound"
+                                        ):
+                                            logger.warning(
                                                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                                             )
-
-                        except ClientError as error:
-                            if (
-                                error.response["Error"]["Code"]
-                                == "DBParameterGroupNotFound"
-                            ):
-                                logger.warning(
-                                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                                )
+                                    except Exception as error:
+                                        logger.error(
+                                            f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                                        )
                         except Exception as error:
                             logger.error(
                                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
