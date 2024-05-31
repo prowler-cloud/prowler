@@ -7,7 +7,10 @@ from typing import Any, Optional
 
 from prowler.config.config import get_default_mute_file_path
 from prowler.lib.logger import logger
-from prowler.lib.mutelist.mutelist import parse_mutelist_file
+from prowler.lib.mutelist.mutelist import (
+    get_mutelist_file_from_local_file,
+    validate_mutelist,
+)
 
 providers_path = "prowler.providers"
 
@@ -178,7 +181,8 @@ class Provider(ABC):
         if not mutelist_path:
             mutelist_path = get_default_mute_file_path(self.type)
         if mutelist_path:
-            mutelist = parse_mutelist_file(mutelist_path)
+            mutelist = get_mutelist_file_from_local_file(mutelist_path)
+            mutelist = validate_mutelist(mutelist)
         else:
             mutelist = {}
 
