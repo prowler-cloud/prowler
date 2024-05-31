@@ -25,15 +25,15 @@ class Test_rds_instance__no_event_subscriptions:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.rds.rds_instance_security_group_event_subscription.rds_instance_security_group_event_subscription.rds_client",
+                "prowler.providers.aws.services.rds.rds_instance_event_subscription_security_groups.rds_instance_event_subscription_security_groups.rds_client",
                 new=RDS(aws_provider),
             ):
                 # Test Check
-                from prowler.providers.aws.services.rds.rds_instance_security_group_event_subscription.rds_instance_security_group_event_subscription import (
-                    rds_instance_security_group_event_subscription,
+                from prowler.providers.aws.services.rds.rds_instance_event_subscription_security_groups.rds_instance_event_subscription_security_groups import (
+                    rds_instance_event_subscription_security_groups,
                 )
 
-                check = rds_instance_security_group_event_subscription()
+                check = rds_instance_event_subscription_security_groups()
                 result = check.execute()
 
                 assert len(result) == 0
@@ -73,15 +73,15 @@ class Test_rds_instance__no_event_subscriptions:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.rds.rds_instance_security_group_event_subscription.rds_instance_security_group_event_subscription.rds_client",
+                "prowler.providers.aws.services.rds.rds_instance_event_subscription_security_groups.rds_instance_event_subscription_security_groups.rds_client",
                 new=RDS(aws_provider),
             ):
                 # Test Check
-                from prowler.providers.aws.services.rds.rds_instance_security_group_event_subscription.rds_instance_security_group_event_subscription import (
-                    rds_instance_security_group_event_subscription,
+                from prowler.providers.aws.services.rds.rds_instance_event_subscription_security_groups.rds_instance_event_subscription_security_groups import (
+                    rds_instance_event_subscription_security_groups,
                 )
 
-                check = rds_instance_security_group_event_subscription()
+                check = rds_instance_event_subscription_security_groups()
                 result = check.execute()
 
                 assert len(result) == 1
@@ -133,22 +133,22 @@ class Test_rds_instance__no_event_subscriptions:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.rds.rds_instance_security_group_event_subscription.rds_instance_security_group_event_subscription.rds_client",
+                "prowler.providers.aws.services.rds.rds_instance_event_subscription_security_groups.rds_instance_event_subscription_security_groups.rds_client",
                 new=RDS(aws_provider),
             ):
                 # Test Check
-                from prowler.providers.aws.services.rds.rds_instance_security_group_event_subscription.rds_instance_security_group_event_subscription import (
-                    rds_instance_security_group_event_subscription,
+                from prowler.providers.aws.services.rds.rds_instance_event_subscription_security_groups.rds_instance_event_subscription_security_groups import (
+                    rds_instance_event_subscription_security_groups,
                 )
 
-                check = rds_instance_security_group_event_subscription()
+                check = rds_instance_event_subscription_security_groups()
                 result = check.execute()
 
                 assert len(result) == 1
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == 'RDS security group event category of "configuration change" is not subscribed.'
+                    == "RDS security group event category of configuration change is not subscribed."
                 )
                 assert result[0].resource_id == "TestSub"
                 assert result[0].region == AWS_REGION_US_EAST_1
@@ -191,22 +191,22 @@ class Test_rds_instance__no_event_subscriptions:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.rds.rds_instance_security_group_event_subscription.rds_instance_security_group_event_subscription.rds_client",
+                "prowler.providers.aws.services.rds.rds_instance_event_subscription_security_groups.rds_instance_event_subscription_security_groups.rds_client",
                 new=RDS(aws_provider),
             ):
                 # Test Check
-                from prowler.providers.aws.services.rds.rds_instance_security_group_event_subscription.rds_instance_security_group_event_subscription import (
-                    rds_instance_security_group_event_subscription,
+                from prowler.providers.aws.services.rds.rds_instance_event_subscription_security_groups.rds_instance_event_subscription_security_groups import (
+                    rds_instance_event_subscription_security_groups,
                 )
 
-                check = rds_instance_security_group_event_subscription()
+                check = rds_instance_event_subscription_security_groups()
                 result = check.execute()
 
                 assert len(result) == 1
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == 'RDS security group event category of "failure" is not subscribed.'
+                    == "RDS security group event category of failure is not subscribed."
                 )
                 assert result[0].resource_id == "TestSub"
                 assert result[0].region == AWS_REGION_US_EAST_1
@@ -248,21 +248,21 @@ class Test_rds_instance__no_event_subscriptions:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.rds.rds_instance_security_group_event_subscription.rds_instance_security_group_event_subscription.rds_client",
+                "prowler.providers.aws.services.rds.rds_instance_event_subscription_security_groups.rds_instance_event_subscription_security_groups.rds_client",
                 new=RDS(aws_provider),
             ):
                 # Test Check
-                from prowler.providers.aws.services.rds.rds_instance_security_group_event_subscription.rds_instance_security_group_event_subscription import (
-                    rds_instance_security_group_event_subscription,
+                from prowler.providers.aws.services.rds.rds_instance_event_subscription_security_groups.rds_instance_event_subscription_security_groups import (
+                    rds_instance_event_subscription_security_groups,
                 )
 
-                check = rds_instance_security_group_event_subscription()
+                check = rds_instance_event_subscription_security_groups()
                 result = check.execute()
 
                 assert len(result) == 1
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == 'RDS security group event categories of "configuration change" and "failure" are not subscribed.'
+                    == "RDS security group event categories of configuration change and failure are not subscribed."
                 )
                 assert result[0].region == AWS_REGION_US_EAST_1
