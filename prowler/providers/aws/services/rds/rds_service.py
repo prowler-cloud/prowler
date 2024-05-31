@@ -26,6 +26,7 @@ class RDS(AWSService):
         self.__threading_call__(self.__describe_db_snapshots__)
         self.__threading_call__(self.__describe_db_snapshot_attributes__)
         self.__threading_call__(self.__describe_db_clusters__)
+        self.__threading_call__(self.__describe_db_cluster_parameters__)
         self.__threading_call__(self.__describe_db_cluster_snapshots__)
         self.__threading_call__(self.__describe_db_cluster_snapshot_attributes__)
         self.__threading_call__(self.__describe_db_engine_versions__)
@@ -237,54 +238,6 @@ class RDS(AWSService):
                                     )
                                     # We must use a unique value as the dict key to have unique keys
                                     self.db_clusters[db_cluster_arn] = db_cluster
-
-                                    # Get DB Cluster Parameters
-                                    describe_db_parameters_paginator = (
-                                        regional_client.get_paginator(
-                                            "describe_db_parameters"
-                                        )
-                                    )
-                                    try:
-                                        for (
-                                            page
-                                        ) in describe_db_parameters_paginator.paginate(
-                                            DBParameterGroupName=cluster[
-                                                "DBClusterParameterGroup"
-                                            ]
-                                        ):
-                                            try:
-                                                for parameter in page["Parameters"]:
-                                                    if (
-                                                        parameter["ParameterName"]
-                                                        == "rds.force_ssl"
-                                                    ):
-                                                        db_cluster.force_ssl = (
-                                                            parameter["ParameterValue"]
-                                                        )
-                                                    if (
-                                                        parameter["ParameterName"]
-                                                        == "require_secure_transport"
-                                                    ):
-                                                        db_cluster.require_secure_transport = parameter[
-                                                            "ParameterValue"
-                                                        ]
-
-                                            except Exception as error:
-                                                logger.error(
-                                                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                                                )
-                                    except ClientError as error:
-                                        if (
-                                            error.response["Error"]["Code"]
-                                            == "DBParameterGroupNotFound"
-                                        ):
-                                            logger.warning(
-                                                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                                            )
-                                    except Exception as error:
-                                        logger.error(
-                                            f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                                        )
                         except Exception as error:
                             logger.error(
                                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -293,6 +246,51 @@ class RDS(AWSService):
                     logger.error(
                         f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def __describe_db_cluster_parameters__(self, regional_client):
+        logger.info("RDS - Describe DB Cluster Parameters...")
+        try:
+            for cluster in self.db_clusters.values():
+                if cluster.region == regional_client.region:
+                    try:
+                        describe_db_cluster_parameters_paginator = (
+                            regional_client.get_paginator(
+                                "describe_db_cluster_parameters"
+                            )
+                        )
+                        for page in describe_db_cluster_parameters_paginator.paginate(
+                            DBClusterParameterGroupName=cluster.parameter_group
+                        ):
+                            for parameter in page["Parameters"]:
+                                if parameter["ParameterName"] == "rds.force_ssl":
+                                    cluster.force_ssl = parameter["ParameterValue"]
+                                if (
+                                    parameter["ParameterName"]
+                                    == "require_secure_transport"
+                                ):
+                                    cluster.require_secure_transport = parameter[
+                                        "ParameterValue"
+                                    ]
+                    except ClientError as error:
+                        if (
+                            error.response["Error"]["Code"]
+                            == "DBClusterParameterGroupName"
+                        ):
+                            logger.warning(
+                                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                            )
+                        else:
+                            logger.error(
+                                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                            )
+                    except Exception as error:
+                        logger.error(
+                            f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -436,8 +434,8 @@ class DBCluster(BaseModel):
     auto_minor_version_upgrade: bool
     multi_az: bool
     parameter_group: str
-    force_ssl: Optional[bool]
-    require_secure_transport: Optional[str]
+    force_ssl: Optional[str] = "0"
+    require_secure_transport: Optional[str] = "OFF"
     region: str
     tags: Optional[list] = []
 
