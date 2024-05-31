@@ -465,7 +465,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
                     assert sg.resource_tags == []
 
     @mock_aws
-    def test_ec2_compliant_default_sg_only_open_to_one_port(self):
+    def test_ec2_non_compliant_default_sg_open_to_one_port(self):
         # Create EC2 Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
         # Create VPC
@@ -590,7 +590,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
             assert result[0].region == AWS_REGION_US_EAST_1
 
     @mock_aws
-    def test_ec2_default_sgs_with_all_ports_check(self):
+    def test_ec2_default_sgs_with_any_ports_check(self):
         # Create EC2 Mocked Resources
         ec2 = resource("ec2", region_name=AWS_REGION_US_EAST_1)
         vpc = ec2.create_vpc(CidrBlock="10.0.0.0/16")
