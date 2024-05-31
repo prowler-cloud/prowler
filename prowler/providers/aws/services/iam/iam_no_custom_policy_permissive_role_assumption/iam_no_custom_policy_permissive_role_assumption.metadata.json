@@ -8,7 +8,7 @@
   "ServiceName": "iam",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
-  "Severity": "critical",
+  "Severity": "high",
   "ResourceType": "AwsIamPolicy",
   "Description": "Ensure that no custom IAM policies exist which allow permissive role assumption (e.g. sts:AssumeRole on *)",
   "Risk": "If not restricted unintended access could happen.",
