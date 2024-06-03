@@ -337,27 +337,32 @@ class RDS(AWSService):
             events_exist = False
             for page in describe_event_subscriptions_paginator.paginate():
                 for event in page["EventSubscriptionsList"]:
-                    arn = f"arn:{self.audited_partition}:rds:{regional_client.region}:{self.audited_account}:es:{event['CustSubscriptionId']}"
-                    if not self.audit_resources or (
-                        is_resource_filtered(
-                            arn,
-                            self.audit_resources,
-                        )
-                    ):
-                        self.db_event_subscriptions.append(
-                            EventSubscription(
-                                id=event["CustSubscriptionId"],
-                                arn=arn,
-                                sns_topic_arn=event["SnsTopicArn"],
-                                status=event["Status"],
-                                source_type=event["SourceType"],
-                                source_id=event.get("SourceIdsList", []),
-                                event_list=event.get("EventCategoriesList", []),
-                                enabled=event["Enabled"],
-                                region=regional_client.region,
+                    try:
+                        arn = f"arn:{self.audited_partition}:rds:{regional_client.region}:{self.audited_account}:es:{event['CustSubscriptionId']}"
+                        if not self.audit_resources or (
+                            is_resource_filtered(
+                                arn,
+                                self.audit_resources,
                             )
+                        ):
+                            self.db_event_subscriptions.append(
+                                EventSubscription(
+                                    id=event["CustSubscriptionId"],
+                                    arn=arn,
+                                    sns_topic_arn=event["SnsTopicArn"],
+                                    status=event["Status"],
+                                    source_type=event["SourceType"],
+                                    source_id=event.get("SourceIdsList", []),
+                                    event_list=event.get("EventCategoriesList", []),
+                                    enabled=event["Enabled"],
+                                    region=regional_client.region,
+                                )
+                            )
+                            events_exist = True
+                    except Exception as error:
+                        logger.error(
+                            f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
-                        events_exist = True
             if not events_exist:
                 # No Event Subscriptions for that region
                 self.db_event_subscriptions.append(
