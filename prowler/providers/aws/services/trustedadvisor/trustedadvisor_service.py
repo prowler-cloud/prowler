@@ -28,7 +28,7 @@ class TrustedAdvisor(AWSService):
             )
             self.client.region = support_region
             self.__describe_services__()
-            if self.premium_support.enabled:
+            if getattr(self.premium_support, "enabled", False):
                 self.__describe_trusted_advisor_checks__()
                 self.__describe_trusted_advisor_check_result__()
 
