@@ -208,16 +208,22 @@ class Cloudtrail(AWSService):
         logger.info("CloudTrail - List Tags...")
         try:
             for trail in self.trails.values():
-                # Check if trails are in this account and region
-                if (
-                    trail.region == trail.home_region
-                    and self.audited_account in trail.arn
-                ):
-                    regional_client = self.regional_clients[trail.region]
-                    response = regional_client.list_tags(ResourceIdList=[trail.arn])[
-                        "ResourceTagList"
-                    ][0]
-                    trail.tags = response.get("TagsList")
+                try:
+                    # Check if trails are in this account and region
+                    if (
+                        trail.region == trail.home_region
+                        and self.audited_account in trail.arn
+                    ):
+                        if trail.region in self.regional_clients.keys():
+                            regional_client = self.regional_clients[trail.region]
+                            response = regional_client.list_tags(
+                                ResourceIdList=[trail.arn]
+                            )["ResourceTagList"][0]
+                            trail.tags = response.get("TagsList")
+                except Exception as error:
+                    logger.error(
+                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
