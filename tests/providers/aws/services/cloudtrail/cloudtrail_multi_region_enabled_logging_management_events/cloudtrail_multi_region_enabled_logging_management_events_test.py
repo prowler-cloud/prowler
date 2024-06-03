@@ -6,6 +6,7 @@ from moto import mock_aws
 from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
+    AWS_REGION_US_EAST_2,
     set_mocked_aws_audit_info,
 )
 
@@ -44,7 +45,7 @@ class Test_cloudtrail_multi_region_enabled_logging_management_events:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == "No trail found with multi-region enabled and logging management events."
+                    == "No CloudTrail trails enabled and logging management events were found."
                 )
 
     @mock_aws
@@ -159,7 +160,7 @@ class Test_cloudtrail_multi_region_enabled_logging_management_events:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == "No trail found with multi-region enabled and logging management events."
+                    == "No CloudTrail trails enabled and logging management events were found."
                 )
 
     @mock_aws
@@ -271,7 +272,7 @@ class Test_cloudtrail_multi_region_enabled_logging_management_events:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == "No trail found with multi-region enabled and logging management events."
+                    == "No CloudTrail trails enabled and logging management events were found."
                 )
 
     @mock_aws
@@ -299,3 +300,36 @@ class Test_cloudtrail_multi_region_enabled_logging_management_events:
                 check = cloudtrail_multi_region_enabled_logging_management_events()
                 result = check.execute()
                 assert len(result) == 0
+
+    def test_no_trails_two_regions(self):
+        from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
+            Cloudtrail,
+        )
+
+        audit_info = set_mocked_aws_audit_info(
+            [AWS_REGION_US_EAST_1, AWS_REGION_US_EAST_2]
+        )
+
+        with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=audit_info,
+        ):
+            with mock.patch(
+                "prowler.providers.aws.services.cloudtrail.cloudtrail_multi_region_enabled_logging_management_events.cloudtrail_multi_region_enabled_logging_management_events.cloudtrail_client",
+                new=Cloudtrail(audit_info),
+            ):
+                # Test Check
+                from prowler.providers.aws.services.cloudtrail.cloudtrail_multi_region_enabled_logging_management_events.cloudtrail_multi_region_enabled_logging_management_events import (
+                    cloudtrail_multi_region_enabled_logging_management_events,
+                )
+
+                check = cloudtrail_multi_region_enabled_logging_management_events()
+                result = check.execute()
+                assert len(result) == 2
+                for r in result:
+                    assert r.resource_id == AWS_ACCOUNT_NUMBER
+                    assert r.status == "FAIL"
+                    assert (
+                        r.status_extended
+                        == "No CloudTrail trails enabled and logging management events were found."
+                    )

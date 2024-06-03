@@ -36,6 +36,10 @@ class Cloudtrail(AWSService):
             describe_trails = regional_client.describe_trails()["trailList"]
             trails_count = 0
             for trail in describe_trails:
+                # If a multi region trail was already retrieved in another region
+                if trail["TrailARN"] in self.trails.keys():
+                    continue
+
                 if not self.audit_resources or (
                     is_resource_filtered(trail["TrailARN"], self.audit_resources)
                 ):
@@ -192,16 +196,21 @@ class Cloudtrail(AWSService):
         logger.info("CloudTrail - List Tags...")
         try:
             for trail in self.trails.values():
-                # Check if trails are in this account and region
-                if (
-                    trail.region == trail.home_region
-                    and self.audited_account in trail.arn
-                ):
-                    regional_client = self.regional_clients[trail.region]
-                    response = regional_client.list_tags(ResourceIdList=[trail.arn])[
-                        "ResourceTagList"
-                    ][0]
-                    trail.tags = response.get("TagsList")
+                try:
+                    # Check if trails are in this account and region
+                    if (
+                        trail.region == trail.home_region
+                        and self.audited_account in trail.arn
+                    ):
+                        regional_client = self.regional_clients[trail.region]
+                        response = regional_client.list_tags(
+                            ResourceIdList=[trail.arn]
+                        )["ResourceTagList"][0]
+                        trail.tags = response.get("TagsList")
+                except Exception as error:
+                    logger.error(
+                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -218,6 +227,7 @@ class Trail(BaseModel):
     is_multiregion: bool = None
     home_region: str = None
     arn: str = None
+    # Region holds the region where the trail is audited
     region: str
     is_logging: bool = None
     log_file_validation_enabled: bool = None

@@ -221,7 +221,6 @@ class Test_cloudtrail_logs_s3_bucket_access_logging_enabled:
 
     @mock_aws
     def test_access_denied(self):
-
         from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
             Cloudtrail,
         )
