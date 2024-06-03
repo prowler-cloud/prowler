@@ -183,8 +183,8 @@ class Test_RDS_Service:
     def test__describe_db_clusters__(self):
         conn = client("rds", region_name=AWS_REGION_US_EAST_1)
         cluster_id = "db-master-1"
-        conn.create_db_parameter_group(
-            DBParameterGroupName="test",
+        conn.create_db_cluster_parameter_group(
+            DBClusterParameterGroupName="test",
             DBParameterGroupFamily="default.postgres9.3",
             Description="test parameter group",
         )
@@ -232,6 +232,8 @@ class Test_RDS_Service:
             {"Key": "test", "Value": "test"},
         ]
         assert rds.db_clusters[db_cluster_arn].parameter_group == "test"
+        assert rds.db_clusters[db_cluster_arn].force_ssl == "0"
+        assert rds.db_clusters[db_cluster_arn].require_secure_transport == "OFF"
 
     # Test RDS Describe DB Cluster Snapshots
     @mock_aws
