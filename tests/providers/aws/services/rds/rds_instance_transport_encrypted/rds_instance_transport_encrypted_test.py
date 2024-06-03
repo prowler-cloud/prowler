@@ -11,6 +11,9 @@ from tests.providers.aws.audit_info_utils import (
 )
 
 make_api_call = botocore.client.BaseClient._make_api_call
+cluster_arn = (
+    f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:cluster:db-cluster-1"
+)
 
 
 def mock_make_api_call(self, operation_name, kwarg):
@@ -160,10 +163,7 @@ class Test_rds_instance_transport_encrypted:
                 )
                 assert result[0].resource_id == "db-cluster-1"
                 assert result[0].region == AWS_REGION_US_EAST_1
-                assert (
-                    result[0].resource_arn
-                    == f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:cluster:db-cluster-1"
-                )
+                assert result[0].resource_arn == cluster_arn
                 assert result[0].resource_tags == []
 
     @mock_aws
@@ -433,16 +433,6 @@ class Test_rds_instance_transport_encrypted:
             MasterUserPassword="password",
             Tags=[],
         )
-        conn.modify_db_parameter_group(
-            DBParameterGroupName="test",
-            Parameters=[
-                {
-                    "ParameterName": "rds.force_ssl",
-                    "ParameterValue": "1",
-                    "ApplyMethod": "immediate",
-                },
-            ],
-        )
         from prowler.providers.aws.services.rds.rds_service import RDS
 
         audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
@@ -454,12 +444,14 @@ class Test_rds_instance_transport_encrypted:
             with mock.patch(
                 "prowler.providers.aws.services.rds.rds_instance_transport_encrypted.rds_instance_transport_encrypted.rds_client",
                 new=RDS(audit_info),
-            ):
+            ) as rds_client:
                 # Test Check
                 from prowler.providers.aws.services.rds.rds_instance_transport_encrypted.rds_instance_transport_encrypted import (
                     rds_instance_transport_encrypted,
                 )
 
+                # Change DB Cluster parameter group to support SSL since Moto does not support it
+                rds_client.db_clusters[cluster_arn].require_secure_transport = "ON"
                 check = rds_instance_transport_encrypted()
                 result = check.execute()
 
@@ -471,10 +463,7 @@ class Test_rds_instance_transport_encrypted:
                 )
                 assert result[0].resource_id == "db-cluster-1"
                 assert result[0].region == AWS_REGION_US_EAST_1
-                assert (
-                    result[0].resource_arn
-                    == f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:cluster:db-cluster-1"
-                )
+                assert result[0].resource_arn == cluster_arn
                 assert result[0].resource_tags == []
 
     @mock_aws
@@ -517,12 +506,14 @@ class Test_rds_instance_transport_encrypted:
             with mock.patch(
                 "prowler.providers.aws.services.rds.rds_instance_transport_encrypted.rds_instance_transport_encrypted.rds_client",
                 new=RDS(audit_info),
-            ):
+            ) as rds_client:
                 # Test Check
                 from prowler.providers.aws.services.rds.rds_instance_transport_encrypted.rds_instance_transport_encrypted import (
                     rds_instance_transport_encrypted,
                 )
 
+                # Change DB Cluster parameter group to support SSL since Moto does not support it
+                rds_client.db_clusters[cluster_arn].require_secure_transport = "ON"
                 check = rds_instance_transport_encrypted()
                 result = check.execute()
 
@@ -534,8 +525,5 @@ class Test_rds_instance_transport_encrypted:
                 )
                 assert result[0].resource_id == "db-cluster-1"
                 assert result[0].region == AWS_REGION_US_EAST_1
-                assert (
-                    result[0].resource_arn
-                    == f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:cluster:db-cluster-1"
-                )
+                assert result[0].resource_arn == cluster_arn
                 assert result[0].resource_tags == []

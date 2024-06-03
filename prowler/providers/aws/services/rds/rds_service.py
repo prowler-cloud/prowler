@@ -24,6 +24,7 @@ class RDS(AWSService):
         self.__threading_call__(self.__describe_db_snapshots__)
         self.__threading_call__(self.__describe_db_snapshot_attributes__)
         self.__threading_call__(self.__describe_db_clusters__)
+        self.__threading_call__(self.__describe_db_cluster_parameters__)
         self.__threading_call__(self.__describe_db_cluster_snapshots__)
         self.__threading_call__(self.__describe_db_cluster_snapshot_attributes__)
         self.__threading_call__(self.__describe_db_engine_versions__)
@@ -164,57 +165,98 @@ class RDS(AWSService):
                 "describe_db_clusters"
             )
             for page in describe_db_clusters_paginator.paginate():
-                for cluster in page["DBClusters"]:
-                    db_cluster_arn = f"arn:{self.audited_partition}:rds:{regional_client.region}:{self.audited_account}:cluster:{cluster['DBClusterIdentifier']}"
-                    if not self.audit_resources or (
-                        is_resource_filtered(db_cluster_arn, self.audit_resources)
-                    ):
-                        if cluster["Engine"] != "docdb":
-                            describe_db_parameters_paginator = (
-                                regional_client.get_paginator("describe_db_parameters")
-                            )
-                            db_cluster = DBCluster(
-                                id=cluster["DBClusterIdentifier"],
-                                arn=db_cluster_arn,
-                                endpoint=cluster.get("Endpoint"),
-                                engine=cluster["Engine"],
-                                status=cluster["Status"],
-                                public=cluster.get("PubliclyAccessible", False),
-                                encrypted=cluster["StorageEncrypted"],
-                                auto_minor_version_upgrade=cluster.get(
-                                    "AutoMinorVersionUpgrade", False
-                                ),
-                                backup_retention_period=cluster.get(
-                                    "BackupRetentionPeriod"
-                                ),
-                                cloudwatch_logs=cluster.get(
-                                    "EnabledCloudwatchLogsExports"
-                                ),
-                                deletion_protection=cluster["DeletionProtection"],
-                                parameter_group=cluster["DBClusterParameterGroup"],
-                                multi_az=cluster["MultiAZ"],
-                                region=regional_client.region,
-                                tags=cluster.get("TagList", []),
-                            )
-                            for page in describe_db_parameters_paginator.paginate(
-                                DBParameterGroupName=cluster["DBClusterParameterGroup"]
+                try:
+                    for cluster in page["DBClusters"]:
+                        try:
+                            db_cluster_arn = f"arn:{self.audited_partition}:rds:{regional_client.region}:{self.audited_account}:cluster:{cluster['DBClusterIdentifier']}"
+                            if not self.audit_resources or (
+                                is_resource_filtered(
+                                    db_cluster_arn, self.audit_resources
+                                )
                             ):
-                                for parameter in page["Parameters"]:
-                                    if parameter["ParameterName"] == "rds.force_ssl":
-                                        db_cluster.force_ssl = parameter[
-                                            "ParameterValue"
-                                        ]
-                                    if (
-                                        parameter["ParameterName"]
-                                        == "require_secure_transport"
-                                    ):
-                                        db_cluster.require_secure_transport = parameter[
-                                            "ParameterValue"
-                                        ]
+                                if cluster["Engine"] != "docdb":
+                                    db_cluster = DBCluster(
+                                        id=cluster["DBClusterIdentifier"],
+                                        arn=db_cluster_arn,
+                                        endpoint=cluster.get("Endpoint"),
+                                        engine=cluster["Engine"],
+                                        status=cluster["Status"],
+                                        public=cluster.get("PubliclyAccessible", False),
+                                        encrypted=cluster["StorageEncrypted"],
+                                        auto_minor_version_upgrade=cluster.get(
+                                            "AutoMinorVersionUpgrade", False
+                                        ),
+                                        backup_retention_period=cluster.get(
+                                            "BackupRetentionPeriod"
+                                        ),
+                                        cloudwatch_logs=cluster.get(
+                                            "EnabledCloudwatchLogsExports"
+                                        ),
+                                        deletion_protection=cluster[
+                                            "DeletionProtection"
+                                        ],
+                                        parameter_group=cluster[
+                                            "DBClusterParameterGroup"
+                                        ],
+                                        multi_az=cluster["MultiAZ"],
+                                        region=regional_client.region,
+                                        tags=cluster.get("TagList", []),
+                                    )
+                                    # We must use a unique value as the dict key to have unique keys
+                                    self.db_clusters[db_cluster_arn] = db_cluster
+                        except Exception as error:
+                            logger.error(
+                                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                            )
+                except Exception as error:
+                    logger.error(
+                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
-                            # We must use a unique value as the dict key to have unique keys
-                            self.db_clusters[db_cluster_arn] = db_cluster
-
+    def __describe_db_cluster_parameters__(self, regional_client):
+        logger.info("RDS - Describe DB Cluster Parameters...")
+        try:
+            for cluster in self.db_clusters.values():
+                if cluster.region == regional_client.region:
+                    try:
+                        describe_db_cluster_parameters_paginator = (
+                            regional_client.get_paginator(
+                                "describe_db_cluster_parameters"
+                            )
+                        )
+                        for page in describe_db_cluster_parameters_paginator.paginate(
+                            DBClusterParameterGroupName=cluster.parameter_group
+                        ):
+                            for parameter in page["Parameters"]:
+                                if parameter["ParameterName"] == "rds.force_ssl":
+                                    cluster.force_ssl = parameter["ParameterValue"]
+                                if (
+                                    parameter["ParameterName"]
+                                    == "require_secure_transport"
+                                ):
+                                    cluster.require_secure_transport = parameter[
+                                        "ParameterValue"
+                                    ]
+                    except ClientError as error:
+                        if (
+                            error.response["Error"]["Code"]
+                            == "DBClusterParameterGroupName"
+                        ):
+                            logger.warning(
+                                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                            )
+                        else:
+                            logger.error(
+                                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                            )
+                    except Exception as error:
+                        logger.error(
+                            f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -346,8 +388,8 @@ class DBCluster(BaseModel):
     auto_minor_version_upgrade: bool
     multi_az: bool
     parameter_group: str
-    force_ssl: Optional[bool]
-    require_secure_transport: Optional[str]
+    force_ssl: str = "0"
+    require_secure_transport: str = "OFF"
     region: str
     tags: Optional[list] = []
 
