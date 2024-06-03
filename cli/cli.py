@@ -1,6 +1,7 @@
 import typer
 
 from prowler.config.config import available_compliance_frameworks
+from prowler.lib.banner import print_banner
 from prowler.lib.check.check import (
     bulk_load_checks_metadata,
     bulk_load_compliance_frameworks,
@@ -30,6 +31,7 @@ app.add_typer(kubernetes, name="kubernetes")
 
 
 def list_resources(provider: str, resource_type: str):
+    print_banner(False)
     if resource_type == "services":
         print_services(list_services(provider))
     elif resource_type == "fixers":
@@ -61,6 +63,7 @@ def list_resources(provider: str, resource_type: str):
 def list_compliance_requirements(
     provider: str, compliance_frameworks: list[str] = None
 ):
+    print_banner(False)
     print_compliance_requirements(
         bulk_load_compliance_frameworks(provider), compliance_frameworks
     )
