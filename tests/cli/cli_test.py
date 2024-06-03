@@ -1,3 +1,5 @@
+import json
+
 from typer.testing import CliRunner
 
 from cli.cli import app
@@ -58,4 +60,8 @@ class TestCLI:
         result = runner.invoke(app, ["aws", "list-checks-json"])
         assert result.exit_code == 0
         assert "aws" in result.output
-        assert result.output.startswith("{") and result.output.endswith("}\n")
+        # validate the json output
+        try:
+            json.loads(result.output)
+        except ValueError:
+            assert False
