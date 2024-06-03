@@ -3,7 +3,16 @@ from colorama import Fore, Style
 from prowler.config.config import banner_color, orange_color, prowler_version, timestamp
 
 
-def print_banner(verbose: bool, fixer: bool = False):
+def print_banner(legend: bool = False):
+    """
+    Prints the banner with optional legend for color codes.
+
+    Parameters:
+    - legend (bool): Flag to indicate whether to print the color legend or not. Default is False.
+
+    Returns:
+    - None
+    """
     banner = rf"""{banner_color}                         _
  _ __  _ __ _____      _| | ___ _ __
 | '_ \| '__/ _ \ \ /\ / / |/ _ \ '__|
@@ -15,7 +24,7 @@ def print_banner(verbose: bool, fixer: bool = False):
 """
     print(banner)
 
-    if verbose or fixer:
+    if legend:
         print(
             f"""
 {Style.BRIGHT}Color code for results:{Style.RESET_ALL}
