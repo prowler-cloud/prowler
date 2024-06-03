@@ -37,7 +37,7 @@ class Cloudtrail(AWSService):
             trails_count = 0
             for trail in describe_trails:
                 # If a multi region trail was already retrieved in another region
-                if trail["TrailARN"] in self.trails.keys():
+                if self.trails and trail["TrailARN"] in self.trails.keys():
                     continue
 
                 if not self.audit_resources or (
