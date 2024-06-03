@@ -140,7 +140,11 @@ class Test_Cloudtrail_Service:
             if trail.name == trail_name_sp:
                 assert trail.is_multiregion
                 assert trail.home_region == AWS_REGION_EU_SOUTH_2
-                assert trail.region == AWS_REGION_EU_SOUTH_2
+                # The region is the first audited region since the trail home region is not audited
+                assert (
+                    trail.region == AWS_REGION_US_EAST_1
+                    or trail.region == AWS_REGION_EU_WEST_1
+                )
                 assert not trail.is_logging
                 assert not trail.log_file_validation_enabled
                 assert not trail.latest_cloudwatch_delivery_time
