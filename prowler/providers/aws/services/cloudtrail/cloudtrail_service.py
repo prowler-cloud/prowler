@@ -53,7 +53,7 @@ class Cloudtrail(AWSService):
                         is_multiregion=trail["IsMultiRegionTrail"],
                         home_region=trail["HomeRegion"],
                         arn=trail["TrailARN"],
-                        region=regional_client.region,
+                        region=trail["HomeRegion"],
                         is_logging=False,
                         log_file_validation_enabled=trail["LogFileValidationEnabled"],
                         latest_cloudwatch_delivery_time=None,
