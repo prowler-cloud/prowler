@@ -59,6 +59,11 @@ config_aws = {
     "organizations_enabled_regions": [],
     "organizations_trusted_delegated_administrators": [],
     "check_rds_instance_replicas": False,
+    "ec2_allowed_interface_types": [
+        "api_gateway_managed",
+        "vpc_endpoint",
+    ],
+    "ec2_allowed_instance_owners": ["amazon-elb"],
 }
 
 config_azure = {"shodan_api_key": None}
