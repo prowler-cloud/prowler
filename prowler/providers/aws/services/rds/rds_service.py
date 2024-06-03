@@ -434,8 +434,8 @@ class DBCluster(BaseModel):
     auto_minor_version_upgrade: bool
     multi_az: bool
     parameter_group: str
-    force_ssl: Optional[str] = "0"
-    require_secure_transport: Optional[str] = "OFF"
+    force_ssl: str = "0"
+    require_secure_transport: str = "OFF"
     region: str
     tags: Optional[list] = []
 
