@@ -102,7 +102,7 @@ class Check(ABC, Check_Metadata_Model):
         return self.json()
 
     @abstractmethod
-    def execute(self):
+    def execute(self) -> list:
         """Execute the check's logic"""
 
 
