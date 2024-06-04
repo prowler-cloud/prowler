@@ -104,17 +104,13 @@ class Test_SecurityHub:
         return finding
 
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
-    def test_verify_security_hub_integration_enabled_per_region(self):
+    def test_verify(self):
         aws_provider = set_mocked_aws_provider()
         security_hub = SecurityHub(aws_provider)
 
-        assert security_hub.verify_security_hub_integration_enabled_per_region(
-            AWS_REGION_EU_WEST_1
-        )
+        assert security_hub.verify(AWS_REGION_EU_WEST_1)
 
-    def test_verify_security_hub_integration_enabled_per_region_security_hub_disabled(
-        self, caplog
-    ):
+    def test_verify_security_hub_disabled(self, caplog):
         aws_provider = set_mocked_aws_provider()
         security_hub = SecurityHub(aws_provider)
 
@@ -134,7 +130,7 @@ class Test_SecurityHub:
             operation_name = "DescribeHub"
             mock_security_hub.side_effect = ClientError(error_response, operation_name)
 
-            assert not security_hub.verify_security_hub_integration_enabled_per_region(
+            assert not security_hub.verify(
                 AWS_REGION_EU_WEST_1,
             )
             assert caplog.record_tuples == [
@@ -145,9 +141,7 @@ class Test_SecurityHub:
                 )
             ]
 
-    def test_verify_security_hub_integration_enabled_per_region_prowler_not_subscribed(
-        self, caplog
-    ):
+    def test_verify_prowler_not_subscribed(self, caplog):
         aws_provider = set_mocked_aws_provider()
         security_hub = SecurityHub(aws_provider)
 
@@ -159,7 +153,7 @@ class Test_SecurityHub:
             mock_security_hub.describe_hub.return_value = None
             mock_security_hub.list_enabled_products_for_import.return_value = []
 
-            assert not security_hub.verify_security_hub_integration_enabled_per_region(
+            assert not security_hub.verify(
                 AWS_REGION_EU_WEST_1,
             )
             assert caplog.record_tuples == [
@@ -170,9 +164,7 @@ class Test_SecurityHub:
                 )
             ]
 
-    def test_verify_security_hub_integration_enabled_per_region_another_ClientError(
-        self, caplog
-    ):
+    def test_verify_another_ClientError(self, caplog):
         aws_provider = set_mocked_aws_provider()
         security_hub = SecurityHub(aws_provider)
 
@@ -192,7 +184,7 @@ class Test_SecurityHub:
             operation_name = "DescribeHub"
             mock_security_hub.side_effect = ClientError(error_response, operation_name)
 
-            assert not security_hub.verify_security_hub_integration_enabled_per_region(
+            assert not security_hub.verify(
                 AWS_REGION_EU_WEST_1,
             )
             assert caplog.record_tuples == [
@@ -203,9 +195,7 @@ class Test_SecurityHub:
                 )
             ]
 
-    def test_verify_security_hub_integration_enabled_per_region_another_Exception(
-        self, caplog
-    ):
+    def test_verify_another_Exception(self, caplog):
         aws_provider = set_mocked_aws_provider()
         security_hub = SecurityHub(aws_provider)
 
@@ -217,7 +207,7 @@ class Test_SecurityHub:
             error_message = f"Another exception in region {AWS_REGION_EU_WEST_1}"
             mock_security_hub.side_effect = Exception(error_message)
 
-            assert not security_hub.verify_security_hub_integration_enabled_per_region(
+            assert not security_hub.verify(
                 AWS_REGION_EU_WEST_1,
             )
             assert caplog.record_tuples == [
@@ -228,7 +218,7 @@ class Test_SecurityHub:
                 )
             ]
 
-    def test_prepare_security_hub_findings_enabled_region_all_statuses(self):
+    def test_prepare_enabled_region_all_statuses(self):
         enabled_regions = [AWS_REGION_EU_WEST_1]
         findings = [self.generate_finding("PASS", AWS_REGION_EU_WEST_1)]
         aws_provider = set_mocked_aws_provider(
@@ -236,14 +226,14 @@ class Test_SecurityHub:
         )
         security_hub = SecurityHub(aws_provider)
 
-        assert security_hub.prepare_security_hub_findings(
+        assert security_hub.prepare(
             findings,
             enabled_regions,
         ) == {
             AWS_REGION_EU_WEST_1: [get_security_hub_finding("PASSED")],
         }
 
-    def test_prepare_security_hub_findings_all_statuses_MANUAL_finding(self):
+    def test_prepare_all_statuses_MANUAL_finding(self):
         enabled_regions = [AWS_REGION_EU_WEST_1]
         findings = [self.generate_finding("MANUAL", AWS_REGION_EU_WEST_1)]
         aws_provider = set_mocked_aws_provider(
@@ -251,12 +241,12 @@ class Test_SecurityHub:
         )
         security_hub = SecurityHub(aws_provider)
 
-        assert security_hub.prepare_security_hub_findings(
+        assert security_hub.prepare(
             findings,
             enabled_regions,
         ) == {AWS_REGION_EU_WEST_1: []}
 
-    def test_prepare_security_hub_findings_disabled_region(self):
+    def test_prepare_disabled_region(self):
         enabled_regions = [AWS_REGION_EU_WEST_1]
         findings = [self.generate_finding("PASS", AWS_REGION_EU_WEST_2)]
         aws_provider = set_mocked_aws_provider(
@@ -264,12 +254,12 @@ class Test_SecurityHub:
         )
         security_hub = SecurityHub(aws_provider)
 
-        assert security_hub.prepare_security_hub_findings(
+        assert security_hub.prepare(
             findings,
             enabled_regions,
         ) == {AWS_REGION_EU_WEST_1: []}
 
-    def test_prepare_security_hub_findings_PASS_and_FAIL_statuses(self):
+    def test_prepare_PASS_and_FAIL_statuses(self):
         enabled_regions = [AWS_REGION_EU_WEST_1]
         findings = [self.generate_finding("PASS", AWS_REGION_EU_WEST_1)]
 
@@ -281,12 +271,12 @@ class Test_SecurityHub:
 
         security_hub = SecurityHub(aws_provider)
 
-        assert security_hub.prepare_security_hub_findings(
+        assert security_hub.prepare(
             findings,
             enabled_regions,
         ) == {AWS_REGION_EU_WEST_1: []}
 
-    def test_prepare_security_hub_findings_FAIL_and_FAIL_statuses(self):
+    def test_prepare_FAIL_and_FAIL_statuses(self):
         enabled_regions = [AWS_REGION_EU_WEST_1]
         findings = [self.generate_finding("FAIL", AWS_REGION_EU_WEST_1)]
 
@@ -298,12 +288,12 @@ class Test_SecurityHub:
 
         security_hub = SecurityHub(aws_provider)
 
-        assert security_hub.prepare_security_hub_findings(
+        assert security_hub.prepare(
             findings,
             enabled_regions,
         ) == {AWS_REGION_EU_WEST_1: [get_security_hub_finding("FAILED")]}
 
-    def test_prepare_security_hub_findings_send_sh_only_fails_PASS(self):
+    def test_prepare_send_sh_only_fails_PASS(self):
         enabled_regions = [AWS_REGION_EU_WEST_1]
         findings = [self.generate_finding("PASS", AWS_REGION_EU_WEST_1)]
 
@@ -315,12 +305,12 @@ class Test_SecurityHub:
         )
         security_hub = SecurityHub(aws_provider)
 
-        assert security_hub.prepare_security_hub_findings(
+        assert security_hub.prepare(
             findings,
             enabled_regions,
         ) == {AWS_REGION_EU_WEST_1: []}
 
-    def test_prepare_security_hub_findings_send_sh_only_fails_FAIL(self):
+    def test_prepare_send_sh_only_fails_FAIL(self):
         enabled_regions = [AWS_REGION_EU_WEST_1]
         findings = [self.generate_finding("FAIL", AWS_REGION_EU_WEST_1)]
 
@@ -332,12 +322,12 @@ class Test_SecurityHub:
         )
         security_hub = SecurityHub(aws_provider)
 
-        assert security_hub.prepare_security_hub_findings(
+        assert security_hub.prepare(
             findings,
             enabled_regions,
         ) == {AWS_REGION_EU_WEST_1: [get_security_hub_finding("FAILED")]}
 
-    def test_prepare_security_hub_findings_no_audited_regions(self):
+    def test_prepare_no_audited_regions(self):
         enabled_regions = [AWS_REGION_EU_WEST_1]
         findings = [self.generate_finding("PASS", AWS_REGION_EU_WEST_1)]
 
@@ -346,14 +336,14 @@ class Test_SecurityHub:
         )
         security_hub = SecurityHub(aws_provider)
 
-        assert security_hub.prepare_security_hub_findings(
+        assert security_hub.prepare(
             findings,
             enabled_regions,
         ) == {
             AWS_REGION_EU_WEST_1: [get_security_hub_finding("PASSED")],
         }
 
-    def test_prepare_security_hub_findings_muted_fail_with_send_sh_only_fails(self):
+    def test_prepare_muted_fail_with_send_sh_only_fails(self):
         enabled_regions = [AWS_REGION_EU_WEST_1]
         findings = [
             self.generate_finding(
@@ -366,14 +356,14 @@ class Test_SecurityHub:
         aws_provider = set_mocked_aws_provider(arguments=args)
         security_hub = SecurityHub(aws_provider)
 
-        assert security_hub.prepare_security_hub_findings(
+        assert security_hub.prepare(
             findings,
             enabled_regions,
         ) == {
             AWS_REGION_EU_WEST_1: [],
         }
 
-    def test_prepare_security_hub_findings_muted_fail_with_status_FAIL(self):
+    def test_prepare_muted_fail_with_status_FAIL(self):
         enabled_regions = [AWS_REGION_EU_WEST_1]
         findings = [
             self.generate_finding(
@@ -385,7 +375,7 @@ class Test_SecurityHub:
         aws_provider = set_mocked_aws_provider(arguments=args)
         security_hub = SecurityHub(aws_provider)
 
-        assert security_hub.prepare_security_hub_findings(
+        assert security_hub.prepare(
             findings,
             enabled_regions,
         ) == {
@@ -393,7 +383,7 @@ class Test_SecurityHub:
         }
 
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
-    def test_batch_send_to_security_hub_one_finding(self):
+    def test_send_one_finding(self):
         enabled_regions = [AWS_REGION_EU_WEST_1, AWS_REGION_EU_WEST_2]
         findings = [
             self.generate_finding("PASS", AWS_REGION_EU_WEST_1),
@@ -405,13 +395,13 @@ class Test_SecurityHub:
         )
         security_hub = SecurityHub(aws_provider)
 
-        security_hub_findings = security_hub.prepare_security_hub_findings(
+        security_hub_findings = security_hub.prepare(
             findings,
             enabled_regions,
         )
 
         assert (
-            security_hub.batch_send_to_security_hub(
+            security_hub.send(
                 security_hub_findings,
             )
             == 2

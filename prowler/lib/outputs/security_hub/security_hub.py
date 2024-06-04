@@ -22,13 +22,10 @@ class SecurityHub:
         self._account = provider.identity.account
         self._partition = provider.identity.partition
 
-    @property
-    def findings_per_region(self):
-        return self._findings_per_region
-
-    def prepare_security_hub_findings(
-        self, findings: list, enabled_regions: list
-    ) -> dict:
+    def prepare(self, findings: list, enabled_regions: list) -> dict:
+        """
+        prepare creates a dictionary with the findings per region in the JSON ASFF format.
+        """
         security_hub_findings_per_region = {}
 
         # Create a key per audited region
@@ -69,12 +66,12 @@ class SecurityHub:
 
         return security_hub_findings_per_region
 
-    def verify_security_hub_integration_enabled_per_region(
+    def verify(
         self,
         region: str,
     ) -> bool:
         f"""
-        verify_security_hub_integration_enabled returns True if the {SECURITY_HUB_INTEGRATION_NAME} is enabled for the given region. Otherwise returns false.
+        verify returns True if the {SECURITY_HUB_INTEGRATION_NAME} is enabled for the given region. Otherwise returns false.
         """
         prowler_integration_enabled = False
 
@@ -124,12 +121,12 @@ class SecurityHub:
         finally:
             return prowler_integration_enabled
 
-    def batch_send_to_security_hub(
+    def send(
         self,
         security_hub_findings_per_region: dict,
     ) -> int:
         """
-        send_to_security_hub sends findings to Security Hub and returns the number of findings that were successfully sent.
+        send sends findings to Security Hub and returns the number of findings that were successfully sent.
         """
 
         success_count = 0
@@ -143,7 +140,7 @@ class SecurityHub:
                     "securityhub", region_name=region
                 )
 
-                success_count += self.__send_findings_to_security_hub__(
+                success_count += self.__batch_import_findings__(
                     findings, region, security_hub_client
                 )
 
@@ -154,11 +151,9 @@ class SecurityHub:
         return success_count
 
     # Move previous Security Hub check findings to ARCHIVED (as prowler didn't re-detect them)
-    def resolve_security_hub_previous_findings(
-        self, security_hub_findings_per_region: dict
-    ) -> list:
+    def resolve(self, security_hub_findings_per_region: dict) -> list:
         """
-        resolve_security_hub_previous_findings archives all the findings that does not appear in the current execution
+        resolve archives all the findings that does not appear in the current execution
         """
         logger.info("Checking previous findings in Security Hub to archive them.")
         success_count = 0
@@ -196,7 +191,7 @@ class SecurityHub:
                 logger.info(f"Archiving {len(findings_to_archive)} findings.")
 
                 # Send archive findings to SHub
-                success_count += self.__send_findings_to_security_hub__(
+                success_count += self.__batch_import_findings__(
                     findings_to_archive, region, security_hub_client
                 )
             except Exception as error:
@@ -205,7 +200,7 @@ class SecurityHub:
                 )
         return success_count
 
-    def __send_findings_to_security_hub__(
+    def __batch_import_findings__(
         self, findings: list[dict], region: str, security_hub_client
     ):
         """Private function send_findings_to_security_hub chunks the findings in groups of 100 findings and send them to AWS Security Hub. It returns the number of sent findings."""

@@ -320,19 +320,19 @@ def prowler():
 
         for region in security_hub_regions:
             # Save the regions where AWS Security Hub is enabled
-            if security_hub.verify_security_hub_integration_enabled_per_region(
+            if security_hub.verify(
                 region,
             ):
                 aws_security_enabled_regions.append(region)
 
         # Prepare the findings to be sent to Security Hub
-        security_hub_findings_per_region = security_hub.prepare_security_hub_findings(
+        security_hub_findings_per_region = security_hub.prepare(
             findings,
             aws_security_enabled_regions,
         )
 
         # Send the findings to Security Hub
-        findings_sent_to_security_hub = security_hub.batch_send_to_security_hub(
+        findings_sent_to_security_hub = security_hub.send(
             security_hub_findings_per_region
         )
 
@@ -347,10 +347,8 @@ def prowler():
             print(
                 f"{Style.BRIGHT}\nArchiving previous findings in AWS Security Hub, please wait...{Style.RESET_ALL}"
             )
-            findings_archived_in_security_hub = (
-                security_hub.resolve_security_hub_previous_findings(
-                    security_hub_findings_per_region,
-                )
+            findings_archived_in_security_hub = security_hub.resolve(
+                security_hub_findings_per_region,
             )
             # Refactor(CLI)
             print(
