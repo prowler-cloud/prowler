@@ -61,7 +61,6 @@ class TestCLI:
         result = runner.invoke(app, ["aws", "--list-checks-json"])
         assert result.exit_code == 0
         assert "aws" in result.output
-
         # validate the json output
         try:
             json.loads(result.output)

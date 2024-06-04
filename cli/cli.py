@@ -16,7 +16,6 @@ from prowler.lib.check.check import (
     print_services,
 )
 from prowler.lib.check.checks_loader import load_checks_to_execute
-from prowler.lib.logger import logger, logging_levels, set_logging_config
 
 app = typer.Typer()
 
@@ -126,6 +125,7 @@ def main(
             [],
             provider,
         )
+        print(list_checks_json(provider, sorted(checks_to_execute)))
 
 
 if __name__ == "__main__":
