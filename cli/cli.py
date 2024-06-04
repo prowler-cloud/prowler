@@ -30,14 +30,16 @@ def check_provider(provider: str):
 def check_compliance_framework(provider: str, compliance_framework: list):
     # From the available_compliance_frameworks, check if the compliance_framework is valid for the provider
     compliance_frameworks_provider = []
+    valid_compliance_frameworks = []
     for provider_compliance_framework in available_compliance_frameworks:
         if provider in provider_compliance_framework:
             compliance_frameworks_provider.append(provider_compliance_framework)
     for compliance in compliance_framework:
         if compliance not in compliance_frameworks_provider:
-            raise typer.BadParameter(
-                f"{compliance} is not a valid Compliance Framework for {provider}"
-            )
+            print(f"{compliance} is not a valid Compliance Framework\n")
+        else:
+            valid_compliance_frameworks.append(compliance)
+    return valid_compliance_frameworks
 
 
 @app.command()
@@ -89,10 +91,12 @@ def main(
         list_compliance_requirements_value = list_compliance_requirements_value.split(
             ","
         )
-        check_compliance_framework(provider, list_compliance_requirements_value)
+        valid_compliance = check_compliance_framework(
+            provider, list_compliance_requirements_value
+        )
         print_compliance_requirements(
             bulk_load_compliance_frameworks(provider),
-            list_compliance_requirements_value,
+            valid_compliance,
         )
     if list_checks_bool:
         checks_metadata = bulk_load_checks_metadata(provider)
