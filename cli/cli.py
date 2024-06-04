@@ -1,3 +1,5 @@
+from argparse import Namespace
+
 import typer
 
 from prowler.config.config import available_compliance_frameworks
@@ -17,6 +19,8 @@ from prowler.lib.check.check import (
 )
 from prowler.lib.check.checks_loader import load_checks_to_execute
 from prowler.lib.logger import logger, logging_levels, set_logging_config
+from prowler.lib.scan.scan import Scan
+from prowler.providers.common.provider import Provider
 
 app = typer.Typer()
 
@@ -83,6 +87,7 @@ def main(
     log_level: str = typer.Option("INFO", "--log-level", help="Set the Log level"),
     log_file: str = typer.Option(None, "--log-file", help="Set the Log file"),
     only_logs: bool = typer.Option(False, "--only-logs", help="Only show logs"),
+    profile: str = typer.Option(None, "--profile", help="The profile to use"),
 ):
     check_provider(provider)
     if list_services_bool:
@@ -152,6 +157,33 @@ def main(
         else:
             set_logging_config("INFO", only_logs=True)
         logger.info("Only logs are shown")
+    if profile:
+        # Execute Prowler
+        checks_to_execute = ["s3_account_level_public_access_blocks"]
+        # Create the provider
+        args = Namespace
+        args.provider = provider
+        args.profile = profile
+        args.verbose = False
+        args.fixer = False
+        args.only_logs = False
+        args.status = []
+        args.output_formats = []
+        args.output_filename = None
+        args.unix_timestamp = False
+        args.output_directory = None
+        args.shodan = None
+        args.security_hub = False
+        args.send_sh_only_fails = False
+        # args.region = ("eu-west-1")
+        Provider.set_global_provider(args)
+        provider = Provider.get_global_provider()
+        bulk_checks_metadata = bulk_load_checks_metadata(provider.type)
+        provider.output_options = (args, bulk_checks_metadata)
+        scan = Scan(provider, checks_to_execute)
+        custom_checks_metadata = None
+        scan_results = scan.scan(custom_checks_metadata)
+        print(scan_results)
 
 
 if __name__ == "__main__":

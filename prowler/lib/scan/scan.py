@@ -38,6 +38,7 @@ class Scan:
 
         self._service_checks_to_execute = service_checks_to_execute
         self._service_checks_completed = service_checks_completed
+        self._checks_to_execute = checks_to_execute
 
     @property
     def checks_to_execute(self) -> set[str]:
