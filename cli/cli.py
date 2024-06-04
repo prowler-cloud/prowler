@@ -50,12 +50,6 @@ def validate_log_level(log_level: str):
     return log_level
 
 
-def validate_log_file(log_file: str):
-    if not log_file:
-        raise typer.BadParameter("Log file must be provided")
-    return log_file
-
-
 @app.command()
 def main(
     provider: str = typer.Argument(..., help="The provider to check"),
@@ -148,11 +142,9 @@ def main(
         logger.info(f"Log level set to {log_level}")
     if log_file:
         if log_level:
-            set_logging_config(
-                validate_log_level(log_level), validate_log_file(log_file)
-            )
+            set_logging_config(validate_log_level(log_level), log_file)
         else:
-            set_logging_config("INFO", validate_log_file(log_file))
+            set_logging_config("INFO", log_file)
         logger.info(f"Log file set to {log_file}")
     if only_logs:
         if log_level:
