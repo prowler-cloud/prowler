@@ -17,15 +17,15 @@ class cloudtrail_log_file_validation_enabled(Check):
                     report.resource_tags = trail.tags
                     report.status = "FAIL"
                     if trail.is_multiregion:
-                        report.status_extended = f"Multiregion trail {trail.name} log file validation disabled."
+                        report.status_extended = f"Multiregion trail {trail.name} has log file validation disabled."
                     else:
-                        report.status_extended = f"Single region trail {trail.name} log file validation disabled."
+                        report.status_extended = f"Single region trail {trail.name} has log file validation disabled."
                     if trail.log_file_validation_enabled:
                         report.status = "PASS"
                         if trail.is_multiregion:
-                            report.status_extended = f"Multiregion trail {trail.name} log file validation enabled."
+                            report.status_extended = f"Multiregion trail {trail.name} has log file validation enabled."
                         else:
-                            report.status_extended = f"Single region trail {trail.name} log file validation enabled."
+                            report.status_extended = f"Single region trail {trail.name} has log file validation enabled."
                     findings.append(report)
 
         return findings

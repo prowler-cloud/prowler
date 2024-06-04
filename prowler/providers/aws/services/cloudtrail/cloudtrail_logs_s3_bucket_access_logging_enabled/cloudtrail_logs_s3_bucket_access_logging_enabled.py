@@ -29,9 +29,9 @@ class cloudtrail_logs_s3_bucket_access_logging_enabled(Check):
                             if bucket.logging:
                                 report.status = "PASS"
                                 if trail.is_multiregion:
-                                    report.status_extended = f"Multiregion trail {trail.name} S3 bucket access logging is enabled for bucket {trail_bucket}."
+                                    report.status_extended = f"Multiregion Trail {trail.name} S3 bucket access logging is enabled for bucket {trail_bucket}."
                                 else:
-                                    report.status_extended = f"Single region trail {trail.name} S3 bucket access logging is enabled for bucket {trail_bucket}."
+                                    report.status_extended = f"Single region Trail {trail.name} S3 bucket access logging is enabled for bucket {trail_bucket}."
                             break
 
                     # check if trail is delivering logs in a cross account bucket

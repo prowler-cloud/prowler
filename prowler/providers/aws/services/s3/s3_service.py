@@ -65,6 +65,7 @@ class S3(AWSService):
                         self.regions_with_buckets.append(bucket_region)
                         # Check if there are filter regions
                         if provider.identity.audited_regions:
+                            # FIXME: what if the bucket comes from a CloudTrail bucket in another audited region
                             if bucket_region in provider.identity.audited_regions:
                                 buckets.append(
                                     Bucket(
