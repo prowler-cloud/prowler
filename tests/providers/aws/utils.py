@@ -157,7 +157,7 @@ def set_default_provider_arguments(input_arguments: Namespace) -> Namespace:
 
     arguments = Namespace
     arguments.status = []
-    if hasattr(input_arguments, "status") and input_arguments.status:
+    if getattr(input_arguments, "status", None):
         arguments.status = input_arguments.status
     arguments.output_formats = []
     arguments.output_directory = ""
@@ -168,10 +168,7 @@ def set_default_provider_arguments(input_arguments: Namespace) -> Namespace:
     arguments.security_hub = False
 
     arguments.send_sh_only_fails = False
-    if (
-        hasattr(input_arguments, "send_sh_only_fails")
-        and input_arguments.send_sh_only_fails
-    ):
+    if getattr(input_arguments, "send_sh_only_fails", None):
         arguments.send_sh_only_fails = input_arguments.send_sh_only_fails
 
     arguments.config_file = default_config_file_path

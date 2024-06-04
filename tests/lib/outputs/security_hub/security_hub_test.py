@@ -394,8 +394,11 @@ class Test_SecurityHub:
 
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     def test_batch_send_to_security_hub_one_finding(self):
-        enabled_regions = [AWS_REGION_EU_WEST_1]
-        findings = [self.generate_finding("PASS", AWS_REGION_EU_WEST_1)]
+        enabled_regions = [AWS_REGION_EU_WEST_1, AWS_REGION_EU_WEST_2]
+        findings = [
+            self.generate_finding("PASS", AWS_REGION_EU_WEST_1),
+            self.generate_finding("FAIL", AWS_REGION_EU_WEST_2),
+        ]
 
         aws_provider = set_mocked_aws_provider(
             audited_regions=[AWS_REGION_EU_WEST_1, AWS_REGION_EU_WEST_2]
@@ -411,5 +414,5 @@ class Test_SecurityHub:
             security_hub.batch_send_to_security_hub(
                 security_hub_findings,
             )
-            == 1
+            == 2
         )
