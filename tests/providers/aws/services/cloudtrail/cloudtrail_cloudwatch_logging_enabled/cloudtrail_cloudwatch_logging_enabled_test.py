@@ -110,7 +110,7 @@ class Test_cloudtrail_cloudwatch_logging_enabled:
                         assert report.status == "PASS"
                         assert (
                             report.status_extended
-                            == f"Single region trail {trail_name_us} has been logging the last 24h."
+                            == f"Single region trail {trail_name_us} has been logging in the last 24h."
                         )
 
                         assert report.resource_tags == []
@@ -121,7 +121,7 @@ class Test_cloudtrail_cloudwatch_logging_enabled:
                         assert report.status == "FAIL"
                         assert (
                             report.status_extended
-                            == f"Single region trail {trail_name_us} has not been logging in the last 24h."
+                            == f"Single region trail {trail_name_eu} has not been logging in the last 24h."
                         )
                         assert report.resource_tags == []
                         assert report.region == AWS_REGION_EU_WEST_1
@@ -197,7 +197,7 @@ class Test_cloudtrail_cloudwatch_logging_enabled:
                         assert report.status == "PASS"
                         assert (
                             report.status_extended
-                            == f"Multiregion trail {trail_name_us} has been logging the last 24h."
+                            == f"Multiregion trail {trail_name_us} has been logging in the last 24h."
                         )
 
                         assert report.region == AWS_REGION_US_EAST_1
@@ -208,7 +208,7 @@ class Test_cloudtrail_cloudwatch_logging_enabled:
                         assert report.status == "FAIL"
                         assert (
                             report.status_extended
-                            == f"Single region trail {trail_name_us} has not been logging in the last 24h."
+                            == f"Single region trail {trail_name_eu} has not been logging in the last 24h."
                         )
                         assert report.region == AWS_REGION_EU_WEST_1
                         assert report.resource_tags == []
@@ -282,7 +282,7 @@ class Test_cloudtrail_cloudwatch_logging_enabled:
                         assert report.status == "PASS"
                         assert (
                             report.status_extended
-                            == f"Single region trail {trail_name_us} has been logging the last 24h."
+                            == f"Single region trail {trail_name_us} has been logging in the last 24h."
                         )
                         assert report.region == AWS_REGION_US_EAST_1
                         assert report.resource_tags == []
