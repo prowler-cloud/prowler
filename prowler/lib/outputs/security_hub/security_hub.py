@@ -143,7 +143,7 @@ class SecurityHub:
                     "securityhub", region_name=region
                 )
 
-                success_count = self.__send_findings_to_security_hub__(
+                success_count += self.__send_findings_to_security_hub__(
                     findings, region, security_hub_client
                 )
 
