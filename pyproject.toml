@@ -71,7 +71,7 @@ docker = "7.1.0"
 flake8 = "7.0.0"
 freezegun = "1.5.1"
 mock = "5.1.0"
-moto = {extras = ["all"], version = "5.0.8"}
+moto = {extras = ["all"], version = "5.0.9"}
 openapi-schema-validator = "0.6.2"
 openapi-spec-validator = "0.7.1"
 pylint = "3.2.2"
