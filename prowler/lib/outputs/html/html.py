@@ -136,7 +136,7 @@ def fill_html(file_descriptor, finding):
     try:
         row_class = "p-3 mb-2 bg-success-custom"
         finding.status = finding.status.split(".")[0]
-        if finding.status == "INFO":
+        if finding.status == "MANUAL":
             row_class = "table-info"
         elif finding.status == "FAIL":
             row_class = "table-danger"
