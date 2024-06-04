@@ -333,7 +333,7 @@ The following is the mapping between the native JSON and the Detection Finding f
 | --- |---|
 | AssessmentStartTime | event_time |
 | FindingUniqueId | finding_info.uid |
-| Provider | cloud.account.type |
+| Provider | cloud.provider |
 | CheckID | metadata.event_code |
 | CheckTitle | finding_info.title |
 | CheckType | unmapped.check_type |
