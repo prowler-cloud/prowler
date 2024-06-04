@@ -16,6 +16,7 @@ from prowler.lib.check.check import (
     print_services,
 )
 from prowler.lib.check.checks_loader import load_checks_to_execute
+from prowler.lib.logger import logger, logging_levels, set_logging_config
 
 app = typer.Typer()
 
@@ -40,6 +41,13 @@ def check_compliance_framework(provider: str, compliance_framework: list):
         else:
             valid_compliance_frameworks.append(compliance)
     return valid_compliance_frameworks
+
+
+def validate_log_level(log_level: str):
+    log_levels = list(logging_levels.keys())
+    if log_level not in log_levels:
+        raise typer.BadParameter(f"Log level must be one of {log_levels}")
+    return log_level
 
 
 @app.command()
@@ -72,6 +80,9 @@ def main(
         "--list-checks-json",
         help="List the checks of the provider in JSON format",
     ),
+    log_level: str = typer.Option("INFO", "--log-level", help="Set the Log level"),
+    log_file: str = typer.Option(None, "--log-file", help="Set the Log file"),
+    only_logs: bool = typer.Option(False, "--only-logs", help="Only show logs"),
 ):
     check_provider(provider)
     if list_services_bool:
@@ -126,6 +137,21 @@ def main(
             provider,
         )
         print(list_checks_json(provider, sorted(checks_to_execute)))
+    if log_level:
+        set_logging_config(validate_log_level(log_level))
+        logger.info(f"Log level set to {log_level}")
+    if log_file:
+        if log_level:
+            set_logging_config(validate_log_level(log_level), log_file)
+        else:
+            set_logging_config("INFO", log_file)
+        logger.info(f"Log file set to {log_file}")
+    if only_logs:
+        if log_level:
+            set_logging_config(validate_log_level(log_level), only_logs=True)
+        else:
+            set_logging_config("INFO", only_logs=True)
+        logger.info("Only logs are shown")
 
 
 if __name__ == "__main__":

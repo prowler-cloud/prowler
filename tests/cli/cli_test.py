@@ -66,3 +66,30 @@ class TestCLI:
             json.loads(result.output)
         except ValueError:
             assert False
+
+    def test_log_level(self):
+        result = runner.invoke(app, ["aws", "--log-level", "ERROR"])
+        assert result.exit_code == 0
+
+    def test_log_level_invalid(self):
+        result = runner.invoke(app, ["aws", "--log-level", "INVALID"])
+        assert result.exit_code == 2
+        assert "Log level must be one of" in result.output
+
+    def test_log_level_no_value(self):
+        result = runner.invoke(app, ["aws", "--log-level"])
+        assert result.exit_code == 2
+        assert "Option '--log-level' requires an argument." in result.output
+
+    def test_log_file(self):
+        result = runner.invoke(app, ["aws", "--log-file", "test.log"])
+        assert result.exit_code == 0
+
+    def test_log_file_no_value(self):
+        result = runner.invoke(app, ["aws", "--log-file"])
+        assert result.exit_code == 2
+        assert "Option '--log-file' requires an argument." in result.output
+
+    def test_only_logs(self):
+        result = runner.invoke(app, ["aws", "--only-logs"])
+        assert result.exit_code == 0
