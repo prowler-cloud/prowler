@@ -1,5 +1,6 @@
 import typer
 
+from prowler.config.config import available_compliance_frameworks
 from prowler.lib.check.check import (
     bulk_load_checks_metadata,
     bulk_load_compliance_frameworks,
@@ -19,9 +20,29 @@ from prowler.lib.check.checks_loader import load_checks_to_execute
 app = typer.Typer()
 
 
+def check_provider(provider: str):
+    if provider not in ["aws", "azure", "gcp", "kubernetes"]:
+        raise typer.BadParameter(
+            "Invalid provider. Choose between aws, azure, gcp or kubernetes."
+        )
+
+
+def check_compliance_framework(provider: str, compliance_framework: list):
+    # From the available_compliance_frameworks, check if the compliance_framework is valid for the provider
+    compliance_frameworks_provider = []
+    for provider_compliance_framework in available_compliance_frameworks:
+        if provider in provider_compliance_framework:
+            compliance_frameworks_provider.append(provider_compliance_framework)
+    for compliance in compliance_framework:
+        if compliance not in compliance_frameworks_provider:
+            raise typer.BadParameter(
+                f"{compliance} is not a valid Compliance Framework for {provider}"
+            )
+
+
 @app.command()
 def main(
-    provider: str,
+    provider: str = typer.Argument(..., help="The provider to check"),
     list_services_bool: bool = typer.Option(
         False, "--list-services", help="List the services of the provider"
     ),
@@ -36,7 +57,7 @@ def main(
         "--list-compliance",
         help="List the compliance frameworks of the provider",
     ),
-    list_compliance_requirements_value: list[str] = typer.Option(
+    list_compliance_requirements_value: str = typer.Option(
         None,
         "--list-compliance-requirements",
         help="List the compliance requirements of the provider",
@@ -50,6 +71,7 @@ def main(
         help="List the checks of the provider in JSON format",
     ),
 ):
+    check_provider(provider)
     if list_services_bool:
         services = list_services(provider)
         print_services(services)
@@ -64,6 +86,10 @@ def main(
         compliance_frameworks = bulk_load_compliance_frameworks(provider)
         print_compliance_frameworks(compliance_frameworks)
     if list_compliance_requirements_value:
+        list_compliance_requirements_value = list_compliance_requirements_value.split(
+            ","
+        )
+        check_compliance_framework(provider, list_compliance_requirements_value)
         print_compliance_requirements(
             bulk_load_compliance_frameworks(provider),
             list_compliance_requirements_value,
