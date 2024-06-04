@@ -700,7 +700,7 @@ def execute(
         # Run check
         verbose = (
             global_provider.output_options.verbose
-            or global_provider.output_options.verbose
+            or global_provider.output_options.fixer
         )
         check_findings = run_check(
             check_class, verbose, global_provider.output_options.only_logs
