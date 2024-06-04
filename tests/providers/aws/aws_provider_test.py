@@ -9,7 +9,7 @@ from os import rmdir
 from re import search
 
 import botocore
-from boto3 import client, session
+from boto3 import client, resource, session
 from freezegun import freeze_time
 from mock import patch
 from moto import mock_aws
@@ -56,7 +56,6 @@ from tests.providers.aws.utils import (
     set_mocked_aws_provider,
 )
 
-# Mocking GetCallerIdentity for China and GovCloud
 make_api_call = botocore.client.BaseClient._make_api_call
 
 
@@ -528,38 +527,39 @@ aws:
     @mock_aws
     def test_aws_provider_mutelist(self):
         mutelist = {
-            "Accounts": {
-                AWS_ACCOUNT_NUMBER: {
-                    "Checks": {
-                        "test-check": {
-                            "Regions": [],
-                            "Resources": [],
-                            "Tags": [],
-                            "Exceptions": {
-                                "Accounts": [],
+            "Mutelist": {
+                "Accounts": {
+                    AWS_ACCOUNT_NUMBER: {
+                        "Checks": {
+                            "test-check": {
                                 "Regions": [],
                                 "Resources": [],
                                 "Tags": [],
-                            },
+                                "Exceptions": {
+                                    "Accounts": [],
+                                    "Regions": [],
+                                    "Resources": [],
+                                    "Tags": [],
+                                },
+                            }
                         }
                     }
                 }
             }
         }
-        mutelist_content = {"Mutelist": mutelist}
 
-        config_file = tempfile.NamedTemporaryFile(delete=False)
-        with open(config_file.name, "w") as allowlist_file:
-            allowlist_file.write(json.dumps(mutelist_content, indent=4))
+        mutelist_file = tempfile.NamedTemporaryFile(delete=False)
+        with open(mutelist_file.name, "w") as mutelist_file:
+            mutelist_file.write(json.dumps(mutelist, indent=4))
 
         arguments = Namespace()
         aws_provider = AwsProvider(arguments)
 
-        aws_provider.mutelist = config_file.name
+        aws_provider.mutelist = mutelist_file.name
 
-        os.remove(config_file.name)
+        os.remove(mutelist_file.name)
 
-        assert aws_provider.mutelist == mutelist
+        assert aws_provider.mutelist == mutelist["Mutelist"]
 
     @mock_aws
     def test_aws_provider_mutelist_none(self):
@@ -567,12 +567,134 @@ aws:
         aws_provider = AwsProvider(arguments)
 
         with patch(
-            "prowler.providers.common.provider.get_default_mute_file_path",
+            "prowler.providers.aws.aws_provider.get_default_mute_file_path",
             return_value=None,
         ):
             aws_provider.mutelist = None
 
         assert aws_provider.mutelist == {}
+
+    @mock_aws
+    def test_aws_provider_mutelist_s3(self):
+        # Create mutelist temp file
+        mutelist = {
+            "Mutelist": {
+                "Accounts": {
+                    AWS_ACCOUNT_NUMBER: {
+                        "Checks": {
+                            "test-check": {
+                                "Regions": [],
+                                "Resources": [],
+                                "Tags": [],
+                                "Exceptions": {
+                                    "Accounts": [],
+                                    "Regions": [],
+                                    "Resources": [],
+                                    "Tags": [],
+                                },
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        mutelist_file = tempfile.NamedTemporaryFile(delete=False)
+        with open(mutelist_file.name, "w") as mutelist_file:
+            mutelist_file.write(json.dumps(mutelist, indent=4))
+
+        # Create bucket and upload mutelist yaml
+        s3_resource = resource("s3", region_name=AWS_REGION_US_EAST_1)
+        bucket_name = "test-mutelist"
+        mutelist_file_name = "mutelist.yaml"
+        mutelist_bucket_object_uri = f"s3://{bucket_name}/{mutelist_file_name}"
+        s3_resource.create_bucket(Bucket=bucket_name)
+        s3_resource.Object(bucket_name, "mutelist.yaml").put(
+            Body=open(
+                mutelist_file.name,
+                "rb",
+            )
+        )
+
+        arguments = Namespace()
+        aws_provider = AwsProvider(arguments)
+
+        aws_provider.mutelist = mutelist_bucket_object_uri
+        os.remove(mutelist_file.name)
+
+        assert aws_provider.mutelist == mutelist["Mutelist"]
+
+    @mock_aws
+    def test_aws_provider_mutelist_lambda(self):
+        # Create mutelist temp file
+        mutelist = {
+            "Mutelist": {
+                "Accounts": {
+                    AWS_ACCOUNT_NUMBER: {
+                        "Checks": {
+                            "test-check": {
+                                "Regions": [],
+                                "Resources": [],
+                                "Tags": [],
+                                "Exceptions": {
+                                    "Accounts": [],
+                                    "Regions": [],
+                                    "Resources": [],
+                                    "Tags": [],
+                                },
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        arguments = Namespace()
+        aws_provider = AwsProvider(arguments)
+
+        with patch(
+            "prowler.providers.aws.aws_provider.get_mutelist_file_from_lambda",
+            return_value=mutelist["Mutelist"],
+        ):
+            aws_provider.mutelist = f"arn:aws:lambda:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:function:lambda-mutelist"
+
+        assert aws_provider.mutelist == mutelist["Mutelist"]
+
+    @mock_aws
+    def test_aws_provider_mutelist_dynamodb(self):
+        # Create mutelist temp file
+        mutelist = {
+            "Mutelist": {
+                "Accounts": {
+                    AWS_ACCOUNT_NUMBER: {
+                        "Checks": {
+                            "test-check": {
+                                "Regions": [],
+                                "Resources": [],
+                                "Tags": [],
+                                "Exceptions": {
+                                    "Accounts": [],
+                                    "Regions": [],
+                                    "Resources": [],
+                                    "Tags": [],
+                                },
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        arguments = Namespace()
+        aws_provider = AwsProvider(arguments)
+
+        with patch(
+            "prowler.providers.aws.aws_provider.get_mutelist_file_from_dynamodb",
+            return_value=mutelist["Mutelist"],
+        ):
+            aws_provider.mutelist = f"arn:aws:dynamodb:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:table/mutelist-dynamo"
+
+        assert aws_provider.mutelist == mutelist["Mutelist"]
 
     @mock_aws
     def test_generate_regional_clients_all_enabled_regions(self):
