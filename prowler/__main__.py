@@ -84,7 +84,8 @@ def prowler():
     )
 
     if not args.no_banner:
-        print_banner(args.verbose, getattr(args, "fixer", None))
+        legend = args.verbose or getattr(args, "fixer", None)
+        print_banner(legend)
 
     # We treat the compliance framework as another output format
     if compliance_framework:
@@ -260,7 +261,7 @@ def prowler():
         else:
             # Refactor(CLI)
             logger.critical(
-                "Slack integration needs SLACK_API_TOKEN and SLACK_CHANNEL_ID environment variables (see more in https://docs.prowler.cloud/en/latest/tutorials/integrations/#slack)."
+                "Slack integration needs SLACK_API_TOKEN and SLACK_CHANNEL_NAME environment variables (see more in https://docs.prowler.cloud/en/latest/tutorials/integrations/#slack)."
             )
             sys.exit(1)
 

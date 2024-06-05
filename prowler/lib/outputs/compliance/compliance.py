@@ -221,7 +221,7 @@ def get_check_compliance(finding, provider_type, output_options) -> dict:
                         check_compliance[compliance_fw].append(requirement.Id)
         return check_compliance
     except Exception as error:
-        logger.critical(
+        logger.error(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
         )
-        sys.exit(1)
+        return {}

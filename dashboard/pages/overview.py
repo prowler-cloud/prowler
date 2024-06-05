@@ -1533,7 +1533,7 @@ def generate_table(data, index, color_mapping_severity, color_mapping_status):
                                                     [
                                                         html.P(
                                                             html.Strong(
-                                                                "Resource uid: ",
+                                                                "ResourceUid: ",
                                                                 style={
                                                                     "margin-right": "5px"
                                                                 },
@@ -1553,7 +1553,7 @@ def generate_table(data, index, color_mapping_severity, color_mapping_status):
                                                     [
                                                         html.P(
                                                             html.Strong(
-                                                                "Finding uid: ",
+                                                                "FindingUid: ",
                                                                 style={
                                                                     "margin-right": "5px"
                                                                 },
@@ -1573,7 +1573,7 @@ def generate_table(data, index, color_mapping_severity, color_mapping_status):
                                                     [
                                                         html.P(
                                                             html.Strong(
-                                                                "Check id: ",
+                                                                "CheckId: ",
                                                                 style={
                                                                     "margin-right": "5px"
                                                                 },
@@ -1621,6 +1621,48 @@ def generate_table(data, index, color_mapping_severity, color_mapping_status):
                                                             str(
                                                                 data.get(
                                                                     "RESOURCE_DETAILS",
+                                                                    "",
+                                                                )
+                                                            )
+                                                        ),
+                                                    ],
+                                                    style={"display": "flex"},
+                                                ),
+                                                html.Div(
+                                                    [
+                                                        html.P(
+                                                            html.Strong(
+                                                                "StatusExtended: ",
+                                                                style={
+                                                                    "margin-right": "5px"
+                                                                },
+                                                            )
+                                                        ),
+                                                        html.P(
+                                                            str(
+                                                                data.get(
+                                                                    "STATUS_EXTENDED",
+                                                                    "",
+                                                                )
+                                                            )
+                                                        ),
+                                                    ],
+                                                    style={"display": "flex"},
+                                                ),
+                                                html.Div(
+                                                    [
+                                                        html.P(
+                                                            html.Strong(
+                                                                "Risk: ",
+                                                                style={
+                                                                    "margin-right": "5px"
+                                                                },
+                                                            )
+                                                        ),
+                                                        html.P(
+                                                            str(
+                                                                data.get(
+                                                                    "RISK",
                                                                     "",
                                                                 )
                                                             )

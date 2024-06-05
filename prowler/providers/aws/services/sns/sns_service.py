@@ -17,6 +17,7 @@ class SNS(AWSService):
         self.__threading_call__(self.__list_topics__)
         self.__get_topic_attributes__(self.regional_clients)
         self.__list_tags_for_resource__()
+        self.__list_subscriptions_by_topic__()
 
     def __list_topics__(self, regional_client):
         logger.info("SNS - listing topics...")
@@ -74,6 +75,43 @@ class SNS(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def __list_subscriptions_by_topic__(self):
+        logger.info("SNS - Listing subscriptions by topic...")
+        try:
+            for topic in self.topics:
+                try:
+                    regional_client = self.regional_clients[topic.region]
+                    response = regional_client.list_subscriptions_by_topic(
+                        TopicArn=topic.arn
+                    )
+                    subscriptions: list[Subscription] = [
+                        Subscription(
+                            id=sub["SubscriptionArn"].split(":")[-1],
+                            arn=sub["SubscriptionArn"],
+                            owner=sub["Owner"],
+                            protocol=sub["Protocol"],
+                            endpoint=sub["Endpoint"],
+                        )
+                        for sub in response["Subscriptions"]
+                    ]
+                    topic.subscriptions = subscriptions
+                except Exception as error:
+                    logger.error(
+                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+
+class Subscription(BaseModel):
+    id: str
+    arn: str
+    owner: str
+    protocol: str
+    endpoint: str
+
 
 class Topic(BaseModel):
     name: str
@@ -82,3 +120,4 @@ class Topic(BaseModel):
     policy: dict = None
     kms_master_key_id: str = None
     tags: Optional[list] = []
+    subscriptions: Optional[list[Subscription]] = []

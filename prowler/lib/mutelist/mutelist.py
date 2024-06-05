@@ -1,121 +1,40 @@
 import re
-import sys
 from typing import Any
 
 import yaml
-from boto3 import Session
-from boto3.dynamodb.conditions import Attr
-from schema import Optional, Schema
 
 from prowler.lib.logger import logger
+from prowler.lib.mutelist.models import mutelist_schema
 from prowler.lib.outputs.utils import unroll_tags
 
-mutelist_schema = Schema(
-    {
-        "Accounts": {
-            str: {
-                "Checks": {
-                    str: {
-                        "Regions": list,
-                        "Resources": list,
-                        Optional("Tags"): list,
-                        Optional("Exceptions"): {
-                            Optional("Accounts"): list,
-                            Optional("Regions"): list,
-                            Optional("Resources"): list,
-                            Optional("Tags"): list,
-                        },
-                    }
-                }
-            }
-        }
-    }
-)
 
-
-def parse_mutelist_file(
-    mutelist_path: str, aws_session: Session = None, aws_account: str = None
-):
+def get_mutelist_file_from_local_file(mutelist_path: str):
     try:
-        # Check if file is a S3 URI
-        if re.search("^s3://([^/]+)/(.*?([^/]+))$", mutelist_path):
-            bucket = mutelist_path.split("/")[2]
-            key = ("/").join(mutelist_path.split("/")[3:])
-            s3_client = aws_session.client("s3")
-            mutelist = yaml.safe_load(
-                s3_client.get_object(Bucket=bucket, Key=key)["Body"]
-            )["Mutelist"]
-        # Check if file is a Lambda Function ARN
-        elif re.search(r"^arn:(\w+):lambda:", mutelist_path):
-            lambda_region = mutelist_path.split(":")[3]
-            lambda_client = aws_session.client("lambda", region_name=lambda_region)
-            lambda_response = lambda_client.invoke(
-                FunctionName=mutelist_path, InvocationType="RequestResponse"
-            )
-            lambda_payload = lambda_response["Payload"].read()
-            mutelist = yaml.safe_load(lambda_payload)["Mutelist"]
-        # Check if file is a DynamoDB ARN
-        elif re.search(
-            r"^arn:aws(-cn|-us-gov)?:dynamodb:[a-z]{2}-[a-z-]+-[1-9]{1}:[0-9]{12}:table\/[a-zA-Z0-9._-]+$",
-            mutelist_path,
-        ):
-            mutelist = {"Accounts": {}}
-            table_region = mutelist_path.split(":")[3]
-            dynamodb_resource = aws_session.resource(
-                "dynamodb", region_name=table_region
-            )
-            dynamo_table = dynamodb_resource.Table(mutelist_path.split("/")[1])
-            response = dynamo_table.scan(
-                FilterExpression=Attr("Accounts").is_in([aws_account, "*"])
-            )
-            dynamodb_items = response["Items"]
-            # Paginate through all results
-            while "LastEvaluatedKey" in dynamodb_items:
-                response = dynamo_table.scan(
-                    ExclusiveStartKey=response["LastEvaluatedKey"],
-                    FilterExpression=Attr("Accounts").is_in([aws_account, "*"]),
-                )
-                dynamodb_items.update(response["Items"])
-            for item in dynamodb_items:
-                # Create mutelist for every item
-                mutelist["Accounts"][item["Accounts"]] = {
-                    "Checks": {
-                        item["Checks"]: {
-                            "Regions": item["Regions"],
-                            "Resources": item["Resources"],
-                        }
-                    }
-                }
-                if "Tags" in item:
-                    mutelist["Accounts"][item["Accounts"]]["Checks"][item["Checks"]][
-                        "Tags"
-                    ] = item["Tags"]
-                if "Exceptions" in item:
-                    mutelist["Accounts"][item["Accounts"]]["Checks"][item["Checks"]][
-                        "Exceptions"
-                    ] = item["Exceptions"]
-        else:
-            with open(mutelist_path) as f:
-                mutelist = yaml.safe_load(f)["Mutelist"]
-        try:
-            mutelist_schema.validate(mutelist)
-        except Exception as error:
-            logger.critical(
-                f"{error.__class__.__name__} -- Mutelist YAML is malformed - {error}[{error.__traceback__.tb_lineno}]"
-            )
-            sys.exit(1)
-        return mutelist
+        with open(mutelist_path) as f:
+            mutelist = yaml.safe_load(f)["Mutelist"]
+            return mutelist
     except Exception as error:
-        logger.critical(
+        logger.error(
             f"{error.__class__.__name__} -- {error}[{error.__traceback__.tb_lineno}]"
         )
-        sys.exit(1)
+        return {}
+
+
+def validate_mutelist(mutelist: dict) -> dict:
+    try:
+        mutelist = mutelist_schema.validate(mutelist)
+        return mutelist
+    except Exception as error:
+        logger.error(
+            f"{error.__class__.__name__} -- Mutelist YAML is malformed - {error}[{error.__traceback__.tb_lineno}]"
+        )
+        return {}
 
 
 def mutelist_findings(
     global_provider: Any,
     check_findings: list[Any],
-):
+) -> list[Any]:
     # Check if finding is muted
     for finding in check_findings:
         # TODO: Move this mapping to the execute_check function and pass that output to the mutelist and the report
@@ -167,7 +86,21 @@ def is_muted(
     finding_region: str,
     finding_resource: str,
     finding_tags,
-):
+) -> bool:
+    """
+    Check if the provided finding is muted for the audited account, check, region, resource and tags.
+
+    Args:
+        mutelist (dict): Dictionary containing information about muted checks for different accounts.
+        audited_account (str): The account being audited.
+        check (str): The check to be evaluated for muting.
+        finding_region (str): The region where the finding occurred.
+        finding_resource (str): The resource related to the finding.
+        finding_tags: The tags associated with the finding.
+
+    Returns:
+        bool: True if the finding is muted for the audited account, check, region, resource and tags., otherwise False.
+    """
     try:
         # By default is not muted
         is_finding_muted = False
@@ -189,10 +122,10 @@ def is_muted(
 
         return is_finding_muted
     except Exception as error:
-        logger.critical(
+        logger.error(
             f"{error.__class__.__name__} -- {error}[{error.__traceback__.tb_lineno}]"
         )
-        sys.exit(1)
+        return False
 
 
 def is_muted_in_check(
@@ -202,7 +135,21 @@ def is_muted_in_check(
     finding_region,
     finding_resource,
     finding_tags,
-):
+) -> bool:
+    """
+    Check if the provided check is muted.
+
+    Args:
+        muted_checks (dict): Dictionary containing information about muted checks.
+        audited_account (str): The account to be audited.
+        check (str): The check to be evaluated for muting.
+        finding_region (str): The region where the finding occurred.
+        finding_resource (str): The resource related to the finding.
+        finding_tags (str): The tags associated with the finding.
+
+    Returns:
+        bool: True if the check is muted, otherwise False.
+    """
     try:
         # Default value is not muted
         is_check_muted = False
@@ -263,44 +210,74 @@ def is_muted_in_check(
 
         return is_check_muted
     except Exception as error:
-        logger.critical(
+        logger.error(
             f"{error.__class__.__name__} -- {error}[{error.__traceback__.tb_lineno}]"
         )
-        sys.exit(1)
+        return False
 
 
 def is_muted_in_region(
     mutelist_regions,
     finding_region,
-):
+) -> bool:
+    """
+    Check if the finding_region is present in the mutelist_regions.
+
+    Args:
+        mutelist_regions (list): List of regions in the mute list.
+        finding_region (str): Region to check if it is muted.
+
+    Returns:
+        bool: True if the finding_region is muted in any of the mutelist_regions, otherwise False.
+    """
     try:
         return __is_item_matched__(mutelist_regions, finding_region)
     except Exception as error:
-        logger.critical(
+        logger.error(
             f"{error.__class__.__name__} -- {error}[{error.__traceback__.tb_lineno}]"
         )
-        sys.exit(1)
+        return False
 
 
-def is_muted_in_tags(muted_tags, finding_tags):
+def is_muted_in_tags(muted_tags, finding_tags) -> bool:
+    """
+    Check if any of the muted tags are present in the finding tags.
+
+    Args:
+        muted_tags (list): List of muted tags to be checked.
+        finding_tags (str): String containing tags to search for muted tags.
+
+    Returns:
+        bool: True if any of the muted tags are present in the finding tags, otherwise False.
+    """
     try:
         return __is_item_matched__(muted_tags, finding_tags)
     except Exception as error:
-        logger.critical(
+        logger.error(
             f"{error.__class__.__name__} -- {error}[{error.__traceback__.tb_lineno}]"
         )
-        sys.exit(1)
+        return False
 
 
-def is_muted_in_resource(muted_resources, finding_resource):
+def is_muted_in_resource(muted_resources, finding_resource) -> bool:
+    """
+    Check if any of the muted_resources are present in the finding_resource.
+
+    Args:
+        muted_resources (list): List of muted resources to be checked.
+        finding_resource (str): Resource to search for muted resources.
+
+    Returns:
+        bool: True if any of the muted_resources are present in the finding_resource, otherwise False.
+    """
     try:
         return __is_item_matched__(muted_resources, finding_resource)
 
     except Exception as error:
-        logger.critical(
+        logger.error(
             f"{error.__class__.__name__} -- {error}[{error.__traceback__.tb_lineno}]"
         )
-        sys.exit(1)
+        return False
 
 
 def is_excepted(
@@ -309,8 +286,20 @@ def is_excepted(
     finding_region,
     finding_resource,
     finding_tags,
-):
-    """is_excepted returns True if the account, region, resource and tags are excepted"""
+) -> bool:
+    """
+    Check if the provided account, region, resource, and tags are excepted based on the exceptions dictionary.
+
+    Args:
+        exceptions (dict): Dictionary containing exceptions for different attributes like Accounts, Regions, Resources, and Tags.
+        audited_account (str): The account to be audited.
+        finding_region (str): The region where the finding occurred.
+        finding_resource (str): The resource related to the finding.
+        finding_tags (str): The tags associated with the finding.
+
+    Returns:
+        bool: True if the account, region, resource, and tags are excepted based on the exceptions, otherwise False.
+    """
     try:
         excepted = False
         is_account_excepted = False
@@ -350,26 +339,35 @@ def is_excepted(
                 excepted = True
         return excepted
     except Exception as error:
-        logger.critical(
+        logger.error(
             f"{error.__class__.__name__} -- {error}[{error.__traceback__.tb_lineno}]"
         )
-        sys.exit(1)
+        return False
 
 
 def __is_item_matched__(matched_items, finding_items):
-    """__is_item_matched__ return True if any of the matched_items are present in the finding_items, otherwise returns False."""
+    """
+    Check if any of the items in matched_items are present in finding_items.
+
+    Args:
+        matched_items (list): List of items to be matched.
+        finding_items (str): String to search for matched items.
+
+    Returns:
+        bool: True if any of the matched_items are present in finding_items, otherwise False.
+    """
     try:
         is_item_matched = False
         if matched_items and (finding_items or finding_items == ""):
             for item in matched_items:
-                if item == "*":
-                    item = ".*"
+                if item.startswith("*"):
+                    item = ".*" + item[1:]
                 if re.search(item, finding_items):
                     is_item_matched = True
                     break
         return is_item_matched
     except Exception as error:
-        logger.critical(
+        logger.error(
             f"{error.__class__.__name__} -- {error}[{error.__traceback__.tb_lineno}]"
         )
-        sys.exit(1)
+        return False

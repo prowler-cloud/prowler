@@ -28,7 +28,7 @@ class cloudtrail_s3_dataevents_read_enabled(Check):
                                     in resource["Values"]
                                 ):
                                     report = Check_Report_AWS(self.metadata())
-                                    report.region = trail.region
+                                    report.region = trail.home_region
                                     report.resource_id = trail.name
                                     report.resource_arn = trail.arn
                                     report.resource_tags = trail.tags
@@ -45,7 +45,7 @@ class cloudtrail_s3_dataevents_read_enabled(Check):
                                 and field_selector["Equals"][0] == "AWS::S3::Object"
                             ):
                                 report = Check_Report_AWS(self.metadata())
-                                report.region = trail.region
+                                report.region = trail.home_region
                                 report.resource_id = trail.name
                                 report.resource_arn = trail.arn
                                 report.resource_tags = trail.tags

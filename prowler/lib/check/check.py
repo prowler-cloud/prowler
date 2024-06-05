@@ -438,7 +438,7 @@ def import_check(check_path: str) -> ModuleType:
     return lib
 
 
-def run_check(check: Check, output_options) -> list:
+def run_check(check: Check, verbose: bool = False, only_logs: bool = False) -> list:
     """
     Run the check and return the findings
     Args:
@@ -448,7 +448,7 @@ def run_check(check: Check, output_options) -> list:
         list: list of findings
     """
     findings = []
-    if output_options.verbose or output_options.fixer:
+    if verbose:
         print(
             f"\nCheck ID: {check.CheckID} - {Fore.MAGENTA}{check.ServiceName}{Fore.YELLOW} [{check.Severity}]{Style.RESET_ALL}"
         )
@@ -456,7 +456,7 @@ def run_check(check: Check, output_options) -> list:
     try:
         findings = check.execute()
     except Exception as error:
-        if not output_options.only_logs:
+        if not only_logs:
             print(
                 f"Something went wrong in {check.CheckID}, please use --log-level ERROR"
             )
@@ -708,7 +708,13 @@ def execute(
             )
 
         # Run check
-        check_findings = run_check(check_class, global_provider.output_options)
+        verbose = (
+            global_provider.output_options.verbose
+            or global_provider.output_options.fixer
+        )
+        check_findings = run_check(
+            check_class, verbose, global_provider.output_options.only_logs
+        )
 
         # Mutelist findings
         if hasattr(global_provider, "mutelist") and global_provider.mutelist:
