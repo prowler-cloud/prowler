@@ -12,7 +12,7 @@ As an **AWS Partner** and we have passed the [AWS Foundation Technical Review (F
 
 ## Reporting a Vulnerability
 
-If you would like to report a vulnerability or have a security concern regarding Prowler Open Source or ProwlerPro service, please submit the information by contacting to help@prowler.pro.
+If you would like to report a vulnerability or have a security concern regarding Prowler Open Source or ProwlerPro service, please submit the information by contacting to https://support.prowler.com.
 
 The information you share with ProwlerPro as part of this process is kept confidential within ProwlerPro. We will only share this information with a third party if the vulnerability you report is found to affect a third-party product, in which case we will share this information with the third-party product's author or manufacturer. Otherwise, we will only share this information as permitted by you.
 

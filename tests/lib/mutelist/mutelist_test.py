@@ -1,9 +1,8 @@
 import yaml
-from boto3 import resource
 from mock import MagicMock
-from moto import mock_aws
 
 from prowler.lib.mutelist.mutelist import (
+    get_mutelist_file_from_local_file,
     is_excepted,
     is_muted,
     is_muted_in_check,
@@ -11,7 +10,7 @@ from prowler.lib.mutelist.mutelist import (
     is_muted_in_resource,
     is_muted_in_tags,
     mutelist_findings,
-    parse_mutelist_file,
+    validate_mutelist,
 )
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
@@ -24,118 +23,33 @@ from tests.providers.aws.utils import (
 
 
 class TestMutelist:
-    # Test S3 mutelist
-    @mock_aws
-    def test_s3_mutelist(self):
-        aws_provider = set_mocked_aws_provider()
-        # Create bucket and upload mutelist yaml
-        s3_resource = resource("s3", region_name=AWS_REGION_US_EAST_1)
-        s3_resource.create_bucket(Bucket="test-mutelist")
-        s3_resource.Object("test-mutelist", "mutelist.yaml").put(
-            Body=open(
-                "tests//lib/mutelist/fixtures/aws_mutelist.yaml",
-                "rb",
-            )
-        )
+    def test_get_mutelist_file_from_local_file(self):
+        mutelist_path = "tests/lib/mutelist/fixtures/aws_mutelist.yaml"
+        with open(mutelist_path) as f:
+            mutelist_fixture = yaml.safe_load(f)["Mutelist"]
 
-        with open("tests//lib/mutelist/fixtures/aws_mutelist.yaml") as f:
-            assert yaml.safe_load(f)["Mutelist"] == parse_mutelist_file(
-                "s3://test-mutelist/mutelist.yaml",
-                aws_provider.session.current_session,
-                aws_provider.identity.account,
-            )
+        assert get_mutelist_file_from_local_file(mutelist_path) == mutelist_fixture
 
-    # Test DynamoDB mutelist
-    @mock_aws
-    def test_dynamo_mutelist(self):
-        aws_provider = set_mocked_aws_provider()
-        # Create table and put item
-        dynamodb_resource = resource("dynamodb", region_name=AWS_REGION_US_EAST_1)
-        table_name = "test-mutelist"
-        params = {
-            "TableName": table_name,
-            "KeySchema": [
-                {"AttributeName": "Accounts", "KeyType": "HASH"},
-                {"AttributeName": "Checks", "KeyType": "RANGE"},
-            ],
-            "AttributeDefinitions": [
-                {"AttributeName": "Accounts", "AttributeType": "S"},
-                {"AttributeName": "Checks", "AttributeType": "S"},
-            ],
-            "ProvisionedThroughput": {
-                "ReadCapacityUnits": 10,
-                "WriteCapacityUnits": 10,
-            },
-        }
-        table = dynamodb_resource.create_table(**params)
-        table.put_item(
-            Item={
-                "Accounts": "*",
-                "Checks": "iam_user_hardware_mfa_enabled",
-                "Regions": [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1],
-                "Resources": ["keyword"],
-            }
-        )
+    def test_get_mutelist_file_from_local_file_non_existent(self):
+        mutelist_path = "tests/lib/mutelist/fixtures/not_present"
 
-        assert (
-            "keyword"
-            in parse_mutelist_file(
-                "arn:aws:dynamodb:"
-                + AWS_REGION_US_EAST_1
-                + ":"
-                + str(AWS_ACCOUNT_NUMBER)
-                + ":table/"
-                + table_name,
-                aws_provider.session.current_session,
-                aws_provider.identity.account,
-            )["Accounts"]["*"]["Checks"]["iam_user_hardware_mfa_enabled"]["Resources"]
-        )
+        assert get_mutelist_file_from_local_file(mutelist_path) == {}
 
-    @mock_aws
-    def test_dynamo_mutelist_with_tags(self):
-        aws_provider = set_mocked_aws_provider()
-        # Create table and put item
-        dynamodb_resource = resource("dynamodb", region_name=AWS_REGION_US_EAST_1)
-        table_name = "test-mutelist"
-        params = {
-            "TableName": table_name,
-            "KeySchema": [
-                {"AttributeName": "Accounts", "KeyType": "HASH"},
-                {"AttributeName": "Checks", "KeyType": "RANGE"},
-            ],
-            "AttributeDefinitions": [
-                {"AttributeName": "Accounts", "AttributeType": "S"},
-                {"AttributeName": "Checks", "AttributeType": "S"},
-            ],
-            "ProvisionedThroughput": {
-                "ReadCapacityUnits": 10,
-                "WriteCapacityUnits": 10,
-            },
-        }
-        table = dynamodb_resource.create_table(**params)
-        table.put_item(
-            Item={
-                "Accounts": "*",
-                "Checks": "*",
-                "Regions": ["*"],
-                "Resources": ["*"],
-                "Tags": ["environment=dev"],
-            }
-        )
+    def test_validate_mutelist(self):
+        mutelist_path = "tests/lib/mutelist/fixtures/aws_mutelist.yaml"
+        with open(mutelist_path) as f:
+            mutelist_fixture = yaml.safe_load(f)["Mutelist"]
 
-        assert (
-            "environment=dev"
-            in parse_mutelist_file(
-                "arn:aws:dynamodb:"
-                + AWS_REGION_US_EAST_1
-                + ":"
-                + str(AWS_ACCOUNT_NUMBER)
-                + ":table/"
-                + table_name,
-                aws_provider.session.current_session,
-                aws_provider.identity.account,
-            )["Accounts"]["*"]["Checks"]["*"]["Tags"]
-        )
+        assert validate_mutelist(mutelist_fixture) == mutelist_fixture
+
+    def test_validate_mutelist_not_valid_key(self):
+        mutelist_path = "tests/lib/mutelist/fixtures/aws_mutelist.yaml"
+        with open(mutelist_path) as f:
+            mutelist_fixture = yaml.safe_load(f)["Mutelist"]
+
+        mutelist_fixture["Accounts1"] = mutelist_fixture["Accounts"]
+        del mutelist_fixture["Accounts"]
+        assert validate_mutelist(mutelist_fixture) == {}
 
     def test_mutelist_findings_only_wildcard(self):
 
@@ -1323,3 +1237,8 @@ class TestMutelist:
         assert is_muted_in_resource(mutelist_resources, "prowler-test")
         assert is_muted_in_resource(mutelist_resources, "test-prowler")
         assert not is_muted_in_resource(mutelist_resources, "random")
+
+    def test_is_muted_in_resource_starting_by_star(self):
+        allowlist_resources = ["*.es"]
+
+        assert is_muted_in_resource(allowlist_resources, "google.es")

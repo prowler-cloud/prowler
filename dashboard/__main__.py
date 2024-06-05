@@ -16,7 +16,7 @@ from prowler.lib.banner import print_banner
 warnings.filterwarnings("ignore")
 
 cli = sys.modules["flask.cli"]
-print_banner(verbose=False)
+print_banner()
 print(
     f"{Fore.GREEN}Loading all CSV files from the folder {folder_path_overview} ...\n{Style.RESET_ALL}"
 )

@@ -24,3 +24,23 @@ Prowler will follow the same credentials search as [Google authentication librar
 3. [The attached service account, returned by the metadata server](https://cloud.google.com/docs/authentication/application-default-credentials#attached-sa)
 
 Those credentials must be associated to a user or service account with proper permissions to do all checks. To make sure, add the `Viewer` role to the member associated with the credentials.
+
+# GCP Service APIs
+
+Prowler will use the Google Cloud APIs to get the information needed to perform the checks. Make sure that the following APIs are enabled in the project:
+
+- apikeys.googleapis.com
+- artifactregistry.googleapis.com
+- bigquery.googleapis.com
+- sqladmin.googleapis.com
+- storage.googleapis.com
+- compute.googleapis.com
+- dataproc.googleapis.com
+- dns.googleapis.com
+- containerregistry.googleapis.com
+- container.googleapis.com
+- iam.googleapis.com
+- cloudkms.googleapis.com
+- logging.googleapis.com
+
+You can enable them automatically using our script [enable_apis_in_projects.sh](https://github.com/prowler-cloud/prowler/blob/master/contrib/gcp/enable_apis_in_projects.sh)

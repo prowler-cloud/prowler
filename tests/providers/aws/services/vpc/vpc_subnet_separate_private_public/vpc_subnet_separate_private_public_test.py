@@ -130,6 +130,48 @@ class Test_vpc_subnet_separate_private_public:
                     assert False
 
     @mock_aws
+    def test_vpc_subnet_only_public_but_unused(self):
+        # Create EC2 Mocked Resources
+        ec2 = resource("ec2", region_name=AWS_REGION_US_EAST_1)
+        vpc = ec2.create_vpc(CidrBlock="10.0.0.0/16")
+        subnet = ec2.create_subnet(VpcId=vpc.id, CidrBlock="10.0.0.0/18")
+        ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
+        # Create IGW and attach to VPC
+        igw = ec2.create_internet_gateway()
+        vpc.attach_internet_gateway(InternetGatewayId=igw.id)
+        # Set IGW as default route for public subnet
+        route_table = ec2.create_route_table(VpcId=vpc.id)
+        route_table.associate_with_subnet(SubnetId=subnet.id)
+        ec2_client.create_route(
+            RouteTableId=route_table.id,
+            DestinationCidrBlock="0.0.0.0/0",
+            GatewayId=igw.id,
+        )
+
+        from prowler.providers.aws.services.vpc.vpc_service import VPC
+
+        aws_provider = set_mocked_aws_provider(
+            audited_regions=[AWS_REGION_US_EAST_1], scan_unused_services=False
+        )
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ):
+            with mock.patch(
+                "prowler.providers.aws.services.vpc.vpc_subnet_separate_private_public.vpc_subnet_separate_private_public.vpc_client",
+                new=VPC(aws_provider),
+            ):
+                from prowler.providers.aws.services.vpc.vpc_subnet_separate_private_public.vpc_subnet_separate_private_public import (
+                    vpc_subnet_separate_private_public,
+                )
+
+                check = vpc_subnet_separate_private_public()
+                results = check.execute()
+
+                assert len(results) == 0
+
+    @mock_aws
     def test_vpc_subnet_private_and_public(self):
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
         ec2 = resource("ec2", region_name=AWS_REGION_US_EAST_1)

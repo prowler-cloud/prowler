@@ -57,7 +57,8 @@ def add_html_header(file_descriptor, provider):
         <div class="col-md-4">
             <a href="{html_logo_url}"><img class="float-left card-img-left mt-4 mr-4 ml-4"
                         src={square_logo_img}
-                        alt="prowler-logo" /></a>
+                        alt="prowler-logo"
+                        style="width: 15rem; height:auto;"/></a>
             <div class="card">
             <div class="card-header">
                 Report Information
@@ -135,7 +136,7 @@ def fill_html(file_descriptor, finding):
     try:
         row_class = "p-3 mb-2 bg-success-custom"
         finding.status = finding.status.split(".")[0]
-        if finding.status == "INFO":
+        if finding.status == "MANUAL":
             row_class = "table-info"
         elif finding.status == "FAIL":
             row_class = "table-danger"
