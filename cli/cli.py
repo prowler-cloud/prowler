@@ -82,12 +82,15 @@ def validate_status(status: List[str]):
 
 
 def validate_output_formats(output_formats: List[str]):
+    valid_formats = []
     valid_output_formats = ["csv", "json-ocsf", "html", "json-asff"]
     for output_format in output_formats:
         if output_format not in valid_output_formats:
             raise typer.BadParameter(
                 f"Output format must be one of {valid_output_formats}"
             )
+        else:
+            valid_formats.append(output_format)
     return output_formats
 
 
@@ -155,6 +158,7 @@ def main(
     ),
     profile: str = typer.Option(None, "--profile", help="The profile to use"),
 ):
+    # Make sure the values are valid
     if status_value:
         status_value = validate_status(status_value)
     if output_formats_value:
