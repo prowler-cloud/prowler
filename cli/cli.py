@@ -64,12 +64,11 @@ def validate_log_level(log_level: str):
 
 
 def split_space_separated_values(value: str) -> List[str]:
-    if value is None:
-        return []
     output = []
-    for item in value:
-        for input in item.split(" "):
-            output.append(input)
+    if value:
+        for item in value:
+            for input in item.split(" "):
+                output.append(input)
     return output
 
 
