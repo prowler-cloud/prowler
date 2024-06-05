@@ -11,6 +11,7 @@ from tests.providers.aws.utils import (
 )
 
 make_api_call = botocore.client.BaseClient._make_api_call
+rds_account_arn = f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:account"
 
 
 class Test_rds_instance__no_event_subscriptions:
@@ -43,6 +44,8 @@ class Test_rds_instance__no_event_subscriptions:
                     == "RDS security group event categories of configuration change and failure are not subscribed."
                 )
                 assert result[0].region == AWS_REGION_US_EAST_1
+                assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+                assert result[0].resource_arn == rds_account_arn
 
     @mock_aws
     def test_rds_no_events_ignoring(self):
@@ -297,6 +300,8 @@ class Test_rds_instance__no_event_subscriptions:
                     == "RDS security group event categories of configuration change and failure are not subscribed."
                 )
                 assert result[0].region == AWS_REGION_US_EAST_1
+                assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+                assert result[0].resource_arn == rds_account_arn
 
     @mock_aws
     def test_rds_no_event_subscription(self):
@@ -342,3 +347,5 @@ class Test_rds_instance__no_event_subscriptions:
                     == "RDS security group event categories of configuration change and failure are not subscribed."
                 )
                 assert result[0].region == AWS_REGION_US_EAST_1
+                assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+                assert result[0].resource_arn == rds_account_arn
