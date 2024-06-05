@@ -31,7 +31,7 @@ class TestCLI:
 
     def test_list_compliance_requirements_aws(self):
         result = runner.invoke(
-            app, ["aws", "--list-compliance-requirements", "cis_2.0_aws,soc2_aws"]
+            app, ["aws", "--list-compliance-requirements", "cis_2.0_aws soc2_aws"]
         )
         assert result.exit_code == 0
         assert "Listing CIS 2.0 AWS Compliance Requirements:" in result.output
@@ -46,7 +46,7 @@ class TestCLI:
         invalid_name = "invalid"
         result = runner.invoke(
             app,
-            ["aws", "--list-compliance-requirements", f"cis_2.0_aws,{invalid_name}"],
+            ["aws", "--list-compliance-requirements", f"cis_2.0_aws {invalid_name}"],
         )
         assert result.exit_code == 0
         assert "Listing CIS 2.0 AWS Compliance Requirements:" in result.output
@@ -92,4 +92,56 @@ class TestCLI:
 
     def test_only_logs(self):
         result = runner.invoke(app, ["aws", "--only-logs"])
+        assert result.exit_code == 0
+
+    def test_status(self):
+        result = runner.invoke(app, ["aws", "--status", "PASS"])
+        assert result.exit_code == 0
+
+    def test_status_invalid(self):
+        result = runner.invoke(app, ["aws", "--status", "INVALID"])
+        assert result.exit_code == 2
+        assert "Status must be one of" in result.output
+
+    def test_status_no_value(self):
+        result = runner.invoke(app, ["aws", "--status"])
+        assert result.exit_code == 2
+        assert "Option '--status' requires an argument." in result.output
+
+    def test_outputs_formats(self):
+        result = runner.invoke(app, ["aws", "--output-filename", "csv html"])
+        assert result.exit_code == 0
+
+    def test_outputs_formats_no_value(self):
+        result = runner.invoke(app, ["aws", "--output-filename"])
+        assert result.exit_code == 2
+        assert "Option '--output-filename' requires an argument." in result.output
+
+    def test_output_directory(self):
+        result = runner.invoke(app, ["aws", "--output-directory", "test"])
+        assert result.exit_code == 0
+
+    def test_output_directory_no_value(self):
+        result = runner.invoke(app, ["aws", "--output-directory"])
+        assert result.exit_code == 2
+        assert "Option '--output-directory' requires an argument." in result.output
+
+    def test_verbose(self):
+        result = runner.invoke(app, ["aws", "--verbose"])
+        assert result.exit_code == 0
+
+    def test_ignore_exit_code_3(self):
+        result = runner.invoke(app, ["aws", "--ignore-exit-code-3"])
+        assert result.exit_code == 0
+
+    def test_no_banner(self):
+        result = runner.invoke(app, ["aws", "--no-banner"])
+        assert result.exit_code == 0
+
+    def test_unix_timestamp(self):
+        result = runner.invoke(app, ["aws", "--unix-timestamp"])
+        assert result.exit_code == 0
+
+    def test_profile(self):
+        result = runner.invoke(app, ["aws", "--profile", "test"])
         assert result.exit_code == 0
