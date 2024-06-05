@@ -17,6 +17,7 @@ def mock_appinsights_get_components(_):
                 resource_id="/subscriptions/resource_id",
                 resource_name="AppInsightsTest",
                 location="westeurope",
+                instrumentation_key="",
             )
         }
     }

@@ -29,6 +29,9 @@ class AppInsights(AzureService):
                                 resource_id=component.id,
                                 resource_name=component.name,
                                 location=component.location,
+                                instrumentation_key=getattr(
+                                    component, "instrumentation_key", None
+                                ),
                             )
                         }
                     )
@@ -45,3 +48,4 @@ class Component:
     resource_id: str
     resource_name: str
     location: str
+    instrumentation_key: str
