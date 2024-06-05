@@ -1,8 +1,8 @@
-
-from typing import List
 from argparse import Namespace
+from typing import List
 
 import typer
+from lib.options import OptionsState
 
 from prowler.config.config import available_compliance_frameworks, finding_statuses
 from prowler.lib.check.check import (
@@ -84,7 +84,9 @@ def validate_output_formats(output_formats: List[str]):
 
 @app.command()
 def main(
-    provider: str = typer.Argument(..., help="The provider to check"),
+    provider: str = typer.Argument(
+        ..., help="The provider to check", callback=check_provider
+    ),
     list_services_bool: bool = typer.Option(
         False, "--list-services", help="List the services of the provider"
     ),
@@ -144,92 +146,114 @@ def main(
     ),
     profile: str = typer.Option(None, "--profile", help="The profile to use"),
 ):
-    check_provider(provider)
-    if list_services_bool:
-        services = list_services(provider)
+    options = OptionsState(
+        provider,
+        list_services_bool,
+        list_fixers_bool,
+        list_categories_bool,
+        list_compliance_bool,
+        list_compliance_requirements_value,
+        list_checks_bool,
+        list_checks_json_bool,
+        log_level,
+        log_file,
+        only_logs,
+        status_value,
+        output_formats_value,
+        output_filename_value,
+        output_directory_value,
+        verbose,
+        ignore_exit_code_3,
+        no_banner,
+        unix_timestamp,
+        profile,
+    )
+
+    if options.list_services:
+        services = list_services(options.provider)
         print_services(services)
-    if list_fixers_bool:
-        fixers = list_fixers(provider)
+    if options.list_fixers:
+        fixers = list_fixers(options.provider)
         print_fixers(fixers)
-    if list_categories_bool:
-        checks_metadata = bulk_load_checks_metadata(provider)
+    if options.list_categories:
+        checks_metadata = bulk_load_checks_metadata(options.provider)
         categories = list_categories(checks_metadata)
         print_categories(categories)
-    if list_compliance_bool:
-        compliance_frameworks = bulk_load_compliance_frameworks(provider)
+    if options.list_compliance:
+        compliance_frameworks = bulk_load_compliance_frameworks(options.provider)
         print_compliance_frameworks(compliance_frameworks)
-    if list_compliance_requirements_value:
+    if options.list_compliance_requirements:
         valid_compliance = check_compliance_framework(
-            provider, list_compliance_requirements_value
+            options.provider, options.list_compliance_requirements
         )
         print_compliance_requirements(
-            bulk_load_compliance_frameworks(provider),
+            bulk_load_compliance_frameworks(options.provider),
             valid_compliance,
         )
-    if list_checks_bool:
-        checks_metadata = bulk_load_checks_metadata(provider)
+    if options.list_checks:
+        checks_metadata = bulk_load_checks_metadata(options.provider)
         checks = load_checks_to_execute(
             checks_metadata,
-            bulk_load_compliance_frameworks(provider),
+            bulk_load_compliance_frameworks(options.provider),
             None,
             [],
             [],
             [],
             [],
             [],
-            provider,
+            options.provider,
         )
-        print_checks(provider, sorted(checks), checks_metadata)
-    if list_checks_json_bool:
-        checks_metadata = bulk_load_checks_metadata(provider)
+        print_checks(options.provider, sorted(checks), checks_metadata)
+    if options.list_checks_json:
+        checks_metadata = bulk_load_checks_metadata(options.provider)
         checks_to_execute = load_checks_to_execute(
             checks_metadata,
-            bulk_load_compliance_frameworks(provider),
+            bulk_load_compliance_frameworks(options.provider),
             None,
             [],
             [],
             [],
             [],
             [],
-            provider,
+            options.provider,
         )
-        print(list_checks_json(provider, sorted(checks_to_execute)))
-    if log_level:
-        set_logging_config(validate_log_level(log_level))
-        logger.info(f"Log level set to {log_level}")
-    if log_file:
-        if log_level:
-            set_logging_config(validate_log_level(log_level), log_file)
+        print(list_checks_json(options.provider, sorted(checks_to_execute)))
+    if options.log_level:
+        set_logging_config(validate_log_level(options.log_level))
+        logger.info(f"Log level set to {options.log_level}")
+    if options.log_file:
+        if options.log_level:
+            set_logging_config(validate_log_level(options.log_level), options.log_file)
         else:
-            set_logging_config("INFO", log_file)
-        logger.info(f"Log file set to {log_file}")
-    if only_logs:
-        if log_level:
-            set_logging_config(validate_log_level(log_level), only_logs=True)
+            set_logging_config("INFO", options.log_file)
+        logger.info(f"Log file set to {options.log_file}")
+    if options.only_logs:
+        if options.log_level:
+            set_logging_config(validate_log_level(options.log_level), only_logs=True)
         else:
             set_logging_config("INFO", only_logs=True)
         logger.info("Only logs are shown")
-    if status_value:
-        logger.info(f"Filtering by status: {status_value}")
+    if options.status:
+        logger.info(f"Filtering by status: {options.status}")
         # TODO: Implement filtering by status in a class
-    if output_formats_value:
-        logger.info(f"Output formats: {output_formats_value}")
+    if options.output_formats:
+        logger.info(f"Output formats: {options.output_formats}")
         # TODO: Implement output formats in a class
-    if output_filename_value:
-        logger.info(f"Output filename: {output_filename_value}")
+    if options.output_filename:
+        logger.info(f"Output filename: {options.output_filename}")
     # TODO: Implement output filename in a class
-    if output_directory_value:
-        logger.info(f"Output directory: {output_directory_value}")
-        # TODO: Implement output directory in a class
-    if verbose:
+    if options.output_directory:
+        logger.info(f"Output directory: {options.output_directory}")
+    # TODO: Implement output directory in a class
+    if options.verbose:
         logger.info("Verbose output is enabled")
-    if ignore_exit_code_3:
+    if options.ignore_exit_code_3:
         logger.info("Ignoring exit code 3")
-    if no_banner:
+    if options.no_banner:
         logger.info("No banner is shown")
-    if unix_timestamp:
+    if options.unix_timestamp:
         logger.info("Using Unix timestamp")
-    if profile:
+    if options.profile:
         # Execute Prowler
         checks_to_execute = ["s3_account_level_public_access_blocks"]
         # Create the provider
@@ -284,6 +308,7 @@ def main(
             security_hub_findings_per_region
         )
         print(findings_sent_to_security_hub)
+
 
 if __name__ == "__main__":
     app()
