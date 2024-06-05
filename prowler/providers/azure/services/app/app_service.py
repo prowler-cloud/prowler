@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Dict
 
 from azure.mgmt.web import WebSiteManagementClient
 from azure.mgmt.web.models import ManagedServiceIdentity, SiteConfigResource
@@ -10,11 +11,11 @@ from prowler.providers.azure.services.monitor.monitor_client import monitor_clie
 from prowler.providers.azure.services.monitor.monitor_service import DiagnosticSetting
 
 
-########################## App
 class App(AzureService):
     def __init__(self, provider: AzureProvider):
         super().__init__(WebSiteManagementClient, provider)
         self.apps = self.__get_apps__()
+        self.functions = self.__get_functions__()
 
     def __get_apps__(self):
         logger.info("App - Getting apps...")
@@ -27,7 +28,7 @@ class App(AzureService):
 
                 for app in apps_list:
                     # Filter function apps
-                    if app.kind.startswith("app"):
+                    if getattr(app, "kind", "app").startswith("app"):
                         platform_auth = getattr(
                             client.web_apps.get_auth_settings_v2(
                                 resource_group_name=app.resource_group, name=app.name
@@ -59,7 +60,7 @@ class App(AzureService):
                                     https_only=getattr(app, "https_only", False),
                                     identity=getattr(app, "identity", None),
                                     location=app.location,
-                                    kind=getattr(app, "kind", "app"),
+                                    kind=app.kind,
                                 )
                             }
                         )
@@ -69,6 +70,52 @@ class App(AzureService):
                 )
 
         return apps
+
+    def __get_functions__(self):
+        logger.info("Function - Getting functions...")
+        functions = {}
+
+        for subscription_name, client in self.clients.items():
+            try:
+                functions_list = client.web_apps.list()
+                functions.update({subscription_name: {}})
+
+                for function in functions_list:
+                    # Filter function apps
+                    if getattr(function, "kind", "").startswith("functionapp"):
+                        # List host keys
+                        host_keys = client.web_apps.list_host_keys(
+                            resource_group_name=function.resource_group,
+                            name=function.name,
+                        )  # Need to add role 'Logic App Contributor' to the service principal to get the host keys or add to the reader role the permission 'Microsoft.Web/sites/host/listkeys'
+
+                        functions[subscription_name].update(
+                            {
+                                function.id: FunctionApp(
+                                    name=function.name,
+                                    location=function.location,
+                                    kind=function.kind,
+                                    function_keys=getattr(
+                                        host_keys, "function_keys", {}
+                                    ),
+                                    enviroment_variables=getattr(
+                                        client.web_apps.list_application_settings(
+                                            resource_group_name=function.resource_group,
+                                            name=function.name,
+                                        ),
+                                        "properties",
+                                        {},
+                                    ),
+                                    identity=getattr(function, "identity", None),
+                                )
+                            }
+                        )
+            except Exception as error:
+                logger.error(
+                    f"Subscription name: {subscription_name} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
+        return functions
 
     def __get_client_cert_mode__(
         self, client_cert_enabled: bool, client_cert_mode: str
@@ -114,3 +161,13 @@ class WebApp:
     https_only: bool = False
     monitor_diagnostic_settings: list[DiagnosticSetting] = None
     kind: str = "app"
+
+
+@dataclass
+class FunctionApp:
+    name: str
+    location: str
+    kind: str
+    function_keys: Dict[str, str]
+    enviroment_variables: Dict[str, str]
+    identity: ManagedServiceIdentity
