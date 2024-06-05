@@ -1,6 +1,8 @@
+from typing import List
+
 import typer
 
-from prowler.config.config import available_compliance_frameworks
+from prowler.config.config import available_compliance_frameworks, finding_statuses
 from prowler.lib.check.check import (
     bulk_load_checks_metadata,
     bulk_load_compliance_frameworks,
@@ -50,6 +52,30 @@ def validate_log_level(log_level: str):
     return log_level
 
 
+def split_space_separated_values(value: str) -> List[str]:
+    output = []
+    for item in value:
+        for input in item.split(" "):
+            output.append(input)
+    return output
+
+
+def validate_status(status: str):
+    if status not in finding_statuses:
+        raise typer.BadParameter(f"Status must be one of {finding_statuses}")
+    return status
+
+
+def validate_output_formats(output_formats: List[str]):
+    valid_output_formats = ["csv", "json-ocsf", "html", "json-asff"]
+    for output_format in output_formats:
+        if output_format not in valid_output_formats:
+            raise typer.BadParameter(
+                f"Output format must be one of {valid_output_formats}"
+            )
+    return output_formats
+
+
 @app.command()
 def main(
     provider: str = typer.Argument(..., help="The provider to check"),
@@ -67,10 +93,11 @@ def main(
         "--list-compliance",
         help="List the compliance frameworks of the provider",
     ),
-    list_compliance_requirements_value: str = typer.Option(
+    list_compliance_requirements_value: List[str] = typer.Option(
         None,
         "--list-compliance-requirements",
         help="List the compliance requirements of the provider",
+        callback=split_space_separated_values,
     ),
     list_checks_bool: bool = typer.Option(
         False, "--list-checks", help="List the checks of the provider"
@@ -83,6 +110,32 @@ def main(
     log_level: str = typer.Option("INFO", "--log-level", help="Set the Log level"),
     log_file: str = typer.Option(None, "--log-file", help="Set the Log file"),
     only_logs: bool = typer.Option(False, "--only-logs", help="Only show logs"),
+    status_value: str = typer.Option(
+        None,
+        "--status",
+        help=f"Filter by the status of the findings {finding_statuses}",
+        callback=validate_status,
+    ),
+    output_formats_value: str = typer.Option(
+        "csv json-ocsf html",
+        "--output-formats",
+        help="Output format for the findings",
+        callback=split_space_separated_values,
+    ),
+    output_filename_value: str = typer.Option(
+        None, "--output-filename", help="Output filename"
+    ),
+    output_directory_value: str = typer.Option(
+        None, "--output-directory", help="Output directory"
+    ),
+    verbose: bool = typer.Option(False, "--verbose", help="Show verbose output"),
+    ignore_exit_code_3: bool = typer.Option(
+        False, "--ignore-exit-code-3", help="Ignore exit code 3"
+    ),
+    no_banner: bool = typer.Option(False, "--no-banner", help="Do not show the banner"),
+    unix_timestamp: bool = typer.Option(
+        False, "--unix-timestamp", help="Use Unix timestamp"
+    ),
 ):
     check_provider(provider)
     if list_services_bool:
@@ -99,9 +152,6 @@ def main(
         compliance_frameworks = bulk_load_compliance_frameworks(provider)
         print_compliance_frameworks(compliance_frameworks)
     if list_compliance_requirements_value:
-        list_compliance_requirements_value = list_compliance_requirements_value.split(
-            ","
-        )
         valid_compliance = check_compliance_framework(
             provider, list_compliance_requirements_value
         )
@@ -152,6 +202,26 @@ def main(
         else:
             set_logging_config("INFO", only_logs=True)
         logger.info("Only logs are shown")
+    if status_value:
+        logger.info(f"Filtering by status: {status_value}")
+        # TODO: Implement filtering by status in a class
+    if output_formats_value:
+        logger.info(f"Output formats: {output_formats_value}")
+        # TODO: Implement output formats in a class
+    if output_filename_value:
+        logger.info(f"Output filename: {output_filename_value}")
+    # TODO: Implement output filename in a class
+    if output_directory_value:
+        logger.info(f"Output directory: {output_directory_value}")
+        # TODO: Implement output directory in a class
+    if verbose:
+        logger.info("Verbose output is enabled")
+    if ignore_exit_code_3:
+        logger.info("Ignoring exit code 3")
+    if no_banner:
+        logger.info("No banner is shown")
+    if unix_timestamp:
+        logger.info("Using Unix timestamp")
 
 
 if __name__ == "__main__":
