@@ -1,21 +1,16 @@
+from argparse import Namespace
 from logging import ERROR, WARNING
 from os import path
 
 import botocore
-from boto3 import session
 from botocore.client import ClientError
-from mock import MagicMock, patch
+from mock import patch
 
 from prowler.config.config import prowler_version, timestamp_utc
 from prowler.lib.check.models import Check_Report, load_check_metadata
-from prowler.providers.aws.lib.security_hub.security_hub import (
-    batch_send_to_security_hub,
-    prepare_security_hub_findings,
-    verify_security_hub_integration_enabled_per_region,
-)
+from prowler.lib.outputs.security_hub.security_hub import SecurityHub
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
-    AWS_COMMERCIAL_PARTITION,
     AWS_REGION_EU_WEST_1,
     AWS_REGION_EU_WEST_2,
     set_mocked_aws_provider,
@@ -108,37 +103,25 @@ class Test_SecurityHub:
 
         return finding
 
-    def set_mocked_output_options(
-        self, status: list[str] = [], send_sh_only_fails: bool = False
-    ):
-        output_options = MagicMock
-        output_options.bulk_checks_metadata = {}
-        output_options.status = status
-        output_options.send_sh_only_fails = send_sh_only_fails
-
-        return output_options
-
-    def set_mocked_session(self, region):
-        # Create mock session
-        return session.Session(
-            region_name=region,
-        )
-
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     def test_verify_security_hub_integration_enabled_per_region(self):
-        session = self.set_mocked_session(AWS_REGION_EU_WEST_1)
-        assert verify_security_hub_integration_enabled_per_region(
-            AWS_COMMERCIAL_PARTITION, AWS_REGION_EU_WEST_1, session, AWS_ACCOUNT_NUMBER
+        aws_provider = set_mocked_aws_provider()
+        security_hub = SecurityHub(aws_provider)
+
+        assert security_hub.verify_security_hub_integration_enabled_per_region(
+            AWS_REGION_EU_WEST_1
         )
 
     def test_verify_security_hub_integration_enabled_per_region_security_hub_disabled(
         self, caplog
     ):
+        aws_provider = set_mocked_aws_provider()
+        security_hub = SecurityHub(aws_provider)
+
         caplog.set_level(WARNING)
-        session = self.set_mocked_session(AWS_REGION_EU_WEST_1)
 
         with patch(
-            "prowler.providers.aws.lib.security_hub.security_hub.session.Session.client",
+            "prowler.lib.outputs.security_hub.security_hub.Session.client",
         ) as mock_security_hub:
             error_message = f"Account {AWS_ACCOUNT_NUMBER} is not subscribed to AWS Security Hub in region {AWS_REGION_EU_WEST_1}"
             error_code = "InvalidAccessException"
@@ -151,37 +134,33 @@ class Test_SecurityHub:
             operation_name = "DescribeHub"
             mock_security_hub.side_effect = ClientError(error_response, operation_name)
 
-            assert not verify_security_hub_integration_enabled_per_region(
-                AWS_COMMERCIAL_PARTITION,
+            assert not security_hub.verify_security_hub_integration_enabled_per_region(
                 AWS_REGION_EU_WEST_1,
-                session,
-                AWS_ACCOUNT_NUMBER,
             )
             assert caplog.record_tuples == [
                 (
                     "root",
                     WARNING,
-                    f"ClientError -- [70]: An error occurred ({error_code}) when calling the {operation_name} operation: {error_message}",
+                    f"ClientError -- [86]: An error occurred ({error_code}) when calling the {operation_name} operation: {error_message}",
                 )
             ]
 
     def test_verify_security_hub_integration_enabled_per_region_prowler_not_subscribed(
         self, caplog
     ):
+        aws_provider = set_mocked_aws_provider()
+        security_hub = SecurityHub(aws_provider)
+
         caplog.set_level(WARNING)
-        session = self.set_mocked_session(AWS_REGION_EU_WEST_1)
 
         with patch(
-            "prowler.providers.aws.lib.security_hub.security_hub.session.Session.client",
+            "prowler.lib.outputs.security_hub.security_hub.Session.client",
         ) as mock_security_hub:
             mock_security_hub.describe_hub.return_value = None
             mock_security_hub.list_enabled_products_for_import.return_value = []
 
-            assert not verify_security_hub_integration_enabled_per_region(
-                AWS_COMMERCIAL_PARTITION,
+            assert not security_hub.verify_security_hub_integration_enabled_per_region(
                 AWS_REGION_EU_WEST_1,
-                session,
-                AWS_ACCOUNT_NUMBER,
             )
             assert caplog.record_tuples == [
                 (
@@ -194,11 +173,13 @@ class Test_SecurityHub:
     def test_verify_security_hub_integration_enabled_per_region_another_ClientError(
         self, caplog
     ):
+        aws_provider = set_mocked_aws_provider()
+        security_hub = SecurityHub(aws_provider)
+
         caplog.set_level(WARNING)
-        session = self.set_mocked_session(AWS_REGION_EU_WEST_1)
 
         with patch(
-            "prowler.providers.aws.lib.security_hub.security_hub.session.Session.client",
+            "prowler.lib.outputs.security_hub.security_hub.Session.client",
         ) as mock_security_hub:
             error_message = f"Another exception in region {AWS_REGION_EU_WEST_1}"
             error_code = "AnotherException"
@@ -211,58 +192,52 @@ class Test_SecurityHub:
             operation_name = "DescribeHub"
             mock_security_hub.side_effect = ClientError(error_response, operation_name)
 
-            assert not verify_security_hub_integration_enabled_per_region(
-                AWS_COMMERCIAL_PARTITION,
+            assert not security_hub.verify_security_hub_integration_enabled_per_region(
                 AWS_REGION_EU_WEST_1,
-                session,
-                AWS_ACCOUNT_NUMBER,
             )
             assert caplog.record_tuples == [
                 (
                     "root",
                     ERROR,
-                    f"ClientError -- [70]: An error occurred ({error_code}) when calling the {operation_name} operation: {error_message}",
+                    f"ClientError -- [86]: An error occurred ({error_code}) when calling the {operation_name} operation: {error_message}",
                 )
             ]
 
     def test_verify_security_hub_integration_enabled_per_region_another_Exception(
         self, caplog
     ):
+        aws_provider = set_mocked_aws_provider()
+        security_hub = SecurityHub(aws_provider)
+
         caplog.set_level(WARNING)
-        session = self.set_mocked_session(AWS_REGION_EU_WEST_1)
 
         with patch(
-            "prowler.providers.aws.lib.security_hub.security_hub.session.Session.client",
+            "prowler.lib.outputs.security_hub.security_hub.Session.client",
         ) as mock_security_hub:
             error_message = f"Another exception in region {AWS_REGION_EU_WEST_1}"
             mock_security_hub.side_effect = Exception(error_message)
 
-            assert not verify_security_hub_integration_enabled_per_region(
-                AWS_COMMERCIAL_PARTITION,
+            assert not security_hub.verify_security_hub_integration_enabled_per_region(
                 AWS_REGION_EU_WEST_1,
-                session,
-                AWS_ACCOUNT_NUMBER,
             )
             assert caplog.record_tuples == [
                 (
                     "root",
                     ERROR,
-                    f"Exception -- [70]: {error_message}",
+                    f"Exception -- [86]: {error_message}",
                 )
             ]
 
     def test_prepare_security_hub_findings_enabled_region_all_statuses(self):
         enabled_regions = [AWS_REGION_EU_WEST_1]
-        output_options = self.set_mocked_output_options()
         findings = [self.generate_finding("PASS", AWS_REGION_EU_WEST_1)]
         aws_provider = set_mocked_aws_provider(
             audited_regions=[AWS_REGION_EU_WEST_1, AWS_REGION_EU_WEST_2]
         )
+        security_hub = SecurityHub(aws_provider)
 
-        assert prepare_security_hub_findings(
+        assert security_hub.prepare_security_hub_findings(
             findings,
-            aws_provider,
-            output_options,
             enabled_regions,
         ) == {
             AWS_REGION_EU_WEST_1: [get_security_hub_finding("PASSED")],
@@ -270,104 +245,109 @@ class Test_SecurityHub:
 
     def test_prepare_security_hub_findings_all_statuses_MANUAL_finding(self):
         enabled_regions = [AWS_REGION_EU_WEST_1]
-        output_options = self.set_mocked_output_options()
         findings = [self.generate_finding("MANUAL", AWS_REGION_EU_WEST_1)]
         aws_provider = set_mocked_aws_provider(
             audited_regions=[AWS_REGION_EU_WEST_1, AWS_REGION_EU_WEST_2]
         )
+        security_hub = SecurityHub(aws_provider)
 
-        assert prepare_security_hub_findings(
+        assert security_hub.prepare_security_hub_findings(
             findings,
-            aws_provider,
-            output_options,
             enabled_regions,
         ) == {AWS_REGION_EU_WEST_1: []}
 
     def test_prepare_security_hub_findings_disabled_region(self):
         enabled_regions = [AWS_REGION_EU_WEST_1]
-        output_options = self.set_mocked_output_options()
         findings = [self.generate_finding("PASS", AWS_REGION_EU_WEST_2)]
         aws_provider = set_mocked_aws_provider(
             audited_regions=[AWS_REGION_EU_WEST_1, AWS_REGION_EU_WEST_2]
         )
+        security_hub = SecurityHub(aws_provider)
 
-        assert prepare_security_hub_findings(
+        assert security_hub.prepare_security_hub_findings(
             findings,
-            aws_provider,
-            output_options,
             enabled_regions,
         ) == {AWS_REGION_EU_WEST_1: []}
 
     def test_prepare_security_hub_findings_PASS_and_FAIL_statuses(self):
         enabled_regions = [AWS_REGION_EU_WEST_1]
-        output_options = self.set_mocked_output_options(status=["FAIL"])
         findings = [self.generate_finding("PASS", AWS_REGION_EU_WEST_1)]
+
+        args = Namespace()
+        args.status = ["FAIL"]
         aws_provider = set_mocked_aws_provider(
-            audited_regions=[AWS_REGION_EU_WEST_1, AWS_REGION_EU_WEST_2]
+            audited_regions=[AWS_REGION_EU_WEST_1, AWS_REGION_EU_WEST_2], arguments=args
         )
 
-        assert prepare_security_hub_findings(
+        security_hub = SecurityHub(aws_provider)
+
+        assert security_hub.prepare_security_hub_findings(
             findings,
-            aws_provider,
-            output_options,
             enabled_regions,
         ) == {AWS_REGION_EU_WEST_1: []}
 
     def test_prepare_security_hub_findings_FAIL_and_FAIL_statuses(self):
         enabled_regions = [AWS_REGION_EU_WEST_1]
-        output_options = self.set_mocked_output_options(status=["FAIL"])
         findings = [self.generate_finding("FAIL", AWS_REGION_EU_WEST_1)]
+
+        args = Namespace()
+        args.status = ["FAIL"]
         aws_provider = set_mocked_aws_provider(
-            audited_regions=[AWS_REGION_EU_WEST_1, AWS_REGION_EU_WEST_2]
+            audited_regions=[AWS_REGION_EU_WEST_1, AWS_REGION_EU_WEST_2], arguments=args
         )
 
-        assert prepare_security_hub_findings(
+        security_hub = SecurityHub(aws_provider)
+
+        assert security_hub.prepare_security_hub_findings(
             findings,
-            aws_provider,
-            output_options,
             enabled_regions,
         ) == {AWS_REGION_EU_WEST_1: [get_security_hub_finding("FAILED")]}
 
     def test_prepare_security_hub_findings_send_sh_only_fails_PASS(self):
         enabled_regions = [AWS_REGION_EU_WEST_1]
-        output_options = self.set_mocked_output_options(send_sh_only_fails=True)
         findings = [self.generate_finding("PASS", AWS_REGION_EU_WEST_1)]
-        aws_provider = set_mocked_aws_provider(
-            audited_regions=[AWS_REGION_EU_WEST_1, AWS_REGION_EU_WEST_2]
-        )
 
-        assert prepare_security_hub_findings(
+        args = Namespace()
+        args.send_sh_only_fails = True
+
+        aws_provider = set_mocked_aws_provider(
+            audited_regions=[AWS_REGION_EU_WEST_1, AWS_REGION_EU_WEST_2], arguments=args
+        )
+        security_hub = SecurityHub(aws_provider)
+
+        assert security_hub.prepare_security_hub_findings(
             findings,
-            aws_provider,
-            output_options,
             enabled_regions,
         ) == {AWS_REGION_EU_WEST_1: []}
 
     def test_prepare_security_hub_findings_send_sh_only_fails_FAIL(self):
         enabled_regions = [AWS_REGION_EU_WEST_1]
-        output_options = self.set_mocked_output_options(send_sh_only_fails=True)
         findings = [self.generate_finding("FAIL", AWS_REGION_EU_WEST_1)]
-        aws_provider = set_mocked_aws_provider(
-            audited_regions=[AWS_REGION_EU_WEST_1, AWS_REGION_EU_WEST_2]
-        )
 
-        assert prepare_security_hub_findings(
+        args = Namespace()
+        args.send_sh_only_fails = True
+
+        aws_provider = set_mocked_aws_provider(
+            audited_regions=[AWS_REGION_EU_WEST_1, AWS_REGION_EU_WEST_2], arguments=args
+        )
+        security_hub = SecurityHub(aws_provider)
+
+        assert security_hub.prepare_security_hub_findings(
             findings,
-            aws_provider,
-            output_options,
             enabled_regions,
         ) == {AWS_REGION_EU_WEST_1: [get_security_hub_finding("FAILED")]}
 
     def test_prepare_security_hub_findings_no_audited_regions(self):
         enabled_regions = [AWS_REGION_EU_WEST_1]
-        output_options = self.set_mocked_output_options()
         findings = [self.generate_finding("PASS", AWS_REGION_EU_WEST_1)]
-        aws_provider = set_mocked_aws_provider()
 
-        assert prepare_security_hub_findings(
+        aws_provider = set_mocked_aws_provider(
+            audited_regions=[AWS_REGION_EU_WEST_1, AWS_REGION_EU_WEST_2]
+        )
+        security_hub = SecurityHub(aws_provider)
+
+        assert security_hub.prepare_security_hub_findings(
             findings,
-            aws_provider,
-            output_options,
             enabled_regions,
         ) == {
             AWS_REGION_EU_WEST_1: [get_security_hub_finding("PASSED")],
@@ -375,20 +355,19 @@ class Test_SecurityHub:
 
     def test_prepare_security_hub_findings_muted_fail_with_send_sh_only_fails(self):
         enabled_regions = [AWS_REGION_EU_WEST_1]
-        output_options = self.set_mocked_output_options(
-            send_sh_only_fails=True,
-        )
         findings = [
             self.generate_finding(
                 status="FAIL", region=AWS_REGION_EU_WEST_1, muted=True
             )
         ]
-        aws_provider = set_mocked_aws_provider()
+        args = Namespace()
+        args.send_sh_only_fails = True
 
-        assert prepare_security_hub_findings(
+        aws_provider = set_mocked_aws_provider(arguments=args)
+        security_hub = SecurityHub(aws_provider)
+
+        assert security_hub.prepare_security_hub_findings(
             findings,
-            aws_provider,
-            output_options,
             enabled_regions,
         ) == {
             AWS_REGION_EU_WEST_1: [],
@@ -396,18 +375,18 @@ class Test_SecurityHub:
 
     def test_prepare_security_hub_findings_muted_fail_with_status_FAIL(self):
         enabled_regions = [AWS_REGION_EU_WEST_1]
-        output_options = self.set_mocked_output_options(status=["FAIL"])
         findings = [
             self.generate_finding(
                 status="FAIL", region=AWS_REGION_EU_WEST_1, muted=True
             )
         ]
-        aws_provider = set_mocked_aws_provider()
+        args = Namespace()
+        args.status = ["FAIL"]
+        aws_provider = set_mocked_aws_provider(arguments=args)
+        security_hub = SecurityHub(aws_provider)
 
-        assert prepare_security_hub_findings(
+        assert security_hub.prepare_security_hub_findings(
             findings,
-            aws_provider,
-            output_options,
             enabled_regions,
         ) == {
             AWS_REGION_EU_WEST_1: [],
@@ -416,24 +395,21 @@ class Test_SecurityHub:
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     def test_batch_send_to_security_hub_one_finding(self):
         enabled_regions = [AWS_REGION_EU_WEST_1]
-        output_options = self.set_mocked_output_options()
         findings = [self.generate_finding("PASS", AWS_REGION_EU_WEST_1)]
+
         aws_provider = set_mocked_aws_provider(
             audited_regions=[AWS_REGION_EU_WEST_1, AWS_REGION_EU_WEST_2]
         )
-        session = self.set_mocked_session(AWS_REGION_EU_WEST_1)
+        security_hub = SecurityHub(aws_provider)
 
-        security_hub_findings = prepare_security_hub_findings(
+        security_hub_findings = security_hub.prepare_security_hub_findings(
             findings,
-            aws_provider,
-            output_options,
             enabled_regions,
         )
 
         assert (
-            batch_send_to_security_hub(
+            security_hub.batch_send_to_security_hub(
                 security_hub_findings,
-                session,
             )
             == 1
         )
