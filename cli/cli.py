@@ -4,7 +4,11 @@ from typing import List
 import typer
 from lib.options import OptionsState
 
-from prowler.config.config import available_compliance_frameworks, finding_statuses
+from prowler.config.config import (
+    available_compliance_frameworks,
+    default_output_directory,
+    finding_statuses,
+)
 from prowler.lib.check.check import (
     bulk_load_checks_metadata,
     bulk_load_compliance_frameworks,
@@ -34,6 +38,7 @@ def check_provider(provider: str):
         raise typer.BadParameter(
             "Invalid provider. Choose between aws, azure, gcp or kubernetes."
         )
+    return provider
 
 
 def check_compliance_framework(provider: str, compliance_framework: list):
@@ -59,6 +64,8 @@ def validate_log_level(log_level: str):
 
 
 def split_space_separated_values(value: str) -> List[str]:
+    if value is None:
+        return []
     output = []
     for item in value:
         for input in item.split(" "):
@@ -66,10 +73,13 @@ def split_space_separated_values(value: str) -> List[str]:
     return output
 
 
-def validate_status(status: str):
-    if status not in finding_statuses:
-        raise typer.BadParameter(f"Status must be one of {finding_statuses}")
-    return status
+def validate_status(status: List[str]):
+    valid_status = []
+    for s in status:
+        if s not in finding_statuses:
+            raise typer.BadParameter(f"Status must be one of {finding_statuses}")
+        valid_status.append(s)
+    return valid_status
 
 
 def validate_output_formats(output_formats: List[str]):
@@ -118,14 +128,14 @@ def main(
     log_level: str = typer.Option("INFO", "--log-level", help="Set the Log level"),
     log_file: str = typer.Option(None, "--log-file", help="Set the Log file"),
     only_logs: bool = typer.Option(False, "--only-logs", help="Only show logs"),
-    status_value: str = typer.Option(
-        None,
+    status_value: List[str] = typer.Option(
+        [],
         "--status",
         help=f"Filter by the status of the findings {finding_statuses}",
-        callback=validate_status,
+        callback=split_space_separated_values,
     ),
-    output_formats_value: str = typer.Option(
-        "csv json-ocsf html",
+    output_formats_value: List[str] = typer.Option(
+        ["csv json-ocsf html"],
         "--output-formats",
         help="Output format for the findings",
         callback=split_space_separated_values,
@@ -146,6 +156,12 @@ def main(
     ),
     profile: str = typer.Option(None, "--profile", help="The profile to use"),
 ):
+    if status_value:
+        status_value = validate_status(status_value)
+    if output_formats_value:
+        output_formats_value = validate_output_formats(output_formats_value)
+    if not output_directory_value:
+        output_directory_value = default_output_directory
     options = OptionsState(
         provider,
         list_services_bool,
@@ -255,19 +271,23 @@ def main(
         logger.info("Using Unix timestamp")
     if options.profile:
         # Execute Prowler
-        checks_to_execute = ["s3_account_level_public_access_blocks"]
+        checks_to_execute = [
+            "s3_account_level_public_access_blocks",
+            "s3_bucket_public_access",
+            "s3_bucket_kms_encryption",
+        ]
         # Create the provider
         args = Namespace
-        args.provider = provider
-        args.profile = profile
-        args.verbose = False
+        args.provider = options.provider
+        args.profile = options.profile
+        args.verbose = options.verbose
         args.fixer = False
-        args.only_logs = False
-        args.status = []
-        args.output_formats = []
-        args.output_filename = None
-        args.unix_timestamp = False
-        args.output_directory = None
+        args.only_logs = options.only_logs
+        args.status = options.status
+        args.output_formats = options.output_formats
+        args.output_filename = options.output_filename
+        args.unix_timestamp = options.unix_timestamp
+        args.output_directory = options.output_directory
         args.shodan = None
         args.security_hub = False
         args.send_sh_only_fails = False

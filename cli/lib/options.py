@@ -15,7 +15,7 @@ class OptionsState:
         log_level: str,
         log_file: Optional[str],
         only_logs: bool,
-        status: Optional[str],
+        status: List[str],
         output_formats: List[str],
         output_filename: Optional[str],
         output_directory: Optional[str],
