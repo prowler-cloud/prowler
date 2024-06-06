@@ -18,16 +18,14 @@ class app_function_identity_has_not_admin_privileges(Check):
             functions,
         ) in app_client.functions.items():
             for function_id, function in functions.items():
-                report = Check_Report_Azure(self.metadata())
-                report.status = "PASS"
-                report.status_extended = f"Function '{function.name}' does not have a managed identity enabled."
-                report.subscription = subscription_name
-                report.resource_name = function.name
-                report.resource_id = function_id
-                report.location = function.location
-
                 if function.identity:
+                    report = Check_Report_Azure(self.metadata())
+                    report.status = "PASS"
                     report.status_extended = f"Function '{function.name}' has a managed identity enabled. But it is not configured with admin privileges."
+                    report.subscription = subscription_name
+                    report.resource_name = function.name
+                    report.resource_id = function_id
+                    report.location = function.location
 
                     admin_roles_assigned = []
 
@@ -52,6 +50,6 @@ class app_function_identity_has_not_admin_privileges(Check):
                         report.status = "FAIL"
                         report.status_extended = f"Function '{function.name}' has a managed identity enabled and it is configure with admin privileges. The admin {'roles assigned are: ' + ', '.join(admin_roles_assigned) if len(admin_roles_assigned) > 1 else 'role assigned is ' + admin_roles_assigned[0]}."
 
-                findings.append(report)
+                    findings.append(report)
 
         return findings

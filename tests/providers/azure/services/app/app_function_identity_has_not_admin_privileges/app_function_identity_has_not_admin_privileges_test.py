@@ -81,16 +81,7 @@ class Test_app_function_identity_has_not_admin_privileges:
 
             check = app_function_identity_has_not_admin_privileges()
             result = check.execute()
-            assert len(result) == 1
-            assert result[0].status == "PASS"
-            assert (
-                result[0].status_extended
-                == "Function 'function1' does not have a managed identity enabled."
-            )
-            assert result[0].resource_id == function_id
-            assert result[0].resource_name == "function1"
-            assert result[0].subscription == AZURE_SUBSCRIPTION_ID
-            assert result[0].location == "West Europe"
+            assert len(result) == 0
 
     def test_app_function_no_admin_roles(self):
         app_client = mock.MagicMock
