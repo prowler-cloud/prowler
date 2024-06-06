@@ -232,15 +232,19 @@ class RDS(AWSService):
                             DBClusterParameterGroupName=cluster.parameter_group
                         ):
                             for parameter in page["Parameters"]:
-                                if parameter["ParameterName"] == "rds.force_ssl":
-                                    cluster.force_ssl = parameter["ParameterValue"]
                                 if (
-                                    parameter["ParameterName"]
-                                    == "require_secure_transport"
+                                    "ParameterValue" in parameter
+                                    and "ParameterName" in parameter
                                 ):
-                                    cluster.require_secure_transport = parameter[
-                                        "ParameterValue"
-                                    ]
+                                    if parameter["ParameterName"] == "rds.force_ssl":
+                                        cluster.force_ssl = parameter["ParameterValue"]
+                                    if (
+                                        parameter["ParameterName"]
+                                        == "require_secure_transport"
+                                    ):
+                                        cluster.require_secure_transport = parameter[
+                                            "ParameterValue"
+                                        ]
                     except ClientError as error:
                         if (
                             error.response["Error"]["Code"]
