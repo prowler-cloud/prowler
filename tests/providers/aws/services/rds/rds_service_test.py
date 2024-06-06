@@ -288,7 +288,39 @@ class Test_RDS_Service:
         assert rds.db_cluster_snapshots[0].region == AWS_REGION_US_EAST_1
         assert not rds.db_cluster_snapshots[0].public
 
-    # Test RDS describe db engine versions
+    # Test RDS describe db event subscriptions
+    @mock_aws
+    def test__describe_db_event_subscriptions_(self):
+        # RDS client for this test class
+        conn = client("rds", region_name=AWS_REGION_US_EAST_1)
+        conn.create_db_instance(
+            DBInstanceIdentifier="db-primary-1",
+            AllocatedStorage=10,
+            Engine="postgres",
+            DBName="staging-postgres",
+            DBInstanceClass="db.m1.small",
+        )
+        conn.create_event_subscription(
+            SubscriptionName="TestSub",
+            SnsTopicArn=f"arn:aws:sns:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:test",
+            SourceType="db-security-group",
+            Enabled=True,
+            Tags=[
+                {"Key": "test", "Value": "testing"},
+            ],
+        )
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        rds = RDS(aws_provider)
+        assert len(rds.db_event_subscriptions) == 1
+        assert (
+            rds.db_event_subscriptions[0].sns_topic_arn
+            == f"arn:aws:sns:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:test"
+        )
+        assert rds.db_event_subscriptions[0].enabled
+        assert rds.db_event_subscriptions[0].region == AWS_REGION_US_EAST_1
+        assert rds.db_event_subscriptions[0].source_type == "db-security-group"
+
+    # Test RDS engine version
     @mock_aws
     def test__describe_db_engine_versions__(self):
         # RDS client for this test class

@@ -20,6 +20,7 @@ class RDS(AWSService):
         self.db_engines = {}
         self.db_cluster_parameters = {}
         self.db_cluster_snapshots = []
+        self.db_event_subscriptions = []
         self.__threading_call__(self.__describe_db_instances__)
         self.__threading_call__(self.__describe_db_certificate__)
         self.__threading_call__(self.__describe_db_parameters__)
@@ -30,6 +31,14 @@ class RDS(AWSService):
         self.__threading_call__(self.__describe_db_cluster_snapshots__)
         self.__threading_call__(self.__describe_db_cluster_snapshot_attributes__)
         self.__threading_call__(self.__describe_db_engine_versions__)
+        self.__threading_call__(self.__describe_db_event_subscriptions__)
+
+    def __get_trail_arn_template__(self, region):
+        return (
+            f"arn:{self.audited_partition}:rds:{region}:{self.audited_account}:account"
+            if region
+            else f"arn:{self.audited_partition}:rds:{self.region}:{self.audited_account}:account"
+        )
 
     def __describe_db_instances__(self, regional_client):
         logger.info("RDS - Describe Instances...")
@@ -385,6 +394,61 @@ class RDS(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def __describe_db_event_subscriptions__(self, regional_client):
+        logger.info("RDS - Describe Event Subscriptions...")
+        try:
+            describe_event_subscriptions_paginator = regional_client.get_paginator(
+                "describe_event_subscriptions"
+            )
+            events_exist = False
+            for page in describe_event_subscriptions_paginator.paginate():
+                for event in page["EventSubscriptionsList"]:
+                    try:
+                        arn = f"arn:{self.audited_partition}:rds:{regional_client.region}:{self.audited_account}:es:{event['CustSubscriptionId']}"
+                        if not self.audit_resources or (
+                            is_resource_filtered(
+                                arn,
+                                self.audit_resources,
+                            )
+                        ):
+                            self.db_event_subscriptions.append(
+                                EventSubscription(
+                                    id=event["CustSubscriptionId"],
+                                    arn=arn,
+                                    sns_topic_arn=event["SnsTopicArn"],
+                                    status=event["Status"],
+                                    source_type=event["SourceType"],
+                                    source_id=event.get("SourceIdsList", []),
+                                    event_list=event.get("EventCategoriesList", []),
+                                    enabled=event["Enabled"],
+                                    region=regional_client.region,
+                                )
+                            )
+                            events_exist = True
+                    except Exception as error:
+                        logger.error(
+                            f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+            if not events_exist:
+                # No Event Subscriptions for that region
+                self.db_event_subscriptions.append(
+                    EventSubscription(
+                        id="",
+                        arn="",
+                        sns_topic_arn="",
+                        status="",
+                        source_type="",
+                        source_id=[],
+                        event_list=[],
+                        enabled=False,
+                        region=regional_client.region,
+                    )
+                )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class Certificate(BaseModel):
     id: str
@@ -469,3 +533,15 @@ class DBEngine(BaseModel):
     engine: str
     engine_versions: list[str]
     engine_description: str
+
+
+class EventSubscription(BaseModel):
+    id: str
+    arn: str
+    sns_topic_arn: str
+    status: str
+    source_type: str
+    source_id: list
+    event_list: list
+    enabled: bool
+    region: str
