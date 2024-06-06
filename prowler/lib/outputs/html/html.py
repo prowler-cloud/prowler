@@ -139,14 +139,11 @@ def fill_html(file_descriptor, finding):
         # Change the status of the finding if it's muted
         if finding.muted:
             finding.status = f"Muted({finding.status})"
+            row_class = "table-warning"
         if finding.status == "MANUAL":
             row_class = "table-info"
         elif finding.status == "FAIL":
             row_class = "table-danger"
-        elif finding.status == "WARNING":
-            row_class = "table-warning"
-        elif "Muted" in finding.status:
-            row_class = "table-secondary"
 
         file_descriptor.write(
             f"""
