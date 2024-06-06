@@ -135,10 +135,10 @@ def add_html_header(file_descriptor, provider):
 def fill_html(file_descriptor, finding):
     try:
         row_class = "p-3 mb-2 bg-success-custom"
-        finding.status = finding.status.split(".")[0]
+        finding_status = finding.status
         # Change the status of the finding if it's muted
         if finding.muted:
-            finding.status = f"MUTED ({finding.status})"
+            finding_status = f"MUTED ({finding.status})"
             row_class = "table-warning"
         if finding.status == "MANUAL":
             row_class = "table-info"
@@ -148,7 +148,7 @@ def fill_html(file_descriptor, finding):
         file_descriptor.write(
             f"""
                 <tr class="{row_class}">
-                    <td>{finding.status}</td>
+                    <td>{finding_status}</td>
                     <td>{finding.severity.split(".")[0]}</td>
                     <td>{finding.service_name}</td>
                     <td>{finding.region.lower()}</td>
