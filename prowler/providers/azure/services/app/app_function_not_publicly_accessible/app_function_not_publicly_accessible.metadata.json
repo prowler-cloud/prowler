@@ -1,0 +1,30 @@
+{
+  "Provider": "azure",
+  "CheckID": "app_function_not_publicly_accessible",
+  "CheckTitle": "Ensure Azure Functions are not publicly accessible",
+  "CheckType": [],
+  "ServiceName": "app",
+  "SubServiceName": "function",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Microsoft.Web/sites",
+  "Description": "Azure Functions should not be exposed to the public internet. Restricting access helps protect applications from potential threats and reduces the attack surface.",
+  "Risk": "Exposing Azure Functions to the public internet increases the risk of unauthorized access, data breaches, and other security threats.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/azure-functions/functions-networking-options",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/Functions/azure-function-exposed.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Review the Azure Functions security guidelines and ensure that access restrictions are in place. Use Azure Private Link and Key Vault for enhanced security.",
+      "Url": "https://learn.microsoft.com/en-us/azure/app-service/overview-access-restrictions"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
