@@ -101,5 +101,5 @@ class Cluster(BaseModel):
     arn: str
     region: str
     cache_subnet_group_id: Optional[str]
-    subnets: Optional[list]
+    subnets: list = []
     tags: Optional[list]

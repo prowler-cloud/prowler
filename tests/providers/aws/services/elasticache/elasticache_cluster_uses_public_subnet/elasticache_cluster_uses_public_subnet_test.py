@@ -58,6 +58,54 @@ class Test_elasticache_cluster_uses_public_subnet:
             result = check.execute()
             assert len(result) == 0
 
+    def test_elasticache_no_subnets(self):
+        # Mock ElastiCache Service
+        elasticache_service = MagicMock
+        elasticache_service.clusters = {}
+
+        elasticache_service.clusters[ELASTICACHE_CLUSTER_ARN] = Cluster(
+            arn=ELASTICACHE_CLUSTER_ARN,
+            name=ELASTICACHE_CLUSTER_NAME,
+            id=ELASTICACHE_CLUSTER_NAME,
+            region=AWS_REGION_US_EAST_1,
+            cache_subnet_group_id=SUBNET_GROUP_NAME,
+            tags=ELASTICACHE_CLUSTER_TAGS,
+        )
+
+        # Mock VPC Service
+        vpc_client = MagicMock
+        vpc_client.vpc_subnets = {}
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
+        ), mock.patch(
+            "prowler.providers.aws.services.elasticache.elasticache_service.ElastiCache",
+            new=elasticache_service,
+        ), mock.patch(
+            "prowler.providers.aws.services.vpc.vpc_service.VPC",
+            new=vpc_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.vpc.vpc_client.vpc_client",
+            new=vpc_client,
+        ):
+            from prowler.providers.aws.services.elasticache.elasticache_cluster_uses_public_subnet.elasticache_cluster_uses_public_subnet import (
+                elasticache_cluster_uses_public_subnet,
+            )
+
+            check = elasticache_cluster_uses_public_subnet()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == f"Cluster {ELASTICACHE_CLUSTER_NAME} is not using public subnets."
+            )
+            assert result[0].region == AWS_REGION_US_EAST_1
+            assert result[0].resource_id == ELASTICACHE_CLUSTER_NAME
+            assert result[0].resource_arn == ELASTICACHE_CLUSTER_ARN
+            assert result[0].resource_tags == ELASTICACHE_CLUSTER_TAGS
+
     def test_elasticache_clusters_using_private_subnets(self):
         # Mock ElastiCache Service
         elasticache_service = MagicMock
