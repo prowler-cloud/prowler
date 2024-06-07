@@ -106,9 +106,6 @@ def load_and_validate_config_file(provider: str, config_file_path: str) -> dict:
 
     Returns:
         dict: The configuration dictionary for the specified provider.
-
-    Raises:
-        SystemExit: If there is an error reading or parsing the configuration file.
     """
     try:
         with open(config_file_path, "r", encoding="utf-8") as f:
@@ -128,13 +125,15 @@ def load_and_validate_config_file(provider: str, config_file_path: str) -> dict:
 
     except FileNotFoundError:
         logger.error(
-            f"FileNotFoundError: The config file {config_file_path} was not found."
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
         )
     except yaml.YAMLError as error:
-        logger.error(f"YAMLError: Error parsing the YAML config file: {error}")
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+        )
     except UnicodeDecodeError as error:
         logger.error(
-            f"UnicodeDecodeError: Error decoding the file {config_file_path}: {error}"
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
         )
     except Exception as error:
         logger.error(
@@ -167,13 +166,15 @@ def load_and_validate_fixer_config_file(
 
     except FileNotFoundError:
         logger.error(
-            f"FileNotFoundError: The config file {fixer_config_file_path} was not found."
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
         )
     except yaml.YAMLError as error:
-        logger.error(f"YAMLError: Error parsing the YAML config file: {error}")
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+        )
     except UnicodeDecodeError as error:
         logger.error(
-            f"UnicodeDecodeError: Error decoding the file {fixer_config_file_path}: {error}"
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
         )
     except Exception as error:
         logger.error(

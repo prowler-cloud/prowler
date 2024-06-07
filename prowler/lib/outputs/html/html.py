@@ -198,9 +198,13 @@ def fill_html_overview_statistics(stats, output_filename, output_directory):
                 file.write(filedata)
 
     except FileNotFoundError:
-        logger.error(f"FileNotFoundError: The file {filename} was not found.")
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+        )
     except UnicodeDecodeError as error:
-        logger.error(f"UnicodeDecodeError: Error decoding the file {filename}: {error}")
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+        )
     except Exception as error:
         logger.error(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
