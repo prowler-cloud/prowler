@@ -1,6 +1,5 @@
 import os
 import pathlib
-import sys
 from datetime import datetime, timezone
 from os import getcwd
 
@@ -99,52 +98,87 @@ def check_current_version():
 
 def load_and_validate_config_file(provider: str, config_file_path: str) -> dict:
     """
-    load_and_validate_config_file reads the Prowler config file in YAML format from the default location or the file passed with the --config-file flag
+    Reads the Prowler config file in YAML format from the default location or the file passed with the --config-file flag.
+
+    Args:
+        provider (str): The provider name (e.g., 'aws', 'gcp', 'azure', 'kubernetes').
+        config_file_path (str): The path to the configuration file.
+
+    Returns:
+        dict: The configuration dictionary for the specified provider.
     """
     try:
-        with open(config_file_path) as f:
-            config = {}
+        with open(config_file_path, "r", encoding="utf-8") as f:
             config_file = yaml.safe_load(f)
 
-            # Not to introduce a breaking change we have to allow the old format config file without any provider keys
-            # and a new format with a key for each provider to include their configuration values within
-            # Check if the new format is passed
-            if (
-                "aws" in config_file
-                or "gcp" in config_file
-                or "azure" in config_file
-                or "kubernetes" in config_file
-            ):
+            # Not to introduce a breaking change, allow the old format config file without any provider keys
+            # and a new format with a key for each provider to include their configuration values within.
+            if any(key in config_file for key in ["aws", "gcp", "azure", "kubernetes"]):
                 config = config_file.get(provider, {})
             else:
                 config = config_file if config_file else {}
-                # Not to break Azure, K8s and GCP does not support neither use the old config format
+                # Not to break Azure, K8s and GCP does not support or use the old config format
                 if provider in ["azure", "gcp", "kubernetes"]:
                     config = {}
 
             return config
 
-    except Exception as error:
-        logger.critical(
+    except FileNotFoundError as error:
+        logger.error(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
         )
-        sys.exit(1)
+    except yaml.YAMLError as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+        )
+    except UnicodeDecodeError as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+        )
+    except Exception as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+        )
+
+    return {}
 
 
 def load_and_validate_fixer_config_file(
     provider: str, fixer_config_file_path: str
 ) -> dict:
     """
-    load_and_validate_fixer_config_file reads the Prowler fixer config file in YAML format from the default location or the file passed with the --fixer-config flag
+    Reads the Prowler fixer config file in YAML format from the default location or the file passed with the --fixer-config flag.
+
+    Args:
+        provider (str): The provider name (e.g., 'aws', 'gcp', 'azure', 'kubernetes').
+        fixer_config_file_path (str): The path to the fixer configuration file.
+
+    Returns:
+        dict: The fixer configuration dictionary for the specified provider.
+
+    Raises:
+        SystemExit: If there is an error reading or parsing the fixer configuration file.
     """
     try:
-        with open(fixer_config_file_path) as f:
+        with open(fixer_config_file_path, "r", encoding="utf-8") as f:
             fixer_config_file = yaml.safe_load(f)
-
             return fixer_config_file.get(provider, {})
 
-    except Exception as error:
-        logger.critical(
+    except FileNotFoundError as error:
+        logger.error(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
         )
-        sys.exit(1)
+    except yaml.YAMLError as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+        )
+    except UnicodeDecodeError as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+        )
+    except Exception as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+        )
+
+    return {}
