@@ -197,7 +197,7 @@ def fill_html_overview_statistics(stats, output_filename, output_directory):
             with open(filename, "w", encoding="utf-8") as file:
                 file.write(filedata)
 
-    except FileNotFoundError:
+    except FileNotFoundError as error:
         logger.error(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
         )

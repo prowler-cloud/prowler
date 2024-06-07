@@ -123,7 +123,7 @@ def load_and_validate_config_file(provider: str, config_file_path: str) -> dict:
 
             return config
 
-    except FileNotFoundError:
+    except FileNotFoundError as error:
         logger.error(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
         )
@@ -164,7 +164,7 @@ def load_and_validate_fixer_config_file(
             fixer_config_file = yaml.safe_load(f)
             return fixer_config_file.get(provider, {})
 
-    except FileNotFoundError:
+    except FileNotFoundError as error:
         logger.error(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
         )
