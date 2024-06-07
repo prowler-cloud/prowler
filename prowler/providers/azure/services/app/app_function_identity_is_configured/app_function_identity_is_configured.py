@@ -21,7 +21,7 @@ class app_function_identity_is_configured(Check):
 
                 if function.identity:
                     report.status = "PASS"
-                    report.status_extended = f"Function '{function.name}' has a {function.identity.type if getattr(function.identity, "type", "") else "managed"} identity enabled."
+                    report.status_extended = f"Function '{function.name}' has a {function.identity.type if getattr(function.identity, 'type', '') else 'managed'} identity enabled."
 
                 findings.append(report)
 
