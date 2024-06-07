@@ -173,33 +173,42 @@ def fill_html(file_descriptor, finding):
 def fill_html_overview_statistics(stats, output_filename, output_directory):
     try:
         filename = f"{output_directory}/{output_filename}{html_file_suffix}"
-        #  Read file
+
+        # Read file
         if path.isfile(filename):
-            with open(filename, "r") as file:
+            with open(filename, "r", encoding="utf-8") as file:
                 filedata = file.read()
 
             # Replace statistics
             # TOTAL_FINDINGS
             filedata = filedata.replace(
-                "TOTAL_FINDINGS", str(stats.get("findings_count"))
+                "TOTAL_FINDINGS", str(stats.get("findings_count", 0))
             )
             # TOTAL_RESOURCES
             filedata = filedata.replace(
-                "TOTAL_RESOURCES", str(stats.get("resources_count"))
+                "TOTAL_RESOURCES", str(stats.get("resources_count", 0))
             )
             # TOTAL_PASS
-            filedata = filedata.replace("TOTAL_PASS", str(stats.get("total_pass")))
+            filedata = filedata.replace("TOTAL_PASS", str(stats.get("total_pass", 0)))
             # TOTAL_FAIL
-            filedata = filedata.replace("TOTAL_FAIL", str(stats.get("total_fail")))
+            filedata = filedata.replace("TOTAL_FAIL", str(stats.get("total_fail", 0)))
+
             # Write file
-            with open(filename, "w") as file:
+            with open(filename, "w", encoding="utf-8") as file:
                 file.write(filedata)
 
-    except Exception as error:
-        logger.critical(
+    except FileNotFoundError as error:
+        logger.error(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
         )
-        sys.exit(1)
+    except UnicodeDecodeError as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+        )
+    except Exception as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+        )
 
 
 def add_html_footer(output_filename, output_directory):
