@@ -107,6 +107,19 @@ class App(AzureService):
                                         {},
                                     ),
                                     identity=getattr(function, "identity", None),
+                                    public_access=(
+                                        False
+                                        if getattr(
+                                            function, "public_network_access", ""
+                                        )
+                                        == "Disabled"
+                                        else True
+                                    ),
+                                    vnet_subnet_id=getattr(
+                                        function,
+                                        "virtual_network_subnet_id",
+                                        None,
+                                    ),
                                 )
                             }
                         )
@@ -171,3 +184,5 @@ class FunctionApp:
     function_keys: Dict[str, str]
     enviroment_variables: Dict[str, str]
     identity: ManagedServiceIdentity
+    public_access: bool
+    vnet_subnet_id: str

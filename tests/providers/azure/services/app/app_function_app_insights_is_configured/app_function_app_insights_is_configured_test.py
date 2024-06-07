@@ -81,6 +81,8 @@ class Test_app_function_app_insights_is_configured:
                         function_keys={},
                         enviroment_variables={},
                         identity=None,
+                        public_access=False,
+                        vnet_subnet_id=None,
                     )
                 }
             }
@@ -142,6 +144,8 @@ class Test_app_function_app_insights_is_configured:
                         function_keys={},
                         enviroment_variables={"APPINSIGHTS_INSTRUMENTATIONKEY": "1234"},
                         identity=None,
+                        public_access=False,
+                        vnet_subnet_id=None,
                     )
                 }
             }

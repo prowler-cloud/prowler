@@ -75,6 +75,8 @@ class Test_app_function_identity_has_not_admin_privileges:
                         function_keys={},
                         enviroment_variables={},
                         identity=None,
+                        public_access=False,
+                        vnet_subnet_id=None,
                     )
                 }
             }
@@ -117,6 +119,8 @@ class Test_app_function_identity_has_not_admin_privileges:
                         function_keys={},
                         enviroment_variables={},
                         identity=mock.MagicMock(principal_id="123"),
+                        public_access=False,
+                        vnet_subnet_id=None,
                     )
                 }
             }
@@ -190,6 +194,8 @@ class Test_app_function_identity_has_not_admin_privileges:
                         function_keys={},
                         enviroment_variables={},
                         identity=mock.MagicMock(principal_id="123"),
+                        public_access=False,
+                        vnet_subnet_id=None,
                     )
                 }
             }
