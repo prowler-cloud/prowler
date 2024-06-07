@@ -945,7 +945,7 @@ def filter_data(
         color_mapping_status = {
             "FAIL": fail_color,
             "PASS": pass_color,
-            "INFO": info_color,
+            "LOW": info_color,
             "MANUAL": manual_color,
             "WARNING": muted_fail_color,
             "MUTED (FAIL)": muted_fail_color,
@@ -1564,7 +1564,10 @@ def generate_table(data, index, color_mapping_severity, color_mapping_status):
                                                                 data.get(
                                                                     "FINDING_UID", ""
                                                                 )
-                                                            )
+                                                            ),
+                                                            style={
+                                                                "margin-left": "5px"
+                                                            },
                                                         ),
                                                     ],
                                                     style={"display": "flex"},
@@ -1644,28 +1647,10 @@ def generate_table(data, index, color_mapping_severity, color_mapping_status):
                                                                     "STATUS_EXTENDED",
                                                                     "",
                                                                 )
-                                                            )
-                                                        ),
-                                                    ],
-                                                    style={"display": "flex"},
-                                                ),
-                                                html.Div(
-                                                    [
-                                                        html.P(
-                                                            html.Strong(
-                                                                "Risk: ",
-                                                                style={
-                                                                    "margin-right": "5px"
-                                                                },
-                                                            )
-                                                        ),
-                                                        html.P(
-                                                            str(
-                                                                data.get(
-                                                                    "RISK",
-                                                                    "",
-                                                                )
-                                                            )
+                                                            ),
+                                                            style={
+                                                                "margin-left": "5px"
+                                                            },
                                                         ),
                                                     ],
                                                     style={"display": "flex"},
@@ -1689,7 +1674,10 @@ def generate_table(data, index, color_mapping_severity, color_mapping_status):
                                                             )
                                                         ),
                                                         html.P(
-                                                            str(data.get("RISK", ""))
+                                                            str(data.get("RISK", "")),
+                                                            style={
+                                                                "margin-left": "5px"
+                                                            },
                                                         ),
                                                     ],
                                                     style={"display": "flex"},
@@ -1744,7 +1732,10 @@ def generate_table(data, index, color_mapping_severity, color_mapping_status):
                                                                     "REMEDIATION_RECOMMENDATION_TEXT",
                                                                     "",
                                                                 )
-                                                            )
+                                                            ),
+                                                            style={
+                                                                "margin-left": "5px"
+                                                            },
                                                         ),
                                                     ],
                                                     style={"display": "flex"},
@@ -1772,7 +1763,10 @@ def generate_table(data, index, color_mapping_severity, color_mapping_status):
                                                                     "",
                                                                 )
                                                             ),
-                                                            style={"color": "#3182ce"},
+                                                            style={
+                                                                "color": "#3182ce",
+                                                                "margin-left": "5px",
+                                                            },
                                                         ),
                                                     ],
                                                     style={"display": "flex"},
