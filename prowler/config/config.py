@@ -131,16 +131,18 @@ def load_and_validate_config_file(provider: str, config_file_path: str) -> dict:
         logger.critical(
             f"FileNotFoundError: The config file {config_file_path} was not found."
         )
+        sys.exit(1)
     except yaml.YAMLError as error:
         logger.critical(f"YAMLError: Error parsing the YAML config file: {error}")
+        sys.exit(1)
     except UnicodeDecodeError as error:
         logger.critical(
             f"UnicodeDecodeError: Error decoding the file {config_file_path}: {error}"
         )
+        sys.exit(1)
     except Exception as error:
         logger.critical(f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}")
-
-    sys.exit(1)
+        sys.exit(1)
 
 
 def load_and_validate_fixer_config_file(
@@ -168,13 +170,15 @@ def load_and_validate_fixer_config_file(
         logger.critical(
             f"FileNotFoundError: The config file {fixer_config_file_path} was not found."
         )
+        sys.exit(1)
     except yaml.YAMLError as error:
         logger.critical(f"YAMLError: Error parsing the YAML config file: {error}")
+        sys.exit(1)
     except UnicodeDecodeError as error:
         logger.critical(
             f"UnicodeDecodeError: Error decoding the file {fixer_config_file_path}: {error}"
         )
+        sys.exit(1)
     except Exception as error:
         logger.critical(f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}")
-
-    sys.exit(1)
+        sys.exit(1)

@@ -195,12 +195,13 @@ def fill_html_overview_statistics(stats, output_filename, output_directory):
 
     except FileNotFoundError:
         logger.critical(f"FileNotFoundError: The file {filename} was not found.")
+        sys.exit(1)
     except UnicodeDecodeError as error:
         logger.critical(f"UnicodeDecodeError: Error decoding the file {filename}: {error}")
+        sys.exit(1)
     except Exception as error:
         logger.critical(f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}")
-    
-    sys.exit(1)
+        sys.exit(1)
 
 
 def add_html_footer(output_filename, output_directory):
