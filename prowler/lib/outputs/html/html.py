@@ -181,9 +181,13 @@ def fill_html_overview_statistics(stats, output_filename, output_directory):
 
             # Replace statistics
             # TOTAL_FINDINGS
-            filedata = filedata.replace("TOTAL_FINDINGS", str(stats.get("findings_count", 0)))
+            filedata = filedata.replace(
+                "TOTAL_FINDINGS", str(stats.get("findings_count", 0))
+            )
             # TOTAL_RESOURCES
-            filedata = filedata.replace("TOTAL_RESOURCES", str(stats.get("resources_count", 0)))
+            filedata = filedata.replace(
+                "TOTAL_RESOURCES", str(stats.get("resources_count", 0))
+            )
             # TOTAL_PASS
             filedata = filedata.replace("TOTAL_PASS", str(stats.get("total_pass", 0)))
             # TOTAL_FAIL
@@ -197,10 +201,14 @@ def fill_html_overview_statistics(stats, output_filename, output_directory):
         logger.critical(f"FileNotFoundError: The file {filename} was not found.")
         sys.exit(1)
     except UnicodeDecodeError as error:
-        logger.critical(f"UnicodeDecodeError: Error decoding the file {filename}: {error}")
+        logger.critical(
+            f"UnicodeDecodeError: Error decoding the file {filename}: {error}"
+        )
         sys.exit(1)
     except Exception as error:
-        logger.critical(f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}")
+        logger.critical(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+        )
         sys.exit(1)
 
 
