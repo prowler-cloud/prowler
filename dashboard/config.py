@@ -21,7 +21,7 @@ muted_manual_color = "#b33696"
 critical_color = "#951649"
 high_color = "#e11d48"
 medium_color = "#ee6f15"
-low_color = "#f9f5e6"
+low_color = "#fcf45d"
 informational_color = "#3274d9"
 
 # Folder output path
