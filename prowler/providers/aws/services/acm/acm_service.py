@@ -50,6 +50,7 @@ class ACM(AWSService):
                                 id=certificate["CertificateArn"].split("/")[-1],
                                 type=certificate["Type"],
                                 expiration_days=certificate_expiration_time,
+                                in_use=certificate.get("InUse", False),
                                 transparency_logging=False,
                                 region=regional_client.region,
                             )
@@ -99,5 +100,6 @@ class Certificate(BaseModel):
     type: str
     tags: Optional[list] = []
     expiration_days: int
+    in_use: bool
     transparency_logging: Optional[bool]
     region: str

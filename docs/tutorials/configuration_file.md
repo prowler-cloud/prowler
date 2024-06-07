@@ -34,6 +34,8 @@ The following list includes all the AWS checks with configurable variables that 
 | `guardduty_is_enabled`                                        | `allowlist_non_default_regions`                  | Boolean         |
 | `securityhub_enabled`                                         | `allowlist_non_default_regions`                  | Boolean         |
 | `rds_instance_backup_enabled`                                  | `check_rds_instance_replicas`      | Boolean        |
+| `acm_certificates_expiration_check`                           | `days_to_expire_threshold`                       | Integer         |
+
 ## Azure
 
 ### Configurable Checks
@@ -59,7 +61,6 @@ The following list includes all the Azure checks with configurable variables tha
 ```yaml title="config.yaml"
 # AWS Configuration
 aws:
-
   # AWS Global Configuration
   # aws.allowlist_non_default_regions --> Allowlist Failed Findings in non-default regions for GuardDuty, SecurityHub, DRS and Config
   allowlist_non_default_regions: False
@@ -72,6 +73,7 @@ aws:
 
   # AWS EC2 Configuration
   # aws.ec2_elastic_ip_shodan
+  # TODO: create common config
   shodan_api_key: null
   # aws.ec2_securitygroup_with_many_ingress_egress_rules --> by default is 50 rules
   max_security_group_rules: 50
@@ -124,24 +126,24 @@ aws:
     ]
 
   # AWS Organizations
-  # organizations_scp_check_deny_regions
-  # organizations_enabled_regions: [
-  #   'eu-central-1',
-  #   'eu-west-1',
+  # aws.organizations_scp_check_deny_regions
+  # aws.organizations_enabled_regions: [
+  #   "eu-central-1",
+  #   "eu-west-1",
   #   "us-east-1"
   # ]
   organizations_enabled_regions: []
   organizations_trusted_delegated_administrators: []
 
   # AWS ECR
-  # ecr_repositories_scan_vulnerabilities_in_latest_image
+  # aws.ecr_repositories_scan_vulnerabilities_in_latest_image
   # CRITICAL
   # HIGH
   # MEDIUM
   ecr_repository_vulnerability_minimum_severity: "MEDIUM"
 
   # AWS Trusted Advisor
-  # trustedadvisor_premium_support_plan_subscribed
+  # aws.trustedadvisor_premium_support_plan_subscribed
   verify_premium_support_plans: True
 
   # AWS RDS
@@ -149,13 +151,18 @@ aws:
   # Whether to check RDS instance replicas or not
   check_rds_instance_replicas: False
 
+  # AWS ACM Configuration
+  # aws.acm_certificates_expiration_check
+  days_to_expire_threshold: 7
+
 # Azure Configuration
 azure:
   # Azure Network Configuration
   # azure.network_public_ip_shodan
+  # TODO: create common config
   shodan_api_key: null
 
-  # Azure App Configuration
+  # Azure App Service
   # azure.app_ensure_php_version_is_latest
   php_latest_version: "8.2"
   # azure.app_ensure_python_version_is_latest
@@ -168,5 +175,35 @@ gcp:
   # GCP Compute Configuration
   # gcp.compute_public_address_shodan
   shodan_api_key: null
+
+# Kubernetes Configuration
+kubernetes:
+  # Kubernetes API Server
+  # kubernetes.apiserver_audit_log_maxbackup_set
+  audit_log_maxbackup: 10
+  # kubernetes.apiserver_audit_log_maxsize_set
+  audit_log_maxsize: 100
+  # kubernetes.apiserver_audit_log_maxage_set
+  audit_log_maxage: 30
+  # kubernetes.apiserver_strong_ciphers_only
+  apiserver_strong_ciphers:
+    [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256",
+    ]
+  # Kubelet
+  # kubernetes.kubelet_strong_ciphers_only
+  kubelet_strong_ciphers:
+    [
+      "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+      "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+      "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305",
+      "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+      "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305",
+      "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
+      "TLS_RSA_WITH_AES_256_GCM_SHA384",
+      "TLS_RSA_WITH_AES_128_GCM_SHA256",
+    ]
 
 ```
