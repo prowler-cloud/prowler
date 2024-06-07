@@ -29,19 +29,22 @@ The following list includes all the AWS checks with configurable variables that 
 | `organizations_delegated_administrators`                      | `organizations_trusted_delegated_administrators` | List of Strings |
 | `ecr_repositories_scan_vulnerabilities_in_latest_image`       | `ecr_repository_vulnerability_minimum_severity`  | String          |
 | `trustedadvisor_premium_support_plan_subscribed`              | `verify_premium_support_plans`                   | Boolean         |
-| `config_recorder_all_regions_enabled`                         | `mute_non_default_regions`                  | Boolean         |
-| `drs_job_exist`                                               | `mute_non_default_regions`                  | Boolean         |
-| `guardduty_is_enabled`                                        | `mute_non_default_regions`                  | Boolean         |
-| `securityhub_enabled`                                         | `mute_non_default_regions`                  | Boolean         |
-| `cloudtrail_threat_detection_privilege_escalation`             | `threat_detection_privilege_escalation_entropy` | Integer         |
-| `cloudtrail_threat_detection_privilege_escalation`             | `threat_detection_privilege_escalation_minutes` | Integer         |
-| `cloudtrail_threat_detection_privilege_escalation`             | `threat_detection_privilege_escalation_actions` | List of Strings         |
-| `cloudtrail_threat_detection_enumeration`                      | `threat_detection_enumeration_entropy`      | Integer         |
-| `cloudtrail_threat_detection_enumeration`                      | `threat_detection_enumeration_minutes`      | Integer         |
-| `cloudtrail_threat_detection_enumeration`                      | `threat_detection_enumeration_actions`      | List of Strings         |
-| `rds_instance_backup_enabled`                                  | `check_rds_instance_replicas`      | Boolean        |
-| `ec2_securitygroup_allow_ingress_from_internet_to_any_port`    | `ec2_allowed_interface_types`      | List of Strings        |
-| `ec2_securitygroup_allow_ingress_from_internet_to_any_port`    | `ec2_allowed_instance_owners`      | List of Strings        |
+| `config_recorder_all_regions_enabled`                         | `mute_non_default_regions`                       | Boolean         |
+| `drs_job_exist`                                               | `mute_non_default_regions`                       | Boolean         |
+| `guardduty_is_enabled`                                        | `mute_non_default_regions`                       | Boolean         |
+| `securityhub_enabled`                                         | `mute_non_default_regions`                       | Boolean         |
+| `cloudtrail_threat_detection_privilege_escalation`            | `threat_detection_privilege_escalation_entropy`  | Integer         |
+| `cloudtrail_threat_detection_privilege_escalation`            | `threat_detection_privilege_escalation_minutes`  | Integer         |
+| `cloudtrail_threat_detection_privilege_escalation`            | `threat_detection_privilege_escalation_actions`  | List of Strings |
+| `cloudtrail_threat_detection_enumeration`                     | `threat_detection_enumeration_entropy`           | Integer         |
+| `cloudtrail_threat_detection_enumeration`                     | `threat_detection_enumeration_minutes`           | Integer         |
+| `cloudtrail_threat_detection_enumeration`                     | `threat_detection_enumeration_actions`           | List of Strings |
+| `rds_instance_backup_enabled`                                 | `check_rds_instance_replicas`                    | Boolean         |
+| `ec2_securitygroup_allow_ingress_from_internet_to_any_port`   | `ec2_allowed_interface_types`                    | List of Strings |
+| `ec2_securitygroup_allow_ingress_from_internet_to_any_port`   | `ec2_allowed_instance_owners`                    | List of Strings |
+| `acm_certificates_expiration_check`                           | `days_to_expire_threshold`                       | Integer         |
+
+
 ## Azure
 
 ### Configurable Checks
