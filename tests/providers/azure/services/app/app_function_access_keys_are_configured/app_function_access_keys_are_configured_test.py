@@ -74,6 +74,8 @@ class Test_app_function_access_keys_are_configured:
                         function_keys={},
                         enviroment_variables={},
                         identity=None,
+                        public_access=False,
+                        vnet_subnet_id=None,
                     )
                 }
             }
@@ -122,6 +124,8 @@ class Test_app_function_access_keys_are_configured:
                         },
                         enviroment_variables={},
                         identity=None,
+                        public_access=False,
+                        vnet_subnet_id=None,
                     )
                 }
             }

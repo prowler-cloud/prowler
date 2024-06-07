@@ -74,6 +74,8 @@ class Test_app_function_runtime_is_the_latest:
                         function_keys={},
                         enviroment_variables={"FUNCTIONS_EXTENSION_VERSION": "~4"},
                         identity=None,
+                        public_access=False,
+                        vnet_subnet_id=None,
                     )
                 }
             }
@@ -116,6 +118,8 @@ class Test_app_function_runtime_is_the_latest:
                         function_keys={},
                         enviroment_variables={"FUNCTIONS_EXTENSION_VERSION": "2"},
                         identity=None,
+                        public_access=False,
+                        vnet_subnet_id=None,
                     )
                 }
             }
