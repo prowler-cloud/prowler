@@ -58,7 +58,7 @@ def add_html_header(file_descriptor, provider):
             <a href="{html_logo_url}"><img class="float-left card-img-left mt-4 mr-4 ml-4"
                         src={square_logo_img}
                         alt="prowler-logo"
-                        style="width: 300px; height:auto;"/></a>
+                        style="width: 15rem; height:auto;"/></a>
             <div class="card">
             <div class="card-header">
                 Report Information
@@ -135,18 +135,20 @@ def add_html_header(file_descriptor, provider):
 def fill_html(file_descriptor, finding):
     try:
         row_class = "p-3 mb-2 bg-success-custom"
-        finding.status = finding.status.split(".")[0]
-        if finding.status == "INFO":
+        finding_status = finding.status.split(".")[0]
+        # Change the status of the finding if it's muted
+        if finding.muted:
+            finding_status = f"MUTED ({finding_status})"
+            row_class = "table-warning"
+        if finding.status == "MANUAL":
             row_class = "table-info"
         elif finding.status == "FAIL":
             row_class = "table-danger"
-        elif finding.status == "WARNING":
-            row_class = "table-warning"
 
         file_descriptor.write(
             f"""
                 <tr class="{row_class}">
-                    <td>{finding.status}</td>
+                    <td>{finding_status}</td>
                     <td>{finding.severity.split(".")[0]}</td>
                     <td>{finding.service_name}</td>
                     <td>{finding.region.lower()}</td>
@@ -171,33 +173,42 @@ def fill_html(file_descriptor, finding):
 def fill_html_overview_statistics(stats, output_filename, output_directory):
     try:
         filename = f"{output_directory}/{output_filename}{html_file_suffix}"
-        #  Read file
+
+        # Read file
         if path.isfile(filename):
-            with open(filename, "r") as file:
+            with open(filename, "r", encoding="utf-8") as file:
                 filedata = file.read()
 
             # Replace statistics
             # TOTAL_FINDINGS
             filedata = filedata.replace(
-                "TOTAL_FINDINGS", str(stats.get("findings_count"))
+                "TOTAL_FINDINGS", str(stats.get("findings_count", 0))
             )
             # TOTAL_RESOURCES
             filedata = filedata.replace(
-                "TOTAL_RESOURCES", str(stats.get("resources_count"))
+                "TOTAL_RESOURCES", str(stats.get("resources_count", 0))
             )
             # TOTAL_PASS
-            filedata = filedata.replace("TOTAL_PASS", str(stats.get("total_pass")))
+            filedata = filedata.replace("TOTAL_PASS", str(stats.get("total_pass", 0)))
             # TOTAL_FAIL
-            filedata = filedata.replace("TOTAL_FAIL", str(stats.get("total_fail")))
+            filedata = filedata.replace("TOTAL_FAIL", str(stats.get("total_fail", 0)))
+
             # Write file
-            with open(filename, "w") as file:
+            with open(filename, "w", encoding="utf-8") as file:
                 file.write(filedata)
 
-    except Exception as error:
-        logger.critical(
+    except FileNotFoundError as error:
+        logger.error(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
         )
-        sys.exit(1)
+    except UnicodeDecodeError as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+        )
+    except Exception as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+        )
 
 
 def add_html_footer(output_filename, output_directory):

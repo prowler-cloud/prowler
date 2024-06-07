@@ -125,7 +125,7 @@ The JSON-OCSF output format implements the [Detection Finding](https://schema.oc
         "product": {
             "name": "Prowler",
             "vendor_name": "Prowler",
-            "version": "4.2.1"
+            "version": "4.2.3"
         },
         "version": "1.1.0"
     },
@@ -333,7 +333,7 @@ The following is the mapping between the native JSON and the Detection Finding f
 | --- |---|
 | AssessmentStartTime | event_time |
 | FindingUniqueId | finding_info.uid |
-| Provider | cloud.account.type |
+| Provider | cloud.provider |
 | CheckID | metadata.event_code |
 | CheckTitle | finding_info.title |
 | CheckType | unmapped.check_type |

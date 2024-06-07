@@ -60,23 +60,28 @@ def get_check_compliance_frameworks_in_input(
 ):
     """get_check_compliance_frameworks_in_input returns a list of Compliance for the given check if the compliance framework is present in the input compliance to execute"""
     check_compliances = []
-    if bulk_checks_metadata and bulk_checks_metadata[check_id]:
-        for compliance in bulk_checks_metadata[check_id].Compliance:
-            compliance_name = ""
-            if compliance.Version:
-                compliance_name = (
-                    compliance.Framework.lower()
-                    + "_"
-                    + compliance.Version.lower()
-                    + "_"
-                    + compliance.Provider.lower()
-                )
-            else:
-                compliance_name = (
-                    compliance.Framework.lower() + "_" + compliance.Provider.lower()
-                )
-            if compliance_name.replace("-", "_") in input_compliance_frameworks:
-                check_compliances.append(compliance)
+    try:
+        if bulk_checks_metadata and bulk_checks_metadata.get(check_id):
+            for compliance in bulk_checks_metadata[check_id].Compliance:
+                compliance_name = ""
+                if compliance.Version:
+                    compliance_name = (
+                        compliance.Framework.lower()
+                        + "_"
+                        + compliance.Version.lower()
+                        + "_"
+                        + compliance.Provider.lower()
+                    )
+                else:
+                    compliance_name = (
+                        compliance.Framework.lower() + "_" + compliance.Provider.lower()
+                    )
+                if compliance_name.replace("-", "_") in input_compliance_frameworks:
+                    check_compliances.append(compliance)
+    except Exception as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+        )
     return check_compliances
 
 
@@ -221,7 +226,7 @@ def get_check_compliance(finding, provider_type, output_options) -> dict:
                         check_compliance[compliance_fw].append(requirement.Id)
         return check_compliance
     except Exception as error:
-        logger.critical(
+        logger.error(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
         )
-        sys.exit(1)
+        return {}

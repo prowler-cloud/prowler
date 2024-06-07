@@ -1,3 +1,4 @@
+import logging
 import os
 import pathlib
 from unittest import mock
@@ -24,6 +25,45 @@ def mock_prowler_get_latest_release(_, **kwargs):
     return response
 
 
+old_config_aws = {
+    "shodan_api_key": None,
+    "max_security_group_rules": 50,
+    "max_ec2_instance_age_in_days": 180,
+    "ec2_allowed_interface_types": ["api_gateway_managed", "vpc_endpoint"],
+    "ec2_allowed_instance_owners": ["amazon-elb"],
+    "trusted_account_ids": [],
+    "log_group_retention_days": 365,
+    "max_idle_disconnect_timeout_in_seconds": 600,
+    "max_disconnect_timeout_in_seconds": 300,
+    "max_session_duration_seconds": 36000,
+    "obsolete_lambda_runtimes": [
+        "java8",
+        "go1.x",
+        "provided",
+        "python3.6",
+        "python2.7",
+        "python3.7",
+        "nodejs4.3",
+        "nodejs4.3-edge",
+        "nodejs6.10",
+        "nodejs",
+        "nodejs8.10",
+        "nodejs10.x",
+        "nodejs12.x",
+        "nodejs14.x",
+        "dotnet5.0",
+        "dotnetcore1.0",
+        "dotnetcore2.0",
+        "dotnetcore2.1",
+        "dotnetcore3.1",
+        "ruby2.5",
+        "ruby2.7",
+    ],
+    "organizations_enabled_regions": [],
+    "organizations_trusted_delegated_administrators": [],
+    "check_rds_instance_replicas": False,
+    "days_to_expire_threshold": 7,
+}
 config_aws = {
     "mute_non_default_regions": False,
     "max_unused_access_keys_days": 45,
@@ -215,9 +255,38 @@ config_aws = {
         "Search",
     ],
     "check_rds_instance_replicas": False,
+    "days_to_expire_threshold": 7,
 }
 
-config_azure = {"shodan_api_key": None}
+config_azure = {
+    "shodan_api_key": None,
+    "php_latest_version": "8.2",
+    "python_latest_version": "3.12",
+    "java_latest_version": "17",
+}
+
+config_gcp = {"shodan_api_key": None}
+
+config_kubernetes = {
+    "audit_log_maxbackup": 10,
+    "audit_log_maxsize": 100,
+    "audit_log_maxage": 30,
+    "apiserver_strong_ciphers": [
+        "TLS_AES_128_GCM_SHA256",
+        "TLS_AES_256_GCM_SHA384",
+        "TLS_CHACHA20_POLY1305_SHA256",
+    ],
+    "kubelet_strong_ciphers": [
+        "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+        "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+        "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305",
+        "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+        "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305",
+        "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
+        "TLS_RSA_WITH_AES_256_GCM_SHA384",
+        "TLS_RSA_WITH_AES_128_GCM_SHA256",
+    ],
+}
 
 
 class Test_Config:
@@ -282,7 +351,7 @@ class Test_Config:
         path = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
         config_test_file = f"{path}/fixtures/config.yaml"
         provider = "aws"
-
+        print(load_and_validate_config_file(provider, config_test_file))
         assert load_and_validate_config_file(provider, config_test_file) == config_aws
 
     def test_load_and_validate_config_file_gcp(self):
@@ -290,14 +359,17 @@ class Test_Config:
         config_test_file = f"{path}/fixtures/config.yaml"
         provider = "gcp"
 
-        assert load_and_validate_config_file(provider, config_test_file) is None
+        assert load_and_validate_config_file(provider, config_test_file) == config_gcp
 
     def test_load_and_validate_config_file_kubernetes(self):
         path = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
         config_test_file = f"{path}/fixtures/config.yaml"
         provider = "kubernetes"
-
-        assert load_and_validate_config_file(provider, config_test_file) is None
+        print(load_and_validate_config_file(provider, config_test_file))
+        assert (
+            load_and_validate_config_file(provider, config_test_file)
+            == config_kubernetes
+        )
 
     def test_load_and_validate_config_file_azure(self):
         path = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
@@ -309,18 +381,22 @@ class Test_Config:
     def test_load_and_validate_config_file_old_format(self):
         path = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
         config_test_file = f"{path}/fixtures/config_old.yaml"
-
-        assert load_and_validate_config_file("aws", config_test_file) == config_aws
+        print(load_and_validate_config_file("aws", config_test_file))
+        assert load_and_validate_config_file("aws", config_test_file) == old_config_aws
         assert load_and_validate_config_file("gcp", config_test_file) == {}
         assert load_and_validate_config_file("azure", config_test_file) == {}
         assert load_and_validate_config_file("kubernetes", config_test_file) == {}
 
-    def test_load_and_validate_config_file_invalid_config_file_path(self):
+    def test_load_and_validate_config_file_invalid_config_file_path(self, caplog):
         provider = "aws"
         config_file_path = "invalid/path/to/fixer_config.yaml"
 
-        with pytest.raises(SystemExit):
-            load_and_validate_config_file(provider, config_file_path)
+        with caplog.at_level(logging.ERROR):
+            result = load_and_validate_config_file(provider, config_file_path)
+            assert "FileNotFoundError" in caplog.text
+            assert result == {}
+
+        assert pytest is not None
 
     def test_load_and_validate_fixer_config_aws(self):
         path = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
@@ -350,9 +426,13 @@ class Test_Config:
 
         assert load_and_validate_fixer_config_file(provider, config_test_file) == {}
 
-    def test_load_and_validate_fixer_config_invalid_fixer_config_path(self):
+    def test_load_and_validate_fixer_config_invalid_fixer_config_path(self, caplog):
         provider = "aws"
         fixer_config_path = "invalid/path/to/fixer_config.yaml"
 
-        with pytest.raises(SystemExit):
-            load_and_validate_fixer_config_file(provider, fixer_config_path)
+        with caplog.at_level(logging.ERROR):
+            result = load_and_validate_fixer_config_file(provider, fixer_config_path)
+            assert "FileNotFoundError" in caplog.text
+            assert result == {}
+
+        assert pytest is not None

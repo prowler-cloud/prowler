@@ -41,6 +41,7 @@ class Test_acm_certificates_transparency_logs_enabled:
                 type=certificate_type,
                 expiration_days=365,
                 transparency_logging=True,
+                in_use=True,
                 region=AWS_REGION,
             )
         ]
@@ -83,6 +84,7 @@ class Test_acm_certificates_transparency_logs_enabled:
                 type=certificate_type,
                 expiration_days=365,
                 transparency_logging=False,
+                in_use=True,
                 region=AWS_REGION,
             )
         ]
