@@ -100,19 +100,19 @@ def check_current_version():
 def load_and_validate_config_file(provider: str, config_file_path: str) -> dict:
     """
     Reads the Prowler config file in YAML format from the default location or the file passed with the --config-file flag.
-    
+
     Args:
         provider (str): The provider name (e.g., 'aws', 'gcp', 'azure', 'kubernetes').
         config_file_path (str): The path to the configuration file.
-    
+
     Returns:
         dict: The configuration dictionary for the specified provider.
-    
+
     Raises:
         SystemExit: If there is an error reading or parsing the configuration file.
     """
     try:
-        with open(config_file_path, 'r', encoding='utf-8') as f:
+        with open(config_file_path, "r", encoding="utf-8") as f:
             config_file = yaml.safe_load(f)
 
             # Not to introduce a breaking change, allow the old format config file without any provider keys
@@ -128,43 +128,53 @@ def load_and_validate_config_file(provider: str, config_file_path: str) -> dict:
             return config
 
     except FileNotFoundError:
-        logger.critical(f"FileNotFoundError: The config file {config_file_path} was not found.")
-    except yaml.YAMLError as e:
-        logger.critical(f"YAMLError: Error parsing the YAML config file: {e}")
-    except UnicodeDecodeError as e:
-        logger.critical(f"UnicodeDecodeError: Error decoding the file {config_file_path}: {e}")
-    except Exception as e:
-        logger.critical(f"{e.__class__.__name__}[{e.__traceback__.tb_lineno}] -- {e}")
-    
+        logger.critical(
+            f"FileNotFoundError: The config file {config_file_path} was not found."
+        )
+    except yaml.YAMLError as error:
+        logger.critical(f"YAMLError: Error parsing the YAML config file: {error}")
+    except UnicodeDecodeError as error:
+        logger.critical(
+            f"UnicodeDecodeError: Error decoding the file {config_file_path}: {error}"
+        )
+    except Exception as error:
+        logger.critical(f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}")
+
     sys.exit(1)
 
 
-def load_and_validate_fixer_config_file(provider: str, fixer_config_file_path: str) -> dict:
+def load_and_validate_fixer_config_file(
+    provider: str, fixer_config_file_path: str
+) -> dict:
     """
     Reads the Prowler fixer config file in YAML format from the default location or the file passed with the --fixer-config flag.
-    
+
     Args:
         provider (str): The provider name (e.g., 'aws', 'gcp', 'azure', 'kubernetes').
         fixer_config_file_path (str): The path to the fixer configuration file.
-    
+
     Returns:
         dict: The fixer configuration dictionary for the specified provider.
-    
+
     Raises:
         SystemExit: If there is an error reading or parsing the fixer configuration file.
     """
     try:
-        with open(fixer_config_file_path, 'r', encoding='utf-8') as f:
+        with open(fixer_config_file_path, "r", encoding="utf-8") as f:
             fixer_config_file = yaml.safe_load(f)
             return fixer_config_file.get(provider, {})
 
     except FileNotFoundError:
-        logger.critical(f"FileNotFoundError: The config file {fixer_config_file_path} was not found.")
-    except yaml.YAMLError as e:
-        logger.critical(f"YAMLError: Error parsing the YAML config file: {e}")
-    except UnicodeDecodeError as e:
-        logger.critical(f"UnicodeDecodeError: Error decoding the file {fixer_config_file_path}: {e}")
-    except Exception as e:
-        logger.critical(f"{e.__class__.__name__}[{e.__traceback__.tb_lineno}] -- {e}")
-    
+        logger.critical(
+            f"FileNotFoundError: The config file {fixer_config_file_path} was not found."
+        )
+    except yaml.YAMLError as error:
+        logger.critical(f"YAMLError: Error parsing the YAML config file: {error}")
+    except UnicodeDecodeError as error:
+        logger.critical(
+            f"UnicodeDecodeError: Error decoding the file {fixer_config_file_path}: {error}"
+        )
+    except Exception as error:
+        logger.critical(f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}")
+
     sys.exit(1)

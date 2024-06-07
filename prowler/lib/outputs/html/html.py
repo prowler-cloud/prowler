@@ -195,10 +195,10 @@ def fill_html_overview_statistics(stats, output_filename, output_directory):
 
     except FileNotFoundError:
         logger.critical(f"FileNotFoundError: The file {filename} was not found.")
-    except UnicodeDecodeError as e:
-        logger.critical(f"UnicodeDecodeError: Error decoding the file {filename}: {e}")
-    except Exception as e:
-        logger.critical(f"{e.__class__.__name__}[{e.__traceback__.tb_lineno}] -- {e}")
+    except UnicodeDecodeError as error:
+        logger.critical(f"UnicodeDecodeError: Error decoding the file {filename}: {error}")
+    except Exception as error:
+        logger.critical(f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}")
     
     sys.exit(1)
 
