@@ -138,7 +138,7 @@ def fill_html(file_descriptor, finding):
         finding_status = finding.status.split(".")[0]
         # Change the status of the finding if it's muted
         if finding.muted:
-            finding_status = f"MUTED ({finding.status})"
+            finding_status = f"MUTED ({finding_status})"
             row_class = "table-warning"
         if finding.status == "MANUAL":
             row_class = "table-info"
