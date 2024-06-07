@@ -13,7 +13,7 @@ prowler <provider> --scan-unused-services
 ### AWS
 #### ACM
 You can have certificates in ACM that is not in use by any AWS resource.
-Prowler will check if every certificate is going to expire soon, if this certificate is not in use by default it is not going to be check if it is expired, is gonna expire soon or it is good.
+Prowler will check if every certificate is going to expire soon, if this certificate is not in use by default it is not going to be check if it is expired, is going to expire soon or it is good.
 
 - `acm_certificates_expiration_check`
 
