@@ -173,7 +173,7 @@ def fill_html(file_descriptor, finding):
 def fill_html_overview_statistics(stats, output_filename, output_directory):
     try:
         filename = f"{output_directory}/{output_filename}{html_file_suffix}"
-        
+
         # Read file
         if path.isfile(filename):
             with open(filename, "r", encoding="utf-8") as file:
@@ -188,7 +188,7 @@ def fill_html_overview_statistics(stats, output_filename, output_directory):
             filedata = filedata.replace("TOTAL_PASS", str(stats.get("total_pass", 0)))
             # TOTAL_FAIL
             filedata = filedata.replace("TOTAL_FAIL", str(stats.get("total_fail", 0)))
-            
+
             # Write file
             with open(filename, "w", encoding="utf-8") as file:
                 file.write(filedata)
