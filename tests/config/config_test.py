@@ -1,3 +1,4 @@
+import logging
 import os
 import pathlib
 from unittest import mock
@@ -163,12 +164,14 @@ class Test_Config:
         assert load_and_validate_config_file("azure", config_test_file) == {}
         assert load_and_validate_config_file("kubernetes", config_test_file) == {}
 
-    def test_load_and_validate_config_file_invalid_config_file_path(self):
+    def test_load_and_validate_config_file_invalid_config_file_path(caplog):
         provider = "aws"
-        config_file_path = "invalid/path/to/config.yaml"
+        config_file_path = "invalid/path/to/fixer_config.yaml"
 
-        config = load_and_validate_config_file(provider, config_file_path)
-        assert config == {}
+        with caplog.at_level(logging.ERROR):
+            result = load_and_validate_config_file(provider, config_file_path)
+            assert "FileNotFoundError" in caplog.text
+            assert result == {}
 
     def test_load_and_validate_fixer_config_aws(self):
         path = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
@@ -198,9 +201,11 @@ class Test_Config:
 
         assert load_and_validate_fixer_config_file(provider, config_test_file) == {}
 
-    def test_load_and_validate_fixer_config_invalid_fixer_config_path(self):
+    def test_load_and_validate_fixer_config_invalid_fixer_config_path(caplog):
         provider = "aws"
         fixer_config_path = "invalid/path/to/fixer_config.yaml"
 
-        fixer_config = load_and_validate_fixer_config_file(provider, fixer_config_path)
-        assert fixer_config == {}
+        with caplog.at_level(logging.ERROR):
+            result = load_and_validate_fixer_config_file(provider, fixer_config_path)
+            assert "FileNotFoundError" in caplog.text
+            assert result == {}
