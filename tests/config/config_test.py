@@ -2,7 +2,6 @@ import os
 import pathlib
 from unittest import mock
 
-import pytest
 from requests import Response
 
 from prowler.config.config import (
@@ -166,10 +165,10 @@ class Test_Config:
 
     def test_load_and_validate_config_file_invalid_config_file_path(self):
         provider = "aws"
-        config_file_path = "invalid/path/to/fixer_config.yaml"
+        config_file_path = "invalid/path/to/config.yaml"
 
-        with pytest.raises(SystemExit):
-            load_and_validate_config_file(provider, config_file_path)
+        config = load_and_validate_config_file(provider, config_file_path)
+        assert config == {}
 
     def test_load_and_validate_fixer_config_aws(self):
         path = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
@@ -203,5 +202,5 @@ class Test_Config:
         provider = "aws"
         fixer_config_path = "invalid/path/to/fixer_config.yaml"
 
-        with pytest.raises(SystemExit):
-            load_and_validate_fixer_config_file(provider, fixer_config_path)
+        fixer_config = load_and_validate_fixer_config_file(provider, fixer_config_path)
+        assert fixer_config == {}
