@@ -141,7 +141,9 @@ def load_and_validate_config_file(provider: str, config_file_path: str) -> dict:
         )
         sys.exit(1)
     except Exception as error:
-        logger.critical(f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}")
+        logger.critical(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+        )
         sys.exit(1)
 
 
@@ -180,5 +182,7 @@ def load_and_validate_fixer_config_file(
         )
         sys.exit(1)
     except Exception as error:
-        logger.critical(f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}")
+        logger.critical(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+        )
         sys.exit(1)
