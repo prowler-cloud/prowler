@@ -126,9 +126,9 @@ def parse_checks_from_file(input_file: str, provider: str) -> set:
 
 
 # Load checks from custom folder
-def parse_checks_from_folder(provider, input_folder: str) -> int:
+def parse_checks_from_folder(provider, input_folder: str) -> set:
     try:
-        imported_checks = 0
+        custom_checks = set()
         # Check if input folder is a S3 URI
         if provider.type == "aws" and re.search(
             "^s3://([^/]+)/(.*?([^/]+))/$", input_folder
@@ -156,8 +156,8 @@ def parse_checks_from_folder(provider, input_folder: str) -> int:
                     if os.path.exists(prowler_module):
                         shutil.rmtree(prowler_module)
                     shutil.copytree(check_module, prowler_module)
-                    imported_checks += 1
-        return imported_checks
+                    custom_checks.add(check.name)
+        return custom_checks
     except Exception as error:
         logger.critical(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
