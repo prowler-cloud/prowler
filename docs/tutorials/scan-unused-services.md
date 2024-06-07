@@ -11,6 +11,12 @@ prowler <provider> --scan-unused-services
 
 ## Services that are ignored
 ### AWS
+#### ACM
+You can have certificates in ACM that is not in use by any AWS resource.
+Prowler will check if every certificate is going to expire soon, if this certificate is not in use by default it is not going to be check if it is expired, is going to expire soon or it is good.
+
+- `acm_certificates_expiration_check`
+
 #### Athena
 When you create an AWS Account, Athena will create a default primary workgroup for you.
 Prowler will check if that workgroup is enabled and if it is being used by checking if there were queries in the last 45 days.
