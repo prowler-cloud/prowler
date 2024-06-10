@@ -274,16 +274,21 @@ class IAM(AWSService):
                     if not self.audit_resources or (
                         is_resource_filtered(user["Arn"], self.audit_resources)
                     ):
-                        if "PasswordLastUsed" not in user:
-                            users.append(User(name=user["UserName"], arn=user["Arn"]))
-                        else:
-                            users.append(
-                                User(
-                                    name=user["UserName"],
-                                    arn=user["Arn"],
-                                    password_last_used=user["PasswordLastUsed"],
-                                )
+                        try:
+                            user_login_profile = self.client.get_login_profile(
+                                UserName=user["UserName"]
                             )
+                        except self.client.exceptions.NoSuchEntityException:
+                            user_login_profile = None
+
+                        users.append(
+                            User(
+                                name=user["UserName"],
+                                arn=user["Arn"],
+                                password_last_used=user.get("PasswordLastUsed", None),
+                                console_access=True if user_login_profile else False,
+                            )
+                        )
         except Exception as error:
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -935,6 +940,7 @@ class User(BaseModel):
     arn: str
     mfa_devices: list[MFADevice] = []
     password_last_used: Optional[datetime]
+    console_access: Optional[bool]
     attached_policies: list[dict] = []
     inline_policies: list[str] = []
     tags: Optional[list] = []
