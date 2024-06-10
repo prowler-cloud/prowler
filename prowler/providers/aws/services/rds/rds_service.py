@@ -81,6 +81,7 @@ class RDS(AWSService):
                                         for item in instance["DBParameterGroups"]
                                     ],
                                     multi_az=instance["MultiAZ"],
+                                    username=instance["MasterUsername"],
                                     security_groups=[
                                         sg["VpcSecurityGroupId"]
                                         for sg in instance["VpcSecurityGroups"]
@@ -242,6 +243,7 @@ class RDS(AWSService):
                                             "DBClusterParameterGroup"
                                         ],
                                         multi_az=cluster["MultiAZ"],
+                                        username=cluster["MasterUsername"],
                                         region=regional_client.region,
                                         tags=cluster.get("TagList", []),
                                     )
@@ -476,6 +478,7 @@ class DBInstance(BaseModel):
     auto_minor_version_upgrade: bool
     enhanced_monitoring_arn: Optional[str]
     multi_az: bool
+    username: Optional[str]
     parameter_groups: list[str] = []
     parameters: list[dict] = []
     security_groups: list[str] = []
@@ -501,6 +504,7 @@ class DBCluster(BaseModel):
     deletion_protection: bool
     auto_minor_version_upgrade: bool
     multi_az: bool
+    username: Optional[str]
     parameter_group: str
     force_ssl: str = "0"
     require_secure_transport: str = "OFF"
