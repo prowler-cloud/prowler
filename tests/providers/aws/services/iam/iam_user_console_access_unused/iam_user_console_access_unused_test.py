@@ -12,13 +12,15 @@ AWS_REGION = "us-east-1"
 
 class Test_iam_user_console_access_unused_test:
     @mock_aws
-    def test_iam_user_logged_45_days(self):
+    def test_iam_user_logged_2_days_ago(self):
         password_last_used = (
             datetime.datetime.now() - datetime.timedelta(days=2)
         ).strftime("%Y-%m-%d %H:%M:%S+00:00")
         iam_client = client("iam")
         user = "test-user"
         arn = iam_client.create_user(UserName=user)["User"]["Arn"]
+        # Enable console access
+        iam_client.create_login_profile(UserName=user, Password="Test1234")
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
@@ -59,6 +61,7 @@ class Test_iam_user_console_access_unused_test:
         iam_client = client("iam")
         user = "test-user"
         arn = iam_client.create_user(UserName=user)["User"]["Arn"]
+        iam_client.create_login_profile(UserName=user, Password="Test1234")
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
@@ -123,7 +126,7 @@ class Test_iam_user_console_access_unused_test:
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == f"User {user} does not have a console password or is unused."
+                    == f"User {user} does not have a console access enabled or is unused."
                 )
                 assert result[0].resource_id == user
                 assert result[0].resource_arn == arn
