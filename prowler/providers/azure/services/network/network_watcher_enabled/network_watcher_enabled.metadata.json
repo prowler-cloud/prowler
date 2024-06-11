@@ -15,12 +15,12 @@
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/Network/enable-network-watcher.html#",
+      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/Network/enable-network-watcher.html",
       "Terraform": ""
     },
     "Recommendation": {
       "Text": "Opting out of Network Watcher automatic enablement is a permanent change. Once you opt-out you cannot opt-in without contacting support.",
-      "Url": "https://docs.azure.cn/zh-cn/cli/network/watcher?view=azure-cli-latest#az_network_watcher_list"
+      "Url": "https://learn.microsoft.com/en-us/security/benchmark/azure/security-controls-v2-logging-threat-detection#lt-3-enable-logging-for-azure-network-activities"
     }
   },
   "Categories": [],
