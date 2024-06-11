@@ -5,6 +5,7 @@ from argparse import RawTextHelpFormatter
 from dashboard.lib.arguments.arguments import init_dashboard_parser
 from prowler.config.config import (
     available_compliance_frameworks,
+    available_output_formats,
     check_current_version,
     default_config_file_path,
     default_fixer_config_file_path,
@@ -147,7 +148,7 @@ Detailed documentation at https://docs.prowler.com
             nargs="+",
             help="Output modes, by default csv and json-oscf are saved. When using AWS Security Hub integration, json-asff output is also saved.",
             default=["csv", "json-ocsf", "html"],
-            choices=["csv", "json-asff", "json-ocsf", "html"],
+            choices=available_output_formats,
         )
         common_outputs_parser.add_argument(
             "--output-filename",

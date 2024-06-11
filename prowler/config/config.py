@@ -64,6 +64,7 @@ default_config_file_path = (
 default_fixer_config_file_path = (
     f"{pathlib.Path(os.path.dirname(os.path.realpath(__file__)))}/fixer_config.yaml"
 )
+available_output_formats = ["csv", "json-asff", "json-ocsf", "html"]
 
 
 def get_default_mute_file_path(provider: str):
