@@ -127,8 +127,8 @@ class Test_Neptune_Service:
             DBClusterIdentifier=NEPTUNE_CLUSTER_NAME,
             Port=123,
             Tags=NEPTUNE_CLUSTER_TAGS,
-            StorageEncrypted=False,
-            DeletionProtection=True | False,
+            EnableIAMDatabaseAuthentication=False,
+            DeletionProtection=False,
         )["DBCluster"]
 
         cluster_arn = cluster["DBClusterArn"]
@@ -143,6 +143,12 @@ class Test_Neptune_Service:
             arn=cluster_arn,
             name=NEPTUNE_CLUSTER_NAME,
             id=cluster_id,
+            backup_retention_period=1,
+            encrypted=True,
+            kms_key="default_kms_key_id",
+            multi_az=False,
+            iam_auth=False,
+            deletion_protection=False,
             region=AWS_REGION_US_EAST_1,
             db_subnet_group_id=SUBNET_GROUP_NAME,
             subnets=[SUBNET_1, SUBNET_2],
