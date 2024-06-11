@@ -350,7 +350,6 @@ class Test_Config:
         path = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
         config_test_file = f"{path}/fixtures/config.yaml"
         provider = "aws"
-        print(load_and_validate_config_file(provider, config_test_file))
         assert load_and_validate_config_file(provider, config_test_file) == config_aws
 
     def test_load_and_validate_config_file_gcp(self):
@@ -364,7 +363,6 @@ class Test_Config:
         path = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
         config_test_file = f"{path}/fixtures/config.yaml"
         provider = "kubernetes"
-        print(load_and_validate_config_file(provider, config_test_file))
         assert (
             load_and_validate_config_file(provider, config_test_file)
             == config_kubernetes
@@ -380,7 +378,6 @@ class Test_Config:
     def test_load_and_validate_config_file_old_format(self):
         path = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
         config_test_file = f"{path}/fixtures/config_old.yaml"
-        print(load_and_validate_config_file("aws", config_test_file))
         assert load_and_validate_config_file("aws", config_test_file) == old_config_aws
         assert load_and_validate_config_file("gcp", config_test_file) == {}
         assert load_and_validate_config_file("azure", config_test_file) == {}
