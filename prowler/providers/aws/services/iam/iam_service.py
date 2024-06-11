@@ -280,6 +280,11 @@ class IAM(AWSService):
                             )
                         except self.client.exceptions.NoSuchEntityException:
                             user_login_profile = None
+                        except Exception as error:
+                            user_login_profile = None
+                            logger.error(
+                                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                            )
 
                         users.append(
                             User(
