@@ -1249,6 +1249,15 @@
         ]
       }
     },
+    "bcm-data-exports": {
+      "regions": {
+        "aws": [
+          "us-east-1"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
     "bedrock": {
       "regions": {
         "aws": [
@@ -9279,7 +9288,10 @@
           "us-west-2"
         ],
         "aws-cn": [],
-        "aws-us-gov": []
+        "aws-us-gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
       }
     },
     "serverlessrepo": {
