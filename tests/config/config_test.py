@@ -3,7 +3,6 @@ import os
 import pathlib
 from unittest import mock
 
-import pytest
 from requests import Response
 
 from prowler.config.config import (
@@ -396,8 +395,6 @@ class Test_Config:
             assert "FileNotFoundError" in caplog.text
             assert result == {}
 
-        assert pytest is not None
-
     def test_load_and_validate_fixer_config_aws(self):
         path = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
         config_test_file = f"{path}/fixtures/fixer_config.yaml"
@@ -434,5 +431,3 @@ class Test_Config:
             result = load_and_validate_fixer_config_file(provider, fixer_config_path)
             assert "FileNotFoundError" in caplog.text
             assert result == {}
-
-        assert pytest is not None
