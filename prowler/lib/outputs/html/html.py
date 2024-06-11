@@ -12,6 +12,7 @@ from prowler.config.config import (
     timestamp,
 )
 from prowler.lib.logger import logger
+from prowler.lib.outputs.common_models import FindingOutput
 from prowler.lib.outputs.utils import parse_html_string, unroll_dict
 from prowler.lib.utils.utils import open_file
 
@@ -133,10 +134,10 @@ def add_html_header(file_descriptor, provider):
         sys.exit(1)
 
 
-def fill_html(file_descriptor, finding):
+def fill_html(file_descriptor, finding: FindingOutput):
     try:
         row_class = "p-3 mb-2 bg-success-custom"
-        finding_status = finding.status.split(".")[0]
+        finding_status = finding.status.value
         # Change the status of the finding if it's muted
         if finding.muted:
             finding_status = f"MUTED ({finding_status})"
@@ -150,7 +151,7 @@ def fill_html(file_descriptor, finding):
             f"""
                 <tr class="{row_class}">
                     <td>{finding_status}</td>
-                    <td>{finding.severity.split(".")[0]}</td>
+                    <td>{finding.severity.value}</td>
                     <td>{finding.service_name}</td>
                     <td>{finding.region.lower()}</td>
                     <td>{finding.check_id.replace("_", "<wbr />_")}</td>
