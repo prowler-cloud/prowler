@@ -1,7 +1,7 @@
 {
   "Provider": "azure",
   "CheckID": "network_watcher_enabled",
-  "CheckTitle": "Ensure that Network Watcher is 'Enabled'",
+  "CheckTitle": "Ensure that Network Watcher is 'Enabled' for all locations in the Azure subscription",
   "CheckType": [],
   "ServiceName": "network",
   "SubServiceName": "",
