@@ -4,6 +4,7 @@ import sys
 from os import path
 
 from prowler.config.config import (
+    enconding_format_utf_8,
     html_file_suffix,
     html_logo_url,
     prowler_version,
@@ -176,7 +177,7 @@ def fill_html_overview_statistics(stats, output_filename, output_directory):
 
         # Read file
         if path.isfile(filename):
-            with open(filename, "r", encoding="utf-8") as file:
+            with open(filename, "r", encoding=enconding_format_utf_8) as file:
                 filedata = file.read()
 
             # Replace statistics
@@ -194,7 +195,7 @@ def fill_html_overview_statistics(stats, output_filename, output_directory):
             filedata = filedata.replace("TOTAL_FAIL", str(stats.get("total_fail", 0)))
 
             # Write file
-            with open(filename, "w", encoding="utf-8") as file:
+            with open(filename, "w", encoding=enconding_format_utf_8) as file:
                 file.write(filedata)
 
     except FileNotFoundError as error:
