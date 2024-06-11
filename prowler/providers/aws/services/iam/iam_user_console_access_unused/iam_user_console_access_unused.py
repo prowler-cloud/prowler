@@ -31,7 +31,7 @@ class iam_user_console_access_unused(Check):
                     report.status_extended = f"User {user.name} has logged in to the console in the past {maximum_expiration_days} days ({time_since_insertion.days} days)."
             else:
                 report.status = "PASS"
-                report.status_extended = f"User {user.name} does not have a console access enabled or is unused."
+                report.status_extended = f"User {user.name} does not have console access enabled or is unused."
 
             findings.append(report)
         return findings

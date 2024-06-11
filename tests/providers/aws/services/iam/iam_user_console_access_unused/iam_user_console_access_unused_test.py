@@ -119,14 +119,14 @@ class Test_iam_user_console_access_unused_test:
                 )
 
                 service_client.users[0].password_last_used = ""
-                # raise Exception
+
                 check = iam_user_console_access_unused()
                 result = check.execute()
                 assert len(result) == 1
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == f"User {user} does not have a console access enabled or is unused."
+                    == f"User {user} does not have console access enabled or is unused."
                 )
                 assert result[0].resource_id == user
                 assert result[0].resource_arn == arn
