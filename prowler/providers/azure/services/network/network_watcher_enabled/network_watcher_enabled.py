@@ -18,10 +18,10 @@ class network_watcher_enabled(Check):
 
             if missing_locations:
                 report.status = "FAIL"
-                report.status_extended = f"Network Watcher is not enabled for the following locations in subscription '{subscription}': {', '.join(missing_locations)}"
+                report.status_extended = f"Network Watcher is not enabled for the following locations in subscription '{subscription}': {', '.join(missing_locations)}."
             else:
                 report.status = "PASS"
-                report.status_extended = f"Network Watcher is enabled for all locations in subscription '{subscription}'"
+                report.status_extended = f"Network Watcher is enabled for all locations in subscription '{subscription}'."
 
             findings.append(report)
 
