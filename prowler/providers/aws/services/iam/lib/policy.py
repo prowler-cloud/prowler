@@ -68,3 +68,46 @@ def is_policy_public(policy: dict) -> bool:
                     ) and "Condition" not in statement:
                         return True
     return False
+
+
+def get_policy_actions(policy: dict) -> tuple:
+    """
+    get_policy_actions extracts the actions from a policy.
+    Args:
+        policy (dict): The policy to extract the actions from.
+    Returns:
+        tuple: A tuple containing the allowed actions, denied actions, and denied not actions.
+    """
+    allowed_actions = set()
+    denied_actions = set()
+    denied_not_actions = set()
+
+    if policy.document:
+        statements = policy.document.get("Statement", [])
+        if not isinstance(statements, list):
+            statements = [statements]
+
+        for statement in statements:
+            effect = statement.get("Effect")
+            actions = statement.get("Action")
+            not_actions = statement.get("NotAction")
+
+            if effect == "Allow" and actions:
+                if isinstance(actions, str):
+                    allowed_actions.add(actions)
+                elif isinstance(actions, list):
+                    allowed_actions.update(actions)
+
+            if effect == "Deny" and actions:
+                if isinstance(actions, str):
+                    denied_actions.add(actions)
+                elif isinstance(actions, list):
+                    denied_actions.update(actions)
+
+            if effect == "Deny" and not_actions:
+                if isinstance(not_actions, str):
+                    denied_not_actions.add(not_actions)
+                elif isinstance(not_actions, list):
+                    denied_not_actions.update(not_actions)
+
+    return allowed_actions, denied_actions, denied_not_actions
