@@ -125,7 +125,7 @@ The JSON-OCSF output format implements the [Detection Finding](https://schema.oc
         "product": {
             "name": "Prowler",
             "vendor_name": "Prowler",
-            "version": "4.2.3"
+            "version": "4.2.4"
         },
         "version": "1.1.0"
     },
