@@ -1,4 +1,5 @@
 import json
+import time
 from enum import Enum
 from typing import Optional
 
@@ -145,6 +146,7 @@ class SSM(AWSService):
                         id=resource_id,
                         region=regional_client.region,
                     )
+                time.sleep(0.1)
 
         except Exception as error:
             logger.error(
