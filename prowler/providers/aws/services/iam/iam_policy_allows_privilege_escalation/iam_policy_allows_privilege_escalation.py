@@ -1,5 +1,8 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.iam.iam_client import iam_client
+from prowler.providers.aws.services.iam.lib.privilege_escalation import (
+    check_privilege_escalation,
+)
 
 # Does the tool analyze both users and roles, or just one or the other? --> Everything using AttachementCount.
 # Does the tool take a principal-centric or policy-centric approach? --> Policy-centric approach.
@@ -19,81 +22,8 @@ from prowler.providers.aws.services.iam.iam_client import iam_client
 
 class iam_policy_allows_privilege_escalation(Check):
     def execute(self) -> Check_Report_AWS:
-        privilege_escalation_policies_combination = {
-            "OverPermissiveIAM": {"iam:*"},
-            "IAMPut": {"iam:Put*"},
-            "CreatePolicyVersion": {"iam:CreatePolicyVersion"},
-            "SetDefaultPolicyVersion": {"iam:SetDefaultPolicyVersion"},
-            "iam:PassRole": {"iam:PassRole"},
-            "PassRole+EC2": {
-                "iam:PassRole",
-                "ec2:RunInstances",
-            },
-            "PassRole+CreateLambda+Invoke": {
-                "iam:PassRole",
-                "lambda:CreateFunction",
-                "lambda:InvokeFunction",
-            },
-            "PassRole+CreateLambda+ExistingDynamo": {
-                "iam:PassRole",
-                "lambda:CreateFunction",
-                "lambda:CreateEventSourceMapping",
-            },
-            "PassRole+CreateLambda+NewDynamo": {
-                "iam:PassRole",
-                "lambda:CreateFunction",
-                "lambda:CreateEventSourceMapping",
-                "dynamodb:CreateTable",
-                "dynamodb:PutItem",
-            },
-            "PassRole+GlueEndpoint": {
-                "iam:PassRole",
-                "glue:CreateDevEndpoint",
-                "glue:GetDevEndpoint",
-            },
-            "PassRole+GlueEndpoints": {
-                "iam:PassRole",
-                "glue:CreateDevEndpoint",
-                "glue:GetDevEndpoints",
-            },
-            "PassRole+CloudFormation": {
-                "iam:PassRole",
-                "cloudformation:CreateStack",
-                "cloudformation:DescribeStacks",
-            },
-            "PassRole+DataPipeline": {
-                "iam:PassRole",
-                "datapipeline:CreatePipeline",
-                "datapipeline:PutPipelineDefinition",
-                "datapipeline:ActivatePipeline",
-            },
-            "GlueUpdateDevEndpoint": {"glue:UpdateDevEndpoint"},
-            "GlueUpdateDevEndpoints": {"glue:UpdateDevEndpoints"},
-            "lambda:UpdateFunctionCode": {"lambda:UpdateFunctionCode"},
-            "iam:CreateAccessKey": {"iam:CreateAccessKey"},
-            "iam:CreateLoginProfile": {"iam:CreateLoginProfile"},
-            "iam:UpdateLoginProfile": {"iam:UpdateLoginProfile"},
-            "iam:AttachUserPolicy": {"iam:AttachUserPolicy"},
-            "iam:AttachGroupPolicy": {"iam:AttachGroupPolicy"},
-            "iam:AttachRolePolicy": {"iam:AttachRolePolicy"},
-            "AssumeRole+AttachRolePolicy": {"sts:AssumeRole", "iam:AttachRolePolicy"},
-            "iam:PutGroupPolicy": {"iam:PutGroupPolicy"},
-            "iam:PutRolePolicy": {"iam:PutRolePolicy"},
-            "AssumeRole+PutRolePolicy": {"sts:AssumeRole", "iam:PutRolePolicy"},
-            "iam:PutUserPolicy": {"iam:PutUserPolicy"},
-            "iam:AddUserToGroup": {"iam:AddUserToGroup"},
-            "iam:UpdateAssumeRolePolicy": {"iam:UpdateAssumeRolePolicy"},
-            "AssumeRole+UpdateAssumeRolePolicy": {
-                "sts:AssumeRole",
-                "iam:UpdateAssumeRolePolicy",
-            },
-            # TO-DO: We have to handle AssumeRole just if the resource is * and without conditions
-            # "sts:AssumeRole": {"sts:AssumeRole"},
-        }
-
         findings = []
 
-        # Iterate over all the IAM "Customer Managed" policies
         for policy in iam_client.policies:
             if policy.type == "Custom":
                 report = Check_Report_AWS(self.metadata())
@@ -104,105 +34,15 @@ class iam_policy_allows_privilege_escalation(Check):
                 report.status = "PASS"
                 report.status_extended = f"Custom Policy {report.resource_arn} does not allow privilege escalation."
 
-                # List of policy actions
-                allowed_actions = set()
-                denied_actions = set()
-                denied_not_actions = set()
+                policies_affected = check_privilege_escalation(policy)
 
-                # Recover all policy actions
-                if policy.document:
-                    if not isinstance(policy.document["Statement"], list):
-                        policy_statements = [policy.document["Statement"]]
-                    else:
-                        policy_statements = policy.document["Statement"]
-                    for statements in policy_statements:
-                        # Recover allowed actions
-                        if statements["Effect"] == "Allow":
-                            if "Action" in statements:
-                                if type(statements["Action"]) is str:
-                                    allowed_actions.add(statements["Action"])
-                                if type(statements["Action"]) is list:
-                                    allowed_actions.update(statements["Action"])
+                if policies_affected:
+                    report.status = "FAIL"
+                    report.status_extended = (
+                        f"Custom Policy {report.resource_arn} allows privilege escalation using the following actions: {policies_affected}".rstrip()
+                        + "."
+                    )
 
-                        # Recover denied actions
-                        if statements["Effect"] == "Deny":
-                            if "Action" in statements:
-                                if type(statements["Action"]) is str:
-                                    denied_actions.add(statements["Action"])
-                                if type(statements["Action"]) is list:
-                                    denied_actions.update(statements["Action"])
-
-                            if "NotAction" in statements:
-                                if type(statements["NotAction"]) is str:
-                                    denied_not_actions.add(statements["NotAction"])
-                                if type(statements["NotAction"]) is list:
-                                    denied_not_actions.update(statements["NotAction"])
-
-                    # First, we need to perform a left join with ALLOWED_ACTIONS and DENIED_ACTIONS
-                    left_actions = allowed_actions.difference(denied_actions)
-                    # Then, we need to find the DENIED_NOT_ACTIONS in LEFT_ACTIONS
-                    if denied_not_actions:
-                        privileged_actions = left_actions.intersection(
-                            denied_not_actions
-                        )
-                    # If there is no Denied Not Actions
-                    else:
-                        privileged_actions = left_actions
-
-                    # Store all the action's combinations
-                    policies_combination = set()
-
-                    for values in privilege_escalation_policies_combination.values():
-                        for val in values:
-                            val_set = set()
-                            val_set.add(val)
-                            # Look for specific api:action
-                            if privileged_actions.intersection(val_set) == val_set:
-                                policies_combination.add(val)
-                            # Look for api:*
-                            else:
-                                for permission in privileged_actions:
-                                    # Here we have to handle if the api-action is admin, so "*"
-                                    api_action = permission.split(":")
-                                    # len() == 2, so api:action
-                                    if len(api_action) == 2:
-                                        api = api_action[0]
-                                        action = api_action[1]
-                                        # Add permissions if the API is present
-                                        if action == "*":
-                                            val_api = val.split(":")[0]
-                                            if api == val_api:
-                                                policies_combination.add(val)
-
-                                    # len() == 1, so *
-                                    elif len(api_action) == 1:
-                                        api = api_action[0]
-                                        # Add permissions if the API is present
-                                        if api == "*":
-                                            policies_combination.add(val)
-
-                    # Check all policies combinations and see if matchs with some combo key
-                    combos = set()
-                    for (
-                        key,
-                        values,
-                    ) in privilege_escalation_policies_combination.items():
-                        intersection = policies_combination.intersection(values)
-                        if intersection == values:
-                            combos.add(key)
-
-                    if len(combos) != 0:
-                        report.status = "FAIL"
-                        policies_affected = ""
-                        for key in combos:
-                            policies_affected += (
-                                str(privilege_escalation_policies_combination[key])
-                                + " "
-                            )
-
-                        report.status_extended = (
-                            f"Custom Policy {report.resource_arn} allows privilege escalation using the following actions: {policies_affected}".rstrip()
-                            + "."
-                        )
                 findings.append(report)
+
         return findings
