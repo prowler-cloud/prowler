@@ -74,7 +74,7 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler-clo
 pip install prowler
 prowler -v
 ```
-More details at [https://docs.prowler.com](https://docs.prowler.com/projects/prowler-open-source/en/latest/)
+>More details at [https://docs.prowler.com](https://docs.prowler.com/projects/prowler-open-source/en/latest/)
 
 ## Containers
 
@@ -102,8 +102,7 @@ poetry shell
 poetry install
 python prowler.py -v
 ```
-???+ note
-  If you want to clone Prowler from Windows, use `git config core.longpaths true` to allow long file paths.
+> If you want to clone Prowler from Windows, use `git config core.longpaths true` to allow long file paths.
 # 📐✏️ High level architecture
 
 You can run Prowler from your workstation, a Kubernetes Job, a Google Compute Engine, an Azure VM, an EC2 instance, Fargate or any other container, CloudShell and many more.
