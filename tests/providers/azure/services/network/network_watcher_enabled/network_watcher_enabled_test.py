@@ -73,7 +73,7 @@ class Test_network_watcher_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Network Watcher is not enabled for all locations in subscription '{AZURE_SUBSCRIPTION_NAME}'."
+                == f"Network Watcher is not enabled for the following locations in subscription '{AZURE_SUBSCRIPTION_NAME}': location."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_NAME
             assert result[0].resource_name == network_watcher_name
