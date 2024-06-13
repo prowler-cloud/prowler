@@ -2,6 +2,7 @@ import botocore
 from mock import patch
 
 from prowler.providers.aws.services.documentdb.documentdb_service import (
+    DBCluster,
     DocumentDB,
     Instance,
 )
@@ -16,6 +17,8 @@ DOC_DB_INSTANCE_NAME = "test-db"
 DOC_DB_INSTANCE_ARN = (
     f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:db:{DOC_DB_INSTANCE_NAME}"
 )
+DOC_DB_CLUSTER_NAME = "test-cluster"
+DOC_DB_CLUSTER_ARN = f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:cluster:{DOC_DB_CLUSTER_NAME}"
 DOC_DB_ENGINE_VERSION = "5.0.0"
 
 # Mocking Access Analyzer Calls
@@ -45,7 +48,7 @@ def mock_make_api_call(self, operation_name, kwargs):
                     "DBClusterIdentifier": DOC_DB_CLUSTER_ID,
                     "StorageEncrypted": False,
                     "DbiResourceId": "string",
-                    "CACertificateIdentifier": "string",
+                    "CACertificateIdentifier": "rds-ca-2015",
                     "CopyTagsToSnapshot": True | False,
                     "PromotionTier": 123,
                     "DBInstanceArn": DOC_DB_INSTANCE_ARN,
@@ -54,7 +57,26 @@ def mock_make_api_call(self, operation_name, kwargs):
         }
     if operation_name == "ListTagsForResource":
         return {"TagList": [{"Key": "environment", "Value": "test"}]}
-
+    if operation_name == "DescribeDBClusters":
+        return {
+            "DBClusters": [
+                {
+                    "DBClusterIdentifier": DOC_DB_CLUSTER_ID,
+                    "DBInstanceIdentifier": DOC_DB_CLUSTER_NAME,
+                    "DBInstanceClass": "string",
+                    "Engine": "docdb",
+                    "Status": "available",
+                    "BackupRetentionPeriod": 1,
+                    "StorageEncrypted": False,
+                    "EnabledCloudwatchLogsExports": [],
+                    "DBClusterParameterGroupName": "test",
+                    "DeletionProtection": True,
+                    "MultiAZ": True,
+                    "DBClusterParameterGroup": "default.docdb3.6",
+                    "DBClusterArn": DOC_DB_CLUSTER_ARN,
+                },
+            ]
+        }
     return make_api_call(self, operation_name, kwargs)
 
 
@@ -113,5 +135,26 @@ class Test_DocumentDB_Service:
                 cluster_id=DOC_DB_CLUSTER_ID,
                 region=AWS_REGION_US_EAST_1,
                 tags=[{"Key": "environment", "Value": "test"}],
+            )
+        }
+
+    # Test DocumentDB Describe DB Clusters
+    def test_describe_db_clusters(self):
+        aws_provider = set_mocked_aws_provider()
+        docdb = DocumentDB(aws_provider)
+        assert docdb.db_clusters == {
+            DOC_DB_CLUSTER_ARN: DBCluster(
+                id=DOC_DB_CLUSTER_NAME,
+                arn=DOC_DB_CLUSTER_ARN,
+                engine="docdb",
+                status="available",
+                backup_retention_period=1,
+                encrypted=False,
+                cloudwatch_logs=[],
+                multi_az=True,
+                parameter_group="default.docdb3.6",
+                deletion_protection=True,
+                region=AWS_REGION_US_EAST_1,
+                tags=[],
             )
         }
