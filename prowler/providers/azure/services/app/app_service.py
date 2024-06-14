@@ -89,6 +89,11 @@ class App(AzureService):
                             name=function.name,
                         )  # Need to add role 'Logic App Contributor' to the service principal to get the host keys or add to the reader role the permission 'Microsoft.Web/sites/host/listkeys'
 
+                        function_config = client.web_apps.get_configuration(
+                            resource_group_name=function.resource_group,
+                            name=function.name,
+                        )
+
                         functions[subscription_name].update(
                             {
                                 function.id: FunctionApp(
@@ -119,6 +124,9 @@ class App(AzureService):
                                         function,
                                         "virtual_network_subnet_id",
                                         None,
+                                    ),
+                                    ftps_state=getattr(
+                                        function_config, "ftps_state", ""
                                     ),
                                 )
                             }
@@ -186,3 +194,4 @@ class FunctionApp:
     identity: ManagedServiceIdentity
     public_access: bool
     vnet_subnet_id: str
+    ftps_state: str
