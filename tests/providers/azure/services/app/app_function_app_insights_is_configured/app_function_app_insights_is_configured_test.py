@@ -83,6 +83,7 @@ class Test_app_function_app_insights_is_configured:
                         identity=None,
                         public_access=False,
                         vnet_subnet_id=None,
+                        ftps_state="AllAllowed",
                     )
                 }
             }
@@ -146,6 +147,7 @@ class Test_app_function_app_insights_is_configured:
                         identity=None,
                         public_access=False,
                         vnet_subnet_id=None,
+                        ftps_state="AllAllowed",
                     )
                 }
             }

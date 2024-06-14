@@ -76,6 +76,7 @@ class Test_app_function_vnet_integration_enabled:
                         identity=None,
                         public_access=True,
                         vnet_subnet_id="vnet_subnet_id",
+                        ftps_state="FtpsOnly",
                     )
                 }
             }
@@ -120,6 +121,7 @@ class Test_app_function_vnet_integration_enabled:
                         identity=None,
                         public_access=True,
                         vnet_subnet_id=None,
+                        ftps_state="AllAllowed",
                     )
                 }
             }

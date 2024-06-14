@@ -76,6 +76,7 @@ class Test_app_function_access_keys_are_configured:
                         identity=None,
                         public_access=False,
                         vnet_subnet_id=None,
+                        ftps_state="AllAllowed",
                     )
                 }
             }
@@ -126,6 +127,7 @@ class Test_app_function_access_keys_are_configured:
                         identity=None,
                         public_access=False,
                         vnet_subnet_id=None,
+                        ftps_state="AllAllowed",
                     )
                 }
             }

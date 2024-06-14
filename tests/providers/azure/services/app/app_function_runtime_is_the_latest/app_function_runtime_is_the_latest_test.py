@@ -76,6 +76,7 @@ class Test_app_function_runtime_is_the_latest:
                         identity=None,
                         public_access=False,
                         vnet_subnet_id=None,
+                        ftps_state="AllAllowed",
                     )
                 }
             }
@@ -120,6 +121,7 @@ class Test_app_function_runtime_is_the_latest:
                         identity=None,
                         public_access=False,
                         vnet_subnet_id=None,
+                        ftps_state="AllAllowed",
                     )
                 }
             }

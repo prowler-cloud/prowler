@@ -76,6 +76,7 @@ class Test_app_function_identity_is_configured:
                         identity=None,
                         public_access=False,
                         vnet_subnet_id=None,
+                        ftps_state="AllAllowed",
                     )
                 }
             }
@@ -121,6 +122,7 @@ class Test_app_function_identity_is_configured:
                         identity=mock.MagicMock(type="SystemAssigned"),
                         public_access=False,
                         vnet_subnet_id=None,
+                        ftps_state="AllAllowed",
                     )
                 }
             }
