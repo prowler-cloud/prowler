@@ -319,7 +319,7 @@ Each Prowler check has metadata associated which is stored at the same level of 
 For the Remediation Code we use the following knowledge base to fill it:
 
 - Official documentation for the provider
-- https://docs.bridgecrew.io
+- https://docs.prowler.com/checks/checks-index
 - https://www.trendmicro.com/cloudoneconformity
 - https://github.com/cloudmatos/matos/tree/master/remediations
 
