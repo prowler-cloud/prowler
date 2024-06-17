@@ -28,6 +28,7 @@ from prowler.lib.mutelist.mutelist import (
 )
 from prowler.lib.utils.utils import open_file, parse_json_file, print_boxes
 from prowler.providers.aws.config import (
+    AWS_REGION_US_EAST_1,
     AWS_STS_GLOBAL_ENDPOINT_REGION,
     BOTO3_USER_AGENT_EXTRA,
     ROLE_SESSION_NAME,
@@ -144,6 +145,7 @@ class AwsProvider(Provider):
                 input_mfa,
                 input_session_duration,
                 input_role_session_name,
+                sts_region,
             )
             # Assume the IAM Role
             logger.info(f"Assuming role: {assumed_role_information.role_arn.arn}")
@@ -188,6 +190,7 @@ class AwsProvider(Provider):
                 input_mfa,
                 input_session_duration,
                 input_role_session_name,
+                sts_region,
             )
             # Assume the Organizations IAM Role
             logger.info(
@@ -213,11 +216,6 @@ class AwsProvider(Provider):
             logger.info(
                 "Generated new session for to get the AWS Organizations metadata"
             )
-
-            # TODO: Do we need to modify the identity here? I think not since it is not used
-            # self._identity.account = assumed_role.info.role_arn.account_id
-            # self._identity.partition = assumed_role.info.role_arn.partition
-            # self._identity.account_arn = f"arn:{self._identity.partition}:iam::{assumed_role.info.role_arn.account_id}:root"
 
         self._organizations_metadata = self.get_organizations_info(
             aws_organizations_session, self._identity.account
@@ -404,10 +402,9 @@ class AwsProvider(Provider):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    # TODO: This can be moved to another class since it doesn't need self
-    def get_profile_region(self, session: Session):
-        # TODO: read "us-east-1" from another place
-        profile_region = "us-east-1"
+    @staticmethod
+    def get_profile_region(session: Session):
+        profile_region = AWS_REGION_US_EAST_1
         if session.region_name:
             profile_region = session.region_name
 
@@ -424,7 +421,7 @@ class AwsProvider(Provider):
         logger.info(f"Original AWS Caller Identity ARN: {caller_identity.arn}")
 
         partition = parse_iam_credentials_arn(caller_identity.arn.arn).partition
-
+        print(partition)
         return AWSIdentityInfo(
             account=caller_identity.account,
             account_arn=f"arn:{partition}:iam::{caller_identity.account}:root",
@@ -437,7 +434,10 @@ class AwsProvider(Provider):
         )
 
     def setup_session(
-        self, input_mfa: bool, input_profile: str, input_role: str = None
+        self,
+        input_mfa: bool,
+        input_profile: str,
+        input_role: str = None,
     ) -> Session:
         try:
             logger.info("Creating original session ...")
@@ -479,6 +479,7 @@ class AwsProvider(Provider):
         input_mfa: str,
         session_duration: int,
         role_session_name: str,
+        sts_region: str = AWS_STS_GLOBAL_ENDPOINT_REGION,
     ) -> AWSAssumeRoleInfo:
         """
         set_assumed_role_info returns a AWSAssumeRoleInfo object
@@ -490,6 +491,7 @@ class AwsProvider(Provider):
             external_id=input_external_id,
             mfa_enabled=input_mfa,
             role_session_name=role_session_name,
+            sts_region=sts_region,
         )
 
     def setup_assumed_session(
@@ -823,8 +825,6 @@ class AwsProvider(Provider):
         self,
         session: Session,
         assumed_role_info: AWSAssumeRoleInfo,
-        # TODO: remove I think
-        # sts_endpoint_region: str = None,
     ) -> AWSCredentials:
         """
         assume_role assumes the IAM roles passed with the given session and returns AWSCredentials
@@ -850,8 +850,7 @@ class AwsProvider(Provider):
                 mfa_info = self.__input_role_mfa_token_and_code__()
                 assume_role_arguments["SerialNumber"] = mfa_info.arn
                 assume_role_arguments["TokenCode"] = mfa_info.totp
-
-            sts_client = create_sts_session(session, AWS_STS_GLOBAL_ENDPOINT_REGION)
+            sts_client = create_sts_session(session, assumed_role_info.sts_region)
             assumed_credentials = sts_client.assume_role(**assume_role_arguments)
             # Convert the UTC datetime object to your local timezone
             credentials_expiration_local_time = (
@@ -998,7 +997,7 @@ def get_aws_region_for_sts(session_region: str, input_regions: set[str]) -> str:
 
 # TODO: This can be moved to another class since it doesn't need self
 def create_sts_session(
-    session: session.Session, aws_region: str
+    session: session.Session, aws_region: str = AWS_STS_GLOBAL_ENDPOINT_REGION
 ) -> session.Session.client:
     """
     Create an STS session client.
