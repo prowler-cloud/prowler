@@ -1,4 +1,17 @@
-from prowler.providers.aws.services.iam.lib.policy import get_policy_actions
+# Does the tool analyze both users and roles, or just one or the other? --> Everything using AttachementCount.
+# Does the tool take a principal-centric or policy-centric approach? --> Policy-centric approach.
+# Does the tool handle resource constraints? --> We don't check if the policy affects all resources or not, we check everything.
+# Does the tool consider the permissions of service roles? --> Just checks policies.
+# Does the tool handle transitive privesc paths (i.e., attack chains)? --> Not yet.
+# Does the tool handle the DENY effect as expected? --> Yes, it checks DENY's statements with Action and NotAction.
+# Does the tool handle NotAction as expected? --> Yes
+# Does the tool handle Condition constraints? --> Not yet.
+# Does the tool handle service control policy (SCP) restrictions? --> No, SCP are within Organizations AWS API.
+
+# Based on:
+# - https://bishopfox.com/blog/privilege-escalation-in-aws
+# - https://github.com/RhinoSecurityLabs/Security-Research/blob/master/tools/aws-pentest-tools/aws_escalate.py
+# - https://rhinosecuritylabs.com/aws/aws-privilege-escalation-methods-mitigation/
 
 privilege_escalation_policies_combination = {
     "OverPermissiveIAM": {"iam:*"},
@@ -141,7 +154,44 @@ def check_privilege_escalation(policy: dict) -> str:
     policies_affected = ""
 
     if policy:
-        allowed_actions, denied_actions, denied_not_actions = get_policy_actions(policy)
+        allowed_actions = set()
+        denied_actions = set()
+        denied_not_actions = set()
+
+        if policy.document:
+            statements = policy.document.get("Statement", [])
+            if not isinstance(statements, list):
+                statements = [statements]
+
+            for statement in statements:
+                effect = statement.get("Effect")
+                actions = statement.get("Action")
+                not_actions = statement.get("NotAction")
+
+                if effect == "Allow" and actions:
+                    if isinstance(actions, str):
+                        allowed_actions.add(actions)
+                    elif isinstance(actions, list):
+                        allowed_actions.update(actions)
+
+                if effect == "Deny" and actions:
+                    if isinstance(actions, str):
+                        denied_actions.add(actions)
+                    elif isinstance(actions, list):
+                        denied_actions.update(actions)
+
+                if effect == "Allow" and not_actions:
+                    if isinstance(not_actions, str):
+                        denied_not_actions.add(not_actions)
+                    elif isinstance(not_actions, list):
+                        denied_not_actions.update(not_actions)
+
+                if effect == "Deny" and not_actions:
+                    if isinstance(not_actions, str):
+                        denied_not_actions.add(not_actions)
+                    elif isinstance(not_actions, list):
+                        denied_not_actions.update(not_actions)
+
         policies_combination = find_escalation_combinations(
             allowed_actions, denied_actions, denied_not_actions
         )
