@@ -47,10 +47,15 @@ class awslambda_function_not_directly_publicly_accessible_via_elbv2(Check):
                                             listen_port = listener.port
                                             break
 
-                            if listen_port:
+                            #changed this to not equal to none, because I got a port as 0
+                            if listen_port != None:
+                                safe_sgs = []
                                 # Check for lb security groups in every sg
                                 for sg in ec2_client.security_groups:
-                                    if sg.id in lb.security_groups:
+                                    if sg.id in lb.security_groups or sg.id in function.security_groups: #i added sg.id in function.security_groups because 
+                                                                                                            #there could be a case where the lamda has a 
+                                                                                                            #different sg than the load balancer but still one of the 
+                                                                                                            #sg's could restrict public access
                                         for rule in sg.ingress_rules:
                                             # Check if some listener is open in the range of the lambda function
                                             if check_security_group(
@@ -59,9 +64,17 @@ class awslambda_function_not_directly_publicly_accessible_via_elbv2(Check):
                                                 ports=[listen_port],
                                                 any_address=True,
                                             ):
-                                                report.status = "FAIL"
-                                                report.status_extended = f"Lambda function '{function.name}' is publicly accesible through an Internet facing Load Balancer '{lb.dns}'."
+                                                safe_sgs.append(False) # i added this in the case where a function or load balancer has multiple sg's
                                                 break
+                                            else:
+                                                safe_sgs.append(True)
+                                # i added this to check if number of sg's are greater than 0 or if the sg is internet exposed
+                                if len(safe_sgs) == 0:
+                                    report.status = "FAIL"
+                                    report.status_extended = f"Lambda function '{function.name}' is publicly accesible through an Internet facing Load Balancer '{lb.dns}'."
+                                elif not any(safe_sgs):
+                                    report.status = "FAIL"
+                                    report.status_extended = f"Lambda function '{function.name}' is publicly accesible through an Internet facing Load Balancer '{lb.dns}'."
 
             findings.append(report)
 

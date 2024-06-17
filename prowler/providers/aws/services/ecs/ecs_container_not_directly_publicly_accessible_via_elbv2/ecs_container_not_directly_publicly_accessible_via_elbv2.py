@@ -46,7 +46,7 @@ class ecs_container_not_directly_publicly_accessible_via_elbv2(Check):
                                                 listen_port = listener.port
                                                 break
                                 # Check for lb security groups in every sg
-                                if listen_port:
+                                if listen_port != None: # i added this in case listen port is 0
                                     safe_sgs = []
                                     for sg in ec2_client.security_groups:
                                         if (
@@ -65,9 +65,13 @@ class ecs_container_not_directly_publicly_accessible_via_elbv2(Check):
                                                 ):
                                                     safe_sgs.append(False)
                                                     break
-                                            else:
-                                                safe_sgs.append(True)
+                                                #i changed this else statment and move it inside the for loop
+                                                else:
+                                                    safe_sgs.append(True)
                                     # If there is not any security group safe, the service is publicly accessible
+                                    if len(safe_sgs) == 0: # i added this condition in the case of default sgs are restricting access
+                                        report.status = "FAIL"
+                                        report.status_extended = f"ECS Container '{service_arn}' is publicly accesible through an Internet facing Load Balancer '{lb.name}'."
                                     if not any(safe_sgs):
                                         report.status = "FAIL"
                                         report.status_extended = f"ECS Container '{service_arn}' is publicly accesible through an Internet facing Load Balancer '{lb.name}'."

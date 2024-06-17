@@ -31,7 +31,8 @@ class ec2_instance_not_directly_publicly_accessible_via_elb(Check):
                                 else:
                                     listen_port = None
 
-                                if listen_port:
+                                # added this part to if condition in case the port is 0
+                                if listen_port != None:
                                     for rule in sg.ingress_rules:
                                         if check_security_group(
                                             ingress_rule=rule,
@@ -41,10 +42,15 @@ class ec2_instance_not_directly_publicly_accessible_via_elb(Check):
                                         ):
                                             safe_sgs.append(False)
                                             break
-                                    else:
-                                        safe_sgs.append(True)
+                                        else:
+                                            safe_sgs.append(True)
 
-                            if safe_sgs and not any(safe_sgs):
+                            # I added this if condition part. Not sure if it wil affect anything. Pls double check
+                            if len(safe_sgs) == 0:
+                                report.status = "FAIL"
+                                report.status_extended = f"EC2 Instance {instance.id} is publicly accesible through an Internet facing Classic Load Balancer."
+                                break
+                            elif safe_sgs and not any(safe_sgs):
                                 report.status = "FAIL"
                                 report.status_extended = f"EC2 Instance {instance.id} is publicly accesible through an Internet facing Classic Load Balancer."
                                 break

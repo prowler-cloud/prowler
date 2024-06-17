@@ -47,7 +47,8 @@ class ec2_instance_not_directly_publicly_accessible_via_elbv2(Check):
                                                 break
 
                                 # Check lb and ec2 security groups
-                                if listen_port:
+                                # added this part to if condition in case the port is 0
+                                if listen_port != None:
                                     safe_sgs = []
                                     for sg in ec2_client.security_groups:
                                         if (
@@ -65,9 +66,15 @@ class ec2_instance_not_directly_publicly_accessible_via_elbv2(Check):
                                                 ):
                                                     safe_sgs.append(False)
                                                     break
-                                            else:
-                                                safe_sgs.append(True)
+                                                #added this else here instead to address default sg's
+                                                else:
+                                                    safe_sgs.append(True)
                                     # If there is not any security group safe, the instance is publicly accessible
+                                    #added this if statmeent line, pls double check
+                                    if len(safe_sgs) == 0:
+                                        report.status = "FAIL"
+                                        report.status_extended = f"EC2 Instance {instance.id} is publicly accesible through an Internet facing Load Balancer '{lb.dns}'."
+                                        break
                                     if not any(safe_sgs):
                                         report.status = "FAIL"
                                         report.status_extended = f"EC2 Instance {instance.id} is publicly accesible through an Internet facing Load Balancer '{lb.dns}'."

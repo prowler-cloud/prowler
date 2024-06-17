@@ -12,8 +12,9 @@ from tests.providers.aws.utils import (
     set_mocked_aws_provider,
 )
 
-container_instance = "f2756532-8f13-4d53-87c9-aed50dc94cd7"
-CONTAINER_ARN = f"arn:aws:ecs:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:container-instance/{container_instance}"
+from prowler.providers.aws.services.elbv2.elbv2_service import ELBv2
+from prowler.providers.aws.services.ecs.ecs_service import ECS
+from prowler.providers.aws.services.ec2.ec2_service import EC2
 
 
 def mock_generate_regional_clients(provider, service):
@@ -29,23 +30,27 @@ def mock_generate_regional_clients(provider, service):
     new=mock_generate_regional_clients,
 )
 class Test_ecs_container_not_directly_publicly_accessible_via_elbv2:
-
     @mock_aws
-    def test_no_elbs_or_container_instances(self):
-        from prowler.providers.aws.services.elbv2.elbv2_service import ELBv2
-
+    def test_no_elbs_or_clusters(self):
         ecs_client = mock.MagicMock
-        ecs_client.containers = []
+        ecs_client.clusters = {}
+
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_EU_WEST_1]
+        )
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider(),
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.ecs.ecs_container_not_directly_publicly_accessible_via_elbv2.ecs_container_not_directly_publicly_accessible_via_elbv2.ecs_client",
             new=ecs_client,
         ), mock.patch(
             "prowler.providers.aws.services.ecs.ecs_container_not_directly_publicly_accessible_via_elbv2.ecs_container_not_directly_publicly_accessible_via_elbv2.elbv2_client",
-            new=ELBv2(set_mocked_aws_provider()),
+            new=ELBv2(aws_provider),
+        ), mock.patch(
+            "prowler.providers.aws.services.ecs.ecs_container_not_directly_publicly_accessible_via_elbv2.ecs_container_not_directly_publicly_accessible_via_elbv2.ec2_client",
+            new=EC2(aws_provider),
         ):
             from prowler.providers.aws.services.ecs.ecs_container_not_directly_publicly_accessible_via_elbv2.ecs_container_not_directly_publicly_accessible_via_elbv2 import (
                 ecs_container_not_directly_publicly_accessible_via_elbv2,
@@ -54,31 +59,154 @@ class Test_ecs_container_not_directly_publicly_accessible_via_elbv2:
             check = ecs_container_not_directly_publicly_accessible_via_elbv2()
             result = check.execute()
             assert len(result) == 0
-
+    
     @mock_aws
-    def test_container_instances_behind_public_lb_ipv4(self):
-        from prowler.providers.aws.services.elbv2.elbv2_service import ELBv2
-        from prowler.providers.aws.services.ecs.ecs_service import Containers
-
-        # ecs container instance
+    def test_public_elbs_and_no_clusters(self):
         ecs_client = mock.MagicMock
-        ecs_client.containers = []  # create container instances
-        ipv4Address = "192.168.0.1"
-        ecs_client.containers.append(
-            Containers(
-                arn=f"arn:aws:ecs:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:container-instance/{container_instance}",
-                availability_zone=AWS_REGION_EU_WEST_1_AZA,
-                ipv4=ipv4Address,
-            )
-        )
+        ecs_client.clusters = {}
 
-        # ALB Client
         conn = client("elbv2", region_name=AWS_REGION_EU_WEST_1)
         ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
 
         security_group = ec2.create_security_group(
-            GroupName="a-security-group", Description="First One"
+            GroupName="sg01", Description="Test security group for load balancer"
         )
+
+        vpc = ec2.create_vpc(CidrBlock="172.28.7.0/24", InstanceTenancy="default")
+        subnet1 = ec2.create_subnet(
+            VpcId=vpc.id,
+            CidrBlock="172.28.7.192/26",
+            AvailabilityZone=AWS_REGION_EU_WEST_1_AZA,
+        )
+        subnet2 = ec2.create_subnet(
+            VpcId=vpc.id,
+            CidrBlock="172.28.7.0/26",
+            AvailabilityZone=AWS_REGION_EU_WEST_1_AZB,
+        )
+
+        lb = conn.create_load_balancer(
+            Name="my-lb",
+            Subnets=[subnet1.id, subnet2.id],
+            Scheme="internet-facing",
+            SecurityGroups=[security_group.id],
+            Type="application",
+        )["LoadBalancers"][0]
+
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_EU_WEST_1]
+        )
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.ecs.ecs_container_not_directly_publicly_accessible_via_elbv2.ecs_container_not_directly_publicly_accessible_via_elbv2.ecs_client",
+            new=ecs_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.ecs.ecs_container_not_directly_publicly_accessible_via_elbv2.ecs_container_not_directly_publicly_accessible_via_elbv2.elbv2_client",
+            new=ELBv2(aws_provider),
+        ):
+            from prowler.providers.aws.services.ecs.ecs_container_not_directly_publicly_accessible_via_elbv2.ecs_container_not_directly_publicly_accessible_via_elbv2 import (
+                ecs_container_not_directly_publicly_accessible_via_elbv2,
+            )
+
+            check = ecs_container_not_directly_publicly_accessible_via_elbv2()
+            result = check.execute()
+            assert len(result) == 0
+    
+    @mock_aws
+    def test_internal_elbs_and_no_clusters(self):
+        ecs_client = mock.MagicMock
+        ecs_client.clusters = {}
+
+        conn = client("elbv2", region_name=AWS_REGION_EU_WEST_1)
+        ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
+
+        security_group = ec2.create_security_group(
+            GroupName="sg01", Description="Test security group for load balancer"
+        )
+
+        vpc = ec2.create_vpc(CidrBlock="172.28.7.0/24", InstanceTenancy="default")
+        subnet1 = ec2.create_subnet(
+            VpcId=vpc.id,
+            CidrBlock="172.28.7.192/26",
+            AvailabilityZone=AWS_REGION_EU_WEST_1_AZA,
+        )
+        subnet2 = ec2.create_subnet(
+            VpcId=vpc.id,
+            CidrBlock="172.28.7.0/26",
+            AvailabilityZone=AWS_REGION_EU_WEST_1_AZB,
+        )
+
+        lb = conn.create_load_balancer(
+            Name="my-lb",
+            Subnets=[subnet1.id, subnet2.id],
+            Scheme="internal",
+            SecurityGroups=[security_group.id],
+            Type="application",
+        )["LoadBalancers"][0]
+
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_EU_WEST_1]
+        )
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.ecs.ecs_container_not_directly_publicly_accessible_via_elbv2.ecs_container_not_directly_publicly_accessible_via_elbv2.ecs_client",
+            new=ecs_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.ecs.ecs_container_not_directly_publicly_accessible_via_elbv2.ecs_container_not_directly_publicly_accessible_via_elbv2.elbv2_client",
+            new=ELBv2(aws_provider),
+        ), mock.patch(
+            "prowler.providers.aws.services.ecs.ecs_container_not_directly_publicly_accessible_via_elbv2.ecs_container_not_directly_publicly_accessible_via_elbv2.ec2_client",
+            new=EC2(aws_provider),
+        ):
+            from prowler.providers.aws.services.ecs.ecs_container_not_directly_publicly_accessible_via_elbv2.ecs_container_not_directly_publicly_accessible_via_elbv2 import (
+                ecs_container_not_directly_publicly_accessible_via_elbv2,
+            )
+
+            check = ecs_container_not_directly_publicly_accessible_via_elbv2()
+            result = check.execute()
+            assert len(result) == 0
+    
+    @mock_aws
+    def test_public_container_instances_behind_public_lb_ipv4(self):
+        ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
+        ecs_client = client("ecs", region_name=AWS_REGION_EU_WEST_1)
+
+        security_group = ec2.create_security_group(
+            GroupName="sg01", Description="First One"
+        )
+
+        security_group2 = ec2.create_security_group(
+            GroupName="sg02", Description="Second one"
+        )
+
+        ec2_client.authorize_security_group_ingress(
+            GroupId=security_group.id,
+            IpPermissions=[
+                {
+                    "IpProtocol": "-1",
+                    "IpRanges": [{"CidrIp": "0.0.0.0/0"}],
+                }
+            ],
+        )
+
+        ec2_client.authorize_security_group_ingress(
+            GroupId=security_group2.id,
+            IpPermissions=[
+                {
+                    "IpProtocol": "-1",
+                    "IpRanges": [{"CidrIp": "0.0.0.0/0"}],
+                }
+            ],
+        )
+
+        # ALB Client
+        conn = client("elbv2", region_name=AWS_REGION_EU_WEST_1)
 
         vpc = ec2.create_vpc(CidrBlock="172.28.7.0/24", InstanceTenancy="default")
         subnet1 = ec2.create_subnet(
@@ -118,10 +246,67 @@ class Test_ecs_container_not_directly_publicly_accessible_via_elbv2:
 
         target_group_arn = target_group["TargetGroupArn"]
 
+        task_definition = ecs_client.register_task_definition(
+            family="sleep360",
+            containerDefinitions=[
+                {
+                    "name": "sleep",
+                    'command': [
+                        'sleep',
+                        '360',
+                    ],
+                    'cpu': 10,
+                    'essential': True,
+                    'image': 'busybox',
+                    'memory': 10,
+                },
+            ],
+            taskRoleArn='',
+            volumes=[]
+        )
+
+        task_definition_arn = task_definition["taskDefinition"]["taskDefinitionArn"]
+
+        # ecs container instance
+        cluster_response = ecs_client.create_cluster(
+            clusterName="test-cluster",
+        )
+
+        cluster_arn = cluster_response["cluster"]["clusterArn"]
+
+        service_response = ecs_client.create_service(
+            cluster=cluster_arn,
+            serviceName="test-service",
+            taskDefinition=task_definition_arn,
+            loadBalancers=[
+                {"targetGroupArn": target_group_arn, "loadBalancerName": lb["LoadBalancerName"]},
+            ],
+            desiredCount=1,
+            launchType="EC2",
+            placementConstraints=[],
+        )
+
+        container_instances = ecs_client.list_container_instances(
+            cluster=cluster_arn
+        )["containerInstanceArns"]
+
+        print(container_instances)
+
+        container_instances = ecs_client.describe_container_instances(
+            cluster=cluster_arn,
+            containerInstances=container_instances
+        )["containerInstances"]
+
+        container_instance_ips = [
+            instance["ec2InstanceId"]
+            for instance in container_instances
+        ]
+
         conn.register_targets(
             TargetGroupArn=target_group_arn,
             Targets=[
-                {"Id": ipv4Address},
+                {"Id": ip}
+                for ip in container_instance_ips
             ],
         )
 
@@ -138,10 +323,13 @@ class Test_ecs_container_not_directly_publicly_accessible_via_elbv2:
             return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.ecs.ecs_container_not_directly_publicly_accessible_via_elbv2.ecs_container_not_directly_publicly_accessible_via_elbv2.ecs_client",
-            new=ecs_client,
+            new=ECS(aws_provider),
         ), mock.patch(
             "prowler.providers.aws.services.ecs.ecs_container_not_directly_publicly_accessible_via_elbv2.ecs_container_not_directly_publicly_accessible_via_elbv2.elbv2_client",
             new=ELBv2(aws_provider),
+        ), mock.patch(
+            "prowler.providers.aws.services.ecs.ecs_container_not_directly_publicly_accessible_via_elbv2.ecs_container_not_directly_publicly_accessible_via_elbv2.ec2_client",
+            new=EC2(aws_provider),
         ):
             from prowler.providers.aws.services.ecs.ecs_container_not_directly_publicly_accessible_via_elbv2.ecs_container_not_directly_publicly_accessible_via_elbv2 import (
                 ecs_container_not_directly_publicly_accessible_via_elbv2,
@@ -153,213 +341,7 @@ class Test_ecs_container_not_directly_publicly_accessible_via_elbv2:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"ECS Container {CONTAINER_ARN} is publicly accesible through an Internet facing Load Balancer through target group {target_group_arn}."
+                == f"ECS Container '{container_instances}' is publicly accesible through an Internet facing Load Balancer '{lb["DNSName"]}'."
             )
-            assert result[0].resource_arn == CONTAINER_ARN
-            assert result[0].resource_tags == []
-
-    @mock_aws
-    def test_container_instances_behind_public_lb_ipv6(self):
-        from prowler.providers.aws.services.elbv2.elbv2_service import ELBv2
-        from prowler.providers.aws.services.ecs.ecs_service import Containers
-
-        # ecs container instance
-        ecs_client = mock.MagicMock
-        ecs_client.containers = []  # create container instances
-        ipv6Address = "fd6b:21b0:4789::/48"
-        ecs_client.containers.append(
-            Containers(
-                arn=f"arn:aws:ecs:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:container-instance/{container_instance}",
-                availability_zone=AWS_REGION_EU_WEST_1_AZA,
-                ipv6=ipv6Address,
-            )
-        )
-
-        # ALB Client
-        conn = client("elbv2", region_name=AWS_REGION_EU_WEST_1)
-        ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
-
-        security_group = ec2.create_security_group(
-            GroupName="a-security-group", Description="First One"
-        )
-
-        vpc = ec2.create_vpc(CidrBlock="172.28.7.0/24", InstanceTenancy="default")
-        subnet1 = ec2.create_subnet(
-            VpcId=vpc.id,
-            CidrBlock="172.28.7.192/26",
-            AvailabilityZone=AWS_REGION_EU_WEST_1_AZA,
-        )
-        subnet2 = ec2.create_subnet(
-            VpcId=vpc.id,
-            CidrBlock="172.28.7.0/26",
-            AvailabilityZone=AWS_REGION_EU_WEST_1_AZB,
-        )
-
-        lb = conn.create_load_balancer(
-            Name="my-lb",
-            Subnets=[subnet1.id, subnet2.id],
-            SecurityGroups=[security_group.id],
-            Scheme="internet-facing",
-            Type="application",
-        )["LoadBalancers"][0]
-
-        target_group = conn.create_target_group(
-            Name="a-target",
-            Protocol="HTTP",
-            Port=80,
-            VpcId=vpc.id,
-            HealthCheckEnabled=True,
-            HealthCheckProtocol="HTTP",
-            HealthCheckPath="/",
-            HealthCheckIntervalSeconds=35,
-            HealthCheckTimeoutSeconds=5,
-            HealthyThresholdCount=5,
-            UnhealthyThresholdCount=2,
-            TargetType="ip",
-            IpAddressType="ipv6",
-        )["TargetGroups"][0]
-
-        target_group_arn = target_group["TargetGroupArn"]
-
-        conn.register_targets(
-            TargetGroupArn=target_group_arn,
-            Targets=[
-                {"Id": ipv6Address},
-            ],
-        )
-
-        conn.create_listener(
-            LoadBalancerArn=lb["LoadBalancerArn"],
-            Protocol="HTTP",
-            DefaultActions=[{"Type": "forward", "TargetGroupArn": target_group_arn}],
-        )
-
-        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
-
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.ecs.ecs_container_not_directly_publicly_accessible_via_elbv2.ecs_container_not_directly_publicly_accessible_via_elbv2.ecs_client",
-            new=ecs_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.ecs.ecs_container_not_directly_publicly_accessible_via_elbv2.ecs_container_not_directly_publicly_accessible_via_elbv2.elbv2_client",
-            new=ELBv2(aws_provider),
-        ):
-            from prowler.providers.aws.services.ecs.ecs_container_not_directly_publicly_accessible_via_elbv2.ecs_container_not_directly_publicly_accessible_via_elbv2 import (
-                ecs_container_not_directly_publicly_accessible_via_elbv2,
-            )
-
-            check = ecs_container_not_directly_publicly_accessible_via_elbv2()
-            result = check.execute()
-            assert len(result) == 1
-            assert result[0].status == "FAIL"
-            assert (
-                result[0].status_extended
-                == f"ECS Container {CONTAINER_ARN} is publicly accesible through an Internet facing Load Balancer through target group {target_group_arn}."
-            )
-            assert result[0].resource_arn == CONTAINER_ARN
-            assert result[0].resource_tags == []
-
-    @mock_aws
-    def test_container_instances_behind_private_lb(self):
-        from prowler.providers.aws.services.elbv2.elbv2_service import ELBv2
-        from prowler.providers.aws.services.ecs.ecs_service import Containers
-
-        # ecs container instance
-        ecs_client = mock.MagicMock
-        ecs_client.containers = []  # create container instances
-        ipv6Address = "fd6b:21b0:4789::/48"
-        ecs_client.containers.append(
-            Containers(
-                arn=f"arn:aws:ecs:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:container-instance/{container_instance}",
-                availability_zone=AWS_REGION_EU_WEST_1_AZA,
-                ipv6=ipv6Address,
-            )
-        )
-
-        # ALB Client
-        conn = client("elbv2", region_name=AWS_REGION_EU_WEST_1)
-        ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
-
-        security_group = ec2.create_security_group(
-            GroupName="a-security-group", Description="First One"
-        )
-
-        vpc = ec2.create_vpc(CidrBlock="172.28.7.0/24", InstanceTenancy="default")
-        subnet1 = ec2.create_subnet(
-            VpcId=vpc.id,
-            CidrBlock="172.28.7.192/26",
-            AvailabilityZone=AWS_REGION_EU_WEST_1_AZA,
-        )
-        subnet2 = ec2.create_subnet(
-            VpcId=vpc.id,
-            CidrBlock="172.28.7.0/26",
-            AvailabilityZone=AWS_REGION_EU_WEST_1_AZB,
-        )
-
-        lb = conn.create_load_balancer(
-            Name="my-lb",
-            Subnets=[subnet1.id, subnet2.id],
-            SecurityGroups=[security_group.id],
-            Scheme="internal",
-            Type="application",
-        )["LoadBalancers"][0]
-
-        target_group = conn.create_target_group(
-            Name="a-target",
-            Protocol="HTTP",
-            Port=80,
-            VpcId=vpc.id,
-            HealthCheckEnabled=True,
-            HealthCheckProtocol="HTTP",
-            HealthCheckPath="/",
-            HealthCheckIntervalSeconds=35,
-            HealthCheckTimeoutSeconds=5,
-            HealthyThresholdCount=5,
-            UnhealthyThresholdCount=2,
-            TargetType="ip",
-            IpAddressType="ipv6",
-        )["TargetGroups"][0]
-
-        target_group_arn = target_group["TargetGroupArn"]
-
-        conn.register_targets(
-            TargetGroupArn=target_group_arn,
-            Targets=[
-                {"Id": ipv6Address},
-            ],
-        )
-
-        conn.create_listener(
-            LoadBalancerArn=lb["LoadBalancerArn"],
-            Protocol="HTTP",
-            DefaultActions=[{"Type": "forward", "TargetGroupArn": target_group_arn}],
-        )
-
-        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
-
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.ecs.ecs_container_not_directly_publicly_accessible_via_elbv2.ecs_container_not_directly_publicly_accessible_via_elbv2.ecs_client",
-            new=ecs_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.ecs.ecs_container_not_directly_publicly_accessible_via_elbv2.ecs_container_not_directly_publicly_accessible_via_elbv2.elbv2_client",
-            new=ELBv2(aws_provider),
-        ):
-            from prowler.providers.aws.services.ecs.ecs_container_not_directly_publicly_accessible_via_elbv2.ecs_container_not_directly_publicly_accessible_via_elbv2 import (
-                ecs_container_not_directly_publicly_accessible_via_elbv2,
-            )
-
-            check = ecs_container_not_directly_publicly_accessible_via_elbv2()
-            result = check.execute()
-            assert len(result) == 1
-            assert result[0].status == "PASS"
-            assert (
-                result[0].status_extended
-                == f"ECS Container {CONTAINER_ARN} is not publicly accesible through an Internet facing Load Balancer."
-            )
-            assert result[0].resource_arn == CONTAINER_ARN
+            assert result[0].resource_arn == container_instances
             assert result[0].resource_tags == []
