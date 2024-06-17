@@ -6,20 +6,11 @@ from boto3 import client
 from moto import mock_aws
 
 from tests.providers.aws.utils import (
+    ADMINISTRATOR_ROLE_ASSUME_ROLE_POLICY,
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
     set_mocked_aws_provider,
 )
-
-ASSUME_ROLE_POLICY_DOCUMENT = {
-    "Version": "2012-10-17",
-    "Statement": {
-        "Sid": "test",
-        "Effect": "Allow",
-        "Principal": {"AWS": f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"},
-        "Action": "sts:AssumeRole",
-    },
-}
 
 # Keep this up-to-date with the check's actions that allows for privilege escalation
 privilege_escalation_policies_combination = {
@@ -109,7 +100,7 @@ class Test_iam_inline_policy_allows_privilege_escalation:
     #     role_name = "test_role"
     #     role_arn = iam_client.create_role(
     #         RoleName=role_name,
-    #         AssumeRolePolicyDocument=dumps(ASSUME_ROLE_POLICY_DOCUMENT),
+    #         AssumeRolePolicyDocument=dumps(ADMINISTRATOR_ROLE_ASSUME_ROLE_POLICY),
     #     )["Role"]["Arn"]
     #     policy_name = "policy1"
     #     policy_document = {
@@ -152,7 +143,7 @@ class Test_iam_inline_policy_allows_privilege_escalation:
         role_name = "test_role"
         role_arn = iam_client.create_role(
             RoleName=role_name,
-            AssumeRolePolicyDocument=dumps(ASSUME_ROLE_POLICY_DOCUMENT),
+            AssumeRolePolicyDocument=dumps(ADMINISTRATOR_ROLE_ASSUME_ROLE_POLICY),
         )["Role"]["Arn"]
 
         # Put Role Policy
@@ -329,7 +320,7 @@ class Test_iam_inline_policy_allows_privilege_escalation:
         role_name = "test_role"
         role_arn = iam_client.create_role(
             RoleName=role_name,
-            AssumeRolePolicyDocument=dumps(ASSUME_ROLE_POLICY_DOCUMENT),
+            AssumeRolePolicyDocument=dumps(ADMINISTRATOR_ROLE_ASSUME_ROLE_POLICY),
         )["Role"]["Arn"]
 
         policy_name = "policy1"
@@ -395,7 +386,7 @@ class Test_iam_inline_policy_allows_privilege_escalation:
         role_name = "test_role"
         role_arn = iam_client.create_role(
             RoleName=role_name,
-            AssumeRolePolicyDocument=dumps(ASSUME_ROLE_POLICY_DOCUMENT),
+            AssumeRolePolicyDocument=dumps(ADMINISTRATOR_ROLE_ASSUME_ROLE_POLICY),
         )["Role"]["Arn"]
 
         policy_name = "policy1"
@@ -453,7 +444,7 @@ class Test_iam_inline_policy_allows_privilege_escalation:
         role_name = "test_role"
         role_arn = iam_client.create_role(
             RoleName=role_name,
-            AssumeRolePolicyDocument=dumps(ASSUME_ROLE_POLICY_DOCUMENT),
+            AssumeRolePolicyDocument=dumps(ADMINISTRATOR_ROLE_ASSUME_ROLE_POLICY),
         )["Role"]["Arn"]
 
         policy_name = "policy1"
@@ -533,7 +524,7 @@ class Test_iam_inline_policy_allows_privilege_escalation:
         role_name = "test_role"
         role_arn = iam_client.create_role(
             RoleName=role_name,
-            AssumeRolePolicyDocument=dumps(ASSUME_ROLE_POLICY_DOCUMENT),
+            AssumeRolePolicyDocument=dumps(ADMINISTRATOR_ROLE_ASSUME_ROLE_POLICY),
         )["Role"]["Arn"]
 
         policy_name = "policy1"
@@ -597,7 +588,7 @@ class Test_iam_inline_policy_allows_privilege_escalation:
         role_name = "test_role"
         role_arn = iam_client.create_role(
             RoleName=role_name,
-            AssumeRolePolicyDocument=dumps(ASSUME_ROLE_POLICY_DOCUMENT),
+            AssumeRolePolicyDocument=dumps(ADMINISTRATOR_ROLE_ASSUME_ROLE_POLICY),
         )["Role"]["Arn"]
 
         policy_name = "privileged_policy"
@@ -666,7 +657,7 @@ class Test_iam_inline_policy_allows_privilege_escalation:
         role_name = "test_role"
         role_arn = iam_client.create_role(
             RoleName=role_name,
-            AssumeRolePolicyDocument=dumps(ASSUME_ROLE_POLICY_DOCUMENT),
+            AssumeRolePolicyDocument=dumps(ADMINISTRATOR_ROLE_ASSUME_ROLE_POLICY),
         )["Role"]["Arn"]
 
         policy_name_1 = "privileged_policy_1"
@@ -769,7 +760,7 @@ class Test_iam_inline_policy_allows_privilege_escalation:
         role_name = "test_role"
         role_arn = iam_client.create_role(
             RoleName=role_name,
-            AssumeRolePolicyDocument=dumps(ASSUME_ROLE_POLICY_DOCUMENT),
+            AssumeRolePolicyDocument=dumps(ADMINISTRATOR_ROLE_ASSUME_ROLE_POLICY),
         )["Role"]["Arn"]
 
         policy_name_1 = "privileged_policy_1"
@@ -884,7 +875,7 @@ class Test_iam_inline_policy_allows_privilege_escalation:
         role_name = "test_role"
         role_arn = iam_client.create_role(
             RoleName=role_name,
-            AssumeRolePolicyDocument=dumps(ASSUME_ROLE_POLICY_DOCUMENT),
+            AssumeRolePolicyDocument=dumps(ADMINISTRATOR_ROLE_ASSUME_ROLE_POLICY),
         )["Role"]["Arn"]
 
         policy_name_1 = "privileged_policy_1"
@@ -958,7 +949,7 @@ class Test_iam_inline_policy_allows_privilege_escalation:
         role_name = "test_role"
         role_arn = iam_client.create_role(
             RoleName=role_name,
-            AssumeRolePolicyDocument=dumps(ASSUME_ROLE_POLICY_DOCUMENT),
+            AssumeRolePolicyDocument=dumps(ADMINISTRATOR_ROLE_ASSUME_ROLE_POLICY),
         )["Role"]["Arn"]
 
         policy_name_1 = "privileged_policy_1"
@@ -1024,7 +1015,7 @@ class Test_iam_inline_policy_allows_privilege_escalation:
         role_name = "test_role"
         role_arn = iam_client.create_role(
             RoleName=role_name,
-            AssumeRolePolicyDocument=dumps(ASSUME_ROLE_POLICY_DOCUMENT),
+            AssumeRolePolicyDocument=dumps(ADMINISTRATOR_ROLE_ASSUME_ROLE_POLICY),
         )["Role"]["Arn"]
 
         policy_name_1 = "privileged_policy_1"
@@ -1085,7 +1076,7 @@ class Test_iam_inline_policy_allows_privilege_escalation:
         role_name = "test_role"
         role_arn = iam_client.create_role(
             RoleName=role_name,
-            AssumeRolePolicyDocument=dumps(ASSUME_ROLE_POLICY_DOCUMENT),
+            AssumeRolePolicyDocument=dumps(ADMINISTRATOR_ROLE_ASSUME_ROLE_POLICY),
         )["Role"]["Arn"]
 
         policy_name_1 = "privileged_policy_1"
@@ -1146,7 +1137,7 @@ class Test_iam_inline_policy_allows_privilege_escalation:
         role_name = "test_role"
         role_arn = iam_client.create_role(
             RoleName=role_name,
-            AssumeRolePolicyDocument=dumps(ASSUME_ROLE_POLICY_DOCUMENT),
+            AssumeRolePolicyDocument=dumps(ADMINISTRATOR_ROLE_ASSUME_ROLE_POLICY),
         )["Role"]["Arn"]
 
         policy_name_1 = "privileged_policy_1"
