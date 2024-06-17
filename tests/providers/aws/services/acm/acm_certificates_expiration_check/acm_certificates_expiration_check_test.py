@@ -73,6 +73,7 @@ class Test_acm_certificates_expiration_check:
             assert result[0].resource_arn == certificate_arn
             assert result[0].region == AWS_REGION
             assert result[0].resource_tags == []
+            assert result[0].check_metadata.Severity == "medium"
 
     def test_acm_certificate_expirated_long_time(self):
         certificate_id = str(uuid.uuid4())
@@ -119,6 +120,7 @@ class Test_acm_certificates_expiration_check:
             assert result[0].resource_arn == certificate_arn
             assert result[0].region == AWS_REGION
             assert result[0].resource_tags == []
+            assert result[0].check_metadata.Severity == "high"
 
     def test_acm_certificate_not_expirated(self):
         certificate_id = str(uuid.uuid4())
@@ -252,3 +254,4 @@ class Test_acm_certificates_expiration_check:
             assert result[0].resource_arn == certificate_arn
             assert result[0].region == AWS_REGION
             assert result[0].resource_tags == []
+            assert result[0].check_metadata.Severity == "high"

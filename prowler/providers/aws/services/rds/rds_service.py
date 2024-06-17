@@ -33,7 +33,7 @@ class RDS(AWSService):
         self.__threading_call__(self.__describe_db_engine_versions__)
         self.__threading_call__(self.__describe_db_event_subscriptions__)
 
-    def __get_trail_arn_template__(self, region):
+    def __get_rds_arn_template__(self, region):
         return (
             f"arn:{self.audited_partition}:rds:{region}:{self.audited_account}:account"
             if region
