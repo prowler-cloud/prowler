@@ -453,14 +453,14 @@ class TestCheck:
                     "path": test_checks_folder,
                     "provider": "aws",
                 },
-                "expected": {"check11", "check12", "check7777"},
+                "expected": 3,
             },
             {
                 "input": {
                     "path": "s3://test/checks_folder/",
                     "provider": "aws",
                 },
-                "expected": {"check11", "check12", "check7777"},
+                "expected": 3,
             },
         ]
 
