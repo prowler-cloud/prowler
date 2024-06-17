@@ -70,44 +70,55 @@ def is_policy_public(policy: dict) -> bool:
     return False
 
 
-def get_policy_actions(policy: dict) -> tuple:
+def check_full_service_access(service: str, policy: dict) -> bool:
     """
-    get_policy_actions extracts the actions from a policy.
+    check_full_service_access checks if the policy allows full access to a service.
     Args:
-        policy (dict): The policy to extract the actions from.
+        service (str): The service to check.
+        policy (dict): The policy to check.
     Returns:
-        tuple: A tuple containing the allowed actions, denied actions, and denied not actions.
+        bool: True if the policy allows full access to the service, False otherwise.
     """
-    allowed_actions = set()
-    denied_actions = set()
-    denied_not_actions = set()
+
+    full_access = False
 
     if policy.document:
-        statements = policy.document.get("Statement", [])
-        if not isinstance(statements, list):
-            statements = [statements]
+        policy_statements = policy.document.get("Statement", [])
 
-        for statement in statements:
-            effect = statement.get("Effect")
-            actions = statement.get("Action")
-            not_actions = statement.get("NotAction")
+        if not isinstance(policy_statements, list):
+            policy_statements = [policy.document["Statement"]]
 
-            if effect == "Allow" and actions:
-                if isinstance(actions, str):
-                    allowed_actions.add(actions)
-                elif isinstance(actions, list):
-                    allowed_actions.update(actions)
+        for statement in policy_statements:
+            if statement.get("Effect", "") == "Allow":
+                resources = statement.get("Resource", [])
 
-            if effect == "Deny" and actions:
-                if isinstance(actions, str):
-                    denied_actions.add(actions)
-                elif isinstance(actions, list):
-                    denied_actions.update(actions)
+                if not isinstance(resources, list):
+                    resources = [statement.get("Resource", [])]
 
-            if effect == "Deny" and not_actions:
-                if isinstance(not_actions, str):
-                    denied_not_actions.add(not_actions)
-                elif isinstance(not_actions, list):
-                    denied_not_actions.update(not_actions)
+                if "*" in resources:
+                    if "Action" in statement:
+                        actions = statement.get("Action", [])
 
-    return allowed_actions, denied_actions, denied_not_actions
+                        if not isinstance(actions, list):
+                            actions = [actions]
+
+                        for action in actions:
+                            if f"{service}:*" in action:
+                                full_access = True
+                                break
+
+                    elif "NotAction" in statement:
+                        not_actions = statement.get("NotAction", [])
+
+                        if not isinstance(not_actions, list):
+                            not_actions = [not_actions]
+
+                        for not_action in not_actions:
+                            if f"{service}:*" not in not_action:
+                                full_access = True
+                                break
+
+            if full_access:
+                break
+
+    return full_access
