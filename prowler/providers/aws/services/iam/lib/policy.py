@@ -102,10 +102,9 @@ def check_full_service_access(service: str, policy: dict) -> bool:
                         if not isinstance(actions, list):
                             actions = [actions]
 
-                        for action in actions:
-                            if f"{service}:*" in action:
-                                full_access = True
-                                break
+                        if f"{service}:*" in actions:
+                            full_access = True
+                            break
 
                     elif "NotAction" in statement:
                         not_actions = statement.get("NotAction", [])
@@ -113,12 +112,8 @@ def check_full_service_access(service: str, policy: dict) -> bool:
                         if not isinstance(not_actions, list):
                             not_actions = [not_actions]
 
-                        for not_action in not_actions:
-                            if f"{service}:*" not in not_action:
-                                full_access = True
-                                break
-
-            if full_access:
-                break
+                        if f"{service}:*" not in not_actions:
+                            full_access = True
+                            break
 
     return full_access

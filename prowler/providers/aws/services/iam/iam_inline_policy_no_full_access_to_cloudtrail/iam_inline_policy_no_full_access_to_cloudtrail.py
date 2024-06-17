@@ -25,7 +25,7 @@ class iam_inline_policy_no_full_access_to_cloudtrail(Check):
 
                 if check_full_service_access(critical_service, policy):
                     report.status = "FAIL"
-                    report.status_extended = f"Inline Policy {policy.name} allows '{critical_service}:*' privileges for all resources."
+                    report.status_extended = f"Inline Policy {policy.name} allows '{critical_service}:*' privileges to all resources."
 
                 findings.append(report)
 
