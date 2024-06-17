@@ -11,8 +11,7 @@ class iam_inline_policy_allows_privilege_escalation(Check):
 
         for policy in iam_client.policies:
             if (
-                policy.attached
-                or iam_client.provider.scan_unused_services  # Check this in the revision
+                policy.attached or iam_client.provider.scan_unused_services
             ) and policy.type == "Inline":
                 report = Check_Report_AWS(self.metadata())
                 report.resource_id = policy.name

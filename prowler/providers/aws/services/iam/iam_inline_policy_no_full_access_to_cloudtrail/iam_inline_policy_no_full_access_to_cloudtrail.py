@@ -12,8 +12,7 @@ class iam_inline_policy_no_full_access_to_cloudtrail(Check):
         for policy in iam_client.policies:
             # Check only inline policies
             if (
-                policy.attached
-                or iam_client.provider.scan_unused_services  # Check this in the revision
+                policy.attached or iam_client.provider.scan_unused_services
             ) and policy.type == "Inline":
                 report = Check_Report_AWS(self.metadata())
                 report.region = iam_client.region
