@@ -437,6 +437,7 @@ class TestAWSProvider:
                 external_id=arguments.external_id,
                 mfa_enabled=True,  # <- MFA configuration
                 role_session_name=arguments.role_session_name,
+                sts_region=AWS_REGION_US_EAST_1,
             )
 
             credentials = aws_provider._assumed_role_configuration.credentials
