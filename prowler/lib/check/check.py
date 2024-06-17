@@ -127,6 +127,7 @@ def parse_checks_from_file(input_file: str, provider: str) -> set:
 
 # Load checks from custom folder
 def parse_checks_from_folder(provider, input_folder: str) -> set:
+    # TODO: move the AWS-specific code into the provider
     try:
         custom_checks = set()
         # Check if input folder is a S3 URI

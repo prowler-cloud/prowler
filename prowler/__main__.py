@@ -181,7 +181,16 @@ def prowler():
     # Import custom checks from folder
     if checks_folder:
         custom_checks = parse_checks_from_folder(global_provider, checks_folder)
-        checks_to_execute.update(custom_checks)
+        # Workaround to be able to execute custom checks alongside all checks if nothing is explicitly set
+        if (
+            not checks_file
+            and not checks
+            and not services
+            and not severities
+            and not compliance_framework
+            and not categories
+        ):
+            checks_to_execute.update(custom_checks)
 
     # Exclude checks if -e/--excluded-checks
     if excluded_checks:
