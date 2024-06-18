@@ -88,3 +88,13 @@ VPCs should have separate private and public subnets to prevent the exposure of 
 VPCs should have subnets in different availability zones to prevent a single point of failure. Prowler will only check this configuration for those VPCs that are in use, in other words, only the VPCs where you have ENIs (network interfaces).
 
   - `vpc_subnet_different_az`
+
+#### IAM
+Prowler checks that inline policies does not overly guaranteeing access to certain services such as Cloudtrail and KMS, only attached inline policies will be checked.
+
+  - `iam_policy_no_full_access_to_cloudtrail`
+  - `iam_policy_no_full_access_to_kms`
+
+Policies with determined combination could lead into a privilege escalation, only attached inline policies will be checked.
+
+  - `iam_policy_allows_privilege_escalation`
