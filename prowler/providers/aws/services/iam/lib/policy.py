@@ -82,11 +82,11 @@ def check_full_service_access(service: str, policy: dict) -> bool:
 
     full_access = False
 
-    if policy.document:
-        policy_statements = policy.document.get("Statement", [])
+    if policy:
+        policy_statements = policy.get("Statement", [])
 
         if not isinstance(policy_statements, list):
-            policy_statements = [policy.document["Statement"]]
+            policy_statements = [policy["Statement"]]
 
         for statement in policy_statements:
             if statement.get("Effect", "") == "Allow":

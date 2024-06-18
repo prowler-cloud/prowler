@@ -1,4 +1,5 @@
 from prowler.providers.aws.services.iam.lib.policy import (
+    check_full_service_access,
     is_policy_cross_account,
     is_policy_public,
 )
@@ -89,3 +90,46 @@ class Test_Policy:
         assert is_policy_public(policy2)
         assert not is_policy_public(policy3)
         assert not is_policy_public(policy4)
+
+    def test_check_full_service_access(self):
+        policy1 = {
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Action": "s3:*",
+                    "Resource": "*",
+                }
+            ]
+        }
+        policy2 = {
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Action": "s3:Get*",
+                    "Resource": "*",
+                }
+            ]
+        }
+        policy3 = {
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Action": "s3:*",
+                    "Resource": "arn:aws:s3:::example_bucket/*",
+                }
+            ]
+        }
+        policy4 = {
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Action": "s3:*",
+                    "Resource": "arn:aws:s3:::example_bucket",
+                }
+            ]
+        }
+
+        assert check_full_service_access("s3", policy1)
+        assert not check_full_service_access("s3", policy2)
+        assert not check_full_service_access("s3", policy3)
+        assert not check_full_service_access("s3", policy4)
