@@ -158,39 +158,38 @@ def check_privilege_escalation(policy: dict) -> str:
         denied_actions = set()
         denied_not_actions = set()
 
-        if policy.document:
-            statements = policy.document.get("Statement", [])
-            if not isinstance(statements, list):
-                statements = [statements]
+        statements = policy.get("Statement", [])
+        if not isinstance(statements, list):
+            statements = [statements]
 
-            for statement in statements:
-                effect = statement.get("Effect")
-                actions = statement.get("Action")
-                not_actions = statement.get("NotAction")
+        for statement in statements:
+            effect = statement.get("Effect")
+            actions = statement.get("Action")
+            not_actions = statement.get("NotAction")
 
-                if effect == "Allow" and actions:
-                    if isinstance(actions, str):
-                        allowed_actions.add(actions)
-                    elif isinstance(actions, list):
-                        allowed_actions.update(actions)
+            if effect == "Allow" and actions:
+                if isinstance(actions, str):
+                    allowed_actions.add(actions)
+                elif isinstance(actions, list):
+                    allowed_actions.update(actions)
 
-                if effect == "Deny" and actions:
-                    if isinstance(actions, str):
-                        denied_actions.add(actions)
-                    elif isinstance(actions, list):
-                        denied_actions.update(actions)
+            if effect == "Deny" and actions:
+                if isinstance(actions, str):
+                    denied_actions.add(actions)
+                elif isinstance(actions, list):
+                    denied_actions.update(actions)
 
-                if effect == "Allow" and not_actions:
-                    if isinstance(not_actions, str):
-                        denied_not_actions.add(not_actions)
-                    elif isinstance(not_actions, list):
-                        denied_not_actions.update(not_actions)
+            if effect == "Allow" and not_actions:
+                if isinstance(not_actions, str):
+                    denied_not_actions.add(not_actions)
+                elif isinstance(not_actions, list):
+                    denied_not_actions.update(not_actions)
 
-                if effect == "Deny" and not_actions:
-                    if isinstance(not_actions, str):
-                        denied_not_actions.add(not_actions)
-                    elif isinstance(not_actions, list):
-                        denied_not_actions.update(not_actions)
+            if effect == "Deny" and not_actions:
+                if isinstance(not_actions, str):
+                    denied_not_actions.add(not_actions)
+                elif isinstance(not_actions, list):
+                    denied_not_actions.update(not_actions)
 
         policies_combination = find_escalation_combinations(
             allowed_actions, denied_actions, denied_not_actions
@@ -207,8 +206,13 @@ def check_privilege_escalation(policy: dict) -> str:
                 combos.add(key)
 
         if combos:
-            policies_affected = " ".join(
-                str(privilege_escalation_policies_combination[key]) for key in combos
+            policies_affected = (
+                ", ".join(
+                    str(privilege_escalation_policies_combination[key])
+                    for key in combos
+                )
+                .replace("{", "")
+                .replace("}", "")
             )
 
     return policies_affected

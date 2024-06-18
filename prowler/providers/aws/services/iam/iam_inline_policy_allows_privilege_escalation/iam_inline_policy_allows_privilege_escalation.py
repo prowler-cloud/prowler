@@ -31,7 +31,9 @@ class iam_inline_policy_allows_privilege_escalation(Check):
 
                 report.status_extended = f"Inline Policy '{report.resource_id}'{' attached to ' + resource_type_str + ' ' + report.resource_arn if policy.attached else ''} does not allow privilege escalation."
 
-                policies_affected = check_privilege_escalation(policy)
+                policies_affected = check_privilege_escalation(
+                    getattr(policy, "document", {})
+                )
 
                 if policies_affected:
                     report.status = "FAIL"

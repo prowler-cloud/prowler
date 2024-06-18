@@ -19,7 +19,9 @@ class iam_policy_allows_privilege_escalation(Check):
                 report.status = "PASS"
                 report.status_extended = f"Custom Policy {report.resource_arn} does not allow privilege escalation."
 
-                policies_affected = check_privilege_escalation(policy)
+                policies_affected = check_privilege_escalation(
+                    getattr(policy, "document", {})
+                )
 
                 if policies_affected:
                     report.status = "FAIL"
