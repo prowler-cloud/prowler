@@ -421,7 +421,6 @@ class AwsProvider(Provider):
         logger.info(f"Original AWS Caller Identity ARN: {caller_identity.arn}")
 
         partition = parse_iam_credentials_arn(caller_identity.arn.arn).partition
-        print(partition)
         return AWSIdentityInfo(
             account=caller_identity.account,
             account_arn=f"arn:{partition}:iam::{caller_identity.account}:root",
