@@ -206,31 +206,27 @@ class Test_ec2_instance_managed_by_ssm_test:
             )
 
             check = ec2_instance_managed_by_ssm()
-            result = check.execute()
+            results = check.execute()
 
-            assert len(result) == 2
-            instance_managed_result = next(
-                (r for r in result if r.resource_id == instance_managed.id), None
-            )
-            assert instance_managed_result
-            assert instance_managed_result.status == "PASS"
-            assert instance_managed_result.region == AWS_REGION_US_EAST_1
-            assert instance_managed_result.resource_tags is None
-            assert (
-                instance_managed_result.status_extended
-                == f"EC2 Instance {instance_managed.id} is managed by Systems Manager."
-            )
-            instance_unmanaged_result = next(
-                (r for r in result if r.resource_id == instance_unmanaged.id), None
-            )
-            assert instance_unmanaged_result
-            assert instance_unmanaged_result.status == "FAIL"
-            assert instance_unmanaged_result.region == AWS_REGION_US_EAST_1
-            assert instance_unmanaged_result.resource_tags is None
-            assert (
-                instance_unmanaged_result.status_extended
-                == f"EC2 Instance {instance_unmanaged.id} is not managed by Systems Manager."
-            )
+            assert len(results) == 2
+            for result in results:
+                if result.resource_id == instance_managed.id:
+                    assert result.status == "PASS"
+                    assert result.region == AWS_REGION_US_EAST_1
+                    assert result.resource_tags is None
+                    assert (
+                        result.status_extended
+                        == f"EC2 Instance {instance_managed.id} is managed by Systems Manager."
+                    )
+
+                if result.resource_id == instance_unmanaged.id:
+                    assert result.status == "FAIL"
+                    assert result.region == AWS_REGION_US_EAST_1
+                    assert result.resource_tags is None
+                    assert (
+                        result.status_extended
+                        == f"EC2 Instance {instance_unmanaged.id} is not managed by Systems Manager."
+                    )
 
     @mock_aws
     def test_ec2_instance_managed_by_ssm_stopped(self):
@@ -276,15 +272,11 @@ class Test_ec2_instance_managed_by_ssm_test:
             result = check.execute()
 
             assert len(result) == 1
-            instance_result = next(
-                (r for r in result if r.resource_id == instance.id), None
-            )
-            assert instance_result
-            assert instance_result.status == "PASS"
-            assert instance_result.region == AWS_REGION_US_EAST_1
-            assert instance_result.resource_tags is None
+            assert result[0].status == "PASS"
+            assert result[0].region == AWS_REGION_US_EAST_1
+            assert result[0].resource_tags is None
             assert (
-                instance_result.status_extended
+                result[0].status_extended
                 == f"EC2 Instance {instance.id} is unmanaged by Systems Manager because it is stopped."
             )
 
@@ -332,14 +324,10 @@ class Test_ec2_instance_managed_by_ssm_test:
             result = check.execute()
 
             assert len(result) == 1
-            instance_result = next(
-                (r for r in result if r.resource_id == instance.id), None
-            )
-            assert instance_result
-            assert instance_result.status == "PASS"
-            assert instance_result.region == AWS_REGION_US_EAST_1
-            assert instance_result.resource_tags is None
+            assert result[0].status == "PASS"
+            assert result[0].region == AWS_REGION_US_EAST_1
+            assert result[0].resource_tags is None
             assert (
-                instance_result.status_extended
+                result[0].status_extended
                 == f"EC2 Instance {instance.id} is unmanaged by Systems Manager because it is terminated."
             )
