@@ -68,3 +68,89 @@ def is_policy_public(policy: dict) -> bool:
                     ) and "Condition" not in statement:
                         return True
     return False
+
+
+def check_full_service_access(service: str, policy: dict) -> bool:
+    """
+    check_full_service_access checks if the policy allows full access to a service.
+    Args:
+        service (str): The service to check.
+        policy (dict): The policy to check.
+    Returns:
+        bool: True if the policy allows full access to the service, False otherwise.
+    """
+
+    full_access = False
+
+    if policy:
+        policy_statements = policy.get("Statement", [])
+
+        if not isinstance(policy_statements, list):
+            policy_statements = [policy["Statement"]]
+
+        for statement in policy_statements:
+            if statement.get("Effect", "") == "Allow":
+                resources = statement.get("Resource", [])
+
+                if not isinstance(resources, list):
+                    resources = [statement.get("Resource", [])]
+
+                if "*" in resources:
+                    if "Action" in statement:
+                        actions = statement.get("Action", [])
+
+                        if not isinstance(actions, list):
+                            actions = [actions]
+
+                        if f"{service}:*" in actions:
+                            full_access = True
+                            break
+
+                    elif "NotAction" in statement:
+                        not_actions = statement.get("NotAction", [])
+
+                        if not isinstance(not_actions, list):
+                            not_actions = [not_actions]
+
+                        if f"{service}:*" not in not_actions:
+                            full_access = True
+                            break
+
+    return full_access
+
+
+def has_private_conditions(statement: dict) -> bool:
+    """
+    Check if the statement has conditions that makes the statement private
+    Args:
+        statement: dict: Statement from the policy
+    Returns:
+        bool: True if the statement has conditions that makes the statement private
+    """
+
+    conditions = statement.get("Condition", {})
+
+    no_public_conditions = [
+        "aws:SourceArn",
+        "aws:SourceVpc",
+        "aws:SourceVpce",
+        "aws:SourceOwner",
+        "aws:SourceAccount",
+    ]
+
+    return (
+        any(
+            no_public_condition in conditions.get("StringEquals", {})
+            for no_public_condition in no_public_conditions
+        )
+        or any(
+            no_public_condition in conditions.get("StringLike", {})
+            for no_public_condition in no_public_conditions
+        )
+        or any(
+            conditions.get("IpAddress", {})
+            .get("aws:SourceIp", "")
+            .startswith(private_ip)
+            for private_ip in ["10.", "192.168.", "172."]
+        )
+    )
