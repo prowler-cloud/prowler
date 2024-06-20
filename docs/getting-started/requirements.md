@@ -114,6 +114,24 @@ To assign this roles, follow the instructions:
 
 *Repeat these steps for `Reader` role*
 
+Moreover, some read-only additional permissions are needed for several checks, for this kind of checks that is not cover by builtin roles we use a custom role. This role is defined in [prowler-azure-custom-role](https://github.com/prowler-cloud/prowler/blob/master/permissions/prowler-azure-custom-role.json).
+
+##### Recommendation for multiple subscription
+
+For scanning multiple subscription it could be tedious create and assign role for every subscription, for this reason in Prowler recommend the usage of *[management groups](https://learn.microsoft.com/en-us/azure/governance/management-groups/overview)* to group all subscriptions that wanna be audited.
+
+To do this in a propper way you have to [create a new management group](https://learn.microsoft.com/en-us/azure/governance/management-groups/create-management-group-portal) and add all roles in the same way that have been done for subscription scope.
+
+![Create management group](../img/create-management-group.gif)
+
+Once the management group is properly set you can add all the subscription that you want to audit.
+
+![Add subscription to management group](../img/add-sub-to-management-group.gif)
+
+???+ note
+    By default, `prowler` will scan all subscriptions in the Azure tenant, use flag `--subscription-id` to specify the subscriptions to be scanned.
+
+
 ## Google Cloud
 
 ### Authentication
