@@ -16,7 +16,7 @@ class rds_instance_default_admin(Check):
                 f"RDS Instance {db_instance.id} is using the default master username."
             )
 
-            # Check only RDS DB instances that support parameter group encryption
+            # Check only RDS DB instances that are not clustered
             if not db_instance.cluster_id:
                 if (
                     db_instance.username != "admin"
@@ -35,7 +35,6 @@ class rds_instance_default_admin(Check):
             report.resource_tags = rds_client.db_clusters[db_cluster].tags
             report.status = "FAIL"
             report.status_extended = f"RDS Cluster {rds_client.db_clusters[db_cluster].id} is using the default master username."
-            # Check RDS Clusters that support TLS encryption
             if (
                 rds_client.db_clusters[db_cluster].username != "admin"
                 and rds_client.db_clusters[db_cluster].username != "postgres"

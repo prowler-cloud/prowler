@@ -82,9 +82,9 @@ class RDS(AWSService):
                                     ],
                                     multi_az=instance["MultiAZ"],
                                     username=instance["MasterUsername"],
-                                    iam_auth=instance[
-                                        "IAMDatabaseAuthenticationEnabled"
-                                    ],
+                                    iam_auth=instance.get(
+                                        "IAMDatabaseAuthenticationEnabled", False
+                                    ),
                                     security_groups=[
                                         sg["VpcSecurityGroupId"]
                                         for sg in instance["VpcSecurityGroups"]
@@ -249,9 +249,9 @@ class RDS(AWSService):
                                         ],
                                         multi_az=cluster["MultiAZ"],
                                         username=cluster["MasterUsername"],
-                                        iam_auth=cluster[
-                                            "IAMDatabaseAuthenticationEnabled"
-                                        ],
+                                        iam_auth=cluster.get(
+                                            "IAMDatabaseAuthenticationEnabled", False
+                                        ),
                                         region=regional_client.region,
                                         tags=cluster.get("TagList", []),
                                     )
@@ -487,8 +487,8 @@ class DBInstance(BaseModel):
     auto_minor_version_upgrade: bool
     enhanced_monitoring_arn: Optional[str]
     multi_az: bool
-    username: Optional[str]
-    iam_auth: Optional[bool]
+    username: str
+    iam_auth: bool
     parameter_groups: list[str] = []
     parameters: list[dict] = []
     security_groups: list[str] = []
@@ -510,13 +510,13 @@ class DBCluster(BaseModel):
     public: bool
     encrypted: bool
     backup_retention_period: int = 0
-    backtrack: int = 0
+    backtrack: int
     cloudwatch_logs: Optional[list]
     deletion_protection: bool
     auto_minor_version_upgrade: bool
     multi_az: bool
-    username: Optional[str]
-    iam_auth: Optional[bool]
+    username: str
+    iam_auth: bool
     parameter_group: str
     force_ssl: str = "0"
     require_secure_transport: str = "OFF"
