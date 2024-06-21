@@ -40,10 +40,10 @@ If your IAM entity enforces MFA you can use `--mfa` and Prowler will ask you to 
 
 Prowler for Azure supports the following authentication types:
 
-- Service principal authentication by environment variables (Enterprise Application)
+- [Service principal application](https://learn.microsoft.com/en-us/entra/identity-platform/app-objects-and-service-principals?tabs=browser#service-principal-object) by environment variables (recommended)
 - Current az cli credentials stored
 - Interactive browser authentication
-- Managed identity authentication
+- [Managed identity](https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/overview) authentication
 
 ### Service Principal authentication
 
@@ -64,7 +64,7 @@ The other three cases does not need additional configuration, `--az-cli-auth` an
 
 To use each one you need to pass the proper flag to the execution. Prowler for Azure handles two types of permission scopes, which are:
 
-- **Microsoft Entra ID permissions**: Used to retrieve metadata from the identity assumed by Prowler (not mandatory to have access to execute the tool).
+- **Microsoft Entra ID permissions**: Used to retrieve metadata from the identity assumed by Prowler and specific Entra checks (not mandatory to have access to execute the tool).
 - **Subscription scope permissions**: Required to launch the checks against your resources, mandatory to launch the tool.
 
 
