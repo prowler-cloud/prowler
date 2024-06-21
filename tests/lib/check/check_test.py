@@ -1,12 +1,15 @@
 import os
 import pathlib
+import traceback
 from argparse import Namespace
 from importlib.machinery import FileFinder
+from logging import DEBUG, ERROR
 from pkgutil import ModuleInfo
 
 from boto3 import client
+from colorama import Fore, Style
 from fixtures.bulk_checks_metadata import test_bulk_checks_metadata
-from mock import patch
+from mock import Mock, patch
 from moto import mock_aws
 
 from prowler.lib.check.check import (
@@ -21,6 +24,7 @@ from prowler.lib.check.check import (
     recover_checks_from_provider,
     recover_checks_from_service,
     remove_custom_checks_module,
+    run_check,
     update_audit_metadata,
 )
 from prowler.lib.check.models import load_check_metadata
@@ -449,14 +453,14 @@ class TestCheck:
                     "path": test_checks_folder,
                     "provider": "aws",
                 },
-                "expected": 3,
+                "expected": {"check11", "check12", "check7777"},
             },
             {
                 "input": {
                     "path": "s3://test/checks_folder/",
                     "provider": "aws",
                 },
-                "expected": 3,
+                "expected": {"check11", "check12", "check7777"},
             },
         ]
 
@@ -786,3 +790,89 @@ class TestCheck:
             checks_json
             == '{\n  "aws": [\n    "awslambda_function_invoke_api_operations_cloudtrail_logging_enabled",\n    "awslambda_function_no_secrets_in_code",\n    "awslambda_function_no_secrets_in_variables",\n    "awslambda_function_not_publicly_accessible",\n    "awslambda_function_url_cors_policy",\n    "awslambda_function_url_public",\n    "awslambda_function_using_supported_runtimes"\n  ]\n}'
         )
+
+    def test_run_check(self, caplog):
+        caplog.set_level(DEBUG)
+
+        findings = []
+        check = Mock()
+        check.CheckID = "test-check"
+        check.execute = Mock(return_value=findings)
+
+        with patch("prowler.lib.check.check.execute", return_value=findings):
+            assert run_check(check) == findings
+            assert caplog.record_tuples == [
+                (
+                    "root",
+                    DEBUG,
+                    f"Executing check: {check.CheckID}",
+                )
+            ]
+
+    def test_run_check_verbose(self, capsys):
+
+        findings = []
+        check = Mock()
+        check.CheckID = "test-check"
+        check.ServiceName = "test-service"
+        check.Severity = "test-severity"
+        check.execute = Mock(return_value=findings)
+
+        with patch("prowler.lib.check.check.execute", return_value=findings):
+            assert run_check(check, verbose=True) == findings
+            assert (
+                capsys.readouterr().out
+                == f"\nCheck ID: {check.CheckID} - {Fore.MAGENTA}{check.ServiceName}{Fore.YELLOW} [{check.Severity}]{Style.RESET_ALL}\n"
+            )
+
+    def test_run_check_exception_only_logs(self, caplog):
+        caplog.set_level(ERROR)
+
+        findings = []
+        check = Mock()
+        check.CheckID = "test-check"
+        check.ServiceName = "test-service"
+        check.Severity = "test-severity"
+        error = Exception()
+        check.execute = Mock(side_effect=error)
+
+        with patch("prowler.lib.check.check.execute", return_value=findings):
+            assert run_check(check, only_logs=True) == findings
+            assert caplog.record_tuples == [
+                (
+                    "root",
+                    ERROR,
+                    f"{check.CheckID} -- {error.__class__.__name__}[{traceback.extract_tb(error.__traceback__)[-1].lineno}]: {error}",
+                )
+            ]
+
+    def test_run_check_exception(self, caplog, capsys):
+        caplog.set_level(ERROR)
+
+        findings = []
+        check = Mock()
+        check.CheckID = "test-check"
+        check.ServiceName = "test-service"
+        check.Severity = "test-severity"
+        error = Exception()
+        check.execute = Mock(side_effect=error)
+
+        with patch("prowler.lib.check.check.execute", return_value=findings):
+            assert (
+                run_check(
+                    check,
+                    verbose=False,
+                )
+                == findings
+            )
+            assert caplog.record_tuples == [
+                (
+                    "root",
+                    ERROR,
+                    f"{check.CheckID} -- {error.__class__.__name__}[{traceback.extract_tb(error.__traceback__)[-1].lineno}]: {error}",
+                )
+            ]
+            assert (
+                capsys.readouterr().out
+                == f"Something went wrong in {check.CheckID}, please use --log-level ERROR\n"
+            )

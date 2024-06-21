@@ -11,7 +11,7 @@ class cloudtrail_insights_exist(Check):
             for trail in cloudtrail_client.trails.values():
                 if trail.is_logging:
                     report = Check_Report_AWS(self.metadata())
-                    report.region = trail.region
+                    report.region = trail.home_region
                     report.resource_id = trail.name
                     report.resource_arn = trail.arn
                     report.resource_tags = trail.tags

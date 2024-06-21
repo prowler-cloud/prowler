@@ -4,6 +4,7 @@ from moto import mock_aws
 from prowler.providers.aws.services.cloudtrail.cloudtrail_service import Cloudtrail
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
+    AWS_REGION_EU_SOUTH_2,
     AWS_REGION_EU_WEST_1,
     AWS_REGION_US_EAST_1,
     set_mocked_aws_provider,
@@ -50,23 +51,14 @@ class Test_Cloudtrail_Service:
 
     @mock_aws
     def test_describe_trails(self):
+        # USA
         cloudtrail_client_us_east_1 = client(
             "cloudtrail", region_name=AWS_REGION_US_EAST_1
         )
         s3_client_us_east_1 = client("s3", region_name=AWS_REGION_US_EAST_1)
-        cloudtrail_client_eu_west_1 = client(
-            "cloudtrail", region_name=AWS_REGION_EU_WEST_1
-        )
-        s3_client_eu_west_1 = client("s3", region_name=AWS_REGION_EU_WEST_1)
         trail_name_us = "trail_test_us"
         bucket_name_us = "bucket_test_us"
-        trail_name_eu = "trail_test_eu"
-        bucket_name_eu = "bucket_test_eu"
         s3_client_us_east_1.create_bucket(Bucket=bucket_name_us)
-        s3_client_eu_west_1.create_bucket(
-            Bucket=bucket_name_eu,
-            CreateBucketConfiguration={"LocationConstraint": AWS_REGION_EU_WEST_1},
-        )
         cloudtrail_client_us_east_1.create_trail(
             Name=trail_name_us,
             S3BucketName=bucket_name_us,
@@ -74,6 +66,18 @@ class Test_Cloudtrail_Service:
             TagsList=[
                 {"Key": "test", "Value": "test"},
             ],
+        )
+
+        # IRELAND
+        cloudtrail_client_eu_west_1 = client(
+            "cloudtrail", region_name=AWS_REGION_EU_WEST_1
+        )
+        s3_client_eu_west_1 = client("s3", region_name=AWS_REGION_EU_WEST_1)
+        trail_name_eu = "trail_test_eu"
+        bucket_name_eu = "bucket_test_eu"
+        s3_client_eu_west_1.create_bucket(
+            Bucket=bucket_name_eu,
+            CreateBucketConfiguration={"LocationConstraint": AWS_REGION_EU_WEST_1},
         )
         cloudtrail_client_eu_west_1.create_trail(
             Name=trail_name_eu,
@@ -83,19 +87,60 @@ class Test_Cloudtrail_Service:
                 {"Key": "test", "Value": "test"},
             ],
         )
+        # SPAIN
+        cloudtrail_client_eu_south_2 = client(
+            "cloudtrail", region_name=AWS_REGION_EU_SOUTH_2
+        )
+        s3_client_eu_south_2 = client("s3", region_name=AWS_REGION_EU_SOUTH_2)
+        trail_name_sp = "trail_test_sp"
+        bucket_name_sp = "bucket_test_sp"
+        s3_client_eu_south_2.create_bucket(
+            Bucket=bucket_name_sp,
+            CreateBucketConfiguration={"LocationConstraint": AWS_REGION_EU_SOUTH_2},
+        )
+        cloudtrail_client_eu_south_2.create_trail(
+            Name=trail_name_sp,
+            S3BucketName=bucket_name_sp,
+            IsMultiRegionTrail=True,
+            TagsList=[
+                {"Key": "test", "Value": "test"},
+            ],
+        )
+
+        # We are not going to include AWS_REGION_EU_SOUTH_2 in the audited
+        # regions, but that trail is regional so it'll appear
         aws_provider = set_mocked_aws_provider(
             [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
         )
         cloudtrail = Cloudtrail(aws_provider)
-        assert len(cloudtrail.trails) == 2
+        assert len(cloudtrail.trails) == 3
         for trail in cloudtrail.trails.values():
-            if trail.name:
-                assert trail.name == trail_name_us or trail.name == trail_name_eu
+            if trail.name == trail_name_us:
                 assert not trail.is_multiregion
-                assert (
-                    trail.home_region == AWS_REGION_US_EAST_1
-                    or trail.home_region == AWS_REGION_EU_WEST_1
-                )
+                assert trail.home_region == AWS_REGION_US_EAST_1
+                assert trail.region == AWS_REGION_US_EAST_1
+                assert not trail.is_logging
+                assert not trail.log_file_validation_enabled
+                assert not trail.latest_cloudwatch_delivery_time
+                assert trail.s3_bucket == bucket_name_us
+                assert trail.tags == [
+                    {"Key": "test", "Value": "test"},
+                ]
+            if trail.name == trail_name_eu:
+                assert not trail.is_multiregion
+                assert trail.home_region == AWS_REGION_EU_WEST_1
+                assert trail.region == AWS_REGION_EU_WEST_1
+                assert not trail.is_logging
+                assert not trail.log_file_validation_enabled
+                assert not trail.latest_cloudwatch_delivery_time
+                assert trail.s3_bucket == bucket_name_eu
+                assert trail.tags == [
+                    {"Key": "test", "Value": "test"},
+                ]
+            if trail.name == trail_name_sp:
+                assert trail.is_multiregion
+                assert trail.home_region == AWS_REGION_EU_SOUTH_2
+                # The region is the first audited region since the trail home region is not audited
                 assert (
                     trail.region == AWS_REGION_US_EAST_1
                     or trail.region == AWS_REGION_EU_WEST_1
@@ -103,13 +148,9 @@ class Test_Cloudtrail_Service:
                 assert not trail.is_logging
                 assert not trail.log_file_validation_enabled
                 assert not trail.latest_cloudwatch_delivery_time
-                assert (
-                    trail.s3_bucket == bucket_name_eu
-                    or trail.s3_bucket == bucket_name_us
-                )
-                assert trail.tags == [
-                    {"Key": "test", "Value": "test"},
-                ]
+                assert trail.s3_bucket == bucket_name_sp
+                # No tags since the trail region is not audited and the tags are retrieved from the regional endpoint
+                assert trail.tags == []
 
     @mock_aws
     def test_status_trails(self):

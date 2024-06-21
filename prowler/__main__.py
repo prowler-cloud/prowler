@@ -40,7 +40,7 @@ from prowler.lib.outputs.compliance.compliance import display_compliance_table
 from prowler.lib.outputs.html.html import add_html_footer, fill_html_overview_statistics
 from prowler.lib.outputs.json.json import close_json
 from prowler.lib.outputs.outputs import extract_findings_statistics
-from prowler.lib.outputs.slack import send_slack_message
+from prowler.lib.outputs.slack.slack import Slack
 from prowler.lib.outputs.summary_table import display_summary_table
 from prowler.providers.aws.lib.s3.s3 import send_to_s3_bucket
 from prowler.providers.aws.lib.security_hub.security_hub import (
@@ -89,7 +89,8 @@ def prowler():
     )
 
     if not args.no_banner:
-        print_banner(args.verbose, getattr(args, "fixer", None))
+        legend = args.verbose or getattr(args, "fixer", None)
+        print_banner(legend)
 
     # We treat the compliance framework as another output format
     if compliance_framework:
@@ -179,7 +180,17 @@ def prowler():
 
     # Import custom checks from folder
     if checks_folder:
-        parse_checks_from_folder(global_provider, checks_folder)
+        custom_checks = parse_checks_from_folder(global_provider, checks_folder)
+        # Workaround to be able to execute custom checks alongside all checks if nothing is explicitly set
+        if (
+            not checks_file
+            and not checks
+            and not services
+            and not severities
+            and not compliance_framework
+            and not categories
+        ):
+            checks_to_execute.update(custom_checks)
 
     # Exclude checks if -e/--excluded-checks
     if excluded_checks:
@@ -248,20 +259,22 @@ def prowler():
     stats = extract_findings_statistics(findings)
 
     if args.slack:
+        # TODO: this should be also in a config file
         if "SLACK_API_TOKEN" in environ and (
             "SLACK_CHANNEL_NAME" in environ or "SLACK_CHANNEL_ID" in environ
         ):
-            _ = send_slack_message(
-                environ["SLACK_API_TOKEN"],
-                (
-                    environ["SLACK_CHANNEL_NAME"]
-                    if "SLACK_CHANNEL_NAME" in environ
-                    else environ["SLACK_CHANNEL_ID"]
-                ),
-                stats,
-                global_provider,
+
+            token = environ["SLACK_API_TOKEN"]
+            channel = (
+                environ["SLACK_CHANNEL_NAME"]
+                if "SLACK_CHANNEL_NAME" in environ
+                else environ["SLACK_CHANNEL_ID"]
             )
+            prowler_args = " ".join(sys.argv[1:])
+            slack = Slack(token, channel, global_provider)
+            _ = slack.send(stats, prowler_args)
         else:
+            # Refactor(CLI)
             logger.critical(
                 "Slack integration needs SLACK_API_TOKEN and SLACK_CHANNEL_NAME environment variables (see more in https://docs.prowler.cloud/en/latest/tutorials/integrations/#slack)."
             )

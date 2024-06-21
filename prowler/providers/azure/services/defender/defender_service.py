@@ -31,7 +31,9 @@ class Defender(AzureService):
         pricings = {}
         for subscription_name, client in self.clients.items():
             try:
-                pricings_list = client.pricings.list()
+                pricings_list = client.pricings.list(
+                    scope_id=f"subscriptions/{self.subscriptions[subscription_name]}"
+                )
                 pricings.update({subscription_name: {}})
                 for pricing in pricings_list.value:
                     pricings[subscription_name].update(

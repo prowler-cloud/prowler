@@ -1,115 +1,34 @@
 import re
-import sys
 from typing import Any
 
 import yaml
-from boto3 import Session
-from boto3.dynamodb.conditions import Attr
-from schema import Optional, Schema
 
 from prowler.lib.logger import logger
+from prowler.lib.mutelist.models import mutelist_schema
 from prowler.lib.outputs.utils import unroll_tags
 
-mutelist_schema = Schema(
-    {
-        "Accounts": {
-            str: {
-                "Checks": {
-                    str: {
-                        "Regions": list,
-                        "Resources": list,
-                        Optional("Tags"): list,
-                        Optional("Exceptions"): {
-                            Optional("Accounts"): list,
-                            Optional("Regions"): list,
-                            Optional("Resources"): list,
-                            Optional("Tags"): list,
-                        },
-                    }
-                }
-            }
-        }
-    }
-)
 
-
-def parse_mutelist_file(
-    mutelist_path: str, aws_session: Session = None, aws_account: str = None
-):
+def get_mutelist_file_from_local_file(mutelist_path: str):
     try:
-        # Check if file is a S3 URI
-        if re.search("^s3://([^/]+)/(.*?([^/]+))$", mutelist_path):
-            bucket = mutelist_path.split("/")[2]
-            key = ("/").join(mutelist_path.split("/")[3:])
-            s3_client = aws_session.client("s3")
-            mutelist = yaml.safe_load(
-                s3_client.get_object(Bucket=bucket, Key=key)["Body"]
-            )["Mutelist"]
-        # Check if file is a Lambda Function ARN
-        elif re.search(r"^arn:(\w+):lambda:", mutelist_path):
-            lambda_region = mutelist_path.split(":")[3]
-            lambda_client = aws_session.client("lambda", region_name=lambda_region)
-            lambda_response = lambda_client.invoke(
-                FunctionName=mutelist_path, InvocationType="RequestResponse"
-            )
-            lambda_payload = lambda_response["Payload"].read()
-            mutelist = yaml.safe_load(lambda_payload)["Mutelist"]
-        # Check if file is a DynamoDB ARN
-        elif re.search(
-            r"^arn:aws(-cn|-us-gov)?:dynamodb:[a-z]{2}-[a-z-]+-[1-9]{1}:[0-9]{12}:table\/[a-zA-Z0-9._-]+$",
-            mutelist_path,
-        ):
-            mutelist = {"Accounts": {}}
-            table_region = mutelist_path.split(":")[3]
-            dynamodb_resource = aws_session.resource(
-                "dynamodb", region_name=table_region
-            )
-            dynamo_table = dynamodb_resource.Table(mutelist_path.split("/")[1])
-            response = dynamo_table.scan(
-                FilterExpression=Attr("Accounts").is_in([aws_account, "*"])
-            )
-            dynamodb_items = response["Items"]
-            # Paginate through all results
-            while "LastEvaluatedKey" in dynamodb_items:
-                response = dynamo_table.scan(
-                    ExclusiveStartKey=response["LastEvaluatedKey"],
-                    FilterExpression=Attr("Accounts").is_in([aws_account, "*"]),
-                )
-                dynamodb_items.update(response["Items"])
-            for item in dynamodb_items:
-                # Create mutelist for every item
-                mutelist["Accounts"][item["Accounts"]] = {
-                    "Checks": {
-                        item["Checks"]: {
-                            "Regions": item["Regions"],
-                            "Resources": item["Resources"],
-                        }
-                    }
-                }
-                if "Tags" in item:
-                    mutelist["Accounts"][item["Accounts"]]["Checks"][item["Checks"]][
-                        "Tags"
-                    ] = item["Tags"]
-                if "Exceptions" in item:
-                    mutelist["Accounts"][item["Accounts"]]["Checks"][item["Checks"]][
-                        "Exceptions"
-                    ] = item["Exceptions"]
-        else:
-            with open(mutelist_path) as f:
-                mutelist = yaml.safe_load(f)["Mutelist"]
-        try:
-            mutelist_schema.validate(mutelist)
-        except Exception as error:
-            logger.critical(
-                f"{error.__class__.__name__} -- Mutelist YAML is malformed - {error}[{error.__traceback__.tb_lineno}]"
-            )
-            sys.exit(1)
-        return mutelist
+        with open(mutelist_path) as f:
+            mutelist = yaml.safe_load(f)["Mutelist"]
+            return mutelist
     except Exception as error:
-        logger.critical(
+        logger.error(
             f"{error.__class__.__name__} -- {error}[{error.__traceback__.tb_lineno}]"
         )
-        sys.exit(1)
+        return {}
+
+
+def validate_mutelist(mutelist: dict) -> dict:
+    try:
+        mutelist = mutelist_schema.validate(mutelist)
+        return mutelist
+    except Exception as error:
+        logger.error(
+            f"{error.__class__.__name__} -- Mutelist YAML is malformed - {error}[{error.__traceback__.tb_lineno}]"
+        )
+        return {}
 
 
 def mutelist_findings(

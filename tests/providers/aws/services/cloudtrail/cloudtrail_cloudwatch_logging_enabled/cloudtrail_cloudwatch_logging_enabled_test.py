@@ -205,6 +205,7 @@ class Test_cloudtrail_cloudwatch_logging_enabled:
                             report.status_extended,
                             f"Multiregion trail {trail_name_us} has been logging the last 24h.",
                         )
+                        assert report.region == AWS_REGION_US_EAST_1
                         assert report.resource_tags == []
                     if (
                         report.resource_id == trail_name_eu
@@ -217,6 +218,7 @@ class Test_cloudtrail_cloudwatch_logging_enabled:
                             report.status_extended,
                             f"Single region trail {trail_name_eu} is not logging in the last 24h.",
                         )
+                        assert report.region == AWS_REGION_EU_WEST_1
                         assert report.resource_tags == []
 
     @mock_aws
@@ -293,6 +295,7 @@ class Test_cloudtrail_cloudwatch_logging_enabled:
                             report.status_extended
                             == f"Single region trail {trail_name_us} has been logging the last 24h."
                         )
+                        assert report.region == AWS_REGION_US_EAST_1
                         assert report.resource_tags == []
                     if report.resource_id == trail_name_eu:
                         assert report.resource_id == trail_name_eu
@@ -302,6 +305,7 @@ class Test_cloudtrail_cloudwatch_logging_enabled:
                             report.status_extended
                             == f"Single region trail {trail_name_eu} is not logging in the last 24h or not configured to deliver logs."
                         )
+                        assert report.region == AWS_REGION_EU_WEST_1
                         assert report.resource_tags == []
 
     @mock_aws

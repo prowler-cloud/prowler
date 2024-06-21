@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "rds_snapshots_encrypted",
+  "CheckTitle": "Check if RDS Snapshots and Cluster Snapshots are encrypted.",
+  "CheckType": [],
+  "ServiceName": "rds",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:rds:region:account-id:snapshot",
+  "Severity": "medium",
+  "ResourceType": "AwsRdsDbSnapshot",
+  "Description": "Check if RDS Snapshots and Cluster Snapshots are encrypted.",
+  "Risk": "Ensure that your manual Amazon RDS database snapshots are encrypted in order to achieve compliance for data-at-rest encryption within your organization.",
+  "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-4",
+  "Remediation": {
+    "Code": {
+      "CLI": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/snapshot-encrypted.html#",
+      "NativeIaC": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/snapshot-encrypted.html#",
+      "Other": "",
+      "Terraform": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/snapshot-encrypted.html#"
+    },
+    "Recommendation": {
+      "Text": "When working with production databases that hold sensitive and critical data, it is strongly recommended to implement encryption at rest and protect your data from attackers or unauthorized personnel. ",
+      "Url": "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-4"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

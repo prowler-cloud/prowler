@@ -7,21 +7,23 @@ class ec2_instance_managed_by_ssm(Check):
     def execute(self):
         findings = []
         for instance in ec2_client.instances:
-            if instance.state != "terminated":
-                report = Check_Report_AWS(self.metadata())
-                report.region = instance.region
-                report.resource_arn = instance.arn
-                report.resource_tags = instance.tags
-                report.status = "PASS"
+            report = Check_Report_AWS(self.metadata())
+            report.region = instance.region
+            report.resource_arn = instance.arn
+            report.resource_tags = instance.tags
+            report.status = "PASS"
+            report.status_extended = (
+                f"EC2 Instance {instance.id} is managed by Systems Manager."
+            )
+            report.resource_id = instance.id
+            # instances not running should pass the check
+            if instance.state in ["pending", "terminated", "stopped"]:
+                report.status_extended = f"EC2 Instance {instance.id} is unmanaged by Systems Manager because it is {instance.state}."
+            elif not ssm_client.managed_instances.get(instance.id):
+                report.status = "FAIL"
                 report.status_extended = (
-                    f"EC2 Instance {instance.id} is managed by Systems Manager."
+                    f"EC2 Instance {instance.id} is not managed by Systems Manager."
                 )
-                report.resource_id = instance.id
-                if not ssm_client.managed_instances.get(instance.id):
-                    report.status = "FAIL"
-                    report.status_extended = (
-                        f"EC2 Instance {instance.id} is not managed by Systems Manager."
-                    )
-                findings.append(report)
+            findings.append(report)
 
         return findings

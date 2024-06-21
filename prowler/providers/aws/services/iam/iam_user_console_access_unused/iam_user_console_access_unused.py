@@ -16,7 +16,7 @@ class iam_user_console_access_unused(Check):
             report.resource_arn = user.arn
             report.resource_tags = user.tags
             report.region = iam_client.region
-            if user.password_last_used:
+            if user.console_access and user.password_last_used:
                 time_since_insertion = (
                     datetime.datetime.now()
                     - datetime.datetime.strptime(
@@ -31,10 +31,7 @@ class iam_user_console_access_unused(Check):
                     report.status_extended = f"User {user.name} has logged in to the console in the past {maximum_expiration_days} days ({time_since_insertion.days} days)."
             else:
                 report.status = "PASS"
-                report.status_extended = (
-                    f"User {user.name} does not have a console password or is unused."
-                )
+                report.status_extended = f"User {user.name} does not have console access enabled or is unused."
 
-            # Append report
             findings.append(report)
         return findings

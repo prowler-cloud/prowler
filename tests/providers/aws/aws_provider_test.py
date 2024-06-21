@@ -9,7 +9,7 @@ from os import rmdir
 from re import search
 
 import botocore
-from boto3 import client, session
+from boto3 import client, resource, session
 from freezegun import freeze_time
 from mock import patch
 from moto import mock_aws
@@ -41,6 +41,7 @@ from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_CHINA_PARTITION,
     AWS_COMMERCIAL_PARTITION,
+    AWS_GOV_CLOUD_ACCOUNT_ARN,
     AWS_GOV_CLOUD_PARTITION,
     AWS_ISO_PARTITION,
     AWS_REGION_CN_NORTH_1,
@@ -56,7 +57,6 @@ from tests.providers.aws.utils import (
     set_mocked_aws_provider,
 )
 
-# Mocking GetCallerIdentity for China and GovCloud
 make_api_call = botocore.client.BaseClient._make_api_call
 
 
@@ -437,6 +437,7 @@ class TestAWSProvider:
                 external_id=arguments.external_id,
                 mfa_enabled=True,  # <- MFA configuration
                 role_session_name=arguments.role_session_name,
+                sts_region=AWS_REGION_US_EAST_1,
             )
 
             credentials = aws_provider._assumed_role_configuration.credentials
@@ -462,51 +463,97 @@ class TestAWSProvider:
         arguments = Namespace()
         arguments.mfa = False
         role_name = "test-role"
-        arguments.role = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:role/{role_name}"
+        arguments.role = (
+            f"arn:{AWS_COMMERCIAL_PARTITION}:iam::{AWS_ACCOUNT_NUMBER}:role/{role_name}"
+        )
         arguments.session_duration = 900
         arguments.role_session_name = "ProwlerAssessmentSession"
 
-        with patch(
-            "prowler.providers.aws.aws_provider.AwsProvider.__input_role_mfa_token_and_code__",
-            return_value=AWSMFAInfo(
-                arn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:mfa/test-role-mfa",
-                totp="111111",
-            ),
-        ):
-            aws_provider = AwsProvider(arguments)
-            assert (
-                aws_provider.session.current_session.region_name == AWS_REGION_US_EAST_1
-            )
-            assert aws_provider.identity.account == AWS_ACCOUNT_NUMBER
-            assert aws_provider.identity.account_arn == AWS_ACCOUNT_ARN
-            assert aws_provider.identity.partition == AWS_COMMERCIAL_PARTITION
-            assert isinstance(
-                aws_provider._assumed_role_configuration.info, AWSAssumeRoleInfo
-            )
-            assert aws_provider._assumed_role_configuration.info == AWSAssumeRoleInfo(
-                role_arn=ARN(arn=arguments.role),
-                session_duration=arguments.session_duration,
-                external_id=None,
-                mfa_enabled=False,  # <- MFA configuration
-                role_session_name=arguments.role_session_name,
-            )
+        aws_provider = AwsProvider(arguments)
+        assert aws_provider.session.current_session.region_name == AWS_REGION_US_EAST_1
+        assert aws_provider.identity.account == AWS_ACCOUNT_NUMBER
+        assert aws_provider.identity.account_arn == AWS_ACCOUNT_ARN
+        assert aws_provider.identity.partition == AWS_COMMERCIAL_PARTITION
+        assert isinstance(
+            aws_provider._assumed_role_configuration.info, AWSAssumeRoleInfo
+        )
+        assert aws_provider._assumed_role_configuration.info == AWSAssumeRoleInfo(
+            role_arn=ARN(arn=arguments.role),
+            session_duration=arguments.session_duration,
+            external_id=None,
+            mfa_enabled=False,  # <- MFA configuration
+            role_session_name=arguments.role_session_name,
+            sts_region=AWS_REGION_US_EAST_1,
+        )
 
-            credentials = aws_provider._assumed_role_configuration.credentials
-            assert isinstance(credentials, AWSCredentials)
+        credentials = aws_provider._assumed_role_configuration.credentials
+        assert isinstance(credentials, AWSCredentials)
 
-            assert credentials.aws_access_key_id
-            assert len(credentials.aws_access_key_id) == 20
-            assert search(r"^ASIA.*$", credentials.aws_access_key_id)
+        assert credentials.aws_access_key_id
+        assert len(credentials.aws_access_key_id) == 20
+        assert search(r"^ASIA.*$", credentials.aws_access_key_id)
 
-            assert credentials.aws_session_token
-            assert len(credentials.aws_session_token) == 356
-            assert search(r"^FQoGZXIvYXdzE.*$", credentials.aws_session_token)
+        assert credentials.aws_session_token
+        assert len(credentials.aws_session_token) == 356
+        assert search(r"^FQoGZXIvYXdzE.*$", credentials.aws_session_token)
 
-            assert credentials.aws_secret_access_key
-            assert len(credentials.aws_secret_access_key) == 40
+        assert credentials.aws_secret_access_key
+        assert len(credentials.aws_secret_access_key) == 40
 
-            assert credentials.expiration
-            # assert credentials.expiration == datetime.now(tzinfo=tzutc())
+        assert credentials.expiration
+        # assert credentials.expiration == datetime.now(tzinfo=tzutc())
+
+    @mock_aws
+    def test_aws_provider_assume_role_without_mfa_gov_cloud(self, monkeypatch):
+        # Set AWS_DEFAULT_REGION = 'us-gov-east-1' since is set by default to 'us-east-1
+        monkeypatch.setenv("AWS_DEFAULT_REGION", AWS_REGION_GOV_CLOUD_US_EAST_1)
+
+        # Variables
+        arguments = Namespace()
+        arguments.mfa = False
+        role_name = "test-role"
+        arguments.role = (
+            f"arn:{AWS_GOV_CLOUD_PARTITION}:iam::{AWS_ACCOUNT_NUMBER}:role/{role_name}"
+        )
+        arguments.session_duration = 900
+        arguments.role_session_name = "ProwlerAssessmentSession"
+
+        aws_provider = AwsProvider(arguments)
+        assert (
+            aws_provider.session.current_session.region_name
+            == AWS_REGION_GOV_CLOUD_US_EAST_1
+        )
+        assert aws_provider.identity.account == AWS_ACCOUNT_NUMBER
+        assert aws_provider.identity.account_arn == AWS_GOV_CLOUD_ACCOUNT_ARN
+        assert aws_provider.identity.partition == AWS_GOV_CLOUD_PARTITION
+        assert isinstance(
+            aws_provider._assumed_role_configuration.info, AWSAssumeRoleInfo
+        )
+        assert aws_provider._assumed_role_configuration.info == AWSAssumeRoleInfo(
+            role_arn=ARN(arn=arguments.role),
+            session_duration=arguments.session_duration,
+            external_id=None,
+            mfa_enabled=False,  # <- MFA configuration
+            role_session_name=arguments.role_session_name,
+            sts_region=AWS_REGION_GOV_CLOUD_US_EAST_1,
+        )
+
+        credentials = aws_provider._assumed_role_configuration.credentials
+        assert isinstance(credentials, AWSCredentials)
+
+        assert credentials.aws_access_key_id
+        assert len(credentials.aws_access_key_id) == 20
+        assert search(r"^ASIA.*$", credentials.aws_access_key_id)
+
+        assert credentials.aws_session_token
+        assert len(credentials.aws_session_token) == 356
+        assert search(r"^FQoGZXIvYXdzE.*$", credentials.aws_session_token)
+
+        assert credentials.aws_secret_access_key
+        assert len(credentials.aws_secret_access_key) == 40
+
+        assert credentials.expiration
+        # assert credentials.expiration == datetime.now(tzinfo=tzutc())
 
     @mock_aws
     def test_aws_provider_config(self):
@@ -528,38 +575,39 @@ aws:
     @mock_aws
     def test_aws_provider_mutelist(self):
         mutelist = {
-            "Accounts": {
-                AWS_ACCOUNT_NUMBER: {
-                    "Checks": {
-                        "test-check": {
-                            "Regions": [],
-                            "Resources": [],
-                            "Tags": [],
-                            "Exceptions": {
-                                "Accounts": [],
+            "Mutelist": {
+                "Accounts": {
+                    AWS_ACCOUNT_NUMBER: {
+                        "Checks": {
+                            "test-check": {
                                 "Regions": [],
                                 "Resources": [],
                                 "Tags": [],
-                            },
+                                "Exceptions": {
+                                    "Accounts": [],
+                                    "Regions": [],
+                                    "Resources": [],
+                                    "Tags": [],
+                                },
+                            }
                         }
                     }
                 }
             }
         }
-        mutelist_content = {"Mutelist": mutelist}
 
-        config_file = tempfile.NamedTemporaryFile(delete=False)
-        with open(config_file.name, "w") as allowlist_file:
-            allowlist_file.write(json.dumps(mutelist_content, indent=4))
+        mutelist_file = tempfile.NamedTemporaryFile(delete=False)
+        with open(mutelist_file.name, "w") as mutelist_file:
+            mutelist_file.write(json.dumps(mutelist, indent=4))
 
         arguments = Namespace()
         aws_provider = AwsProvider(arguments)
 
-        aws_provider.mutelist = config_file.name
+        aws_provider.mutelist = mutelist_file.name
 
-        os.remove(config_file.name)
+        os.remove(mutelist_file.name)
 
-        assert aws_provider.mutelist == mutelist
+        assert aws_provider.mutelist == mutelist["Mutelist"]
 
     @mock_aws
     def test_aws_provider_mutelist_none(self):
@@ -567,12 +615,134 @@ aws:
         aws_provider = AwsProvider(arguments)
 
         with patch(
-            "prowler.providers.common.provider.get_default_mute_file_path",
+            "prowler.providers.aws.aws_provider.get_default_mute_file_path",
             return_value=None,
         ):
             aws_provider.mutelist = None
 
         assert aws_provider.mutelist == {}
+
+    @mock_aws
+    def test_aws_provider_mutelist_s3(self):
+        # Create mutelist temp file
+        mutelist = {
+            "Mutelist": {
+                "Accounts": {
+                    AWS_ACCOUNT_NUMBER: {
+                        "Checks": {
+                            "test-check": {
+                                "Regions": [],
+                                "Resources": [],
+                                "Tags": [],
+                                "Exceptions": {
+                                    "Accounts": [],
+                                    "Regions": [],
+                                    "Resources": [],
+                                    "Tags": [],
+                                },
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        mutelist_file = tempfile.NamedTemporaryFile(delete=False)
+        with open(mutelist_file.name, "w") as mutelist_file:
+            mutelist_file.write(json.dumps(mutelist, indent=4))
+
+        # Create bucket and upload mutelist yaml
+        s3_resource = resource("s3", region_name=AWS_REGION_US_EAST_1)
+        bucket_name = "test-mutelist"
+        mutelist_file_name = "mutelist.yaml"
+        mutelist_bucket_object_uri = f"s3://{bucket_name}/{mutelist_file_name}"
+        s3_resource.create_bucket(Bucket=bucket_name)
+        s3_resource.Object(bucket_name, "mutelist.yaml").put(
+            Body=open(
+                mutelist_file.name,
+                "rb",
+            )
+        )
+
+        arguments = Namespace()
+        aws_provider = AwsProvider(arguments)
+
+        aws_provider.mutelist = mutelist_bucket_object_uri
+        os.remove(mutelist_file.name)
+
+        assert aws_provider.mutelist == mutelist["Mutelist"]
+
+    @mock_aws
+    def test_aws_provider_mutelist_lambda(self):
+        # Create mutelist temp file
+        mutelist = {
+            "Mutelist": {
+                "Accounts": {
+                    AWS_ACCOUNT_NUMBER: {
+                        "Checks": {
+                            "test-check": {
+                                "Regions": [],
+                                "Resources": [],
+                                "Tags": [],
+                                "Exceptions": {
+                                    "Accounts": [],
+                                    "Regions": [],
+                                    "Resources": [],
+                                    "Tags": [],
+                                },
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        arguments = Namespace()
+        aws_provider = AwsProvider(arguments)
+
+        with patch(
+            "prowler.providers.aws.aws_provider.get_mutelist_file_from_lambda",
+            return_value=mutelist["Mutelist"],
+        ):
+            aws_provider.mutelist = f"arn:aws:lambda:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:function:lambda-mutelist"
+
+        assert aws_provider.mutelist == mutelist["Mutelist"]
+
+    @mock_aws
+    def test_aws_provider_mutelist_dynamodb(self):
+        # Create mutelist temp file
+        mutelist = {
+            "Mutelist": {
+                "Accounts": {
+                    AWS_ACCOUNT_NUMBER: {
+                        "Checks": {
+                            "test-check": {
+                                "Regions": [],
+                                "Resources": [],
+                                "Tags": [],
+                                "Exceptions": {
+                                    "Accounts": [],
+                                    "Regions": [],
+                                    "Resources": [],
+                                    "Tags": [],
+                                },
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        arguments = Namespace()
+        aws_provider = AwsProvider(arguments)
+
+        with patch(
+            "prowler.providers.aws.aws_provider.get_mutelist_file_from_dynamodb",
+            return_value=mutelist["Mutelist"],
+        ):
+            aws_provider.mutelist = f"arn:aws:dynamodb:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:table/mutelist-dynamo"
+
+        assert aws_provider.mutelist == mutelist["Mutelist"]
 
     @mock_aws
     def test_generate_regional_clients_all_enabled_regions(self):
