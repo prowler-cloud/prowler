@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "neptune-cluster-multi-az-enabled",
+  "CheckID": "neptune_cluster_multi_az_enabled",
   "CheckTitle": "Check if Neptune Clusters have multi-AZ enabled.",
   "CheckType": [],
   "ServiceName": "neptune",

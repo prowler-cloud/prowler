@@ -13,10 +13,10 @@
   "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/neptune-controls.html#neptune-1",
   "Remediation": {
     "Code": {
-      "CLI": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Neptune/encryption-enabled.html",
+      "CLI": "https://docs.prowler.com/checks/aws/general-policies/general_18/",
       "NativeIaC": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Neptune/encryption-enabled.html",
       "Other": "",
-      "Terraform": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Neptune/encryption-enabled.html"
+      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/general_18/"
     },
     "Recommendation": {
       "Text": "Enable Encryption. Use a CMK where possible. It will provide additional management and privacy benefits.",

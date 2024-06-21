@@ -39,7 +39,7 @@ class Neptune(AWSService):
                         arn=cluster_arn,
                         name=cluster["DBClusterIdentifier"],
                         id=cluster["DbClusterResourceId"],
-                        backup_retention_period=cluster["BackupRetentionPeriod"],
+                        backup_retention_period=cluster.get("BackupRetentionPeriod", 0),
                         encrypted=cluster.get("StorageEncrypted", False),
                         kms_key=cluster.get("KmsKeyId", ""),
                         multi_az=cluster["MultiAZ"],
@@ -102,14 +102,12 @@ class Cluster(BaseModel):
     arn: str
     name: str
     id: str
-    backup_retention_period: int = 0
-    encrypted: Optional[bool]
-    kms_key: Optional[str]
+    backup_retention_period: int
+    encrypted: bool
+    kms_key: str
     multi_az: bool
     iam_auth: bool
     deletion_protection: bool
-    cluster_id: Optional[str]
-    cluster_arn: Optional[str]
     region: str
     db_subnet_group_id: str
     subnets: Optional[list]
