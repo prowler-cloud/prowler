@@ -1,0 +1,30 @@
+{
+  "Provider": "azure",
+  "CheckID": "app_function_application_insights_enabled",
+  "CheckTitle": "Ensure Function App has Application Insights configured",
+  "CheckType": [],
+  "ServiceName": "app",
+  "SubServiceName": "function",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Microsoft.Web/sites",
+  "Description": "Application Insights is a powerful tool for monitoring the performance and health of Azure Function Apps. It provides valuable insights into exceptions, performance issues, and usage patterns, enabling timely detection and resolution of issues.",
+  "Risk": "Without Application Insights, you may miss critical errors, performance degradation, or abnormal behavior in your Function App, potentially impacting availability and user experience.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/azure-monitor/app/app-insights-overview",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/Functions/function-app-insights-on.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable Application Insights for your Azure Function App to monitor its performance and health.",
+      "Url": "https://learn.microsoft.com/en-us/azure/azure-monitor/app/monitor-functions"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

@@ -1,0 +1,30 @@
+{
+  "Provider": "azure",
+  "CheckID": "app_function_identity_is_configured",
+  "CheckTitle": "Ensure Azure function has system or user assigned managed identity configured",
+  "CheckType": [],
+  "ServiceName": "app",
+  "SubServiceName": "function",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Microsoft.Web/sites",
+  "Description": "Azure Functions should have managed identities configured for enhanced security and access control.",
+  "Risk": "Not using managed identities can lead to less secure authentication and authorization practices, potentially exposing sensitive data.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/overview",
+  "Remediation": {
+    "Code": {
+      "CLI": "az functionapp identity assign --name <function_name> --resource-group <resource_group> --identities [system]",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/Functions/azure-function-system-assigned-identity.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "It is recommended to enable managed identities for Azure Functions to enhance security and access control. This allows the function app to easily access other Azure resources securely and with the appropriate permissions.",
+      "Url": "https://learn.microsoft.com/en-us/azure/app-service/overview-managed-identity"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

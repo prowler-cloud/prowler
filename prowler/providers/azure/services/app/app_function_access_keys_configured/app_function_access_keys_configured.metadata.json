@@ -1,0 +1,30 @@
+{
+  "Provider": "azure",
+  "CheckID": "app_function_access_keys_configured",
+  "CheckTitle": "Ensure that Azure Functions are using access keys for enhanced security",
+  "CheckType": [],
+  "ServiceName": "app",
+  "SubServiceName": "function",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Microsoft.Web/sites",
+  "Description": "Azure Functions provide a way to secure HTTP function endpoints during development and production. Using access keys adds an extra layer of protection, ensuring that only authorized users or systems can access the functions. This is particularly important when dealing with public apps or sensitive data.",
+  "Risk": "Unprotected function endpoints may be vulnerable to unauthorized access, leading to potential data breaches or malicious activity.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/azure-functions/functions-bindings-http-webhook-trigger?tabs=python-v2%2Cisolated-process%2Cnodejs-v4%2Cfunctionsv2&pivots=programming-language-csharp#authorization-keys",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/Functions/azure-function-anonymous-access.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Use access keys to secure Azure Functions. You can create and manage keys in the Azure portal or using the Azure CLI. For more information, see the official documentation.",
+      "Url": "https://learn.microsoft.com/en-us/azure/azure-functions/security-concepts?tabs=v4#function-access-keys"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "For additional security, consider using managed identities and key vaults along with access keys. This provides granular control over resource access and improves auditability."
+}

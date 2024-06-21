@@ -8,7 +8,7 @@ from tests.providers.azure.azure_fixtures import (
     set_mocked_azure_provider,
 )
 
-# TODO: we have to fix this test not to use MagicMock but set the App service while mocking the import ot the Monitor client
+# TODO: we have to fix this test not to use MagicMock but set the App service while mocking the import of the Monitor client
 # def mock_app_get_apps(_):
 #     return {
 #         AZURE_SUBSCRIPTION_ID: {
