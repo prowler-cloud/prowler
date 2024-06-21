@@ -86,7 +86,7 @@ class Test_app_function_latest_runtime_version:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert result[0].status_extended == (
-                "Function 'function1' is using the latest runtime."
+                "Function function1 is using the latest runtime."
             )
             assert result[0].resource_id == function_id
             assert result[0].resource_name == "function1"
@@ -131,7 +131,7 @@ class Test_app_function_latest_runtime_version:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].status_extended == (
-                "Function 'function1' is not using the latest runtime. The current runtime is '2' and should be '~4'."
+                "Function function1 is not using the latest runtime. The current runtime is '2' and should be '~4'."
             )
             assert result[0].resource_id == function_id
             assert result[0].resource_name == "function1"

@@ -87,7 +87,7 @@ class Test_app_function_not_publicly_accessible:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "Function 'function1' is not publicly accessible."
+                == "Function function1 is not publicly accessible."
             )
             assert result[0].resource_name == "function1"
             assert result[0].resource_id == function_id
@@ -133,7 +133,7 @@ class Test_app_function_not_publicly_accessible:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Function 'function1' is publicly accessible."
+                == "Function function1 is publicly accessible."
             )
             assert result[0].resource_name == "function1"
             assert result[0].resource_id == function_id

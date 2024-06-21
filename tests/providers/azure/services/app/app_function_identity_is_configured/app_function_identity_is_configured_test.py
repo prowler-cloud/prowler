@@ -87,7 +87,7 @@ class Test_app_function_identity_is_configured:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Function 'function1' does not have a managed identity enabled."
+                == "Function function1 does not have a managed identity enabled."
             )
             assert result[0].resource_name == "function1"
             assert result[0].resource_id == function_id
@@ -133,7 +133,7 @@ class Test_app_function_identity_is_configured:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "Function 'function1' has a SystemAssigned identity enabled."
+                == "Function function1 has a SystemAssigned identity enabled."
             )
             assert result[0].resource_name == "function1"
             assert result[0].resource_id == function_id

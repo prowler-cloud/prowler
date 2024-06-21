@@ -88,7 +88,7 @@ class Test_app_function_access_keys_configured:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Function 'function1' does not have function keys configured."
+                == "Function function1 does not have function keys configured."
             )
             assert result[0].resource_id == function_id
             assert result[0].resource_name == "function1"
@@ -139,7 +139,7 @@ class Test_app_function_access_keys_configured:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "Function 'function1' has function keys configured."
+                == "Function function1 has function keys configured."
             )
             assert result[0].resource_id == function_id
             assert result[0].resource_name == "function1"

@@ -87,7 +87,7 @@ class Test_app_function_vnet_integration_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "Function 'function1' has Virtual Network integration enabled with subnet 'vnet_subnet_id' enabled."
+                == "Function function1 has Virtual Network integration enabled with subnet 'vnet_subnet_id' enabled."
             )
             assert result[0].resource_name == "function1"
             assert result[0].resource_id == function_id
@@ -132,7 +132,7 @@ class Test_app_function_vnet_integration_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Function 'function1' does not have virtual network integration enabled."
+                == "Function function1 does not have virtual network integration enabled."
             )
             assert result[0].resource_name == "function1"
             assert result[0].resource_id == function_id
