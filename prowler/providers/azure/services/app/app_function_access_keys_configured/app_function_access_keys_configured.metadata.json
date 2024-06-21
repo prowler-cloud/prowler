@@ -1,6 +1,6 @@
 {
   "Provider": "azure",
-  "CheckID": "app_function_access_keys_are_configured",
+  "CheckID": "app_function_access_keys_configured",
   "CheckTitle": "Ensure that Azure Functions are using access keys for enhanced security",
   "CheckType": [],
   "ServiceName": "app",

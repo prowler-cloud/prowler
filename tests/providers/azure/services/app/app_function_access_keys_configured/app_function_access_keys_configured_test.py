@@ -7,7 +7,7 @@ from tests.providers.azure.azure_fixtures import (
 )
 
 
-class Test_app_function_access_keys_are_configured:
+class Test_app_function_access_keys_configured:
     def test_app_no_subscriptions(self):
         app_client = mock.MagicMock
 
@@ -15,16 +15,16 @@ class Test_app_function_access_keys_are_configured:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
-            "prowler.providers.azure.services.app.app_function_access_keys_are_configured.app_function_access_keys_are_configured.app_client",
+            "prowler.providers.azure.services.app.app_function_access_keys_configured.app_function_access_keys_configured.app_client",
             new=app_client,
         ):
-            from prowler.providers.azure.services.app.app_function_access_keys_are_configured.app_function_access_keys_are_configured import (
-                app_function_access_keys_are_configured,
+            from prowler.providers.azure.services.app.app_function_access_keys_configured.app_function_access_keys_configured import (
+                app_function_access_keys_configured,
             )
 
             app_client.functions = {}
 
-            check = app_function_access_keys_are_configured()
+            check = app_function_access_keys_configured()
             result = check.execute()
             assert len(result) == 0
 
@@ -36,14 +36,14 @@ class Test_app_function_access_keys_are_configured:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
-            "prowler.providers.azure.services.app.app_function_access_keys_are_configured.app_function_access_keys_are_configured.app_client",
+            "prowler.providers.azure.services.app.app_function_access_keys_configured.app_function_access_keys_configured.app_client",
             new=app_client,
         ):
-            from prowler.providers.azure.services.app.app_function_access_keys_are_configured.app_function_access_keys_are_configured import (
-                app_function_access_keys_are_configured,
+            from prowler.providers.azure.services.app.app_function_access_keys_configured.app_function_access_keys_configured import (
+                app_function_access_keys_configured,
             )
 
-            check = app_function_access_keys_are_configured()
+            check = app_function_access_keys_configured()
             result = check.execute()
             assert len(result) == 0
 
@@ -55,11 +55,11 @@ class Test_app_function_access_keys_are_configured:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
-            "prowler.providers.azure.services.app.app_function_access_keys_are_configured.app_function_access_keys_are_configured.app_client",
+            "prowler.providers.azure.services.app.app_function_access_keys_configured.app_function_access_keys_configured.app_client",
             new=app_client,
         ):
-            from prowler.providers.azure.services.app.app_function_access_keys_are_configured.app_function_access_keys_are_configured import (
-                app_function_access_keys_are_configured,
+            from prowler.providers.azure.services.app.app_function_access_keys_configured.app_function_access_keys_configured import (
+                app_function_access_keys_configured,
             )
             from prowler.providers.azure.services.app.app_service import FunctionApp
 
@@ -81,7 +81,7 @@ class Test_app_function_access_keys_are_configured:
                 }
             }
 
-            check = app_function_access_keys_are_configured()
+            check = app_function_access_keys_configured()
             result = check.execute()
 
             assert len(result) == 1
@@ -103,11 +103,11 @@ class Test_app_function_access_keys_are_configured:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
-            "prowler.providers.azure.services.app.app_function_access_keys_are_configured.app_function_access_keys_are_configured.app_client",
+            "prowler.providers.azure.services.app.app_function_access_keys_configured.app_function_access_keys_configured.app_client",
             new=app_client,
         ):
-            from prowler.providers.azure.services.app.app_function_access_keys_are_configured.app_function_access_keys_are_configured import (
-                app_function_access_keys_are_configured,
+            from prowler.providers.azure.services.app.app_function_access_keys_configured.app_function_access_keys_configured import (
+                app_function_access_keys_configured,
             )
             from prowler.providers.azure.services.app.app_service import FunctionApp
 
@@ -132,7 +132,7 @@ class Test_app_function_access_keys_are_configured:
                 }
             }
 
-            check = app_function_access_keys_are_configured()
+            check = app_function_access_keys_configured()
             result = check.execute()
 
             assert len(result) == 1

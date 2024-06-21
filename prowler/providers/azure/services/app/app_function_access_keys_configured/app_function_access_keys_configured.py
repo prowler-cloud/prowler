@@ -2,7 +2,7 @@ from prowler.lib.check.models import Check, Check_Report_Azure
 from prowler.providers.azure.services.app.app_client import app_client
 
 
-class app_function_access_keys_are_configured(Check):
+class app_function_access_keys_configured(Check):
     def execute(self):
         findings = []
 
