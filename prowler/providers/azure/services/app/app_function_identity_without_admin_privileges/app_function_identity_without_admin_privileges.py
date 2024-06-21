@@ -9,7 +9,7 @@ from prowler.providers.azure.services.app.app_client import app_client
 from prowler.providers.azure.services.iam.iam_client import iam_client
 
 
-class app_function_identity_has_not_admin_privileges(Check):
+class app_function_identity_without_admin_privileges(Check):
     def execute(self):
         findings = []
 

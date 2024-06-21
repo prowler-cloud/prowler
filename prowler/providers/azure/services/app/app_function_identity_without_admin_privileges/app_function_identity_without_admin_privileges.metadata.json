@@ -1,6 +1,6 @@
 {
   "Provider": "azure",
-  "CheckID": "app_function_identity_has_not_admin_privileges",
+  "CheckID": "app_function_identity_without_admin_privileges",
   "CheckTitle": "Ensure that your Azure functions are not configured with an identity with admin privileges",
   "CheckType": [],
   "ServiceName": "app",
