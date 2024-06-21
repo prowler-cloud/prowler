@@ -21,7 +21,7 @@ class app_function_vnet_integration_enabled(Check):
 
                 if function.vnet_subnet_id:
                     report.status = "PASS"
-                    report.status_extended = f"Function '{function.name}' has the subnet '{function.vnet_subnet_id}' enabled."
+                    report.status_extended = f"Function '{function.name}' has Virtual Network integration enabled with subnet '{function.vnet_subnet_id}' enabled."
 
                 findings.append(report)
 
