@@ -14,7 +14,7 @@ class app_function_not_publicly_accessible(Check):
                 report = Check_Report_Azure(self.metadata())
                 report.status = "FAIL"
                 report.status_extended = (
-                    f"Function '{function.name}' is publicly accessible."
+                    f"Function {function.name} is publicly accessible."
                 )
                 report.subscription = subscription_name
                 report.resource_name = function.name
@@ -24,7 +24,7 @@ class app_function_not_publicly_accessible(Check):
                 if not function.public_access:
                     report.status = "PASS"
                     report.status_extended = (
-                        f"Function '{function.name}' is not publicly accessible."
+                        f"Function {function.name} is not publicly accessible."
                     )
 
                 findings.append(report)

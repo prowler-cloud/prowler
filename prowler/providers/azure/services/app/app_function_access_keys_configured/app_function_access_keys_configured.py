@@ -13,7 +13,9 @@ class app_function_access_keys_configured(Check):
             for function_id, function in functions.items():
                 report = Check_Report_Azure(self.metadata())
                 report.status = "FAIL"
-                report.status_extended = f"Function '{function.name}' does not have function keys configured."
+                report.status_extended = (
+                    f"Function {function.name} does not have function keys configured."
+                )
                 report.subscription = subscription_name
                 report.resource_name = function.name
                 report.resource_id = function_id
@@ -22,7 +24,7 @@ class app_function_access_keys_configured(Check):
                 if len(function.function_keys) > 0:
                     report.status = "PASS"
                     report.status_extended = (
-                        f"Function '{function.name}' has function keys configured."
+                        f"Function {function.name} has function keys configured."
                     )
 
                 findings.append(report)

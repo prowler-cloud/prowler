@@ -17,7 +17,7 @@ class app_function_application_insights_enabled(Check):
                 report = Check_Report_Azure(self.metadata())
                 report.status = "FAIL"
                 report.status_extended = (
-                    f"Function '{function.name}' is not using Application Insights."
+                    f"Function {function.name} is not using Application Insights."
                 )
                 report.subscription = subscription_name
                 report.resource_name = function.name
@@ -34,7 +34,7 @@ class app_function_application_insights_enabled(Check):
                 ]:
                     report.status = "PASS"
                     report.status_extended = (
-                        f"Function '{function.name}' is using Application Insights."
+                        f"Function {function.name} is using Application Insights."
                     )
 
                 findings.append(report)

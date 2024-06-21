@@ -13,7 +13,7 @@ class app_function_identity_is_configured(Check):
             for function_id, function in functions.items():
                 report = Check_Report_Azure(self.metadata())
                 report.status = "FAIL"
-                report.status_extended = f"Function '{function.name}' does not have a managed identity enabled."
+                report.status_extended = f"Function {function.name} does not have a managed identity enabled."
                 report.subscription = subscription_name
                 report.resource_name = function.name
                 report.resource_id = function_id
@@ -21,7 +21,7 @@ class app_function_identity_is_configured(Check):
 
                 if function.identity:
                     report.status = "PASS"
-                    report.status_extended = f"Function '{function.name}' has a {function.identity.type if getattr(function.identity, 'type', '') else 'managed'} identity enabled."
+                    report.status_extended = f"Function {function.name} has a {function.identity.type if getattr(function.identity, 'type', '') else 'managed'} identity enabled."
 
                 findings.append(report)
 

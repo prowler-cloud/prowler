@@ -14,7 +14,7 @@ class app_function_latest_runtime_version(Check):
                 report = Check_Report_Azure(self.metadata())
                 report.status = "PASS"
                 report.status_extended = (
-                    f"Function '{function.name}' is using the latest runtime."
+                    f"Function {function.name} is using the latest runtime."
                 )
                 report.subscription = subscription_name
                 report.resource_name = function.name
@@ -26,7 +26,7 @@ class app_function_latest_runtime_version(Check):
                     != "~4"
                 ):
                     report.status = "FAIL"
-                    report.status_extended = f"Function '{function.name}' is not using the latest runtime. The current runtime is '{function.enviroment_variables.get('FUNCTIONS_EXTENSION_VERSION', '')}' and should be '~4'."
+                    report.status_extended = f"Function {function.name} is not using the latest runtime. The current runtime is '{function.enviroment_variables.get('FUNCTIONS_EXTENSION_VERSION', '')}' and should be '~4'."
 
                 findings.append(report)
 

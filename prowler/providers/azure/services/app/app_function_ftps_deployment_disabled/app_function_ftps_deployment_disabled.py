@@ -13,7 +13,7 @@ class app_function_ftps_deployment_disabled(Check):
             for function_id, function in functions.items():
                 report = Check_Report_Azure(self.metadata())
                 report.status = "FAIL"
-                report.status_extended = f"Function '{function.name}' has {'FTP' if function.ftps_state == 'AllAllowed' else 'FTPS' if function.ftps_state == 'FtpsOnly' else 'FTP or FTPS'} deployment enabled"
+                report.status_extended = f"Function {function.name} has {'FTP' if function.ftps_state == 'AllAllowed' else 'FTPS' if function.ftps_state == 'FtpsOnly' else 'FTP or FTPS'} deployment enabled"
                 report.subscription = subscription_name
                 report.resource_name = function.name
                 report.resource_id = function_id
@@ -21,7 +21,9 @@ class app_function_ftps_deployment_disabled(Check):
 
                 if function.ftps_state == "Disabled":
                     report.status = "PASS"
-                    report.status_extended = f"Function '{function.name}' has FTP and FTPS deployment disabled"
+                    report.status_extended = (
+                        f"Function {function.name} has FTP and FTPS deployment disabled"
+                    )
 
                 findings.append(report)
 
