@@ -114,7 +114,7 @@ To assign this roles, follow the instructions:
 
 *Repeat these steps for `Reader` role*
 
-Moreover, some read-only additional permissions are needed for several checks, for this kind of checks that is not cover by builtin roles we use a custom role. This role is defined in [prowler-azure-custom-role](https://github.com/prowler-cloud/prowler/blob/master/permissions/prowler-azure-custom-role.json).
+Moreover, some additional read-only permissions are needed for some checks, for this kind of checks that are not covered by built-in roles we use a custom role. This role is defined in [prowler-azure-custom-role](https://github.com/prowler-cloud/prowler/blob/master/permissions/prowler-azure-custom-role.json). Please be sure to change the `assignableScopes` field for your subscriptions or management group.
 
 ##### Recommendation for multiple subscription
 

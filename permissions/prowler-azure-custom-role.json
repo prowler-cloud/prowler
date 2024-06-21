@@ -1,0 +1,19 @@
+{
+  "properties": {
+    "roleName": "prowler-audit",
+    "description": "",
+    "assignableScopes": [
+      "/providers/Microsoft.Management/managementGroups/<name_management_group> or /subscriptions/<subscription_id>"
+    ],
+    "permissions": [
+      {
+        "actions": [
+          "microsoft.web/sites/host/listkeys/action"
+        ],
+        "notActions": [],
+        "dataActions": [],
+        "notDataActions": []
+      }
+    ]
+  }
+}
