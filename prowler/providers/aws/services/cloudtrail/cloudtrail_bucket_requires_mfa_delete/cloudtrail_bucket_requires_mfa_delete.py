@@ -29,7 +29,7 @@ class cloudtrail_bucket_requires_mfa_delete(Check):
                     # check if trail bucket is a cross account bucket
                     if not trail_bucket_is_in_account:
                         report.status = "MANUAL"
-                        report.status_extended = f"Trail {trail.name} bucket ({trail_bucket}) is a cross-account bucket in another account out of Prowler's permissions scope, please check it manually."
+                        report.status_extended = f"Trail {trail.name} bucket ({trail_bucket}) is a cross-account bucket or out of Prowler's audit scope, please check it manually."
 
                     findings.append(report)
 

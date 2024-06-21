@@ -269,7 +269,7 @@ class Test_cloudtrail_logs_s3_bucket_is_not_publicly_accessible:
             assert result[0].resource_arn == trail_us["TrailARN"]
             assert (
                 result[0].status_extended
-                == f"Trail {trail_name_us} bucket ({bucket_name_us}) is a cross-account bucket in another account out of Prowler's permissions scope, please check it manually."
+                == f"Trail {trail_name_us} bucket ({bucket_name_us}) is a cross-account bucket or out of Prowler's audit scope, please check it manually."
             )
             assert result[0].resource_tags == []
             assert result[0].region == AWS_REGION_US_EAST_1

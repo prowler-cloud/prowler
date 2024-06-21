@@ -193,7 +193,7 @@ class Test_cloudtrail_bucket_requires_mfa_delete:
             assert result[0].status == "MANUAL"
             assert (
                 result[0].status_extended
-                == f"Trail {trail_name_us} bucket ({bucket_name_us}) is a cross-account bucket in another account out of Prowler's permissions scope, please check it manually."
+                == f"Trail {trail_name_us} bucket ({bucket_name_us}) is a cross-account bucket or out of Prowler's audit scope, please check it manually."
             )
             assert result[0].resource_id == trail_name_us
             assert result[0].region == AWS_REGION_US_EAST_1
@@ -248,7 +248,7 @@ class Test_cloudtrail_bucket_requires_mfa_delete:
             assert result[0].status == "MANUAL"
             assert (
                 result[0].status_extended
-                == f"Trail {trail_name_us} bucket ({bucket_name_us}) is a cross-account bucket in another account out of Prowler's permissions scope, please check it manually."
+                == f"Trail {trail_name_us} bucket ({bucket_name_us}) is a cross-account bucket or out of Prowler's audit scope, please check it manually."
             )
             assert result[0].resource_id == trail_name_us
             assert result[0].region == AWS_REGION_US_EAST_1
@@ -322,8 +322,8 @@ class Test_cloudtrail_bucket_requires_mfa_delete:
             check = cloudtrail_bucket_requires_mfa_delete()
             result = check.execute()
             assert len(result) == 1
-            # FIXME: This is returning MANUAL since S3 is not being able to get the S3 buckets
-            assert result[0].status == "FAIL"
+            # This is MANUAL since S3 bucket is in another region not audited
+            assert result[0].status == "MANUAL"
             assert (
                 result[0].status_extended
                 == f"Trail {trail_name_us} bucket ({bucket_name_us}) does not have MFA delete enabled."

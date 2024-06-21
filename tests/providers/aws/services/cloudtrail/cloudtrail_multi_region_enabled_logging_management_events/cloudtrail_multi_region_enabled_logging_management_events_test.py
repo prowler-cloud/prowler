@@ -397,7 +397,7 @@ class Test_cloudtrail_multi_region_enabled_logging_management_events:
                 check = cloudtrail_multi_region_enabled_logging_management_events()
                 result = check.execute()
                 assert len(result) == 1
-                # FIXME: This should return fail since we are not loggin management events but the trail is multiregion
+                # FIXME: This should return fail since we are not logging management events but the trail is multiregion
                 assert result[0].resource_id == trail_name_us
                 assert result[0].resource_arn == trail_us["TrailARN"]
                 assert result[0].status == "FAIL"

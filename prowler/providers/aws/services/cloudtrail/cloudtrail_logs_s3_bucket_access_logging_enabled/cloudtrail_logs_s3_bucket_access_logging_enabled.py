@@ -34,10 +34,10 @@ class cloudtrail_logs_s3_bucket_access_logging_enabled(Check):
                                     report.status_extended = f"Single region Trail {trail.name} S3 bucket access logging is enabled for bucket {trail_bucket}."
                             break
 
-                    # check if trail is delivering logs in a cross account bucket
+                    # check if trail is delivering logs in a cross account bucket or another region out of Prowler's audit scope
                     if not trail_bucket_is_in_account:
                         report.status = "MANUAL"
-                        report.status_extended = f"Trail {trail.name} is delivering logs in a cross-account bucket {trail_bucket} in another account out of Prowler's permissions scope, please check it manually."
+                        report.status_extended = f"Trail {trail.name} is delivering logs to bucket {trail_bucket} which is a cross-account bucket or out of Prowler's audit scope, please check it manually."
                     findings.append(report)
 
         return findings
