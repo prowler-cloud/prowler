@@ -8,7 +8,8 @@
     "permissions": [
       {
         "actions": [
-          "Microsoft.Web/sites/config/list/action"
+          "Microsoft.Web/sites/host/listkeys/action",
+          "Microsoft.Web/sites/config/list/Action"
         ],
         "notActions": [],
         "dataActions": [],
