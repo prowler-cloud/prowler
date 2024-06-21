@@ -155,7 +155,7 @@ class Test_app_function_identity_has_not_admin_privileges:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "Function 'function1' has a managed identity enabled. But it is not configured with admin privileges."
+                == "Function 'function1' has a managed identity enabled but without admin privileges."
             )
             assert result[0].resource_id == function_id
             assert result[0].resource_name == "function1"
