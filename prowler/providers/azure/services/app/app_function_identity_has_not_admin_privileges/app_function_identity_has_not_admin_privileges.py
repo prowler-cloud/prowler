@@ -48,7 +48,7 @@ class app_function_identity_has_not_admin_privileges(Check):
 
                     if admin_roles_assigned:
                         report.status = "FAIL"
-                        report.status_extended = f"Function '{function.name}' has a managed identity enabled and it is configure with admin privileges. The admin {'roles assigned are: ' + ', '.join(admin_roles_assigned) if len(admin_roles_assigned) > 1 else 'role assigned is ' + admin_roles_assigned[0]}."
+                        report.status_extended = f"Function '{function.name}' has a managed identity enabled and it is configure with admin privileges using {'roles: ' + ', '.join(admin_roles_assigned) if len(admin_roles_assigned) > 1 else 'role ' + admin_roles_assigned[0]}."
 
                     findings.append(report)
 

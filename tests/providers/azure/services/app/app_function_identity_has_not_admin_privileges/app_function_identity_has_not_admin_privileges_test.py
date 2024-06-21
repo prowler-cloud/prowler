@@ -231,7 +231,7 @@ class Test_app_function_identity_has_not_admin_privileges:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Function 'function1' has a managed identity enabled and it is configure with admin privileges. The admin role assigned is User Access Administrator."
+                == "Function 'function1' has a managed identity enabled and it is configure with admin privileges using role User Access Administrator."
             )
             assert result[0].resource_id == function_id
             assert result[0].resource_name == "function1"
