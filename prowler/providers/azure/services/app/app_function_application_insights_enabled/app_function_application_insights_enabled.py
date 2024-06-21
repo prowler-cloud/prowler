@@ -5,7 +5,7 @@ from prowler.providers.azure.services.appinsights.appinsights_client import (
 )
 
 
-class app_function_app_insights_is_configured(Check):
+class app_function_application_insights_enabled(Check):
     def execute(self):
         findings = []
 
