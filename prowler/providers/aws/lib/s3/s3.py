@@ -1,5 +1,7 @@
 from prowler.config.config import (
+    available_output_formats,
     csv_file_suffix,
+    html_file_suffix,
     json_asff_file_suffix,
     json_ocsf_file_suffix,
 )
@@ -14,13 +16,15 @@ def send_to_s3_bucket(
         bucket_directory = get_s3_object_path(output_directory)
         filename = ""
         # Get only last part of the path
-        if output_mode in ["csv", "json-asff", "json-ocsf"]:
+        if output_mode in available_output_formats:
             if output_mode == "csv":
                 filename = f"{output_filename}{csv_file_suffix}"
             elif output_mode == "json-asff":
                 filename = f"{output_filename}{json_asff_file_suffix}"
             elif output_mode == "json-ocsf":
                 filename = f"{output_filename}{json_ocsf_file_suffix}"
+            elif output_mode == "html":
+                filename = f"{output_filename}{html_file_suffix}"
             file_name = output_directory + "/" + filename
             object_name = bucket_directory + "/" + output_mode + "/" + filename
         else:  # Compliance output mode

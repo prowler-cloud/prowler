@@ -1,4 +1,5 @@
 import json
+import time
 from enum import Enum
 from typing import Optional
 
@@ -145,6 +146,10 @@ class SSM(AWSService):
                         id=resource_id,
                         region=regional_client.region,
                     )
+                # boto3 does not properly handle throttling exceptions for
+                # ssm:DescribeInstanceInformation when there are large numbers of instances
+                # AWS support recommends manually reducing frequency of requests
+                time.sleep(0.1)
 
         except Exception as error:
             logger.error(

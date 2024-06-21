@@ -1,13 +1,7 @@
-import sys
 from unittest import mock
 
 from prowler.config.config import aws_logo, azure_logo, gcp_logo
-from prowler.lib.outputs.slack import (
-    create_message_blocks,
-    create_message_identity,
-    create_title,
-    send_slack_message,
-)
+from prowler.lib.outputs.slack.slack import Slack
 from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, set_mocked_aws_provider
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
@@ -16,28 +10,25 @@ from tests.providers.azure.azure_fixtures import (
 )
 from tests.providers.gcp.gcp_fixtures import set_mocked_gcp_provider
 
-
-def mock_create_message_blocks(*_):
-    return [{}]
-
-
-def mock_create_message_identity(*_):
-    return "", ""
+SLACK_CHANNEL = "test-channel"
+SLACK_TOKEN = "test-token"
 
 
 class TestSlackIntegration:
     def test_create_message_identity_aws(self):
         aws_provider = set_mocked_aws_provider()
+        slack = Slack(SLACK_TOKEN, SLACK_CHANNEL, aws_provider)
 
-        assert create_message_identity(aws_provider) == (
+        assert slack.__create_message_identity__(aws_provider) == (
             f"AWS Account *{aws_provider.identity.account}*",
             aws_logo,
         )
 
     def test_create_message_identity_azure(self):
         azure_provider = set_mocked_azure_provider()
+        slack = Slack(SLACK_TOKEN, SLACK_CHANNEL, azure_provider)
 
-        assert create_message_identity(azure_provider) == (
+        assert slack.__create_message_identity__(azure_provider) == (
             f"Azure Subscriptions:\n- *{AZURE_SUBSCRIPTION_ID}: {AZURE_SUBSCRIPTION_NAME}*\n",
             azure_logo,
         )
@@ -46,27 +37,50 @@ class TestSlackIntegration:
         gcp_provider = set_mocked_gcp_provider(
             project_ids=["test-project1", "test-project2"],
         )
+        slack = Slack(SLACK_TOKEN, SLACK_CHANNEL, gcp_provider)
 
-        assert create_message_identity(gcp_provider) == (
+        assert slack.__create_message_identity__(gcp_provider) == (
             f"GCP Projects *{', '.join(gcp_provider.project_ids)}*",
             gcp_logo,
         )
 
-    def test_create_message_blocks(self):
-        aws_identity = f"AWS Account *{AWS_ACCOUNT_NUMBER}*"
-        azure_identity = "Azure Subscriptions:\n- *subscription 1: qwerty*\n- *subscription 2: asdfg*\n"
-        gcp_identity = "GCP Project *gcp-project*"
+    def test_create_title(self):
+        aws_provider = set_mocked_aws_provider()
+        slack = Slack(SLACK_TOKEN, SLACK_CHANNEL, aws_provider)
+
         stats = {}
         stats["total_pass"] = 12
         stats["total_fail"] = 10
         stats["resources_count"] = 20
         stats["findings_count"] = 22
-        assert create_message_blocks(aws_identity, aws_logo, stats) == [
+
+        identity = slack.__create_message_identity__(aws_provider) == (
+            f"AWS Account *{aws_provider.identity.account}*",
+            aws_logo,
+        )
+        assert (
+            slack.__create_title__(identity, stats)
+            == f"Hey there 👋 \n I'm *Prowler*, _the handy multi-cloud security tool_ :cloud::key:\n\n I have just finished the security assessment on your {identity} with a total of *{stats['findings_count']}* findings."
+        )
+
+    def test_create_message_blocks_aws(self):
+        aws_provider = set_mocked_aws_provider()
+        slack = Slack(SLACK_TOKEN, SLACK_CHANNEL, aws_provider)
+        args = "--slack"
+        stats = {}
+        stats["total_pass"] = 12
+        stats["total_fail"] = 10
+        stats["resources_count"] = 20
+        stats["findings_count"] = 22
+
+        aws_identity = f"AWS Account *{AWS_ACCOUNT_NUMBER}*"
+
+        assert slack.__create_message_blocks__(aws_identity, aws_logo, stats, args) == [
             {
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": create_title(aws_identity, stats),
+                    "text": slack.__create_title__(aws_identity, stats),
                 },
                 "accessory": {
                     "type": "image",
@@ -102,7 +116,7 @@ class TestSlackIntegration:
                 "elements": [
                     {
                         "type": "mrkdwn",
-                        "text": f"Used parameters: `prowler {' '.join(sys.argv[1:])} `",
+                        "text": f"Used parameters: `prowler {args}`",
                     }
                 ],
             },
@@ -141,12 +155,27 @@ class TestSlackIntegration:
                 },
             },
         ]
-        assert create_message_blocks(azure_identity, azure_logo, stats) == [
+
+    def test_create_message_blocks_azure(self):
+        aws_provider = set_mocked_aws_provider()
+        slack = Slack(SLACK_TOKEN, SLACK_CHANNEL, aws_provider)
+        args = "--slack"
+        stats = {}
+        stats["total_pass"] = 12
+        stats["total_fail"] = 10
+        stats["resources_count"] = 20
+        stats["findings_count"] = 22
+
+        azure_identity = "Azure Subscriptions:\n- *subscription 1: qwerty*\n- *subscription 2: asdfg*\n"
+
+        assert slack.__create_message_blocks__(
+            azure_identity, azure_logo, stats, args
+        ) == [
             {
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": create_title(azure_identity, stats),
+                    "text": slack.__create_title__(azure_identity, stats),
                 },
                 "accessory": {
                     "type": "image",
@@ -182,7 +211,7 @@ class TestSlackIntegration:
                 "elements": [
                     {
                         "type": "mrkdwn",
-                        "text": f"Used parameters: `prowler {' '.join(sys.argv[1:])} `",
+                        "text": f"Used parameters: `prowler {args}`",
                     }
                 ],
             },
@@ -221,12 +250,25 @@ class TestSlackIntegration:
                 },
             },
         ]
-        assert create_message_blocks(gcp_identity, gcp_logo, stats) == [
+
+    def test_create_message_blocks_gcp(self):
+        aws_provider = set_mocked_aws_provider()
+        slack = Slack(SLACK_TOKEN, SLACK_CHANNEL, aws_provider)
+        args = "--slack"
+        stats = {}
+        stats["total_pass"] = 12
+        stats["total_fail"] = 10
+        stats["resources_count"] = 20
+        stats["findings_count"] = 22
+
+        gcp_identity = "GCP Project *gcp-project*"
+
+        assert slack.__create_message_blocks__(gcp_identity, gcp_logo, stats, args) == [
             {
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": create_title(gcp_identity, stats),
+                    "text": slack.__create_title__(gcp_identity, stats),
                 },
                 "accessory": {
                     "type": "image",
@@ -262,7 +304,7 @@ class TestSlackIntegration:
                 "elements": [
                     {
                         "type": "mrkdwn",
-                        "text": f"Used parameters: `prowler {' '.join(sys.argv[1:])} `",
+                        "text": f"Used parameters: `prowler {args}`",
                     }
                 ],
             },
@@ -324,14 +366,13 @@ class TestSlackIntegration:
         mocked_web_client.chat_postMessage = mock.Mock(
             return_value=mocked_slack_response
         )
+
         with mock.patch(
-            "prowler.lib.outputs.slack.create_message_blocks",
-            new=mock_create_message_blocks,
-        ), mock.patch(
-            "prowler.lib.outputs.slack.create_message_identity",
-            new=mock_create_message_identity,
-        ), mock.patch(
-            "prowler.lib.outputs.slack.WebClient", new=mocked_web_client
+            "prowler.lib.outputs.slack.slack.WebClient", new=mocked_web_client
         ):
-            response = send_slack_message("test-token", "test-channel", {}, "provider")
+            aws_provider = set_mocked_aws_provider()
+            slack = Slack(SLACK_TOKEN, SLACK_CHANNEL, aws_provider)
+            stats = {}
+            args = "--slack"
+            response = slack.send(stats, args)
             assert response == mocked_slack_response

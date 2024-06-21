@@ -6,6 +6,7 @@ from unittest import mock
 from boto3 import client
 from moto import mock_aws
 
+from prowler.config.config import enconding_format_utf_8
 from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provider
 
 ACTUAL_DIRECTORY = Path(path.dirname(path.realpath(__file__)))
@@ -49,9 +50,9 @@ class Test_ec2_launch_template_no_secrets:
             VersionDescription="Launch Template without secrets",
             LaunchTemplateData={
                 "InstanceType": "t1.micro",
-                "UserData": b64encode("This is some user_data".encode("utf-8")).decode(
-                    "utf-8"
-                ),
+                "UserData": b64encode(
+                    "This is some user_data".encode(enconding_format_utf_8)
+                ).decode(enconding_format_utf_8),
             },
         )
 
@@ -103,7 +104,7 @@ class Test_ec2_launch_template_no_secrets:
             VersionDescription="Launch Template with secrets",
             LaunchTemplateData={
                 "InstanceType": "t1.micro",
-                "UserData": b64encode(secrets).decode("utf-8"),
+                "UserData": b64encode(secrets).decode(enconding_format_utf_8),
             },
         )
 
@@ -159,7 +160,7 @@ class Test_ec2_launch_template_no_secrets:
             VersionDescription="Launch Template with secrets",
             LaunchTemplateData={
                 "InstanceType": "t1.micro",
-                "UserData": b64encode(secrets).decode("utf-8"),
+                "UserData": b64encode(secrets).decode(enconding_format_utf_8),
             },
         )
 
@@ -168,7 +169,7 @@ class Test_ec2_launch_template_no_secrets:
             VersionDescription="Second Launch Template version with secrets",
             LaunchTemplateData={
                 "InstanceType": "t1.micro",
-                "UserData": b64encode(secrets).decode("utf-8"),
+                "UserData": b64encode(secrets).decode(enconding_format_utf_8),
             },
         )
 
@@ -227,7 +228,7 @@ class Test_ec2_launch_template_no_secrets:
             VersionDescription="Launch Template with secrets",
             LaunchTemplateData={
                 "InstanceType": "t1.micro",
-                "UserData": b64encode(secrets).decode("utf-8"),
+                "UserData": b64encode(secrets).decode(enconding_format_utf_8),
             },
         )
 
@@ -291,7 +292,7 @@ class Test_ec2_launch_template_no_secrets:
             VersionDescription="Launch Template with secrets",
             LaunchTemplateData={
                 "InstanceType": "t1.micro",
-                "UserData": b64encode(secrets).decode("utf-8"),
+                "UserData": b64encode(secrets).decode(enconding_format_utf_8),
             },
         )
 
@@ -393,7 +394,7 @@ class Test_ec2_launch_template_no_secrets:
             VersionDescription="Launch Template with secrets",
             LaunchTemplateData={
                 "InstanceType": "t1.micro",
-                "UserData": b64encode(secrets).decode("utf-8"),
+                "UserData": b64encode(secrets).decode(enconding_format_utf_8),
             },
         )
 
@@ -410,7 +411,7 @@ class Test_ec2_launch_template_no_secrets:
             VersionDescription="Launch Template without secrets",
             LaunchTemplateData={
                 "InstanceType": "t1.micro",
-                "UserData": b64encode(b"Test").decode("utf-8"),
+                "UserData": b64encode(b"Test").decode(enconding_format_utf_8),
             },
         )
 

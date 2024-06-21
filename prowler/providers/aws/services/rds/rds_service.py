@@ -20,6 +20,7 @@ class RDS(AWSService):
         self.db_engines = {}
         self.db_cluster_parameters = {}
         self.db_cluster_snapshots = []
+        self.db_event_subscriptions = []
         self.__threading_call__(self.__describe_db_instances__)
         self.__threading_call__(self.__describe_db_certificate__)
         self.__threading_call__(self.__describe_db_parameters__)
@@ -30,6 +31,14 @@ class RDS(AWSService):
         self.__threading_call__(self.__describe_db_cluster_snapshots__)
         self.__threading_call__(self.__describe_db_cluster_snapshot_attributes__)
         self.__threading_call__(self.__describe_db_engine_versions__)
+        self.__threading_call__(self.__describe_db_event_subscriptions__)
+
+    def __get_rds_arn_template__(self, region):
+        return (
+            f"arn:{self.audited_partition}:rds:{region}:{self.audited_account}:account"
+            if region
+            else f"arn:{self.audited_partition}:rds:{self.region}:{self.audited_account}:account"
+        )
 
     def __describe_db_instances__(self, regional_client):
         logger.info("RDS - Describe Instances...")
@@ -72,6 +81,10 @@ class RDS(AWSService):
                                         for item in instance["DBParameterGroups"]
                                     ],
                                     multi_az=instance["MultiAZ"],
+                                    username=instance["MasterUsername"],
+                                    iam_auth=instance.get(
+                                        "IAMDatabaseAuthenticationEnabled", False
+                                    ),
                                     security_groups=[
                                         sg["VpcSecurityGroupId"]
                                         for sg in instance["VpcSecurityGroups"]
@@ -161,6 +174,7 @@ class RDS(AWSService):
                                     id=snapshot["DBSnapshotIdentifier"],
                                     arn=arn,
                                     instance_id=snapshot["DBInstanceIdentifier"],
+                                    encrypted=snapshot.get("Encrypted", False),
                                     region=regional_client.region,
                                     tags=snapshot.get("TagList", []),
                                 )
@@ -223,6 +237,7 @@ class RDS(AWSService):
                                         backup_retention_period=cluster.get(
                                             "BackupRetentionPeriod"
                                         ),
+                                        backtrack=cluster.get("BacktrackWindow", 0),
                                         cloudwatch_logs=cluster.get(
                                             "EnabledCloudwatchLogsExports"
                                         ),
@@ -233,6 +248,10 @@ class RDS(AWSService):
                                             "DBClusterParameterGroup"
                                         ],
                                         multi_az=cluster["MultiAZ"],
+                                        username=cluster["MasterUsername"],
+                                        iam_auth=cluster.get(
+                                            "IAMDatabaseAuthenticationEnabled", False
+                                        ),
                                         region=regional_client.region,
                                         tags=cluster.get("TagList", []),
                                     )
@@ -266,15 +285,19 @@ class RDS(AWSService):
                             DBClusterParameterGroupName=cluster.parameter_group
                         ):
                             for parameter in page["Parameters"]:
-                                if parameter["ParameterName"] == "rds.force_ssl":
-                                    cluster.force_ssl = parameter["ParameterValue"]
                                 if (
-                                    parameter["ParameterName"]
-                                    == "require_secure_transport"
+                                    "ParameterValue" in parameter
+                                    and "ParameterName" in parameter
                                 ):
-                                    cluster.require_secure_transport = parameter[
-                                        "ParameterValue"
-                                    ]
+                                    if parameter["ParameterName"] == "rds.force_ssl":
+                                        cluster.force_ssl = parameter["ParameterValue"]
+                                    if (
+                                        parameter["ParameterName"]
+                                        == "require_secure_transport"
+                                    ):
+                                        cluster.require_secure_transport = parameter[
+                                            "ParameterValue"
+                                        ]
                     except ClientError as error:
                         if (
                             error.response["Error"]["Code"]
@@ -317,6 +340,7 @@ class RDS(AWSService):
                                     id=snapshot["DBClusterSnapshotIdentifier"],
                                     arn=arn,
                                     cluster_id=snapshot["DBClusterIdentifier"],
+                                    encrypted=snapshot.get("StorageEncrypted", False),
                                     region=regional_client.region,
                                     tags=snapshot.get("TagList", []),
                                 )
@@ -381,6 +405,61 @@ class RDS(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def __describe_db_event_subscriptions__(self, regional_client):
+        logger.info("RDS - Describe Event Subscriptions...")
+        try:
+            describe_event_subscriptions_paginator = regional_client.get_paginator(
+                "describe_event_subscriptions"
+            )
+            events_exist = False
+            for page in describe_event_subscriptions_paginator.paginate():
+                for event in page["EventSubscriptionsList"]:
+                    try:
+                        arn = f"arn:{self.audited_partition}:rds:{regional_client.region}:{self.audited_account}:es:{event['CustSubscriptionId']}"
+                        if not self.audit_resources or (
+                            is_resource_filtered(
+                                arn,
+                                self.audit_resources,
+                            )
+                        ):
+                            self.db_event_subscriptions.append(
+                                EventSubscription(
+                                    id=event["CustSubscriptionId"],
+                                    arn=arn,
+                                    sns_topic_arn=event["SnsTopicArn"],
+                                    status=event["Status"],
+                                    source_type=event["SourceType"],
+                                    source_id=event.get("SourceIdsList", []),
+                                    event_list=event.get("EventCategoriesList", []),
+                                    enabled=event["Enabled"],
+                                    region=regional_client.region,
+                                )
+                            )
+                            events_exist = True
+                    except Exception as error:
+                        logger.error(
+                            f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+            if not events_exist:
+                # No Event Subscriptions for that region
+                self.db_event_subscriptions.append(
+                    EventSubscription(
+                        id="",
+                        arn="",
+                        sns_topic_arn="",
+                        status="",
+                        source_type="",
+                        source_id=[],
+                        event_list=[],
+                        enabled=False,
+                        region=regional_client.region,
+                    )
+                )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class Certificate(BaseModel):
     id: str
@@ -408,6 +487,8 @@ class DBInstance(BaseModel):
     auto_minor_version_upgrade: bool
     enhanced_monitoring_arn: Optional[str]
     multi_az: bool
+    username: str
+    iam_auth: bool
     parameter_groups: list[str] = []
     parameters: list[dict] = []
     security_groups: list[str] = []
@@ -429,10 +510,13 @@ class DBCluster(BaseModel):
     public: bool
     encrypted: bool
     backup_retention_period: int = 0
+    backtrack: int
     cloudwatch_logs: Optional[list]
     deletion_protection: bool
     auto_minor_version_upgrade: bool
     multi_az: bool
+    username: str
+    iam_auth: bool
     parameter_group: str
     force_ssl: str = "0"
     require_secure_transport: str = "OFF"
@@ -446,6 +530,7 @@ class DBSnapshot(BaseModel):
     arn: str
     instance_id: str
     public: bool = False
+    encrypted: bool
     region: str
     tags: Optional[list] = []
 
@@ -456,6 +541,7 @@ class ClusterSnapshot(BaseModel):
     # arn:{partition}:rds:{region}:{account}:cluster-snapshot:{resource_id}
     arn: str
     public: bool = False
+    encrypted: bool
     region: str
     tags: Optional[list] = []
 
@@ -465,3 +551,15 @@ class DBEngine(BaseModel):
     engine: str
     engine_versions: list[str]
     engine_description: str
+
+
+class EventSubscription(BaseModel):
+    id: str
+    arn: str
+    sns_topic_arn: str
+    status: str
+    source_type: str
+    source_id: list
+    event_list: list
+    enabled: bool
+    region: str

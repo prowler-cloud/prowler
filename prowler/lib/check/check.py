@@ -126,9 +126,10 @@ def parse_checks_from_file(input_file: str, provider: str) -> set:
 
 
 # Load checks from custom folder
-def parse_checks_from_folder(provider, input_folder: str) -> int:
+def parse_checks_from_folder(provider, input_folder: str) -> set:
+    # TODO: move the AWS-specific code into the provider
     try:
-        imported_checks = 0
+        custom_checks = set()
         # Check if input folder is a S3 URI
         if provider.type == "aws" and re.search(
             "^s3://([^/]+)/(.*?([^/]+))/$", input_folder
@@ -156,8 +157,8 @@ def parse_checks_from_folder(provider, input_folder: str) -> int:
                     if os.path.exists(prowler_module):
                         shutil.rmtree(prowler_module)
                     shutil.copytree(check_module, prowler_module)
-                    imported_checks += 1
-        return imported_checks
+                    custom_checks.add(check.name)
+        return custom_checks
     except Exception as error:
         logger.critical(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
@@ -438,7 +439,7 @@ def import_check(check_path: str) -> ModuleType:
     return lib
 
 
-def run_check(check: Check, output_options) -> list:
+def run_check(check: Check, verbose: bool = False, only_logs: bool = False) -> list:
     """
     Run the check and return the findings
     Args:
@@ -448,7 +449,7 @@ def run_check(check: Check, output_options) -> list:
         list: list of findings
     """
     findings = []
-    if output_options.verbose or output_options.fixer:
+    if verbose:
         print(
             f"\nCheck ID: {check.CheckID} - {Fore.MAGENTA}{check.ServiceName}{Fore.YELLOW} [{check.Severity}]{Style.RESET_ALL}"
         )
@@ -456,7 +457,7 @@ def run_check(check: Check, output_options) -> list:
     try:
         findings = check.execute()
     except Exception as error:
-        if not output_options.only_logs:
+        if not only_logs:
             print(
                 f"Something went wrong in {check.CheckID}, please use --log-level ERROR"
             )
@@ -698,7 +699,13 @@ def execute(
             )
 
         # Run check
-        check_findings = run_check(check_class, global_provider.output_options)
+        verbose = (
+            global_provider.output_options.verbose
+            or global_provider.output_options.fixer
+        )
+        check_findings = run_check(
+            check_class, verbose, global_provider.output_options.only_logs
+        )
 
         # Update Audit Status
         services_executed.add(service)
