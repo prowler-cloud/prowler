@@ -123,7 +123,7 @@ class App(AzureService):
                                     vnet_subnet_id=getattr(
                                         function,
                                         "virtual_network_subnet_id",
-                                        None,
+                                        "",
                                     ),
                                     ftps_state=getattr(
                                         function_config, "ftps_state", ""
