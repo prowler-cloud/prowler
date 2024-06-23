@@ -10260,6 +10260,15 @@
         ]
       }
     },
+    "taxsettings": {
+      "regions": {
+        "aws": [
+          "us-east-1"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
     "textract": {
       "regions": {
         "aws": [
