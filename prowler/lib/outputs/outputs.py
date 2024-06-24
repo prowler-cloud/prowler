@@ -89,16 +89,17 @@ def report(check_findings, provider):
                                 available_compliance_frameworks
                             )
                         )
-                        fill_compliance(
+
+                        add_manual_controls(
                             output_options,
-                            finding,
                             provider,
                             file_descriptors,
                             input_compliance_frameworks,
                         )
 
-                        add_manual_controls(
+                        fill_compliance(
                             output_options,
+                            finding,
                             provider,
                             file_descriptors,
                             input_compliance_frameworks,
