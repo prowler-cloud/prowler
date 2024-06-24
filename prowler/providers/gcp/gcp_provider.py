@@ -206,7 +206,6 @@ class GcpProvider(Provider):
                     source_credentials=credentials,
                     target_principal=service_account,
                     target_scopes=scopes,
-                    lifetime=3600,
                 )
                 logger.info(f"Impersonated credentials: {credentials}")
 
