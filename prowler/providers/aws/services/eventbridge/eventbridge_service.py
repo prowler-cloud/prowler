@@ -127,7 +127,6 @@ class Schema(AWSService):
         logger.info("EventBridge - Getting Registry Resource Policy...")
         try:
             for registry in self.registries.values():
-                print(registry)
                 # Only get the policy for the registry in the same region and not AWS owned
                 if (
                     registry.region == regional_client.region
