@@ -1,0 +1,30 @@
+{
+  "Provider": "aws",
+  "CheckID": "dms_instance_minor_version_upgrade_enabled",
+  "CheckTitle": "Ensure DMS instances have auto minor version upgrade enabled.",
+  "CheckType": [],
+  "ServiceName": "dms",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:rdmsds:region:account-id:rep",
+  "Severity": "medium",
+  "ResourceType": "AwsDmsReplicationInstance",
+  "Description": "Ensure DMS instances have auto minor version upgrade enabled.",
+  "Risk": "Ensure that your Amazon Database Migration Service (DMS) replication instances have the Auto Minor Version Upgrade feature enabled in order to receive automatically minor engine upgrades.",
+  "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/dms-controls.html#dms-6",
+  "Remediation": {
+    "Code": {
+      "CLI": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DMS/auto-minor-version-upgrade.html#",
+      "NativeIaC": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DMS/auto-minor-version-upgrade.html#",
+      "Other": "",
+      "Terraform": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DMS/auto-minor-version-upgrade.html#"
+    },
+    "Recommendation": {
+      "Text": "Enable auto minor version upgrade for all DMS replication instances.",
+      "Url": "https://docs.aws.amazon.com/securityhub/latest/userguide/dms-controls.html#dms-6"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
