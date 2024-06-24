@@ -86,6 +86,9 @@ nav:
       - Google Cloud:
           - Authentication: tutorials/gcp/authentication.md
           - Projects: tutorials/gcp/projects.md
+      - Kubernetes:
+          - Non In-Cluster: tutorials/kubernetes/outside-cluster.md
+          - In-Cluster: tutorials/kubernetes/in-cluster.md
   - Developer Guide:
       - Introduction: developer-guide/introduction.md
       - Provider: developer-guide/provider.md
