@@ -1,6 +1,6 @@
-# Non In-Cluster Execution
+# External Access
 
-For non in-cluster execution, you can provide the location of the KubeConfig file with the following argument:
+For non in-cluster execution, you can provide the location of the [kubeconfig](https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/) file with the following argument:
 
 ```console
 prowler kubernetes --kubeconfig-file path
