@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "dms_not_public",
+  "CheckID": "dms_instance_not_public",
   "CheckTitle": "Ensure DMS instances are not publicly accessible.",
   "CheckType": [],
   "ServiceName": "dms",

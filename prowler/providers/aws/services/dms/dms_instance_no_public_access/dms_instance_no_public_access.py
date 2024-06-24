@@ -4,7 +4,7 @@ from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 from prowler.providers.aws.services.ec2.lib.security_groups import check_security_group
 
 
-class dms_no_public_access(Check):
+class dms_instance_no_public_access(Check):
     def execute(self):
         findings = []
         for instance in dms_client.instances:
@@ -27,7 +27,7 @@ class dms_no_public_access(Check):
                             for ingress_rule in security_group.ingress_rules:
                                 if check_security_group(
                                     ingress_rule,
-                                    "tcp",
+                                    "-1",
                                     ports=None,
                                     any_address=True,
                                 ):

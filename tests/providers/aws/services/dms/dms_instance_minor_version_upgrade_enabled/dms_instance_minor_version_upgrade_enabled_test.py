@@ -10,7 +10,7 @@ DMS_INSTANCE_ARN = (
 KMS_KEY_ID = f"arn:aws:kms:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:key/abcdabcd-1234-abcd-1234-abcdabcdabcd"
 
 
-class Test_dms_minor_version_upgrade_enabled:
+class Test_dms_instance_minor_version_upgrade_enabled:
     def test_dms_no_instances(self):
         dms_client = mock.MagicMock
         dms_client.instances = []
@@ -19,11 +19,11 @@ class Test_dms_minor_version_upgrade_enabled:
             "prowler.providers.aws.services.dms.dms_service.DMS",
             new=dms_client,
         ):
-            from prowler.providers.aws.services.dms.dms_minor_version_upgrade_enabled.dms_minor_version_upgrade_enabled import (
-                dms_minor_version_upgrade_enabled,
+            from prowler.providers.aws.services.dms.dms_instance_minor_version_upgrade_enabled.dms_instance_minor_version_upgrade_enabled import (
+                dms_instance_minor_version_upgrade_enabled,
             )
 
-            check = dms_minor_version_upgrade_enabled()
+            check = dms_instance_minor_version_upgrade_enabled()
             result = check.execute()
             assert len(result) == 0
 
@@ -47,17 +47,17 @@ class Test_dms_minor_version_upgrade_enabled:
             "prowler.providers.aws.services.dms.dms_service.DMS",
             new=dms_client,
         ):
-            from prowler.providers.aws.services.dms.dms_minor_version_upgrade_enabled.dms_minor_version_upgrade_enabled import (
-                dms_minor_version_upgrade_enabled,
+            from prowler.providers.aws.services.dms.dms_instance_minor_version_upgrade_enabled.dms_instance_minor_version_upgrade_enabled import (
+                dms_instance_minor_version_upgrade_enabled,
             )
 
-            check = dms_minor_version_upgrade_enabled()
+            check = dms_instance_minor_version_upgrade_enabled()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"DMS Replication Instance {DMS_INSTANCE_NAME} does not have minor version upgrade enabled."
+                == f"DMS Replication Instance {DMS_INSTANCE_NAME} does not have auto minor version upgrade enabled."
             )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == DMS_INSTANCE_NAME
@@ -83,17 +83,17 @@ class Test_dms_minor_version_upgrade_enabled:
             "prowler.providers.aws.services.dms.dms_service.DMS",
             new=dms_client,
         ):
-            from prowler.providers.aws.services.dms.dms_minor_version_upgrade_enabled.dms_minor_version_upgrade_enabled import (
-                dms_minor_version_upgrade_enabled,
+            from prowler.providers.aws.services.dms.dms_instance_minor_version_upgrade_enabled.dms_instance_minor_version_upgrade_enabled import (
+                dms_instance_minor_version_upgrade_enabled,
             )
 
-            check = dms_minor_version_upgrade_enabled()
+            check = dms_instance_minor_version_upgrade_enabled()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"DMS Replication Instance {DMS_INSTANCE_NAME} has minor version upgrade enabled."
+                == f"DMS Replication Instance {DMS_INSTANCE_NAME} has auto minor version upgrade enabled."
             )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == DMS_INSTANCE_NAME

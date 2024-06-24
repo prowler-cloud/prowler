@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "dms_minor_version_upgrade_enabled",
+  "CheckID": "dms_instance_minor_version_upgrade_enabled",
   "CheckTitle": "Ensure DMS instances have auto minor version upgrade enabled.",
   "CheckType": [],
   "ServiceName": "dms",

@@ -10,7 +10,7 @@ DMS_INSTANCE_ARN = (
 KMS_KEY_ID = f"arn:aws:kms:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:key/abcdabcd-1234-abcd-1234-abcdabcdabcd"
 
 
-class Test_dms_multi_az:
+class Test_dms_instance_multi_az:
     def test_dms_no_instances(self):
         dms_client = mock.MagicMock
         dms_client.instances = []
@@ -19,15 +19,15 @@ class Test_dms_multi_az:
             "prowler.providers.aws.services.dms.dms_service.DMS",
             new=dms_client,
         ):
-            from prowler.providers.aws.services.dms.dms_multi_az.dms_multi_az import (
-                dms_multi_az,
+            from prowler.providers.aws.services.dms.dms_instance_multi_az.dms_instance_multi_az import (
+                dms_instance_multi_az,
             )
 
-            check = dms_multi_az()
+            check = dms_instance_multi_az()
             result = check.execute()
             assert len(result) == 0
 
-    def test_dms_multi_az_not_enabled(self):
+    def test_dms_instance_multi_az_not_enabled(self):
         dms_client = mock.MagicMock
         dms_client.instances = []
         dms_client.instances.append(
@@ -47,11 +47,11 @@ class Test_dms_multi_az:
             "prowler.providers.aws.services.dms.dms_service.DMS",
             new=dms_client,
         ):
-            from prowler.providers.aws.services.dms.dms_multi_az.dms_multi_az import (
-                dms_multi_az,
+            from prowler.providers.aws.services.dms.dms_instance_multi_az.dms_instance_multi_az import (
+                dms_instance_multi_az,
             )
 
-            check = dms_multi_az()
+            check = dms_instance_multi_az()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -83,11 +83,11 @@ class Test_dms_multi_az:
             "prowler.providers.aws.services.dms.dms_service.DMS",
             new=dms_client,
         ):
-            from prowler.providers.aws.services.dms.dms_multi_az.dms_multi_az import (
-                dms_multi_az,
+            from prowler.providers.aws.services.dms.dms_instance_multi_az.dms_instance_multi_az import (
+                dms_instance_multi_az,
             )
 
-            check = dms_multi_az()
+            check = dms_instance_multi_az()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"

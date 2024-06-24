@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "dms_multi_az_enabled",
+  "CheckID": "dms_instance_multi_az_enabled",
   "CheckTitle": "Ensure DMS instances have multi az enabled.",
   "CheckType": [],
   "ServiceName": "dms",

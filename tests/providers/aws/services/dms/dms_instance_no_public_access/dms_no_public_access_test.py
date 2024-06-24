@@ -17,7 +17,7 @@ DMS_INSTANCE_ARN = (
 KMS_KEY_ID = f"arn:aws:kms:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:key/abcdabcd-1234-abcd-1234-abcdabcdabcd"
 
 
-class Test_dms_no_public_access:
+class Test_dms_instance_no_public_access:
     def test_dms_no_instances(self):
         dms_client = mock.MagicMock
         dms_client.instances = []
@@ -37,11 +37,11 @@ class Test_dms_no_public_access:
                 "prowler.providers.aws.services.rds.rds_instance_no_public_access.rds_instance_no_public_access.ec2_client",
                 new=EC2(aws_provider),
             ):
-                from prowler.providers.aws.services.dms.dms_no_public_access.dms_no_public_access import (
-                    dms_no_public_access,
+                from prowler.providers.aws.services.dms.dms_instance_no_public_access.dms_instance_no_public_access import (
+                    dms_instance_no_public_access,
                 )
 
-                check = dms_no_public_access()
+                check = dms_instance_no_public_access()
                 result = check.execute()
                 assert len(result) == 0
 
@@ -73,11 +73,11 @@ class Test_dms_no_public_access:
                 "prowler.providers.aws.services.dms.dms_service.DMS",
                 new=dms_client,
             ):
-                from prowler.providers.aws.services.dms.dms_no_public_access.dms_no_public_access import (
-                    dms_no_public_access,
+                from prowler.providers.aws.services.dms.dms_instance_no_public_access.dms_instance_no_public_access import (
+                    dms_instance_no_public_access,
                 )
 
-                check = dms_no_public_access()
+                check = dms_instance_no_public_access()
                 result = check.execute()
                 assert len(result) == 1
                 assert result[0].status == "PASS"
@@ -117,11 +117,11 @@ class Test_dms_no_public_access:
                 "prowler.providers.aws.services.dms.dms_service.DMS",
                 new=dms_client,
             ):
-                from prowler.providers.aws.services.dms.dms_no_public_access.dms_no_public_access import (
-                    dms_no_public_access,
+                from prowler.providers.aws.services.dms.dms_instance_no_public_access.dms_instance_no_public_access import (
+                    dms_instance_no_public_access,
                 )
 
-                check = dms_no_public_access()
+                check = dms_instance_no_public_access()
                 result = check.execute()
                 assert len(result) == 1
                 assert result[0].status == "PASS"
@@ -181,15 +181,15 @@ class Test_dms_no_public_access:
                 "prowler.providers.aws.services.dms.dms_service.DMS",
                 new=dms_client,
             ), mock.patch(
-                "prowler.providers.aws.services.dms.dms_no_public_access.dms_no_public_access.ec2_client",
+                "prowler.providers.aws.services.dms.dms_instance_no_public_access.dms_instance_no_public_access.ec2_client",
                 new=EC2(aws_provider),
             ):
                 # Test Check
-                from prowler.providers.aws.services.dms.dms_no_public_access.dms_no_public_access import (
-                    dms_no_public_access,
+                from prowler.providers.aws.services.dms.dms_instance_no_public_access.dms_instance_no_public_access import (
+                    dms_instance_no_public_access,
                 )
 
-                check = dms_no_public_access()
+                check = dms_instance_no_public_access()
                 result = check.execute()
 
                 assert len(result) == 1
@@ -250,15 +250,15 @@ class Test_dms_no_public_access:
                 "prowler.providers.aws.services.dms.dms_service.DMS",
                 new=dms_client,
             ), mock.patch(
-                "prowler.providers.aws.services.dms.dms_no_public_access.dms_no_public_access.ec2_client",
+                "prowler.providers.aws.services.dms.dms_instance_no_public_access.dms_instance_no_public_access.ec2_client",
                 new=EC2(aws_provider),
             ):
                 # Test Check
-                from prowler.providers.aws.services.dms.dms_no_public_access.dms_no_public_access import (
-                    dms_no_public_access,
+                from prowler.providers.aws.services.dms.dms_instance_no_public_access.dms_instance_no_public_access import (
+                    dms_instance_no_public_access,
                 )
 
-                check = dms_no_public_access()
+                check = dms_instance_no_public_access()
                 result = check.execute()
 
                 assert len(result) == 1
