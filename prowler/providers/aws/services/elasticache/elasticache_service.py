@@ -14,9 +14,11 @@ class ElastiCache(AWSService):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.clusters = {}
+        self.replication_groups = {}
         self.__threading_call__(self.__describe_cache_clusters__)
         self.__threading_call__(self.__describe_cache_subnet_groups__)
         self.__list_tags_for_resource__()
+        self.__threading_call__(self.__describe_replication_groups__)
 
     def __describe_cache_clusters__(self, regional_client):
         logger.info("Elasticache - Describing Cache Clusters...")
@@ -32,6 +34,11 @@ class ElastiCache(AWSService):
                         id=cache_cluster["CacheClusterId"],
                         arn=cluster_arn,
                         region=regional_client.region,
+                        security_groups=[
+                            sg["SecurityGroupId"]
+                            for sg in cache_cluster["SecurityGroups"]
+                            if sg["Status"] == "active"
+                        ],
                         cache_subnet_group_id=cache_cluster.get(
                             "CacheSubnetGroupName", None
                         ),
@@ -95,11 +102,48 @@ class ElastiCache(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def __describe_replication_groups__(self, regional_client):
+        logger.info("Elasticache - Describing Replication Groups...")
+        try:
+            for repl_group in regional_client.describe_replication_groups()[
+                "ReplicationGroups"
+            ]:
+                replication_arn = repl_group["ARN"]
+                if not self.audit_resources or (
+                    is_resource_filtered(replication_arn, self.audit_resources)
+                ):
+                    self.replication_groups[replication_arn] = ReplicationGroup(
+                        id=repl_group["ReplicationGroupId"],
+                        arn=replication_arn,
+                        region=regional_client.region,
+                        status=repl_group["Status"],
+                        snapshot_retention=repl_group.get("SnapshotRetentionLimit", 0),
+                        encrypted=repl_group["AtRestEncryptionEnabled"],
+                        transit_encryption=repl_group["TransitEncryptionEnabled"],
+                        multi_az=repl_group["MultiAZ"],
+                    )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class Cluster(BaseModel):
     id: str
     arn: str
     region: str
+    security_groups: list[str] = []
     cache_subnet_group_id: Optional[str]
     subnets: list = []
     tags: Optional[list]
+
+
+class ReplicationGroup(BaseModel):
+    id: str
+    arn: str
+    region: str
+    status: str
+    snapshot_retention: int
+    encrypted: bool
+    transit_encryption: bool
+    multi_az: str
