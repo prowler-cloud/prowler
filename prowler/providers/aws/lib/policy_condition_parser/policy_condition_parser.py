@@ -29,6 +29,8 @@ def is_condition_block_restrictive(
             "aws:principalaccount",
             "aws:resourceaccount",
             "aws:sourcearn",
+            "aws:sourcevpc",
+            "aws:sourcevpce",
         ],
         "StringLike": [
             "aws:sourceaccount",
@@ -37,6 +39,8 @@ def is_condition_block_restrictive(
             "aws:principalarn",
             "aws:resourceaccount",
             "aws:principalaccount",
+            "aws:sourcevpc",
+            "aws:sourcevpce",
         ],
         "ArnLike": ["aws:sourcearn", "aws:principalarn"],
         "ArnEquals": ["aws:sourcearn", "aws:principalarn"],
