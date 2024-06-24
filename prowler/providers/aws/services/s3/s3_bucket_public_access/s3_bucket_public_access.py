@@ -1,5 +1,10 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
-from prowler.providers.aws.services.iam.lib.policy import has_private_conditions
+from prowler.providers.aws.lib.policy_condition_parser.policy_condition_parser import (
+    is_condition_block_restrictive,
+)
+from prowler.providers.aws.services.iam.lib.policy import (
+    is_condition_restricting_from_private_ip,
+)
 from prowler.providers.aws.services.s3.s3_client import s3_client
 from prowler.providers.aws.services.s3.s3control_client import s3control_client
 
@@ -51,7 +56,12 @@ class s3_bucket_public_access(Check):
                                 if (
                                     "Principal" in statement
                                     and statement["Effect"] == "Allow"
-                                    and not has_private_conditions(statement)
+                                    and not is_condition_block_restrictive(
+                                        statement.get("Condition", {}), "", True
+                                    )
+                                    and not is_condition_restricting_from_private_ip(
+                                        statement.get("Condition", {})
+                                    )
                                 ):
                                     if "*" == statement["Principal"]:
                                         report.status = "FAIL"
