@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "documentdb_cluster_c_log_export",
+  "CheckID": "documentdb_cluster_cloudwatch_log_export",
   "CheckTitle": "Check if DocumentDB clusters are using the log export feature.",
   "CheckType": [],
   "ServiceName": "documentdb",
