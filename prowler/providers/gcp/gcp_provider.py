@@ -3,7 +3,8 @@ import re
 import sys
 
 from colorama import Fore, Style
-from google import auth
+from google.auth import default, impersonated_credentials
+from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from googleapiclient import discovery
 from googleapiclient.errors import HttpError
@@ -38,9 +39,12 @@ class GcpProvider(Provider):
         input_project_ids = arguments.project_id
         excluded_project_ids = arguments.excluded_project_id
         credentials_file = arguments.credentials_file
+        self._impersonated_service_account = arguments.impersonate_service_account
         list_project_ids = arguments.list_project_id
 
-        self._session = self.setup_session(credentials_file)
+        self._session = self.setup_session(
+            credentials_file, self._impersonated_service_account
+        )
 
         self._project_ids = []
         self._projects = {}
@@ -121,6 +125,10 @@ class GcpProvider(Provider):
         return self._projects
 
     @property
+    def impersonated_service_account(self):
+        return self._impersonated_service_account
+
+    @property
     def project_ids(self):
         return self._project_ids
 
@@ -168,20 +176,46 @@ class GcpProvider(Provider):
             # "partition": "identity.partition",
         }
 
-    def setup_session(self, credentials_file):
+    def setup_session(self, credentials_file: str, service_account: str) -> Credentials:
+        """
+        Setup the GCP session with the provided credentials file or service account to impersonate
+        Args:
+            credentials_file: str
+            service_account: str
+        Returns:
+            Credentials object
+        """
         try:
+            scopes = ["https://www.googleapis.com/auth/cloud-platform"]
+
             if credentials_file:
+                logger.info(f"Using credentials file: {credentials_file}")
                 self.__set_gcp_creds_env_var__(credentials_file)
 
-            credentials, _ = auth.default(
-                scopes=["https://www.googleapis.com/auth/cloud-platform"]
-            )
+            # Get default credentials
+            credentials, _ = default(scopes=scopes)
+
+            # Refresh the credentials to ensure they are valid
+            credentials.refresh(Request())
+
+            logger.info(f"Initial credentials: {credentials}")
+
+            if service_account:
+                # Create the impersonated credentials
+                credentials = impersonated_credentials.Credentials(
+                    source_credentials=credentials,
+                    target_principal=service_account,
+                    target_scopes=scopes,
+                    lifetime=3600,
+                )
+                logger.info(f"Impersonated credentials: {credentials}")
+
             return credentials
         except Exception as error:
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            sys.exit(1)
+        sys.exit(1)
 
     def __set_gcp_creds_env_var__(self, credentials_file):
         logger.info(
@@ -197,6 +231,10 @@ class GcpProvider(Provider):
             f"GCP Account: {Fore.YELLOW}{self.identity.profile}{Style.RESET_ALL}",
             f"GCP Project IDs: {Fore.YELLOW}{', '.join(self.project_ids)}{Style.RESET_ALL}",
         ]
+        if self.impersonated_service_account:
+            report_lines.append(
+                f"Impersonated Service Account: {Fore.YELLOW}{self.impersonated_service_account}{Style.RESET_ALL}"
+            )
         if self.excluded_project_ids:
             report_lines.append(
                 f"Excluded GCP Project IDs: {Fore.YELLOW}{', '.join(self.excluded_project_ids)}{Style.RESET_ALL}"
@@ -259,14 +297,9 @@ class GcpProvider(Provider):
                     f"{http_error.__class__.__name__}[{http_error.__traceback__.tb_lineno}]: {http_error}"
                 )
         except Exception as error:
-            if error.__class__.__name__ == "RefreshError":
-                logger.critical(
-                    "Google Cloud SDK has not been authenticated or the credentials have expired. Authenticate by running 'gcloud auth application-default login' then retry."
-                )
-            else:
-                logger.critical(
-                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                )
+            logger.critical(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
             sys.exit(1)
         finally:
             return projects
