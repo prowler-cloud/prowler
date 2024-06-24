@@ -214,7 +214,7 @@ class GcpProvider(Provider):
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-        sys.exit(1)
+            sys.exit(1)
 
     def __set_gcp_creds_env_var__(self, credentials_file):
         logger.info(
