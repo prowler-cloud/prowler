@@ -1,6 +1,6 @@
 from prowler.providers.aws.services.iam.lib.policy import (
     check_full_service_access,
-    has_private_conditions,
+    is_condition_restricting_from_private_ip,
     is_policy_cross_account,
     is_policy_public,
 )
@@ -135,32 +135,75 @@ class Test_Policy:
         assert not check_full_service_access("s3", policy3)
         assert not check_full_service_access("s3", policy4)
 
-    def test_statemetns_with_private_conditions(self):
-        statement_no_conditions = {
-            "Effect": "Allow",
-            "Action": "s3:*",
-            "Resource": "*",
-        }
-        statement_condition_from_vpc = {
-            "Effect": "Allow",
-            "Action": "s3:*",
-            "Resource": "*",
-            "Condition": {"StringEquals": {"aws:SourceVpc": "vpc-123456"}},
-        }
-        statement_condition_public_IP = {
-            "Effect": "Allow",
-            "Action": "s3:*",
-            "Resource": "*",
-            "Condition": {"IpAddress": {"aws:SourceIp": "1.2.3.4"}},
-        }
-        statement_condition_private_IP = {
-            "Effect": "Allow",
-            "Action": "s3:*",
-            "Resource": "*",
-            "Condition": {"IpAddress": {"aws:SourceIp": "192.168.4.234"}},
-        }
+    def test_is_condition_restricting_from_private_ip_no_condition(self):
+        assert not is_condition_restricting_from_private_ip({})
 
-        assert not has_private_conditions(statement_no_conditions)
-        assert has_private_conditions(statement_condition_from_vpc)
-        assert not has_private_conditions(statement_condition_public_IP)
-        assert has_private_conditions(statement_condition_private_IP)
+    def test_is_condition_restricting_from_private_ip(self):
+        condition_from_private_ip = {
+            "IpAddress": {"aws:SourceIp": "10.0.0.22"},
+        }
+        assert is_condition_restricting_from_private_ip(condition_from_private_ip)
+
+    def test_is_condition_restricting_from_private_ip_not_from_private_ip(self):
+        condition_not_from_private_ip = {
+            "IpAddress": {"aws:SourceIp": "1.2.3.4"},
+        }
+        assert not is_condition_restricting_from_private_ip(
+            condition_not_from_private_ip
+        )
+
+    def test_is_condition_restricting_from_private_ipv6(self):
+        condition_from_private_ipv6 = {
+            "IpAddress": {"aws:SourceIp": "fd00::1"},
+        }
+        assert is_condition_restricting_from_private_ip(condition_from_private_ipv6)
+
+    def test_is_condition_restricting_from_private_ipv6_not_private(self):
+        condition_not_from_private_ipv6 = {
+            "IpAddress": {"aws:SourceIp": "2001:0db8::1"},
+        }
+        assert is_condition_restricting_from_private_ip(condition_not_from_private_ipv6)
+
+    def test_is_condition_restricting_from_private_ip_network(self):
+        condition_from_private_ip_network = {
+            "IpAddress": {"aws:SourceIp": "10.0.0.0/24"},
+        }
+        assert is_condition_restricting_from_private_ip(
+            condition_from_private_ip_network
+        )
+
+    def test_is_condition_restricting_from_private_ipv6_network(self):
+        condition_from_private_ipv6_network = {
+            "IpAddress": {"aws:SourceIp": "fd00::/8"},
+        }
+        assert is_condition_restricting_from_private_ip(
+            condition_from_private_ipv6_network
+        )
+
+    def test_is_condition_restricting_from_private_ip_array(self):
+        condition_from_private_ip_array = {
+            "IpAddress": {"aws:SourceIp": ["10.0.0.22", "192.168.1.1"]},
+        }
+        assert is_condition_restricting_from_private_ip(condition_from_private_ip_array)
+
+    def test_is_condition_restricting_from_private_ipv6_array(self):
+        condition_from_private_ipv6_array = {
+            "IpAddress": {"aws:SourceIp": ["fd00::1", "fe80::1"]},
+        }
+        assert is_condition_restricting_from_private_ip(
+            condition_from_private_ipv6_array
+        )
+
+    def test_is_condition_restricting_from_mixed_ip_array(self):
+        condition_from_mixed_ip_array = {
+            "IpAddress": {"aws:SourceIp": ["10.0.0.22", "2001:0db8::1"]},
+        }
+        assert is_condition_restricting_from_private_ip(condition_from_mixed_ip_array)
+
+    def test_is_condition_restricting_from_mixed_ip_array_not_private(self):
+        condition_from_mixed_ip_array_not_private = {
+            "IpAddress": {"aws:SourceIp": ["1.2.3.4", "2001:0db8::1"]},
+        }
+        assert not is_condition_restricting_from_private_ip(
+            condition_from_mixed_ip_array_not_private
+        )
