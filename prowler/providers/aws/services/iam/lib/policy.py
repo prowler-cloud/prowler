@@ -1,3 +1,8 @@
+import ipaddress
+
+from prowler.lib.logger import logger
+
+
 def is_policy_cross_account(policy: dict, audited_account: str) -> bool:
     """
     is_policy_cross_account checks if the policy allows cross-account access.
@@ -119,38 +124,45 @@ def check_full_service_access(service: str, policy: dict) -> bool:
     return full_access
 
 
-def has_private_conditions(statement: dict) -> bool:
+def is_condition_restricting_from_private_ip(condition_statement: dict) -> bool:
+    """Check if the policy condition is coming from a private IP address.
+
+    Keyword arguments:
+    condition_statement -- The policy condition to check. For example:
+        {
+            "IpAddress": {
+                "aws:SourceIp": "X.X.X.X"
+            }
+        }
     """
-    Check if the statement has conditions that makes the statement private
-    Args:
-        statement: dict: Statement from the policy
-    Returns:
-        bool: True if the statement has conditions that makes the statement private
-    """
 
-    conditions = statement.get("Condition", {})
+    is_from_private_ip = False
 
-    no_public_conditions = [
-        "aws:SourceArn",
-        "aws:SourceVpc",
-        "aws:SourceVpce",
-        "aws:SourceOwner",
-        "aws:SourceAccount",
-    ]
+    if condition_statement.get("IpAddress", {}):
+        # We need to transform the condition_statement into lowercase
+        condition_statement["IpAddress"] = {
+            k.lower(): v for k, v in condition_statement["IpAddress"].items()
+        }
 
-    return (
-        any(
-            no_public_condition in conditions.get("StringEquals", {})
-            for no_public_condition in no_public_conditions
-        )
-        or any(
-            no_public_condition in conditions.get("StringLike", {})
-            for no_public_condition in no_public_conditions
-        )
-        or any(
-            conditions.get("IpAddress", {})
-            .get("aws:SourceIp", "")
-            .startswith(private_ip)
-            for private_ip in ["10.", "192.168.", "172."]
-        )
-    )
+        if condition_statement["IpAddress"].get("aws:sourceip", ""):
+            if not isinstance(condition_statement["IpAddress"]["aws:sourceip"], list):
+                condition_statement["IpAddress"]["aws:sourceip"] = [
+                    condition_statement["IpAddress"]["aws:sourceip"]
+                ]
+
+            for ip in condition_statement["IpAddress"]["aws:sourceip"]:
+                try:
+                    # Select if IP address or IP network searching in the string for '/'
+                    if "/" in ip:
+                        if not ipaddress.ip_network(ip, strict=False).is_private:
+                            break
+                    else:
+                        if not ipaddress.ip_address(ip).is_private:
+                            break
+
+                except ValueError:
+                    logger.error(f"Invalid IP: {ip}")
+            else:
+                is_from_private_ip = True
+
+    return is_from_private_ip
