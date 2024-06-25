@@ -546,19 +546,19 @@ msrest = ">=0.6.21"
 
 [[package]]
 name = "azure-mgmt-storage"
-version = "21.1.0"
+version = "21.2.0"
 description = "Microsoft Azure Storage Management Client Library for Python"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "azure-mgmt-storage-21.1.0.tar.gz", hash = "sha256:d6d3c0e917c988bc9ed0472477d3ef3f90886009eb1d97a711944f8375630162"},
-    {file = "azure_mgmt_storage-21.1.0-py3-none-any.whl", hash = "sha256:593f2544fc4f05750c4fe7ca4d83c32ea1e9d266e57899bbf79ce5940124e8cc"},
+    {file = "azure-mgmt-storage-21.2.0.tar.gz", hash = "sha256:287c9840b01be931819d403da7ed52bd62fd077b0529dd470e6dbc4fede4b20d"},
+    {file = "azure_mgmt_storage-21.2.0-py3-none-any.whl", hash = "sha256:36b8ef99390b179dc60007b8f017f47a39d030c52e0ca16080012465faf6be51"},
 ]
 
 [package.dependencies]
-azure-common = ">=1.1,<2.0"
-azure-mgmt-core = ">=1.3.2,<2.0.0"
-isodate = ">=0.6.1,<1.0.0"
+azure-common = ">=1.1"
+azure-mgmt-core = ">=1.3.2"
+isodate = ">=0.6.1"
 
 [[package]]
 name = "azure-mgmt-subscription"
@@ -4508,4 +4508,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "jaraco.test", "more
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "2d7629eeb4a3e0ce21eb35363ba6e0f19abe040dc42cb66ff026071315fa5d8a"
+content-hash = "598c0ef5e74ab52dffffaef082aad9b4fe20fbe0b9d767920de7c984ce3c4e33"
