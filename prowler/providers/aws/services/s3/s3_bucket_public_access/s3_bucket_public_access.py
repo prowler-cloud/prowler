@@ -59,8 +59,14 @@ class s3_bucket_public_access(Check):
                                     and not is_condition_block_restrictive(
                                         statement.get("Condition", {}), "", True
                                     )
-                                    and not is_condition_restricting_from_private_ip(
-                                        statement.get("Condition", {})
+                                    and (
+                                        not is_condition_restricting_from_private_ip(
+                                            statement.get("Condition", {})
+                                        )
+                                        if statement.get("Condition", {}).get(
+                                            "IpAddress", {}
+                                        )
+                                        else True
                                     )
                                 ):
                                     if "*" == statement["Principal"]:
