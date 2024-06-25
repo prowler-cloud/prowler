@@ -418,13 +418,13 @@ azure-core = ">=1.26.2,<2.0.0"
 
 [[package]]
 name = "azure-mgmt-cosmosdb"
-version = "9.5.0"
+version = "9.5.1"
 description = "Microsoft Azure Cosmos DB Management Client Library for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "azure-mgmt-cosmosdb-9.5.0.tar.gz", hash = "sha256:5d21a197de08b3638e09ad88e32da211f7bb598b7d7cfee48d61d57d69b3edd9"},
-    {file = "azure_mgmt_cosmosdb-9.5.0-py3-none-any.whl", hash = "sha256:9abdcda0c973c3afe92adf52f9e8d2ede0576e7ade384efd3f4ccd36475ab1a3"},
+    {file = "azure-mgmt-cosmosdb-9.5.1.tar.gz", hash = "sha256:4e55d3973f11cf02cf7a8055aee86615233d7cbe3bb227a07c176bac8bc7ef02"},
+    {file = "azure_mgmt_cosmosdb-9.5.1-py3-none-any.whl", hash = "sha256:860cad5583d63936e5f9477f7878a256c4dee039169cdea554da851f0762f0c7"},
 ]
 
 [package.dependencies]
@@ -4508,4 +4508,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "jaraco.test", "more
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "3d12082e929ec45d9008b80c14079133f0767a23f69f4043f2c87bc4c5843e13"
+content-hash = "aa3f5d2e7ccab7a0794161606f8e0ec6724fd948ae0205990f036a23045b0d76"
