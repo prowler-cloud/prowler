@@ -1,4 +1,10 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
+from prowler.providers.aws.lib.policy_condition_parser.policy_condition_parser import (
+    is_condition_block_restrictive,
+)
+from prowler.providers.aws.services.iam.lib.policy import (
+    is_condition_restricting_from_private_ip,
+)
 from prowler.providers.aws.services.s3.s3_client import s3_client
 from prowler.providers.aws.services.s3.s3control_client import s3control_client
 
@@ -46,26 +52,35 @@ class s3_bucket_public_access(Check):
 
                         # 4. Check bucket policy
                         if bucket.policy:
-                            for statement in bucket.policy["Statement"]:
+                            for statement in bucket.policy.get("Statement", []):
                                 if (
                                     "Principal" in statement
-                                    and "*" == statement["Principal"]
                                     and statement["Effect"] == "Allow"
+                                    and not is_condition_block_restrictive(
+                                        statement.get("Condition", {}), "", True
+                                    )
+                                    and (
+                                        not is_condition_restricting_from_private_ip(
+                                            statement.get("Condition", {})
+                                        )
+                                        if statement.get("Condition", {}).get(
+                                            "IpAddress", {}
+                                        )
+                                        else True
+                                    )
                                 ):
-                                    report.status = "FAIL"
-                                    report.status_extended = f"S3 Bucket {bucket.name} has public access due to bucket policy."
-                                else:
-                                    if (
-                                        "Principal" in statement
-                                        and "AWS" in statement["Principal"]
-                                        and statement["Effect"] == "Allow"
-                                    ):
-                                        if isinstance(
-                                            statement["Principal"]["AWS"], str
-                                        ):
-                                            principals = [statement["Principal"]["AWS"]]
-                                        else:
-                                            principals = statement["Principal"]["AWS"]
+                                    if "*" == statement["Principal"]:
+                                        report.status = "FAIL"
+                                        report.status_extended = f"S3 Bucket {bucket.name} has public access due to bucket policy."
+                                    elif "AWS" in statement["Principal"]:
+                                        principals = (
+                                            statement["Principal"]["AWS"]
+                                            if isinstance(
+                                                statement["Principal"]["AWS"], list
+                                            )
+                                            else [statement["Principal"]["AWS"]]
+                                        )
+
                                         for principal_arn in principals:
                                             if principal_arn == "*":
                                                 report.status = "FAIL"
