@@ -75,17 +75,18 @@ class Test_Codebuild_Service:
     def test__list_projects__(self):
         codebuild = Codebuild(set_mocked_aws_audit_info())
         assert len(codebuild.projects) == 1
-        assert codebuild.projects[0].name == "test"
-        assert codebuild.projects[0].region == AWS_REGION_EU_WEST_1
+        print(codebuild.projects)
+        assert codebuild.projects[project_arn].name == "test"
+        assert codebuild.projects[project_arn].region == AWS_REGION_EU_WEST_1
 
     def test__list_builds_for_project__(self):
         codebuild = Codebuild(set_mocked_aws_audit_info())
         assert len(codebuild.projects) == 1
-        assert codebuild.projects[0].name == "test"
-        assert codebuild.projects[0].region == AWS_REGION_EU_WEST_1
-        assert codebuild.projects[0].last_invoked_time == last_invoked_time
+        assert codebuild.projects[project_arn].name == "test"
+        assert codebuild.projects[project_arn].region == AWS_REGION_EU_WEST_1
+        assert codebuild.projects[project_arn].last_invoked_time == last_invoked_time
         assert (
-            codebuild.projects[0].buildspec
+            codebuild.projects[project_arn].buildspec
             == "arn:aws:s3:::my-codebuild-sample2/buildspec.yml"
         )
 

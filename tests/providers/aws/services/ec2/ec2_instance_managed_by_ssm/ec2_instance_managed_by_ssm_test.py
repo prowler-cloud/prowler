@@ -183,13 +183,13 @@ class Test_ec2_instance_managed_by_ssm_test:
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-        aws_provider = set_mocked_aws_provider(
+        aws_provider = set_mocked_aws_audit_info(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
 
         with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.ssm.ssm_service.SSM",
             new=ssm_client,
@@ -246,13 +246,13 @@ class Test_ec2_instance_managed_by_ssm_test:
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-        aws_provider = set_mocked_aws_provider(
+        aws_provider = set_mocked_aws_audit_info(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
 
         with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.ssm.ssm_service.SSM",
             new=ssm_client,
@@ -298,13 +298,13 @@ class Test_ec2_instance_managed_by_ssm_test:
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-        aws_provider = set_mocked_aws_provider(
+        aws_provider = set_mocked_aws_audit_info(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
 
         with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.ssm.ssm_service.SSM",
             new=ssm_client,
