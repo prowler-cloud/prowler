@@ -22,7 +22,7 @@ def get_provider_data_mapping(provider) -> dict:
     return data
 
 
-def generate_provider_output(provider, finding, csv_data) -> FindingOutput:
+def generate_provider_output(provider, finding, output_data) -> FindingOutput:
     """
     generate_provider_output returns the provider's Finding output model
     """
@@ -30,70 +30,70 @@ def generate_provider_output(provider, finding, csv_data) -> FindingOutput:
     try:
         if provider.type == "aws":
             # TODO: probably Organization UID is without the account id
-            csv_data["auth_method"] = f"profile: {csv_data['auth_method']}"
-            csv_data["resource_name"] = finding.resource_id
-            csv_data["resource_uid"] = finding.resource_arn
-            csv_data["region"] = finding.region
+            output_data["auth_method"] = f"profile: {output_data['auth_method']}"
+            output_data["resource_name"] = finding.resource_id
+            output_data["resource_uid"] = finding.resource_arn
+            output_data["region"] = finding.region
 
         elif provider.type == "azure":
             # TODO: we should show the authentication method used I think
-            csv_data["auth_method"] = (
+            output_data["auth_method"] = (
                 f"{provider.identity.identity_type}: {provider.identity.identity_id}"
             )
             # Get the first tenant domain ID, just in case
-            csv_data["account_organization_uid"] = csv_data["account_organization_uid"][
-                0
-            ]
-            csv_data["account_uid"] = (
-                csv_data["account_organization_uid"]
+            output_data["account_organization_uid"] = output_data[
+                "account_organization_uid"
+            ][0]
+            output_data["account_uid"] = (
+                output_data["account_organization_uid"]
                 if "Tenant:" in finding.subscription
                 else provider.identity.subscriptions[finding.subscription]
             )
-            csv_data["account_name"] = finding.subscription
-            csv_data["resource_name"] = finding.resource_name
-            csv_data["resource_uid"] = finding.resource_id
-            csv_data["region"] = finding.location
+            output_data["account_name"] = finding.subscription
+            output_data["resource_name"] = finding.resource_name
+            output_data["resource_uid"] = finding.resource_id
+            output_data["region"] = finding.location
 
         elif provider.type == "gcp":
-            csv_data["auth_method"] = f"Principal: {csv_data['auth_method']}"
-            csv_data["account_uid"] = provider.projects[finding.project_id].id
-            csv_data["account_name"] = provider.projects[finding.project_id].name
-            csv_data["account_tags"] = provider.projects[finding.project_id].labels
-            csv_data["resource_name"] = finding.resource_name
-            csv_data["resource_uid"] = finding.resource_id
-            csv_data["region"] = finding.location
+            output_data["auth_method"] = f"Principal: {output_data['auth_method']}"
+            output_data["account_uid"] = provider.projects[finding.project_id].id
+            output_data["account_name"] = provider.projects[finding.project_id].name
+            output_data["account_tags"] = provider.projects[finding.project_id].labels
+            output_data["resource_name"] = finding.resource_name
+            output_data["resource_uid"] = finding.resource_id
+            output_data["region"] = finding.location
 
             if (
                 provider.projects
                 and finding.project_id in provider.projects
                 and getattr(provider.projects[finding.project_id], "organization")
             ):
-                csv_data["account_organization_uid"] = provider.projects[
+                output_data["account_organization_uid"] = provider.projects[
                     finding.project_id
                 ].organization.id
                 # TODO: for now is None since we don't retrieve that data
-                csv_data["account_organization"] = provider.projects[
+                output_data["account_organization"] = provider.projects[
                     finding.project_id
                 ].organization.display_name
 
         elif provider.type == "kubernetes":
             if provider.identity.context == "In-Cluster":
-                csv_data["auth_method"] = "in-cluster"
+                output_data["auth_method"] = "in-cluster"
             else:
-                csv_data["auth_method"] = "kubeconfig"
-            csv_data["resource_name"] = finding.resource_name
-            csv_data["resource_uid"] = finding.resource_id
-            csv_data["account_name"] = f"context: {provider.identity.context}"
-            csv_data["region"] = f"namespace: {finding.namespace}"
+                output_data["auth_method"] = "kubeconfig"
+            output_data["resource_name"] = finding.resource_name
+            output_data["resource_uid"] = finding.resource_id
+            output_data["account_name"] = f"context: {provider.identity.context}"
+            output_data["region"] = f"namespace: {finding.namespace}"
 
         # Finding Unique ID
         # TODO: move this to a function
         # TODO: in Azure, GCP and K8s there are fidings without resource_name
-        csv_data["finding_uid"] = (
-            f"prowler-{provider.type}-{finding.check_metadata.CheckID}-{csv_data['account_uid']}-{csv_data['region']}-{csv_data['resource_name']}"
+        output_data["finding_uid"] = (
+            f"prowler-{provider.type}-{finding.check_metadata.CheckID}-{output_data['account_uid']}-{output_data['region']}-{output_data['resource_name']}"
         )
 
-        finding_output = FindingOutput(**csv_data)
+        finding_output = FindingOutput(**output_data)
 
     except Exception as error:
         logger.error(

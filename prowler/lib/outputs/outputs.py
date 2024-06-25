@@ -122,14 +122,14 @@ def report(check_findings, provider):
                         common_finding_data = fill_common_finding_data(
                             finding, output_options.unix_timestamp
                         )
-                        csv_data = {}
-                        csv_data.update(provider_data_mapping)
-                        csv_data.update(common_finding_data)
-                        csv_data["compliance"] = get_check_compliance(
+                        output_data = {}
+                        output_data.update(provider_data_mapping)
+                        output_data.update(common_finding_data)
+                        output_data["compliance"] = get_check_compliance(
                             finding, provider.type, output_options
                         )
                         finding_output = generate_provider_output(
-                            provider, finding, csv_data
+                            provider, finding, output_data
                         )
                         # JSON
                         if "json-ocsf" in file_descriptors:
