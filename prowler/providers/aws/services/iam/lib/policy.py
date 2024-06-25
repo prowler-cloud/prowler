@@ -1,4 +1,4 @@
-import ipaddress
+from ipaddress import ip_address, ip_network
 
 from prowler.lib.logger import logger
 
@@ -86,34 +86,42 @@ def is_condition_restricting_from_private_ip(condition_statement: dict) -> bool:
             }
         }
     """
+    try:
+        CONDITION_OPERATOR = "IpAddress"
+        CONDITION_KEY = "aws:sourceip"
 
-    is_from_private_ip = False
+        is_from_private_ip = False
 
-    if condition_statement.get("IpAddress", {}):
-        # We need to transform the condition_statement into lowercase
-        condition_statement["IpAddress"] = {
-            k.lower(): v for k, v in condition_statement["IpAddress"].items()
-        }
+        if condition_statement.get(CONDITION_OPERATOR, {}):
+            # We need to transform the condition_statement into lowercase
+            condition_statement[CONDITION_OPERATOR] = {
+                k.lower(): v for k, v in condition_statement[CONDITION_OPERATOR].items()
+            }
 
-        if condition_statement["IpAddress"].get("aws:sourceip", ""):
-            if not isinstance(condition_statement["IpAddress"]["aws:sourceip"], list):
-                condition_statement["IpAddress"]["aws:sourceip"] = [
-                    condition_statement["IpAddress"]["aws:sourceip"]
-                ]
+            if condition_statement[CONDITION_OPERATOR].get(CONDITION_KEY, ""):
+                if not isinstance(
+                    condition_statement[CONDITION_OPERATOR][CONDITION_KEY], list
+                ):
+                    condition_statement[CONDITION_OPERATOR][CONDITION_KEY] = [
+                        condition_statement[CONDITION_OPERATOR][CONDITION_KEY]
+                    ]
 
-            for ip in condition_statement["IpAddress"]["aws:sourceip"]:
-                try:
+                for ip in condition_statement[CONDITION_OPERATOR][CONDITION_KEY]:
                     # Select if IP address or IP network searching in the string for '/'
                     if "/" in ip:
-                        if not ipaddress.ip_network(ip, strict=False).is_private:
+                        if not ip_network(ip, strict=False).is_private:
                             break
                     else:
-                        if not ipaddress.ip_address(ip).is_private:
+                        if not ip_address(ip).is_private:
                             break
+                else:
+                    is_from_private_ip = True
 
-                except ValueError:
-                    logger.error(f"Invalid IP: {ip}")
-            else:
-                is_from_private_ip = True
+    except ValueError:
+        logger.error(f"Invalid IP: {ip}")
+    except Exception as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+        )
 
     return is_from_private_ip
