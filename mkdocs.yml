@@ -87,10 +87,9 @@ nav:
           - Authentication: tutorials/gcp/authentication.md
           - Projects: tutorials/gcp/projects.md
       - Kubernetes:
-          - External Access: tutorials/kubernetes/outside-cluster.md
-          - In-Cluster: tutorials/kubernetes/in-cluster.md
-          - Context: tutorials/kubernetes/context.md
-          - Namespace: tutorials/kubernetes/namespace.md
+          - In-Cluster Execution: tutorials/kubernetes/in-cluster.md
+          - Non In-Cluster Execution: tutorials/kubernetes/outside-cluster.md
+          - Miscellaneous: tutorials/kubernetes/misc.md
   - Developer Guide:
       - Introduction: developer-guide/introduction.md
       - Provider: developer-guide/provider.md

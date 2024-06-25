@@ -17,4 +17,4 @@ kubectl logs prowler-XXXXX --namespace prowler-ns
 ```
 
 ???+ note
-    By default, `prowler` will scan all namespaces in your active Kubernetes context. Use the [`--context`](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/kubernetes/context/) and [`--namespace`](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/kubernetes/namespace/) flags to manage Prowler behaviour.
+    By default, `prowler` will scan all namespaces in your active Kubernetes context. Use the [`--namespace`](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/kubernetes/namespace/) flag to specify the namespace(s) to be scanned.
