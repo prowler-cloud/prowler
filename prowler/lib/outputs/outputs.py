@@ -5,16 +5,11 @@ from colorama import Fore, Style
 
 from prowler.config.config import available_compliance_frameworks, orange_color
 from prowler.lib.logger import logger
-from prowler.lib.outputs.common import (
-    fill_common_finding_data,
-    generate_provider_output,
-    get_provider_data_mapping,
-)
+from prowler.lib.outputs.common import generate_output
 from prowler.lib.outputs.common_models import FindingOutput
 from prowler.lib.outputs.compliance.compliance import (
     add_manual_controls,
     fill_compliance,
-    get_check_compliance,
 )
 from prowler.lib.outputs.csv.csv import generate_csv_fields
 from prowler.lib.outputs.file_descriptors import fill_file_descriptors
@@ -118,23 +113,14 @@ def report(check_findings, provider):
                                 file_descriptors["json-asff"].write(",")
 
                         # Common Output Data
-                        provider_data_mapping = get_provider_data_mapping(provider)
-                        common_finding_data = fill_common_finding_data(
-                            finding, output_options.unix_timestamp
+                        finding_output = generate_output(
+                            provider, finding, output_options
                         )
-                        output_data = {}
-                        output_data.update(provider_data_mapping)
-                        output_data.update(common_finding_data)
-                        output_data["compliance"] = get_check_compliance(
-                            finding, provider.type, output_options
-                        )
-                        finding_output = generate_provider_output(
-                            provider, finding, output_data
-                        )
+
                         # JSON
                         if "json-ocsf" in file_descriptors:
                             detection_finding = fill_json_ocsf(finding_output)
-                            # print(file)
+
                             file_descriptors["json-ocsf"].write(
                                 detection_finding.json(exclude_none=True, indent=4)
                             )

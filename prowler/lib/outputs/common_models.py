@@ -75,3 +75,6 @@ class FindingOutput(BaseModel):
     related_to: str
     notes: str
     prowler_version: str = prowler_version
+
+    def generate_csv_fields(self):
+        return self.dict().keys()
