@@ -89,6 +89,8 @@ nav:
       - Kubernetes:
           - External Access: tutorials/kubernetes/outside-cluster.md
           - In-Cluster: tutorials/kubernetes/in-cluster.md
+          - Context: tutorials/kubernetes/context.md
+          - Namespace: tutorials/kubernetes/namespace.md
   - Developer Guide:
       - Introduction: developer-guide/introduction.md
       - Provider: developer-guide/provider.md

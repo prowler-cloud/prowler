@@ -17,21 +17,4 @@ kubectl logs prowler-XXXXX --namespace prowler-ns
 ```
 
 ???+ note
-    By default, `prowler` will scan all namespaces in your active Kubernetes context. Use the flag `--context` to specify the context to be scanned and `--namespaces` to specify the namespaces to be scanned.
-
-## Context Flag
-
-To specify the Kubernetes context to be scanned, use the `--context` flag followed by the desired context name. For example:
-
-```console
-prowler --context my-context
-```
-
-This will ensure that Prowler scans the specified context for vulnerabilities and misconfigurations.
-
-## Namespace Flag
-
-To specify the namespace(s) to be scanned, use the `--namespace` flag followed by the desired namespace(s) sepparated by spaces. For example:
-```console
-prowler --namespace namespace1 namespace2
-```
+    By default, `prowler` will scan all namespaces in your active Kubernetes context. Use the [`--context`](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/kubernetes/context/) and [`--namespace`](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/kubernetes/namespace/) flags to manage Prowler behaviour.
