@@ -23,7 +23,7 @@ def generate_csv_fields(format: Any) -> list[str]:
     return csv_fields
 
 
-def generate_csv(findings: list[FindingOutput], file_descriptor) -> CSVOutput:
+def generate_csv(findings: list[FindingOutput]) -> CSVOutput:
     """Generates the CSV output for the given findings"""
     csv_output = CSVOutput(findings=[])
     csv_output.findings = []
