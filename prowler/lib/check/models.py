@@ -54,7 +54,6 @@ class Check_Metadata_Model(BaseModel):
     DependsOn: list[str]
     RelatedTo: list[str]
     Notes: str
-    Tags: dict = {}
     # We set the compliance to None to
     # store the compliance later if supplied
     Compliance: list = None

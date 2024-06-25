@@ -74,7 +74,6 @@ def update_checks_metadata_with_compliance(
                 "DependsOn": [],
                 "RelatedTo": [],
                 "Notes": "",
-                "Tags": {},
             }
             manual_check = parse_obj_as(Check_Metadata_Model, manual_check_metadata)
             # Save it into the check's metadata

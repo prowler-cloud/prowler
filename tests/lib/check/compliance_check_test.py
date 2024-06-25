@@ -9,7 +9,7 @@ from prowler.lib.check.compliance_models import (
 from prowler.lib.check.models import Check_Metadata_Model
 
 
-class TestUpdateChecksMetadataWithCompliance:
+class TestCompliance:
     provider = "aws"
 
     def get_custom_framework(self):
@@ -139,28 +139,55 @@ class TestUpdateChecksMetadataWithCompliance:
         assert "check2" in updated_metadata
         assert "manual_check" in updated_metadata
 
-        assert len(updated_metadata["check1"].Compliance) == 1
-        assert len(updated_metadata["check2"].Compliance) == 1
+        manual_compliance = updated_metadata["manual_check"].Compliance[0]
+        check1_compliance = updated_metadata["check1"].Compliance[0]
+
         assert len(updated_metadata["manual_check"].Compliance) == 1
+        assert len(updated_metadata["check1"].Compliance) == 1
 
-        manual_compliance = updated_metadata["manual_check"].Compliance[0]
         assert manual_compliance.Framework == "Framework1"
         assert manual_compliance.Provider == "Provider1"
         assert manual_compliance.Version == "1.0"
         assert manual_compliance.Description == "Framework 1 Description"
+        assert len(manual_compliance.Requirements) == 1
 
-    def test_update_checks_metadata_with_manual_control(self):
-        bulk_compliance_frameworks = self.get_custom_framework()
-        bulk_checks_metadata = self.get_custom_check_metadata()
+        manual_requirement = manual_compliance.Requirements[0]
+        assert manual_requirement.Id == "1.1.2"
+        assert manual_requirement.Description == "description"
+        assert len(manual_requirement.Attributes) == 1
 
-        updated_metadata = update_checks_metadata_with_compliance(
-            bulk_compliance_frameworks, bulk_checks_metadata
-        )
+        manual_attribute = manual_requirement.Attributes[0]
+        assert manual_attribute.Section == "1. Identity"
+        assert manual_attribute.Profile == "Level 1"
+        assert manual_attribute.AssessmentStatus == "Manual"
+        assert manual_attribute.Description == "Description"
+        assert manual_attribute.RationaleStatement == "Rationale"
+        assert manual_attribute.ImpactStatement == "Impact"
+        assert manual_attribute.RemediationProcedure == "Remediation"
+        assert manual_attribute.AuditProcedure == "Audit"
+        assert manual_attribute.AdditionalInformation == "Additional"
+        assert manual_attribute.References == "References"
 
-        assert "manual_check" in updated_metadata
+        assert len(updated_metadata["check1"].Compliance) == 1
+        assert check1_compliance.Framework == "Framework1"
+        assert check1_compliance.Provider == "Provider1"
+        assert check1_compliance.Version == "1.0"
+        assert check1_compliance.Description == "Framework 1 Description"
+        assert len(check1_compliance.Requirements) == 1
 
-        manual_compliance = updated_metadata["manual_check"].Compliance[0]
-        assert manual_compliance.Framework == "Framework1"
-        assert manual_compliance.Provider == "Provider1"
-        assert manual_compliance.Version == "1.0"
-        assert manual_compliance.Description == "Framework 1 Description"
+        check1_requirement = check1_compliance.Requirements[0]
+        assert check1_requirement.Id == "1.1.1"
+        assert check1_requirement.Description == "description"
+        assert len(check1_requirement.Attributes) == 1
+
+        check1_attribute = check1_requirement.Attributes[0]
+        assert check1_attribute.Section == "1. Identity"
+        assert check1_attribute.Profile == "Level 1"
+        assert check1_attribute.AssessmentStatus == "Manual"
+        assert check1_attribute.Description == "Description"
+        assert check1_attribute.RationaleStatement == "Rationale"
+        assert check1_attribute.ImpactStatement == "Impact"
+        assert check1_attribute.RemediationProcedure == "Remediation"
+        assert check1_attribute.AuditProcedure == "Audit"
+        assert check1_attribute.AdditionalInformation == "Additional"
+        assert check1_attribute.References == "References"
