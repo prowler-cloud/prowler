@@ -1,5 +1,4 @@
 import json
-from csv import DictWriter
 
 from colorama import Fore, Style
 
@@ -11,7 +10,7 @@ from prowler.lib.outputs.compliance.compliance import (
     add_manual_controls,
     fill_compliance,
 )
-from prowler.lib.outputs.csv.csv import generate_csv_fields
+from prowler.lib.outputs.csv.csv import generate_csv_fields, write_csv
 from prowler.lib.outputs.file_descriptors import fill_file_descriptors
 from prowler.lib.outputs.html.html import fill_html
 from prowler.lib.outputs.json_asff.json_asff import fill_json_asff
@@ -137,13 +136,11 @@ def report(check_findings, provider):
                             finding_output.account_tags = unroll_list(
                                 finding_output.account_tags, ","
                             )
-                            csv_writer = DictWriter(
+                            write_csv(
                                 file_descriptors["csv"],
-                                fieldnames=generate_csv_fields(FindingOutput),
-                                delimiter=";",
+                                generate_csv_fields(FindingOutput),
+                                finding_output,
                             )
-
-                            csv_writer.writerow(finding_output.dict())
 
         else:  # No service resources in the whole account
             color = set_report_color("MANUAL")
