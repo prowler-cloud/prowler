@@ -1,6 +1,7 @@
 import datetime
-from dataclasses import dataclass
 from typing import Optional
+
+from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
@@ -14,10 +15,12 @@ class Codebuild(AWSService):
         super().__init__(__class__.__name__, provider)
         self.projects = []
         self.__threading_call__(self.__list_projects__)
-        self.__list_builds_for_project__()
+        self.__threading_call__(self.__list_builds_for_project__)
+        self.__threading_call__(self.__batch_get_builds__)
+        self.__threading_call__(self.__batch_get_projects__)
 
     def __list_projects__(self, regional_client):
-        logger.info("Codebuild - listing projects")
+        logger.info("Codebuild - Listing projects...")
         try:
             list_projects_paginator = regional_client.get_paginator("list_projects")
             for page in list_projects_paginator.paginate():
@@ -31,8 +34,6 @@ class Codebuild(AWSService):
                                 name=project,
                                 arn=project_arn,
                                 region=regional_client.region,
-                                last_invoked_time=None,
-                                buildspec=None,
                             )
                         )
 
@@ -41,38 +42,70 @@ class Codebuild(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __list_builds_for_project__(self):
-        logger.info("Codebuild - listing builds from projects")
+    def __list_builds_for_project__(self, regional_client):
+        logger.info("Codebuild - Listing builds...")
         try:
             for project in self.projects:
-                for region, client in self.regional_clients.items():
-                    if project.region == region:
-                        ids = client.list_builds_for_project(projectName=project.name)
-                        if "ids" in ids:
-                            if len(ids["ids"]) > 0:
-                                builds = client.batch_get_builds(ids=[ids["ids"][0]])
-                                if "builds" in builds:
-                                    if "endTime" in builds["builds"][0]:
-                                        project.last_invoked_time = builds["builds"][0][
-                                            "endTime"
-                                        ]
+                if project.region == regional_client.region:
+                    try:
+                        project.build_ids = regional_client.list_builds_for_project(
+                            projectName=project.name
+                        ).get("ids", [])
+                    except Exception as error:
+                        logger.error(
+                            f"{regional_client.region}: {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
-                        projects = client.batch_get_projects(names=[project.name])[
-                            "projects"
-                        ][0]["source"]
+    def __batch_get_builds__(self, regional_client):
+        logger.info("Codebuild - Getting builds...")
+        try:
+            for project in self.projects:
+                if project.region == regional_client.region and project.build_ids:
+                    try:
+                        builds = regional_client.batch_get_builds(
+                            ids=[project.build_ids[0]]
+                        ).get("builds", [])
+                        if builds:
+                            if "endTime" in builds[0]:
+                                project.last_invoked_time = builds[0]["endTime"]
+                    except Exception as error:
+                        logger.error(
+                            f"{regional_client.region}: {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def __batch_get_projects__(self, regional_client):
+        logger.info("Codebuild - Getting projects...")
+        try:
+            for project in self.projects:
+                if project.region == regional_client.region:
+                    try:
+                        projects = regional_client.batch_get_projects(
+                            names=[project.name]
+                        )["projects"][0]["source"]
                         if "buildspec" in projects:
                             project.buildspec = projects["buildspec"]
-
+                    except Exception as error:
+                        logger.error(
+                            f"{regional_client.region}: {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
 
-@dataclass
-class Project:
+class Project(BaseModel):
     name: str
     arn: str
     region: str
+    build_ids: list = []
     last_invoked_time: Optional[datetime.datetime]
     buildspec: Optional[str]

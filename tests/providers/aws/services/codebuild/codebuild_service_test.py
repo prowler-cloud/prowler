@@ -71,6 +71,22 @@ class Test_Codebuild_Service:
         assert codebuild.projects[0].name == "test"
         assert codebuild.projects[0].region == AWS_REGION_EU_WEST_1
         assert codebuild.projects[0].last_invoked_time == last_invoked_time
+        assert codebuild.projects[0].build_ids == [
+            "test:93f838a7-cd20-48ae-90e5-c10fbbc78ca6"
+        ]
+
+    def test__batch_get_builds__(self):
+        codebuild = Codebuild(set_mocked_aws_provider())
+        assert len(codebuild.projects) == 1
+        assert codebuild.projects[0].name == "test"
+        assert codebuild.projects[0].region == AWS_REGION_EU_WEST_1
+        assert codebuild.projects[0].last_invoked_time == last_invoked_time
+
+    def test__batch_get_projects__(self):
+        codebuild = Codebuild(set_mocked_aws_provider())
+        assert len(codebuild.projects) == 1
+        assert codebuild.projects[0].name == "test"
+        assert codebuild.projects[0].region == AWS_REGION_EU_WEST_1
         assert (
             codebuild.projects[0].buildspec
             == "arn:aws:s3:::my-codebuild-sample2/buildspec.yml"
