@@ -56,6 +56,8 @@ export AZURE_CLIENT_SECRET="XXXXXXX"
 ```
 
 If you try to execute Prowler with the `--sp-env-auth` flag and those variables are empty or not exported, the execution is going to fail.
+Follow the instructions in the [Create Prowler Service Principal](../tutorials/azure/create-prowler-service-principal.md) section to create a service principal.
+
 ### AZ CLI / Browser / Managed Identity authentication
 
 The other three cases does not need additional configuration, `--az-cli-auth` and `--managed-identity-auth` are automated options. To use `--browser-auth`  the user needs to authenticate against Azure using the default browser to start the scan, also `tenant-id` is required.
@@ -64,73 +66,16 @@ The other three cases does not need additional configuration, `--az-cli-auth` an
 
 To use each one you need to pass the proper flag to the execution. Prowler for Azure handles two types of permission scopes, which are:
 
-- **Microsoft Entra ID permissions**: Used to retrieve metadata from the identity assumed by Prowler and specific Entra checks (not mandatory to have access to execute the tool).
-- **Subscription scope permissions**: Required to launch the checks against your resources, mandatory to launch the tool.
-
-
-#### Microsoft Entra ID scope
-
-Microsoft Entra ID (AAD earlier) permissions required by the tool are the following:
-
-- `Directory.Read.All`
-- `Policy.Read.All`
-- `UserAuthenticationMethod.Read.All`
-
-The best way to assign it is through the Azure web console:
-
-1. Access to Microsoft Entra ID
-2. In the left menu bar, go to "App registrations"
-3. Once there, in the menu bar click on "+ New registration" to register a new application
-4. Fill the "Name, select the "Supported account types" and click on "Register. You will be redirected to the applications page.
-  ![Register an Application page](../img/register-application.png)
-4. Select the new application
-5. In the left menu bar, select "API permissions"
-6. Then click on "+ Add a permission" and select "Microsoft Graph"
-7. Once in the "Microsoft Graph" view, select "Application permissions"
-8. Finally, search for "Directory", "Policy" and "UserAuthenticationMethod" select the following permissions:
+- **Microsoft Entra ID permissions**: Used to retrieve metadata from the identity assumed by Prowler and specific Entra checks (not mandatory to have access to execute the tool). The permissions required by the tool are the following:
     - `Directory.Read.All`
     - `Policy.Read.All`
     - `UserAuthenticationMethod.Read.All`
-    ![EntraID Permissions](../img/AAD-permissions.png)
+- **Subscription scope permissions**: Required to launch the checks against your resources, mandatory to launch the tool. It is required to add the following RBAC builtin roles per subscription to the entity that is going to be assumed by the tool:
+    - `Security Reader`
+    - `Reader`
+    - `ProwlerRole` (custom role defined in [prowler-azure-custom-role](https://github.com/prowler-cloud/prowler/blob/master/permissions/prowler-azure-custom-role.json))
 
-
-#### Subscriptions scope
-
-Regarding the subscription scope, Prowler by default scans all the subscriptions that is able to list, so it is required to add the following RBAC builtin roles per subscription to the entity that is going to be assumed by the tool:
-
-- `Security Reader`
-- `Reader`
-
-To assign this roles, follow the instructions:
-
-1. Access your subscription, then select your subscription.
-2. Select "Access control (IAM)".
-3. In the overview, select "Roles"
-  ![IAM Page](../img/page-IAM.png)
-4. Click on "+ Add" and select "Add role assignment"
-5. In the search bar, type `Security Reader`, select it and click on "Next"
-6. In the Members tab, click on "+ Select members" and add the members you want to assign this role.
-7. Click on "Review + assign" to apply the new role.
-
-*Repeat these steps for `Reader` role*
-
-Moreover, some additional read-only permissions are needed for some checks, for this kind of checks that are not covered by built-in roles we use a custom role. This role is defined in [prowler-azure-custom-role](https://github.com/prowler-cloud/prowler/blob/master/permissions/prowler-azure-custom-role.json). Please be sure to change the `assignableScopes` field for your subscriptions or management group. Once the cusotm role is created, repeat the steps mentioned above to assign the new `ProwlerRole` to an identity.
-
-##### Recommendation for multiple subscriptions
-
-While scanning multiple subscriptions could be tedious to create and assign roles for each one. For this reason in Prowler we recommend the usage of *[management groups](https://learn.microsoft.com/en-us/azure/governance/management-groups/overview)* to group all subscriptions that are going to be audited by Prowler.
-
-To do this in a propper way you have to [create a new management group](https://learn.microsoft.com/en-us/azure/governance/management-groups/create-management-group-portal) and add all the roles in the same way that have been done for subscription scope.
-
-![Create management group](../img/create-management-group.gif)
-
-Once the management group is properly set you can add all the subscription that you want to audit.
-
-![Add subscription to management group](../img/add-sub-to-management-group.gif)
-
-???+ note
-    By default, `prowler` will scan all subscriptions in the Azure tenant, use the flag `--subscription-id` to specify the subscriptions to be scanned.
-
+To assign the permissions, follow the instructions in the [Microsoft Entra ID permissions](../tutorials/azure/create-prowler-service-principal.md#assigning-the-proper-permissions) section and the [Azure subscriptions permissions](../tutorials/azure/subscriptions.md#assigning-proper-permissions) section, respectively.
 
 ## Google Cloud
 
