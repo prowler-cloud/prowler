@@ -116,11 +116,11 @@ To assign this roles, follow the instructions:
 
 Moreover, some additional read-only permissions are needed for some checks, for this kind of checks that are not covered by built-in roles we use a custom role. This role is defined in [prowler-azure-custom-role](https://github.com/prowler-cloud/prowler/blob/master/permissions/prowler-azure-custom-role.json). Please be sure to change the `assignableScopes` field for your subscriptions or management group. Once the cusotm role is created, repeat the steps mentioned above to assign the new `ProwlerRole` to an identity.
 
-##### Recommendation for multiple subscription
+##### Recommendation for multiple subscriptions
 
-For scanning multiple subscription it could be tedious create and assign role for every subscription, for this reason in Prowler recommend the usage of *[management groups](https://learn.microsoft.com/en-us/azure/governance/management-groups/overview)* to group all subscriptions that wanna be audited.
+While scanning multiple subscriptions could be tedious to create and assign roles for each one. For this reason in Prowler we recommend the usage of *[management groups](https://learn.microsoft.com/en-us/azure/governance/management-groups/overview)* to group all subscriptions that are going to be audited by Prowler.
 
-To do this in a propper way you have to [create a new management group](https://learn.microsoft.com/en-us/azure/governance/management-groups/create-management-group-portal) and add all roles in the same way that have been done for subscription scope.
+To do this in a propper way you have to [create a new management group](https://learn.microsoft.com/en-us/azure/governance/management-groups/create-management-group-portal) and add all the roles in the same way that have been done for subscription scope.
 
 ![Create management group](../img/create-management-group.gif)
 
@@ -129,7 +129,7 @@ Once the management group is properly set you can add all the subscription that 
 ![Add subscription to management group](../img/add-sub-to-management-group.gif)
 
 ???+ note
-    By default, `prowler` will scan all subscriptions in the Azure tenant, use flag `--subscription-id` to specify the subscriptions to be scanned.
+    By default, `prowler` will scan all subscriptions in the Azure tenant, use the flag `--subscription-id` to specify the subscriptions to be scanned.
 
 
 ## Google Cloud
