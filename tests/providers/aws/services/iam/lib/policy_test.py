@@ -172,3 +172,9 @@ class Test_Policy:
         assert not is_condition_restricting_from_private_ip(
             condition_from_mixed_ip_array_not_private
         )
+
+    def test_is_condition_restricting_from_private_ip_from_invalid_ip(self):
+        condition_from_invalid_ip = {
+            "IpAddress": {"aws:SourceIp": "256.256.256.256"},
+        }
+        assert not is_condition_restricting_from_private_ip(condition_from_invalid_ip)
