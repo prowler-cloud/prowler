@@ -67,15 +67,15 @@ def report(check_findings, output_options, audit_info):
                             compliance in output_options.output_modes
                             for compliance in available_compliance_frameworks
                         ):
-                            fill_compliance(
+                            add_manual_controls(
                                 output_options,
-                                finding,
                                 audit_info,
                                 file_descriptors,
                             )
 
-                            add_manual_controls(
+                            fill_compliance(
                                 output_options,
+                                finding,
                                 audit_info,
                                 file_descriptors,
                             )

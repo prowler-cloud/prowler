@@ -34,6 +34,7 @@ def update_checks_metadata_with_compliance(
             # Save it into the check's metadata
             bulk_checks_metadata[check].Compliance = check_compliance
 
+        check_compliance = []
         # Add requirements of Manual Controls
         for framework in bulk_compliance_frameworks.values():
             for requirement in framework.Requirements:
@@ -70,7 +71,6 @@ def update_checks_metadata_with_compliance(
                     "Recommendation": {"Text": "", "Url": ""},
                 },
                 "Categories": [],
-                "Tags": {},
                 "DependsOn": [],
                 "RelatedTo": [],
                 "Notes": "",
