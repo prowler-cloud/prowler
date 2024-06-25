@@ -71,5 +71,5 @@ def generate_csv(findings: list[FindingOutput], file_descriptor) -> CSVOutput:
             notes=finding.notes,
         )
         csv_output.findings.append(csv_row)
-        write_csv(file_descriptor, generate_csv_fields(CSVRow), csv_row)
+
     return csv_output
