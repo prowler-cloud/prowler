@@ -72,13 +72,3 @@ class CSVRow(BaseModel):
     depends_on: str
     related_to: str
     notes: str
-
-
-class CSVOutput(BaseModel):
-    """
-    CSVOutput generates the CSV output for every provider.
-
-    This is the base CSV output model for every provider.
-    """
-
-    findings: list[CSVRow]
