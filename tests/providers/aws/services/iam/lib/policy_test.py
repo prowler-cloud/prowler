@@ -100,7 +100,7 @@ class Test_Policy:
         }
         assert is_condition_restricting_from_private_ip(condition_from_private_ip)
 
-    def test_is_condition_restricting_from_private_ip_not_from_private_ip(self):
+    def test_is_condition_restricting_from_public_ip(self):
         condition_not_from_private_ip = {
             "IpAddress": {"aws:SourceIp": "1.2.3.4"},
         }
@@ -114,7 +114,7 @@ class Test_Policy:
         }
         assert is_condition_restricting_from_private_ip(condition_from_private_ipv6)
 
-    def test_is_condition_restricting_from_private_ipv6_not_private(self):
+    def test_is_condition_restricting_from_public_ipv6(self):
         condition_not_from_private_ipv6 = {
             "IpAddress": {"aws:SourceIp": "2001:0db8::1"},
         }
@@ -126,6 +126,15 @@ class Test_Policy:
         }
         assert is_condition_restricting_from_private_ip(
             condition_from_private_ip_network
+        )
+
+    def test_is_condition_restricting_from_public_ip_network(self):
+        condition_from_public_ip_network = {
+            "IpAddress": {"aws:SourceIp": "1.2.3.0/24"},
+        }
+
+        assert not is_condition_restricting_from_private_ip(
+            condition_from_public_ip_network
         )
 
     def test_is_condition_restricting_from_private_ipv6_network(self):
