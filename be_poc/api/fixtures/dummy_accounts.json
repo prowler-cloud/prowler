@@ -1,0 +1,193 @@
+[
+    {
+      "model": "api.account",
+      "pk": "c0bbdcd2-c69e-4bdf-bea7-8db6524fd205",
+      "fields": {
+        "name": "prod",
+        "inserted_at": "2024-06-25T09:03:20.273Z",
+        "updated_at": "2024-06-25T09:03:20.273Z",
+        "aws_account_id": "1234567890",
+        "scan_window_start_at": "2024-06-29T09:03:17Z"
+      }
+    },
+    {
+      "model": "api.account",
+      "pk": "cf51b7a0-687e-4a2a-bf3d-14f98dcb4c3f",
+      "fields": {
+        "name": "platform",
+        "inserted_at": "2024-06-25T09:03:08.847Z",
+        "updated_at": "2024-06-25T09:03:08.847Z",
+        "aws_account_id": "1234567890",
+        "scan_window_start_at": "2024-06-28T09:03:08Z"
+      }
+    },
+    {
+      "model": "api.account",
+      "pk": "cf9d2400-9a10-4c7b-a3be-6215c41b619e",
+      "fields": {
+        "name": "dev",
+        "inserted_at": "2024-06-25T09:02:34.188Z",
+        "updated_at": "2024-06-25T09:02:34.188Z",
+        "aws_account_id": "12345467890",
+        "scan_window_start_at": "2024-06-29T09:02:27Z"
+      }
+    },
+    {
+      "model": "api.account",
+      "pk": "dbc452bd-b51c-4199-8b42-c1bc8164d45d",
+      "fields": {
+        "name": "marketplace",
+        "inserted_at": "2024-06-25T09:02:58.412Z",
+        "updated_at": "2024-06-25T09:02:58.412Z",
+        "aws_account_id": "1234567890",
+        "scan_window_start_at": "2024-06-27T09:02:57Z"
+      }
+    },
+    {
+      "model": "api.account",
+      "pk": "fabc5b58-901b-4ba6-9901-4b2349acf492",
+      "fields": {
+        "name": "management",
+        "inserted_at": "2024-06-25T09:02:46.950Z",
+        "updated_at": "2024-06-25T09:02:46.950Z",
+        "aws_account_id": "1234567890",
+        "scan_window_start_at": "2024-06-27T09:02:46Z"
+      }
+    },
+    {
+      "model": "api.cloudaccount",
+      "pk": "1f1dd221-6d49-4413-a8b7-e10ca4b0660a",
+      "fields": {
+        "account_id": "cf9d2400-9a10-4c7b-a3be-6215c41b619e",
+        "type": "test",
+        "groups": [
+          "Operation"
+        ],
+        "resources": 644,
+        "enable": true,
+        "provider_id": "aws",
+        "inserted_at": "2024-06-25T09:03:57.233Z",
+        "updated_at": "2024-06-25T09:03:57.233Z"
+      }
+    },
+    {
+      "model": "api.cloudaccount",
+      "pk": "4997b2eb-a9f9-4d12-800b-1a6394728510",
+      "fields": {
+        "account_id": "c0bbdcd2-c69e-4bdf-bea7-8db6524fd205",
+        "type": "test",
+        "groups": [
+          "Production"
+        ],
+        "resources": 564,
+        "enable": true,
+        "provider_id": "aws",
+        "inserted_at": "2024-06-25T09:04:56.941Z",
+        "updated_at": "2024-06-25T09:04:56.941Z"
+      }
+    },
+    {
+      "model": "api.cloudaccount",
+      "pk": "668bb77d-cfb4-4f4a-8c51-45beb16af4e9",
+      "fields": {
+        "account_id": "dbc452bd-b51c-4199-8b42-c1bc8164d45d",
+        "type": "test",
+        "groups": [
+          "Production"
+        ],
+        "resources": 148,
+        "enable": true,
+        "provider_id": "aws",
+        "inserted_at": "2024-06-25T09:04:31.753Z",
+        "updated_at": "2024-06-25T09:04:31.753Z"
+      }
+    },
+    {
+      "model": "api.cloudaccount",
+      "pk": "a50d3d9d-ac2d-47d1-ac6c-29c8d304072e",
+      "fields": {
+        "account_id": "fabc5b58-901b-4ba6-9901-4b2349acf492",
+        "type": "test",
+        "groups": [
+          "Production",
+          "Operation"
+        ],
+        "resources": 356,
+        "enable": true,
+        "provider_id": "aws",
+        "inserted_at": "2024-06-25T09:04:14.567Z",
+        "updated_at": "2024-06-25T09:04:14.567Z"
+      }
+    },
+    {
+      "model": "api.cloudaccount",
+      "pk": "d71c8ac6-074d-45a3-a7a7-0595ab5440bc",
+      "fields": {
+        "account_id": "cf51b7a0-687e-4a2a-bf3d-14f98dcb4c3f",
+        "type": "test",
+        "groups": [
+          "Production"
+        ],
+        "resources": 112,
+        "enable": true,
+        "provider_id": "aws",
+        "inserted_at": "2024-06-25T09:04:44.431Z",
+        "updated_at": "2024-06-25T09:04:44.431Z"
+      }
+    },
+    {
+      "model": "api.audit",
+      "pk": "0f712e8e-b419-40b4-9d85-65ef723fc1b9",
+      "fields": {
+        "aws_account_id": "fabc5b58-901b-4ba6-9901-4b2349acf492",
+        "audit_complete": true,
+        "inserted_at": "2024-06-25T09:05:37.352Z",
+        "updated_at": "2024-06-25T09:05:37.352Z",
+        "audit_duration": "00:06:30"
+      }
+    },
+    {
+      "model": "api.audit",
+      "pk": "1bf18315-34e6-4912-8e8e-3e4650e4653e",
+      "fields": {
+        "aws_account_id": "dbc452bd-b51c-4199-8b42-c1bc8164d45d",
+        "audit_complete": true,
+        "inserted_at": "2024-06-25T09:05:43.601Z",
+        "updated_at": "2024-06-25T09:05:43.601Z",
+        "audit_duration": "00:08:00"
+      }
+    },
+    {
+      "model": "api.audit",
+      "pk": "48605239-58ee-4dbf-8a46-3ef42b270a19",
+      "fields": {
+        "aws_account_id": "cf9d2400-9a10-4c7b-a3be-6215c41b619e",
+        "audit_complete": true,
+        "inserted_at": "2024-06-25T09:05:29.533Z",
+        "updated_at": "2024-06-25T09:05:29.533Z",
+        "audit_duration": "00:06:12"
+      }
+    },
+    {
+      "model": "api.audit",
+      "pk": "955c1a4f-496a-4df5-96c8-578280b7a914",
+      "fields": {
+        "aws_account_id": "cf51b7a0-687e-4a2a-bf3d-14f98dcb4c3f",
+        "audit_complete": true,
+        "inserted_at": "2024-06-25T09:05:49.405Z",
+        "updated_at": "2024-06-25T09:05:49.405Z",
+        "audit_duration": "00:06:40"
+      }
+    },
+    {
+      "model": "api.audit",
+      "pk": "ccbedd87-d64e-42dd-86d0-15ac60ade56d",
+      "fields": {
+        "aws_account_id": "c0bbdcd2-c69e-4bdf-bea7-8db6524fd205",
+        "audit_complete": true,
+        "inserted_at": "2024-06-25T09:06:00.463Z",
+        "updated_at": "2024-06-25T09:06:00.463Z",
+        "audit_duration": "00:07:12"
+      }
+    }
+]

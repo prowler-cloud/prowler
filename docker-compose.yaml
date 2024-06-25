@@ -1,0 +1,8 @@
+version: '3.7'
+services:
+  django-be-poc:
+    image: django-be-poc
+    build:
+      context: "./"
+    ports:
+      - "8080:8000"
