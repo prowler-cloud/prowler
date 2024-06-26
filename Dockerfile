@@ -13,7 +13,7 @@ RUN mkdir -p /home/prowler && \
     chown -R prowler:prowler /home/prowler
 USER prowler
 
-# Copy necessary files
+# Copy necessary files
 WORKDIR /home/prowler
 COPY prowler/  /home/prowler/prowler/
 COPY dashboard/ /home/prowler/dashboard/
@@ -36,4 +36,5 @@ USER 0
 RUN rm -rf /home/prowler/prowler /home/prowler/pyproject.toml /home/prowler/README.md /home/prowler/build /home/prowler/prowler.egg-info
 
 USER prowler
-ENTRYPOINT ["prowler"]
+ENTRYPOINT ["/bin/sh", "-c"]
+CMD ["prowler azure --sp-env-auth ; prowler dashboard"]
