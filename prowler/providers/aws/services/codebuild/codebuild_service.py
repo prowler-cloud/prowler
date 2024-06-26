@@ -13,7 +13,7 @@ class Codebuild(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
-        self.projects = []
+        self.projects = {}
         self.__threading_call__(self.__list_projects__)
         self.__threading_call__(self.__list_builds_for_project__)
         self.__threading_call__(self.__batch_get_builds__)
@@ -29,12 +29,10 @@ class Codebuild(AWSService):
                     if not self.audit_resources or (
                         is_resource_filtered(project_arn, self.audit_resources)
                     ):
-                        self.projects.append(
-                            Project(
-                                name=project,
-                                arn=project_arn,
-                                region=regional_client.region,
-                            )
+                        self.projects[project_arn] = Project(
+                            name=project,
+                            arn=project_arn,
+                            region=regional_client.region,
                         )
 
         except Exception as error:
@@ -45,12 +43,14 @@ class Codebuild(AWSService):
     def __list_builds_for_project__(self, regional_client):
         logger.info("Codebuild - Listing builds...")
         try:
-            for project in self.projects:
+            for project in self.projects.values():
                 if project.region == regional_client.region:
                     try:
-                        project.build_ids = regional_client.list_builds_for_project(
+                        build_ids = regional_client.list_builds_for_project(
                             projectName=project.name
                         ).get("ids", [])
+                        if len(build_ids) > 0:
+                            project.last_build = Build(id=build_ids[0])
                     except Exception as error:
                         logger.error(
                             f"{regional_client.region}: {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -63,15 +63,18 @@ class Codebuild(AWSService):
     def __batch_get_builds__(self, regional_client):
         logger.info("Codebuild - Getting builds...")
         try:
-            for project in self.projects:
-                if project.region == regional_client.region and project.build_ids:
+            for project in self.projects.values():
+                if (
+                    project.region == regional_client.region
+                    and project.last_build
+                    and project.last_build.id
+                ):
                     try:
-                        builds = regional_client.batch_get_builds(
-                            ids=[project.build_ids[0]]
+                        builds_by_id = regional_client.batch_get_builds(
+                            ids=[project.last_build.id]
                         ).get("builds", [])
-                        if builds:
-                            if "endTime" in builds[0]:
-                                project.last_invoked_time = builds[0]["endTime"]
+                        if len(builds_by_id) > 0:
+                            project.last_invoked_time = builds_by_id[0].get("endTime")
                     except Exception as error:
                         logger.error(
                             f"{regional_client.region}: {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -84,14 +87,15 @@ class Codebuild(AWSService):
     def __batch_get_projects__(self, regional_client):
         logger.info("Codebuild - Getting projects...")
         try:
-            for project in self.projects:
+            for project in self.projects.values():
                 if project.region == regional_client.region:
                     try:
-                        projects = regional_client.batch_get_projects(
+                        project_source = regional_client.batch_get_projects(
                             names=[project.name]
                         )["projects"][0]["source"]
-                        if "buildspec" in projects:
-                            project.buildspec = projects["buildspec"]
+                        # If the project's buildspec is stored inline we don't want to store it
+                        if project_source.get("type", "NO_SOURCE") != "NO_SOURCE":
+                            project.buildspec = project_source.get("buildspec", "")
                     except Exception as error:
                         logger.error(
                             f"{regional_client.region}: {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -102,10 +106,14 @@ class Codebuild(AWSService):
             )
 
 
+class Build(BaseModel):
+    id: str
+
+
 class Project(BaseModel):
     name: str
     arn: str
     region: str
-    build_ids: list = []
+    last_build: Optional[Build]
     last_invoked_time: Optional[datetime.datetime]
     buildspec: Optional[str]

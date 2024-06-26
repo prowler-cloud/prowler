@@ -7,7 +7,7 @@ from prowler.providers.aws.services.codebuild.codebuild_client import codebuild_
 class codebuild_project_older_90_days(Check):
     def execute(self):
         findings = []
-        for project in codebuild_client.projects:
+        for project in codebuild_client.projects.values():
             report = Check_Report_AWS(self.metadata())
             report.region = project.region
             report.resource_id = project.name
