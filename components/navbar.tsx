@@ -9,8 +9,8 @@ import {
   NavbarMenuToggle,
   NavbarBrand,
   NavbarMenuItem,
-} from "@nextui-org/navbar";
-import { Link } from "@nextui-org/link";
+  Link,
+} from "@nextui-org/react";
 
 export const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);

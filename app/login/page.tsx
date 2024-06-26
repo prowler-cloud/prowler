@@ -1,10 +1,15 @@
 "use client";
 
 import React from "react";
-import { Card, CardHeader, CardBody, CardFooter } from "@nextui-org/card";
-import { Input } from "@nextui-org/input";
-import { Link } from "@nextui-org/link";
-import { Button } from "@nextui-org/button";
+import {
+  Card,
+  CardHeader,
+  CardBody,
+  CardFooter,
+  Input,
+  Link,
+  Button,
+} from "@nextui-org/react";
 import { EyeIcon } from "@heroicons/react/24/solid";
 import { EyeSlashIcon } from "@heroicons/react/24/solid";
 
