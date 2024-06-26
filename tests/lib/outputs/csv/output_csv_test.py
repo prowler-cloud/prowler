@@ -4,6 +4,7 @@ from io import StringIO
 from unittest.mock import Mock
 
 from prowler.lib.outputs.common_models import CSV, Finding, Output, Severity, Status
+from prowler.lib.outputs.csv.csv import write_csv
 
 
 class TestOutputCSV(unittest.TestCase):
@@ -162,3 +163,34 @@ class TestOutputCSV(unittest.TestCase):
         dummy_output = DummyOutput(self.finding_example)
         with self.assertRaises(NotImplementedError):
             dummy_output.write_to_file(Mock())
+
+
+class TestWriteCSV(unittest.TestCase):
+
+    def test_write_csv_with_dict(self):
+        headers = ["provider", "account", "check_id"]
+        row = {"provider": "aws", "account": "account_try", "check_id": "account_check"}
+        mock_file = StringIO()
+
+        write_csv(mock_file, headers, row)
+
+        mock_file.seek(0)
+        content = mock_file.readlines()
+        assert "aws;account_try;account_check" in content[0]
+
+    def test_write_csv_with_object(self):
+        class Row:
+            def __init__(self, provider, account, check_id):
+                self.provider = provider
+                self.account = account
+                self.check_id = check_id
+
+        headers = ["provider", "account", "check_id"]
+        row = Row("aws", "account_try", "account_check")
+        mock_file = StringIO()
+
+        write_csv(mock_file, headers, row)
+
+        mock_file.seek(0)
+        content = mock_file.readlines()
+        assert "aws;account_try;account_check" in content[0]
