@@ -89,21 +89,58 @@ const users = [
 ];
 
 export default function CloudsPage() {
-  const { data, error, isLoading } = useSWR(
+  const getAccounts = useSWR(
     `http://localhost:8080/api/v1/providers/aws/accounts`,
     fetcher,
   );
 
-  console.log("### data", data);
+  const getAudits = useSWR(
+    `http://localhost:8080/api/v1/providers/aws/audits`,
+    fetcher,
+  );
 
   // TODO FIX TYPE CHECKING
-  // const rowItems = data?.map((row: any) => (
-  //   <TableRow key={row.id}>
-  //     <TableCell>{row.account_id}</TableCell>
-  //     <TableCell>{row.alias}</TableCell>
-  //     <TableCell>{row.connected ? "True" : "False"}</TableCell>
-  //   </TableRow>
-  // ));
+  const getScanDetails = (account_id: Number, detail: String) => {
+    const scan =
+      getAudits.data &&
+      getAudits.data.find((audit: any) => audit.account_id === account_id);
+
+    console.log("### scan", scan);
+    console.log("### new date", new Date("2024-06-25T09:05:49.405000Z"));
+
+    if (detail === "status") {
+      return scan?.audit_complete && "Completed";
+    }
+
+    if (detail === "duration") {
+      return scan?.audit_duration;
+    }
+
+    if (detail === "added") {
+      return new Date(scan?.inserted_at).toString();
+    }
+
+    return;
+  };
+
+  console.log("### getAccounts data", getAccounts.data);
+  console.log("### getAudits data", getAudits.data);
+
+  // TODO FIX TYPE CHECKING
+  const rowItems = getAccounts.data?.map((row: any) => (
+    <TableRow key={row.id}>
+      <TableCell>{row.account_id}</TableCell>
+      <TableCell>{row.provider_id}</TableCell>
+      <TableCell>TBD</TableCell>
+      <TableCell>TBD</TableCell>
+      <TableCell>{row.groups.map(String).join(", ")}</TableCell>
+      <TableCell>{getScanDetails(row.account_id, "status")}</TableCell>
+      <TableCell>{getScanDetails(row.account_id, "duration")}</TableCell>
+      <TableCell>TBD</TableCell>
+      <TableCell>{row.resources}</TableCell>
+      <TableCell>{getScanDetails(row.account_id, "added")}</TableCell>
+    </TableRow>
+  ));
 
   // console.log("### rows", rows);
 
@@ -230,44 +267,55 @@ export default function CloudsPage() {
     <div>
       <h1 className={title()}>Cloud Accounts</h1>
       <p className="mt-10 text-left">
-        {error && <span className="text-red-400">Failed to load</span>}
-        {isLoading && <span className="text-yellow-400">Loading</span>}
+        {getAccounts.error && (
+          <span className="text-red-400">Failed to load</span>
+        )}
+        {getAccounts.isLoading && (
+          <span className="text-yellow-400">Loading</span>
+        )}
       </p>
-      {data && (
-        // <Table aria-label="cloud accounts table" className="text-left mt-10">
-        //   <TableHeader>
-        //     <TableColumn>ACCOUNT ID</TableColumn>
-        //     <TableColumn>ALIAS</TableColumn>
-        //     <TableColumn>CONNECTED</TableColumn>
-        //   </TableHeader>
-        //   <TableBody>{rowItems}</TableBody>
-        // </Table>
-
-        <Table
-          isStriped
-          aria-label="cloud accounts table"
-          className="text-left mt-10"
-        >
-          <TableHeader columns={columns}>
-            {(column) => (
-              <TableColumn
-                key={column.uid}
-                align={column.uid === "actions" ? "center" : "start"}
-              >
-                {column.name}
-              </TableColumn>
-            )}
+      {getAccounts.data && (
+        <Table aria-label="cloud accounts table" className="text-left mt-10">
+          <TableHeader>
+            <TableColumn>ACCOUNT ID</TableColumn>
+            <TableColumn>PROVIDER ID</TableColumn>
+            <TableColumn>ALIAS</TableColumn>
+            <TableColumn>CONNECTED</TableColumn>
+            <TableColumn>GROUP(S)</TableColumn>
+            <TableColumn>SCAN STATUS</TableColumn>
+            <TableColumn>LAST SCAN</TableColumn>
+            <TableColumn>NEXT SCAN</TableColumn>
+            <TableColumn>RESOURCES</TableColumn>
+            <TableColumn>ADDED</TableColumn>
           </TableHeader>
-          <TableBody items={users}>
-            {(item) => (
-              <TableRow key={item.id}>
-                {(columnKey) => (
-                  <TableCell>{renderCell(item, columnKey)}</TableCell>
-                )}
-              </TableRow>
-            )}
-          </TableBody>
+          <TableBody>{rowItems}</TableBody>
         </Table>
+
+        // <Table
+        //   isStriped
+        //   aria-label="cloud accounts table"
+        //   className="text-left mt-10"
+        // >
+        //   <TableHeader columns={columns}>
+        //     {(column) => (
+        //       <TableColumn
+        //         key={column.uid}
+        //         align={column.uid === "actions" ? "center" : "start"}
+        //       >
+        //         {column.name}
+        //       </TableColumn>
+        //     )}
+        //   </TableHeader>
+        //   <TableBody items={users}>
+        //     {(item) => (
+        //       <TableRow key={item.id}>
+        //         {(columnKey) => (
+        //           <TableCell>{renderCell(item, columnKey)}</TableCell>
+        //         )}
+        //       </TableRow>
+        //     )}
+        //   </TableBody>
+        // </Table>
       )}
       <p className="mt-24">This is a page with "use client", useSWR</p>
     </div>
