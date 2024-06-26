@@ -1,3 +1,4 @@
+import copy
 from abc import ABC, abstractmethod
 from csv import DictWriter
 from datetime import datetime
@@ -101,8 +102,7 @@ class Output(ABC):
 
 class CSV(Output):
     def transform(self, finding: Finding) -> None:
-        # deepcopy
-        finding_dict = finding.dict()
+        finding_dict = copy.deepcopy(finding.dict())
         finding_dict["compliance"] = unroll_dict(finding.compliance)
         finding_dict["account_tags"] = unroll_list(finding.account_tags)
         self._data = finding_dict
