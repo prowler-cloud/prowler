@@ -49,6 +49,8 @@ class FMS(AWSService):
                     if (
                         "No default admin could be found for account"
                         in error.response["Error"]["Message"]
+                        or "Operation ListPolicies is only available to AWS Firewall Manager Administrators"
+                        in error.response["Error"]["Message"]
                     ):
                         # FMS is not enabled in this account
                         self.fms_admin_account = False

@@ -80,6 +80,7 @@ class Test_rds_instance_certificate_expiration:
                 iam_auth=False,
                 region=AWS_REGION,
                 ca_cert="rds-ca-rsa2048-g1",
+                endpoint={},
                 cert=[
                     Certificate(
                         id="rds-ca-rsa2048-g1",
@@ -151,6 +152,7 @@ class Test_rds_instance_certificate_expiration:
                 iam_auth=False,
                 region=AWS_REGION,
                 ca_cert="rds-ca-rsa2048-g1",
+                endpoint={},
                 cert=[
                     Certificate(
                         id="rds-ca-rsa2048-g1",
@@ -221,6 +223,7 @@ class Test_rds_instance_certificate_expiration:
                 iam_auth=False,
                 region=AWS_REGION,
                 ca_cert="rds-ca-rsa2048-g1",
+                endpoint={},
                 cert=[
                     Certificate(
                         id="rds-ca-rsa2048-g1",
@@ -291,6 +294,7 @@ class Test_rds_instance_certificate_expiration:
                 iam_auth=False,
                 region=AWS_REGION,
                 ca_cert="rds-ca-rsa2048-g1",
+                endpoint={},
                 cert=[
                     Certificate(
                         id="rds-ca-rsa2048-g1",
@@ -361,6 +365,7 @@ class Test_rds_instance_certificate_expiration:
                 iam_auth=False,
                 region=AWS_REGION,
                 ca_cert="rds-ca-rsa2048-g1",
+                endpoint={},
                 cert=[
                     Certificate(
                         id="rds-ca-rsa2048-g1",
@@ -431,6 +436,7 @@ class Test_rds_instance_certificate_expiration:
                 iam_auth=False,
                 region=AWS_REGION,
                 ca_cert="rds-ca-rsa2048-g1",
+                endpoint={},
                 cert=[
                     Certificate(
                         id="rds-ca-rsa2048-g1",
@@ -501,6 +507,7 @@ class Test_rds_instance_certificate_expiration:
                 iam_auth=False,
                 region=AWS_REGION,
                 ca_cert="rds-ca-rsa2048-g1",
+                endpoint={},
                 cert=[
                     Certificate(
                         id="rds-ca-rsa2048-g1",
@@ -571,6 +578,7 @@ class Test_rds_instance_certificate_expiration:
                 iam_auth=False,
                 region=AWS_REGION,
                 ca_cert="rds-ca-rsa2048-g1",
+                endpoint={},
                 cert=[
                     Certificate(
                         id="rds-ca-rsa2048-g1",
@@ -641,6 +649,7 @@ class Test_rds_instance_certificate_expiration:
                 iam_auth=False,
                 region=AWS_REGION,
                 ca_cert="rds-ca-rsa2048-g1",
+                endpoint={},
                 cert=[
                     Certificate(
                         id="rds-ca-rsa2048-g1",

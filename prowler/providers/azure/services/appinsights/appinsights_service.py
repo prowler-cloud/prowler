@@ -1,6 +1,5 @@
-from dataclasses import dataclass
-
 from azure.mgmt.applicationinsights import ApplicationInsightsManagementClient
+from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.providers.azure.azure_provider import AzureProvider
@@ -29,6 +28,9 @@ class AppInsights(AzureService):
                                 resource_id=component.id,
                                 resource_name=component.name,
                                 location=component.location,
+                                instrumentation_key=getattr(
+                                    component, "instrumentation_key", "Not Found"
+                                ),
                             )
                         }
                     )
@@ -40,8 +42,8 @@ class AppInsights(AzureService):
         return components
 
 
-@dataclass
-class Component:
+class Component(BaseModel):
     resource_id: str
     resource_name: str
     location: str
+    instrumentation_key: str

@@ -124,10 +124,14 @@ class Schema(AWSService):
             )
 
     def __get_resource_policy__(self, regional_client):
-        logger.info("EventBridge - Describing Event Buses...")
+        logger.info("EventBridge - Getting Registry Resource Policy...")
         try:
             for registry in self.registries.values():
-                if registry.region == regional_client.region:
+                # Only get the policy for the registry in the same region and not AWS owned
+                if (
+                    registry.region == regional_client.region
+                    and not registry.name.startswith("aws.")
+                ):
                     try:
                         response = regional_client.get_resource_policy(
                             RegistryName=registry.name

@@ -57,7 +57,7 @@ class RDS(AWSService):
                                 DBInstance(
                                     id=instance["DBInstanceIdentifier"],
                                     arn=arn,
-                                    endpoint=instance.get("Endpoint"),
+                                    endpoint=instance.get("Endpoint", {}),
                                     engine=instance["Engine"],
                                     engine_version=instance["EngineVersion"],
                                     status=instance["DBInstanceStatus"],
@@ -226,7 +226,7 @@ class RDS(AWSService):
                                     db_cluster = DBCluster(
                                         id=cluster["DBClusterIdentifier"],
                                         arn=db_cluster_arn,
-                                        endpoint=cluster.get("Endpoint"),
+                                        endpoint=cluster.get("Endpoint", ""),
                                         engine=cluster["Engine"],
                                         status=cluster["Status"],
                                         public=cluster.get("PubliclyAccessible", False),
@@ -475,7 +475,7 @@ class DBInstance(BaseModel):
     id: str
     # arn:{partition}:rds:{region}:{account}:db:{resource_id}
     arn: str
-    endpoint: Optional[dict]
+    endpoint: dict
     engine: str
     engine_version: str
     status: str
@@ -504,7 +504,7 @@ class DBInstance(BaseModel):
 class DBCluster(BaseModel):
     id: str
     arn: str
-    endpoint: Optional[str]
+    endpoint: str
     engine: str
     status: str
     public: bool

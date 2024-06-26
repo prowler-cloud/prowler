@@ -1366,3 +1366,26 @@ class Test_policy_condition_parser:
         assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER, True
         )
+
+    def test_condition_parser_string_equals_vpc(self):
+        condition_statement = {"StringEquals": {"aws:SourceVpc": "vpc-123456"}}
+
+        assert is_condition_block_restrictive(
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER, True
+        )
+
+    def test_condition_parser_string_equals_vpc_list(self):
+        condition_statement = {"StringEquals": {"aws:sourcevpc": ["vpc-123456"]}}
+
+        assert is_condition_block_restrictive(
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER, True
+        )
+
+    def test_condition_parser_string_equals_vpc_list_not_valid(self):
+        condition_statement = {
+            "StringEquals": {"aws:SourceVpc": ["vpc-123456", "vpc-654321"]}
+        }
+
+        assert is_condition_block_restrictive(
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER, True
+        )
