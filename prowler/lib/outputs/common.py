@@ -2,7 +2,7 @@ from operator import attrgetter
 
 from prowler.config.config import timestamp
 from prowler.lib.logger import logger
-from prowler.lib.outputs.common_models import FindingOutput
+from prowler.lib.outputs.common_models import Finding
 from prowler.lib.outputs.compliance.compliance import get_check_compliance
 from prowler.lib.outputs.utils import unroll_list, unroll_tags
 from prowler.lib.utils.utils import outputs_unix_timestamp
@@ -23,7 +23,7 @@ def get_provider_data_mapping(provider) -> dict:
     return data
 
 
-def generate_output(provider, finding, output_options) -> FindingOutput:
+def generate_output(provider, finding, output_options) -> Finding:
     provider_data_mapping = get_provider_data_mapping(provider)
     common_finding_data = fill_common_finding_data(
         finding, output_options.unix_timestamp
@@ -38,7 +38,7 @@ def generate_output(provider, finding, output_options) -> FindingOutput:
     return finding_output
 
 
-def generate_provider_output(provider, finding, output_data) -> FindingOutput:
+def generate_provider_output(provider, finding, output_data) -> Finding:
     """
     generate_provider_output returns the provider's Finding output model
     """
@@ -109,7 +109,7 @@ def generate_provider_output(provider, finding, output_data) -> FindingOutput:
             f"prowler-{provider.type}-{finding.check_metadata.CheckID}-{output_data['account_uid']}-{output_data['region']}-{output_data['resource_name']}"
         )
 
-        finding_output = FindingOutput(**output_data)
+        finding_output = Finding(**output_data)
 
     except Exception as error:
         logger.error(

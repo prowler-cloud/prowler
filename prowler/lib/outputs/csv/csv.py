@@ -8,7 +8,10 @@ def write_csv(file_descriptor, headers, row):
         fieldnames=headers,
         delimiter=";",
     )
-    csv_writer.writerow(row.__dict__)
+    if isinstance(row, dict):
+        csv_writer.writerow(row)
+    else:
+        csv_writer.writerow(row.__dict__)
 
 
 def generate_csv_fields(format: Any) -> list[str]:

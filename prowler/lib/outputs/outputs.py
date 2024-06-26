@@ -5,17 +5,15 @@ from colorama import Fore, Style
 from prowler.config.config import available_compliance_frameworks, orange_color
 from prowler.lib.logger import logger
 from prowler.lib.outputs.common import generate_output
-from prowler.lib.outputs.common_models import FindingOutput
+from prowler.lib.outputs.common_models import CSV
 from prowler.lib.outputs.compliance.compliance import (
     add_manual_controls,
     fill_compliance,
 )
-from prowler.lib.outputs.csv.csv import generate_csv_fields, write_csv
 from prowler.lib.outputs.file_descriptors import fill_file_descriptors
 from prowler.lib.outputs.html.html import fill_html
 from prowler.lib.outputs.json_asff.json_asff import fill_json_asff
 from prowler.lib.outputs.json_ocsf.json_ocsf import fill_json_ocsf
-from prowler.lib.outputs.utils import unroll_dict, unroll_list
 
 
 def stdout_report(finding, color, verbose, status, fix):
@@ -130,17 +128,8 @@ def report(check_findings, provider):
 
                         # CSV
                         if "csv" in file_descriptors:
-                            finding_output.compliance = unroll_dict(
-                                finding_output.compliance
-                            )
-                            finding_output.account_tags = unroll_list(
-                                finding_output.account_tags, ","
-                            )
-                            write_csv(
-                                file_descriptors["csv"],
-                                generate_csv_fields(FindingOutput),
-                                finding_output,
-                            )
+                            csv_finding = CSV(finding_output)
+                            csv_finding.write_to_file(file_descriptors["csv"])
 
         else:  # No service resources in the whole account
             color = set_report_color("MANUAL")

@@ -1,10 +1,14 @@
+from abc import ABC, abstractmethod
+from csv import DictWriter
 from datetime import datetime
 from enum import Enum
+from io import TextIOWrapper
 from typing import Optional, Union
 
 from pydantic import BaseModel
 
 from prowler.config.config import prowler_version
+from prowler.lib.outputs.utils import unroll_dict, unroll_list
 
 
 class Status(str, Enum):
@@ -21,9 +25,9 @@ class Severity(str, Enum):
     informational = "informational"
 
 
-class FindingOutput(BaseModel):
+class Finding(BaseModel):
     """
-    FindingOutput generates a finding's output. It can be written to CSV or another format doing the mapping.
+    Finding generates a finding's output. It can be written to CSV or another format doing the mapping.
 
     This is the base finding output model for every provider.
     """
@@ -76,5 +80,37 @@ class FindingOutput(BaseModel):
     notes: str
     prowler_version: str = prowler_version
 
-    def generate_csv_fields(self):
-        return self.dict().keys()
+
+class Output(ABC):
+    _data: object
+
+    def __init__(self, finding: Finding) -> None:
+        self.transform(finding)
+
+    @property
+    def data(self):
+        return self._data
+
+    @abstractmethod
+    def transform(self, finding: Finding):
+        raise NotImplementedError
+
+    def write_to_file(self, file_descriptor: TextIOWrapper) -> None:
+        raise NotImplementedError
+
+
+class CSV(Output):
+    def transform(self, finding: Finding) -> None:
+        # deepcopy
+        finding_dict = finding.dict()
+        finding_dict["compliance"] = unroll_dict(finding.compliance)
+        finding_dict["account_tags"] = unroll_list(finding.account_tags)
+        self._data = finding_dict
+
+    def write_to_file(self, file_descriptor) -> None:
+        csv_writer = DictWriter(
+            file_descriptor,
+            fieldnames=self._data.keys(),
+            delimiter=";",
+        )
+        csv_writer.writerow(self._data)

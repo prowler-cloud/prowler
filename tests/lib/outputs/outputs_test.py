@@ -19,7 +19,7 @@ from prowler.lib.check.compliance_models import (
 )
 from prowler.lib.check.models import Check_Report, load_check_metadata
 from prowler.lib.outputs.common import generate_provider_output
-from prowler.lib.outputs.common_models import FindingOutput
+from prowler.lib.outputs.common_models import Finding
 from prowler.lib.outputs.compliance.compliance import get_check_compliance
 from prowler.lib.outputs.csv.csv import generate_csv_fields
 from prowler.lib.outputs.file_descriptors import fill_file_descriptors
@@ -169,7 +169,7 @@ class TestOutputs:
             "prowler_version",
         ]
 
-        assert generate_csv_fields(FindingOutput) == expected
+        assert generate_csv_fields(Finding) == expected
 
     def test_unroll_list_no_separator(self):
         list = ["test", "test1", "test2"]
@@ -794,7 +794,7 @@ class TestOutputs:
             "finding_uid": "test-finding",
         }
 
-        assert generate_provider_output(provider, finding, csv_data) == FindingOutput(
+        assert generate_provider_output(provider, finding, csv_data) == Finding(
             auth_method="profile: test",
             account_uid="123456789012",
             timestamp="2022-01-01T00:00:00Z",
@@ -884,7 +884,7 @@ class TestOutputs:
             "finding_uid": "test-finding",
         }
 
-        assert generate_provider_output(provider, finding, csv_data) == FindingOutput(
+        assert generate_provider_output(provider, finding, csv_data) == Finding(
             auth_method="profile: test",
             account_uid="123456789012",
             timestamp=1640995200,

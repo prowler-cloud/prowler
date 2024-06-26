@@ -15,7 +15,7 @@ from py_ocsf_models.objects.remediation import Remediation
 from py_ocsf_models.objects.resource_details import ResourceDetails
 
 from prowler.lib.logger import logger
-from prowler.lib.outputs.common_models import FindingOutput
+from prowler.lib.outputs.common_models import Finding
 
 
 def get_account_type_id_by_provider(provider: str) -> TypeID:
@@ -38,7 +38,7 @@ def get_finding_status_id(status: str, muted: bool) -> StatusID:
     return status_id
 
 
-def fill_json_ocsf(finding_output: FindingOutput) -> DetectionFinding:
+def fill_json_ocsf(finding_output: Finding) -> DetectionFinding:
     try:
         finding_activity = ActivityID.Create
         cloud_account_type = get_account_type_id_by_provider(finding_output.provider)

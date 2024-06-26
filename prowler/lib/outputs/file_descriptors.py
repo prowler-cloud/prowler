@@ -9,7 +9,7 @@ from prowler.config.config import (
     json_ocsf_file_suffix,
 )
 from prowler.lib.logger import logger
-from prowler.lib.outputs.common_models import FindingOutput
+from prowler.lib.outputs.common_models import Finding
 from prowler.lib.outputs.compliance.mitre_attack.models import (
     MitreAttackAWS,
     MitreAttackAzure,
@@ -34,9 +34,9 @@ def initialize_file_descriptor(
     filename: str,
     output_mode: str,
     provider: Any = None,
-    format: Any = FindingOutput,
+    format: Any = Finding,
 ) -> TextIOWrapper:
-    """Open/Create the output file. If needed include headers or the required format, by default will use the FindingOutput"""
+    """Open/Create the output file. If needed include headers or the required format, by default will use the Finding"""
     try:
         if file_exists(filename):
             file_descriptor = open_file(
@@ -74,7 +74,7 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, provi
             for output_mode in output_modes:
                 if output_mode == "csv":
                     filename = f"{output_directory}/{output_filename}{csv_file_suffix}"
-                    output_model = FindingOutput
+                    output_model = Finding
                     file_descriptor = initialize_file_descriptor(
                         filename,
                         output_mode,
