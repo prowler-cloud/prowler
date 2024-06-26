@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "rds_instance_no_public_access",
+  "CheckTitle": "Ensure there are no Public Accessible RDS instances.",
+  "CheckType": [],
+  "ServiceName": "rds",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-instance",
+  "Severity": "critical",
+  "ResourceType": "AwsRdsDbInstance",
+  "Description": "Ensure there are no Public Accessible RDS instances.",
+  "Risk": "Publicly accessible databases could expose sensitive data to bad actors.",
+  "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/rds-instance-public-access-check.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws rds modify-db-instance --db-instance-identifier <db_instance_id> --no-publicly-accessible --apply-immediately",
+      "NativeIaC": "https://docs.prowler.com/checks/aws/public-policies/public_2#cloudformation",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/rds-publicly-accessible.html",
+      "Terraform": "https://docs.prowler.com/checks/aws/public-policies/public_2#terraform"
+    },
+    "Recommendation": {
+      "Text": "Using an AWS Config rule check for RDS public instances periodically and check there is a business reason for it.",
+      "Url": "https://docs.aws.amazon.com/config/latest/developerguide/rds-instance-public-access-check.html"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

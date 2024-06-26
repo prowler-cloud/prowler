@@ -1,0 +1,30 @@
+{
+  "Provider": "aws",
+  "CheckID": "rds_instance_enhanced_monitoring_enabled",
+  "CheckTitle": "Check if RDS instances has enhanced monitoring enabled.",
+  "CheckType": [],
+  "ServiceName": "rds",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-instance",
+  "Severity": "low",
+  "ResourceType": "AwsRdsDbInstance",
+  "Description": "Check if RDS instances has enhanced monitoring enabled.",
+  "Risk": "A smaller monitoring interval results in more frequent reporting of OS metrics.",
+  "RelatedUrl": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_Monitoring.OS.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws rds create-db-instance --db-instance-identifier <db_instance_id> --db-instance-class <instance_class> --engine <engine> --storage-encrypted true",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": "https://docs.prowler.com/checks/aws/logging-policies/ensure-that-enhanced-monitoring-is-enabled-for-amazon-rds-instances#terraform"
+    },
+    "Recommendation": {
+      "Text": "To use Enhanced Monitoring, you must create an IAM role, and then enable Enhanced Monitoring.",
+      "Url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_Monitoring.OS.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

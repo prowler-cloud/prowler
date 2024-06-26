@@ -1,0 +1,30 @@
+{
+  "Provider": "aws",
+  "CheckID": "cloudfront_distributions_geo_restrictions_enabled",
+  "CheckTitle": "Check if Geo restrictions are enabled in CloudFront distributions.",
+  "CheckType": [],
+  "ServiceName": "cloudfront",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:cloudfront:region:account-id:distribution/resource-id",
+  "Severity": "low",
+  "ResourceType": "AwsCloudFrontDistribution",
+  "Description": "Check if Geo restrictions are enabled in CloudFront distributions.",
+  "Risk": "Consider countries where service should not be accessed, by legal or compliance requirements. Additionally if not restricted the attack vector is increased.",
+  "RelatedUrl": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/georestrictions.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudFront/geo-restriction.html",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "If possible, define and enable Geo restrictions for this service.",
+      "Url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/georestrictions.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Infrastructure Security"
+}

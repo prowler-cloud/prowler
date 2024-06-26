@@ -1,0 +1,30 @@
+{
+  "Provider": "gcp",
+  "CheckID": "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+  "CheckTitle": "Ensure That the Log Metric Filter and Alerts Exist for Audit Configuration Changes.",
+  "CheckType": [],
+  "ServiceName": "logging",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "MetricFilter",
+  "Description": "Ensure That the Log Metric Filter and Alerts Exist for Audit Configuration Changes.",
+  "Risk": "Admin Activity audit logs and Data Access audit logs produced by the Google Cloud Audit Logs service can be extremely useful for security analysis, resource change tracking, and compliance auditing.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudLogging/enable-audit-configuration-changes-monitoring.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "By using Google Cloud alerting policies to detect audit configuration changes, you make sure that the recommended state of audit configuration is well maintained so that all the activities performed within your GCP project are available for security analysis and auditing at any point in time.",
+      "Url": "https://cloud.google.com/monitoring/alerts"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

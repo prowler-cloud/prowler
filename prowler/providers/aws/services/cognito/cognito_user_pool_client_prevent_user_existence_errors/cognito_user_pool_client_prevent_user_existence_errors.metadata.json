@@ -1,0 +1,30 @@
+{
+  "Provider": "aws",
+  "CheckID": "cognito_user_pool_client_prevent_user_existence_errors",
+  "CheckTitle": "Amazon Cognito User Pool should prevent user existence errors",
+  "CheckType": [],
+  "ServiceName": "cognito",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:cognito-idp:region:account:userpool/userpool-id",
+  "Severity": "medium",
+  "ResourceType": "AwsCognitoUserPoolClient",
+  "Description": "Amazon Cognito User Pool should be configured to prevent user existence errors. This setting prevents user existence errors by requiring the user to enter a username and password to sign in. If the user does not exist, the user will receive an error message.",
+  "Risk": "Revealing user existence errors can be a security risk as it can allow an attacker to determine if a user exists in the system. This can be used to perform user enumeration attacks.",
+  "RelatedUrl": "https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pool-managing-errors.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "To prevent user existence errors, you should configure the Amazon Cognito User Pool to require a username and password to sign in. If the user does not exist, the user will receive an error message.",
+      "Url": "https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pool-managing-errors.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

@@ -1,0 +1,40 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: devsecops-prowler-cronjob-secret
+  namespace: defectdojo
+spec:
+#Cron Time is set according to server time, ensure server time zone and set accordingly.
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 1
+  schedule: "5 3 * * 0,2,4"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: prowler
+            image: toniblyx/prowler:latest
+            imagePullPolicy: Always
+            command:
+            - "./prowler.py"
+            args: [ "-B", "$(awsS3Bucket)" ]
+            env:
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name:  devsecops-prowler-cronjob-secret
+                  key: awsId
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name:  devsecops-prowler-cronjob-secret
+                  key: awsSecretKey
+            - name: awsS3Bucket
+              valueFrom:
+                secretKeyRef:
+                  name:  devsecops-prowler-cronjob-secret
+                  key: awsS3Bucket
+            imagePullPolicy: IfNotPresent
+          restartPolicy: OnFailure
+      backoffLimit: 3

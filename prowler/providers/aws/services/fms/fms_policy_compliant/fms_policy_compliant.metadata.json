@@ -1,0 +1,30 @@
+{
+  "Provider": "aws",
+  "CheckID": "fms_policy_compliant",
+  "CheckTitle": "Ensure that all FMS policies inside an admin account are compliant",
+  "CheckType": [],
+  "ServiceName": "fms",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:fms:region:account-id:policy/policy",
+  "Severity": "medium",
+  "ResourceType": "Other",
+  "Description": "This check ensures all FMS policies inside an admin account are compliant",
+  "Risk": "If FMS policies are not compliant, means there are resources unprotected by the policies",
+  "RelatedUrl": "https://docs.aws.amazon.com/waf/latest/developerguide/getting-started-fms-intro.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws fms list-policies",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure FMS is enabled and all the policies are compliant across your AWS accounts",
+      "Url": "https://docs.aws.amazon.com/waf/latest/developerguide/getting-started-fms-intro.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

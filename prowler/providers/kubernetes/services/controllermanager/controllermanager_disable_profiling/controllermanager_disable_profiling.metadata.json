@@ -1,0 +1,32 @@
+{
+  "Provider": "kubernetes",
+  "CheckID": "controllermanager_disable_profiling",
+  "CheckTitle": "Ensure that the --profiling argument is set to false",
+  "CheckType": [],
+  "ServiceName": "controller-manager",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "KubernetesControllerManager",
+  "Description": "This check ensures that profiling is disabled in the Kubernetes Controller Manager, reducing the potential attack surface.",
+  "Risk": "Enabling profiling can expose detailed system and program information, which could be exploited if accessed by unauthorized users.",
+  "RelatedUrl": "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/",
+  "Remediation": {
+    "Code": {
+      "CLI": "--profiling=false",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-profiling-argument-is-set-to-false",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Disable profiling in the Kubernetes Controller Manager for enhanced security.",
+      "Url": "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/#options"
+    }
+  },
+  "Categories": [
+    "trustboundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Profiling should be turned off unless it is explicitly required for troubleshooting performance issues."
+}

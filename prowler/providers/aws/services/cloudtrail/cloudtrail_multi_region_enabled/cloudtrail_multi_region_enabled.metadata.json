@@ -1,0 +1,36 @@
+{
+  "Provider": "aws",
+  "CheckID": "cloudtrail_multi_region_enabled",
+  "CheckTitle": "Ensure CloudTrail is enabled in all regions",
+  "CheckType": [
+    "Software and Configuration Checks",
+    "Industry and Regulatory Standards",
+    "CIS AWS Foundations Benchmark"
+  ],
+  "ServiceName": "cloudtrail",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "high",
+  "ResourceType": "AwsCloudTrailTrail",
+  "Description": "Ensure CloudTrail is enabled in all regions",
+  "Risk": "AWS CloudTrail is a web service that records AWS API calls for your account and delivers log files to you. The recorded information includes the identity of the API caller, the time of the API call, the source IP address of the API caller, the request parameters, and the response elements returned by the AWS service.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws cloudtrail create-trail --name <trail_name> --bucket-name <s3_bucket_for_cloudtrail> --is-multi-region-trail aws cloudtrail update-trail --name <trail_name> --is-multi-region-trail ",
+      "NativeIaC": "https://docs.prowler.com/checks/aws/logging-policies/logging_1#cloudformation",
+      "Other": "https://docs.prowler.com/checks/aws/logging-policies/logging_1#aws-console",
+      "Terraform": "https://docs.prowler.com/checks/aws/logging-policies/logging_1#terraform"
+    },
+    "Recommendation": {
+      "Text": "Ensure Logging is set to ON on all regions (even if they are not being used at the moment.",
+      "Url": "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrailconcepts.html#cloudtrail-concepts-management-events"
+    }
+  },
+  "Categories": [
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

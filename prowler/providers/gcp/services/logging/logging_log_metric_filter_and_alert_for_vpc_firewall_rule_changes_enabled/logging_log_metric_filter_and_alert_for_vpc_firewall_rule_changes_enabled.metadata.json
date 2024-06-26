@@ -1,0 +1,30 @@
+{
+  "Provider": "gcp",
+  "CheckID": "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+  "CheckTitle": "Ensure That the Log Metric Filter and Alerts Exist for VPC Network Firewall Rule Changes.",
+  "CheckType": [],
+  "ServiceName": "logging",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "MetricFilter",
+  "Description": "Ensure That the Log Metric Filter and Alerts Exist for VPC Network Firewall Rule Changes.",
+  "Risk": "Monitoring for Create or Update Firewall rule events gives insight to network access changes and may reduce the time it takes to detect suspicious activity.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudLogging/enable-firewall-rule-changes-monitoring.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "It is recommended that a metric filter and alarm be established for Virtual Private Cloud (VPC) Network Firewall rule changes.",
+      "Url": "https://cloud.google.com/monitoring/alerts"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

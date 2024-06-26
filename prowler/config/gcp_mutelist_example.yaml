@@ -1,0 +1,44 @@
+### Account, Check and/or Region can be * to apply for all the cases.
+### Account == GCP Project ID and Region == GCP Location
+### Resources and tags are lists that can have either Regex or Keywords.
+### Tags is an optional list that matches on tuples of 'key=value' and are "ANDed" together.
+### Use an alternation Regex to match one of multiple tags with "ORed" logic.
+### For each check you can except Accounts, Regions, Resources and/or Tags.
+###########################  MUTELIST EXAMPLE  ###########################
+Mutelist:
+  Accounts:
+    "gcp-project-id-1":
+      Checks:
+        "compute_instance_public_ip":
+          Regions:
+            - "europe-southwest1"
+          Resources:
+            - "instance1"           # Will ignore instance1 in check compute_instance_public_ip located in europe-southwest1
+            - "instance2"           # Will ignore instance2 in check compute_instance_public_ip located in europe-southwest1
+        "iam_*":
+          Regions:
+            - "*"
+          Resources:
+            - "*"                 # Will ignore every IAM check in every location
+        "*":
+          Regions:
+            - "*"
+          Resources:
+            - "test"
+          Tags:
+            - "test=test"         # Will ignore every resource containing the string "test" and the tags 'test=test' and
+            - "project=test|project=stage" # either of ('project=test' OR project=stage) in GCP Project gcp-project-id-1 and every location
+
+    "*":
+      Checks:
+        "kms_*":
+          Regions:
+            - "*"
+          Resources:
+            - "*"
+          Exceptions:
+            Accounts:
+              - "gcp-project-id-2"
+            Regions:
+              - "us-west1"
+              - "us-west2"        # Will ignore every resource in KMS checks except the ones in GCP Project gcp-project-id-2 located in us-west1 or us-west2

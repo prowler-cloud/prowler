@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "sqs_queues_server_side_encryption_enabled",
+  "CheckTitle": "Check if SQS queues have Server Side Encryption enabled",
+  "CheckType": [],
+  "ServiceName": "sqs",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:sqs:region:account-id:queue",
+  "Severity": "medium",
+  "ResourceType": "AwsSqsQueue",
+  "Description": "Check if SQS queues have Server Side Encryption enabled",
+  "Risk": "If not enabled sensitive information in transit is not protected.",
+  "RelatedUrl": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-configure-sse-existing-queue.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws sqs set-queue-attributes --queue-url <QUEUE_URL> --attributes KmsMasterKeyId=<KEY>",
+      "NativeIaC": "https://docs.prowler.com/checks/aws/general-policies/general_16-encrypt-sqs-queue#cloudformation",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/SQS/queue-encrypted-with-kms-customer-master-keys.html",
+      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/general_16-encrypt-sqs-queue#terraform"
+    },
+    "Recommendation": {
+      "Text": "Enable Encryption. Use a CMK where possible. It will provide additional management and privacy benefits",
+      "Url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-configure-sse-existing-queue.html"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

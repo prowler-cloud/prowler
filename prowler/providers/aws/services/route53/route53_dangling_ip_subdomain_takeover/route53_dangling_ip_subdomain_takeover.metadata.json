@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "route53_dangling_ip_subdomain_takeover",
+  "CheckTitle": "Check if Route53 Records contains dangling IPs.",
+  "CheckType": [],
+  "ServiceName": "route53",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "AWSRoute53RecordSet",
+  "Description": "Check if Route53 Records contains dangling IPs.",
+  "Risk": "When an ephemeral AWS resource such as an Elastic IP (EIP) is released into the Amazon's Elastic IP pool, an attacker may acquire the EIP resource and effectively control the domain/subdomain associated with that EIP in your Route 53 DNS records.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws route53 change-resource-record-sets --hosted-zone-id <resource_id>",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Route53/dangling-dns-records.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure that any dangling DNS records are deleted from your Amazon Route 53 public hosted zones in order to maintain the integrity and authenticity of your domains/subdomains and to protect against domain hijacking attacks.",
+      "Url": "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resource-record-sets-deleting.html"
+    }
+  },
+  "Categories": [
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

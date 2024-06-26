@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "rds_instance_transport_encrypted",
+  "CheckTitle": "Check if RDS instances client connections are encrypted (Microsoft SQL Server, PostgreSQL, MySQL, MariaDB, Aurora PostgreSQL, and Aurora MySQL).",
+  "CheckType": [],
+  "ServiceName": "rds",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-instance",
+  "Severity": "high",
+  "ResourceType": "AwsRdsDbInstance",
+  "Description": "For SQL Server, PostgreSQL and Aurora PostgreSQL databases, if the rds.force_ssl parameter value is set to 0, the Transport Encryption feature is not enabled. For MySQL, Aurora MySQL and MariaDB databases, if the require_secure_transport parameter value is set to OFF, the Transport Encryption feature is not enabled.",
+  "Risk": "If not enabled sensitive information at transit is not protected.",
+  "RelatedUrl": "https://aws.amazon.com/premiumsupport/knowledge-center/rds-connect-ssl-connection/",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws rds modify-db-parameter-group --region <REGION_NAME> --db-parameter-group-name <PARAMETER_GROUP_NAME> --parameters ParameterName='rds.force_ssl',ParameterValue='1',ApplyMethod='pending-reboot'",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/transport-encryption.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure that instances provisioned with Amazon RDS have Transport Encryption feature enabled in order to meet security and compliance requirements.",
+      "Url": "https://aws.amazon.com/premiumsupport/knowledge-center/rds-connect-ssl-connection/"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

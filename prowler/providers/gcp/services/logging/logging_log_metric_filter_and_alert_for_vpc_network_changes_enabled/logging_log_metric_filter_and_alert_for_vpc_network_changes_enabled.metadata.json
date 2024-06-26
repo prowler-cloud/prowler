@@ -1,0 +1,30 @@
+{
+  "Provider": "gcp",
+  "CheckID": "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+  "CheckTitle": "Ensure That the Log Metric Filter and Alerts Exist for VPC Network Changes.",
+  "CheckType": [],
+  "ServiceName": "logging",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "MetricFilter",
+  "Description": "Ensure That the Log Metric Filter and Alerts Exist for VPC Network Changes.",
+  "Risk": "Monitoring changes to a VPC will help ensure VPC traffic flow is not getting impacted.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudLogging/enable-vpc-network-changes-monitoring.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "It is recommended that a metric filter and alarm be established for Virtual Private Cloud (VPC) network changes.",
+      "Url": "https://cloud.google.com/monitoring/alerts"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

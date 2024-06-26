@@ -1,0 +1,24 @@
+version: 0.2
+phases:
+  install:
+    runtime-versions:
+      python: 3.8
+    commands:
+      - echo "Installing Prowler and dependencies..."
+      - pip3 install detect-secrets
+      - yum -y install jq
+      - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+      - unzip awscliv2.zip
+      - ./aws/install
+      - git clone https://github.com/prowler-cloud/prowler
+      - cd prowler
+
+  build:
+    commands:
+      - echo "Running Prowler as ./prowler $PROWLER_OPTIONS"
+      - ./prowler $PROWLER_OPTIONS || true
+  post_build:
+    commands:
+      - echo "Scan Complete"
+      - aws s3 cp --sse AES256 output/ s3://$BUCKET_REPORT/ --recursive
+      - echo "Done!"

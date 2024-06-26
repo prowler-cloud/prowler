@@ -1,0 +1,32 @@
+{
+  "Provider": "gcp",
+  "CheckID": "cloudsql_instance_public_access",
+  "CheckTitle": "Ensure That Cloud SQL Database Instances Do Not Implicitly Whitelist All Public IP Addresses ",
+  "CheckType": [],
+  "ServiceName": "cloudsql",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "DatabaseInstance",
+  "Description": "Ensure That Cloud SQL Database Instances Do Not Implicitly Whitelist All Public IP Addresses ",
+  "Risk": "To minimize attack surface on a Database server instance, only trusted/known and required IP(s) should be white-listed to connect to it. An authorized network should not have IPs/networks configured to 0.0.0.0/0 which will allow access to the instance from anywhere in the world. Note that authorized networks apply only to instances with public IPs.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "gcloud sql instances patch <INSTANCE_NAME> --authorized-networks=IP_ADDR1,IP_ADDR2...",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudSQL/publicly-accessible-cloud-sql-instances.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Database Server should accept connections only from trusted Network(s)/IP(s) and restrict access from public IP addresses.",
+      "Url": "https://cloud.google.com/sql/docs/mysql/connection-org-policy"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

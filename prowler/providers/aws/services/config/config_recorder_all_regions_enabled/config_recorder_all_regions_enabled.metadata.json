@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "config_recorder_all_regions_enabled",
+  "CheckTitle": "Ensure AWS Config is enabled in all regions.",
+  "CheckType": [
+    "Logging and Monitoring"
+  ],
+  "ServiceName": "config",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:access-recorder:region:account-id:recorder/resource-id",
+  "Severity": "medium",
+  "ResourceType": "Other",
+  "Description": "Ensure AWS Config is enabled in all regions.",
+  "Risk": "The AWS configuration item history captured by AWS Config enables security analysis, resource change tracking and compliance auditing.",
+  "RelatedUrl": "https://aws.amazon.com/blogs/mt/aws-config-best-practices/",
+  "Remediation": {
+    "Code": {
+      "CLI": "https://docs.prowler.com/checks/aws/logging-policies/logging_5-enable-aws-config-regions#cli-command",
+      "NativeIaC": "",
+      "Other": "https://docs.prowler.com/checks/aws/logging-policies/logging_5-enable-aws-config-regions#aws-console",
+      "Terraform": "https://docs.prowler.com/checks/aws/logging-policies/logging_5-enable-aws-config-regions#terraform"
+    },
+    "Recommendation": {
+      "Text": "It is recommended to enable AWS Config in all regions.",
+      "Url": "https://aws.amazon.com/blogs/mt/aws-config-best-practices/"
+    }
+  },
+  "Categories": [
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

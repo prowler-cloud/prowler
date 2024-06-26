@@ -1,0 +1,30 @@
+{
+  "Provider": "azure",
+  "CheckID": "defender_ensure_defender_for_arm_is_on",
+  "CheckTitle": "Ensure That Microsoft Defender for Azure Resource Manager Is Set To 'On' ",
+  "CheckType": [],
+  "ServiceName": "defender",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "AzureDefenderPlan",
+  "Description": "Ensure That Microsoft Defender for Azure Resource Manager Is Set To 'On' ",
+  "Risk": "Scanning resource requests lets you be alerted every time there is suspicious activity in order to prevent a security threat from being introduced.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable  Microsoft Defender for Azure Resource Manager",
+      "Url": ""
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

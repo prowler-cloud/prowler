@@ -1,0 +1,32 @@
+{
+  "Provider": "azure",
+  "CheckID": "storage_secure_transfer_required_is_enabled",
+  "CheckTitle": "Ensure that all data transferred between clients and your Azure Storage account is encrypted using the HTTPS protocol.",
+  "CheckType": [],
+  "ServiceName": "storage",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "AzureStorageAccount",
+  "Description": "Ensure that all data transferred between clients and your Azure Storage account is encrypted using the HTTPS protocol.",
+  "Risk": "Requests to the storage account sent outside of a secure connection can be eavesdropped",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/StorageAccounts/secure-transfer-required.html",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/StorageAccounts/secure-transfer-required.html",
+      "Terraform": "https://docs.prowler.com/checks/azure/azure-networking-policies/ensure-that-storage-account-enables-secure-transfer"
+    },
+    "Recommendation": {
+      "Text": "Enable data encryption in transit.",
+      "Url": ""
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

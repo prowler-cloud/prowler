@@ -1,0 +1,32 @@
+{
+  "Provider": "kubernetes",
+  "CheckID": "core_minimize_allowPrivilegeEscalation_containers",
+  "CheckTitle": "Minimize the admission of containers with allowPrivilegeEscalation",
+  "CheckType": [],
+  "ServiceName": "core",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "KubernetesPod",
+  "Description": "This check ensures that Kubernetes clusters are configured to minimize the admission of containers that have the allowPrivilegeEscalation flag set to true, preventing processes within containers from gaining additional privileges.",
+  "Risk": "Allowing containers with allowPrivilegeEscalation can lead to elevated privileges within the container's context, posing a security risk.",
+  "RelatedUrl": "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/bc_k8s_19#kubernetes",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Restrict the use of allowPrivilegeEscalation in containers through admission control policies.",
+      "Url": "https://kubernetes.io/docs/tasks/configure-pod-container/security-context/"
+    }
+  },
+  "Categories": [
+    "container-security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Exceptions for containers requiring allowPrivilegeEscalation should be clearly defined and monitored."
+}

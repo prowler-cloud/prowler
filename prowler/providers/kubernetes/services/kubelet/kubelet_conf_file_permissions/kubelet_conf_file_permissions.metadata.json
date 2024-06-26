@@ -1,0 +1,32 @@
+{
+  "Provider": "kubernetes",
+  "CheckID": "kubelet_conf_file_permissions",
+  "CheckTitle": "Ensure kubelet.conf file permissions are set to 600 or more restrictive",
+  "CheckType": [],
+  "ServiceName": "kubelet",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "KubernetesWorkerNode",
+  "Description": "Ensure that the kubelet.conf file, which is the kubeconfig file for the node, has permissions set to 600 or more restrictive. This ensures the integrity and security of the node's configuration.",
+  "Risk": "Improper permissions on kubelet.conf can expose sensitive configuration data, potentially leading to cluster security compromises.",
+  "RelatedUrl": "https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/kubelet-integration/",
+  "Remediation": {
+    "Code": {
+      "CLI": "chmod 600 /etc/kubernetes/kubelet.conf",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure kubelet.conf file permissions are correctly set to protect the node's configuration.",
+      "Url": "https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/"
+    }
+  },
+  "Categories": [
+    "node-security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Regular checks of kubelet.conf file permissions are essential for maintaining node security."
+}

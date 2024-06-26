@@ -1,0 +1,30 @@
+{
+  "Provider": "azure",
+  "CheckID": "app_function_latest_runtime_version",
+  "CheckTitle": "Ensure Azure Functions are using the latest supported runtime",
+  "CheckType": [],
+  "ServiceName": "app",
+  "SubServiceName": "function",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Microsoft.Web/sites",
+  "Description": "Keeping Azure Functions up to date with the latest supported runtime version is crucial for security and performance. Updates often include security patches and enhancements, helping to protect against known vulnerabilities and potential exploits. Additionally, newer runtime versions may offer improved functionality and optimized resource utilization.",
+  "Risk": "Using outdated runtime versions may introduce security risks and performance degradation. Outdated runtimes may have unpatched vulnerabilities, making them susceptible to attacks.",
+  "RelatedUrl": "https://docs.microsoft.com/en-us/azure/azure-functions/functions-versions",
+  "Remediation": {
+    "Code": {
+      "CLI": "az functionapp config appsettings set --name <function_app_name> --resource-group <resource_group_name> --settings FUNCTIONS_EXTENSION_VERSION=~4",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/Functions/azure-function-runtime-version.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "",
+      "Url": "https://learn.microsoft.com/en-us/azure/azure-functions/migrate-version-3-version-4?tabs=net8%2Cazure-cli%2Cwindows&pivots=programming-language-python"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Stay informed about the latest security updates and patch releases for Azure Functions to maintain a secure and up-to-date environment."
+}

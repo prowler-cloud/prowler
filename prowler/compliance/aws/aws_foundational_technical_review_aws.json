@@ -1,0 +1,693 @@
+{
+  "Framework": "AWS-Foundational-Technical-Review",
+  "Version": "",
+  "Provider": "AWS",
+  "Description": "The AWS Foundational Technical Review (FTR) assesses an AWS Partner's solution against a specific set of Amazon Web Services (AWS) best practices around security, performance, and operational processes that are most critical for customer success. Passing the FTR is required to qualify AWS Software Partners for AWS Partner Network (APN) programs such as AWS Competency and AWS Service Ready but any AWS Partner who offers a technology solution may request a FTR review through AWS Partner Central.",
+  "Requirements": [
+    {
+      "Id": "HOST-001",
+      "Name": "Confirm your hosting model",
+      "Description": "To use this FTR checklist you must host all critical application components on AWS. You may use external providers for edge services such as content delivery networks (CDNs) or domain name system (DNS), or corporate identity providers. If you are using any edge services outside AWS, please specify them in the self-assessment.",
+      "Attributes": [
+        {
+          "Section": "Partner-hosted FTR requirements",
+          "Subsection": "Hosting",
+          "Type": "Manual"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "SUP-001",
+      "Name": "Subscribe to the AWS Business Support tier (or higher) for all production AWS accounts or have an action plan to handle issues which require help from AWS Support",
+      "Description": "It is recommended that you subscribe to the AWS Business Support tier or higher (including AWS Partner-Led Support) for all of your AWS production accounts. For more information, refer to Compare AWS Support Plans. If you don't have premium support, you must have an action plan to handle issues which require help from AWS Support. AWS Support provides a mix of tools and technology, people, and programs designed to proactively help you optimize performance, lower costs, and innovate faster. AWS Business Support provides additional benefits including access to AWS Trusted Advisor and AWS Personal Health Dashboard and faster response times.",
+      "Attributes": [
+        {
+          "Section": "Partner-hosted FTR requirements",
+          "Subsection": "Support level",
+          "Type": "Manual"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "WAFR-001",
+      "Name": "Conduct periodic architecture reviews (minimum once every year)",
+      "Description": "Conduct periodic architecture reviews of your production workload (at least once per year) using a documented architectural standard that includes AWS-specific best practices. If you have an internally defined standard for your AWS workloads, we recommend you use it for these reviews. If you do not have an internal standard, we recommend you use the AWS Well-Architected Framework.",
+      "Attributes": [
+        {
+          "Section": "Partner-hosted FTR requirements",
+          "Subsection": "Architecture review",
+          "Type": "Manual"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "WAFR-002",
+      "Name": "Review the AWS Shared Responsibility Models for Security and Resiliency",
+      "Description": "Review the AWS Shared Responsibility Model for Security and the AWS Shared Responsibility Model for Resiliency. Ensure that your product’s architecture and operational processes address the customer responsibilities defined in these models. We recommend you to use AWS Resilience Hub to ensure your workload resiliency posture meets your targets and to provide you with operational procedures you may use to address the customer responsibilities.",
+      "Attributes": [
+        {
+          "Section": "Partner-hosted FTR requirements",
+          "Subsection": "Architecture review",
+          "Type": "Manual"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "ARC-001",
+      "Name": "Use root user only by exception",
+      "Description": "The root user has unlimited access to your account and its resources, and using it only by exception helps protect your AWS resources. The AWS root user must not be used for everyday tasks, even administrative ones. Instead, adhere to the best practice of using the root user only to create your first AWS Identity and Access Management (IAM) user. Then securely lock away the root user credentials and use them to perform only a few accounts and service management tasks. To view the tasks that require you to sign in as the root user, see AWS Tasks That Require Root User. FTR does not require you to actively monitor root usage.",
+      "Attributes": [
+        {
+          "Section": "Architectural and Operational Controls",
+          "Subsection": "AWS root account",
+          "Type": "Manual"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "ARC-003",
+      "Name": "Enable multi-factor authentication (MFA) on the root user for all AWS accounts",
+      "Description": "Enabling MFA provides an additional layer of protection against unauthorized access to your account. To configure MFA for the root user, follow the instructions for enabling either a virtual MFA or hardware MFA device. If you are using AWS Organizations to create new accounts, the initial password for the root user is set to a random value that is never exposed to you. If you do not recover the password for the root user of these accounts, you do not need to enable MFA on them. For any accounts where you do have access to the root user’s password, you must enable MFA",
+      "Attributes": [
+        {
+          "Section": "Architectural and Operational Controls",
+          "Subsection": "AWS root account",
+          "Type": "Automated"
+        }
+      ],
+      "Checks": [
+        "iam_root_mfa_enabled",
+        "iam_root_hardware_mfa_enabled"
+      ]
+    },
+    {
+      "Id": "ARC-004",
+      "Name": "Remove access keys for the root user",
+      "Description": "Programmatic access to AWS APIs should never use the root user. It is best not to generate static an access key for the root user. If one already exists, you should transition any processes using that key to use temporary access keys from an AWS Identity and Access Management (IAM) role, or, if necessary, static access keys from an IAM user.",
+      "Attributes": [
+        {
+          "Section": "Architectural and Operational Controls",
+          "Subsection": "AWS root account",
+          "Type": "Automated"
+        }
+      ],
+      "Checks": [
+        "iam_no_root_access_key"
+      ]
+    },
+    {
+      "Id": "ARC-005",
+      "Name": "Develop incident management plans",
+      "Description": "An incident management plan is critical to respond, mitigate, and recover from the potential impact of security incidents. An incident management plan is a structured process for identifying, remediating, and responding in a timely matter to security incidents. An effective incident management plan must be continually iterated upon, remaining current with your cloud operations goal. For more information on developing incident management plan please see Develop incident management plans.",
+      "Attributes": [
+        {
+          "Section": "Architectural and Operational Controls",
+          "Subsection": "AWS root account",
+          "Type": "Manual"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "ACOM-001",
+      "Name": "Configure AWS account contacts",
+      "Description": "If an account is not managed by AWS Organizations, alternate account contacts help AWS get in contact with the appropriate personnel if needed. Configure the account’s alternate contacts to point to a group rather than an individual. For example, create separate email distribution lists for billing, operations, and security and configure these as Billing, Security, and Operations contacts in each active AWS account. This ensures that multiple people will receive AWS notifications and be able to respond, even if someone is on vacation, changes roles, or leaves the company.",
+      "Attributes": [
+        {
+          "Section": "Architectural and Operational Controls",
+          "Subsection": "Communications from AWS",
+          "Type": "Manual"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "ACOM-002",
+      "Name": "Set account contact information including the root user email address to email addresses and phone numbers owned by your company",
+      "Description": "Using company owned email addresses and phone numbers for contact information enables you to access them even if the individuals whom they belong to are no longer with your organization",
+      "Attributes": [
+        {
+          "Section": "Architectural and Operational Controls",
+          "Subsection": "Communications from AWS",
+          "Type": "Manual"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "IAM-001",
+      "Name": "Enable multi-factor authentication (MFA) for all Human Identities with AWS access",
+      "Description": "You must require any human identities to authenticate using MFA before accessing your AWS accounts. Typically, this means enabling MFA within your corporate identity provider. If you have existing legacy IAM users you must enable MFA for console access for those principals as well. Enabling MFA for IAM users provides an additional layer of security. With MFA, users have a device that generates a unique authentication code (a one-time password, or OTP). Users must provide both their normal credentials (user name and password) and the OTP. The MFA device can either be a special piece of hardware, or it can be a virtual device (for example, it can run in an app on a smartphone). Please note that machine identities do not require MFA.",
+      "Attributes": [
+        {
+          "Section": "Architectural and Operational Controls",
+          "Subsection": "Identity and Access Management",
+          "Type": "Automated"
+        }
+      ],
+      "Checks": [
+        "iam_root_mfa_enabled",
+        "iam_root_hardware_mfa_enabled",
+        "iam_user_hardware_mfa_enabled",
+        "iam_user_mfa_enabled_console_access",
+        "iam_administrator_access_with_mfa"
+      ]
+    },
+    {
+      "Id": "IAM-002",
+      "Name": "Monitor and secure static AWS Identity and Access Management (IAM) credentials",
+      "Description": "Use temporary IAM credentials retrieved by assuming a role whenever possible. In cases where it is infeasible to use IAM roles, implement the following controls to reduce the risk these credentials are misused: Rotate IAM access keys regularly (recommended at least every 90 days). Maintain an inventory of all static keys and where they are used and remove unused access keys. Implement monitoring of AWS CloudTrail logs to detect anomalous activity or other potential misuse (e.g. using AWS GuardDuty.) Define a runbook or SOP for revoking credentials in the event you detect misuse.",
+      "Attributes": [
+        {
+          "Section": "Architectural and Operational Controls",
+          "Subsection": "Identity and Access Management",
+          "Type": "Automated"
+        }
+      ],
+      "Checks": [
+        "iam_rotate_access_key_90_days",
+        "iam_user_accesskey_unused",
+        "iam_user_with_temporary_credentials",
+        "guardduty_is_enabled",
+        "guardduty_no_high_severity_findings"
+      ]
+    },
+    {
+      "Id": "IAM-003",
+      "Name": "Use strong password policy",
+      "Description": "Enforce a strong password policy, and educate users to avoid common or re-used passwords. For IAM users, you can create a password policy for your account on the Account Settings page of the IAM console. You can use the password policy to define password requirements, such as minimum length and whether it requires non-alphabetic characters, and so on. For more information, see Setting an Account Password Policy for IAM users.",
+      "Attributes": [
+        {
+          "Section": "Architectural and Operational Controls",
+          "Subsection": "Identity and Access Management",
+          "Type": "Automated"
+        }
+      ],
+      "Checks": [
+        "iam_password_policy_expires_passwords_within_90_days_or_less",
+        "iam_password_policy_lowercase",
+        "iam_password_policy_minimum_length_14",
+        "iam_password_policy_number",
+        "iam_password_policy_reuse_24",
+        "iam_password_policy_symbol",
+        "iam_password_policy_uppercase"
+      ]
+    },
+    {
+      "Id": "IAM-004",
+      "Name": "Create individual identities (no shared credentials) for anyone who needs AWS access",
+      "Description": "Create individual entities and give unique security credentials and permissions to each user accessing your account. With individual entities and no shared credentials, you can audit the activity of each user.",
+      "Attributes": [
+        {
+          "Section": "Architectural and Operational Controls",
+          "Subsection": "Identity and Access Management",
+          "Type": "Manual"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "IAM-005",
+      "Name": "Use IAM roles and its temporary security credentials to provide access to third parties.",
+      "Description": "Do not provision IAM users and share those credentials with people outside of your organization. Any external services that need to make AWS API calls against your account (for example, a monitoring solution that accesses your account's AWS CloudWatch metrics) must use a cross-account role. For more information, refer to Providing access to AWS accounts owned by third parties.",
+      "Attributes": [
+        {
+          "Section": "Architectural and Operational Controls",
+          "Subsection": "Identity and Access Management",
+          "Type": "Manual"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "IAM-006",
+      "Name": "Grant least privilege access",
+      "Description": "You must follow the standard security advice of granting least privilege. Grant only the access that identities require by allowing access to specific actions on specific AWS resources under specific conditions. Rely on groups and identity attributes to dynamically set permissions at scale, rather than defining permissions for individual users. For example, you can allow a group of developers access to manage only resources for their project. This way, when a developer is removed from the group, access for the developer is revoked everywhere that group was used for access control, without requiring any changes to the access policies.",
+      "Attributes": [
+        {
+          "Section": "Architectural and Operational Controls",
+          "Subsection": "Identity and Access Management",
+          "Type": "Automated"
+        }
+      ],
+      "Checks": [
+        "iam_policy_attached_only_to_group_or_roles"
+      ]
+    },
+    {
+      "Id": "IAM-007",
+      "Name": "Manage access based on life cycle",
+      "Description": "Integrate access controls with operator and application lifecycle and your centralized federation provider and IAM. For example, remove a user’s access when they leave the organization or change roles.",
+      "Attributes": [
+        {
+          "Section": "Architectural and Operational Controls",
+          "Subsection": "Identity and Access Management",
+          "Type": "Manual"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "IAM-008",
+      "Name": "Audit identities quarterly",
+      "Description": "Auditing the identities that are configured in your identity provider and IAM helps ensure that only authorized identities have access to your workload. For example, remove people that leave the organization, and remove cross-account roles that are no longer required. Have a process in place to periodically audit permissions to the services accessed by an IAM entity. This helps you identify the policies you needto modify to remove any unused permissions. For more information, see Refining permissions in AWS using last accessed information.",
+      "Attributes": [
+        {
+          "Section": "Architectural and Operational Controls",
+          "Subsection": "Identity and Access Management",
+          "Type": "Manual"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "IAM-009",
+      "Name": "Do not embed credentials in application code",
+      "Description": "Ensure that all credentials used by your applications (for example, IAM access keys and database passwords) are never included in your application's source code or committed to source control in any way.",
+      "Attributes": [
+        {
+          "Section": "Architectural and Operational Controls",
+          "Subsection": "Identity and Access Management",
+          "Type": "Manual"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "IAM-0010",
+      "Name": "Store secrets securely.",
+      "Description": "Encrypt all secrets in transit and at rest, define fine-grained access controls that only allow access to specific identities, and log access to secrets in an audit log. We recommend you use a purpose-built secret management service such as AWS Secrets Manager, AWS Systems Manager Parameter Store, or an AWS Partner solution, but internally developed solutions that meet these requirements are also acceptable.",
+      "Attributes": [
+        {
+          "Section": "Architectural and Operational Controls",
+          "Subsection": "Identity and Access Management",
+          "Type": "Manual"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "IAM-0011",
+      "Name": "Encrypt all end user/customer credentials and hash passwords at rest.",
+      "Description": "If you are storing end user/customer credentials in a database that you manage, encrypt credentials at rest and hash passwords. As an alternative, AWS recommends using a user-identity synchronization service, such as Amazon Cognito or an equivalent AWS Partner solution.",
+      "Attributes": [
+        {
+          "Section": "Architectural and Operational Controls",
+          "Subsection": "Identity and Access Management",
+          "Type": "Manual"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "IAM-0012",
+      "Name": "Use temporary credentials",
+      "Description": "Use temporary security credentials to access AWS resources. For machine identities within AWS (for example, Amazon Elastic Compute Cloud (Amazon EC2) instances or AWS Lambda functions), always use IAM roles to acquire temporary security credentials. For machine identities running outside of AWS, use IAM Roles Anywhere or securely store static AWS access keys that are only used to assume an IAM role.For human identities, use AWS IAM Identity Center or other identity federation solutions where possible. If you must use static AWS access keys for human users, require MFA for all access, including the AWS Management Console, and AWS Command Line Interface (AWS CLI).",
+      "Attributes": [
+        {
+          "Section": "Architectural and Operational Controls",
+          "Subsection": "Identity and Access Management",
+          "Type": "Automated"
+        }
+      ],
+      "Checks": [
+        "iam_rotate_access_key_90_days",
+        "iam_user_accesskey_unused",
+        "iam_user_with_temporary_credentials",
+        "iam_policy_attached_only_to_group_or_roles",
+        "iam_role_administratoraccess_policy",
+        "iam_role_cross_account_readonlyaccess_policy",
+        "iam_role_cross_service_confused_deputy_prevention",
+        "iam_root_hardware_mfa_enabled",
+        "iam_root_mfa_enabled",
+        "iam_root_hardware_mfa_enabled",
+        "iam_user_hardware_mfa_enabled",
+        "iam_user_mfa_enabled_console_access",
+        "iam_administrator_access_with_mfa"
+      ]
+    },
+    {
+      "Id": "SECOPS-001",
+      "Name": "Perform vulnerability management",
+      "Description": "Define a mechanism and frequency to scan and patch for vulnerabilities in your dependencies, and in your operating systems to help protect against new threats. Scan and patch your dependencies, and your operating systems on a defined schedule. Software vulnerability management is essential to keeping your system secure from threat actors. Embedding vulnerability assessments early into your continuous integration/continuous delivery (CI/CD) pipeline allows you to prioritize remediation of any security vulnerabilities detected. The solution you need to achieve this varies according to the AWS services that you are consuming. To check for vulnerabilities in software running in Amazon EC2 instances, you can add Amazon Inspector to your pipeline to cause your build to fail if Inspector detects vulnerabilities. You can also use open source products such as OWASP Dependency-Check, Snyk, OpenVAS, package managers and AWS Partner tools for vulnerability management.",
+      "Attributes": [
+        {
+          "Section": "Architectural and Operational Controls",
+          "Subsection": "Operational security",
+          "Type": "Automated"
+        }
+      ],
+      "Checks": [
+        "inspector2_is_enabled",
+        "inspector2_active_findings_exist",
+        "accessanalyzer_enabled_without_findings",
+        "guardduty_no_high_severity_findings"
+      ]
+    },
+    {
+      "Id": "NETSEC-001",
+      "Name": "Implement the least permissive rules for all Amazon EC2 security groups",
+      "Description": "All Amazon EC2 security groups should restrict access to the greatest degree possible. At a minimum, do the following: Ensure that no security groups allow ingress from 0.0.0.0/0 to port 22 or 3389 (CIS 5.2) Ensure that the default security group of every VPC restricts all traffic (CIS 5.3/Security Control EC2.2)",
+      "Attributes": [
+        {
+          "Section": "Architectural and Operational Controls",
+          "Subsection": "Network Security",
+          "Type": "Automated"
+        }
+      ],
+      "Checks": [
+        "ec2_ami_public",
+        "ec2_instance_public_ip",
+        "ec2_securitygroup_allow_ingress_from_internet_to_all_ports",
+        "ec2_securitygroup_allow_ingress_from_internet_to_port_mongodb_27017_27018",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_ftp_port_20_21",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_elasticsearch_kibana_9200_9300_5601",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_kafka_9092",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_memcached_11211",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_oracle_1521_2483",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_redis_6379",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_sql_server_1433_1434",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_telnet_23",
+        "ec2_securitygroup_allow_wide_open_public_ipv4",
+        "ec2_securitygroup_default_restrict_traffic",
+        "ec2_securitygroup_not_used",
+        "ec2_securitygroup_with_many_ingress_egress_rules"
+      ]
+    },
+    {
+      "Id": "NETSEC-002",
+      "Name": "Restrict resources in public subnets",
+      "Description": "Do not place resources in public subnets of your VPC unless they must receive network traffic from public sources. Public subnets are subnets associated with a route table that has a route to an internet gateway.",
+      "Attributes": [
+        {
+          "Section": "Architectural and Operational Controls",
+          "Subsection": "Network Security",
+          "Type": "Automated"
+        }
+      ],
+      "Checks": [
+        "vpc_subnet_no_public_ip_by_default",
+        "vpc_subnet_separate_private_public",
+        "vpc_endpoint_connections_trust_boundaries",
+        "vpc_endpoint_services_allowed_principals_trust_boundaries",
+        "workspaces_vpc_2private_1public_subnets_nat"
+      ]
+    },
+    {
+      "Id": "BAR-001",
+      "Name": "Configure automatic data backups",
+      "Description": "You must perform regular backups to a durable storage service. Backups ensure that you have the ability to recover from administrative, logical, or physical error scenarios. Configure backups to be taken automatically based on a periodic schedule, or by changes in the dataset. RDS instances, EBS volumes, DynamoDB tables, and S3 objects can all be configured for automatic backup. AWS Backup, AWS Marketplace solutions or third-party solutions can also be used. If objects in S3 bucket are write-once-read-many (WORM), compensating controls such as object lock can be used meet this requirement. If it is customers’ responsibility to backup their data, it must be clearly stated in the documentation and the Partner must provide clear instructions on how to backup the data.",
+      "Attributes": [
+        {
+          "Section": "Architectural and Operational Controls",
+          "Subsection": "Backups and recovery",
+          "Type": "Automated"
+        }
+      ],
+      "Checks": [
+        "backup_plans_exist",
+        "backup_reportplans_exist",
+        "backup_vaults_encrypted",
+        "backup_vaults_exist",
+        "efs_have_backup_enabled",
+        "rds_instance_backup_enabled"
+      ]
+    },
+    {
+      "Id": "BAR-002",
+      "Name": "Periodically recover data to verify the integrity of your backup process",
+      "Description": "To confirm that your backup process meets your recovery time objectives (RTO) and recovery point objectives (RPO), run a recovery test on a regular schedule and after making significant changes to your cloud environment. For more information, refer to Getting Started - Backup and Restore with AWS.",
+      "Attributes": [
+        {
+          "Section": "Architectural and Operational Controls",
+          "Subsection": "Backups and recovery",
+          "Type": "Manual"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "RES-001",
+      "Name": "Define a Recovery Point Objective (RPO)",
+      "Description": "To confirm that your backup process meets your recovery time objectives (RTO) and recovery point objectives (RPO), run a recovery test on a regular schedule and after making significant changes to your cloud environment. For more information, refer to Getting Started - Backup and Restore with AWS.",
+      "Attributes": [
+        {
+          "Section": "Architectural and Operational Controls",
+          "Subsection": "Resiliency",
+          "Type": "Manual"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "RES-002",
+      "Name": "Establish a Recovery Time Objective (RTO)",
+      "Description": "Define an RTO that meets your organization’s needs and expectations. RTO is the maximum acceptable delay your organization will accept between the interruption and restoration of service.",
+      "Attributes": [
+        {
+          "Section": "Architectural and Operational Controls",
+          "Subsection": "Resiliency",
+          "Type": "Manual"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "RES-004",
+      "Name": "Resiliency Testing",
+      "Description": "Test resiliency to ensure that RTO and RPO are met, both periodically (minimum every 12 months) and after major updates. The resiliency test must include accidental data loss, instance failures, and Availability Zone (AZ) failures. At least one resilience test that meets RTO and RPO requirements must be completed prior to FTR approval. You can use AWS Resilience Hub to test and verify your workloads to see if it meets its resilience target. AWS Resilience Hub works with AWS Fault Injection Service (AWS FIS) , a chaos engineering service, to provide fault-injection simulations of real-world failures to validate the application recovers within the resilience targets you defined. AWS Resilience Hub also provides API operations for you to integrate its resilience assessment and testing into your CI/CD pipelines for ongoing resilience validation. Including resilience validation in CI/CD pipelines helps make sure that changes to the workload’s underlying infrastructure don't compromise resilience.",
+      "Attributes": [
+        {
+          "Section": "Architectural and Operational Controls",
+          "Subsection": "Resiliency",
+          "Type": "Manual"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "RES-005",
+      "Name": "Communicate customer responsibilities for resilience",
+      "Description": "Clearly define your customers’ responsibility for backup, recovery, and availability. At a minimum, your product documentation or customer agreements should cover the following: Responsibility the customer has for backing up the data stored in your solution. Instructions for backing up data or configuring optional features in your product for data protection, if applicable. Options customers have for configuring the availability of your product.",
+      "Attributes": [
+        {
+          "Section": "Architectural and Operational Controls",
+          "Subsection": "Resiliency",
+          "Type": "Manual"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "RES-006",
+      "Name": "Architect your product to meet availability targets and uptime service level agreements (SLAs)",
+      "Description": "If you publish or privately agree to availability targets or uptime SLAs, ensure that your architecture and operational processes are designed to support them. Additionally, provide clear guidance to customers on any configuration required to achieve the targets or SLAs.",
+      "Attributes": [
+        {
+          "Section": "Architectural and Operational Controls",
+          "Subsection": "Resiliency",
+          "Type": "Manual"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "RES-007",
+      "Name": "Define a customer communication plan for outages",
+      "Description": "Establish a plan for communicating information about system outages to your customers both during and after incidents. Your communication should not include any data that was provided by AWS under a non-disclosure agreement (NDA).",
+      "Attributes": [
+        {
+          "Section": "Architectural and Operational Controls",
+          "Subsection": "Resiliency",
+          "Type": "Manual"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "S3-001",
+      "Name": "Review all Amazon S3 buckets to determine appropriate access levels",
+      "Description": "You must ensure that buckets that require public access have been reviewed to determine if public read or write access is needed and if appropriate controls are in place to control public access. When assigning access permissions, follow the principle of least privilege, an AWS best practice. For more information, refer to overview of managing access.",
+      "Attributes": [
+        {
+          "Section": "Architectural and Operational Controls",
+          "Subsection": "Amazon S3 bucket access",
+          "Type": "Automated"
+        }
+      ],
+      "Checks": [
+        "s3_bucket_acl_prohibited",
+        "s3_bucket_default_encryption",
+        "s3_bucket_kms_encryption",
+        "s3_bucket_level_public_access_block",
+        "s3_bucket_object_lock",
+        "s3_bucket_policy_public_write_access",
+        "s3_bucket_public_access",
+        "s3_bucket_public_list_acl",
+        "s3_bucket_public_write_acl",
+        "s3_bucket_secure_transport_policy",
+        "s3_bucket_server_access_logging_enabled"
+      ]
+    },
+    {
+      "Id": "CAA-001",
+      "Name": "Use cross-account roles to access customer AWS accounts",
+      "Description": "Cross-account roles reduce the amount of sensitive information AWS Partners need to store for their customers.",
+      "Attributes": [
+        {
+          "Section": "Architectural and Operational Controls",
+          "Subsection": "Cross-account access",
+          "Type": "Manual"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CAA-007",
+      "Name": "Provide guidance or an automated setup mechanism (for example, an AWS CloudFormation template) for creating cross-account roles with the minimum required privileges",
+      "Description": "The policy created for cross-account access in customer accounts must follow the principle of least privilege. The AWS Partner must provide a role-policy document or an automated setup mechanism (for example, an AWS CloudFormation template) for the customers to use to ensure that the roles are created with minimum required privileges. For more information, refer to the AWS Partner Network (APN) blog posts.",
+      "Attributes": [
+        {
+          "Section": "Architectural and Operational Controls",
+          "Subsection": "Cross-account access",
+          "Type": "Manual"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CAA-002",
+      "Name": "Use an external ID with cross-account roles to access customer accounts",
+      "Description": "An external ID allows the user that is assuming the role to assert the circumstances in which they are operating. It also provides a way for the account owner to permit the role to be assumed only under specific circumstances. The primary function of the external ID is to address and prevent the confused deputy problem.",
+      "Attributes": [
+        {
+          "Section": "Architectural and Operational Controls",
+          "Subsection": "Cross-account access",
+          "Type": "Manual"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CAA-004",
+      "Name": "Use a value you generate (not something provided by the customer) for the external ID",
+      "Description": "When configuring cross-account access using IAM roles, you must use a value you generate for the external ID, instead of one provided by the customer, to ensure the integrity of the cross-account role configuration. A partner-generated external ID ensures that malicious parties cannot impersonate a customer's configuration and enforces uniqueness and format consistency across all customers. If you are not generating an external ID today we recommend implementing a process that generates a random unique value (such as a Universally Unique Identifier) for the external ID that a customer uses to set up a cross-account role.",
+      "Attributes": [
+        {
+          "Section": "Architectural and Operational Controls",
+          "Subsection": "Cross-account access",
+          "Type": "Manual"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CAA-005",
+      "Name": "Ensure that all external IDs are unique.",
+      "Description": "The external IDs used must be unique across all customers. Re-using external IDs for different customers does not solve the confused deputy problem and runs the risk of customer A being able to view data of customer B by using the role ARN and the external ID of customer B. To resolve this, we recommend implementing a process that ensures a random unique value, such as a Universally Unique Identifier, is generated for the external ID that a customer would use to setup a cross account role.",
+      "Attributes": [
+        {
+          "Section": "Architectural and Operational Controls",
+          "Subsection": "Cross-account access",
+          "Type": "Manual"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CAA-006",
+      "Name": "Provide read-only access to external ID to customers",
+      "Description": "Customers must not be able to set or influence external IDs. When the external ID is editable, it is possible for one customer to impersonate the configuration of another. For example, when the external ID is editable, customer A can create a cross account role setup using customer B’s role ARN and external ID, granting customer A access to customer B’s data. Remediation of this item involves making the external ID a view-only field, ensuring that the external ID cannot be changed to impersonate the setup of another customer.",
+      "Attributes": [
+        {
+          "Section": "Architectural and Operational Controls",
+          "Subsection": "Cross-account access",
+          "Type": "Manual"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CAA-003",
+      "Name": "Deprecate any historical use of customer-provided IAM credentials",
+      "Description": "If your application provides legacy support for the use of static IAM credentials for cross-account access, the application's user interface and customer documentation must make it clear that this method is deprecated. Existing customers should be encouraged to switch to cross-account role based-access, and collection of credentials should be disabled for new customers.",
+      "Attributes": [
+        {
+          "Section": "Architectural and Operational Controls",
+          "Subsection": "Cross-account access",
+          "Type": "Manual"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "SDAT-001",
+      "Name": "Identify sensitive data (for example, Personally Identifiable Information (PII) and Protected Health Information (PHI))",
+      "Description": "Data classification enables you to determine which data needs to be protected and how. Based on the workload and the data it processes, identify the data that is not common public knowledge.",
+      "Attributes": [
+        {
+          "Section": "Architectural and Operational Controls",
+          "Subsection": "Sensitive data",
+          "Type": "Manual"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "SDAT-002",
+      "Name": "Encrypt all sensitive data at rest",
+      "Description": "Encryption maintains the confidentiality of sensitive data even when it gets stolen or the network through which it is transmitted becomes compromised.",
+      "Attributes": [
+        {
+          "Section": "Architectural and Operational Controls",
+          "Subsection": "Sensitive data",
+          "Type": "Automated"
+        }
+      ],
+      "Checks": [
+        "sns_topics_kms_encryption_at_rest_enabled",
+        "athena_workgroup_encryption",
+        "cloudtrail_kms_encryption_enabled",
+        "dynamodb_accelerator_cluster_encryption_enabled",
+        "dynamodb_tables_kms_cmk_encryption_enabled",
+        "efs_encryption_at_rest_enabled",
+        "opensearch_service_domains_encryption_at_rest_enabled"
+      ]
+    },
+    {
+      "Id": "SDAT-003",
+      "Name": "Only use protocols with encryption when transmitting sensitive data outside of your VPC",
+      "Description": "Encryption maintains data confidentiality even when the network through which it is transmitted becomes compromised.",
+      "Attributes": [
+        {
+          "Section": "Architectural and Operational Controls",
+          "Subsection": "Sensitive data",
+          "Type": "Manual"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "RCVP-001",
+      "Name": "Establish a process to ensure that all required compliance standards are met",
+      "Description": "If you advertise that your product meets specific compliance standards, you must have an internal process for ensuring compliance. Examples of compliance standards include Payment Card Industry Data Security Standard (PCI DSS) PCI DSS, Federal Risk and Authorization Management Program (FedRAMP)FedRAMP, and U.S. Health Insurance Portability and Accountability Act (HIPAA)HIPAA. Applicable compliance standards are determined by various factors, such as what types of data the solution stores or transmits and which geographic regions the solution supports.",
+      "Attributes": [
+        {
+          "Section": "Architectural and Operational Controls",
+          "Subsection": "Regulatory compliance validation process",
+          "Type": "Manual"
+        }
+      ],
+      "Checks": []
+    }
+  ]
+}

@@ -1,0 +1,909 @@
+{
+  "Framework": "FFIEC",
+  "Version": "",
+  "Provider": "AWS",
+  "Description": "In light of the increasing volume and sophistication of cyber threats, the Federal Financial Institutions Examination Council (FFIEC) developed the Cybersecurity Assessment Tool (Assessment), on behalf of its members, to help institutions identify their risks and determine their cybersecurity maturity.",
+  "Requirements": [
+    {
+      "Id": "d1-g-it-b-1",
+      "Name": "D1.G.IT.B.1",
+      "Description": "An inventory of organizational assets (e.g., hardware, software, data, and systems hosted externally) is maintained.",
+      "Attributes": [
+        {
+          "ItemId": "d1-g-it-b-1",
+          "Section": "Cyber Risk Management and Oversight (Domain 1)",
+          "SubSection": "Governance (G)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "ec2_instance_managed_by_ssm",
+        "ec2_instance_older_than_specific_days",
+        "ec2_elastic_ip_unassigned"
+      ]
+    },
+    {
+      "Id": "d1-rm-ra-b-2",
+      "Name": "D1.RM.RA.B.2",
+      "Description": "The risk assessment identifies Internet- based systems and high-risk transactions that warrant additional authentication controls.",
+      "Attributes": [
+        {
+          "ItemId": "d1-rm-ra-b-2",
+          "Section": "Cyber Risk Management and Oversight (Domain 1)",
+          "SubSection": "Risk Management (RM)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "guardduty_is_enabled"
+      ]
+    },
+    {
+      "Id": "d1-rm-rm-b-1",
+      "Name": "D1.RM.Rm.B.1",
+      "Description": "An information security and business continuity risk management function(s) exists within the institution.",
+      "Attributes": [
+        {
+          "ItemId": "d1-rm-rm-b-1",
+          "Section": "Cyber Risk Management and Oversight (Domain 1)",
+          "SubSection": "Risk Management (RM)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "rds_instance_backup_enabled",
+        "rds_instance_backup_enabled",
+        "rds_instance_multi_az",
+        "redshift_cluster_automated_snapshot"
+      ]
+    },
+    {
+      "Id": "d2-is-is-b-1",
+      "Name": "D2.IS.Is.B.1",
+      "Description": "Information security threats are gathered and shared with applicable internal employees.",
+      "Attributes": [
+        {
+          "ItemId": "d2-is-is-b-1",
+          "Section": "Threat Intelligence and Collaboration (Domain 2)",
+          "SubSection": "Information Sharing (IS)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "cloudtrail_cloudwatch_logging_enabled",
+        "guardduty_is_enabled",
+        "securityhub_enabled"
+      ]
+    },
+    {
+      "Id": "d2-ma-ma-b-1",
+      "Name": "D2.MA.Ma.B.1",
+      "Description": "Information security threats are gathered and shared with applicable internal employees.",
+      "Attributes": [
+        {
+          "ItemId": "d2-ma-ma-b-1",
+          "Section": "Threat Intelligence and Collaboration (Domain 2)",
+          "SubSection": "Monitoring and Analyzing (MA)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "apigateway_restapi_logging_enabled",
+        "cloudtrail_multi_region_enabled",
+        "cloudtrail_s3_dataevents_read_enabled",
+        "cloudtrail_s3_dataevents_write_enabled",
+        "cloudtrail_multi_region_enabled",
+        "cloudtrail_cloudwatch_logging_enabled",
+        "cloudwatch_log_group_retention_policy_specific_days_enabled",
+        "elbv2_logging_enabled",
+        "elb_logging_enabled",
+        "opensearch_service_domains_cloudwatch_logging_enabled",
+        "rds_instance_integration_cloudwatch_logs",
+        "redshift_cluster_audit_logging",
+        "s3_bucket_server_access_logging_enabled",
+        "vpc_flow_logs_enabled"
+      ]
+    },
+    {
+      "Id": "d2-ma-ma-b-2",
+      "Name": "D2.MA.Ma.B.2",
+      "Description": "Computer event logs are used for investigations once an event has occurred.",
+      "Attributes": [
+        {
+          "ItemId": "d2-ma-ma-b-2",
+          "Section": "Threat Intelligence and Collaboration (Domain 2)",
+          "SubSection": "Monitoring and Analyzing (MA)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "apigateway_restapi_logging_enabled",
+        "cloudtrail_multi_region_enabled",
+        "cloudtrail_s3_dataevents_read_enabled",
+        "cloudtrail_s3_dataevents_write_enabled",
+        "cloudtrail_multi_region_enabled",
+        "cloudtrail_cloudwatch_logging_enabled",
+        "elbv2_logging_enabled",
+        "elb_logging_enabled",
+        "opensearch_service_domains_cloudwatch_logging_enabled",
+        "redshift_cluster_audit_logging",
+        "s3_bucket_server_access_logging_enabled",
+        "vpc_flow_logs_enabled"
+      ]
+    },
+    {
+      "Id": "d2-ti-ti-b-1",
+      "Name": "D2.TI.Ti.B.1",
+      "Description": "The institution belongs or subscribes to a threat and vulnerability information-sharing source(s) that provides information on threats (e.g., FS-ISAC, US- CERT).",
+      "Attributes": [
+        {
+          "ItemId": "d2-ti-ti-b-1",
+          "Section": "Threat Intelligence and Collaboration (Domain 2)",
+          "SubSection": "Threat Intelligence (TI)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "guardduty_is_enabled",
+        "securityhub_enabled"
+      ]
+    },
+    {
+      "Id": "d2-ti-ti-b-2",
+      "Name": "D2.TI.Ti.B.2",
+      "Description": "Threat information is used to monitor threats and vulnerabilities.",
+      "Attributes": [
+        {
+          "ItemId": "d2-ti-ti-b-2",
+          "Section": "Threat Intelligence and Collaboration (Domain 2)",
+          "SubSection": "Threat Intelligence (TI)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "guardduty_is_enabled",
+        "securityhub_enabled",
+        "ssm_managed_compliant_patching"
+      ]
+    },
+    {
+      "Id": "d2-ti-ti-b-3",
+      "Name": "D2.TI.Ti.B.3",
+      "Description": "Threat information is used to enhance internal risk management and controls.",
+      "Attributes": [
+        {
+          "ItemId": "d2-ti-ti-b-3",
+          "Section": "Threat Intelligence and Collaboration (Domain 2)",
+          "SubSection": "Threat Intelligence (TI)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "guardduty_is_enabled",
+        "securityhub_enabled"
+      ]
+    },
+    {
+      "Id": "d3-cc-pm-b-1",
+      "Name": "D3.CC.PM.B.1",
+      "Description": "A patch management program is implemented and ensures that software and firmware patches are applied in a timely manner.",
+      "Attributes": [
+        {
+          "ItemId": "d3-cc-pm-b-1",
+          "Section": "Cybersecurity Controls (Domain 3)",
+          "SubSection": "Corrective Controls (CC)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "rds_instance_minor_version_upgrade_enabled",
+        "redshift_cluster_automatic_upgrades",
+        "ssm_managed_compliant_patching"
+      ]
+    },
+    {
+      "Id": "d3-cc-pm-b-3",
+      "Name": "D3.CC.PM.B.3",
+      "Description": "Patch management reports are reviewed and reflect missing security patches.",
+      "Attributes": [
+        {
+          "ItemId": "d3-cc-pm-b-3",
+          "Section": "Cybersecurity Controls (Domain 3)",
+          "SubSection": "Corrective Controls (CC)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "rds_instance_minor_version_upgrade_enabled",
+        "redshift_cluster_automatic_upgrades",
+        "ssm_managed_compliant_patching"
+      ]
+    },
+    {
+      "Id": "d3-dc-an-b-1",
+      "Name": "D3.DC.An.B.1",
+      "Description": "The institution is able to detect anomalous activities through monitoring across the environment.",
+      "Attributes": [
+        {
+          "ItemId": "d3-dc-an-b-1",
+          "Section": "Cybersecurity Controls (Domain 3)",
+          "SubSection": "Detective Controls (DC)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "guardduty_is_enabled",
+        "guardduty_no_high_severity_findings",
+        "securityhub_enabled"
+      ]
+    },
+    {
+      "Id": "d3-dc-an-b-2",
+      "Name": "D3.DC.An.B.2",
+      "Description": "Customer transactions generating anomalous activity alerts are monitored and reviewed.",
+      "Attributes": [
+        {
+          "ItemId": "d3-dc-an-b-2",
+          "Section": "Cybersecurity Controls (Domain 3)",
+          "SubSection": "Detective Controls (DC)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "guardduty_is_enabled",
+        "securityhub_enabled"
+      ]
+    },
+    {
+      "Id": "d3-dc-an-b-3",
+      "Name": "D3.DC.An.B.3",
+      "Description": "Logs of physical and/or logical access are reviewed following events.",
+      "Attributes": [
+        {
+          "ItemId": "d3-dc-an-b-3",
+          "Section": "Cybersecurity Controls (Domain 3)",
+          "SubSection": "Detective Controls (DC)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "apigateway_restapi_logging_enabled",
+        "cloudtrail_multi_region_enabled",
+        "cloudtrail_s3_dataevents_read_enabled",
+        "cloudtrail_s3_dataevents_write_enabled",
+        "cloudtrail_multi_region_enabled",
+        "cloudtrail_cloudwatch_logging_enabled",
+        "elbv2_logging_enabled",
+        "elb_logging_enabled",
+        "opensearch_service_domains_cloudwatch_logging_enabled",
+        "rds_instance_integration_cloudwatch_logs",
+        "s3_bucket_server_access_logging_enabled",
+        "vpc_flow_logs_enabled"
+      ]
+    },
+    {
+      "Id": "d3-dc-an-b-4",
+      "Name": "D3.DC.An.B.4",
+      "Description": "Access to critical systems by third parties is monitored for unauthorized or unusual activity.",
+      "Attributes": [
+        {
+          "ItemId": "d3-dc-an-b-4",
+          "Section": "Cybersecurity Controls (Domain 3)",
+          "SubSection": "Detective Controls (DC)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "apigateway_restapi_logging_enabled",
+        "cloudtrail_multi_region_enabled",
+        "cloudtrail_s3_dataevents_read_enabled",
+        "cloudtrail_s3_dataevents_write_enabled",
+        "cloudtrail_multi_region_enabled",
+        "cloudtrail_cloudwatch_logging_enabled",
+        "elbv2_logging_enabled",
+        "elb_logging_enabled",
+        "opensearch_service_domains_cloudwatch_logging_enabled",
+        "rds_instance_integration_cloudwatch_logs",
+        "redshift_cluster_audit_logging",
+        "s3_bucket_server_access_logging_enabled",
+        "vpc_flow_logs_enabled"
+      ]
+    },
+    {
+      "Id": "d3-dc-an-b-5",
+      "Name": "D3.DC.An.B.5",
+      "Description": "Elevated privileges are monitored.",
+      "Attributes": [
+        {
+          "ItemId": "d3-dc-an-b-5",
+          "Section": "Cybersecurity Controls (Domain 3)",
+          "SubSection": "Detective Controls (DC)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "cloudtrail_multi_region_enabled",
+        "cloudtrail_cloudwatch_logging_enabled"
+      ]
+    },
+    {
+      "Id": "d3-dc-ev-b-1",
+      "Name": "D3.DC.Ev.B.1",
+      "Description": "A normal network activity baseline is established.",
+      "Attributes": [
+        {
+          "ItemId": "d3-dc-ev-b-1",
+          "Section": "Cybersecurity Controls (Domain 3)",
+          "SubSection": "Detective Controls (DC)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "apigateway_restapi_logging_enabled",
+        "cloudtrail_multi_region_enabled",
+        "cloudtrail_s3_dataevents_read_enabled",
+        "cloudtrail_s3_dataevents_write_enabled",
+        "cloudtrail_multi_region_enabled",
+        "cloudtrail_cloudwatch_logging_enabled",
+        "elbv2_logging_enabled",
+        "elb_logging_enabled",
+        "redshift_cluster_audit_logging",
+        "vpc_flow_logs_enabled"
+      ]
+    },
+    {
+      "Id": "d3-dc-ev-b-2",
+      "Name": "D3.DC.Ev.B.2",
+      "Description": "Mechanisms (e.g., antivirus alerts, log event alerts) are in place to alert management to potential attacks.",
+      "Attributes": [
+        {
+          "ItemId": "d3-dc-ev-b-2",
+          "Section": "Cybersecurity Controls (Domain 3)",
+          "SubSection": "Detective Controls (DC)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "guardduty_is_enabled"
+      ]
+    },
+    {
+      "Id": "d3-dc-ev-b-3",
+      "Name": "D3.DC.Ev.B.3",
+      "Description": "Processes are in place to monitor for the presence of unauthorized users, devices, connections, and software.",
+      "Attributes": [
+        {
+          "ItemId": "d3-dc-ev-b-3",
+          "Section": "Cybersecurity Controls (Domain 3)",
+          "SubSection": "Detective Controls (DC)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "cloudtrail_multi_region_enabled",
+        "guardduty_is_enabled",
+        "securityhub_enabled",
+        "vpc_flow_logs_enabled"
+      ]
+    },
+    {
+      "Id": "d3-dc-th-b-1",
+      "Name": "D3.DC.Th.B.1",
+      "Description": "Independent testing (including penetration testing and vulnerability scanning) is conducted according to the risk assessment for external-facing systems and the internal network.",
+      "Attributes": [
+        {
+          "ItemId": "d3-dc-th-b-1",
+          "Section": "Cybersecurity Controls (Domain 3)",
+          "SubSection": "Detective Controls (DC)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "guardduty_is_enabled",
+        "securityhub_enabled",
+        "ssm_managed_compliant_patching"
+      ]
+    },
+    {
+      "Id": "d3-pc-am-b-1",
+      "Name": "D3.PC.Am.B.1",
+      "Description": "Employee access is granted to systems and confidential data based on job responsibilities and the principles of least privilege.",
+      "Attributes": [
+        {
+          "ItemId": "d3-pc-am-b-1",
+          "Section": "Cybersecurity Controls (Domain 3)",
+          "SubSection": "Preventative Controls (PC)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "ec2_instance_profile_attached",
+        "iam_policy_attached_only_to_group_or_roles",
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges",
+        "iam_inline_policy_no_administrative_privileges",
+        "iam_no_root_access_key"
+      ]
+    },
+    {
+      "Id": "d3-pc-am-b-10",
+      "Name": "D3.PC.Am.B.10",
+      "Description": "Production and non-production environments are segregated to prevent unauthorized access or changes to information assets. (*N/A if no production environment exists at the institution or the institution's third party.)",
+      "Attributes": [
+        {
+          "ItemId": "d3-pc-am-b-10",
+          "Section": "Cybersecurity Controls (Domain 3)",
+          "SubSection": "Preventative Controls (PC)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "ec2_networkacl_allow_ingress_any_port",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
+        "ec2_networkacl_allow_ingress_any_port"
+      ]
+    },
+    {
+      "Id": "d3-pc-am-b-12",
+      "Name": "D3.PC.Am.B.12",
+      "Description": "All passwords are encrypted in storage and in transit.",
+      "Attributes": [
+        {
+          "ItemId": "d3-pc-am-b-12",
+          "Section": "Cybersecurity Controls (Domain 3)",
+          "SubSection": "Preventative Controls (PC)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "apigateway_restapi_client_certificate_enabled",
+        "ec2_ebs_volume_encryption",
+        "ec2_ebs_default_encryption",
+        "efs_encryption_at_rest_enabled",
+        "opensearch_service_domains_encryption_at_rest_enabled",
+        "opensearch_service_domains_node_to_node_encryption_enabled",
+        "rds_instance_storage_encrypted",
+        "redshift_cluster_audit_logging",
+        "s3_bucket_default_encryption",
+        "s3_bucket_secure_transport_policy"
+      ]
+    },
+    {
+      "Id": "d3-pc-am-b-13",
+      "Name": "D3.PC.Am.B.13",
+      "Description": "Confidential data is encrypted when transmitted across public or untrusted networks (e.g., Internet).",
+      "Attributes": [
+        {
+          "ItemId": "d3-pc-am-b-13",
+          "Section": "Cybersecurity Controls (Domain 3)",
+          "SubSection": "Preventative Controls (PC)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "apigateway_restapi_client_certificate_enabled",
+        "elbv2_insecure_ssl_ciphers",
+        "elb_ssl_listeners",
+        "s3_bucket_secure_transport_policy"
+      ]
+    },
+    {
+      "Id": "d3-pc-am-b-15",
+      "Name": "D3.PC.Am.B.15",
+      "Description": "Remote access to critical systems by employees, contractors, and third parties uses encrypted connections and multifactor authentication.",
+      "Attributes": [
+        {
+          "ItemId": "d3-pc-am-b-15",
+          "Section": "Cybersecurity Controls (Domain 3)",
+          "SubSection": "Preventative Controls (PC)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "apigateway_restapi_client_certificate_enabled",
+        "iam_root_hardware_mfa_enabled",
+        "iam_root_mfa_enabled",
+        "iam_user_mfa_enabled_console_access",
+        "s3_bucket_secure_transport_policy"
+      ]
+    },
+    {
+      "Id": "d3-pc-am-b-16",
+      "Name": "D3.PC.Am.B.16",
+      "Description": "Administrative, physical, or technical controls are in place to prevent users without administrative responsibilities from installing unauthorized software.",
+      "Attributes": [
+        {
+          "ItemId": "d3-pc-am-b-16",
+          "Section": "Cybersecurity Controls (Domain 3)",
+          "SubSection": "Preventative Controls (PC)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges",
+        "iam_inline_policy_no_administrative_privileges"
+      ]
+    },
+    {
+      "Id": "d3-pc-am-b-2",
+      "Name": "D3.PC.Am.B.2",
+      "Description": "Employee access to systems and confidential data provides for separation of duties.",
+      "Attributes": [
+        {
+          "ItemId": "d3-pc-am-b-2",
+          "Section": "Cybersecurity Controls (Domain 3)",
+          "SubSection": "Preventative Controls (PC)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges",
+        "iam_inline_policy_no_administrative_privileges"
+      ]
+    },
+    {
+      "Id": "d3-pc-am-b-3",
+      "Name": "D3.PC.Am.B.3",
+      "Description": "Elevated privileges (e.g., administrator privileges) are limited and tightly controlled (e.g., assigned to individuals, not shared, and require stronger password controls",
+      "Attributes": [
+        {
+          "ItemId": "d3-pc-am-b-3",
+          "Section": "Cybersecurity Controls (Domain 3)",
+          "SubSection": "Preventative Controls (PC)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges",
+        "iam_inline_policy_no_administrative_privileges",
+        "iam_root_hardware_mfa_enabled",
+        "iam_root_mfa_enabled",
+        "iam_no_root_access_key"
+      ]
+    },
+    {
+      "Id": "d3-pc-am-b-6",
+      "Name": "D3.PC.Am.B.6",
+      "Description": "Identification and authentication are required and managed for access to systems, applications, and hardware.",
+      "Attributes": [
+        {
+          "ItemId": "d3-pc-am-b-6",
+          "Section": "Cybersecurity Controls (Domain 3)",
+          "SubSection": "Preventative Controls (PC)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "iam_password_policy_minimum_length_14",
+        "iam_password_policy_lowercase",
+        "iam_password_policy_number",
+        "iam_password_policy_number",
+        "iam_password_policy_symbol",
+        "iam_password_policy_uppercase",
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges",
+        "iam_inline_policy_no_administrative_privileges",
+        "iam_root_hardware_mfa_enabled",
+        "iam_root_mfa_enabled",
+        "iam_rotate_access_key_90_days",
+        "iam_user_mfa_enabled_console_access",
+        "iam_user_mfa_enabled_console_access",
+        "iam_user_accesskey_unused",
+        "iam_user_console_access_unused"
+      ]
+    },
+    {
+      "Id": "d3-pc-am-b-7",
+      "Name": "D3.PC.Am.B.7",
+      "Description": "Access controls include password complexity and limits to password attempts and reuse.",
+      "Attributes": [
+        {
+          "ItemId": "d3-pc-am-b-7",
+          "Section": "Cybersecurity Controls (Domain 3)",
+          "SubSection": "Preventative Controls (PC)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "iam_password_policy_minimum_length_14",
+        "iam_password_policy_lowercase",
+        "iam_password_policy_number",
+        "iam_password_policy_number",
+        "iam_password_policy_symbol",
+        "iam_password_policy_uppercase"
+      ]
+    },
+    {
+      "Id": "d3-pc-am-b-8",
+      "Name": "D3.PC.Am.B.8",
+      "Description": "All default passwords and unnecessary default accounts are changed before system implementation.",
+      "Attributes": [
+        {
+          "ItemId": "d3-pc-am-b-8",
+          "Section": "Cybersecurity Controls (Domain 3)",
+          "SubSection": "Preventative Controls (PC)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "iam_no_root_access_key"
+      ]
+    },
+    {
+      "Id": "d3-pc-im-b-1",
+      "Name": "D3.PC.Im.B.1",
+      "Description": "Network perimeter defense tools (e.g., border router and firewall) are used.",
+      "Attributes": [
+        {
+          "ItemId": "d3-pc-im-b-1",
+          "Section": "Cybersecurity Controls (Domain 3)",
+          "SubSection": "Preventative Controls (PC)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "acm_certificates_expiration_check",
+        "apigateway_restapi_waf_acl_attached",
+        "ec2_ebs_public_snapshot",
+        "ec2_instance_public_ip",
+        "elbv2_waf_acl_attached",
+        "emr_cluster_master_nodes_no_public_ip",
+        "awslambda_function_not_publicly_accessible",
+        "awslambda_function_url_public",
+        "rds_instance_no_public_access",
+        "rds_snapshots_public_access",
+        "redshift_cluster_public_access",
+        "s3_bucket_public_access",
+        "s3_bucket_policy_public_write_access",
+        "s3_account_level_public_access_blocks",
+        "s3_bucket_public_access",
+        "sagemaker_notebook_instance_without_direct_internet_access_configured",
+        "ec2_securitygroup_default_restrict_traffic",
+        "ec2_networkacl_allow_ingress_any_port",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
+        "ec2_networkacl_allow_ingress_any_port"
+      ]
+    },
+    {
+      "Id": "d3-pc-im-b-2",
+      "Name": "D3.PC.Im.B.2",
+      "Description": "Systems that are accessed from the Internet or by external parties are protected by firewalls or other similar devices.",
+      "Attributes": [
+        {
+          "ItemId": "d3-pc-im-b-2",
+          "Section": "Cybersecurity Controls (Domain 3)",
+          "SubSection": "Preventative Controls (PC)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "apigateway_restapi_waf_acl_attached",
+        "elbv2_waf_acl_attached",
+        "ec2_securitygroup_default_restrict_traffic",
+        "ec2_networkacl_allow_ingress_any_port",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
+        "ec2_networkacl_allow_ingress_any_port"
+      ]
+    },
+    {
+      "Id": "d3-pc-im-b-3",
+      "Name": "D3.PC.Im.B.3",
+      "Description": "All ports are monitored.",
+      "Attributes": [
+        {
+          "ItemId": "d3-pc-im-b-3",
+          "Section": "Cybersecurity Controls (Domain 3)",
+          "SubSection": "Preventative Controls (PC)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "apigateway_restapi_logging_enabled",
+        "cloudtrail_multi_region_enabled",
+        "cloudtrail_cloudwatch_logging_enabled",
+        "elbv2_logging_enabled",
+        "elb_logging_enabled",
+        "vpc_flow_logs_enabled"
+      ]
+    },
+    {
+      "Id": "d3-pc-im-b-5",
+      "Name": "D3.PC.Im.B.5",
+      "Description": "Systems configurations (for servers, desktops, routers, etc.) follow industry standards and are enforced",
+      "Attributes": [
+        {
+          "ItemId": "d3-pc-im-b-5",
+          "Section": "Cybersecurity Controls (Domain 3)",
+          "SubSection": "Preventative Controls (PC)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "ec2_instance_managed_by_ssm",
+        "ssm_managed_compliant_patching",
+        "ssm_managed_compliant_patching"
+      ]
+    },
+    {
+      "Id": "d3-pc-im-b-6",
+      "Name": "D3.PC.Im.B.6",
+      "Description": "Ports, functions, protocols and services are prohibited if no longer needed for business purposes.",
+      "Attributes": [
+        {
+          "ItemId": "d3-pc-im-b-6",
+          "Section": "Cybersecurity Controls (Domain 3)",
+          "SubSection": "Preventative Controls (PC)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "ec2_securitygroup_default_restrict_traffic",
+        "ec2_networkacl_allow_ingress_any_port",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
+        "ec2_networkacl_allow_ingress_any_port"
+      ]
+    },
+    {
+      "Id": "d3-pc-im-b-7",
+      "Name": "D3.PC.Im.B.7",
+      "Description": "Access to make changes to systems configurations (including virtual machines and hypervisors) is controlled and monitored.",
+      "Attributes": [
+        {
+          "ItemId": "d3-pc-im-b-7",
+          "Section": "Cybersecurity Controls (Domain 3)",
+          "SubSection": "Preventative Controls (PC)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "cloudtrail_multi_region_enabled",
+        "cloudtrail_cloudwatch_logging_enabled",
+        "iam_policy_attached_only_to_group_or_roles",
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges",
+        "iam_inline_policy_no_administrative_privileges"
+      ]
+    },
+    {
+      "Id": "d3-pc-se-b-1",
+      "Name": "D3.PC.Se.B.1",
+      "Description": "Developers working for the institution follow secure program coding practices, as part of a system development life cycle (SDLC), that meet industry standards.",
+      "Attributes": [
+        {
+          "ItemId": "d3-pc-se-b1",
+          "Section": "Cybersecurity Controls (Domain 3)",
+          "SubSection": "Preventative Controls (PC)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "d4-c-co-b-2",
+      "Name": "D4.C.Co.B.2",
+      "Description": "The institution ensures that third-party connections are authorized.",
+      "Attributes": [
+        {
+          "ItemId": "d4-c-co-b-2",
+          "Section": "External Dependency Management (Domain 4)",
+          "SubSection": "Connections (C)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "ec2_securitygroup_default_restrict_traffic",
+        "ec2_networkacl_allow_ingress_any_port",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
+        "ec2_networkacl_allow_ingress_any_port"
+      ]
+    },
+    {
+      "Id": "d5-dr-de-b-1",
+      "Name": "D5.DR.De.B.1",
+      "Description": "Alert parameters are set for detecting information security incidents that prompt mitigating actions.",
+      "Attributes": [
+        {
+          "ItemId": "d5-dr-de-b-1",
+          "Section": "Cyber Incident Management and Resilience (Domain 5)",
+          "SubSection": "Detection, Response, & Mitigation (DR)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "cloudwatch_changes_to_network_acls_alarm_configured",
+        "cloudwatch_changes_to_network_gateways_alarm_configured",
+        "cloudwatch_changes_to_network_route_tables_alarm_configured",
+        "cloudwatch_changes_to_vpcs_alarm_configured",
+        "guardduty_is_enabled",
+        "securityhub_enabled"
+      ]
+    },
+    {
+      "Id": "d5-dr-de-b-2",
+      "Name": "D5.DR.De.B.2",
+      "Description": "System performance reports contain information that can be used as a risk indicator to detect information security incidents.",
+      "Attributes": [
+        {
+          "ItemId": "d5-dr-de-b-2",
+          "Section": "Cyber Incident Management and Resilience (Domain 5)",
+          "SubSection": "Detection, Response, & Mitigation (DR)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "d5-dr-de-b-3",
+      "Name": "D5.DR.De.B.3",
+      "Description": "Tools and processes are in place to detect, alert, and trigger the incident response program.",
+      "Attributes": [
+        {
+          "ItemId": "d5-dr-de-b-3",
+          "Section": "Cyber Incident Management and Resilience (Domain 5)",
+          "SubSection": "Detection, Response, & Mitigation (DR)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "cloudtrail_multi_region_enabled",
+        "cloudtrail_s3_dataevents_read_enabled",
+        "cloudtrail_s3_dataevents_write_enabled",
+        "cloudtrail_multi_region_enabled",
+        "cloudtrail_cloudwatch_logging_enabled",
+        "cloudwatch_changes_to_network_acls_alarm_configured",
+        "cloudwatch_changes_to_network_gateways_alarm_configured",
+        "cloudwatch_changes_to_network_route_tables_alarm_configured",
+        "cloudwatch_changes_to_vpcs_alarm_configured",
+        "elbv2_logging_enabled",
+        "elb_logging_enabled",
+        "guardduty_is_enabled",
+        "rds_instance_integration_cloudwatch_logs",
+        "redshift_cluster_audit_logging",
+        "s3_bucket_server_access_logging_enabled",
+        "securityhub_enabled"
+      ]
+    },
+    {
+      "Id": "d5-er-es-b-4",
+      "Name": "D5.ER.Es.B.4",
+      "Description": "Incidents are classified, logged and tracked.",
+      "Attributes": [
+        {
+          "ItemId": "d5-er-es-b-4",
+          "Section": "Cyber Incident Management and Resilience (Domain 5)",
+          "SubSection": "Escalation and Reporting (ER)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "guardduty_no_high_severity_findings"
+      ]
+    },
+    {
+      "Id": "d5-ir-pl-b-6",
+      "Name": "D5.IR.Pl.B.6",
+      "Description": "The institution plans to use business continuity, disaster recovery, and data backup programs to recover operations following an incident.",
+      "Attributes": [
+        {
+          "ItemId": "d5-ir-pl-b-6",
+          "Section": "Cyber Incident Management and Resilience (Domain 5)",
+          "SubSection": "Incident Resilience Planning & Strategy (IR)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "dynamodb_tables_pitr_enabled",
+        "elbv2_deletion_protection",
+        "rds_instance_enhanced_monitoring_enabled",
+        "rds_instance_backup_enabled",
+        "rds_instance_deletion_protection",
+        "rds_instance_multi_az",
+        "rds_instance_backup_enabled",
+        "s3_bucket_object_versioning"
+      ]
+    }
+  ]
+}

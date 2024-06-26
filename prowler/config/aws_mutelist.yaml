@@ -1,0 +1,92 @@
+Mutelist:
+  Accounts:
+    "*":
+      ########################### AWS CONTROL TOWER ###########################
+      ### The following entries includes all resources created by AWS Control Tower when setting up a landing zone ###
+      # https://docs.aws.amazon.com/controltower/latest/userguide/shared-account-resources.html #
+      Checks:
+        "awslambda_function_*":
+          Regions:
+            - "*"
+          Resources:
+            - "aws-controltower-NotificationForwarder"
+        "cloudformation_stack*":
+          Regions:
+            - "*"
+          Resources:
+            - "StackSet-AWSControlTowerGuardrailAWS-*"
+            - "StackSet-AWSControlTowerBP-*"
+            - "StackSet-AWSControlTowerSecurityResources-*"
+            - "StackSet-AWSControlTowerLoggingResources-*"
+            - "StackSet-AWSControlTowerExecutionRole-*"
+            - "AWSControlTowerBP-BASELINE-CLOUDTRAIL-MASTER"
+            - "AWSControlTowerBP-BASELINE-CONFIG-MASTER"
+        "cloudtrail_*":
+          Regions:
+            - "*"
+          Resources:
+            - "aws-controltower-BaselineCloudTrail"
+        "cloudwatch_log_group_*":
+          Regions:
+            - "*"
+          Resources:
+            - "aws-controltower/CloudTrailLogs"
+            - "/aws/lambda/aws-controltower-NotificationForwarder"
+            - "StackSet-AWSControlTowerBP-*"
+        "iam_inline_policy_no_administrative_privileges":
+          Regions:
+            - "*"
+          Resources:
+            - "aws-controltower-ForwardSnsNotificationRole/sns"
+            - "aws-controltower-AuditAdministratorRole/AssumeRole-aws-controltower-AuditAdministratorRole"
+            - "aws-controltower-AuditReadOnlyRole/AssumeRole-aws-controltower-AuditReadOnlyRole"
+        "iam.*policy_*":
+          Regions:
+            - "*"
+          Resources:
+            - "AWSControlTowerAccountServiceRolePolicy"
+            - "AWSControlTowerServiceRolePolicy"
+            - "AWSControlTowerStackSetRolePolicy"
+            - "AWSControlTowerAdminPolicy"
+            - "AWSLoadBalancerControllerIAMPolicy"
+            - "AWSControlTowerCloudTrailRolePolicy"
+        "iam_role_*":
+          Regions:
+            - "*"
+          Resources:
+            - "aws-controltower-AdministratorExecutionRole"
+            - "aws-controltower-AuditAdministratorRole"
+            - "aws-controltower-AuditReadOnlyRole"
+            - "aws-controltower-CloudWatchLogsRole"
+            - "aws-controltower-ConfigRecorderRole"
+            - "aws-controltower-ForwardSnsNotificationRole"
+            - "aws-controltower-ReadOnlyExecutionRole"
+            - "AWSControlTower_VPCFlowLogsRole"
+            - "AWSControlTowerExecution"
+            - "AWSControlTowerCloudTrailRole"
+            - "AWSControlTowerConfigAggregatorRoleForOrganizations"
+            - "AWSControlTowerStackSetRole"
+            - "AWSControlTowerAdmin"
+            - "AWSAFTAdmin"
+            - "AWSAFTExecution"
+            - "AWSAFTService"
+        "s3_bucket_*":
+          Regions:
+            - "*"
+          Resources:
+            - "aws-controltower-logs-*"
+            - "aws-controltower-s3-access-logs-*"
+        "sns_*":
+          Regions:
+            - "*"
+          Resources:
+            - "aws-controltower-AggregateSecurityNotifications"
+            - "aws-controltower-AllConfigNotifications"
+            - "aws-controltower-SecurityNotifications"
+        "vpc_*":
+          Regions:
+            - "*"
+          Resources:
+            - "*"
+          Tags:
+            - "Name=aws-controltower-VPC"

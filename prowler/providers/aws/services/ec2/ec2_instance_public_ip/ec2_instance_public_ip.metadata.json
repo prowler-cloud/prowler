@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "ec2_instance_public_ip",
+  "CheckTitle": "Check for EC2 Instances with Public IP.",
+  "CheckType": [
+    "Infrastructure Security"
+  ],
+  "ServiceName": "ec2",
+  "SubServiceName": "instance",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "medium",
+  "ResourceType": "AwsEc2Instance",
+  "Description": "Check for EC2 Instances with Public IP.",
+  "Risk": "Exposing an EC2 directly to internet increases the attack surface and therefore the risk of compromise.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "https://docs.prowler.com/checks/aws/public-policies/public_12#cloudformation",
+      "Other": "https://docs.prowler.com/checks/aws/public-policies/public_12#aws-console",
+      "Terraform": "https://docs.prowler.com/checks/aws/public-policies/public_12#terraform"
+    },
+    "Recommendation": {
+      "Text": "Use an ALB and apply WAF ACL.",
+      "Url": "https://aws.amazon.com/blogs/aws/aws-web-application-firewall-waf-for-application-load-balancers/"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

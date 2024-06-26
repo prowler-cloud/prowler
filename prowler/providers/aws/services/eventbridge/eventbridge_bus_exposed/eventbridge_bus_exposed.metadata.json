@@ -1,0 +1,30 @@
+{
+  "Provider": "aws",
+  "CheckID": "eventbridge_bus_exposed",
+  "CheckTitle": "Ensure that your AWS EventBridge event bus is not exposed to everyone",
+  "CheckType": [],
+  "ServiceName": "eventbridge",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "high",
+  "ResourceType": "AwsEventsEventbus",
+  "Description": "Ensure that your AWS EventBridge event bus is not exposed to everyone.",
+  "Risk": "If your AWS EventBridge event bus is exposed to everyone, unauthorized users can access your event bus and potentially view or modify your events.",
+  "RelatedUrl": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/CWE_GettingStarted.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws events remove-permission --event-bus-name <event_bus_name> --statement-id <statement_id>",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudWatchEvents/event-bus-exposed.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "To restrict access to your AWS EventBridge event bus, remove the permission that allows everyone to access it.",
+      "Url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/CloudWatchEvents-CrossAccountEventDelivery.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

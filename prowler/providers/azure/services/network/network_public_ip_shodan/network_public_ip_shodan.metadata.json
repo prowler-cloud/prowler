@@ -1,0 +1,32 @@
+{
+  "Provider": "azure",
+  "CheckID": "network_public_ip_shodan",
+  "CheckTitle": "Check if an Azure Public IP is exposed in Shodan (requires Shodan API KEY).",
+  "CheckType": [],
+  "ServiceName": "network",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Network",
+  "Description": "Check if an Azure Public IP is exposed in Shodan (requires Shodan API KEY).",
+  "Risk": "If an Azure Public IP is exposed in Shodan, it can be accessed by anyone on the internet. This can lead to unauthorized access to your resources.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Check Identified IPs, Consider changing them to private ones and delete them from Shodan.",
+      "Url": "https://www.shodan.io/"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

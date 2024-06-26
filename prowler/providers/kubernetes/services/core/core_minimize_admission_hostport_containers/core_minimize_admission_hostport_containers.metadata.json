@@ -1,0 +1,32 @@
+{
+  "Provider": "kubernetes",
+  "CheckID": "core_minimize_admission_hostport_containers",
+  "CheckTitle": "Minimize the admission of containers which use HostPorts",
+  "CheckType": [],
+  "ServiceName": "core",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "KubernetesPod",
+  "Description": "This check ensures that Kubernetes clusters are configured to minimize the admission of containers that require the use of HostPorts. This helps maintain network policy controls and reduce security risks.",
+  "Risk": "Permitting containers with HostPorts can bypass network policy controls, increasing the risk of unauthorized network access.",
+  "RelatedUrl": "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/bc_k8s_25#kubernetes",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Limit the use of HostPorts in Kubernetes containers to maintain network security.",
+      "Url": "https://kubernetes.io/docs/concepts/security/pod-security-standards/"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Carefully evaluate the need for HostPorts in container configurations and prefer network policies for secure communication."
+}

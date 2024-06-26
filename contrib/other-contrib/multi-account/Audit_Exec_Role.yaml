@@ -1,0 +1,75 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Prowler Auditing Role - in Control Tower pick AWSControlTowerStackSetRole for IAM role and AWSControlTowerExecution for execution
+
+Parameters:
+
+  AuditorAccountId:
+    Default: 987600001234
+    Description: AWS Account ID where the audit tooling executes
+    Type: Number
+  AuditRolePathName:
+    Default: '/audit/prowler/XA_AuditRole_Prowler'
+    Description: Path for role name in audit tooling account
+    Type: String
+
+Resources:
+  XAAuditRole:
+    Type: "AWS::IAM::Role"
+    Properties: # /audit/prowler/XA_AuditRole_Prowler
+      RoleName: XA_AuditRole_Prowler
+      Path: "/audit/prowler/"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/SecurityAudit
+        - arn:aws:iam::aws:policy/AWSOrganizationsReadOnlyAccess
+        - arn:aws:iam::aws:policy/IAMReadOnlyAccess
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              AWS: # TODO: review permissions to see if this can be narrowed down - code build only perhaps
+                - !Sub "arn:aws:iam::${AuditorAccountId}:root"
+            Action:
+              - "sts:AssumeRole"
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "codebuild.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+            # TODO: restrict to only AuditorAccount only
+      Policies:
+        - PolicyName: "ProwlerPolicyAdditions"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: "ProwlerPolicyAdditions"
+                Effect: "Allow"
+                Resource: "*"
+                Action:
+                  - "acm:describecertificate"
+                  - "acm:listcertificates"
+                  - "apigateway:GET"
+                  - "cloudtrail:GetEventSelectors"
+                  - "ec2:GetEbsEncryptionByDefault"
+                  - "es:describeelasticsearchdomainconfig"
+                  - "guardduty:ListDetectors"
+                  - "guardduty:GetDetector"
+                  - "logs:DescribeLogGroups"
+                  - "logs:DescribeMetricFilters"
+                  - "s3:GetEncryptionConfiguration"
+                  - "ses:getidentityverificationattributes"
+                  - "sns:listsubscriptionsbytopic"
+                  - "support:*"
+                  - "trustedadvisor:Describe*"
+
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W28
+            reason: "the role name is intentionally static"
+          - id: W11
+            reason: "the policy grants read/view/audit access only, to all resources, by design"
+          - id: F3
+            reason: "Support does not allow or deny access to individual actions"

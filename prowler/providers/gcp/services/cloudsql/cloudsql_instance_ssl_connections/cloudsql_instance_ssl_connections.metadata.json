@@ -1,0 +1,30 @@
+{
+  "Provider": "gcp",
+  "CheckID": "cloudsql_instance_ssl_connections",
+  "CheckTitle": "Ensure That the Cloud SQL Database Instance Requires All Incoming Connections To Use SSL",
+  "CheckType": [],
+  "ServiceName": "cloudsql",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "DatabaseInstance",
+  "Description": "Ensure That the Cloud SQL Database Instance Requires All Incoming Connections To Use SSL",
+  "Risk": "SQL database connections if successfully trapped (MITM), can reveal sensitive data like credentials, database queries, query outputs etc. For security, it is recommended to always use SSL encryption when connecting to your instance. This recommendation is applicable for Postgresql, MySql generation 1, MySql generation 2 and SQL Server 2017 instances.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "gcloud sql instances patch <INSTANCE_NAME> --require-ssl",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudSQL/enable-ssl-for-incoming-connections.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "It is recommended to enforce all incoming connections to SQL database instance to use SSL.",
+      "Url": "https://cloud.google.com/sql/docs/postgres/configure-ssl-instance/"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

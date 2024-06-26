@@ -1,0 +1,33 @@
+{
+  "Provider": "aws",
+  "CheckID": "codebuild_project_user_controlled_buildspec",
+  "CheckTitle": "Ensure CodeBuild Project uses a controlled buildspec",
+  "CheckType": [
+    "Software and Configuration Checks",
+    "Industry and Regulatory Standards"
+  ],
+  "ServiceName": "codebuild",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "medium",
+  "ResourceType": "AwsCodeBuildProject",
+  "Description": "Ensure CodeBuild Project uses a controlled buildspec",
+  "Risk": "The CodeBuild projects with user controlled buildspec",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Use buildspec.yml from a trusted source which user cant interfere with",
+      "Url": "https://docs.aws.amazon.com/codebuild/latest/userguide/security.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

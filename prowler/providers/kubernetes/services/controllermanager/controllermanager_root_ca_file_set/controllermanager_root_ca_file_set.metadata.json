@@ -1,0 +1,33 @@
+{
+  "Provider": "kubernetes",
+  "CheckID": "controllermanager_root_ca_file_set",
+  "CheckTitle": "Ensure that the --root-ca-file argument is set as appropriate",
+  "CheckType": [],
+  "ServiceName": "controller-manager",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "KubernetesControllerManager",
+  "Description": "This check verifies that the Kubernetes Controller Manager is configured with the --root-ca-file argument set to a certificate bundle file, allowing pods to verify the API server's serving certificate.",
+  "Risk": "Not setting the root CA file can expose pods to man-in-the-middle attacks due to unverified TLS connections to the API server.",
+  "RelatedUrl": "https://kubernetes.io/docs/setup/best-practices/certificates/",
+  "Remediation": {
+    "Code": {
+      "CLI": "--root-ca-file=/path/to/ca-file",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-root-ca-file-argument-is-set-as-appropriate",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure the Controller Manager with a root CA file to enhance security for pods communicating with the API server.",
+      "Url": "https://kubernetes.io/docs/setup/best-practices/certificates/#certificate-paths"
+    }
+  },
+  "Categories": [
+    "encryption",
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Ensure that the certificate bundle file is properly maintained and updated as needed."
+}

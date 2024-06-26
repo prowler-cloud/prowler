@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "iam_policy_allows_privilege_escalation",
+  "CheckTitle": "Ensure no Customer Managed IAM policies allow actions that may lead into Privilege Escalation",
+  "CheckType": [
+    "Software and Configuration Checks",
+    "Industry and Regulatory Standards",
+    "CIS AWS Foundations Benchmark"
+  ],
+  "ServiceName": "iam",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "high",
+  "ResourceType": "AwsIamPolicy",
+  "Description": "Ensure no Customer Managed IAM policies allow actions that may lead into Privilege Escalation",
+  "Risk": "Users with some IAM permissions are allowed to elevate their privileges up to administrator rights.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Grant usage permission on a per-resource basis and applying least privilege principle.",
+      "Url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#grant-least-privilege"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "CAF Security Epic: IAM"
+}

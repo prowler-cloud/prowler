@@ -1,0 +1,30 @@
+{
+  "Provider": "gcp",
+  "CheckID": "compute_instance_ip_forwarding_is_enabled",
+  "CheckTitle": "Ensure That IP Forwarding Is Not Enabled on Instances",
+  "CheckType": [],
+  "ServiceName": "compute",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "VMInstance",
+  "Description": "Compute Engine instance cannot forward a packet unless the source IP address of the packet matches the IP address of the instance. Similarly, GCP won't deliver a packet whose destination IP address is different than the IP address of the instance receiving the packet. However, both capabilities are required if you want to use instances to help route packets. Forwarding of data packets should be disabled to prevent data loss or information disclosure.",
+  "Risk": "When the IP Forwarding feature is enabled on a virtual machine's network interface (NIC), it allows the VM to act as a router and receive traffic addressed to other destinations. ",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "https://docs.prowler.com/checks/gcp/google-cloud-networking-policies/bc_gcp_networking_12#cli-command",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/ComputeEngine/disable-ip-forwarding.html",
+      "Terraform": "https://docs.prowler.com/checks/gcp/google-cloud-networking-policies/bc_gcp_networking_12#terraform"
+    },
+    "Recommendation": {
+      "Text": "Ensure that IP Forwarding feature is not enabled at the Google Compute Engine instance level for security and compliance reasons, as instances with IP Forwarding enabled act as routers/packet forwarders. Because IP forwarding is rarely required, except when the virtual machine (VM) is used as a network virtual appliance, each Google Cloud VM instance should be reviewed in order to decide whether the IP forwarding is really needed for the verified instance. IP Forwarding is enabled at the VM instance level and applies to all network interfaces (NICs) attached to the instance. In addition, Instances created by GKE should be excluded from this recommendation because they need to have IP forwarding enabled and cannot be changed. Instances created by GKE have names that start with \"gke- \".",
+      "Url": "https://cloud.google.com/compute/docs/instances/create-start-instance"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

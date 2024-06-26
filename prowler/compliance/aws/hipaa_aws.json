@@ -1,0 +1,790 @@
+{
+  "Framework": "HIPAA",
+  "Version": "",
+  "Provider": "AWS",
+  "Description": "The Health Insurance Portability and Accountability Act of 1996 (HIPAA) is legislation that helps US workers to retain health insurance coverage when they change or lose jobs. The legislation also seeks to encourage electronic health records to improve the efficiency and quality of the US healthcare system through improved information sharing.",
+  "Requirements": [
+    {
+      "Id": "164_308_a_1_ii_a",
+      "Name": "164.308(a)(1)(ii)(A) Risk analysis",
+      "Description": "Conduct an accurate and thorough assessment of the potential risks and vulnerabilities to the confidentiality, integrity, and availability of electronic protected health information held by the covered entity or business associate.",
+      "Attributes": [
+        {
+          "ItemId": "164_308_a_1_ii_a",
+          "Section": "164.308 Administrative Safeguards",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "config_recorder_all_regions_enabled",
+        "guardduty_is_enabled"
+      ]
+    },
+    {
+      "Id": "164_308_a_1_ii_b",
+      "Name": "164.308(a)(1)(ii)(B) Risk Management",
+      "Description": "Implement security measures sufficient to reduce risks and vulnerabilities to a reasonable and appropriate level to comply with 164.306(a): Ensure the confidentiality, integrity, and availability of all electronic protected health information the covered entity or business associate creates, receives, maintains, or transmits.",
+      "Attributes": [
+        {
+          "ItemId": "164_308_a_1_ii_b",
+          "Section": "164.308 Administrative Safeguards",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "cloudtrail_kms_encryption_enabled",
+        "cloudtrail_log_file_validation_enabled",
+        "dynamodb_tables_pitr_enabled",
+        "ec2_ebs_public_snapshot",
+        "ec2_ebs_volume_encryption",
+        "ec2_ebs_default_encryption",
+        "ec2_instance_public_ip",
+        "ec2_instance_older_than_specific_days",
+        "efs_encryption_at_rest_enabled",
+        "elbv2_deletion_protection",
+        "elb_ssl_listeners",
+        "emr_cluster_master_nodes_no_public_ip",
+        "opensearch_service_domains_encryption_at_rest_enabled",
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges",
+        "iam_inline_policy_no_administrative_privileges",
+        "iam_no_root_access_key",
+        "awslambda_function_not_publicly_accessible",
+        "awslambda_function_url_public",
+        "cloudwatch_log_group_kms_encryption_enabled",
+        "rds_instance_backup_enabled",
+        "rds_instance_storage_encrypted",
+        "rds_instance_multi_az",
+        "rds_instance_storage_encrypted",
+        "rds_snapshots_public_access",
+        "redshift_cluster_audit_logging",
+        "redshift_cluster_public_access",
+        "s3_bucket_default_encryption",
+        "s3_bucket_secure_transport_policy",
+        "s3_bucket_public_access",
+        "s3_bucket_policy_public_write_access",
+        "s3_bucket_object_versioning",
+        "s3_account_level_public_access_blocks",
+        "sagemaker_notebook_instance_without_direct_internet_access_configured",
+        "sagemaker_notebook_instance_encryption_enabled",
+        "sns_topics_kms_encryption_at_rest_enabled",
+        "ec2_networkacl_allow_ingress_any_port",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
+        "ec2_networkacl_allow_ingress_any_port"
+      ]
+    },
+    {
+      "Id": "164_308_a_1_ii_d",
+      "Name": "164.308(a)(1)(ii)(D) Information system activity review",
+      "Description": "Implement procedures to regularly review records of information system activity, such as audit logs, access reports, and security incident tracking reports.",
+      "Attributes": [
+        {
+          "ItemId": "164_308_a_1_ii_d",
+          "Section": "164.308 Administrative Safeguards",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "apigateway_restapi_logging_enabled",
+        "cloudtrail_multi_region_enabled",
+        "cloudtrail_s3_dataevents_read_enabled",
+        "cloudtrail_s3_dataevents_write_enabled",
+        "cloudtrail_multi_region_enabled",
+        "cloudtrail_cloudwatch_logging_enabled",
+        "cloudtrail_kms_encryption_enabled",
+        "cloudtrail_log_file_validation_enabled",
+        "elbv2_logging_enabled",
+        "elb_logging_enabled",
+        "guardduty_is_enabled",
+        "redshift_cluster_audit_logging",
+        "s3_bucket_server_access_logging_enabled",
+        "securityhub_enabled",
+        "vpc_flow_logs_enabled"
+      ]
+    },
+    {
+      "Id": "164_308_a_3_i",
+      "Name": "164.308(a)(3)(i) Workforce security",
+      "Description": "Implement policies and procedures to ensure that all members of its workforce have appropriate access to electronic protected health information, as provided under paragraph (a)(4) of this section, and to prevent those workforce members who do not have access under paragraph (a)(4) of this section from obtaining access to electronic protected health information.",
+      "Attributes": [
+        {
+          "ItemId": "164_308_a_3_i",
+          "Section": "164.308 Administrative Safeguards",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "ec2_ebs_public_snapshot",
+        "ec2_instance_public_ip",
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges",
+        "iam_inline_policy_no_administrative_privileges",
+        "iam_no_root_access_key",
+        "awslambda_function_not_publicly_accessible",
+        "awslambda_function_url_public",
+        "rds_instance_no_public_access",
+        "rds_snapshots_public_access",
+        "redshift_cluster_public_access",
+        "s3_bucket_public_access",
+        "s3_bucket_policy_public_write_access",
+        "s3_account_level_public_access_blocks",
+        "sagemaker_notebook_instance_without_direct_internet_access_configured"
+      ]
+    },
+    {
+      "Id": "164_308_a_3_ii_a",
+      "Name": "164.308(a)(3)(ii)(A) Authorization and/or supervision",
+      "Description": "Implement procedures for the authorization and/or supervision of workforce members who work with electronic protected health information or in locations where it might be accessed.",
+      "Attributes": [
+        {
+          "ItemId": "164_308_a_3_ii_a",
+          "Section": "164.308 Administrative Safeguards",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "apigateway_restapi_logging_enabled",
+        "cloudtrail_multi_region_enabled",
+        "cloudtrail_s3_dataevents_read_enabled",
+        "cloudtrail_s3_dataevents_write_enabled",
+        "cloudtrail_multi_region_enabled",
+        "elbv2_logging_enabled",
+        "elb_logging_enabled",
+        "guardduty_is_enabled",
+        "iam_root_hardware_mfa_enabled",
+        "iam_root_mfa_enabled",
+        "iam_user_mfa_enabled_console_access",
+        "iam_user_mfa_enabled_console_access",
+        "redshift_cluster_audit_logging",
+        "s3_bucket_server_access_logging_enabled",
+        "securityhub_enabled",
+        "vpc_flow_logs_enabled"
+      ]
+    },
+    {
+      "Id": "164_308_a_3_ii_b",
+      "Name": "164.308(a)(3)(ii)(B) Workforce clearance procedure",
+      "Description": "Implement procedures to determine that the access of a workforce member to electronic protected health information is appropriate.",
+      "Attributes": [
+        {
+          "ItemId": "164_308_a_3_ii_b",
+          "Section": "164.308 Administrative Safeguards",
+          "Service": "iam"
+        }
+      ],
+      "Checks": [
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges",
+        "iam_inline_policy_no_administrative_privileges",
+        "iam_no_root_access_key",
+        "iam_user_accesskey_unused",
+        "iam_user_console_access_unused"
+      ]
+    },
+    {
+      "Id": "164_308_a_3_ii_c",
+      "Name": "164.308(a)(3)(ii)(C) Termination procedures",
+      "Description": "Implement procedures for terminating access to electronic protected health information when the employment of, or other arrangement with, a workforce member ends or as required by determinations made as specified in paragraph (a)(3)(ii)(b).",
+      "Attributes": [
+        {
+          "ItemId": "164_308_a_3_ii_c",
+          "Section": "164.308 Administrative Safeguards",
+          "Service": "iam"
+        }
+      ],
+      "Checks": [
+        "iam_rotate_access_key_90_days"
+      ]
+    },
+    {
+      "Id": "164_308_a_4_i",
+      "Name": "164.308(a)(4)(i) Information access management",
+      "Description": "Implement policies and procedures for authorizing access to electronic protected health information that are consistent with the applicable requirements of subpart E of this part.",
+      "Attributes": [
+        {
+          "ItemId": "164_308_a_4_i",
+          "Section": "164.308 Administrative Safeguards",
+          "Service": "iam"
+        }
+      ],
+      "Checks": [
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges",
+        "iam_inline_policy_no_administrative_privileges"
+      ]
+    },
+    {
+      "Id": "164_308_a_4_ii_a",
+      "Name": "164.308(a)(4)(ii)(A) Isolating health care clearinghouse functions",
+      "Description": "If a health care clearinghouse is part of a larger organization, the clearinghouse must implement policies and procedures that protect the electronic protected health information of the clearinghouse from unauthorized access by the larger organization.",
+      "Attributes": [
+        {
+          "ItemId": "164_308_a_4_ii_a",
+          "Section": "164.308 Administrative Safeguards",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "acm_certificates_expiration_check",
+        "cloudfront_distributions_https_enabled",
+        "cloudtrail_kms_encryption_enabled",
+        "dynamodb_accelerator_cluster_encryption_enabled",
+        "dynamodb_tables_kms_cmk_encryption_enabled",
+        "dynamodb_tables_kms_cmk_encryption_enabled",
+        "ec2_ebs_volume_encryption",
+        "ec2_ebs_volume_encryption",
+        "ec2_ebs_default_encryption",
+        "efs_encryption_at_rest_enabled",
+        "eks_cluster_kms_cmk_encryption_in_secrets_enabled",
+        "elb_ssl_listeners",
+        "opensearch_service_domains_encryption_at_rest_enabled",
+        "opensearch_service_domains_node_to_node_encryption_enabled",
+        "cloudwatch_log_group_kms_encryption_enabled",
+        "rds_instance_storage_encrypted",
+        "rds_instance_backup_enabled",
+        "rds_instance_integration_cloudwatch_logs",
+        "rds_instance_storage_encrypted",
+        "redshift_cluster_automated_snapshot",
+        "redshift_cluster_audit_logging",
+        "s3_bucket_default_encryption",
+        "s3_bucket_default_encryption",
+        "sagemaker_notebook_instance_encryption_enabled",
+        "sns_topics_kms_encryption_at_rest_enabled"
+      ]
+    },
+    {
+      "Id": "164_308_a_4_ii_b",
+      "Name": "164.308(a)(4)(ii)(B) Access authorization",
+      "Description": "Implement policies and procedures for granting access to electronic protected health information, As one illustrative example, through access to a workstation, transaction, program, process, or other mechanism.",
+      "Attributes": [
+        {
+          "ItemId": "164_308_a_4_ii_b",
+          "Section": "164.308 Administrative Safeguards",
+          "Service": "iam"
+        }
+      ],
+      "Checks": [
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges",
+        "iam_inline_policy_no_administrative_privileges"
+      ]
+    },
+    {
+      "Id": "164_308_a_4_ii_c",
+      "Name": "164.308(a)(4)(ii)(B) Access authorization",
+      "Description": "Implement policies and procedures that, based upon the covered entity's or the business associate's access authorization policies, establish, document, review, and modify a user's right of access to a workstation, transaction, program, or process.",
+      "Attributes": [
+        {
+          "ItemId": "164_308_a_4_ii_c",
+          "Section": "164.308 Administrative Safeguards",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "iam_password_policy_reuse_24",
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges",
+        "iam_inline_policy_no_administrative_privileges",
+        "iam_no_root_access_key",
+        "iam_rotate_access_key_90_days",
+        "iam_user_accesskey_unused",
+        "iam_user_console_access_unused",
+        "secretsmanager_automatic_rotation_enabled"
+      ]
+    },
+    {
+      "Id": "164_308_a_5_ii_b",
+      "Name": "164.308(a)(5)(ii)(B) Protection from malicious software",
+      "Description": "Procedures for guarding against, detecting, and reporting malicious software.",
+      "Attributes": [
+        {
+          "ItemId": "164_308_a_5_ii_b",
+          "Section": "164.308 Administrative Safeguards",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "ec2_instance_managed_by_ssm",
+        "ssm_managed_compliant_patching",
+        "ssm_managed_compliant_patching"
+      ]
+    },
+    {
+      "Id": "164_308_a_5_ii_c",
+      "Name": "164.308(a)(5)(ii)(C) Log-in monitoring",
+      "Description": "Procedures for monitoring log-in attempts and reporting discrepancies.",
+      "Attributes": [
+        {
+          "ItemId": "164_308_a_5_ii_c",
+          "Section": "164.308 Administrative Safeguards",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "guardduty_is_enabled",
+        "cloudwatch_log_metric_filter_authentication_failures",
+        "securityhub_enabled"
+      ]
+    },
+    {
+      "Id": "164_308_a_5_ii_d",
+      "Name": "164.308(a)(5)(ii)(D) Password management",
+      "Description": "Procedures for creating, changing, and safeguarding passwords.",
+      "Attributes": [
+        {
+          "ItemId": "164_308_a_5_ii_d",
+          "Section": "164.308 Administrative Safeguards",
+          "Service": "iam"
+        }
+      ],
+      "Checks": [
+        "iam_password_policy_minimum_length_14",
+        "iam_password_policy_lowercase",
+        "iam_password_policy_number",
+        "iam_password_policy_symbol",
+        "iam_password_policy_uppercase",
+        "iam_password_policy_reuse_24",
+        "iam_rotate_access_key_90_days",
+        "iam_user_accesskey_unused",
+        "iam_user_console_access_unused"
+      ]
+    },
+    {
+      "Id": "164_308_a_6_i",
+      "Name": "164.308(a)(6)(i) Security incident procedures",
+      "Description": "Implement policies and procedures to address security incidents.",
+      "Attributes": [
+        {
+          "ItemId": "164_308_a_6_i",
+          "Section": "164.308 Administrative Safeguards",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "cloudwatch_changes_to_network_acls_alarm_configured",
+        "cloudwatch_changes_to_network_gateways_alarm_configured",
+        "cloudwatch_changes_to_network_route_tables_alarm_configured",
+        "cloudwatch_changes_to_vpcs_alarm_configured",
+        "guardduty_is_enabled",
+        "cloudwatch_log_metric_filter_authentication_failures",
+        "cloudwatch_log_metric_filter_root_usage",
+        "securityhub_enabled"
+      ]
+    },
+    {
+      "Id": "164_308_a_6_ii",
+      "Name": "164.308(a)(6)(ii) Response and reporting",
+      "Description": "Identify and respond to suspected or known security incidents; mitigate, to the extent practicable, harmful effects of security incidents that are known to the covered entity or business associate; and document security incidents and their outcomes.",
+      "Attributes": [
+        {
+          "ItemId": "164_308_a_6_ii",
+          "Section": "164.308 Administrative Safeguards",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "apigateway_restapi_logging_enabled",
+        "cloudtrail_multi_region_enabled",
+        "cloudtrail_s3_dataevents_read_enabled",
+        "cloudtrail_s3_dataevents_write_enabled",
+        "cloudtrail_multi_region_enabled",
+        "cloudtrail_cloudwatch_logging_enabled",
+        "elbv2_logging_enabled",
+        "elb_logging_enabled",
+        "guardduty_is_enabled",
+        "guardduty_no_high_severity_findings",
+        "cloudwatch_log_metric_filter_authentication_failures",
+        "cloudwatch_log_metric_filter_root_usage",
+        "s3_bucket_server_access_logging_enabled",
+        "securityhub_enabled",
+        "vpc_flow_logs_enabled"
+      ]
+    },
+    {
+      "Id": "164_308_a_7_i",
+      "Name": "164.308(a)(7)(i) Contingency plan",
+      "Description": "Establish (and implement as needed) policies and procedures for responding to an emergency or other occurrence (for example, fire, vandalism, system failure, and natural disaster) that damages systems that contain electronic protected health information.",
+      "Attributes": [
+        {
+          "ItemId": "164_308_a_7_i",
+          "Section": "164.308 Administrative Safeguards",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "dynamodb_tables_pitr_enabled",
+        "dynamodb_tables_pitr_enabled",
+        "efs_have_backup_enabled",
+        "efs_have_backup_enabled",
+        "rds_instance_backup_enabled",
+        "rds_instance_backup_enabled",
+        "rds_instance_multi_az",
+        "rds_instance_backup_enabled",
+        "redshift_cluster_automated_snapshot",
+        "s3_bucket_object_versioning"
+      ]
+    },
+    {
+      "Id": "164_308_a_7_ii_a",
+      "Name": "164.308(a)(7)(ii)(A) Data backup plan",
+      "Description": "Establish and implement procedures to create and maintain retrievable exact copies of electronic protected health information.",
+      "Attributes": [
+        {
+          "ItemId": "164_308_a_7_ii_a",
+          "Section": "164.308 Administrative Safeguards",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "dynamodb_tables_pitr_enabled",
+        "dynamodb_tables_pitr_enabled",
+        "efs_have_backup_enabled",
+        "efs_have_backup_enabled",
+        "rds_instance_backup_enabled",
+        "rds_instance_backup_enabled",
+        "rds_instance_multi_az",
+        "rds_instance_backup_enabled",
+        "redshift_cluster_automated_snapshot",
+        "s3_bucket_object_versioning"
+      ]
+    },
+    {
+      "Id": "164_308_a_7_ii_b",
+      "Name": "164.308(a)(7)(ii)(B) Disaster recovery plan",
+      "Description": "Establish (and implement as needed) procedures to restore any loss of data.",
+      "Attributes": [
+        {
+          "ItemId": "164_308_a_7_ii_b",
+          "Section": "164.308 Administrative Safeguards",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "dynamodb_tables_pitr_enabled",
+        "dynamodb_tables_pitr_enabled",
+        "efs_have_backup_enabled",
+        "efs_have_backup_enabled",
+        "rds_instance_backup_enabled",
+        "rds_instance_backup_enabled",
+        "rds_instance_multi_az",
+        "rds_instance_backup_enabled",
+        "redshift_cluster_automated_snapshot",
+        "s3_bucket_object_versioning"
+      ]
+    },
+    {
+      "Id": "164_308_a_7_ii_c",
+      "Name": "164.308(a)(7)(ii)(C) Emergency mode operation plan",
+      "Description": "Establish (and implement as needed) procedures to enable continuation of critical business processes for protection of the security of electronic protected health information while operating in emergency mode.",
+      "Attributes": [
+        {
+          "ItemId": "164_308_a_7_ii_c",
+          "Section": "164.308 Administrative Safeguards",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "dynamodb_tables_pitr_enabled",
+        "dynamodb_tables_pitr_enabled",
+        "efs_have_backup_enabled",
+        "efs_have_backup_enabled",
+        "rds_instance_backup_enabled",
+        "rds_instance_backup_enabled",
+        "rds_instance_multi_az",
+        "rds_instance_backup_enabled",
+        "redshift_cluster_automated_snapshot",
+        "s3_bucket_object_versioning"
+      ]
+    },
+    {
+      "Id": "164_308_a_8",
+      "Name": "164.308(a)(8) Evaluation",
+      "Description": "Perform a periodic technical and nontechnical evaluation, based initially upon the standards implemented under this rule and subsequently, in response to environmental or operational changes affecting the security of electronic protected health information, that establishes the extent to which an entity's security policies and procedures meet the requirements of this subpart.",
+      "Attributes": [
+        {
+          "ItemId": "164_308_a_8",
+          "Section": "164.308 Administrative Safeguards",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "guardduty_is_enabled",
+        "securityhub_enabled"
+      ]
+    },
+    {
+      "Id": "164_312_a_1",
+      "Name": "164.312(a)(1) Access control",
+      "Description": "Implement technical policies and procedures for electronic information systems that maintain electronic protected health information to allow access only to those persons or software programs that have been granted access rights as specified in 164.308(a)(4).",
+      "Attributes": [
+        {
+          "ItemId": "164_312_a_1",
+          "Section": "164.312 Technical Safeguards",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "ec2_ebs_public_snapshot",
+        "ec2_instance_public_ip",
+        "emr_cluster_master_nodes_no_public_ip",
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges",
+        "iam_inline_policy_no_administrative_privileges",
+        "iam_user_mfa_enabled_console_access",
+        "awslambda_function_not_publicly_accessible",
+        "awslambda_function_url_public",
+        "rds_instance_no_public_access",
+        "rds_snapshots_public_access",
+        "redshift_cluster_public_access",
+        "s3_bucket_public_access",
+        "s3_bucket_policy_public_write_access",
+        "s3_bucket_public_access",
+        "sagemaker_notebook_instance_without_direct_internet_access_configured"
+      ]
+    },
+    {
+      "Id": "164_312_a_2_i",
+      "Name": "164.312(a)(2)(i) Unique user identification",
+      "Description": "Assign a unique name and/or number for identifying and tracking user identity.",
+      "Attributes": [
+        {
+          "ItemId": "164_312_a_2_i",
+          "Section": "164.312 Technical Safeguards",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "cloudtrail_s3_dataevents_read_enabled",
+        "cloudtrail_s3_dataevents_write_enabled",
+        "iam_no_root_access_key",
+        "s3_bucket_public_access"
+      ]
+    },
+    {
+      "Id": "164_312_a_2_ii",
+      "Name": "164.312(a)(2)(ii) Emergency access procedure",
+      "Description": "Establish (and implement as needed) procedures for obtaining necessary electronic protected health information during an emergency.",
+      "Attributes": [
+        {
+          "ItemId": "164_312_a_2_ii",
+          "Section": "164.312 Technical Safeguards",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "dynamodb_tables_pitr_enabled",
+        "dynamodb_tables_pitr_enabled",
+        "efs_have_backup_enabled",
+        "efs_have_backup_enabled",
+        "rds_instance_backup_enabled",
+        "rds_instance_backup_enabled",
+        "rds_instance_backup_enabled",
+        "redshift_cluster_automated_snapshot",
+        "s3_bucket_object_versioning"
+      ]
+    },
+    {
+      "Id": "164_312_a_2_iv",
+      "Name": "164.312(a)(2)(iv) Encryption and decryption",
+      "Description": "Implement a mechanism to encrypt and decrypt electronic protected health information.",
+      "Attributes": [
+        {
+          "ItemId": "164_312_a_2_iv",
+          "Section": "164.312 Technical Safeguards",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "cloudtrail_kms_encryption_enabled",
+        "dynamodb_accelerator_cluster_encryption_enabled",
+        "dynamodb_tables_kms_cmk_encryption_enabled",
+        "dynamodb_tables_kms_cmk_encryption_enabled",
+        "ec2_ebs_volume_encryption",
+        "ec2_ebs_default_encryption",
+        "efs_encryption_at_rest_enabled",
+        "eks_cluster_kms_cmk_encryption_in_secrets_enabled",
+        "opensearch_service_domains_encryption_at_rest_enabled",
+        "kms_cmk_rotation_enabled",
+        "cloudwatch_log_group_kms_encryption_enabled",
+        "rds_instance_storage_encrypted",
+        "rds_instance_storage_encrypted",
+        "redshift_cluster_audit_logging",
+        "s3_bucket_default_encryption",
+        "s3_bucket_default_encryption",
+        "s3_bucket_secure_transport_policy",
+        "sagemaker_notebook_instance_encryption_enabled",
+        "sns_topics_kms_encryption_at_rest_enabled"
+      ]
+    },
+    {
+      "Id": "164_312_b",
+      "Name": "164.312(b) Audit controls",
+      "Description": "Implement hardware, software, and/or procedural mechanisms that record and examine activity in information systems that contain or use electronic protected health information.",
+      "Attributes": [
+        {
+          "ItemId": "164_312_b",
+          "Section": "164.312 Technical Safeguards",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "apigateway_restapi_logging_enabled",
+        "cloudtrail_multi_region_enabled",
+        "cloudtrail_s3_dataevents_read_enabled",
+        "cloudtrail_s3_dataevents_write_enabled",
+        "cloudtrail_multi_region_enabled",
+        "cloudtrail_cloudwatch_logging_enabled",
+        "cloudtrail_log_file_validation_enabled",
+        "cloudwatch_log_group_retention_policy_specific_days_enabled",
+        "elbv2_logging_enabled",
+        "elb_logging_enabled",
+        "guardduty_is_enabled",
+        "rds_instance_integration_cloudwatch_logs",
+        "redshift_cluster_audit_logging",
+        "s3_bucket_server_access_logging_enabled",
+        "securityhub_enabled",
+        "vpc_flow_logs_enabled"
+      ]
+    },
+    {
+      "Id": "164_312_c_1",
+      "Name": "164.312(c)(1) Integrity",
+      "Description": "Implement policies and procedures to protect electronic protected health information from improper alteration or destruction.",
+      "Attributes": [
+        {
+          "ItemId": "164_312_c_1",
+          "Section": "164.312 Technical Safeguards",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "cloudtrail_kms_encryption_enabled",
+        "cloudtrail_log_file_validation_enabled",
+        "ec2_ebs_volume_encryption",
+        "s3_bucket_default_encryption",
+        "s3_bucket_secure_transport_policy",
+        "s3_bucket_object_versioning"
+      ]
+    },
+    {
+      "Id": "164_312_c_2",
+      "Name": "164.312(c)(2) Mechanism to authenticate electronic protected health information",
+      "Description": "Implement electronic mechanisms to corroborate that electronic protected health information has not been altered or destroyed in an unauthorized manner.",
+      "Attributes": [
+        {
+          "ItemId": "164_312_c_2",
+          "Section": "164.312 Technical Safeguards",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "cloudtrail_kms_encryption_enabled",
+        "cloudtrail_log_file_validation_enabled",
+        "ec2_ebs_volume_encryption",
+        "s3_bucket_default_encryption",
+        "s3_bucket_secure_transport_policy",
+        "s3_bucket_object_versioning",
+        "vpc_flow_logs_enabled"
+      ]
+    },
+    {
+      "Id": "164_312_d",
+      "Name": "164.312(d) Person or entity authentication",
+      "Description": "Implement procedures to verify that a person or entity seeking access to electronic protected health information is the one claimed.",
+      "Attributes": [
+        {
+          "ItemId": "164_312_d",
+          "Section": "164.312 Technical Safeguards",
+          "Service": "iam"
+        }
+      ],
+      "Checks": [
+        "iam_password_policy_reuse_24",
+        "iam_root_hardware_mfa_enabled",
+        "iam_root_mfa_enabled",
+        "iam_user_mfa_enabled_console_access",
+        "iam_user_mfa_enabled_console_access"
+      ]
+    },
+    {
+      "Id": "164_312_e_1",
+      "Name": "164.312(e)(1) Transmission security",
+      "Description": "Implement technical security measures to guard against unauthorized access to electronic protected health information that is being transmitted over an electronic communications network.",
+      "Attributes": [
+        {
+          "ItemId": "164_312_e_1",
+          "Section": "164.312 Technical Safeguards",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "acm_certificates_expiration_check",
+        "cloudfront_distributions_https_enabled",
+        "elb_ssl_listeners",
+        "opensearch_service_domains_node_to_node_encryption_enabled",
+        "awslambda_function_not_publicly_accessible",
+        "s3_bucket_secure_transport_policy",
+        "ec2_networkacl_allow_ingress_any_port",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
+        "ec2_networkacl_allow_ingress_any_port"
+      ]
+    },
+    {
+      "Id": "164_312_e_2_i",
+      "Name": "164.312(e)(2)(i) Integrity controls",
+      "Description": "Implement security measures to ensure that electronically transmitted electronic protected health information is not improperly modified without detection until disposed of.",
+      "Attributes": [
+        {
+          "ItemId": "164_312_e_2_i",
+          "Section": "164.312 Technical Safeguards",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "cloudtrail_multi_region_enabled",
+        "cloudtrail_s3_dataevents_read_enabled",
+        "cloudtrail_s3_dataevents_write_enabled",
+        "cloudtrail_multi_region_enabled",
+        "cloudtrail_cloudwatch_logging_enabled",
+        "elb_ssl_listeners",
+        "guardduty_is_enabled",
+        "s3_bucket_secure_transport_policy",
+        "s3_bucket_server_access_logging_enabled",
+        "securityhub_enabled"
+      ]
+    },
+    {
+      "Id": "164_312_e_2_ii",
+      "Name": "164.312(e)(2)(ii) Encryption",
+      "Description": "Implement a mechanism to encrypt electronic protected health information whenever deemed appropriate.",
+      "Attributes": [
+        {
+          "ItemId": "164_312_e_2_ii",
+          "Section": "164.312 Technical Safeguards",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "cloudtrail_kms_encryption_enabled",
+        "dynamodb_accelerator_cluster_encryption_enabled",
+        "dynamodb_tables_kms_cmk_encryption_enabled",
+        "dynamodb_tables_kms_cmk_encryption_enabled",
+        "ec2_ebs_volume_encryption",
+        "ec2_ebs_default_encryption",
+        "efs_encryption_at_rest_enabled",
+        "eks_cluster_kms_cmk_encryption_in_secrets_enabled",
+        "elb_ssl_listeners",
+        "opensearch_service_domains_encryption_at_rest_enabled",
+        "cloudwatch_log_group_kms_encryption_enabled",
+        "rds_instance_storage_encrypted",
+        "rds_instance_storage_encrypted",
+        "redshift_cluster_audit_logging",
+        "s3_bucket_default_encryption",
+        "s3_bucket_default_encryption",
+        "s3_bucket_secure_transport_policy",
+        "sagemaker_notebook_instance_encryption_enabled",
+        "sns_topics_kms_encryption_at_rest_enabled"
+      ]
+    }
+  ]
+}

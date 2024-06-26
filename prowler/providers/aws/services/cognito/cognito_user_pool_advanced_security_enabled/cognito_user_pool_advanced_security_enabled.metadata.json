@@ -1,0 +1,30 @@
+{
+  "Provider": "aws",
+  "CheckID": "cognito_user_pool_advanced_security_enabled",
+  "CheckTitle": "Ensure cognito user pools has advanced security enabled with full-function",
+  "CheckType": [],
+  "ServiceName": "cognito",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:cognito-idp:region:account:userpool/userpool-id",
+  "Severity": "medium",
+  "ResourceType": "AwsCognitoUserPool",
+  "Description": "Advanced security features for Amazon Cognito User Pools provide additional security for your user pool. These features include compromised credentials protection, phone number verification, and account takeover protection.",
+  "Risk": "If advanced security features are not enabled, your user pool is more vulnerable to unauthorized access.",
+  "RelatedUrl": "https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pool-settings-advanced-security.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "To enable advanced security features for an Amazon Cognito User Pool, follow the instructions in the Amazon Cognito documentation.",
+      "Url": "https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pool-settings-advanced-security.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

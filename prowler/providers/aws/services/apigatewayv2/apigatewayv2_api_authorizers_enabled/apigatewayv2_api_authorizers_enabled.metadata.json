@@ -1,0 +1,35 @@
+{
+  "Provider": "aws",
+  "CheckID": "apigatewayv2_api_authorizers_enabled",
+  "CheckTitle": "Checks if API Gateway V2 has configured authorizers.",
+  "CheckAliases": [
+    "apigatewayv2_authorizers_enabled"
+  ],
+  "CheckType": [
+    "Logging and Monitoring"
+  ],
+  "ServiceName": "apigateway",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "medium",
+  "ResourceType": "AwsApiGatewayV2Api",
+  "Description": "Checks if API Gateway V2 has configured authorizers.",
+  "Risk": "If no authorizer is enabled anyone can use the service.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Implement Amazon Cognito or a Lambda function to control access to your API",
+      "Url": "https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-use-lambda-authorizer.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

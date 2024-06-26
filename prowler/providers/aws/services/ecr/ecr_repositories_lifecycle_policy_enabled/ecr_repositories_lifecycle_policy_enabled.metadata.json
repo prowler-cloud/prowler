@@ -1,0 +1,33 @@
+{
+  "Provider": "aws",
+  "CheckID": "ecr_repositories_lifecycle_policy_enabled",
+  "CheckTitle": "Check if ECR repositories have lifecycle policies enabled",
+  "CheckType": [
+    "Identify",
+    "Resource configuration"
+  ],
+  "ServiceName": "ecr",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "low",
+  "ResourceType": "AwsEcrRepository",
+  "Description": "Check if ECR repositories have lifecycle policies enabled",
+  "Risk": "Amazon ECR repositories run the risk of retaining huge volumes of images, increasing unnecessary cost.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ECR/lifecycle-policy-in-use.html",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Open the Amazon ECR console. Create an ECR lifecycle policy.",
+      "Url": "https://docs.aws.amazon.com/AmazonECR/latest/userguide/LifecyclePolicies.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

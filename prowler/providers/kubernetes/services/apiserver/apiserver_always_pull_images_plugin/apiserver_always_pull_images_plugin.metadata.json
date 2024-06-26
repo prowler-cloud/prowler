@@ -1,0 +1,32 @@
+{
+  "Provider": "kubernetes",
+  "CheckID": "apiserver_always_pull_images_plugin",
+  "CheckTitle": "Ensure that the admission control plugin AlwaysPullImages is set",
+  "CheckType": [],
+  "ServiceName": "apiserver",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "KubernetesAPIServer",
+  "Description": "This check verifies that the AlwaysPullImages admission control plugin is enabled in the Kubernetes API server. This plugin ensures that every new pod always pulls the required images, enforcing image access control and preventing the use of possibly outdated or altered images.",
+  "Risk": "Without AlwaysPullImages, once an image is pulled to a node, any pod can use it without any authorization check, potentially leading to security risks.",
+  "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#alwayspullimages",
+  "Remediation": {
+    "Code": {
+      "CLI": "--enable-admission-plugins=...,AlwaysPullImages,...",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-admission-control-plugin-alwayspullimages-is-set#kubernetes",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure the API server to use the AlwaysPullImages admission control plugin to ensure image security and integrity.",
+      "Url": "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers"
+    }
+  },
+  "Categories": [
+    "cluster-security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Enabling AlwaysPullImages can increase network and registry load and decrease container startup speed. It may not be suitable for all environments."
+}

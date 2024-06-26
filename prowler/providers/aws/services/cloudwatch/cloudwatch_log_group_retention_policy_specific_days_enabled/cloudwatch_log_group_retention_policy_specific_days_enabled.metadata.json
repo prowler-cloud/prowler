@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "cloudwatch_log_group_retention_policy_specific_days_enabled",
+  "CheckTitle": "Check if CloudWatch Log Groups have a retention policy of specific days.",
+  "CheckType": [
+    "Data Retention"
+  ],
+  "ServiceName": "cloudwatch",
+  "SubServiceName": "logs",
+  "ResourceIdTemplate": "arn:partition:cloudwatch:region:account-id:certificate/resource-id",
+  "Severity": "medium",
+  "ResourceType": "AwsLogsLogGroup",
+  "Description": "Check if CloudWatch Log Groups have a retention policy of specific days.",
+  "Risk": "If log groups have a low retention policy of less than specific days, crucial logs and data can be lost.",
+  "RelatedUrl": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/AWS_Logs.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "https://docs.prowler.com/checks/aws/logging-policies/logging_13#cli-command",
+      "NativeIaC": "https://docs.prowler.com/checks/aws/logging-policies/logging_13#cloudformation",
+      "Other": "",
+      "Terraform": "https://docs.prowler.com/checks/aws/logging-policies/logging_13#terraform"
+    },
+    "Recommendation": {
+      "Text": "Add Log Retention policy of specific days to log groups. This will persist logs and traces for a long time.",
+      "Url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/AWS_Logs.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

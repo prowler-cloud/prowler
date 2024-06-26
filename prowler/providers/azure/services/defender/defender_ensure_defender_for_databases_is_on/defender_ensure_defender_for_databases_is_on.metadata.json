@@ -1,0 +1,30 @@
+{
+  "Provider": "azure",
+  "CheckID": "defender_ensure_defender_for_databases_is_on",
+  "CheckTitle": "Ensure That Microsoft Defender for Databases Is Set To 'On' ",
+  "CheckType": [],
+  "ServiceName": "defender",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "AzureDefenderPlan",
+  "Description": "Ensure That Microsoft Defender for Databases Is Set To 'On' ",
+  "Risk": "Enabling Microsoft Defender for Azure SQL Databases allows your organization more granular control of the infrastructure running your database software",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable Microsoft Defender for Azure SQL Databases",
+      "Url": ""
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

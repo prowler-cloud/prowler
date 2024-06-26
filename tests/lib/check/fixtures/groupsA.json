@@ -1,0 +1,18 @@
+{
+  "aws": {
+    "gdpr": {
+      "checks": [
+        "check11",
+        "check12"
+      ],
+      "description": "GDPR Readiness"
+    },
+    "iam": {
+      "checks": [
+        "iam_user_accesskey_unused",
+        "iam_user_console_access_unused"
+      ],
+      "description": "Identity and Access Management"
+    }
+  }
+}

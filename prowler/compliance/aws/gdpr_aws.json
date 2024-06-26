@@ -1,0 +1,129 @@
+{
+  "Framework": "GDPR",
+  "Version": "",
+  "Provider": "AWS",
+  "Description": "The General Data Protection Regulation (GDPR) is a new European privacy law that became enforceable on May 25, 2018. The GDPR replaces the EU Data Protection Directive, also known as Directive 95/46/EC. It's intended to harmonize data protection laws throughout the European Union (EU). It does this by applying a single data protection law that's binding throughout each EU member state.",
+  "Requirements": [
+    {
+      "Id": "article_25",
+      "Name": "Article 25 Data protection by design and by default",
+      "Description": "To obtain the latest version of the official guide, please visit https://gdpr-info.eu/art-25-gdpr/. Taking into account the state of the art, the cost of implementation and the nature, scope, context and purposes of processing as well as the risks of varying likelihood and severity for rights and freedoms of natural persons posed by the processing, the controller shall, both at the time of the determination of the means for processing and at the time of the processing itself, implement appropriate technical and organisational measures, such as pseudonymisation, which are designed to implement data-protection principles, such as data minimisation, in an effective manner and to integrate the necessary safeguards into the processing in order to meet the requirements of this Regulation and protect the rights of data subjects. The controller shall implement appropriate technical and organisational measures for ensuring that, by default, only personal data which are necessary for each specific purpose of the processing are processed. That obligation applies to the amount of personal data collected, the extent of their processing, the period of their storage and their accessibility. In particular, such measures shall ensure that by default personal data are not made accessible without the individual's intervention to an indefinite number of natural persons. An approved certification mechanism pursuant to Article 42 may be used as an element to demonstrate compliance with the requirements set out in paragraphs 1 and 2 of this Article.",
+      "Attributes": [
+        {
+          "ItemId": "article_25",
+          "Section": "Article 25 Data protection by design and by default",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "cloudtrail_logs_s3_bucket_is_not_publicly_accessible",
+        "cloudtrail_multi_region_enabled",
+        "cloudtrail_logs_s3_bucket_access_logging_enabled",
+        "cloudtrail_cloudwatch_logging_enabled",
+        "cloudtrail_kms_encryption_enabled",
+        "cloudtrail_log_file_validation_enabled",
+        "config_recorder_all_regions_enabled",
+        "iam_password_policy_minimum_length_14",
+        "iam_password_policy_lowercase",
+        "iam_password_policy_number",
+        "iam_password_policy_symbol",
+        "iam_password_policy_uppercase",
+        "iam_password_policy_reuse_24",
+        "iam_password_policy_minimum_length_14",
+        "iam_password_policy_lowercase",
+        "iam_password_policy_number",
+        "iam_password_policy_number",
+        "iam_password_policy_symbol",
+        "iam_password_policy_uppercase",
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges",
+        "iam_inline_policy_no_administrative_privileges",
+        "iam_root_hardware_mfa_enabled",
+        "iam_root_mfa_enabled",
+        "iam_no_root_access_key",
+        "iam_support_role_created",
+        "iam_rotate_access_key_90_days",
+        "iam_user_mfa_enabled_console_access",
+        "iam_user_accesskey_unused",
+        "iam_user_console_access_unused",
+        "kms_cmk_rotation_enabled",
+        "cloudwatch_log_metric_filter_for_s3_bucket_policy_changes",
+        "cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled",
+        "cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled",
+        "cloudwatch_log_metric_filter_authentication_failures",
+        "cloudwatch_log_metric_filter_sign_in_without_mfa",
+        "cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk",
+        "cloudwatch_log_metric_filter_policy_changes",
+        "cloudwatch_log_metric_filter_root_usage",
+        "cloudwatch_log_metric_filter_security_group_changes",
+        "cloudwatch_log_metric_filter_unauthorized_api_calls",
+        "vpc_flow_logs_enabled"
+      ]
+    },
+    {
+      "Id": "article_30",
+      "Name": "Article 30 Records of processing activities",
+      "Description": " To obtain the latest version of the official guide, please visit https://www.privacy-regulation.eu/en/article-30-records-of-processing-activities-GDPR.htm. Each controller and, where applicable, the controller's representative, shall maintain a record of processing activities under its responsibility. That record shall contain all of the following information like the name and contact details of the controller and where applicable, the joint controller, the controller's representative and the data protection officer, the purposes of the processing etc. Each processor and where applicable, the processor's representative shall maintain a record of all categories of processing activities carried out on behalf of a controller, containing the name and contact details of the processor or processors and of each controller on behalf of which the processor is acting, and, where applicable of the controller's or the processor's representative, and the data protection officer, where applicable, transfers of personal data to a third country or an international organisation, including the identification of that third country or international organisation and, in the case of transfers referred to in the second subparagraph of Article 49(1), the documentation of suitable safeguards. The records referred to in paragraphs 1 and 2 shall be in writing, including in electronic form. The controller or the processor and, where applicable, the controller's or the processor's representative, shall make the record available to the supervisory authority on request. The obligations referred to in paragraphs 1 and 2 shall not apply to an enterprise or an organisation employing fewer than 250 persons unless the processing it carries out is likely to result in a risk to the rights and freedoms of data subjects, the processing is not occasional, or the processing includes special categories of data as referred to in Article 9(1) or personal data relating to criminal convictions and offences referred to in Article 10.",
+      "Attributes": [
+        {
+          "ItemId": "article_30",
+          "Section": "Article 30 Records of processing activities",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "cloudtrail_multi_region_enabled",
+        "cloudtrail_s3_dataevents_read_enabled",
+        "cloudtrail_s3_dataevents_write_enabled",
+        "cloudtrail_multi_region_enabled",
+        "cloudtrail_cloudwatch_logging_enabled",
+        "cloudtrail_kms_encryption_enabled",
+        "config_recorder_all_regions_enabled",
+        "elbv2_logging_enabled",
+        "elb_logging_enabled",
+        "kms_cmk_rotation_enabled",
+        "redshift_cluster_audit_logging",
+        "vpc_flow_logs_enabled"
+      ]
+    },
+    {
+      "Id": "article_32",
+      "Name": "Article 32 Security of processing",
+      "Description": " To obtain the latest version of the official guide, please visit https://gdpr-info.eu/art-32-gdpr/. Taking into account the state of the art, the costs of implementation and the nature, scope, context and purposes of processing as well as the risk of varying likelihood and severity for the rights and freedoms of natural persons, the controller and the processor shall implement appropriate technical and organisational measures to ensure a level of security appropriate to the risk, including inter alia as appropriate. In assessing the appropriate level of security account shall be taken in particular of the risks that are presented by processing, in particular from accidental or unlawful destruction, loss, alteration, unauthorised disclosure of, or access to personal data transmitted, stored or otherwise processed. Adherence to an approved code of conduct as referred to in Article 40 or an approved certification mechanism as referred to in Article 42 may be used as an element by which to demonstrate compliance with the requirements set out in paragraph 1 of this Article. The controller and processor shall take steps to ensure that any natural person acting under the authority of the controller or the processor who has access to personal data does not process them except on instructions from the controller, unless he or she is required to do so by Union or Member State law.",
+      "Attributes": [
+        {
+          "ItemId": "article_32",
+          "Section": "Article 32 Security of processing",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "acm_certificates_expiration_check",
+        "cloudfront_distributions_https_enabled",
+        "cloudtrail_kms_encryption_enabled",
+        "cloudtrail_log_file_validation_enabled",
+        "dynamodb_accelerator_cluster_encryption_enabled",
+        "dynamodb_tables_kms_cmk_encryption_enabled",
+        "dynamodb_tables_kms_cmk_encryption_enabled",
+        "ec2_ebs_volume_encryption",
+        "ec2_ebs_volume_encryption",
+        "efs_encryption_at_rest_enabled",
+        "elb_ssl_listeners",
+        "opensearch_service_domains_encryption_at_rest_enabled",
+        "opensearch_service_domains_node_to_node_encryption_enabled",
+        "cloudwatch_log_group_kms_encryption_enabled",
+        "rds_instance_storage_encrypted",
+        "rds_instance_backup_enabled",
+        "rds_instance_integration_cloudwatch_logs",
+        "rds_instance_storage_encrypted",
+        "redshift_cluster_automated_snapshot",
+        "redshift_cluster_audit_logging",
+        "s3_bucket_default_encryption",
+        "s3_bucket_default_encryption",
+        "s3_bucket_secure_transport_policy",
+        "sagemaker_notebook_instance_encryption_enabled",
+        "sns_topics_kms_encryption_at_rest_enabled"
+      ]
+    }
+  ]
+}

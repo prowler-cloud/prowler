@@ -1,0 +1,37 @@
+{
+  "Provider": "aws",
+  "CheckID": "cloudtrail_kms_encryption_enabled",
+  "CheckTitle": "Ensure CloudTrail logs are encrypted at rest using KMS CMKs",
+  "CheckType": [
+    "Software and Configuration Checks",
+    "Industry and Regulatory Standards",
+    "CIS AWS Foundations Benchmark"
+  ],
+  "ServiceName": "cloudtrail",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "medium",
+  "ResourceType": "AwsCloudTrailTrail",
+  "Description": "Ensure CloudTrail logs are encrypted at rest using KMS CMKs",
+  "Risk": "By default, the log files delivered by CloudTrail to your bucket are encrypted by Amazon server-side encryption with Amazon S3-managed encryption keys (SSE-S3). To provide a security layer that is directly manageable, you can instead use server-side encryption with AWS KMS–managed keys (SSE-KMS) for your CloudTrail log files.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws cloudtrail update-trail --name <trail_name> --kms-id <cloudtrail_kms_key> aws kms put-key-policy --key-id <cloudtrail_kms_key> --policy <cloudtrail_kms_key_policy>",
+      "NativeIaC": "https://docs.prowler.com/checks/aws/logging-policies/logging_7#fix---buildtime",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "This approach has the following advantages: You can create and manage the CMK encryption keys yourself. You can use a single CMK to encrypt and decrypt log files for multiple accounts across all regions. You have control over who can use your key for encrypting and decrypting CloudTrail log files. You can assign permissions for the key to the users. You have enhanced security.",
+      "Url": "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/encrypting-cloudtrail-log-files-with-aws-kms.html"
+    }
+  },
+  "Categories": [
+    "forensics-ready",
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

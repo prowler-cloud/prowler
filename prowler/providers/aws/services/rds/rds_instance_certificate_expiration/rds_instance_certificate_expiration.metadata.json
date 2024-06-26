@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "rds_instance_certificate_expiration",
+  "CheckTitle": "Ensure that the SSL/TLS certificates configured for your Amazon RDS are not expired.",
+  "CheckType": [],
+  "ServiceName": "rds",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-instance",
+  "Severity": "high",
+  "ResourceType": "AwsRdsDbInstance",
+  "Description": "To maintain Amazon RDS database security and avoid interruption of the applications that are using RDS and/or Aurora databases, rotate the required SSL/TLS certificates and update the deprecated Certificate Authority (CA) certificates at the Amazon RDS instance level.",
+  "Risk": "Interruption of application if the certificate expires.",
+  "RelatedUrl": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.SSL-certificate-rotation.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws rds modify-db-instance --region us-east-1 --db-instance-identifier cc-project5-mysql-database --ca-certificate-identifier \"rds-ca-2019\" --apply-immediately",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/rotate-rds-certificates.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "To maintain Amazon RDS database security and avoid interruption of the applications that are using RDS and/or Aurora databases, rotate the required SSL/TLS certificates and update the deprecated Certificate Authority (CA) certificates at the Amazon RDS instance level.",
+      "Url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.SSL-certificate-rotation.html"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

@@ -1,0 +1,40 @@
+### Account, Check and/or Region can be * to apply for all the cases.
+### Resources and tags are lists that can have either Regex or Keywords.
+### Tags is an optional list that matches on tuples of 'key=value' and are "ANDed" together.
+### Use an alternation Regex to match one of multiple tags with "ORed" logic.
+### For each check you can except Accounts, Regions, Resources and/or Tags.
+###########################  MUTELIST EXAMPLE  ###########################
+Mutelist:
+  Accounts:
+    "123456789012":
+      Checks:
+        "iam_user_hardware_mfa_enabled":
+          Regions:
+            - "us-east-1"
+          Resources:
+            - "user-1"           # Will ignore user-1 in check iam_user_hardware_mfa_enabled
+            - "user-2"           # Will ignore user-2 in check iam_user_hardware_mfa_enabled
+        "*":
+          Regions:
+            - "*"
+          Resources:
+            - "test"             # Will ignore every resource containing the string "test" in every account and region
+
+    "098765432109":
+      Checks:
+        "s3_bucket_object_versioning":
+          Regions:
+            - "eu-west-1"
+            - "us-east-1"
+          Resources:
+            - "ci-logs"           # Will ignore bucket "ci-logs" AND ALSO bucket "ci-logs-replica" in specified check and regions
+            - "logs"              # Will ignore EVERY BUCKET containing the string "logs" in specified check and regions
+            - ".+-logs"           # Will ignore all buckets containing the terms ci-logs, qa-logs, etc. in specified check and regions
+
+# EXAMPLE: CONTROL TOWER (to migrate)
+# When using Control Tower, guardrails prevent access to certain protected resources. The mutelist
+# below ensures that warnings instead of errors are reported for the affected resources.
+#extra734:aws-controltower-logs-[[:digit:]]+-[[:alpha:]\-]+
+#extra734:aws-controltower-s3-access-logs-[[:digit:]]+-[[:alpha:]\-]+
+#extra764:aws-controltower-logs-[[:digit:]]+-[[:alpha:]\-]+
+#extra764:aws-controltower-s3-access-logs-[[:digit:]]+-[[:alpha:]\-]+

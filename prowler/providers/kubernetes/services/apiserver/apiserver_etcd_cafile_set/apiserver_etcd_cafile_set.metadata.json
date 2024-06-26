@@ -1,0 +1,33 @@
+{
+  "Provider": "kubernetes",
+  "CheckID": "apiserver_etcd_cafile_set",
+  "CheckTitle": "Ensure that the --etcd-cafile argument is set as appropriate",
+  "CheckType": [],
+  "ServiceName": "apiserver",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "KubernetesAPIServer",
+  "Description": "This check ensures that the Kubernetes API server is configured with the --etcd-cafile argument, specifying the Certificate Authority file for etcd client connections. This setting is important for secure communication with etcd and ensures that the API server connects to etcd with an SSL Certificate Authority file.",
+  "Risk": "Without proper TLS configuration, communication between the API server and etcd can be unencrypted, leading to potential security vulnerabilities.",
+  "RelatedUrl": "https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/",
+  "Remediation": {
+    "Code": {
+      "CLI": "--etcd-cafile=<path/to/ca-file>",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-etcd-cafile-argument-is-set-as-appropriate-1",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure etcd connections from the API server are secured using the appropriate CA file.",
+      "Url": "https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/#limiting-access-of-etcd-clusters"
+    }
+  },
+  "Categories": [
+    "encryption",
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "It is crucial to manage and rotate the CA file securely as part of your cluster's security practices."
+}

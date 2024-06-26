@@ -1,0 +1,32 @@
+{
+  "Provider": "kubernetes",
+  "CheckID": "apiserver_event_rate_limit",
+  "CheckTitle": "Ensure that the admission control plugin EventRateLimit is set",
+  "CheckType": [],
+  "ServiceName": "apiserver",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "KubernetesAPIServer",
+  "Description": "This check verifies if the Kubernetes API server is configured with the EventRateLimit admission control plugin. This plugin limits the rate of events accepted by the API Server, preventing potential DoS attacks by misbehaving workloads.",
+  "Risk": "Without EventRateLimit, the API server could be overwhelmed by a high number of events, leading to DoS and performance issues.",
+  "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/",
+  "Remediation": {
+    "Code": {
+      "CLI": "--enable-admission-plugins=...,EventRateLimit,... --admission-control-config-file=/path/to/configuration/file",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-admission-control-plugin-eventratelimit-is-set",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure EventRateLimit as an admission control plugin for the API server to manage the rate of incoming events effectively.",
+      "Url": "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#eventratelimit"
+    }
+  },
+  "Categories": [
+    "trustboundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Tuning EventRateLimit requires careful consideration of the specific requirements of your environment."
+}

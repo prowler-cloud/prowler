@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "dlm_ebs_snapshot_lifecycle_policy_exists",
+  "CheckTitle": "Ensure EBS Snapshot lifecycle policies are defined.",
+  "CheckType": [
+    "Data Protection"
+  ],
+  "ServiceName": "dlm",
+  "SubServiceName": "ebs",
+  "ResourceIdTemplate": "arn:aws:iam::account-id:resource-id",
+  "Severity": "medium",
+  "ResourceType": "Other",
+  "Description": "Ensure EBS Snapshot lifecycle policies are defined.",
+  "Risk": "With AWS DLM service, you can manage the lifecycle of your EBS volume snapshots. By automating the EBS volume backup management using lifecycle policies, you can protect your EBS data by enforcing a regular backup schedule, retain backups as required by auditors or internal compliance.",
+  "RelatedUrl": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/snapshot-lifecycle.html#dlm-elements",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws dlm create-lifecycle-policy --region <region> --execution-role-arn <execution-role-arn> --description <description> --state ENABLED --policy-details file://lifecycle-policy-config.json",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/DLM/ebs-snapshot-automation.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "To use Amazon Data Lifecycle Manager (DLM) service to manage the lifecycle of your EBS volume snapshots, you have to tag your AWS EBS volumes and create data lifecycle policies via Amazon DLM.",
+      "Url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/snapshot-lifecycle.html#dlm-elements"
+    }
+  },
+  "Categories": [
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

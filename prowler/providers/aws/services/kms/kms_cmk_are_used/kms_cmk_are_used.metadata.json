@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "kms_cmk_are_used",
+  "CheckTitle": "Check if there are CMK KMS keys not used.",
+  "CheckType": [
+    "Data Protection"
+  ],
+  "ServiceName": "kms",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:kms:region:account-id:certificate/resource-id",
+  "Severity": "medium",
+  "ResourceType": "AwsKmsKey",
+  "Description": "Check if there are CMK KMS keys not used.",
+  "Risk": "Unused keys may increase service cost.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws kms schedule-key-deletion --key-id <key_id> --pending-window-in-days 7",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Before deleting a customer master key (CMK), you might want to know how many cipher-texts were encrypted under that key.",
+      "Url": "https://docs.aws.amazon.com/kms/latest/developerguide/deleting-keys-determining-usage.html"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

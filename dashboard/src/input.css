@@ -1,0 +1,122 @@
+/*
+/*
+/*
+/*
+/* Use this file to add custom styles using Tailwind's utility classes. */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .custom-grid {
+    grid-template-columns: minmax(0, 16fr) repeat(11, minmax(0, 11fr));
+  }
+
+  .custom-grid-large {
+    grid-template-columns: minmax(0, 10fr) repeat(11, minmax(0, 11fr));
+  }
+}
+
+@layer utilities {
+  /* Hide scrollbar for Chrome, Safari and Opera */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  /* Hide scrollbar for IE, Edge and Firefox */
+  .no-scrollbar {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+}
+
+#_dash-app-content {
+  @apply bg-prowler-stone-500;
+}
+
+/* Styles for the accordion in the compliance page */
+#_dash-app-content .accordion .accordion-header .accordion-button {
+  @apply text-prowler-stone-900 inline-block px-4 text-xs font-bold uppercase transition-all rounded-lg bg-prowler-stone-300 hover:bg-prowler-stone-900/10;
+}
+
+#_dash-app-content .accordion .accordion-item {
+  @apply text-prowler-stone-900 bg-prowler-white rounded-lg;
+}
+
+#_dash-app-content .accordion .accordion-collapse.collapse {
+  @apply visible
+}
+
+#_dash-app-content .accordion .accordion-button:not(.collapsed) {
+  @apply text-prowler-stone-900 bg-prowler-stone-500;
+}
+
+#_dash-app-content .accordion .dash-table-container {
+  @apply grid;
+}
+
+#_dash-app-content .accordion table {
+  @apply rounded-lg;
+}
+/* Styles for thead */
+#_dash-app-content .accordion th {
+  @apply text-prowler-white text-left bg-prowler-stone-900 text-xs py-1 font-bold;
+}
+
+/* Styles for td */
+#_dash-app-content .accordion td {
+  @apply text-prowler-stone-900 text-left bg-prowler-white text-xs py-1 font-light;
+}
+
+/* Styles for table cells */
+#_dash-app-content .accordion table tbody thead,
+#_dash-app-content .accordion table tbody tr {
+  @apply w-full;
+}
+
+/* Check ID */
+#_dash-app-content .accordion table th:nth-child(1) {
+  @apply w-[60%];
+}
+/* Status */
+#_dash-app-content .accordion table th:nth-child(2) {
+  @apply w-[10%] text-center;
+}
+#_dash-app-content .accordion table td:nth-child(2) {
+  @apply text-center;
+}
+/* Region */
+#_dash-app-content .accordion table th:nth-child(3) {
+  @apply w-[10%];
+}
+/* Account ID */
+#_dash-app-content .accordion table th:nth-child(4) {
+  @apply w-[10%];
+}
+/* Resource ID */
+#_dash-app-content .accordion table th:nth-child(5) {
+  @apply w-[10%];
+}
+
+#_dash-app-content .compliance-data-layout,
+#_dash-app-content .accordion-body,
+#_dash-app-content .compliance-data-layout .accordion.accordion-flush {
+  @apply grid gap-y-4;
+}
+
+#_dash-app-content .accordion-inner--child,
+#_dash-app-content .accordion-inner {
+  @apply relative;
+}
+
+#_dash-app-content .info-bar {
+  @apply absolute left-1/2 transform -translate-x-1/2 top-2 h-8 z-50;
+}
+
+#_dash-app-content .info-bar-child {
+  @apply absolute right-6 top-2 w-auto h-8 z-50;
+}
+
+.overview-table .card .collapse {
+ @apply visible
+}

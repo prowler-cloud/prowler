@@ -1,0 +1,98 @@
+name: pypi-release
+
+on:
+  release:
+    types: [published]
+
+env:
+  RELEASE_TAG: ${{ github.event.release.tag_name }}
+  PYTHON_VERSION: 3.11
+  CACHE: "poetry"
+  # TODO: create a bot user for this kind of tasks, like prowler-bot
+  GIT_COMMITTER_EMAIL: "sergio@prowler.com"
+
+jobs:
+  release-prowler-job:
+    runs-on: ubuntu-latest
+    env:
+      POETRY_VIRTUALENVS_CREATE: "false"
+    name: Release Prowler to PyPI
+    steps:
+      - name: Get Prowler version
+        run: |
+          PROWLER_VERSION="${{ env.RELEASE_TAG }}"
+
+          case ${PROWLER_VERSION%%.*} in
+          3)
+              echo "Releasing Prowler v3 with tag ${PROWLER_VERSION}"
+              ;;
+          4)
+              echo "Releasing Prowler v4 with tag ${PROWLER_VERSION}"
+              ;;
+          *)
+              echo "Releasing another Prowler major version, aborting..."
+              exit 1
+              ;;
+          esac
+
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          pipx install poetry
+          pipx inject poetry poetry-bumpversion
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: ${{ env.CACHE }}
+
+      - name: Update Poetry and config version
+        run: |
+          poetry version ${{ env.RELEASE_TAG }}
+
+      - name: Import GPG key
+        uses: crazy-max/ghaction-import-gpg@v6
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+          git_user_signingkey: true
+          git_commit_gpgsign: true
+
+      - name: Push updated version to the release tag
+        run: |
+          # Configure Git
+          git config user.name "github-actions"
+          git config user.email "${{ env.GIT_COMMITTER_EMAIL }}"
+
+          # Add the files with the version changed
+          git add prowler/config/config.py pyproject.toml
+          git commit -m "chore(release): ${{ env.RELEASE_TAG }}" --no-verify -S
+
+          # Replace the tag with the version updated
+          git tag -fa ${{ env.RELEASE_TAG }} -m "chore(release): ${{ env.RELEASE_TAG }}" --sign
+
+          # Push the tag
+          git push -f origin ${{ env.RELEASE_TAG }}
+
+      - name: Build Prowler package
+        run: |
+          poetry build
+
+      - name: Publish Prowler package to PyPI
+        run: |
+          poetry config pypi-token.pypi ${{ secrets.PYPI_API_TOKEN }}
+          poetry publish
+
+      - name: Replicate PyPI package
+        run: |
+          rm -rf ./dist && rm -rf ./build && rm -rf prowler.egg-info
+          pip install toml
+          python util/replicate_pypi_package.py
+          poetry build
+
+      - name: Publish prowler-cloud package to PyPI
+        run: |
+          poetry config pypi-token.pypi ${{ secrets.PYPI_API_TOKEN }}
+          poetry publish

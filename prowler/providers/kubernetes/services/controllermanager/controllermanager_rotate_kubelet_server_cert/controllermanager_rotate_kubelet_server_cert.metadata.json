@@ -1,0 +1,32 @@
+{
+  "Provider": "kubernetes",
+  "CheckID": "controllermanager_rotate_kubelet_server_cert",
+  "CheckTitle": "Ensure that the RotateKubeletServerCertificate argument is set to true",
+  "CheckType": [],
+  "ServiceName": "controller-manager",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "KubernetesControllerManager",
+  "Description": "This check ensures that the Kubernetes Controller Manager is configured with the RotateKubeletServerCertificate argument set to true, enabling automated rotation of kubelet server certificates.",
+  "Risk": "Not enabling kubelet server certificate rotation could lead to downtime due to expired certificates.",
+  "RelatedUrl": "https://kubernetes.io/docs/tasks/tls/certificate-rotation/",
+  "Remediation": {
+    "Code": {
+      "CLI": "--feature-gates='RotateKubeletServerCertificate=true'",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-rotatekubeletservercertificate-argument-is-set-to-true-for-controller-manager#kubernetes",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable kubelet server certificate rotation in the Controller Manager for automated certificate management.",
+      "Url": "https://kubernetes.io/docs/tasks/tls/certificate-rotation/#understanding-the-certificate-rotation-configuration"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Ensure that your cluster setup supports kubelet server certificate rotation."
+}

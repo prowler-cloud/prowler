@@ -1,0 +1,32 @@
+{
+  "Provider": "kubernetes",
+  "CheckID": "core_minimize_hostIPC_containers",
+  "CheckTitle": "Minimize the admission of containers wishing to share the host IPC namespace",
+  "CheckType": [],
+  "ServiceName": "core",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "KubernetesPod",
+  "Description": "This check ensures that Kubernetes clusters are configured to minimize the admission of containers that share the host's IPC namespace. Containers with hostIPC can interact with processes outside of the container, potentially leading to security risks.",
+  "Risk": "Allowing containers to share the host's IPC namespace without strict control can lead to security risks and potential privilege escalations.",
+  "RelatedUrl": "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/bc_k8s_3#kubernetes",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Restrict the use of hostIPC in containers through admission control policies.",
+      "Url": "https://kubernetes.io/docs/concepts/security/pod-security-standards/"
+    }
+  },
+  "Categories": [
+    "container-security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Exceptions for hostIPC containers should be clearly defined and monitored."
+}

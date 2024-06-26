@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "sqs_queues_not_publicly_accessible",
+  "CheckTitle": "Check if SQS queues have policy set as Public",
+  "CheckType": [],
+  "ServiceName": "sqs",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:sqs:region:account-id:queue",
+  "Severity": "critical",
+  "ResourceType": "AwsSqsQueue",
+  "Description": "Check if SQS queues have policy set as Public",
+  "Risk": "Sensitive information could be disclosed",
+  "RelatedUrl": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-basic-examples-of-sqs-policies.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/SQS/sqs-queue-exposed.html",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/SQS/sqs-queue-exposed.html",
+      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/ensure-sqs-queue-policy-is-not-public-by-only-allowing-specific-services-or-principals-to-access-it#terraform"
+    },
+    "Recommendation": {
+      "Text": "Review service with overly permissive policies. Adhere to Principle of Least Privilege.",
+      "Url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-basic-examples-of-sqs-policies.html"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

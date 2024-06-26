@@ -1,0 +1,32 @@
+{
+  "Provider": "kubernetes",
+  "CheckID": "core_minimize_net_raw_capability_admission",
+  "CheckTitle": "Minimize the admission of containers with the NET_RAW capability",
+  "CheckType": [],
+  "ServiceName": "core",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "KubernetesPod",
+  "Description": "This check ensures that Kubernetes clusters are configured to minimize the admission of containers with the potentially dangerous NET_RAW capability, which can be exploited by malicious containers.",
+  "Risk": "Allowing containers with NET_RAW capability increases the risk of network attacks and privilege escalation.",
+  "RelatedUrl": "https://kubernetes.io/docs/tasks/configure-pod-container/security-context",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/bc_k8s_6#kubernetes",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Restrict the use of NET_RAW capability through admission control policies.",
+      "Url": "https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-capabilities-for-a-container"
+    }
+  },
+  "Categories": [
+    "container-security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Exceptions for NET_RAW capability should be clearly defined and monitored."
+}

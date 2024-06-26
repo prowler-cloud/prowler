@@ -1,0 +1,35 @@
+{
+  "Provider": "aws",
+  "CheckID": "opensearch_service_domains_not_publicly_accessible",
+  "CheckTitle": "Check if Amazon Opensearch/Elasticsearch domains are set as Public or if it has open policy access",
+  "CheckType": [
+    "Protect",
+    "Secure Access Management"
+  ],
+  "ServiceName": "opensearch",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "critical",
+  "ResourceType": "AwsOpenSearchDomain",
+  "Description": "Check if Amazon Opensearch/Elasticsearch domains are set as Public or if it has open policy access",
+  "Risk": "Publicly accessible services could expose sensitive data to bad actors.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Elasticsearch/elasticsearch-domain-exposed.html",
+      "NativeIaC": "",
+      "Other": "https://docs.prowler.com/checks/aws/public-policies/public_3#fix---runtime",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Use  VPC endpoints for internal services.",
+      "Url": "https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-vpc.html"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

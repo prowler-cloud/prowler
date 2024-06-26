@@ -1,0 +1,32 @@
+{
+  "Provider": "kubernetes",
+  "CheckID": "rbac_minimize_pod_creation_access",
+  "CheckTitle": "Minimize access to create pods",
+  "CheckType": [],
+  "ServiceName": "RBAC",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Pod",
+  "Description": "This check ensures that the ability to create pods in a Kubernetes cluster is restricted to a minimal group of users. Limiting pod creation access mitigates the risk of privilege escalation and exposure of sensitive data.",
+  "Risk": "Unrestricted access to create pods can lead to potential security risks and privilege escalation within the cluster.",
+  "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/rbac/",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Restrict pod creation access to minimize security risks.",
+      "Url": "https://kubernetes.io/docs/reference/access-authn-authz/rbac/#role-and-clusterrole"
+    }
+  },
+  "Categories": [
+    "trustboundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Care should be taken to ensure that restrictions do not disrupt normal operations of the cluster."
+}

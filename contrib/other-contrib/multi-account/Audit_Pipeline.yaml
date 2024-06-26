@@ -1,0 +1,411 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Prowler Auditing Tools Stack
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: "Organizations and Accounts"
+        Parameters:
+          - pOrgMasterAccounts
+          - pOrgExcludedAccounts
+          - pStandAloneAccounts
+      - Label:
+          default: "Check Group and Execution"
+        Parameters:
+          - pProwlerCheckGroup
+          - pAuditEveryXHours
+      - Label:
+          default: "Advanced"
+        Parameters:
+          - pTimeoutMinutes
+          - pAuditRolePathName
+          - pCustomProwlerRepo
+          - pCustomProwlerCloneArgs
+    ParameterLabels:
+      pOrgMasterAccounts:
+        default: "Organization Master Accounts"
+      pOrgExcludedAccounts:
+        default: "Excluded Organiztion Members"
+      pStandAloneAccounts:
+        default: "Stand-alone Accounts"
+      pProwlerCheckGroup:
+        default: "Prowler Check Group"
+      pAuditEveryXHours:
+        default: "Perform Audit every X hours"
+      pTimeoutMinutes:
+        default: "Permit Audit to run for X minutes"
+      pAuditRolePathName:
+        default: "Custom audit role path"
+      pCustomProwlerRepo:
+        default: "Custom git repo location for prowler"
+      pCustomProwlerCloneArgs:
+        default: "Custom arguments to git clone --depth 1"
+
+Parameters:
+  pAuditEveryXHours:
+    Default: 24
+    Type: Number
+    Description: Number of hours between prowler audit runs.
+    MinValue: 2
+    MaxValue: 168
+  pTimeoutMinutes:
+    Default: 30
+    Type: Number
+    Description: Timeout for running prowler across the fleet
+    MinValue: 5
+    MaxValue: 480
+  pAuditRolePathName:
+    Default: '/audit/prowler/XA_AuditRole_Prowler'
+    Type: String
+    Description: Role path and name which prowler will assume in the target accounts (Audit_Exec_Role.yaml)
+    # TODO: Validation: begins with "/" and does NOT end with "/"
+  pOrgMasterAccounts:
+    Description: Comma Separated list of Organization Master Accounts, or 'none'
+    Default: 'none'
+    Type: String
+    MinLength: 4
+    AllowedPattern: ^(none|([0-9]{12}(,[0-9]{12})*))$
+    ConstraintDescription: comma separated list 12-digit account numbers, or 'none'
+  pOrgExcludedAccounts: # Comma Separated list of Org Member Accounts to EXCLUDE
+    Description: Comma Separated list of Skipped Organization Member Accounts, or 'none'
+    Default: 'none'
+    Type: String
+    MinLength: 4
+    AllowedPattern: ^(none|([0-9]{12}(,[0-9]{12})*))$
+    ConstraintDescription: comma separated list 12-digit account numbers, or 'none'
+  pStandAloneAccounts: # Comma Separated list of Stand-Alone Accounts
+    Description: Comma Separated list of Stand-alone Accounts, or 'none'
+    Default: 'none'
+    Type: String
+    MinLength: 4
+    AllowedPattern: ^(none|([0-9]{12}(,[0-9]{12})*))$
+    ConstraintDescription: comma separated list 12-digit account numbers, or 'none'
+  pProwlerCheckGroup:
+    Default: 'cislevel1'
+    Type: String
+    Description: Which group of checks should prowler run
+    AllowedValues:
+     - 'group1'
+     - 'group2'
+     - 'group3'
+     - 'group4'
+     - 'cislevel1'
+     - 'cislevel2'
+     - 'extras'
+     - 'forensics-ready'
+     - 'gdpr'
+     - 'hipaa'
+     - 'secrets'
+     - 'apigateway'
+     - 'rds'
+  pCustomProwlerRepo:
+    Type: String
+    Default: 'https://github.com/prowler-cloud/prowler.git'
+    MinLength: 10
+  pCustomProwlerCloneArgs:
+    Type: String
+    Default: '--branch master'
+    MinLength: 0
+  ##### TODO
+  # pResultsBucket: # if specified, use an existing bucket for the data
+  # pEnableAthena:
+  #   Default: false
+  #   Type: Boolean
+  #   Description: Set to true to enable creation of Athena/QuickSight resources
+
+#### TODO
+# Conditions:
+#   cUseAthena: False
+
+Resources:
+
+  # S3 Bucket for Results, Config
+  ProwlerResults:
+    Type: "AWS::S3::Bucket"
+    Properties:
+      # BucketName: !Sub "audit-results-${AWS::AccountId}"
+      Tags:
+        - Key: "data-type"
+          Value: "it-audit:sensitive"
+        - Key: "data-public"
+          Value: "NO"
+      AccessControl: Private
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+            - ServerSideEncryptionByDefault:
+                SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: True
+        BlockPublicPolicy: True
+        IgnorePublicAcls: True
+        RestrictPublicBuckets: True
+      # LoggingConfiguration:
+      # TODO: Enable BucketLogging - requires more parameters
+    DeletionPolicy: "Retain"
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W35
+            reason: "Bucket logging requires additional configuration not yet supported by this template"
+
+  # Policy to allow assuming the XA_AuditRole_Prowler in target accounts
+  ProwlerAuditManagerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: AuditManagerRole_Prowler
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codebuild.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: AssumeRole-XA_AuditRole_Prowler
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - sts:AssumeRole
+                Resource:
+                  - !Sub "arn:aws:iam::*:role${pAuditRolePathName}"
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:GetObject
+                  - s3:GetObjectVersion
+                Resource:
+                  - !Sub "${ProwlerResults.Arn}/*"
+              - Effect: Allow
+                Action:
+                  - s3:ListBucket
+                  - s3:HeadBucket
+                  - s3:GetBucketLocation
+                  - s3:GetBucketAcl
+                Resource:
+                  - !Sub "${ProwlerResults.Arn}"
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource:
+                  - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:*"
+                  - !Sub "${ProwlerResults.Arn}"
+              - Effect: Allow
+                Action:
+                  - ssm:GetParameters
+                Resource:
+                  - !Sub "arn:aws:ssm:us-east-1:${AWS::AccountId}:parameter/audit/prowler/config/*"
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W28
+            reason: "the role name is intentionally static"
+          - id: W11
+            reason: "not sure where the violation of w11 is"
+
+  ## Code Build Job
+  ProwlerBuildProject:
+    Type: "AWS::CodeBuild::Project"
+    Properties:
+      Name: PerformProwlerAudit
+      Description: "Run Prowler audit on accounts in targeted organizations"
+      QueuedTimeoutInMinutes: 480
+      TimeoutInMinutes: !Ref pTimeoutMinutes
+      ServiceRole: !Ref ProwlerAuditManagerRole
+      EncryptionKey: !Sub "arn:aws:kms:us-east-1:${AWS::AccountId}:alias/aws/s3"
+      Environment:
+        Type: "LINUX_CONTAINER"
+        ComputeType: "BUILD_GENERAL1_MEDIUM"
+        PrivilegedMode: False
+        Image: "aws/codebuild/standard:2.0-1.12.0"
+        ImagePullCredentialsType: "CODEBUILD"
+      Artifacts: # s3://stack-prowlerresults-randomness/prowler/results/...
+        Name: "results"
+        Type: "S3"
+        Location: !Ref ProwlerResults
+        Path: "prowler"
+        NamespaceType: NONE
+        Packaging: NONE
+        OverrideArtifactName: False
+        EncryptionDisabled: False
+      LogsConfig: # S3/logs/pipeline/
+        CloudWatchLogs:
+          Status: ENABLED
+          GroupName: "audit/prowler"
+          StreamName: "codebuild_runs"
+        S3Logs:
+          Status: DISABLED
+          # Location: !Sub "${ProwlerResults.Arn}/codebuild_run_logs"
+          EncryptionDisabled: False
+      BadgeEnabled: False
+      Tags:
+        - Key: "data-type"
+          Value: "it-audit:sensitive"
+        - Key: "data-public"
+          Value: "NO"
+      Cache:
+        Type: "NO_CACHE"
+      Source:
+        Type: NO_SOURCE
+        BuildSpec: |
+          version: 0.2
+          env:
+            parameter-store:
+              PROWL_CHECK_GROUP:         /audit/prowler/config/check_group
+              PROWL_MASTER_ACCOUNTS:     /audit/prowler/config/orgmaster_accounts
+              PROWL_STANDALONE_ACCOUNTS: /audit/prowler/config/standalone_accounts
+              PROWL_SKIP_ACCOUNTS:       /audit/prowler/config/skip_accounts
+              PROWL_AUDIT_ROLE:          /audit/prowler/config/audit_role
+              PROWLER_REPO:              /audit/prowler/config/gitrepo
+              PROWLER_CLONE_ARGS:        /audit/prowler/config/gitcloneargs
+          phases:
+            install:
+              runtime-versions:
+                python: 3.7
+              commands:
+                - aws --version
+                - git clone --depth 1 $PROWLER_REPO $PROWLER_CLONE_ARGS
+            pre_build:
+              commands:
+                - env | grep PROWL_
+                - export OUTBASE=$(date -u +"out/diagnostics/%Y/%m/%d")
+                - export STAMP=$(date -u +"%Y%m%dT%H%M%SZ")
+                - mkdir -p $OUTBASE || true
+                - prowler/prowler -V
+                - aws sts get-caller-identity > ${OUTBASE}/${STAMP}-caller-id.json
+            build:
+              commands:
+                #### Run Prowler against this account, but don't fail the build
+                # - export PROWLER_ACCOUNT_ID=$(aws sts get-caller-identity | jq -r '.Account')
+                # - /bin/bash prowler/prowler -g cislevel1 -M csv -n -k > ${OUTBASE}/${STAMP}.${PROWLER_ACCOUNT_ID}.prowler.cislevel1.csv || /bin/true
+                # - /bin/bash prowler/prowler -g forensics-ready -M csv -n -k > ${OUTBASE}/${STAMP}.${PROWLER_ACCOUNT_ID}.prowler.forensics-ready.csv || /bin/true
+                #### Run Prowler targeting all accounts in the configured organizations
+                - test -f prowler/util/multi-account/config
+                - /bin/bash prowler/util/multi-account/megaprowler.sh out
+              finally:
+                - ps axuwww | grep -E 'parallel|sem|prowler'
+            post_build:
+              commands:
+                - echo "attempting to collect any prowler credential reports ..."
+                - find /tmp/ -name prowler\* | xargs -I % cp % ${OUTDIAG} || true
+          artifacts:
+            files:
+              - '**/*'
+            discard-paths: no
+            base-directory: out
+
+  ProwlerAuditTriggerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      # RoleName: Let cloudformation create this
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: events.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: AssumeRole-XA_AuditRole_Prowler
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - codebuild:StartBuild
+                Resource:
+                  - !GetAtt ProwlerBuildProject.Arn
+
+  ProwlerAuditTrigger:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: !Sub "Execute Prowler audit every ${pAuditEveryXHours} hours"
+      Name: "ScheduledProwler"
+      RoleArn: !GetAtt ProwlerAuditTriggerRole.Arn
+      ## Other ways to define scheduling
+      # ScheduleExpression: "cron(MM HH ? * * *)"
+      # ScheduleExpression: "cron(45 15 ? * * *)"
+      # ScheduleExpression: !Sub "rate( ${pAuditEveryXHours} hours)"
+      ScheduleExpression: !Sub "rate(${pAuditEveryXHours} hours)"
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt ProwlerBuildProject.Arn
+          Id: 'ScheduledProwler'
+          RoleArn: !GetAtt ProwlerAuditTriggerRole.Arn
+
+  ProwlerConfigCheckGroup:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: "Name of the prowler check group to use"
+      Name: "/audit/prowler/config/check_group"
+      Type: "String"
+      Value: !Ref pProwlerCheckGroup
+
+  ProwlerConfigMasterAccounts:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: "List of organization master accounts"
+      Name: "/audit/prowler/config/orgmaster_accounts"
+      Type: "String"
+      Value: !Ref pOrgMasterAccounts
+
+  ProwlerConfigStandAloneAccounts:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: "List of stand-alone accounts"
+      Name: "/audit/prowler/config/standalone_accounts"
+      Type: "String"
+      Value: !Ref pStandAloneAccounts
+
+  ProwlerConfigSkipAccounts:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: "List of skipped organization member accounts"
+      Name: "/audit/prowler/config/skip_accounts"
+      Type: "String"
+      Value: !Ref pOrgExcludedAccounts
+
+  ProwlerConfigAuditRole:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: "Role used to audit target accounts"
+      Name: "/audit/prowler/config/audit_role"
+      Type: "String"
+      Value: !Ref pAuditRolePathName
+
+  ProwlerConfigGitRepo:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: "Git repository where prowler is gathered"
+      Name: "/audit/prowler/config/gitrepo"
+      Type: "String"
+      Value: !Ref pCustomProwlerRepo
+
+  ProwlerConfigGitCloneArgs:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: "Git clone arguments"
+      Name: "/audit/prowler/config/gitcloneargs"
+      Type: "String"
+      Value: !Ref pCustomProwlerCloneArgs
+
+
+  # -- Conditional "cUseAthena"
+  # Athena
+  # QuickSight
+  # ???
+
+
+Outputs:
+  ResultsBucket:
+    Description: S3 Bucket with Prowler Results, Logs, Configs
+    Value: !Ref ProwlerResults

@@ -1,0 +1,33 @@
+{
+  "Provider": "kubernetes",
+  "CheckID": "kubelet_tls_cert_and_key",
+  "CheckTitle": "Ensure that the kubelet TLS certificate and private key are set appropriately",
+  "CheckType": [],
+  "ServiceName": "kubelet",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "KubernetesKubelet",
+  "Description": "This check ensures that each Kubelet is configured with a TLS certificate and private key for secure connections. These settings are crucial for preventing man-in-the-middle attacks and ensuring secure communication between the apiserver and kubelets.",
+  "Risk": "Not setting the kubelet's TLS certificate and private key can expose the node to security vulnerabilities and interception of sensitive data.",
+  "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/kubelet-tls-bootstrapping/",
+  "Remediation": {
+    "Code": {
+      "CLI": "--tls-cert-file=<path/to/tls-certificate-file> --tls-private-key-file=<path/to/tls-key-file>",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-tls-cert-file-and-tls-private-key-file-arguments-are-set-as-appropriate-for-kubelet",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure each kubelet with its own TLS certificate and private key for secure connections.",
+      "Url": "https://kubernetes.io/docs/reference/access-authn-authz/kubelet-tls-bootstrapping/#client-and-serving-certificates"
+    }
+  },
+  "Categories": [
+    "encryption",
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Ensure each kubelet has a unique TLS certificate and key for enhanced security."
+}

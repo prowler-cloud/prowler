@@ -1,0 +1,36 @@
+{
+  "Provider": "aws",
+  "CheckID": "s3_bucket_level_public_access_block",
+  "CheckTitle": "Check S3 Bucket Level Public Access Block.",
+  "CheckType": [
+    "Data Protection"
+  ],
+  "ServiceName": "s3",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:s3:::bucket_name",
+  "Severity": "medium",
+  "ResourceType": "AwsS3Bucket",
+  "Description": "Check S3 Bucket Level Public Access Block.",
+  "Risk": "Public access policies may be applied to sensitive data buckets.",
+  "RelatedUrl": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws s3api put-public-access-block --region <REGION_NAME> --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true --bucket <BUCKET_NAME>",
+      "NativeIaC": "",
+      "Other": "https://github.com/cloudmatos/matos/tree/master/remediations/aws/s3/s3/block-public-access",
+      "Terraform": "https://docs.prowler.com/checks/aws/s3-policies/bc_aws_s3_20#terraform"
+    },
+    "Recommendation": {
+      "Text": "You can enable Public Access Block at the bucket level to prevent the exposure of your data stored in S3.",
+      "Url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html"
+    }
+  },
+  "Categories": [],
+  "Tags": {
+    "Tag1Key": "value",
+    "Tag2Key": "value"
+  },
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

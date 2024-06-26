@@ -1,0 +1,37 @@
+{
+  "Provider": "aws",
+  "CheckID": "apigateway_restapi_public_with_authorizer",
+  "CheckTitle": "Check if API Gateway public endpoint has an authorizer configured.",
+  "CheckAliases": [
+    "apigateway_public_with_authorizer"
+  ],
+  "CheckType": [
+    "Infrastructure Security"
+  ],
+  "ServiceName": "apigateway",
+  "SubServiceName": "rest_api",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "medium",
+  "ResourceType": "AwsApiGatewayRestApi",
+  "Description": "Check if API Gateway public endpoint has an authorizer configured.",
+  "Risk": "If accessible from internet without restrictions opens up attack / abuse surface for any malicious user.",
+  "RelatedUrl": "https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-api-endpoint-types.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Verify that any public API Gateway is protected and audited. Detective controls for common risks should be implemented.",
+      "Url": "https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-api-endpoint-types.html"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

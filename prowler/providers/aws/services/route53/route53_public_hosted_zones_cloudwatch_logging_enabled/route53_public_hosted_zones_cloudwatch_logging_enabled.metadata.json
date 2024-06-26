@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "route53_public_hosted_zones_cloudwatch_logging_enabled",
+  "CheckTitle": "Check if Route53 public hosted zones are logging queries to CloudWatch Logs.",
+  "CheckType": [],
+  "ServiceName": "route53",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "AwsRoute53HostedZone",
+  "Description": "Check if Route53 public hosted zones are logging queries to CloudWatch Logs.",
+  "Risk": "If logs are not enabled, monitoring of service use and threat analysis is not possible.",
+  "RelatedUrl": "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/monitoring-hosted-zones-with-cloudwatch.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws route53 create-query-logging-config  --hosted-zone-id <zone_id>  --cloud-watch-logs-log-group-arn <log_group_arn>",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Route53/enable-query-logging.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable CloudWatch logs and define metrics and uses cases for the events recorded.",
+      "Url": "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/monitoring-hosted-zones-with-cloudwatch.html"
+    }
+  },
+  "Categories": [
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

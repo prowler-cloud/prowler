@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "ec2_securitygroup_not_used",
+  "CheckTitle": "Ensure there are no Security Groups not being used.",
+  "CheckType": [
+    "Infrastructure Security"
+  ],
+  "ServiceName": "ec2",
+  "SubServiceName": "securitygroup",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "low",
+  "ResourceType": "AwsEc2SecurityGroup",
+  "Description": "Ensure there are no Security Groups not being used.",
+  "Risk": "Having clear definition and scope for Security Groups creates a better administration environment.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "List all the security groups and then use the cli to check if they are attached to an instance.",
+      "Url": "https://aws.amazon.com/premiumsupport/knowledge-center/ec2-find-security-group-resources/"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

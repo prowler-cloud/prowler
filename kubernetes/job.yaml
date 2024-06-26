@@ -1,0 +1,107 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: prowler-ns
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: prowler-sa
+  namespace: prowler-ns
+
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: prowler
+  namespace: prowler-ns
+spec:
+  template:
+    metadata:
+      labels:
+        app: prowler
+    spec:
+      serviceAccountName: prowler-sa
+      containers:
+      - name: prowler
+        image: toniblyx/prowler:stable
+        command: ["prowler"]
+        args: ["kubernetes", "-z"]
+        imagePullPolicy: Always
+        volumeMounts:
+            - name: var-lib-cni
+              mountPath: /var/lib/cni
+              readOnly: true
+            - mountPath: /var/lib/etcd
+              name: var-lib-etcd
+              readOnly: true
+            - mountPath: /var/lib/kubelet
+              name: var-lib-kubelet
+              readOnly: true
+            - mountPath: /var/lib/kube-scheduler
+              name: var-lib-kube-scheduler
+              readOnly: true
+            - mountPath: /var/lib/kube-controller-manager
+              name: var-lib-kube-controller-manager
+              readOnly: true
+            - mountPath: /etc/systemd
+              name: etc-systemd
+              readOnly: true
+            - mountPath: /lib/systemd/
+              name: lib-systemd
+              readOnly: true
+            - mountPath: /srv/kubernetes/
+              name: srv-kubernetes
+              readOnly: true
+            - mountPath: /etc/kubernetes
+              name: etc-kubernetes
+              readOnly: true
+            - mountPath: /usr/local/mount-from-host/bin
+              name: usr-bin
+              readOnly: true
+            - mountPath: /etc/cni/net.d/
+              name: etc-cni-netd
+              readOnly: true
+            - mountPath: /opt/cni/bin/
+              name: opt-cni-bin
+              readOnly: true
+      hostPID: true
+      restartPolicy: Never
+      volumes:
+        - name: var-lib-cni
+          hostPath:
+            path: /var/lib/cni
+        - hostPath:
+            path: /var/lib/etcd
+          name: var-lib-etcd
+        - hostPath:
+            path: /var/lib/kubelet
+          name: var-lib-kubelet
+        - hostPath:
+            path: /var/lib/kube-scheduler
+          name: var-lib-kube-scheduler
+        - hostPath:
+            path: /var/lib/kube-controller-manager
+          name: var-lib-kube-controller-manager
+        - hostPath:
+            path: /etc/systemd
+          name: etc-systemd
+        - hostPath:
+            path: /lib/systemd
+          name: lib-systemd
+        - hostPath:
+            path: /srv/kubernetes
+          name: srv-kubernetes
+        - hostPath:
+            path: /etc/kubernetes
+          name: etc-kubernetes
+        - hostPath:
+            path: /usr/bin
+          name: usr-bin
+        - hostPath:
+            path: /etc/cni/net.d/
+          name: etc-cni-netd
+        - hostPath:
+            path: /opt/cni/bin/
+          name: opt-cni-bin

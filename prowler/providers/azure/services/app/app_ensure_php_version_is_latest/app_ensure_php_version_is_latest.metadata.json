@@ -1,0 +1,30 @@
+{
+  "Provider": "azure",
+  "CheckID": "app_ensure_php_version_is_latest",
+  "CheckTitle": "Ensure That 'PHP version' is the Latest, If Used to Run the Web App",
+  "CheckType": [],
+  "ServiceName": "app",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "Microsoft.Web/sites",
+  "Description": "Periodically newer versions are released for PHP software either due to security flaws or to include additional functionality. Using the latest PHP version for web apps is recommended in order to take advantage of security fixes, if any, and/or additional functionalities of the newer version.",
+  "Risk": "Newer versions may contain security enhancements and additional functionality. Using the latest software version is recommended in order to take advantage of enhancements and new capabilities. With each software installation, organizations need to determine if a given update meets their requirements. They must also verify the compatibility and support provided for any additional software against the update revision that is selected.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/app-service/configure-common?tabs=portal#general-settings",
+  "Remediation": {
+    "Code": {
+      "CLI": "az webapp config set --resource-group <resource group name> --name <app name> [--linux-fx-version <php runtime version>][--php-version <php version>]",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/AppService/latest-version-of-php.html",
+      "Terraform": "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-that-php-version-is-the-latest-if-used-to-run-the-web-app#terraform"
+    },
+    "Recommendation": {
+      "Text": "1. From Azure Home open the Portal Menu in the top left 2. Go to App Services 3. Click on each App 4. Under Settings section, click on Configuration 5. Click on the General settings pane, ensure that for a Stack of PHP the Major Version and Minor Version reflect the latest stable and supported release. NOTE: No action is required If PHP version is set to Off or is set with an empty value as PHP is not used by your web app",
+      "Url": "https://learn.microsoft.com/en-us/azure/app-service/configure-language-php?pivots=platform-linux#set-php-version"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "If your app is written using version-dependent features or libraries, they may not be available on the latest version. If you wish to upgrade, research the impact thoroughly. Upgrading may have unforeseen consequences that could result in downtime"
+}

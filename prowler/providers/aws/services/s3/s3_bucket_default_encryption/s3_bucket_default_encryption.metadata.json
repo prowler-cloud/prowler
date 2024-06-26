@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "s3_bucket_default_encryption",
+  "CheckTitle": "Check if S3 buckets have default encryption (SSE) enabled or use a bucket policy to enforce it.",
+  "CheckType": [
+    "Data Protection"
+  ],
+  "ServiceName": "s3",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:s3:::bucket_name",
+  "Severity": "medium",
+  "ResourceType": "AwsS3Bucket",
+  "Description": "Check if S3 buckets have default encryption (SSE) enabled or use a bucket policy to enforce it.",
+  "Risk": "Amazon S3 default encryption provides a way to set the default encryption behavior for an S3 bucket. This will ensure data-at-rest is encrypted.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws s3api put-bucket-encryption --bucket <bucket_name> --server-side-encryption-configuration '{'Rules': [{'ApplyServerSideEncryptionByDefault': {'SSEAlgorithm': 'AES256'}}]}'",
+      "NativeIaC": "https://docs.prowler.com/checks/aws/s3-policies/s3_14-data-encrypted-at-rest#cloudformation",
+      "Other": "",
+      "Terraform": "https://docs.prowler.com/checks/aws/s3-policies/s3_14-data-encrypted-at-rest#terraform"
+    },
+    "Recommendation": {
+      "Text": "Ensure that S3 buckets have encryption at rest enabled.",
+      "Url": "https://aws.amazon.com/blogs/security/how-to-prevent-uploads-of-unencrypted-objects-to-amazon-s3/"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

@@ -1,0 +1,606 @@
+{
+  "Framework": "AWS-Foundational-Security-Best-Practices",
+  "Version": "",
+  "Provider": "AWS",
+  "Description": "The AWS Foundational Security Best Practices standard is a set of controls that detect when your deployed accounts and resources deviate from security best practices.",
+  "Requirements": [
+    {
+      "Id": "account",
+      "Name": "Account",
+      "Description": "This section contains recommendations for configuring AWS Account.",
+      "Attributes": [
+        {
+          "ItemId": "account",
+          "Section": "Account",
+          "Service": "account"
+        }
+      ],
+      "Checks": [
+        "account_security_contact_information_is_registered"
+      ]
+    },
+    {
+      "Id": "acm",
+      "Name": "ACM",
+      "Description": "This section contains recommendations for configuring ACM resources.",
+      "Attributes": [
+        {
+          "ItemId": "acm",
+          "Section": "Acm",
+          "Service": "acm"
+        }
+      ],
+      "Checks": [
+        "account_security_contact_information_is_registered"
+      ]
+    },
+    {
+      "Id": "api-gateway",
+      "Name": "API Gateway",
+      "Description": "This section contains recommendations for configuring API Gateway resources.",
+      "Attributes": [
+        {
+          "ItemId": "api-gateway",
+          "Section": "API Gateway",
+          "Service": "apigateway"
+        }
+      ],
+      "Checks": [
+        "apigateway_restapi_logging_enabled",
+        "apigateway_restapi_client_certificate_enabled",
+        "apigateway_restapi_waf_acl_attached",
+        "apigatewayv2_api_authorizers_enabled",
+        "apigatewayv2_api_access_logging_enabled"
+      ]
+    },
+    {
+      "Id": "auto-scaling",
+      "Name": "Benchmark: Auto Scaling",
+      "Description": "This section contains recommendations for configuring Auto Scaling resources and options.",
+      "Attributes": [
+        {
+          "ItemId": "auto-scaling",
+          "Section": "Auto Scaling",
+          "Service": "autoscaling"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "cloudformation",
+      "Name": "Benchmark: CloudFormation",
+      "Description": "This section contains recommendations for configuring CloudFormation resources and options.",
+      "Attributes": [
+        {
+          "ItemId": "cloudformation",
+          "Section": "CloudFormation",
+          "Service": "cloudformation"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "cloudfront",
+      "Name": "Benchmark: CloudFront",
+      "Description": "This section contains recommendations for configuring CloudFront resources and options.",
+      "Attributes": [
+        {
+          "ItemId": "cloudfront",
+          "Section": "CloudFront",
+          "Service": "cloudfront"
+        }
+      ],
+      "Checks": [
+        "cloudfront_distributions_https_enabled",
+        "cloudfront_distributions_logging_enabled",
+        "cloudfront_distributions_using_waf",
+        "cloudfront_distributions_field_level_encryption_enabled",
+        "cloudfront_distributions_using_deprecated_ssl_protocols"
+      ]
+    },
+    {
+      "Id": "cloudtrail",
+      "Name": "Benchmark: CloudTrail",
+      "Description": "This section contains recommendations for configuring CloudTrail resources and options.",
+      "Attributes": [
+        {
+          "ItemId": "cloudtrail",
+          "Section": "CloudTrail",
+          "Service": "cloudtrail"
+        }
+      ],
+      "Checks": [
+        "cloudtrail_multi_region_enabled",
+        "cloudtrail_kms_encryption_enabled",
+        "cloudtrail_log_file_validation_enabled",
+        "cloudtrail_cloudwatch_logging_enabled"
+      ]
+    },
+    {
+      "Id": "codebuild",
+      "Name": "Benchmark: CodeBuild",
+      "Description": "This section contains recommendations for configuring CodeBuild resources and options.",
+      "Attributes": [
+        {
+          "ItemId": "codebuild",
+          "Section": "CodeBuild",
+          "Service": "codebuild"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "config",
+      "Name": "Benchmark: Config",
+      "Description": "This section contains recommendations for configuring AWS Config.",
+      "Attributes": [
+        {
+          "ItemId": "config",
+          "Section": "Config",
+          "Service": "config"
+        }
+      ],
+      "Checks": [
+        "config_recorder_all_regions_enabled"
+      ]
+    },
+    {
+      "Id": "dms",
+      "Name": "Benchmark: DMS",
+      "Description": "This section contains recommendations for configuring AWS DMS resources and options.",
+      "Attributes": [
+        {
+          "ItemId": "dms",
+          "Section": "DMS",
+          "Service": "dms"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "dynamodb",
+      "Name": "Benchmark: DynamoDB",
+      "Description": "This section contains recommendations for configuring AWS Dynamo DB resources and options.",
+      "Attributes": [
+        {
+          "ItemId": "dynamodb",
+          "Section": "DynamoDB",
+          "Service": "dynamodb"
+        }
+      ],
+      "Checks": [
+        "dynamodb_tables_pitr_enabled",
+        "dynamodb_accelerator_cluster_encryption_enabled"
+      ]
+    },
+    {
+      "Id": "ec2",
+      "Name": "Benchmark: EC2",
+      "Description": "This section contains recommendations for configuring EC2 resources and options.",
+      "Attributes": [
+        {
+          "ItemId": "ec2",
+          "Section": "EC2",
+          "Service": "ec2"
+        }
+      ],
+      "Checks": [
+        "ec2_ebs_public_snapshot",
+        "ec2_securitygroup_default_restrict_traffic",
+        "ec2_ebs_volume_encryption",
+        "ec2_instance_older_than_specific_days",
+        "vpc_flow_logs_enabled",
+        "ec2_ebs_default_encryption",
+        "ec2_instance_imdsv2_enabled",
+        "ec2_instance_public_ip",
+        "ec2_networkacl_allow_ingress_any_port",
+        "ec2_securitygroup_not_used"
+      ]
+    },
+    {
+      "Id": "ecr",
+      "Name": "Benchmark: Elastic Container Registry",
+      "Description": "This section contains recommendations for configuring AWS ECR resources and options.",
+      "Attributes": [
+        {
+          "ItemId": "ecr",
+          "Section": "ECR",
+          "Service": "ecr"
+        }
+      ],
+      "Checks": [
+        "ecr_repositories_scan_images_on_push_enabled",
+        "ecr_repositories_lifecycle_policy_enabled"
+      ]
+    },
+    {
+      "Id": "ecs",
+      "Name": "Benchmark: Elastic Container Service",
+      "Description": "This section contains recommendations for configuring ECS resources and options.",
+      "Attributes": [
+        {
+          "ItemId": "ecs",
+          "Section": "ECS",
+          "Service": "ecs"
+        }
+      ],
+      "Checks": [
+        "ecs_task_definitions_no_environment_secrets"
+      ]
+    },
+    {
+      "Id": "efs",
+      "Name": "Benchmark: EFS",
+      "Description": "This section contains recommendations for configuring AWS EFS resources and options.",
+      "Attributes": [
+        {
+          "ItemId": "efs",
+          "Section": "EFS",
+          "Service": "efs"
+        }
+      ],
+      "Checks": [
+        "efs_encryption_at_rest_enabled",
+        "efs_have_backup_enabled"
+      ]
+    },
+    {
+      "Id": "eks",
+      "Name": "Benchmark: EKS",
+      "Description": "This section contains recommendations for configuring AWS EKS resources and options.",
+      "Attributes": [
+        {
+          "ItemId": "eks",
+          "Section": "EKS",
+          "Service": "eks"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "elastic-beanstalk",
+      "Name": "Benchmark: Elastic Beanstalk",
+      "Description": "This section contains recommendations for configuring AWS Elastic Beanstalk resources and options.",
+      "Attributes": [
+        {
+          "ItemId": "elastic-beanstalk",
+          "Section": "Elastic Beanstalk",
+          "Service": "elasticbeanstalk"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "elb",
+      "Name": "Benchmark: ELB",
+      "Description": "This section contains recommendations for configuring Elastic Load Balancer resources and options.",
+      "Attributes": [
+        {
+          "ItemId": "elb",
+          "Section": "ELB",
+          "Service": "elb"
+        }
+      ],
+      "Checks": [
+        "elbv2_logging_enabled",
+        "elb_logging_enabled",
+        "elbv2_deletion_protection",
+        "elbv2_desync_mitigation_mode"
+      ]
+    },
+    {
+      "Id": "elbv2",
+      "Name": "Benchmark: ELBv2",
+      "Description": "This section contains recommendations for configuring Elastic Load Balancer resources and options.",
+      "Attributes": [
+        {
+          "ItemId": "elbv2",
+          "Section": "ELBv2",
+          "Service": "elbv2"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "emr",
+      "Name": "Benchmark: EMR",
+      "Description": "This section contains recommendations for configuring EMR resources.",
+      "Attributes": [
+        {
+          "ItemId": "emr",
+          "Section": "EMR",
+          "Service": "emr"
+        }
+      ],
+      "Checks": [
+        "emr_cluster_master_nodes_no_public_ip"
+      ]
+    },
+    {
+      "Id": "elasticsearch",
+      "Name": "Benchmark: Elasticsearch",
+      "Description": "This section contains recommendations for configuring Elasticsearch resources and options.",
+      "Attributes": [
+        {
+          "ItemId": "elasticsearch",
+          "Section": "ElasticSearch",
+          "Service": "elasticsearch"
+        }
+      ],
+      "Checks": [
+        "opensearch_service_domains_encryption_at_rest_enabled",
+        "opensearch_service_domains_node_to_node_encryption_enabled",
+        "opensearch_service_domains_audit_logging_enabled",
+        "opensearch_service_domains_audit_logging_enabled",
+        "opensearch_service_domains_https_communications_enforced"
+      ]
+    },
+    {
+      "Id": "guardduty",
+      "Name": "Benchmark: GuardDuty",
+      "Description": "This section contains recommendations for configuring AWS GuardDuty resources and options.",
+      "Attributes": [
+        {
+          "ItemId": "guardduty",
+          "Section": "GuardDuty",
+          "Service": "guardduty"
+        }
+      ],
+      "Checks": [
+        "guardduty_is_enabled"
+      ]
+    },
+    {
+      "Id": "iam",
+      "Name": "Benchmark: IAM",
+      "Description": "This section contains recommendations for configuring AWS IAM resources and options.",
+      "Attributes": [
+        {
+          "ItemId": "iam",
+          "Section": "IAM",
+          "Service": "iam"
+        }
+      ],
+      "Checks": [
+        "iam_rotate_access_key_90_days",
+        "iam_no_root_access_key",
+        "iam_user_mfa_enabled_console_access",
+        "iam_root_hardware_mfa_enabled",
+        "iam_password_policy_minimum_length_14",
+        "iam_user_accesskey_unused",
+        "iam_user_console_access_unused",
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges",
+        "iam_inline_policy_no_administrative_privileges"
+      ]
+    },
+    {
+      "Id": "kinesis",
+      "Name": "Benchmark: Kinesis",
+      "Description": "This section contains recommendations for configuring AWS Kinesis resources and options.",
+      "Attributes": [
+        {
+          "ItemId": "kinesis",
+          "Section": "Kinesis",
+          "Service": "kinesis"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "kms",
+      "Name": "Benchmark: KMS",
+      "Description": "This section contains recommendations for configuring AWS KMS resources and options.",
+      "Attributes": [
+        {
+          "ItemId": "kms",
+          "Section": "KMS",
+          "Service": "kms"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "lambda",
+      "Name": "Benchmark: Lambda",
+      "Description": "This section contains recommendations for configuring Lambda resources and options.",
+      "Attributes": [
+        {
+          "ItemId": "lambda",
+          "Section": "Lambda",
+          "Service": "lambda"
+        }
+      ],
+      "Checks": [
+        "awslambda_function_url_public",
+        "awslambda_function_using_supported_runtimes"
+      ]
+    },
+    {
+      "Id": "network-firewall",
+      "Name": "Benchmark: Network Firewall",
+      "Description": "This section contains recommendations for configuring Network Firewall resources and options.",
+      "Attributes": [
+        {
+          "ItemId": "network-firewall",
+          "Section": "Network Firewall",
+          "Service": "network-firewall"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "opensearch",
+      "Name": "Benchmark: OpenSearch",
+      "Description": "This section contains recommendations for configuring OpenSearch resources and options.",
+      "Attributes": [
+        {
+          "ItemId": "opensearch",
+          "Section": "OpenSearch",
+          "Service": "opensearch"
+        }
+      ],
+      "Checks": [
+        "opensearch_service_domains_not_publicly_accessible"
+      ]
+    },
+    {
+      "Id": "rds",
+      "Name": "Benchmark: RDS",
+      "Description": "This section contains recommendations for configuring AWS RDS resources and options.",
+      "Attributes": [
+        {
+          "ItemId": "rds",
+          "Section": "RDS",
+          "Service": "rds"
+        }
+      ],
+      "Checks": [
+        "rds_snapshots_public_access",
+        "rds_instance_no_public_access",
+        "rds_instance_storage_encrypted",
+        "rds_instance_storage_encrypted",
+        "rds_instance_multi_az",
+        "rds_instance_enhanced_monitoring_enabled",
+        "rds_instance_deletion_protection",
+        "rds_instance_integration_cloudwatch_logs",
+        "rds_instance_minor_version_upgrade_enabled",
+        "rds_instance_multi_az"
+      ]
+    },
+    {
+      "Id": "redshift",
+      "Name": "Benchmark: Redshift",
+      "Description": "This section contains recommendations for configuring AWS Redshift resources and options.",
+      "Attributes": [
+        {
+          "ItemId": "redshift",
+          "Section": "Redshift",
+          "Service": "redshift"
+        }
+      ],
+      "Checks": [
+        "redshift_cluster_public_access",
+        "redshift_cluster_automated_snapshot",
+        "redshift_cluster_automated_snapshot",
+        "redshift_cluster_automatic_upgrades"
+      ]
+    },
+    {
+      "Id": "s3",
+      "Name": "Benchmark: S3",
+      "Description": "This section contains recommendations for configuring AWS S3 resources and options.",
+      "Attributes": [
+        {
+          "ItemId": "s3",
+          "Section": "S3",
+          "Service": "s3"
+        }
+      ],
+      "Checks": [
+        "s3_account_level_public_access_blocks",
+        "s3_account_level_public_access_blocks",
+        "s3_bucket_policy_public_write_access",
+        "s3_bucket_default_encryption",
+        "s3_bucket_secure_transport_policy",
+        "s3_bucket_public_access",
+        "s3_bucket_server_access_logging_enabled",
+        "s3_bucket_object_versioning",
+        "s3_bucket_acl_prohibited"
+      ]
+    },
+    {
+      "Id": "sagemaker",
+      "Name": "Benchmark: SageMaker",
+      "Description": "This section contains recommendations for configuring AWS Sagemaker resources and options.",
+      "Attributes": [
+        {
+          "ItemId": "sagemaker",
+          "Section": "SageMaker",
+          "Service": "sagemaker"
+        }
+      ],
+      "Checks": [
+        "sagemaker_notebook_instance_without_direct_internet_access_configured",
+        "sagemaker_notebook_instance_vpc_settings_configured",
+        "sagemaker_notebook_instance_root_access_disabled"
+      ]
+    },
+    {
+      "Id": "secretsmanager",
+      "Name": "Benchmark: Secrets Manager",
+      "Description": "This section contains recommendations for configuring AWS Secrets Manager resources.",
+      "Attributes": [
+        {
+          "ItemId": "secretsmanager",
+          "Section": "Secrets Manager",
+          "Service": "secretsmanager"
+        }
+      ],
+      "Checks": [
+        "secretsmanager_automatic_rotation_enabled",
+        "secretsmanager_automatic_rotation_enabled"
+      ]
+    },
+    {
+      "Id": "sns",
+      "Name": "Benchmark: SNS",
+      "Description": "This section contains recommendations for configuring AWS SNS resources and options.",
+      "Attributes": [
+        {
+          "ItemId": "sns",
+          "Section": "SNS",
+          "Service": "sns"
+        }
+      ],
+      "Checks": [
+        "sns_topics_kms_encryption_at_rest_enabled"
+      ]
+    },
+    {
+      "Id": "sqs",
+      "Name": "Benchmark: SQS",
+      "Description": "This section contains recommendations for configuring AWS SQS resources and options.",
+      "Attributes": [
+        {
+          "ItemId": "sqs",
+          "Section": "SQS",
+          "Service": "sqs"
+        }
+      ],
+      "Checks": [
+        "sqs_queues_server_side_encryption_enabled"
+      ]
+    },
+    {
+      "Id": "ssm",
+      "Name": "Benchmark: SSM",
+      "Description": "This section contains recommendations for configuring AWS Systems Manager resources and options.",
+      "Attributes": [
+        {
+          "ItemId": "ssm",
+          "Section": "SSM",
+          "Service": "ssm"
+        }
+      ],
+      "Checks": [
+        "ec2_instance_managed_by_ssm",
+        "ssm_managed_compliant_patching",
+        "ssm_managed_compliant_patching"
+      ]
+    },
+    {
+      "Id": "waf",
+      "Name": "Benchmark: WAF",
+      "Description": "This section contains recommendations for configuring AWS WAF resources and options.",
+      "Attributes": [
+        {
+          "ItemId": "waf",
+          "Section": "WAF",
+          "Service": "waf"
+        }
+      ],
+      "Checks": []
+    }
+  ]
+}

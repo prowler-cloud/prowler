@@ -1,0 +1,32 @@
+{
+  "Provider": "kubernetes",
+  "CheckID": "kubelet_disable_read_only_port",
+  "CheckTitle": "Verify that the kubelet --read-only-port argument is set to 0",
+  "CheckType": [],
+  "ServiceName": "kubelet",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "KubernetesKubelet",
+  "Description": "This check ensures that the read-only port of the Kubelet is disabled by verifying that the --read-only-port argument is set to 0. Disabling the read-only port is crucial to prevent unauthenticated access to sensitive cluster data.",
+  "Risk": "If the read-only port is open, it could allow unauthenticated access to sensitive cluster information.",
+  "RelatedUrl": "https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/",
+  "Remediation": {
+    "Code": {
+      "CLI": "--read-only-port=0",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-read-only-port-argument-is-set-to-0",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Disable the read-only port in the kubelet for enhanced cluster security.",
+      "Url": "https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/#options"
+    }
+  },
+  "Categories": [
+    "trustboundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Ensure that any services relying on the read-only port are reconfigured to use the main Kubelet API."
+}

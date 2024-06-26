@@ -1,0 +1,32 @@
+{
+  "Provider": "kubernetes",
+  "CheckID": "rbac_minimize_webhook_config_access",
+  "CheckTitle": "Minimize access to webhook configuration objects",
+  "CheckType": [],
+  "ServiceName": "RBAC",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "WebhookConfiguration",
+  "Description": "This check ensures that access to webhook configuration objects (validatingwebhookconfigurations and mutatingwebhookconfigurations) is restricted. Unauthorized access or modification of these objects can lead to privilege escalation or disruption of cluster operations.",
+  "Risk": "Inadequately restricted access to webhook configurations can result in unauthorized control over webhooks, potentially allowing privilege escalation or interference with cluster functionality.",
+  "RelatedUrl": "https://kubernetes.io/docs/concepts/security/rbac-good-practices/#control-admission-webhooks",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-clusterroles-that-grant-control-over-validating-or-mutating-admission-webhook-configurations-are-minimized",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Restrict access to webhook configuration objects in the cluster.",
+      "Url": "https://kubernetes.io/docs/concepts/security/rbac-good-practices/#control-admission-webhooks"
+    }
+  },
+  "Categories": [
+    "trustboundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Consider using role-based access control to precisely define and manage permissions related to webhook configurations."
+}

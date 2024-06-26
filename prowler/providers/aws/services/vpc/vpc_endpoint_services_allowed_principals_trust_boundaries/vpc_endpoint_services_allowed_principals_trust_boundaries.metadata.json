@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "vpc_endpoint_services_allowed_principals_trust_boundaries",
+  "CheckTitle": "Find trust boundaries in VPC endpoint services allowlisted principles.",
+  "CheckType": [
+    "Infrastructure Security"
+  ],
+  "ServiceName": "vpc",
+  "SubServiceName": "service_endpoint",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "medium",
+  "ResourceType": "AwsEc2VpcEndpointService",
+  "Description": "Find trust boundaries in VPC endpoint services allowlisted principles.",
+  "Risk": "Account VPC could be linked to other accounts.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://docs.prowler.com/checks/aws/networking-policies/networking_9#aws-vpc-endpoints-are-exposed",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "In multi Account environments identify untrusted links. Check trust chaining and dependencies between accounts.",
+      "Url": "https://docs.aws.amazon.com/vpc/latest/privatelink/vpc-endpoints-access.html"
+    }
+  },
+  "Categories": [
+    "trustboundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

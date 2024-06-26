@@ -1,0 +1,30 @@
+{
+  "Provider": "aws",
+  "CheckID": "neptune_cluster_iam_authentication_enabled",
+  "CheckTitle": "Check if Neptune Clusters have IAM authentication enabled.",
+  "CheckType": [],
+  "ServiceName": "rds",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-cluster",
+  "Severity": "medium",
+  "ResourceType": "AwsRdsDbCluster",
+  "Description": "Check if Neptune Clusters have IAM authentication enabled.",
+  "Risk": "Ensure that IAM Database Authentication feature is enabled for your Amazon Neptune database clusters in order to make use of AWS Identity and Access Management (IAM) service to manage database access.",
+  "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/neptune-controls.html#neptune-7",
+  "Remediation": {
+    "Code": {
+      "CLI": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Neptune/iam-db-authentication.html#",
+      "NativeIaC": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Neptune/iam-db-authentication.html#",
+      "Other": "",
+      "Terraform": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Neptune/iam-db-authentication.html#"
+    },
+    "Recommendation": {
+      "Text": "Enable IAM authentication for Neptune Clusters.",
+      "Url": "https://docs.aws.amazon.com/securityhub/latest/userguide/neptune-controls.html#neptune-7"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

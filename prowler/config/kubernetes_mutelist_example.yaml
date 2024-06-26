@@ -1,0 +1,44 @@
+### Account, Check and/or Region can be * to apply for all the cases.
+### Account == <Kubernetes Cluster Name> and Region == <Kubernetes Namespace Name>
+### Resources and tags are lists that can have either Regex or Keywords.
+### Tags is an optional list that matches on tuples of 'key=value' and are "ANDed" together.
+### Use an alternation Regex to match one of multiple tags with "ORed" logic.
+### For each check you can except Accounts, Regions, Resources and/or Tags.
+###########################  MUTELIST EXAMPLE  ###########################
+Mutelist:
+  Accounts:
+    "k8s-cluster-1":
+      Checks:
+        "core_minimize_allowPrivilegeEscalation_containers":
+          Regions:
+            - "namespace1"
+          Resources:
+            - "prowler-pod1"           # Will ignore prowler-pod1 in check core_minimize_allowPrivilegeEscalation_containers located in namespace1
+            - "prowler-pod2"           # Will ignore prowler-pod2 in check core_minimize_allowPrivilegeEscalation_containers located in namespace1
+        "kubelet_*":
+          Regions:
+            - "*"
+          Resources:
+            - "*"                 # Will ignore every Kubelet check in every namespace
+        "*":
+          Regions:
+            - "*"
+          Resources:
+            - "test"
+          Tags:
+            - "test=test"         # Will ignore every resource containing the string "test" and the tags 'test=test' and
+            - "project=test|project=stage" # either of ('project=test' OR project=stage) in Kubernetes Cluster k8s-cluster-1 and every namespace
+
+    "*":
+      Checks:
+        "etcd_*":
+          Regions:
+            - "*"
+          Resources:
+            - "*"
+          Exceptions:
+            Accounts:
+              - "k8s-cluster-2"
+            Regions:
+              - "namespace1"
+              - "namespace2"        # Will ignore every ETCD finding except the ones in Kubernetes Cluster k8s-cluster-2 located in namespace1 or namespace2

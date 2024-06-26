@@ -1,0 +1,30 @@
+{
+  "Provider": "azure",
+  "CheckID": "storage_blob_public_access_level_is_disabled",
+  "CheckTitle": "Ensure that the 'Public access level' is set to 'Private (no anonymous access)' for all blob containers in your storage account",
+  "CheckType": [],
+  "ServiceName": "storage",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "AzureStorageAccount",
+  "Description": "Ensure that the 'Public access level' configuration setting is set to 'Private (no anonymous access)' for all blob containers in your storage account in order to block anonymous access to these Microsoft Azure resources.",
+  "Risk": "A user that accesses blob containers anonymously can use constructors that do not require credentials such as shared access signatures.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/StorageAccounts/secure-transfer-required.html",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/StorageAccounts/secure-transfer-required.html",
+      "Terraform": "https://docs.prowler.com/checks/azure/azure-networking-policies/ensure-that-storage-accounts-disallow-public-access#terraform"
+    },
+    "Recommendation": {
+      "Text": "Set 'Public access level' configuration setting to 'Private (no anonymous access)'",
+      "Url": ""
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

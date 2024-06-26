@@ -1,0 +1,30 @@
+{
+  "Provider": "azure",
+  "CheckID": "network_watcher_enabled",
+  "CheckTitle": "Ensure that Network Watcher is 'Enabled' for all locations in the Azure subscription",
+  "CheckType": [],
+  "ServiceName": "network",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Network",
+  "Description": "Enable Network Watcher for Azure subscriptions.",
+  "Risk": "Network diagnostic and visualization tools available with Network Watcher help users understand, diagnose, and gain insights to the network in Azure.",
+  "RelatedUrl": "https://docs.microsoft.com/en-us/azure/network-watcher/network-watcher-monitoring-overview",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/Network/enable-network-watcher.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Opting out of Network Watcher automatic enablement is a permanent change. Once you opt-out you cannot opt-in without contacting support.",
+      "Url": "https://learn.microsoft.com/en-us/security/benchmark/azure/security-controls-v2-logging-threat-detection#lt-3-enable-logging-for-azure-network-activities"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "There are additional costs per transaction to run and store network data. For high-volume networks these charges will add up quickly."
+}

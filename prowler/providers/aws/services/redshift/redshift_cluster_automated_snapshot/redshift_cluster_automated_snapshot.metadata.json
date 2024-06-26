@@ -1,0 +1,30 @@
+{
+  "Provider": "aws",
+  "CheckID": "redshift_cluster_automated_snapshot",
+  "CheckTitle": "Check if Redshift Clusters have automated snapshots enabled",
+  "CheckType": [],
+  "ServiceName": "redshift",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:redshift:region:account-id:cluster:cluster-name",
+  "Severity": "medium",
+  "ResourceType": "AwsRedshiftCluster",
+  "Description": "Check if Redshift Clusters have automated snapshots enabled",
+  "Risk": "If backup is not enabled, data is vulnerable. Human error or bad actors could erase or modify data.",
+  "RelatedUrl": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/AWS_Redshift.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable automated backup for production data. Define a retention period and periodically test backup restoration. A Disaster Recovery process should be in place to govern Data Protection approach",
+      "Url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/AWS_Redshift.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

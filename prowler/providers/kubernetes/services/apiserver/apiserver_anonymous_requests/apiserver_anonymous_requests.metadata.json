@@ -1,0 +1,32 @@
+{
+  "Provider": "kubernetes",
+  "CheckID": "apiserver_anonymous_requests",
+  "CheckTitle": "Ensure that the --anonymous-auth argument is set to false",
+  "CheckType": [],
+  "ServiceName": "apiserver",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "KubernetesAPIServer",
+  "Description": "Disable anonymous requests to the API server. When enabled, requests that are not rejected by other configured authentication methods are treated as anonymous requests, which are then served by the API server. Disallowing anonymous requests strengthens security by ensuring all access is authenticated.",
+  "Risk": "Enabling anonymous access to the API server can expose the cluster to unauthorized access and potential security vulnerabilities.",
+  "RelatedUrl": "https://kubernetes.io/docs/admin/authentication/#anonymous-requests",
+  "Remediation": {
+    "Code": {
+      "CLI": "--anonymous-auth=false",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-anonymous-auth-argument-is-set-to-false-1#kubernetes",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure the --anonymous-auth argument in the API server is set to false. This will reject all anonymous requests, enforcing authenticated access to the server.",
+      "Url": "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/"
+    }
+  },
+  "Categories": [
+    "trustboundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "While anonymous access can be useful for health checks and discovery, consider the security implications for your specific environment."
+}

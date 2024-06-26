@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "cloudfront_distributions_https_enabled",
+  "CheckTitle": "Check if CloudFront distributions are set to HTTPS.",
+  "CheckType": [],
+  "ServiceName": "cloudfront",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:cloudfront:region:account-id:distribution/resource-id",
+  "Severity": "medium",
+  "ResourceType": "AwsCloudFrontDistribution",
+  "Description": "Check if CloudFront distributions are set to HTTPS.",
+  "Risk": "If not enabled sensitive information in transit is not protected. Surveillance and other threats are risks may exists.",
+  "RelatedUrl": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudFront/security-policy.html",
+      "NativeIaC": "https://docs.prowler.com/checks/aws/networking-policies/networking_32#cloudformation",
+      "Other": "",
+      "Terraform": "https://docs.prowler.com/checks/aws/networking-policies/networking_32#terraform"
+    },
+    "Recommendation": {
+      "Text": "Use HTTPS everywhere possible. It will enforce privacy and protect against account hijacking and other threats.",
+      "Url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-https.html"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

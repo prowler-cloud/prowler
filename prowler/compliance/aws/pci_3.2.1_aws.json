@@ -1,0 +1,296 @@
+{
+  "Framework": "PCI",
+  "Version": "3.2.1",
+  "Provider": "AWS",
+  "Description": "The Payment Card Industry Data Security Standard (PCI DSS) is a proprietary information security standard. It's administered by the PCI Security Standards Council, which was founded by American Express, Discover Financial Services, JCB International, MasterCard Worldwide, and Visa Inc. PCI DSS applies to entities that store, process, or transmit cardholder data (CHD) or sensitive authentication data (SAD). This includes, but isn't limited to, merchants, processors, acquirers, issuers, and service providers. The PCI DSS is mandated by the card brands and administered by the Payment Card Industry Security Standards Council.",
+  "Requirements": [
+    {
+      "Id": "autoscaling",
+      "Name": "Auto Scaling",
+      "Description": "This control checks whether your Auto Scaling groups that are associated with a load balancer are using Elastic Load Balancing health checks. PCI DSS does not require load balancing or highly available configurations. However, this check aligns with AWS best practices.",
+      "Attributes": [
+        {
+          "ItemId": "autoscaling",
+          "Service": "autoscaling"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "cloudtrail",
+      "Name": "CloudTrail",
+      "Description": "This section contains recommendations for configuring CloudTrail resources and options.",
+      "Attributes": [
+        {
+          "ItemId": "cloudtrail",
+          "Service": "cloudtrail"
+        }
+      ],
+      "Checks": [
+        "cloudtrail_kms_encryption_enabled",
+        "cloudtrail_multi_region_enabled",
+        "cloudtrail_log_file_validation_enabled",
+        "cloudtrail_cloudwatch_logging_enabled"
+      ]
+    },
+    {
+      "Id": "codebuild",
+      "Name": "CodeBuild",
+      "Description": "This section contains recommendations for configuring CodeBuild resources and options.",
+      "Attributes": [
+        {
+          "ItemId": "codebuild",
+          "Service": "codebuild"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "config",
+      "Name": "Config",
+      "Description": "This section contains recommendations for configuring AWS Config.",
+      "Attributes": [
+        {
+          "ItemId": "config",
+          "Service": "config"
+        }
+      ],
+      "Checks": [
+        "config_recorder_all_regions_enabled"
+      ]
+    },
+    {
+      "Id": "cw",
+      "Name": "CloudWatch",
+      "Description": "This section contains recommendations for configuring CloudWatch resources and options.",
+      "Attributes": [
+        {
+          "ItemId": "cw",
+          "Service": "cloudwatch"
+        }
+      ],
+      "Checks": [
+        "cloudwatch_log_metric_filter_root_usage"
+      ]
+    },
+    {
+      "Id": "dms",
+      "Name": "DMS",
+      "Description": "This section contains recommendations for configuring AWS DMS resources and options.",
+      "Attributes": [
+        {
+          "ItemId": "dms",
+          "Service": "dms"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "ec2",
+      "Name": "EC2",
+      "Description": "This section contains recommendations for configuring EC2 resources and options.",
+      "Attributes": [
+        {
+          "ItemId": "ec2",
+          "Service": "ec2"
+        }
+      ],
+      "Checks": [
+        "ec2_ebs_public_snapshot",
+        "ec2_securitygroup_default_restrict_traffic",
+        "ec2_elastic_ip_unassigned",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389",
+        "vpc_flow_logs_enabled"
+      ]
+    },
+    {
+      "Id": "elbv2",
+      "Name": "ELBV2",
+      "Description": "This section contains recommendations for configuring Elastic Load Balancer resources and options.",
+      "Attributes": [
+        {
+          "ItemId": "elbv2",
+          "Service": "elbv2"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "elasticsearch",
+      "Name": "Elasticsearch",
+      "Description": "This section contains recommendations for configuring Elasticsearch resources and options.",
+      "Attributes": [
+        {
+          "ItemId": "elasticsearch",
+          "Service": "elasticsearch"
+        }
+      ],
+      "Checks": [
+        "opensearch_service_domains_encryption_at_rest_enabled"
+      ]
+    },
+    {
+      "Id": "guardduty",
+      "Name": "GuardDuty",
+      "Description": "This section contains recommendations for configuring AWS GuardDuty resources and options.",
+      "Attributes": [
+        {
+          "ItemId": "guardduty",
+          "Service": "guardduty"
+        }
+      ],
+      "Checks": [
+        "guardduty_is_enabled"
+      ]
+    },
+    {
+      "Id": "iam",
+      "Name": "IAM",
+      "Description": "This section contains recommendations for configuring AWS IAM resources and options.",
+      "Attributes": [
+        {
+          "ItemId": "iam",
+          "Service": "iam"
+        }
+      ],
+      "Checks": [
+        "iam_no_root_access_key",
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges",
+        "iam_inline_policy_no_administrative_privileges",
+        "iam_root_hardware_mfa_enabled",
+        "iam_root_mfa_enabled",
+        "iam_user_mfa_enabled_console_access",
+        "iam_user_accesskey_unused",
+        "iam_user_console_access_unused",
+        "iam_password_policy_minimum_length_14",
+        "iam_password_policy_lowercase",
+        "iam_password_policy_number",
+        "iam_password_policy_number",
+        "iam_password_policy_symbol",
+        "iam_password_policy_uppercase"
+      ]
+    },
+    {
+      "Id": "kms",
+      "Name": "KMS",
+      "Description": "This section contains recommendations for configuring AWS KMS resources and options.",
+      "Attributes": [
+        {
+          "ItemId": "kms",
+          "Service": "kms"
+        }
+      ],
+      "Checks": [
+        "kms_cmk_rotation_enabled"
+      ]
+    },
+    {
+      "Id": "lambda",
+      "Name": "Lambda",
+      "Description": "This section contains recommendations for configuring Lambda resources and options.",
+      "Attributes": [
+        {
+          "ItemId": "lambda",
+          "Service": "lambda"
+        }
+      ],
+      "Checks": [
+        "awslambda_function_url_public",
+        "awslambda_function_not_publicly_accessible"
+      ]
+    },
+    {
+      "Id": "opensearch",
+      "Name": "OpenSearch",
+      "Description": "This section contains recommendations for configuring OpenSearch resources and options.",
+      "Attributes": [
+        {
+          "ItemId": "opensearch",
+          "Service": "opensearch"
+        }
+      ],
+      "Checks": [
+        "opensearch_service_domains_encryption_at_rest_enabled"
+      ]
+    },
+    {
+      "Id": "rds",
+      "Name": "RDS",
+      "Description": "This section contains recommendations for configuring AWS RDS resources and options.",
+      "Attributes": [
+        {
+          "ItemId": "rds",
+          "Service": "rds"
+        }
+      ],
+      "Checks": [
+        "rds_snapshots_public_access",
+        "rds_instance_no_public_access"
+      ]
+    },
+    {
+      "Id": "redshift",
+      "Name": "Redshift",
+      "Description": "This section contains recommendations for configuring AWS Redshift resources and options.",
+      "Attributes": [
+        {
+          "ItemId": "redshift",
+          "Service": "redshift"
+        }
+      ],
+      "Checks": [
+        "redshift_cluster_public_access"
+      ]
+    },
+    {
+      "Id": "s3",
+      "Name": "S3",
+      "Description": "This section contains recommendations for configuring AWS S3 resources and options.",
+      "Attributes": [
+        {
+          "ItemId": "s3",
+          "Service": "s3"
+        }
+      ],
+      "Checks": [
+        "s3_bucket_policy_public_write_access",
+        "s3_bucket_public_access",
+        "s3_bucket_default_encryption",
+        "s3_bucket_secure_transport_policy",
+        "s3_bucket_public_access"
+      ]
+    },
+    {
+      "Id": "sagemaker",
+      "Name": "SageMaker",
+      "Description": "This section contains recommendations for configuring AWS Sagemaker resources and options.",
+      "Attributes": [
+        {
+          "ItemId": "sagemaker",
+          "Service": "sagemaker"
+        }
+      ],
+      "Checks": [
+        "sagemaker_notebook_instance_without_direct_internet_access_configured"
+      ]
+    },
+    {
+      "Id": "ssm",
+      "Name": "SSM",
+      "Description": "This section contains recommendations for configuring AWS SSM resources and options.",
+      "Attributes": [
+        {
+          "ItemId": "ssm",
+          "Service": "ssm"
+        }
+      ],
+      "Checks": [
+        "ssm_managed_compliant_patching",
+        "ssm_managed_compliant_patching",
+        "ec2_instance_managed_by_ssm"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "sagemaker_notebook_instance_encryption_enabled",
+  "CheckTitle": "Check if Amazon SageMaker Notebook instances have data encryption enabled",
+  "CheckType": [],
+  "ServiceName": "sagemaker",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:sagemaker:region:account-id:notebook-instance",
+  "Severity": "medium",
+  "ResourceType": "AwsSageMakerNotebookInstance",
+  "Description": "Check if Amazon SageMaker Notebook instances have data encryption enabled",
+  "Risk": "Data exfiltration could happen if information is not protected. KMS keys provide additional security level to IAM policies.",
+  "RelatedUrl": "https://docs.aws.amazon.com/sagemaker/latest/dg/key-management.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/SageMaker/notebook-data-encrypted.html",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/SageMaker/notebook-data-encrypted.html",
+      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_40#fix---buildtime"
+    },
+    "Recommendation": {
+      "Text": "Specify AWS KMS keys to use for input and output from S3 and EBS.",
+      "Url": "https://docs.aws.amazon.com/sagemaker/latest/dg/key-management.html"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

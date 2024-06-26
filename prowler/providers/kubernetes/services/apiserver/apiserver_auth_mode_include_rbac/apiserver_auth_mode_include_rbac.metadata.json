@@ -1,0 +1,32 @@
+{
+  "Provider": "kubernetes",
+  "CheckID": "apiserver_auth_mode_include_rbac",
+  "CheckTitle": "Ensure that the --authorization-mode argument includes RBAC",
+  "CheckType": [],
+  "ServiceName": "apiserver",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "KubernetesAPIServer",
+  "Description": "This check verifies that Role Based Access Control (RBAC) is enabled in the Kubernetes API server's authorization mode. RBAC allows for fine-grained control over cluster operations and is recommended for secure and manageable access control.",
+  "Risk": "If RBAC is not included in the API server's authorization mode, the cluster may not be leveraging fine-grained access controls, leading to potential security risks.",
+  "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/rbac/",
+  "Remediation": {
+    "Code": {
+      "CLI": "--authorization-mode=Node,RBAC",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-authorization-mode-argument-includes-rbac",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure that the API server is configured with RBAC authorization mode for enhanced security and access control.",
+      "Url": "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/"
+    }
+  },
+  "Categories": [
+    "trustboundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "By default, Kubernetes API server may not use RBAC authorization. It is crucial to enable this setting to ensure proper access control in the cluster."
+}

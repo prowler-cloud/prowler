@@ -1,0 +1,30 @@
+{
+  "Provider": "gcp",
+  "CheckID": "cloudstorage_bucket_uniform_bucket_level_access",
+  "CheckTitle": "Ensure That Cloud Storage Buckets Have Uniform Bucket-Level Access Enabled",
+  "CheckType": [],
+  "ServiceName": "cloudstorage",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Bucket",
+  "Description": "Ensure That Cloud Storage Buckets Have Uniform Bucket-Level Access Enabled",
+  "Risk": "Enabling uniform bucket-level access guarantees that if a Storage bucket is not publicly accessible, no object in the bucket is publicly accessible either.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "gsutil uniformbucketlevelaccess set on gs://BUCKET_NAME/",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudStorage/enable-uniform-bucket-level-access.html",
+      "Terraform": "https://docs.prowler.com/checks/gcp/google-cloud-storage-gcs-policies/bc_gcp_gcs_2#terraform"
+    },
+    "Recommendation": {
+      "Text": "It is recommended that uniform bucket-level access is enabled on Cloud Storage buckets.",
+      "Url": "https://cloud.google.com/storage/docs/using-uniform-bucket-level-access"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

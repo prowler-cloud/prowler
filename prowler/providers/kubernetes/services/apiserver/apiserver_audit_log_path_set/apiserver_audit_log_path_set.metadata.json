@@ -1,0 +1,32 @@
+{
+  "Provider": "kubernetes",
+  "CheckID": "apiserver_audit_log_path_set",
+  "CheckTitle": "Ensure that the --audit-log-path argument is set",
+  "CheckType": [],
+  "ServiceName": "apiserver",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "KubernetesAPIServer",
+  "Description": "This check verifies that the Kubernetes API server is configured with an audit log path. Enabling audit logs helps in maintaining a chronological record of all activities and operations which can be critical for security analysis and troubleshooting.",
+  "Risk": "Without audit logs, it becomes difficult to track changes and activities within the cluster, potentially obscuring the detection of malicious activities or operational issues.",
+  "RelatedUrl": "https://kubernetes.io/docs/concepts/cluster-administration/audit/",
+  "Remediation": {
+    "Code": {
+      "CLI": "--audit-log-path=/var/log/apiserver/audit.log",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-audit-log-path-argument-is-set#kubernetes",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable audit logging in the API server by specifying a valid path for --audit-log-path to ensure comprehensive activity logging within the cluster.",
+      "Url": "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Audit logs are not enabled by default in Kubernetes. Configuring them is essential for security monitoring and forensic analysis."
+}

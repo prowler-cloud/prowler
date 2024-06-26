@@ -1,0 +1,32 @@
+{
+  "Provider": "kubernetes",
+  "CheckID": "kubelet_config_yaml_ownership",
+  "CheckTitle": "Validate kubelet config.yaml File Ownership",
+  "CheckType": [],
+  "ServiceName": "kubelet",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "KubernetesWorkerNode",
+  "Description": "Ensure that if the kubelet refers to a configuration file with the --config argument, that file is owned by root:root. The kubelet config file contains various critical parameters for the kubelet service on worker nodes, and its ownership should be strictly controlled.",
+  "Risk": "Improper file ownership on kubelet config.yaml can expose sensitive data or allow unauthorized modifications.",
+  "RelatedUrl": "https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/",
+  "Remediation": {
+    "Code": {
+      "CLI": "chown root:root /var/lib/kubelet/config.yaml",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Secure the kubelet configuration by enforcing strict file ownership.",
+      "Url": "https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/"
+    }
+  },
+  "Categories": [
+    "node-security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Regularly verify the file ownership of kubelet config files to ensure they are not altered unexpectedly."
+}

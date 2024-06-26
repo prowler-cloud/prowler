@@ -1,0 +1,32 @@
+{
+  "Provider": "kubernetes",
+  "CheckID": "apiserver_no_token_auth_file",
+  "CheckTitle": "Ensure that the --token-auth-file parameter is not set",
+  "CheckType": [],
+  "ServiceName": "apiserver",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "KubernetesAPIServer",
+  "Description": "This check ensures that the Kubernetes API server is not using static token-based authentication, which is less secure. Static tokens are stored in clear-text and lack features like revocation or rotation without restarting the API server.",
+  "Risk": "Using static token-based authentication exposes the cluster to security risks due to the static nature of the tokens, their clear-text storage, and the inability to revoke or rotate them easily.",
+  "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/authentication/",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-token-auth-file-parameter-is-not-set",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Replace token-based authentication with more secure mechanisms like client certificate authentication. Ensure the --token-auth-file argument is not used in the API server configuration.",
+      "Url": "https://kubernetes.io/docs/reference/access-authn-authz/authentication/#static-token-file"
+    }
+  },
+  "Categories": [
+    "trustboundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "By default, the --token-auth-file argument is not set in the kube-apiserver. Ensure it remains unset or is removed if currently in use."
+}

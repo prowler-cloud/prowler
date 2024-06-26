@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "ec2_elastic_ip_unassigned",
+  "CheckTitle": "Check if there is any unassigned Elastic IP.",
+  "CheckType": [
+    "Infrastructure Security"
+  ],
+  "ServiceName": "ec2",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "low",
+  "ResourceType": "AwsEc2Eip",
+  "Description": "Check if there is any unassigned Elastic IP.",
+  "Risk": "Unassigned Elastic IPs may result in extra cost.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws ec2 release-address --public-ip <theIPyoudontneed>",
+      "NativeIaC": "https://docs.prowler.com/checks/aws/general-policies/general_19#cloudformation",
+      "Other": "https://docs.prowler.com/checks/aws/general-policies/general_19#ec2-console",
+      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/general_19#terraform"
+    },
+    "Recommendation": {
+      "Text": "Ensure Elastic IPs are not unassigned.",
+      "Url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/elastic-ip-addresses-eip.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

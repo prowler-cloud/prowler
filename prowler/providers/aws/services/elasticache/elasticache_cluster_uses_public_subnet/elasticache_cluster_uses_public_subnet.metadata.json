@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "elasticache_cluster_uses_public_subnet",
+  "CheckTitle": "Ensure Elasticache Cluster is not using a public subnet",
+  "CheckType": [],
+  "ServiceName": "elasticache",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "medium",
+  "ResourceType": "AWSElastiCacheCacheCluster",
+  "Description": "Ensure Elasticache Cluster is not using a public subnet",
+  "Risk": "There is a risk of exposing sensitive data if Elasticache Cluster uses a public subnet.",
+  "RelatedUrl": "https://docs.aws.amazon.com/AmazonElastiCache/latest/red-ug/VPCs.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws elasticache modify-cache-cluster --cache-cluster-id my-elasticache-cluster --cache-subnet-group-name my-private-subnet-group",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "To ensure your Elasticache cluster is not using a public subnet, follow the recommended remediation steps based on your preferred method.",
+      "Url": "https://docs.aws.amazon.com/AmazonElastiCache/latest/red-ug/VPCs.html"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

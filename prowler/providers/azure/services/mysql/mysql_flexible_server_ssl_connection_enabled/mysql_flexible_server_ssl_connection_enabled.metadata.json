@@ -1,0 +1,30 @@
+{
+  "Provider": "azure",
+  "CheckID": "mysql_flexible_server_ssl_connection_enabled",
+  "CheckTitle": "Ensure 'Enforce SSL connection' is set to 'Enabled' for Standard MySQL Database Server",
+  "CheckType": [],
+  "ServiceName": "mysql",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Microsoft.DBforMySQL/flexibleServers",
+  "Description": "Enable SSL connection on MYSQL Servers.",
+  "Risk": "SSL connectivity helps to provide a new layer of security by connecting database server to client applications using Secure Sockets Layer (SSL). Enforcing SSL connections between database server and client applications helps protect against 'man in the middle' attacks by encrypting the data stream between the server and application.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/mysql/single-server/concepts-ssl-connection-security",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://www.tenable.com/policies/[type]/AC_AZURE_0131",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "1. Login to Azure Portal using https://portal.azure.com 2. Go to Azure Database for MySQL servers 3. For each database, click on Connection security 4. In SSL settings, click on ENABLED to Enforce SSL connections",
+      "Url": "https://docs.microsoft.com/en-us/azure/mysql/single-server/how-to-configure-ssl"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
