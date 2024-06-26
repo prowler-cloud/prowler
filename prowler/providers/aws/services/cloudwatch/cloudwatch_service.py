@@ -215,7 +215,7 @@ class Logs(AWSService):
         )
 
     def __list_tags_for_resource__(self, log_group):
-        logger.info("CloudWatch Logs - List Tags...")
+        logger.info(f"CloudWatch Logs - List Tags for Log Group {log_group.name}...")
         try:
             regional_client = self.regional_clients[log_group.region]
             response = regional_client.list_tags_log_group(logGroupName=log_group.name)[
