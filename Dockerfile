@@ -37,4 +37,4 @@ RUN rm -rf /home/prowler/prowler /home/prowler/pyproject.toml /home/prowler/READ
 
 USER prowler
 ENTRYPOINT ["/bin/sh", "-c"]
-CMD ["prowler azure --sp-env-auth ; prowler dashboard"]
+CMD ["prowler azure --sp-env-auth ;prowler gcp --credentials-file /home/prowler/gcp/ivedha.json; prowler dashboard"]
