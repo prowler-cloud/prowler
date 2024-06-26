@@ -9,9 +9,15 @@ class AccountSerializer(serializers.ModelSerializer):
 
 
 class CloudAccountSerializer(serializers.ModelSerializer):
+    aws_account_id = serializers.SerializerMethodField()
+
     class Meta:
         model = CloudAccount
         fields = "__all__"
+        extra_fields = ["aws_account_id"]
+
+    def get_aws_account_id(self, obj):
+        return obj.account_id.aws_account_id
 
 
 class AuditSerializer(serializers.ModelSerializer):

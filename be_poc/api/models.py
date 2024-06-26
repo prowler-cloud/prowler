@@ -30,6 +30,8 @@ class CloudAccount(models.Model):
     groups = models.JSONField(default=list)
     resources = models.IntegerField(default=0)
     enable = models.BooleanField()
+    alias = models.CharField(max_length=255, null=True)
+    connected = models.BooleanField(default=False)
     provider_id = models.CharField(max_length=255)
     inserted_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

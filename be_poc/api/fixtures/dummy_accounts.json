@@ -6,7 +6,7 @@
         "name": "prod",
         "inserted_at": "2024-06-25T09:03:20.273Z",
         "updated_at": "2024-06-25T09:03:20.273Z",
-        "aws_account_id": "1234567890",
+        "aws_account_id": "232136659152",
         "scan_window_start_at": "2024-06-29T09:03:17Z"
       }
     },
@@ -17,7 +17,7 @@
         "name": "platform",
         "inserted_at": "2024-06-25T09:03:08.847Z",
         "updated_at": "2024-06-25T09:03:08.847Z",
-        "aws_account_id": "1234567890",
+        "aws_account_id": "714274078102",
         "scan_window_start_at": "2024-06-28T09:03:08Z"
       }
     },
@@ -28,7 +28,7 @@
         "name": "dev",
         "inserted_at": "2024-06-25T09:02:34.188Z",
         "updated_at": "2024-06-25T09:02:34.188Z",
-        "aws_account_id": "12345467890",
+        "aws_account_id": "106908755756",
         "scan_window_start_at": "2024-06-29T09:02:27Z"
       }
     },
@@ -39,7 +39,7 @@
         "name": "marketplace",
         "inserted_at": "2024-06-25T09:02:58.412Z",
         "updated_at": "2024-06-25T09:02:58.412Z",
-        "aws_account_id": "1234567890",
+        "aws_account_id": "879304169158",
         "scan_window_start_at": "2024-06-27T09:02:57Z"
       }
     },
@@ -50,7 +50,7 @@
         "name": "management",
         "inserted_at": "2024-06-25T09:02:46.950Z",
         "updated_at": "2024-06-25T09:02:46.950Z",
-        "aws_account_id": "1234567890",
+        "aws_account_id": "741399645537",
         "scan_window_start_at": "2024-06-27T09:02:46Z"
       }
     },
@@ -67,7 +67,9 @@
         "enable": true,
         "provider_id": "aws",
         "inserted_at": "2024-06-25T09:03:57.233Z",
-        "updated_at": "2024-06-25T09:03:57.233Z"
+        "updated_at": "2024-06-25T09:03:57.233Z",
+        "alias": "dev",
+        "connected": true
       }
     },
     {
@@ -83,7 +85,9 @@
         "enable": true,
         "provider_id": "aws",
         "inserted_at": "2024-06-25T09:04:56.941Z",
-        "updated_at": "2024-06-25T09:04:56.941Z"
+        "updated_at": "2024-06-25T09:04:56.941Z",
+        "alias": "prod",
+        "connected": true
       }
     },
     {
@@ -99,7 +103,9 @@
         "enable": true,
         "provider_id": "aws",
         "inserted_at": "2024-06-25T09:04:31.753Z",
-        "updated_at": "2024-06-25T09:04:31.753Z"
+        "updated_at": "2024-06-25T09:04:31.753Z",
+        "alias": "marketplace",
+        "connected": true
       }
     },
     {
@@ -116,7 +122,9 @@
         "enable": true,
         "provider_id": "aws",
         "inserted_at": "2024-06-25T09:04:14.567Z",
-        "updated_at": "2024-06-25T09:04:14.567Z"
+        "updated_at": "2024-06-25T09:04:14.567Z",
+        "alias": "management",
+        "connected": true
       }
     },
     {
@@ -132,7 +140,9 @@
         "enable": true,
         "provider_id": "aws",
         "inserted_at": "2024-06-25T09:04:44.431Z",
-        "updated_at": "2024-06-25T09:04:44.431Z"
+        "updated_at": "2024-06-25T09:04:44.431Z",
+        "alias": "platform",
+        "connected": true
       }
     },
     {
