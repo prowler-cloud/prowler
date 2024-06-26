@@ -434,7 +434,7 @@ class Test_cloudtrail_s3_dataevents_write_enabled:
 
         s3_client_us_east_1.create_bucket(Bucket=bucket_name_us)
 
-        trail_us = cloudtrail_client_us_east_1.create_trail(
+        _ = cloudtrail_client_us_east_1.create_trail(
             Name=trail_name_us, S3BucketName=bucket_name_us, IsMultiRegionTrail=True
         )
         _ = cloudtrail_client_us_east_1.put_event_selectors(
@@ -461,8 +461,6 @@ class Test_cloudtrail_s3_dataevents_write_enabled:
         )
         from prowler.providers.aws.services.s3.s3_service import S3
 
-        aws_provider = set_mocked_aws_provider()
-
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
@@ -481,14 +479,16 @@ class Test_cloudtrail_s3_dataevents_write_enabled:
             check = cloudtrail_s3_dataevents_write_enabled()
             result = check.execute()
             assert len(result) == 1
-            # FIXME: multi region trail only auditing a single region
-            # Why this check does not raise FAIL for trails?
-            assert result[0].resource_id == trail_name_us
-            assert result[0].resource_arn == trail_us["TrailARN"]
-            assert result[0].status == "PASS"
+            # FAIL since it is a multi-region trail in a region that Prowler is not auditing, so it is not possible to check the trail's data events
+            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:cloudtrail:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:trail"
+            )
+            assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Multiregion trail {trail_name_us} has not been logging in the last 24h or is not configured to deliver logs."
+                == "No CloudTrail trails have a data event to record all S3 object-level API operations."
             )
-            assert result[0].region == AWS_REGION_US_EAST_1
+            assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_tags == []

@@ -424,7 +424,7 @@ class Test_cloudtrail_s3_dataevents_read_enabled:
             assert len(result) == 0
 
     @mock_aws
-    def test_trail_multi_region_auditing_other_region(self):
+    def test_trail_multi_region_in_other_region_with_read_dataevents(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         cloudtrail_client_us_east_1 = client(
             "cloudtrail", region_name=AWS_REGION_US_EAST_1
@@ -436,7 +436,7 @@ class Test_cloudtrail_s3_dataevents_read_enabled:
 
         s3_client_us_east_1.create_bucket(Bucket=bucket_name_us)
 
-        trail_us = cloudtrail_client_us_east_1.create_trail(
+        cloudtrail_client_us_east_1.create_trail(
             Name=trail_name_us, S3BucketName=bucket_name_us, IsMultiRegionTrail=True
         )
         _ = cloudtrail_client_us_east_1.put_event_selectors(
@@ -446,14 +446,8 @@ class Test_cloudtrail_s3_dataevents_read_enabled:
                     "ReadWriteType": "All",
                     "IncludeManagementEvents": True,
                     "DataResources": [
-                        {
-                            "Type": "AWS::DynamoDB::Table",
-                            "Values": ["arn:aws:dynamodb"],
-                        },
-                        {"Type": "AWS::S3::Object", "Values": ["arn:aws:s3:::"]},
-                        {"Type": "AWS::Lambda::Function", "Values": ["arn:aws:lambda"]},
+                        {"Type": "AWS::S3::Object", "Values": ["arn:aws:s3:::*/*"]}
                     ],
-                    "ExcludeManagementEventSources": [],
                 }
             ],
         )["EventSelectors"]
@@ -462,8 +456,6 @@ class Test_cloudtrail_s3_dataevents_read_enabled:
             Cloudtrail,
         )
         from prowler.providers.aws.services.s3.s3_service import S3
-
-        aws_provider = set_mocked_aws_provider()
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
@@ -480,17 +472,19 @@ class Test_cloudtrail_s3_dataevents_read_enabled:
                 cloudtrail_s3_dataevents_read_enabled,
             )
 
-            # FIXME: multi region trail only auditing a single region
-            # Why this check does not raise FAIL for trails?
+            # FAIL since this trail is multi-region and in another region so Prowler audit is out of scope
             check = cloudtrail_s3_dataevents_read_enabled()
             result = check.execute()
             assert len(result) == 1
-            assert result[0].resource_id == trail_name_us
-            assert result[0].resource_arn == trail_us["TrailARN"]
-            assert result[0].status == "PASS"
+            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:cloudtrail:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:trail"
+            )
+            assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Multiregion trail {trail_name_us} has not been logging in the last 24h or is not configured to deliver logs."
+                == "No CloudTrail trails have a data event to record all S3 object-level API operations."
             )
-            assert result[0].region == AWS_REGION_US_EAST_1
+            assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_tags == []

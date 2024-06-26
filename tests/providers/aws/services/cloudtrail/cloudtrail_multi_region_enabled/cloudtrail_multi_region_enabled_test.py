@@ -43,7 +43,7 @@ class Test_cloudtrail_multi_region_enabled:
                         assert report.status == "FAIL"
                         assert (
                             report.status_extended
-                            == "No CloudTrail trails enabled and logging were found."
+                            == "No CloudTrail trails enabled with logging were found."
                         )
                         assert report.resource_id == AWS_ACCOUNT_NUMBER
                         assert (
@@ -55,7 +55,7 @@ class Test_cloudtrail_multi_region_enabled:
                         assert report.status == "FAIL"
                         assert (
                             report.status_extended
-                            == "No CloudTrail trails enabled and logging were found."
+                            == "No CloudTrail trails enabled with logging were found."
                         )
                         assert report.resource_id == AWS_ACCOUNT_NUMBER
                         assert (
@@ -119,7 +119,7 @@ class Test_cloudtrail_multi_region_enabled:
                         assert report.status == "FAIL"
                         assert (
                             report.status_extended
-                            == "No CloudTrail trails enabled and logging were found."
+                            == "No CloudTrail trails enabled with logging were found."
                         )
                         assert report.resource_id == AWS_ACCOUNT_NUMBER
                         assert (
@@ -131,7 +131,7 @@ class Test_cloudtrail_multi_region_enabled:
                         assert report.status == "FAIL"
                         assert (
                             report.status_extended
-                            == "No CloudTrail trails enabled and logging were found."
+                            == "No CloudTrail trails enabled with logging were found."
                         )
                         assert report.resource_id == AWS_ACCOUNT_NUMBER
                         assert (
@@ -207,7 +207,7 @@ class Test_cloudtrail_multi_region_enabled:
                         assert report.status == "FAIL"
                         assert (
                             report.status_extended
-                            == "No CloudTrail trails enabled and logging were found."
+                            == "No CloudTrail trails enabled with logging were found."
                         )
                         assert report.resource_id == AWS_ACCOUNT_NUMBER
                         assert (
@@ -330,7 +330,7 @@ class Test_cloudtrail_multi_region_enabled:
 
         s3_client_us_east_1.create_bucket(Bucket=bucket_name_us)
 
-        trail_us = cloudtrail_client_us_east_1.create_trail(
+        _ = cloudtrail_client_us_east_1.create_trail(
             Name=trail_name_us, S3BucketName=bucket_name_us, IsMultiRegionTrail=True
         )
 
@@ -353,14 +353,17 @@ class Test_cloudtrail_multi_region_enabled:
 
                 check = cloudtrail_multi_region_enabled()
                 result = check.execute()
-                # FIXME: this is failing since we are just auditing one region and not returning all the cloudtrails for the multiregion
+                # FAIL since the multiregion trail it is in another region and the logging status cannot be checked
                 assert len(result) == 1
-                assert result[0].resource_id == trail_name_us
-                assert result[0].resource_arn == trail_us["TrailARN"]
+                assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+                assert (
+                    result[0].resource_arn
+                    == f"arn:aws:cloudtrail:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:trail"
+                )
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == f"Trail {trail_name_us} is multiregion and it is not logging."
+                    == "No CloudTrail trails enabled with logging were found."
                 )
-                assert result[0].region == AWS_REGION_US_EAST_1
+                assert result[0].region == AWS_REGION_EU_WEST_1
                 assert result[0].resource_tags == []

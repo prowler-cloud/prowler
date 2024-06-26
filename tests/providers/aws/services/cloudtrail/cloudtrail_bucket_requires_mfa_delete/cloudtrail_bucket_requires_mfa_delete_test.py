@@ -326,7 +326,7 @@ class Test_cloudtrail_bucket_requires_mfa_delete:
             assert result[0].status == "MANUAL"
             assert (
                 result[0].status_extended
-                == f"Trail {trail_name_us} bucket ({bucket_name_us}) does not have MFA delete enabled."
+                == f"Trail {trail_name_us} bucket ({bucket_name_us}) is a cross-account bucket or out of Prowler's audit scope, please check it manually."
             )
             assert result[0].resource_id == trail_name_us
             assert result[0].region == AWS_REGION_US_EAST_1
