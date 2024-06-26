@@ -105,9 +105,6 @@ export default function CloudsPage() {
       getAudits.data &&
       getAudits.data.find((audit: any) => audit.account_id === account_id);
 
-    console.log("### scan", scan);
-    console.log("### new date", new Date("2024-06-25T09:05:49.405000Z"));
-
     if (detail === "status") {
       return scan?.audit_complete && "Completed";
     }
@@ -123,8 +120,8 @@ export default function CloudsPage() {
     return;
   };
 
-  console.log("### getAccounts data", getAccounts.data);
-  console.log("### getAudits data", getAudits.data);
+  // console.log("### getAccounts data", getAccounts.data);
+  // console.log("### getAudits data", getAudits.data);
 
   // TODO FIX TYPE CHECKING
   const rowItems = getAccounts.data?.map((row: any) => (
