@@ -1,9 +1,9 @@
 from unittest import mock
 
 from tests.providers.gcp.gcp_fixtures import (
+    GCP_EU1_LOCATION,
     GCP_PROJECT_ID,
     set_mocked_gcp_provider,
-    GCP_EU1_LOCATION,
 )
 
 
