@@ -1,3 +1,0 @@
-# Create a new integration
-
-Coming soon ...

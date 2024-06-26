@@ -1,3 +1,0 @@
-export ROLE=ProwlerXA-Role
-export PARALLEL_ACCOUNTS=1
-export REGION=us-east-1
