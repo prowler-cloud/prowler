@@ -12,6 +12,12 @@ def init_parser(self):
         metavar="FILE_PATH",
         help="Authenticate using a Google Service Account Application Credentials JSON file",
     )
+    gcp_auth_modes_group.add_argument(
+        "--impersonate-service-account",
+        nargs="?",
+        metavar="SERVICE_ACCOUNT",
+        help="Impersonate a Google Service Account",
+    )
     # Projects
     gcp_projects_subparser = gcp_parser.add_argument_group("Projects")
     gcp_projects_subparser.add_argument(

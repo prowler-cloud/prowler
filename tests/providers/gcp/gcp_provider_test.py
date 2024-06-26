@@ -20,6 +20,7 @@ class TestGCPProvider:
         arguments.excluded_project_id = []
         arguments.list_project_id = False
         arguments.credentials_file = ""
+        arguments.impersonate_service_account = ""
         arguments.config_file = default_config_file_path
         arguments.fixer_config = default_fixer_config_file_path
 
@@ -56,6 +57,7 @@ class TestGCPProvider:
         arguments.excluded_project_id = []
         arguments.list_project_id = False
         arguments.credentials_file = ""
+        arguments.impersonate_service_account = ""
         arguments.config_file = default_config_file_path
         arguments.fixer_config = default_fixer_config_file_path
 
@@ -128,6 +130,7 @@ class TestGCPProvider:
         arguments.excluded_project_id = []
         arguments.list_project_id = False
         arguments.credentials_file = ""
+        arguments.impersonate_service_account = ""
         arguments.config_file = default_config_file_path
         arguments.fixer_config = default_fixer_config_file_path
 
