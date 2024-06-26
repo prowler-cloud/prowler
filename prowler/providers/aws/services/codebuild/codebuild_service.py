@@ -93,9 +93,7 @@ class Codebuild(AWSService):
                         project_source = regional_client.batch_get_projects(
                             names=[project.name]
                         )["projects"][0]["source"]
-                        # If the project's buildspec is stored inline we don't want to store it
-                        if project_source.get("type", "NO_SOURCE") != "NO_SOURCE":
-                            project.buildspec = project_source.get("buildspec", "")
+                        project.buildspec = project_source.get("buildspec", "")
                     except Exception as error:
                         logger.error(
                             f"{regional_client.region}: {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
