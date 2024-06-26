@@ -3,15 +3,24 @@ from unittest.mock import patch
 
 import botocore
 
-from prowler.providers.aws.services.codebuild.codebuild_service import Codebuild
+from prowler.providers.aws.services.codebuild.codebuild_service import (
+    Build,
+    Codebuild,
+    Project,
+)
 from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_COMMERCIAL_PARTITION,
     AWS_REGION_EU_WEST_1,
     set_mocked_aws_audit_info,
 )
 
-# last time invoked time
+project_name = "test"
+project_arn = f"arn:{AWS_COMMERCIAL_PARTITION}:codebuild:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:project/{project_name}"
+build_spec_project_arn = "arn:aws:s3:::my-codebuild-sample2/buildspec.yml"
+buildspec_type = "S3"
+build_id = "test:93f838a7-cd20-48ae-90e5-c10fbbc78ca6"
 last_invoked_time = datetime.now() - timedelta(days=2)
-
 
 # Mocking batch_get_projects
 make_api_call = botocore.client.BaseClient._make_api_call
@@ -19,9 +28,9 @@ make_api_call = botocore.client.BaseClient._make_api_call
 
 def mock_make_api_call(self, operation_name, kwarg):
     if operation_name == "ListProjects":
-        return {"projects": ["test"]}
+        return {"projects": [project_name]}
     if operation_name == "ListBuildsForProject":
-        return {"ids": ["test:93f838a7-cd20-48ae-90e5-c10fbbc78ca6"]}
+        return {"ids": [build_id]}
     if operation_name == "BatchGetBuilds":
         return {"builds": [{"endTime": last_invoked_time}]}
     if operation_name == "BatchGetProjects":
@@ -29,7 +38,8 @@ def mock_make_api_call(self, operation_name, kwarg):
             "projects": [
                 {
                     "source": {
-                        "buildspec": "arn:aws:s3:::my-codebuild-sample2/buildspec.yml"
+                        "type": buildspec_type,
+                        "buildspec": build_spec_project_arn,
                     }
                 }
             ]
@@ -78,3 +88,19 @@ class Test_Codebuild_Service:
             codebuild.projects[0].buildspec
             == "arn:aws:s3:::my-codebuild-sample2/buildspec.yml"
         )
+
+    def test_codebuild_service(self):
+        codebuild = Codebuild(set_mocked_aws_audit_info())
+
+        assert codebuild.session.__class__.__name__ == "Session"
+        assert codebuild.service == "codebuild"
+
+        assert len(codebuild.projects) == 1
+        assert isinstance(codebuild.projects, dict)
+        assert isinstance(codebuild.projects[project_arn], Project)
+        assert codebuild.projects[project_arn].name == project_name
+        assert codebuild.projects[project_arn].arn == project_arn
+        assert codebuild.projects[project_arn].region == AWS_REGION_EU_WEST_1
+        assert codebuild.projects[project_arn].last_invoked_time == last_invoked_time
+        assert codebuild.projects[project_arn].last_build == Build(id=build_id)
+        assert codebuild.projects[project_arn].buildspec == build_spec_project_arn
