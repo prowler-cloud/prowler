@@ -18,7 +18,6 @@ from prowler.lib.check.compliance_models import (
     Compliance_Requirement,
 )
 from prowler.lib.check.models import Check_Report, load_check_metadata
-from prowler.lib.outputs.common import generate_provider_output
 from prowler.lib.outputs.common_models import Finding
 from prowler.lib.outputs.compliance.compliance import get_check_compliance
 from prowler.lib.outputs.csv.csv import generate_csv_fields
@@ -794,7 +793,7 @@ class TestOutputs:
             "finding_uid": "test-finding",
         }
 
-        assert generate_provider_output(provider, finding, csv_data) == Finding(
+        assert Finding.generate_provider_output(provider, finding, csv_data) == Finding(
             auth_method="profile: test",
             account_uid="123456789012",
             timestamp="2022-01-01T00:00:00Z",
@@ -884,7 +883,7 @@ class TestOutputs:
             "finding_uid": "test-finding",
         }
 
-        assert generate_provider_output(provider, finding, csv_data) == Finding(
+        assert Finding.generate_provider_output(provider, finding, csv_data) == Finding(
             auth_method="profile: test",
             account_uid="123456789012",
             timestamp=1640995200,
