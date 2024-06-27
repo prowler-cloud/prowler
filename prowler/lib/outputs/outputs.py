@@ -109,9 +109,7 @@ def report(check_findings, provider):
                                 file_descriptors["json-asff"].write(",")
 
                         # Common Output Data
-                        finding_output = Finding.generate_output(
-                            provider, finding, output_options
-                        )
+                        finding_output = Finding(provider, finding, output_options)
 
                         # JSON
                         if "json-ocsf" in file_descriptors:
@@ -124,11 +122,6 @@ def report(check_findings, provider):
 
                         if "html" in file_descriptors:
                             fill_html(file_descriptors["html"], finding_output)
-
-                        # CSV
-                        # if "csv" in file_descriptors:
-                        #     csv_finding = CSV(finding_output)
-                        #     csv_finding.write_to_file(file_descriptors["csv"])
 
         else:  # No service resources in the whole account
             color = set_report_color("MANUAL")

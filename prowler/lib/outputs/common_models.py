@@ -87,8 +87,7 @@ class Finding(BaseModel):
     notes: str
     prowler_version: str = prowler_version
 
-    @classmethod
-    def generate_output(cls, provider, finding, output_options) -> "Finding":
+    def __init__(self, provider, finding, output_options) -> "Finding":
         """generates the output for a finding based on the provider and output options
 
         Args:
@@ -110,11 +109,10 @@ class Finding(BaseModel):
         output_data["compliance"] = get_check_compliance(
             finding, provider.type, output_options
         )
-        finding_output = cls.generate_provider_output(provider, finding, output_data)
-        return finding_output
+        finding_output = self.generate_provider_output(provider, finding, output_data)
+        super().__init__(**finding_output)
 
-    @classmethod
-    def generate_provider_output(cls, provider, finding, output_data) -> "Finding":
+    def generate_provider_output(self, provider, finding, output_data) -> dict:
         """generates the provider specific output for a finding
 
         Args:
@@ -123,7 +121,7 @@ class Finding(BaseModel):
             output_data (dict): the output data
 
         Returns:
-            finding_output (Finding): the finding output object
+            output_data (dict): the output data
 
         """
         # TODO: we have to standardize this between the above mapping and the provider.get_output_mapping()
@@ -195,14 +193,12 @@ class Finding(BaseModel):
                 f"prowler-{provider.type}-{finding.check_metadata.CheckID}-{output_data['account_uid']}-{output_data['region']}-{output_data['resource_name']}"
             )
 
-            finding_output = cls(**output_data)
-
+            return output_data
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-        else:
-            return finding_output
+            return output_data
 
 
 class Output(ABC):

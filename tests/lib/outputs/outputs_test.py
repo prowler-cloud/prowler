@@ -793,7 +793,7 @@ class TestOutputs:
             "finding_uid": "test-finding",
         }
 
-        assert Finding.generate_provider_output(provider, finding, csv_data) == Finding(
+        assert Finding(provider, finding, csv_data) == Finding(
             auth_method="profile: test",
             account_uid="123456789012",
             timestamp="2022-01-01T00:00:00Z",
@@ -883,7 +883,7 @@ class TestOutputs:
             "finding_uid": "test-finding",
         }
 
-        assert Finding.generate_provider_output(provider, finding, csv_data) == Finding(
+        assert Finding(provider, finding, csv_data) == Finding(
             auth_method="profile: test",
             account_uid="123456789012",
             timestamp=1640995200,

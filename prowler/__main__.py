@@ -284,9 +284,7 @@ def prowler():
     finding_output = []
     for finding in findings:
         finding_output.append(
-            Finding.generate_output(
-                global_provider, finding, global_provider.output_options
-            )
+            Finding(global_provider, finding, global_provider.output_options)
         )
 
     if args.output_formats:
@@ -296,7 +294,6 @@ def prowler():
                 filename,
                 "a",
             )
-            # Write findings to file
             if "csv" in mode:
                 # Generate CSV Finding Object
                 csv_finding = CSV(finding_output)
