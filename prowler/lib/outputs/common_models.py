@@ -89,7 +89,6 @@ class Finding(BaseModel):
 
     @classmethod
     def generate_output(cls, provider, finding, output_options) -> "Finding":
-        # add docstring to explain the method
         """generates the output for a finding based on the provider and output options
 
         Args:
@@ -226,6 +225,12 @@ class Output(ABC):
 
 class CSV(Output):
     def transform(self, findings: list[Finding]) -> None:
+        """Transforms the findings into a format that can be written to a CSV file.
+
+        Args:
+            findings (list[Finding]): a list of Finding objects
+
+        """
         for finding in findings:
             finding_dict = copy.deepcopy(finding.dict())
             finding_dict["compliance"] = unroll_dict(finding.compliance)
@@ -233,6 +238,12 @@ class CSV(Output):
             self._data.append(finding_dict)
 
     def write_to_file(self, file_descriptor) -> None:
+        """Writes the findings to a CSV file.
+
+        Args:
+            file_descriptor (TextIOWrapper): a file descriptor
+
+        """
         csv_writer = DictWriter(
             file_descriptor,
             fieldnames=self._data[0].keys(),
