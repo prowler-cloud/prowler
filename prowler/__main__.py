@@ -6,7 +6,7 @@ from os import environ
 
 from colorama import Fore, Style
 
-from prowler.config.config import get_available_compliance_frameworks
+from prowler.config.config import csv_file_suffix, get_available_compliance_frameworks
 from prowler.lib.banner import print_banner
 from prowler.lib.check.check import (
     bulk_load_checks_metadata,
@@ -36,14 +36,14 @@ from prowler.lib.check.custom_checks_metadata import (
 )
 from prowler.lib.cli.parser import ProwlerArgumentParser
 from prowler.lib.logger import logger, set_logging_config
-from prowler.lib.outputs.common_models import CSV, Finding
 from prowler.lib.outputs.compliance.compliance import display_compliance_table
+from prowler.lib.outputs.csv.csv import CSV
 from prowler.lib.outputs.html.html import add_html_footer, fill_html_overview_statistics
 from prowler.lib.outputs.json.json import close_json
+from prowler.lib.outputs.output import Finding
 from prowler.lib.outputs.outputs import extract_findings_statistics
 from prowler.lib.outputs.slack.slack import Slack
 from prowler.lib.outputs.summary_table import display_summary_table
-from prowler.lib.utils.utils import open_file
 from prowler.providers.aws.lib.s3.s3 import send_to_s3_bucket
 from prowler.providers.aws.lib.security_hub.security_hub import (
     batch_send_to_security_hub,
@@ -281,25 +281,32 @@ def prowler():
                 "Slack integration needs SLACK_API_TOKEN and SLACK_CHANNEL_NAME environment variables (see more in https://docs.prowler.cloud/en/latest/tutorials/integrations/#slack)."
             )
             sys.exit(1)
-    finding_output = []
+
+    # Outputs
+    # TODO: this part is needed since the checks generates a Check_Report_XXX and the output uses Finding
+    # This will be refactored for the outputs generate directly the Finding
+    finding_outputs = []
     for finding in findings:
-        finding_output.append(
+        finding_outputs.append(
             Finding(global_provider, finding, global_provider.output_options)
         )
 
     if args.output_formats:
         for mode in args.output_formats:
-            filename = f"{global_provider.output_options.output_directory}/{global_provider.output_options.output_filename}.csv"
-            file_descriptor = open_file(
-                filename,
-                "a",
-            )
+
             if "csv" in mode:
                 # Generate CSV Finding Object
-                csv_finding = CSV(finding_output)
+                filename = f"{global_provider.output_options.output_directory}/{global_provider.output_options.output_filename}{csv_file_suffix}"
+                csv_finding = CSV(
+                    findings=finding_outputs,
+                    create_file_descriptor=True,
+                    file_path=filename,
+                )
                 # Write CSV Finding Object to file
-                csv_finding.write_to_file(file_descriptor)
+                csv_finding.batch_write_findings_to_file()
+
             # Close json file if exists
+            # TODO: generate JSON here
             if "json" in mode:
                 close_json(
                     global_provider.output_options.output_filename,
@@ -308,6 +315,7 @@ def prowler():
                 )
 
             if "html" in mode:
+                # TODO: generate HTML here
                 add_html_footer(
                     global_provider.output_options.output_filename,
                     global_provider.output_options.output_directory,

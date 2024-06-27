@@ -4,8 +4,8 @@ from unittest.mock import Mock
 
 import pytest
 
-from prowler.lib.outputs.common_models import CSV, Finding, Output, Severity, Status
 from prowler.lib.outputs.csv.csv import write_csv
+from prowler.lib.outputs.output import CSV, Finding, Output, Severity, Status
 
 findings = [
     Finding(

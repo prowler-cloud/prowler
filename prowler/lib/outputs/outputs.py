@@ -4,7 +4,6 @@ from colorama import Fore, Style
 
 from prowler.config.config import available_compliance_frameworks, orange_color
 from prowler.lib.logger import logger
-from prowler.lib.outputs.common_models import Finding
 from prowler.lib.outputs.compliance.compliance import (
     add_manual_controls,
     fill_compliance,
@@ -13,6 +12,7 @@ from prowler.lib.outputs.file_descriptors import fill_file_descriptors
 from prowler.lib.outputs.html.html import fill_html
 from prowler.lib.outputs.json_asff.json_asff import fill_json_asff
 from prowler.lib.outputs.json_ocsf.json_ocsf import fill_json_ocsf
+from prowler.lib.outputs.output import Finding
 
 
 def stdout_report(finding, color, verbose, status, fix):

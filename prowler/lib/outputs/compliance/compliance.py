@@ -197,6 +197,7 @@ def display_compliance_table(
         sys.exit(1)
 
 
+# TODO: this should be in the Check class
 def get_check_compliance(finding, provider_type, output_options) -> dict:
     """get_check_compliance returns a map with the compliance framework as key and the requirements where the finding's check is present.
 

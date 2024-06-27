@@ -18,10 +18,10 @@ from prowler.lib.check.compliance_models import (
     Compliance_Requirement,
 )
 from prowler.lib.check.models import Check_Report, load_check_metadata
-from prowler.lib.outputs.common_models import Finding
 from prowler.lib.outputs.compliance.compliance import get_check_compliance
 from prowler.lib.outputs.csv.csv import generate_csv_fields
 from prowler.lib.outputs.file_descriptors import fill_file_descriptors
+from prowler.lib.outputs.output import Finding
 from prowler.lib.outputs.outputs import extract_findings_statistics, set_report_color
 from prowler.lib.outputs.utils import (
     parse_html_string,

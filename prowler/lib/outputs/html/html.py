@@ -12,7 +12,7 @@ from prowler.config.config import (
     timestamp,
 )
 from prowler.lib.logger import logger
-from prowler.lib.outputs.common_models import Finding
+from prowler.lib.outputs.output import Finding
 from prowler.lib.outputs.utils import parse_html_string, unroll_dict
 from prowler.lib.utils.utils import open_file
 

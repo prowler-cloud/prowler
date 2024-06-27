@@ -9,7 +9,6 @@ from prowler.config.config import (
     json_ocsf_file_suffix,
 )
 from prowler.lib.logger import logger
-from prowler.lib.outputs.common_models import Finding
 from prowler.lib.outputs.compliance.mitre_attack.models import (
     MitreAttackAWS,
     MitreAttackAzure,
@@ -27,6 +26,7 @@ from prowler.lib.outputs.compliance.models import (
 )
 from prowler.lib.outputs.csv.csv import generate_csv_fields
 from prowler.lib.outputs.html.html import add_html_header
+from prowler.lib.outputs.output import Finding
 from prowler.lib.utils.utils import file_exists, open_file
 
 

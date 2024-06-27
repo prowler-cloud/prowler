@@ -1,9 +1,5 @@
-import copy
-from abc import ABC, abstractmethod
-from csv import DictWriter
 from datetime import datetime
 from enum import Enum
-from io import TextIOWrapper
 from typing import Optional, Union
 
 from pydantic import BaseModel
@@ -15,7 +11,6 @@ from prowler.lib.outputs.common import (
     get_provider_data_mapping,
 )
 from prowler.lib.outputs.compliance.compliance import get_check_compliance
-from prowler.lib.outputs.utils import unroll_dict, unroll_list
 
 
 class Status(str, Enum):
@@ -99,7 +94,9 @@ class Finding(BaseModel):
             finding_output (Finding): the finding output object
 
         """
+        # TODO: think about get_provider_data_mapping
         provider_data_mapping = get_provider_data_mapping(provider)
+        # TODO: move fill_common_finding_data
         common_finding_data = fill_common_finding_data(
             finding, output_options.unix_timestamp
         )
@@ -109,10 +106,10 @@ class Finding(BaseModel):
         output_data["compliance"] = get_check_compliance(
             finding, provider.type, output_options
         )
-        finding_output = self.generate_provider_output(provider, finding, output_data)
+        finding_output = self.generate_finding_output(provider, finding, output_data)
         super().__init__(**finding_output)
 
-    def generate_provider_output(self, provider, finding, output_data) -> dict:
+    def generate_finding_output(self, provider, finding, output_data) -> dict:
         """generates the provider specific output for a finding
 
         Args:
@@ -199,51 +196,3 @@ class Finding(BaseModel):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             return output_data
-
-
-class Output(ABC):
-    _data: list[object] = []
-
-    def __init__(self, finding: Finding) -> None:
-        self.transform(finding)
-
-    @property
-    def data(self):
-        return self._data
-
-    @abstractmethod
-    def transform(self, finding: Finding):
-        raise NotImplementedError
-
-    def write_to_file(self, file_descriptor: TextIOWrapper) -> None:
-        raise NotImplementedError
-
-
-class CSV(Output):
-    def transform(self, findings: list[Finding]) -> None:
-        """Transforms the findings into a format that can be written to a CSV file.
-
-        Args:
-            findings (list[Finding]): a list of Finding objects
-
-        """
-        for finding in findings:
-            finding_dict = copy.deepcopy(finding.dict())
-            finding_dict["compliance"] = unroll_dict(finding.compliance)
-            finding_dict["account_tags"] = unroll_list(finding.account_tags)
-            self._data.append(finding_dict)
-
-    def write_to_file(self, file_descriptor) -> None:
-        """Writes the findings to a CSV file.
-
-        Args:
-            file_descriptor (TextIOWrapper): a file descriptor
-
-        """
-        csv_writer = DictWriter(
-            file_descriptor,
-            fieldnames=self._data[0].keys(),
-            delimiter=";",
-        )
-        for finding in self._data:
-            csv_writer.writerow(finding)

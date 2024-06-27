@@ -15,7 +15,7 @@ from py_ocsf_models.objects.remediation import Remediation
 from py_ocsf_models.objects.resource_details import ResourceDetails
 
 from prowler.lib.logger import logger
-from prowler.lib.outputs.common_models import Finding
+from prowler.lib.outputs.output import Finding
 
 
 def get_account_type_id_by_provider(provider: str) -> TypeID:
