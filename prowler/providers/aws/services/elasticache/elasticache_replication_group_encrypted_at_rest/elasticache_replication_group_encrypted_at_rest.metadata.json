@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "elasticache_replication_group_encrypted_at_rest",
+  "CheckTitle": "Ensure Elasticache Replication Groups have at rest encryption enabled.",
+  "CheckType": [],
+  "ServiceName": "elasticache",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "medium",
+  "ResourceType": "AWSElastiCacheReplicationGroups",
+  "Description": "Ensure Elasticache Replication Groups have at rest encryption enabled.",
+  "Risk": "There is a risk of exposing sensitive data if Elasticache Replication Group does not have at rest encryption enabled.",
+  "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/elasticache-controls.html#elasticache-4",
+  "Remediation": {
+    "Code": {
+      "CLI": "https://docs.prowler.com/checks/aws/general-policies/general_9/",
+      "NativeIaC": "https://docs.prowler.com/checks/aws/general-policies/general_9/",
+      "Other": "",
+      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/general_9/"
+    },
+    "Recommendation": {
+      "Text": "Ensure your Elasticache replication groups have at rest encryption enabled.",
+      "Url": "https://docs.aws.amazon.com/AmazonElastiCache/latest/red-ug/at-rest-encryption.html#at-rest-encryption-enable"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
