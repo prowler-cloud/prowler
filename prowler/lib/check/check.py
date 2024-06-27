@@ -19,7 +19,6 @@ from prowler.lib.check.compliance_models import load_compliance_framework
 from prowler.lib.check.custom_checks_metadata import update_check_metadata
 from prowler.lib.check.models import Check, load_check_metadata
 from prowler.lib.logger import logger
-from prowler.lib.mutelist.mutelist import mutelist_findings
 from prowler.lib.outputs.outputs import report
 from prowler.lib.utils.utils import open_file, parse_json_file, print_boxes
 from prowler.providers.common.models import Audit_Metadata
@@ -612,9 +611,9 @@ def execute_checks(
     else:
         # Prepare your messages
         messages = [f"Config File: {Fore.YELLOW}{config_file}{Style.RESET_ALL}"]
-        if global_provider.mutelist_file_path:
+        if global_provider.mutelist.mutelist_file_path:
             messages.append(
-                f"Mutelist File: {Fore.YELLOW}{global_provider.mutelist_file_path}{Style.RESET_ALL}"
+                f"Mutelist File: {Fore.YELLOW}{global_provider.mutelist.mutelist_file_path}{Style.RESET_ALL}"
             )
         if global_provider.type == "aws":
             messages.append(
@@ -716,10 +715,30 @@ def execute(
 
         # Mutelist findings
         if hasattr(global_provider, "mutelist") and global_provider.mutelist:
-            check_findings = mutelist_findings(
-                global_provider,
-                check_findings,
-            )
+            is_finding_muted_args = {}
+            # TODO: make this prettier
+            if global_provider.type == "aws":
+                is_finding_muted_args["aws_account_id"] = (
+                    global_provider.identity.account
+                )
+            elif global_provider.type == "azure":
+                is_finding_muted_args["aws_account_id"] = (
+                    global_provider.identity.account
+                )
+            elif global_provider.type == "gcp":
+                is_finding_muted_args["aws_account_id"] = (
+                    global_provider.identity.account
+                )
+            elif global_provider.type == "kubernetes":
+                is_finding_muted_args["aws_account_id"] = (
+                    global_provider.identity.account
+                )
+
+            for finding in check_findings:
+                is_finding_muted_args["finding"] = finding
+                finding.muted = global_provider.mutelist.is_finding_muted(
+                    **is_finding_muted_args
+                )
 
         # Refactor(Outputs)
         # Report the check's findings

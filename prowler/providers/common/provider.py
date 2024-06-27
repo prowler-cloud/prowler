@@ -7,10 +7,7 @@ from typing import Any, Optional
 
 from prowler.config.config import get_default_mute_file_path
 from prowler.lib.logger import logger
-from prowler.lib.mutelist.mutelist import (
-    get_mutelist_file_from_local_file,
-    validate_mutelist,
-)
+from prowler.lib.mutelist.mutelist import Mutelist
 
 providers_path = "prowler.providers"
 
@@ -30,8 +27,7 @@ providers_path = "prowler.providers"
 # TODO: enforce audit_metadata for all the providers
 class Provider(ABC):
     _global: Optional["Provider"] = None
-    _mutelist: dict
-    _mutelist_file_path: str
+    mutelist: Mutelist
     """
     The Provider class is an abstract base class that defines the interface for all provider classes in the auditing system.
 
@@ -159,18 +155,11 @@ class Provider(ABC):
         return set()
 
     @property
-    def mutelist(self):
+    def mutelist(self) -> Mutelist:
         """
         mutelist method returns the provider's mutelist.
         """
         return self._mutelist
-
-    @property
-    def mutelist_file_path(self):
-        """
-        mutelist method returns the provider's mutelist file path.
-        """
-        return self._mutelist_file_path
 
     @mutelist.setter
     def mutelist(self, mutelist_path):
@@ -180,14 +169,15 @@ class Provider(ABC):
         # Set default mutelist path if none is set
         if not mutelist_path:
             mutelist_path = get_default_mute_file_path(self.type)
-        if mutelist_path:
-            mutelist = get_mutelist_file_from_local_file(mutelist_path)
-            mutelist = validate_mutelist(mutelist)
-        else:
-            mutelist = {}
+        # TODO: review
+        # if mutelist_path:
 
-        self._mutelist = mutelist
-        self._mutelist_file_path = mutelist_path
+        self._mutelist = Mutelist(mutelist_path)
+        # else:
+        #     mutelist = {}
+
+        # self._mutelist = mutelist
+        # self._mutelist_file_path = mutelist_path
 
     @staticmethod
     def get_global_provider() -> "Provider":
