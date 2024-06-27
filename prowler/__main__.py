@@ -36,8 +36,7 @@ from prowler.lib.check.custom_checks_metadata import (
 )
 from prowler.lib.cli.parser import ProwlerArgumentParser
 from prowler.lib.logger import logger, set_logging_config
-from prowler.lib.outputs.common import generate_output
-from prowler.lib.outputs.common_models import CSV
+from prowler.lib.outputs.common_models import CSV, Finding
 from prowler.lib.outputs.compliance.compliance import display_compliance_table
 from prowler.lib.outputs.html.html import add_html_footer, fill_html_overview_statistics
 from prowler.lib.outputs.json.json import close_json
@@ -285,7 +284,9 @@ def prowler():
     finding_output = []
     for finding in findings:
         finding_output.append(
-            generate_output(global_provider, finding, global_provider.output_options)
+            Finding.generate_output(
+                global_provider, finding, global_provider.output_options
+            )
         )
 
     if args.output_formats:

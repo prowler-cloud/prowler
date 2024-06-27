@@ -4,7 +4,7 @@ from colorama import Fore, Style
 
 from prowler.config.config import available_compliance_frameworks, orange_color
 from prowler.lib.logger import logger
-from prowler.lib.outputs.common import generate_output
+from prowler.lib.outputs.common_models import Finding
 from prowler.lib.outputs.compliance.compliance import (
     add_manual_controls,
     fill_compliance,
@@ -109,7 +109,7 @@ def report(check_findings, provider):
                                 file_descriptors["json-asff"].write(",")
 
                         # Common Output Data
-                        finding_output = generate_output(
+                        finding_output = Finding.generate_output(
                             provider, finding, output_options
                         )
 
