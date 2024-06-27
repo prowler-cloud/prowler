@@ -1,7 +1,9 @@
+from csv import DictWriter
+
 from prowler.config.config import timestamp
 from prowler.lib.logger import logger
 from prowler.lib.outputs.compliance.models import Check_Output_CSV_AWS_Well_Architected
-from prowler.lib.outputs.csv.csv import generate_csv_fields, write_csv
+from prowler.lib.outputs.csv.csv import generate_csv_fields
 from prowler.lib.utils.utils import outputs_unix_timestamp
 
 
@@ -15,6 +17,12 @@ def write_compliance_row_aws_well_architected_framework(
         if compliance.Provider != "":
             compliance_output += "_" + compliance.Provider
         compliance_output = compliance_output.lower().replace("-", "_")
+        csv_header = generate_csv_fields(Check_Output_CSV_AWS_Well_Architected)
+        csv_writer = DictWriter(
+            file_descriptors[compliance_output],
+            fieldnames=csv_header,
+            delimiter=";",
+        )
         for requirement in compliance.Requirements:
             requirement_description = requirement.Description
             requirement_id = requirement.Id
@@ -45,11 +53,7 @@ def write_compliance_row_aws_well_architected_framework(
                     Muted=finding.muted,
                 )
 
-                write_csv(
-                    file_descriptors[compliance_output],
-                    generate_csv_fields(Check_Output_CSV_AWS_Well_Architected),
-                    compliance_row,
-                )
+                csv_writer.writerow(compliance_row.__dict__)
     except Exception as error:
         logger.error(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

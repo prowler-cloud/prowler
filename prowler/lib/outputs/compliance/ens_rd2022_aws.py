@@ -1,9 +1,11 @@
+from csv import DictWriter
+
 from colorama import Fore, Style
 from tabulate import tabulate
 
 from prowler.config.config import orange_color, timestamp
 from prowler.lib.outputs.compliance.models import Check_Output_CSV_ENS_RD2022
-from prowler.lib.outputs.csv.csv import generate_csv_fields, write_csv
+from prowler.lib.outputs.csv.csv import generate_csv_fields
 from prowler.lib.utils.utils import outputs_unix_timestamp
 
 
@@ -11,6 +13,12 @@ def write_compliance_row_ens_rd2022_aws(
     file_descriptors, finding, compliance, output_options, provider
 ):
     compliance_output = "ens_rd2022_aws"
+    csv_header = generate_csv_fields(Check_Output_CSV_ENS_RD2022)
+    csv_writer = DictWriter(
+        file_descriptors[compliance_output],
+        fieldnames=csv_header,
+        delimiter=";",
+    )
     for requirement in compliance.Requirements:
         requirement_description = requirement.Description
         requirement_id = requirement.Id
@@ -41,11 +49,7 @@ def write_compliance_row_ens_rd2022_aws(
                 Muted=finding.muted,
             )
 
-            write_csv(
-                file_descriptors[compliance_output],
-                generate_csv_fields(Check_Output_CSV_ENS_RD2022),
-                compliance_row,
-            )
+            csv_writer.writerow(compliance_row.__dict__)
 
 
 def get_ens_rd2022_aws_table(

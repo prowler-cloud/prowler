@@ -1,9 +1,11 @@
+from csv import DictWriter
+
 from colorama import Fore, Style
 from tabulate import tabulate
 
 from prowler.config.config import orange_color, timestamp
 from prowler.lib.outputs.compliance.models import Check_Output_CSV_Generic_Compliance
-from prowler.lib.outputs.csv.csv import generate_csv_fields, write_csv
+from prowler.lib.outputs.csv.csv import generate_csv_fields
 from prowler.lib.utils.utils import outputs_unix_timestamp
 
 
@@ -17,6 +19,12 @@ def write_compliance_row_generic(
         compliance_output += "_" + compliance.Provider
 
     compliance_output = compliance_output.lower().replace("-", "_")
+    csv_header = generate_csv_fields(Check_Output_CSV_Generic_Compliance)
+    csv_writer = DictWriter(
+        file_descriptors[compliance_output],
+        fieldnames=csv_header,
+        delimiter=";",
+    )
     for requirement in compliance.Requirements:
         requirement_description = requirement.Description
         requirement_id = requirement.Id
@@ -42,11 +50,7 @@ def write_compliance_row_generic(
                 CheckId=finding.check_metadata.CheckID,
                 Muted=finding.muted,
             )
-            write_csv(
-                file_descriptors[compliance_output],
-                generate_csv_fields(Check_Output_CSV_Generic_Compliance),
-                compliance_row,
-            )
+            csv_writer.writerow(compliance_row.__dict__)
 
 
 def get_generic_compliance_table(
