@@ -14,12 +14,12 @@ class elasticache_cluster_multi_az_enabled(Check):
             report.resource_arn = repl_group.arn
             report.status = "FAIL"
             report.status_extended = (
-                f"Elasticache Cluster {repl_group.id} does not have multi az enabled."
+                f"Elasticache Cluster {repl_group.id} does not have Multi-AZ enabled."
             )
             if repl_group.multi_az == "enabled":
                 report.status = "PASS"
                 report.status_extended = (
-                    f"Elasticache Cluster {repl_group.id} has multi az enabled."
+                    f"Elasticache Cluster {repl_group.id} has Multi-AZ enabled."
                 )
 
             findings.append(report)

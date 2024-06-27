@@ -13,10 +13,10 @@
   "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/elasticache-controls.html#elasticache-5",
   "Remediation": {
     "Code": {
-      "CLI": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/ElastiCache/in-transit-and-at-rest-encryption.html#",
-      "NativeIaC": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/ElastiCache/in-transit-and-at-rest-encryption.html#",
+      "CLI": "https://docs.prowler.com/checks/aws/general-policies/general_10/",
+      "NativeIaC": "https://docs.prowler.com/checks/aws/general-policies/general_10/",
       "Other": "",
-      "Terraform": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/ElastiCache/in-transit-and-at-rest-encryption.html#"
+      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/general_10/"
     },
     "Recommendation": {
       "Text": "Ensure your Elasticache replication groups have in transit encryption enabled.",
