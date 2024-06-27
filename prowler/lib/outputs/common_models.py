@@ -89,6 +89,18 @@ class Finding(BaseModel):
 
     @classmethod
     def generate_output(cls, provider, finding, output_options) -> "Finding":
+        # add docstring to explain the method
+        """generates the output for a finding based on the provider and output options
+
+        Args:
+            provider (Provider): the provider object
+            finding (Finding): the finding object
+            output_options (OutputOptions): the output options object
+
+        Returns:
+            finding_output (Finding): the finding output object
+
+        """
         provider_data_mapping = get_provider_data_mapping(provider)
         common_finding_data = fill_common_finding_data(
             finding, output_options.unix_timestamp
@@ -104,8 +116,16 @@ class Finding(BaseModel):
 
     @classmethod
     def generate_provider_output(cls, provider, finding, output_data) -> "Finding":
-        """
-        generate_provider_output returns the provider's Finding output model
+        """generates the provider specific output for a finding
+
+        Args:
+            provider (Provider): the provider object
+            finding (Finding): the finding object
+            output_data (dict): the output data
+
+        Returns:
+            finding_output (Finding): the finding output object
+
         """
         # TODO: we have to standardize this between the above mapping and the provider.get_output_mapping()
         try:
