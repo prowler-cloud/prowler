@@ -4,7 +4,7 @@ from prowler.providers.aws.services.elasticache.elasticache_client import (
 )
 
 
-class elasticache_replication_group_encrypted_in_transit(Check):
+class elasticache_redis_cluster_in_transit_encryption_enabled(Check):
     def execute(self):
         findings = []
         for repl_group in elasticache_client.replication_groups.values():
@@ -13,10 +13,10 @@ class elasticache_replication_group_encrypted_in_transit(Check):
             report.resource_id = repl_group.id
             report.resource_arn = repl_group.arn
             report.status = "FAIL"
-            report.status_extended = f"Elasticache Replication Group {repl_group.id} does not have in transit encryption enabled."
+            report.status_extended = f"Elasticache Redis cache cluster {repl_group.id} does not have in transit encryption enabled."
             if repl_group.transit_encryption:
                 report.status = "PASS"
-                report.status_extended = f"Elasticache Replication Group {repl_group.id} has in transit encryption enabled."
+                report.status_extended = f"Elasticache Redis cache cluster {repl_group.id} has in transit encryption enabled."
 
             findings.append(report)
 

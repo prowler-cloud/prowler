@@ -9,6 +9,7 @@ from tests.providers.aws.services.elasticache.elasticache_service_test import (
     ELASTICACHE_CLUSTER_ARN,
     ELASTICACHE_CLUSTER_NAME,
     ELASTICACHE_CLUSTER_TAGS,
+    ELASTICACHE_ENGINE,
     SUBNET_1,
     SUBNET_2,
     SUBNET_GROUP_NAME,
@@ -67,6 +68,7 @@ class Test_elasticache_cluster_uses_public_subnet:
             arn=ELASTICACHE_CLUSTER_ARN,
             name=ELASTICACHE_CLUSTER_NAME,
             id=ELASTICACHE_CLUSTER_NAME,
+            engine=ELASTICACHE_ENGINE,
             region=AWS_REGION_US_EAST_1,
             cache_subnet_group_id=SUBNET_GROUP_NAME,
             tags=ELASTICACHE_CLUSTER_TAGS,
@@ -99,7 +101,7 @@ class Test_elasticache_cluster_uses_public_subnet:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Cluster {ELASTICACHE_CLUSTER_NAME} is not using public subnets."
+                == f"Elasticache Redis Node {ELASTICACHE_CLUSTER_NAME} is not using public subnets."
             )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == ELASTICACHE_CLUSTER_NAME
@@ -115,6 +117,7 @@ class Test_elasticache_cluster_uses_public_subnet:
             arn=ELASTICACHE_CLUSTER_ARN,
             name=ELASTICACHE_CLUSTER_NAME,
             id=ELASTICACHE_CLUSTER_NAME,
+            engine=ELASTICACHE_ENGINE,
             region=AWS_REGION_US_EAST_1,
             cache_subnet_group_id=SUBNET_GROUP_NAME,
             subnets=[SUBNET_1, SUBNET_2],
@@ -176,7 +179,7 @@ class Test_elasticache_cluster_uses_public_subnet:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Cluster {ELASTICACHE_CLUSTER_NAME} is not using public subnets."
+                == f"Elasticache Redis Node {ELASTICACHE_CLUSTER_NAME} is not using public subnets."
             )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == ELASTICACHE_CLUSTER_NAME
@@ -192,6 +195,7 @@ class Test_elasticache_cluster_uses_public_subnet:
             arn=ELASTICACHE_CLUSTER_ARN,
             name=ELASTICACHE_CLUSTER_NAME,
             id=ELASTICACHE_CLUSTER_NAME,
+            engine=ELASTICACHE_ENGINE,
             region=AWS_REGION_US_EAST_1,
             cache_subnet_group_id=SUBNET_GROUP_NAME,
             subnets=[SUBNET_1, SUBNET_2],
@@ -253,7 +257,7 @@ class Test_elasticache_cluster_uses_public_subnet:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Cluster {ELASTICACHE_CLUSTER_NAME} is using subnet-1, subnet-2 public subnets."
+                == f"Elasticache Redis Node {ELASTICACHE_CLUSTER_NAME} is using subnet-1, subnet-2 public subnets."
             )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == ELASTICACHE_CLUSTER_NAME

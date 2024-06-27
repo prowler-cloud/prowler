@@ -25,7 +25,7 @@ REPLICATION_GROUP_MULTI_AZ = "enabled"
 make_api_call = botocore.client.BaseClient._make_api_call
 
 
-class Test_elasticache_cluster_backup_enabled:
+class Test_elasticache_redis_cluster_backup_enabled:
     @mock_aws
     def test_elasticache_no_replication_groups(self):
 
@@ -40,11 +40,11 @@ class Test_elasticache_cluster_backup_enabled:
             "prowler.providers.aws.services.elasticache.elasticache_service.ElastiCache",
             new=elasticache_client,
         ):
-            from prowler.providers.aws.services.elasticache.elasticache_cluster_backup_enabled.elasticache_cluster_backup_enabled import (
-                elasticache_cluster_backup_enabled,
+            from prowler.providers.aws.services.elasticache.elasticache_redis_cluster_backup_enabled.elasticache_redis_cluster_backup_enabled import (
+                elasticache_redis_cluster_backup_enabled,
             )
 
-            check = elasticache_cluster_backup_enabled()
+            check = elasticache_redis_cluster_backup_enabled()
             result = check.execute()
             assert len(result) == 0
 
@@ -72,24 +72,24 @@ class Test_elasticache_cluster_backup_enabled:
             "prowler.providers.aws.services.elasticache.elasticache_service.ElastiCache",
             new=elasticache_client,
         ):
-            from prowler.providers.aws.services.elasticache.elasticache_cluster_backup_enabled.elasticache_cluster_backup_enabled import (
-                elasticache_cluster_backup_enabled,
+            from prowler.providers.aws.services.elasticache.elasticache_redis_cluster_backup_enabled.elasticache_redis_cluster_backup_enabled import (
+                elasticache_redis_cluster_backup_enabled,
             )
 
-            check = elasticache_cluster_backup_enabled()
+            check = elasticache_redis_cluster_backup_enabled()
             result = check.execute()
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Elasticache Cluster {REPLICATION_GROUP_ID} does not have automated snapshot backups enabled."
+                == f"Elasticache Redis cache cluster {REPLICATION_GROUP_ID} does not have automated snapshot backups enabled."
             )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == REPLICATION_GROUP_ID
             assert result[0].resource_arn == REPLICATION_GROUP_ARN
 
-    def test_elasticache_cluster_backup_enabled(self):
+    def test_elasticache_redis_cluster_backup_enabled(self):
         # Mock ElastiCache Service
         elasticache_client = MagicMock
         elasticache_client.replication_groups = {}
@@ -114,24 +114,24 @@ class Test_elasticache_cluster_backup_enabled:
             "prowler.providers.aws.services.elasticache.elasticache_service.ElastiCache",
             new=elasticache_client,
         ):
-            from prowler.providers.aws.services.elasticache.elasticache_cluster_backup_enabled.elasticache_cluster_backup_enabled import (
-                elasticache_cluster_backup_enabled,
+            from prowler.providers.aws.services.elasticache.elasticache_redis_cluster_backup_enabled.elasticache_redis_cluster_backup_enabled import (
+                elasticache_redis_cluster_backup_enabled,
             )
 
-            check = elasticache_cluster_backup_enabled()
+            check = elasticache_redis_cluster_backup_enabled()
             result = check.execute()
 
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Elasticache Cluster {REPLICATION_GROUP_ID} has automated snapshot backups enabled with retention period 9 days."
+                == f"Elasticache Redis cache cluster {REPLICATION_GROUP_ID} has automated snapshot backups enabled with retention period 9 days."
             )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == REPLICATION_GROUP_ID
             assert result[0].resource_arn == REPLICATION_GROUP_ARN
 
-    def test_elasticache_cluster_backup_enabled_modified_retention(self):
+    def test_elasticache_redis_cluster_backup_enabled_modified_retention(self):
         # Mock ElastiCache Service
         elasticache_client = MagicMock
         elasticache_client.replication_groups = {}
@@ -155,18 +155,18 @@ class Test_elasticache_cluster_backup_enabled:
             "prowler.providers.aws.services.elasticache.elasticache_service.ElastiCache",
             new=elasticache_client,
         ):
-            from prowler.providers.aws.services.elasticache.elasticache_cluster_backup_enabled.elasticache_cluster_backup_enabled import (
-                elasticache_cluster_backup_enabled,
+            from prowler.providers.aws.services.elasticache.elasticache_redis_cluster_backup_enabled.elasticache_redis_cluster_backup_enabled import (
+                elasticache_redis_cluster_backup_enabled,
             )
 
-            check = elasticache_cluster_backup_enabled()
+            check = elasticache_redis_cluster_backup_enabled()
             result = check.execute()
 
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Elasticache Cluster {REPLICATION_GROUP_ID} has automated snapshot backups enabled with retention period 3 days."
+                == f"Elasticache Redis cache cluster {REPLICATION_GROUP_ID} has automated snapshot backups enabled with retention period 3 days."
             )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == REPLICATION_GROUP_ID

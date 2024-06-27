@@ -25,7 +25,7 @@ REPLICATION_GROUP_MULTI_AZ = "enabled"
 make_api_call = botocore.client.BaseClient._make_api_call
 
 
-class Test_elasticache_replication_group_in_transit_encryption_enabled:
+class Test_elasticache_replication_group_multi_az_enabled:
     @mock_aws
     def test_elasticache_no_replication_groups(self):
 
@@ -40,15 +40,15 @@ class Test_elasticache_replication_group_in_transit_encryption_enabled:
             "prowler.providers.aws.services.elasticache.elasticache_service.ElastiCache",
             new=elasticache_service,
         ):
-            from prowler.providers.aws.services.elasticache.elasticache_replication_group_encrypted_in_transit.elasticache_replication_group_encrypted_in_transit import (
-                elasticache_replication_group_encrypted_in_transit,
+            from prowler.providers.aws.services.elasticache.elasticache_redis_cluster_multi_az_enabled.elasticache_redis_cluster_multi_az_enabled import (
+                elasticache_redis_cluster_multi_az_enabled,
             )
 
-            check = elasticache_replication_group_encrypted_in_transit()
+            check = elasticache_redis_cluster_multi_az_enabled()
             result = check.execute()
             assert len(result) == 0
 
-    def test_elasticache_replication_groups_in_transit_encryption_disabled(self):
+    def test_elasticache_cluster_multi_az_disabled(self):
         # Mock ElastiCache Service
         elasticache_service = MagicMock
         elasticache_service.replication_groups = {}
@@ -60,9 +60,9 @@ class Test_elasticache_replication_group_in_transit_encryption_enabled:
                 region=AWS_REGION_US_EAST_1,
                 status=REPLICATION_GROUP_STATUS,
                 snapshot_retention=REPLICATION_GROUP_SNAPSHOT_RETENTION,
-                encrypted=REPLICATION_GROUP_ENCRYPTION,
+                encrypted=False,
                 transit_encryption=False,
-                multi_az=REPLICATION_GROUP_MULTI_AZ,
+                multi_az="disabled",
             )
         )
 
@@ -73,24 +73,24 @@ class Test_elasticache_replication_group_in_transit_encryption_enabled:
             "prowler.providers.aws.services.elasticache.elasticache_service.ElastiCache",
             new=elasticache_service,
         ):
-            from prowler.providers.aws.services.elasticache.elasticache_replication_group_encrypted_in_transit.elasticache_replication_group_encrypted_in_transit import (
-                elasticache_replication_group_encrypted_in_transit,
+            from prowler.providers.aws.services.elasticache.elasticache_redis_cluster_multi_az_enabled.elasticache_redis_cluster_multi_az_enabled import (
+                elasticache_redis_cluster_multi_az_enabled,
             )
 
-            check = elasticache_replication_group_encrypted_in_transit()
+            check = elasticache_redis_cluster_multi_az_enabled()
             result = check.execute()
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Elasticache Replication Group {REPLICATION_GROUP_ID} does not have in transit encryption enabled."
+                == f"Elasticache Redis cache cluster {REPLICATION_GROUP_ID} does not have Multi-AZ enabled."
             )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == REPLICATION_GROUP_ID
             assert result[0].resource_arn == REPLICATION_GROUP_ARN
 
-    def test_elasticache_replication_groups_in_transit_encryption_enabled(self):
+    def test_elasticache_redis_cluster_multi_az_enabled(self):
         # Mock ElastiCache Service
         elasticache_service = MagicMock
         elasticache_service.replication_groups = {}
@@ -115,18 +115,18 @@ class Test_elasticache_replication_group_in_transit_encryption_enabled:
             "prowler.providers.aws.services.elasticache.elasticache_service.ElastiCache",
             new=elasticache_service,
         ):
-            from prowler.providers.aws.services.elasticache.elasticache_replication_group_encrypted_in_transit.elasticache_replication_group_encrypted_in_transit import (
-                elasticache_replication_group_encrypted_in_transit,
+            from prowler.providers.aws.services.elasticache.elasticache_redis_cluster_multi_az_enabled.elasticache_redis_cluster_multi_az_enabled import (
+                elasticache_redis_cluster_multi_az_enabled,
             )
 
-            check = elasticache_replication_group_encrypted_in_transit()
+            check = elasticache_redis_cluster_multi_az_enabled()
             result = check.execute()
 
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Elasticache Replication Group {REPLICATION_GROUP_ID} has in transit encryption enabled."
+                == f"Elasticache Redis cache cluster {REPLICATION_GROUP_ID} has Multi-AZ enabled."
             )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == REPLICATION_GROUP_ID
