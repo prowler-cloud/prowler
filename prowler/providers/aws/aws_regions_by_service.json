@@ -757,6 +757,18 @@
         "aws-us-gov": []
       }
     },
+    "apptest": {
+      "regions": {
+        "aws": [
+          "ap-southeast-2",
+          "eu-central-1",
+          "sa-east-1",
+          "us-east-1"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
     "aps": {
       "regions": {
         "aws": [
