@@ -13,10 +13,10 @@
   "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/networkfirewall-controls.html#networkfirewall-9",
   "Remediation": {
     "Code": {
-      "CLI": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/NetworkFirewall/enable-deletion-protection.html#",
-      "NativeIaC": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/NetworkFirewall/enable-deletion-protection.html#",
+      "CLI": "aws network-firewall update-firewall-delete-protection --region <value> --firewall-name <value> --delete-protection",
+      "NativeIaC": "",
       "Other": "",
-      "Terraform": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/NetworkFirewall/enable-deletion-protection.html#"
+      "Terraform": ""
     },
     "Recommendation": {
       "Text": "Ensure that Deletion Protection safety feature is enabled for your Amazon VPC network firewalls.",
