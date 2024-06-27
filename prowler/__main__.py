@@ -37,7 +37,7 @@ from prowler.lib.check.custom_checks_metadata import (
 from prowler.lib.cli.parser import ProwlerArgumentParser
 from prowler.lib.logger import logger, set_logging_config
 from prowler.lib.outputs.compliance.compliance import display_compliance_table
-from prowler.lib.outputs.csv.csv import CSV
+from prowler.lib.outputs.csv.models import CSV
 from prowler.lib.outputs.html.html import add_html_footer, fill_html_overview_statistics
 from prowler.lib.outputs.json.json import close_json
 from prowler.lib.outputs.output import Finding

@@ -7,16 +7,16 @@ from prowler.lib.utils.utils import open_file
 
 
 class Output(ABC):
-    _data: list[object] = []
+    _data: list[Finding] = []
     _file_descriptor: TextIOWrapper = None
 
     def __init__(
         self,
-        finding: Finding,
+        findings: Finding,
         create_file_descriptor: bool = False,
         file_path: str = None,
     ) -> None:
-        self.transform(finding)
+        self.transform(self.transform(findings))
         if create_file_descriptor:
             self.create_file_descriptor(file_path)
 
@@ -33,7 +33,7 @@ class Output(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def write_to_file(self, file_descriptor: TextIOWrapper) -> None:
+    def batch_write_findings_to_file(self, file_descriptor: TextIOWrapper) -> None:
         raise NotImplementedError
 
     def create_file_descriptor(self, file_path) -> TextIOWrapper:
