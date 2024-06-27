@@ -5,7 +5,6 @@ from colorama import Fore, Style
 from prowler.config.config import available_compliance_frameworks, orange_color
 from prowler.lib.logger import logger
 from prowler.lib.outputs.common import generate_output
-from prowler.lib.outputs.common_models import CSV
 from prowler.lib.outputs.compliance.compliance import (
     add_manual_controls,
     fill_compliance,
@@ -127,9 +126,9 @@ def report(check_findings, provider):
                             fill_html(file_descriptors["html"], finding_output)
 
                         # CSV
-                        if "csv" in file_descriptors:
-                            csv_finding = CSV(finding_output)
-                            csv_finding.write_to_file(file_descriptors["csv"])
+                        # if "csv" in file_descriptors:
+                        #     csv_finding = CSV(finding_output)
+                        #     csv_finding.write_to_file(file_descriptors["csv"])
 
         else:  # No service resources in the whole account
             color = set_report_color("MANUAL")

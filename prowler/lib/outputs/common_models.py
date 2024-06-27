@@ -83,7 +83,7 @@ class Finding(BaseModel):
 
 
 class Output(ABC):
-    _data: object
+    _data: list[object] = []
 
     def __init__(self, finding: Finding) -> None:
         self.transform(finding)
@@ -101,16 +101,18 @@ class Output(ABC):
 
 
 class CSV(Output):
-    def transform(self, finding: Finding) -> None:
-        finding_dict = copy.deepcopy(finding.dict())
-        finding_dict["compliance"] = unroll_dict(finding.compliance)
-        finding_dict["account_tags"] = unroll_list(finding.account_tags)
-        self._data = finding_dict
+    def transform(self, findings: list[Finding]) -> None:
+        for finding in findings:
+            finding_dict = copy.deepcopy(finding.dict())
+            finding_dict["compliance"] = unroll_dict(finding.compliance)
+            finding_dict["account_tags"] = unroll_list(finding.account_tags)
+            self._data.append(finding_dict)
 
     def write_to_file(self, file_descriptor) -> None:
         csv_writer = DictWriter(
             file_descriptor,
-            fieldnames=self._data.keys(),
+            fieldnames=self._data[0].keys(),
             delimiter=";",
         )
-        csv_writer.writerow(self._data)
+        for finding in self._data:
+            csv_writer.writerow(finding)

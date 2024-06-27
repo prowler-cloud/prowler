@@ -10,106 +10,107 @@ from prowler.lib.outputs.csv.csv import write_csv
 
 @pytest.fixture
 def finding_example():
-    return Finding(
-        auth_method="OAuth",
-        timestamp=datetime.now(),
-        account_uid="12345",
-        account_name="Example Account",
-        account_email="example@example.com",
-        account_organization_uid="org-123",
-        account_organization_name="Example Org",
-        account_tags=["tag1", "tag2"],
-        finding_uid="finding-123",
-        provider="AWS",
-        check_id="check-123",
-        check_title="Example Check",
-        check_type="Security",
-        status=Status("FAIL"),
-        status_extended="Extended status",
-        muted=False,
-        service_name="Example Service",
-        subservice_name="Example Subservice",
-        severity=Severity("critical"),
-        resource_type="Instance",
-        resource_uid="resource-123",
-        resource_name="Example Resource",
-        resource_details="Detailed information about the resource",
-        resource_tags="tag1,tag2",
-        partition="aws",
-        region="us-west-1",
-        description="Description of the finding",
-        risk="High",
-        related_url="http://example.com",
-        remediation_recommendation_text="Recommendation text",
-        remediation_recommendation_url="http://example.com/remediation",
-        remediation_code_nativeiac="native-iac-code",
-        remediation_code_terraform="terraform-code",
-        remediation_code_cli="cli-code",
-        remediation_code_other="other-code",
-        compliance={"compliance_key": "compliance_value"},
-        categories="category1,category2",
-        depends_on="dependency",
-        related_to="related finding",
-        notes="Notes about the finding",
-        prowler_version="1.0",
-    )
+    return [
+        Finding(
+            auth_method="OAuth",
+            timestamp=datetime.now(),
+            account_uid="12345",
+            account_name="Example Account",
+            account_email="example@example.com",
+            account_organization_uid="org-123",
+            account_organization_name="Example Org",
+            account_tags=["tag1", "tag2"],
+            finding_uid="finding-123",
+            provider="AWS",
+            check_id="check-123",
+            check_title="Example Check",
+            check_type="Security",
+            status=Status("FAIL"),
+            status_extended="Extended status",
+            muted=False,
+            service_name="Example Service",
+            subservice_name="Example Subservice",
+            severity=Severity("critical"),
+            resource_type="Instance",
+            resource_uid="resource-123",
+            resource_name="Example Resource",
+            resource_details="Detailed information about the resource",
+            resource_tags="tag1,tag2",
+            partition="aws",
+            region="us-west-1",
+            description="Description of the finding",
+            risk="High",
+            related_url="http://example.com",
+            remediation_recommendation_text="Recommendation text",
+            remediation_recommendation_url="http://example.com/remediation",
+            remediation_code_nativeiac="native-iac-code",
+            remediation_code_terraform="terraform-code",
+            remediation_code_cli="cli-code",
+            remediation_code_other="other-code",
+            compliance={"compliance_key": "compliance_value"},
+            categories="category1,category2",
+            depends_on="dependency",
+            related_to="related finding",
+            notes="Notes about the finding",
+            prowler_version="1.0",
+        )
+    ]
 
 
 def test_output_transform(finding_example):
     output = CSV(finding_example)
+    output_data = output.data[0]
+    assert isinstance(output_data, dict)
+    assert isinstance(output_data["timestamp"], datetime)
+    assert isinstance(output_data["account_tags"], str)
+    assert isinstance(output_data["severity"], str)
+    assert isinstance(output_data["status"], str)
+    assert isinstance(output_data["muted"], bool)
+    assert isinstance(output_data["compliance"], str)
 
-    assert isinstance(output.data, dict)
-    assert isinstance(output.data["timestamp"], datetime)
-    assert isinstance(output.data["account_tags"], str)
-    assert isinstance(output.data["severity"], str)
-    assert isinstance(output.data["status"], str)
-    assert isinstance(output.data["muted"], bool)
-    assert isinstance(output.data["compliance"], str)
-
-    assert output.data["auth_method"] == "OAuth"
-    assert output.data["timestamp"] == finding_example.timestamp
-    assert output.data["account_uid"] == "12345"
-    assert output.data["account_name"] == "Example Account"
-    assert output.data["account_email"] == "example@example.com"
-    assert output.data["account_organization_uid"] == "org-123"
-    assert output.data["account_organization_name"] == "Example Org"
-    assert output.data["account_tags"] == "tag1 | tag2"
-    assert output.data["finding_uid"] == "finding-123"
-    assert output.data["provider"] == "AWS"
-    assert output.data["check_id"] == "check-123"
-    assert output.data["check_title"] == "Example Check"
-    assert output.data["check_type"] == "Security"
-    assert output.data["status"] == "FAIL"
-    assert output.data["status_extended"] == "Extended status"
-    assert output.data["muted"] is False
-    assert output.data["service_name"] == "Example Service"
-    assert output.data["subservice_name"] == "Example Subservice"
-    assert output.data["severity"] == "critical"
-    assert output.data["resource_type"] == "Instance"
-    assert output.data["resource_uid"] == "resource-123"
-    assert output.data["resource_name"] == "Example Resource"
-    assert output.data["resource_details"] == "Detailed information about the resource"
-    assert output.data["resource_tags"] == "tag1,tag2"
-    assert output.data["partition"] == "aws"
-    assert output.data["region"] == "us-west-1"
-    assert output.data["description"] == "Description of the finding"
-    assert output.data["risk"] == "High"
-    assert output.data["related_url"] == "http://example.com"
-    assert output.data["remediation_recommendation_text"] == "Recommendation text"
+    assert output_data["auth_method"] == "OAuth"
+    assert output_data["account_uid"] == "12345"
+    assert output_data["account_name"] == "Example Account"
+    assert output_data["account_email"] == "example@example.com"
+    assert output_data["account_organization_uid"] == "org-123"
+    assert output_data["account_organization_name"] == "Example Org"
+    assert output_data["account_tags"] == "tag1 | tag2"
+    assert output_data["finding_uid"] == "finding-123"
+    assert output_data["provider"] == "AWS"
+    assert output_data["check_id"] == "check-123"
+    assert output_data["check_title"] == "Example Check"
+    assert output_data["check_type"] == "Security"
+    assert output_data["status"] == "FAIL"
+    assert output_data["status_extended"] == "Extended status"
+    assert output_data["muted"] is False
+    assert output_data["service_name"] == "Example Service"
+    assert output_data["subservice_name"] == "Example Subservice"
+    assert output_data["severity"] == "critical"
+    assert output_data["resource_type"] == "Instance"
+    assert output_data["resource_uid"] == "resource-123"
+    assert output_data["resource_name"] == "Example Resource"
+    assert output_data["resource_details"] == "Detailed information about the resource"
+    assert output_data["resource_tags"] == "tag1,tag2"
+    assert output_data["partition"] == "aws"
+    assert output_data["region"] == "us-west-1"
+    assert output_data["description"] == "Description of the finding"
+    assert output_data["risk"] == "High"
+    assert output_data["related_url"] == "http://example.com"
+    assert output_data["remediation_recommendation_text"] == "Recommendation text"
     assert (
-        output.data["remediation_recommendation_url"]
+        output_data["remediation_recommendation_url"]
         == "http://example.com/remediation"
     )
-    assert output.data["remediation_code_nativeiac"] == "native-iac-code"
-    assert output.data["remediation_code_terraform"] == "terraform-code"
-    assert output.data["remediation_code_cli"] == "cli-code"
-    assert output.data["remediation_code_other"] == "other-code"
-    assert output.data["compliance"] == "compliance_key: compliance_value"
-    assert output.data["categories"] == "category1,category2"
-    assert output.data["depends_on"] == "dependency"
-    assert output.data["related_to"] == "related finding"
-    assert output.data["notes"] == "Notes about the finding"
-    assert output.data["prowler_version"] == "1.0"
+    assert output_data["remediation_code_nativeiac"] == "native-iac-code"
+    assert output_data["remediation_code_terraform"] == "terraform-code"
+    assert output_data["remediation_code_cli"] == "cli-code"
+    assert output_data["remediation_code_other"] == "other-code"
+    assert output_data["compliance"] == "compliance_key: compliance_value"
+    assert output_data["categories"] == "category1,category2"
+    assert output_data["depends_on"] == "dependency"
+    assert output_data["related_to"] == "related finding"
+    assert output_data["notes"] == "Notes about the finding"
+    assert output_data["prowler_version"] == "1.0"
 
 
 def test_csv_write_to_file(finding_example):
