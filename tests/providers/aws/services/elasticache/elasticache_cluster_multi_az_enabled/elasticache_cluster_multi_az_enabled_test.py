@@ -84,7 +84,7 @@ class Test_elasticache_replication_group_multi_az_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Elasticache Cluster {REPLICATION_GROUP_ID} does not have multi az enabled."
+                == f"Elasticache Cluster {REPLICATION_GROUP_ID} does not have Multi-AZ enabled."
             )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == REPLICATION_GROUP_ID
@@ -126,7 +126,7 @@ class Test_elasticache_replication_group_multi_az_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Elasticache Cluster {REPLICATION_GROUP_ID} has multi az enabled."
+                == f"Elasticache Cluster {REPLICATION_GROUP_ID} has Multi-AZ enabled."
             )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == REPLICATION_GROUP_ID
