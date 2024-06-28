@@ -4,9 +4,10 @@ from unittest.mock import Mock
 
 import pytest
 
-from prowler.lib.outputs.csv.csv import CSV, write_csv
-from prowler.lib.outputs.finding import Severity, Status
-from prowler.lib.outputs.output import Finding, Output
+from prowler.lib.outputs.csv.csv import write_csv
+from prowler.lib.outputs.csv.models import CSV
+from prowler.lib.outputs.finding import Finding, Severity, Status
+from prowler.lib.outputs.output import Output
 
 
 class TestCSV:
@@ -116,12 +117,19 @@ class TestCSV:
     def test_csv_write_to_file(self):
         mock_file = StringIO()
         findings = [self.generate_finding()]
-        output = CSV(findings, create_file_descriptor=True, file_path=mock_file)
+
+        # Crear la instancia de CSV con mock_file como file descriptor
+        output = CSV(findings)
+        output._file_descriptor = (
+            mock_file  # Asignar StringIO como el descriptor de archivo
+        )
+
+        # Llamar a la función a testear
         output.batch_write_findings_to_file()
 
+        # Volver al inicio del StringIO y leer el contenido
         mock_file.seek(0)
         content = mock_file.read()
-
         assert "OAuth" in content
         assert "12345" in content
         assert "Example Account" in content
@@ -166,6 +174,12 @@ class TestCSV:
     def test_abstract_methods(finding_example):
         class DummyOutput(Output):
             def transform(self, finding: Finding):
+                pass
+
+            def write_to_file(self, file_descriptor):
+                raise NotImplementedError
+
+            def batch_write_findings_to_file(self):
                 pass
 
         dummy_output = DummyOutput(finding_example)

@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from io import TextIOWrapper
+from typing import List
 
 from prowler.lib.logger import logger
 from prowler.lib.outputs.finding import Finding
@@ -12,11 +13,11 @@ class Output(ABC):
 
     def __init__(
         self,
-        findings: Finding,
+        findings: List[Finding],
         create_file_descriptor: bool = False,
         file_path: str = None,
     ) -> None:
-        self.transform(self.transform(findings))
+        self.transform(findings)
         if create_file_descriptor:
             self.create_file_descriptor(file_path)
 
@@ -29,14 +30,14 @@ class Output(ABC):
         return self._file_descriptor
 
     @abstractmethod
-    def transform(self, finding: Finding):
+    def transform(self, findings: List[Finding]):
         raise NotImplementedError
 
     @abstractmethod
     def batch_write_findings_to_file(self, file_descriptor: TextIOWrapper) -> None:
         raise NotImplementedError
 
-    def create_file_descriptor(self, file_path) -> TextIOWrapper:
+    def create_file_descriptor(self, file_path) -> None:
         try:
             mode = "a"
             self._file_descriptor = open_file(

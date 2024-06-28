@@ -2,7 +2,8 @@ import copy
 from csv import DictWriter
 
 from prowler.lib.logger import logger
-from prowler.lib.outputs.output import Finding, Output
+from prowler.lib.outputs.finding import Finding
+from prowler.lib.outputs.output import Output
 from prowler.lib.outputs.utils import unroll_dict, unroll_list
 
 

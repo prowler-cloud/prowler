@@ -9,10 +9,10 @@ from prowler.lib.outputs.compliance.compliance import (
     fill_compliance,
 )
 from prowler.lib.outputs.file_descriptors import fill_file_descriptors
+from prowler.lib.outputs.finding import Finding
 from prowler.lib.outputs.html.html import fill_html
 from prowler.lib.outputs.json_asff.json_asff import fill_json_asff
 from prowler.lib.outputs.json_ocsf.json_ocsf import fill_json_ocsf
-from prowler.lib.outputs.output import Finding
 
 
 def stdout_report(finding, color, verbose, status, fix):
@@ -109,7 +109,9 @@ def report(check_findings, provider):
                                 file_descriptors["json-asff"].write(",")
 
                         # Common Output Data
-                        finding_output = Finding(provider, finding, output_options)
+                        finding_output = Finding.generate_output(
+                            provider, finding, output_options
+                        )
 
                         # JSON
                         if "json-ocsf" in file_descriptors:

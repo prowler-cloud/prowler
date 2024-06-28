@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from prowler.config.config import prowler_version
-from prowler.lib.outputs.output import Finding
+from prowler.lib.outputs.finding import Finding
 from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER
 
 

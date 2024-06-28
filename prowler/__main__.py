@@ -38,9 +38,9 @@ from prowler.lib.cli.parser import ProwlerArgumentParser
 from prowler.lib.logger import logger, set_logging_config
 from prowler.lib.outputs.compliance.compliance import display_compliance_table
 from prowler.lib.outputs.csv.models import CSV
+from prowler.lib.outputs.finding import Finding
 from prowler.lib.outputs.html.html import add_html_footer, fill_html_overview_statistics
 from prowler.lib.outputs.json.json import close_json
-from prowler.lib.outputs.output import Finding
 from prowler.lib.outputs.outputs import extract_findings_statistics
 from prowler.lib.outputs.slack.slack import Slack
 from prowler.lib.outputs.summary_table import display_summary_table
@@ -288,7 +288,9 @@ def prowler():
     finding_outputs = []
     for finding in findings:
         finding_outputs.append(
-            Finding(global_provider, finding, global_provider.output_options)
+            Finding.generate_output(
+                global_provider, finding, global_provider.output_options
+            )
         )
 
     if args.output_formats:
@@ -302,6 +304,7 @@ def prowler():
                     create_file_descriptor=True,
                     file_path=filename,
                 )
+                # csv_finding.transform(finding_outputs)
                 # Write CSV Finding Object to file
                 csv_finding.batch_write_findings_to_file()
 
