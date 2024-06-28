@@ -95,7 +95,7 @@ class Logs(AWSService):
                     1000  # The threshold for number of events to return per log group.
                 )
                 self.__threading_call__(self.__get_log_events__)
-            self.__list_tags_for_resource__()
+            self.__threading_call__(self.__list_tags_for_resource__, self.log_groups)
 
     def __describe_metric_filters__(self, regional_client):
         logger.info("CloudWatch Logs - Describing metric filters...")
@@ -214,21 +214,19 @@ class Logs(AWSService):
             f"CloudWatch Logs - Finished retrieving log events in {regional_client.region}..."
         )
 
-    def __list_tags_for_resource__(self):
-        logger.info("CloudWatch Logs - List Tags...")
+    def __list_tags_for_resource__(self, log_group):
+        logger.info(f"CloudWatch Logs - List Tags for Log Group {log_group.name}...")
         try:
-            for log_group in self.log_groups:
-                try:
-                    regional_client = self.regional_clients[log_group.region]
-                    response = regional_client.list_tags_log_group(
-                        logGroupName=log_group.name
-                    )["tags"]
-                    log_group.tags = [response]
-                except ClientError as error:
-                    if error.response["Error"]["Code"] == "ResourceNotFoundException":
-                        log_group.tags = []
-
-                    continue
+            regional_client = self.regional_clients[log_group.region]
+            response = regional_client.list_tags_for_resource(
+                resourceArn=log_group.arn
+            )["tags"]
+            log_group.tags = [response]
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "ResourceNotFoundException":
+                logger.warning(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
