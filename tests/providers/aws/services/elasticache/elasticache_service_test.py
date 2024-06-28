@@ -21,6 +21,7 @@ SUBNET_2 = "subnet-2"
 ELASTICACHE_CLUSTER_NAME = "test-cluster"
 ELASTICACHE_CLUSTER_ARN = f"arn:aws:elasticache:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:{ELASTICACHE_CLUSTER_NAME}"
 ELASTICACHE_ENGINE = "redis"
+ELASTICACHE_ENGINE_MEMCACHED = "memcached"
 
 ELASTICACHE_CLUSTER_TAGS = [
     {"Key": "environment", "Value": "test"},
@@ -33,6 +34,10 @@ REPLICATION_GROUP_SNAPSHOT_RETENTION = "0"
 REPLICATION_GROUP_ENCRYPTION = True
 REPLICATION_GROUP_TRANSIT_ENCRYPTION = True
 REPLICATION_GROUP_MULTI_AZ = "enabled"
+REPLICATION_GROUP_TAGS = [
+    {"Key": "environment", "Value": "test"},
+]
+
 
 # Mocking Access Analyzer Calls
 make_api_call = botocore.client.BaseClient._make_api_call
@@ -181,5 +186,5 @@ class Test_ElastiCache_Service:
             encrypted=REPLICATION_GROUP_ENCRYPTION,
             transit_encryption=REPLICATION_GROUP_TRANSIT_ENCRYPTION,
             multi_az=REPLICATION_GROUP_MULTI_AZ,
-            tags=ELASTICACHE_CLUSTER_TAGS,
+            tags=REPLICATION_GROUP_TAGS,
         )

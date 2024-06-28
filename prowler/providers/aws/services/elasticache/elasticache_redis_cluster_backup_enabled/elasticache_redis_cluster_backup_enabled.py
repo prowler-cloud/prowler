@@ -12,6 +12,7 @@ class elasticache_redis_cluster_backup_enabled(Check):
             report.region = repl_group.region
             report.resource_id = repl_group.id
             report.resource_arn = repl_group.arn
+            report.resource_tags = repl_group.tags
             report.status = "FAIL"
             report.status_extended = f"Elasticache Redis cache cluster {repl_group.id} does not have automated snapshot backups enabled."
             if repl_group.snapshot_retention > elasticache_client.audit_config.get(
