@@ -63,9 +63,6 @@ old_config_aws = {
 }
 
 config_aws = {
-    "mute_non_default_regions": False,
-    "max_unused_access_keys_days": 45,
-    "max_console_access_days": 45,
     "shodan_api_key": None,
     "max_security_group_rules": 50,
     "max_ec2_instance_age_in_days": 180,
@@ -111,27 +108,6 @@ config_azure = {
 }
 
 config_gcp = {"shodan_api_key": None}
-
-config_kubernetes = {
-    "audit_log_maxbackup": 10,
-    "audit_log_maxsize": 100,
-    "audit_log_maxage": 30,
-    "apiserver_strong_ciphers": [
-        "TLS_AES_128_GCM_SHA256",
-        "TLS_AES_256_GCM_SHA384",
-        "TLS_CHACHA20_POLY1305_SHA256",
-    ],
-    "kubelet_strong_ciphers": [
-        "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
-        "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
-        "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305",
-        "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
-        "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305",
-        "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
-        "TLS_RSA_WITH_AES_256_GCM_SHA384",
-        "TLS_RSA_WITH_AES_128_GCM_SHA256",
-    ],
-}
 
 
 class Test_Config:

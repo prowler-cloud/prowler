@@ -1,25 +1,6 @@
 # AWS Configuration
 aws:
   # AWS Global Configuration
-  # aws.mute_non_default_regions --> Set to True to muted failed findings in non-default regions for AccessAnalyzer, GuardDuty, SecurityHub, DRS and Config
-  mute_non_default_regions: False
-  # If you want to mute failed findings only in specific regions, create a file with the following syntax and run it with `prowler aws -w mutelist.yaml`:
-  # Mutelist:
-  #  Accounts:
-  #   "*":
-  #     Checks:
-  #       "*":
-  #         Regions:
-  #           - "ap-southeast-1"
-  #           - "ap-southeast-2"
-  #         Resources:
-  #           - "*"
-
-  # AWS IAM Configuration
-  # aws.iam_user_accesskey_unused --> CIS recommends 45 days
-  max_unused_access_keys_days: 45
-  # aws.iam_user_console_access_unused --> CIS recommends 45 days
-  max_console_access_days: 45
 
   # AWS EC2 Configuration
   # aws.ec2_elastic_ip_shodan
