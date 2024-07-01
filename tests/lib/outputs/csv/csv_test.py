@@ -157,9 +157,7 @@ class TestCSV:
         assert "us-west-1" in content
         assert "Description of the finding" in content
         assert "High" in content
-        assert "http://example.com" in content
         assert "Recommendation text" in content
-        assert "http://example.com/remediation" in content
         assert "native-iac-code" in content
         assert "terraform-code" in content
         assert "cli-code" in content

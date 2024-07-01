@@ -40,6 +40,7 @@ class CSV(Output):
                     fieldnames=self._data[0].keys(),
                     delimiter=";",
                 )
+                csv_writer.writeheader()
                 for finding in self._data:
                     csv_writer.writerow(finding)
         except Exception as error:

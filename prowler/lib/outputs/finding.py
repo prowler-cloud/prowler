@@ -83,7 +83,7 @@ class Finding(BaseModel):
     prowler_version: str = prowler_version
 
     @classmethod
-    def generate_output(self, provider, finding, output_options) -> "Finding":
+    def generate_output(cls, provider, check_output, output_options) -> "Finding":
         """generates the output for a finding based on the provider and output options
 
         Args:
@@ -99,38 +99,21 @@ class Finding(BaseModel):
         provider_data_mapping = get_provider_data_mapping(provider)
         # TODO: move fill_common_finding_data
         common_finding_data = fill_common_finding_data(
-            finding, output_options.unix_timestamp
+            check_output, output_options.unix_timestamp
         )
         output_data = {}
         output_data.update(provider_data_mapping)
         output_data.update(common_finding_data)
         output_data["compliance"] = get_check_compliance(
-            finding, provider.type, output_options
+            check_output, provider.type, output_options
         )
-        finding_output = self.generate_finding_output(provider, finding, output_data)
-        return finding_output
-
-    @classmethod
-    def generate_finding_output(self, provider, finding, output_data) -> dict:
-        """generates the provider specific output for a finding
-
-        Args:
-            provider (Provider): the provider object
-            finding (Finding): the finding object
-            output_data (dict): the output data
-
-        Returns:
-            output_data (dict): the output data
-
-        """
-        # TODO: we have to standardize this between the above mapping and the provider.get_output_mapping()
         try:
             if provider.type == "aws":
                 # TODO: probably Organization UID is without the account id
                 output_data["auth_method"] = f"profile: {output_data['auth_method']}"
-                output_data["resource_name"] = finding.resource_id
-                output_data["resource_uid"] = finding.resource_arn
-                output_data["region"] = finding.region
+                output_data["resource_name"] = check_output.resource_id
+                output_data["resource_uid"] = check_output.resource_arn
+                output_data["region"] = check_output.region
 
             elif provider.type == "azure":
                 # TODO: we should show the authentication method used I think
@@ -143,36 +126,42 @@ class Finding(BaseModel):
                 ][0]
                 output_data["account_uid"] = (
                     output_data["account_organization_uid"]
-                    if "Tenant:" in finding.subscription
-                    else provider.identity.subscriptions[finding.subscription]
+                    if "Tenant:" in check_output.subscription
+                    else provider.identity.subscriptions[check_output.subscription]
                 )
-                output_data["account_name"] = finding.subscription
-                output_data["resource_name"] = finding.resource_name
-                output_data["resource_uid"] = finding.resource_id
-                output_data["region"] = finding.location
+                output_data["account_name"] = check_output.subscription
+                output_data["resource_name"] = check_output.resource_name
+                output_data["resource_uid"] = check_output.resource_id
+                output_data["region"] = check_output.location
 
             elif provider.type == "gcp":
                 output_data["auth_method"] = f"Principal: {output_data['auth_method']}"
-                output_data["account_uid"] = provider.projects[finding.project_id].id
-                output_data["account_name"] = provider.projects[finding.project_id].name
+                output_data["account_uid"] = provider.projects[
+                    check_output.project_id
+                ].id
+                output_data["account_name"] = provider.projects[
+                    check_output.project_id
+                ].name
                 output_data["account_tags"] = provider.projects[
-                    finding.project_id
+                    check_output.project_id
                 ].labels
-                output_data["resource_name"] = finding.resource_name
-                output_data["resource_uid"] = finding.resource_id
-                output_data["region"] = finding.location
+                output_data["resource_name"] = check_output.resource_name
+                output_data["resource_uid"] = check_output.resource_id
+                output_data["region"] = check_output.location
 
                 if (
                     provider.projects
-                    and finding.project_id in provider.projects
-                    and getattr(provider.projects[finding.project_id], "organization")
+                    and check_output.project_id in provider.projects
+                    and getattr(
+                        provider.projects[check_output.project_id], "organization"
+                    )
                 ):
                     output_data["account_organization_uid"] = provider.projects[
-                        finding.project_id
+                        check_output.project_id
                     ].organization.id
                     # TODO: for now is None since we don't retrieve that data
                     output_data["account_organization"] = provider.projects[
-                        finding.project_id
+                        check_output.project_id
                     ].organization.display_name
 
             elif provider.type == "kubernetes":
@@ -180,19 +169,19 @@ class Finding(BaseModel):
                     output_data["auth_method"] = "in-cluster"
                 else:
                     output_data["auth_method"] = "kubeconfig"
-                output_data["resource_name"] = finding.resource_name
-                output_data["resource_uid"] = finding.resource_id
+                output_data["resource_name"] = check_output.resource_name
+                output_data["resource_uid"] = check_output.resource_id
                 output_data["account_name"] = f"context: {provider.identity.context}"
-                output_data["region"] = f"namespace: {finding.namespace}"
+                output_data["region"] = f"namespace: {check_output.namespace}"
 
-            # Finding Unique ID
+            # check_output Unique ID
             # TODO: move this to a function
             # TODO: in Azure, GCP and K8s there are fidings without resource_name
             output_data["finding_uid"] = (
-                f"prowler-{provider.type}-{finding.check_metadata.CheckID}-{output_data['account_uid']}-{output_data['region']}-{output_data['resource_name']}"
+                f"prowler-{provider.type}-{check_output.check_metadata.CheckID}-{output_data['account_uid']}-{output_data['region']}-{output_data['resource_name']}"
             )
 
-            finding_output = self(**output_data)
+            finding_output = cls(**output_data)
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
