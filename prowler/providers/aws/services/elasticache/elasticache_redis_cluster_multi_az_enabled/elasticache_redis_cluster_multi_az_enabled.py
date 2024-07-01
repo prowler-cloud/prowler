@@ -4,7 +4,7 @@ from prowler.providers.aws.services.elasticache.elasticache_client import (
 )
 
 
-class elasticache_cluster_multi_az_enabled(Check):
+class elasticache_redis_cluster_multi_az_enabled(Check):
     def execute(self):
         findings = []
         for repl_group in elasticache_client.replication_groups.values():
@@ -12,15 +12,12 @@ class elasticache_cluster_multi_az_enabled(Check):
             report.region = repl_group.region
             report.resource_id = repl_group.id
             report.resource_arn = repl_group.arn
+            report.resource_tags = repl_group.tags
             report.status = "FAIL"
-            report.status_extended = (
-                f"Elasticache Cluster {repl_group.id} does not have Multi-AZ enabled."
-            )
+            report.status_extended = f"Elasticache Redis cache cluster {repl_group.id} does not have Multi-AZ enabled."
             if repl_group.multi_az == "enabled":
                 report.status = "PASS"
-                report.status_extended = (
-                    f"Elasticache Cluster {repl_group.id} has Multi-AZ enabled."
-                )
+                report.status_extended = f"Elasticache Redis cache cluster {repl_group.id} has Multi-AZ enabled."
 
             findings.append(report)
 

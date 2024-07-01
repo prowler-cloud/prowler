@@ -21,6 +21,7 @@ SUBNET_2 = "subnet-2"
 ELASTICACHE_CLUSTER_NAME = "test-cluster"
 ELASTICACHE_CLUSTER_ARN = f"arn:aws:elasticache:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:{ELASTICACHE_CLUSTER_NAME}"
 ELASTICACHE_ENGINE = "redis"
+ELASTICACHE_ENGINE_MEMCACHED = "memcached"
 
 ELASTICACHE_CLUSTER_TAGS = [
     {"Key": "environment", "Value": "test"},
@@ -33,6 +34,10 @@ REPLICATION_GROUP_SNAPSHOT_RETENTION = "0"
 REPLICATION_GROUP_ENCRYPTION = True
 REPLICATION_GROUP_TRANSIT_ENCRYPTION = True
 REPLICATION_GROUP_MULTI_AZ = "enabled"
+REPLICATION_GROUP_TAGS = [
+    {"Key": "environment", "Value": "test"},
+]
+
 
 # Mocking Access Analyzer Calls
 make_api_call = botocore.client.BaseClient._make_api_call
@@ -53,6 +58,7 @@ def mock_make_api_call(self, operation_name, kwargs):
                     "CacheClusterId": ELASTICACHE_CLUSTER_NAME,
                     "CacheSubnetGroupName": SUBNET_GROUP_NAME,
                     "ARN": ELASTICACHE_CLUSTER_ARN,
+                    "Engine": ELASTICACHE_ENGINE,
                     "SecurityGroups": [],
                 },
             ]
@@ -143,7 +149,7 @@ class Test_ElastiCache_Service:
         elasticache = ElastiCache(aws_provider)
         assert elasticache.audited_account == AWS_ACCOUNT_NUMBER
 
-    # Test ElastiCache Clusters
+    # Test Elasticache Redis cache clusters
     def test_describe_cache_clusters(self):
         aws_provider = set_mocked_aws_provider()
         elasticache = ElastiCache(aws_provider)
@@ -154,6 +160,7 @@ class Test_ElastiCache_Service:
             arn=ELASTICACHE_CLUSTER_ARN,
             name=ELASTICACHE_CLUSTER_NAME,
             id=ELASTICACHE_CLUSTER_NAME,
+            engine=ELASTICACHE_ENGINE,
             region=AWS_REGION_US_EAST_1,
             security_groups=[],
             cache_subnet_group_id=SUBNET_GROUP_NAME,
@@ -161,7 +168,7 @@ class Test_ElastiCache_Service:
             tags=ELASTICACHE_CLUSTER_TAGS,
         )
 
-    # Test ElastiCache Replication Groups
+    # Test Elasticache Redis cache clusters
     def test_describe_replication_groups(self):
         aws_provider = set_mocked_aws_provider()
         elasticache = ElastiCache(aws_provider)
@@ -179,4 +186,5 @@ class Test_ElastiCache_Service:
             encrypted=REPLICATION_GROUP_ENCRYPTION,
             transit_encryption=REPLICATION_GROUP_TRANSIT_ENCRYPTION,
             multi_az=REPLICATION_GROUP_MULTI_AZ,
+            tags=REPLICATION_GROUP_TAGS,
         )

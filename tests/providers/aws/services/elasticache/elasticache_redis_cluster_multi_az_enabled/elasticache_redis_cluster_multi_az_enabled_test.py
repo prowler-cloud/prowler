@@ -20,6 +20,10 @@ REPLICATION_GROUP_SNAPSHOT_RETENTION = "0"
 REPLICATION_GROUP_ENCRYPTION = True
 REPLICATION_GROUP_TRANSIT_ENCRYPTION = True
 REPLICATION_GROUP_MULTI_AZ = "enabled"
+REPLICATION_GROUP_TAGS = [
+    {"Key": "environment", "Value": "test"},
+]
+
 
 # Patch every AWS call using Boto3
 make_api_call = botocore.client.BaseClient._make_api_call
@@ -40,11 +44,11 @@ class Test_elasticache_replication_group_multi_az_enabled:
             "prowler.providers.aws.services.elasticache.elasticache_service.ElastiCache",
             new=elasticache_service,
         ):
-            from prowler.providers.aws.services.elasticache.elasticache_cluster_multi_az_enabled.elasticache_cluster_multi_az_enabled import (
-                elasticache_cluster_multi_az_enabled,
+            from prowler.providers.aws.services.elasticache.elasticache_redis_cluster_multi_az_enabled.elasticache_redis_cluster_multi_az_enabled import (
+                elasticache_redis_cluster_multi_az_enabled,
             )
 
-            check = elasticache_cluster_multi_az_enabled()
+            check = elasticache_redis_cluster_multi_az_enabled()
             result = check.execute()
             assert len(result) == 0
 
@@ -63,6 +67,7 @@ class Test_elasticache_replication_group_multi_az_enabled:
                 encrypted=False,
                 transit_encryption=False,
                 multi_az="disabled",
+                tags=REPLICATION_GROUP_TAGS,
             )
         )
 
@@ -73,24 +78,25 @@ class Test_elasticache_replication_group_multi_az_enabled:
             "prowler.providers.aws.services.elasticache.elasticache_service.ElastiCache",
             new=elasticache_service,
         ):
-            from prowler.providers.aws.services.elasticache.elasticache_cluster_multi_az_enabled.elasticache_cluster_multi_az_enabled import (
-                elasticache_cluster_multi_az_enabled,
+            from prowler.providers.aws.services.elasticache.elasticache_redis_cluster_multi_az_enabled.elasticache_redis_cluster_multi_az_enabled import (
+                elasticache_redis_cluster_multi_az_enabled,
             )
 
-            check = elasticache_cluster_multi_az_enabled()
+            check = elasticache_redis_cluster_multi_az_enabled()
             result = check.execute()
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Elasticache Cluster {REPLICATION_GROUP_ID} does not have Multi-AZ enabled."
+                == f"Elasticache Redis cache cluster {REPLICATION_GROUP_ID} does not have Multi-AZ enabled."
             )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == REPLICATION_GROUP_ID
             assert result[0].resource_arn == REPLICATION_GROUP_ARN
+            assert result[0].resource_tags == REPLICATION_GROUP_TAGS
 
-    def test_elasticache_cluster_multi_az_enabled(self):
+    def test_elasticache_redis_cluster_multi_az_enabled(self):
         # Mock ElastiCache Service
         elasticache_service = MagicMock
         elasticache_service.replication_groups = {}
@@ -105,6 +111,7 @@ class Test_elasticache_replication_group_multi_az_enabled:
                 encrypted=REPLICATION_GROUP_ENCRYPTION,
                 transit_encryption=REPLICATION_GROUP_TRANSIT_ENCRYPTION,
                 multi_az=REPLICATION_GROUP_MULTI_AZ,
+                tags=REPLICATION_GROUP_TAGS,
             )
         )
 
@@ -115,19 +122,20 @@ class Test_elasticache_replication_group_multi_az_enabled:
             "prowler.providers.aws.services.elasticache.elasticache_service.ElastiCache",
             new=elasticache_service,
         ):
-            from prowler.providers.aws.services.elasticache.elasticache_cluster_multi_az_enabled.elasticache_cluster_multi_az_enabled import (
-                elasticache_cluster_multi_az_enabled,
+            from prowler.providers.aws.services.elasticache.elasticache_redis_cluster_multi_az_enabled.elasticache_redis_cluster_multi_az_enabled import (
+                elasticache_redis_cluster_multi_az_enabled,
             )
 
-            check = elasticache_cluster_multi_az_enabled()
+            check = elasticache_redis_cluster_multi_az_enabled()
             result = check.execute()
 
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Elasticache Cluster {REPLICATION_GROUP_ID} has Multi-AZ enabled."
+                == f"Elasticache Redis cache cluster {REPLICATION_GROUP_ID} has Multi-AZ enabled."
             )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == REPLICATION_GROUP_ID
             assert result[0].resource_arn == REPLICATION_GROUP_ARN
+            assert result[0].resource_tags == REPLICATION_GROUP_TAGS
