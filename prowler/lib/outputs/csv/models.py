@@ -8,7 +8,7 @@ from prowler.lib.outputs.utils import unroll_dict, unroll_list
 
 class CSV(Output):
     def transform(self, findings: list[Finding]) -> None:
-        """Transforms the findings into a format that can be written to a CSV file.
+        """Transforms the findings into the CSV format.
 
         Args:
             findings (list[Finding]): a list of Finding objects
@@ -25,13 +25,8 @@ class CSV(Output):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def batch_write_findings_to_file(self) -> None:
-        """Writes the findings to a CSV file.
-
-        Args:
-            file_descriptor (TextIOWrapper): a file descriptor
-
-        """
+    def batch_write_data_to_file(self) -> None:
+        """Writes the findings to a file using the CSV format using the `Output._file_descriptor`."""
         try:
             if self._file_descriptor:
                 csv_writer = DictWriter(

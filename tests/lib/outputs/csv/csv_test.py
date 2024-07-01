@@ -1,8 +1,5 @@
 from datetime import datetime
 from io import StringIO
-from unittest.mock import Mock
-
-import pytest
 
 from prowler.lib.outputs.csv.csv import write_csv
 from prowler.lib.outputs.csv.models import CSV
@@ -22,7 +19,7 @@ class TestCSV:
             account_organization_name="Example Org",
             account_tags=["tag1", "tag2"],
             finding_uid="finding-123",
-            provider="AWS",
+            provider="aws",
             check_id="check-123",
             check_title="Example Check",
             check_type="Security",
@@ -76,7 +73,7 @@ class TestCSV:
         assert output_data["ACCOUNT_ORGANIZATION_NAME"] == "Example Org"
         assert output_data["ACCOUNT_TAGS"] == "tag1 | tag2"
         assert output_data["FINDING_UID"] == "finding-123"
-        assert output_data["PROVIDER"] == "AWS"
+        assert output_data["PROVIDER"] == "aws"
         assert output_data["CHECK_ID"] == "check-123"
         assert output_data["CHECK_TITLE"] == "Example Check"
         assert output_data["CHECK_TYPE"] == "Security"
@@ -118,72 +115,34 @@ class TestCSV:
         mock_file = StringIO()
         findings = [self.generate_finding()]
 
-        # Crear la instancia de CSV con mock_file como file descriptor
         output = CSV(findings)
-        output._file_descriptor = (
-            mock_file  # Asignar StringIO como el descriptor de archivo
-        )
+        output._file_descriptor = mock_file
 
-        # Llamar a la función a testear
-        output.batch_write_findings_to_file()
+        output.batch_write_data_to_file()
 
-        # Volver al inicio del StringIO y leer el contenido
         mock_file.seek(0)
         content = mock_file.read()
-        assert "OAuth" in content
-        assert "12345" in content
-        assert "Example Account" in content
-        assert "example@example.com" in content
-        assert "org-123" in content
-        assert "Example Org" in content
-        assert "tag1 | tag2" in content
-        assert "finding-123" in content
-        assert "AWS" in content
-        assert "check-123" in content
-        assert "Example Check" in content
-        assert "Security" in content
-        assert "FAIL" in content
-        assert "Extended status" in content
-        assert "False" in content
-        assert "Example Service" in content
-        assert "Example Subservice" in content
-        assert "critical" in content
-        assert "Instance" in content
-        assert "resource-123" in content
-        assert "Example Resource" in content
-        assert "Detailed information about the resource" in content
-        assert "tag1,tag2" in content
-        assert "aws" in content
-        assert "us-west-1" in content
-        assert "Description of the finding" in content
-        assert "High" in content
-        assert "Recommendation text" in content
-        assert "native-iac-code" in content
-        assert "terraform-code" in content
-        assert "cli-code" in content
-        assert "other-code" in content
-        assert "compliance_key: compliance_value" in content
-        assert "category1,category2" in content
-        assert "dependency" in content
-        assert "related finding" in content
-        assert "Notes about the finding" in content
-        assert "1.0" in content
+        content = content.split("PROWLER_VERSION")[1]
+        content = content.split("1.0")[0]
+        content = content + "1.0;"
+        string = ""
+        for key, value in output.data[0].items():
+            if "Status." in str(value) or "Severity." in str(value):
+                value = str(value).split(".")[1]
+            string += f"{value};"
+        assert string in content
 
-    def test_abstract_methods(finding_example):
+    def test_abstract_methods(self):
         class DummyOutput(Output):
             def transform(self, finding: Finding):
                 pass
 
-            def write_to_file(self, file_descriptor):
-                raise NotImplementedError
-
-            def batch_write_findings_to_file(self):
+            def batch_write_data_to_file(self):
                 pass
 
-        dummy_output = DummyOutput(finding_example)
-        assert dummy_output.transform(finding_example) is None
-        with pytest.raises(NotImplementedError):
-            dummy_output.write_to_file(Mock())
+        dummy_output = DummyOutput(self.generate_finding())
+        assert dummy_output.transform(self.generate_finding()) is None
+        assert dummy_output.batch_write_data_to_file() is None
 
     def test_write_csv_with_dict(self):
         headers = ["provider", "account", "check_id"]

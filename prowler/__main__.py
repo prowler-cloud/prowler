@@ -288,9 +288,7 @@ def prowler():
     finding_outputs = []
     for finding in findings:
         finding_outputs.append(
-            Finding.generate_output(
-                global_provider, finding, global_provider.output_options
-            )
+            Finding.generate_output(global_provider, finding, global_provider)
         )
 
     if args.output_formats:
@@ -304,9 +302,8 @@ def prowler():
                     create_file_descriptor=True,
                     file_path=filename,
                 )
-                # csv_finding.transform(finding_outputs)
                 # Write CSV Finding Object to file
-                csv_finding.batch_write_findings_to_file()
+                csv_finding.batch_write_data_to_file()
 
             # Close json file if exists
             # TODO: generate JSON here

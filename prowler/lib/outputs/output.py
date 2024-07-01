@@ -34,7 +34,7 @@ class Output(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def batch_write_findings_to_file(self, file_descriptor: TextIOWrapper) -> None:
+    def batch_write_data_to_file(self, file_descriptor: TextIOWrapper) -> None:
         raise NotImplementedError
 
     def create_file_descriptor(self, file_path) -> None:

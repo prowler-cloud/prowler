@@ -110,7 +110,7 @@ def report(check_findings, provider):
 
                         # Common Output Data
                         finding_output = Finding.generate_output(
-                            provider, finding, output_options
+                            provider, finding, provider
                         )
 
                         # JSON

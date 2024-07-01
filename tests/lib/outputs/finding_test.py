@@ -53,6 +53,10 @@ def mock_fill_common_finding_data(_, unix_timestamp):
     return {"common_key": "common_value", "unix_timestamp": unix_timestamp}
 
 
+def mock_get_check_compliance(_, __, ___):
+    return {"mock_compliance_key": "mock_compliance_value"}
+
+
 class TestFinding:
     @patch(
         "prowler.lib.outputs.finding.get_provider_data_mapping",
@@ -61,6 +65,10 @@ class TestFinding:
     @patch(
         "prowler.lib.outputs.finding.fill_common_finding_data",
         new=mock_fill_common_finding_data,
+    )
+    @patch(
+        "prowler.lib.outputs.finding.get_check_compliance",
+        new=mock_get_check_compliance,
     )
     def test_generate_output(self):
         # Mock provider and other arguments
@@ -72,9 +80,12 @@ class TestFinding:
         check_output.region = "us-west-1"
         output_options = MagicMock()
         output_options.unix_timestamp = 1234567890
-
+        global_provider = MagicMock()
+        global_provider.output_options = output_options
         # Call the method under test
-        finding_output = Finding.generate_output(provider, check_output, output_options)
+        finding_output = Finding.generate_output(
+            provider, check_output, global_provider=global_provider
+        )
 
         # Assertions to verify expected behavior
         assert finding_output is not None
@@ -82,3 +93,39 @@ class TestFinding:
         assert finding_output.resource_name == "test_resource_id"
         assert finding_output.resource_uid == "test_resource_arn"
         assert finding_output.region == "us-west-1"
+        assert finding_output.compliance == {
+            "mock_compliance_key": "mock_compliance_value"
+        }
+        assert finding_output.provider == "aws"
+        assert finding_output.check_id == "mock_check_id"
+        assert finding_output.check_title == "mock_check_title"
+        assert finding_output.check_type == "mock_check_type"
+        assert finding_output.status == Status.PASS
+        assert finding_output.status_extended == "mock_status_extended"
+        assert finding_output.muted is False
+        assert finding_output.service_name == "mock_service_name"
+        assert finding_output.subservice_name == "mock_subservice_name"
+        assert finding_output.severity == Severity.high
+        assert finding_output.resource_type == "mock_resource_type"
+        assert finding_output.resource_tags == "mock_resource_tags"
+        assert finding_output.partition is None
+        assert finding_output.description == "mock_description"
+        assert finding_output.risk == "mock_risk"
+        assert finding_output.related_url == "mock_related_url"
+        assert finding_output.remediation_recommendation_text == "mock_remediation_text"
+        assert finding_output.remediation_recommendation_url == "mock_remediation_url"
+        assert finding_output.remediation_code_nativeiac == "mock_code_nativeiac"
+        assert finding_output.remediation_code_terraform == "mock_code_terraform"
+        assert finding_output.remediation_code_cli == "mock_code_cli"
+        assert finding_output.remediation_code_other == "mock_code_other"
+        assert finding_output.categories == "mock_categories"
+        assert finding_output.depends_on == "mock_depends_on"
+        assert finding_output.related_to == "mock_related_to"
+        assert finding_output.notes == "mock_notes"
+        assert finding_output.account_uid == "mock_account_uid"
+        assert finding_output.account_name == "mock_account_name"
+        assert finding_output.account_email == "mock_account_email"
+        assert finding_output.account_organization_uid == "mock_account_org_uid"
+        assert finding_output.account_organization_name == "mock_account_org_name"
+        assert finding_output.account_tags == ["tag1", "tag2"]
+        assert finding_output.prowler_version == "1.0.0"
