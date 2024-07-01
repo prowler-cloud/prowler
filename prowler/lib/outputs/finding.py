@@ -83,7 +83,7 @@ class Finding(BaseModel):
     prowler_version: str = prowler_version
 
     @classmethod
-    def generate_output(cls, provider, check_output, global_provider) -> "Finding":
+    def generate_output(cls, provider, check_output) -> "Finding":
         """generates the output for a finding based on the provider and output options
 
         Args:
@@ -95,7 +95,7 @@ class Finding(BaseModel):
             finding_output (Finding): the finding output object
 
         """
-        output_options = global_provider.output_options
+        output_options = provider.output_options
         # TODO: think about get_provider_data_mapping
         provider_data_mapping = get_provider_data_mapping(provider)
         # TODO: move fill_common_finding_data

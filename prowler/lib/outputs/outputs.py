@@ -109,9 +109,7 @@ def report(check_findings, provider):
                                 file_descriptors["json-asff"].write(",")
 
                         # Common Output Data
-                        finding_output = Finding.generate_output(
-                            provider, finding, provider
-                        )
+                        finding_output = Finding.generate_output(provider, finding)
 
                         # JSON
                         if "json-ocsf" in file_descriptors:

@@ -287,9 +287,7 @@ def prowler():
     # This will be refactored for the outputs generate directly the Finding
     finding_outputs = []
     for finding in findings:
-        finding_outputs.append(
-            Finding.generate_output(global_provider, finding, global_provider)
-        )
+        finding_outputs.append(Finding.generate_output(global_provider, finding))
 
     if args.output_formats:
         for mode in args.output_formats:
