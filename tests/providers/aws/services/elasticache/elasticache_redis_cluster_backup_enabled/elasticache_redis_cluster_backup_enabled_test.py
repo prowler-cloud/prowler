@@ -223,3 +223,4 @@ class Test_elasticache_redis_cluster_backup_enabled:
             assert result[0].resource_id == REPLICATION_GROUP_ID
             assert result[0].resource_arn == REPLICATION_GROUP_ARN
             assert result[0].resource_tags == REPLICATION_GROUP_TAGS
+            assert result[0].check_metadata.Severity == "low"
