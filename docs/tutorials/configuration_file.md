@@ -176,34 +176,4 @@ gcp:
   # gcp.compute_public_address_shodan
   shodan_api_key: null
 
-# Kubernetes Configuration
-kubernetes:
-  # Kubernetes API Server
-  # kubernetes.apiserver_audit_log_maxbackup_set
-  audit_log_maxbackup: 10
-  # kubernetes.apiserver_audit_log_maxsize_set
-  audit_log_maxsize: 100
-  # kubernetes.apiserver_audit_log_maxage_set
-  audit_log_maxage: 30
-  # kubernetes.apiserver_strong_ciphers_only
-  apiserver_strong_ciphers:
-    [
-      "TLS_AES_128_GCM_SHA256",
-      "TLS_AES_256_GCM_SHA384",
-      "TLS_CHACHA20_POLY1305_SHA256",
-    ]
-  # Kubelet
-  # kubernetes.kubelet_strong_ciphers_only
-  kubelet_strong_ciphers:
-    [
-      "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
-      "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
-      "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305",
-      "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
-      "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305",
-      "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
-      "TLS_RSA_WITH_AES_256_GCM_SHA384",
-      "TLS_RSA_WITH_AES_128_GCM_SHA256",
-    ]
-
 ```
