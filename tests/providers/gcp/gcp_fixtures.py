@@ -7,6 +7,9 @@ from prowler.providers.gcp.models import GCPIdentityInfo
 
 GCP_PROJECT_ID = "123456789012"
 
+GCP_EU1_LOCATION = "europe-west1"
+GCP_US_CENTER1_LOCATION = "us-central1"
+
 
 def set_mocked_gcp_provider(
     project_ids: list[str] = [], profile: str = ""
