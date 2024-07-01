@@ -61,58 +61,58 @@ class TestCSV:
         output = CSV(findings)
         output_data = output.data[0]
         assert isinstance(output_data, dict)
-        assert isinstance(output_data["timestamp"], datetime)
-        assert isinstance(output_data["account_tags"], str)
-        assert isinstance(output_data["severity"], str)
-        assert isinstance(output_data["status"], str)
-        assert isinstance(output_data["muted"], bool)
-        assert isinstance(output_data["compliance"], str)
+        assert isinstance(output_data["TIMESTAMP"], datetime)
+        assert isinstance(output_data["ACCOUNT_TAGS"], str)
+        assert isinstance(output_data["SEVERITY"], str)
+        assert isinstance(output_data["STATUS"], str)
+        assert isinstance(output_data["MUTED"], bool)
+        assert isinstance(output_data["COMPLIANCE"], str)
 
-        assert output_data["auth_method"] == "OAuth"
-        assert output_data["account_uid"] == "12345"
-        assert output_data["account_name"] == "Example Account"
-        assert output_data["account_email"] == "example@example.com"
-        assert output_data["account_organization_uid"] == "org-123"
-        assert output_data["account_organization_name"] == "Example Org"
-        assert output_data["account_tags"] == "tag1 | tag2"
-        assert output_data["finding_uid"] == "finding-123"
-        assert output_data["provider"] == "AWS"
-        assert output_data["check_id"] == "check-123"
-        assert output_data["check_title"] == "Example Check"
-        assert output_data["check_type"] == "Security"
-        assert output_data["status"] == "FAIL"
-        assert output_data["status_extended"] == "Extended status"
-        assert output_data["muted"] is False
-        assert output_data["service_name"] == "Example Service"
-        assert output_data["subservice_name"] == "Example Subservice"
-        assert output_data["severity"] == "critical"
-        assert output_data["resource_type"] == "Instance"
-        assert output_data["resource_uid"] == "resource-123"
-        assert output_data["resource_name"] == "Example Resource"
+        assert output_data["AUTH_METHOD"] == "OAuth"
+        assert output_data["ACCOUNT_UID"] == "12345"
+        assert output_data["ACCOUNT_NAME"] == "Example Account"
+        assert output_data["ACCOUNT_EMAIL"] == "example@example.com"
+        assert output_data["ACCOUNT_ORGANIZATION_UID"] == "org-123"
+        assert output_data["ACCOUNT_ORGANIZATION_NAME"] == "Example Org"
+        assert output_data["ACCOUNT_TAGS"] == "tag1 | tag2"
+        assert output_data["FINDING_UID"] == "finding-123"
+        assert output_data["PROVIDER"] == "AWS"
+        assert output_data["CHECK_ID"] == "check-123"
+        assert output_data["CHECK_TITLE"] == "Example Check"
+        assert output_data["CHECK_TYPE"] == "Security"
+        assert output_data["STATUS"] == "FAIL"
+        assert output_data["STATUS_EXTENDED"] == "Extended status"
+        assert output_data["MUTED"] is False
+        assert output_data["SERVICE_NAME"] == "Example Service"
+        assert output_data["SUBSERVICE_NAME"] == "Example Subservice"
+        assert output_data["SEVERITY"] == "critical"
+        assert output_data["RESOURCE_TYPE"] == "Instance"
+        assert output_data["RESOURCE_UID"] == "resource-123"
+        assert output_data["RESOURCE_NAME"] == "Example Resource"
         assert (
-            output_data["resource_details"] == "Detailed information about the resource"
+            output_data["RESOURCE_DETAILS"] == "Detailed information about the resource"
         )
-        assert output_data["resource_tags"] == "tag1,tag2"
-        assert output_data["partition"] == "aws"
-        assert output_data["region"] == "us-west-1"
-        assert output_data["description"] == "Description of the finding"
-        assert output_data["risk"] == "High"
-        assert output_data["related_url"] == "http://example.com"
-        assert output_data["remediation_recommendation_text"] == "Recommendation text"
+        assert output_data["RESOURCE_TAGS"] == "tag1,tag2"
+        assert output_data["PARTITION"] == "aws"
+        assert output_data["REGION"] == "us-west-1"
+        assert output_data["DESCRIPTION"] == "Description of the finding"
+        assert output_data["RISK"] == "High"
+        assert output_data["RELATED_URL"] == "http://example.com"
+        assert output_data["REMEDIATION_RECOMMENDATION_TEXT"] == "Recommendation text"
         assert (
-            output_data["remediation_recommendation_url"]
+            output_data["REMEDIATION_RECOMMENDATION_URL"]
             == "http://example.com/remediation"
         )
-        assert output_data["remediation_code_nativeiac"] == "native-iac-code"
-        assert output_data["remediation_code_terraform"] == "terraform-code"
-        assert output_data["remediation_code_cli"] == "cli-code"
-        assert output_data["remediation_code_other"] == "other-code"
-        assert output_data["compliance"] == "compliance_key: compliance_value"
-        assert output_data["categories"] == "category1,category2"
-        assert output_data["depends_on"] == "dependency"
-        assert output_data["related_to"] == "related finding"
-        assert output_data["notes"] == "Notes about the finding"
-        assert output_data["prowler_version"] == "1.0"
+        assert output_data["REMEDIATION_CODE_NATIVEIAC"] == "native-iac-code"
+        assert output_data["REMEDIATION_CODE_TERRAFORM"] == "terraform-code"
+        assert output_data["REMEDIATION_CODE_CLI"] == "cli-code"
+        assert output_data["REMEDIATION_CODE_OTHER"] == "other-code"
+        assert output_data["COMPLIANCE"] == "compliance_key: compliance_value"
+        assert output_data["CATEGORIES"] == "category1,category2"
+        assert output_data["DEPENDS_ON"] == "dependency"
+        assert output_data["RELATED_TO"] == "related finding"
+        assert output_data["NOTES"] == "Notes about the finding"
+        assert output_data["PROWLER_VERSION"] == "1.0"
 
     def test_csv_write_to_file(self):
         mock_file = StringIO()

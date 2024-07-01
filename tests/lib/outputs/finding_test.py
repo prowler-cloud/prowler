@@ -72,7 +72,6 @@ class TestFinding:
         check_output.region = "us-west-1"
         output_options = MagicMock()
         output_options.unix_timestamp = 1234567890
-        output_options
 
         # Call the method under test
         finding_output = Finding.generate_output(provider, check_output, output_options)

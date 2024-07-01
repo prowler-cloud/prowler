@@ -1,4 +1,3 @@
-import copy
 from csv import DictWriter
 
 from prowler.lib.logger import logger
@@ -17,9 +16,9 @@ class CSV(Output):
         """
         try:
             for finding in findings:
-                finding_dict = copy.deepcopy(finding.dict())
-                finding_dict["compliance"] = unroll_dict(finding.compliance)
-                finding_dict["account_tags"] = unroll_list(finding.account_tags)
+                finding_dict = {k.upper(): v for k, v in finding.dict().items()}
+                finding_dict["COMPLIANCE"] = unroll_dict(finding.compliance)
+                finding_dict["ACCOUNT_TAGS"] = unroll_list(finding.account_tags)
                 self._data.append(finding_dict)
         except Exception as error:
             logger.error(
