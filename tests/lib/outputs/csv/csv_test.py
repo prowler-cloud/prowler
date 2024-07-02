@@ -13,58 +13,55 @@ from prowler.lib.outputs.output import Output
 
 @pytest.fixture
 def generate_finding():
-    def _generate_finding():
-        return Finding(
-            auth_method="OAuth",
-            timestamp=datetime.now(),
-            account_uid="12345",
-            account_name="Example Account",
-            account_email="example@example.com",
-            account_organization_uid="org-123",
-            account_organization_name="Example Org",
-            account_tags=["tag1", "tag2"],
-            finding_uid="finding-123",
-            provider="aws",
-            check_id="check-123",
-            check_title="Example Check",
-            check_type="Security",
-            status=Status("FAIL"),
-            status_extended="Extended status",
-            muted=False,
-            service_name="Example Service",
-            subservice_name="Example Subservice",
-            severity=Severity("critical"),
-            resource_type="Instance",
-            resource_uid="resource-123",
-            resource_name="Example Resource",
-            resource_details="Detailed information about the resource",
-            resource_tags="tag1,tag2",
-            partition="aws",
-            region="us-west-1",
-            description="Description of the finding",
-            risk="High",
-            related_url="http://example.com",
-            remediation_recommendation_text="Recommendation text",
-            remediation_recommendation_url="http://example.com/remediation",
-            remediation_code_nativeiac="native-iac-code",
-            remediation_code_terraform="terraform-code",
-            remediation_code_cli="cli-code",
-            remediation_code_other="other-code",
-            compliance={"compliance_key": "compliance_value"},
-            categories="category1,category2",
-            depends_on="dependency",
-            related_to="related finding",
-            notes="Notes about the finding",
-            prowler_version="1.0",
-        )
-
-    return _generate_finding
+    return Finding(
+        auth_method="OAuth",
+        timestamp=datetime.now(),
+        account_uid="12345",
+        account_name="Example Account",
+        account_email="example@example.com",
+        account_organization_uid="org-123",
+        account_organization_name="Example Org",
+        account_tags=["tag1", "tag2"],
+        finding_uid="finding-123",
+        provider="aws",
+        check_id="check-123",
+        check_title="Example Check",
+        check_type="Security",
+        status=Status("FAIL"),
+        status_extended="Extended status",
+        muted=False,
+        service_name="Example Service",
+        subservice_name="Example Subservice",
+        severity=Severity("critical"),
+        resource_type="Instance",
+        resource_uid="resource-123",
+        resource_name="Example Resource",
+        resource_details="Detailed information about the resource",
+        resource_tags="tag1,tag2",
+        partition="aws",
+        region="us-west-1",
+        description="Description of the finding",
+        risk="High",
+        related_url="http://example.com",
+        remediation_recommendation_text="Recommendation text",
+        remediation_recommendation_url="http://example.com/remediation",
+        remediation_code_nativeiac="native-iac-code",
+        remediation_code_terraform="terraform-code",
+        remediation_code_cli="cli-code",
+        remediation_code_other="other-code",
+        compliance={"compliance_key": "compliance_value"},
+        categories="category1,category2",
+        depends_on="dependency",
+        related_to="related finding",
+        notes="Notes about the finding",
+        prowler_version="1.0",
+    )
 
 
 class TestCSV:
 
     def test_output_transform(self, generate_finding):
-        findings = [generate_finding()]
+        findings = [generate_finding]
 
         # Clear the data from CSV class
         CSV._data = []
@@ -127,7 +124,7 @@ class TestCSV:
 
     def test_csv_write_to_file(self, generate_finding):
         mock_file = StringIO()
-        findings = [generate_finding()]
+        findings = [generate_finding]
         # Clear the data from CSV class
         CSV._data = []
         output = CSV(findings)
