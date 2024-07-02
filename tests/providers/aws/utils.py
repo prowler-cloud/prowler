@@ -156,8 +156,12 @@ def set_mocked_aws_provider(
     return provider
 
 
-def set_default_provider_arguments(arguments: Namespace) -> Namespace:
+def set_default_provider_arguments(input_arguments: Namespace) -> Namespace:
+
+    arguments = Namespace
     arguments.status = []
+    if getattr(input_arguments, "status", None):
+        arguments.status = input_arguments.status
     arguments.output_formats = []
     arguments.output_directory = ""
     arguments.verbose = False
@@ -165,7 +169,11 @@ def set_default_provider_arguments(arguments: Namespace) -> Namespace:
     arguments.unix_timestamp = False
     arguments.shodan = None
     arguments.security_hub = False
+
     arguments.send_sh_only_fails = False
+    if getattr(input_arguments, "send_sh_only_fails", None):
+        arguments.send_sh_only_fails = input_arguments.send_sh_only_fails
+
     arguments.config_file = default_config_file_path
     arguments.fixer_config = default_fixer_config_file_path
 
