@@ -1,7 +1,10 @@
 # AWS Configuration
 aws:
+  # AWS Global Configuration
+
   # AWS EC2 Configuration
   # aws.ec2_elastic_ip_shodan
+  # TODO: create common config
   shodan_api_key: null
   # aws.ec2_securitygroup_with_many_ingress_egress_rules --> by default is 50 rules
   max_security_group_rules: 50
@@ -54,24 +57,41 @@ aws:
     ]
 
   # AWS Organizations
-  # organizations_scp_check_deny_regions
-  # organizations_enabled_regions: [
-  #   'eu-central-1',
-  #   'eu-west-1',
+  # aws.organizations_scp_check_deny_regions
+  # aws.organizations_enabled_regions: [
+  #   "eu-central-1",
+  #   "eu-west-1",
   #   "us-east-1"
   # ]
   organizations_enabled_regions: []
   organizations_trusted_delegated_administrators: []
 
+  # AWS RDS Configuration
   # aws.rds_instance_backup_enabled
   # Whether to check RDS instance replicas or not
   check_rds_instance_replicas: False
+
+  # AWS ACM Configuration
+  # aws.acm_certificates_expiration_check
+  days_to_expire_threshold: 7
 
 # Azure Configuration
 azure:
   # Azure Network Configuration
   # azure.network_public_ip_shodan
+  # TODO: create common config
   shodan_api_key: null
+
+  # Azure App Service
+  # azure.app_ensure_php_version_is_latest
+  php_latest_version: "8.2"
+  # azure.app_ensure_python_version_is_latest
+  python_latest_version: "3.12"
+  # azure.app_ensure_java_version_is_latest
+  java_latest_version: "17"
 
 # GCP Configuration
 gcp:
+  # GCP Compute Configuration
+  # gcp.compute_public_address_shodan
+  shodan_api_key: null

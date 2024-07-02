@@ -6,7 +6,6 @@ from prowler.lib.logger import logger
 from prowler.providers.azure.lib.service.service import AzureService
 
 
-########################## SQLServer
 class Network(AzureService):
     def __init__(self, audit_info):
         super().__init__(NetworkManagementClient, audit_info)

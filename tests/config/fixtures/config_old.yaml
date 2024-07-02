@@ -64,3 +64,7 @@ organizations_trusted_delegated_administrators: []
 # aws.rds_instance_backup_enabled
 # Whether to check RDS instance replicas or not
 check_rds_instance_replicas: False
+
+# AWS ACM Configuration
+# aws.acm_certificates_expiration_check
+days_to_expire_threshold: 7

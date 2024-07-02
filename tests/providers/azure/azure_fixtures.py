@@ -9,6 +9,7 @@ from prowler.providers.azure.lib.audit_info.models import (
 )
 
 AZURE_SUBSCRIPTION = str(uuid4())
+AZURE_SUBSCRIPTION_ID = str(uuid4())
 
 # Azure Identity
 IDENTITY_ID = "00000000-0000-0000-0000-000000000000"
