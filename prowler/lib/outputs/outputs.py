@@ -10,7 +10,6 @@ from prowler.lib.outputs.compliance.compliance import (
 )
 from prowler.lib.outputs.file_descriptors import fill_file_descriptors
 from prowler.lib.outputs.finding import Finding
-from prowler.lib.outputs.html.html import fill_html
 from prowler.lib.outputs.json_asff.json_asff import fill_json_asff
 from prowler.lib.outputs.json_ocsf.json_ocsf import fill_json_ocsf
 
@@ -120,9 +119,6 @@ def report(check_findings, provider):
                                 detection_finding.json(exclude_none=True, indent=4)
                             )
                             file_descriptors["json-ocsf"].write(",")
-
-                        if "html" in file_descriptors:
-                            fill_html(file_descriptors["html"], finding_output)
 
         else:  # No service resources in the whole account
             color = set_report_color("MANUAL")
