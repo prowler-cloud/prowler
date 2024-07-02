@@ -6,7 +6,7 @@ class iam_inline_policy_no_administrative_privileges(Check):
     def execute(self) -> Check_Report_AWS:
         findings = []
         for policy in iam_client.policies:
-            if policy.attached and policy.type == "Inline":
+            if policy.type == "Inline":
                 report = Check_Report_AWS(self.metadata())
                 report.region = iam_client.region
                 report.resource_arn = policy.arn
