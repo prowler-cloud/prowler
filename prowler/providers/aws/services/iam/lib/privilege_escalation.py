@@ -156,7 +156,7 @@ def check_privilege_escalation(policy: dict) -> str:
     Args:
         policy (dict): The policy to check.
     Returns:
-        str: The policies affected by privilege escalation, separated by spaces.
+        str: The policies affected by privilege escalation, separated by commas.
     """
 
     policies_affected = ""
