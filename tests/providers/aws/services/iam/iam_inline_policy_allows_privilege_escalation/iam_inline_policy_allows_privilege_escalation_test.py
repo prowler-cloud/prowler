@@ -9,23 +9,22 @@ from prowler.providers.aws.services.iam.lib.privilege_escalation import (
     privilege_escalation_policies_combination,
 )
 from tests.providers.aws.utils import (
+    ADMINISTRATOR_ROLE_ASSUME_ROLE_POLICY,
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
     set_mocked_aws_provider,
 )
 
 
-class Test_iam_policy_allows_privilege_escalation:
-    from tests.providers.aws.utils import (
-        AWS_ACCOUNT_ARN,
-        AWS_ACCOUNT_NUMBER,
-        AWS_REGION_US_EAST_1,
-        set_mocked_aws_provider,
-    )
-
+class Test_iam_inline_policy_allows_privilege_escalation:
     # @mock_aws
-    # def test_iam_policy_allows_privilege_escalation_sts(self):
+    # def test_iam_inline_policy_allows_privilege_escalation_sts(self):
     #     iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
+    #     role_name = "test_role"
+    #     role_arn = iam_client.create_role(
+    #         RoleName=role_name,
+    #         AssumeRolePolicyDocument=dumps(ADMINISTRATOR_ROLE_ASSUME_ROLE_POLICY),
+    #     )["Role"]["Arn"]
     #     policy_name = "policy1"
     #     policy_document = {
     #         "Version": "2012-10-17",
@@ -42,27 +41,35 @@ class Test_iam_policy_allows_privilege_escalation:
     #         "prowler.providers.common.provider.Provider.get_global_provider",
     #         return_value=aws_provider,
     #     ), mock.patch(
-    #         "prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation.iam_client",
+    #         "prowler.providers.aws.services.iam.iam_inline_policy_allows_privilege_escalation.iam_inline_policy_allows_privilege_escalation.iam_client",
     #         new=IAM(aws_provider),
     #     ):
     #         # Test Check
-    #         from prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation import (
-    #             iam_policy_allows_privilege_escalation,
+    #         from prowler.providers.aws.services.iam.iam_inline_policy_allows_privilege_escalation.iam_inline_policy_allows_privilege_escalation import (
+    #             iam_inline_policy_allows_privilege_escalation,
     #         )
-    #         check = iam_policy_allows_privilege_escalation()
+    #         check = iam_inline_policy_allows_privilege_escalation()
     #         result = check.execute()
     #         assert len(result) == 1
     #         assert result[0].status == "FAIL"
     #         assert (
     #             result[0].status_extended
-    #             == f"Custom Policy {policy_arn} allows privilege escalation using the following actions: {{'sts:AssumeRole'}}"
+    #             == f"Inline Policy '{policy_arn}' allows privilege escalation using the following actions: {{'sts:AssumeRole'}}"
     #         )
     #         assert result[0].resource_id == policy_name
     #         assert result[0].resource_arn == policy_arn
 
     @mock_aws
-    def test_iam_policy_not_allows_privilege_escalation(self):
+    def test_iam_inline_role_policy_not_allows_privilege_escalation(self):
         iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
+        # Create IAM Role
+        role_name = "test_role"
+        role_arn = iam_client.create_role(
+            RoleName=role_name,
+            AssumeRolePolicyDocument=dumps(ADMINISTRATOR_ROLE_ASSUME_ROLE_POLICY),
+        )["Role"]["Arn"]
+
+        # Put Role Policy
         policy_name = "policy1"
         policy_document = {
             "Version": "2012-10-17",
@@ -72,9 +79,11 @@ class Test_iam_policy_allows_privilege_escalation:
                 {"Effect": "Deny", "NotAction": "sts:*", "Resource": "*"},
             ],
         }
-        policy_arn = iam_client.create_policy(
-            PolicyName=policy_name, PolicyDocument=dumps(policy_document)
-        )["Policy"]["Arn"]
+        _ = iam_client.put_role_policy(
+            RoleName=role_name,
+            PolicyName=policy_name,
+            PolicyDocument=dumps(policy_document),
+        )
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         from prowler.providers.aws.services.iam.iam_service import IAM
@@ -83,30 +92,36 @@ class Test_iam_policy_allows_privilege_escalation:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation.iam_client",
+            "prowler.providers.aws.services.iam.iam_inline_policy_allows_privilege_escalation.iam_inline_policy_allows_privilege_escalation.iam_client",
             new=IAM(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation import (
-                iam_policy_allows_privilege_escalation,
+            from prowler.providers.aws.services.iam.iam_inline_policy_allows_privilege_escalation.iam_inline_policy_allows_privilege_escalation import (
+                iam_inline_policy_allows_privilege_escalation,
             )
 
-            check = iam_policy_allows_privilege_escalation()
+            check = iam_inline_policy_allows_privilege_escalation()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Custom Policy {policy_arn} does not allow privilege escalation."
+                == f"Inline Policy '{policy_name}' attached to role {role_arn} does not allow privilege escalation."
             )
             assert result[0].resource_id == policy_name
-            assert result[0].resource_arn == policy_arn
+            assert result[0].resource_arn == role_arn
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []
 
     @mock_aws
-    def test_iam_policy_not_allows_privilege_escalation_glue_GetDevEndpoints(self):
+    def test_iam_inline_user_policy_not_allows_privilege_escalation_glue_GetDevEndpoints(
+        self,
+    ):
         iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
+        # Create IAM User
+        user_name = "test_user"
+        user_arn = iam_client.create_user(UserName=user_name)["User"]["Arn"]
+
         policy_name = "policy1"
         policy_document = {
             "Version": "2012-10-17",
@@ -120,9 +135,11 @@ class Test_iam_policy_allows_privilege_escalation:
                 },
             ],
         }
-        policy_arn = iam_client.create_policy(
-            PolicyName=policy_name, PolicyDocument=dumps(policy_document)
-        )["Policy"]["Arn"]
+        _ = iam_client.put_user_policy(
+            UserName=user_name,
+            PolicyName=policy_name,
+            PolicyDocument=dumps(policy_document),
+        )
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         from prowler.providers.aws.services.iam.iam_service import IAM
@@ -131,30 +148,35 @@ class Test_iam_policy_allows_privilege_escalation:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation.iam_client",
+            "prowler.providers.aws.services.iam.iam_inline_policy_allows_privilege_escalation.iam_inline_policy_allows_privilege_escalation.iam_client",
             new=IAM(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation import (
-                iam_policy_allows_privilege_escalation,
+            from prowler.providers.aws.services.iam.iam_inline_policy_allows_privilege_escalation.iam_inline_policy_allows_privilege_escalation import (
+                iam_inline_policy_allows_privilege_escalation,
             )
 
-            check = iam_policy_allows_privilege_escalation()
+            check = iam_inline_policy_allows_privilege_escalation()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Custom Policy {policy_arn} does not allow privilege escalation."
+                == f"Inline Policy '{policy_name}' attached to user {user_arn} does not allow privilege escalation."
             )
             assert result[0].resource_id == policy_name
-            assert result[0].resource_arn == policy_arn
+            assert result[0].resource_arn == user_arn
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []
 
     @mock_aws
-    def test_iam_policy_not_allows_privilege_escalation_dynamodb_PutItem(self):
+    def test_iam_inline_group_policy_not_allows_privilege_escalation_dynamodb_PutItem(
+        self,
+    ):
         iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
+        group_name = "test_group"
+        group_arn = iam_client.create_group(GroupName=group_name)["Group"]["Arn"]
+
         policy_name = "policy1"
         policy_document = {
             "Version": "2012-10-17",
@@ -179,9 +201,11 @@ class Test_iam_policy_allows_privilege_escalation:
                 {"Effect": "Deny", "NotAction": "dynamodb:PutItem", "Resource": "*"},
             ],
         }
-        policy_arn = iam_client.create_policy(
-            PolicyName=policy_name, PolicyDocument=dumps(policy_document)
-        )["Policy"]["Arn"]
+        _ = iam_client.put_group_policy(
+            GroupName=group_name,
+            PolicyName=policy_name,
+            PolicyDocument=dumps(policy_document),
+        )
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         from prowler.providers.aws.services.iam.iam_service import IAM
@@ -190,32 +214,38 @@ class Test_iam_policy_allows_privilege_escalation:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation.iam_client",
+            "prowler.providers.aws.services.iam.iam_inline_policy_allows_privilege_escalation.iam_inline_policy_allows_privilege_escalation.iam_client",
             new=IAM(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation import (
-                iam_policy_allows_privilege_escalation,
+            from prowler.providers.aws.services.iam.iam_inline_policy_allows_privilege_escalation.iam_inline_policy_allows_privilege_escalation import (
+                iam_inline_policy_allows_privilege_escalation,
             )
 
-            check = iam_policy_allows_privilege_escalation()
+            check = iam_inline_policy_allows_privilege_escalation()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Custom Policy {policy_arn} does not allow privilege escalation."
+                == f"Inline Policy '{policy_name}' attached to group {group_arn} does not allow privilege escalation."
             )
             assert result[0].resource_id == policy_name
-            assert result[0].resource_arn == policy_arn
+            assert result[0].resource_arn == group_arn
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []
 
     @mock_aws
-    def test_iam_policy_allows_privilege_escalation_iam_all_and_ec2_RunInstances(
+    def test_iam_inline_role_policy_allows_privilege_escalation_iam_all_and_ec2_RunInstances(
         self,
     ):
         iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
+        role_name = "test_role"
+        role_arn = iam_client.create_role(
+            RoleName=role_name,
+            AssumeRolePolicyDocument=dumps(ADMINISTRATOR_ROLE_ASSUME_ROLE_POLICY),
+        )["Role"]["Arn"]
+
         policy_name = "policy1"
         policy_document = {
             "Version": "2012-10-17",
@@ -234,9 +264,11 @@ class Test_iam_policy_allows_privilege_escalation:
                 },
             ],
         }
-        policy_arn = iam_client.create_policy(
-            PolicyName=policy_name, PolicyDocument=dumps(policy_document)
-        )["Policy"]["Arn"]
+        _ = iam_client.put_role_policy(
+            RoleName=role_name,
+            PolicyName=policy_name,
+            PolicyDocument=dumps(policy_document),
+        )
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         from prowler.providers.aws.services.iam.iam_service import IAM
@@ -245,35 +277,41 @@ class Test_iam_policy_allows_privilege_escalation:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation.iam_client",
+            "prowler.providers.aws.services.iam.iam_inline_policy_allows_privilege_escalation.iam_inline_policy_allows_privilege_escalation.iam_client",
             new=IAM(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation import (
-                iam_policy_allows_privilege_escalation,
+            from prowler.providers.aws.services.iam.iam_inline_policy_allows_privilege_escalation.iam_inline_policy_allows_privilege_escalation import (
+                iam_inline_policy_allows_privilege_escalation,
             )
 
-            check = iam_policy_allows_privilege_escalation()
+            check = iam_inline_policy_allows_privilege_escalation()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].resource_id == policy_name
-            assert result[0].resource_arn == policy_arn
+            assert result[0].resource_arn == role_arn
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []
 
             assert search(
-                f"Custom Policy {policy_arn} allows privilege escalation using the following actions: ",
+                f"Inline Policy '{policy_name}' attached to role {role_arn} allows privilege escalation using the following actions: ",
                 result[0].status_extended,
             )
             assert search("iam:PassRole", result[0].status_extended)
             assert search("ec2:RunInstances", result[0].status_extended)
 
     @mock_aws
-    def test_iam_policy_allows_privilege_escalation_iam_PassRole(
+    def test_iam_inline_policy_allows_privilege_escalation_iam_PassRole(
         self,
     ):
         iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
+        role_name = "test_role"
+        role_arn = iam_client.create_role(
+            RoleName=role_name,
+            AssumeRolePolicyDocument=dumps(ADMINISTRATOR_ROLE_ASSUME_ROLE_POLICY),
+        )["Role"]["Arn"]
+
         policy_name = "policy1"
         policy_document = {
             "Version": "2012-10-17",
@@ -285,9 +323,11 @@ class Test_iam_policy_allows_privilege_escalation:
                 }
             ],
         }
-        policy_arn = iam_client.create_policy(
-            PolicyName=policy_name, PolicyDocument=dumps(policy_document)
-        )["Policy"]["Arn"]
+        _ = iam_client.put_role_policy(
+            RoleName=role_name,
+            PolicyName=policy_name,
+            PolicyDocument=dumps(policy_document),
+        )
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         from prowler.providers.aws.services.iam.iam_service import IAM
@@ -296,34 +336,40 @@ class Test_iam_policy_allows_privilege_escalation:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation.iam_client",
+            "prowler.providers.aws.services.iam.iam_inline_policy_allows_privilege_escalation.iam_inline_policy_allows_privilege_escalation.iam_client",
             new=IAM(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation import (
-                iam_policy_allows_privilege_escalation,
+            from prowler.providers.aws.services.iam.iam_inline_policy_allows_privilege_escalation.iam_inline_policy_allows_privilege_escalation import (
+                iam_inline_policy_allows_privilege_escalation,
             )
 
-            check = iam_policy_allows_privilege_escalation()
+            check = iam_inline_policy_allows_privilege_escalation()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].resource_id == policy_name
-            assert result[0].resource_arn == policy_arn
+            assert result[0].resource_arn == role_arn
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []
 
             assert search(
-                f"Custom Policy {policy_arn} allows privilege escalation using the following actions: ",
+                f"Inline Policy '{policy_name}' attached to role {role_arn} allows privilege escalation using the following actions: ",
                 result[0].status_extended,
             )
             assert search("iam:PassRole", result[0].status_extended)
 
     @mock_aws
-    def test_iam_policy_allows_privilege_escalation_two_combinations(
+    def test_iam_inline_policy_allows_privilege_escalation_two_combinations(
         self,
     ):
         iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
+        role_name = "test_role"
+        role_arn = iam_client.create_role(
+            RoleName=role_name,
+            AssumeRolePolicyDocument=dumps(ADMINISTRATOR_ROLE_ASSUME_ROLE_POLICY),
+        )["Role"]["Arn"]
+
         policy_name = "policy1"
         policy_document = {
             "Version": "2012-10-17",
@@ -354,9 +400,11 @@ class Test_iam_policy_allows_privilege_escalation:
                 },
             ],
         }
-        policy_arn = iam_client.create_policy(
-            PolicyName=policy_name, PolicyDocument=dumps(policy_document)
-        )["Policy"]["Arn"]
+        _ = iam_client.put_role_policy(
+            RoleName=role_name,
+            PolicyName=policy_name,
+            PolicyDocument=dumps(policy_document),
+        )
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         from prowler.providers.aws.services.iam.iam_service import IAM
@@ -365,25 +413,25 @@ class Test_iam_policy_allows_privilege_escalation:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation.iam_client",
+            "prowler.providers.aws.services.iam.iam_inline_policy_allows_privilege_escalation.iam_inline_policy_allows_privilege_escalation.iam_client",
             new=IAM(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation import (
-                iam_policy_allows_privilege_escalation,
+            from prowler.providers.aws.services.iam.iam_inline_policy_allows_privilege_escalation.iam_inline_policy_allows_privilege_escalation import (
+                iam_inline_policy_allows_privilege_escalation,
             )
 
-            check = iam_policy_allows_privilege_escalation()
+            check = iam_inline_policy_allows_privilege_escalation()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].resource_id == policy_name
-            assert result[0].resource_arn == policy_arn
+            assert result[0].resource_arn == role_arn
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []
 
             assert search(
-                f"Custom Policy {policy_arn} allows privilege escalation using the following actions: ",
+                f"Inline Policy '{policy_name}' attached to role {role_arn} allows privilege escalation using the following actions: ",
                 result[0].status_extended,
             )
             assert search("iam:PassRole", result[0].status_extended)
@@ -392,10 +440,16 @@ class Test_iam_policy_allows_privilege_escalation:
             assert search("ec2:RunInstances", result[0].status_extended)
 
     @mock_aws
-    def test_iam_policy_allows_privilege_escalation_iam_PassRole_and_other_actions(
+    def test_iam_inline_policy_allows_privilege_escalation_iam_PassRole_and_other_actions(
         self,
     ):
         iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
+        role_name = "test_role"
+        role_arn = iam_client.create_role(
+            RoleName=role_name,
+            AssumeRolePolicyDocument=dumps(ADMINISTRATOR_ROLE_ASSUME_ROLE_POLICY),
+        )["Role"]["Arn"]
+
         policy_name = "policy1"
         policy_document = {
             "Version": "2012-10-17",
@@ -412,9 +466,11 @@ class Test_iam_policy_allows_privilege_escalation:
                 },
             ],
         }
-        policy_arn = iam_client.create_policy(
-            PolicyName=policy_name, PolicyDocument=dumps(policy_document)
-        )["Policy"]["Arn"]
+        _ = iam_client.put_role_policy(
+            RoleName=role_name,
+            PolicyName=policy_name,
+            PolicyDocument=dumps(policy_document),
+        )
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         from prowler.providers.aws.services.iam.iam_service import IAM
@@ -423,35 +479,41 @@ class Test_iam_policy_allows_privilege_escalation:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation.iam_client",
+            "prowler.providers.aws.services.iam.iam_inline_policy_allows_privilege_escalation.iam_inline_policy_allows_privilege_escalation.iam_client",
             new=IAM(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation import (
-                iam_policy_allows_privilege_escalation,
+            from prowler.providers.aws.services.iam.iam_inline_policy_allows_privilege_escalation.iam_inline_policy_allows_privilege_escalation import (
+                iam_inline_policy_allows_privilege_escalation,
             )
 
-            check = iam_policy_allows_privilege_escalation()
+            check = iam_inline_policy_allows_privilege_escalation()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].resource_id == policy_name
-            assert result[0].resource_arn == policy_arn
+            assert result[0].resource_arn == role_arn
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []
 
             assert search(
-                f"Custom Policy {policy_arn} allows privilege escalation using the following actions: ",
+                f"Inline Policy '{policy_name}' attached to role {role_arn} allows privilege escalation using the following actions: ",
                 result[0].status_extended,
             )
             assert search("iam:PassRole", result[0].status_extended)
 
     @mock_aws
-    def test_iam_policy_allows_privilege_escalation_policies_combination(
+    def test_iam_inline_policy_allows_privilege_escalation_policies_combination(
         self,
     ):
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
+        role_name = "test_role"
+        role_arn = iam_client.create_role(
+            RoleName=role_name,
+            AssumeRolePolicyDocument=dumps(ADMINISTRATOR_ROLE_ASSUME_ROLE_POLICY),
+        )["Role"]["Arn"]
+
         policy_name = "privileged_policy"
         for values in privilege_escalation_policies_combination.values():
             print(list(values))
@@ -466,9 +528,11 @@ class Test_iam_policy_allows_privilege_escalation:
                     },
                 ],
             }
-            policy_arn = iam_client.create_policy(
-                PolicyName=policy_name, PolicyDocument=dumps(policy_document)
-            )["Policy"]["Arn"]
+            _ = iam_client.put_role_policy(
+                RoleName=role_name,
+                PolicyName=policy_name,
+                PolicyDocument=dumps(policy_document),
+            )
 
             from prowler.providers.aws.services.iam.iam_service import IAM
 
@@ -476,25 +540,25 @@ class Test_iam_policy_allows_privilege_escalation:
                 "prowler.providers.common.provider.Provider.get_global_provider",
                 return_value=aws_provider,
             ), mock.patch(
-                "prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation.iam_client",
+                "prowler.providers.aws.services.iam.iam_inline_policy_allows_privilege_escalation.iam_inline_policy_allows_privilege_escalation.iam_client",
                 new=IAM(aws_provider),
             ):
                 # Test Check
-                from prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation import (
-                    iam_policy_allows_privilege_escalation,
+                from prowler.providers.aws.services.iam.iam_inline_policy_allows_privilege_escalation.iam_inline_policy_allows_privilege_escalation import (
+                    iam_inline_policy_allows_privilege_escalation,
                 )
 
-                check = iam_policy_allows_privilege_escalation()
+                check = iam_inline_policy_allows_privilege_escalation()
                 result = check.execute()
                 assert len(result) == 1
                 assert result[0].status == "FAIL"
                 assert result[0].resource_id == policy_name
-                assert result[0].resource_arn == policy_arn
+                assert result[0].resource_arn == role_arn
                 assert result[0].region == AWS_REGION_US_EAST_1
                 assert result[0].resource_tags == []
 
                 assert search(
-                    f"Custom Policy {policy_arn} allows privilege escalation using the following actions: ",
+                    f"Inline Policy '{policy_name}' attached to role {role_arn} allows privilege escalation using the following actions: ",
                     result[0].status_extended,
                 )
 
@@ -502,15 +566,23 @@ class Test_iam_policy_allows_privilege_escalation:
                 for action in values:
                     assert search(action, result[0].status_extended)
 
-                # Delete each IAM policy after the test
-                iam_client.delete_policy(PolicyArn=policy_arn)
+                # Delete each IAM inline policy after the test
+                _ = iam_client.delete_role_policy(
+                    RoleName=role_name, PolicyName=policy_name
+                )
 
     @mock_aws
-    def test_iam_policy_allows_privilege_escalation_two_policies_one_good_one_bad(
+    def test_iam_inline_policy_allows_privilege_escalation_two_policies_one_good_one_bad(
         self,
     ):
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
+        role_name = "test_role"
+        role_arn = iam_client.create_role(
+            RoleName=role_name,
+            AssumeRolePolicyDocument=dumps(ADMINISTRATOR_ROLE_ASSUME_ROLE_POLICY),
+        )["Role"]["Arn"]
+
         policy_name_1 = "privileged_policy_1"
         policy_document_1 = {
             "Version": "2012-10-17",
@@ -547,13 +619,17 @@ class Test_iam_policy_allows_privilege_escalation:
                 },
             ],
         }
-        policy_arn_1 = iam_client.create_policy(
-            PolicyName=policy_name_1, PolicyDocument=dumps(policy_document_1)
-        )["Policy"]["Arn"]
-
-        policy_arn_2 = iam_client.create_policy(
-            PolicyName=policy_name_2, PolicyDocument=dumps(policy_document_2)
-        )["Policy"]["Arn"]
+        # Attach both policies to the role
+        _ = iam_client.put_role_policy(
+            RoleName=role_name,
+            PolicyName=policy_name_1,
+            PolicyDocument=dumps(policy_document_1),
+        )
+        _ = iam_client.put_role_policy(
+            RoleName=role_name,
+            PolicyName=policy_name_2,
+            PolicyDocument=dumps(policy_document_2),
+        )
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
@@ -561,37 +637,37 @@ class Test_iam_policy_allows_privilege_escalation:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation.iam_client",
+            "prowler.providers.aws.services.iam.iam_inline_policy_allows_privilege_escalation.iam_inline_policy_allows_privilege_escalation.iam_client",
             new=IAM(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation import (
-                iam_policy_allows_privilege_escalation,
+            from prowler.providers.aws.services.iam.iam_inline_policy_allows_privilege_escalation.iam_inline_policy_allows_privilege_escalation import (
+                iam_inline_policy_allows_privilege_escalation,
             )
 
-            check = iam_policy_allows_privilege_escalation()
+            check = iam_inline_policy_allows_privilege_escalation()
             result = check.execute()
             assert len(result) == 2
             for finding in result:
                 if finding.resource_id == policy_name_1:
                     assert finding.status == "PASS"
                     assert finding.resource_id == policy_name_1
-                    assert finding.resource_arn == policy_arn_1
+                    assert finding.resource_arn == role_arn
                     assert finding.region == AWS_REGION_US_EAST_1
                     assert finding.resource_tags == []
                     assert (
                         finding.status_extended
-                        == f"Custom Policy {policy_arn_1} does not allow privilege escalation."
+                        == f"Inline Policy '{policy_name_1}' attached to role {role_arn} does not allow privilege escalation."
                     )
 
                 if finding.resource_id == policy_name_2:
                     assert finding.status == "FAIL"
                     assert finding.resource_id == policy_name_2
-                    assert finding.resource_arn == policy_arn_2
+                    assert finding.resource_arn == role_arn
                     assert finding.region == AWS_REGION_US_EAST_1
                     assert finding.resource_tags == []
                     assert search(
-                        f"Custom Policy {policy_arn_2} allows privilege escalation using the following actions: ",
+                        f"Inline Policy '{policy_name_2}' attached to role {role_arn} allows privilege escalation using the following actions: ",
                         finding.status_extended,
                     )
                     assert search("iam:PassRole", finding.status_extended)
@@ -599,11 +675,17 @@ class Test_iam_policy_allows_privilege_escalation:
                     assert search("lambda:CreateFunction", finding.status_extended)
 
     @mock_aws
-    def test_iam_policy_allows_privilege_escalation_two_bad_policies(
+    def test_iam_inline_policy_allows_privilege_escalation_two_bad_policies(
         self,
     ):
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
+        role_name = "test_role"
+        role_arn = iam_client.create_role(
+            RoleName=role_name,
+            AssumeRolePolicyDocument=dumps(ADMINISTRATOR_ROLE_ASSUME_ROLE_POLICY),
+        )["Role"]["Arn"]
+
         policy_name_1 = "privileged_policy_1"
         policy_document_1 = {
             "Version": "2012-10-17",
@@ -647,13 +729,17 @@ class Test_iam_policy_allows_privilege_escalation:
                 },
             ],
         }
-        policy_arn_1 = iam_client.create_policy(
-            PolicyName=policy_name_1, PolicyDocument=dumps(policy_document_1)
-        )["Policy"]["Arn"]
-
-        policy_arn_2 = iam_client.create_policy(
-            PolicyName=policy_name_2, PolicyDocument=dumps(policy_document_2)
-        )["Policy"]["Arn"]
+        # Attach both policies to the role
+        _ = iam_client.put_role_policy(
+            RoleName=role_name,
+            PolicyName=policy_name_1,
+            PolicyDocument=dumps(policy_document_1),
+        )
+        _ = iam_client.put_role_policy(
+            RoleName=role_name,
+            PolicyName=policy_name_2,
+            PolicyDocument=dumps(policy_document_2),
+        )
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
@@ -661,27 +747,27 @@ class Test_iam_policy_allows_privilege_escalation:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation.iam_client",
+            "prowler.providers.aws.services.iam.iam_inline_policy_allows_privilege_escalation.iam_inline_policy_allows_privilege_escalation.iam_client",
             new=IAM(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation import (
-                iam_policy_allows_privilege_escalation,
+            from prowler.providers.aws.services.iam.iam_inline_policy_allows_privilege_escalation.iam_inline_policy_allows_privilege_escalation import (
+                iam_inline_policy_allows_privilege_escalation,
             )
 
-            check = iam_policy_allows_privilege_escalation()
+            check = iam_inline_policy_allows_privilege_escalation()
             result = check.execute()
             assert len(result) == 2
             for finding in result:
                 if finding.resource_id == policy_name_1:
                     assert finding.status == "FAIL"
                     assert finding.resource_id == policy_name_1
-                    assert finding.resource_arn == policy_arn_1
+                    assert finding.resource_arn == role_arn
                     assert finding.region == AWS_REGION_US_EAST_1
                     assert finding.resource_tags == []
 
                     assert search(
-                        f"Custom Policy {policy_arn_1} allows privilege escalation using the following actions: ",
+                        f"Inline Policy '{policy_name_1}' attached to role {role_arn} allows privilege escalation using the following actions: ",
                         finding.status_extended,
                     )
 
@@ -691,12 +777,12 @@ class Test_iam_policy_allows_privilege_escalation:
                 if finding.resource_id == policy_name_2:
                     assert finding.status == "FAIL"
                     assert finding.resource_id == policy_name_2
-                    assert finding.resource_arn == policy_arn_2
+                    assert finding.resource_arn == role_arn
                     assert finding.region == AWS_REGION_US_EAST_1
                     assert finding.resource_tags == []
 
                     assert search(
-                        f"Custom Policy {policy_arn_2} allows privilege escalation using the following actions: ",
+                        f"Inline Policy '{policy_name_2}' attached to role {role_arn} allows privilege escalation using the following actions: ",
                         finding.status_extended,
                     )
                     assert search("iam:PassRole", finding.status_extended)
@@ -704,11 +790,17 @@ class Test_iam_policy_allows_privilege_escalation:
                     assert search("lambda:CreateFunction", finding.status_extended)
 
     @mock_aws
-    def test_iam_policy_allows_privilege_escalation_over_permissive_policy(
+    def test_iam_inline_policy_allows_privilege_escalation_over_permissive_policy(
         self,
     ):
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
+        role_name = "test_role"
+        role_arn = iam_client.create_role(
+            RoleName=role_name,
+            AssumeRolePolicyDocument=dumps(ADMINISTRATOR_ROLE_ASSUME_ROLE_POLICY),
+        )["Role"]["Arn"]
+
         policy_name_1 = "privileged_policy_1"
         policy_document_1 = {
             "Version": "2012-10-17",
@@ -732,9 +824,11 @@ class Test_iam_policy_allows_privilege_escalation:
             ],
         }
 
-        policy_arn_1 = iam_client.create_policy(
-            PolicyName=policy_name_1, PolicyDocument=dumps(policy_document_1)
-        )["Policy"]["Arn"]
+        _ = iam_client.put_role_policy(
+            RoleName=role_name,
+            PolicyName=policy_name_1,
+            PolicyDocument=dumps(policy_document_1),
+        )
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
@@ -742,27 +836,27 @@ class Test_iam_policy_allows_privilege_escalation:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation.iam_client",
+            "prowler.providers.aws.services.iam.iam_inline_policy_allows_privilege_escalation.iam_inline_policy_allows_privilege_escalation.iam_client",
             new=IAM(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation import (
-                iam_policy_allows_privilege_escalation,
+            from prowler.providers.aws.services.iam.iam_inline_policy_allows_privilege_escalation.iam_inline_policy_allows_privilege_escalation import (
+                iam_inline_policy_allows_privilege_escalation,
             )
 
-            check = iam_policy_allows_privilege_escalation()
+            check = iam_inline_policy_allows_privilege_escalation()
             result = check.execute()
             assert len(result) == 1
             for finding in result:
                 if finding.resource_id == policy_name_1:
                     assert finding.status == "FAIL"
                     assert finding.resource_id == policy_name_1
-                    assert finding.resource_arn == policy_arn_1
+                    assert finding.resource_arn == role_arn
                     assert finding.region == AWS_REGION_US_EAST_1
                     assert finding.resource_tags == []
 
                     assert search(
-                        f"Custom Policy {policy_arn_1} allows privilege escalation using the following actions: ",
+                        f"Inline Policy '{policy_name_1}' attached to role {role_arn} allows privilege escalation using the following actions: ",
                         finding.status_extended,
                     )
 
@@ -770,11 +864,17 @@ class Test_iam_policy_allows_privilege_escalation:
                     assert search("ec2:RunInstances", finding.status_extended)
 
     @mock_aws
-    def test_iam_policy_allows_privilege_escalation_administrator_policy(
+    def test_iam_inline_policy_allows_privilege_escalation_administrator_policy(
         self,
     ):
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
+        role_name = "test_role"
+        role_arn = iam_client.create_role(
+            RoleName=role_name,
+            AssumeRolePolicyDocument=dumps(ADMINISTRATOR_ROLE_ASSUME_ROLE_POLICY),
+        )["Role"]["Arn"]
+
         policy_name_1 = "privileged_policy_1"
         policy_document_1 = {
             "Version": "2012-10-17",
@@ -788,9 +888,11 @@ class Test_iam_policy_allows_privilege_escalation:
             ],
         }
 
-        policy_arn_1 = iam_client.create_policy(
-            PolicyName=policy_name_1, PolicyDocument=dumps(policy_document_1)
-        )["Policy"]["Arn"]
+        _ = iam_client.put_role_policy(
+            RoleName=role_name,
+            PolicyName=policy_name_1,
+            PolicyDocument=dumps(policy_document_1),
+        )
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
@@ -798,26 +900,26 @@ class Test_iam_policy_allows_privilege_escalation:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation.iam_client",
+            "prowler.providers.aws.services.iam.iam_inline_policy_allows_privilege_escalation.iam_inline_policy_allows_privilege_escalation.iam_client",
             new=IAM(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation import (
-                iam_policy_allows_privilege_escalation,
+            from prowler.providers.aws.services.iam.iam_inline_policy_allows_privilege_escalation.iam_inline_policy_allows_privilege_escalation import (
+                iam_inline_policy_allows_privilege_escalation,
             )
 
-            check = iam_policy_allows_privilege_escalation()
+            check = iam_inline_policy_allows_privilege_escalation()
             result = check.execute()
             assert len(result) == 1
             for finding in result:
                 if finding.resource_id == policy_name_1:
                     assert finding.status == "FAIL"
                     assert finding.resource_id == policy_name_1
-                    assert finding.resource_arn == policy_arn_1
+                    assert finding.resource_arn == role_arn
                     assert finding.region == AWS_REGION_US_EAST_1
                     assert finding.resource_tags == []
                     assert search(
-                        f"Custom Policy {policy_arn_1} allows privilege escalation using the following actions:",
+                        f"Inline Policy '{policy_name_1}' attached to role {role_arn} allows privilege escalation using the following actions:",
                         finding.status_extended,
                     )
                     # Since the policy is admin all the possible privilege escalation paths should be present
@@ -828,11 +930,17 @@ class Test_iam_policy_allows_privilege_escalation:
                             assert search(permission, finding.status_extended)
 
     @mock_aws
-    def test_iam_policy_allows_privilege_escalation_iam_put(
+    def test_iam_inline_policy_allows_privilege_escalation_iam_put(
         self,
     ):
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
+        role_name = "test_role"
+        role_arn = iam_client.create_role(
+            RoleName=role_name,
+            AssumeRolePolicyDocument=dumps(ADMINISTRATOR_ROLE_ASSUME_ROLE_POLICY),
+        )["Role"]["Arn"]
+
         policy_name_1 = "privileged_policy_1"
         policy_document_1 = {
             "Version": "2012-10-17",
@@ -846,9 +954,11 @@ class Test_iam_policy_allows_privilege_escalation:
             ],
         }
 
-        policy_arn_1 = iam_client.create_policy(
-            PolicyName=policy_name_1, PolicyDocument=dumps(policy_document_1)
-        )["Policy"]["Arn"]
+        _ = iam_client.put_role_policy(
+            RoleName=role_name,
+            PolicyName=policy_name_1,
+            PolicyDocument=dumps(policy_document_1),
+        )
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
@@ -856,36 +966,42 @@ class Test_iam_policy_allows_privilege_escalation:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation.iam_client",
+            "prowler.providers.aws.services.iam.iam_inline_policy_allows_privilege_escalation.iam_inline_policy_allows_privilege_escalation.iam_client",
             new=IAM(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation import (
-                iam_policy_allows_privilege_escalation,
+            from prowler.providers.aws.services.iam.iam_inline_policy_allows_privilege_escalation.iam_inline_policy_allows_privilege_escalation import (
+                iam_inline_policy_allows_privilege_escalation,
             )
 
-            check = iam_policy_allows_privilege_escalation()
+            check = iam_inline_policy_allows_privilege_escalation()
             result = check.execute()
             assert len(result) == 1
             for finding in result:
                 if finding.resource_id == policy_name_1:
                     assert finding.status == "FAIL"
                     assert finding.resource_id == policy_name_1
-                    assert finding.resource_arn == policy_arn_1
+                    assert finding.resource_arn == role_arn
                     assert finding.region == AWS_REGION_US_EAST_1
                     assert finding.resource_tags == []
                     assert search(
-                        f"Custom Policy {policy_arn_1} allows privilege escalation using the following actions:",
+                        f"Inline Policy '{policy_name_1}' attached to role {role_arn} allows privilege escalation using the following actions:",
                         finding.status_extended,
                     )
                     assert search("iam:Put*", finding.status_extended)
 
     @mock_aws
-    def test_iam_policy_allows_privilege_escalation_iam_wildcard(
+    def test_iam_inline_policy_allows_privilege_escalation_iam_wildcard(
         self,
     ):
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
+        role_name = "test_role"
+        role_arn = iam_client.create_role(
+            RoleName=role_name,
+            AssumeRolePolicyDocument=dumps(ADMINISTRATOR_ROLE_ASSUME_ROLE_POLICY),
+        )["Role"]["Arn"]
+
         policy_name_1 = "privileged_policy_1"
         policy_document_1 = {
             "Version": "2012-10-17",
@@ -899,9 +1015,11 @@ class Test_iam_policy_allows_privilege_escalation:
             ],
         }
 
-        policy_arn_1 = iam_client.create_policy(
-            PolicyName=policy_name_1, PolicyDocument=dumps(policy_document_1)
-        )["Policy"]["Arn"]
+        _ = iam_client.put_role_policy(
+            RoleName=role_name,
+            PolicyName=policy_name_1,
+            PolicyDocument=dumps(policy_document_1),
+        )
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
@@ -909,26 +1027,26 @@ class Test_iam_policy_allows_privilege_escalation:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation.iam_client",
+            "prowler.providers.aws.services.iam.iam_inline_policy_allows_privilege_escalation.iam_inline_policy_allows_privilege_escalation.iam_client",
             new=IAM(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation import (
-                iam_policy_allows_privilege_escalation,
+            from prowler.providers.aws.services.iam.iam_inline_policy_allows_privilege_escalation.iam_inline_policy_allows_privilege_escalation import (
+                iam_inline_policy_allows_privilege_escalation,
             )
 
-            check = iam_policy_allows_privilege_escalation()
+            check = iam_inline_policy_allows_privilege_escalation()
             result = check.execute()
             assert len(result) == 1
             for finding in result:
                 if finding.resource_id == policy_name_1:
                     assert finding.status == "FAIL"
                     assert finding.resource_id == policy_name_1
-                    assert finding.resource_arn == policy_arn_1
+                    assert finding.resource_arn == role_arn
                     assert finding.region == AWS_REGION_US_EAST_1
                     assert finding.resource_tags == []
                     assert search(
-                        f"Custom Policy {policy_arn_1} allows privilege escalation using the following actions:",
+                        f"Inline Policy '{policy_name_1}' attached to role {role_arn} allows privilege escalation using the following actions:",
                         finding.status_extended,
                     )
                     assert search("iam:*", finding.status_extended)
@@ -939,6 +1057,12 @@ class Test_iam_policy_allows_privilege_escalation:
     ):
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
+        role_name = "test_role"
+        role_arn = iam_client.create_role(
+            RoleName=role_name,
+            AssumeRolePolicyDocument=dumps(ADMINISTRATOR_ROLE_ASSUME_ROLE_POLICY),
+        )["Role"]["Arn"]
+
         policy_name_1 = "privileged_policy_1"
         policy_document_1 = {
             "Version": "2012-10-17",
@@ -958,9 +1082,11 @@ class Test_iam_policy_allows_privilege_escalation:
             ],
         }
 
-        policy_arn_1 = iam_client.create_policy(
-            PolicyName=policy_name_1, PolicyDocument=dumps(policy_document_1)
-        )["Policy"]["Arn"]
+        _ = iam_client.put_role_policy(
+            RoleName=role_name,
+            PolicyName=policy_name_1,
+            PolicyDocument=dumps(policy_document_1),
+        )
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
@@ -968,25 +1094,25 @@ class Test_iam_policy_allows_privilege_escalation:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation.iam_client",
+            "prowler.providers.aws.services.iam.iam_inline_policy_allows_privilege_escalation.iam_inline_policy_allows_privilege_escalation.iam_client",
             new=IAM(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation import (
-                iam_policy_allows_privilege_escalation,
+            from prowler.providers.aws.services.iam.iam_inline_policy_allows_privilege_escalation.iam_inline_policy_allows_privilege_escalation import (
+                iam_inline_policy_allows_privilege_escalation,
             )
 
-            check = iam_policy_allows_privilege_escalation()
+            check = iam_inline_policy_allows_privilege_escalation()
             result = check.execute()
             assert len(result) == 1
             for finding in result:
                 if finding.resource_id == policy_name_1:
                     assert finding.status == "PASS"
                     assert finding.resource_id == policy_name_1
-                    assert finding.resource_arn == policy_arn_1
+                    assert finding.resource_arn == role_arn
                     assert finding.region == AWS_REGION_US_EAST_1
                     assert finding.resource_tags == []
                     assert (
                         finding.status_extended
-                        == f"Custom Policy {policy_arn_1} does not allow privilege escalation."
+                        == f"Inline Policy '{policy_name_1}' attached to role {role_arn} does not allow privilege escalation."
                     )
