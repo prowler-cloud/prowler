@@ -8,8 +8,8 @@ from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER
 
 
 class Test_Policy:
-    def test_is_policy_cross_account(self):
-        policy1 = {
+    def test_policy_allows_cross_account_access_with_root_and_wildcard_principal(self):
+        policy_allow_root_and_wildcard_principal = {
             "Statement": [
                 {
                     "Effect": "Allow",
@@ -19,7 +19,14 @@ class Test_Policy:
                 }
             ]
         }
-        policy2 = {
+        assert is_policy_cross_account(
+            policy_allow_root_and_wildcard_principal, AWS_ACCOUNT_NUMBER
+        )
+
+    def test_policy_does_not_allow_cross_account_access_with_specific_root_principal(
+        self,
+    ):
+        policy_allow_specific_root_principal = {
             "Statement": [
                 {
                     "Effect": "Allow",
@@ -29,7 +36,12 @@ class Test_Policy:
                 }
             ]
         }
-        policy3 = {
+        assert not is_policy_cross_account(
+            policy_allow_specific_root_principal, AWS_ACCOUNT_NUMBER
+        )
+
+    def test_policy_does_not_allow_cross_account_access_with_deny_effect(self):
+        policy_deny_specific_root_principal = {
             "Statement": [
                 {
                     "Effect": "Deny",
@@ -39,13 +51,12 @@ class Test_Policy:
                 }
             ]
         }
+        assert not is_policy_cross_account(
+            policy_deny_specific_root_principal, AWS_ACCOUNT_NUMBER
+        )
 
-        assert is_policy_cross_account(policy1, AWS_ACCOUNT_NUMBER)
-        assert not is_policy_cross_account(policy2, AWS_ACCOUNT_NUMBER)
-        assert not is_policy_cross_account(policy3, AWS_ACCOUNT_NUMBER)
-
-    def test_is_policy_public(self):
-        policy1 = {
+    def test_policy_allows_public_access_with_wildcard_principal(self):
+        policy_allow_wildcard_principal = {
             "Statement": [
                 {
                     "Effect": "Allow",
@@ -55,7 +66,10 @@ class Test_Policy:
                 }
             ]
         }
-        policy2 = {
+        assert is_policy_public(policy_allow_wildcard_principal)
+
+    def test_policy_allows_public_access_with_aws_wildcard_principal(self):
+        policy_allow_aws_wildcard_principal = {
             "Statement": [
                 {
                     "Effect": "Allow",
@@ -65,7 +79,10 @@ class Test_Policy:
                 }
             ]
         }
-        policy3 = {
+        assert is_policy_public(policy_allow_aws_wildcard_principal)
+
+    def test_policy_does_not_allow_public_access_with_specific_aws_principal(self):
+        policy_allow_specific_aws_principal = {
             "Statement": [
                 {
                     "Effect": "Allow",
@@ -75,7 +92,10 @@ class Test_Policy:
                 }
             ]
         }
-        policy4 = {
+        assert not is_policy_public(policy_allow_specific_aws_principal)
+
+    def test_policy_does_not_allow_public_access_with_condition(self):
+        policy_allow_aws_wildcard_principal_with_condition = {
             "Statement": [
                 {
                     "Effect": "Allow",
@@ -86,11 +106,7 @@ class Test_Policy:
                 }
             ]
         }
-
-        assert is_policy_public(policy1)
-        assert is_policy_public(policy2)
-        assert not is_policy_public(policy3)
-        assert not is_policy_public(policy4)
+        assert not is_policy_public(policy_allow_aws_wildcard_principal_with_condition)
 
     def test_policy_allows_full_service_access_with_wildcard_action_and_resource(self):
         policy_allow_wildcard_action_and_resource = {
