@@ -81,7 +81,7 @@ def get_table(data):
 
 ## S3 Integration
 
-If you are a Prowler Saas customer and you want to use your data from your S3 bucket, you can run:
+If you are using Prowler SaaS with the S3 integration or that integration from Prowler Open Source and you want to use your data from your S3 bucket, you can run:
 
 ```sh
 aws s3 cp s3://<your-bucket>/output/csv ./output --recursive

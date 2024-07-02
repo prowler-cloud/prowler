@@ -65,6 +65,7 @@ class Test_networkfirewall_in_all_vpc:
                 vpc_id=VPC_ID_PROTECTED,
                 tags=[],
                 encryption_type="CUSTOMER_KMS",
+                deletion_protection=True,
             )
         ]
         vpc_client = mock.MagicMock
@@ -292,6 +293,7 @@ class Test_networkfirewall_in_all_vpc:
                 vpc_id=VPC_ID_PROTECTED,
                 tags=[],
                 encryption_type="CUSTOMER_KMS",
+                deletion_protection=True,
             )
         ]
         vpc_client = mock.MagicMock

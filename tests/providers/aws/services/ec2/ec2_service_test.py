@@ -10,6 +10,7 @@ from dateutil.tz import tzutc
 from freezegun import freeze_time
 from moto import mock_aws
 
+from prowler.config.config import enconding_format_utf_8
 from prowler.providers.aws.services.ec2.ec2_service import EC2
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
@@ -320,7 +321,9 @@ class Test_EC2_Service:
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
         ec2 = EC2(aws_provider)
-        assert user_data == b64decode(ec2.instances[0].user_data).decode("utf-8")
+        assert user_data == b64decode(ec2.instances[0].user_data).decode(
+            enconding_format_utf_8
+        )
 
     # Test EC2 Get EBS Encryption by default
     @mock_aws
@@ -632,9 +635,9 @@ class Test_EC2_Service:
             VersionDescription="Test EC Launch Template 1 (Secret in UserData)",
             LaunchTemplateData={
                 "InstanceType": TEMPLATE_INSTANCE_TYPE,
-                "UserData": b64encode(KNOWN_SECRET_USER_DATA.encode("utf-8")).decode(
-                    "utf-8"
-                ),
+                "UserData": b64encode(
+                    KNOWN_SECRET_USER_DATA.encode(enconding_format_utf_8)
+                ).decode(enconding_format_utf_8),
             },
         )
 
@@ -677,9 +680,9 @@ class Test_EC2_Service:
             VersionDescription="Updated Test EC Launch Template 1",
             LaunchTemplateData={
                 "InstanceType": TEMPLATE_INSTANCE_TYPE,
-                "UserData": b64encode(KNOWN_SECRET_USER_DATA.encode("utf-8")).decode(
-                    "utf-8"
-                ),
+                "UserData": b64encode(
+                    KNOWN_SECRET_USER_DATA.encode(enconding_format_utf_8)
+                ).decode(enconding_format_utf_8),
             },
         )
 
@@ -701,6 +704,6 @@ class Test_EC2_Service:
 
         assert version2.template_data["InstanceType"] == TEMPLATE_INSTANCE_TYPE
         assert (
-            b64decode(version2.template_data["UserData"]).decode("utf-8")
+            b64decode(version2.template_data["UserData"]).decode(enconding_format_utf_8)
             == KNOWN_SECRET_USER_DATA
         )

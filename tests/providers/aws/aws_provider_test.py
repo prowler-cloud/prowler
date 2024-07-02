@@ -41,6 +41,7 @@ from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_CHINA_PARTITION,
     AWS_COMMERCIAL_PARTITION,
+    AWS_GOV_CLOUD_ACCOUNT_ARN,
     AWS_GOV_CLOUD_PARTITION,
     AWS_ISO_PARTITION,
     AWS_REGION_CN_NORTH_1,
@@ -436,6 +437,7 @@ class TestAWSProvider:
                 external_id=arguments.external_id,
                 mfa_enabled=True,  # <- MFA configuration
                 role_session_name=arguments.role_session_name,
+                sts_region=AWS_REGION_US_EAST_1,
             )
 
             credentials = aws_provider._assumed_role_configuration.credentials
@@ -461,51 +463,97 @@ class TestAWSProvider:
         arguments = Namespace()
         arguments.mfa = False
         role_name = "test-role"
-        arguments.role = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:role/{role_name}"
+        arguments.role = (
+            f"arn:{AWS_COMMERCIAL_PARTITION}:iam::{AWS_ACCOUNT_NUMBER}:role/{role_name}"
+        )
         arguments.session_duration = 900
         arguments.role_session_name = "ProwlerAssessmentSession"
 
-        with patch(
-            "prowler.providers.aws.aws_provider.AwsProvider.__input_role_mfa_token_and_code__",
-            return_value=AWSMFAInfo(
-                arn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:mfa/test-role-mfa",
-                totp="111111",
-            ),
-        ):
-            aws_provider = AwsProvider(arguments)
-            assert (
-                aws_provider.session.current_session.region_name == AWS_REGION_US_EAST_1
-            )
-            assert aws_provider.identity.account == AWS_ACCOUNT_NUMBER
-            assert aws_provider.identity.account_arn == AWS_ACCOUNT_ARN
-            assert aws_provider.identity.partition == AWS_COMMERCIAL_PARTITION
-            assert isinstance(
-                aws_provider._assumed_role_configuration.info, AWSAssumeRoleInfo
-            )
-            assert aws_provider._assumed_role_configuration.info == AWSAssumeRoleInfo(
-                role_arn=ARN(arn=arguments.role),
-                session_duration=arguments.session_duration,
-                external_id=None,
-                mfa_enabled=False,  # <- MFA configuration
-                role_session_name=arguments.role_session_name,
-            )
+        aws_provider = AwsProvider(arguments)
+        assert aws_provider.session.current_session.region_name == AWS_REGION_US_EAST_1
+        assert aws_provider.identity.account == AWS_ACCOUNT_NUMBER
+        assert aws_provider.identity.account_arn == AWS_ACCOUNT_ARN
+        assert aws_provider.identity.partition == AWS_COMMERCIAL_PARTITION
+        assert isinstance(
+            aws_provider._assumed_role_configuration.info, AWSAssumeRoleInfo
+        )
+        assert aws_provider._assumed_role_configuration.info == AWSAssumeRoleInfo(
+            role_arn=ARN(arn=arguments.role),
+            session_duration=arguments.session_duration,
+            external_id=None,
+            mfa_enabled=False,  # <- MFA configuration
+            role_session_name=arguments.role_session_name,
+            sts_region=AWS_REGION_US_EAST_1,
+        )
 
-            credentials = aws_provider._assumed_role_configuration.credentials
-            assert isinstance(credentials, AWSCredentials)
+        credentials = aws_provider._assumed_role_configuration.credentials
+        assert isinstance(credentials, AWSCredentials)
 
-            assert credentials.aws_access_key_id
-            assert len(credentials.aws_access_key_id) == 20
-            assert search(r"^ASIA.*$", credentials.aws_access_key_id)
+        assert credentials.aws_access_key_id
+        assert len(credentials.aws_access_key_id) == 20
+        assert search(r"^ASIA.*$", credentials.aws_access_key_id)
 
-            assert credentials.aws_session_token
-            assert len(credentials.aws_session_token) == 356
-            assert search(r"^FQoGZXIvYXdzE.*$", credentials.aws_session_token)
+        assert credentials.aws_session_token
+        assert len(credentials.aws_session_token) == 356
+        assert search(r"^FQoGZXIvYXdzE.*$", credentials.aws_session_token)
 
-            assert credentials.aws_secret_access_key
-            assert len(credentials.aws_secret_access_key) == 40
+        assert credentials.aws_secret_access_key
+        assert len(credentials.aws_secret_access_key) == 40
 
-            assert credentials.expiration
-            # assert credentials.expiration == datetime.now(tzinfo=tzutc())
+        assert credentials.expiration
+        # assert credentials.expiration == datetime.now(tzinfo=tzutc())
+
+    @mock_aws
+    def test_aws_provider_assume_role_without_mfa_gov_cloud(self, monkeypatch):
+        # Set AWS_DEFAULT_REGION = 'us-gov-east-1' since is set by default to 'us-east-1
+        monkeypatch.setenv("AWS_DEFAULT_REGION", AWS_REGION_GOV_CLOUD_US_EAST_1)
+
+        # Variables
+        arguments = Namespace()
+        arguments.mfa = False
+        role_name = "test-role"
+        arguments.role = (
+            f"arn:{AWS_GOV_CLOUD_PARTITION}:iam::{AWS_ACCOUNT_NUMBER}:role/{role_name}"
+        )
+        arguments.session_duration = 900
+        arguments.role_session_name = "ProwlerAssessmentSession"
+
+        aws_provider = AwsProvider(arguments)
+        assert (
+            aws_provider.session.current_session.region_name
+            == AWS_REGION_GOV_CLOUD_US_EAST_1
+        )
+        assert aws_provider.identity.account == AWS_ACCOUNT_NUMBER
+        assert aws_provider.identity.account_arn == AWS_GOV_CLOUD_ACCOUNT_ARN
+        assert aws_provider.identity.partition == AWS_GOV_CLOUD_PARTITION
+        assert isinstance(
+            aws_provider._assumed_role_configuration.info, AWSAssumeRoleInfo
+        )
+        assert aws_provider._assumed_role_configuration.info == AWSAssumeRoleInfo(
+            role_arn=ARN(arn=arguments.role),
+            session_duration=arguments.session_duration,
+            external_id=None,
+            mfa_enabled=False,  # <- MFA configuration
+            role_session_name=arguments.role_session_name,
+            sts_region=AWS_REGION_GOV_CLOUD_US_EAST_1,
+        )
+
+        credentials = aws_provider._assumed_role_configuration.credentials
+        assert isinstance(credentials, AWSCredentials)
+
+        assert credentials.aws_access_key_id
+        assert len(credentials.aws_access_key_id) == 20
+        assert search(r"^ASIA.*$", credentials.aws_access_key_id)
+
+        assert credentials.aws_session_token
+        assert len(credentials.aws_session_token) == 356
+        assert search(r"^FQoGZXIvYXdzE.*$", credentials.aws_session_token)
+
+        assert credentials.aws_secret_access_key
+        assert len(credentials.aws_secret_access_key) == 40
+
+        assert credentials.expiration
+        # assert credentials.expiration == datetime.now(tzinfo=tzutc())
 
     @mock_aws
     def test_aws_provider_config(self):

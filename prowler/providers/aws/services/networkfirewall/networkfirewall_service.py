@@ -53,6 +53,9 @@ class NetworkFirewall(AWSService):
                 network_firewall.encryption_type = describe_firewall.get(
                     "EncryptionConfiguration"
                 ).get("Type")
+                network_firewall.deletion_protection = describe_firewall.get(
+                    "DeleteProtection"
+                )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
@@ -67,3 +70,4 @@ class Firewall(BaseModel):
     vpc_id: str = None
     tags: list = []
     encryption_type: str = None
+    deletion_protection: bool = False

@@ -12,10 +12,19 @@ from prowler.config.config import (
 from prowler.providers.aws.aws_provider import AwsProvider
 from prowler.providers.common.models import Audit_Metadata
 
+# AWS Partitions
+AWS_COMMERCIAL_PARTITION = "aws"
+AWS_GOV_CLOUD_PARTITION = "aws-us-gov"
+AWS_CHINA_PARTITION = "aws-cn"
+AWS_ISO_PARTITION = "aws-iso"
+
 # Root AWS Account
 AWS_ACCOUNT_NUMBER = "123456789012"
-AWS_ACCOUNT_ARN = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
-AWS_COMMERCIAL_PARTITION = "aws"
+AWS_ACCOUNT_ARN = f"arn:{AWS_COMMERCIAL_PARTITION}:iam::{AWS_ACCOUNT_NUMBER}:root"
+AWS_GOV_CLOUD_ACCOUNT_ARN = (
+    f"arn:{AWS_GOV_CLOUD_PARTITION}:iam::{AWS_ACCOUNT_NUMBER}:root"
+)
+
 
 # Commercial Regions
 AWS_REGION_US_EAST_1 = "us-east-1"
@@ -41,12 +50,6 @@ AWS_REGION_GOV_CLOUD_US_EAST_1 = "us-gov-east-1"
 
 # Iso Regions
 AWS_REGION_ISO_GLOBAL = "aws-iso-global"
-
-# AWS Partitions
-AWS_COMMERCIAL_PARTITION = "aws"
-AWS_GOV_CLOUD_PARTITION = "aws-us-gov"
-AWS_CHINA_PARTITION = "aws-cn"
-AWS_ISO_PARTITION = "aws-iso"
 
 # EC2
 EXAMPLE_AMI_ID = "ami-12c6146b"

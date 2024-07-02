@@ -22,6 +22,7 @@ class s3_bucket_secure_transport_policy(Check):
                     if (
                         statement["Effect"] == "Deny"
                         and "Condition" in statement
+                        and "Action" in statement
                         and (
                             "s3:PutObject" in statement["Action"]
                             or "*" in statement["Action"]

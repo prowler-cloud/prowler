@@ -83,9 +83,14 @@ nav:
           - Authentication: tutorials/azure/authentication.md
           - Non default clouds: tutorials/azure/use-non-default-cloud.md
           - Subscriptions: tutorials/azure/subscriptions.md
+          - Create Prowler Service Principal: tutorials/azure/create-prowler-service-principal.md
       - Google Cloud:
           - Authentication: tutorials/gcp/authentication.md
           - Projects: tutorials/gcp/projects.md
+      - Kubernetes:
+          - In-Cluster Execution: tutorials/kubernetes/in-cluster.md
+          - Non In-Cluster Execution: tutorials/kubernetes/outside-cluster.md
+          - Miscellaneous: tutorials/kubernetes/misc.md
   - Developer Guide:
       - Introduction: developer-guide/introduction.md
       - Provider: developer-guide/provider.md

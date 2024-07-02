@@ -1,3 +1,8 @@
+from ipaddress import ip_address, ip_network
+
+from prowler.lib.logger import logger
+
+
 def is_policy_cross_account(policy: dict, audited_account: str) -> bool:
     """
     is_policy_cross_account checks if the policy allows cross-account access.
@@ -117,3 +122,55 @@ def check_full_service_access(service: str, policy: dict) -> bool:
                             break
 
     return full_access
+
+
+def is_condition_restricting_from_private_ip(condition_statement: dict) -> bool:
+    """Check if the policy condition is coming from a private IP address.
+
+    Keyword arguments:
+    condition_statement -- The policy condition to check. For example:
+        {
+            "IpAddress": {
+                "aws:SourceIp": "X.X.X.X"
+            }
+        }
+    """
+    try:
+        CONDITION_OPERATOR = "IpAddress"
+        CONDITION_KEY = "aws:sourceip"
+
+        is_from_private_ip = False
+
+        if condition_statement.get(CONDITION_OPERATOR, {}):
+            # We need to transform the condition_statement into lowercase
+            condition_statement[CONDITION_OPERATOR] = {
+                k.lower(): v for k, v in condition_statement[CONDITION_OPERATOR].items()
+            }
+
+            if condition_statement[CONDITION_OPERATOR].get(CONDITION_KEY, ""):
+                if not isinstance(
+                    condition_statement[CONDITION_OPERATOR][CONDITION_KEY], list
+                ):
+                    condition_statement[CONDITION_OPERATOR][CONDITION_KEY] = [
+                        condition_statement[CONDITION_OPERATOR][CONDITION_KEY]
+                    ]
+
+                for ip in condition_statement[CONDITION_OPERATOR][CONDITION_KEY]:
+                    # Select if IP address or IP network searching in the string for '/'
+                    if "/" in ip:
+                        if not ip_network(ip, strict=False).is_private:
+                            break
+                    else:
+                        if not ip_address(ip).is_private:
+                            break
+                else:
+                    is_from_private_ip = True
+
+    except ValueError:
+        logger.error(f"Invalid IP: {ip}")
+    except Exception as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+        )
+
+    return is_from_private_ip

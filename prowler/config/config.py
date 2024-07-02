@@ -64,6 +64,7 @@ default_config_file_path = (
 default_fixer_config_file_path = (
     f"{pathlib.Path(os.path.dirname(os.path.realpath(__file__)))}/fixer_config.yaml"
 )
+enconding_format_utf_8 = "utf-8"
 available_output_formats = ["csv", "json-asff", "json-ocsf", "html"]
 
 
@@ -109,7 +110,7 @@ def load_and_validate_config_file(provider: str, config_file_path: str) -> dict:
         dict: The configuration dictionary for the specified provider.
     """
     try:
-        with open(config_file_path, "r", encoding="utf-8") as f:
+        with open(config_file_path, "r", encoding=enconding_format_utf_8) as f:
             config_file = yaml.safe_load(f)
 
             # Not to introduce a breaking change, allow the old format config file without any provider keys
@@ -156,12 +157,9 @@ def load_and_validate_fixer_config_file(
 
     Returns:
         dict: The fixer configuration dictionary for the specified provider.
-
-    Raises:
-        SystemExit: If there is an error reading or parsing the fixer configuration file.
     """
     try:
-        with open(fixer_config_file_path, "r", encoding="utf-8") as f:
+        with open(fixer_config_file_path, "r", encoding=enconding_format_utf_8) as f:
             fixer_config_file = yaml.safe_load(f)
             return fixer_config_file.get(provider, {})
 

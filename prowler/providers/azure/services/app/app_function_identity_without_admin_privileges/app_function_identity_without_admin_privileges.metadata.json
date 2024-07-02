@@ -1,0 +1,30 @@
+{
+  "Provider": "azure",
+  "CheckID": "app_function_identity_without_admin_privileges",
+  "CheckTitle": "Ensure that your Azure functions are not configured with an identity with admin privileges",
+  "CheckType": [],
+  "ServiceName": "app",
+  "SubServiceName": "function",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Microsoft.Web/sites",
+  "Description": "It is important to ensure that Azure functions are not configured with administrative privileges to maintain the principle of least privilege and reduce the attack surface. By limiting the privileges of Azure functions, potential security risks and data leaks can be mitigated.",
+  "Risk": "If Azure functions are configured with administrative privileges, it increases the risk of unauthorized access, privilege escalation, and data breaches. Attackers can exploit these privileges to gain access to sensitive data and compromise the entire system.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/overview",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/Functions/azure-function-admin-permissions.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "To remediate this issue, ensure that Azure functions are not configured with an identity that has administrative privileges. Instead, use the principle of least privilege to grant only the necessary permissions to Azure functions. For more information, refer to the official documentation: Use the principle of least privilege.",
+      "Url": "https://docs.microsoft.com/en-us/azure/architecture/framework/security/design-identity-authorization#use-the-principle-of-least-privilege"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check helps prevent privilege escalation attacks and ensures that Azure functions operate with the necessary permissions, reducing the impact of potential security breaches."
+}

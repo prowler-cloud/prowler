@@ -7,7 +7,6 @@ from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.azure.lib.service.service import AzureService
 
 
-########################## SQLServer
 class Network(AzureService):
     def __init__(self, provider: AzureProvider):
         super().__init__(NetworkManagementClient, provider)

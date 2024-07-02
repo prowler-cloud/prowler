@@ -7,6 +7,7 @@ from boto3 import client, resource
 from mock import patch
 from moto import mock_aws
 
+from prowler.config.config import enconding_format_utf_8
 from prowler.providers.aws.lib.mutelist.mutelist import (
     get_mutelist_file_from_dynamodb,
     get_mutelist_file_from_lambda,
@@ -45,7 +46,7 @@ def mock_make_api_call(self, operation_name, kwarg):
                             }
                         }
                     }
-                ).encode("utf-8")
+                ).encode(enconding_format_utf_8)
             )
         }
 

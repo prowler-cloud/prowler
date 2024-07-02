@@ -1288,7 +1288,7 @@
       ],
       "Attributes": [
         {
-          "Section": "2 etcd",
+          "Section": "2 Etcd",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "Configure TLS encryption for the etcd service.",
@@ -1310,7 +1310,7 @@
       ],
       "Attributes": [
         {
-          "Section": "2 etcd",
+          "Section": "2 Etcd",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "Enable client authentication on etcd service.",
@@ -1332,7 +1332,7 @@
       ],
       "Attributes": [
         {
-          "Section": "2 etcd",
+          "Section": "2 Etcd",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "Do not use self-signed certificates for TLS.",
@@ -1354,7 +1354,7 @@
       ],
       "Attributes": [
         {
-          "Section": "2 etcd",
+          "Section": "2 Etcd",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "etcd should be configured to make use of TLS encryption for peer connections.",
@@ -1376,7 +1376,7 @@
       ],
       "Attributes": [
         {
-          "Section": "2 etcd",
+          "Section": "2 Etcd",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "etcd should be configured for peer authentication.",
@@ -1398,7 +1398,7 @@
       ],
       "Attributes": [
         {
-          "Section": "2 etcd",
+          "Section": "2 Etcd",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "Do not use automatically generated self-signed certificates for TLS connections between peers.",
@@ -1420,7 +1420,7 @@
       ],
       "Attributes": [
         {
-          "Section": "2 etcd",
+          "Section": "2 Etcd",
           "Profile": "Level 2 - Master Node",
           "AssessmentStatus": "Manual",
           "Description": "Use a different certificate authority for etcd from the one used for Kubernetes.",
@@ -2634,7 +2634,7 @@
       ],
       "Attributes": [
         {
-          "Section": "5.4",
+          "Section": "5.4 Secrets Management",
           "Profile": "Level 2 - Master Node",
           "AssessmentStatus": "Manual",
           "Description": "Kubernetes supports mounting secrets as data volumes or as environment variables. Minimize the use of environment variable secrets.",

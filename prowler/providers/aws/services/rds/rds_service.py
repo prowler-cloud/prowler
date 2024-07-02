@@ -33,7 +33,7 @@ class RDS(AWSService):
         self.__threading_call__(self.__describe_db_engine_versions__)
         self.__threading_call__(self.__describe_db_event_subscriptions__)
 
-    def __get_trail_arn_template__(self, region):
+    def __get_rds_arn_template__(self, region):
         return (
             f"arn:{self.audited_partition}:rds:{region}:{self.audited_account}:account"
             if region
@@ -57,7 +57,7 @@ class RDS(AWSService):
                                 DBInstance(
                                     id=instance["DBInstanceIdentifier"],
                                     arn=arn,
-                                    endpoint=instance.get("Endpoint"),
+                                    endpoint=instance.get("Endpoint", {}),
                                     engine=instance["Engine"],
                                     engine_version=instance["EngineVersion"],
                                     status=instance["DBInstanceStatus"],
@@ -81,6 +81,10 @@ class RDS(AWSService):
                                         for item in instance["DBParameterGroups"]
                                     ],
                                     multi_az=instance["MultiAZ"],
+                                    username=instance["MasterUsername"],
+                                    iam_auth=instance.get(
+                                        "IAMDatabaseAuthenticationEnabled", False
+                                    ),
                                     security_groups=[
                                         sg["VpcSecurityGroupId"]
                                         for sg in instance["VpcSecurityGroups"]
@@ -170,6 +174,7 @@ class RDS(AWSService):
                                     id=snapshot["DBSnapshotIdentifier"],
                                     arn=arn,
                                     instance_id=snapshot["DBInstanceIdentifier"],
+                                    encrypted=snapshot.get("Encrypted", False),
                                     region=regional_client.region,
                                     tags=snapshot.get("TagList", []),
                                 )
@@ -221,7 +226,7 @@ class RDS(AWSService):
                                     db_cluster = DBCluster(
                                         id=cluster["DBClusterIdentifier"],
                                         arn=db_cluster_arn,
-                                        endpoint=cluster.get("Endpoint"),
+                                        endpoint=cluster.get("Endpoint", ""),
                                         engine=cluster["Engine"],
                                         status=cluster["Status"],
                                         public=cluster.get("PubliclyAccessible", False),
@@ -232,6 +237,7 @@ class RDS(AWSService):
                                         backup_retention_period=cluster.get(
                                             "BackupRetentionPeriod"
                                         ),
+                                        backtrack=cluster.get("BacktrackWindow", 0),
                                         cloudwatch_logs=cluster.get(
                                             "EnabledCloudwatchLogsExports"
                                         ),
@@ -242,6 +248,10 @@ class RDS(AWSService):
                                             "DBClusterParameterGroup"
                                         ],
                                         multi_az=cluster["MultiAZ"],
+                                        username=cluster["MasterUsername"],
+                                        iam_auth=cluster.get(
+                                            "IAMDatabaseAuthenticationEnabled", False
+                                        ),
                                         region=regional_client.region,
                                         tags=cluster.get("TagList", []),
                                     )
@@ -330,6 +340,7 @@ class RDS(AWSService):
                                     id=snapshot["DBClusterSnapshotIdentifier"],
                                     arn=arn,
                                     cluster_id=snapshot["DBClusterIdentifier"],
+                                    encrypted=snapshot.get("StorageEncrypted", False),
                                     region=regional_client.region,
                                     tags=snapshot.get("TagList", []),
                                 )
@@ -464,7 +475,7 @@ class DBInstance(BaseModel):
     id: str
     # arn:{partition}:rds:{region}:{account}:db:{resource_id}
     arn: str
-    endpoint: Optional[dict]
+    endpoint: dict
     engine: str
     engine_version: str
     status: str
@@ -476,6 +487,8 @@ class DBInstance(BaseModel):
     auto_minor_version_upgrade: bool
     enhanced_monitoring_arn: Optional[str]
     multi_az: bool
+    username: str
+    iam_auth: bool
     parameter_groups: list[str] = []
     parameters: list[dict] = []
     security_groups: list[str] = []
@@ -491,16 +504,19 @@ class DBInstance(BaseModel):
 class DBCluster(BaseModel):
     id: str
     arn: str
-    endpoint: Optional[str]
+    endpoint: str
     engine: str
     status: str
     public: bool
     encrypted: bool
     backup_retention_period: int = 0
+    backtrack: int
     cloudwatch_logs: Optional[list]
     deletion_protection: bool
     auto_minor_version_upgrade: bool
     multi_az: bool
+    username: str
+    iam_auth: bool
     parameter_group: str
     force_ssl: str = "0"
     require_secure_transport: str = "OFF"
@@ -514,6 +530,7 @@ class DBSnapshot(BaseModel):
     arn: str
     instance_id: str
     public: bool = False
+    encrypted: bool
     region: str
     tags: Optional[list] = []
 
@@ -524,6 +541,7 @@ class ClusterSnapshot(BaseModel):
     # arn:{partition}:rds:{region}:{account}:cluster-snapshot:{resource_id}
     arn: str
     public: bool = False
+    encrypted: bool
     region: str
     tags: Optional[list] = []
 

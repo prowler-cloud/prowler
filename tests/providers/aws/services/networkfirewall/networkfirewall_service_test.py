@@ -97,3 +97,4 @@ class Test_NetworkFirewall_Service:
             {"Key": "test_tag", "Value": "test_value"}
         ]
         assert networkfirewall.network_firewalls[0].encryption_type == "CUSTOMER_KMS"
+        assert networkfirewall.network_firewalls[0].deletion_protection

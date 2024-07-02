@@ -4,6 +4,7 @@ from mock import patch
 from prowler.providers.aws.services.elasticache.elasticache_service import (
     Cluster,
     ElastiCache,
+    ReplicationGroup,
 )
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
@@ -20,10 +21,23 @@ SUBNET_2 = "subnet-2"
 ELASTICACHE_CLUSTER_NAME = "test-cluster"
 ELASTICACHE_CLUSTER_ARN = f"arn:aws:elasticache:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:{ELASTICACHE_CLUSTER_NAME}"
 ELASTICACHE_ENGINE = "redis"
+ELASTICACHE_ENGINE_MEMCACHED = "memcached"
 
 ELASTICACHE_CLUSTER_TAGS = [
     {"Key": "environment", "Value": "test"},
 ]
+
+REPLICATION_GROUP_ID = "clustered-redis"
+REPLICATION_GROUP_ARN = f"arn:aws:elasticache:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:replicationgroup:{REPLICATION_GROUP_ID}"
+REPLICATION_GROUP_STATUS = "available"
+REPLICATION_GROUP_SNAPSHOT_RETENTION = "0"
+REPLICATION_GROUP_ENCRYPTION = True
+REPLICATION_GROUP_TRANSIT_ENCRYPTION = True
+REPLICATION_GROUP_MULTI_AZ = "enabled"
+REPLICATION_GROUP_TAGS = [
+    {"Key": "environment", "Value": "test"},
+]
+
 
 # Mocking Access Analyzer Calls
 make_api_call = botocore.client.BaseClient._make_api_call
@@ -44,6 +58,8 @@ def mock_make_api_call(self, operation_name, kwargs):
                     "CacheClusterId": ELASTICACHE_CLUSTER_NAME,
                     "CacheSubnetGroupName": SUBNET_GROUP_NAME,
                     "ARN": ELASTICACHE_CLUSTER_ARN,
+                    "Engine": ELASTICACHE_ENGINE,
+                    "SecurityGroups": [],
                 },
             ]
         }
@@ -77,7 +93,20 @@ def mock_make_api_call(self, operation_name, kwargs):
         }
     if operation_name == "ListTagsForResource":
         return {"TagList": ELASTICACHE_CLUSTER_TAGS}
-
+    if operation_name == "DescribeReplicationGroups":
+        return {
+            "ReplicationGroups": [
+                {
+                    "ReplicationGroupId": REPLICATION_GROUP_ID,
+                    "Status": REPLICATION_GROUP_STATUS,
+                    "SnapshotRetentionLimit": REPLICATION_GROUP_SNAPSHOT_RETENTION,
+                    "MultiAZ": REPLICATION_GROUP_MULTI_AZ,
+                    "TransitEncryptionEnabled": REPLICATION_GROUP_TRANSIT_ENCRYPTION,
+                    "AtRestEncryptionEnabled": REPLICATION_GROUP_ENCRYPTION,
+                    "ARN": REPLICATION_GROUP_ARN,
+                },
+            ]
+        }
     return make_api_call(self, operation_name, kwargs)
 
 
@@ -120,7 +149,7 @@ class Test_ElastiCache_Service:
         elasticache = ElastiCache(aws_provider)
         assert elasticache.audited_account == AWS_ACCOUNT_NUMBER
 
-    # Test ElastiCache Clusters
+    # Test Elasticache Redis cache clusters
     def test_describe_cache_clusters(self):
         aws_provider = set_mocked_aws_provider()
         elasticache = ElastiCache(aws_provider)
@@ -131,8 +160,31 @@ class Test_ElastiCache_Service:
             arn=ELASTICACHE_CLUSTER_ARN,
             name=ELASTICACHE_CLUSTER_NAME,
             id=ELASTICACHE_CLUSTER_NAME,
+            engine=ELASTICACHE_ENGINE,
             region=AWS_REGION_US_EAST_1,
+            security_groups=[],
             cache_subnet_group_id=SUBNET_GROUP_NAME,
             subnets=[SUBNET_1, SUBNET_2],
             tags=ELASTICACHE_CLUSTER_TAGS,
+        )
+
+    # Test Elasticache Redis cache clusters
+    def test_describe_replication_groups(self):
+        aws_provider = set_mocked_aws_provider()
+        elasticache = ElastiCache(aws_provider)
+
+        assert len(elasticache.replication_groups) == 1
+        assert elasticache.replication_groups[REPLICATION_GROUP_ARN]
+        assert elasticache.replication_groups[
+            REPLICATION_GROUP_ARN
+        ] == ReplicationGroup(
+            id=REPLICATION_GROUP_ID,
+            arn=REPLICATION_GROUP_ARN,
+            region=AWS_REGION_US_EAST_1,
+            status=REPLICATION_GROUP_STATUS,
+            snapshot_retention=REPLICATION_GROUP_SNAPSHOT_RETENTION,
+            encrypted=REPLICATION_GROUP_ENCRYPTION,
+            transit_encryption=REPLICATION_GROUP_TRANSIT_ENCRYPTION,
+            multi_az=REPLICATION_GROUP_MULTI_AZ,
+            tags=REPLICATION_GROUP_TAGS,
         )
