@@ -10,9 +10,7 @@ class iam_inline_policy_no_full_access_to_kms(Check):
         findings = []
 
         for policy in iam_client.policies:
-            if (
-                policy.attached or iam_client.provider.scan_unused_services
-            ) and policy.type == "Inline":
+            if policy.type == "Inline":
                 report = Check_Report_AWS(self.metadata())
                 report.region = iam_client.region
                 report.resource_arn = policy.arn
