@@ -1,11 +1,11 @@
 from prowler.providers.aws.services.iam.lib.privilege_escalation import (
     check_privilege_escalation,
-    find_escalation_combinations,
+    find_privilege_escalation_combinations,
 )
 
 
 class Test_PrivilegeEscalation:
-    def test_find_escalation_combinations_no_priv_escalation(self):
+    def test_find_privilege_escalation_combinations_no_priv_escalation(self):
         allowed_actions = set()
         denied_actions = set()
         denied_not_actions = set()
@@ -15,13 +15,13 @@ class Test_PrivilegeEscalation:
         denied_not_actions.add("s3:DeleteObject")
 
         assert (
-            find_escalation_combinations(
+            find_privilege_escalation_combinations(
                 allowed_actions, denied_actions, denied_not_actions
             )
             == set()
         )
 
-    def test_find_escalation_combinations_priv_escalation_iam_all_and_ec2_RunInstances(
+    def test_find_privilege_escalation_combinations_priv_escalation_iam_all_and_ec2_RunInstances(
         self,
     ):
         allowed_actions = set()
@@ -31,7 +31,7 @@ class Test_PrivilegeEscalation:
         allowed_actions.add("iam:*")
         denied_actions.add("ec2:RunInstances")
 
-        assert find_escalation_combinations(
+        assert find_privilege_escalation_combinations(
             allowed_actions, denied_actions, denied_not_actions
         ) == {
             "iam:Put*",
@@ -52,14 +52,14 @@ class Test_PrivilegeEscalation:
             "iam:UpdateLoginProfile",
         }
 
-    def test_find_escalation_combinations_priv_escalation_iam_PassRole(self):
+    def test_find_privilege_escalation_combinations_priv_escalation_iam_PassRole(self):
         allowed_actions = set()
         denied_actions = set()
         denied_not_actions = set()
 
         allowed_actions.add("iam:PassRole")
 
-        assert find_escalation_combinations(
+        assert find_privilege_escalation_combinations(
             allowed_actions, denied_actions, denied_not_actions
         ) == {"iam:PassRole"}
 

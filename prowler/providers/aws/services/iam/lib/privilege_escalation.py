@@ -86,11 +86,11 @@ privilege_escalation_policies_combination = {
 }
 
 
-def find_escalation_combinations(
+def find_privilege_escalation_combinations(
     allowed_actions: set, denied_actions: set, denied_not_actions: set
 ) -> set:
     """
-    find_escalation_combinations finds the privilege escalation combinations.
+    find_privilege_escalation_combinations finds the privilege escalation combinations.
     Args:
         allowed_actions (set): The allowed actions.
         denied_actions (set): The denied actions.
@@ -191,7 +191,7 @@ def check_privilege_escalation(policy: dict) -> str:
                 elif isinstance(not_actions, list):
                     denied_not_actions.update(not_actions)
 
-        policies_combination = find_escalation_combinations(
+        policies_combination = find_privilege_escalation_combinations(
             allowed_actions, denied_actions, denied_not_actions
         )
 
