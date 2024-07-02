@@ -17,13 +17,6 @@ from tests.providers.aws.utils import (
 
 
 class Test_iam_inline_policy_allows_privilege_escalation:
-    from tests.providers.aws.utils import (
-        AWS_ACCOUNT_ARN,
-        AWS_ACCOUNT_NUMBER,
-        AWS_REGION_US_EAST_1,
-        set_mocked_aws_provider,
-    )
-
     # @mock_aws
     # def test_iam_inline_policy_allows_privilege_escalation_sts(self):
     #     iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
