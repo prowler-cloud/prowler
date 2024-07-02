@@ -6,7 +6,6 @@ import pytest
 from colorama import Fore
 
 from prowler.config.config import (
-    csv_file_suffix,
     html_file_suffix,
     json_asff_file_suffix,
     json_ocsf_file_suffix,
@@ -18,11 +17,10 @@ from prowler.lib.check.compliance_models import (
     Compliance_Requirement,
 )
 from prowler.lib.check.models import Check_Report, load_check_metadata
-from prowler.lib.outputs.common import generate_provider_output
-from prowler.lib.outputs.common_models import FindingOutput
 from prowler.lib.outputs.compliance.compliance import get_check_compliance
 from prowler.lib.outputs.csv.csv import generate_csv_fields
 from prowler.lib.outputs.file_descriptors import fill_file_descriptors
+from prowler.lib.outputs.finding import Finding
 from prowler.lib.outputs.outputs import extract_findings_statistics, set_report_color
 from prowler.lib.outputs.utils import (
     parse_html_string,
@@ -42,20 +40,13 @@ class TestOutputs:
         output_directory = f"{os.path.dirname(os.path.realpath(__file__))}"
         aws_provider = set_mocked_aws_provider()
         test_output_modes = [
-            ["csv"],
             ["json-asff"],
             ["json-ocsf"],
             ["html"],
-            ["csv", "json-asff", "json-ocsf", "html"],
+            ["json-asff", "json-ocsf", "html"],
         ]
         output_filename = f"prowler-output-{audited_account}-{output_file_timestamp}"
         expected = [
-            {
-                "csv": open_file(
-                    f"{output_directory}/{output_filename}{csv_file_suffix}",
-                    "a",
-                )
-            },
             {
                 "json-asff": open_file(
                     f"{output_directory}/{output_filename}{json_asff_file_suffix}",
@@ -75,10 +66,6 @@ class TestOutputs:
                 )
             },
             {
-                "csv": open_file(
-                    f"{output_directory}/{output_filename}{csv_file_suffix}",
-                    "a",
-                ),
                 "json-asff": open_file(
                     f"{output_directory}/{output_filename}{json_asff_file_suffix}",
                     "a",
@@ -169,7 +156,7 @@ class TestOutputs:
             "prowler_version",
         ]
 
-        assert generate_csv_fields(FindingOutput) == expected
+        assert generate_csv_fields(Finding) == expected
 
     def test_unroll_list_no_separator(self):
         list = ["test", "test1", "test2"]
@@ -744,183 +731,3 @@ class TestOutputs:
             "CIS-2.0": ["2.1.3"],
             "CIS-2.1": ["2.1.3"],
         }
-
-    def test_generate_provider_output(self):
-        provider = mock.MagicMock()
-        provider.type = "aws"
-        finding = mock.MagicMock()
-        finding.resource_id = "test"
-        finding.resource_arn = "test-arn"
-        finding.region = "eu-west-1"
-        finding.check_metadata = mock.MagicMock()
-        finding.check_metadata.CheckID = "iam_user_accesskey_unused"
-        csv_data = {
-            "resource_uid": "test",
-            "resource_arn": "test-arn",
-            "region": "eu-west-1",
-            "account_uid": "123456789012",
-            "auth_method": "test",
-            "resource_name": "test",
-            "timestamp": "2022-01-01T00:00:00Z",
-            "provider": "aws",
-            "check_id": "iam_user_accesskey_unused",
-            "check_title": "IAM User Access Key Unused",
-            "check_type": "config",
-            "status": "PASS",
-            "status_extended": "This is a test",
-            "service_name": "iam",
-            "subservice_name": "user",
-            "severity": "low",
-            "resource_type": "aws_iam_user",
-            "resource_details": "Test resource details",
-            "resource_tags": "",
-            "description": "IAM User Access Key Unused",
-            "risk": "if an access key is not used, it should be removed",
-            "related_url": "",
-            "remediation_recommendation_text": "Remove unused access keys",
-            "remediation_recommendation_url": "",
-            "remediation_code_nativeiac": "",
-            "remediation_code_terraform": "",
-            "remediation_code_cli": "",
-            "remediation_code_other": "",
-            "compliance": {
-                "CIS": ["2.1.3"],
-                "NIST-800-53-Revision-5": ["sc_28_1"],
-            },
-            "categories": "security",
-            "depends_on": "",
-            "related_to": "",
-            "notes": "",
-            "finding_uid": "test-finding",
-        }
-
-        assert generate_provider_output(provider, finding, csv_data) == FindingOutput(
-            auth_method="profile: test",
-            account_uid="123456789012",
-            timestamp="2022-01-01T00:00:00Z",
-            account_name=None,
-            account_email=None,
-            account_organization_uid=None,
-            account_organization_name=None,
-            account_tags=None,
-            finding_uid="prowler-aws-iam_user_accesskey_unused-123456789012-eu-west-1-test",
-            provider="aws",
-            check_id="iam_user_accesskey_unused",
-            check_title="IAM User Access Key Unused",
-            check_type="config",
-            status="PASS",
-            status_extended="This is a test",
-            service_name="iam",
-            subservice_name="user",
-            severity="low",
-            resource_type="aws_iam_user",
-            resource_uid="test-arn",
-            resource_name="test",
-            resource_tags="",
-            resource_details="Test resource details",
-            region="eu-west-1",
-            description="IAM User Access Key Unused",
-            risk="if an access key is not used, it should be removed",
-            related_url="",
-            remediation_recommendation_text="Remove unused access keys",
-            remediation_recommendation_url="",
-            remediation_code_nativeiac="",
-            remediation_code_terraform="",
-            remediation_code_cli="",
-            remediation_code_other="",
-            compliance={"CIS": ["2.1.3"], "NIST-800-53-Revision-5": ["sc_28_1"]},
-            categories="security",
-            depends_on="",
-            related_to="",
-            notes="",
-        )
-
-    def test_generate_provider_output_unix_timestamp(self):
-        provider = mock.MagicMock()
-        provider.type = "aws"
-        finding = mock.MagicMock()
-        finding.resource_id = "test"
-        finding.resource_arn = "test-arn"
-        finding.region = "eu-west-1"
-        finding.check_metadata = mock.MagicMock()
-        finding.check_metadata.CheckID = "iam_user_accesskey_unused"
-        csv_data = {
-            "resource_uid": "test",
-            "resource_arn": "test-arn",
-            "region": "eu-west-1",
-            "account_uid": "123456789012",
-            "auth_method": "test",
-            "resource_name": "test",
-            "timestamp": 1640995200,
-            "provider": "aws",
-            "check_id": "iam_user_accesskey_unused",
-            "check_title": "IAM User Access Key Unused",
-            "check_type": "config",
-            "status": "PASS",
-            "status_extended": "This is a test",
-            "service_name": "iam",
-            "subservice_name": "user",
-            "severity": "low",
-            "resource_type": "aws_iam_user",
-            "resource_details": "Test resource details",
-            "resource_tags": "",
-            "description": "IAM User Access Key Unused",
-            "risk": "if an access key is not used, it should be removed",
-            "related_url": "",
-            "remediation_recommendation_text": "Remove unused access keys",
-            "remediation_recommendation_url": "",
-            "remediation_code_nativeiac": "",
-            "remediation_code_terraform": "",
-            "remediation_code_cli": "",
-            "remediation_code_other": "",
-            "compliance": {
-                "CIS": ["2.1.3"],
-                "NIST-800-53-Revision-5": ["sc_28_1"],
-            },
-            "categories": "security",
-            "depends_on": "",
-            "related_to": "",
-            "notes": "",
-            "finding_uid": "test-finding",
-        }
-
-        assert generate_provider_output(provider, finding, csv_data) == FindingOutput(
-            auth_method="profile: test",
-            account_uid="123456789012",
-            timestamp=1640995200,
-            account_name=None,
-            account_email=None,
-            account_organization_uid=None,
-            account_organization_name=None,
-            account_tags=None,
-            finding_uid="prowler-aws-iam_user_accesskey_unused-123456789012-eu-west-1-test",
-            provider="aws",
-            check_id="iam_user_accesskey_unused",
-            check_title="IAM User Access Key Unused",
-            check_type="config",
-            status="PASS",
-            status_extended="This is a test",
-            service_name="iam",
-            subservice_name="user",
-            severity="low",
-            resource_type="aws_iam_user",
-            resource_uid="test-arn",
-            resource_name="test",
-            resource_tags="",
-            resource_details="Test resource details",
-            region="eu-west-1",
-            description="IAM User Access Key Unused",
-            risk="if an access key is not used, it should be removed",
-            related_url="",
-            remediation_recommendation_text="Remove unused access keys",
-            remediation_recommendation_url="",
-            remediation_code_nativeiac="",
-            remediation_code_terraform="",
-            remediation_code_cli="",
-            remediation_code_other="",
-            compliance={"CIS": ["2.1.3"], "NIST-800-53-Revision-5": ["sc_28_1"]},
-            categories="security",
-            depends_on="",
-            related_to="",
-            notes="",
-        )

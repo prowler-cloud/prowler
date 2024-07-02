@@ -6,7 +6,7 @@ from os import environ
 
 from colorama import Fore, Style
 
-from prowler.config.config import get_available_compliance_frameworks
+from prowler.config.config import csv_file_suffix, get_available_compliance_frameworks
 from prowler.lib.banner import print_banner
 from prowler.lib.check.check import (
     bulk_load_checks_metadata,
@@ -37,6 +37,8 @@ from prowler.lib.check.custom_checks_metadata import (
 from prowler.lib.cli.parser import ProwlerArgumentParser
 from prowler.lib.logger import logger, set_logging_config
 from prowler.lib.outputs.compliance.compliance import display_compliance_table
+from prowler.lib.outputs.csv.models import CSV
+from prowler.lib.outputs.finding import Finding
 from prowler.lib.outputs.html.html import add_html_footer, fill_html_overview_statistics
 from prowler.lib.outputs.json.json import close_json
 from prowler.lib.outputs.outputs import extract_findings_statistics
@@ -280,9 +282,32 @@ def prowler():
             )
             sys.exit(1)
 
+    # Outputs
+    # TODO: this part is needed since the checks generates a Check_Report_XXX and the output uses Finding
+    # This will be refactored for the outputs generate directly the Finding
+    finding_outputs = [
+        Finding.generate_output(global_provider, finding) for finding in findings
+    ]
+
     if args.output_formats:
         for mode in args.output_formats:
+
+            if "csv" in mode:
+                # Generate CSV Finding Object
+                filename = (
+                    f"{global_provider.output_options.output_directory}/"
+                    f"{global_provider.output_options.output_filename}{csv_file_suffix}"
+                )
+                csv_finding = CSV(
+                    findings=finding_outputs,
+                    create_file_descriptor=True,
+                    file_path=filename,
+                )
+                # Write CSV Finding Object to file
+                csv_finding.batch_write_data_to_file()
+
             # Close json file if exists
+            # TODO: generate JSON here
             if "json" in mode:
                 close_json(
                     global_provider.output_options.output_filename,
@@ -291,6 +316,7 @@ def prowler():
                 )
 
             if "html" in mode:
+                # TODO: generate HTML here
                 add_html_footer(
                     global_provider.output_options.output_filename,
                     global_provider.output_options.output_directory,

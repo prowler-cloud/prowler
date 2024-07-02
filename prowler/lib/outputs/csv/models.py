@@ -1,74 +1,45 @@
-from datetime import datetime
-from enum import Enum
-from typing import Optional
+from csv import DictWriter
 
-from pydantic import BaseModel
-
-
-class Status(str, Enum):
-    PASS = "PASS"
-    FAIL = "FAIL"
-    MANUAL = "MANUAL"
+from prowler.lib.logger import logger
+from prowler.lib.outputs.finding import Finding
+from prowler.lib.outputs.output import Output
+from prowler.lib.outputs.utils import unroll_dict, unroll_list
 
 
-class Severity(str, Enum):
-    critical = "critical"
-    high = "high"
-    medium = "medium"
-    low = "low"
-    informational = "informational"
+class CSV(Output):
+    def transform(self, findings: list[Finding]) -> None:
+        """Transforms the findings into the CSV format.
 
+        Args:
+            findings (list[Finding]): a list of Finding objects
 
-class CSVRow(BaseModel):
-    """
-    CSVRow generates a finding's output in CSV format.
+        """
+        try:
+            for finding in findings:
+                finding_dict = {k.upper(): v for k, v in finding.dict().items()}
+                finding_dict["COMPLIANCE"] = unroll_dict(finding.compliance)
+                finding_dict["ACCOUNT_TAGS"] = unroll_list(finding.account_tags)
+                finding_dict["STATUS"] = finding.status.value
+                finding_dict["SEVERITY"] = finding.severity.value
+                self._data.append(finding_dict)
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
-    This is the base CSV output model for every provider.
-    """
-
-    auth_method: str
-    timestamp: datetime
-    account_uid: str
-    # Optional since depends on permissions
-    account_name: Optional[str]
-    # Optional since depends on permissions
-    account_email: Optional[str]
-    # Optional since depends on permissions
-    account_organization_uid: Optional[str]
-    # Optional since depends on permissions
-    account_organization: Optional[str]
-    # Optional since depends on permissions
-    account_tags: Optional[str]
-    finding_uid: str
-    provider: str
-    check_id: str
-    check_title: str
-    check_type: str
-    status: Status
-    status_extended: str
-    muted: bool = False
-    service_name: str
-    subservice_name: str
-    severity: Severity
-    resource_type: str
-    resource_uid: str
-    resource_name: str
-    resource_details: str
-    resource_tags: str
-    # Only present for AWS and Azure
-    partition: Optional[str]
-    region: str
-    description: str
-    risk: str
-    related_url: str
-    remediation_recommendation_text: str
-    remediation_recommendation_url: str
-    remediation_code_nativeiac: str
-    remediation_code_terraform: str
-    remediation_code_cli: str
-    remediation_code_other: str
-    compliance: str
-    categories: str
-    depends_on: str
-    related_to: str
-    notes: str
+    def batch_write_data_to_file(self) -> None:
+        """Writes the findings to a file using the CSV format using the `Output._file_descriptor`."""
+        try:
+            if self._file_descriptor:
+                csv_writer = DictWriter(
+                    self._file_descriptor,
+                    fieldnames=self._data[0].keys(),
+                    delimiter=";",
+                )
+                csv_writer.writeheader()
+                for finding in self._data:
+                    csv_writer.writerow(finding)
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )

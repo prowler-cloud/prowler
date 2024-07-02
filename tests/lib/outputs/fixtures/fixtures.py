@@ -1,15 +1,15 @@
 from datetime import datetime
 
 from prowler.config.config import prowler_version
-from prowler.lib.outputs.common_models import FindingOutput
+from prowler.lib.outputs.finding import Finding
 from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER
 
 
 # TODO: customize it per provider
-def generate_finding_output(status, severity, muted, region) -> FindingOutput:
+def generate_finding_output(status, severity, muted, region) -> Finding:
     # TODO: Include metadata from a valid file
 
-    return FindingOutput(
+    return Finding(
         auth_method="profile: default",
         timestamp=datetime.now(),
         account_uid=AWS_ACCOUNT_NUMBER,

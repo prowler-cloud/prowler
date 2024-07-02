@@ -1,27 +1,18 @@
 import json
-from csv import DictWriter
 
 from colorama import Fore, Style
 
 from prowler.config.config import available_compliance_frameworks, orange_color
 from prowler.lib.logger import logger
-from prowler.lib.outputs.common import (
-    fill_common_finding_data,
-    generate_provider_output,
-    get_provider_data_mapping,
-)
-from prowler.lib.outputs.common_models import FindingOutput
 from prowler.lib.outputs.compliance.compliance import (
     add_manual_controls,
     fill_compliance,
-    get_check_compliance,
 )
-from prowler.lib.outputs.csv.csv import generate_csv_fields
 from prowler.lib.outputs.file_descriptors import fill_file_descriptors
+from prowler.lib.outputs.finding import Finding
 from prowler.lib.outputs.html.html import fill_html
 from prowler.lib.outputs.json_asff.json_asff import fill_json_asff
 from prowler.lib.outputs.json_ocsf.json_ocsf import fill_json_ocsf
-from prowler.lib.outputs.utils import unroll_dict, unroll_list
 
 
 def stdout_report(finding, color, verbose, status, fix):
@@ -119,23 +110,12 @@ def report(check_findings, provider):
                                 file_descriptors["json-asff"].write(",")
 
                         # Common Output Data
-                        provider_data_mapping = get_provider_data_mapping(provider)
-                        common_finding_data = fill_common_finding_data(
-                            finding, output_options.unix_timestamp
-                        )
-                        csv_data = {}
-                        csv_data.update(provider_data_mapping)
-                        csv_data.update(common_finding_data)
-                        csv_data["compliance"] = get_check_compliance(
-                            finding, provider.type, output_options
-                        )
-                        finding_output = generate_provider_output(
-                            provider, finding, csv_data
-                        )
+                        finding_output = Finding.generate_output(provider, finding)
+
                         # JSON
                         if "json-ocsf" in file_descriptors:
                             detection_finding = fill_json_ocsf(finding_output)
-                            # print(file)
+
                             file_descriptors["json-ocsf"].write(
                                 detection_finding.json(exclude_none=True, indent=4)
                             )
@@ -143,22 +123,6 @@ def report(check_findings, provider):
 
                         if "html" in file_descriptors:
                             fill_html(file_descriptors["html"], finding_output)
-
-                        # CSV
-                        if "csv" in file_descriptors:
-                            finding_output.compliance = unroll_dict(
-                                finding_output.compliance
-                            )
-                            finding_output.account_tags = unroll_list(
-                                finding_output.account_tags, ","
-                            )
-                            csv_writer = DictWriter(
-                                file_descriptors["csv"],
-                                fieldnames=generate_csv_fields(FindingOutput),
-                                delimiter=";",
-                            )
-
-                            csv_writer.writerow(finding_output.dict())
 
         else:  # No service resources in the whole account
             color = set_report_color("MANUAL")

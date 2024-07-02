@@ -9,7 +9,6 @@ from prowler.config.config import (
     json_ocsf_file_suffix,
 )
 from prowler.lib.logger import logger
-from prowler.lib.outputs.common_models import FindingOutput
 from prowler.lib.outputs.compliance.mitre_attack.models import (
     MitreAttackAWS,
     MitreAttackAzure,
@@ -27,6 +26,7 @@ from prowler.lib.outputs.compliance.models import (
 )
 from prowler.lib.outputs.csv.csv import generate_csv_fields
 from prowler.lib.outputs.html.html import add_html_header
+from prowler.lib.outputs.output import Finding
 from prowler.lib.utils.utils import file_exists, open_file
 
 
@@ -34,9 +34,10 @@ def initialize_file_descriptor(
     filename: str,
     output_mode: str,
     provider: Any = None,
-    format: Any = FindingOutput,
+    format: Any = Finding,
+    write_header: bool = True,
 ) -> TextIOWrapper:
-    """Open/Create the output file. If needed include headers or the required format, by default will use the FindingOutput"""
+    """Open/Create the output file. If needed include headers or the required format, by default will use the Finding"""
     try:
         if file_exists(filename):
             file_descriptor = open_file(
@@ -59,7 +60,8 @@ def initialize_file_descriptor(
                 csv_writer = DictWriter(
                     file_descriptor, fieldnames=csv_header, delimiter=";"
                 )
-                csv_writer.writeheader()
+                if write_header:
+                    csv_writer.writeheader()
         return file_descriptor
     except Exception as error:
         logger.error(
@@ -72,17 +74,9 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, provi
         file_descriptors = {}
         if output_modes:
             for output_mode in output_modes:
+                # FIXME: Remove this once we always use the new CSV(Output)
                 if output_mode == "csv":
-                    filename = f"{output_directory}/{output_filename}{csv_file_suffix}"
-                    output_model = FindingOutput
-                    file_descriptor = initialize_file_descriptor(
-                        filename,
-                        output_mode,
-                        provider.type,
-                        output_model,
-                    )
-                    file_descriptors.update({output_mode: file_descriptor})
-
+                    continue
                 elif output_mode == "html":
                     filename = f"{output_directory}/{output_filename}{html_file_suffix}"
                     file_descriptor = initialize_file_descriptor(
