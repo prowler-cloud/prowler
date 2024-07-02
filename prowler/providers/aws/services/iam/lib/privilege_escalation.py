@@ -150,6 +150,21 @@ def find_privilege_escalation_combinations(
     return policies_combination
 
 
+def process_actions(effect, actions, target_set):
+    """
+    process_actions processes the actions in the policy.
+    Args:
+        effect (str): The effect of the policy.
+        actions (str or list): The actions to process.
+        target_set (set): The set to store the actions.
+    """
+    if effect in ["Allow", "Deny"] and actions:
+        if isinstance(actions, str):
+            target_set.add(actions)
+        elif isinstance(actions, list):
+            target_set.update(actions)
+
+
 def check_privilege_escalation(policy: dict) -> str:
     """
     check_privilege_escalation checks if the policy allows privilege escalation.
@@ -174,13 +189,6 @@ def check_privilege_escalation(policy: dict) -> str:
             effect = statement.get("Effect")
             actions = statement.get("Action")
             not_actions = statement.get("NotAction")
-
-            def process_actions(effect, actions, target_set):
-                if effect in ["Allow", "Deny"] and actions:
-                    if isinstance(actions, str):
-                        target_set.add(actions)
-                    elif isinstance(actions, list):
-                        target_set.update(actions)
 
             if effect == "Allow":
                 process_actions(effect, actions, allowed_actions)
