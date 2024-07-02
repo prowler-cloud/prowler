@@ -18,7 +18,7 @@ from py_ocsf_models.objects.remediation import Remediation
 from py_ocsf_models.objects.resource_details import ResourceDetails
 
 from prowler.config.config import prowler_version
-from prowler.lib.outputs.json_ocsf.json_ocsf import (
+from prowler.lib.outputs.json_ocsf.ocsf import (
     fill_json_ocsf,
     get_account_type_id_by_provider,
     get_finding_status_id,
