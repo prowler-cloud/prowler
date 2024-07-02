@@ -122,13 +122,11 @@ class Test_Policy:
         self,
     ):
         policy_allow_bucket_wildcard_resource = {
-            "Statement": [
-                {
-                    "Effect": "Allow",
-                    "Action": "s3:*",
-                    "Resource": "arn:aws:s3:::example_bucket/*",
-                }
-            ]
+            "Statement": {
+                "Effect": "Allow",
+                "Action": "s3:*",
+                "Resource": "arn:aws:s3:::example_bucket/*",
+            }
         }
         assert not check_full_service_access(
             "s3", policy_allow_bucket_wildcard_resource
@@ -145,6 +143,36 @@ class Test_Policy:
             ]
         }
         assert not check_full_service_access("s3", policy_allow_specific_bucket)
+
+    def test_policy_allows_full_service_access_with_not_action_excluding_other_service(
+        self,
+    ):
+        policy_allow_not_action_excluding_other_service = {
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "NotAction": "ec2:*",
+                    "Resource": "*",
+                }
+            ]
+        }
+        assert check_full_service_access(
+            "s3", policy_allow_not_action_excluding_other_service
+        )
+
+    def test_policy_does_not_allow_full_service_access_with_not_action_including_service(
+        self,
+    ):
+        policy_not_action_including_service = {
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "NotAction": "s3:*",
+                    "Resource": "*",
+                }
+            ]
+        }
+        assert not check_full_service_access("s3", policy_not_action_including_service)
 
     def test_is_condition_restricting_from_private_ip_no_condition(self):
         assert not is_condition_restricting_from_private_ip({})
