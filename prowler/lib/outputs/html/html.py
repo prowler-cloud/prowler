@@ -197,8 +197,7 @@ class HTML(Output):
                     <th scope="col">Compliance</th>
                 </tr>
             </thead>
-            <tbody>
-        """
+            <tbody>"""
             )
         except Exception as error:
             logger.critical(
@@ -297,7 +296,7 @@ class HTML(Output):
 </body>
 
 </html>
-    """
+"""
             )
         except Exception as error:
             logger.critical(
@@ -362,9 +361,7 @@ class HTML(Output):
                             </li>
                         </ul>
                     </div>
-                </div>
-                """
-
+                </div>"""
         except Exception as error:
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
@@ -429,8 +426,7 @@ class HTML(Output):
                             </li>
                         </ul>
                     </div>
-                </div>
-                """
+                </div>"""
         except Exception as error:
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
@@ -483,8 +479,7 @@ class HTML(Output):
                             </li>
                         </ul>
                     </div>
-                </div>
-                """
+                </div>"""
         except Exception as error:
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
@@ -530,8 +525,7 @@ class HTML(Output):
                             </li>
                         </ul>
                     </div>
-                </div>
-                """
+                </div>"""
         except Exception as error:
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
