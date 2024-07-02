@@ -1,3 +1,5 @@
+from prowler.lib.logger import logger
+
 # Does the tool analyze both users and roles, or just one or the other? --> Everything using AttachementCount.
 # Does the tool take a principal-centric or policy-centric approach? --> Policy-centric approach.
 # Does the tool handle resource constraints? --> We don't check if the policy affects all resources or not, we check everything.
@@ -98,46 +100,52 @@ def find_privilege_escalation_combinations(
     Returns:
         set: The privilege escalation combinations.
     """
-    # First, we need to perform a left join with ALLOWED_ACTIONS and DENIED_ACTIONS
-    left_actions = allowed_actions.difference(denied_actions)
-    # Then, we need to find the DENIED_NOT_ACTIONS in LEFT_ACTIONS
-    if denied_not_actions:
-        privileged_actions = left_actions.intersection(denied_not_actions)
-    # If there is no Denied Not Actions
-    else:
-        privileged_actions = left_actions
 
     # Store all the action's combinations
     policies_combination = set()
 
-    for values in privilege_escalation_policies_combination.values():
-        for val in values:
-            val_set = set()
-            val_set.add(val)
-            # Look for specific api:action
-            if privileged_actions.intersection(val_set) == val_set:
-                policies_combination.add(val)
-            # Look for api:*
-            else:
-                for permission in privileged_actions:
-                    # Here we have to handle if the api-action is admin, so "*"
-                    api_action = permission.split(":")
-                    # len() == 2, so api:action
-                    if len(api_action) == 2:
-                        api = api_action[0]
-                        action = api_action[1]
-                        # Add permissions if the API is present
-                        if action == "*":
-                            val_api = val.split(":")[0]
-                            if api == val_api:
-                                policies_combination.add(val)
+    try:
+        # First, we need to perform a left join with ALLOWED_ACTIONS and DENIED_ACTIONS
+        left_actions = allowed_actions.difference(denied_actions)
+        # Then, we need to find the DENIED_NOT_ACTIONS in LEFT_ACTIONS
+        if denied_not_actions:
+            privileged_actions = left_actions.intersection(denied_not_actions)
+        # If there is no Denied Not Actions
+        else:
+            privileged_actions = left_actions
 
-                    # len() == 1, so *
-                    elif len(api_action) == 1:
-                        api = api_action[0]
-                        # Add permissions if the API is present
-                        if api == "*":
-                            policies_combination.add(val)
+        for values in privilege_escalation_policies_combination.values():
+            for val in values:
+                val_set = set()
+                val_set.add(val)
+                # Look for specific api:action
+                if privileged_actions.intersection(val_set) == val_set:
+                    policies_combination.add(val)
+                # Look for api:*
+                else:
+                    for permission in privileged_actions:
+                        # Here we have to handle if the api-action is admin, so "*"
+                        api_action = permission.split(":")
+                        # len() == 2, so api:action
+                        if len(api_action) == 2:
+                            api = api_action[0]
+                            action = api_action[1]
+                            # Add permissions if the API is present
+                            if action == "*":
+                                val_api = val.split(":")[0]
+                                if api == val_api:
+                                    policies_combination.add(val)
+
+                        # len() == 1, so *
+                        elif len(api_action) == 1:
+                            api = api_action[0]
+                            # Add permissions if the API is present
+                            if api == "*":
+                                policies_combination.add(val)
+    except Exception as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+        )
 
     return policies_combination
 
