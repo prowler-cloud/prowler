@@ -1,3 +1,4 @@
+import tempfile
 from datetime import datetime
 from io import StringIO, TextIOWrapper
 from typing import List
@@ -160,29 +161,32 @@ class TestCSV:
         mock_output_class.batch_write_data_to_file = MagicMock()
 
         findings = [MagicMock(spec=Finding)]
-        file_path = "test_file.txt"
 
-        # Instantiate the mock class
-        output_instance = mock_output_class(
-            findings, create_file_descriptor=True, file_path=file_path
-        )
+        # Create a temporary file
+        with tempfile.NamedTemporaryFile() as file:
+            file_path = file.name
 
-        # Check that transform was called once
-        output_instance.transform.assert_called_once_with(findings)
+            # Instantiate the mock class
+            output_instance = mock_output_class(
+                findings, create_file_descriptor=True, file_path=file_path
+            )
 
-        # Check that create_file_descriptor was called and the file descriptor was created
-        assert output_instance.file_descriptor is not None
+            # Check that transform was called once
+            output_instance.transform.assert_called_once_with(findings)
 
-        # Check the type
-        assert isinstance(output_instance.file_descriptor, TextIOWrapper)
+            # Check that create_file_descriptor was called and the file descriptor was created
+            assert output_instance.file_descriptor is not None
 
-        # Assuming we need to call batch_write_data_to_file for this test
-        output_instance.batch_write_data_to_file(output_instance.file_descriptor)
+            # Check the type
+            assert isinstance(output_instance.file_descriptor, TextIOWrapper)
 
-        # Check that batch_write_data_to_file was called once
-        output_instance.batch_write_data_to_file.assert_called_once_with(
-            output_instance.file_descriptor
-        )
+            # Assuming we need to call batch_write_data_to_file for this test
+            output_instance.batch_write_data_to_file(output_instance.file_descriptor)
+
+            # Check that batch_write_data_to_file was called once
+            output_instance.batch_write_data_to_file.assert_called_once_with(
+                output_instance.file_descriptor
+            )
 
     def test_write_csv_with_dict(self):
         headers = ["provider", "account", "check_id"]
