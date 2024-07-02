@@ -7,6 +7,7 @@ from prowler.providers.common.provider import Provider
 
 
 # TODO: include this for all the providers
+# Rename to AuditMetadata or ScanMetadata
 class Audit_Metadata(BaseModel):
     services_scanned: int
     # We can't use a set in the expected

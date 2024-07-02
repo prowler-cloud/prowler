@@ -594,11 +594,16 @@ def execute_checks(
                     service,
                     check_name,
                     global_provider,
-                    services_executed,
-                    checks_executed,
                     custom_checks_metadata,
                 )
                 all_findings.extend(check_findings)
+
+                # Update Audit Status
+                services_executed.add(service)
+                checks_executed.add(check_name)
+                global_provider.audit_metadata = update_audit_metadata(
+                    global_provider.audit_metadata, services_executed, checks_executed
+                )
 
             # If check does not exists in the provider or is from another provider
             except ModuleNotFoundError:
@@ -652,11 +657,18 @@ def execute_checks(
                         service,
                         check_name,
                         global_provider,
-                        services_executed,
-                        checks_executed,
                         custom_checks_metadata,
                     )
                     all_findings.extend(check_findings)
+
+                    # Update Audit Status
+                    services_executed.add(service)
+                    checks_executed.add(check_name)
+                    global_provider.audit_metadata = update_audit_metadata(
+                        global_provider.audit_metadata,
+                        services_executed,
+                        checks_executed,
+                    )
 
                 # If check does not exists in the provider or is from another provider
                 except ModuleNotFoundError:
@@ -678,8 +690,6 @@ def execute(
     service: str,
     check_name: str,
     global_provider: Any,
-    services_executed: set,
-    checks_executed: set,
     custom_checks_metadata: Any,
 ):
     try:
@@ -705,13 +715,6 @@ def execute(
         )
         check_findings = run_check(
             check_class, verbose, global_provider.output_options.only_logs
-        )
-
-        # Update Audit Status
-        services_executed.add(service)
-        checks_executed.add(check_name)
-        global_provider.audit_metadata = update_audit_metadata(
-            global_provider.audit_metadata, services_executed, checks_executed
         )
 
         # Mutelist findings
