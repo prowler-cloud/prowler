@@ -175,29 +175,19 @@ def check_privilege_escalation(policy: dict) -> str:
             actions = statement.get("Action")
             not_actions = statement.get("NotAction")
 
-            if effect == "Allow" and actions:
-                if isinstance(actions, str):
-                    allowed_actions.add(actions)
-                elif isinstance(actions, list):
-                    allowed_actions.update(actions)
+            def process_actions(effect, actions, target_set):
+                if effect in ["Allow", "Deny"] and actions:
+                    if isinstance(actions, str):
+                        target_set.add(actions)
+                    elif isinstance(actions, list):
+                        target_set.update(actions)
 
-            if effect == "Deny" and actions:
-                if isinstance(actions, str):
-                    denied_actions.add(actions)
-                elif isinstance(actions, list):
-                    denied_actions.update(actions)
-
-            if effect == "Allow" and not_actions:
-                if isinstance(not_actions, str):
-                    denied_not_actions.add(not_actions)
-                elif isinstance(not_actions, list):
-                    denied_not_actions.update(not_actions)
-
-            if effect == "Deny" and not_actions:
-                if isinstance(not_actions, str):
-                    denied_not_actions.add(not_actions)
-                elif isinstance(not_actions, list):
-                    denied_not_actions.update(not_actions)
+            if effect == "Allow":
+                process_actions(effect, actions, allowed_actions)
+                process_actions(effect, not_actions, denied_not_actions)
+            elif effect == "Deny":
+                process_actions(effect, actions, denied_actions)
+                process_actions(effect, not_actions, denied_not_actions)
 
         policies_combination = find_privilege_escalation_combinations(
             allowed_actions, denied_actions, denied_not_actions
