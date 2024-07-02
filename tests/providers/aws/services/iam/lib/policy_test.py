@@ -92,8 +92,8 @@ class Test_Policy:
         assert not is_policy_public(policy3)
         assert not is_policy_public(policy4)
 
-    def test_check_full_service_access(self):
-        policy1 = {
+    def test_policy_allows_full_service_access_with_wildcard_action_and_resource(self):
+        policy_allow_wildcard_action_and_resource = {
             "Statement": [
                 {
                     "Effect": "Allow",
@@ -102,7 +102,12 @@ class Test_Policy:
                 }
             ]
         }
-        policy2 = {
+        assert check_full_service_access(
+            "s3", policy_allow_wildcard_action_and_resource
+        )
+
+    def test_policy_does_not_allow_full_service_access_with_specific_get_action(self):
+        policy_allow_specific_get_action = {
             "Statement": [
                 {
                     "Effect": "Allow",
@@ -111,7 +116,12 @@ class Test_Policy:
                 }
             ]
         }
-        policy3 = {
+        assert not check_full_service_access("s3", policy_allow_specific_get_action)
+
+    def test_policy_does_not_allow_full_service_access_with_bucket_wildcard_resource(
+        self,
+    ):
+        policy_allow_bucket_wildcard_resource = {
             "Statement": [
                 {
                     "Effect": "Allow",
@@ -120,7 +130,12 @@ class Test_Policy:
                 }
             ]
         }
-        policy4 = {
+        assert not check_full_service_access(
+            "s3", policy_allow_bucket_wildcard_resource
+        )
+
+    def test_policy_does_not_allow_full_service_access_with_specific_bucket(self):
+        policy_allow_specific_bucket = {
             "Statement": [
                 {
                     "Effect": "Allow",
@@ -129,13 +144,8 @@ class Test_Policy:
                 }
             ]
         }
+        assert not check_full_service_access("s3", policy_allow_specific_bucket)
 
-        assert check_full_service_access("s3", policy1)
-        assert not check_full_service_access("s3", policy2)
-        assert not check_full_service_access("s3", policy3)
-        assert not check_full_service_access("s3", policy4)
-
-    
     def test_is_condition_restricting_from_private_ip_no_condition(self):
         assert not is_condition_restricting_from_private_ip({})
 
@@ -223,4 +233,3 @@ class Test_Policy:
             "IpAddress": {"aws:SourceIp": "256.256.256.256"},
         }
         assert not is_condition_restricting_from_private_ip(condition_from_invalid_ip)
-        
