@@ -59,6 +59,10 @@ class TestCSV:
 
     def test_output_transform(self):
         findings = [self.generate_finding()]
+
+        # Clear the data from CSV class
+        CSV._data = []
+
         output = CSV(findings)
         output_data = output.data[0]
         assert isinstance(output_data, dict)
@@ -118,7 +122,8 @@ class TestCSV:
     def test_csv_write_to_file(self):
         mock_file = StringIO()
         findings = [self.generate_finding()]
-
+        # Clear the data from CSV class
+        CSV._data = []
         output = CSV(findings)
         output._file_descriptor = mock_file
 
@@ -127,13 +132,12 @@ class TestCSV:
         mock_file.seek(0)
         content = mock_file.read()
         content = content.split("PROWLER_VERSION")[1]
-        content = content.split("1.0")[0]
-        content = content + "1.0;"
+        content = content.removeprefix("\r\n")
+        content = content.removesuffix("\r\n")
         string = ""
-        for key, value in output.data[0].items():
-            if "Status." in str(value) or "Severity." in str(value):
-                value = str(value).split(".")[1]
+        for value in output.data[0].values():
             string += f"{value};"
+        string = string.removesuffix(";")
         assert string in content
 
     @pytest.fixture
@@ -165,6 +169,9 @@ class TestCSV:
 
         # Check that create_file_descriptor was called and the file descriptor was created
         assert output_instance.file_descriptor is not None
+
+        # Check the type
+        assert isinstance(output_instance.file_descriptor, TextIOWrapper)
 
         # Assuming we need to call batch_write_data_to_file for this test
         output_instance.batch_write_data_to_file(output_instance.file_descriptor)

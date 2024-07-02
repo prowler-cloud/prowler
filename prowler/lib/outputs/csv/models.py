@@ -19,6 +19,8 @@ class CSV(Output):
                 finding_dict = {k.upper(): v for k, v in finding.dict().items()}
                 finding_dict["COMPLIANCE"] = unroll_dict(finding.compliance)
                 finding_dict["ACCOUNT_TAGS"] = unroll_list(finding.account_tags)
+                finding_dict["STATUS"] = finding.status.value
+                finding_dict["SEVERITY"] = finding.severity.value
                 self._data.append(finding_dict)
         except Exception as error:
             logger.error(

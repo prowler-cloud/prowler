@@ -35,6 +35,7 @@ def initialize_file_descriptor(
     output_mode: str,
     provider: Any = None,
     format: Any = Finding,
+    write_header: bool = True,
 ) -> TextIOWrapper:
     """Open/Create the output file. If needed include headers or the required format, by default will use the Finding"""
     try:
@@ -59,7 +60,8 @@ def initialize_file_descriptor(
                 csv_writer = DictWriter(
                     file_descriptor, fieldnames=csv_header, delimiter=";"
                 )
-                csv_writer.writeheader()
+                if write_header:
+                    csv_writer.writeheader()
         return file_descriptor
     except Exception as error:
         logger.error(
@@ -75,7 +77,7 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, provi
                 if output_mode == "csv":
                     filename = f"{output_directory}/{output_filename}{csv_file_suffix}"
                     file_descriptor = initialize_file_descriptor(
-                        filename, output_mode, provider
+                        filename, output_mode, provider, write_header=False
                     )
                     file_descriptors.update({output_mode: file_descriptor})
                 elif output_mode == "html":
