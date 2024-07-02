@@ -74,12 +74,9 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, provi
         file_descriptors = {}
         if output_modes:
             for output_mode in output_modes:
+                # FIXME: Remove this once we always use the new CSV(Output)
                 if output_mode == "csv":
-                    filename = f"{output_directory}/{output_filename}{csv_file_suffix}"
-                    file_descriptor = initialize_file_descriptor(
-                        filename, output_mode, provider, write_header=False
-                    )
-                    file_descriptors.update({output_mode: file_descriptor})
+                    continue
                 elif output_mode == "html":
                     filename = f"{output_directory}/{output_filename}{html_file_suffix}"
                     file_descriptor = initialize_file_descriptor(
