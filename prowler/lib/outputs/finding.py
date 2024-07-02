@@ -29,23 +29,25 @@ class Severity(str, Enum):
 
 class Finding(BaseModel):
     """
-    Finding generates a finding's output. It can be written to CSV or another format doing the mapping.
+    Represents the output model for a finding across different providers.
 
-    This is the base finding output model for every provider.
+    This class encapsulates the details of a finding and supports
+    serialization to various formats such as CSV. It serves as the base
+    model for storing and managing finding information for every provider.
     """
 
     auth_method: str
     timestamp: Union[int, datetime]
     account_uid: str
-    # Optional since depends on permissions
+    # Optional since it depends on permissions
     account_name: Optional[str]
-    # Optional since depends on permissions
+    # Optional since it depends on permissions
     account_email: Optional[str]
-    # Optional since depends on permissions
+    # Optional since it depends on permissions
     account_organization_uid: Optional[str]
-    # Optional since depends on permissions
+    # Optional since it depends on permissions
     account_organization_name: Optional[str]
-    # Optional since depends on permissions
+    # Optional since it depends on permissions
     account_tags: Optional[list[str]]
     finding_uid: str
     provider: str
@@ -84,12 +86,11 @@ class Finding(BaseModel):
 
     @classmethod
     def generate_output(cls, provider, check_output) -> "Finding":
-        """generates the output for a finding based on the provider and output options
+        """Generates the output for a finding based on the provider and output options
 
         Args:
             provider (Provider): the provider object
             finding (Finding): the finding object
-            global_provider (Provider): the global provider object
 
         Returns:
             finding_output (Finding): the finding output object
@@ -179,13 +180,12 @@ class Finding(BaseModel):
             # TODO: move this to a function
             # TODO: in Azure, GCP and K8s there are fidings without resource_name
             output_data["finding_uid"] = (
-                f"prowler-{provider.type}-{check_output.check_metadata.CheckID}-{output_data['account_uid']}-{output_data['region']}-{output_data['resource_name']}"
+                f"prowler-{provider.type}-{check_output.check_metadata.CheckID}-{output_data['account_uid']}-"
+                f"{output_data['region']}-{output_data['resource_name']}"
             )
 
-            finding_output = cls(**output_data)
+            return cls(**output_data)
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-        else:
-            return finding_output

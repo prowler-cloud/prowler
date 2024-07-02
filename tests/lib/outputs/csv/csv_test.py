@@ -11,8 +11,9 @@ from prowler.lib.outputs.finding import Finding, Severity, Status
 from prowler.lib.outputs.output import Output
 
 
-class TestCSV:
-    def generate_finding(self):
+@pytest.fixture
+def generate_finding():
+    def _generate_finding():
         return Finding(
             auth_method="OAuth",
             timestamp=datetime.now(),
@@ -57,8 +58,13 @@ class TestCSV:
             prowler_version="1.0",
         )
 
-    def test_output_transform(self):
-        findings = [self.generate_finding()]
+    return _generate_finding
+
+
+class TestCSV:
+
+    def test_output_transform(self, generate_finding):
+        findings = [generate_finding()]
 
         # Clear the data from CSV class
         CSV._data = []
@@ -119,9 +125,9 @@ class TestCSV:
         assert output_data["NOTES"] == "Notes about the finding"
         assert output_data["PROWLER_VERSION"] == "1.0"
 
-    def test_csv_write_to_file(self):
+    def test_csv_write_to_file(self, generate_finding):
         mock_file = StringIO()
-        findings = [self.generate_finding()]
+        findings = [generate_finding()]
         # Clear the data from CSV class
         CSV._data = []
         output = CSV(findings)
