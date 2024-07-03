@@ -25,10 +25,24 @@ from prowler.lib.outputs.output import Output
 
 
 class OCSF(Output):
-    """OCSF class that transforms the findings into the OCSF format.
+    """
+    OCSF class that transforms the findings into the OCSF format.
 
-    Args:
-        Output (ABC): Abstract class that defines the methods that the child classes should implement.
+    This class provides methods to transform the findings into the OCSF format and write them to a file.
+
+    Attributes:
+        - _data: A list to store the transformed findings.
+        - _file_descriptor: A file descriptor to write the findings to a file.
+
+    Methods:
+        - transform(findings: List[Finding]) -> None: Transforms the findings into the OCSF format.
+        - batch_write_data_to_file() -> None: Writes the findings to a file using the OCSF format using the `Output._file_descriptor`.
+        - get_account_type_id_by_provider(provider: str) -> TypeID: Returns the TypeID based on the provider.
+        - get_finding_status_id(status: str, muted: bool) -> StatusID: Returns the StatusID based on the status and muted values.
+
+    References:
+        - OCSF: https://docs.aws.amazon.com/security-lake/latest/userguide/open-cybersecurity-schema-framework.html
+        - PY-OCSF-Model: https://github.com/prowler-cloud/py-ocsf-models
     """
 
     def transform(self, findings: List[Finding]) -> None:
@@ -179,6 +193,15 @@ class OCSF(Output):
 
     @staticmethod
     def get_account_type_id_by_provider(provider: str) -> TypeID:
+        """
+        Returns the TypeID based on the provider.
+
+        Args:
+            provider (str): The provider name
+
+        Returns:
+            TypeID: The TypeID based on the provider
+        """
         type_id = TypeID.Other
         if provider == "aws":
             type_id = TypeID.AWS_Account
@@ -190,6 +213,16 @@ class OCSF(Output):
 
     @staticmethod
     def get_finding_status_id(status: str, muted: bool) -> StatusID:
+        """
+        Returns the StatusID based on the status and muted values.
+
+        Args:
+            status (str): The status value
+            muted (bool): The muted value
+
+        Returns:
+            StatusID: The StatusID based on the status and muted values
+        """
         status_id = StatusID.Other
         if status == "FAIL":
             status_id = StatusID.New
