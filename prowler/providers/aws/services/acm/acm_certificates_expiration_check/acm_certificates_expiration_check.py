@@ -6,7 +6,7 @@ class acm_certificates_expiration_check(Check):
     def execute(self):
         findings = []
         for certificate in acm_client.certificates:
-            if certificate.in_use or acm_client.provider.scan_unused_services:
+            if certificate.in_use or not acm_client.audit_info.ignore_unused_services:
                 report = Check_Report_AWS(self.metadata())
                 report.region = certificate.region
                 if certificate.expiration_days > acm_client.audit_config.get(
