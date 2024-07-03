@@ -27,7 +27,7 @@ class Test_acm_certificates_expiration_check:
 
             assert len(result) == 0
 
-    def test_acm_certificate_expirated(self):
+    def test_acm_certificate_expired(self):
         certificate_id = str(uuid.uuid4())
         certificate_arn = f"arn:aws:acm:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:certificate/{certificate_id}"
         certificate_name = "test-certificate.com"
@@ -49,6 +49,7 @@ class Test_acm_certificates_expiration_check:
             )
         ]
 
+        acm_client.audit_info = mock.MagicMock
         acm_client.audit_config = {"days_to_expire_threshold": 7}
 
         with mock.patch(
@@ -74,7 +75,7 @@ class Test_acm_certificates_expiration_check:
             assert result[0].region == AWS_REGION
             assert result[0].resource_tags == []
 
-    def test_acm_certificate_expirated_long_time(self):
+    def test_acm_certificate_expired_long_time(self):
         certificate_id = str(uuid.uuid4())
         certificate_arn = f"arn:aws:acm:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:certificate/{certificate_id}"
         certificate_name = "test-certificate.com"
@@ -96,6 +97,7 @@ class Test_acm_certificates_expiration_check:
             )
         ]
 
+        acm_client.audit_info = mock.MagicMock
         acm_client.audit_config = {"days_to_expire_threshold": 7}
 
         with mock.patch(
@@ -120,7 +122,7 @@ class Test_acm_certificates_expiration_check:
             assert result[0].region == AWS_REGION
             assert result[0].resource_tags == []
 
-    def test_acm_certificate_not_expirated(self):
+    def test_acm_certificate_not_expired(self):
         certificate_id = str(uuid.uuid4())
         certificate_arn = f"arn:aws:acm:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:certificate/{certificate_id}"
         certificate_name = "test-certificate.com"
@@ -141,7 +143,7 @@ class Test_acm_certificates_expiration_check:
                 region=AWS_REGION,
             )
         ]
-
+        acm_client.audit_info = mock.MagicMock
         acm_client.audit_config = {"days_to_expire_threshold": 7}
 
         with mock.patch(
@@ -188,9 +190,9 @@ class Test_acm_certificates_expiration_check:
             )
         ]
 
+        acm_client.audit_info = mock.MagicMock
         acm_client.audit_config = {"days_to_expire_threshold": 7}
-
-        acm_client.provider = mock.MagicMock(scan_unused_services=False)
+        acm_client.audit_info.ignore_unused_services = True
 
         with mock.patch(
             "prowler.providers.aws.services.acm.acm_service.ACM",
@@ -205,7 +207,7 @@ class Test_acm_certificates_expiration_check:
 
             assert len(result) == 0
 
-    def test_acm_certificate_not_in_use_expired_scan_unused_services(self):
+    def test_acm_certificate_not_in_use_expired_not_ignore_unused_services(self):
         certificate_id = str(uuid.uuid4())
         certificate_arn = f"arn:aws:acm:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:certificate/{certificate_id}"
         certificate_name = "test-certificate.com"
@@ -226,10 +228,9 @@ class Test_acm_certificates_expiration_check:
                 region=AWS_REGION,
             )
         ]
-
+        acm_client.audit_info = mock.MagicMock
         acm_client.audit_config = {"days_to_expire_threshold": 7}
-
-        acm_client.provider = mock.MagicMock(scan_unused_services=True)
+        acm_client.audit_info.ignore_unused_services = False
 
         with mock.patch(
             "prowler.providers.aws.services.acm.acm_service.ACM",
