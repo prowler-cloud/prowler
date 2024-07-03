@@ -6,12 +6,14 @@ from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER
 
 
 # TODO: customize it per provider
-def generate_finding_output(status, severity, muted, region) -> Finding:
+def generate_finding_output(
+    status, severity, muted, region, timestamp: datetime = datetime.now()
+) -> Finding:
     # TODO: Include metadata from a valid file
 
     return Finding(
         auth_method="profile: default",
-        timestamp=datetime.now(),
+        timestamp=timestamp,
         account_uid=AWS_ACCOUNT_NUMBER,
         account_name=AWS_ACCOUNT_NUMBER,
         account_email="",

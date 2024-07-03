@@ -1,7 +1,10 @@
-# from datetime import datetime
-from os import path
+import json
+from datetime import datetime
+from io import StringIO
 
+from mock import patch
 from py_ocsf_models.events.base_event import SeverityID, StatusID
+from py_ocsf_models.events.findings.detection_finding import DetectionFinding
 from py_ocsf_models.events.findings.detection_finding import (
     TypeID as DetectionFindingTypeID,
 )
@@ -12,40 +15,132 @@ from py_ocsf_models.objects.group import Group
 from py_ocsf_models.objects.metadata import Metadata
 from py_ocsf_models.objects.organization import Organization
 from py_ocsf_models.objects.product import Product
-
-# from py_ocsf_models.events.findings.detection_finding import DetectionFinding
 from py_ocsf_models.objects.remediation import Remediation
 from py_ocsf_models.objects.resource_details import ResourceDetails
 
 from prowler.config.config import prowler_version
-from prowler.lib.outputs.json_ocsf.ocsf import (
-    fill_json_ocsf,
+from prowler.lib.outputs.ocsf.ocsf import (
+    OCSF,
     get_account_type_id_by_provider,
     get_finding_status_id,
 )
 from tests.lib.outputs.fixtures.fixtures import generate_finding_output
 from tests.providers.aws.utils import AWS_REGION_EU_WEST_1
 
-METADATA_FIXTURE_PATH = (
-    f"{path.dirname(path.realpath(__file__))}/../fixtures/metadata.json"
+now = datetime.now()
+expected_json_output = json.dumps(
+    [
+        {
+            "metadata": {
+                "event_code": "test-check-id",
+                "product": {
+                    "name": "Prowler",
+                    "vendor_name": "Prowler",
+                    "version": "4.2.4",
+                },
+                "version": "1.2.0",
+            },
+            "severity_id": 2,
+            "severity": "Low",
+            "status": "New",
+            "status_code": "FAIL",
+            "status_detail": "status extended",
+            "status_id": 1,
+            "unmapped": {
+                "check_type": "test-type",
+                "related_url": "test-url",
+                "categories": "test-category",
+                "depends_on": "test-dependency",
+                "related_to": "test-related-to",
+                "notes": "test-notes",
+                "compliance": {"test-compliance": "test-compliance"},
+            },
+            "activity_name": "Create",
+            "activity_id": 1,
+            "finding_info": {
+                "created_time": now.isoformat(),
+                "desc": "check description",
+                "product_uid": "prowler",
+                "title": "test-check-id",
+                "uid": "test-unique-finding",
+            },
+            "resources": [
+                {
+                    "cloud_partition": "aws",
+                    "region": "eu-west-1",
+                    "data": {"details": "resource_details"},
+                    "group": {"name": "test-service"},
+                    "labels": [],
+                    "name": "resource_name",
+                    "type": "test-resource",
+                    "uid": "resource-id",
+                }
+            ],
+            "category_name": "Findings",
+            "category_uid": 2,
+            "class_name": "DetectionFinding",
+            "class_uid": 2004,
+            "cloud": {
+                "account": {
+                    "name": "123456789012",
+                    "type": "AWS_Account",
+                    "type_id": 10,
+                    "uid": "123456789012",
+                    "labels": ["test-tag:test-value"],
+                },
+                "org": {"name": "test-organization", "uid": "test-organization-id"},
+                "provider": "aws",
+                "region": "eu-west-1",
+            },
+            "event_time": now.isoformat(),
+            "remediation": {"desc": "", "references": []},
+            "risk_details": "test-risk",
+            "type_uid": 200401,
+            "type_name": "Create",
+        }
+    ]
 )
 
 
-class TestOutputJSONOCSF:
-    # test_fill_json_ocsf_iso_format_timestamp
+class TestOCSF:
+    def test_transform(self):
+        findings = [generate_finding_output("FAIL", "low", False, AWS_REGION_EU_WEST_1)]
+
+        ocsf = OCSF(findings)
+
+        output_data = ocsf.data[0]
+        assert isinstance(output_data, DetectionFinding)
+
+    def test_batch_write_data_to_file(self):
+        mock_file = StringIO()
+        findings = [
+            generate_finding_output("FAIL", "low", False, AWS_REGION_EU_WEST_1, now)
+        ]
+
+        output = OCSF(findings)
+        output._file_descriptor = mock_file
+
+        with patch.object(mock_file, "close", return_value=None):
+            output.batch_write_data_to_file()
+
+        mock_file.seek(0)
+        content = mock_file.read()
+
+        assert json.loads(content) == json.loads(expected_json_output)
+
     def test_finding_output_cloud_pass_low_muted(self):
         finding_output = generate_finding_output(
             "PASS", "low", True, AWS_REGION_EU_WEST_1
         )
 
-        finding_json_ocsf = fill_json_ocsf(finding_output)
-
+        finding_ocsf = OCSF([finding_output])
+        finding_ocsf = finding_ocsf.data[0]
         # Activity
-        assert finding_json_ocsf.activity_id == ActivityID.Create.value
-        assert finding_json_ocsf.activity_name == ActivityID.Create.name
+        assert finding_ocsf.activity_id == ActivityID.Create.value
+        assert finding_ocsf.activity_name == ActivityID.Create.name
 
         # Finding Information
-        finding_information = finding_json_ocsf.finding_info
+        finding_information = finding_ocsf.finding_info
 
         assert isinstance(finding_information, FindingInformation)
         assert finding_information.created_time == finding_output.timestamp
@@ -55,29 +150,29 @@ class TestOutputJSONOCSF:
         assert finding_information.product_uid == "prowler"
 
         # Event time
-        assert finding_json_ocsf.event_time == finding_output.timestamp
+        assert finding_ocsf.event_time == finding_output.timestamp
 
         # Remediation
-        remediation = finding_json_ocsf.remediation
+        remediation = finding_ocsf.remediation
         assert isinstance(remediation, Remediation)
         assert remediation.desc == finding_output.remediation_recommendation_text
         assert remediation.references == []
 
         # Severity
-        assert finding_json_ocsf.severity_id == SeverityID.Low
-        assert finding_json_ocsf.severity == SeverityID.Low.name
+        assert finding_ocsf.severity_id == SeverityID.Low
+        assert finding_ocsf.severity == SeverityID.Low.name
 
         # Status
-        assert finding_json_ocsf.status_id == StatusID.Suppressed.value
-        assert finding_json_ocsf.status == StatusID.Suppressed.name
-        assert finding_json_ocsf.status_code == finding_output.status
-        assert finding_json_ocsf.status_detail == finding_output.status_extended
+        assert finding_ocsf.status_id == StatusID.Suppressed.value
+        assert finding_ocsf.status == StatusID.Suppressed.name
+        assert finding_ocsf.status_code == finding_output.status
+        assert finding_ocsf.status_detail == finding_output.status_extended
 
         # Risk
-        assert finding_json_ocsf.risk_details == finding_output.risk
+        assert finding_ocsf.risk_details == finding_output.risk
 
         # Unmapped Data
-        assert finding_json_ocsf.unmapped == {
+        assert finding_ocsf.unmapped == {
             "check_type": finding_output.check_type,
             "related_url": finding_output.related_url,
             "categories": finding_output.categories,
@@ -88,7 +183,7 @@ class TestOutputJSONOCSF:
         }
 
         # ResourceDetails
-        resource_details = finding_json_ocsf.resources
+        resource_details = finding_ocsf.resources
 
         assert len(resource_details) == 1
         assert isinstance(resource_details, list)
@@ -106,7 +201,7 @@ class TestOutputJSONOCSF:
         assert resource_details_group.name == finding_output.service_name
 
         # Metadata
-        metadata = finding_json_ocsf.metadata
+        metadata = finding_ocsf.metadata
         assert isinstance(metadata, Metadata)
         assert metadata.event_code == finding_output.check_id
 
@@ -117,11 +212,11 @@ class TestOutputJSONOCSF:
         assert metadata_product.version == prowler_version
 
         # Type
-        assert finding_json_ocsf.type_uid == DetectionFindingTypeID.Create
-        assert finding_json_ocsf.type_name == DetectionFindingTypeID.Create.name
+        assert finding_ocsf.type_uid == DetectionFindingTypeID.Create
+        assert finding_ocsf.type_name == DetectionFindingTypeID.Create.name
 
         # Cloud
-        cloud = finding_json_ocsf.cloud
+        cloud = finding_ocsf.cloud
         assert isinstance(cloud, Cloud)
         assert cloud.provider == "aws"
         assert cloud.region == finding_output.region
@@ -144,26 +239,28 @@ class TestOutputJSONOCSF:
             "FAIL", "low", False, AWS_REGION_EU_WEST_1
         )
 
-        finding_json_ocsf = fill_json_ocsf(finding_output)
+        finding_ocsf = OCSF([finding_output])
+        finding_ocsf = finding_ocsf.data[0]
 
         # Status
-        assert finding_json_ocsf.status_id == StatusID.New.value
-        assert finding_json_ocsf.status == StatusID.New.name
-        assert finding_json_ocsf.status_code == finding_output.status
-        assert finding_json_ocsf.status_detail == finding_output.status_extended
+        assert finding_ocsf.status_id == StatusID.New.value
+        assert finding_ocsf.status == StatusID.New.name
+        assert finding_ocsf.status_code == finding_output.status
+        assert finding_ocsf.status_detail == finding_output.status_extended
 
     def test_finding_output_cloud_pass_low_not_muted(self):
         finding_output = generate_finding_output(
             "PASS", "low", False, AWS_REGION_EU_WEST_1
         )
 
-        finding_json_ocsf = fill_json_ocsf(finding_output)
+        finding_ocsf = OCSF([finding_output])
+        finding_ocsf = finding_ocsf.data[0]
 
         # Status
-        assert finding_json_ocsf.status_id == StatusID.Other.value
-        assert finding_json_ocsf.status == StatusID.Other.name
-        assert finding_json_ocsf.status_code == finding_output.status
-        assert finding_json_ocsf.status_detail == finding_output.status_extended
+        assert finding_ocsf.status_id == StatusID.Other.value
+        assert finding_ocsf.status == StatusID.Other.name
+        assert finding_ocsf.status_code == finding_output.status
+        assert finding_ocsf.status_detail == finding_output.status_extended
 
     # Returns TypeID.AWS_Account when provider is 'aws'
     def test_returns_aws_account_when_provider_is_aws(self):

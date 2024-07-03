@@ -25,6 +25,12 @@ from prowler.lib.outputs.output import Output
 
 
 class OCSF(Output):
+    """OCSF class that transforms the findings into the OCSF format.
+
+    Args:
+        Output (ABC): Abstract class that defines the methods that the child classes should implement.
+    """
+
     def transform(self, findings: List[Finding]) -> None:
         """Transforms the findings into the OCSF format.
 
