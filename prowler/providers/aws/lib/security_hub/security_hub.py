@@ -118,11 +118,13 @@ def batch_send_to_security_hub(
         # Iterate findings by region
         for region, findings in security_hub_findings_per_region.items():
             # Send findings to Security Hub
-            logger.info(f"Sending findings to Security Hub in the region {region}")
+            logger.info(
+                f"Sending {len(findings)} findings to Security Hub in the region {region}"
+            )
 
             security_hub_client = session.client("securityhub", region_name=region)
 
-            success_count = _send_findings_to_security_hub(
+            success_count += _send_findings_to_security_hub(
                 findings, region, security_hub_client
             )
 
@@ -205,10 +207,9 @@ def _send_findings_to_security_hub(
                     f"Failed to send findings to AWS Security Hub -- {failed_import['ErrorCode']} -- {failed_import['ErrorMessage']}"
                 )
             success_count += batch_import["SuccessCount"]
-
+        return success_count
     except Exception as error:
         logger.error(
             f"{error.__class__.__name__} -- [{error.__traceback__.tb_lineno}]:{error} in region {region}"
         )
-    finally:
         return success_count

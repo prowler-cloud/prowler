@@ -47,7 +47,7 @@ def mock_make_api_call(self, operation_name, kwarg):
     return make_api_call(self, operation_name, kwarg)
 
 
-def set_mocked_session(region):
+def set_mocked_session(region=None):
     # Create mock session
     return session.Session(
         region_name=region,
@@ -326,8 +326,11 @@ class TestSecurityHub:
 
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     def test_batch_send_to_security_hub_one_finding(self):
-        enabled_regions = [AWS_REGION_EU_WEST_1]
-        findings = [generate_finding_output(status="PASS", region=AWS_REGION_EU_WEST_1)]
+        enabled_regions = [AWS_REGION_EU_WEST_1, AWS_REGION_EU_WEST_2]
+        findings = [
+            generate_finding_output(status="PASS", region=AWS_REGION_EU_WEST_1),
+            generate_finding_output(status="FAIL", region=AWS_REGION_EU_WEST_2),
+        ]
         asff = ASFF(findings=findings)
         session = set_mocked_session(AWS_REGION_EU_WEST_1)
 
@@ -343,5 +346,5 @@ class TestSecurityHub:
                 security_hub_findings,
                 session,
             )
-            == 1
+            == 2
         )
