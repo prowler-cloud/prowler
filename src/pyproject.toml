@@ -1,16 +1,17 @@
 [tool.poetry]
-name = "Prowler RESTful API"
+name = "prowler-rest-api"
 version = "1.0.0"
 description = "Prowler's RESTful API (Django/DRF)"
 authors = ["Prowler Team"]
 license = "AGPL-3.0"
-readme = "README.md"
+package-mode = false
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = "^3.12"
 django = "5.0.6"
 djangorestframework = "3.15.2"
-
+django-cors-headers = "4.4.0"
+drf-spectacular = "0.27.2"
 
 [build-system]
 requires = ["poetry-core"]
