@@ -1,22 +1,17 @@
 import os
 import sys
 
-from prowler.config.config import (
-    json_asff_file_suffix,
-    json_file_suffix,
-    json_ocsf_file_suffix,
-)
+from prowler.config.config import json_file_suffix, json_ocsf_file_suffix
 from prowler.lib.logger import logger
 from prowler.lib.utils.utils import open_file
 
 
+# TODO: remove this once every JSON is generated from Output
 def close_json(output_filename, output_directory, mode):
     """close_json closes the output JSON file replacing the last comma with ]"""
     try:
         suffix = json_file_suffix
-        if mode == "json-asff":
-            suffix = json_asff_file_suffix
-        elif mode == "json-ocsf":
+        if mode == "json-ocsf":
             suffix = json_ocsf_file_suffix
         filename = f"{output_directory}/{output_filename}{suffix}"
         # Close JSON file if exists

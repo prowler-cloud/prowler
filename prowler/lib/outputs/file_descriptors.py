@@ -5,7 +5,6 @@ from typing import Any
 from prowler.config.config import (
     csv_file_suffix,
     html_file_suffix,
-    json_asff_file_suffix,
     json_ocsf_file_suffix,
 )
 from prowler.lib.logger import logger
@@ -50,7 +49,7 @@ def initialize_file_descriptor(
                 "a",
             )
 
-            if output_mode in ("json-asff", "json-ocsf"):
+            if output_mode in ("json-ocsf"):
                 file_descriptor.write("[")
             elif "html" in output_mode:
                 add_html_header(file_descriptor, provider)
@@ -165,68 +164,62 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, provi
                         file_descriptors.update({output_mode: file_descriptor})
 
                 elif provider.type == "aws":
-                    if output_mode == "json-asff":
-                        filename = f"{output_directory}/{output_filename}{json_asff_file_suffix}"
+                    # Compliance frameworks
+                    filename = f"{output_directory}/compliance/{output_filename}_{output_mode}{csv_file_suffix}"
+                    if output_mode == "ens_rd2022_aws":
                         file_descriptor = initialize_file_descriptor(
-                            filename, output_mode
+                            filename,
+                            output_mode,
+                            provider.type,
+                            Check_Output_CSV_ENS_RD2022,
                         )
                         file_descriptors.update({output_mode: file_descriptor})
-                    else:  # Compliance frameworks
-                        filename = f"{output_directory}/compliance/{output_filename}_{output_mode}{csv_file_suffix}"
-                        if output_mode == "ens_rd2022_aws":
-                            file_descriptor = initialize_file_descriptor(
-                                filename,
-                                output_mode,
-                                provider.type,
-                                Check_Output_CSV_ENS_RD2022,
-                            )
-                            file_descriptors.update({output_mode: file_descriptor})
 
-                        elif "cis_" in output_mode:
-                            file_descriptor = initialize_file_descriptor(
-                                filename,
-                                output_mode,
-                                provider.type,
-                                Check_Output_CSV_AWS_CIS,
-                            )
-                            file_descriptors.update({output_mode: file_descriptor})
+                    elif "cis_" in output_mode:
+                        file_descriptor = initialize_file_descriptor(
+                            filename,
+                            output_mode,
+                            provider.type,
+                            Check_Output_CSV_AWS_CIS,
+                        )
+                        file_descriptors.update({output_mode: file_descriptor})
 
-                        elif "aws_well_architected_framework" in output_mode:
-                            file_descriptor = initialize_file_descriptor(
-                                filename,
-                                output_mode,
-                                provider.type,
-                                Check_Output_CSV_AWS_Well_Architected,
-                            )
-                            file_descriptors.update({output_mode: file_descriptor})
+                    elif "aws_well_architected_framework" in output_mode:
+                        file_descriptor = initialize_file_descriptor(
+                            filename,
+                            output_mode,
+                            provider.type,
+                            Check_Output_CSV_AWS_Well_Architected,
+                        )
+                        file_descriptors.update({output_mode: file_descriptor})
 
-                        elif output_mode == "iso27001_2013_aws":
-                            file_descriptor = initialize_file_descriptor(
-                                filename,
-                                output_mode,
-                                provider.type,
-                                Check_Output_CSV_AWS_ISO27001_2013,
-                            )
-                            file_descriptors.update({output_mode: file_descriptor})
+                    elif output_mode == "iso27001_2013_aws":
+                        file_descriptor = initialize_file_descriptor(
+                            filename,
+                            output_mode,
+                            provider.type,
+                            Check_Output_CSV_AWS_ISO27001_2013,
+                        )
+                        file_descriptors.update({output_mode: file_descriptor})
 
-                        elif output_mode == "mitre_attack_aws":
-                            file_descriptor = initialize_file_descriptor(
-                                filename,
-                                output_mode,
-                                provider.type,
-                                MitreAttackAWS,
-                            )
-                            file_descriptors.update({output_mode: file_descriptor})
+                    elif output_mode == "mitre_attack_aws":
+                        file_descriptor = initialize_file_descriptor(
+                            filename,
+                            output_mode,
+                            provider.type,
+                            MitreAttackAWS,
+                        )
+                        file_descriptors.update({output_mode: file_descriptor})
 
-                        else:
-                            # Generic Compliance framework
-                            file_descriptor = initialize_file_descriptor(
-                                filename,
-                                output_mode,
-                                provider.type,
-                                Check_Output_CSV_Generic_Compliance,
-                            )
-                            file_descriptors.update({output_mode: file_descriptor})
+                    else:
+                        # Generic Compliance framework
+                        file_descriptor = initialize_file_descriptor(
+                            filename,
+                            output_mode,
+                            provider.type,
+                            Check_Output_CSV_Generic_Compliance,
+                        )
+                        file_descriptors.update({output_mode: file_descriptor})
 
     except Exception as error:
         logger.error(

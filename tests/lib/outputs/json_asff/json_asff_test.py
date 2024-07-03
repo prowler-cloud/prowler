@@ -4,12 +4,7 @@ import mock
 
 from prowler.config.config import prowler_version, timestamp_utc
 from prowler.lib.check.models import Check_Report, load_check_metadata
-from prowler.lib.outputs.json_asff.json_asff import (
-    fill_json_asff,
-    generate_json_asff_resource_tags,
-    generate_json_asff_status,
-)
-from prowler.lib.outputs.json_asff.models import (
+from prowler.lib.outputs.asff.asff import (
     Check_Output_JSON_ASFF,
     Compliance,
     ProductFields,
@@ -17,6 +12,9 @@ from prowler.lib.outputs.json_asff.models import (
     Remediation,
     Resource,
     Severity,
+    fill_json_asff,
+    generate_json_asff_resource_tags,
+    generate_json_asff_status,
 )
 from prowler.lib.utils.utils import hash_sha512
 from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, set_mocked_aws_provider

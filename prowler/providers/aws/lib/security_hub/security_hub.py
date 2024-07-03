@@ -3,52 +3,50 @@ from botocore.client import ClientError
 
 from prowler.config.config import timestamp_utc
 from prowler.lib.logger import logger
-from prowler.lib.outputs.json_asff.json_asff import fill_json_asff
+from prowler.lib.outputs.asff.asff import AWSSecurityFindingFormat
 
 SECURITY_HUB_INTEGRATION_NAME = "prowler/prowler"
 SECURITY_HUB_MAX_BATCH = 100
 
 
-def prepare_security_hub_findings(
-    findings: list, provider, output_options, enabled_regions: list
+def filter_security_hub_findings_per_region(
+    findings: list[AWSSecurityFindingFormat],
+    send_only_fails: bool,
+    status: list,
+    enabled_regions: list,
 ) -> dict:
     security_hub_findings_per_region = {}
-
     # Create a key per audited region
     for region in enabled_regions:
         security_hub_findings_per_region[region] = []
 
     for finding in findings:
-        # We don't send the MANUAL findings to AWS Security Hub
-        if finding.status == "MANUAL":
-            continue
-
         # We don't send findings to not enabled regions
-        if finding.region not in enabled_regions:
+        if finding.Resources[0].Region not in enabled_regions:
             continue
 
         if (
-            finding.status != "FAIL" or finding.muted
-        ) and output_options.send_sh_only_fails:
+            finding.Compliance.Status != "FAILED"
+            or finding.Compliance.Status == "WARNING"
+        ) and send_only_fails:
             continue
 
-        if output_options.status:
-            if finding.status not in output_options.status:
+        # SecurityHub valid statuses are: PASSED, FAILED, WARNING
+        if status:
+            if finding.Compliance.Status == "PASSED" and "PASS" not in status:
                 continue
-
-            if finding.muted:
+            if finding.Compliance.Status == "FAILED" and "FAIL" not in status:
+                continue
+            # Check muted finding
+            if finding.Compliance.Status == "WARNING":
                 continue
 
         # Get the finding region
-        region = finding.region
-
-        # Format the finding in the JSON ASFF format
-        finding_json_asff = fill_json_asff(provider, finding)
+        # We can do that since the finding always stores just one finding
+        region = finding.Resources[0].Region
 
         # Include that finding within their region in the JSON format
-        security_hub_findings_per_region[region].append(
-            finding_json_asff.dict(exclude_none=True)
-        )
+        security_hub_findings_per_region[region].append(finding.dict(exclude_none=True))
 
     return security_hub_findings_per_region
 
@@ -124,7 +122,7 @@ def batch_send_to_security_hub(
 
             security_hub_client = session.client("securityhub", region_name=region)
 
-            success_count = __send_findings_to_security_hub__(
+            success_count = _send_findings_to_security_hub(
                 findings, region, security_hub_client
             )
 
@@ -178,7 +176,7 @@ def resolve_security_hub_previous_findings(
             logger.info(f"Archiving {len(findings_to_archive)} findings.")
 
             # Send archive findings to SHub
-            success_count += __send_findings_to_security_hub__(
+            success_count += _send_findings_to_security_hub(
                 findings_to_archive, region, security_hub_client
             )
         except Exception as error:
@@ -188,7 +186,7 @@ def resolve_security_hub_previous_findings(
     return success_count
 
 
-def __send_findings_to_security_hub__(
+def _send_findings_to_security_hub(
     findings: list[dict], region: str, security_hub_client
 ):
     """Private function send_findings_to_security_hub chunks the findings in groups of 100 findings and send them to AWS Security Hub. It returns the number of sent findings."""

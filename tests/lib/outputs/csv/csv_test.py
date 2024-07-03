@@ -59,7 +59,6 @@ def generate_finding():
 
 
 class TestCSV:
-
     def test_output_transform(self, generate_finding):
         findings = [generate_finding]
 
