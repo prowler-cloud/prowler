@@ -1,6 +1,6 @@
 import os
+import sys
 from copy import deepcopy
-from json import dump
 from typing import List
 
 from py_ocsf_models.events.base_event import SeverityID, StatusID
@@ -151,12 +151,8 @@ class OCSF(Output):
             if self._file_descriptor and not self._file_descriptor.closed:
                 self._file_descriptor.write("[")
                 for finding in self._data:
-                    dump(
-                        finding.json(exclude_none=True),
-                        self._file_descriptor,
-                    )
+                    self._file_descriptor.write(finding.json(exclude_none=True))
                     self._file_descriptor.write(",")
-
                 if self._file_descriptor.tell() > 0:
                     if self._file_descriptor.tell() != 1:
                         self._file_descriptor.seek(
@@ -169,6 +165,7 @@ class OCSF(Output):
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+            sys.exit(1)
 
 
 def get_account_type_id_by_provider(provider: str) -> TypeID:
