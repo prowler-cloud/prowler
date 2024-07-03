@@ -64,19 +64,9 @@ class ASFF(Output):
                 timestamp = timestamp_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
                 resource_tags = ASFF.format_resource_tags(finding.resource_tags)
 
-                # Iterate for each compliance framework
-                compliance_summary = []
-                associated_standards = []
-
-                for key, value in finding.compliance.items():
-                    if (
-                        len(associated_standards) < 20
-                    ):  # AssociatedStandards should NOT have more than 20 items
-                        associated_standards.append({"StandardsId": key})
-                        item = f"{key} {' '.join(value)}"
-                        if len(item) > 64:
-                            item = item[0:63]
-                        compliance_summary.append(item)
+                associated_standards, compliance_summary = ASFF.format_compliance(
+                    finding.compliance
+                )
 
                 # Ensures finding_status matches allowed values in ASFF
                 finding_status = ASFF.generate_status(finding.status, finding.muted)
@@ -98,7 +88,7 @@ class ASFF(Output):
                         CreatedAt=timestamp,
                         Severity=Severity(Label=finding.severity.value),
                         Title=finding.check_title,
-                        Description=finding.status_extended,
+                        Description=finding.description,
                         Resources=[
                             Resource(
                                 Id=finding.resource_uid,
@@ -225,6 +215,26 @@ class ASFF(Output):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             return {}
+        except AttributeError as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return {}
+
+    @staticmethod
+    def format_compliance(compliance: dict) -> tuple[list[dict], list[str]]:
+        compliance_summary = []
+        associated_standards = []
+        for key, value in compliance.items():
+            if (
+                len(associated_standards) < 20
+            ):  # AssociatedStandards should NOT have more than 20 items
+                associated_standards.append({"StandardsId": key})
+                item = f"{key} {' '.join(value)}"
+                if len(item) > 64:
+                    item = item[0:63]
+                compliance_summary.append(item)
+        return associated_standards, compliance_summary
 
 
 class ProductFields(BaseModel):
@@ -295,6 +305,12 @@ class Compliance(BaseModel):
     Status: str
     RelatedRequirements: list[str]
     AssociatedStandards: list[dict]
+
+    @validator("Status", pre=True, always=True)
+    def status(status):
+        if status not in ["PASSED", "WARNING", "FAILED", "NOT_AVAILABLE"]:
+            raise ValueError("must contain a space")
+        return status
 
 
 class Recommendation(BaseModel):

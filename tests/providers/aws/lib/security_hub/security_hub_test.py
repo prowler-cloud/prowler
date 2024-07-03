@@ -1,4 +1,3 @@
-from datetime import datetime
 from logging import ERROR, WARNING
 
 import botocore
@@ -7,12 +6,12 @@ from botocore.client import ClientError
 from mock import patch
 
 from prowler.lib.outputs.asff.asff import ASFF
-from prowler.lib.outputs.finding import Finding, Severity, Status
 from prowler.providers.aws.lib.security_hub.security_hub import (
     batch_send_to_security_hub,
     filter_security_hub_findings_per_region,
     verify_security_hub_integration_enabled_per_region,
 )
+from tests.lib.outputs.fixtures.fixtures import generate_finding_output
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_COMMERCIAL_PARTITION,
@@ -52,52 +51,6 @@ def set_mocked_session(region):
     # Create mock session
     return session.Session(
         region_name=region,
-    )
-
-
-def generate_finding(status: str, region: str, muted: bool = False) -> Finding:
-    return Finding(
-        auth_method="",
-        timestamp=datetime.now(),
-        account_uid="12345",
-        account_name="Example Account",
-        account_email="example@example.com",
-        account_organization_uid="org-123",
-        account_organization_name="Example Org",
-        account_tags=["tag1", "tag2"],
-        finding_uid="finding-123",
-        provider="aws",
-        check_id="check-123",
-        check_title="Example Check",
-        check_type="Security",
-        status=Status(status),
-        status_extended="Extended status",
-        muted=muted,
-        service_name="Example Service",
-        subservice_name="Example Subservice",
-        severity=Severity("critical"),
-        resource_type="Instance",
-        resource_uid="resource-123",
-        resource_name="Example Resource",
-        resource_details="Detailed information about the resource",
-        resource_tags="tag1 | tag2",
-        partition="aws",
-        region=region,
-        description="Description of the finding",
-        risk="High",
-        related_url="http://example.com",
-        remediation_recommendation_text="Recommendation text",
-        remediation_recommendation_url="http://example.com/remediation",
-        remediation_code_nativeiac="native-iac-code",
-        remediation_code_terraform="terraform-code",
-        remediation_code_cli="cli-code",
-        remediation_code_other="other-code",
-        compliance={"compliance_key": "compliance_value"},
-        categories="category1,category2",
-        depends_on="dependency",
-        related_to="related finding",
-        notes="Notes about the finding",
-        prowler_version="1.0",
     )
 
 
@@ -232,7 +185,7 @@ class TestSecurityHub:
 
     def test_filter_security_hub_findings_per_region_enabled_region_all_statuses(self):
         enabled_regions = [AWS_REGION_EU_WEST_1]
-        findings = [generate_finding("PASS", AWS_REGION_EU_WEST_1)]
+        findings = [generate_finding_output(status="PASS", region=AWS_REGION_EU_WEST_1)]
         asff = ASFF(findings=findings)
         asff_finding = asff.data[0]
 
@@ -247,7 +200,9 @@ class TestSecurityHub:
 
     def test_filter_security_hub_findings_per_region_all_statuses_MANUAL_finding(self):
         enabled_regions = [AWS_REGION_EU_WEST_1]
-        findings = [generate_finding("MANUAL", AWS_REGION_EU_WEST_1)]
+        findings = [
+            generate_finding_output(status="MANUAL", region=AWS_REGION_EU_WEST_1)
+        ]
         asff = ASFF(findings=findings)
 
         assert filter_security_hub_findings_per_region(
@@ -259,7 +214,7 @@ class TestSecurityHub:
 
     def test_filter_security_hub_findings_per_region_disabled_region(self):
         enabled_regions = [AWS_REGION_EU_WEST_1]
-        findings = [generate_finding("PASS", AWS_REGION_EU_WEST_2)]
+        findings = [generate_finding_output(status="PASS", region=AWS_REGION_EU_WEST_2)]
         asff = ASFF(findings=findings)
 
         assert filter_security_hub_findings_per_region(
@@ -271,7 +226,7 @@ class TestSecurityHub:
 
     def test_filter_security_hub_findings_per_region_PASS_and_FAIL_statuses(self):
         enabled_regions = [AWS_REGION_EU_WEST_1]
-        findings = [generate_finding("PASS", AWS_REGION_EU_WEST_1)]
+        findings = [generate_finding_output(status="PASS", region=AWS_REGION_EU_WEST_1)]
         asff = ASFF(findings=findings)
 
         assert filter_security_hub_findings_per_region(
@@ -283,7 +238,7 @@ class TestSecurityHub:
 
     def test_filter_security_hub_findings_per_region_FAIL_and_FAIL_statuses(self):
         enabled_regions = [AWS_REGION_EU_WEST_1]
-        findings = [generate_finding("FAIL", AWS_REGION_EU_WEST_1)]
+        findings = [generate_finding_output(status="FAIL", region=AWS_REGION_EU_WEST_1)]
         asff = ASFF(findings=findings)
 
         assert filter_security_hub_findings_per_region(
@@ -295,7 +250,7 @@ class TestSecurityHub:
 
     def test_filter_security_hub_findings_per_region_send_sh_only_fails_PASS(self):
         enabled_regions = [AWS_REGION_EU_WEST_1]
-        findings = [generate_finding("PASS", AWS_REGION_EU_WEST_1)]
+        findings = [generate_finding_output(status="PASS", region=AWS_REGION_EU_WEST_1)]
         asff = ASFF(findings=findings)
 
         assert filter_security_hub_findings_per_region(
@@ -307,7 +262,7 @@ class TestSecurityHub:
 
     def test_filter_security_hub_findings_per_region_send_sh_only_fails_FAIL(self):
         enabled_regions = [AWS_REGION_EU_WEST_1]
-        findings = [generate_finding("FAIL", AWS_REGION_EU_WEST_1)]
+        findings = [generate_finding_output(status="FAIL", region=AWS_REGION_EU_WEST_1)]
         asff = ASFF(findings=findings)
 
         assert filter_security_hub_findings_per_region(
@@ -319,7 +274,7 @@ class TestSecurityHub:
 
     def test_filter_security_hub_findings_per_region_no_audited_regions(self):
         enabled_regions = [AWS_REGION_EU_WEST_1]
-        findings = [generate_finding("PASS", AWS_REGION_EU_WEST_1)]
+        findings = [generate_finding_output(status="PASS", region=AWS_REGION_EU_WEST_1)]
         asff = ASFF(findings=findings)
 
         assert filter_security_hub_findings_per_region(
@@ -336,7 +291,9 @@ class TestSecurityHub:
     ):
         enabled_regions = [AWS_REGION_EU_WEST_1]
         findings = [
-            generate_finding(status="FAIL", region=AWS_REGION_EU_WEST_1, muted=True)
+            generate_finding_output(
+                status="FAIL", region=AWS_REGION_EU_WEST_1, muted=True
+            )
         ]
         asff = ASFF(findings=findings)
 
@@ -352,7 +309,9 @@ class TestSecurityHub:
     def test_filter_security_hub_findings_per_region_muted_fail_with_status_FAIL(self):
         enabled_regions = [AWS_REGION_EU_WEST_1]
         findings = [
-            generate_finding(status="FAIL", region=AWS_REGION_EU_WEST_1, muted=True)
+            generate_finding_output(
+                status="FAIL", region=AWS_REGION_EU_WEST_1, muted=True
+            )
         ]
         asff = ASFF(findings=findings)
 
@@ -368,7 +327,7 @@ class TestSecurityHub:
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     def test_batch_send_to_security_hub_one_finding(self):
         enabled_regions = [AWS_REGION_EU_WEST_1]
-        findings = [generate_finding("PASS", AWS_REGION_EU_WEST_1)]
+        findings = [generate_finding_output(status="PASS", region=AWS_REGION_EU_WEST_1)]
         asff = ASFF(findings=findings)
         session = set_mocked_session(AWS_REGION_EU_WEST_1)
 
