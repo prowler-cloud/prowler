@@ -15,7 +15,7 @@ html_stats = {
     "findings_count": 1,
 }
 
-html_finding = """
+aws_html_finding = """
                         <tr class="table-danger">
                             <td>FAIL</td>
                             <td>critical</td>
@@ -36,7 +36,7 @@ html_finding = """
                         </tr>
                         """
 
-html_header = (
+aws_html_header = (
     """
 <!DOCTYPE html>
     <html lang="en">
@@ -91,7 +91,7 @@ html_header = (
                 </div>
                 </li>
                 <li class="list-group-item">
-                <b>Parameters used:</b> tests/lib/outputs/ -vv
+                <b>Parameters used:</b>
                 </li>
                 <li class="list-group-item">
                 <b>Date:</b> """
@@ -313,38 +313,27 @@ def generate_finding():
 class TestHTML:
     def test_transform(self, generate_finding):
         findings = [generate_finding]
-
-        # Clear the data from CSV class
-        HTML._data = []
-
         html = HTML(findings)
         output_data = html.data[0]
         assert isinstance(output_data, str)
-        assert output_data == html_finding
+        assert output_data == aws_html_finding
 
     def test_batch_write_data_to_file(self, generate_finding):
         mock_file = StringIO()
         findings = [generate_finding]
-        # Clear the data from CSV class
-        HTML._data = []
         output = HTML(findings)
         output._file_descriptor = mock_file
-
-        # FIXME: This function need the Check_Report_XXX findings
-        # stats = extract_findings_statistics(findings)
         provider = set_mocked_aws_provider()
 
         output.batch_write_data_to_file(provider, html_stats)
 
         mock_file.seek(0)
         content = mock_file.read()
-        assert content == html_header + html_finding + html_footer
+        assert content == aws_html_header + aws_html_finding + html_footer
 
-    def test_write_header(self, generate_finding):
+    def test_aws_write_header(self, generate_finding):
         mock_file = StringIO()
         findings = [generate_finding]
-        # Clear the data from CSV class
-        HTML._data = []
         output = HTML(findings)
         output._file_descriptor = mock_file
         provider = set_mocked_aws_provider()
@@ -353,13 +342,11 @@ class TestHTML:
 
         mock_file.seek(0)
         content = mock_file.read()
-        assert content == html_header
+        assert content == aws_html_header
 
     def test_write_footer(self, generate_finding):
         mock_file = StringIO()
         findings = [generate_finding]
-        # Clear the data from CSV class
-        HTML._data = []
         output = HTML(findings)
         output._file_descriptor = mock_file
 

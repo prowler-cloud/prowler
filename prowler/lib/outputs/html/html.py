@@ -154,7 +154,7 @@ class HTML(Output):
                 </li>
             </ul>
             </div>
-        </div> {HTML.get_assessment_summary(provider)}
+        </div>{HTML.get_assessment_summary(provider)}
             <div class="col-md-2">
             <div class="card">
                 <div class="card-header">
@@ -342,7 +342,7 @@ class HTML(Output):
                                 <b>AWS-CLI Profile:</b> {profile}
                             </li>
                             <li class="list-group-item">
-                                <b>Audited Regions:</b> {audited_regions}
+                                <b>Audited Regions:</b>{audited_regions}
                             </li>
                         </ul>
                     </div>
