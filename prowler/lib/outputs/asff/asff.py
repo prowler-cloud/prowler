@@ -223,6 +223,23 @@ class ASFF(Output):
 
     @staticmethod
     def format_compliance(compliance: dict) -> tuple[list[dict], list[str]]:
+        """
+        Transforms a dictionary of compliance data into a tuple of associated standards and compliance summaries.
+
+        Parameters:
+            - compliance (dict): A dictionary containing compliance data where keys are standards and values are lists of compliance details.
+
+        Returns:
+            - tuple[list[dict], list[str]]: A tuple containing a list of associated standards (each as a dictionary with 'StandardsId') and a list of compliance summaries.
+
+        Notes:
+            - The method limits the number of associated standards to 20.
+            - Each compliance summary is a concatenation of the standard key and its associated compliance details.
+            - If the concatenated summary exceeds 64 characters, it is truncated to 63 characters.
+
+        Example:
+            format_compliance({"standard1": ["detail1", "detail2"], "standard2": ["detail3"]}) -> ([{"StandardsId": "standard1"}, {"StandardsId": "standard2"}], ["standard1 detail1 detail2", "standard2 detail3"])
+        """
         compliance_summary = []
         associated_standards = []
         for key, value in compliance.items():
