@@ -437,10 +437,10 @@ class TestASFF:
         assert ASFF.generate_status("SOMETHING ELSE") == "NOT_AVAILABLE"
 
     def test_asff_format_resource_tags(self):
-        assert ASFF.format_resource_tags(None) == {}
-        assert ASFF.format_resource_tags("") == {}
-        assert ASFF.format_resource_tags([]) == {}
-        assert ASFF.format_resource_tags([{}]) == {}
+        assert ASFF.format_resource_tags(None) is None
+        assert ASFF.format_resource_tags("") is None
+        assert ASFF.format_resource_tags([]) is None
+        assert ASFF.format_resource_tags([{}]) is None
         assert ASFF.format_resource_tags("key1=value1") == {"key1": "value1"}
         assert ASFF.format_resource_tags("key1=value1 | key2=value2") == {
             "key1": "value1",

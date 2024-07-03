@@ -193,16 +193,18 @@ class ASFF(Output):
         Transforms a string of tags into a dictionary format.
 
         Parameters:
-            - tags (str): A string containing tags in the format "key1=value1 | key2=value2".
+            - tags (str): A string containing tags separated by ' | ' and key-value pairs separated by '='.
 
         Returns:
-            - dict: A dictionary where the keys are the tag names and the values are the tag values.
+            - dict: A dictionary where keys are tag names and values are tag values.
 
-        Example:
-            format_resource_tags("key1=value1 | key2=value2") -> {"key1": "value1", "key2": "value2"}
+        Notes:
+            - If the input string is empty or None, it returns None.
+            - Each tag in the input string should be in the format 'key=value'.
+            - If the input string is not formatted correctly, it logs an error and returns None.
         """
         try:
-            tags_dict = {}
+            tags_dict = None
             if tags:
                 tags = tags.split(" | ")
                 tags_dict = {}
@@ -214,12 +216,12 @@ class ASFF(Output):
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            return {}
+            return None
         except AttributeError as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            return {}
+            return None
 
     @staticmethod
     def format_compliance(compliance: dict) -> tuple[list[dict], list[str]]:
