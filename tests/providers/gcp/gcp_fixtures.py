@@ -13,7 +13,8 @@ def set_mocked_gcp_provider(
 ) -> GcpProvider:
     provider = MagicMock()
     provider.type = "gcp"
-    provider.session = None
+    provider.session = MagicMock()
+    provider.session._service_account_email = "test@test.com"
     provider.project_ids = project_ids
     provider.identity = GCPIdentityInfo(
         profile=profile,

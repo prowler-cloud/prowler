@@ -316,19 +316,18 @@ class HTML(Output):
             str: the HTML assessment summary
         """
         try:
-            if provider.__class__.__name__ == "AwsProvider":
-                profile = (
-                    provider._identity.profile
-                    if provider._identity.profile is not None
-                    else "default"
-                )
-                if isinstance(provider._identity.audited_regions, list):
-                    audited_regions = " ".join(provider._identity.audited_regions)
-                elif not provider._identity.audited_regions:
-                    audited_regions = "All Regions"
-                else:
-                    audited_regions = ", ".join(provider._identity.audited_regions)
-                return f"""
+            profile = (
+                provider.identity.profile
+                if provider.identity.profile is not None
+                else "default"
+            )
+            if isinstance(provider.identity.audited_regions, list):
+                audited_regions = " ".join(provider.identity.audited_regions)
+            elif not provider.identity.audited_regions:
+                audited_regions = "All Regions"
+            else:
+                audited_regions = ", ".join(provider.identity.audited_regions)
+            return f"""
                 <div class="col-md-2">
                     <div class="card">
                         <div class="card-header">
@@ -336,7 +335,7 @@ class HTML(Output):
                         </div>
                         <ul class="list-group list-group-flush">
                             <li class="list-group-item">
-                                <b>AWS Account:</b> {provider._identity.account}
+                                <b>AWS Account:</b> {provider.identity.account}
                             </li>
                             <li class="list-group-item">
                                 <b>AWS-CLI Profile:</b> {profile}
@@ -354,10 +353,10 @@ class HTML(Output):
                     </div>
                     <ul class="list-group list-group-flush">
                         <li class="list-group-item">
-                            <b>User Id:</b> {provider._identity.user_id}
+                            <b>User Id:</b> {provider.identity.user_id}
                             </li>
                             <li class="list-group-item">
-                                <b>Caller Identity ARN:</b> {provider._identity.identity_arn}
+                                <b>Caller Identity ARN:</b> {provider.identity.identity_arn}
                             </li>
                         </ul>
                     </div>
@@ -380,20 +379,19 @@ class HTML(Output):
             str: the HTML assessment summary
         """
         try:
-            if provider.__class__.__name__ == "AzureProvider":
-                printed_subscriptions = []
-                for key, value in provider._identity.subscriptions.items():
-                    intermediate = f"{key} : {value}"
-                    printed_subscriptions.append(intermediate)
+            printed_subscriptions = []
+            for key, value in provider.identity.subscriptions.items():
+                intermediate = f"{key} : {value}"
+                printed_subscriptions.append(intermediate)
 
-                # check if identity is str(coming from SP) or dict(coming from browser or)
-                if isinstance(provider._identity.identity_id, dict):
-                    html_identity = provider._identity.identity_id.get(
-                        "userPrincipalName", "Identity not found"
-                    )
-                else:
-                    html_identity = provider._identity.identity_id
-                return f"""
+            # check if identity is str(coming from SP) or dict(coming from browser or)
+            if isinstance(provider.identity.identity_id, dict):
+                html_identity = provider.identity.identity_id.get(
+                    "userPrincipalName", "Identity not found"
+                )
+            else:
+                html_identity = provider.identity.identity_id
+            return f"""
                 <div class="col-md-2">
                     <div class="card">
                         <div class="card-header">
@@ -401,10 +399,10 @@ class HTML(Output):
                         </div>
                         <ul class="list-group list-group-flush">
                             <li class="list-group-item">
-                                <b>Azure Tenant IDs:</b> {" ".join(provider._identity.tenant_ids)}
+                                <b>Azure Tenant IDs:</b> {" ".join(provider.identity.tenant_ids)}
                             </li>
                             <li class="list-group-item">
-                                <b>Azure Tenant Domain:</b> {provider._identity.tenant_domain}
+                                <b>Azure Tenant Domain:</b> {provider.identity.tenant_domain}
                             </li>
                             <li class="list-group-item">
                                 <b>Azure Subscriptions:</b> {" ".join(printed_subscriptions)}
@@ -419,7 +417,7 @@ class HTML(Output):
                     </div>
                     <ul class="list-group list-group-flush">
                         <li class="list-group-item">
-                            <b>Azure Identity Type:</b> {provider._identity.identity_type}
+                            <b>Azure Identity Type:</b> {provider.identity.identity_type}
                             </li>
                             <li class="list-group-item">
                                 <b>Azure Identity ID:</b> {html_identity}
@@ -445,17 +443,16 @@ class HTML(Output):
             str: the HTML assessment summary
         """
         try:
-            if provider.__class__.__name__ == "GcpProvider":
-                try:
-                    getattr(provider.credentials, "_service_account_email")
-                    profile = (
-                        provider.credentials._service_account_email
-                        if provider.credentials._service_account_email is not None
-                        else "default"
-                    )
-                except AttributeError:
-                    profile = "default"
-                return f"""
+            try:
+                getattr(provider.session, "_service_account_email")
+                profile = (
+                    provider.session._service_account_email
+                    if provider.session._service_account_email is not None
+                    else "default"
+                )
+            except AttributeError:
+                profile = "default"
+            return f"""
                 <div class="col-md-2">
                     <div class="card">
                         <div class="card-header">
@@ -498,8 +495,7 @@ class HTML(Output):
             str: the HTML assessment summary
         """
         try:
-            if provider.__class__.__name__ == "KubernetesProvider":
-                return f"""
+            return f"""
                 <div class="col-md-2">
                     <div class="card">
                         <div class="card-header">
@@ -508,7 +504,7 @@ class HTML(Output):
                         <ul class="list-group
                         list-group-flush">
                             <li class="list-group-item">
-                                <b>Kubernetes Cluster:</b> {provider._identity.cluster}
+                                <b>Kubernetes Cluster:</b> {provider.identity.cluster}
                             </li>
                         </ul>
                     </div>
@@ -521,7 +517,7 @@ class HTML(Output):
                         <ul class="list-group
                         list-group-flush">
                             <li class="list-group-item">
-                                <b>Kubernetes Context:</b> {provider._identity.context}
+                                <b>Kubernetes Context:</b> {provider.identity.context}
                             </li>
                         </ul>
                     </div>
@@ -549,6 +545,7 @@ class HTML(Output):
             # AWS_provider --> aws
             # GCP_provider --> gcp
             # Azure_provider --> azure
+            # Kubernetes_provider --> kubernetes
 
             # Dynamically get the Provider quick inventory handler
             provider_html_assessment_summary_function = (
