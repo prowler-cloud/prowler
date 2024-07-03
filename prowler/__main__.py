@@ -6,7 +6,11 @@ from os import environ
 
 from colorama import Fore, Style
 
-from prowler.config.config import csv_file_suffix, get_available_compliance_frameworks
+from prowler.config.config import (
+    csv_file_suffix,
+    get_available_compliance_frameworks,
+    json_ocsf_file_suffix,
+)
 from prowler.lib.banner import print_banner
 from prowler.lib.check.check import (
     bulk_load_checks_metadata,
@@ -40,7 +44,7 @@ from prowler.lib.outputs.compliance.compliance import display_compliance_table
 from prowler.lib.outputs.csv.models import CSV
 from prowler.lib.outputs.finding import Finding
 from prowler.lib.outputs.html.html import add_html_footer, fill_html_overview_statistics
-from prowler.lib.outputs.json.json import close_json
+from prowler.lib.outputs.json_ocsf.ocsf import OCSF
 from prowler.lib.outputs.outputs import extract_findings_statistics
 from prowler.lib.outputs.slack.slack import Slack
 from prowler.lib.outputs.summary_table import display_summary_table
@@ -309,12 +313,16 @@ def prowler():
             # Close json file if exists
             # TODO: generate JSON here
             if "json" in mode:
-                close_json(
-                    global_provider.output_options.output_filename,
-                    global_provider.output_options.output_directory,
-                    mode,
+                filename = (
+                    f"{global_provider.output_options.output_directory}/"
+                    f"{global_provider.output_options.output_filename}{json_ocsf_file_suffix}"
                 )
-
+                json_finding = OCSF(
+                    findings=finding_outputs,
+                    create_file_descriptor=True,
+                    file_path=filename,
+                )
+                json_finding.batch_write_data_to_file()
             if "html" in mode:
                 # TODO: generate HTML here
                 add_html_footer(

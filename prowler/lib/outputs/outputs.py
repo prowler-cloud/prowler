@@ -12,7 +12,6 @@ from prowler.lib.outputs.file_descriptors import fill_file_descriptors
 from prowler.lib.outputs.finding import Finding
 from prowler.lib.outputs.html.html import fill_html
 from prowler.lib.outputs.json_asff.json_asff import fill_json_asff
-from prowler.lib.outputs.json_ocsf.ocsf import fill_json_ocsf
 
 
 def stdout_report(finding, color, verbose, status, fix):
@@ -111,15 +110,6 @@ def report(check_findings, provider):
 
                         # Common Output Data
                         finding_output = Finding.generate_output(provider, finding)
-
-                        # JSON
-                        if "json-ocsf" in file_descriptors:
-                            detection_finding = fill_json_ocsf(finding_output)
-
-                            file_descriptors["json-ocsf"].write(
-                                detection_finding.json(exclude_none=True, indent=4)
-                            )
-                            file_descriptors["json-ocsf"].write(",")
 
                         if "html" in file_descriptors:
                             fill_html(file_descriptors["html"], finding_output)
