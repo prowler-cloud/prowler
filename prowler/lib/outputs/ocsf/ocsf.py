@@ -41,11 +41,15 @@ class OCSF(Output):
             for finding_output in findings:
                 finding = deepcopy(finding_output)
                 finding_activity = ActivityID.Create
-                cloud_account_type = get_account_type_id_by_provider(finding.provider)
+                cloud_account_type = self.get_account_type_id_by_provider(
+                    finding.provider
+                )
                 finding_severity = getattr(
                     SeverityID, finding.severity.capitalize(), SeverityID.Unknown
                 )
-                finding_status = get_finding_status_id(finding.status, finding.muted)
+                finding_status = self.get_finding_status_id(
+                    finding.status, finding.muted
+                )
 
                 detection_finding = DetectionFinding(
                     activity_id=finding_activity.value,
@@ -173,22 +177,22 @@ class OCSF(Output):
             )
             sys.exit(1)
 
+    @staticmethod
+    def get_account_type_id_by_provider(provider: str) -> TypeID:
+        type_id = TypeID.Other
+        if provider == "aws":
+            type_id = TypeID.AWS_Account
+        elif provider == "azure":
+            type_id = TypeID.Azure_AD_Account
+        elif provider == "gcp":
+            type_id = TypeID.GCP_Account
+        return type_id
 
-def get_account_type_id_by_provider(provider: str) -> TypeID:
-    type_id = TypeID.Other
-    if provider == "aws":
-        type_id = TypeID.AWS_Account
-    elif provider == "azure":
-        type_id = TypeID.Azure_AD_Account
-    elif provider == "gcp":
-        type_id = TypeID.GCP_Account
-    return type_id
-
-
-def get_finding_status_id(status: str, muted: bool) -> StatusID:
-    status_id = StatusID.Other
-    if status == "FAIL":
-        status_id = StatusID.New
-    if muted:
-        status_id = StatusID.Suppressed
-    return status_id
+    @staticmethod
+    def get_finding_status_id(status: str, muted: bool) -> StatusID:
+        status_id = StatusID.Other
+        if status == "FAIL":
+            status_id = StatusID.New
+        if muted:
+            status_id = StatusID.Suppressed
+        return status_id

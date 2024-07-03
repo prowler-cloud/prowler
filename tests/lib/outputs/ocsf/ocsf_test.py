@@ -19,11 +19,7 @@ from py_ocsf_models.objects.remediation import Remediation
 from py_ocsf_models.objects.resource_details import ResourceDetails
 
 from prowler.config.config import prowler_version
-from prowler.lib.outputs.ocsf.ocsf import (
-    OCSF,
-    get_account_type_id_by_provider,
-    get_finding_status_id,
-)
+from prowler.lib.outputs.ocsf.ocsf import OCSF
 from tests.lib.outputs.fixtures.fixtures import generate_finding_output
 from tests.providers.aws.utils import AWS_REGION_EU_WEST_1
 
@@ -265,75 +261,103 @@ class TestOCSF:
     # Returns TypeID.AWS_Account when provider is 'aws'
     def test_returns_aws_account_when_provider_is_aws(self):
         provider = "aws"
-        result = get_account_type_id_by_provider(provider)
+        finding = generate_finding_output(
+            "FAIL", "low", False, AWS_REGION_EU_WEST_1, provider=provider
+        )
+        result = OCSF([finding])
+        result = result.data[0]
 
-        assert result == TypeID.AWS_Account
+        assert result.cloud.account.type_id == TypeID.AWS_Account
 
     # Returns TypeID.Azure_AD_Account when provider is 'azure'
     def test_returns_azure_ad_account_when_provider_is_azure(self):
         provider = "azure"
-        result = get_account_type_id_by_provider(provider)
+        finding = generate_finding_output(
+            "FAIL", "low", False, AWS_REGION_EU_WEST_1, provider=provider
+        )
+        result = OCSF([finding])
+        result = result.data[0]
 
-        assert result == TypeID.Azure_AD_Account
+        assert result.cloud.account.type_id == TypeID.Azure_AD_Account
 
     # Returns TypeID.GCP_Account when provider is 'gcp'
     def test_returns_gcp_account_when_provider_is_gcp(self):
         provider = "gcp"
-        result = get_account_type_id_by_provider(provider)
+        finding = generate_finding_output(
+            "FAIL", "low", False, AWS_REGION_EU_WEST_1, provider=provider
+        )
+        result = OCSF([finding])
+        result = result.data[0]
 
-        assert result == TypeID.GCP_Account
+        assert result.cloud.account.type_id == TypeID.GCP_Account
 
     # Returns TypeID.Other when provider is None
     def test_returns_other_when_provider_is_none(self):
-        provider = None
-        result = get_account_type_id_by_provider(provider)
+        provider = "None"
+        finding = generate_finding_output(
+            "FAIL", "low", False, AWS_REGION_EU_WEST_1, provider=provider
+        )
+        result = OCSF([finding])
+        result = result.data[0]
 
-        assert result == TypeID.Other
+        assert result.cloud.account.type_id == TypeID.Other
 
     # Returns StatusID.New when status is "FAIL" and muted is False
     def test_new_when_status_fail_and_not_muted(self):
         status = "FAIL"
         muted = False
-        result = get_finding_status_id(status, muted)
+        finding = generate_finding_output(status, "low", muted, AWS_REGION_EU_WEST_1)
+        result = OCSF([finding])
+        result = result.data[0]
 
-        assert result == StatusID.New
+        assert result.status_id == StatusID.New
 
     # Returns StatusID.Suppressed when status is "FAIL" and muted is True
     def test_suppressed_when_status_fail_and_muted(self):
         status = "FAIL"
         muted = True
-        result = get_finding_status_id(status, muted)
+        finding = generate_finding_output(status, "low", muted, AWS_REGION_EU_WEST_1)
+        result = OCSF([finding])
+        result = result.data[0]
 
-        assert result == StatusID.Suppressed
+        assert result.status_id == StatusID.Suppressed
 
-    # Returns StatusID.Other when status is None and muted is False
+    # Returns StatusID.Other when status is PASS and muted is False
     def test_other_when_status_whatever_and_not_muted(self):
-        status = None
+        status = "PASS"
         muted = False
-        result = get_finding_status_id(status, muted)
+        finding = generate_finding_output(status, "low", muted, AWS_REGION_EU_WEST_1)
+        result = OCSF([finding])
+        result = result.data[0]
 
-        assert result == StatusID.Other
+        assert result.status_id == StatusID.Other
 
-    # Returns StatusID.Suppresed when status is None and muted is True
+    # Returns StatusID.Suppresed when status is PASS and muted is True
     def test_other_when_status_whatever_and_muted(self):
-        status = None
+        status = "PASS"
         muted = True
-        result = get_finding_status_id(status, muted)
+        finding = generate_finding_output(status, "low", muted, AWS_REGION_EU_WEST_1)
+        result = OCSF([finding])
+        result = result.data[0]
 
-        assert result == StatusID.Suppressed
+        assert result.status_id == StatusID.Suppressed
 
     # Returns StatusID.Suppressed when muted is True and status is not "FAIL"
     def test_suppressed_when_status_pass_and_muted(self):
         status = "PASS"
         muted = True
-        result = get_finding_status_id(status, muted)
+        finding = generate_finding_output(status, "low", muted, AWS_REGION_EU_WEST_1)
+        result = OCSF([finding])
+        result = result.data[0]
 
-        assert result == StatusID.Suppressed
+        assert result.status_id == StatusID.Suppressed
 
     # Returns StatusID.Other when muted is False and status is not "FAIL"
     def test_other_when_status_pass_and_not_muted(self):
         status = "PASS"
         muted = False
-        result = get_finding_status_id(status, muted)
+        finding = generate_finding_output(status, "low", muted, AWS_REGION_EU_WEST_1)
+        result = OCSF([finding])
+        result = result.data[0]
 
-        assert result == StatusID.Other
+        assert result.status_id == StatusID.Other

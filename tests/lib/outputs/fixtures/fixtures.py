@@ -7,7 +7,12 @@ from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER
 
 # TODO: customize it per provider
 def generate_finding_output(
-    status, severity, muted, region, timestamp: datetime = datetime.now()
+    status,
+    severity,
+    muted,
+    region,
+    timestamp: datetime = datetime.now(),
+    provider: str = "aws",
 ) -> Finding:
     # TODO: Include metadata from a valid file
 
@@ -21,7 +26,7 @@ def generate_finding_output(
         account_organization_name="test-organization",
         account_tags=["test-tag:test-value"],
         finding_uid="test-unique-finding",
-        provider="aws",
+        provider=provider,
         check_id="test-check-id",
         check_title="test-check-id",
         check_type="test-type",
