@@ -9,7 +9,6 @@ from prowler.lib.outputs.compliance.compliance import (
     fill_compliance,
 )
 from prowler.lib.outputs.file_descriptors import fill_file_descriptors
-from prowler.lib.outputs.finding import Finding
 from prowler.lib.outputs.json_asff.json_asff import fill_json_asff
 
 
@@ -106,10 +105,6 @@ def report(check_findings, provider):
                                     indent=4,
                                 )
                                 file_descriptors["json-asff"].write(",")
-
-                        # Common Output Data
-                        finding_output = Finding.generate_output(provider, finding)
-
 
         else:  # No service resources in the whole account
             color = set_report_color("MANUAL")

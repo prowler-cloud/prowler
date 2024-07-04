@@ -200,7 +200,7 @@ class HTML(Output):
             <tbody>"""
             )
         except Exception as error:
-            logger.critical(
+            logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
             )
 
@@ -298,7 +298,7 @@ class HTML(Output):
 """
             )
         except Exception as error:
-            logger.critical(
+            logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
             )
 
@@ -360,9 +360,10 @@ class HTML(Output):
                     </div>
                 </div>"""
         except Exception as error:
-            logger.critical(
+            logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
             )
+            return ""
 
     @staticmethod
     def get_azure_assessment_summary(provider: Provider) -> str:
@@ -423,9 +424,10 @@ class HTML(Output):
                     </div>
                 </div>"""
         except Exception as error:
-            logger.critical(
+            logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
             )
+            return ""
 
     @staticmethod
     def get_gcp_assessment_summary(provider: Provider) -> str:
@@ -474,9 +476,10 @@ class HTML(Output):
                     </div>
                 </div>"""
         except Exception as error:
-            logger.critical(
+            logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
             )
+            return ""
 
     @staticmethod
     def get_kubernetes_assessment_summary(provider: Provider) -> str:
@@ -518,9 +521,10 @@ class HTML(Output):
                     </div>
                 </div>"""
         except Exception as error:
-            logger.critical(
+            logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
             )
+            return ""
 
     @staticmethod
     def get_assessment_summary(provider: Provider) -> str:
@@ -547,6 +551,7 @@ class HTML(Output):
             )
             return getattr(HTML, provider_html_assessment_summary_function)(provider)
         except Exception as error:
-            logger.critical(
+            logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
             )
+            return ""
