@@ -2,20 +2,23 @@ from datetime import datetime
 
 from prowler.config.config import prowler_version
 from prowler.lib.outputs.finding import Finding
-from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER
+from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, AWS_REGION_EU_WEST_1
 
 
-# TODO: customize it per provider
 def generate_finding_output(
-    status,
-    severity,
-    muted,
-    region,
+    status: str = "PASS",
+    status_extended: str = "",
+    severity: str = "high",
+    muted: bool = False,
+    region: str = AWS_REGION_EU_WEST_1,
+    resource_details: str = "",
+    resource_uid: str = "",
+    resource_name: str = "",
+    resource_tags: str = "",
+    compliance: dict = {"test-compliance": "test-compliance"},
     timestamp: datetime = datetime.now(),
     provider: str = "aws",
 ) -> Finding:
-    # TODO: Include metadata from a valid file
-
     return Finding(
         auth_method="profile: default",
         timestamp=timestamp,
@@ -31,17 +34,17 @@ def generate_finding_output(
         check_title="test-check-id",
         check_type="test-type",
         status=status,
-        status_extended="status extended",
+        status_extended=status_extended,
         muted=muted,
         service_name="test-service",
         subservice_name="",
         severity=severity,
         resource_type="test-resource",
-        resource_uid="resource-id",
-        resource_name="resource_name",
-        resource_details="resource_details",
-        resource_tags="",
-        partition="aws",
+        resource_uid=resource_uid,
+        resource_name=resource_name,
+        resource_details=resource_details,
+        resource_tags=resource_tags,
+        partition=provider,
         region=region,
         description="check description",
         risk="test-risk",
@@ -52,7 +55,7 @@ def generate_finding_output(
         remediation_code_terraform="",
         remediation_code_cli="",
         remediation_code_other="",
-        compliance={"test-compliance": "test-compliance"},
+        compliance=compliance,
         categories="test-category",
         depends_on="test-dependency",
         related_to="test-related-to",

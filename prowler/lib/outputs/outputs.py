@@ -1,5 +1,3 @@
-import json
-
 from colorama import Fore, Style
 
 from prowler.config.config import available_compliance_frameworks, orange_color
@@ -11,7 +9,6 @@ from prowler.lib.outputs.compliance.compliance import (
 from prowler.lib.outputs.file_descriptors import fill_file_descriptors
 from prowler.lib.outputs.finding import Finding
 from prowler.lib.outputs.html.html import fill_html
-from prowler.lib.outputs.json_asff.json_asff import fill_json_asff
 
 
 def stdout_report(finding, color, verbose, status, fix):
@@ -94,19 +91,6 @@ def report(check_findings, provider):
                             file_descriptors,
                             input_compliance_frameworks,
                         )
-
-                        # AWS specific outputs
-                        if finding.check_metadata.Provider == "aws":
-                            if "json-asff" in file_descriptors:
-                                # Initialize this field using the class within fill_json_asff not here
-                                json_asff_finding = fill_json_asff(provider, finding)
-
-                                json.dump(
-                                    json_asff_finding.dict(exclude_none=True),
-                                    file_descriptors["json-asff"],
-                                    indent=4,
-                                )
-                                file_descriptors["json-asff"].write(",")
 
                         # Common Output Data
                         finding_output = Finding.generate_output(provider, finding)

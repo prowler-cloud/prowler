@@ -5,11 +5,7 @@ from unittest import mock
 import pytest
 from colorama import Fore
 
-from prowler.config.config import (
-    html_file_suffix,
-    json_asff_file_suffix,
-    output_file_timestamp,
-)
+from prowler.config.config import html_file_suffix, output_file_timestamp
 from prowler.lib.check.compliance_models import (
     CIS_Requirement_Attribute,
     Compliance_Base_Model,
@@ -39,33 +35,15 @@ class TestOutputs:
         output_directory = f"{os.path.dirname(os.path.realpath(__file__))}"
         aws_provider = set_mocked_aws_provider()
         test_output_modes = [
-            ["json-asff"],
             ["html"],
-            ["json-asff", "html"],
         ]
         output_filename = f"prowler-output-{audited_account}-{output_file_timestamp}"
         expected = [
             {
-                "json-asff": open_file(
-                    f"{output_directory}/{output_filename}{json_asff_file_suffix}",
-                    "a",
-                )
-            },
-            {
                 "html": open_file(
                     f"{output_directory}/{output_filename}{html_file_suffix}",
                     "a",
                 )
-            },
-            {
-                "json-asff": open_file(
-                    f"{output_directory}/{output_filename}{json_asff_file_suffix}",
-                    "a",
-                ),
-                "html": open_file(
-                    f"{output_directory}/{output_filename}{html_file_suffix}",
-                    "a",
-                ),
             },
         ]
 

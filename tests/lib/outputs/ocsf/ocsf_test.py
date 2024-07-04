@@ -100,7 +100,11 @@ expected_json_output = json.dumps(
 
 class TestOCSF:
     def test_transform(self):
-        findings = [generate_finding_output("FAIL", "low", False, AWS_REGION_EU_WEST_1)]
+        findings = [
+            generate_finding_output(
+                status="FAIL", severity="low", muted=False, region=AWS_REGION_EU_WEST_1
+            )
+        ]
 
         ocsf = OCSF(findings)
 
@@ -110,7 +114,17 @@ class TestOCSF:
     def test_batch_write_data_to_file(self):
         mock_file = StringIO()
         findings = [
-            generate_finding_output("FAIL", "low", False, AWS_REGION_EU_WEST_1, now)
+            generate_finding_output(
+                status="FAIL",
+                severity="low",
+                muted=False,
+                region=AWS_REGION_EU_WEST_1,
+                timestamp=now,
+                resource_details="resource_details",
+                resource_name="resource_name",
+                resource_uid="resource-id",
+                status_extended="status extended",
+            )
         ]
 
         output = OCSF(findings)
@@ -126,7 +140,7 @@ class TestOCSF:
 
     def test_finding_output_cloud_pass_low_muted(self):
         finding_output = generate_finding_output(
-            "PASS", "low", True, AWS_REGION_EU_WEST_1
+            status="PASS", severity="low", muted=True, region=AWS_REGION_EU_WEST_1
         )
 
         finding_ocsf = OCSF([finding_output])
@@ -232,7 +246,11 @@ class TestOCSF:
 
     def test_finding_output_kubernetes(self):
         finding_output = generate_finding_output(
-            "PASS", "low", True, AWS_REGION_EU_WEST_1, provider="kubernetes"
+            status="PASS",
+            severity="low",
+            muted=True,
+            region=AWS_REGION_EU_WEST_1,
+            provider="kubernetes",
         )
 
         finding_ocsf = OCSF([finding_output])
@@ -243,7 +261,7 @@ class TestOCSF:
 
     def test_finding_output_cloud_fail_low_not_muted(self):
         finding_output = generate_finding_output(
-            "FAIL", "low", False, AWS_REGION_EU_WEST_1
+            status="FAIL", severity="low", muted=False, region=AWS_REGION_EU_WEST_1
         )
 
         finding_ocsf = OCSF([finding_output])
@@ -257,7 +275,7 @@ class TestOCSF:
 
     def test_finding_output_cloud_pass_low_not_muted(self):
         finding_output = generate_finding_output(
-            "PASS", "low", False, AWS_REGION_EU_WEST_1
+            status="PASS", severity="low", muted=False, region=AWS_REGION_EU_WEST_1
         )
 
         finding_ocsf = OCSF([finding_output])

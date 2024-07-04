@@ -171,7 +171,9 @@ class OCSF(Output):
             if self._file_descriptor and not self._file_descriptor.closed:
                 self._file_descriptor.write("[")
                 for finding in self._data:
-                    self._file_descriptor.write(finding.json(exclude_none=True))
+                    self._file_descriptor.write(
+                        finding.json(exclude_none=True, indent=4)
+                    )
                     self._file_descriptor.write(",")
                 if self._file_descriptor.tell() > 0:
                     if self._file_descriptor.tell() != 1:
