@@ -4,6 +4,7 @@ from typing import List
 from unittest.mock import MagicMock
 
 import pytest
+from mock import patch
 
 from prowler.lib.outputs.csv.csv import write_csv
 from prowler.lib.outputs.csv.models import CSV
@@ -129,7 +130,8 @@ class TestCSV:
         output = CSV(findings)
         output._file_descriptor = mock_file
 
-        output.batch_write_data_to_file()
+        with patch.object(mock_file, "close", return_value=None):
+            output.batch_write_data_to_file()
 
         mock_file.seek(0)
         content = mock_file.read()

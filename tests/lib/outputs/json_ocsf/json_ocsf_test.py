@@ -35,7 +35,7 @@ class TestOutputJSONOCSF:
     # test_fill_json_ocsf_iso_format_timestamp
     def test_finding_output_cloud_pass_low_muted(self):
         finding_output = generate_finding_output(
-            "PASS", "low", True, AWS_REGION_EU_WEST_1
+            status="PASS", severity="low", muted=True, region=AWS_REGION_EU_WEST_1
         )
 
         finding_json_ocsf = fill_json_ocsf(finding_output)
@@ -141,7 +141,7 @@ class TestOutputJSONOCSF:
 
     def test_finding_output_cloud_fail_low_not_muted(self):
         finding_output = generate_finding_output(
-            "FAIL", "low", False, AWS_REGION_EU_WEST_1
+            status="FAIL", severity="low", muted=False, region=AWS_REGION_EU_WEST_1
         )
 
         finding_json_ocsf = fill_json_ocsf(finding_output)
@@ -154,7 +154,7 @@ class TestOutputJSONOCSF:
 
     def test_finding_output_cloud_pass_low_not_muted(self):
         finding_output = generate_finding_output(
-            "PASS", "low", False, AWS_REGION_EU_WEST_1
+            status="PASS", severity="low", muted=False, region=AWS_REGION_EU_WEST_1
         )
 
         finding_json_ocsf = fill_json_ocsf(finding_output)
