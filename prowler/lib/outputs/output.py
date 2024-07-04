@@ -8,8 +8,8 @@ from prowler.lib.utils.utils import open_file
 
 
 class Output(ABC):
-    _data: list[Finding] = []
-    _file_descriptor: TextIOWrapper = None
+    _data: list[Finding]
+    _file_descriptor: TextIOWrapper
 
     def __init__(
         self,
@@ -17,6 +17,7 @@ class Output(ABC):
         create_file_descriptor: bool = False,
         file_path: str = None,
     ) -> None:
+        self._data = []
         self.transform(findings)
         if create_file_descriptor:
             self.create_file_descriptor(file_path)
