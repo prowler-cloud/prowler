@@ -95,7 +95,7 @@ class ASFF(Output):
                                 Type=finding.resource_type,
                                 Partition=finding.partition,
                                 Region=finding.region,
-                                Tads=resource_tags,
+                                Tags=resource_tags,
                             )
                         ],
                         Compliance=Compliance(
