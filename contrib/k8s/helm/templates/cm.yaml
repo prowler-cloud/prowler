@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.configMap.name }}
+  namespace: {{ .Values.namespace.name }}
+data:
+  varLibCni: "{{ .Values.configMap.data.varLibCni }}"
+  varLibEtcd: "{{ .Values.configMap.data.varLibEtcd }}"
+  varLibKubelet: "{{ .Values.configMap.data.varLibKubelet }}"
+  varLibKubeScheduler: "{{ .Values.configMap.data.varLibKubeScheduler }}"
+  varLibKubeControllerManager: "{{ .Values.configMap.data.varLibKubeControllerManager }}"
+  etcSystemd: "{{ .Values.configMap.data.etcSystemd }}"
+  libSystemd: "{{ .Values.configMap.data.libSystemd }}"
+  etcKubernetes: "{{ .Values.configMap.data.etcKubernetes }}"
+  usrBin: "{{ .Values.configMap.data.usrBin }}"
+  etcCniNetd: "{{ .Values.configMap.data.etcCniNetd }}"
+  optCniBin: "{{ .Values.configMap.data.optCniBin }}"
+  srvKubernetes: "{{ .Values.configMap.data.srvKubernetes }}"

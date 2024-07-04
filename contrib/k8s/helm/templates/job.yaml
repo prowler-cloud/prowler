@@ -1,0 +1,42 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ .Values.cronjob.name }}
+  namespace: {{ .Values.namespace.name }}
+spec:
+  schedule: "{{ .Values.cronjob.schedule }}"
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: prowler
+        spec:
+          serviceAccountName: {{ .Values.serviceAccount.name }}
+          containers:
+          - name: prowler
+            image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+            command: ["prowler"]
+            args: ["kubernetes", "-z", "-b"]
+            imagePullPolicy: {{ .Values.image.pullPolicy }}
+            volumeMounts:
+            {{- range $key, $value := .Values.configMap.data }}
+              {{- if and (eq $.Values.clusterType "gke") (eq $key "srvKubernetes") }}
+              {{- else }}
+              - name: {{ $key | lower }}
+                mountPath: {{ $value }}
+                readOnly: true
+              {{- end }}
+            {{- end }}
+          hostPID: {{ .Values.cronjob.hostPID }}
+          restartPolicy: Never
+          volumes:
+          {{- range $key, $value := .Values.configMap.data }}
+            {{- if and (eq $.Values.clusterType "gke") (eq $key "srvKubernetes") }}
+            {{- else }}
+            - name: {{ $key | lower }}
+              hostPath:
+                path: {{ $value }}
+            {{- end }}
+          {{- end }}
+
