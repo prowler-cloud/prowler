@@ -1,12 +1,9 @@
 import sys
-from datetime import datetime
 from io import StringIO
 
-import pytest
-
 from prowler.config.config import timestamp
-from prowler.lib.outputs.finding import Finding, Severity, Status
 from prowler.lib.outputs.html.html import HTML
+from tests.lib.outputs.fixtures.fixtures import generate_finding_output
 from tests.providers.aws.utils import AWS_REGION_EU_WEST_1, set_mocked_aws_provider
 from tests.providers.azure.azure_fixtures import set_mocked_azure_provider
 from tests.providers.gcp.gcp_fixtures import GCP_PROJECT_ID, set_mocked_gcp_provider
@@ -20,24 +17,75 @@ html_stats = {
     "resources_count": 1,
     "findings_count": 1,
 }
-
-aws_html_finding = """
+pass_html_finding = """
+                        <tr class="p-3 mb-2 bg-success-custom">
+                            <td>PASS</td>
+                            <td>high</td>
+                            <td>test-service</td>
+                            <td>eu-west-1</td>
+                            <td>test-check-id</td>
+                            <td>test-check-id</td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td><p class="show-read-more">test-risk</p></td>
+                            <td><p class="show-read-more"></p> <a class="read-more" href=""><i class="fas fa-external-link-alt"></i></a></td>
+                            <td><p class="show-read-more">
+&#x2022;test-compliance: test-compliance
+</p></td>
+                        </tr>
+                        """
+fail_html_finding = """
                         <tr class="table-danger">
                             <td>FAIL</td>
-                            <td>critical</td>
-                            <td>Example Service</td>
-                            <td>us-west-1</td>
-                            <td>check-123</td>
-                            <td>Example Check</td>
-                            <td>resource-123</td>
-                            <td>
-&#x2022;tag1,tag2
-</td>
-                            <td>Extended status</td>
-                            <td><p class="show-read-more">High</p></td>
-                            <td><p class="show-read-more">Recommendation text</p> <a class="read-more" href="http://example.com/remediation"><i class="fas fa-external-link-alt"></i></a></td>
+                            <td>high</td>
+                            <td>test-service</td>
+                            <td>eu-west-1</td>
+                            <td>test-check-id</td>
+                            <td>test-check-id</td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td><p class="show-read-more">test-risk</p></td>
+                            <td><p class="show-read-more"></p> <a class="read-more" href=""><i class="fas fa-external-link-alt"></i></a></td>
                             <td><p class="show-read-more">
-&#x2022;compliance_key: compliance_value
+&#x2022;test-compliance: test-compliance
+</p></td>
+                        </tr>
+                        """
+muted_html_finding = """
+                        <tr class="table-warning">
+                            <td>MUTED (PASS)</td>
+                            <td>high</td>
+                            <td>test-service</td>
+                            <td>eu-west-1</td>
+                            <td>test-check-id</td>
+                            <td>test-check-id</td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td><p class="show-read-more">test-risk</p></td>
+                            <td><p class="show-read-more"></p> <a class="read-more" href=""><i class="fas fa-external-link-alt"></i></a></td>
+                            <td><p class="show-read-more">
+&#x2022;test-compliance: test-compliance
+</p></td>
+                        </tr>
+                        """
+manual_html_finding = """
+                        <tr class="table-info">
+                            <td>MANUAL</td>
+                            <td>high</td>
+                            <td>test-service</td>
+                            <td>eu-west-1</td>
+                            <td>test-check-id</td>
+                            <td>test-check-id</td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td><p class="show-read-more">test-risk</p></td>
+                            <td><p class="show-read-more"></p> <a class="read-more" href=""><i class="fas fa-external-link-alt"></i></a></td>
+                            <td><p class="show-read-more">
+&#x2022;test-compliance: test-compliance
 </p></td>
                         </tr>
                         """
@@ -364,64 +412,39 @@ html_footer = """
 """
 
 
-@pytest.fixture
-def generate_finding():
-    return Finding(
-        auth_method="OAuth",
-        timestamp=datetime.now(),
-        account_uid="12345",
-        account_name="Example Account",
-        account_email="example@example.com",
-        account_organization_uid="org-123",
-        account_organization_name="Example Org",
-        account_tags=["tag1", "tag2"],
-        finding_uid="finding-123",
-        provider="aws",
-        check_id="check-123",
-        check_title="Example Check",
-        check_type="Security",
-        status=Status("FAIL"),
-        status_extended="Extended status",
-        muted=False,
-        service_name="Example Service",
-        subservice_name="Example Subservice",
-        severity=Severity("critical"),
-        resource_type="Instance",
-        resource_uid="resource-123",
-        resource_name="Example Resource",
-        resource_details="Detailed information about the resource",
-        resource_tags="tag1,tag2",
-        partition="aws",
-        region="us-west-1",
-        description="Description of the finding",
-        risk="High",
-        related_url="http://example.com",
-        remediation_recommendation_text="Recommendation text",
-        remediation_recommendation_url="http://example.com/remediation",
-        remediation_code_nativeiac="native-iac-code",
-        remediation_code_terraform="terraform-code",
-        remediation_code_cli="cli-code",
-        remediation_code_other="other-code",
-        compliance={"compliance_key": "compliance_value"},
-        categories="category1,category2",
-        depends_on="dependency",
-        related_to="related finding",
-        notes="Notes about the finding",
-        prowler_version="1.0",
-    )
-
-
 class TestHTML:
-    def test_transform(self, generate_finding):
-        findings = [generate_finding]
+    def test_transform_fail_finding(self):
+        findings = [generate_finding_output(status="FAIL")]
         html = HTML(findings)
         output_data = html.data[0]
         assert isinstance(output_data, str)
-        assert output_data == aws_html_finding
+        print(output_data)
+        assert output_data == fail_html_finding
 
-    def test_batch_write_data_to_file(self, generate_finding):
+    def test_transform_pass_finding(self):
+        findings = [generate_finding_output()]
+        html = HTML(findings)
+        output_data = html.data[0]
+        assert isinstance(output_data, str)
+        assert output_data == pass_html_finding
+
+    def test_transform_muted_finding(self):
+        findings = [generate_finding_output(muted=True)]
+        html = HTML(findings)
+        output_data = html.data[0]
+        assert isinstance(output_data, str)
+        assert output_data == muted_html_finding
+
+    def test_transform_manual_finding(self):
+        findings = [generate_finding_output(status="MANUAL")]
+        html = HTML(findings)
+        output_data = html.data[0]
+        assert isinstance(output_data, str)
+        assert output_data == manual_html_finding
+
+    def test_batch_write_data_to_file(self):
         mock_file = StringIO()
-        findings = [generate_finding]
+        findings = [generate_finding_output()]
         output = HTML(findings)
         output._file_descriptor = mock_file
         provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_EU_WEST_1])
@@ -430,11 +453,11 @@ class TestHTML:
 
         mock_file.seek(0)
         content = mock_file.read()
-        assert content == aws_html_header + aws_html_finding + html_footer
+        assert content == aws_html_header + pass_html_finding + html_footer
 
-    def test_write_header(self, generate_finding):
+    def test_write_header(self):
         mock_file = StringIO()
-        findings = [generate_finding]
+        findings = [generate_finding_output()]
         output = HTML(findings)
         output._file_descriptor = mock_file
         provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_EU_WEST_1])
@@ -445,9 +468,9 @@ class TestHTML:
         content = mock_file.read()
         assert content == aws_html_header
 
-    def test_write_footer(self, generate_finding):
+    def test_write_footer(self):
         mock_file = StringIO()
-        findings = [generate_finding]
+        findings = [generate_finding_output()]
         output = HTML(findings)
         output._file_descriptor = mock_file
 
@@ -457,8 +480,8 @@ class TestHTML:
         content = mock_file.read()
         assert content == html_footer
 
-    def test_aws_get_assessment_summary(self, generate_finding):
-        findings = [generate_finding]
+    def test_aws_get_assessment_summary(self):
+        findings = [generate_finding_output()]
         output = HTML(findings)
         provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_EU_WEST_1])
 
@@ -466,8 +489,8 @@ class TestHTML:
 
         assert summary == aws_html_assessment_summary
 
-    def test_azure_get_assessment_summary(self, generate_finding):
-        findings = [generate_finding]
+    def test_azure_get_assessment_summary(self):
+        findings = [generate_finding_output()]
         output = HTML(findings)
         provider = set_mocked_azure_provider()
 
@@ -475,8 +498,8 @@ class TestHTML:
 
         assert summary == summary
 
-    def test_gcp_get_assessment_summary(self, generate_finding):
-        findings = [generate_finding]
+    def test_gcp_get_assessment_summary(self):
+        findings = [generate_finding_output()]
         output = HTML(findings)
         provider = set_mocked_gcp_provider(project_ids=[GCP_PROJECT_ID])
 
@@ -484,8 +507,8 @@ class TestHTML:
 
         assert summary == gcp_html_assessment_summary
 
-    def test_kubernetes_get_assessment_summary(self, generate_finding):
-        findings = [generate_finding]
+    def test_kubernetes_get_assessment_summary(self):
+        findings = [generate_finding_output()]
         output = HTML(findings)
         provider = set_mocked_kubernetes_provider()
 
