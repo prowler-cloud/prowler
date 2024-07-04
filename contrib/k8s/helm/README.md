@@ -4,6 +4,49 @@
 
 Prowler Security Tool Helm chart for Kubernetes
 
+# Prowler Helm Chart Deployment
+
+This guide provides step-by-step instructions for deploying the Prowler Helm chart.
+
+## Prerequisites
+
+Before you begin, ensure you have the following:
+
+1. A running Kubernetes cluster.
+2. Helm installed on your local machine. If you don't have Helm installed, you can follow the [Helm installation guide](https://helm.sh/docs/intro/install/).
+3. Proper access to your Kubernetes cluster (e.g., `kubectl` is configured and working).
+
+## Deployment Steps
+
+### 1. Clone the Repository
+
+Clone the repository containing the Helm chart to your local machine.
+
+```sh
+git clone git@github.com:prowler-cloud/prowler.git
+cd prowler/contrib/k8s/helm
+```
+
+### 2. Deploy the helm chart
+
+```
+helm install prowler .
+```
+
+### 3. Verify the deployment
+
+```
+helm status prowler
+kubectl get all -n prowler-ns
+```
+
+### 4. Clean Up
+To uninstall the Helm release and clean up the resources, run:
+
+```helm uninstall prowler
+kubectl delete namespace prowler-ns
+```
+
 ## Values
 
 | Key | Type | Default | Description |
