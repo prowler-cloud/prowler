@@ -339,7 +339,7 @@ class HTML(Output):
                                 <b>AWS-CLI Profile:</b> {profile}
                             </li>
                             <li class="list-group-item">
-                                <b>Audited Regions:</b>{audited_regions}
+                                <b>Audited Regions:</b> {audited_regions}
                             </li>
                         </ul>
                     </div>

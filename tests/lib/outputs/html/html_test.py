@@ -7,7 +7,7 @@ import pytest
 from prowler.config.config import timestamp
 from prowler.lib.outputs.finding import Finding, Severity, Status
 from prowler.lib.outputs.html.html import HTML
-from tests.providers.aws.utils import set_mocked_aws_provider
+from tests.providers.aws.utils import AWS_REGION_EU_WEST_1, set_mocked_aws_provider
 from tests.providers.azure.azure_fixtures import set_mocked_azure_provider
 from tests.providers.gcp.gcp_fixtures import GCP_PROJECT_ID, set_mocked_gcp_provider
 from tests.providers.kubernetes.kubernetes_fixtures import (
@@ -41,6 +41,130 @@ aws_html_finding = """
 </p></td>
                         </tr>
                         """
+aws_html_assessment_summary = """
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            AWS Assessment Summary
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>AWS Account:</b> 123456789012
+                            </li>
+                            <li class="list-group-item">
+                                <b>AWS-CLI Profile:</b> default
+                            </li>
+                            <li class="list-group-item">
+                                <b>Audited Regions:</b> eu-west-1
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        AWS Credentials
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <b>User Id:</b> None
+                            </li>
+                            <li class="list-group-item">
+                                <b>Caller Identity ARN:</b> None
+                            </li>
+                        </ul>
+                    </div>
+                </div>"""
+
+azure_html_assessment_summary = """
+
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            Azure Assessment Summary
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>Azure Tenant IDs:</b> 00000000-0000-0000-0000-000000000000
+                            </li>
+                            <li class="list-group-item">
+                                <b>Azure Tenant Domain:</b> Unknown tenant domain (missing AAD permissions)
+                            </li>
+                            <li class="list-group-item">
+                                <b>Azure Subscriptions:</b> 4f647f43-15d2-4e3a-a7f0-8517cc4d977b : Subscription Name
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        Azure Credentials
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <b>Azure Identity Type:</b> Service Principal
+                            </li>
+                            <li class="list-group-item">
+                                <b>Azure Identity ID:</b> 00000000-0000-0000-0000-000000000000
+                            </li>
+                        </ul>
+                    </div>
+                </div>"""
+
+gcp_html_assessment_summary = """
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            GCP Assessment Summary
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>GCP Project IDs:</b> 123456789012
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            GCP Credentials
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>GCP Account:</b> test@test.com
+                            </li>
+                        </ul>
+                    </div>
+                </div>"""
+
+kubernetes_html_assessment_summary = """
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            Kubernetes Assessment Summary
+                        </div>
+                        <ul class="list-group
+                        list-group-flush">
+                            <li class="list-group-item">
+                                <b>Kubernetes Cluster:</b> None
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            Kubernetes Credentials
+                        </div>
+                        <ul class="list-group
+                        list-group-flush">
+                            <li class="list-group-item">
+                                <b>Kubernetes Context:</b> None
+                            </li>
+                        </ul>
+                    </div>
+                </div>"""
 
 aws_html_header = (
     """
@@ -108,40 +232,9 @@ aws_html_header = (
                 </li>
             </ul>
             </div>
-        </div>
-                <div class="col-md-2">
-                    <div class="card">
-                        <div class="card-header">
-                            AWS Assessment Summary
-                        </div>
-                        <ul class="list-group list-group-flush">
-                            <li class="list-group-item">
-                                <b>AWS Account:</b> 123456789012
-                            </li>
-                            <li class="list-group-item">
-                                <b>AWS-CLI Profile:</b> default
-                            </li>
-                            <li class="list-group-item">
-                                <b>Audited Regions:</b>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                <div class="card">
-                    <div class="card-header">
-                        AWS Credentials
-                    </div>
-                    <ul class="list-group list-group-flush">
-                        <li class="list-group-item">
-                            <b>User Id:</b> None
-                            </li>
-                            <li class="list-group-item">
-                                <b>Caller Identity ARN:</b> None
-                            </li>
-                        </ul>
-                    </div>
-                </div>
+        </div>"""
+    + aws_html_assessment_summary
+    + """
             <div class="col-md-2">
             <div class="card">
                 <div class="card-header">
@@ -270,131 +363,6 @@ html_footer = """
 </html>
 """
 
-aws_html_assessment_summary = """
-                <div class="col-md-2">
-                    <div class="card">
-                        <div class="card-header">
-                            AWS Assessment Summary
-                        </div>
-                        <ul class="list-group list-group-flush">
-                            <li class="list-group-item">
-                                <b>AWS Account:</b> 123456789012
-                            </li>
-                            <li class="list-group-item">
-                                <b>AWS-CLI Profile:</b> default
-                            </li>
-                            <li class="list-group-item">
-                                <b>Audited Regions:</b>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                <div class="card">
-                    <div class="card-header">
-                        AWS Credentials
-                    </div>
-                    <ul class="list-group list-group-flush">
-                        <li class="list-group-item">
-                            <b>User Id:</b> None
-                            </li>
-                            <li class="list-group-item">
-                                <b>Caller Identity ARN:</b> None
-                            </li>
-                        </ul>
-                    </div>
-                </div>"""
-
-azure_html_assessment_summary = """
-
-                <div class="col-md-2">
-                    <div class="card">
-                        <div class="card-header">
-                            Azure Assessment Summary
-                        </div>
-                        <ul class="list-group list-group-flush">
-                            <li class="list-group-item">
-                                <b>Azure Tenant IDs:</b> 00000000-0000-0000-0000-000000000000
-                            </li>
-                            <li class="list-group-item">
-                                <b>Azure Tenant Domain:</b> Unknown tenant domain (missing AAD permissions)
-                            </li>
-                            <li class="list-group-item">
-                                <b>Azure Subscriptions:</b> 4f647f43-15d2-4e3a-a7f0-8517cc4d977b : Subscription Name
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                <div class="card">
-                    <div class="card-header">
-                        Azure Credentials
-                    </div>
-                    <ul class="list-group list-group-flush">
-                        <li class="list-group-item">
-                            <b>Azure Identity Type:</b> Service Principal
-                            </li>
-                            <li class="list-group-item">
-                                <b>Azure Identity ID:</b> 00000000-0000-0000-0000-000000000000
-                            </li>
-                        </ul>
-                    </div>
-                </div>"""
-
-gcp_html_assessment_summary = """
-                <div class="col-md-2">
-                    <div class="card">
-                        <div class="card-header">
-                            GCP Assessment Summary
-                        </div>
-                        <ul class="list-group list-group-flush">
-                            <li class="list-group-item">
-                                <b>GCP Project IDs:</b> 123456789012
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card">
-                        <div class="card-header">
-                            GCP Credentials
-                        </div>
-                        <ul class="list-group list-group-flush">
-                            <li class="list-group-item">
-                                <b>GCP Account:</b> test@test.com
-                            </li>
-                        </ul>
-                    </div>
-                </div>"""
-
-kubernetes_html_assessment_summary = """
-                <div class="col-md-2">
-                    <div class="card">
-                        <div class="card-header">
-                            Kubernetes Assessment Summary
-                        </div>
-                        <ul class="list-group
-                        list-group-flush">
-                            <li class="list-group-item">
-                                <b>Kubernetes Cluster:</b> None
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card">
-                        <div class="card-header">
-                            Kubernetes Credentials
-                        </div>
-                        <ul class="list-group
-                        list-group-flush">
-                            <li class="list-group-item">
-                                <b>Kubernetes Context:</b> None
-                            </li>
-                        </ul>
-                    </div>
-                </div>"""
-
 
 @pytest.fixture
 def generate_finding():
@@ -456,7 +424,7 @@ class TestHTML:
         findings = [generate_finding]
         output = HTML(findings)
         output._file_descriptor = mock_file
-        provider = set_mocked_aws_provider()
+        provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_EU_WEST_1])
 
         output.batch_write_data_to_file(provider, html_stats)
 
@@ -469,7 +437,7 @@ class TestHTML:
         findings = [generate_finding]
         output = HTML(findings)
         output._file_descriptor = mock_file
-        provider = set_mocked_aws_provider()
+        provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_EU_WEST_1])
 
         output.write_header(mock_file, provider, html_stats)
 
@@ -492,7 +460,7 @@ class TestHTML:
     def test_aws_get_assessment_summary(self, generate_finding):
         findings = [generate_finding]
         output = HTML(findings)
-        provider = set_mocked_aws_provider()
+        provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_EU_WEST_1])
 
         summary = output.get_assessment_summary(provider)
 
