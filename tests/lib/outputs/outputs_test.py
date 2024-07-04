@@ -1,11 +1,9 @@
-import os
-from os import path, remove
+from os import path
 from unittest import mock
 
 import pytest
 from colorama import Fore
 
-from prowler.config.config import output_file_timestamp
 from prowler.lib.check.compliance_models import (
     CIS_Requirement_Attribute,
     Compliance_Base_Model,
@@ -14,7 +12,6 @@ from prowler.lib.check.compliance_models import (
 from prowler.lib.check.models import Check_Report, load_check_metadata
 from prowler.lib.outputs.compliance.compliance import get_check_compliance
 from prowler.lib.outputs.csv.csv import generate_csv_fields
-from prowler.lib.outputs.file_descriptors import fill_file_descriptors
 from prowler.lib.outputs.finding import Finding
 from prowler.lib.outputs.outputs import extract_findings_statistics, set_report_color
 from prowler.lib.outputs.utils import (
@@ -25,8 +22,6 @@ from prowler.lib.outputs.utils import (
     unroll_list,
     unroll_tags,
 )
-from prowler.lib.utils.utils import open_file
-from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, set_mocked_aws_provider
 
 
 class TestOutputs:
