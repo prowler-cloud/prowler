@@ -13,7 +13,17 @@ class iam_inline_policy_no_administrative_privileges(Check):
                 report.resource_id = f"{policy.entity}/{policy.name}"
                 report.resource_tags = policy.tags
                 report.status = "PASS"
-                report.status_extended = f"{policy.type} policy {policy.name} for IAM identity {policy.arn} does not allow '*:*' administrative privileges."
+
+                if "role" in report.resource_arn:
+                    resource_type_str = "role"
+                elif "group" in report.resource_arn:
+                    resource_type_str = "group"
+                elif "user" in report.resource_arn:
+                    resource_type_str = "user"
+                else:
+                    resource_type_str = "resource"
+
+                report.status_extended = f"{policy.type} policy {policy.name} attached to {resource_type_str} {report.resource_arn} does not allow '*:*' administrative privileges."
                 if policy.document:
                     # Check the statements, if one includes *:* stop iterating over the rest
                     if not isinstance(policy.document["Statement"], list):
@@ -35,7 +45,7 @@ class iam_inline_policy_no_administrative_privileges(Check):
                             )
                         ):
                             report.status = "FAIL"
-                            report.status_extended = f"{policy.type} policy {policy.name} for IAM identity {policy.arn} allows '*:*' administrative privileges."
+                            report.status_extended = f"{policy.type} policy {policy.name} attached to {resource_type_str} {report.resource_arn} allows '*:*' administrative privileges."
                             break
                 findings.append(report)
         return findings
