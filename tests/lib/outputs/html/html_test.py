@@ -418,7 +418,6 @@ class TestHTML:
         html = HTML(findings)
         output_data = html.data[0]
         assert isinstance(output_data, str)
-        print(output_data)
         assert output_data == fail_html_finding
 
     def test_transform_pass_finding(self):

@@ -516,7 +516,6 @@ class Test_iam_inline_policy_allows_privilege_escalation:
 
         policy_name = "privileged_policy"
         for values in privilege_escalation_policies_combination.values():
-            print(list(values))
             # We create a new statement in each loop with the combinations required to allow the privilege escalation
             policy_document = {
                 "Version": "2012-10-17",

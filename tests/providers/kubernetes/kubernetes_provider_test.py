@@ -55,7 +55,6 @@ class TestKubernetesProvider:
 
             # Instantiate the KubernetesProvider with mocked arguments
             kubernetes_provider = KubernetesProvider(arguments)
-            print(kubernetes_provider.__dict__)
             assert isinstance(kubernetes_provider.session, KubernetesSession)
             assert kubernetes_provider.session.api_client is not None
             assert kubernetes_provider.session.context == {
