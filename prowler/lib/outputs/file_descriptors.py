@@ -2,11 +2,7 @@ from csv import DictWriter
 from io import TextIOWrapper
 from typing import Any
 
-from prowler.config.config import (
-    csv_file_suffix,
-    html_file_suffix,
-    json_ocsf_file_suffix,
-)
+from prowler.config.config import csv_file_suffix, html_file_suffix
 from prowler.lib.logger import logger
 from prowler.lib.outputs.compliance.mitre_attack.models import (
     MitreAttackAWS,
@@ -48,10 +44,7 @@ def initialize_file_descriptor(
                 filename,
                 "a",
             )
-
-            if output_mode in ("json-ocsf"):
-                file_descriptor.write("[")
-            elif "html" in output_mode:
+            if "html" in output_mode:
                 add_html_header(file_descriptor, provider)
             else:
                 # Format is the class model of the CSV format to print the headers
@@ -83,13 +76,6 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, provi
                     file_descriptor = initialize_file_descriptor(
                         filename, output_mode, provider
                     )
-                    file_descriptors.update({output_mode: file_descriptor})
-
-                elif output_mode == "json-ocsf":
-                    filename = (
-                        f"{output_directory}/{output_filename}{json_ocsf_file_suffix}"
-                    )
-                    file_descriptor = initialize_file_descriptor(filename, output_mode)
                     file_descriptors.update({output_mode: file_descriptor})
 
                 elif provider.type == "gcp":

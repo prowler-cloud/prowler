@@ -5,19 +5,29 @@ from prowler.providers.aws.services.iam.lib.privilege_escalation import (
 )
 
 
-class iam_policy_allows_privilege_escalation(Check):
+class iam_inline_policy_allows_privilege_escalation(Check):
     def execute(self) -> Check_Report_AWS:
         findings = []
 
         for policy in iam_client.policies:
-            if policy.type == "Custom":
+            if policy.type == "Inline":
                 report = Check_Report_AWS(self.metadata())
                 report.resource_id = policy.name
                 report.resource_arn = policy.arn
                 report.region = iam_client.region
                 report.resource_tags = policy.tags
                 report.status = "PASS"
-                report.status_extended = f"Custom Policy {report.resource_arn} does not allow privilege escalation."
+
+                if "role" in report.resource_arn:
+                    resource_type_str = "role"
+                elif "group" in report.resource_arn:
+                    resource_type_str = "group"
+                elif "user" in report.resource_arn:
+                    resource_type_str = "user"
+                else:
+                    resource_type_str = "resource"
+
+                report.status_extended = f"Inline Policy '{report.resource_id}'{' attached to ' + resource_type_str + ' ' + report.resource_arn if policy.attached else ''} does not allow privilege escalation."
 
                 policies_affected = check_privilege_escalation(
                     getattr(policy, "document", {})
@@ -25,8 +35,9 @@ class iam_policy_allows_privilege_escalation(Check):
 
                 if policies_affected:
                     report.status = "FAIL"
+
                     report.status_extended = (
-                        f"Custom Policy {report.resource_arn} allows privilege escalation using the following actions: {policies_affected}".rstrip()
+                        f"Inline Policy '{report.resource_id}'{' attached to ' + resource_type_str + ' ' + report.resource_arn if policy.attached else ''} allows privilege escalation using the following actions: {policies_affected}".rstrip()
                         + "."
                     )
 

@@ -1,0 +1,40 @@
+namespace:
+  name: prowler-ns
+
+cronjob:
+  name: prowler
+  schedule: "0 0 * * *"
+  hostPID: true
+
+serviceAccount:
+  name: prowler-sa
+
+image:
+  repository: toniblyx/prowler
+  tag: stable
+  pullPolicy: Always
+
+clusterType:
+
+configMap:
+  name: prowler-config
+  data:
+    varLibCni: "/var/lib/cni"
+    varLibEtcd: "/var/lib/etcd"
+    varLibKubelet: "/var/lib/kubelet"
+    varLibKubeScheduler: "/var/lib/kube-scheduler"
+    varLibKubeControllerManager: "/var/lib/kube-controller-manager"
+    etcSystemd: "/etc/systemd"
+    libSystemd: "/lib/systemd"
+    etcKubernetes: "/etc/kubernetes"
+    usrBin: "/usr/bin"
+    etcCniNetd: "/etc/cni/net.d"
+    optCniBin: "/opt/cni/bin"
+    srvKubernetes: "/srv/kubernetes"
+
+clusterRole:
+  name: prowler-read-cluster
+
+clusterRoleBinding:
+  name: prowler-read-cluster-binding
+  roleName: prowler-read-cluster
