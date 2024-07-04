@@ -5,10 +5,7 @@ from unittest import mock
 import pytest
 from colorama import Fore
 
-from prowler.config.config import (
-    json_asff_file_suffix,
-    output_file_timestamp,
-)
+from prowler.config.config import output_file_timestamp
 from prowler.lib.check.compliance_models import (
     CIS_Requirement_Attribute,
     Compliance_Base_Model,
@@ -33,36 +30,6 @@ from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, set_mocked_aws_provide
 
 
 class TestOutputs:
-    def test_fill_file_descriptors_aws(self):
-        audited_account = AWS_ACCOUNT_NUMBER
-        output_directory = f"{os.path.dirname(os.path.realpath(__file__))}"
-        aws_provider = set_mocked_aws_provider()
-        test_output_modes = [
-            ["json-asff"],
-        ]
-        output_filename = f"prowler-output-{audited_account}-{output_file_timestamp}"
-        expected = [
-            {
-                "json-asff": open_file(
-                    f"{output_directory}/{output_filename}{json_asff_file_suffix}",
-                    "a",
-                ),
-            },
-        ]
-
-        for index, output_mode_list in enumerate(test_output_modes):
-            test_output_file_descriptors = fill_file_descriptors(
-                output_mode_list,
-                output_directory,
-                output_filename,
-                aws_provider,
-            )
-            for output_mode in output_mode_list:
-                assert (
-                    test_output_file_descriptors[output_mode].name
-                    == expected[index][output_mode].name
-                )
-                remove(expected[index][output_mode].name)
 
     def test_set_report_color(self):
         test_status = ["PASS", "FAIL", "MANUAL"]

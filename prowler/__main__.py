@@ -10,6 +10,7 @@ from prowler.config.config import (
     csv_file_suffix,
     get_available_compliance_frameworks,
     html_file_suffix,
+    json_asff_file_suffix,
     json_ocsf_file_suffix,
 )
 from prowler.lib.banner import print_banner
@@ -41,6 +42,7 @@ from prowler.lib.check.custom_checks_metadata import (
 )
 from prowler.lib.cli.parser import ProwlerArgumentParser
 from prowler.lib.logger import logger, set_logging_config
+from prowler.lib.outputs.asff.asff import ASFF
 from prowler.lib.outputs.compliance.compliance import display_compliance_table
 from prowler.lib.outputs.csv.models import CSV
 from prowler.lib.outputs.finding import Finding
@@ -52,7 +54,7 @@ from prowler.lib.outputs.summary_table import display_summary_table
 from prowler.providers.aws.lib.s3.s3 import send_to_s3_bucket
 from prowler.providers.aws.lib.security_hub.security_hub import (
     batch_send_to_security_hub,
-    prepare_security_hub_findings,
+    filter_security_hub_findings_per_region,
     resolve_security_hub_previous_findings,
     verify_security_hub_integration_enabled_per_region,
 )
@@ -296,20 +298,32 @@ def prowler():
 
     if args.output_formats:
         for mode in args.output_formats:
-
             if "csv" in mode:
                 # Generate CSV Finding Object
                 filename = (
                     f"{global_provider.output_options.output_directory}/"
                     f"{global_provider.output_options.output_filename}{csv_file_suffix}"
                 )
-                csv_finding = CSV(
+                csv_output = CSV(
                     findings=finding_outputs,
                     create_file_descriptor=True,
                     file_path=filename,
                 )
                 # Write CSV Finding Object to file
-                csv_finding.batch_write_data_to_file()
+                csv_output.batch_write_data_to_file()
+
+            if "json-asff" in mode:
+                filename = (
+                    f"{global_provider.output_options.output_directory}/"
+                    f"{global_provider.output_options.output_filename}{json_asff_file_suffix}"
+                )
+                asff_output = ASFF(
+                    findings=finding_outputs,
+                    create_file_descriptor=True,
+                    file_path=filename,
+                )
+                # Write ASFF Finding Object to file
+                asff_output.batch_write_data_to_file()
 
             # Close json file if exists
             # TODO: generate JSON here
@@ -381,13 +395,12 @@ def prowler():
                 aws_security_enabled_regions.append(region)
 
         # Prepare the findings to be sent to Security Hub
-        security_hub_findings_per_region = prepare_security_hub_findings(
-            findings,
-            global_provider,
-            global_provider.output_options,
+        security_hub_findings_per_region = filter_security_hub_findings_per_region(
+            asff_output.data,
+            global_provider.output_options.send_sh_only_fails,
+            global_provider.output_options.status,
             aws_security_enabled_regions,
         )
-
         # Send the findings to Security Hub
         findings_sent_to_security_hub = batch_send_to_security_hub(
             security_hub_findings_per_region, global_provider.session.current_session
