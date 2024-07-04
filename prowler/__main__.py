@@ -9,6 +9,7 @@ from colorama import Fore, Style
 from prowler.config.config import (
     csv_file_suffix,
     get_available_compliance_frameworks,
+    html_file_suffix,
     json_asff_file_suffix,
     json_ocsf_file_suffix,
 )
@@ -45,7 +46,7 @@ from prowler.lib.outputs.asff.asff import ASFF
 from prowler.lib.outputs.compliance.compliance import display_compliance_table
 from prowler.lib.outputs.csv.models import CSV
 from prowler.lib.outputs.finding import Finding
-from prowler.lib.outputs.html.html import add_html_footer, fill_html_overview_statistics
+from prowler.lib.outputs.html.html import HTML
 from prowler.lib.outputs.ocsf.ocsf import OCSF
 from prowler.lib.outputs.outputs import extract_findings_statistics
 from prowler.lib.outputs.slack.slack import Slack
@@ -338,15 +339,19 @@ def prowler():
                 )
                 json_finding.batch_write_data_to_file()
             if "html" in mode:
-                # TODO: generate HTML here
-                add_html_footer(
-                    global_provider.output_options.output_filename,
-                    global_provider.output_options.output_directory,
+                # Generate HTML Finding Object
+                filename = (
+                    f"{global_provider.output_options.output_directory}/"
+                    f"{global_provider.output_options.output_filename}{html_file_suffix}"
                 )
-                fill_html_overview_statistics(
-                    stats,
-                    global_provider.output_options.output_filename,
-                    global_provider.output_options.output_directory,
+                html_finding = HTML(
+                    findings=finding_outputs,
+                    create_file_descriptor=True,
+                    file_path=filename,
+                )
+                # Write HTML Finding Object to file
+                html_finding.batch_write_data_to_file(
+                    provider=global_provider, stats=stats
                 )
 
             # Send output to S3 if needed (-B / -D)

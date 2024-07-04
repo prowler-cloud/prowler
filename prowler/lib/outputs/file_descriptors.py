@@ -2,7 +2,7 @@ from csv import DictWriter
 from io import TextIOWrapper
 from typing import Any
 
-from prowler.config.config import csv_file_suffix, html_file_suffix
+from prowler.config.config import csv_file_suffix
 from prowler.lib.logger import logger
 from prowler.lib.outputs.compliance.mitre_attack.models import (
     MitreAttackAWS,
@@ -20,7 +20,6 @@ from prowler.lib.outputs.compliance.models import (
     Check_Output_CSV_KUBERNETES_CIS,
 )
 from prowler.lib.outputs.csv.csv import generate_csv_fields
-from prowler.lib.outputs.html.html import add_html_header
 from prowler.lib.outputs.output import Finding
 from prowler.lib.utils.utils import file_exists, open_file
 
@@ -44,16 +43,13 @@ def initialize_file_descriptor(
                 filename,
                 "a",
             )
-            if "html" in output_mode:
-                add_html_header(file_descriptor, provider)
-            else:
-                # Format is the class model of the CSV format to print the headers
-                csv_header = [x.upper() for x in generate_csv_fields(format)]
-                csv_writer = DictWriter(
-                    file_descriptor, fieldnames=csv_header, delimiter=";"
-                )
-                if write_header:
-                    csv_writer.writeheader()
+            # Format is the class model of the CSV format to print the headers
+            csv_header = [x.upper() for x in generate_csv_fields(format)]
+            csv_writer = DictWriter(
+                file_descriptor, fieldnames=csv_header, delimiter=";"
+            )
+            if write_header:
+                csv_writer.writeheader()
         return file_descriptor
     except Exception as error:
         logger.error(
@@ -69,14 +65,12 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, provi
                 # FIXME: Remove this once we always use the new CSV(Output)
                 if output_mode == "csv":
                     continue
+                elif output_mode == "json-ocsf":
+                    continue
                 elif output_mode == "json-asff":
                     continue
                 elif output_mode == "html":
-                    filename = f"{output_directory}/{output_filename}{html_file_suffix}"
-                    file_descriptor = initialize_file_descriptor(
-                        filename, output_mode, provider
-                    )
-                    file_descriptors.update({output_mode: file_descriptor})
+                    continue
 
                 elif provider.type == "gcp":
                     filename = f"{output_directory}/compliance/{output_filename}_{output_mode}{csv_file_suffix}"

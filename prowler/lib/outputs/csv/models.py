@@ -30,7 +30,11 @@ class CSV(Output):
     def batch_write_data_to_file(self) -> None:
         """Writes the findings to a file using the CSV format using the `Output._file_descriptor`."""
         try:
-            if self._file_descriptor and not self._file_descriptor.closed:
+            if (
+                getattr(self, "_file_descriptor", None)
+                and not self._file_descriptor.closed
+                and self._data
+            ):
                 csv_writer = DictWriter(
                     self._file_descriptor,
                     fieldnames=self._data[0].keys(),

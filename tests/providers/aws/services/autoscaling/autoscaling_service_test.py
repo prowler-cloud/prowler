@@ -94,7 +94,7 @@ class Test_AutoScaling_Service:
             KeyName="the_keys",
             SecurityGroups=["default", "default2"],
         )
-        asg = autoscaling_client.create_auto_scaling_group(
+        _ = autoscaling_client.create_auto_scaling_group(
             AutoScalingGroupName="my-autoscaling-group",
             LaunchConfigurationName="test",
             MinSize=0,
@@ -112,7 +112,6 @@ class Test_AutoScaling_Service:
         # AutoScaling client for this test class
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         autoscaling = AutoScaling(aws_provider)
-        print("asg", asg)
         assert len(autoscaling.groups) == 1
         # create_auto_scaling_group doesn't return the ARN, can't check it
         # assert autoscaling.groups[0].arn ==

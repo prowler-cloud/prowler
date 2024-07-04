@@ -34,9 +34,10 @@ class Output(ABC):
         file_path: str = None,
     ) -> None:
         self._data = []
-        self.transform(findings)
-        if create_file_descriptor:
-            self.create_file_descriptor(file_path)
+        if findings:
+            self.transform(findings)
+            if create_file_descriptor:
+                self.create_file_descriptor(file_path)
 
     @property
     def data(self):
