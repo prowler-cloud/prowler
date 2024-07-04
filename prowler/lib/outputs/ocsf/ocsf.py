@@ -1,6 +1,5 @@
 import os
 import sys
-from copy import deepcopy
 from typing import List
 
 from py_ocsf_models.events.base_event import SeverityID, StatusID
@@ -52,8 +51,7 @@ class OCSF(Output):
             findings (List[Finding]): a list of Finding objects
         """
         try:
-            for finding_output in findings:
-                finding = deepcopy(finding_output)
+            for finding in findings:
                 finding_activity = ActivityID.Create
                 cloud_account_type = self.get_account_type_id_by_provider(
                     finding.provider
@@ -138,11 +136,9 @@ class OCSF(Output):
                 )
 
                 if finding.provider == "kubernetes":
-                    detection_finding.container = (
-                        Container(
-                            name=finding.resource_name,
-                            uid=finding.resource_uid,
-                        ),
+                    detection_finding.container = Container(
+                        name=finding.resource_name,
+                        uid=finding.resource_uid,
                     )
                     # TODO: Get the PID of the namespace (we only have the name of the namespace)
                     # detection_finding.namespace_pid=,

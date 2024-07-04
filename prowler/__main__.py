@@ -312,7 +312,7 @@ def prowler():
 
             # Close json file if exists
             # TODO: generate JSON here
-            if "json" in mode:
+            if "json-ocsf" in mode:
                 filename = (
                     f"{global_provider.output_options.output_directory}/"
                     f"{global_provider.output_options.output_filename}{json_ocsf_file_suffix}"
