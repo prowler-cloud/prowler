@@ -6,7 +6,6 @@ class acm_certificates_transparency_logs_enabled(Check):
     def execute(self):
         findings = []
         for certificate in acm_client.certificates:
-            print(acm_client.audit_config)
             if certificate.in_use or not acm_client.audit_info.ignore_unused_services:
                 report = Check_Report_AWS(self.metadata())
                 report.region = certificate.region
