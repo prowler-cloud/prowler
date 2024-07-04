@@ -153,7 +153,7 @@ def batch_send_to_security_hub(
 
             security_hub_client = session.client("securityhub", region_name=region)
             # Convert findings to dict
-            findings = [finding.dict() for finding in findings]
+            findings = [finding.dict(exclude_none=True) for finding in findings]
             success_count += _send_findings_to_security_hub(
                 findings, region, security_hub_client
             )
