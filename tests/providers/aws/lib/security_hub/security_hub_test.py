@@ -93,7 +93,7 @@ class TestSecurityHub:
                 (
                     "root",
                     WARNING,
-                    f"ClientError -- [68]: An error occurred ({error_code}) when calling the {operation_name} operation: {error_message}",
+                    f"ClientError -- [67]: An error occurred ({error_code}) when calling the {operation_name} operation: {error_message}",
                 )
             ]
 
@@ -153,7 +153,7 @@ class TestSecurityHub:
                 (
                     "root",
                     ERROR,
-                    f"ClientError -- [68]: An error occurred ({error_code}) when calling the {operation_name} operation: {error_message}",
+                    f"ClientError -- [67]: An error occurred ({error_code}) when calling the {operation_name} operation: {error_message}",
                 )
             ]
 
@@ -179,7 +179,7 @@ class TestSecurityHub:
                 (
                     "root",
                     ERROR,
-                    f"Exception -- [68]: {error_message}",
+                    f"Exception -- [67]: {error_message}",
                 )
             ]
 

@@ -114,8 +114,6 @@ def batch_send_to_security_hub(
 
     success_count = 0
     try:
-        # print(security_hub_findings_per_region['eu-west-1'][0])
-        # exit()
         # Iterate findings by region
         for region, findings in security_hub_findings_per_region.items():
             # Send findings to Security Hub
@@ -124,6 +122,8 @@ def batch_send_to_security_hub(
             )
 
             security_hub_client = session.client("securityhub", region_name=region)
+            # Convert findings to dict
+            findings = [finding.dict() for finding in findings]
             success_count += _send_findings_to_security_hub(
                 findings, region, security_hub_client
             )
@@ -201,15 +201,7 @@ def _send_findings_to_security_hub(
             for i in range(0, len(findings), SECURITY_HUB_MAX_BATCH)
         ]
         for findings in list_chunked:
-            findings_to_send = []
-            for finding in findings:
-                if isinstance(finding, dict):
-                    findings_to_send.append(finding)
-                else:
-                    findings_to_send.append(finding.dict())
-            batch_import = security_hub_client.batch_import_findings(
-                Findings=findings_to_send
-            )
+            batch_import = security_hub_client.batch_import_findings(Findings=findings)
             if batch_import["FailedCount"] > 0:
                 failed_import = batch_import["FailedFindings"][0]
                 logger.error(
