@@ -15,6 +15,17 @@ def filter_security_hub_findings_per_region(
     status: list,
     enabled_regions: list,
 ) -> dict:
+    """filter_security_hub_findings_per_region filters the findings by region and status. It returns a dictionary with the findings per region.
+
+    Args:
+        findings (list[AWSSecurityFindingFormat]): List of findings
+        send_only_fails (bool): Send only the findings that have failed
+        status (list): List of statuses to filter the findings
+        enabled_regions (list): List of enabled regions
+
+    Returns:
+        dict: Dictionary containing the findings per region
+    """
     security_hub_findings_per_region = {}
     # Create a key per audited region
     for region in enabled_regions:
@@ -56,6 +67,18 @@ def verify_security_hub_integration_enabled_per_region(
     session: session.Session,
     aws_account_number: str,
 ) -> bool:
+    """
+    verify_security_hub_integration_enabled_per_region returns True if the Prowler integration is enabled for the given region. Otherwise returns false.
+
+    Args:
+        partition (str): AWS partition
+        region (str): AWS region
+        session (session.Session): AWS session
+        aws_account_number (str): AWS account number
+
+    Returns:
+        bool: True if the Prowler integration is enabled for the given region. Otherwise returns false.
+    """
     f"""verify_security_hub_integration_enabled returns True if the {SECURITY_HUB_INTEGRATION_NAME} is enabled for the given region. Otherwise returns false."""
     prowler_integration_enabled = False
 
@@ -109,7 +132,14 @@ def batch_send_to_security_hub(
     session: session.Session,
 ) -> int:
     """
-    send_to_security_hub sends findings to Security Hub and returns the number of findings that were successfully sent.
+    batch_send_to_security_hub sends findings to Security Hub and returns the number of findings that were successfully sent.
+
+    Args:
+        security_hub_findings_per_region (dict): Dictionary containing the findings per region
+        session (session.Session): AWS session
+
+    Returns:
+        int: Number of sent findings
     """
 
     success_count = 0
@@ -138,9 +168,16 @@ def batch_send_to_security_hub(
 # Move previous Security Hub check findings to ARCHIVED (as prowler didn't re-detect them)
 def resolve_security_hub_previous_findings(
     security_hub_findings_per_region: dict, provider
-) -> list:
+) -> int:
     """
     resolve_security_hub_previous_findings archives all the findings that does not appear in the current execution
+
+    Args:
+        security_hub_findings_per_region (dict): Dictionary containing the findings per region
+        provider: Provider object
+
+    Returns:
+        int: Number of archived findings
     """
     logger.info("Checking previous findings in Security Hub to archive them.")
     success_count = 0
@@ -192,8 +229,17 @@ def resolve_security_hub_previous_findings(
 
 def _send_findings_to_security_hub(
     findings: list[dict], region: str, security_hub_client
-):
-    """Private function send_findings_to_security_hub chunks the findings in groups of 100 findings and send them to AWS Security Hub. It returns the number of sent findings."""
+) -> int:
+    """Private function send_findings_to_security_hub chunks the findings in groups of 100 findings and send them to AWS Security Hub. It returns the number of sent findings.
+
+    Args:
+        findings (list[dict]): List of findings to send to AWS Security Hub
+        region (str): AWS region to send the findings
+        security_hub_client: AWS Security Hub client
+
+    Returns:
+        int: Number of sent findings
+    """
     success_count = 0
     try:
         list_chunked = [
