@@ -69,7 +69,11 @@ class HTML(Output):
             stats (dict): the statistics of the findings
         """
         try:
-            if self._file_descriptor:
+            if (
+                self._file_descriptor
+                and not self._file_descriptor.closed
+                and self._data
+            ):
                 HTML.write_header(self._file_descriptor, provider, stats)
                 for finding in self._data:
                     self._file_descriptor.write(finding)

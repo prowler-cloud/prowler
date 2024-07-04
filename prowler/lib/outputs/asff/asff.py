@@ -127,7 +127,11 @@ class ASFF(Output):
             None
         """
         try:
-            if self._file_descriptor and not self._file_descriptor.closed:
+            if (
+                self._file_descriptor
+                and not self._file_descriptor.closed
+                and self._data
+            ):
                 # Write JSON opening/header [
                 self._file_descriptor.write("[")
 

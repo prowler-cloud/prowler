@@ -168,7 +168,11 @@ class OCSF(Output):
     def batch_write_data_to_file(self) -> None:
         """Writes the findings to a file using the OCSF format using the `Output._file_descriptor`."""
         try:
-            if self._file_descriptor and not self._file_descriptor.closed:
+            if (
+                self._file_descriptor
+                and not self._file_descriptor.closed
+                and self._data
+            ):
                 self._file_descriptor.write("[")
                 for finding in self._data:
                     self._file_descriptor.write(
