@@ -1,6 +1,6 @@
 from json import dump
 from os import SEEK_SET
-from typing import Optional
+from typing import Dict, Optional
 
 from pydantic import BaseModel, validator
 
@@ -70,7 +70,14 @@ class ASFF(Output):
 
                 # Ensures finding_status matches allowed values in ASFF
                 finding_status = ASFF.generate_status(finding.status, finding.muted)
-
+                resource = Resource(
+                    Id=finding.resource_uid,
+                    Type=finding.resource_type,
+                    Partition=finding.partition,
+                    Region=finding.region,
+                )
+                if resource_tags:
+                    resource.Tags = resource_tags
                 self._data.append(
                     AWSSecurityFindingFormat(
                         # The following line cannot be changed because it is the format we use to generate unique findings for AWS Security Hub
@@ -89,15 +96,7 @@ class ASFF(Output):
                         Severity=Severity(Label=finding.severity.value),
                         Title=finding.check_title,
                         Description=finding.description,
-                        Resources=[
-                            Resource(
-                                Id=finding.resource_uid,
-                                Type=finding.resource_type,
-                                Partition=finding.partition,
-                                Region=finding.region,
-                                Tags=resource_tags,
-                            )
-                        ],
+                        Resources=[resource],
                         Compliance=Compliance(
                             Status=finding_status,
                             AssociatedStandards=associated_standards,
@@ -306,7 +305,7 @@ class Resource(BaseModel):
     Id: str
     Partition: str
     Region: str
-    Tags: Optional[dict]
+    Tags: Optional[Dict[str, str]] = {"key": "value"}
 
 
 class Compliance(BaseModel):

@@ -19,7 +19,6 @@ def filter_security_hub_findings_per_region(
     # Create a key per audited region
     for region in enabled_regions:
         security_hub_findings_per_region[region] = []
-
     for finding in findings:
         # We don't send findings to not enabled regions
         if finding.Resources[0].Region not in enabled_regions:
@@ -115,6 +114,8 @@ def batch_send_to_security_hub(
 
     success_count = 0
     try:
+        # print(security_hub_findings_per_region['eu-west-1'][0])
+        # exit()
         # Iterate findings by region
         for region, findings in security_hub_findings_per_region.items():
             # Send findings to Security Hub
@@ -123,7 +124,6 @@ def batch_send_to_security_hub(
             )
 
             security_hub_client = session.client("securityhub", region_name=region)
-
             success_count += _send_findings_to_security_hub(
                 findings, region, security_hub_client
             )
@@ -150,7 +150,7 @@ def resolve_security_hub_previous_findings(
             # Get current findings IDs
             current_findings_ids = []
             for finding in current_findings:
-                current_findings_ids.append(finding["Id"])
+                current_findings_ids.append(finding.Id)
             # Get findings of that region
             security_hub_client = provider.session.current_session.client(
                 "securityhub", region_name=region
@@ -165,7 +165,9 @@ def resolve_security_hub_previous_findings(
             }
             get_findings_paginator = security_hub_client.get_paginator("get_findings")
             findings_to_archive = []
-            for page in get_findings_paginator.paginate(Filters=findings_filter):
+            for page in get_findings_paginator.paginate(
+                Filters=findings_filter, PaginationConfig={"PageSize": 100}
+            ):
                 # Archive findings that have not appear in this execution
                 for finding in page["Findings"]:
                     if finding["Id"] not in current_findings_ids:
@@ -198,9 +200,16 @@ def _send_findings_to_security_hub(
             findings[i : i + SECURITY_HUB_MAX_BATCH]
             for i in range(0, len(findings), SECURITY_HUB_MAX_BATCH)
         ]
-
         for findings in list_chunked:
-            batch_import = security_hub_client.batch_import_findings(Findings=findings)
+            findings_to_send = []
+            for finding in findings:
+                if isinstance(finding, dict):
+                    findings_to_send.append(finding)
+                else:
+                    findings_to_send.append(finding.dict())
+            batch_import = security_hub_client.batch_import_findings(
+                Findings=findings_to_send
+            )
             if batch_import["FailedCount"] > 0:
                 failed_import = batch_import["FailedFindings"][0]
                 logger.error(
