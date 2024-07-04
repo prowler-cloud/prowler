@@ -7,7 +7,6 @@ from colorama import Fore
 
 from prowler.config.config import (
     json_asff_file_suffix,
-    json_ocsf_file_suffix,
     output_file_timestamp,
 )
 from prowler.lib.check.compliance_models import (
@@ -40,30 +39,12 @@ class TestOutputs:
         aws_provider = set_mocked_aws_provider()
         test_output_modes = [
             ["json-asff"],
-            ["json-ocsf"],
-            ["json-asff", "json-ocsf"],
         ]
         output_filename = f"prowler-output-{audited_account}-{output_file_timestamp}"
         expected = [
             {
                 "json-asff": open_file(
                     f"{output_directory}/{output_filename}{json_asff_file_suffix}",
-                    "a",
-                )
-            },
-            {
-                "json-ocsf": open_file(
-                    f"{output_directory}/{output_filename}{json_ocsf_file_suffix}",
-                    "a",
-                )
-            },
-            {
-                "json-asff": open_file(
-                    f"{output_directory}/{output_filename}{json_asff_file_suffix}",
-                    "a",
-                ),
-                "json-ocsf": open_file(
-                    f"{output_directory}/{output_filename}{json_ocsf_file_suffix}",
                     "a",
                 ),
             },

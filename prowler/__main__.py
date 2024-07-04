@@ -10,6 +10,7 @@ from prowler.config.config import (
     csv_file_suffix,
     get_available_compliance_frameworks,
     html_file_suffix,
+    json_ocsf_file_suffix,
 )
 from prowler.lib.banner import print_banner
 from prowler.lib.check.check import (
@@ -44,7 +45,7 @@ from prowler.lib.outputs.compliance.compliance import display_compliance_table
 from prowler.lib.outputs.csv.models import CSV
 from prowler.lib.outputs.finding import Finding
 from prowler.lib.outputs.html.html import HTML
-from prowler.lib.outputs.json.json import close_json
+from prowler.lib.outputs.ocsf.ocsf import OCSF
 from prowler.lib.outputs.outputs import extract_findings_statistics
 from prowler.lib.outputs.slack.slack import Slack
 from prowler.lib.outputs.summary_table import display_summary_table
@@ -312,13 +313,17 @@ def prowler():
 
             # Close json file if exists
             # TODO: generate JSON here
-            if "json" in mode:
-                close_json(
-                    global_provider.output_options.output_filename,
-                    global_provider.output_options.output_directory,
-                    mode,
+            if "json-ocsf" in mode:
+                filename = (
+                    f"{global_provider.output_options.output_directory}/"
+                    f"{global_provider.output_options.output_filename}{json_ocsf_file_suffix}"
                 )
-
+                json_finding = OCSF(
+                    findings=finding_outputs,
+                    create_file_descriptor=True,
+                    file_path=filename,
+                )
+                json_finding.batch_write_data_to_file()
             if "html" in mode:
                 # Generate HTML Finding Object
                 filename = (
