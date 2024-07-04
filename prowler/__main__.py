@@ -297,7 +297,6 @@ def prowler():
 
     if args.output_formats:
         for mode in args.output_formats:
-
             if "csv" in mode:
                 # Generate CSV Finding Object
                 filename = (
