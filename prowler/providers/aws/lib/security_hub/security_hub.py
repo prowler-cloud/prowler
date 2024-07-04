@@ -45,8 +45,8 @@ def filter_security_hub_findings_per_region(
         # We can do that since the finding always stores just one finding
         region = finding.Resources[0].Region
 
-        # Include that finding within their region in the JSON format
-        security_hub_findings_per_region[region].append(finding.dict(exclude_none=True))
+        # Include that finding within their region
+        security_hub_findings_per_region[region].append(finding)
 
     return security_hub_findings_per_region
 

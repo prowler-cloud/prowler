@@ -1,4 +1,3 @@
-import json
 from logging import ERROR, WARNING
 
 import botocore
@@ -188,24 +187,13 @@ class TestSecurityHub:
         enabled_regions = [AWS_REGION_EU_WEST_1]
         findings = [generate_finding_output(status="PASS", region=AWS_REGION_EU_WEST_1)]
         asff = ASFF(findings=findings)
-        asff_finding = asff.data[0]
-        # Convert to JSON to compare
-        asff_finding_json = str(asff_finding.json(exclude_none=True))
-        asff_finding_json = {AWS_REGION_EU_WEST_1: [asff_finding_json]}
-        converted_data = {
-            region: [json.loads(item.replace("'", '"')) for item in items]
-            for region, items in asff_finding_json.items()
-        }
 
-        assert (
-            filter_security_hub_findings_per_region(
-                asff.data,
-                False,
-                [],
-                enabled_regions,
-            )
-            == converted_data
-        )
+        assert filter_security_hub_findings_per_region(
+            asff.data,
+            False,
+            [],
+            enabled_regions,
+        ) == {AWS_REGION_EU_WEST_1: [asff.data[0]]}
 
     def test_filter_security_hub_findings_per_region_all_statuses_MANUAL_finding(self):
         enabled_regions = [AWS_REGION_EU_WEST_1]
@@ -250,22 +238,12 @@ class TestSecurityHub:
         findings = [generate_finding_output(status="FAIL", region=AWS_REGION_EU_WEST_1)]
         asff = ASFF(findings=findings)
 
-        # Convert to JSON to compare
-        asff_finding_json = str(asff.data[0].json(exclude_none=True))
-        asff_finding_json = {AWS_REGION_EU_WEST_1: [asff_finding_json]}
-        converted_data = {
-            region: [json.loads(item.replace("'", '"')) for item in items]
-            for region, items in asff_finding_json.items()
-        }
-        assert (
-            filter_security_hub_findings_per_region(
-                asff.data,
-                False,
-                ["FAIL"],
-                enabled_regions,
-            )
-            == converted_data
-        )
+        assert filter_security_hub_findings_per_region(
+            asff.data,
+            False,
+            ["FAIL"],
+            enabled_regions,
+        ) == {AWS_REGION_EU_WEST_1: [asff.data[0]]}
 
     def test_filter_security_hub_findings_per_region_send_sh_only_fails_PASS(self):
         enabled_regions = [AWS_REGION_EU_WEST_1]
@@ -284,44 +262,24 @@ class TestSecurityHub:
         findings = [generate_finding_output(status="FAIL", region=AWS_REGION_EU_WEST_1)]
         asff = ASFF(findings=findings)
 
-        # Convert to JSON to compare
-        asff_finding_json = str(asff.data[0].json(exclude_none=True))
-        asff_finding_json = {AWS_REGION_EU_WEST_1: [asff_finding_json]}
-        converted_data = {
-            region: [json.loads(item.replace("'", '"')) for item in items]
-            for region, items in asff_finding_json.items()
-        }
-        assert (
-            filter_security_hub_findings_per_region(
-                asff.data,
-                True,
-                [],
-                enabled_regions,
-            )
-            == converted_data
-        )
+        assert filter_security_hub_findings_per_region(
+            asff.data,
+            True,
+            [],
+            enabled_regions,
+        ) == {AWS_REGION_EU_WEST_1: [asff.data[0]]}
 
     def test_filter_security_hub_findings_per_region_no_audited_regions(self):
         enabled_regions = [AWS_REGION_EU_WEST_1]
         findings = [generate_finding_output(status="PASS", region=AWS_REGION_EU_WEST_1)]
         asff = ASFF(findings=findings)
 
-        # Convert to JSON to compare
-        asff_finding_json = str(asff.data[0].json(exclude_none=True))
-        asff_finding_json = {AWS_REGION_EU_WEST_1: [asff_finding_json]}
-        converted_data = {
-            region: [json.loads(item.replace("'", '"')) for item in items]
-            for region, items in asff_finding_json.items()
-        }
-        assert (
-            filter_security_hub_findings_per_region(
-                asff.data,
-                False,
-                [],
-                enabled_regions,
-            )
-            == converted_data
-        )
+        assert filter_security_hub_findings_per_region(
+            asff.data,
+            False,
+            [],
+            enabled_regions,
+        ) == {AWS_REGION_EU_WEST_1: [asff.data[0]]}
 
     def test_filter_security_hub_findings_per_region_muted_fail_with_send_sh_only_fails(
         self,
