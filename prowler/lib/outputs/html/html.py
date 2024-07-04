@@ -70,7 +70,7 @@ class HTML(Output):
         """
         try:
             if (
-                self._file_descriptor
+                getattr(self, "_file_descriptor", None)
                 and not self._file_descriptor.closed
                 and self._data
             ):
