@@ -43,7 +43,6 @@ git clone git@github.com:prowler-cloud/restful-api.git
 > You must have Poetry installed
 
 ```console
-cd src
 poetry install
 poetry shell
 ```

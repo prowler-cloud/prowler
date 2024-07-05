@@ -1,0 +1,36 @@
+name:  💡 Feature Request
+description: Suggest an idea for this project
+labels: ["enhancement", "status/needs-triage"]
+
+
+body:
+  - type: textarea
+    id: Problem
+    attributes:
+      label: New feature motivation
+      description: Is your feature request related to a problem? Please describe
+      placeholder: |-
+        1. A clear and concise description of what the problem is. Ex. I'm always frustrated when
+    validations:
+      required: true
+  - type: textarea
+    id: Solution
+    attributes:
+      label: Solution Proposed
+      description: A clear and concise description of what you want to happen.
+    validations:
+      required: true
+  - type: textarea
+    id: Alternatives
+    attributes:
+      label: Describe alternatives you've considered
+      description: A clear and concise description of any alternative solutions or features you've considered.
+    validations:
+      required: true
+  - type: textarea
+    id: Context
+    attributes:
+      label: Additional context
+      description: Add any other context or screenshots about the feature request here.
+    validations:
+      required: false

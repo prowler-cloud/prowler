@@ -1,7 +1,6 @@
 services:
   restful-api:
     build:
-      context: ./src
       dockerfile: Dockerfile
     image: prowler-restful-api
     ports:
@@ -9,13 +8,13 @@ services:
 
   restful-api-dev:
     build:
-      context: ./src
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile
+      target: dev
     image: prowler-restful-api-dev
     ports:
       - "8080:8000"
     volumes:
       - "./src/backend:/home/prowler/backend"
-      - "./src/pyproject.toml:/home/prowler/pyproject.toml"
+      - "./pyproject.toml:/home/prowler/pyproject.toml"
     profiles:
       - dev
