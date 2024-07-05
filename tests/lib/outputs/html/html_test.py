@@ -216,8 +216,18 @@ kubernetes_html_assessment_summary = """
                     </div>
                 </div>"""
 
-aws_html_header = (
+
+def __get_aws_html_header__(args: list) -> str:
     """
+    Generate the HTML header for AWS
+
+    Args:
+        args (list): List of arguments passed to the script
+    
+    Returns:
+        str: HTML header for AWS
+    """
+    aws_html_header = f"""
 <!DOCTYPE html>
     <html lang="en">
     <head>
@@ -225,11 +235,11 @@ aws_html_header = (
     <!-- Required meta tags -->
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
     <style>
-        .read-more {color: #00f;}
+        .read-more {{color: #00f;}}
 
-        .bg-success-custom {background-color: #98dea7 !important;}
+        .bg-success-custom {{background-color: #98dea7 !important;}}
 
-        .bg-danger {background-color: #f28484 !important;}
+        .bg-danger {{background-color: #f28484 !important;}}
     </style>
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
@@ -240,13 +250,13 @@ aws_html_header = (
     <link rel="stylesheet" href="https://pro.fontawesome.com/releases/v5.10.0/css/all.css"
         integrity="sha384-AYmEC3Yw5cVb3ZcuHtOA93w35dYTsvhLPVnYs9eStHfGJvOvKxVfELGroGkvsg+p" crossorigin="anonymous" />
     <style>
-        .show-read-more .more-text {display: none;}
+        .show-read-more .more-text {{display: none;}}
 
-        .dataTable {font-size: 14px;}
+        .dataTable {{font-size: 14px;}}
 
-        .container-fluid {font-size: 14px;}
+        .container-fluid {{font-size: 14px;}}
 
-        .float-left { float: left !important; max-width: 100%; }
+        .float-left {{ float: left !important; max-width: 100%; }}
     </style>
     <title>Prowler - The Handy Cloud Security Tool</title>
     </head>
@@ -271,20 +281,14 @@ aws_html_header = (
                 </div>
                 </li>
                 <li class="list-group-item">
-                <b>Parameters used:</b> """
-    + " ".join(sys.argv[1:])
-    + """
+                <b>Parameters used:</b> {" ".join(args)}
                 </li>
                 <li class="list-group-item">
-                <b>Date:</b> """
-    + timestamp.isoformat()
-    + """
+                <b>Date:</b> {timestamp.isoformat()}
                 </li>
             </ul>
             </div>
-        </div>"""
-    + aws_html_assessment_summary
-    + """
+        </div>{aws_html_assessment_summary}
             <div class="col-md-2">
             <div class="card">
                 <div class="card-header">
@@ -328,7 +332,8 @@ aws_html_header = (
                 </tr>
             </thead>
             <tbody>"""
-)
+    return aws_html_header
+
 
 html_footer = """
             </tbody>
@@ -455,7 +460,8 @@ class TestHTML:
 
         mock_file.seek(0)
         content = mock_file.read()
-        assert content == aws_html_header + pass_html_finding + html_footer
+        args = sys.argv[1:]
+        assert content == __get_aws_html_header__(args) + pass_html_finding + html_footer
 
     def test_batch_write_data_to_file_without_findings(self):
         assert not hasattr(HTML([]), "_file_descriptor")
@@ -471,7 +477,8 @@ class TestHTML:
 
         mock_file.seek(0)
         content = mock_file.read()
-        assert content == aws_html_header
+        args = sys.argv[1:]
+        assert content == __get_aws_html_header__(args)
 
     def test_write_footer(self):
         mock_file = StringIO()
