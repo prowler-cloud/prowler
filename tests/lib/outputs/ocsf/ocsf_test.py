@@ -109,7 +109,51 @@ class TestOCSF:
         ocsf = OCSF(findings)
 
         output_data = ocsf.data[0]
+
         assert isinstance(output_data, DetectionFinding)
+        assert output_data.activity_id == ActivityID.Create.value
+        assert output_data.activity_name == ActivityID.Create.name
+        assert output_data.finding_info.created_time == findings[0].timestamp
+        assert output_data.finding_info.desc == findings[0].description
+        assert output_data.finding_info.title == findings[0].check_title
+        assert output_data.finding_info.uid == findings[0].finding_uid
+        assert output_data.finding_info.product_uid == "prowler"
+        assert output_data.event_time == findings[0].timestamp
+        assert (
+            output_data.remediation.desc == findings[0].remediation_recommendation_text
+        )
+        assert output_data.remediation.references == []
+        assert output_data.severity_id == SeverityID.Low
+        assert output_data.severity == SeverityID.Low.name
+        assert output_data.status_id == StatusID.New.value
+        assert output_data.status == StatusID.New.name
+        assert output_data.status_code == findings[0].status
+        assert output_data.status_detail == findings[0].status_extended
+        assert output_data.risk_details == findings[0].risk
+        assert output_data.resources[0].labels == []
+        assert output_data.resources[0].name == findings[0].resource_name
+        assert output_data.resources[0].uid == findings[0].resource_uid
+        assert output_data.resources[0].type == findings[0].resource_type
+        assert output_data.resources[0].cloud_partition == findings[0].partition
+        assert output_data.resources[0].region == findings[0].region
+        assert output_data.resources[0].data == {
+            "details": findings[0].resource_details
+        }
+        assert output_data.metadata.event_code == findings[0].check_id
+        assert output_data.metadata.product.name == "Prowler"
+        assert output_data.metadata.product.vendor_name == "Prowler"
+        assert output_data.metadata.product.version == prowler_version
+        assert output_data.type_uid == DetectionFindingTypeID.Create
+        assert output_data.type_name == DetectionFindingTypeID.Create.name
+        assert output_data.unmapped == {
+            "check_type": findings[0].check_type,
+            "related_url": findings[0].related_url,
+            "categories": findings[0].categories,
+            "depends_on": findings[0].depends_on,
+            "related_to": findings[0].related_to,
+            "notes": findings[0].notes,
+            "compliance": findings[0].compliance,
+        }
 
     def test_batch_write_data_to_file(self):
         mock_file = StringIO()
