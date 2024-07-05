@@ -1,6 +1,8 @@
 import sys
 from io import StringIO
 
+from mock import patch
+
 from prowler.config.config import timestamp
 from prowler.lib.outputs.html.html import HTML
 from tests.lib.outputs.fixtures.fixtures import generate_finding_output
@@ -448,7 +450,8 @@ class TestHTML:
         output._file_descriptor = mock_file
         provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_EU_WEST_1])
 
-        output.batch_write_data_to_file(provider, html_stats)
+        with patch.object(mock_file, "close", return_value=None):
+            output.batch_write_data_to_file(provider, html_stats)
 
         mock_file.seek(0)
         content = mock_file.read()
