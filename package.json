@@ -47,7 +47,7 @@
     "typecheck": "tsc",
     "healthcheck": "npm run typecheck && npm run lint:check",
     "lint:check": "./node_modules/.bin/eslint ./app",
-    "lint:fix": "eslint . --ext .ts,.tsx -c .eslintrc.json --fix",
+    "lint:fix": "eslint . --ext .ts,.tsx -c .eslintrc.cjs --fix",
     "format:check": "./node_modules/.bin/prettier --check ./app",
     "format:write": "./node_modules/.bin/prettier --config .prettierrc.json --write ./app"
   },
