@@ -454,6 +454,9 @@ class TestHTML:
         content = mock_file.read()
         assert content == aws_html_header + pass_html_finding + html_footer
 
+    def test_batch_write_data_to_file_without_findings(self):
+        assert not hasattr(HTML([]), "_file_descriptor")
+
     def test_write_header(self):
         mock_file = StringIO()
         findings = [generate_finding_output()]

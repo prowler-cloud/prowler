@@ -5,67 +5,45 @@ from typing import List
 from unittest.mock import MagicMock
 
 import pytest
+from freezegun import freeze_time
 from mock import patch
 
+from prowler.config.config import prowler_version
 from prowler.lib.outputs.csv.csv import write_csv
 from prowler.lib.outputs.csv.models import CSV
-from prowler.lib.outputs.finding import Finding, Severity, Status
+from prowler.lib.outputs.finding import Finding
 from prowler.lib.outputs.output import Output
-
-
-@pytest.fixture
-def generate_finding():
-    return Finding(
-        auth_method="OAuth",
-        timestamp=datetime.now(),
-        account_uid="12345",
-        account_name="Example Account",
-        account_email="example@example.com",
-        account_organization_uid="org-123",
-        account_organization_name="Example Org",
-        account_tags=["tag1", "tag2"],
-        finding_uid="finding-123",
-        provider="aws",
-        check_id="check-123",
-        check_title="Example Check",
-        check_type="Security",
-        status=Status("FAIL"),
-        status_extended="Extended status",
-        muted=False,
-        service_name="Example Service",
-        subservice_name="Example Subservice",
-        severity=Severity("critical"),
-        resource_type="Instance",
-        resource_uid="resource-123",
-        resource_name="Example Resource",
-        resource_details="Detailed information about the resource",
-        resource_tags="tag1,tag2",
-        partition="aws",
-        region="us-west-1",
-        description="Description of the finding",
-        risk="High",
-        related_url="http://example.com",
-        remediation_recommendation_text="Recommendation text",
-        remediation_recommendation_url="http://example.com/remediation",
-        remediation_code_nativeiac="native-iac-code",
-        remediation_code_terraform="terraform-code",
-        remediation_code_cli="cli-code",
-        remediation_code_other="other-code",
-        compliance={"compliance_key": "compliance_value"},
-        categories="category1,category2",
-        depends_on="dependency",
-        related_to="related finding",
-        notes="Notes about the finding",
-        prowler_version="1.0",
-    )
+from tests.lib.outputs.fixtures.fixtures import generate_finding_output
+from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, AWS_REGION_EU_WEST_1
 
 
 class TestCSV:
-    def test_output_transform(self, generate_finding):
-        findings = [generate_finding]
-
-        # Clear the data from CSV class
-        CSV._data = []
+    def test_output_transform(self):
+        findings = [
+            generate_finding_output(
+                status="PASS",
+                status_extended="status-extended",
+                resource_uid="resource-123",
+                resource_name="Example Resource",
+                resource_details="Detailed information about the resource",
+                resource_tags="tag1,tag2",
+                partition="aws",
+                description="Description of the finding",
+                risk="High",
+                related_url="http://example.com",
+                remediation_recommendation_text="Recommendation text",
+                remediation_recommendation_url="http://example.com/remediation",
+                remediation_code_nativeiac="native-iac-code",
+                remediation_code_terraform="terraform-code",
+                remediation_code_other="other-code",
+                remediation_code_cli="cli-code",
+                compliance={"compliance_key": "compliance_value"},
+                categories="category1,category2",
+                depends_on="dependency",
+                related_to="related finding",
+                notes="Notes about the finding",
+            )
+        ]
 
         output = CSV(findings)
         output_data = output.data[0]
@@ -77,25 +55,25 @@ class TestCSV:
         assert isinstance(output_data["MUTED"], bool)
         assert isinstance(output_data["COMPLIANCE"], str)
 
-        assert output_data["AUTH_METHOD"] == "OAuth"
-        assert output_data["ACCOUNT_UID"] == "12345"
-        assert output_data["ACCOUNT_NAME"] == "Example Account"
-        assert output_data["ACCOUNT_EMAIL"] == "example@example.com"
-        assert output_data["ACCOUNT_ORGANIZATION_UID"] == "org-123"
-        assert output_data["ACCOUNT_ORGANIZATION_NAME"] == "Example Org"
-        assert output_data["ACCOUNT_TAGS"] == "tag1 | tag2"
-        assert output_data["FINDING_UID"] == "finding-123"
+        assert output_data["AUTH_METHOD"] == "profile: default"
+        assert output_data["ACCOUNT_UID"] == AWS_ACCOUNT_NUMBER
+        assert output_data["ACCOUNT_NAME"] == AWS_ACCOUNT_NUMBER
+        assert output_data["ACCOUNT_EMAIL"] == ""
+        assert output_data["ACCOUNT_ORGANIZATION_UID"] == "test-organization-id"
+        assert output_data["ACCOUNT_ORGANIZATION_NAME"] == "test-organization"
+        assert output_data["ACCOUNT_TAGS"] == "test-tag:test-value"
+        assert output_data["FINDING_UID"] == "test-unique-finding"
         assert output_data["PROVIDER"] == "aws"
-        assert output_data["CHECK_ID"] == "check-123"
-        assert output_data["CHECK_TITLE"] == "Example Check"
-        assert output_data["CHECK_TYPE"] == "Security"
-        assert output_data["STATUS"] == "FAIL"
-        assert output_data["STATUS_EXTENDED"] == "Extended status"
+        assert output_data["CHECK_ID"] == "test-check-id"
+        assert output_data["CHECK_TITLE"] == "test-check-id"
+        assert output_data["CHECK_TYPE"] == "test-type"
+        assert output_data["STATUS"] == "PASS"
+        assert output_data["STATUS_EXTENDED"] == "status-extended"
         assert output_data["MUTED"] is False
-        assert output_data["SERVICE_NAME"] == "Example Service"
-        assert output_data["SUBSERVICE_NAME"] == "Example Subservice"
-        assert output_data["SEVERITY"] == "critical"
-        assert output_data["RESOURCE_TYPE"] == "Instance"
+        assert output_data["SERVICE_NAME"] == "test-service"
+        assert output_data["SUBSERVICE_NAME"] == ""
+        assert output_data["SEVERITY"] == "high"
+        assert output_data["RESOURCE_TYPE"] == "test-resource"
         assert output_data["RESOURCE_UID"] == "resource-123"
         assert output_data["RESOURCE_NAME"] == "Example Resource"
         assert (
@@ -103,7 +81,7 @@ class TestCSV:
         )
         assert output_data["RESOURCE_TAGS"] == "tag1,tag2"
         assert output_data["PARTITION"] == "aws"
-        assert output_data["REGION"] == "us-west-1"
+        assert output_data["REGION"] == AWS_REGION_EU_WEST_1
         assert output_data["DESCRIPTION"] == "Description of the finding"
         assert output_data["RISK"] == "High"
         assert output_data["RELATED_URL"] == "http://example.com"
@@ -121,13 +99,13 @@ class TestCSV:
         assert output_data["DEPENDS_ON"] == "dependency"
         assert output_data["RELATED_TO"] == "related finding"
         assert output_data["NOTES"] == "Notes about the finding"
-        assert output_data["PROWLER_VERSION"] == "1.0"
+        assert output_data["PROWLER_VERSION"] == prowler_version
 
-    def test_csv_write_to_file(self, generate_finding):
+    @freeze_time(datetime.now())
+    def test_csv_write_to_file(self):
         mock_file = StringIO()
-        findings = [generate_finding]
-        # Clear the data from CSV class
-        CSV._data = []
+        findings = [generate_finding_output()]
+
         output = CSV(findings)
         output._file_descriptor = mock_file
 
@@ -135,15 +113,13 @@ class TestCSV:
             output.batch_write_data_to_file()
 
         mock_file.seek(0)
+        expected_csv = f"AUTH_METHOD;TIMESTAMP;ACCOUNT_UID;ACCOUNT_NAME;ACCOUNT_EMAIL;ACCOUNT_ORGANIZATION_UID;ACCOUNT_ORGANIZATION_NAME;ACCOUNT_TAGS;FINDING_UID;PROVIDER;CHECK_ID;CHECK_TITLE;CHECK_TYPE;STATUS;STATUS_EXTENDED;MUTED;SERVICE_NAME;SUBSERVICE_NAME;SEVERITY;RESOURCE_TYPE;RESOURCE_UID;RESOURCE_NAME;RESOURCE_DETAILS;RESOURCE_TAGS;PARTITION;REGION;DESCRIPTION;RISK;RELATED_URL;REMEDIATION_RECOMMENDATION_TEXT;REMEDIATION_RECOMMENDATION_URL;REMEDIATION_CODE_NATIVEIAC;REMEDIATION_CODE_TERRAFORM;REMEDIATION_CODE_CLI;REMEDIATION_CODE_OTHER;COMPLIANCE;CATEGORIES;DEPENDS_ON;RELATED_TO;NOTES;PROWLER_VERSION\r\nprofile: default;{datetime.now()};123456789012;123456789012;;test-organization-id;test-organization;test-tag:test-value;test-unique-finding;aws;test-check-id;test-check-id;test-type;PASS;;False;test-service;;high;test-resource;;;;;aws;eu-west-1;check description;test-risk;test-url;;;;;;;test-compliance: test-compliance;test-category;test-dependency;test-related-to;test-notes;4.2.4\r\n"
         content = mock_file.read()
-        content = content.split("PROWLER_VERSION")[1]
-        content = content.removeprefix("\r\n")
-        content = content.removesuffix("\r\n")
-        string = ""
-        for value in output.data[0].values():
-            string += f"{value};"
-        string = string.removesuffix(";")
-        assert string in content
+
+        assert content == expected_csv
+
+    def test_batch_write_data_to_file_without_findings(self):
+        assert not hasattr(CSV([]), "_file_descriptor")
 
     @pytest.fixture
     def mock_output_class(self):
