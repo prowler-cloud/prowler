@@ -85,7 +85,7 @@ jobs:
       - name: Test with pytest
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |
-          poetry run pytest -n auto --cov=./src --cov-report=xml tests
+          poetry run pytest -n auto --cov=./src/backend --cov-report=xml src/backend
       - name: Upload coverage reports to Codecov
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         uses: codecov/codecov-action@v4
