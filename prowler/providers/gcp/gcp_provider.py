@@ -265,7 +265,7 @@ class GcpProvider(Provider):
                     gcp_project = GCPProject(
                         number=project["projectNumber"],
                         id=project_id,
-                        name=project["name"],
+                        name=project.get("name", project_id),
                         lifecycle_state=project["lifecycleState"],
                         labels=labels,
                     )
