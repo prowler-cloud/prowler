@@ -35,9 +35,10 @@
     "typescript": "5.0.4"
   },
   "devDependencies": {
-    "eslint-config-prettier": "^9.1.0"
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-simple-import-sort": "^12.1.1"
   },
-  "name": "next-app-template",
+  "name": "prowler-next-app",
   "private": true,
   "scripts": {
     "build": "next build",
