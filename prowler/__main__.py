@@ -298,59 +298,42 @@ def prowler():
 
     if args.output_formats:
         for mode in args.output_formats:
-            if "csv" in mode:
-                # Generate CSV Finding Object
-                filename = (
-                    f"{global_provider.output_options.output_directory}/"
-                    f"{global_provider.output_options.output_filename}{csv_file_suffix}"
-                )
+            filename = (
+                f"{global_provider.output_options.output_directory}/"
+                f"{global_provider.output_options.output_filename}"
+            )
+            if mode == "csv":
                 csv_output = CSV(
                     findings=finding_outputs,
                     create_file_descriptor=True,
-                    file_path=filename,
+                    file_path=f"{filename}{csv_file_suffix}",
                 )
                 # Write CSV Finding Object to file
                 csv_output.batch_write_data_to_file()
 
-            if "json-asff" in mode:
-                filename = (
-                    f"{global_provider.output_options.output_directory}/"
-                    f"{global_provider.output_options.output_filename}{json_asff_file_suffix}"
-                )
+            if mode == "json-asff":
                 asff_output = ASFF(
                     findings=finding_outputs,
                     create_file_descriptor=True,
-                    file_path=filename,
+                    file_path=f"{filename}{json_asff_file_suffix}",
                 )
                 # Write ASFF Finding Object to file
                 asff_output.batch_write_data_to_file()
 
-            # Close json file if exists
-            # TODO: generate JSON here
-            if "json-ocsf" in mode:
-                filename = (
-                    f"{global_provider.output_options.output_directory}/"
-                    f"{global_provider.output_options.output_filename}{json_ocsf_file_suffix}"
-                )
-                json_finding = OCSF(
+            if mode == "json-ocsf":
+                json_output = OCSF(
                     findings=finding_outputs,
                     create_file_descriptor=True,
-                    file_path=filename,
+                    file_path=f"{filename}{json_ocsf_file_suffix}",
                 )
-                json_finding.batch_write_data_to_file()
-            if "html" in mode:
-                # Generate HTML Finding Object
-                filename = (
-                    f"{global_provider.output_options.output_directory}/"
-                    f"{global_provider.output_options.output_filename}{html_file_suffix}"
-                )
-                html_finding = HTML(
+                json_output.batch_write_data_to_file()
+            if mode == "html":
+                html_output = HTML(
                     findings=finding_outputs,
                     create_file_descriptor=True,
-                    file_path=filename,
+                    file_path=f"{filename}{html_file_suffix}",
                 )
-                # Write HTML Finding Object to file
-                html_finding.batch_write_data_to_file(
+                html_output.batch_write_data_to_file(
                     provider=global_provider, stats=stats
                 )
 

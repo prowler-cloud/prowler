@@ -2,6 +2,7 @@ import json
 from datetime import datetime
 from io import StringIO
 
+from freezegun import freeze_time
 from mock import patch
 from py_ocsf_models.events.base_event import SeverityID, StatusID
 from py_ocsf_models.events.findings.detection_finding import DetectionFinding
@@ -23,82 +24,9 @@ from prowler.lib.outputs.ocsf.ocsf import OCSF
 from tests.lib.outputs.fixtures.fixtures import generate_finding_output
 from tests.providers.aws.utils import AWS_REGION_EU_WEST_1
 
-now = datetime.now()
-expected_json_output = json.dumps(
-    [
-        {
-            "metadata": {
-                "event_code": "test-check-id",
-                "product": {
-                    "name": "Prowler",
-                    "vendor_name": "Prowler",
-                    "version": "4.2.4",
-                },
-                "version": "1.2.0",
-            },
-            "severity_id": 2,
-            "severity": "Low",
-            "status": "New",
-            "status_code": "FAIL",
-            "status_detail": "status extended",
-            "status_id": 1,
-            "unmapped": {
-                "check_type": "test-type",
-                "related_url": "test-url",
-                "categories": "test-category",
-                "depends_on": "test-dependency",
-                "related_to": "test-related-to",
-                "notes": "test-notes",
-                "compliance": {"test-compliance": "test-compliance"},
-            },
-            "activity_name": "Create",
-            "activity_id": 1,
-            "finding_info": {
-                "created_time": now.isoformat(),
-                "desc": "check description",
-                "product_uid": "prowler",
-                "title": "test-check-id",
-                "uid": "test-unique-finding",
-            },
-            "resources": [
-                {
-                    "cloud_partition": "aws",
-                    "region": "eu-west-1",
-                    "data": {"details": "resource_details"},
-                    "group": {"name": "test-service"},
-                    "labels": [],
-                    "name": "resource_name",
-                    "type": "test-resource",
-                    "uid": "resource-id",
-                }
-            ],
-            "category_name": "Findings",
-            "category_uid": 2,
-            "class_name": "DetectionFinding",
-            "class_uid": 2004,
-            "cloud": {
-                "account": {
-                    "name": "123456789012",
-                    "type": "AWS_Account",
-                    "type_id": 10,
-                    "uid": "123456789012",
-                    "labels": ["test-tag:test-value"],
-                },
-                "org": {"name": "test-organization", "uid": "test-organization-id"},
-                "provider": "aws",
-                "region": "eu-west-1",
-            },
-            "event_time": now.isoformat(),
-            "remediation": {"desc": "", "references": []},
-            "risk_details": "test-risk",
-            "type_uid": 200401,
-            "type_name": "Create",
-        }
-    ]
-)
-
 
 class TestOCSF:
+    # TODO: improve this test checking the fields
     def test_transform(self):
         findings = [
             generate_finding_output(
@@ -155,6 +83,7 @@ class TestOCSF:
             "compliance": findings[0].compliance,
         }
 
+    @freeze_time(datetime.now())
     def test_batch_write_data_to_file(self):
         mock_file = StringIO()
         findings = [
@@ -163,12 +92,86 @@ class TestOCSF:
                 severity="low",
                 muted=False,
                 region=AWS_REGION_EU_WEST_1,
-                timestamp=now,
+                timestamp=datetime.now(),
                 resource_details="resource_details",
                 resource_name="resource_name",
                 resource_uid="resource-id",
                 status_extended="status extended",
             )
+        ]
+
+        expected_json_output = [
+            {
+                "metadata": {
+                    "event_code": "test-check-id",
+                    "product": {
+                        "name": "Prowler",
+                        "vendor_name": "Prowler",
+                        "version": "4.2.4",
+                    },
+                    "version": "1.2.0",
+                },
+                "severity_id": 2,
+                "severity": "Low",
+                "status": "New",
+                "status_code": "FAIL",
+                "status_detail": "status extended",
+                "status_id": 1,
+                "unmapped": {
+                    "check_type": "test-type",
+                    "related_url": "test-url",
+                    "categories": "test-category",
+                    "depends_on": "test-dependency",
+                    "related_to": "test-related-to",
+                    "notes": "test-notes",
+                    "compliance": {"test-compliance": "test-compliance"},
+                },
+                "activity_name": "Create",
+                "activity_id": 1,
+                "finding_info": {
+                    "created_time": datetime.now().isoformat(),
+                    "desc": "check description",
+                    "product_uid": "prowler",
+                    "title": "test-check-id",
+                    "uid": "test-unique-finding",
+                },
+                "resources": [
+                    {
+                        "cloud_partition": "aws",
+                        "region": "eu-west-1",
+                        "data": {"details": "resource_details"},
+                        "group": {"name": "test-service"},
+                        "labels": [],
+                        "name": "resource_name",
+                        "type": "test-resource",
+                        "uid": "resource-id",
+                    }
+                ],
+                "category_name": "Findings",
+                "category_uid": 2,
+                "class_name": "DetectionFinding",
+                "class_uid": 2004,
+                "cloud": {
+                    "account": {
+                        "name": "123456789012",
+                        "type": "AWS_Account",
+                        "type_id": 10,
+                        "uid": "123456789012",
+                        "labels": ["test-tag:test-value"],
+                    },
+                    "org": {
+                        "name": "test-organization",
+                        "uid": "test-organization-id",
+                    },
+                    "provider": "aws",
+                    "region": "eu-west-1",
+                },
+                "event_time": datetime.now().isoformat(),
+                "remediation": {"desc": "", "references": []},
+                "risk_details": "test-risk",
+                "type_uid": 200401,
+                "type_name": "Create",
+            }
         ]
 
         output = OCSF(findings)
@@ -180,7 +183,10 @@ class TestOCSF:
         mock_file.seek(0)
         content = mock_file.read()
 
-        assert json.loads(content) == json.loads(expected_json_output)
+        assert json.loads(content) == expected_json_output
+
+    def test_batch_write_data_to_file_without_findings(self):
+        assert not hasattr(OCSF([]), "_file_descriptor")
 
     def test_finding_output_cloud_pass_low_muted(self):
         finding_output = generate_finding_output(

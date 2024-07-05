@@ -1,5 +1,4 @@
 import os
-import sys
 from typing import List
 
 from py_ocsf_models.events.base_event import SeverityID, StatusID
@@ -25,22 +24,22 @@ from prowler.lib.outputs.output import Output
 
 class OCSF(Output):
     """
-    OCSF class that transforms the findings into the OCSF format.
+    OCSF class that transforms the findings into the OCSF Detection Finding format.
 
-    This class provides methods to transform the findings into the OCSF format and write them to a file.
+    This class provides methods to transform the findings into the OCSF Detection Finding format and write them to a file.
 
     Attributes:
         - _data: A list to store the transformed findings.
         - _file_descriptor: A file descriptor to write the findings to a file.
 
     Methods:
-        - transform(findings: List[Finding]) -> None: Transforms the findings into the OCSF format.
-        - batch_write_data_to_file() -> None: Writes the findings to a file using the OCSF format using the `Output._file_descriptor`.
+        - transform(findings: List[Finding]) -> None: Transforms the findings into the OCSF Detection Finding format.
+        - batch_write_data_to_file() -> None: Writes the findings to a file using the OCSF Detection Finding format using the `Output._file_descriptor`.
         - get_account_type_id_by_provider(provider: str) -> TypeID: Returns the TypeID based on the provider.
         - get_finding_status_id(status: str, muted: bool) -> StatusID: Returns the StatusID based on the status and muted values.
 
     References:
-        - OCSF: https://docs.aws.amazon.com/security-lake/latest/userguide/open-cybersecurity-schema-framework.html
+        - OCSF: https://schema.ocsf.io/1.2.0/classes/detection_finding
         - PY-OCSF-Model: https://github.com/prowler-cloud/py-ocsf-models
     """
 
@@ -191,7 +190,6 @@ class OCSF(Output):
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            sys.exit(1)
 
     @staticmethod
     def get_account_type_id_by_provider(provider: str) -> TypeID:
