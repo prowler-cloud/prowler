@@ -1,5 +1,5 @@
 from prowler.config.config import timestamp
-from prowler.lib.outputs.compliance.models import Check_Output_CSV_KUBERNETES_CIS
+from prowler.lib.outputs.compliance.models import Kubernetes
 from prowler.lib.outputs.csv.csv import generate_csv_fields
 from prowler.lib.utils.utils import outputs_unix_timestamp
 
@@ -7,7 +7,7 @@ from prowler.lib.utils.utils import outputs_unix_timestamp
 def generate_compliance_row_cis_kubernetes(
     finding, compliance, requirement, attribute, output_options, provider
 ):
-    compliance_row = Check_Output_CSV_KUBERNETES_CIS(
+    compliance_row = Kubernetes(
         Provider=finding.check_metadata.Provider,
         Description=compliance.Description,
         Context=provider.identity.context,
@@ -32,6 +32,6 @@ def generate_compliance_row_cis_kubernetes(
         CheckId=finding.check_metadata.CheckID,
         Muted=finding.muted,
     )
-    csv_header = generate_csv_fields(Check_Output_CSV_KUBERNETES_CIS)
+    csv_header = generate_csv_fields(Kubernetes)
 
     return compliance_row, csv_header

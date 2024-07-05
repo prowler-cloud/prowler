@@ -2,15 +2,15 @@ from mock import MagicMock
 
 from prowler.lib.check.compliance_models import (
     CIS_Requirement_Attribute,
-    Compliance_Base_Model,
     Compliance_Requirement,
+    ComplianceBaseModel,
 )
 from prowler.lib.outputs.compliance.compliance import (
     get_check_compliance_frameworks_in_input,
 )
 
 CIS_1_4_AWS_NAME = "cis_1.4_aws"
-CIS_1_4_AWS = Compliance_Base_Model(
+CIS_1_4_AWS = ComplianceBaseModel(
     Framework="CIS",
     Provider="AWS",
     Version="1.4",
@@ -38,7 +38,7 @@ CIS_1_4_AWS = Compliance_Base_Model(
     ],
 )
 CIS_1_5_AWS_NAME = "cis_1.5_aws"
-CIS_1_5_AWS = Compliance_Base_Model(
+CIS_1_5_AWS = ComplianceBaseModel(
     Framework="CIS",
     Provider="AWS",
     Version="1.5",
@@ -67,7 +67,7 @@ CIS_1_5_AWS = Compliance_Base_Model(
 )
 
 NOT_PRESENT_COMPLIANCE_NAME = "not_present_compliance_name"
-NOT_PRESENT_COMPLIANCE = Compliance_Base_Model(
+NOT_PRESENT_COMPLIANCE = ComplianceBaseModel(
     Framework="NOT_EXISTENT",
     Provider="NOT_EXISTENT",
     Version="NOT_EXISTENT",

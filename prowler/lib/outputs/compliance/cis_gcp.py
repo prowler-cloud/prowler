@@ -1,5 +1,5 @@
 from prowler.config.config import timestamp
-from prowler.lib.outputs.compliance.models import Check_Output_CSV_GCP_CIS
+from prowler.lib.outputs.compliance.models import GCP
 from prowler.lib.outputs.csv.csv import generate_csv_fields
 from prowler.lib.utils.utils import outputs_unix_timestamp
 
@@ -7,7 +7,7 @@ from prowler.lib.utils.utils import outputs_unix_timestamp
 def generate_compliance_row_cis_gcp(
     finding, compliance, requirement, attribute, output_options
 ):
-    compliance_row = Check_Output_CSV_GCP_CIS(
+    compliance_row = GCP(
         Provider=finding.check_metadata.Provider,
         Description=compliance.Description,
         ProjectId=finding.project_id,
@@ -32,6 +32,6 @@ def generate_compliance_row_cis_gcp(
         CheckId=finding.check_metadata.CheckID,
         Muted=finding.muted,
     )
-    csv_header = generate_csv_fields(Check_Output_CSV_GCP_CIS)
+    csv_header = generate_csv_fields(GCP)
 
     return compliance_row, csv_header

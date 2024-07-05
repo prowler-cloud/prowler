@@ -1,5 +1,5 @@
 from prowler.config.config import timestamp
-from prowler.lib.outputs.compliance.models import Check_Output_CSV_AZURE_CIS
+from prowler.lib.outputs.compliance.models import Azure
 from prowler.lib.outputs.csv.csv import generate_csv_fields
 from prowler.lib.utils.utils import outputs_unix_timestamp
 
@@ -7,7 +7,7 @@ from prowler.lib.utils.utils import outputs_unix_timestamp
 def generate_compliance_row_cis_azure(
     finding, compliance, requirement, attribute, output_options
 ):
-    compliance_row = Check_Output_CSV_AZURE_CIS(
+    compliance_row = Azure(
         Provider=finding.check_metadata.Provider,
         Description=compliance.Description,
         Subscription=finding.subscription,
@@ -32,6 +32,6 @@ def generate_compliance_row_cis_azure(
         CheckId=finding.check_metadata.CheckID,
         Muted=finding.muted,
     )
-    csv_header = generate_csv_fields(Check_Output_CSV_AZURE_CIS)
+    csv_header = generate_csv_fields(Azure)
 
     return compliance_row, csv_header

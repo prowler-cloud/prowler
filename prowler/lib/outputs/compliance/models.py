@@ -32,11 +32,7 @@ class Check_Output_CSV_ENS_RD2022(BaseModel):
     Muted: bool
 
 
-class Check_Output_CSV_AWS_CIS(BaseModel):
-    """
-    Check_Output_CSV_CIS generates a finding's output in CSV CIS format.
-    """
-
+class CIS(BaseModel):
     Provider: str
     Description: str
     AccountId: str
@@ -61,94 +57,40 @@ class Check_Output_CSV_AWS_CIS(BaseModel):
     Muted: bool
 
 
-class Check_Output_CSV_AZURE_CIS(BaseModel):
+class AWS(CIS):
     """
     Check_Output_CSV_CIS generates a finding's output in CSV CIS format.
     """
 
-    Provider: str
-    Description: str
+    AccountId: str
+    Region: str
+
+
+class Azure(CIS):
+    """
+    Check_Output_CSV_CIS generates a finding's output in CSV CIS format.
+    """
+
     Subscription: str
-    AssessmentDate: str
-    Requirements_Id: str
-    Requirements_Description: str
-    Requirements_Attributes_Section: str
-    Requirements_Attributes_Profile: str
-    Requirements_Attributes_AssessmentStatus: str
-    Requirements_Attributes_Description: str
-    Requirements_Attributes_RationaleStatement: str
-    Requirements_Attributes_ImpactStatement: str
-    Requirements_Attributes_RemediationProcedure: str
-    Requirements_Attributes_AuditProcedure: str
-    Requirements_Attributes_AdditionalInformation: str
-    Requirements_Attributes_DefaultValue: str
-    Requirements_Attributes_References: str
-    Status: str
-    StatusExtended: str
-    ResourceId: str
-    ResourceName: str
-    CheckId: str
-    Muted: bool
+    Location: str
 
 
-class Check_Output_CSV_GCP_CIS(BaseModel):
+class GCP(CIS):
     """
     Check_Output_CSV_CIS generates a finding's output in CSV CIS format.
     """
 
-    Provider: str
-    Description: str
     ProjectId: str
     Location: str
-    AssessmentDate: str
-    Requirements_Id: str
-    Requirements_Description: str
-    Requirements_Attributes_Section: str
-    Requirements_Attributes_Profile: str
-    Requirements_Attributes_AssessmentStatus: str
-    Requirements_Attributes_Description: str
-    Requirements_Attributes_RationaleStatement: str
-    Requirements_Attributes_ImpactStatement: str
-    Requirements_Attributes_RemediationProcedure: str
-    Requirements_Attributes_AuditProcedure: str
-    Requirements_Attributes_AdditionalInformation: str
-    Requirements_Attributes_References: str
-    Status: str
-    StatusExtended: str
-    ResourceId: str
-    ResourceName: str
-    CheckId: str
-    Muted: bool
 
 
-class Check_Output_CSV_KUBERNETES_CIS(BaseModel):
+class Kubernetes(CIS):
     """
     Check_Output_CSV_CIS generates a finding's output in CSV CIS format.
     """
 
-    Provider: str
-    Description: str
     Context: str
     Namespace: str
-    AssessmentDate: str
-    Requirements_Id: str
-    Requirements_Description: str
-    Requirements_Attributes_Section: str
-    Requirements_Attributes_Profile: str
-    Requirements_Attributes_AssessmentStatus: str
-    Requirements_Attributes_Description: str
-    Requirements_Attributes_RationaleStatement: str
-    Requirements_Attributes_ImpactStatement: str
-    Requirements_Attributes_RemediationProcedure: str
-    Requirements_Attributes_AuditProcedure: str
-    Requirements_Attributes_AdditionalInformation: str
-    Requirements_Attributes_References: str
-    Requirements_Attributes_DefaultValue: str
-    Status: str
-    StatusExtended: str
-    ResourceId: str
-    CheckId: str
-    Muted: bool
 
 
 class Check_Output_CSV_Generic_Compliance(BaseModel):
