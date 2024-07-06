@@ -35,15 +35,21 @@
     "typescript": "5.0.4"
   },
   "devDependencies": {
-    "eslint-config-prettier": "^9.1.0"
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-simple-import-sort": "^12.1.1"
   },
-  "name": "next-app-template",
+  "name": "prowler-next-app",
   "private": true,
   "scripts": {
-    "build": "next build",
     "dev": "next dev",
-    "lint": "eslint . --ext .ts,.tsx -c .eslintrc.json --fix",
-    "start": "next start"
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc",
+    "healthcheck": "npm run typecheck && npm run lint:check",
+    "lint:check": "./node_modules/.bin/eslint ./app",
+    "lint:fix": "eslint . --ext .ts,.tsx -c .eslintrc.cjs --fix",
+    "format:check": "./node_modules/.bin/prettier --check ./app",
+    "format:write": "./node_modules/.bin/prettier --config .prettierrc.json --write ./app"
   },
   "version": "0.0.1"
 }
