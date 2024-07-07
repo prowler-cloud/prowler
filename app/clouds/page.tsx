@@ -1,43 +1,34 @@
 "use client";
 
-import useSWR from "swr";
-import React from "react";
-
+// import { PencilSquareIcon } from "@heroicons/react/24/solid";
+// import { TrashIcon } from "@heroicons/react/24/solid";
+// import { EyeIcon } from "@heroicons/react/24/solid";
 import {
+  // Chip,
+  // getKeyValue,
   Table,
-  TableHeader,
   TableBody,
-  TableColumn,
-  TableRow,
   TableCell,
-  User,
-  Chip,
-  Tooltip,
-  getKeyValue,
+  TableColumn,
+  TableHeader,
+  TableRow,
+  // Tooltip,
+  // User,
 } from "@nextui-org/react";
-import { fetcher } from "@/utils/fetcher";
-import { title } from "@/components/primitives";
+import React from "react";
+import useSWR from "swr";
 
-import { PencilSquareIcon } from "@heroicons/react/24/solid";
-import { TrashIcon } from "@heroicons/react/24/solid";
-import { EyeIcon } from "@heroicons/react/24/solid";
+import { title } from "@/components/primitives";
+import { fetcher } from "@/utils/fetcher";
 
 export default function CloudsPage() {
-  const getAccounts = useSWR(
-    `http://localhost:8080/api/v1/providers/aws/accounts`,
-    fetcher,
-  );
+  const getAccounts = useSWR("http://localhost:8080/api/v1/providers/aws/accounts", fetcher);
 
-  const getAudits = useSWR(
-    `http://localhost:8080/api/v1/providers/aws/audits`,
-    fetcher,
-  );
+  const getAudits = useSWR("http://localhost:8080/api/v1/providers/aws/audits", fetcher);
 
   // TODO FIX TYPE CHECKING
-  const getScanDetails = (account_id: Number, detail: String) => {
-    const scan =
-      getAudits.data &&
-      getAudits.data.find((audit: any) => audit.account_id === account_id);
+  const getScanDetails = (account_id: number, detail: string) => {
+    const scan = getAudits.data && getAudits.data.find((audit: any) => audit.account_id === account_id);
 
     if (detail === "status") {
       return scan?.audit_complete && "Completed";
@@ -79,12 +70,8 @@ export default function CloudsPage() {
     <div>
       <h1 className={title()}>Cloud Accounts</h1>
       <p className="mt-10 text-left">
-        {getAccounts.error && (
-          <span className="text-red-400">Failed to load</span>
-        )}
-        {getAccounts.isLoading && (
-          <span className="text-yellow-400">Loading</span>
-        )}
+        {getAccounts.error && <span className="text-red-400">Failed to load</span>}
+        {getAccounts.isLoading && <span className="text-yellow-400">Loading</span>}
       </p>
       {getAccounts.data && (
         <Table aria-label="cloud accounts table" className="text-left mt-10">

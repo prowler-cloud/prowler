@@ -1,17 +1,9 @@
 "use client";
 
-import React from "react";
-import {
-  Card,
-  CardHeader,
-  CardBody,
-  CardFooter,
-  Input,
-  Link,
-  Button,
-} from "@nextui-org/react";
 import { EyeIcon } from "@heroicons/react/24/solid";
 import { EyeSlashIcon } from "@heroicons/react/24/solid";
+import { Button, Card, CardBody, CardFooter, CardHeader, Input, Link } from "@nextui-org/react";
+import React from "react";
 
 export default function Home() {
   const [isVisible, setIsVisible] = React.useState(false);
@@ -26,22 +18,13 @@ export default function Home() {
             <h1 className="pl-1">Login</h1>
           </CardHeader>
           <CardBody className="w-72 pb-0">
-            <Input
-              label="Email"
-              variant="bordered"
-              placeholder="Enter your email"
-              className="mb-2"
-            />
+            <Input label="Email" variant="bordered" placeholder="Enter your email" className="mb-2" />
             <Input
               label="Password"
               variant="bordered"
               placeholder="Enter your password"
               endContent={
-                <button
-                  className="focus:outline-none"
-                  type="button"
-                  onClick={toggleVisibility}
-                >
+                <button className="focus:outline-none" type="button" onClick={toggleVisibility}>
                   {isVisible ? (
                     <EyeSlashIcon className="text-2xl text-default-400 pointer-events-none w-5 h-5" />
                   ) : (
