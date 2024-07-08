@@ -217,7 +217,7 @@ kubernetes_html_assessment_summary = """
                 </div>"""
 
 
-def __get_aws_html_header__(args: list) -> str:
+def get_aws_html_header(args: list) -> str:
     """
     Generate the HTML header for AWS
 
@@ -461,9 +461,7 @@ class TestHTML:
         mock_file.seek(0)
         content = mock_file.read()
         args = sys.argv[1:]
-        assert (
-            content == __get_aws_html_header__(args) + pass_html_finding + html_footer
-        )
+        assert content == get_aws_html_header(args) + pass_html_finding + html_footer
 
     def test_batch_write_data_to_file_without_findings(self):
         assert not hasattr(HTML([]), "_file_descriptor")
@@ -480,7 +478,7 @@ class TestHTML:
         mock_file.seek(0)
         content = mock_file.read()
         args = sys.argv[1:]
-        assert content == __get_aws_html_header__(args)
+        assert content == get_aws_html_header(args)
 
     def test_write_footer(self):
         mock_file = StringIO()
