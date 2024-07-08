@@ -50,7 +50,9 @@ class ComplianceOutput(ABC):
         return self._file_descriptor
 
     @abstractmethod
-    def transform(self, findings: List[Finding], compliance: dict):
+    def transform(
+        self, findings: List[Finding], compliance: ComplianceBaseModel
+    ) -> None:
         raise NotImplementedError
 
     @abstractmethod

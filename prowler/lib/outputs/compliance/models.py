@@ -35,8 +35,6 @@ class Check_Output_CSV_ENS_RD2022(BaseModel):
 class CIS(BaseModel):
     Provider: str
     Description: str
-    AccountId: str
-    Region: str
     AssessmentDate: str
     Requirements_Id: str
     Requirements_Description: str

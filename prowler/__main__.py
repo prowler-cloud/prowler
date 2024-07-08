@@ -7,7 +7,6 @@ from os import environ
 from colorama import Fore, Style
 
 from prowler.config.config import (
-    available_compliance_frameworks,
     csv_file_suffix,
     get_available_compliance_frameworks,
     html_file_suffix,
@@ -45,10 +44,10 @@ from prowler.lib.cli.parser import ProwlerArgumentParser
 from prowler.lib.logger import logger, set_logging_config
 from prowler.lib.outputs.asff.asff import ASFF
 from prowler.lib.outputs.compliance.cis_aws import AWSCIS
-from prowler.lib.outputs.compliance.compliance import (
-    display_compliance_table,
-    get_check_compliance_frameworks_in_input,
-)
+from prowler.lib.outputs.compliance.cis_azure import AzureCIS
+from prowler.lib.outputs.compliance.cis_gcp import GCPCIS
+from prowler.lib.outputs.compliance.cis_kubernetes import KubernetesCIS
+from prowler.lib.outputs.compliance.compliance import display_compliance_table
 from prowler.lib.outputs.csv.models import CSV
 from prowler.lib.outputs.finding import Finding
 from prowler.lib.outputs.html.html import HTML
@@ -301,20 +300,6 @@ def prowler():
         Finding.generate_output(global_provider, finding) for finding in findings
     ]
 
-    input_compliance_frameworks = list(
-        set(global_provider.output_options.output_modes).intersection(
-            available_compliance_frameworks
-        )
-    )
-
-    check_compliance = []
-    for finding in finding_outputs:
-        check_compliance += get_check_compliance_frameworks_in_input(
-            finding.check_id,
-            global_provider.output_options.bulk_checks_metadata,
-            input_compliance_frameworks,
-        )
-
     if args.output_formats:
         for mode in args.output_formats:
             if "csv" in mode:
@@ -391,12 +376,20 @@ def prowler():
                     bucket_session,
                 )
 
+    # Compliance Frameworks
+    input_compliance_frameworks = list(
+        set(global_provider.output_options.output_modes).intersection(
+            get_available_compliance_frameworks(provider)
+        )
+    )
+    output_compliance_frameworks = (
+        input_compliance_frameworks
+        if input_compliance_frameworks
+        else get_available_compliance_frameworks(provider)
+    )
     if provider == "aws":
-        for compliance in check_compliance:
-            if compliance.Framework == "CIS":
-                compliance_name = (
-                    "cis_" + compliance.Version + "_" + compliance.Provider.lower()
-                )
+        for compliance_name in output_compliance_frameworks:
+            if compliance_name.startswith("cis_"):
                 # Generate CIS Finding Object
                 filename = (
                     f"{global_provider.output_options.output_directory}/compliance/"
@@ -404,13 +397,59 @@ def prowler():
                 )
                 cis_finding = AWSCIS(
                     findings=finding_outputs,
-                    compliance=compliance,
+                    compliance=bulk_compliance_frameworks[compliance_name],
                     create_file_descriptor=True,
                     file_path=filename,
                 )
-                # Write CIS Finding Object to file, using bool to write the header.
-                # TODO: If it's the first time that the compliance it's found, it SHOULD
-                cis_finding.batch_write_data_to_file(False)
+                cis_finding.batch_write_data_to_file()
+
+    elif provider == "azure":
+        for compliance_name in output_compliance_frameworks:
+            if compliance_name.startswith("cis_"):
+                # Generate CIS Finding Object
+                filename = (
+                    f"{global_provider.output_options.output_directory}/compliance/"
+                    f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
+                )
+                cis_finding = AzureCIS(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    create_file_descriptor=True,
+                    file_path=filename,
+                )
+                cis_finding.batch_write_data_to_file()
+
+    elif provider == "gcp":
+        for compliance_name in output_compliance_frameworks:
+            if compliance_name.startswith("cis_"):
+                # Generate CIS Finding Object
+                filename = (
+                    f"{global_provider.output_options.output_directory}/compliance/"
+                    f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
+                )
+                cis_finding = GCPCIS(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    create_file_descriptor=True,
+                    file_path=filename,
+                )
+                cis_finding.batch_write_data_to_file()
+
+    elif provider == "kubernetes":
+        for compliance_name in output_compliance_frameworks:
+            if compliance_name.startswith("cis_"):
+                # Generate CIS Finding Object
+                filename = (
+                    f"{global_provider.output_options.output_directory}/compliance/"
+                    f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
+                )
+                cis_finding = KubernetesCIS(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    create_file_descriptor=True,
+                    file_path=filename,
+                )
+                cis_finding.batch_write_data_to_file()
 
     # AWS Security Hub Integration
     if provider == "aws" and args.security_hub:

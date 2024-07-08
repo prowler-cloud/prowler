@@ -12,36 +12,45 @@ class AzureCIS(ComplianceOutput):
         self, findings: list[Finding], compliance: ComplianceBaseModel
     ) -> None:
         for finding in findings:
+            # Get the compliance requirements for the finding
+            compliance_model_name = (
+                compliance.Framework + "-" + compliance.Version
+                if compliance.Version
+                else compliance.Framework
+            )
+            finding_requirements = finding.compliance.get(compliance_model_name, [])
             for requirement in compliance.Requirements:
-                for attribute in requirement.Attributes:
-                    compliance_row = Azure(
-                        Provider=finding.provider,
-                        Description=compliance.Description,
-                        Subscription=finding.subscription,
-                        AssessmentDate=str(finding.timestamp),
-                        Requirements_Id=requirement.Id,
-                        Requirements_Description=requirement.Description,
-                        Requirements_Attributes_Section=attribute.Section,
-                        Requirements_Attributes_Profile=attribute.Profile,
-                        Requirements_Attributes_AssessmentStatus=attribute.AssessmentStatus,
-                        Requirements_Attributes_Description=attribute.Description,
-                        Requirements_Attributes_RationaleStatement=attribute.RationaleStatement,
-                        Requirements_Attributes_ImpactStatement=attribute.ImpactStatement,
-                        Requirements_Attributes_RemediationProcedure=attribute.RemediationProcedure,
-                        Requirements_Attributes_AuditProcedure=attribute.AuditProcedure,
-                        Requirements_Attributes_AdditionalInformation=attribute.AdditionalInformation,
-                        Requirements_Attributes_DefaultValue=attribute.DefaultValue,
-                        Requirements_Attributes_References=attribute.References,
-                        Status=finding.status,
-                        StatusExtended=finding.status_extended,
-                        ResourceId=finding.resource_id,
-                        ResourceName=finding.resource_name,
-                        CheckId=finding.check_id,
-                        Muted=finding.muted,
-                    )
-                    self._data.append(compliance_row)
+                if requirement.Id in finding_requirements:
+                    for attribute in requirement.Attributes:
+                        compliance_row = Azure(
+                            Provider=finding.provider,
+                            Description=compliance.Description,
+                            Subscription=finding.account_name,
+                            Location=finding.region,
+                            AssessmentDate=str(finding.timestamp),
+                            Requirements_Id=requirement.Id,
+                            Requirements_Description=requirement.Description,
+                            Requirements_Attributes_Section=attribute.Section,
+                            Requirements_Attributes_Profile=attribute.Profile,
+                            Requirements_Attributes_AssessmentStatus=attribute.AssessmentStatus,
+                            Requirements_Attributes_Description=attribute.Description,
+                            Requirements_Attributes_RationaleStatement=attribute.RationaleStatement,
+                            Requirements_Attributes_ImpactStatement=attribute.ImpactStatement,
+                            Requirements_Attributes_RemediationProcedure=attribute.RemediationProcedure,
+                            Requirements_Attributes_AuditProcedure=attribute.AuditProcedure,
+                            Requirements_Attributes_AdditionalInformation=attribute.AdditionalInformation,
+                            Requirements_Attributes_DefaultValue=attribute.DefaultValue,
+                            Requirements_Attributes_References=attribute.References,
+                            Status=finding.status,
+                            StatusExtended=finding.status_extended,
+                            ResourceId=finding.resource_uid,
+                            ResourceName=finding.resource_name,
+                            CheckId=finding.check_id,
+                            Muted=finding.muted,
+                        )
+                        self._data.append(compliance_row)
 
-    def batch_write_data_to_file(self, header: bool) -> None:
+    def batch_write_data_to_file(self) -> None:
         try:
             if (
                 getattr(self, "_file_descriptor", None)
@@ -55,8 +64,7 @@ class AzureCIS(ComplianceOutput):
                     ],
                     delimiter=";",
                 )
-                if header:
-                    csv_writer.writeheader()
+                csv_writer.writeheader()
                 for finding in self._data:
                     for key in list(finding.__dict__.keys()):
                         finding.__dict__[key.upper()] = finding.__dict__.pop(key)
