@@ -24,4 +24,4 @@ jobs:
       - name: Install dependencies
         run: npm install
       - name: Run Healthcheck
-        run: npm healthcheck
+        run: npm run healthcheck

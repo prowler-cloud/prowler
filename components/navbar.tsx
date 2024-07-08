@@ -1,16 +1,16 @@
 "use client";
 
-import React from "react";
 import {
+  Link,
   Navbar as NextUINavbar,
+  NavbarBrand,
   NavbarContent,
   NavbarItem,
   NavbarMenu,
-  NavbarMenuToggle,
-  NavbarBrand,
   NavbarMenuItem,
-  Link,
+  NavbarMenuToggle,
 } from "@nextui-org/react";
+import React from "react";
 
 export const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
@@ -20,9 +20,7 @@ export const Navbar = () => {
   return (
     <NextUINavbar onMenuOpenChange={setIsMenuOpen}>
       <NavbarContent>
-        <NavbarMenuToggle
-          aria-label={isMenuOpen ? "Close menu" : "Open menu"}
-        />
+        <NavbarMenuToggle aria-label={isMenuOpen ? "Close menu" : "Open menu"} />
         <NavbarBrand>
           <p className="font-bold text-inherit">PROWLER</p>
         </NavbarBrand>
