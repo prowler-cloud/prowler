@@ -36,6 +36,7 @@
   },
   "devDependencies": {
     "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-security": "^3.0.1",
     "eslint-plugin-simple-import-sort": "^12.1.1"
   },
   "name": "prowler-next-app",
