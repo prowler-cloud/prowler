@@ -52,12 +52,7 @@ from prowler.lib.outputs.outputs import extract_findings_statistics
 from prowler.lib.outputs.slack.slack import Slack
 from prowler.lib.outputs.summary_table import display_summary_table
 from prowler.providers.aws.lib.s3.s3 import send_to_s3_bucket
-from prowler.providers.aws.lib.security_hub.security_hub import (
-    batch_send_to_security_hub,
-    filter_security_hub_findings_per_region,
-    resolve_security_hub_previous_findings,
-    verify_security_hub_integration_enabled_per_region,
-)
+from prowler.providers.aws.lib.security_hub.security_hub import SecurityHub
 from prowler.providers.common.provider import Provider
 from prowler.providers.common.quick_inventory import run_provider_quick_inventory
 
@@ -360,35 +355,24 @@ def prowler():
         print(
             f"{Style.BRIGHT}\nSending findings to AWS Security Hub, please wait...{Style.RESET_ALL}"
         )
-        # Verify where AWS Security Hub is enabled
-        aws_security_enabled_regions = []
+
         security_hub_regions = (
             global_provider.get_available_aws_service_regions("securityhub")
             if not global_provider.identity.audited_regions
             else global_provider.identity.audited_regions
         )
-        for region in security_hub_regions:
-            # Save the regions where AWS Security Hub is enabled
-            if verify_security_hub_integration_enabled_per_region(
-                global_provider.identity.partition,
-                region,
-                global_provider.session.current_session,
-                global_provider.identity.account,
-            ):
-                aws_security_enabled_regions.append(region)
 
-        # Prepare the findings to be sent to Security Hub
-        security_hub_findings_per_region = filter_security_hub_findings_per_region(
-            asff_output.data,
-            global_provider.output_options.send_sh_only_fails,
-            global_provider.output_options.status,
-            aws_security_enabled_regions,
+        security_hub = SecurityHub(
+            aws_account_id=global_provider.identity.account,
+            aws_partition=global_provider.identity.partition,
+            aws_session=global_provider.session.current_session,
+            findings=asff_output.data,
+            status=global_provider.output_options.status,
+            send_only_fails=global_provider.output_options.send_sh_only_fails,
+            aws_security_hub_available_regions=security_hub_regions,
         )
         # Send the findings to Security Hub
-        findings_sent_to_security_hub = batch_send_to_security_hub(
-            security_hub_findings_per_region, global_provider.session.current_session
-        )
-
+        findings_sent_to_security_hub = security_hub.batch_send_to_security_hub()
         print(
             f"{Style.BRIGHT}{Fore.GREEN}\n{findings_sent_to_security_hub} findings sent to AWS Security Hub!{Style.RESET_ALL}"
         )
@@ -398,10 +382,7 @@ def prowler():
             print(
                 f"{Style.BRIGHT}\nArchiving previous findings in AWS Security Hub, please wait...{Style.RESET_ALL}"
             )
-            findings_archived_in_security_hub = resolve_security_hub_previous_findings(
-                security_hub_findings_per_region,
-                global_provider,
-            )
+            findings_archived_in_security_hub = security_hub.archive_previous_findings()
             print(
                 f"{Style.BRIGHT}{Fore.GREEN}\n{findings_archived_in_security_hub} findings archived in AWS Security Hub!{Style.RESET_ALL}"
             )
