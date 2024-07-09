@@ -33,6 +33,10 @@ class Check_Output_CSV_ENS_RD2022(BaseModel):
 
 
 class CIS(BaseModel):
+    """
+    CIS generates a finding's output in CIS Compliance format.
+    """
+
     Provider: str
     Description: str
     AssessmentDate: str
@@ -57,7 +61,7 @@ class CIS(BaseModel):
 
 class AWS(CIS):
     """
-    Check_Output_CSV_CIS generates a finding's output in CSV CIS format.
+    AWS CIS Compliance format.
     """
 
     AccountId: str
@@ -66,7 +70,7 @@ class AWS(CIS):
 
 class Azure(CIS):
     """
-    Check_Output_CSV_CIS generates a finding's output in CSV CIS format.
+    Azure CIS Compliance format.
     """
 
     Subscription: str
@@ -75,7 +79,7 @@ class Azure(CIS):
 
 class GCP(CIS):
     """
-    Check_Output_CSV_CIS generates a finding's output in CSV CIS format.
+    GCP CIS Compliance format.
     """
 
     ProjectId: str
@@ -84,7 +88,7 @@ class GCP(CIS):
 
 class Kubernetes(CIS):
     """
-    Check_Output_CSV_CIS generates a finding's output in CSV CIS format.
+    Kubernetes CIS Compliance format.
     """
 
     Context: str

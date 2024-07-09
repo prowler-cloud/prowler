@@ -37,7 +37,13 @@ class ComplianceOutput(ABC):
     ) -> None:
         self._data = []
         if findings:
-            self.transform(findings, compliance)
+            # Get the compliance name of the model
+            compliance_name = (
+                compliance.Framework + "-" + compliance.Version
+                if compliance.Version
+                else compliance.Framework
+            )
+            self.transform(findings, compliance, compliance_name)
             if create_file_descriptor:
                 self.create_file_descriptor(file_path)
 
@@ -51,7 +57,10 @@ class ComplianceOutput(ABC):
 
     @abstractmethod
     def transform(
-        self, findings: List[Finding], compliance: ComplianceBaseModel
+        self,
+        findings: List[Finding],
+        compliance: ComplianceBaseModel,
+        compliance_name: str,
     ) -> None:
         raise NotImplementedError
 

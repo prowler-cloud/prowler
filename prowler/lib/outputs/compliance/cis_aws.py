@@ -8,17 +8,38 @@ from prowler.lib.outputs.finding import Finding
 
 
 class AWSCIS(ComplianceOutput):
+    """
+    This class represents the AWS CIS compliance output.
+
+    Attributes:
+        - _data (list): A list to store transformed data from findings.
+        - _file_descriptor (TextIOWrapper): A file descriptor to write data to a file.
+
+    Methods:
+        - transform: Transforms findings into AWS CIS compliance format.
+        - batch_write_data_to_file: Writes the findings data to a CSV file in AWS CIS compliance format.
+    """
+
     def transform(
-        self, findings: list[Finding], compliance: ComplianceBaseModel
+        self,
+        findings: list[Finding],
+        compliance: ComplianceBaseModel,
+        compliance_name: str,
     ) -> None:
+        """
+        Transforms a list of findings into AWS CIS compliance format.
+
+        Parameters:
+            - findings (list): A list of findings.
+            - compliance (ComplianceBaseModel): A compliance model.
+            - compliance_name (str): The name of the compliance model.
+
+        Returns:
+            - None
+        """
         for finding in findings:
             # Get the compliance requirements for the finding
-            compliance_model_name = (
-                compliance.Framework + "-" + compliance.Version
-                if compliance.Version
-                else compliance.Framework
-            )
-            finding_requirements = finding.compliance.get(compliance_model_name, [])
+            finding_requirements = finding.compliance.get(compliance_name, [])
             for requirement in compliance.Requirements:
                 if requirement.Id in finding_requirements:
                     for attribute in requirement.Attributes:
@@ -49,6 +70,12 @@ class AWSCIS(ComplianceOutput):
                         self._data.append(compliance_row)
 
     def batch_write_data_to_file(self) -> None:
+        """
+        Writes the findings data to a CSV file in AWS CIS compliance format.
+
+        Returns:
+            - None
+        """
         try:
             if (
                 getattr(self, "_file_descriptor", None)
@@ -57,16 +84,14 @@ class AWSCIS(ComplianceOutput):
             ):
                 csv_writer = DictWriter(
                     self._file_descriptor,
-                    fieldnames=[
-                        field.upper() for field in self._data[0].__dict__.keys()
-                    ],
+                    fieldnames=[field.upper() for field in self._data[0].dict().keys()],
                     delimiter=";",
                 )
                 csv_writer.writeheader()
                 for finding in self._data:
-                    for key in list(finding.__dict__.keys()):
-                        finding.__dict__[key.upper()] = finding.__dict__.pop(key)
-                    csv_writer.writerow(finding.dict())
+                    csv_writer.writerow(
+                        {k.upper(): v for k, v in finding.dict().items()}
+                    )
                 self._file_descriptor.close()
         except Exception as error:
             logger.error(

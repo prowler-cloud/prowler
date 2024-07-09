@@ -377,18 +377,11 @@ def prowler():
                 )
 
     # Compliance Frameworks
-    input_compliance_frameworks = list(
-        set(global_provider.output_options.output_modes).intersection(
-            get_available_compliance_frameworks(provider)
-        )
-    )
-    output_compliance_frameworks = (
-        input_compliance_frameworks
-        if input_compliance_frameworks
-        else get_available_compliance_frameworks(provider)
-    )
+    input_compliance_frameworks = set(
+        global_provider.output_options.output_modes
+    ).intersection(get_available_compliance_frameworks(provider))
     if provider == "aws":
-        for compliance_name in output_compliance_frameworks:
+        for compliance_name in input_compliance_frameworks:
             if compliance_name.startswith("cis_"):
                 # Generate CIS Finding Object
                 filename = (
@@ -404,7 +397,7 @@ def prowler():
                 cis_finding.batch_write_data_to_file()
 
     elif provider == "azure":
-        for compliance_name in output_compliance_frameworks:
+        for compliance_name in input_compliance_frameworks:
             if compliance_name.startswith("cis_"):
                 # Generate CIS Finding Object
                 filename = (
@@ -420,7 +413,7 @@ def prowler():
                 cis_finding.batch_write_data_to_file()
 
     elif provider == "gcp":
-        for compliance_name in output_compliance_frameworks:
+        for compliance_name in input_compliance_frameworks:
             if compliance_name.startswith("cis_"):
                 # Generate CIS Finding Object
                 filename = (
@@ -436,7 +429,7 @@ def prowler():
                 cis_finding.batch_write_data_to_file()
 
     elif provider == "kubernetes":
-        for compliance_name in output_compliance_frameworks:
+        for compliance_name in input_compliance_frameworks:
             if compliance_name.startswith("cis_"):
                 # Generate CIS Finding Object
                 filename = (
