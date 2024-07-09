@@ -82,7 +82,11 @@ class ASFF(Output):
                         ),
                         GeneratorId="prowler-" + finding.check_id,
                         AwsAccountId=finding.account_uid,
-                        Types=finding.check_type.split(","),
+                        Types=(
+                            finding.check_type.split(",")
+                            if finding.check_type
+                            else ["Software and Configuration Checks"]
+                        ),
                         FirstObservedAt=timestamp,
                         UpdatedAt=timestamp,
                         CreatedAt=timestamp,
