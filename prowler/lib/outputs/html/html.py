@@ -78,6 +78,8 @@ class HTML(Output):
                 for finding in self._data:
                     self._file_descriptor.write(finding)
                 HTML.write_footer(self._file_descriptor)
+                # Close file descriptor
+                self._file_descriptor.close()
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

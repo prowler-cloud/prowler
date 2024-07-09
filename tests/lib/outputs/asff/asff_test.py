@@ -1,4 +1,10 @@
+from datetime import datetime
+from io import StringIO
+from json import loads
 from os import path
+
+from freezegun import freeze_time
+from mock import patch
 
 from prowler.config.config import prowler_version, timestamp_utc
 from prowler.lib.outputs.asff.asff import (
@@ -429,6 +435,82 @@ class TestASFF:
         asff_finding = asff.data[0]
 
         assert asff_finding == expected
+
+    @freeze_time(datetime.now())
+    def test_asff_write_to_file(self):
+        mock_file = StringIO()
+
+        status = "PASS"
+        finding = generate_finding_output(
+            status=status,
+            status_extended="This is a test",
+            region=AWS_REGION_EU_WEST_1,
+            resource_details="Test resource details",
+            resource_name="test-resource",
+            resource_uid="test-arn",
+            resource_tags="key1=value1",
+        )
+        finding.remediation_recommendation_url = ""
+
+        timestamp = timestamp_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+        expected_asff = [
+            {
+                "SchemaVersion": "2018-10-08",
+                "Id": "prowler-test-check-id-123456789012-eu-west-1-1aa220687",
+                "ProductArn": "arn:aws:securityhub:eu-west-1::product/prowler/prowler",
+                "RecordState": "ACTIVE",
+                "ProductFields": {
+                    "ProviderName": "Prowler",
+                    "ProviderVersion": "4.2.4",
+                    "ProwlerResourceName": "test-arn",
+                },
+                "GeneratorId": "prowler-test-check-id",
+                "AwsAccountId": "123456789012",
+                "Types": ["test-type"],
+                "FirstObservedAt": timestamp,
+                "UpdatedAt": timestamp,
+                "CreatedAt": timestamp,
+                "Severity": {"Label": "HIGH"},
+                "Title": "test-check-id",
+                "Description": "check description",
+                "Resources": [
+                    {
+                        "Type": "test-resource",
+                        "Id": "test-arn",
+                        "Partition": "aws",
+                        "Region": "eu-west-1",
+                        "Tags": {"key1": "value1"},
+                    }
+                ],
+                "Compliance": {
+                    "Status": "PASSED",
+                    "RelatedRequirements": [
+                        "test-compliance t e s t - c o m p l i a n c e"
+                    ],
+                    "AssociatedStandards": [{"StandardsId": "test-compliance"}],
+                },
+                "Remediation": {
+                    "Recommendation": {
+                        "Text": "",
+                        "Url": "https://docs.aws.amazon.com/securityhub/latest/userguide/what-is-securityhub.html",
+                    }
+                },
+            }
+        ]
+
+        asff = ASFF(findings=[finding])
+        asff._file_descriptor = mock_file
+
+        with patch.object(mock_file, "close", return_value=None):
+            asff.batch_write_data_to_file()
+
+        mock_file.seek(0)
+        content = mock_file.read()
+        assert loads(content) == expected_asff
+
+    def test_batch_write_data_to_file_without_findings(self):
+        assert not hasattr(ASFF([]), "_file_descriptor")
 
     def test_asff_generate_status(self):
         assert ASFF.generate_status("PASS") == "PASSED"
