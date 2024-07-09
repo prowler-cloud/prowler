@@ -20,7 +20,9 @@ export const Navbar = () => {
   return (
     <NextUINavbar onMenuOpenChange={setIsMenuOpen}>
       <NavbarContent>
-        <NavbarMenuToggle aria-label={isMenuOpen ? "Close menu" : "Open menu"} />
+        <NavbarMenuToggle
+          aria-label={isMenuOpen ? "Close menu" : "Open menu"}
+        />
         <NavbarBrand>
           <p className="font-bold text-inherit">PROWLER</p>
         </NavbarBrand>

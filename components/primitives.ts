@@ -26,7 +26,15 @@ export const title = tv({
   },
   compoundVariants: [
     {
-      color: ["violet", "yellow", "blue", "cyan", "green", "pink", "foreground"],
+      color: [
+        "violet",
+        "yellow",
+        "blue",
+        "cyan",
+        "green",
+        "pink",
+        "foreground",
+      ],
       class: "bg-clip-text text-transparent bg-gradient-to-b",
     },
   ],
