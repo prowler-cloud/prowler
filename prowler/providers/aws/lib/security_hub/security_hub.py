@@ -259,12 +259,14 @@ class SecurityHub:
                 )
         return success_count
 
-    def _send_findings_in_batches(self, findings, region) -> int:
+    def _send_findings_in_batches(
+        self, findings: list[AWSSecurityFindingFormat], region: str
+    ) -> int:
         """
         Sends the given findings to AWS Security Hub in batches for a specific region and returns the count of successfully sent findings.
 
         Args:
-            findings (list): List of findings to send to Security Hub.
+            findings (list[AWSSecurityFindingFormat]): List of findings to send to AWS Security Hub.
             region (str): The AWS region where the findings will be sent.
 
         Returns:
