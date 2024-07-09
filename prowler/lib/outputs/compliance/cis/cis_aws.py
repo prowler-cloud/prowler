@@ -2,22 +2,22 @@ from csv import DictWriter
 from venv import logger
 
 from prowler.lib.check.compliance_models import ComplianceBaseModel
+from prowler.lib.outputs.compliance.cis.models import AWS
 from prowler.lib.outputs.compliance.compliance_output import ComplianceOutput
-from prowler.lib.outputs.compliance.models import Azure
 from prowler.lib.outputs.finding import Finding
 
 
-class AzureCIS(ComplianceOutput):
+class AWSCIS(ComplianceOutput):
     """
-    This class represents the Azure CIS compliance output.
+    This class represents the AWS CIS compliance output.
 
     Attributes:
         - _data (list): A list to store transformed data from findings.
         - _file_descriptor (TextIOWrapper): A file descriptor to write data to a file.
 
     Methods:
-        - transform: Transforms findings into Azure CIS compliance format.
-        - batch_write_data_to_file: Writes the findings data to a CSV file in Azure CIS compliance format.
+        - transform: Transforms findings into AWS CIS compliance format.
+        - batch_write_data_to_file: Writes the findings data to a CSV file in AWS CIS compliance format.
     """
 
     def transform(
@@ -27,7 +27,7 @@ class AzureCIS(ComplianceOutput):
         compliance_name: str,
     ) -> None:
         """
-        Transforms a list of findings into Azure CIS compliance format.
+        Transforms a list of findings into AWS CIS compliance format.
 
         Parameters:
             - findings (list): A list of findings.
@@ -43,11 +43,11 @@ class AzureCIS(ComplianceOutput):
             for requirement in compliance.Requirements:
                 if requirement.Id in finding_requirements:
                     for attribute in requirement.Attributes:
-                        compliance_row = Azure(
+                        compliance_row = AWS(
                             Provider=finding.provider,
                             Description=compliance.Description,
-                            Subscription=finding.account_name,
-                            Location=finding.region,
+                            AccountId=finding.account_uid,
+                            Region=finding.region,
                             AssessmentDate=str(finding.timestamp),
                             Requirements_Id=requirement.Id,
                             Requirements_Description=requirement.Description,
@@ -60,18 +60,22 @@ class AzureCIS(ComplianceOutput):
                             Requirements_Attributes_RemediationProcedure=attribute.RemediationProcedure,
                             Requirements_Attributes_AuditProcedure=attribute.AuditProcedure,
                             Requirements_Attributes_AdditionalInformation=attribute.AdditionalInformation,
-                            Requirements_Attributes_DefaultValue=attribute.DefaultValue,
                             Requirements_Attributes_References=attribute.References,
                             Status=finding.status,
                             StatusExtended=finding.status_extended,
                             ResourceId=finding.resource_uid,
-                            ResourceName=finding.resource_name,
                             CheckId=finding.check_id,
                             Muted=finding.muted,
                         )
                         self._data.append(compliance_row)
 
     def batch_write_data_to_file(self) -> None:
+        """
+        Writes the findings data to a CSV file in AWS CIS compliance format.
+
+        Returns:
+            - None
+        """
         try:
             if (
                 getattr(self, "_file_descriptor", None)

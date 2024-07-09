@@ -43,10 +43,10 @@ from prowler.lib.check.custom_checks_metadata import (
 from prowler.lib.cli.parser import ProwlerArgumentParser
 from prowler.lib.logger import logger, set_logging_config
 from prowler.lib.outputs.asff.asff import ASFF
-from prowler.lib.outputs.compliance.cis_aws import AWSCIS
-from prowler.lib.outputs.compliance.cis_azure import AzureCIS
-from prowler.lib.outputs.compliance.cis_gcp import GCPCIS
-from prowler.lib.outputs.compliance.cis_kubernetes import KubernetesCIS
+from prowler.lib.outputs.compliance.cis.cis_aws import AWSCIS
+from prowler.lib.outputs.compliance.cis.cis_azure import AzureCIS
+from prowler.lib.outputs.compliance.cis.cis_gcp import GCPCIS
+from prowler.lib.outputs.compliance.cis.cis_kubernetes import KubernetesCIS
 from prowler.lib.outputs.compliance.compliance import display_compliance_table
 from prowler.lib.outputs.csv.models import CSV
 from prowler.lib.outputs.finding import Finding

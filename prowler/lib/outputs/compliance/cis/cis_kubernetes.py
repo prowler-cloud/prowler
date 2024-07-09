@@ -2,22 +2,22 @@ from csv import DictWriter
 from venv import logger
 
 from prowler.lib.check.compliance_models import ComplianceBaseModel
+from prowler.lib.outputs.compliance.cis.models import Kubernetes
 from prowler.lib.outputs.compliance.compliance_output import ComplianceOutput
-from prowler.lib.outputs.compliance.models import AWS
 from prowler.lib.outputs.finding import Finding
 
 
-class AWSCIS(ComplianceOutput):
+class KubernetesCIS(ComplianceOutput):
     """
-    This class represents the AWS CIS compliance output.
+    This class represents the Kubernetes CIS compliance output.
 
     Attributes:
         - _data (list): A list to store transformed data from findings.
         - _file_descriptor (TextIOWrapper): A file descriptor to write data to a file.
 
     Methods:
-        - transform: Transforms findings into AWS CIS compliance format.
-        - batch_write_data_to_file: Writes the findings data to a CSV file in AWS CIS compliance format.
+        - transform: Transforms findings into Kubernetes CIS compliance format.
+        - batch_write_data_to_file: Writes the findings data to a CSV file in Kubernetes CIS compliance format.
     """
 
     def transform(
@@ -27,7 +27,7 @@ class AWSCIS(ComplianceOutput):
         compliance_name: str,
     ) -> None:
         """
-        Transforms a list of findings into AWS CIS compliance format.
+        Transforms a list of findings into Kubernetes CIS compliance format.
 
         Parameters:
             - findings (list): A list of findings.
@@ -43,11 +43,11 @@ class AWSCIS(ComplianceOutput):
             for requirement in compliance.Requirements:
                 if requirement.Id in finding_requirements:
                     for attribute in requirement.Attributes:
-                        compliance_row = AWS(
+                        compliance_row = Kubernetes(
                             Provider=finding.provider,
                             Description=compliance.Description,
-                            AccountId=finding.account_uid,
-                            Region=finding.region,
+                            Context=finding.account_name,
+                            Namespace=finding.region,
                             AssessmentDate=str(finding.timestamp),
                             Requirements_Id=requirement.Id,
                             Requirements_Description=requirement.Description,
@@ -61,6 +61,7 @@ class AWSCIS(ComplianceOutput):
                             Requirements_Attributes_AuditProcedure=attribute.AuditProcedure,
                             Requirements_Attributes_AdditionalInformation=attribute.AdditionalInformation,
                             Requirements_Attributes_References=attribute.References,
+                            Requirements_Attributes_DefaultValue=attribute.DefaultValue,
                             Status=finding.status,
                             StatusExtended=finding.status_extended,
                             ResourceId=finding.resource_uid,
@@ -70,12 +71,6 @@ class AWSCIS(ComplianceOutput):
                         self._data.append(compliance_row)
 
     def batch_write_data_to_file(self) -> None:
-        """
-        Writes the findings data to a CSV file in AWS CIS compliance format.
-
-        Returns:
-            - None
-        """
         try:
             if (
                 getattr(self, "_file_descriptor", None)

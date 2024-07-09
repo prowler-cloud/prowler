@@ -2,22 +2,22 @@ from csv import DictWriter
 from venv import logger
 
 from prowler.lib.check.compliance_models import ComplianceBaseModel
+from prowler.lib.outputs.compliance.cis.models import Azure
 from prowler.lib.outputs.compliance.compliance_output import ComplianceOutput
-from prowler.lib.outputs.compliance.models import GCP
 from prowler.lib.outputs.finding import Finding
 
 
-class GCPCIS(ComplianceOutput):
+class AzureCIS(ComplianceOutput):
     """
-    This class represents the GCP CIS compliance output.
+    This class represents the Azure CIS compliance output.
 
     Attributes:
         - _data (list): A list to store transformed data from findings.
         - _file_descriptor (TextIOWrapper): A file descriptor to write data to a file.
 
     Methods:
-        - transform: Transforms findings into GCP CIS compliance format.
-        - batch_write_data_to_file: Writes the findings data to a CSV file in GCP CIS compliance format.
+        - transform: Transforms findings into Azure CIS compliance format.
+        - batch_write_data_to_file: Writes the findings data to a CSV file in Azure CIS compliance format.
     """
 
     def transform(
@@ -27,7 +27,7 @@ class GCPCIS(ComplianceOutput):
         compliance_name: str,
     ) -> None:
         """
-        Transforms a list of findings into GCP CIS compliance format.
+        Transforms a list of findings into Azure CIS compliance format.
 
         Parameters:
             - findings (list): A list of findings.
@@ -43,10 +43,10 @@ class GCPCIS(ComplianceOutput):
             for requirement in compliance.Requirements:
                 if requirement.Id in finding_requirements:
                     for attribute in requirement.Attributes:
-                        compliance_row = GCP(
+                        compliance_row = Azure(
                             Provider=finding.provider,
                             Description=compliance.Description,
-                            ProjectId=finding.account_uid,
+                            Subscription=finding.account_name,
                             Location=finding.region,
                             AssessmentDate=str(finding.timestamp),
                             Requirements_Id=requirement.Id,
@@ -60,6 +60,7 @@ class GCPCIS(ComplianceOutput):
                             Requirements_Attributes_RemediationProcedure=attribute.RemediationProcedure,
                             Requirements_Attributes_AuditProcedure=attribute.AuditProcedure,
                             Requirements_Attributes_AdditionalInformation=attribute.AdditionalInformation,
+                            Requirements_Attributes_DefaultValue=attribute.DefaultValue,
                             Requirements_Attributes_References=attribute.References,
                             Status=finding.status,
                             StatusExtended=finding.status_extended,

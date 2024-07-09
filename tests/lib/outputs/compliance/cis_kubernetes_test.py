@@ -1,9 +1,11 @@
+from datetime import datetime
 from io import StringIO
 
+from freezegun import freeze_time
 from mock import patch
 
-from prowler.lib.outputs.compliance.cis_kubernetes import KubernetesCIS
-from prowler.lib.outputs.compliance.models import Kubernetes
+from prowler.lib.outputs.compliance.cis.cis_kubernetes import KubernetesCIS
+from prowler.lib.outputs.compliance.cis.models import Kubernetes
 from tests.lib.outputs.compliance.fixtures import CIS_1_8_KUBERNETES
 from tests.lib.outputs.fixtures.fixtures import generate_finding_output
 from tests.providers.kubernetes.kubernetes_fixtures import (
@@ -82,9 +84,18 @@ class TestKubernetesCIS:
         assert output_data.CheckId == "test-check-id"
         assert output_data.Muted is False
 
+    @freeze_time(datetime.now())
     def test_batch_write_data_to_file(self):
         mock_file = StringIO()
-        findings = [generate_finding_output(compliance={"CIS-1.8": "1.1.3"})]
+        findings = [
+            generate_finding_output(
+                provider="kubernetes",
+                compliance={"CIS-1.8": "1.1.3"},
+                account_name=KUBERNETES_CLUSTER_NAME,
+                account_uid=KUBERNETES_CLUSTER_NAME,
+                region=KUBERNETES_NAMESPACE,
+            )
+        ]
         # Clear the data from CSV class
         output = KubernetesCIS(findings, CIS_1_8_KUBERNETES)
         output._file_descriptor = mock_file
@@ -94,4 +105,5 @@ class TestKubernetesCIS:
 
         mock_file.seek(0)
         content = mock_file.read()
-        assert CIS_1_8_KUBERNETES.Description in content
+        expected_csv = f"PROVIDER;DESCRIPTION;ASSESSMENTDATE;REQUIREMENTS_ID;REQUIREMENTS_DESCRIPTION;REQUIREMENTS_ATTRIBUTES_SECTION;REQUIREMENTS_ATTRIBUTES_PROFILE;REQUIREMENTS_ATTRIBUTES_ASSESSMENTSTATUS;REQUIREMENTS_ATTRIBUTES_DESCRIPTION;REQUIREMENTS_ATTRIBUTES_RATIONALESTATEMENT;REQUIREMENTS_ATTRIBUTES_IMPACTSTATEMENT;REQUIREMENTS_ATTRIBUTES_REMEDIATIONPROCEDURE;REQUIREMENTS_ATTRIBUTES_AUDITPROCEDURE;REQUIREMENTS_ATTRIBUTES_ADDITIONALINFORMATION;REQUIREMENTS_ATTRIBUTES_REFERENCES;STATUS;STATUSEXTENDED;RESOURCEID;CHECKID;MUTED;CONTEXT;NAMESPACE\r\nkubernetes;This CIS Kubernetes Benchmark provides prescriptive guidance for establishing a secure configuration posture for Kubernetes v1.27.;{datetime.now()};1.1.3;Ensure that the controller manager pod specification file permissions are set to 600 or more restrictive;1.1 Control Plane Node Configuration Files;Level 1 - Master Node;Automated;Ensure that the controller manager pod specification file has permissions of `600` or more restrictive.;The controller manager pod specification file controls various parameters that set the behavior of the Controller Manager on the master node. You should restrict its file permissions to maintain the integrity of the file. The file should be writable by only the administrators on the system.;;Run the below command (based on the file location on your system) on the Control Plane node. For example,  ``` chmod 600 /etc/kubernetes/manifests/kube-controller-manager.yaml ```;Run the below command (based on the file location on your system) on the Control Plane node. For example,  ``` stat -c %a /etc/kubernetes/manifests/kube-controller-manager.yaml ```  Verify that the permissions are `600` or more restrictive.;;https://kubernetes.io/docs/admin/kube-apiserver/;PASS;;;test-check-id;False;test-cluster;test-namespace\r\n"
+        assert content == expected_csv

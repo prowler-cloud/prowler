@@ -5,7 +5,7 @@ from prowler.lib.logger import logger
 from prowler.lib.outputs.compliance.aws_well_architected_framework import (
     write_compliance_row_aws_well_architected_framework,
 )
-from prowler.lib.outputs.compliance.cis import get_cis_table
+from prowler.lib.outputs.compliance.cis.cis import get_cis_table
 from prowler.lib.outputs.compliance.ens_rd2022_aws import (
     get_ens_rd2022_aws_table,
     write_compliance_row_ens_rd2022_aws,

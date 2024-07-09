@@ -2,22 +2,22 @@ from csv import DictWriter
 from venv import logger
 
 from prowler.lib.check.compliance_models import ComplianceBaseModel
+from prowler.lib.outputs.compliance.cis.models import GCP
 from prowler.lib.outputs.compliance.compliance_output import ComplianceOutput
-from prowler.lib.outputs.compliance.models import Kubernetes
 from prowler.lib.outputs.finding import Finding
 
 
-class KubernetesCIS(ComplianceOutput):
+class GCPCIS(ComplianceOutput):
     """
-    This class represents the Kubernetes CIS compliance output.
+    This class represents the GCP CIS compliance output.
 
     Attributes:
         - _data (list): A list to store transformed data from findings.
         - _file_descriptor (TextIOWrapper): A file descriptor to write data to a file.
 
     Methods:
-        - transform: Transforms findings into Kubernetes CIS compliance format.
-        - batch_write_data_to_file: Writes the findings data to a CSV file in Kubernetes CIS compliance format.
+        - transform: Transforms findings into GCP CIS compliance format.
+        - batch_write_data_to_file: Writes the findings data to a CSV file in GCP CIS compliance format.
     """
 
     def transform(
@@ -27,7 +27,7 @@ class KubernetesCIS(ComplianceOutput):
         compliance_name: str,
     ) -> None:
         """
-        Transforms a list of findings into Kubernetes CIS compliance format.
+        Transforms a list of findings into GCP CIS compliance format.
 
         Parameters:
             - findings (list): A list of findings.
@@ -43,11 +43,11 @@ class KubernetesCIS(ComplianceOutput):
             for requirement in compliance.Requirements:
                 if requirement.Id in finding_requirements:
                     for attribute in requirement.Attributes:
-                        compliance_row = Kubernetes(
+                        compliance_row = GCP(
                             Provider=finding.provider,
                             Description=compliance.Description,
-                            Context=finding.account_name,
-                            Namespace=finding.region,
+                            ProjectId=finding.account_uid,
+                            Location=finding.region,
                             AssessmentDate=str(finding.timestamp),
                             Requirements_Id=requirement.Id,
                             Requirements_Description=requirement.Description,
@@ -61,10 +61,10 @@ class KubernetesCIS(ComplianceOutput):
                             Requirements_Attributes_AuditProcedure=attribute.AuditProcedure,
                             Requirements_Attributes_AdditionalInformation=attribute.AdditionalInformation,
                             Requirements_Attributes_References=attribute.References,
-                            Requirements_Attributes_DefaultValue=attribute.DefaultValue,
                             Status=finding.status,
                             StatusExtended=finding.status_extended,
                             ResourceId=finding.resource_uid,
+                            ResourceName=finding.resource_name,
                             CheckId=finding.check_id,
                             Muted=finding.muted,
                         )
