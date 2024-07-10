@@ -13,7 +13,9 @@ class Mutelist(ABC):
 
     MUTELIST_KEY = "Mutelist"
 
-    def __init__(self, mutelist_path, mutelist_content) -> "Mutelist":
+    def __init__(
+        self, mutelist_path: str = "", mutelist_content: dict = {}
+    ) -> "Mutelist":
         if mutelist_path:
             self._mutelist_file_path = mutelist_path
             self.get_mutelist_file_from_local_file(mutelist_path)
@@ -50,6 +52,7 @@ class Mutelist(ABC):
             logger.error(
                 f"{error.__class__.__name__} -- Mutelist YAML is malformed - {error}[{error.__traceback__.tb_lineno}]"
             )
+            self._mutelist = {}
             return False
 
     def is_muted(

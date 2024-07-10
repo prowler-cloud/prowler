@@ -722,9 +722,8 @@ def execute(
                     global_provider.identity.account
                 )
             elif global_provider.type == "azure":
-                is_finding_muted_args["aws_account_id"] = (
-                    global_provider.identity.account
-                )
+                is_finding_muted_args["subscription"] = global_provider.identity.account
+
             elif global_provider.type == "gcp":
                 is_finding_muted_args["aws_account_id"] = (
                     global_provider.identity.account
