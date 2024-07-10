@@ -6,6 +6,9 @@ from django_guid.log_filters import CorrelationId
 
 
 class BackendLogger(StrEnum):
+    GUNICORN = "gunicorn"
+    GUNICORN_ACCESS = "gunicorn.access"
+    GUNICORN_ERROR = "gunicorn.error"
     DJANGO = "django"
     SECURITY = "django.security"
     DB = "django.db"
@@ -36,7 +39,7 @@ class NDJSONFormatter(logging.Formatter):
             "thread": record.thread,
             "transaction_id": record.transaction_id
             if hasattr(record, "transaction_id")
-            else "N/A",
+            else None,
         }
 
         # Add REST API extra fields
@@ -55,6 +58,44 @@ class NDJSONFormatter(logging.Formatter):
             log_record["exc_info"] = self.formatException(record.exc_info)
 
         return json.dumps(log_record)
+
+
+class HumanReadableFormatter(logging.Formatter):
+    """Human-readable custom formatter for logging messages.
+
+    If available, it will include all kinds of API request metadata.
+    """
+
+    def format(self, record):
+        log_components = [
+            f"{self.formatTime(record, self.datefmt)}",
+            f"[{record.name}]",
+            f"{record.levelname}:",
+            f"({record.module})",
+            f"[module={record.module}",
+            f"path={record.pathname}",
+            f"line={record.lineno}",
+            f"function={record.funcName}",
+            f"process={record.process}",
+            f"thread={record.thread}",
+            f"transaction-id={record.transaction_id if hasattr(record, "transaction_id") else None}]",
+            f"{record.getMessage()}",
+        ]
+
+        # Add REST API extra fields
+        if hasattr(record, "method"):
+            log_components.append(f'"{record.method} {record.path}"')
+        if hasattr(record, "query_params"):
+            log_components.append(f"with parameters {record.query_params}")
+        if hasattr(record, "duration"):
+            log_components.append(f"done in {record.duration}s:")
+        if hasattr(record, "status_code"):
+            log_components.append(f"{record.status_code}")
+
+        if record.exc_info:
+            log_components.append(self.formatException(record.exc_info))
+
+        return " ".join(log_components)
 
 
 # Filters
@@ -83,6 +124,10 @@ LOGGING = {
             "()": NDJSONFormatter,
             "datefmt": "%Y-%m-%d %H:%M:%S",
         },
+        "human_readable": {
+            "()": HumanReadableFormatter,
+            "datefmt": "%Y-%m-%d %H:%M:%S",
+        },
         "django": {
             "format": "{asctime} [{name}] {levelname}: ({module}) {message}",
             "style": "{",
@@ -106,46 +151,67 @@ LOGGING = {
         },
     },
     "handlers": {
+        "gunicorn_console": {
+            "level": "INFO",
+            "class": "logging.StreamHandler",
+            "formatter": "human_readable",
+            "filters": ["transaction_id"],
+        },
         "django_console": {
             "level": "INFO",
             "class": "logging.StreamHandler",
-            "formatter": "ndjson",
+            "formatter": "human_readable",
             "filters": ["transaction_id"],
         },
         "api_console": {
             "level": "INFO",
             "class": "logging.StreamHandler",
-            "formatter": "ndjson",
+            "formatter": "human_readable",
             "filters": ["transaction_id"],
         },
         "db_console": {
             "level": "DEBUG",
             "class": "logging.StreamHandler",
-            "formatter": "ndjson",
+            "formatter": "human_readable",
             "filters": ["transaction_id"],
         },
         "security_console": {
             "level": "INFO",
             "class": "logging.StreamHandler",
-            "formatter": "ndjson",
+            "formatter": "human_readable",
             "filters": ["transaction_id"],
         },
         "tasks_console": {
             "level": "INFO",
             "class": "logging.StreamHandler",
-            "formatter": "ndjson",
+            "formatter": "human_readable",
             "filters": ["transaction_id"],
         },
     },
     "loggers": {
+        BackendLogger.GUNICORN: {
+            "handlers": ["gunicorn_console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        BackendLogger.GUNICORN_ACCESS: {
+            "handlers": ["gunicorn_console"],
+            "level": "CRITICAL",
+            "propagate": False,
+        },
+        BackendLogger.GUNICORN_ERROR: {
+            "handlers": ["gunicorn_console"],
+            "level": "INFO",
+            "propagate": False,
+        },
         BackendLogger.DJANGO: {
             "handlers": ["django_console"],
-            "level": "INFO",
+            "level": "WARNING",
             "propagate": True,
         },
         BackendLogger.DB: {
             "handlers": ["db_console"],
-            "level": "DEBUG",
+            "level": "INFO",
             "propagate": False,
         },
         BackendLogger.SECURITY: {
@@ -163,5 +229,10 @@ LOGGING = {
             "level": "INFO",
             "propagate": False,
         },
+    },
+    # Gunicorn required configuration
+    "root": {
+        "level": "ERROR",
+        "handlers": ["gunicorn_console"],
     },
 }

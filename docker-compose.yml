@@ -5,6 +5,8 @@ services:
     image: prowler-restful-api
     ports:
       - "8000:8000"
+    profiles:
+      - prod
 
   restful-api-dev:
     build:

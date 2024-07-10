@@ -21,6 +21,25 @@
 
 This repository contains the REST API and Task Runner components for Prowler, which facilitate a complete backend that interacts with the Prowler SDK and is used by the Prowler UI.
 
+# Production deployment
+
+## Install all dependencies with Poetry
+
+```console
+poetry install
+poetry shell
+```
+
+## Run the Django server with Gunicorn
+
+```console
+cd src/backend
+gunicorn -c backend/guniconf.py backend.wsgi:application
+```
+
+> By default, the Gunicorn server will try to use as many workers as your machine can handle. You can manually change that in the `src/backend/backend/guniconf.py` file.
+
+
 # 💻 Development guide
 
 ## Local deployment
@@ -76,7 +95,7 @@ git clone git@github.com:prowler-cloud/restful-api.git
 ### Build the base image
 
 ```console
-docker compose build
+docker compose --profile dev build
 ```
 
 ### Run the development service

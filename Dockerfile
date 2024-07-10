@@ -38,5 +38,4 @@ ENTRYPOINT ["poetry", "run", "python", "manage.py", "runserver", "0.0.0.0:8000"]
 # Production image
 FROM build
 
-# TODO use ASGI
-ENTRYPOINT ["poetry", "run", "python", "manage.py", "runserver", "0.0.0.0:8000"]
+ENTRYPOINT ["poetry", "run", "gunicorn", "-c", "backend/guniconf.py", "backend.wsgi:application"]
