@@ -13,7 +13,7 @@ from prowler.lib.outputs.utils import unroll_tags
 class MutelistAWS(Mutelist):
     def __init__(
         self,
-        mutelist_content={},
+        mutelist_content: dict = {},
         mutelist_path: str = "",
         session: Session = None,
         aws_account_id: str = "",
