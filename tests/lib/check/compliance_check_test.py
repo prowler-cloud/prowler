@@ -3,8 +3,8 @@ from prowler.lib.check.compliance_models import (
     CIS_Requirement_Attribute,
     CIS_Requirement_Attribute_AssessmentStatus,
     CIS_Requirement_Attribute_Profile,
-    Compliance_Base_Model,
     Compliance_Requirement,
+    ComplianceBaseModel,
 )
 from prowler.lib.check.models import Check_Metadata_Model
 
@@ -14,7 +14,7 @@ class TestCompliance:
 
     def get_custom_framework(self):
         return {
-            "framework1": Compliance_Base_Model(
+            "framework1": ComplianceBaseModel(
                 Framework="Framework1",
                 Provider="Provider1",
                 Version="1.0",

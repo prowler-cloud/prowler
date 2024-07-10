@@ -43,6 +43,10 @@ from prowler.lib.check.custom_checks_metadata import (
 from prowler.lib.cli.parser import ProwlerArgumentParser
 from prowler.lib.logger import logger, set_logging_config
 from prowler.lib.outputs.asff.asff import ASFF
+from prowler.lib.outputs.compliance.cis.cis_aws import AWSCIS
+from prowler.lib.outputs.compliance.cis.cis_azure import AzureCIS
+from prowler.lib.outputs.compliance.cis.cis_gcp import GCPCIS
+from prowler.lib.outputs.compliance.cis.cis_kubernetes import KubernetesCIS
 from prowler.lib.outputs.compliance.compliance import display_compliance_table
 from prowler.lib.outputs.csv.models import CSV
 from prowler.lib.outputs.finding import Finding
@@ -349,6 +353,74 @@ def prowler():
                     output_bucket,
                     bucket_session,
                 )
+
+    # Compliance Frameworks
+    input_compliance_frameworks = set(
+        global_provider.output_options.output_modes
+    ).intersection(get_available_compliance_frameworks(provider))
+    if provider == "aws":
+        for compliance_name in input_compliance_frameworks:
+            if compliance_name.startswith("cis_"):
+                # Generate CIS Finding Object
+                filename = (
+                    f"{global_provider.output_options.output_directory}/compliance/"
+                    f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
+                )
+                cis_finding = AWSCIS(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    create_file_descriptor=True,
+                    file_path=filename,
+                )
+                cis_finding.batch_write_data_to_file()
+
+    elif provider == "azure":
+        for compliance_name in input_compliance_frameworks:
+            if compliance_name.startswith("cis_"):
+                # Generate CIS Finding Object
+                filename = (
+                    f"{global_provider.output_options.output_directory}/compliance/"
+                    f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
+                )
+                cis_finding = AzureCIS(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    create_file_descriptor=True,
+                    file_path=filename,
+                )
+                cis_finding.batch_write_data_to_file()
+
+    elif provider == "gcp":
+        for compliance_name in input_compliance_frameworks:
+            if compliance_name.startswith("cis_"):
+                # Generate CIS Finding Object
+                filename = (
+                    f"{global_provider.output_options.output_directory}/compliance/"
+                    f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
+                )
+                cis_finding = GCPCIS(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    create_file_descriptor=True,
+                    file_path=filename,
+                )
+                cis_finding.batch_write_data_to_file()
+
+    elif provider == "kubernetes":
+        for compliance_name in input_compliance_frameworks:
+            if compliance_name.startswith("cis_"):
+                # Generate CIS Finding Object
+                filename = (
+                    f"{global_provider.output_options.output_directory}/compliance/"
+                    f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
+                )
+                cis_finding = KubernetesCIS(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    create_file_descriptor=True,
+                    file_path=filename,
+                )
+                cis_finding.batch_write_data_to_file()
 
     # AWS Security Hub Integration
     if provider == "aws" and args.security_hub:

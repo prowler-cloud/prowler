@@ -1,12 +1,14 @@
-from kubernetes import client
 from mock import MagicMock
 
+from kubernetes import client
 from prowler.providers.kubernetes.kubernetes_provider import KubernetesProvider
 from prowler.providers.kubernetes.models import (
     KubernetesIdentityInfo,
     KubernetesSession,
 )
 
+KUBERNETES_CLUSTER_NAME = "test-cluster"
+KUBERNETES_NAMESPACE = "test-namespace"
 KUBERNETES_CONFIG = {
     "audit_log_maxbackup": 10,
     "audit_log_maxsize": 100,

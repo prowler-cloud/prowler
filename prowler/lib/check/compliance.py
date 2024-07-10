@@ -2,7 +2,7 @@ import sys
 
 from pydantic import parse_obj_as
 
-from prowler.lib.check.compliance_models import Compliance_Base_Model
+from prowler.lib.check.compliance_models import ComplianceBaseModel
 from prowler.lib.check.models import Check_Metadata_Model
 from prowler.lib.logger import logger
 
@@ -22,7 +22,7 @@ def update_checks_metadata_with_compliance(
                         # Include the requirement into the check's framework requirements
                         compliance_requirements.append(requirement)
                         # Create the Compliance_Model
-                        compliance = Compliance_Base_Model(
+                        compliance = ComplianceBaseModel(
                             Framework=framework.Framework,
                             Provider=framework.Provider,
                             Version=framework.Version,
@@ -43,7 +43,7 @@ def update_checks_metadata_with_compliance(
                 if not requirement.Checks:
                     compliance_requirements.append(requirement)
                     # Create the Compliance_Model
-                    compliance = Compliance_Base_Model(
+                    compliance = ComplianceBaseModel(
                         Framework=framework.Framework,
                         Provider=framework.Provider,
                         Version=framework.Version,

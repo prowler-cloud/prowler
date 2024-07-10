@@ -6,8 +6,8 @@ from colorama import Fore
 
 from prowler.lib.check.compliance_models import (
     CIS_Requirement_Attribute,
-    Compliance_Base_Model,
     Compliance_Requirement,
+    ComplianceBaseModel,
 )
 from prowler.lib.check.models import Check_Report, load_check_metadata
 from prowler.lib.outputs.compliance.compliance import get_check_compliance
@@ -329,7 +329,7 @@ class TestOutputs:
 
     def test_get_check_compliance_aws(self):
         bulk_check_metadata = [
-            Compliance_Base_Model(
+            ComplianceBaseModel(
                 Framework="CIS",
                 Provider="AWS",
                 Version="1.4",
@@ -356,7 +356,7 @@ class TestOutputs:
                     )
                 ],
             ),
-            Compliance_Base_Model(
+            ComplianceBaseModel(
                 Framework="CIS",
                 Provider="AWS",
                 Version="1.5",
@@ -413,7 +413,7 @@ class TestOutputs:
 
     def test_get_check_compliance_gcp(self):
         bulk_check_metadata = [
-            Compliance_Base_Model(
+            ComplianceBaseModel(
                 Framework="CIS",
                 Provider="GCP",
                 Version="2.0",
@@ -440,7 +440,7 @@ class TestOutputs:
                     )
                 ],
             ),
-            Compliance_Base_Model(
+            ComplianceBaseModel(
                 Framework="CIS",
                 Provider="GCP",
                 Version="2.1",
@@ -497,7 +497,7 @@ class TestOutputs:
 
     def test_get_check_compliance_azure(self):
         bulk_check_metadata = [
-            Compliance_Base_Model(
+            ComplianceBaseModel(
                 Framework="CIS",
                 Provider="Azure",
                 Version="2.0",
@@ -524,7 +524,7 @@ class TestOutputs:
                     )
                 ],
             ),
-            Compliance_Base_Model(
+            ComplianceBaseModel(
                 Framework="CIS",
                 Provider="Azure",
                 Version="2.1",
@@ -581,7 +581,7 @@ class TestOutputs:
 
     def test_get_check_compliance_kubernetes(self):
         bulk_check_metadata = [
-            Compliance_Base_Model(
+            ComplianceBaseModel(
                 Framework="CIS",
                 Provider="Kubernetes",
                 Version="2.0",
@@ -608,7 +608,7 @@ class TestOutputs:
                     )
                 ],
             ),
-            Compliance_Base_Model(
+            ComplianceBaseModel(
                 Framework="CIS",
                 Provider="Kubernetes",
                 Version="2.1",
