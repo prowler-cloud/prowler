@@ -54,7 +54,6 @@ class Mutelist(ABC):
 
     def is_muted(
         self,
-        # mutelist: dict,
         audited_account: str,
         check: str,
         finding_region: str,

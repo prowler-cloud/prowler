@@ -9,12 +9,10 @@ class MutelistGCP(Mutelist):
         self,
         finding: Any,
         project_id: str,
-        check_id: str,
     ) -> bool:
         return self.is_muted(
-            self._mutelist,
             project_id,
-            check_id,
+            finding.check_metadata.CheckID,
             finding.location,
             finding.resource_name,
             unroll_tags(finding.resource_tags),

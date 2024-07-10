@@ -23,13 +23,10 @@ class MutelistAWS(Mutelist):
         if mutelist_path:
             # Mutelist from S3 URI
             if re.search("^s3://([^/]+)/(.*?([^/]+))$", self._mutelist_file_path):
-                # TODO: move get_mutelist_file_from_s3 here
                 self._mutelist = self.get_mutelist_file_from_s3(session)
             # Mutelist from Lambda Function ARN
             elif re.search(r"^arn:(\w+):lambda:", self._mutelist_file_path):
-                # TODO: move get_mutelist_file_from_lambda here
                 self._mutelist = self.get_mutelist_file_from_lambda(
-                    self._mutelist_file_path,
                     session,
                 )
             # Mutelist from DynamoDB ARN
@@ -37,9 +34,7 @@ class MutelistAWS(Mutelist):
                 r"^arn:aws(-cn|-us-gov)?:dynamodb:[a-z]{2}-[a-z-]+-[1-9]{1}:[0-9]{12}:table\/[a-zA-Z0-9._-]+$",
                 self._mutelist_file_path,
             ):
-                # TODO: move get_mutelist_file_from_dynamodb here
                 self._mutelist = self.get_mutelist_file_from_dynamodb(
-                    self._mutelist_file_path,
                     session,
                     aws_account_id,
                 )
@@ -52,8 +47,6 @@ class MutelistAWS(Mutelist):
         self,
         finding: Any,
         aws_account_id: str,
-        # TODO: probably this is not needed since the finding have that
-        # check_id: str,
     ) -> bool:
         return self.is_muted(
             aws_account_id,

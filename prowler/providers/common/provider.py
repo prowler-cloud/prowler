@@ -169,15 +169,8 @@ class Provider(ABC):
         # Set default mutelist path if none is set
         if not mutelist_path:
             mutelist_path = get_default_mute_file_path(self.type)
-        # TODO: review
-        # if mutelist_path:
 
         self._mutelist = Mutelist(mutelist_path)
-        # else:
-        #     mutelist = {}
-
-        # self._mutelist = mutelist
-        # self._mutelist_file_path = mutelist_path
 
     @staticmethod
     def get_global_provider() -> "Provider":

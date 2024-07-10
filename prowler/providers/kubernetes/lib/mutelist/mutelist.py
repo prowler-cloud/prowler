@@ -9,12 +9,10 @@ class MutelistKubernetes(Mutelist):
         self,
         finding: Any,
         cluster: str,
-        check_id: str,
     ) -> bool:
         return self.is_muted(
-            self._mutelist,
             cluster,
-            check_id,
+            finding.check_metadata.CheckID,
             finding.namespace,
             finding.resource_name,
             unroll_tags(finding.resource_tags),
