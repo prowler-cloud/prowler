@@ -2,7 +2,7 @@ from csv import DictWriter
 from venv import logger
 
 from prowler.lib.check.compliance_models import ComplianceBaseModel
-from prowler.lib.outputs.compliance.cis.models import AWS
+from prowler.lib.outputs.compliance.cis.models import CISAWS
 from prowler.lib.outputs.compliance.compliance_output import ComplianceOutput
 from prowler.lib.outputs.finding import Finding
 
@@ -43,7 +43,7 @@ class AWSCIS(ComplianceOutput):
             for requirement in compliance.Requirements:
                 if requirement.Id in finding_requirements:
                     for attribute in requirement.Attributes:
-                        compliance_row = AWS(
+                        compliance_row = CISAWS(
                             Provider=finding.provider,
                             Description=compliance.Description,
                             AccountId=finding.account_uid,
@@ -64,6 +64,7 @@ class AWSCIS(ComplianceOutput):
                             Status=finding.status,
                             StatusExtended=finding.status_extended,
                             ResourceId=finding.resource_uid,
+                            ResourceName=finding.resource_name,
                             CheckId=finding.check_id,
                             Muted=finding.muted,
                         )

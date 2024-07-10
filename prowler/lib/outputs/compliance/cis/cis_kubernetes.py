@@ -2,7 +2,7 @@ from csv import DictWriter
 from venv import logger
 
 from prowler.lib.check.compliance_models import ComplianceBaseModel
-from prowler.lib.outputs.compliance.cis.models import Kubernetes
+from prowler.lib.outputs.compliance.cis.models import CISKubernetes
 from prowler.lib.outputs.compliance.compliance_output import ComplianceOutput
 from prowler.lib.outputs.finding import Finding
 
@@ -43,7 +43,7 @@ class KubernetesCIS(ComplianceOutput):
             for requirement in compliance.Requirements:
                 if requirement.Id in finding_requirements:
                     for attribute in requirement.Attributes:
-                        compliance_row = Kubernetes(
+                        compliance_row = CISKubernetes(
                             Provider=finding.provider,
                             Description=compliance.Description,
                             Context=finding.account_name,
@@ -65,6 +65,7 @@ class KubernetesCIS(ComplianceOutput):
                             Status=finding.status,
                             StatusExtended=finding.status_extended,
                             ResourceId=finding.resource_uid,
+                            ResourceName=finding.resource_name,
                             CheckId=finding.check_id,
                             Muted=finding.muted,
                         )
