@@ -6,9 +6,9 @@
 ###########################  MUTELIST EXAMPLE  ###########################
 Mutelist:
   Accounts:
-    "subscription_1":
+    "project_1":
       Checks:
-        "aks_cluster_rbac_enabled":
+        "apikeys_api_restrictions_configured":
           Regions:
             - "*"
           Resources:
