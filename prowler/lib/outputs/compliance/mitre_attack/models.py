@@ -25,6 +25,7 @@ class MitreAttackAWS(BaseModel):
     Status: str
     StatusExtended: str
     ResourceId: str
+    ResourceName: str
     CheckId: str
     Muted: bool
 
@@ -37,6 +38,7 @@ class MitreAttackAzure(BaseModel):
     Provider: str
     Description: str
     SubscriptionId: str
+    Location: str
     AssessmentDate: str
     Requirements_Id: str
     Requirements_Name: str
@@ -52,6 +54,7 @@ class MitreAttackAzure(BaseModel):
     Status: str
     StatusExtended: str
     ResourceId: str
+    ResourceName: str
     CheckId: str
     Muted: bool
 
@@ -64,6 +67,7 @@ class MitreAttackGCP(BaseModel):
     Provider: str
     Description: str
     ProjectId: str
+    Location: str
     AssessmentDate: str
     Requirements_Id: str
     Requirements_Name: str
@@ -79,5 +83,6 @@ class MitreAttackGCP(BaseModel):
     Status: str
     StatusExtended: str
     ResourceId: str
+    ResourceName: str
     CheckId: str
     Muted: bool

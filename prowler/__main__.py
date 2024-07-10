@@ -48,6 +48,11 @@ from prowler.lib.outputs.compliance.cis.cis_azure import AzureCIS
 from prowler.lib.outputs.compliance.cis.cis_gcp import GCPCIS
 from prowler.lib.outputs.compliance.cis.cis_kubernetes import KubernetesCIS
 from prowler.lib.outputs.compliance.compliance import display_compliance_table
+from prowler.lib.outputs.compliance.mitre_attack.mitre_attack_aws import AWSMitreAttack
+from prowler.lib.outputs.compliance.mitre_attack.mitre_attack_azure import (
+    AzureMitreAttack,
+)
+from prowler.lib.outputs.compliance.mitre_attack.mitre_attack_gcp import GCPMitreAttack
 from prowler.lib.outputs.csv.models import CSV
 from prowler.lib.outputs.finding import Finding
 from prowler.lib.outputs.html.html import HTML
@@ -373,6 +378,19 @@ def prowler():
                     file_path=filename,
                 )
                 cis_finding.batch_write_data_to_file()
+            elif compliance_name == "mitre_attack_aws":
+                # Generate MITRE ATT&CK Finding Object
+                filename = (
+                    f"{global_provider.output_options.output_directory}/compliance/"
+                    f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
+                )
+                mitre_attack_finding = AWSMitreAttack(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    create_file_descriptor=True,
+                    file_path=filename,
+                )
+                mitre_attack_finding.batch_write_data_to_file()
 
     elif provider == "azure":
         for compliance_name in input_compliance_frameworks:
@@ -389,6 +407,19 @@ def prowler():
                     file_path=filename,
                 )
                 cis_finding.batch_write_data_to_file()
+            elif compliance_name == "mitre_attack_azure":
+                # Generate MITRE ATT&CK Finding Object
+                filename = (
+                    f"{global_provider.output_options.output_directory}/compliance/"
+                    f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
+                )
+                mitre_attack_finding = AzureMitreAttack(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    create_file_descriptor=True,
+                    file_path=filename,
+                )
+                mitre_attack_finding.batch_write_data_to_file()
 
     elif provider == "gcp":
         for compliance_name in input_compliance_frameworks:
@@ -405,6 +436,19 @@ def prowler():
                     file_path=filename,
                 )
                 cis_finding.batch_write_data_to_file()
+            elif compliance_name == "mitre_attack_gcp":
+                # Generate MITRE ATT&CK Finding Object
+                filename = (
+                    f"{global_provider.output_options.output_directory}/compliance/"
+                    f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
+                )
+                mitre_attack_finding = GCPMitreAttack(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    create_file_descriptor=True,
+                    file_path=filename,
+                )
+                mitre_attack_finding.batch_write_data_to_file()
 
     elif provider == "kubernetes":
         for compliance_name in input_compliance_frameworks:

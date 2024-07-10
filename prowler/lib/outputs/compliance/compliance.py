@@ -19,7 +19,6 @@ from prowler.lib.outputs.compliance.iso27001_2013_aws import (
 )
 from prowler.lib.outputs.compliance.mitre_attack.mitre_attack import (
     get_mitre_attack_table,
-    write_compliance_row_mitre_attack,
 )
 
 
@@ -102,7 +101,10 @@ def fill_compliance(
                     file_descriptors, finding, compliance, output_options, provider
                 )
 
+            # FIXME: Remove this once we merge all the compliance frameworks
             elif compliance.Framework == "CIS":
+                continue
+            elif compliance.Framework == "MITRE-ATTACK" and compliance.Version == "":
                 continue
 
             elif (
@@ -120,11 +122,6 @@ def fill_compliance(
             ):
                 write_compliance_row_iso27001_2013_aws(
                     file_descriptors, finding, compliance, output_options, provider
-                )
-
-            elif compliance.Framework == "MITRE-ATTACK" and compliance.Version == "":
-                write_compliance_row_mitre_attack(
-                    file_descriptors, finding, compliance, provider
                 )
 
             else:
