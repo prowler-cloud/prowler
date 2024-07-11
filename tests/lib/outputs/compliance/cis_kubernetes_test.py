@@ -5,7 +5,7 @@ from freezegun import freeze_time
 from mock import patch
 
 from prowler.lib.outputs.compliance.cis.cis_kubernetes import KubernetesCIS
-from prowler.lib.outputs.compliance.cis.models import Kubernetes
+from prowler.lib.outputs.compliance.cis.models import CISKubernetes
 from tests.lib.outputs.compliance.fixtures import CIS_1_8_KUBERNETES
 from tests.lib.outputs.fixtures.fixtures import generate_finding_output
 from tests.providers.kubernetes.kubernetes_fixtures import (
@@ -28,7 +28,7 @@ class TestKubernetesCIS:
 
         output = KubernetesCIS(findings, CIS_1_8_KUBERNETES)
         output_data = output.data[0]
-        assert isinstance(output_data, Kubernetes)
+        assert isinstance(output_data, CISKubernetes)
         assert output_data.Provider == "kubernetes"
         assert output_data.Context == KUBERNETES_CLUSTER_NAME
         assert output_data.Namespace == KUBERNETES_NAMESPACE
@@ -78,9 +78,14 @@ class TestKubernetesCIS:
             output_data.Requirements_Attributes_References
             == CIS_1_8_KUBERNETES.Requirements[0].Attributes[0].References
         )
+        assert (
+            output_data.Requirements_Attributes_DefaultValue
+            == CIS_1_8_KUBERNETES.Requirements[0].Attributes[0].DefaultValue
+        )
         assert output_data.Status == "PASS"
         assert output_data.StatusExtended == ""
         assert output_data.ResourceId == ""
+        assert output_data.ResourceName == ""
         assert output_data.CheckId == "test-check-id"
         assert output_data.Muted is False
 
@@ -105,5 +110,5 @@ class TestKubernetesCIS:
 
         mock_file.seek(0)
         content = mock_file.read()
-        expected_csv = f"PROVIDER;DESCRIPTION;ASSESSMENTDATE;REQUIREMENTS_ID;REQUIREMENTS_DESCRIPTION;REQUIREMENTS_ATTRIBUTES_SECTION;REQUIREMENTS_ATTRIBUTES_PROFILE;REQUIREMENTS_ATTRIBUTES_ASSESSMENTSTATUS;REQUIREMENTS_ATTRIBUTES_DESCRIPTION;REQUIREMENTS_ATTRIBUTES_RATIONALESTATEMENT;REQUIREMENTS_ATTRIBUTES_IMPACTSTATEMENT;REQUIREMENTS_ATTRIBUTES_REMEDIATIONPROCEDURE;REQUIREMENTS_ATTRIBUTES_AUDITPROCEDURE;REQUIREMENTS_ATTRIBUTES_ADDITIONALINFORMATION;REQUIREMENTS_ATTRIBUTES_REFERENCES;STATUS;STATUSEXTENDED;RESOURCEID;CHECKID;MUTED;CONTEXT;NAMESPACE\r\nkubernetes;This CIS Kubernetes Benchmark provides prescriptive guidance for establishing a secure configuration posture for Kubernetes v1.27.;{datetime.now()};1.1.3;Ensure that the controller manager pod specification file permissions are set to 600 or more restrictive;1.1 Control Plane Node Configuration Files;Level 1 - Master Node;Automated;Ensure that the controller manager pod specification file has permissions of `600` or more restrictive.;The controller manager pod specification file controls various parameters that set the behavior of the Controller Manager on the master node. You should restrict its file permissions to maintain the integrity of the file. The file should be writable by only the administrators on the system.;;Run the below command (based on the file location on your system) on the Control Plane node. For example,  ``` chmod 600 /etc/kubernetes/manifests/kube-controller-manager.yaml ```;Run the below command (based on the file location on your system) on the Control Plane node. For example,  ``` stat -c %a /etc/kubernetes/manifests/kube-controller-manager.yaml ```  Verify that the permissions are `600` or more restrictive.;;https://kubernetes.io/docs/admin/kube-apiserver/;PASS;;;test-check-id;False;test-cluster;test-namespace\r\n"
+        expected_csv = f"PROVIDER;DESCRIPTION;CONTEXT;NAMESPACE;ASSESSMENTDATE;REQUIREMENTS_ID;REQUIREMENTS_DESCRIPTION;REQUIREMENTS_ATTRIBUTES_SECTION;REQUIREMENTS_ATTRIBUTES_PROFILE;REQUIREMENTS_ATTRIBUTES_ASSESSMENTSTATUS;REQUIREMENTS_ATTRIBUTES_DESCRIPTION;REQUIREMENTS_ATTRIBUTES_RATIONALESTATEMENT;REQUIREMENTS_ATTRIBUTES_IMPACTSTATEMENT;REQUIREMENTS_ATTRIBUTES_REMEDIATIONPROCEDURE;REQUIREMENTS_ATTRIBUTES_AUDITPROCEDURE;REQUIREMENTS_ATTRIBUTES_ADDITIONALINFORMATION;REQUIREMENTS_ATTRIBUTES_REFERENCES;REQUIREMENTS_ATTRIBUTES_DEFAULTVALUE;STATUS;STATUSEXTENDED;RESOURCEID;RESOURCENAME;CHECKID;MUTED\r\nkubernetes;This CIS Kubernetes Benchmark provides prescriptive guidance for establishing a secure configuration posture for Kubernetes v1.27.;test-cluster;test-namespace;{datetime.now()};1.1.3;Ensure that the controller manager pod specification file permissions are set to 600 or more restrictive;1.1 Control Plane Node Configuration Files;Level 1 - Master Node;Automated;Ensure that the controller manager pod specification file has permissions of `600` or more restrictive.;The controller manager pod specification file controls various parameters that set the behavior of the Controller Manager on the master node. You should restrict its file permissions to maintain the integrity of the file. The file should be writable by only the administrators on the system.;;Run the below command (based on the file location on your system) on the Control Plane node. For example,  ``` chmod 600 /etc/kubernetes/manifests/kube-controller-manager.yaml ```;Run the below command (based on the file location on your system) on the Control Plane node. For example,  ``` stat -c %a /etc/kubernetes/manifests/kube-controller-manager.yaml ```  Verify that the permissions are `600` or more restrictive.;;https://kubernetes.io/docs/admin/kube-apiserver/;By default, the `kube-controller-manager.yaml` file has permissions of `640`.;PASS;;;;test-check-id;False\r\n"
         assert content == expected_csv

@@ -91,7 +91,6 @@ class CIS_Requirement_Attribute(BaseModel):
     AdditionalInformation: str
     DefaultValue: Optional[str]
     References: str
-    DefaultValue: Optional[str]
 
 
 # Well Architected Requirement Attribute

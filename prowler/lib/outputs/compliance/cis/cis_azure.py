@@ -2,7 +2,7 @@ from csv import DictWriter
 from venv import logger
 
 from prowler.lib.check.compliance_models import ComplianceBaseModel
-from prowler.lib.outputs.compliance.cis.models import Azure
+from prowler.lib.outputs.compliance.cis.models import CISAzure
 from prowler.lib.outputs.compliance.compliance_output import ComplianceOutput
 from prowler.lib.outputs.finding import Finding
 
@@ -43,7 +43,7 @@ class AzureCIS(ComplianceOutput):
             for requirement in compliance.Requirements:
                 if requirement.Id in finding_requirements:
                     for attribute in requirement.Attributes:
-                        compliance_row = Azure(
+                        compliance_row = CISAzure(
                             Provider=finding.provider,
                             Description=compliance.Description,
                             Subscription=finding.account_name,
