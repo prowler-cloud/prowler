@@ -1,58 +1,10 @@
-from csv import DictWriter
-
 from colorama import Fore, Style
 from tabulate import tabulate
 
-from prowler.config.config import orange_color, timestamp
-from prowler.lib.outputs.compliance.models import Check_Output_CSV_ENS_RD2022
-from prowler.lib.outputs.csv.csv import generate_csv_fields
-from prowler.lib.utils.utils import outputs_unix_timestamp
+from prowler.config.config import orange_color
 
 
-def write_compliance_row_ens_rd2022_aws(
-    file_descriptors, finding, compliance, output_options, provider
-):
-    compliance_output = "ens_rd2022_aws"
-    csv_header = generate_csv_fields(Check_Output_CSV_ENS_RD2022)
-    csv_writer = DictWriter(
-        file_descriptors[compliance_output],
-        fieldnames=csv_header,
-        delimiter=";",
-    )
-    for requirement in compliance.Requirements:
-        requirement_description = requirement.Description
-        requirement_id = requirement.Id
-        for attribute in requirement.Attributes:
-            compliance_row = Check_Output_CSV_ENS_RD2022(
-                Provider=finding.check_metadata.Provider,
-                Description=compliance.Description,
-                AccountId=provider.identity.account,
-                Region=finding.region,
-                AssessmentDate=outputs_unix_timestamp(
-                    output_options.unix_timestamp, timestamp
-                ),
-                Requirements_Id=requirement_id,
-                Requirements_Description=requirement_description,
-                Requirements_Attributes_IdGrupoControl=attribute.IdGrupoControl,
-                Requirements_Attributes_Marco=attribute.Marco,
-                Requirements_Attributes_Categoria=attribute.Categoria,
-                Requirements_Attributes_DescripcionControl=attribute.DescripcionControl,
-                Requirements_Attributes_Nivel=attribute.Nivel,
-                Requirements_Attributes_Tipo=attribute.Tipo,
-                Requirements_Attributes_Dimensiones=",".join(attribute.Dimensiones),
-                Requirements_Attributes_ModoEjecucion=attribute.ModoEjecucion,
-                Requirements_Attributes_Dependencias=",".join(attribute.Dependencias),
-                Status=finding.status,
-                StatusExtended=finding.status_extended,
-                ResourceId=finding.resource_id,
-                CheckId=finding.check_metadata.CheckID,
-                Muted=finding.muted,
-            )
-
-            csv_writer.writerow(compliance_row.__dict__)
-
-
-def get_ens_rd2022_aws_table(
+def get_ens_table(
     findings: list,
     bulk_checks_metadata: dict,
     compliance_framework: str,
@@ -78,11 +30,7 @@ def get_ens_rd2022_aws_table(
         check = bulk_checks_metadata[finding.check_metadata.CheckID]
         check_compliances = check.Compliance
         for compliance in check_compliances:
-            if (
-                compliance.Framework == "ENS"
-                and compliance.Provider == "AWS"
-                and compliance.Version == "RD2022"
-            ):
+            if compliance.Framework == "ENS" and compliance.Provider == "AWS":
                 for requirement in compliance.Requirements:
                     for attribute in requirement.Attributes:
                         marco_categoria = f"{attribute.Marco}/{attribute.Categoria}"

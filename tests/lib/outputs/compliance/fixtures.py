@@ -2,6 +2,9 @@ from prowler.lib.check.compliance_models import (
     CIS_Requirement_Attribute,
     Compliance_Requirement,
     ComplianceBaseModel,
+    ENS_Requirement_Attribute,
+    ENS_Requirement_Attribute_Nivel,
+    ENS_Requirement_Attribute_Tipos,
     Mitre_Requirement,
     Mitre_Requirement_Attribute_AWS,
     Mitre_Requirement_Attribute_Azure,
@@ -280,6 +283,34 @@ MITRE_ATTACK_GCP = ComplianceBaseModel(
                 "compute_public_address_shodan",
                 "kms_key_not_publicly_accessible",
             ],
+        )
+    ],
+)
+ENS_RD2022_AWS_NAME = "ens_rd2022_aws"
+ENS_RD2022_AWS = ComplianceBaseModel(
+    Framework="ENS",
+    Provider="AWS",
+    Version="RD2022",
+    Description="The accreditation scheme of the ENS (National Security Scheme) has been developed by the Ministry of Finance and Public Administrations and the CCN (National Cryptological Center). This includes the basic principles and minimum requirements necessary for the adequate protection of information.",
+    Requirements=[
+        Compliance_Requirement(
+            Id="op.exp.8.aws.ct.3",
+            Description="Registro de actividad",
+            Name=None,
+            Attributes=[
+                ENS_Requirement_Attribute(
+                    IdGrupoControl="op.exp.8",
+                    Marco="operacional",
+                    Categoria="explotación",
+                    DescripcionControl="Habilitar la validación de archivos en todos los trails, evitando así que estos se vean modificados o eliminados.",
+                    Tipo=ENS_Requirement_Attribute_Tipos.requisito,
+                    Nivel=ENS_Requirement_Attribute_Nivel.alto,
+                    Dimensiones=["trazabilidad"],
+                    ModoEjecucion="automático",
+                    Dependencias=[],
+                )
+            ],
+            Checks=["cloudtrail_log_file_validation_enabled"],
         )
     ],
 )

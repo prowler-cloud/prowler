@@ -7,7 +7,6 @@ from prowler.lib.logger import logger
 from prowler.lib.outputs.compliance.models import (
     Check_Output_CSV_AWS_ISO27001_2013,
     Check_Output_CSV_AWS_Well_Architected,
-    Check_Output_CSV_ENS_RD2022,
     Check_Output_CSV_Generic_Compliance,
 )
 from prowler.lib.outputs.csv.csv import generate_csv_fields
@@ -63,6 +62,8 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, provi
                     continue
                 elif "mitre_attack_" in output_mode:
                     continue
+                elif "ens_" in output_mode:
+                    continue
 
                 elif provider.type == "gcp":
                     filename = f"{output_directory}/compliance/{output_filename}_{output_mode}{csv_file_suffix}"
@@ -91,14 +92,7 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, provi
                 elif provider.type == "aws":
                     # Compliance frameworks
                     filename = f"{output_directory}/compliance/{output_filename}_{output_mode}{csv_file_suffix}"
-                    if output_mode == "ens_rd2022_aws":
-                        file_descriptor = initialize_file_descriptor(
-                            filename,
-                            Check_Output_CSV_ENS_RD2022,
-                        )
-                        file_descriptors.update({output_mode: file_descriptor})
-
-                    elif "aws_well_architected_framework" in output_mode:
+                    if "aws_well_architected_framework" in output_mode:
                         file_descriptor = initialize_file_descriptor(
                             filename,
                             Check_Output_CSV_AWS_Well_Architected,

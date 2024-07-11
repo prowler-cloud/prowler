@@ -6,10 +6,7 @@ from prowler.lib.outputs.compliance.aws_well_architected_framework import (
     write_compliance_row_aws_well_architected_framework,
 )
 from prowler.lib.outputs.compliance.cis.cis import get_cis_table
-from prowler.lib.outputs.compliance.ens_rd2022_aws import (
-    get_ens_rd2022_aws_table,
-    write_compliance_row_ens_rd2022_aws,
-)
+from prowler.lib.outputs.compliance.ens.ens import get_ens_table
 from prowler.lib.outputs.compliance.generic import (
     get_generic_compliance_table,
     write_compliance_row_generic,
@@ -96,15 +93,12 @@ def fill_compliance(
         )
 
         for compliance in check_compliances:
-            if compliance.Framework == "ENS" and compliance.Version == "RD2022":
-                write_compliance_row_ens_rd2022_aws(
-                    file_descriptors, finding, compliance, output_options, provider
-                )
-
             # FIXME: Remove this once we merge all the compliance frameworks
-            elif compliance.Framework == "CIS":
+            if compliance.Framework == "CIS":
                 continue
             elif compliance.Framework == "MITRE-ATTACK" and compliance.Version == "":
+                continue
+            elif compliance.Framework == "ENS":
                 continue
 
             elif (
@@ -144,8 +138,8 @@ def display_compliance_table(
     compliance_overview: bool,
 ):
     try:
-        if "ens_rd2022_aws" == compliance_framework:
-            get_ens_rd2022_aws_table(
+        if "ens_" in compliance_framework:
+            get_ens_table(
                 findings,
                 bulk_checks_metadata,
                 compliance_framework,
