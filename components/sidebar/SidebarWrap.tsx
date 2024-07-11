@@ -2,7 +2,7 @@
 
 import { Icon } from "@iconify/react";
 import { Button, ScrollShadow, Spacer, Tooltip } from "@nextui-org/react";
-import React from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useMediaQuery } from "usehooks-ts";
 
 import { cn } from "@/utils/cn";
@@ -14,14 +14,30 @@ import { sectionItemsWithTeams } from "./SidebarItems";
 import UserAvatar from "./UserAvatar";
 
 export const SidebarWrap = () => {
-  const [isCollapsed, setIsCollapsed] = React.useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
+
   const isMobile = useMediaQuery("(max-width: 768px)");
 
   const isCompact = isCollapsed || isMobile;
 
-  const onToggle = React.useCallback(() => {
-    setIsCollapsed((prev) => !prev);
+  useEffect(() => {
+    const savedState = localStorage.getItem("isCollapsed");
+    if (savedState !== null) {
+      setIsCollapsed(JSON.parse(savedState));
+    }
+    setIsLoaded(true);
   }, []);
+
+  const onToggle = useCallback(() => {
+    setIsCollapsed((prev) => {
+      const newState = !prev;
+      localStorage.setItem("isCollapsed", JSON.stringify(newState));
+      return newState;
+    });
+  }, []);
+
+  if (!isLoaded) return null;
 
   return (
     <div
