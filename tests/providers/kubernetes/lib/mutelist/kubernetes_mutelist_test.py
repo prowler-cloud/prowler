@@ -8,7 +8,7 @@ MUTELIST_FIXTURE_PATH = (
 )
 
 
-class TestMutelistGCP:
+class TestMutelistKubernetes:
     def test_get_mutelist_file_from_local_file(self):
         mutelist = MutelistKubernetes(mutelist_path=MUTELIST_FIXTURE_PATH)
 

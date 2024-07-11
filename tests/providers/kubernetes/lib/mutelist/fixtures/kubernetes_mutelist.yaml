@@ -6,7 +6,7 @@
 ###########################  MUTELIST EXAMPLE  ###########################
 Mutelist:
   Accounts:
-    "project_1":
+    "cluster_1":
       Checks:
         "controllermanager_bind_address":
           Regions:
