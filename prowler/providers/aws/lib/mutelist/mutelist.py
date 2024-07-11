@@ -14,7 +14,7 @@ class MutelistAWS(Mutelist):
     def __init__(
         self,
         mutelist_content: dict = {},
-        mutelist_path: str = "",
+        mutelist_path: str = None,
         session: Session = None,
         aws_account_id: str = "",
     ) -> "MutelistAWS":

@@ -316,7 +316,8 @@ class TestMutelistAWS:
         mutelist = MutelistAWS(mutelist_content=mutelist_fixture)
 
         assert not mutelist.validate_mutelist()
-        assert mutelist.mutelist == mutelist_fixture
+        assert mutelist.mutelist == {}
+        assert mutelist.mutelist_file_path is None
 
     def test_mutelist_findings_only_wildcard(self):
         # Mutelist
