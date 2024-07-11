@@ -15,6 +15,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir poetry
 
 COPY src/backend/  ./backend/
+COPY docker-entrypoint.sh ./docker-entrypoint.sh
 
 ENV PATH="/home/prowler/.local/bin:$PATH"
 
@@ -32,10 +33,9 @@ RUN apk --no-cache add curl=8.8.0-r0 vim=9.1.0414-r0
 
 USER prowler
 
-ENTRYPOINT ["poetry", "run", "python", "manage.py", "runserver", "0.0.0.0:8000"]
-
+ENTRYPOINT ["../docker-entrypoint.sh", "dev"]
 
 # Production image
 FROM build
 
-ENTRYPOINT ["poetry", "run", "gunicorn", "-c", "backend/guniconf.py", "backend.wsgi:application"]
+ENTRYPOINT ["../docker-entrypoint.sh", "prod"]
