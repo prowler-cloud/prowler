@@ -25,9 +25,9 @@ class MitreAttackAWS(BaseModel):
     Status: str
     StatusExtended: str
     ResourceId: str
-    ResourceName: str
     CheckId: str
     Muted: bool
+    ResourceName: str
 
 
 class MitreAttackAzure(BaseModel):
@@ -38,7 +38,6 @@ class MitreAttackAzure(BaseModel):
     Provider: str
     Description: str
     SubscriptionId: str
-    Location: str
     AssessmentDate: str
     Requirements_Id: str
     Requirements_Name: str
@@ -54,9 +53,10 @@ class MitreAttackAzure(BaseModel):
     Status: str
     StatusExtended: str
     ResourceId: str
-    ResourceName: str
     CheckId: str
     Muted: bool
+    ResourceName: str
+    Location: str
 
 
 class MitreAttackGCP(BaseModel):
@@ -67,7 +67,6 @@ class MitreAttackGCP(BaseModel):
     Provider: str
     Description: str
     ProjectId: str
-    Location: str
     AssessmentDate: str
     Requirements_Id: str
     Requirements_Name: str
@@ -83,6 +82,11 @@ class MitreAttackGCP(BaseModel):
     Status: str
     StatusExtended: str
     ResourceId: str
-    ResourceName: str
     CheckId: str
     Muted: bool
+    ResourceName: str
+    Location: str
+
+
+# TODO: Create a parent class for the common fields of MITRE ATT&CK and have the specific classes from each provider to inherit from it.
+# It is not done yet because it is needed to respect the current order of the fields in the output file.
