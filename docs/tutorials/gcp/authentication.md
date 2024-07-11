@@ -35,7 +35,7 @@ prowler gcp --impersonate-service-account <service-account-email>
 
 This argument will use the default credentials to impersonate the service account provided.
 
-# GCP Service APIs
+## Service APIs
 
 Prowler will use the Google Cloud APIs to get the information needed to perform the checks. Make sure that the following APIs are enabled in the project:
 
