@@ -8,14 +8,11 @@ class MutelistAzure(Mutelist):
     def is_finding_muted(
         self,
         finding: Any,
-        subscription: str,
     ) -> bool:
         return self.is_muted(
-            subscription,
+            finding.subscription,
             finding.check_metadata.CheckID,
-            # TODO: add region to the findings when we add Azure Locations
-            # finding.region,
-            "",
+            finding.location,
             finding.resource_name,
             unroll_tags(finding.resource_tags),
         )

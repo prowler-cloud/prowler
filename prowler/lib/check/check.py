@@ -715,23 +715,14 @@ def execute(
 
         # Mutelist findings
         if hasattr(global_provider, "mutelist") and global_provider.mutelist:
-            is_finding_muted_args = {}
             # TODO: make this prettier
+            is_finding_muted_args = {}
             if global_provider.type == "aws":
                 is_finding_muted_args["aws_account_id"] = (
                     global_provider.identity.account
                 )
-            elif global_provider.type == "azure":
-                is_finding_muted_args["subscription"] = global_provider.identity.account
-
-            elif global_provider.type == "gcp":
-                is_finding_muted_args["aws_account_id"] = (
-                    global_provider.identity.account
-                )
             elif global_provider.type == "kubernetes":
-                is_finding_muted_args["aws_account_id"] = (
-                    global_provider.identity.account
-                )
+                is_finding_muted_args["cluster"] = global_provider.identity.cluster
 
             for finding in check_findings:
                 is_finding_muted_args["finding"] = finding

@@ -46,7 +46,6 @@ class TestMutelistAzure:
                 "subscription_1": {
                     "Checks": {
                         "check_test": {
-                            # TODO: review this with Sergio
                             "Regions": ["*"],
                             "Resources": ["test_resource"],
                         }
@@ -60,8 +59,10 @@ class TestMutelistAzure:
         finding = MagicMock
         finding.check_metadata = MagicMock
         finding.check_metadata.CheckID = "check_test"
+        finding.location = "West Europe"
         finding.status = "FAIL"
         finding.resource_name = "test_resource"
         finding.resource_tags = []
+        finding.subscription = "subscription_1"
 
-        assert mutelist.is_finding_muted(finding, "subscription_1")
+        assert mutelist.is_finding_muted(finding)

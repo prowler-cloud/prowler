@@ -44,7 +44,6 @@ class TestMutelistGCP:
                 "project_1": {
                     "Checks": {
                         "check_test": {
-                            # TODO: review this with Sergio
                             "Regions": ["*"],
                             "Resources": ["test_resource"],
                         }
@@ -62,5 +61,6 @@ class TestMutelistGCP:
         finding.resource_name = "test_resource"
         finding.location = "test-location"
         finding.resource_tags = []
+        finding.project_id = "project_1"
 
-        assert mutelist.is_finding_muted(finding, "project_1")
+        assert mutelist.is_finding_muted(finding)
