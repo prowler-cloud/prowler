@@ -1,4 +1,5 @@
 from prowler.lib.check.compliance_models import (
+    AWS_Well_Architected_Requirement_Attribute,
     CIS_Requirement_Attribute,
     Compliance_Requirement,
     ComplianceBaseModel,
@@ -321,4 +322,32 @@ NOT_PRESENT_COMPLIANCE = ComplianceBaseModel(
     Version="NOT_EXISTENT",
     Description="NOT_EXISTENT",
     Requirements=[],
+)
+AWS_WELL_ARCHITECTED_NAME = "aws_well_architected_framework_security_pillar_aws"
+AWS_WELL_ARCHITECTED = ComplianceBaseModel(
+    Framework="AWS-Well-Architected-Framework-Security-Pillar",
+    Provider="AWS",
+    Version="",
+    Description="Best Practices for AWS Well-Architected Framework Security Pillar. The focus of this framework is the security pillar of the AWS Well-Architected Framework. It provides guidance to help you apply best practices, current recommendations in the design, delivery, and maintenance of secure AWS workloads.",
+    Requirements=[
+        Compliance_Requirement(
+            Id="SEC01-BP01",
+            Description="Establish common guardrails and isolation between environments (such as production, development, and test) and workloads through a multi-account strategy. Account-level separation is strongly recommended, as it provides a strong isolation boundary for security, billing, and access.",
+            Name=None,
+            Attributes=[
+                AWS_Well_Architected_Requirement_Attribute(
+                    Name="SEC01-BP01 Separate workloads using accounts",
+                    WellArchitectedQuestionId="securely-operate",
+                    WellArchitectedPracticeId="sec_securely_operate_multi_accounts",
+                    Section="Security foundations",
+                    SubSection="AWS account management and separation",
+                    LevelOfRisk="High",
+                    AssessmentMethod="Automated",
+                    Description="Establish common guardrails and isolation between environments (such as production, development, and test) and workloads through a multi-account strategy. Account-level separation is strongly recommended, as it provides a strong isolation boundary for security, billing, and access.",
+                    ImplementationGuidanceUrl="https://docs.aws.amazon.com/wellarchitected/latest/security-pillar/sec_securely_operate_multi_accounts.html#implementation-guidance.",
+                )
+            ],
+            Checks=["organizations_account_part_of_organizations"],
+        ),
+    ],
 )

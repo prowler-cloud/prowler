@@ -2,9 +2,6 @@ import sys
 
 from prowler.lib.check.models import Check_Report
 from prowler.lib.logger import logger
-from prowler.lib.outputs.compliance.aws_well_architected_framework import (
-    write_compliance_row_aws_well_architected_framework,
-)
 from prowler.lib.outputs.compliance.cis.cis import get_cis_table
 from prowler.lib.outputs.compliance.ens.ens import get_ens_table
 from prowler.lib.outputs.compliance.generic import (
@@ -100,17 +97,8 @@ def fill_compliance(
                 continue
             elif compliance.Framework == "ENS":
                 continue
-            elif compliance.Framework == "MITRE-ATTACK" and compliance.Version == "":
+            elif "AWS-Well-Architected-Framework" in compliance.Framework:
                 continue
-
-            elif (
-                "AWS-Well-Architected-Framework" in compliance.Framework
-                and compliance.Provider == "AWS"
-            ):
-                write_compliance_row_aws_well_architected_framework(
-                    file_descriptors, finding, compliance, output_options, provider
-                )
-
             elif (
                 compliance.Framework == "ISO27001"
                 and compliance.Version == "2013"

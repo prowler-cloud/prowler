@@ -43,6 +43,9 @@ from prowler.lib.check.custom_checks_metadata import (
 from prowler.lib.cli.parser import ProwlerArgumentParser
 from prowler.lib.logger import logger, set_logging_config
 from prowler.lib.outputs.asff.asff import ASFF
+from prowler.lib.outputs.compliance.aws_well_architected.aws_well_architected import (
+    AWSWellArchitected,
+)
 from prowler.lib.outputs.compliance.cis.cis_aws import AWSCIS
 from prowler.lib.outputs.compliance.cis.cis_azure import AzureCIS
 from prowler.lib.outputs.compliance.cis.cis_gcp import GCPCIS
@@ -405,6 +408,19 @@ def prowler():
                     file_path=filename,
                 )
                 ens_finding.batch_write_data_to_file()
+            elif compliance_name.startswith("aws_well_architected_framework"):
+                # Generate AWS Well-Architected Finding Object
+                filename = (
+                    f"{global_provider.output_options.output_directory}/compliance/"
+                    f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
+                )
+                aws_well_architected_finding = AWSWellArchitected(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    create_file_descriptor=True,
+                    file_path=filename,
+                )
+                aws_well_architected_finding.batch_write_data_to_file()
 
     elif provider == "azure":
         for compliance_name in input_compliance_frameworks:

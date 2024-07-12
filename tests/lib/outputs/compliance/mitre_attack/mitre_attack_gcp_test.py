@@ -12,7 +12,7 @@ from tests.lib.outputs.fixtures.fixtures import generate_finding_output
 from tests.providers.gcp.gcp_fixtures import GCP_PROJECT_ID
 
 
-class TestGCPCIS:
+class TestGCPMITREAttack:
     def test_output_transform(self):
         findings = [
             generate_finding_output(
