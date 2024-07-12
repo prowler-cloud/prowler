@@ -27,6 +27,7 @@ class MitreAttackAWS(BaseModel):
     ResourceId: str
     CheckId: str
     Muted: bool
+    ResourceName: str
 
 
 class MitreAttackAzure(BaseModel):
@@ -54,6 +55,8 @@ class MitreAttackAzure(BaseModel):
     ResourceId: str
     CheckId: str
     Muted: bool
+    ResourceName: str
+    Location: str
 
 
 class MitreAttackGCP(BaseModel):
@@ -81,3 +84,9 @@ class MitreAttackGCP(BaseModel):
     ResourceId: str
     CheckId: str
     Muted: bool
+    ResourceName: str
+    Location: str
+
+
+# TODO: Create a parent class for the common fields of MITRE ATT&CK and have the specific classes from each provider to inherit from it.
+# It is not done yet because it is needed to respect the current order of the fields in the output file.

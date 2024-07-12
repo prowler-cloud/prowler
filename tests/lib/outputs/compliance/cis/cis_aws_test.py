@@ -78,7 +78,6 @@ class TestAWSCIS:
     def test_batch_write_data_to_file(self):
         mock_file = StringIO()
         findings = [generate_finding_output(compliance={"CIS-1.4": "2.1.3"})]
-        # Clear the data from CSV class
         output = AWSCIS(findings, CIS_1_4_AWS)
         output._file_descriptor = mock_file
 
