@@ -14,10 +14,9 @@
     "module": "esnext",
     "moduleResolution": "node",
     "noEmit": true,
+    "baseUrl": ".",
     "paths": {
-      "@/*": [
-        "./*"
-      ]
+      "@/*": ["./*"]
     },
     "plugins": [
       {

@@ -8,7 +8,7 @@ import { SidebarWrap } from "@/components";
 import { fontSans } from "@/config/fonts";
 import { siteConfig } from "@/config/site";
 
-import { Providers } from "./providers";
+import { Providers } from "../providers";
 
 export const metadata: Metadata = {
   title: {
@@ -45,7 +45,9 @@ export default function RootLayout({
         <Providers themeProps={{ attribute: "class", defaultTheme: "light" }}>
           <div className="flex items-center h-dvh w-full justify-center overflow-hidden">
             <SidebarWrap />
-            <main className="w-full flex-1 flex-col p-4">{children}</main>
+            <main className="h-full w-full flex-1 flex-col p-4 overflow-y-scroll">
+              {children}
+            </main>
           </div>
         </Providers>
       </body>

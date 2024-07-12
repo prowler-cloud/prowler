@@ -161,8 +161,9 @@ export const SidebarWrap = () => {
         </Tooltip>
       </div>
       <div
-        className={clsx("mt-auto flex justify-end gap-3 items-baseline", {
-          "flex-col items-center": isCompact,
+        className={clsx("mt-auto flex justify-end gap-3", {
+          " flex-col items-center ": isCompact,
+          " items-baseline ": !isCompact,
         })}
       >
         <Tooltip
