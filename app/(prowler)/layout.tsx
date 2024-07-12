@@ -45,7 +45,9 @@ export default function RootLayout({
         <Providers themeProps={{ attribute: "class", defaultTheme: "dark" }}>
           <div className="flex items-center h-dvh w-full justify-center overflow-hidden">
             <SidebarWrap />
-            <main className="w-full flex-1 flex-col p-4">{children}</main>
+            <main className="w-full flex-1 flex-col p-4 mb-auto">
+              {children}
+            </main>
           </div>
         </Providers>
       </body>
