@@ -12,7 +12,7 @@ from tests.lib.outputs.fixtures.fixtures import generate_finding_output
 from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, AWS_REGION_EU_WEST_1
 
 
-class TestAWSCIS:
+class TestAWSMITREAttack:
     def test_output_transform(self):
         findings = [generate_finding_output(compliance={"MITRE-ATTACK": "T1190"})]
 

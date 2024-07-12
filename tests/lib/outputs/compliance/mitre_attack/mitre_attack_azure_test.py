@@ -17,7 +17,7 @@ from tests.providers.azure.azure_fixtures import (
 )
 
 
-class TestAzureCIS:
+class TestAzureMITREAttack:
     def test_output_transform(self):
         findings = [
             generate_finding_output(
