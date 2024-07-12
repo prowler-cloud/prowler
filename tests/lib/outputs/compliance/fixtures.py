@@ -6,6 +6,7 @@ from prowler.lib.check.compliance_models import (
     ENS_Requirement_Attribute,
     ENS_Requirement_Attribute_Nivel,
     ENS_Requirement_Attribute_Tipos,
+    ISO27001_2013_Requirement_Attribute,
     Mitre_Requirement,
     Mitre_Requirement_Attribute_AWS,
     Mitre_Requirement_Attribute_Azure,
@@ -348,6 +349,29 @@ AWS_WELL_ARCHITECTED = ComplianceBaseModel(
                 )
             ],
             Checks=["organizations_account_part_of_organizations"],
+        ),
+    ],
+)
+AWISO27001_2013_AWS_NAME = "iso27001_2013_aws"
+ISO27001_2013_AWS = ComplianceBaseModel(
+    Framework="ISO27001",
+    Provider="AWS",
+    Version="2013",
+    Description="ISO (the International Organization for Standardization) and IEC (the International Electrotechnical Commission) form the specialized system for worldwide standardization. National bodies that are members of ISO or IEC participate in the development of International Standards through technical committees established by the respective organization to deal with particular fields of technical activity. ISO and IEC technical committees collaborate in fields of mutual interest. Other international organizations, governmental and non-governmental, in liaison with ISO and IEC, also take part in the work.",
+    Requirements=[
+        Compliance_Requirement(
+            Id="A.10.1",
+            Description="Setup Encryption at rest for RDS instances",
+            Name="Cryptographic Controls",
+            Attributes=[
+                ISO27001_2013_Requirement_Attribute(
+                    Category="A.10 Cryptography",
+                    Objetive_ID="A.10.1",
+                    Objetive_Name="Cryptographic Controls",
+                    Check_Summary="Setup Encryption at rest for RDS instances",
+                )
+            ],
+            Checks=["rds_instance_storage_encrypted"],
         ),
     ],
 )
