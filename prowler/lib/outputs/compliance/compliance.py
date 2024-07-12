@@ -100,6 +100,8 @@ def fill_compliance(
                 continue
             elif compliance.Framework == "ENS":
                 continue
+            elif compliance.Framework == "MITRE-ATTACK" and compliance.Version == "":
+                continue
 
             elif (
                 "AWS-Well-Architected-Framework" in compliance.Framework

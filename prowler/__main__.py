@@ -392,7 +392,7 @@ def prowler():
                     file_path=filename,
                 )
                 mitre_attack_finding.batch_write_data_to_file()
-            if compliance_name.startswith("ens_"):
+            elif compliance_name.startswith("ens_"):
                 # Generate ENS Finding Object
                 filename = (
                     f"{global_provider.output_options.output_directory}/compliance/"
