@@ -15,7 +15,7 @@ import {
 import { ThemeSwitch } from "../../ThemeSwitch";
 import Sidebar from "./Sidebar";
 import { sectionItemsWithTeams } from "./SidebarItems";
-import UserAvatar from "./UserAvatar";
+import { UserAvatar } from "./UserAvatar";
 
 export const SidebarWrap = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);

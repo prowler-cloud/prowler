@@ -6,7 +6,7 @@ import React from "react";
 
 import { cn } from "@/utils/cn";
 
-const TeamAvatar = React.forwardRef<HTMLSpanElement, AvatarProps>(
+export const TeamAvatar = React.forwardRef<HTMLSpanElement, AvatarProps>(
   ({ name, className, classNames = {}, ...props }, ref) => (
     <Avatar
       {...props}
@@ -34,5 +34,3 @@ const TeamAvatar = React.forwardRef<HTMLSpanElement, AvatarProps>(
 );
 
 TeamAvatar.displayName = "TeamAvatar";
-
-export default TeamAvatar;

@@ -10,7 +10,7 @@ interface UserAvatarProps {
   position: string;
   isCompact: boolean;
 }
-const UserAvatar: React.FC<UserAvatarProps> = ({
+export const UserAvatar: React.FC<UserAvatarProps> = ({
   userName,
   position,
   isCompact = false,
@@ -31,5 +31,3 @@ const UserAvatar: React.FC<UserAvatarProps> = ({
     </div>
   );
 };
-
-export default UserAvatar;
