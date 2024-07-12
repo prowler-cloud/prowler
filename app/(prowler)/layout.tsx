@@ -42,12 +42,10 @@ export default function RootLayout({
           fontSans.variable,
         )}
       >
-        <Providers themeProps={{ attribute: "class", defaultTheme: "light" }}>
+        <Providers themeProps={{ attribute: "class", defaultTheme: "dark" }}>
           <div className="flex items-center h-dvh w-full justify-center overflow-hidden">
             <SidebarWrap />
-            <main className="h-full w-full flex-1 flex-col p-4 overflow-y-scroll">
-              {children}
-            </main>
+            <main className="w-full flex-1 flex-col p-4">{children}</main>
           </div>
         </Providers>
       </body>
