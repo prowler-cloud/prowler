@@ -2,9 +2,8 @@
 
 import type { AvatarProps } from "@nextui-org/react";
 import { Avatar } from "@nextui-org/react";
+import clsx from "clsx";
 import React from "react";
-
-import { cn } from "@/utils/cn";
 
 export const TeamAvatar = React.forwardRef<HTMLSpanElement, AvatarProps>(
   ({ name, className, classNames = {}, ...props }, ref) => (
@@ -13,12 +12,12 @@ export const TeamAvatar = React.forwardRef<HTMLSpanElement, AvatarProps>(
       ref={ref}
       classNames={{
         ...classNames,
-        base: cn(
+        base: clsx(
           "bg-transparent border border-divider",
           classNames?.base,
           className,
         ),
-        name: cn(
+        name: clsx(
           "text-default-500 text-[0.6rem] font-semibold",
           classNames?.name,
         ),

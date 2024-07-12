@@ -6,8 +6,6 @@ import clsx from "clsx";
 import React, { useCallback, useEffect, useState } from "react";
 import { useMediaQuery } from "usehooks-ts";
 
-import { cn } from "@/utils/cn";
-
 import {
   ProwlerExtended,
   ProwlerShort,
@@ -90,7 +88,7 @@ export const SidebarWrap = () => {
       </ScrollShadow>
       <Spacer y={2} />
       <div
-        className={cn("mt-auto flex flex-col", {
+        className={clsx("mt-auto flex flex-col", {
           "items-center": isCompact,
         })}
       >
@@ -101,7 +99,7 @@ export const SidebarWrap = () => {
         >
           <Button
             fullWidth
-            className={cn(
+            className={clsx(
               "justify-start truncate text-default-500 data-[hover=true]:text-foreground",
               {
                 "justify-center": isCompact,
@@ -132,7 +130,7 @@ export const SidebarWrap = () => {
         </Tooltip>
         <Tooltip content="Log Out" isDisabled={!isCompact} placement="right">
           <Button
-            className={cn(
+            className={clsx(
               "justify-start text-default-500 data-[hover=true]:text-foreground",
               {
                 "justify-center": isCompact,
@@ -163,7 +161,7 @@ export const SidebarWrap = () => {
         </Tooltip>
       </div>
       <div
-        className={cn("mt-auto flex justify-end gap-3 items-baseline", {
+        className={clsx("mt-auto flex justify-end gap-3 items-baseline", {
           "flex-col items-center": isCompact,
         })}
       >
@@ -172,7 +170,7 @@ export const SidebarWrap = () => {
           placement={isCompact ? "right" : "top"}
         >
           <div
-            className={cn(
+            className={clsx(
               "text-default-500 data-[hover=true]:text-foreground px-0",
               {
                 "justify-center mt-3": isCompact,
@@ -187,7 +185,7 @@ export const SidebarWrap = () => {
           placement={isCompact ? "right" : "top"}
         >
           <Button
-            className={cn(
+            className={clsx(
               "text-default-500 data-[hover=true]:text-foreground px-0",
               {
                 "justify-center": isCompact,
