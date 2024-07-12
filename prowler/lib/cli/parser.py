@@ -263,7 +263,7 @@ Detailed documentation at https://docs.prowler.com
         group.add_argument(
             "--compliance",
             nargs="+",
-            help="Compliance Framework to check against for. The format should be the following: framework_version_provider (e.g.: ens_rd2022_aws)",
+            help="Compliance Framework to check against for. The format should be the following: framework_version_provider (e.g.: cis_3.0_aws)",
             choices=available_compliance_frameworks,
         )
         group.add_argument(
