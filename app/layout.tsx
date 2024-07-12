@@ -4,10 +4,10 @@ import clsx from "clsx";
 import { Metadata, Viewport } from "next";
 import React from "react";
 
+import { SidebarWrap } from "@/components";
 import { fontSans } from "@/config/fonts";
 import { siteConfig } from "@/config/site";
 
-import { SidebarWrap } from "../components/sidebar/SidebarWrap";
 import { Providers } from "./providers";
 
 export const metadata: Metadata = {
@@ -42,7 +42,7 @@ export default function RootLayout({
           fontSans.variable,
         )}
       >
-        <Providers themeProps={{ attribute: "class", defaultTheme: "dark" }}>
+        <Providers themeProps={{ attribute: "class", defaultTheme: "light" }}>
           <div className="flex items-center h-dvh w-full justify-center overflow-hidden">
             <SidebarWrap />
             <main className="w-full flex-1 flex-col p-4">{children}</main>

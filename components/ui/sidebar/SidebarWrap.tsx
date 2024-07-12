@@ -2,13 +2,17 @@
 
 import { Icon } from "@iconify/react";
 import { Button, ScrollShadow, Spacer, Tooltip } from "@nextui-org/react";
+import clsx from "clsx";
 import React, { useCallback, useEffect, useState } from "react";
 import { useMediaQuery } from "usehooks-ts";
 
 import { cn } from "@/utils/cn";
 
-import { AcmeIcon } from "../acme";
-import { ThemeSwitch } from "../ThemeSwitch";
+import {
+  ProwlerExtended,
+  ProwlerShort,
+} from "../../icons/prowler/ProwlerIcons";
+import { ThemeSwitch } from "../../ThemeSwitch";
 import Sidebar from "./Sidebar";
 import { sectionItemsWithTeams } from "./SidebarItems";
 import UserAvatar from "./UserAvatar";
@@ -41,32 +45,33 @@ export const SidebarWrap = () => {
 
   return (
     <div
-      className={cn(
-        "relative flex h-screen w-72 flex-col !border-r-small border-divider p-6 transition-width",
+      className={clsx(
+        "relative flex h-screen flex-col !border-r-small border-divider  transition-width",
         {
+          "w-72 p-6": !isCompact,
           "w-16 items-center px-2 py-6": isCompact,
         },
       )}
     >
       <div
-        className={cn(
-          "flex items-center gap-3 px-3",
-
-          {
-            "justify-center gap-0": isCompact,
-          },
-        )}
+        className={clsx("flex items-center gap-3 px-3", {
+          "justify-center gap-0": isCompact,
+        })}
       >
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-foreground">
-          <AcmeIcon className="text-background" />
-        </div>
-        <span
-          className={cn("text-small font-bold uppercase opacity-100", {
-            "w-0 opacity-0": isCompact,
+        <div
+          className={clsx({
+            hidden: !isCompact,
           })}
         >
-          Prowler
-        </span>
+          <ProwlerShort />
+        </div>
+        <div
+          className={clsx({
+            hidden: isCompact,
+          })}
+        >
+          <ProwlerExtended />
+        </div>
       </div>
       <Spacer y={8} />
 
