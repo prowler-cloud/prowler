@@ -6,7 +6,6 @@ from prowler.config.config import csv_file_suffix
 from prowler.lib.logger import logger
 from prowler.lib.outputs.compliance.models import (
     Check_Output_CSV_AWS_ISO27001_2013,
-    Check_Output_CSV_AWS_Well_Architected,
     Check_Output_CSV_Generic_Compliance,
 )
 from prowler.lib.outputs.csv.csv import generate_csv_fields
