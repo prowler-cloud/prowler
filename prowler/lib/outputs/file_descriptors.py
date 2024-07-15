@@ -4,10 +4,7 @@ from typing import Any
 
 from prowler.config.config import csv_file_suffix
 from prowler.lib.logger import logger
-from prowler.lib.outputs.compliance.models import (
-    Check_Output_CSV_AWS_ISO27001_2013,
-    Check_Output_CSV_Generic_Compliance,
-)
+from prowler.lib.outputs.compliance.models import Check_Output_CSV_Generic_Compliance
 from prowler.lib.outputs.csv.csv import generate_csv_fields
 from prowler.lib.outputs.output import Finding
 from prowler.lib.utils.utils import file_exists, open_file
@@ -65,6 +62,8 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, provi
                     continue
                 elif "aws_well_architected_framework" in output_mode:
                     continue
+                elif "iso27001_" in output_mode:
+                    continue
 
                 elif provider.type == "gcp":
                     filename = f"{output_directory}/compliance/{output_filename}_{output_mode}{csv_file_suffix}"
@@ -93,20 +92,12 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, provi
                 elif provider.type == "aws":
                     # Compliance frameworks
                     filename = f"{output_directory}/compliance/{output_filename}_{output_mode}{csv_file_suffix}"
-                    if output_mode == "iso27001_2013_aws":
-                        file_descriptor = initialize_file_descriptor(
-                            filename,
-                            Check_Output_CSV_AWS_ISO27001_2013,
-                        )
-                        file_descriptors.update({output_mode: file_descriptor})
-
-                    else:
-                        # Generic Compliance framework
-                        file_descriptor = initialize_file_descriptor(
-                            filename,
-                            Check_Output_CSV_Generic_Compliance,
-                        )
-                        file_descriptors.update({output_mode: file_descriptor})
+                    # Generic Compliance framework
+                    file_descriptor = initialize_file_descriptor(
+                        filename,
+                        Check_Output_CSV_Generic_Compliance,
+                    )
+                    file_descriptors.update({output_mode: file_descriptor})
 
     except Exception as error:
         logger.error(

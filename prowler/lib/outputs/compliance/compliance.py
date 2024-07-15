@@ -8,9 +8,6 @@ from prowler.lib.outputs.compliance.generic import (
     get_generic_compliance_table,
     write_compliance_row_generic,
 )
-from prowler.lib.outputs.compliance.iso27001_2013_aws import (
-    write_compliance_row_iso27001_2013_aws,
-)
 from prowler.lib.outputs.compliance.mitre_attack.mitre_attack import (
     get_mitre_attack_table,
 )
@@ -104,9 +101,7 @@ def fill_compliance(
                 and compliance.Version == "2013"
                 and compliance.Provider == "AWS"
             ):
-                write_compliance_row_iso27001_2013_aws(
-                    file_descriptors, finding, compliance, output_options, provider
-                )
+                continue
 
             else:
                 write_compliance_row_generic(
