@@ -1,7 +1,15 @@
 from prowler.lib.check.compliance_models import (
+    AWS_Well_Architected_Requirement_Attribute,
     CIS_Requirement_Attribute,
     Compliance_Requirement,
     ComplianceBaseModel,
+    ENS_Requirement_Attribute,
+    ENS_Requirement_Attribute_Nivel,
+    ENS_Requirement_Attribute_Tipos,
+    Mitre_Requirement,
+    Mitre_Requirement_Attribute_AWS,
+    Mitre_Requirement_Attribute_Azure,
+    Mitre_Requirement_Attribute_GCP,
 )
 
 CIS_1_4_AWS_NAME = "cis_1.4_aws"
@@ -147,6 +155,166 @@ CIS_1_5_AWS = ComplianceBaseModel(
     ],
 )
 
+MITRE_ATTACK_AWS_NAME = "mitre_attack_aws"
+MITRE_ATTACK_AWS = ComplianceBaseModel(
+    Framework="MITRE-ATTACK",
+    Provider="AWS",
+    Version="",
+    Description="MITRE ATT&CK® is a globally-accessible knowledge base of adversary tactics and techniques based on real-world observations. The ATT&CK knowledge base is used as a foundation for the development of specific threat models and methodologies in the private sector, in government, and in the cybersecurity product and service community.",
+    Requirements=[
+        Mitre_Requirement(
+            Name="Exploit Public-Facing Application",
+            Id="T1190",
+            Tactics=["Initial Access"],
+            SubTechniques=[],
+            Description="Adversaries may attempt to exploit a weakness in an Internet-facing host or system to initially access a network. The weakness in the system can be a software bug, a temporary glitch, or a misconfiguration.",
+            Platforms=["Containers", "IaaS", "Linux", "Network", "Windows", "macOS"],
+            TechniqueURL="https://attack.mitre.org/techniques/T1190/",
+            Attributes=[
+                Mitre_Requirement_Attribute_AWS(
+                    AWSService="AWS CloudEndure Disaster Recovery",
+                    Category="Respond",
+                    Value="Significant",
+                    Comment="AWS CloudEndure Disaster Recovery enables the replication and recovery of servers into AWS Cloud. In the event that a public-facing application or server is compromised, AWS CloudEndure can be used to provision an instance of the server from a previous point in time within minutes. As a result, this mapping is given a score of Significant.",
+                )
+            ],
+            Checks=[
+                "drs_job_exist",
+                "config_recorder_all_regions_enabled",
+                "rds_instance_minor_version_upgrade_enabled",
+                "rds_instance_backup_enabled",
+                "securityhub_enabled",
+                "elbv2_waf_acl_attached",
+                "guardduty_is_enabled",
+                "inspector2_is_enabled",
+                "inspector2_active_findings_exist",
+                "awslambda_function_not_publicly_accessible",
+                "ec2_instance_public_ip",
+            ],
+        )
+    ],
+)
+MITRE_ATTACK_AZURE_NAME = "mitre_attack_azure"
+MITRE_ATTACK_AZURE = ComplianceBaseModel(
+    Framework="MITRE-ATTACK",
+    Provider="Azure",
+    Version="",
+    Description="MITRE ATT&CK® is a globally-accessible knowledge base of adversary tactics and techniques based on real-world observations. The ATT&CK knowledge base is used as a foundation for the development of specific threat models and methodologies in the private sector, in government, and in the cybersecurity product and service community.",
+    Requirements=[
+        Mitre_Requirement(
+            Name="Exploit Public-Facing Application",
+            Id="T1190",
+            Tactics=["Initial Access"],
+            SubTechniques=[],
+            Description="Adversaries may attempt to exploit a weakness in an Internet-facing host or system to initially access a network. The weakness in the system can be a software bug, a temporary glitch, or a misconfiguration.",
+            Platforms=["Containers", "IaaS", "Linux", "Network", "Windows", "macOS"],
+            TechniqueURL="https://attack.mitre.org/techniques/T1190/",
+            Attributes=[
+                Mitre_Requirement_Attribute_Azure(
+                    AzureService="Azure SQL Database",
+                    Category="Detect",
+                    Value="Minimal",
+                    Comment="This control may alert on usage of faulty SQL statements. This generates an alert for a possible SQL injection by an application. Alerts may not be generated on usage of valid SQL statements by attackers for malicious purposes.",
+                )
+            ],
+            Checks=[
+                "aks_clusters_created_with_private_nodes",
+                "aks_clusters_public_access_disabled",
+                "app_ensure_java_version_is_latest",
+                "app_ensure_php_version_is_latest",
+                "app_ensure_python_version_is_latest",
+                "defender_assessments_vm_endpoint_protection_installed",
+                "defender_assessments_vm_endpoint_protection_installed",
+                "defender_auto_provisioning_log_analytics_agent_vms_on",
+                "defender_auto_provisioning_vulnerabilty_assessments_machines_on",
+                "defender_container_images_resolved_vulnerabilities",
+                "defender_container_images_scan_enabled",
+                "defender_ensure_defender_for_app_services_is_on",
+                "defender_ensure_defender_for_arm_is_on",
+                "defender_ensure_defender_for_azure_sql_databases_is_on",
+                "defender_ensure_defender_for_containers_is_on",
+                "defender_ensure_defender_for_cosmosdb_is_on",
+                "defender_ensure_defender_for_databases_is_on",
+                "defender_ensure_defender_for_dns_is_on",
+                "defender_ensure_defender_for_keyvault_is_on",
+                "defender_ensure_defender_for_os_relational_databases_is_on",
+                "defender_ensure_defender_for_server_is_on",
+                "defender_ensure_defender_for_sql_servers_is_on",
+                "defender_ensure_defender_for_storage_is_on",
+                "defender_ensure_iot_hub_defender_is_on",
+                "defender_ensure_mcas_is_enabled",
+                "defender_ensure_notify_alerts_severity_is_high",
+                "defender_ensure_notify_emails_to_owners",
+                "defender_ensure_system_updates_are_applied",
+                "defender_ensure_wdatp_is_enabled",
+            ],
+        )
+    ],
+)
+MITRE_ATTACK_GCP_NAME = "mitre_attack_gcp"
+MITRE_ATTACK_GCP = ComplianceBaseModel(
+    Framework="MITRE-ATTACK",
+    Provider="GCP",
+    Version="",
+    Description="MITRE ATT&CK® is a globally-accessible knowledge base of adversary tactics and techniques based on real-world observations. The ATT&CK knowledge base is used as a foundation for the development of specific threat models and methodologies in the private sector, in government, and in the cybersecurity product and service community.",
+    Requirements=[
+        Mitre_Requirement(
+            Name="Exploit Public-Facing Application",
+            Id="T1190",
+            Tactics=["Initial Access"],
+            SubTechniques=[],
+            Description="Adversaries may attempt to exploit a weakness in an Internet-facing host or system to initially access a network. The weakness in the system can be a software bug, a temporary glitch, or a misconfiguration.",
+            Platforms=["Containers", "IaaS", "Linux", "Network", "Windows", "macOS"],
+            TechniqueURL="https://attack.mitre.org/techniques/T1190/",
+            Attributes=[
+                Mitre_Requirement_Attribute_GCP(
+                    GCPService="Artifact Registry",
+                    Category="Protect",
+                    Value="Partial",
+                    Comment="Once this control is deployed, it can detect known vulnerabilities in various Linux OS packages. This information can be used to patch, isolate, or remove vulnerable software and machines. This control does not directly protect against exploitation and is not effective against zero day attacks, vulnerabilities with no available patch, and other end-of-life packages.",
+                )
+            ],
+            Checks=[
+                "cloudsql_instance_public_access",
+                "cloudsql_instance_public_ip",
+                "cloudstorage_bucket_public_access",
+                "compute_firewall_rdp_access_from_the_internet_allowed",
+                "compute_firewall_ssh_access_from_the_internet_allowed",
+                "compute_instance_public_ip",
+                "compute_public_address_shodan",
+                "kms_key_not_publicly_accessible",
+            ],
+        )
+    ],
+)
+ENS_RD2022_AWS_NAME = "ens_rd2022_aws"
+ENS_RD2022_AWS = ComplianceBaseModel(
+    Framework="ENS",
+    Provider="AWS",
+    Version="RD2022",
+    Description="The accreditation scheme of the ENS (National Security Scheme) has been developed by the Ministry of Finance and Public Administrations and the CCN (National Cryptological Center). This includes the basic principles and minimum requirements necessary for the adequate protection of information.",
+    Requirements=[
+        Compliance_Requirement(
+            Id="op.exp.8.aws.ct.3",
+            Description="Registro de actividad",
+            Name=None,
+            Attributes=[
+                ENS_Requirement_Attribute(
+                    IdGrupoControl="op.exp.8",
+                    Marco="operacional",
+                    Categoria="explotación",
+                    DescripcionControl="Habilitar la validación de archivos en todos los trails, evitando así que estos se vean modificados o eliminados.",
+                    Tipo=ENS_Requirement_Attribute_Tipos.requisito,
+                    Nivel=ENS_Requirement_Attribute_Nivel.alto,
+                    Dimensiones=["trazabilidad"],
+                    ModoEjecucion="automático",
+                    Dependencias=[],
+                )
+            ],
+            Checks=["cloudtrail_log_file_validation_enabled"],
+        )
+    ],
+)
 NOT_PRESENT_COMPLIANCE_NAME = "not_present_compliance_name"
 NOT_PRESENT_COMPLIANCE = ComplianceBaseModel(
     Framework="NOT_EXISTENT",
@@ -154,4 +322,32 @@ NOT_PRESENT_COMPLIANCE = ComplianceBaseModel(
     Version="NOT_EXISTENT",
     Description="NOT_EXISTENT",
     Requirements=[],
+)
+AWS_WELL_ARCHITECTED_NAME = "aws_well_architected_framework_security_pillar_aws"
+AWS_WELL_ARCHITECTED = ComplianceBaseModel(
+    Framework="AWS-Well-Architected-Framework-Security-Pillar",
+    Provider="AWS",
+    Version="",
+    Description="Best Practices for AWS Well-Architected Framework Security Pillar. The focus of this framework is the security pillar of the AWS Well-Architected Framework. It provides guidance to help you apply best practices, current recommendations in the design, delivery, and maintenance of secure AWS workloads.",
+    Requirements=[
+        Compliance_Requirement(
+            Id="SEC01-BP01",
+            Description="Establish common guardrails and isolation between environments (such as production, development, and test) and workloads through a multi-account strategy. Account-level separation is strongly recommended, as it provides a strong isolation boundary for security, billing, and access.",
+            Name=None,
+            Attributes=[
+                AWS_Well_Architected_Requirement_Attribute(
+                    Name="SEC01-BP01 Separate workloads using accounts",
+                    WellArchitectedQuestionId="securely-operate",
+                    WellArchitectedPracticeId="sec_securely_operate_multi_accounts",
+                    Section="Security foundations",
+                    SubSection="AWS account management and separation",
+                    LevelOfRisk="High",
+                    AssessmentMethod="Automated",
+                    Description="Establish common guardrails and isolation between environments (such as production, development, and test) and workloads through a multi-account strategy. Account-level separation is strongly recommended, as it provides a strong isolation boundary for security, billing, and access.",
+                    ImplementationGuidanceUrl="https://docs.aws.amazon.com/wellarchitected/latest/security-pillar/sec_securely_operate_multi_accounts.html#implementation-guidance.",
+                )
+            ],
+            Checks=["organizations_account_part_of_organizations"],
+        ),
+    ],
 )

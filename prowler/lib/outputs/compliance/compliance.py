@@ -2,14 +2,8 @@ import sys
 
 from prowler.lib.check.models import Check_Report
 from prowler.lib.logger import logger
-from prowler.lib.outputs.compliance.aws_well_architected_framework import (
-    write_compliance_row_aws_well_architected_framework,
-)
 from prowler.lib.outputs.compliance.cis.cis import get_cis_table
-from prowler.lib.outputs.compliance.ens_rd2022_aws import (
-    get_ens_rd2022_aws_table,
-    write_compliance_row_ens_rd2022_aws,
-)
+from prowler.lib.outputs.compliance.ens.ens import get_ens_table
 from prowler.lib.outputs.compliance.generic import (
     get_generic_compliance_table,
     write_compliance_row_generic,
@@ -19,7 +13,6 @@ from prowler.lib.outputs.compliance.iso27001_2013_aws import (
 )
 from prowler.lib.outputs.compliance.mitre_attack.mitre_attack import (
     get_mitre_attack_table,
-    write_compliance_row_mitre_attack,
 )
 
 
@@ -97,22 +90,15 @@ def fill_compliance(
         )
 
         for compliance in check_compliances:
-            if compliance.Framework == "ENS" and compliance.Version == "RD2022":
-                write_compliance_row_ens_rd2022_aws(
-                    file_descriptors, finding, compliance, output_options, provider
-                )
-
-            elif compliance.Framework == "CIS":
+            # FIXME: Remove this once we merge all the compliance frameworks
+            if compliance.Framework == "CIS":
                 continue
-
-            elif (
-                "AWS-Well-Architected-Framework" in compliance.Framework
-                and compliance.Provider == "AWS"
-            ):
-                write_compliance_row_aws_well_architected_framework(
-                    file_descriptors, finding, compliance, output_options, provider
-                )
-
+            elif compliance.Framework == "MITRE-ATTACK" and compliance.Version == "":
+                continue
+            elif compliance.Framework == "ENS":
+                continue
+            elif "AWS-Well-Architected-Framework" in compliance.Framework:
+                continue
             elif (
                 compliance.Framework == "ISO27001"
                 and compliance.Version == "2013"
@@ -120,11 +106,6 @@ def fill_compliance(
             ):
                 write_compliance_row_iso27001_2013_aws(
                     file_descriptors, finding, compliance, output_options, provider
-                )
-
-            elif compliance.Framework == "MITRE-ATTACK" and compliance.Version == "":
-                write_compliance_row_mitre_attack(
-                    file_descriptors, finding, compliance, provider
                 )
 
             else:
@@ -147,8 +128,8 @@ def display_compliance_table(
     compliance_overview: bool,
 ):
     try:
-        if "ens_rd2022_aws" == compliance_framework:
-            get_ens_rd2022_aws_table(
+        if "ens_" in compliance_framework:
+            get_ens_table(
                 findings,
                 bulk_checks_metadata,
                 compliance_framework,

@@ -2,34 +2,7 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-
 # TODO: move this to outputs/<compliance>/models.py
-class Check_Output_CSV_ENS_RD2022(BaseModel):
-    """
-    Check_Output_CSV_ENS_RD2022 generates a finding's output in CSV ENS RD2022 format.
-    """
-
-    Provider: str
-    Description: str
-    AccountId: str
-    Region: str
-    AssessmentDate: str
-    Requirements_Id: str
-    Requirements_Description: str
-    Requirements_Attributes_IdGrupoControl: str
-    Requirements_Attributes_Marco: str
-    Requirements_Attributes_Categoria: str
-    Requirements_Attributes_DescripcionControl: str
-    Requirements_Attributes_Nivel: str
-    Requirements_Attributes_Tipo: str
-    Requirements_Attributes_Dimensiones: str
-    Requirements_Attributes_ModoEjecucion: str
-    Requirements_Attributes_Dependencias: str
-    Status: str
-    StatusExtended: str
-    ResourceId: str
-    CheckId: str
-    Muted: bool
 
 
 class Check_Output_CSV_Generic_Compliance(BaseModel):
@@ -49,32 +22,6 @@ class Check_Output_CSV_Generic_Compliance(BaseModel):
     Requirements_Attributes_SubGroup: Optional[str]
     Requirements_Attributes_Service: Optional[str]
     Requirements_Attributes_Type: Optional[str]
-    Status: str
-    StatusExtended: str
-    ResourceId: str
-    CheckId: str
-    Muted: bool
-
-
-class Check_Output_CSV_AWS_Well_Architected(BaseModel):
-    """
-    Check_Output_CSV_AWS_Well_Architected generates a finding's output in CSV AWS Well Architected Compliance format.
-    """
-
-    Provider: str
-    Description: str
-    AccountId: str
-    Region: str
-    AssessmentDate: str
-    Requirements_Attributes_Name: str
-    Requirements_Attributes_WellArchitectedQuestionId: str
-    Requirements_Attributes_WellArchitectedPracticeId: str
-    Requirements_Attributes_Section: str
-    Requirements_Attributes_SubSection: Optional[str]
-    Requirements_Attributes_LevelOfRisk: str
-    Requirements_Attributes_AssessmentMethod: str
-    Requirements_Attributes_Description: str
-    Requirements_Attributes_ImplementationGuidanceUrl: str
     Status: str
     StatusExtended: str
     ResourceId: str
