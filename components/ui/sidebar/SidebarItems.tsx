@@ -2,7 +2,7 @@ import { Icon } from "@iconify/react";
 import { Chip } from "@nextui-org/react";
 
 import { SidebarItem, SidebarItemType } from "./Sidebar";
-import TeamAvatar from "./TeamAvatar";
+import { TeamAvatar } from "./TeamAvatar";
 
 /**
  * Please check the https://nextui.org/docs/guide/routing to have a seamless router integration
@@ -179,10 +179,10 @@ export const sectionItems: SidebarItem[] = [
     title: "Accounts",
     items: [
       {
-        key: "cloud",
-        href: "/cloud",
+        key: "providers",
+        href: "/providers",
         icon: "solar:gift-linear",
-        title: "Cloud",
+        title: "Providers",
         endContent: (
           <Chip size="sm" variant="flat">
             3
