@@ -11,7 +11,7 @@ from tests.lib.outputs.fixtures.fixtures import generate_finding_output
 from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, AWS_REGION_EU_WEST_1
 
 
-class TestAWSENS:
+class TestAWSGenericCompliance:
     def test_output_transform(self):
         findings = [
             generate_finding_output(compliance={"NIST-800-53-Revision-4": "ac_2_4"})
