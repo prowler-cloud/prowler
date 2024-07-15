@@ -6,7 +6,6 @@ from prowler.lib.outputs.compliance.compliance import (
     add_manual_controls,
     fill_compliance,
 )
-from prowler.lib.outputs.file_descriptors import fill_file_descriptors
 
 
 def stdout_report(finding, color, verbose, status, fix):
@@ -41,16 +40,6 @@ def report(check_findings, provider):
 
             if provider.type == "azure":
                 check_findings.sort(key=lambda x: x.subscription)
-
-            # Generate the required output files
-            if output_options.output_modes and not output_options.fixer:
-                # We have to create the required output files
-                file_descriptors = fill_file_descriptors(
-                    output_options.output_modes,
-                    output_options.output_directory,
-                    output_options.output_filename,
-                    provider,
-                )
 
             for finding in check_findings:
                 # Print findings by stdout

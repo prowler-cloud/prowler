@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 class Generic(BaseModel):
     """
-    Check_Output_CSV_Generic_Compliance generates a finding's output in CSV Generic Compliance format.
+    Generic generates a finding's output in Generic Compliance format.
     """
 
     Provider: str
@@ -25,3 +25,4 @@ class Generic(BaseModel):
     ResourceId: str
     CheckId: str
     Muted: bool
+    ResourceName: str

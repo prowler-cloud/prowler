@@ -25,16 +25,14 @@ def get_generic_compliance_table(
                 and compliance.Version in compliance_framework.upper()
                 and compliance.Provider in compliance_framework.upper()
             ):
-                for requirement in compliance.Requirements:
-                    for attribute in requirement.Attributes:
-                        if finding.muted:
-                            if index not in muted_count:
-                                muted_count.append(index)
-                        else:
-                            if finding.status == "FAIL" and index not in fail_count:
-                                fail_count.append(index)
-                            elif finding.status == "PASS" and index not in pass_count:
-                                pass_count.append(index)
+                if finding.muted:
+                    if index not in muted_count:
+                        muted_count.append(index)
+                else:
+                    if finding.status == "FAIL" and index not in fail_count:
+                        fail_count.append(index)
+                    elif finding.status == "PASS" and index not in pass_count:
+                        pass_count.append(index)
     if (
         len(fail_count) + len(pass_count) + len(muted_count) > 1
     ):  # If there are no resources, don't print the compliance table

@@ -61,6 +61,7 @@ class GenericCompliance(ComplianceOutput):
                             ResourceId=finding.resource_uid,
                             CheckId=finding.check_id,
                             Muted=finding.muted,
+                            ResourceName=finding.resource_name,
                         )
                         self._data.append(compliance_row)
 
