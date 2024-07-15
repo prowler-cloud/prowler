@@ -42,9 +42,9 @@ class Glue(AWSService):
                         self.connections.append(
                             Connection(
                                 arn=arn,
-                                name=getattr(conn, "Name", ""),
-                                type=getattr(conn, "ConnectionType", ""),
-                                properties=getattr(conn, "ConnectionProperties", {}),
+                                name=conn.get("Name", ""),
+                                type=conn.get("ConnectionType", ""),
+                                properties=conn.get("ConnectionProperties", {}),
                                 region=regional_client.region,
                             )
                         )
