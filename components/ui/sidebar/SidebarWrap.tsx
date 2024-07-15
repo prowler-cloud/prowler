@@ -52,8 +52,8 @@ export const SidebarWrap = () => {
       )}
     >
       <div
-        className={clsx("flex items-center gap-3 px-3", {
-          "justify-center gap-0": isCompact,
+        className={clsx("flex items-center gap-3 px-3 justify-center", {
+          "gap-0": isCompact,
         })}
       >
         <div
