@@ -9,7 +9,7 @@ from prowler.lib.outputs.finding import Finding
 
 class AWSISO27001(ComplianceOutput):
     """
-    This class represents the AWS ENS compliance output.
+    This class represents the AWS ISO 27001 compliance output.
 
     Attributes:
         - _data (list): A list to store transformed data from findings.
