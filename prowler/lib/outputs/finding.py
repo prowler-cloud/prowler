@@ -5,12 +5,14 @@ from typing import Optional, Union
 from pydantic import BaseModel
 
 from prowler.config.config import prowler_version
+from prowler.lib.check.models import Check_Report
 from prowler.lib.logger import logger
 from prowler.lib.outputs.common import (
     fill_common_finding_data,
     get_provider_data_mapping,
 )
 from prowler.lib.outputs.compliance.compliance import get_check_compliance
+from prowler.providers.common.provider import Provider
 
 
 class Status(str, Enum):
@@ -85,13 +87,14 @@ class Finding(BaseModel):
     prowler_version: str = prowler_version
 
     @classmethod
-    def generate_output(cls, provider, check_output) -> "Finding":
+    def generate_output(
+        cls, provider: Provider, check_output: Check_Report
+    ) -> "Finding":
         """Generates the output for a finding based on the provider and output options
 
         Args:
             provider (Provider): the provider object
-            finding (Finding): the finding object
-
+            check_output (Check_Report): the check output object
         Returns:
             finding_output (Finding): the finding output object
 
@@ -107,7 +110,7 @@ class Finding(BaseModel):
         output_data.update(provider_data_mapping)
         output_data.update(common_finding_data)
         output_data["compliance"] = get_check_compliance(
-            check_output, provider.type, output_options
+            check_output, provider.type, output_options.bulk_checks_metadata
         )
         try:
             if provider.type == "aws":
