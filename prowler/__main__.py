@@ -52,6 +52,7 @@ from prowler.lib.outputs.compliance.cis.cis_gcp import GCPCIS
 from prowler.lib.outputs.compliance.cis.cis_kubernetes import KubernetesCIS
 from prowler.lib.outputs.compliance.compliance import display_compliance_table
 from prowler.lib.outputs.compliance.ens.ens_aws import AWSENS
+from prowler.lib.outputs.compliance.generic.generic import GenericCompliance
 from prowler.lib.outputs.compliance.iso27001.iso27001_aws import AWSISO27001
 from prowler.lib.outputs.compliance.mitre_attack.mitre_attack_aws import AWSMitreAttack
 from prowler.lib.outputs.compliance.mitre_attack.mitre_attack_azure import (
@@ -435,6 +436,18 @@ def prowler():
                     file_path=filename,
                 )
                 iso27001_finding.batch_write_data_to_file()
+            else:
+                filename = (
+                    f"{global_provider.output_options.output_directory}/compliance/"
+                    f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
+                )
+                generic_compliance = GenericCompliance(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    create_file_descriptor=True,
+                    file_path=filename,
+                )
+                generic_compliance.batch_write_data_to_file()
 
     elif provider == "azure":
         for compliance_name in input_compliance_frameworks:
@@ -464,6 +477,18 @@ def prowler():
                     file_path=filename,
                 )
                 mitre_attack_finding.batch_write_data_to_file()
+            else:
+                filename = (
+                    f"{global_provider.output_options.output_directory}/compliance/"
+                    f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
+                )
+                generic_compliance = GenericCompliance(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    create_file_descriptor=True,
+                    file_path=filename,
+                )
+                generic_compliance.batch_write_data_to_file()
 
     elif provider == "gcp":
         for compliance_name in input_compliance_frameworks:
@@ -493,6 +518,18 @@ def prowler():
                     file_path=filename,
                 )
                 mitre_attack_finding.batch_write_data_to_file()
+            else:
+                filename = (
+                    f"{global_provider.output_options.output_directory}/compliance/"
+                    f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
+                )
+                generic_compliance = GenericCompliance(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    create_file_descriptor=True,
+                    file_path=filename,
+                )
+                generic_compliance.batch_write_data_to_file()
 
     elif provider == "kubernetes":
         for compliance_name in input_compliance_frameworks:
@@ -509,6 +546,18 @@ def prowler():
                     file_path=filename,
                 )
                 cis_finding.batch_write_data_to_file()
+            else:
+                filename = (
+                    f"{global_provider.output_options.output_directory}/compliance/"
+                    f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
+                )
+                generic_compliance = GenericCompliance(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    create_file_descriptor=True,
+                    file_path=filename,
+                )
+                generic_compliance.batch_write_data_to_file()
 
     # AWS Security Hub Integration
     if provider == "aws" and args.security_hub:
