@@ -1,5 +1,8 @@
 import datetime
 
+import pytz
+from dateutil import parser
+
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.iam.iam_client import iam_client
 
@@ -29,13 +32,9 @@ class iam_user_accesskey_unused(Check):
                 old_access_keys = False
                 if user["access_key_1_active"] == "true":
                     if user["access_key_1_last_used_date"] != "N/A":
-                        access_key_1_last_used_date = (
-                            datetime.datetime.now()
-                            - datetime.datetime.strptime(
-                                user["access_key_1_last_used_date"],
-                                "%Y-%m-%dT%H:%M:%S+00:00",
-                            )
-                        )
+                        access_key_1_last_used_date = datetime.datetime.now(
+                            pytz.utc
+                        ) - parser.parse(user["access_key_1_last_used_date"])
                         if access_key_1_last_used_date.days > maximum_expiration_days:
                             old_access_keys = True
                             report = Check_Report_AWS(self.metadata())
@@ -48,13 +47,9 @@ class iam_user_accesskey_unused(Check):
 
                 if user["access_key_2_active"] == "true":
                     if user["access_key_2_last_used_date"] != "N/A":
-                        access_key_2_last_used_date = (
-                            datetime.datetime.now()
-                            - datetime.datetime.strptime(
-                                user["access_key_2_last_used_date"],
-                                "%Y-%m-%dT%H:%M:%S+00:00",
-                            )
-                        )
+                        access_key_2_last_used_date = datetime.datetime.now(
+                            pytz.utc
+                        ) - parser.parse(user["access_key_2_last_used_date"])
                         if access_key_2_last_used_date.days > maximum_expiration_days:
                             old_access_keys = True
                             report = Check_Report_AWS(self.metadata())
