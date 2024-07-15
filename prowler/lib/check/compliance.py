@@ -7,7 +7,15 @@ from prowler.lib.logger import logger
 def update_checks_metadata_with_compliance(
     bulk_compliance_frameworks: dict, bulk_checks_metadata: dict
 ) -> dict:
-    """Update the check metadata model with the compliance framework"""
+    """
+    Update the check metadata model with the compliance framework
+    Args:
+        bulk_compliance_frameworks (dict): The compliance frameworks
+        bulk_checks_metadata (dict): The checks metadata
+
+    Returns:
+        dict: The checks metadata with the compliance frameworks
+    """
     try:
         for check in bulk_checks_metadata:
             check_compliance = []
