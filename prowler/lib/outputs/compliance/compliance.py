@@ -4,9 +4,8 @@ from prowler.lib.check.models import Check_Report
 from prowler.lib.logger import logger
 from prowler.lib.outputs.compliance.cis.cis import get_cis_table
 from prowler.lib.outputs.compliance.ens.ens import get_ens_table
-from prowler.lib.outputs.compliance.generic import (
+from prowler.lib.outputs.compliance.generic.generic_table import (
     get_generic_compliance_table,
-    write_compliance_row_generic,
 )
 from prowler.lib.outputs.compliance.iso27001_2013_aws import (
     write_compliance_row_iso27001_2013_aws,
@@ -105,11 +104,6 @@ def fill_compliance(
                 and compliance.Provider == "AWS"
             ):
                 write_compliance_row_iso27001_2013_aws(
-                    file_descriptors, finding, compliance, output_options, provider
-                )
-
-            else:
-                write_compliance_row_generic(
                     file_descriptors, finding, compliance, output_options, provider
                 )
 
