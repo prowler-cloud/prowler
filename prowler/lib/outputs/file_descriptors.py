@@ -100,13 +100,13 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, provi
                         )
                         file_descriptors.update({output_mode: file_descriptor})
 
-                    else:
-                        # Generic Compliance framework
-                        file_descriptor = initialize_file_descriptor(
-                            filename,
-                            Check_Output_CSV_Generic_Compliance,
-                        )
-                        file_descriptors.update({output_mode: file_descriptor})
+                    # else:
+                    #     # Generic Compliance framework
+                    #     file_descriptor = initialize_file_descriptor(
+                    #         filename,
+                    #         Check_Output_CSV_Generic_Compliance,
+                    #     )
+                    #     file_descriptors.update({output_mode: file_descriptor})
 
     except Exception as error:
         logger.error(
