@@ -7,9 +7,6 @@ from prowler.lib.outputs.compliance.ens.ens import get_ens_table
 from prowler.lib.outputs.compliance.generic.generic_table import (
     get_generic_compliance_table,
 )
-from prowler.lib.outputs.compliance.iso27001_2013_aws import (
-    write_compliance_row_iso27001_2013_aws,
-)
 from prowler.lib.outputs.compliance.mitre_attack.mitre_attack import (
     get_mitre_attack_table,
 )
@@ -103,9 +100,7 @@ def fill_compliance(
                 and compliance.Version == "2013"
                 and compliance.Provider == "AWS"
             ):
-                write_compliance_row_iso27001_2013_aws(
-                    file_descriptors, finding, compliance, output_options, provider
-                )
+                continue
 
     except Exception as error:
         logger.error(
