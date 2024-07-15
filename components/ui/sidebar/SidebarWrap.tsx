@@ -3,6 +3,7 @@
 import { Icon } from "@iconify/react";
 import { Button, ScrollShadow, Spacer, Tooltip } from "@nextui-org/react";
 import clsx from "clsx";
+import { usePathname } from "next/navigation";
 import React, { useCallback, useEffect, useState } from "react";
 import { useMediaQuery } from "usehooks-ts";
 
@@ -18,6 +19,9 @@ import { UserAvatar } from "./UserAvatar";
 export const SidebarWrap = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
+
+  const pathname = usePathname();
+  const currentPath = pathname === "/" ? "overview" : pathname.split("/")?.[1];
 
   const isMobile = useMediaQuery("(max-width: 768px)");
 
@@ -74,16 +78,17 @@ export const SidebarWrap = () => {
       <Spacer y={8} />
 
       <UserAvatar
-        userName={"Pablo Lara"}
+        userName={"User name"}
         position={"Software Engineer"}
         isCompact={isCompact}
       />
 
       <ScrollShadow className="-mr-6 h-full max-h-full py-6 pr-6">
         <Sidebar
-          defaultSelectedKey="home"
+          defaultSelectedKey="overview"
           isCompact={isCompact}
           items={sectionItemsWithTeams}
+          selectedKeys={[currentPath]}
         />
       </ScrollShadow>
       <Spacer y={2} />
