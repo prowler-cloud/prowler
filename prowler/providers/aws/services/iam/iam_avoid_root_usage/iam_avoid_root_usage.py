@@ -27,7 +27,7 @@ class iam_avoid_root_usage(Check):
                             datetime.datetime.now()
                             - datetime.datetime.strptime(
                                 user["password_last_used"],
-                                "%Y-%m-%dT%H:%M:%S+00:00",
+                                "%Y-%m-%dT%H:%M:%SZ",
                             )
                         ).days
                     elif user["access_key_1_last_used_date"] != "N/A":
@@ -35,7 +35,7 @@ class iam_avoid_root_usage(Check):
                             datetime.datetime.now()
                             - datetime.datetime.strptime(
                                 user["access_key_1_last_used_date"],
-                                "%Y-%m-%dT%H:%M:%S+00:00",
+                                "%Y-%m-%dT%H:%M:%SZ",
                             )
                         ).days
                     elif user["access_key_2_last_used_date"] != "N/A":
@@ -43,7 +43,7 @@ class iam_avoid_root_usage(Check):
                             datetime.datetime.now()
                             - datetime.datetime.strptime(
                                 user["access_key_2_last_used_date"],
-                                "%Y-%m-%dT%H:%M:%S+00:00",
+                                "%Y-%m-%dT%H:%M:%SZ",
                             )
                         ).days
                     if maximum_access_days >= days_since_accessed:
