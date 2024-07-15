@@ -107,7 +107,7 @@ CIS_1_8_KUBERNETES = ComplianceBaseModel(
     Description="This CIS Kubernetes Benchmark provides prescriptive guidance for establishing a secure configuration posture for Kubernetes v1.27.",
     Requirements=[
         Compliance_Requirement(
-            Checks=[],
+            Checks=["apiserver_always_pull_images_plugin"],
             Id="1.1.3",
             Description="Ensure that the controller manager pod specification file permissions are set to 600 or more restrictive",
             Attributes=[

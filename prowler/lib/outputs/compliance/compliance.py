@@ -101,6 +101,8 @@ def get_check_compliance(
     """
     try:
         check_compliance = {}
+        print(finding.check_metadata.CheckID)
+        print(bulk_checks_metadata.keys())
         # We have to retrieve all the check's compliance requirements
         if finding.check_metadata.CheckID in bulk_checks_metadata:
             for compliance in bulk_checks_metadata[
