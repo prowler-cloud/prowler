@@ -15,7 +15,7 @@ class Test_iam_avoid_root_usage:
     @mock_aws
     def test_root_not_used(self):
         raw_credential_report = r"""user,arn,user_creation_time,password_enabled,password_last_used,password_last_changed,password_next_rotation,mfa_active,access_key_1_active,access_key_1_last_rotated,access_key_1_last_used_date,access_key_1_last_used_region,access_key_1_last_used_service,access_key_2_active,access_key_2_last_rotated,access_key_2_last_used_date,access_key_2_last_used_region,access_key_2_last_used_service,cert_1_active,cert_1_last_rotated,cert_2_active,cert_2_last_rotated
-<root_account>,arn:aws:iam::123456789012:<root_account>,2022-04-17T14:59:38+00:00,true,no_information,not_supported,not_supported,false,true,N/A,N/A,N/A,N/A,false,N/A,N/A,N/A,N/A,false,N/A,false,N/A"""
+<root_account>,arn:aws:iam::123456789012:<root_account>,2022-04-17T14:59:38Z,true,no_information,not_supported,not_supported,false,true,N/A,N/A,N/A,N/A,false,N/A,N/A,N/A,N/A,false,N/A,false,N/A"""
         credential_lines = raw_credential_report.split("\n")
         csv_reader = DictReader(credential_lines, delimiter=",")
         credential_list = list(csv_reader)
@@ -51,11 +51,9 @@ class Test_iam_avoid_root_usage:
 
     @mock_aws
     def test_root_password_recently_used(self):
-        password_last_used = (datetime.datetime.now()).strftime(
-            "%Y-%m-%dT%H:%M:%S+00:00"
-        )
+        password_last_used = (datetime.datetime.now()).strftime("%Y-%m-%dT%H:%M:%SZ")
         raw_credential_report = rf"""user,arn,user_creation_time,password_enabled,password_last_used,password_last_changed,password_next_rotation,mfa_active,access_key_1_active,access_key_1_last_rotated,access_key_1_last_used_date,access_key_1_last_used_region,access_key_1_last_used_service,access_key_2_active,access_key_2_last_rotated,access_key_2_last_used_date,access_key_2_last_used_region,access_key_2_last_used_service,cert_1_active,cert_1_last_rotated,cert_2_active,cert_2_last_rotated
-<root_account>,arn:aws:iam::123456789012:<root_account>,2022-04-17T14:59:38+00:00,true,{password_last_used},not_supported,not_supported,false,true,N/A,N/A,N/A,N/A,false,N/A,N/A,N/A,N/A,false,N/A,false,N/A"""
+<root_account>,arn:aws:iam::123456789012:<root_account>,2022-04-17T14:59:38Z,true,{password_last_used},not_supported,not_supported,false,true,N/A,N/A,N/A,N/A,false,N/A,N/A,N/A,N/A,false,N/A,false,N/A"""
         credential_lines = raw_credential_report.split("\n")
         csv_reader = DictReader(credential_lines, delimiter=",")
         credential_list = list(csv_reader)
@@ -92,10 +90,10 @@ class Test_iam_avoid_root_usage:
     @mock_aws
     def test_root_access_key_1_recently_used(self):
         access_key_1_last_used = (datetime.datetime.now()).strftime(
-            "%Y-%m-%dT%H:%M:%S+00:00"
+            "%Y-%m-%dT%H:%M:%SZ"
         )
         raw_credential_report = rf"""user,arn,user_creation_time,password_enabled,password_last_used,password_last_changed,password_next_rotation,mfa_active,access_key_1_active,access_key_1_last_rotated,access_key_1_last_used_date,access_key_1_last_used_region,access_key_1_last_used_service,access_key_2_active,access_key_2_last_rotated,access_key_2_last_used_date,access_key_2_last_used_region,access_key_2_last_used_service,cert_1_active,cert_1_last_rotated,cert_2_active,cert_2_last_rotated
-<root_account>,arn:aws:iam::123456789012:<root_account>,2022-04-17T14:59:38+00:00,true,no_information,not_supported,not_supported,false,true,N/A,{access_key_1_last_used},N/A,N/A,false,N/A,N/A,N/A,N/A,false,N/A,false,N/A"""
+<root_account>,arn:aws:iam::123456789012:<root_account>,2022-04-17T14:59:38Z,true,no_information,not_supported,not_supported,false,true,N/A,{access_key_1_last_used},N/A,N/A,false,N/A,N/A,N/A,N/A,false,N/A,false,N/A"""
         credential_lines = raw_credential_report.split("\n")
         csv_reader = DictReader(credential_lines, delimiter=",")
         credential_list = list(csv_reader)
@@ -132,10 +130,10 @@ class Test_iam_avoid_root_usage:
     @mock_aws
     def test_root_access_key_2_recently_used(self):
         access_key_2_last_used = (datetime.datetime.now()).strftime(
-            "%Y-%m-%dT%H:%M:%S+00:00"
+            "%Y-%m-%dT%H:%M:%SZ"
         )
         raw_credential_report = rf"""user,arn,user_creation_time,password_enabled,password_last_used,password_last_changed,password_next_rotation,mfa_active,access_key_1_active,access_key_1_last_rotated,access_key_1_last_used_date,access_key_1_last_used_region,access_key_1_last_used_service,access_key_2_active,access_key_2_last_rotated,access_key_2_last_used_date,access_key_2_last_used_region,access_key_2_last_used_service,cert_1_active,cert_1_last_rotated,cert_2_active,cert_2_last_rotated
-<root_account>,arn:aws:iam::123456789012:<root_account>,2022-04-17T14:59:38+00:00,true,no_information,not_supported,not_supported,false,true,N/A,N/A,N/A,N/A,false,N/A,{access_key_2_last_used},N/A,N/A,false,N/A,false,N/A"""
+<root_account>,arn:aws:iam::123456789012:<root_account>,2022-04-17T14:59:38Z,true,no_information,not_supported,not_supported,false,true,N/A,N/A,N/A,N/A,false,N/A,{access_key_2_last_used},N/A,N/A,false,N/A,false,N/A"""
         credential_lines = raw_credential_report.split("\n")
         csv_reader = DictReader(credential_lines, delimiter=",")
         credential_list = list(csv_reader)
@@ -173,9 +171,9 @@ class Test_iam_avoid_root_usage:
     def test_root_password_used(self):
         password_last_used = (
             datetime.datetime.now() - datetime.timedelta(days=100)
-        ).strftime("%Y-%m-%dT%H:%M:%S+00:00")
+        ).strftime("%Y-%m-%dT%H:%M:%SZ")
         raw_credential_report = rf"""user,arn,user_creation_time,password_enabled,password_last_used,password_last_changed,password_next_rotation,mfa_active,access_key_1_active,access_key_1_last_rotated,access_key_1_last_used_date,access_key_1_last_used_region,access_key_1_last_used_service,access_key_2_active,access_key_2_last_rotated,access_key_2_last_used_date,access_key_2_last_used_region,access_key_2_last_used_service,cert_1_active,cert_1_last_rotated,cert_2_active,cert_2_last_rotated
-<root_account>,arn:aws:iam::123456789012:<root_account>,2022-04-17T14:59:38+00:00,true,{password_last_used},not_supported,not_supported,false,true,N/A,N/A,N/A,N/A,false,N/A,N/A,N/A,N/A,false,N/A,false,N/A"""
+<root_account>,arn:aws:iam::123456789012:<root_account>,2022-04-17T14:59:38Z,true,{password_last_used},not_supported,not_supported,false,true,N/A,N/A,N/A,N/A,false,N/A,N/A,N/A,N/A,false,N/A,false,N/A"""
         credential_lines = raw_credential_report.split("\n")
         csv_reader = DictReader(credential_lines, delimiter=",")
         credential_list = list(csv_reader)
@@ -213,9 +211,9 @@ class Test_iam_avoid_root_usage:
     def test_root_access_key_1_used(self):
         access_key_1_last_used = (
             datetime.datetime.now() - datetime.timedelta(days=100)
-        ).strftime("%Y-%m-%dT%H:%M:%S+00:00")
+        ).strftime("%Y-%m-%dT%H:%M:%SZ")
         raw_credential_report = rf"""user,arn,user_creation_time,password_enabled,password_last_used,password_last_changed,password_next_rotation,mfa_active,access_key_1_active,access_key_1_last_rotated,access_key_1_last_used_date,access_key_1_last_used_region,access_key_1_last_used_service,access_key_2_active,access_key_2_last_rotated,access_key_2_last_used_date,access_key_2_last_used_region,access_key_2_last_used_service,cert_1_active,cert_1_last_rotated,cert_2_active,cert_2_last_rotated
-<root_account>,arn:aws:iam::123456789012:<root_account>,2022-04-17T14:59:38+00:00,true,no_information,not_supported,not_supported,false,true,N/A,{access_key_1_last_used},N/A,N/A,false,N/A,N/A,N/A,N/A,false,N/A,false,N/A"""
+<root_account>,arn:aws:iam::123456789012:<root_account>,2022-04-17T14:59:38Z,true,no_information,not_supported,not_supported,false,true,N/A,{access_key_1_last_used},N/A,N/A,false,N/A,N/A,N/A,N/A,false,N/A,false,N/A"""
         credential_lines = raw_credential_report.split("\n")
         csv_reader = DictReader(credential_lines, delimiter=",")
         credential_list = list(csv_reader)
@@ -253,9 +251,9 @@ class Test_iam_avoid_root_usage:
     def test_root_access_key_2_used(self):
         access_key_2_last_used = (
             datetime.datetime.now() - datetime.timedelta(days=100)
-        ).strftime("%Y-%m-%dT%H:%M:%S+00:00")
+        ).strftime("%Y-%m-%dT%H:%M:%SZ")
         raw_credential_report = rf"""user,arn,user_creation_time,password_enabled,password_last_used,password_last_changed,password_next_rotation,mfa_active,access_key_1_active,access_key_1_last_rotated,access_key_1_last_used_date,access_key_1_last_used_region,access_key_1_last_used_service,access_key_2_active,access_key_2_last_rotated,access_key_2_last_used_date,access_key_2_last_used_region,access_key_2_last_used_service,cert_1_active,cert_1_last_rotated,cert_2_active,cert_2_last_rotated
-<root_account>,arn:aws:iam::123456789012:<root_account>,2022-04-17T14:59:38+00:00,true,no_information,not_supported,not_supported,false,true,N/A,N/A,N/A,N/A,false,N/A,{access_key_2_last_used},N/A,N/A,false,N/A,false,N/A"""
+<root_account>,arn:aws:iam::123456789012:<root_account>,2022-04-17T14:59:38Z,true,no_information,not_supported,not_supported,false,true,N/A,N/A,N/A,N/A,false,N/A,{access_key_2_last_used},N/A,N/A,false,N/A,false,N/A"""
         credential_lines = raw_credential_report.split("\n")
         csv_reader = DictReader(credential_lines, delimiter=",")
         credential_list = list(csv_reader)
