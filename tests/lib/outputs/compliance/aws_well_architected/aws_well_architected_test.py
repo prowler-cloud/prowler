@@ -89,7 +89,56 @@ class TestAWSWellArchitected:
         assert output_data_manual.Provider == "aws"
         assert output_data_manual.AccountId == ""
         assert output_data_manual.Region == ""
-        assert output_data_manual.Description == AWS_WELL_ARCHITECTED.Description
+        assert (
+            output_data_manual.Requirements_Id
+            == AWS_WELL_ARCHITECTED.Requirements[1].Id
+        )
+        assert (
+            output_data_manual.Requirements_Description
+            == AWS_WELL_ARCHITECTED.Requirements[1].Description
+        )
+        assert (
+            output_data_manual.Requirements_Attributes_Name
+            == AWS_WELL_ARCHITECTED.Requirements[1].Attributes[0].Name
+        )
+        assert (
+            output_data_manual.Requirements_Attributes_WellArchitectedQuestionId
+            == AWS_WELL_ARCHITECTED.Requirements[0]
+            .Attributes[0]
+            .WellArchitectedQuestionId
+        )
+        assert (
+            output_data_manual.Requirements_Attributes_WellArchitectedPracticeId
+            == AWS_WELL_ARCHITECTED.Requirements[0]
+            .Attributes[0]
+            .WellArchitectedPracticeId
+        )
+        assert (
+            output_data_manual.Requirements_Attributes_Section
+            == AWS_WELL_ARCHITECTED.Requirements[1].Attributes[0].Section
+        )
+        assert (
+            output_data_manual.Requirements_Attributes_SubSection
+            == AWS_WELL_ARCHITECTED.Requirements[1].Attributes[0].SubSection
+        )
+        assert (
+            output_data_manual.Requirements_Attributes_LevelOfRisk
+            == AWS_WELL_ARCHITECTED.Requirements[1].Attributes[0].LevelOfRisk
+        )
+        assert (
+            output_data_manual.Requirements_Attributes_AssessmentMethod
+            == AWS_WELL_ARCHITECTED.Requirements[1].Attributes[0].AssessmentMethod
+        )
+        assert (
+            output_data_manual.Requirements_Attributes_Description
+            == AWS_WELL_ARCHITECTED.Requirements[1].Attributes[0].Description
+        )
+        assert (
+            output_data_manual.Requirements_Attributes_ImplementationGuidanceUrl
+            == AWS_WELL_ARCHITECTED.Requirements[0]
+            .Attributes[0]
+            .ImplementationGuidanceUrl
+        )
         assert output_data_manual.Status == "MANUAL"
         assert output_data_manual.StatusExtended == "Manual check"
         assert output_data_manual.ResourceId == "manual_check"

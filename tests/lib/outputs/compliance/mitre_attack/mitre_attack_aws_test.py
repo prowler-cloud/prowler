@@ -68,7 +68,43 @@ class TestAWSMITREAttack:
         assert output_data_manual.Provider == "aws"
         assert output_data_manual.AccountId == ""
         assert output_data_manual.Region == ""
-        assert output_data_manual.Description == MITRE_ATTACK_AWS.Description
+        assert output_data_manual.Requirements_Id == MITRE_ATTACK_AWS.Requirements[1].Id
+        assert (
+            output_data_manual.Requirements_Name
+            == MITRE_ATTACK_AWS.Requirements[1].Name
+        )
+        assert (
+            output_data_manual.Requirements_Description
+            == MITRE_ATTACK_AWS.Requirements[1].Description
+        )
+        assert output_data_manual.Requirements_Tactics == unroll_list(
+            MITRE_ATTACK_AWS.Requirements[1].Tactics
+        )
+        assert output_data_manual.Requirements_SubTechniques == unroll_list(
+            MITRE_ATTACK_AWS.Requirements[1].SubTechniques
+        )
+        assert output_data_manual.Requirements_Platforms == unroll_list(
+            MITRE_ATTACK_AWS.Requirements[1].Platforms
+        )
+        assert (
+            output_data_manual.Requirements_TechniqueURL
+            == MITRE_ATTACK_AWS.Requirements[1].TechniqueURL
+        )
+        assert output_data_manual.Requirements_Attributes_Services == ", ".join(
+            attribute.AWSService
+            for attribute in MITRE_ATTACK_AWS.Requirements[1].Attributes
+        )
+        assert output_data_manual.Requirements_Attributes_Categories == ", ".join(
+            attribute.Category
+            for attribute in MITRE_ATTACK_AWS.Requirements[1].Attributes
+        )
+        assert output_data_manual.Requirements_Attributes_Values == ", ".join(
+            attribute.Value for attribute in MITRE_ATTACK_AWS.Requirements[1].Attributes
+        )
+        assert output_data_manual.Requirements_Attributes_Comments == ", ".join(
+            attribute.Comment
+            for attribute in MITRE_ATTACK_AWS.Requirements[1].Attributes
+        )
         assert output_data_manual.Status == "MANUAL"
         assert output_data_manual.StatusExtended == "Manual check"
         assert output_data_manual.ResourceId == "manual_check"

@@ -87,6 +87,51 @@ class TestGCPCIS:
         assert output_data_manual.ProjectId == ""
         assert output_data_manual.Location == ""
         assert output_data_manual.Description == CIS_2_0_GCP.Description
+        assert output_data_manual.Requirements_Id == CIS_2_0_GCP.Requirements[1].Id
+        assert (
+            output_data_manual.Requirements_Description
+            == CIS_2_0_GCP.Requirements[1].Description
+        )
+        assert (
+            output_data_manual.Requirements_Attributes_Section
+            == CIS_2_0_GCP.Requirements[1].Attributes[0].Section
+        )
+        assert (
+            output_data_manual.Requirements_Attributes_Profile
+            == CIS_2_0_GCP.Requirements[1].Attributes[0].Profile
+        )
+        assert (
+            output_data_manual.Requirements_Attributes_AssessmentStatus
+            == CIS_2_0_GCP.Requirements[1].Attributes[0].AssessmentStatus
+        )
+        assert (
+            output_data_manual.Requirements_Attributes_Description
+            == CIS_2_0_GCP.Requirements[1].Attributes[0].Description
+        )
+        assert (
+            output_data_manual.Requirements_Attributes_RationaleStatement
+            == CIS_2_0_GCP.Requirements[1].Attributes[0].RationaleStatement
+        )
+        assert (
+            output_data_manual.Requirements_Attributes_ImpactStatement
+            == CIS_2_0_GCP.Requirements[1].Attributes[0].ImpactStatement
+        )
+        assert (
+            output_data_manual.Requirements_Attributes_RemediationProcedure
+            == CIS_2_0_GCP.Requirements[1].Attributes[0].RemediationProcedure
+        )
+        assert (
+            output_data_manual.Requirements_Attributes_AuditProcedure
+            == CIS_2_0_GCP.Requirements[1].Attributes[0].AuditProcedure
+        )
+        assert (
+            output_data_manual.Requirements_Attributes_AdditionalInformation
+            == CIS_2_0_GCP.Requirements[1].Attributes[0].AdditionalInformation
+        )
+        assert (
+            output_data_manual.Requirements_Attributes_References
+            == CIS_2_0_GCP.Requirements[1].Attributes[0].References
+        )
         assert output_data_manual.Status == "MANUAL"
         assert output_data_manual.StatusExtended == "Manual check"
         assert output_data_manual.ResourceId == "manual_check"

@@ -63,6 +63,34 @@ class TestAWSGenericCompliance:
         assert output_data_manual.AccountId == ""
         assert output_data_manual.Region == ""
         assert output_data_manual.Description == NIST_800_53_REVISION_4_AWS.Description
+        assert (
+            output_data_manual.Requirements_Id
+            == NIST_800_53_REVISION_4_AWS.Requirements[1].Id
+        )
+        assert (
+            output_data_manual.Requirements_Description
+            == NIST_800_53_REVISION_4_AWS.Requirements[1].Description
+        )
+        assert (
+            output_data_manual.Requirements_Attributes_Section
+            == NIST_800_53_REVISION_4_AWS.Requirements[1].Attributes[0].Section
+        )
+        assert (
+            output_data_manual.Requirements_Attributes_SubSection
+            == NIST_800_53_REVISION_4_AWS.Requirements[1].Attributes[0].SubSection
+        )
+        assert (
+            output_data_manual.Requirements_Attributes_SubGroup
+            == NIST_800_53_REVISION_4_AWS.Requirements[1].Attributes[0].SubGroup
+        )
+        assert (
+            output_data_manual.Requirements_Attributes_Service
+            == NIST_800_53_REVISION_4_AWS.Requirements[1].Attributes[0].Service
+        )
+        assert (
+            output_data_manual.Requirements_Attributes_Type
+            == NIST_800_53_REVISION_4_AWS.Requirements[1].Attributes[0].Type
+        )
         assert output_data_manual.Status == "MANUAL"
         assert output_data_manual.StatusExtended == "Manual check"
         assert output_data_manual.ResourceId == "manual_check"

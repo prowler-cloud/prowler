@@ -72,7 +72,42 @@ class TestAWSENS:
         assert output_data_manual.Provider == "aws"
         assert output_data_manual.AccountId == ""
         assert output_data_manual.Region == ""
-        assert output_data_manual.Description == ENS_RD2022_AWS.Description
+        assert output_data_manual.Requirements_Id == ENS_RD2022_AWS.Requirements[1].Id
+        assert (
+            output_data_manual.Requirements_Description
+            == ENS_RD2022_AWS.Requirements[1].Description
+        )
+        assert (
+            output_data_manual.Requirements_Attributes_IdGrupoControl
+            == ENS_RD2022_AWS.Requirements[1].Attributes[0].IdGrupoControl
+        )
+        assert (
+            output_data_manual.Requirements_Attributes_Marco
+            == ENS_RD2022_AWS.Requirements[1].Attributes[0].Marco
+        )
+        assert (
+            output_data_manual.Requirements_Attributes_Categoria
+            == ENS_RD2022_AWS.Requirements[1].Attributes[0].Categoria
+        )
+        assert (
+            output_data_manual.Requirements_Attributes_DescripcionControl
+            == ENS_RD2022_AWS.Requirements[1].Attributes[0].DescripcionControl
+        )
+        assert (
+            output_data_manual.Requirements_Attributes_Nivel
+            == ENS_RD2022_AWS.Requirements[1].Attributes[0].Nivel
+        )
+        assert (
+            output_data_manual.Requirements_Attributes_Tipo
+            == ENS_RD2022_AWS.Requirements[1].Attributes[0].Tipo
+        )
+        assert [
+            output_data_manual.Requirements_Attributes_Dimensiones
+        ] == ENS_RD2022_AWS.Requirements[1].Attributes[0].Dimensiones
+        assert (
+            output_data_manual.Requirements_Attributes_ModoEjecucion
+            == ENS_RD2022_AWS.Requirements[1].Attributes[0].ModoEjecucion
+        )
         assert output_data_manual.Status == "MANUAL"
         assert output_data_manual.StatusExtended == "Manual check"
         assert output_data_manual.ResourceId == "manual_check"

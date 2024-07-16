@@ -50,6 +50,22 @@ class TestAWSISO27001:
         assert output_data_manual.AccountId == ""
         assert output_data_manual.Region == ""
         assert output_data_manual.Description == ISO27001_2013_AWS.Description
+        assert (
+            output_data_manual.Requirements_Attributes_Category
+            == ISO27001_2013_AWS.Requirements[1].Attributes[0].Category
+        )
+        assert (
+            output_data_manual.Requirements_Attributes_Objetive_ID
+            == ISO27001_2013_AWS.Requirements[1].Attributes[0].Objetive_ID
+        )
+        assert (
+            output_data_manual.Requirements_Attributes_Objetive_Name
+            == ISO27001_2013_AWS.Requirements[1].Attributes[0].Objetive_Name
+        )
+        assert (
+            output_data_manual.Requirements_Attributes_Check_Summary
+            == ISO27001_2013_AWS.Requirements[1].Attributes[0].Check_Summary
+        )
         assert output_data_manual.Status == "MANUAL"
         assert output_data_manual.StatusExtended == "Manual check"
         assert output_data_manual.ResourceId == "manual_check"
