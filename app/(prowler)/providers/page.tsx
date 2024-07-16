@@ -1,13 +1,35 @@
+"use client";
+
+import { Button, useDisclosure } from "@nextui-org/react";
 import React from "react";
 
-import { Header } from "@/components";
+import { Header, Modal } from "@/components";
 
 export default function Providers() {
+  const { isOpen, onOpen, onClose, onOpenChange } = useDisclosure();
+
+  const onAction = () => {
+    onClose();
+  };
+
   return (
     <>
       <Header title="Providers" icon="tabler:zoom-scan" />
 
       <p>Hi hi from Providers page</p>
+      <Button onPress={onOpen}>Open Modal</Button>
+      <Modal
+        isOpen={isOpen}
+        onOpenChange={onOpenChange}
+        title="Overview Modal"
+        body={
+          <>
+            <p>Modal body content</p>
+          </>
+        }
+        actionText="Save"
+        onAction={onAction}
+      />
     </>
   );
 }
