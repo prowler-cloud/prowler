@@ -103,13 +103,13 @@ class TestAWSWellArchitected:
         )
         assert (
             output_data_manual.Requirements_Attributes_WellArchitectedQuestionId
-            == AWS_WELL_ARCHITECTED.Requirements[0]
+            == AWS_WELL_ARCHITECTED.Requirements[1]
             .Attributes[0]
             .WellArchitectedQuestionId
         )
         assert (
             output_data_manual.Requirements_Attributes_WellArchitectedPracticeId
-            == AWS_WELL_ARCHITECTED.Requirements[0]
+            == AWS_WELL_ARCHITECTED.Requirements[1]
             .Attributes[0]
             .WellArchitectedPracticeId
         )
@@ -135,7 +135,7 @@ class TestAWSWellArchitected:
         )
         assert (
             output_data_manual.Requirements_Attributes_ImplementationGuidanceUrl
-            == AWS_WELL_ARCHITECTED.Requirements[0]
+            == AWS_WELL_ARCHITECTED.Requirements[1]
             .Attributes[0]
             .ImplementationGuidanceUrl
         )
