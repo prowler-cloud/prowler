@@ -1,21 +1,10 @@
-from pathlib import Path
-
-from backend.custom_logging import LOGGING  # noqa
-
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+from config.custom_logging import LOGGING  # noqa
+from config.env import BASE_DIR, env  # noqa
 
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-9ut_dim+ma+r=ys094hoiwns#g1t@0*_&-*d!g+h)y%lye$0_^"
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = ["*"]
+SECRET_KEY = env("SECRET_KEY", default="secret")
+DEBUG = env.bool("DJANGO_DEBUG", default=False)
+ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 
 
 # Application definition
@@ -49,7 +38,7 @@ MIDDLEWARE = [
 
 CORS_ALLOWED_ORIGINS = ["http://localhost", "http://127.0.0.1"]
 
-ROOT_URLCONF = "backend.urls"
+ROOT_URLCONF = "config.urls"
 
 TEMPLATES = [
     {
@@ -78,20 +67,7 @@ SPECTACULAR_SETTINGS = {
     "SERVE_INCLUDE_SCHEMA": True,
 }
 
-WSGI_APPLICATION = "backend.wsgi.application"
-
-# Database
-
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": "prowler_db",
-        "USER": "prowler",
-        "PASSWORD": "S3cret",
-        "HOST": "postgres-db",
-        "PORT": "5432",
-    }
-}
+WSGI_APPLICATION = "config.wsgi.application"
 
 DJANGO_GUID = {
     "GUID_HEADER_NAME": "Transaction-ID",

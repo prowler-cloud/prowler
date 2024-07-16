@@ -4,6 +4,8 @@ from enum import StrEnum
 
 from django_guid.log_filters import CorrelationId
 
+from config.env import env
+
 
 class BackendLogger(StrEnum):
     GUNICORN = "gunicorn"
@@ -115,6 +117,9 @@ class TransactionIdFilter(CorrelationId):
 
 # Logging settings
 
+LEVEL = env("DJANGO_LOGGING_LEVEL", default="INFO")
+FORMATTER = env("DJANGO_LOGGING_FORMATTER", default="ndjson")
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": True,
@@ -128,70 +133,49 @@ LOGGING = {
             "()": HumanReadableFormatter,
             "datefmt": "%Y-%m-%d %H:%M:%S",
         },
-        "django": {
-            "format": "{asctime} [{name}] {levelname}: ({module}) {message}",
-            "style": "{",
-        },
-        "api": {
-            "format": '{asctime} [{name}] {levelname}: "{method} {path}" with parameters {query_params} done in '
-            "{duration}s: {status_code}",
-            "style": "{",
-        },
-        "db": {
-            "format": "{asctime} [{name}] {levelname}: {message}",
-            "style": "{",
-        },
-        "security": {
-            "format": "{asctime} [{name}] {levelname}: {message}",
-            "style": "{",
-        },
-        "tasks": {
-            "format": "{asctime} [{name}] {levelname}: {message}",
-            "style": "{",
-        },
     },
     "handlers": {
         "gunicorn_console": {
-            "level": "INFO",
+            "level": LEVEL,
             "class": "logging.StreamHandler",
-            "formatter": "human_readable",
+            "formatter": FORMATTER,
             "filters": ["transaction_id"],
         },
         "django_console": {
-            "level": "INFO",
+            "level": LEVEL,
             "class": "logging.StreamHandler",
-            "formatter": "human_readable",
+            "formatter": FORMATTER,
             "filters": ["transaction_id"],
         },
         "api_console": {
-            "level": "INFO",
+            "level": LEVEL,
             "class": "logging.StreamHandler",
-            "formatter": "human_readable",
+            "formatter": FORMATTER,
             "filters": ["transaction_id"],
         },
         "db_console": {
-            "level": "DEBUG",
+            "level": f"{'DEBUG' if LEVEL == 'DEBUG' else 'INFO'}",
             "class": "logging.StreamHandler",
-            "formatter": "human_readable",
+            "formatter": FORMATTER,
             "filters": ["transaction_id"],
         },
         "security_console": {
-            "level": "INFO",
+            "level": LEVEL,
             "class": "logging.StreamHandler",
-            "formatter": "human_readable",
+            "formatter": FORMATTER,
             "filters": ["transaction_id"],
         },
         "tasks_console": {
-            "level": "INFO",
+            "level": LEVEL,
             "class": "logging.StreamHandler",
-            "formatter": "human_readable",
+            "formatter": FORMATTER,
             "filters": ["transaction_id"],
         },
     },
     "loggers": {
         BackendLogger.GUNICORN: {
             "handlers": ["gunicorn_console"],
-            "level": "INFO",
+            "level": LEVEL,
             "propagate": False,
         },
         BackendLogger.GUNICORN_ACCESS: {
@@ -201,7 +185,7 @@ LOGGING = {
         },
         BackendLogger.GUNICORN_ERROR: {
             "handlers": ["gunicorn_console"],
-            "level": "INFO",
+            "level": LEVEL,
             "propagate": False,
         },
         BackendLogger.DJANGO: {
@@ -211,22 +195,22 @@ LOGGING = {
         },
         BackendLogger.DB: {
             "handlers": ["db_console"],
-            "level": "INFO",
+            "level": LEVEL,
             "propagate": False,
         },
         BackendLogger.SECURITY: {
             "handlers": ["security_console"],
-            "level": "INFO",
+            "level": LEVEL,
             "propagate": False,
         },
         BackendLogger.API: {
             "handlers": ["api_console"],
-            "level": "INFO",
+            "level": LEVEL,
             "propagate": False,
         },
         BackendLogger.TASKS: {
             "handlers": ["tasks_console"],
-            "level": "INFO",
+            "level": LEVEL,
             "propagate": False,
         },
     },

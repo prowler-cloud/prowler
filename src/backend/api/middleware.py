@@ -1,7 +1,7 @@
 import logging
 import time
 
-from backend.custom_logging import BackendLogger
+from config.custom_logging import BackendLogger
 
 
 class APILoggingMiddleware:

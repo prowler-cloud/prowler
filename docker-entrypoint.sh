@@ -1,5 +1,6 @@
 #!/bin/sh
 
+
 apply_migrations() {
   echo "Applying database migrations..."
   poetry run python manage.py migrate
@@ -7,12 +8,12 @@ apply_migrations() {
 
 start_dev_server() {
   echo "Starting the development server..."
-  poetry run python manage.py runserver 0.0.0.0:8000
+  poetry run python manage.py runserver 0.0.0.0:"${DJANGO_PORT:-8080}"
 }
 
 start_prod_server() {
   echo "Starting the Gunicorn server..."
-  poetry run gunicorn -c backend/guniconf.py backend.wsgi:application
+  poetry run gunicorn -c config/guniconf.py config.wsgi:application
 }
 
 case "$1" in
