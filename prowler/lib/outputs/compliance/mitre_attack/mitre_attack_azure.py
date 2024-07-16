@@ -84,7 +84,7 @@ class AzureMitreAttack(ComplianceOutput):
             if not requirement.Checks:
                 for attribute in requirement.Attributes:
                     compliance_row = MitreAttackAzure(
-                        Provider=compliance.provider,
+                        Provider=compliance.Provider.lower(),
                         Description=compliance.Description,
                         SubscriptionId="",
                         Location="",

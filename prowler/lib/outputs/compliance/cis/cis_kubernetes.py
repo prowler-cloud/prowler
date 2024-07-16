@@ -76,7 +76,7 @@ class KubernetesCIS(ComplianceOutput):
             if not requirement.Checks:
                 for attribute in requirement.Attributes:
                     compliance_row = CISKubernetes(
-                        Provider=compliance.Provider,
+                        Provider=compliance.Provider.lower(),
                         Description=compliance.Description,
                         Context="",
                         Namespace="",

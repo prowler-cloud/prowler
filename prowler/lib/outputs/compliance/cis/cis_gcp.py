@@ -74,7 +74,7 @@ class GCPCIS(ComplianceOutput):
             if not requirement.Checks:
                 for attribute in requirement.Attributes:
                     compliance_row = CISGCP(
-                        Provider=compliance.provider,
+                        Provider=compliance.Provider.lower(),
                         Description=compliance.Description,
                         ProjectId="",
                         Location="",

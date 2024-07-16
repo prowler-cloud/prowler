@@ -75,7 +75,7 @@ class AzureCIS(ComplianceOutput):
             if not requirement.Checks:
                 for attribute in requirement.Attributes:
                     compliance_row = CISAzure(
-                        Provider=compliance.provider,
+                        Provider=compliance.Provider.lower(),
                         Description=compliance.Description,
                         Subscription="",
                         Location="",

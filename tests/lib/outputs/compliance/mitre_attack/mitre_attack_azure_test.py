@@ -77,6 +77,18 @@ class TestAzureMITREAttack:
         assert output_data.ResourceName == ""
         assert output_data.CheckId == "test-check-id"
         assert not output_data.Muted
+        # Test manual check
+        output_data_manual = output.data[1]
+        assert output_data_manual.Provider == "azure"
+        assert output_data_manual.SubscriptionId == ""
+        assert output_data_manual.Location == ""
+        assert output_data_manual.Description == MITRE_ATTACK_AZURE.Description
+        assert output_data_manual.Status == "MANUAL"
+        assert output_data_manual.StatusExtended == "Manual check"
+        assert output_data_manual.ResourceId == "manual_check"
+        assert output_data_manual.ResourceName == "Manual check"
+        assert output_data_manual.CheckId == "manual"
+        assert output_data_manual.Muted is False
 
     @freeze_time(datetime.now())
     def test_batch_write_data_to_file(self):
@@ -99,4 +111,4 @@ class TestAzureMITREAttack:
         mock_file.seek(0)
         content = mock_file.read()
         expected_csv = f"PROVIDER;DESCRIPTION;SUBSCRIPTIONID;ASSESSMENTDATE;REQUIREMENTS_ID;REQUIREMENTS_NAME;REQUIREMENTS_DESCRIPTION;REQUIREMENTS_TACTICS;REQUIREMENTS_SUBTECHNIQUES;REQUIREMENTS_PLATFORMS;REQUIREMENTS_TECHNIQUEURL;REQUIREMENTS_ATTRIBUTES_SERVICES;REQUIREMENTS_ATTRIBUTES_CATEGORIES;REQUIREMENTS_ATTRIBUTES_VALUES;REQUIREMENTS_ATTRIBUTES_COMMENTS;STATUS;STATUSEXTENDED;RESOURCEID;CHECKID;MUTED;RESOURCENAME;LOCATION\r\nazure;MITRE ATT&CK® is a globally-accessible knowledge base of adversary tactics and techniques based on real-world observations. The ATT&CK knowledge base is used as a foundation for the development of specific threat models and methodologies in the private sector, in government, and in the cybersecurity product and service community.;{AZURE_SUBSCRIPTION_ID};{datetime.now()};T1190;Exploit Public-Facing Application;Adversaries may attempt to exploit a weakness in an Internet-facing host or system to initially access a network. The weakness in the system can be a software bug, a temporary glitch, or a misconfiguration.;Initial Access;;Containers | IaaS | Linux | Network | Windows | macOS;https://attack.mitre.org/techniques/T1190/;Azure SQL Database;Detect;Minimal;This control may alert on usage of faulty SQL statements. This generates an alert for a possible SQL injection by an application. Alerts may not be generated on usage of valid SQL statements by attackers for malicious purposes.;PASS;;;test-check-id;False;;\r\n"
-        assert content == expected_csv
+        assert expected_csv in content

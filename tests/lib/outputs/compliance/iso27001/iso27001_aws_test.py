@@ -44,6 +44,18 @@ class TestAWSISO27001:
         assert output_data.ResourceName == ""
         assert output_data.CheckId == "test-check-id"
         assert output_data.Muted is False
+        # Test manual check
+        output_data_manual = output.data[1]
+        assert output_data_manual.Provider == "aws"
+        assert output_data_manual.AccountId == ""
+        assert output_data_manual.Region == ""
+        assert output_data_manual.Description == ISO27001_2013_AWS.Description
+        assert output_data_manual.Status == "MANUAL"
+        assert output_data_manual.StatusExtended == "Manual check"
+        assert output_data_manual.ResourceId == "manual_check"
+        assert output_data_manual.ResourceName == "Manual check"
+        assert output_data_manual.CheckId == "manual"
+        assert output_data_manual.Muted is False
 
     @freeze_time(datetime.now())
     def test_batch_write_data_to_file(self):
@@ -58,4 +70,4 @@ class TestAWSISO27001:
         mock_file.seek(0)
         content = mock_file.read()
         expected_csv = f"""PROVIDER;DESCRIPTION;ACCOUNTID;REGION;ASSESSMENTDATE;REQUIREMENTS_ATTRIBUTES_CATEGORY;REQUIREMENTS_ATTRIBUTES_OBJETIVE_ID;REQUIREMENTS_ATTRIBUTES_OBJETIVE_NAME;REQUIREMENTS_ATTRIBUTES_CHECK_SUMMARY;STATUS;STATUSEXTENDED;RESOURCEID;CHECKID;MUTED;RESOURCENAME\r\naws;ISO (the International Organization for Standardization) and IEC (the International Electrotechnical Commission) form the specialized system for worldwide standardization. National bodies that are members of ISO or IEC participate in the development of International Standards through technical committees established by the respective organization to deal with particular fields of technical activity. ISO and IEC technical committees collaborate in fields of mutual interest. Other international organizations, governmental and non-governmental, in liaison with ISO and IEC, also take part in the work.;123456789012;eu-west-1;{datetime.now()};A.10 Cryptography;A.10.1;Cryptographic Controls;Setup Encryption at rest for RDS instances;PASS;;;test-check-id;False;\r\n"""
-        assert content == expected_csv
+        assert expected_csv in content

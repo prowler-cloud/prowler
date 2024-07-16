@@ -67,6 +67,18 @@ class TestAWSENS:
         assert output_data.ResourceName == ""
         assert output_data.CheckId == "test-check-id"
         assert output_data.Muted is False
+        # Test manual check
+        output_data_manual = output.data[1]
+        assert output_data_manual.Provider == "aws"
+        assert output_data_manual.AccountId == ""
+        assert output_data_manual.Region == ""
+        assert output_data_manual.Description == ENS_RD2022_AWS.Description
+        assert output_data_manual.Status == "MANUAL"
+        assert output_data_manual.StatusExtended == "Manual check"
+        assert output_data_manual.ResourceId == "manual_check"
+        assert output_data_manual.ResourceName == "Manual check"
+        assert output_data_manual.CheckId == "manual"
+        assert output_data_manual.Muted is False
 
     @freeze_time(datetime.now())
     def test_batch_write_data_to_file(self):
@@ -83,4 +95,4 @@ class TestAWSENS:
         mock_file.seek(0)
         content = mock_file.read()
         expected_csv = f"""PROVIDER;DESCRIPTION;ACCOUNTID;REGION;ASSESSMENTDATE;REQUIREMENTS_ID;REQUIREMENTS_DESCRIPTION;REQUIREMENTS_ATTRIBUTES_IDGRUPOCONTROL;REQUIREMENTS_ATTRIBUTES_MARCO;REQUIREMENTS_ATTRIBUTES_CATEGORIA;REQUIREMENTS_ATTRIBUTES_DESCRIPCIONCONTROL;REQUIREMENTS_ATTRIBUTES_NIVEL;REQUIREMENTS_ATTRIBUTES_TIPO;REQUIREMENTS_ATTRIBUTES_DIMENSIONES;REQUIREMENTS_ATTRIBUTES_MODOEJECUCION;REQUIREMENTS_ATTRIBUTES_DEPENDENCIAS;STATUS;STATUSEXTENDED;RESOURCEID;CHECKID;MUTED;RESOURCENAME\r\naws;The accreditation scheme of the ENS (National Security Scheme) has been developed by the Ministry of Finance and Public Administrations and the CCN (National Cryptological Center). This includes the basic principles and minimum requirements necessary for the adequate protection of information.;123456789012;eu-west-1;{datetime.now()};op.exp.8.aws.ct.3;Registro de actividad;op.exp.8;operacional;explotación;Habilitar la validación de archivos en todos los trails, evitando así que estos se vean modificados o eliminados.;alto;requisito;trazabilidad;automático;;PASS;;;test-check-id;False;\r\n"""
-        assert content == expected_csv
+        assert expected_csv in content

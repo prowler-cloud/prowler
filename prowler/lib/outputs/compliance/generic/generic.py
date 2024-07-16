@@ -69,7 +69,7 @@ class GenericCompliance(ComplianceOutput):
             if not requirement.Checks:
                 for attribute in requirement.Attributes:
                     compliance_row = Generic(
-                        Provider=compliance.provider,
+                        Provider=compliance.Provider.lower(),
                         Description=compliance.Description,
                         AccountId="",
                         Region="",

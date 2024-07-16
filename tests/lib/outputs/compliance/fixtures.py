@@ -107,7 +107,7 @@ CIS_1_8_KUBERNETES = ComplianceBaseModel(
     Description="This CIS Kubernetes Benchmark provides prescriptive guidance for establishing a secure configuration posture for Kubernetes v1.27.",
     Requirements=[
         Compliance_Requirement(
-            Checks=["apiserver_always_pull_images_plugin"],
+            Checks=[],
             Id="1.1.3",
             Description="Ensure that the controller manager pod specification file permissions are set to 600 or more restrictive",
             Attributes=[
@@ -180,19 +180,7 @@ MITRE_ATTACK_AWS = ComplianceBaseModel(
                     Comment="AWS CloudEndure Disaster Recovery enables the replication and recovery of servers into AWS Cloud. In the event that a public-facing application or server is compromised, AWS CloudEndure can be used to provision an instance of the server from a previous point in time within minutes. As a result, this mapping is given a score of Significant.",
                 )
             ],
-            Checks=[
-                "drs_job_exist",
-                "config_recorder_all_regions_enabled",
-                "rds_instance_minor_version_upgrade_enabled",
-                "rds_instance_backup_enabled",
-                "securityhub_enabled",
-                "elbv2_waf_acl_attached",
-                "guardduty_is_enabled",
-                "inspector2_is_enabled",
-                "inspector2_active_findings_exist",
-                "awslambda_function_not_publicly_accessible",
-                "ec2_instance_public_ip",
-            ],
+            Checks=[],
         )
     ],
 )
@@ -219,37 +207,7 @@ MITRE_ATTACK_AZURE = ComplianceBaseModel(
                     Comment="This control may alert on usage of faulty SQL statements. This generates an alert for a possible SQL injection by an application. Alerts may not be generated on usage of valid SQL statements by attackers for malicious purposes.",
                 )
             ],
-            Checks=[
-                "aks_clusters_created_with_private_nodes",
-                "aks_clusters_public_access_disabled",
-                "app_ensure_java_version_is_latest",
-                "app_ensure_php_version_is_latest",
-                "app_ensure_python_version_is_latest",
-                "defender_assessments_vm_endpoint_protection_installed",
-                "defender_assessments_vm_endpoint_protection_installed",
-                "defender_auto_provisioning_log_analytics_agent_vms_on",
-                "defender_auto_provisioning_vulnerabilty_assessments_machines_on",
-                "defender_container_images_resolved_vulnerabilities",
-                "defender_container_images_scan_enabled",
-                "defender_ensure_defender_for_app_services_is_on",
-                "defender_ensure_defender_for_arm_is_on",
-                "defender_ensure_defender_for_azure_sql_databases_is_on",
-                "defender_ensure_defender_for_containers_is_on",
-                "defender_ensure_defender_for_cosmosdb_is_on",
-                "defender_ensure_defender_for_databases_is_on",
-                "defender_ensure_defender_for_dns_is_on",
-                "defender_ensure_defender_for_keyvault_is_on",
-                "defender_ensure_defender_for_os_relational_databases_is_on",
-                "defender_ensure_defender_for_server_is_on",
-                "defender_ensure_defender_for_sql_servers_is_on",
-                "defender_ensure_defender_for_storage_is_on",
-                "defender_ensure_iot_hub_defender_is_on",
-                "defender_ensure_mcas_is_enabled",
-                "defender_ensure_notify_alerts_severity_is_high",
-                "defender_ensure_notify_emails_to_owners",
-                "defender_ensure_system_updates_are_applied",
-                "defender_ensure_wdatp_is_enabled",
-            ],
+            Checks=[],
         )
     ],
 )
@@ -276,16 +234,7 @@ MITRE_ATTACK_GCP = ComplianceBaseModel(
                     Comment="Once this control is deployed, it can detect known vulnerabilities in various Linux OS packages. This information can be used to patch, isolate, or remove vulnerable software and machines. This control does not directly protect against exploitation and is not effective against zero day attacks, vulnerabilities with no available patch, and other end-of-life packages.",
                 )
             ],
-            Checks=[
-                "cloudsql_instance_public_access",
-                "cloudsql_instance_public_ip",
-                "cloudstorage_bucket_public_access",
-                "compute_firewall_rdp_access_from_the_internet_allowed",
-                "compute_firewall_ssh_access_from_the_internet_allowed",
-                "compute_instance_public_ip",
-                "compute_public_address_shodan",
-                "kms_key_not_publicly_accessible",
-            ],
+            Checks=[],
         )
     ],
 )
@@ -313,7 +262,7 @@ ENS_RD2022_AWS = ComplianceBaseModel(
                     Dependencias=[],
                 )
             ],
-            Checks=["cloudtrail_log_file_validation_enabled"],
+            Checks=[],
         )
     ],
 )
@@ -349,7 +298,7 @@ AWS_WELL_ARCHITECTED = ComplianceBaseModel(
                     ImplementationGuidanceUrl="https://docs.aws.amazon.com/wellarchitected/latest/security-pillar/sec_securely_operate_multi_accounts.html#implementation-guidance.",
                 )
             ],
-            Checks=["organizations_account_part_of_organizations"],
+            Checks=[],
         ),
     ],
 )
@@ -395,7 +344,7 @@ ISO27001_2013_AWS = ComplianceBaseModel(
                     Check_Summary="Setup Encryption at rest for RDS instances",
                 )
             ],
-            Checks=["rds_instance_storage_encrypted"],
+            Checks=[],
         ),
     ],
 )
@@ -418,19 +367,7 @@ NIST_800_53_REVISION_4_AWS = ComplianceBaseModel(
                     Service="aws",
                 )
             ],
-            Checks=[
-                "cloudtrail_multi_region_enabled",
-                "cloudtrail_multi_region_enabled",
-                "cloudtrail_cloudwatch_logging_enabled",
-                "cloudwatch_changes_to_network_acls_alarm_configured",
-                "cloudwatch_changes_to_network_gateways_alarm_configured",
-                "cloudwatch_changes_to_network_route_tables_alarm_configured",
-                "cloudwatch_changes_to_vpcs_alarm_configured",
-                "guardduty_is_enabled",
-                "rds_instance_integration_cloudwatch_logs",
-                "redshift_cluster_audit_logging",
-                "securityhub_enabled",
-            ],
+            Checks=[],
         )
     ],
 )

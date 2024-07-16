@@ -74,7 +74,7 @@ class AWSCIS(ComplianceOutput):
             if not requirement.Checks:
                 for attribute in requirement.Attributes:
                     compliance_row = CISAWS(
-                        Provider=compliance.provider,
+                        Provider=compliance.Provider.lower(),
                         Description=compliance.Description,
                         AccountId="",
                         Region="",

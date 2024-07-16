@@ -83,7 +83,7 @@ class GCPMitreAttack(ComplianceOutput):
             if not requirement.Checks:
                 for attribute in requirement.Attributes:
                     compliance_row = MitreAttackGCP(
-                        Provider=compliance.provider,
+                        Provider=compliance.Provider.lower(),
                         Description=compliance.Description,
                         ProjectId="",
                         Location="",
