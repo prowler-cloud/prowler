@@ -1,6 +1,7 @@
 import datetime
 from unittest import mock
 
+import pytz
 from boto3 import client
 from moto import mock_aws
 
@@ -60,8 +61,8 @@ class Test_iam_user_accesskey_unused_test:
     @mock_aws
     def test_user_access_key_1_not_used(self):
         credentials_last_rotated = (
-            datetime.datetime.now() - datetime.timedelta(days=100)
-        ).strftime("%Y-%m-%dT%H:%M:%S+00:00")
+            datetime.datetime.now(pytz.utc) - datetime.timedelta(days=100)
+        ).strftime("%Y-%m-%dT%H:%M:%SZ")
         iam_client = client("iam")
         user = "test-user"
         arn = iam_client.create_user(UserName=user)["User"]["Arn"]
@@ -104,8 +105,8 @@ class Test_iam_user_accesskey_unused_test:
     @mock_aws
     def test_user_access_key_2_not_used(self):
         credentials_last_rotated = (
-            datetime.datetime.now() - datetime.timedelta(days=100)
-        ).strftime("%Y-%m-%dT%H:%M:%S+00:00")
+            datetime.datetime.now(pytz.utc) - datetime.timedelta(days=100)
+        ).strftime("%Y-%m-%dT%H:%M:%SZ")
         iam_client = client("iam")
         user = "test-user"
         arn = iam_client.create_user(UserName=user)["User"]["Arn"]
@@ -148,8 +149,8 @@ class Test_iam_user_accesskey_unused_test:
     @mock_aws
     def test_user_both_access_keys_not_used(self):
         credentials_last_rotated = (
-            datetime.datetime.now() - datetime.timedelta(days=100)
-        ).strftime("%Y-%m-%dT%H:%M:%S+00:00")
+            datetime.datetime.now(pytz.utc) - datetime.timedelta(days=100)
+        ).strftime("%Y-%m-%dT%H:%M:%SZ")
         iam_client = client("iam")
         user = "test-user"
         arn = iam_client.create_user(UserName=user)["User"]["Arn"]
@@ -206,8 +207,8 @@ class Test_iam_user_accesskey_unused_test:
     @mock_aws
     def test_user_both_access_keys_used(self):
         credentials_last_rotated = (
-            datetime.datetime.now() - datetime.timedelta(days=10)
-        ).strftime("%Y-%m-%dT%H:%M:%S+00:00")
+            datetime.datetime.now(pytz.utc) - datetime.timedelta(days=10)
+        ).strftime("%Y-%m-%dT%H:%M:%SZ")
         iam_client = client("iam")
         user = "test-user"
         arn = iam_client.create_user(UserName=user)["User"]["Arn"]
