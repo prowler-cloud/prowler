@@ -6,11 +6,15 @@ from colorama import Fore, Style
 from kubernetes.config.config_exception import ConfigException
 
 from kubernetes import client, config
-from prowler.config.config import load_and_validate_config_file
+from prowler.config.config import (
+    get_default_mute_file_path,
+    load_and_validate_config_file,
+)
 from prowler.lib.logger import logger
 from prowler.lib.utils.utils import print_boxes
 from prowler.providers.common.models import Audit_Metadata
 from prowler.providers.common.provider import Provider
+from prowler.providers.kubernetes.lib.mutelist.mutelist import KubernetesMutelist
 from prowler.providers.kubernetes.models import (
     KubernetesIdentityInfo,
     KubernetesOutputOptions,
@@ -96,6 +100,24 @@ class KubernetesProvider(Provider):
         self._output_options = KubernetesOutputOptions(
             arguments, bulk_checks_metadata, self._identity
         )
+
+    @property
+    def mutelist(self) -> KubernetesMutelist:
+        """
+        mutelist method returns the provider's mutelist.
+        """
+        return self._mutelist
+
+    @mutelist.setter
+    def mutelist(self, mutelist_path):
+        """
+        mutelist.setter sets the provider's mutelist.
+        """
+        # Set default mutelist path if none is set
+        if not mutelist_path:
+            mutelist_path = get_default_mute_file_path(self.type)
+
+        self._mutelist = KubernetesMutelist(mutelist_path)
 
     @property
     def get_output_mapping(self):

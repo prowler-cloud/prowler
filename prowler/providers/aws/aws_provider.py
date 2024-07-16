@@ -1,6 +1,5 @@
 import os
 import pathlib
-import re
 import sys
 from argparse import Namespace
 from datetime import datetime
@@ -22,10 +21,6 @@ from prowler.config.config import (
 )
 from prowler.lib.check.check import list_modules, recover_checks_from_service
 from prowler.lib.logger import logger
-from prowler.lib.mutelist.mutelist import (
-    get_mutelist_file_from_local_file,
-    validate_mutelist,
-)
 from prowler.lib.utils.utils import open_file, parse_json_file, print_boxes
 from prowler.providers.aws.config import (
     AWS_REGION_US_EAST_1,
@@ -35,11 +30,7 @@ from prowler.providers.aws.config import (
 )
 from prowler.providers.aws.lib.arn.arn import parse_iam_credentials_arn
 from prowler.providers.aws.lib.arn.models import ARN
-from prowler.providers.aws.lib.mutelist.mutelist import (
-    get_mutelist_file_from_dynamodb,
-    get_mutelist_file_from_lambda,
-    get_mutelist_file_from_s3,
-)
+from prowler.providers.aws.lib.mutelist.mutelist import AWSMutelist
 from prowler.providers.aws.lib.organizations.organizations import (
     get_organizations_metadata,
     parse_organizations_metadata,
@@ -295,12 +286,14 @@ class AwsProvider(Provider):
         )
 
     @property
-    def mutelist(self):
+    def mutelist(self) -> AWSMutelist:
         """
         mutelist method returns the provider's mutelist.
         """
         return self._mutelist
 
+    # TODO: this is going to be called from another place soon, since the provider
+    # shouldn't hold the mutelist
     @mutelist.setter
     def mutelist(self, mutelist_path):
         """
@@ -309,35 +302,12 @@ class AwsProvider(Provider):
         # Set default mutelist path if none is set
         if not mutelist_path:
             mutelist_path = get_default_mute_file_path(self.type)
-        if mutelist_path:
-            # Mutelist from S3 URI
-            if re.search("^s3://([^/]+)/(.*?([^/]+))$", mutelist_path):
-                mutelist = get_mutelist_file_from_s3(
-                    mutelist_path, self._session.current_session
-                )
-            # Mutelist from Lambda Function ARN
-            elif re.search(r"^arn:(\w+):lambda:", mutelist_path):
-                mutelist = get_mutelist_file_from_lambda(
-                    mutelist_path,
-                    self._session.current_session,
-                )
-            # Mutelist from DynamoDB ARN
-            elif re.search(
-                r"^arn:aws(-cn|-us-gov)?:dynamodb:[a-z]{2}-[a-z-]+-[1-9]{1}:[0-9]{12}:table\/[a-zA-Z0-9._-]+$",
-                mutelist_path,
-            ):
-                mutelist = get_mutelist_file_from_dynamodb(
-                    mutelist_path, self._session.current_session, self._identity.account
-                )
-            else:
-                mutelist = get_mutelist_file_from_local_file(mutelist_path)
 
-            mutelist = validate_mutelist(mutelist)
-        else:
-            mutelist = {}
-
-        self._mutelist = mutelist
-        self._mutelist_file_path = mutelist_path
+        self._mutelist = AWSMutelist(
+            mutelist_path=mutelist_path,
+            session=self._session.current_session,
+            aws_account_id=self._identity.account,
+        )
 
     @property
     def get_output_mapping(self):

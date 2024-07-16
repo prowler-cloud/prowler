@@ -27,6 +27,7 @@ from prowler.providers.aws.config import (
     BOTO3_USER_AGENT_EXTRA,
 )
 from prowler.providers.aws.lib.arn.models import ARN
+from prowler.providers.aws.lib.mutelist.mutelist import AWSMutelist
 from prowler.providers.aws.models import (
     AWSAssumeRoleInfo,
     AWSCallerIdentity,
@@ -607,7 +608,9 @@ aws:
 
         os.remove(mutelist_file.name)
 
-        assert aws_provider.mutelist == mutelist["Mutelist"]
+        assert isinstance(aws_provider.mutelist, AWSMutelist)
+        assert aws_provider.mutelist.mutelist == mutelist["Mutelist"]
+        assert aws_provider.mutelist.mutelist_file_path == mutelist_file.name
 
     @mock_aws
     def test_aws_provider_mutelist_none(self):
@@ -620,7 +623,9 @@ aws:
         ):
             aws_provider.mutelist = None
 
-        assert aws_provider.mutelist == {}
+        assert isinstance(aws_provider.mutelist, AWSMutelist)
+        assert aws_provider.mutelist.mutelist == {}
+        assert aws_provider.mutelist.mutelist_file_path is None
 
     @mock_aws
     def test_aws_provider_mutelist_s3(self):
@@ -670,7 +675,9 @@ aws:
         aws_provider.mutelist = mutelist_bucket_object_uri
         os.remove(mutelist_file.name)
 
-        assert aws_provider.mutelist == mutelist["Mutelist"]
+        assert isinstance(aws_provider.mutelist, AWSMutelist)
+        assert aws_provider.mutelist.mutelist == mutelist["Mutelist"]
+        assert aws_provider.mutelist.mutelist_file_path == mutelist_bucket_object_uri
 
     @mock_aws
     def test_aws_provider_mutelist_lambda(self):
@@ -696,17 +703,19 @@ aws:
                 }
             }
         }
-
+        lambda_mutelist_path = f"arn:aws:lambda:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:function:lambda-mutelist"
         arguments = Namespace()
         aws_provider = AwsProvider(arguments)
 
         with patch(
-            "prowler.providers.aws.aws_provider.get_mutelist_file_from_lambda",
+            "prowler.providers.aws.lib.mutelist.mutelist.AWSMutelist.get_mutelist_file_from_lambda",
             return_value=mutelist["Mutelist"],
         ):
-            aws_provider.mutelist = f"arn:aws:lambda:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:function:lambda-mutelist"
+            aws_provider.mutelist = lambda_mutelist_path
 
-        assert aws_provider.mutelist == mutelist["Mutelist"]
+        assert isinstance(aws_provider.mutelist, AWSMutelist)
+        assert aws_provider.mutelist.mutelist == mutelist["Mutelist"]
+        assert aws_provider.mutelist.mutelist_file_path == lambda_mutelist_path
 
     @mock_aws
     def test_aws_provider_mutelist_dynamodb(self):
@@ -732,17 +741,19 @@ aws:
                 }
             }
         }
-
+        dynamodb_mutelist_path = f"arn:aws:dynamodb:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:table/mutelist-dynamo"
         arguments = Namespace()
         aws_provider = AwsProvider(arguments)
 
         with patch(
-            "prowler.providers.aws.aws_provider.get_mutelist_file_from_dynamodb",
+            "prowler.providers.aws.lib.mutelist.mutelist.AWSMutelist.get_mutelist_file_from_dynamodb",
             return_value=mutelist["Mutelist"],
         ):
-            aws_provider.mutelist = f"arn:aws:dynamodb:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:table/mutelist-dynamo"
+            aws_provider.mutelist = dynamodb_mutelist_path
 
-        assert aws_provider.mutelist == mutelist["Mutelist"]
+        assert isinstance(aws_provider.mutelist, AWSMutelist)
+        assert aws_provider.mutelist.mutelist == mutelist["Mutelist"]
+        assert aws_provider.mutelist.mutelist_file_path == dynamodb_mutelist_path
 
     @mock_aws
     def test_generate_regional_clients_all_enabled_regions(self):
