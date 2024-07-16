@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from api.models import TestModel
+from api.models import TestModel, Tenant
 
 
 class TestModelSerializer(serializers.ModelSerializer):
@@ -11,4 +11,14 @@ class TestModelSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TestModel
+        fields = "__all__"
+
+
+class TenantSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the Tenant model.
+    """
+
+    class Meta:
+        model = Tenant
         fields = "__all__"
