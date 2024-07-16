@@ -7,7 +7,7 @@ interface HeaderProps {
   icon: string;
 }
 
-const Header: React.FC<HeaderProps> = ({ title, icon }) => {
+export const Header: React.FC<HeaderProps> = ({ title, icon }) => {
   return (
     <>
       <header className="flex items-center gap-3 py-4">
@@ -18,5 +18,3 @@ const Header: React.FC<HeaderProps> = ({ title, icon }) => {
     </>
   );
 };
-
-export default Header;

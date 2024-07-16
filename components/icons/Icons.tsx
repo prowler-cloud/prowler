@@ -46,12 +46,12 @@ export const GithubIcon: React.FC<IconSvgProps> = ({
   );
 };
 
-export const MoonFilledIcon = ({
+export const MoonFilledIcon: React.FC<IconSvgProps> = ({
   size = 24,
   width,
   height,
   ...props
-}: IconSvgProps) => (
+}) => (
   <svg
     aria-hidden="true"
     focusable="false"
@@ -68,12 +68,12 @@ export const MoonFilledIcon = ({
   </svg>
 );
 
-export const SunFilledIcon = ({
+export const SunFilledIcon: React.FC<IconSvgProps> = ({
   size = 24,
   width,
   height,
   ...props
-}: IconSvgProps) => (
+}) => (
   <svg
     aria-hidden="true"
     focusable="false"
@@ -90,15 +90,20 @@ export const SunFilledIcon = ({
   </svg>
 );
 
-export const SearchIcon = (props: IconSvgProps) => (
+export const SearchIcon: React.FC<IconSvgProps> = ({
+  size = 24,
+  width,
+  height,
+  ...props
+}) => (
   <svg
     aria-hidden="true"
     fill="none"
     focusable="false"
-    height="1em"
+    height={size || height}
     role="presentation"
     viewBox="0 0 24 24"
-    width="1em"
+    width={size || width}
     {...props}
   >
     <path
@@ -115,5 +120,84 @@ export const SearchIcon = (props: IconSvgProps) => (
       strokeLinejoin="round"
       strokeWidth="2"
     />
+  </svg>
+);
+
+export const ChevronDownIcon: React.FC<IconSvgProps> = ({
+  size = 24,
+  width,
+  height,
+  strokeWidth = 1.5,
+  ...props
+}) => (
+  <svg
+    aria-hidden="true"
+    fill="none"
+    focusable="false"
+    height={size || height}
+    role="presentation"
+    viewBox="0 0 24 24"
+    width={size || width}
+    {...props}
+  >
+    <path
+      d="M19.92 8.95l-6.52 6.52c-.77.77-2.03.77-2.8 0L4.08 8.95"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeMiterlimit={10}
+      strokeWidth={strokeWidth}
+    />
+  </svg>
+);
+
+export const PlusIcon: React.FC<IconSvgProps> = ({
+  size = 24,
+  width,
+  height,
+  ...props
+}) => (
+  <svg
+    aria-hidden="true"
+    fill="none"
+    focusable="false"
+    height={size || height}
+    role="presentation"
+    viewBox="0 0 24 24"
+    width={size || width}
+    {...props}
+  >
+    <g
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={1.5}
+    >
+      <path d="M6 12h12" />
+      <path d="M12 18V6" />
+    </g>
+  </svg>
+);
+
+export const VerticalDotsIcon: React.FC<IconSvgProps> = ({
+  size = 24,
+  width,
+  height,
+  ...props
+}) => (
+  <svg
+    aria-hidden="true"
+    fill="none"
+    focusable="false"
+    height={size || height}
+    role="presentation"
+    viewBox="0 0 24 24"
+    width={size || width}
+    {...props}
+  >
+    <g fill="currentColor">
+      <path d="M12 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zM12 4c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zM12 16c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
+    </g>
   </svg>
 );
