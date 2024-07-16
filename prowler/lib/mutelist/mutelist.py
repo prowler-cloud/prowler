@@ -139,8 +139,9 @@ class Mutelist(ABC):
                 check_match = (
                     "*" == muted_check
                     or check == muted_check
-                    or re.search(muted_check, check)
+                    or self.is_item_matched([muted_check], check)
                 )
+
                 # Check if the finding is excepted
                 exceptions = muted_check_info.get("Exceptions")
                 if (
@@ -280,7 +281,7 @@ class Mutelist(ABC):
                 for item in matched_items:
                     if item.startswith("*"):
                         item = ".*" + item[1:]
-                    if re.search(item, finding_items):
+                    if re.match(item, finding_items):
                         is_item_matched = True
                         break
             return is_item_matched
