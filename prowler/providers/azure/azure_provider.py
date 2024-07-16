@@ -8,9 +8,13 @@ from azure.mgmt.subscription import SubscriptionClient
 from colorama import Fore, Style
 from msgraph import GraphServiceClient
 
-from prowler.config.config import load_and_validate_config_file
+from prowler.config.config import (
+    get_default_mute_file_path,
+    load_and_validate_config_file,
+)
 from prowler.lib.logger import logger
 from prowler.lib.utils.utils import print_boxes
+from prowler.providers.azure.lib.mutelist.mutelist import AzureMutelist
 from prowler.providers.azure.lib.regions.regions import get_regions_config
 from prowler.providers.azure.models import (
     AzureIdentityInfo,
@@ -29,7 +33,7 @@ class AzureProvider(Provider):
     _region_config: AzureRegionConfig
     _locations: dict
     _output_options: AzureOutputOptions
-    _mutelist: dict
+    _mutelist: AzureMutelist
     # TODO: this is not optional, enforce for all providers
     audit_metadata: Audit_Metadata
 
@@ -111,6 +115,24 @@ class AzureProvider(Provider):
         self._output_options = AzureOutputOptions(
             arguments, bulk_checks_metadata, self._identity
         )
+
+    @property
+    def mutelist(self) -> AzureMutelist:
+        """
+        mutelist method returns the provider's mutelist.
+        """
+        return self._mutelist
+
+    @mutelist.setter
+    def mutelist(self, mutelist_path):
+        """
+        mutelist.setter sets the provider's mutelist.
+        """
+        # Set default mutelist path if none is set
+        if not mutelist_path:
+            mutelist_path = get_default_mute_file_path(self.type)
+
+        self._mutelist = AzureMutelist(mutelist_path)
 
     @property
     def get_output_mapping(self):

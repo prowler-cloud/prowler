@@ -1,14 +1,14 @@
 import yaml
 from mock import MagicMock
 
-from prowler.providers.gcp.lib.mutelist.mutelist import MutelistGCP
+from prowler.providers.gcp.lib.mutelist.mutelist import GCPMutelist
 
 MUTELIST_FIXTURE_PATH = "tests/providers/gcp/lib/mutelist/fixtures/gcp_mutelist.yaml"
 
 
-class TestMutelistGCP:
+class TestGCPMutelist:
     def test_get_mutelist_file_from_local_file(self):
-        mutelist = MutelistGCP(mutelist_path=MUTELIST_FIXTURE_PATH)
+        mutelist = GCPMutelist(mutelist_path=MUTELIST_FIXTURE_PATH)
 
         with open(MUTELIST_FIXTURE_PATH) as f:
             mutelist_fixture = yaml.safe_load(f)["Mutelist"]
@@ -18,7 +18,7 @@ class TestMutelistGCP:
 
     def test_get_mutelist_file_from_local_file_non_existent(self):
         mutelist_path = "tests/lib/mutelist/fixtures/not_present"
-        mutelist = MutelistGCP(mutelist_path=mutelist_path)
+        mutelist = GCPMutelist(mutelist_path=mutelist_path)
 
         assert mutelist.mutelist == {}
         assert mutelist.mutelist_file_path == mutelist_path
@@ -31,7 +31,7 @@ class TestMutelistGCP:
         mutelist_fixture["Accounts1"] = mutelist_fixture["Accounts"]
         del mutelist_fixture["Accounts"]
 
-        mutelist = MutelistGCP(mutelist_content=mutelist_fixture)
+        mutelist = GCPMutelist(mutelist_content=mutelist_fixture)
 
         assert not mutelist.validate_mutelist()
         assert mutelist.mutelist == {}
@@ -52,7 +52,7 @@ class TestMutelistGCP:
             }
         }
 
-        mutelist = MutelistGCP(mutelist_content=mutelist_content)
+        mutelist = GCPMutelist(mutelist_content=mutelist_content)
 
         finding = MagicMock
         finding.check_metadata = MagicMock

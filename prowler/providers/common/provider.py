@@ -5,7 +5,6 @@ from abc import ABC, abstractmethod
 from importlib import import_module
 from typing import Any, Optional
 
-from prowler.config.config import get_default_mute_file_path
 from prowler.lib.logger import logger
 from prowler.lib.mutelist.mutelist import Mutelist
 
@@ -153,24 +152,6 @@ class Provider(ABC):
         This is a fallback that returns None if the service has not implemented this function.
         """
         return set()
-
-    @property
-    def mutelist(self) -> Mutelist:
-        """
-        mutelist method returns the provider's mutelist.
-        """
-        return self._mutelist
-
-    @mutelist.setter
-    def mutelist(self, mutelist_path):
-        """
-        mutelist.setter sets the provider's mutelist.
-        """
-        # Set default mutelist path if none is set
-        if not mutelist_path:
-            mutelist_path = get_default_mute_file_path(self.type)
-
-        self._mutelist = Mutelist(mutelist_path)
 
     @staticmethod
     def get_global_provider() -> "Provider":

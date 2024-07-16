@@ -10,14 +10,14 @@ from prowler.lib.mutelist.mutelist import Mutelist
 from prowler.lib.outputs.utils import unroll_tags
 
 
-class MutelistAWS(Mutelist):
+class AWSMutelist(Mutelist):
     def __init__(
         self,
         mutelist_content: dict = {},
         mutelist_path: str = None,
         session: Session = None,
         aws_account_id: str = "",
-    ) -> "MutelistAWS":
+    ) -> "AWSMutelist":
         self._mutelist = mutelist_content
         self._mutelist_file_path = mutelist_path
         if mutelist_path:

@@ -4,7 +4,7 @@ from prowler.lib.mutelist.mutelist import Mutelist
 from prowler.lib.outputs.utils import unroll_tags
 
 
-class MutelistKubernetes(Mutelist):
+class KubernetesMutelist(Mutelist):
     def is_finding_muted(
         self,
         finding: Any,

@@ -30,7 +30,7 @@ from prowler.providers.aws.config import (
 )
 from prowler.providers.aws.lib.arn.arn import parse_iam_credentials_arn
 from prowler.providers.aws.lib.arn.models import ARN
-from prowler.providers.aws.lib.mutelist.mutelist import MutelistAWS
+from prowler.providers.aws.lib.mutelist.mutelist import AWSMutelist
 from prowler.providers.aws.lib.organizations.organizations import (
     get_organizations_metadata,
     parse_organizations_metadata,
@@ -286,7 +286,7 @@ class AwsProvider(Provider):
         )
 
     @property
-    def mutelist(self) -> MutelistAWS:
+    def mutelist(self) -> AWSMutelist:
         """
         mutelist method returns the provider's mutelist.
         """
@@ -303,7 +303,7 @@ class AwsProvider(Provider):
         if not mutelist_path:
             mutelist_path = get_default_mute_file_path(self.type)
 
-        self._mutelist = MutelistAWS(
+        self._mutelist = AWSMutelist(
             mutelist_path=mutelist_path,
             session=self._session.current_session,
             aws_account_id=self._identity.account,

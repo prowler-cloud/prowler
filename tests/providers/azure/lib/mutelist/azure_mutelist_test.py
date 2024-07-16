@@ -1,16 +1,16 @@
 import yaml
 from mock import MagicMock
 
-from prowler.providers.azure.lib.mutelist.mutelist import MutelistAzure
+from prowler.providers.azure.lib.mutelist.mutelist import AzureMutelist
 
 MUTELIST_FIXTURE_PATH = (
     "tests/providers/azure/lib/mutelist/fixtures/azure_mutelist.yaml"
 )
 
 
-class TestMutelistAzure:
+class TestAzureMutelist:
     def test_get_mutelist_file_from_local_file(self):
-        mutelist = MutelistAzure(mutelist_path=MUTELIST_FIXTURE_PATH)
+        mutelist = AzureMutelist(mutelist_path=MUTELIST_FIXTURE_PATH)
 
         with open(MUTELIST_FIXTURE_PATH) as f:
             mutelist_fixture = yaml.safe_load(f)["Mutelist"]
@@ -20,7 +20,7 @@ class TestMutelistAzure:
 
     def test_get_mutelist_file_from_local_file_non_existent(self):
         mutelist_path = "tests/lib/mutelist/fixtures/not_present"
-        mutelist = MutelistAzure(mutelist_path=mutelist_path)
+        mutelist = AzureMutelist(mutelist_path=mutelist_path)
 
         assert mutelist.mutelist == {}
         assert mutelist.mutelist_file_path == mutelist_path
@@ -33,7 +33,7 @@ class TestMutelistAzure:
         mutelist_fixture["Accounts1"] = mutelist_fixture["Accounts"]
         del mutelist_fixture["Accounts"]
 
-        mutelist = MutelistAzure(mutelist_content=mutelist_fixture)
+        mutelist = AzureMutelist(mutelist_content=mutelist_fixture)
 
         assert not mutelist.validate_mutelist()
         assert mutelist.mutelist == {}
@@ -54,7 +54,7 @@ class TestMutelistAzure:
             }
         }
 
-        mutelist = MutelistAzure(mutelist_content=mutelist_content)
+        mutelist = AzureMutelist(mutelist_content=mutelist_content)
 
         finding = MagicMock
         finding.check_metadata = MagicMock
