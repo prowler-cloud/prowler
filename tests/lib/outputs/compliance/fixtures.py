@@ -6,6 +6,7 @@ from prowler.lib.check.compliance_models import (
     ENS_Requirement_Attribute,
     ENS_Requirement_Attribute_Nivel,
     ENS_Requirement_Attribute_Tipos,
+    Generic_Compliance_Requirement_Attribute,
     ISO27001_2013_Requirement_Attribute,
     Mitre_Requirement,
     Mitre_Requirement_Attribute_AWS,
@@ -373,5 +374,63 @@ ISO27001_2013_AWS = ComplianceBaseModel(
             ],
             Checks=["rds_instance_storage_encrypted"],
         ),
+    ],
+)
+ISO27001_2013_AWS_NAME = "iso27001_2013_aws"
+ISO27001_2013_AWS = ComplianceBaseModel(
+    Framework="ISO27001",
+    Provider="AWS",
+    Version="2013",
+    Description="ISO (the International Organization for Standardization) and IEC (the International Electrotechnical Commission) form the specialized system for worldwide standardization. National bodies that are members of ISO or IEC participate in the development of International Standards through technical committees established by the respective organization to deal with particular fields of technical activity. ISO and IEC technical committees collaborate in fields of mutual interest. Other international organizations, governmental and non-governmental, in liaison with ISO and IEC, also take part in the work.",
+    Requirements=[
+        Compliance_Requirement(
+            Id="A.10.1",
+            Description="Setup Encryption at rest for RDS instances",
+            Name="Cryptographic Controls",
+            Attributes=[
+                ISO27001_2013_Requirement_Attribute(
+                    Category="A.10 Cryptography",
+                    Objetive_ID="A.10.1",
+                    Objetive_Name="Cryptographic Controls",
+                    Check_Summary="Setup Encryption at rest for RDS instances",
+                )
+            ],
+            Checks=["rds_instance_storage_encrypted"],
+        ),
+    ],
+)
+NIST_800_53_REVISION_4_AWS_NAME = "nist_800_53_revision_4_aws"
+NIST_800_53_REVISION_4_AWS = ComplianceBaseModel(
+    Framework="NIST-800-53-Revision-4",
+    Provider="AWS",
+    Version="",
+    Description="NIST 800-53 is a regulatory standard that defines the minimum baseline of security controls for all U.S. federal information systems except those related to national security. The controls defined in this standard are customizable and address a diverse set of security and privacy requirements.",
+    Requirements=[
+        Compliance_Requirement(
+            Id="ac_2_4",
+            Description="Account Management",
+            Name="The information system automatically audits account creation, modification, enabling, disabling, and removal actions, and notifies [Assignment: organization-defined personnel or roles].",
+            Attributes=[
+                Generic_Compliance_Requirement_Attribute(
+                    ItemId="ac_2_4",
+                    Section="Access Control (AC)",
+                    SubSection="Account Management (AC-2)",
+                    Service="aws",
+                )
+            ],
+            Checks=[
+                "cloudtrail_multi_region_enabled",
+                "cloudtrail_multi_region_enabled",
+                "cloudtrail_cloudwatch_logging_enabled",
+                "cloudwatch_changes_to_network_acls_alarm_configured",
+                "cloudwatch_changes_to_network_gateways_alarm_configured",
+                "cloudwatch_changes_to_network_route_tables_alarm_configured",
+                "cloudwatch_changes_to_vpcs_alarm_configured",
+                "guardduty_is_enabled",
+                "rds_instance_integration_cloudwatch_logs",
+                "redshift_cluster_audit_logging",
+                "securityhub_enabled",
+            ],
+        )
     ],
 )

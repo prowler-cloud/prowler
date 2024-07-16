@@ -2,12 +2,10 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-# TODO: move this to outputs/<compliance>/models.py
 
-
-class Check_Output_CSV_Generic_Compliance(BaseModel):
+class Generic(BaseModel):
     """
-    Check_Output_CSV_Generic_Compliance generates a finding's output in CSV Generic Compliance format.
+    Generic generates a finding's output in Generic Compliance format.
     """
 
     Provider: str
@@ -27,3 +25,4 @@ class Check_Output_CSV_Generic_Compliance(BaseModel):
     ResourceId: str
     CheckId: str
     Muted: bool
+    ResourceName: str
