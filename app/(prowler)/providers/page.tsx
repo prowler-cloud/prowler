@@ -21,7 +21,7 @@ export default function Providers() {
       <Modal
         isOpen={isOpen}
         onOpenChange={onOpenChange}
-        title="Overview Modal"
+        title="Providers Modal"
         body={
           <>
             <p>Modal body content</p>
