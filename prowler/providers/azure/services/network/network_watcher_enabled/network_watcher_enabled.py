@@ -12,9 +12,11 @@ class network_watcher_enabled(Check):
             report.location = "Global"
             report.resource_id = f"/subscriptions/{network_client.subscriptions[subscription]}/resourceGroups/NetworkWatcherRG/providers/Microsoft.Network/networkWatchers/NetworkWatcher_*"
 
-            missing_locations = set(network_client.locations[subscription]) - set(
-                network_watcher.location for network_watcher in network_watchers
-            )
+            missing_locations = set(
+                network_client.locations.get(
+                    network_client.subscriptions.get(subscription, ""), []
+                )
+            ) - set(network_watcher.location for network_watcher in network_watchers)
 
             if missing_locations:
                 report.status = "FAIL"

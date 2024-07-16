@@ -33,7 +33,7 @@ class Test_network_watcher_enabled:
     def test_network_invalid_network_watchers(self):
         network_client = mock.MagicMock
         locations = ["location"]
-        network_client.locations = {AZURE_SUBSCRIPTION: locations}
+        network_client.locations = {AZURE_SUBSCRIPTION_ID: locations}
         network_client.subscriptions = {AZURE_SUBSCRIPTION: AZURE_SUBSCRIPTION_ID}
         network_watcher_name = "Network Watcher"
         network_watcher_id = f"/subscriptions/{AZURE_SUBSCRIPTION_ID}/resourceGroups/NetworkWatcherRG/providers/Microsoft.Network/networkWatchers/NetworkWatcher_*"
@@ -76,7 +76,7 @@ class Test_network_watcher_enabled:
     def test_network_valid_network_watchers(self):
         network_client = mock.MagicMock
         locations = ["location"]
-        network_client.locations = {AZURE_SUBSCRIPTION: locations}
+        network_client.locations = {AZURE_SUBSCRIPTION_ID: locations}
         network_client.subscriptions = {AZURE_SUBSCRIPTION: AZURE_SUBSCRIPTION_ID}
         network_watcher_name = "Network Watcher"
         network_watcher_id = f"/subscriptions/{AZURE_SUBSCRIPTION_ID}/resourceGroups/NetworkWatcherRG/providers/Microsoft.Network/networkWatchers/NetworkWatcher_*"
