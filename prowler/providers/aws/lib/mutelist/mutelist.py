@@ -40,8 +40,8 @@ class AWSMutelist(Mutelist):
                 )
             else:
                 self.get_mutelist_file_from_local_file(mutelist_path)
-
-        self.validate_mutelist()
+        if self._mutelist:
+            self.validate_mutelist()
 
     def is_finding_muted(
         self,

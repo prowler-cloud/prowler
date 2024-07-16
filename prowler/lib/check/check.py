@@ -714,7 +714,7 @@ def execute(
         )
 
         # Mutelist findings
-        if hasattr(global_provider, "mutelist") and global_provider.mutelist:
+        if hasattr(global_provider, "mutelist") and global_provider.mutelist.mutelist:
             # TODO: make this prettier
             is_finding_muted_args = {}
             if global_provider.type == "aws":

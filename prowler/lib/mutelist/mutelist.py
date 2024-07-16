@@ -21,7 +21,9 @@ class Mutelist(ABC):
             self.get_mutelist_file_from_local_file(mutelist_path)
         else:
             self._mutelist = mutelist_content
-        self.validate_mutelist()
+
+        if self._mutelist:
+            self.validate_mutelist()
 
     @property
     def mutelist(self) -> dict:
@@ -83,7 +85,7 @@ class Mutelist(ABC):
 
             # We always check all the accounts present in the mutelist
             # if one mutes the finding we set the finding as muted
-            for account in self._mutelist["Accounts"]:
+            for account in self._mutelist.get("Accounts", []):
                 if account == audited_account or account == "*":
                     if self.is_muted_in_check(
                         self._mutelist["Accounts"][account]["Checks"],
