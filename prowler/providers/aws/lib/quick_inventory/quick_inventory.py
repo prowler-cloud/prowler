@@ -16,7 +16,9 @@ from prowler.config.config import (
 from prowler.lib.logger import logger
 from prowler.providers.aws.aws_provider import AwsProvider
 from prowler.providers.aws.lib.arn.models import get_arn_resource_type
-from prowler.providers.aws.lib.s3.s3 import send_to_s3_bucket
+
+# FIXME:
+# from prowler.providers.aws.lib.s3.s3 import send_to_s3_bucket
 
 
 def quick_inventory(provider: AwsProvider, args):
@@ -285,23 +287,24 @@ def create_output(resources: list, provider: AwsProvider, args):
     print(f" - JSON: {args.output_directory}/{output_file + json_file_suffix}")
 
     # Send output to S3 if needed (-B / -D)
-    for mode in ["csv"]:
-        if args.output_bucket or args.output_bucket_no_assume:
-            # Check if -B was input
-            if args.output_bucket:
-                output_bucket = args.output_bucket
-                bucket_session = provider.session.current_session
-            # Check if -D was input
-            elif args.output_bucket_no_assume:
-                output_bucket = args.output_bucket_no_assume
-                bucket_session = provider.original_session
-            send_to_s3_bucket(
-                output_file,
-                args.output_directory,
-                mode,
-                output_bucket,
-                bucket_session,
-            )
+    # FIXME:
+    # for mode in ["csv"]:
+    #     if args.output_bucket or args.output_bucket_no_assume:
+    #         # Check if -B was input
+    #         if args.output_bucket:
+    #             output_bucket = args.output_bucket
+    #             bucket_session = provider.session.current_session
+    #         # Check if -D was input
+    #         elif args.output_bucket_no_assume:
+    #             output_bucket = args.output_bucket_no_assume
+    #             bucket_session = provider.original_session
+    #         send_to_s3_bucket(
+    #             output_file,
+    #             args.output_directory,
+    #             mode,
+    #             output_bucket,
+    #             bucket_session,
+    #         )
 
 
 def get_regional_buckets(provider: AwsProvider, region: str) -> list:
