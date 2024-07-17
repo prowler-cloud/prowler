@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from io import TextIOWrapper
+from os import path
 from typing import List
 
 from prowler.lib.logger import logger
@@ -14,6 +15,7 @@ class Output(ABC):
     Attributes:
         _data (list): A list to store transformed data from findings.
         _file_descriptor (TextIOWrapper): A file descriptor to write data to a file.
+        _file_extension (str): The extension of the file with the leading ., e.g.: .csv
 
     Methods:
         __init__: Initializes the Output class with findings, optionally creates a file descriptor.
@@ -26,14 +28,22 @@ class Output(ABC):
 
     _data: list
     _file_descriptor: TextIOWrapper
+    _file_extension: str
 
     def __init__(
         self,
         findings: List[Finding],
         create_file_descriptor: bool = False,
         file_path: str = None,
+        file_extension: str = "",
     ) -> None:
         self._data = []
+
+        if not file_extension and file_path:
+            _, self._file_extension = path.splitext(file_path)
+        if file_extension:
+            self._file_extension = file_extension
+
         if findings:
             self.transform(findings)
             if create_file_descriptor:
@@ -47,12 +57,20 @@ class Output(ABC):
     def file_descriptor(self):
         return self._file_descriptor
 
+    @file_descriptor.setter
+    def file_descriptor(self, file_descriptor: TextIOWrapper):
+        self._file_descriptor = file_descriptor
+
+    @property
+    def file_extension(self):
+        return self._file_extension
+
     @abstractmethod
     def transform(self, findings: List[Finding]):
         raise NotImplementedError
 
     @abstractmethod
-    def batch_write_data_to_file(self, file_descriptor: TextIOWrapper) -> None:
+    def batch_write_data_to_file(self) -> None:
         raise NotImplementedError
 
     def create_file_descriptor(self, file_path) -> None:
