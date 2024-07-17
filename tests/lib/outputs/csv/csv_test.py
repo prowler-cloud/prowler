@@ -109,6 +109,7 @@ class TestCSV:
         output = CSV(findings)
         output._file_descriptor = mock_file
 
+        # We don't want to close the file to read it later
         with patch.object(mock_file, "close", return_value=None):
             output.batch_write_data_to_file()
 
@@ -165,6 +166,7 @@ class TestCSV:
                 output_instance.file_descriptor
             )
 
+    # TODO(PRWLR-4187): remove this once we always use the new CSV(Output)
     def test_write_csv_with_dict(self):
         headers = ["provider", "account", "check_id"]
         row = {"provider": "aws", "account": "account_try", "check_id": "account_check"}
@@ -176,6 +178,7 @@ class TestCSV:
         content = mock_file.read()
         assert "aws;account_try;account_check" in content
 
+    # TODO(PRWLR-4187): remove this once we always use the new CSV(Output)
     def test_write_csv_with_object(self):
         class Row:
             def __init__(self, provider, account, check_id):
@@ -192,3 +195,37 @@ class TestCSV:
         mock_file.seek(0)
         content = mock_file.read()
         assert "aws;account_try;account_check" in content
+
+    def test_csv_with_file_path(self):
+        file_name = "test"
+        extension = ".csv"
+        file_path = f"{file_name}{extension}"
+        csv = CSV(findings=[], file_path=file_path)
+
+        assert csv.file_extension == extension
+
+    def test_csv_with_extension(self):
+        extension = ".csv"
+        csv = CSV(findings=[], file_extension=extension)
+
+        assert csv.file_extension == extension
+
+    def test_csv_without_path_or_extension(self):
+        csv = CSV(findings=[])
+
+        assert not hasattr(csv, "_file_extension")
+
+    @freeze_time(datetime.now())
+    def test_csv_custom_file_descriptor(self):
+        with tempfile.TemporaryFile(mode="a+") as temp_file:
+            csv = CSV(findings=[generate_finding_output()])
+            csv.file_descriptor = temp_file
+            # We don't want to close the file to read it later
+            with patch.object(temp_file, "close", return_value=None):
+                csv.batch_write_data_to_file()
+
+            expected_csv = f"AUTH_METHOD;TIMESTAMP;ACCOUNT_UID;ACCOUNT_NAME;ACCOUNT_EMAIL;ACCOUNT_ORGANIZATION_UID;ACCOUNT_ORGANIZATION_NAME;ACCOUNT_TAGS;FINDING_UID;PROVIDER;CHECK_ID;CHECK_TITLE;CHECK_TYPE;STATUS;STATUS_EXTENDED;MUTED;SERVICE_NAME;SUBSERVICE_NAME;SEVERITY;RESOURCE_TYPE;RESOURCE_UID;RESOURCE_NAME;RESOURCE_DETAILS;RESOURCE_TAGS;PARTITION;REGION;DESCRIPTION;RISK;RELATED_URL;REMEDIATION_RECOMMENDATION_TEXT;REMEDIATION_RECOMMENDATION_URL;REMEDIATION_CODE_NATIVEIAC;REMEDIATION_CODE_TERRAFORM;REMEDIATION_CODE_CLI;REMEDIATION_CODE_OTHER;COMPLIANCE;CATEGORIES;DEPENDS_ON;RELATED_TO;NOTES;PROWLER_VERSION\nprofile: default;{datetime.now()};123456789012;123456789012;;test-organization-id;test-organization;test-tag:test-value;test-unique-finding;aws;test-check-id;test-check-id;test-type;PASS;;False;test-service;;high;test-resource;;;;;aws;eu-west-1;check description;test-risk;test-url;;;;;;;test-compliance: test-compliance;test-category;test-dependency;test-related-to;test-notes;4.2.4\n"
+
+            temp_file.seek(0)
+
+            assert temp_file.read() == expected_csv
