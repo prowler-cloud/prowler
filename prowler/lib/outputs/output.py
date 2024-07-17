@@ -36,7 +36,7 @@ class Output(ABC):
         self._data = []
         if findings:
             self.transform(findings)
-            if create_file_descriptor:
+            if create_file_descriptor and file_path:
                 self.create_file_descriptor(file_path)
 
     @property
@@ -55,7 +55,7 @@ class Output(ABC):
     def batch_write_data_to_file(self, file_descriptor: TextIOWrapper) -> None:
         raise NotImplementedError
 
-    def create_file_descriptor(self, file_path) -> None:
+    def create_file_descriptor(self, file_path: str) -> None:
         """
         Creates a file descriptor for writing data to a file.
 
