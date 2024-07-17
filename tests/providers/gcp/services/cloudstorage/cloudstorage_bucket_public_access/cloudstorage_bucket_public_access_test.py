@@ -98,11 +98,6 @@ class TestCloudStorageBucketPublicAccess:
     def test_no_buckets(self):
         cloudstorage_client = mock.MagicMock()
 
-        cloudstorage_client.project_ids = [GCP_PROJECT_ID]
-        cloudstorage_client.region = "global"
-
-        cloudstorage_client.buckets = []
-
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_gcp_provider(),
@@ -113,6 +108,10 @@ class TestCloudStorageBucketPublicAccess:
             from prowler.providers.gcp.services.cloudstorage.cloudstorage_bucket_public_access.cloudstorage_bucket_public_access import (
                 cloudstorage_bucket_public_access,
             )
+
+            cloudstorage_client.project_ids = [GCP_PROJECT_ID]
+            cloudstorage_client.region = "global"
+            cloudstorage_client.buckets = []
 
             check = cloudstorage_bucket_public_access()
             result = check.execute()
