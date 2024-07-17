@@ -15,6 +15,7 @@ interface ModalProps {
   body: React.ReactNode;
   actionText?: string;
   onAction?: () => void;
+  isDismissable?: boolean;
 }
 
 export const Modal: React.FC<ModalProps> = ({
@@ -24,12 +25,20 @@ export const Modal: React.FC<ModalProps> = ({
   body,
   actionText,
   onAction,
+  isDismissable = true,
 }) => {
   const hasActionButton = actionText && onAction;
 
   return (
     <>
-      <ModalContainer isOpen={isOpen} onOpenChange={onOpenChange}>
+      <ModalContainer
+        isOpen={isOpen}
+        onOpenChange={onOpenChange}
+        backdrop="blur"
+        isDismissable={isDismissable}
+        isKeyboardDismissDisabled={!isDismissable}
+        hideCloseButton={!isDismissable}
+      >
         <ModalContent>
           {(onClose) => (
             <>
