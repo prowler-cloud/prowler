@@ -1,50 +1,25 @@
 from csv import DictWriter
-
-from prowler.lib.logger import logger
-from prowler.lib.outputs.finding import Finding
-from prowler.lib.outputs.output import Output
-from prowler.lib.outputs.utils import unroll_dict, unroll_list
+from typing import Any
 
 
-class CSV(Output):
-    def transform(self, findings: list[Finding]) -> None:
-        """Transforms the findings into the CSV format.
+# TODO: remove this once we always use the new CSV(Output)
+def write_csv(file_descriptor, headers, row):
+    csv_writer = DictWriter(
+        file_descriptor,
+        fieldnames=headers,
+        delimiter=";",
+    )
+    if isinstance(row, dict):
+        csv_writer.writerow(row)
+    else:
+        csv_writer.writerow(row.__dict__)
 
-        Args:
-            findings (list[Finding]): a list of Finding objects
 
-        """
-        try:
-            for finding in findings:
-                finding_dict = {k.upper(): v for k, v in finding.dict().items()}
-                finding_dict["COMPLIANCE"] = unroll_dict(finding.compliance)
-                finding_dict["ACCOUNT_TAGS"] = unroll_list(finding.account_tags)
-                finding_dict["STATUS"] = finding.status.value
-                finding_dict["SEVERITY"] = finding.severity.value
-                self._data.append(finding_dict)
-        except Exception as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-
-    def batch_write_data_to_file(self) -> None:
-        """Writes the findings to a file using the CSV format using the `Output._file_descriptor`."""
-        try:
-            if (
-                getattr(self, "_file_descriptor", None)
-                and not self._file_descriptor.closed
-                and self._data
-            ):
-                csv_writer = DictWriter(
-                    self._file_descriptor,
-                    fieldnames=self._data[0].keys(),
-                    delimiter=";",
-                )
-                csv_writer.writeheader()
-                for finding in self._data:
-                    csv_writer.writerow(finding)
-                self._file_descriptor.close()
-        except Exception as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+# TODO: remove this once we always use the new CSV(Output)
+def generate_csv_fields(format: Any) -> list[str]:
+    """Generates the CSV headers for the given class"""
+    csv_fields = []
+    # __fields__ is always available in the Pydantic's BaseModel class
+    for field in format.__dict__.get("__fields__").keys():
+        csv_fields.append(field)
+    return csv_fields

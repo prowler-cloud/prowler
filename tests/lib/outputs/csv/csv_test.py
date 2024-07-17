@@ -9,7 +9,8 @@ from freezegun import freeze_time
 from mock import patch
 
 from prowler.config.config import prowler_version
-from prowler.lib.outputs.csv.csv import CSV
+from prowler.lib.outputs.csv.csv import write_csv
+from prowler.lib.outputs.csv.models import CSV
 from prowler.lib.outputs.finding import Finding
 from prowler.lib.outputs.output import Output
 from tests.lib.outputs.fixtures.fixtures import generate_finding_output
@@ -163,3 +164,31 @@ class TestCSV:
             output_instance.batch_write_data_to_file.assert_called_once_with(
                 output_instance.file_descriptor
             )
+
+    def test_write_csv_with_dict(self):
+        headers = ["provider", "account", "check_id"]
+        row = {"provider": "aws", "account": "account_try", "check_id": "account_check"}
+        mock_file = StringIO()
+
+        write_csv(mock_file, headers, row)
+
+        mock_file.seek(0)
+        content = mock_file.read()
+        assert "aws;account_try;account_check" in content
+
+    def test_write_csv_with_object(self):
+        class Row:
+            def __init__(self, provider, account, check_id):
+                self.provider = provider
+                self.account = account
+                self.check_id = check_id
+
+        headers = ["provider", "account", "check_id"]
+        row = Row("aws", "account_try", "account_check")
+        mock_file = StringIO()
+
+        write_csv(mock_file, headers, row)
+
+        mock_file.seek(0)
+        content = mock_file.read()
+        assert "aws;account_try;account_check" in content
