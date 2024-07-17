@@ -12,102 +12,6 @@ from prowler.lib.outputs.compliance.mitre_attack.mitre_attack import (
 )
 
 
-def add_manual_controls(
-    output_options, provider, file_descriptors, input_compliance_frameworks
-):
-    try:
-        # Check if MANUAL control was already added to output
-        if "manual_check" in output_options.bulk_checks_metadata:
-            manual_finding = Check_Report(
-                output_options.bulk_checks_metadata["manual_check"].json()
-            )
-            manual_finding.status = "MANUAL"
-            manual_finding.status_extended = "Manual check"
-            manual_finding.resource_id = "manual_check"
-            manual_finding.resource_name = "Manual check"
-            manual_finding.region = ""
-            manual_finding.location = ""
-            manual_finding.project_id = ""
-            manual_finding.subscription = ""
-            manual_finding.namespace = ""
-            fill_compliance(
-                output_options,
-                manual_finding,
-                provider,
-                file_descriptors,
-                input_compliance_frameworks,
-            )
-            del output_options.bulk_checks_metadata["manual_check"]
-    except Exception as error:
-        logger.error(
-            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-        )
-
-
-def get_check_compliance_frameworks_in_input(
-    check_id, bulk_checks_metadata, input_compliance_frameworks
-):
-    """get_check_compliance_frameworks_in_input returns a list of Compliance for the given check if the compliance framework is present in the input compliance to execute"""
-    check_compliances = []
-    try:
-        if bulk_checks_metadata and bulk_checks_metadata.get(check_id):
-            for compliance in bulk_checks_metadata[check_id].Compliance:
-                compliance_name = ""
-                if compliance.Version:
-                    compliance_name = (
-                        compliance.Framework.lower()
-                        + "_"
-                        + compliance.Version.lower()
-                        + "_"
-                        + compliance.Provider.lower()
-                    )
-                else:
-                    compliance_name = (
-                        compliance.Framework.lower() + "_" + compliance.Provider.lower()
-                    )
-                if compliance_name.replace("-", "_") in input_compliance_frameworks:
-                    check_compliances.append(compliance)
-    except Exception as error:
-        logger.error(
-            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-        )
-    return check_compliances
-
-
-def fill_compliance(
-    output_options, finding, provider, file_descriptors, input_compliance_frameworks
-):
-    try:
-        # We have to retrieve all the check's compliance requirements and get the ones matching with the input ones
-        check_compliances = get_check_compliance_frameworks_in_input(
-            finding.check_metadata.CheckID,
-            output_options.bulk_checks_metadata,
-            input_compliance_frameworks,
-        )
-
-        for compliance in check_compliances:
-            # FIXME: Remove this once we merge all the compliance frameworks
-            if compliance.Framework == "CIS":
-                continue
-            elif compliance.Framework == "MITRE-ATTACK" and compliance.Version == "":
-                continue
-            elif compliance.Framework == "ENS":
-                continue
-            elif "AWS-Well-Architected-Framework" in compliance.Framework:
-                continue
-            elif (
-                compliance.Framework == "ISO27001"
-                and compliance.Version == "2013"
-                and compliance.Provider == "AWS"
-            ):
-                continue
-
-    except Exception as error:
-        logger.error(
-            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-        )
-
-
 def display_compliance_table(
     findings: list,
     bulk_checks_metadata: dict,
@@ -115,7 +19,21 @@ def display_compliance_table(
     output_filename: str,
     output_directory: str,
     compliance_overview: bool,
-):
+) -> None:
+    """
+    display_compliance_table generates the compliance table for the given compliance framework.
+
+    Args:
+        findings (list): The list of findings
+        bulk_checks_metadata (dict): The bulk checks metadata
+        compliance_framework (str): The compliance framework to generate the table
+        output_filename (str): The output filename
+        output_directory (str): The output directory
+        compliance_overview (bool): The compliance
+
+    Returns:
+        None
+    """
     try:
         if "ens_" in compliance_framework:
             get_ens_table(
@@ -161,7 +79,9 @@ def display_compliance_table(
 
 
 # TODO: this should be in the Check class
-def get_check_compliance(finding, provider_type, output_options) -> dict:
+def get_check_compliance(
+    finding: Check_Report, provider_type: str, bulk_checks_metadata: dict
+) -> dict:
     """get_check_compliance returns a map with the compliance framework as key and the requirements where the finding's check is present.
 
         Example:
@@ -170,12 +90,20 @@ def get_check_compliance(finding, provider_type, output_options) -> dict:
         "CIS-1.4": ["2.1.3"],
         "CIS-1.5": ["2.1.3"],
     }
+
+    Args:
+        finding (Any): The Check_Report finding
+        provider_type (str): The provider type
+        bulk_checks_metadata (dict): The bulk checks metadata
+
+    Returns:
+        dict: The compliance framework as key and the requirements where the finding's check is present.
     """
     try:
         check_compliance = {}
         # We have to retrieve all the check's compliance requirements
-        if finding.check_metadata.CheckID in output_options.bulk_checks_metadata:
-            for compliance in output_options.bulk_checks_metadata[
+        if finding.check_metadata.CheckID in bulk_checks_metadata:
+            for compliance in bulk_checks_metadata[
                 finding.check_metadata.CheckID
             ].Compliance:
                 compliance_fw = compliance.Framework

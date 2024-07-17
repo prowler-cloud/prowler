@@ -137,36 +137,8 @@ class TestCompliance:
 
         assert "check1" in updated_metadata
         assert "check2" in updated_metadata
-        assert "manual_check" in updated_metadata
 
-        manual_compliance = updated_metadata["manual_check"].Compliance[0]
         check1_compliance = updated_metadata["check1"].Compliance[0]
-
-        assert len(updated_metadata["manual_check"].Compliance) == 1
-        assert len(updated_metadata["check1"].Compliance) == 1
-
-        assert manual_compliance.Framework == "Framework1"
-        assert manual_compliance.Provider == "Provider1"
-        assert manual_compliance.Version == "1.0"
-        assert manual_compliance.Description == "Framework 1 Description"
-        assert len(manual_compliance.Requirements) == 1
-
-        manual_requirement = manual_compliance.Requirements[0]
-        assert manual_requirement.Id == "1.1.2"
-        assert manual_requirement.Description == "description"
-        assert len(manual_requirement.Attributes) == 1
-
-        manual_attribute = manual_requirement.Attributes[0]
-        assert manual_attribute.Section == "1. Identity"
-        assert manual_attribute.Profile == "Level 1"
-        assert manual_attribute.AssessmentStatus == "Manual"
-        assert manual_attribute.Description == "Description"
-        assert manual_attribute.RationaleStatement == "Rationale"
-        assert manual_attribute.ImpactStatement == "Impact"
-        assert manual_attribute.RemediationProcedure == "Remediation"
-        assert manual_attribute.AuditProcedure == "Audit"
-        assert manual_attribute.AdditionalInformation == "Additional"
-        assert manual_attribute.References == "References"
 
         assert len(updated_metadata["check1"].Compliance) == 1
         assert check1_compliance.Framework == "Framework1"
