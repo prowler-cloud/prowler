@@ -27,7 +27,6 @@ export default function Providers() {
             <p>Modal body content</p>
           </>
         }
-        actionText="Save"
         onAction={onAction}
       />
     </>

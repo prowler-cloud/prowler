@@ -13,6 +13,7 @@ interface ModalProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
   body: React.ReactNode;
+  onCloseText?: string;
   actionText?: string;
   onAction?: () => void;
   isDismissable?: boolean;
@@ -23,7 +24,8 @@ export const Modal: React.FC<ModalProps> = ({
   isOpen,
   onOpenChange,
   body,
-  actionText,
+  onCloseText = "Close",
+  actionText = "Save",
   onAction,
   isDismissable = true,
 }) => {
@@ -46,7 +48,7 @@ export const Modal: React.FC<ModalProps> = ({
               <ModalBody>{body}</ModalBody>
               <ModalFooter>
                 <Button color="danger" variant="light" onPress={onClose}>
-                  Close
+                  {onCloseText && onCloseText}
                 </Button>
                 {hasActionButton && (
                   <Button color="primary" onPress={onAction}>
