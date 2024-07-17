@@ -28,7 +28,6 @@ def stdout_report(finding, color, verbose, status, fix):
 def report(check_findings, provider):
     try:
         output_options = provider.output_options
-        file_descriptors = {}
         if check_findings:
             # TO-DO Generic Function
             if provider.type == "aws":
@@ -55,10 +54,6 @@ def report(check_findings, provider):
         # Separator between findings and bar
         if output_options.verbose:
             print()
-        if file_descriptors:
-            # Close all file descriptors
-            for file_descriptor in file_descriptors:
-                file_descriptors.get(file_descriptor).close()
     except Exception as error:
         logger.error(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
