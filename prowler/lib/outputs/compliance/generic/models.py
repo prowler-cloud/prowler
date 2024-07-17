@@ -3,9 +3,9 @@ from typing import Optional
 from pydantic import BaseModel
 
 
-class Generic(BaseModel):
+class GenericComplianceModel(BaseModel):
     """
-    Generic generates a finding's output in Generic Compliance format.
+    GenericComplianceModel generates a finding's output in Generic Compliance format.
     """
 
     Provider: str

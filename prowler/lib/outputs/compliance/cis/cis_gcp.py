@@ -2,7 +2,7 @@ from csv import DictWriter
 from venv import logger
 
 from prowler.lib.check.compliance_models import ComplianceBaseModel
-from prowler.lib.outputs.compliance.cis.models import CISGCP
+from prowler.lib.outputs.compliance.cis.models import GCPCISModel
 from prowler.lib.outputs.compliance.compliance_output import ComplianceOutput
 from prowler.lib.outputs.finding import Finding
 
@@ -43,7 +43,7 @@ class GCPCIS(ComplianceOutput):
             for requirement in compliance.Requirements:
                 if requirement.Id in finding_requirements:
                     for attribute in requirement.Attributes:
-                        compliance_row = CISGCP(
+                        compliance_row = GCPCISModel(
                             Provider=finding.provider,
                             Description=compliance.Description,
                             ProjectId=finding.account_uid,
@@ -73,7 +73,7 @@ class GCPCIS(ComplianceOutput):
         for requirement in compliance.Requirements:
             if not requirement.Checks:
                 for attribute in requirement.Attributes:
-                    compliance_row = CISGCP(
+                    compliance_row = GCPCISModel(
                         Provider=compliance.Provider.lower(),
                         Description=compliance.Description,
                         ProjectId="",

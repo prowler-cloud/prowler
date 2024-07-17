@@ -5,7 +5,7 @@ from freezegun import freeze_time
 from mock import patch
 
 from prowler.lib.outputs.compliance.mitre_attack.mitre_attack_gcp import GCPMitreAttack
-from prowler.lib.outputs.compliance.mitre_attack.models import MitreAttackGCP
+from prowler.lib.outputs.compliance.mitre_attack.models import GCPMitreAttackModel
 from prowler.lib.outputs.utils import unroll_list
 from tests.lib.outputs.compliance.fixtures import MITRE_ATTACK_GCP
 from tests.lib.outputs.fixtures.fixtures import generate_finding_output
@@ -26,7 +26,7 @@ class TestGCPMITREAttack:
 
         output = GCPMitreAttack(findings, MITRE_ATTACK_GCP)
         output_data = output.data[0]
-        assert isinstance(output_data, MitreAttackGCP)
+        assert isinstance(output_data, GCPMitreAttackModel)
         assert output_data.Provider == "gcp"
         assert output_data.Description == MITRE_ATTACK_GCP.Description
         assert output_data.ProjectId == GCP_PROJECT_ID

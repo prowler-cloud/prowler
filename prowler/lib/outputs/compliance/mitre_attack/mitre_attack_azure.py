@@ -3,7 +3,7 @@ from venv import logger
 
 from prowler.lib.check.compliance_models import ComplianceBaseModel
 from prowler.lib.outputs.compliance.compliance_output import ComplianceOutput
-from prowler.lib.outputs.compliance.mitre_attack.models import MitreAttackAzure
+from prowler.lib.outputs.compliance.mitre_attack.models import AzureMitreAttackModel
 from prowler.lib.outputs.finding import Finding
 from prowler.lib.outputs.utils import unroll_list
 
@@ -43,7 +43,7 @@ class AzureMitreAttack(ComplianceOutput):
             finding_requirements = finding.compliance.get(compliance_name, [])
             for requirement in compliance.Requirements:
                 if requirement.Id in finding_requirements:
-                    compliance_row = MitreAttackAzure(
+                    compliance_row = AzureMitreAttackModel(
                         Provider=finding.provider,
                         Description=compliance.Description,
                         SubscriptionId=finding.account_uid,
@@ -83,7 +83,7 @@ class AzureMitreAttack(ComplianceOutput):
         for requirement in compliance.Requirements:
             if not requirement.Checks:
                 for attribute in requirement.Attributes:
-                    compliance_row = MitreAttackAzure(
+                    compliance_row = AzureMitreAttackModel(
                         Provider=compliance.Provider.lower(),
                         Description=compliance.Description,
                         SubscriptionId="",

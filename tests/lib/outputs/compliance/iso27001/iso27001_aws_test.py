@@ -5,7 +5,7 @@ from freezegun import freeze_time
 from mock import patch
 
 from prowler.lib.outputs.compliance.iso27001.iso27001_aws import AWSISO27001
-from prowler.lib.outputs.compliance.iso27001.models import ISO27001AWS
+from prowler.lib.outputs.compliance.iso27001.models import AWSISO27001Model
 from tests.lib.outputs.compliance.fixtures import ISO27001_2013_AWS
 from tests.lib.outputs.fixtures.fixtures import generate_finding_output
 from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, AWS_REGION_EU_WEST_1
@@ -17,7 +17,7 @@ class TestAWSISO27001:
 
         output = AWSISO27001(findings, ISO27001_2013_AWS)
         output_data = output.data[0]
-        assert isinstance(output_data, ISO27001AWS)
+        assert isinstance(output_data, AWSISO27001Model)
         assert output_data.Provider == "aws"
         assert output_data.AccountId == AWS_ACCOUNT_NUMBER
         assert output_data.Region == AWS_REGION_EU_WEST_1
