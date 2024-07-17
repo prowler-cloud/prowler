@@ -3,7 +3,7 @@ from venv import logger
 
 from prowler.lib.check.compliance_models import ComplianceBaseModel
 from prowler.lib.outputs.compliance.aws_well_architected.models import (
-    AWSWellArchitected as AWSWellArchitectedModel,
+    AWSWellArchitectedModel,
 )
 from prowler.lib.outputs.compliance.compliance_output import ComplianceOutput
 from prowler.lib.outputs.finding import Finding

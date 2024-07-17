@@ -5,7 +5,7 @@ from freezegun import freeze_time
 from mock import patch
 
 from prowler.lib.outputs.compliance.cis.cis_kubernetes import KubernetesCIS
-from prowler.lib.outputs.compliance.cis.models import CISKubernetes
+from prowler.lib.outputs.compliance.cis.models import KubernetesCISModel
 from tests.lib.outputs.compliance.fixtures import CIS_1_8_KUBERNETES
 from tests.lib.outputs.fixtures.fixtures import generate_finding_output
 from tests.providers.kubernetes.kubernetes_fixtures import (
@@ -28,7 +28,7 @@ class TestKubernetesCIS:
 
         output = KubernetesCIS(findings, CIS_1_8_KUBERNETES)
         output_data = output.data[0]
-        assert isinstance(output_data, CISKubernetes)
+        assert isinstance(output_data, KubernetesCISModel)
         assert output_data.Provider == "kubernetes"
         assert output_data.Context == KUBERNETES_CLUSTER_NAME
         assert output_data.Namespace == KUBERNETES_NAMESPACE

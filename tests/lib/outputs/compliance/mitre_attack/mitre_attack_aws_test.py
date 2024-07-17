@@ -5,7 +5,7 @@ from freezegun import freeze_time
 from mock import patch
 
 from prowler.lib.outputs.compliance.mitre_attack.mitre_attack_aws import AWSMitreAttack
-from prowler.lib.outputs.compliance.mitre_attack.models import MitreAttackAWS
+from prowler.lib.outputs.compliance.mitre_attack.models import AWSMitreAttackModel
 from prowler.lib.outputs.utils import unroll_list
 from tests.lib.outputs.compliance.fixtures import MITRE_ATTACK_AWS
 from tests.lib.outputs.fixtures.fixtures import generate_finding_output
@@ -18,7 +18,7 @@ class TestAWSMITREAttack:
 
         output = AWSMitreAttack(findings, MITRE_ATTACK_AWS)
         output_data = output.data[0]
-        assert isinstance(output_data, MitreAttackAWS)
+        assert isinstance(output_data, AWSMitreAttackModel)
         assert output_data.Provider == "aws"
         assert output_data.Description == MITRE_ATTACK_AWS.Description
         assert output_data.AccountId == AWS_ACCOUNT_NUMBER

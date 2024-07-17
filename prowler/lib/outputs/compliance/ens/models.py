@@ -1,9 +1,9 @@
 from pydantic import BaseModel
 
 
-class ENSAWS(BaseModel):
+class AWSENSModel(BaseModel):
     """
-    ENSAWS generates a finding's output in CSV ENS format for AWS.
+    AWSENSModel generates a finding's output in CSV ENS format for AWS.
     """
 
     Provider: str

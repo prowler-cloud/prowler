@@ -3,7 +3,7 @@ from venv import logger
 
 from prowler.lib.check.compliance_models import ComplianceBaseModel
 from prowler.lib.outputs.compliance.compliance_output import ComplianceOutput
-from prowler.lib.outputs.compliance.generic.models import Generic
+from prowler.lib.outputs.compliance.generic.models import GenericComplianceModel
 from prowler.lib.outputs.finding import Finding
 
 
@@ -43,7 +43,7 @@ class GenericCompliance(ComplianceOutput):
             for requirement in compliance.Requirements:
                 if requirement.Id in finding_requirements:
                     for attribute in requirement.Attributes:
-                        compliance_row = Generic(
+                        compliance_row = GenericComplianceModel(
                             Provider=finding.provider,
                             Description=compliance.Description,
                             AccountId=finding.account_uid,
@@ -68,7 +68,7 @@ class GenericCompliance(ComplianceOutput):
         for requirement in compliance.Requirements:
             if not requirement.Checks:
                 for attribute in requirement.Attributes:
-                    compliance_row = Generic(
+                    compliance_row = GenericComplianceModel(
                         Provider=compliance.Provider.lower(),
                         Description=compliance.Description,
                         AccountId="",

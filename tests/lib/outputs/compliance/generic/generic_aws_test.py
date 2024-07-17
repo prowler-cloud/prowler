@@ -5,7 +5,7 @@ from freezegun import freeze_time
 from mock import patch
 
 from prowler.lib.outputs.compliance.generic.generic import GenericCompliance
-from prowler.lib.outputs.compliance.generic.models import Generic
+from prowler.lib.outputs.compliance.generic.models import GenericComplianceModel
 from tests.lib.outputs.compliance.fixtures import NIST_800_53_REVISION_4_AWS
 from tests.lib.outputs.fixtures.fixtures import generate_finding_output
 from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, AWS_REGION_EU_WEST_1
@@ -19,7 +19,7 @@ class TestAWSGenericCompliance:
 
         output = GenericCompliance(findings, NIST_800_53_REVISION_4_AWS)
         output_data = output.data[0]
-        assert isinstance(output_data, Generic)
+        assert isinstance(output_data, GenericComplianceModel)
         assert output_data.Provider == "aws"
         assert output_data.AccountId == AWS_ACCOUNT_NUMBER
         assert output_data.Region == AWS_REGION_EU_WEST_1

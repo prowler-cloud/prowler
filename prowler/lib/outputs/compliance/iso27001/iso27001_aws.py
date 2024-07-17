@@ -3,7 +3,7 @@ from csv import DictWriter
 from prowler.lib import logger
 from prowler.lib.check.compliance_models import ComplianceBaseModel
 from prowler.lib.outputs.compliance.compliance_output import ComplianceOutput
-from prowler.lib.outputs.compliance.iso27001.models import ISO27001AWS
+from prowler.lib.outputs.compliance.iso27001.models import AWSISO27001Model
 from prowler.lib.outputs.finding import Finding
 
 
@@ -43,7 +43,7 @@ class AWSISO27001(ComplianceOutput):
             for requirement in compliance.Requirements:
                 if requirement.Id in finding_requirements:
                     for attribute in requirement.Attributes:
-                        compliance_row = ISO27001AWS(
+                        compliance_row = AWSISO27001Model(
                             Provider=finding.provider,
                             Description=compliance.Description,
                             AccountId=finding.account_uid,
@@ -65,7 +65,7 @@ class AWSISO27001(ComplianceOutput):
         for requirement in compliance.Requirements:
             if not requirement.Checks:
                 for attribute in requirement.Attributes:
-                    compliance_row = ISO27001AWS(
+                    compliance_row = AWSISO27001Model(
                         Provider=compliance.Provider.lower(),
                         Description=compliance.Description,
                         AccountId="",

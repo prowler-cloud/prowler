@@ -3,7 +3,7 @@ from csv import DictWriter
 from prowler.lib import logger
 from prowler.lib.check.compliance_models import ComplianceBaseModel
 from prowler.lib.outputs.compliance.compliance_output import ComplianceOutput
-from prowler.lib.outputs.compliance.ens.models import ENSAWS
+from prowler.lib.outputs.compliance.ens.models import AWSENSModel
 from prowler.lib.outputs.finding import Finding
 
 
@@ -43,7 +43,7 @@ class AWSENS(ComplianceOutput):
             for requirement in compliance.Requirements:
                 if requirement.Id in finding_requirements:
                     for attribute in requirement.Attributes:
-                        compliance_row = ENSAWS(
+                        compliance_row = AWSENSModel(
                             Provider=finding.provider,
                             Description=compliance.Description,
                             AccountId=finding.account_uid,
@@ -76,7 +76,7 @@ class AWSENS(ComplianceOutput):
         for requirement in compliance.Requirements:
             if not requirement.Checks:
                 for attribute in requirement.Attributes:
-                    compliance_row = ENSAWS(
+                    compliance_row = AWSENSModel(
                         Provider=compliance.Provider.lower(),
                         Description=compliance.Description,
                         AccountId="",

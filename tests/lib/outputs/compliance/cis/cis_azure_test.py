@@ -5,7 +5,7 @@ from freezegun import freeze_time
 from mock import patch
 
 from prowler.lib.outputs.compliance.cis.cis_azure import AzureCIS
-from prowler.lib.outputs.compliance.cis.models import CISAzure
+from prowler.lib.outputs.compliance.cis.models import AzureCISModel
 from tests.lib.outputs.compliance.fixtures import CIS_2_0_AZURE
 from tests.lib.outputs.fixtures.fixtures import generate_finding_output
 from tests.providers.azure.azure_fixtures import (
@@ -28,7 +28,7 @@ class TestAzureCIS:
 
         output = AzureCIS(findings, CIS_2_0_AZURE)
         output_data = output.data[0]
-        assert isinstance(output_data, CISAzure)
+        assert isinstance(output_data, AzureCISModel)
         assert output_data.Provider == "azure"
         assert output_data.Subscription == AZURE_SUBSCRIPTION_NAME
         assert output_data.Location == ""
