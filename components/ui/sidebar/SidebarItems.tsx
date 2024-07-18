@@ -97,7 +97,7 @@ export const sectionItems: SidebarItem[] = [
       {
         key: "overview",
         href: "/",
-        icon: "solar:home-2-linear",
+        icon: "solar:pie-chart-2-outline",
         title: "Overview",
       },
       // {
@@ -129,13 +129,13 @@ export const sectionItems: SidebarItem[] = [
       {
         key: "services",
         href: "/services",
-        icon: "solar:users-group-two-rounded-outline",
+        icon: "material-symbols:linked-services-outline",
         title: "Services",
       },
       {
         key: "compliance",
         href: "/compliance",
-        icon: "solar:sort-by-time-linear",
+        icon: "fluent-mdl2:compliance-audit",
         title: "Compliance",
         endContent: (
           <Chip size="sm" variant="flat">
@@ -153,7 +153,7 @@ export const sectionItems: SidebarItem[] = [
         key: "findings",
         href: "/findings",
         title: "Findings",
-        icon: "solar:pie-chart-2-outline",
+        icon: "ph:list-checks-duotone",
         items: [
           {
             key: "shareholders",
@@ -181,7 +181,7 @@ export const sectionItems: SidebarItem[] = [
       {
         key: "providers",
         href: "/providers",
-        icon: "solar:gift-linear",
+        icon: "fluent:cloud-sync-24-regular",
         title: "Providers",
         endContent: (
           <Chip size="sm" variant="flat">
@@ -192,7 +192,7 @@ export const sectionItems: SidebarItem[] = [
       {
         key: "integration",
         href: "/integration",
-        icon: "solar:bill-list-outline",
+        icon: "tabler:puzzle",
         title: "Integration",
       },
       {
