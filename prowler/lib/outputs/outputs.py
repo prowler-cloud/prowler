@@ -8,7 +8,7 @@ def stdout_report(finding, color, verbose, status, fix):
     if finding.check_metadata.Provider == "aws":
         details = finding.region
     if finding.check_metadata.Provider == "azure":
-        details = finding.check_metadata.ServiceName
+        details = finding.location
     if finding.check_metadata.Provider == "gcp":
         details = finding.location.lower()
     if finding.check_metadata.Provider == "kubernetes":
