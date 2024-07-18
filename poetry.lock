@@ -434,19 +434,20 @@ isodate = ">=0.6.1"
 
 [[package]]
 name = "azure-mgmt-keyvault"
-version = "10.3.0"
+version = "10.3.1"
 description = "Microsoft Azure Key Vault Management Client Library for Python"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "azure-mgmt-keyvault-10.3.0.tar.gz", hash = "sha256:183b4164cf1868b8ea7efeaa98edad7d2a4e14a9bd977c2818b12b75150cd2a2"},
-    {file = "azure_mgmt_keyvault-10.3.0-py3-none-any.whl", hash = "sha256:3410cf6c703e9570ed3c8e9716e483c02b1804adde6ab437ddc8feac4545acd6"},
+    {file = "azure-mgmt-keyvault-10.3.1.tar.gz", hash = "sha256:34b92956aefbdd571cae5a03f7078e037d8087b2c00cfa6748835dc73abb5a30"},
+    {file = "azure_mgmt_keyvault-10.3.1-py3-none-any.whl", hash = "sha256:a18a27a06551482d31f92bc43ac8b0846af02cd69511f80090865b4c5caa3c21"},
 ]
 
 [package.dependencies]
-azure-common = ">=1.1,<2.0"
-azure-mgmt-core = ">=1.3.2,<2.0.0"
-isodate = ">=0.6.1,<1.0.0"
+azure-common = ">=1.1"
+azure-mgmt-core = ">=1.3.2"
+isodate = ">=0.6.1"
+typing-extensions = ">=4.6.0"
 
 [[package]]
 name = "azure-mgmt-monitor"
@@ -4900,4 +4901,4 @@ test = ["big-O", "jaraco.functools", "jaraco.itertools", "jaraco.test", "more-it
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "e3709dfbfaeba997390895158c7e1a0cc14689523ccd06a4f61e1794262df5fc"
+content-hash = "2ea1ac6916ff7a37808097e2b95294a8df658b3767420d56b1b25f4dee3bed96"
