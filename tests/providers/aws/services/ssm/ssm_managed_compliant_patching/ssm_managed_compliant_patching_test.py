@@ -35,6 +35,7 @@ class Test_ssm_managed_compliant_patching:
         ssm_client.compliance_resources = {
             instance_id: ComplianceResource(
                 id="i-1234567890abcdef0",
+                arn=f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:instance/{instance_id}",
                 region=AWS_REGION_US_EAST_1,
                 status=ResourceStatus.COMPLIANT,
             )
@@ -55,6 +56,10 @@ class Test_ssm_managed_compliant_patching:
             assert len(result) == 1
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == instance_id
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:instance/{instance_id}"
+            )
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
@@ -68,6 +73,7 @@ class Test_ssm_managed_compliant_patching:
         ssm_client.compliance_resources = {
             instance_id: ComplianceResource(
                 id="i-1234567890abcdef0",
+                arn=f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:instance/{instance_id}",
                 region=AWS_REGION_US_EAST_1,
                 status=ResourceStatus.NON_COMPLIANT,
             )
@@ -88,6 +94,10 @@ class Test_ssm_managed_compliant_patching:
             assert len(result) == 1
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == instance_id
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:instance/{instance_id}"
+            )
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
