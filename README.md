@@ -91,7 +91,7 @@ The container images are available here:
 - [DockerHub](https://hub.docker.com/r/toniblyx/prowler/tags)
 - [AWS Public ECR](https://gallery.ecr.aws/prowler-cloud/prowler)
 
-## From Github
+## From GitHub
 
 Python >= 3.9, < 3.13 is required with pip and poetry:
 
