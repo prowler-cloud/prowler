@@ -115,11 +115,11 @@ class SSM(AWSService):
             )
             for page in list_resource_compliance_summaries_paginator.paginate():
                 for item in page["ResourceComplianceSummaryItems"]:
-                    resource_arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:instance/{item["ResourceId"]}"
+                    resource_id = item["ResourceId"]
+                    resource_arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:instance/{resource_id}"
                     if not self.audit_resources or (
                         is_resource_filtered(resource_arn, self.audit_resources)
                     ):
-                        resource_id = item["ResourceId"]
                         resource_status = item["Status"]
 
                         self.compliance_resources[resource_id] = ComplianceResource(
