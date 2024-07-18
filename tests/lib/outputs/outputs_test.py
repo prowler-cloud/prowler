@@ -3,8 +3,6 @@ from unittest import mock
 import pytest
 from colorama import Fore
 
-from prowler.lib.outputs.csv.csv import generate_csv_fields
-from prowler.lib.outputs.finding import Finding
 from prowler.lib.outputs.outputs import extract_findings_statistics, set_report_color
 from prowler.lib.outputs.utils import (
     parse_html_string,
@@ -33,53 +31,6 @@ class TestOutputs:
 
         assert "Invalid Report Status. Must be PASS, FAIL or MANUAL" in str(exc.value)
         assert exc.type == Exception
-
-    def test_generate_common_csv_fields(self):
-        expected = [
-            "auth_method",
-            "timestamp",
-            "account_uid",
-            "account_name",
-            "account_email",
-            "account_organization_uid",
-            "account_organization_name",
-            "account_tags",
-            "finding_uid",
-            "provider",
-            "check_id",
-            "check_title",
-            "check_type",
-            "status",
-            "status_extended",
-            "muted",
-            "service_name",
-            "subservice_name",
-            "severity",
-            "resource_type",
-            "resource_uid",
-            "resource_name",
-            "resource_details",
-            "resource_tags",
-            "partition",
-            "region",
-            "description",
-            "risk",
-            "related_url",
-            "remediation_recommendation_text",
-            "remediation_recommendation_url",
-            "remediation_code_nativeiac",
-            "remediation_code_terraform",
-            "remediation_code_cli",
-            "remediation_code_other",
-            "compliance",
-            "categories",
-            "depends_on",
-            "related_to",
-            "notes",
-            "prowler_version",
-        ]
-
-        assert generate_csv_fields(Finding) == expected
 
     def test_unroll_list_no_separator(self):
         list = ["test", "test1", "test2"]
