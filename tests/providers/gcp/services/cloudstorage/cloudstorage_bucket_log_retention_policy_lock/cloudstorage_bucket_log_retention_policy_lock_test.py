@@ -61,7 +61,7 @@ class TestCloudStorageBucketLogRetentionPolicyLock:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Log Sink Bucket {cloudstorage_client.buckets[0].name} has a Retention Policy with Bucket Lock"
+                == f"Log Sink Bucket {cloudstorage_client.buckets[0].name} has a Retention Policy with Bucket Lock."
             )
             assert result[0].resource_id == "example-bucket"
             assert result[0].resource_name == "example-bucket"
@@ -121,7 +121,7 @@ class TestCloudStorageBucketLogRetentionPolicyLock:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Log Sink Bucket {cloudstorage_client.buckets[0].name} has no Retention Policy but without Bucket Lock"
+                == f"Log Sink Bucket {cloudstorage_client.buckets[0].name} has no Retention Policy but without Bucket Lock."
             )
             assert result[0].resource_id == "example-bucket"
             assert result[0].resource_name == "example-bucket"
@@ -181,7 +181,7 @@ class TestCloudStorageBucketLogRetentionPolicyLock:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Log Sink Bucket {cloudstorage_client.buckets[0].name} has no Retention Policy"
+                == f"Log Sink Bucket {cloudstorage_client.buckets[0].name} has no Retention Policy."
             )
             assert result[0].resource_id == "example-bucket"
             assert result[0].resource_name == "example-bucket"

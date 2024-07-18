@@ -46,7 +46,7 @@ class TestCloudStorageBucketPublicAccess:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Bucket {cloudstorage_client.buckets[0].name} is publicly accessible"
+                == f"Bucket {cloudstorage_client.buckets[0].name} is publicly accessible."
             )
             assert result[0].resource_id == "example-bucket"
             assert result[0].resource_name == "example-bucket"
@@ -91,7 +91,7 @@ class TestCloudStorageBucketPublicAccess:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Bucket {cloudstorage_client.buckets[0].name} is not publicly accessible"
+                == f"Bucket {cloudstorage_client.buckets[0].name} is not publicly accessible."
             )
             assert result[0].resource_id == "example-bucket"
             assert result[0].resource_name == "example-bucket"
