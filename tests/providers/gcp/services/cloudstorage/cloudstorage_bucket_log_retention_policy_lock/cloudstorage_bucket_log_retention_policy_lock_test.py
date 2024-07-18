@@ -1,4 +1,3 @@
-import re
 from unittest import mock
 
 from tests.providers.gcp.gcp_fixtures import (
@@ -60,9 +59,9 @@ class TestCloudStorageBucketLogRetentionPolicyLock:
 
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert re.search(
-                f"Log Sink Bucket {cloudstorage_client.buckets[0].name} has a Retention Policy with Bucket Lock",
-                result[0].status_extended,
+            assert (
+                result[0].status_extended
+                == f"Log Sink Bucket {cloudstorage_client.buckets[0].name} has a Retention Policy with Bucket Lock"
             )
             assert result[0].resource_id == "example-bucket"
             assert result[0].resource_name == "example-bucket"
@@ -120,9 +119,9 @@ class TestCloudStorageBucketLogRetentionPolicyLock:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert re.search(
-                f"Log Sink Bucket {cloudstorage_client.buckets[0].name} has no Retention Policy but without Bucket Lock",
-                result[0].status_extended,
+            assert (
+                result[0].status_extended
+                == f"Log Sink Bucket {cloudstorage_client.buckets[0].name} has no Retention Policy but without Bucket Lock"
             )
             assert result[0].resource_id == "example-bucket"
             assert result[0].resource_name == "example-bucket"
@@ -180,9 +179,9 @@ class TestCloudStorageBucketLogRetentionPolicyLock:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert re.search(
-                f"Log Sink Bucket {cloudstorage_client.buckets[0].name} has no Retention Policy",
-                result[0].status_extended,
+            assert (
+                result[0].status_extended
+                == f"Log Sink Bucket {cloudstorage_client.buckets[0].name} has no Retention Policy"
             )
             assert result[0].resource_id == "example-bucket"
             assert result[0].resource_name == "example-bucket"

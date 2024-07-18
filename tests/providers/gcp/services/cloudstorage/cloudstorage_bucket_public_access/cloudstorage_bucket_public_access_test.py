@@ -1,4 +1,3 @@
-import re
 from unittest import mock
 
 from tests.providers.gcp.gcp_fixtures import (
@@ -45,9 +44,9 @@ class TestCloudStorageBucketPublicAccess:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert re.search(
-                f"Bucket {cloudstorage_client.buckets[0].name} is publicly accessible",
-                result[0].status_extended,
+            assert (
+                result[0].status_extended
+                == f"Bucket {cloudstorage_client.buckets[0].name} is publicly accessible"
             )
             assert result[0].resource_id == "example-bucket"
             assert result[0].resource_name == "example-bucket"
@@ -90,9 +89,9 @@ class TestCloudStorageBucketPublicAccess:
 
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert re.search(
-                f"Bucket {cloudstorage_client.buckets[0].name} is not publicly accessible",
-                result[0].status_extended,
+            assert (
+                result[0].status_extended
+                == f"Bucket {cloudstorage_client.buckets[0].name} is not publicly accessible"
             )
             assert result[0].resource_id == "example-bucket"
             assert result[0].resource_name == "example-bucket"
