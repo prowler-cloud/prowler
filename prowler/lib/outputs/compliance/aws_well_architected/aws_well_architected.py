@@ -1,6 +1,3 @@
-from csv import DictWriter
-from venv import logger
-
 from prowler.lib.check.compliance_models import ComplianceBaseModel
 from prowler.lib.outputs.compliance.aws_well_architected.models import (
     AWSWellArchitectedModel,
@@ -19,7 +16,6 @@ class AWSWellArchitected(ComplianceOutput):
 
     Methods:
         - transform: Transforms findings into AWS Well-Architected compliance format.
-        - batch_write_data_to_file: Writes the findings data to a CSV file in AWS Well-Architected compliance format.
     """
 
     def transform(
@@ -99,32 +95,3 @@ class AWSWellArchitected(ComplianceOutput):
                         Muted=False,
                     )
                     self._data.append(compliance_row)
-
-    def batch_write_data_to_file(self) -> None:
-        """
-        Writes the findings data to a CSV file in AWS Well-Architected compliance format.
-
-        Returns:
-            - None
-        """
-        try:
-            if (
-                getattr(self, "_file_descriptor", None)
-                and not self._file_descriptor.closed
-                and self._data
-            ):
-                csv_writer = DictWriter(
-                    self._file_descriptor,
-                    fieldnames=[field.upper() for field in self._data[0].dict().keys()],
-                    delimiter=";",
-                )
-                csv_writer.writeheader()
-                for finding in self._data:
-                    csv_writer.writerow(
-                        {k.upper(): v for k, v in finding.dict().items()}
-                    )
-                self._file_descriptor.close()
-        except Exception as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
