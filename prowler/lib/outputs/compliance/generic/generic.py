@@ -3,7 +3,7 @@ from venv import logger
 
 from prowler.lib.check.compliance_models import ComplianceBaseModel
 from prowler.lib.outputs.compliance.compliance_output import ComplianceOutput
-from prowler.lib.outputs.compliance.generic.models import Generic
+from prowler.lib.outputs.compliance.generic.models import GenericComplianceModel
 from prowler.lib.outputs.finding import Finding
 
 
@@ -43,7 +43,7 @@ class GenericCompliance(ComplianceOutput):
             for requirement in compliance.Requirements:
                 if requirement.Id in finding_requirements:
                     for attribute in requirement.Attributes:
-                        compliance_row = Generic(
+                        compliance_row = GenericComplianceModel(
                             Provider=finding.provider,
                             Description=compliance.Description,
                             AccountId=finding.account_uid,
@@ -59,11 +59,36 @@ class GenericCompliance(ComplianceOutput):
                             Status=finding.status,
                             StatusExtended=finding.status_extended,
                             ResourceId=finding.resource_uid,
+                            ResourceName=finding.resource_name,
                             CheckId=finding.check_id,
                             Muted=finding.muted,
-                            ResourceName=finding.resource_name,
                         )
                         self._data.append(compliance_row)
+        # Add manual requirements to the compliance output
+        for requirement in compliance.Requirements:
+            if not requirement.Checks:
+                for attribute in requirement.Attributes:
+                    compliance_row = GenericComplianceModel(
+                        Provider=compliance.Provider.lower(),
+                        Description=compliance.Description,
+                        AccountId="",
+                        Region="",
+                        AssessmentDate=str(finding.timestamp),
+                        Requirements_Id=requirement.Id,
+                        Requirements_Description=requirement.Description,
+                        Requirements_Attributes_Section=attribute.Section,
+                        Requirements_Attributes_SubSection=attribute.SubSection,
+                        Requirements_Attributes_SubGroup=attribute.SubGroup,
+                        Requirements_Attributes_Service=attribute.Service,
+                        Requirements_Attributes_Type=attribute.Type,
+                        Status="MANUAL",
+                        StatusExtended="Manual check",
+                        ResourceId="manual_check",
+                        ResourceName="Manual check",
+                        CheckId="manual",
+                        Muted=False,
+                    )
+                    self._data.append(compliance_row)
 
     def batch_write_data_to_file(self) -> None:
         """

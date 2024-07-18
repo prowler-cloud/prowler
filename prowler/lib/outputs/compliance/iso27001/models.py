@@ -1,9 +1,9 @@
 from pydantic import BaseModel
 
 
-class ISO27001AWS(BaseModel):
+class AWSISO27001Model(BaseModel):
     """
-    ISO27001AWS generates a finding's output in CSV AWS ISO27001 format.
+    AWSISO27001Model generates a finding's output in CSV AWS ISO27001 format.
     """
 
     Provider: str

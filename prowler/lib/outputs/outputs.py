@@ -1,11 +1,7 @@
 from colorama import Fore, Style
 
-from prowler.config.config import available_compliance_frameworks, orange_color
+from prowler.config.config import orange_color
 from prowler.lib.logger import logger
-from prowler.lib.outputs.compliance.compliance import (
-    add_manual_controls,
-    fill_compliance,
-)
 
 
 def stdout_report(finding, color, verbose, status, fix):
@@ -51,33 +47,6 @@ def report(check_findings, provider):
                     output_options.status,
                     output_options.fixer,
                 )
-
-                if file_descriptors:
-                    # Check if --status is enabled and if the filter applies
-                    if (
-                        not output_options.status
-                        or finding.status in output_options.status
-                    ):
-                        input_compliance_frameworks = list(
-                            set(output_options.output_modes).intersection(
-                                available_compliance_frameworks
-                            )
-                        )
-
-                        add_manual_controls(
-                            output_options,
-                            provider,
-                            file_descriptors,
-                            input_compliance_frameworks,
-                        )
-
-                        fill_compliance(
-                            output_options,
-                            finding,
-                            provider,
-                            file_descriptors,
-                            input_compliance_frameworks,
-                        )
 
         else:  # No service resources in the whole account
             color = set_report_color("MANUAL")

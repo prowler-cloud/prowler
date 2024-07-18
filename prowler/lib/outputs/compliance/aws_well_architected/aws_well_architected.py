@@ -3,7 +3,7 @@ from venv import logger
 
 from prowler.lib.check.compliance_models import ComplianceBaseModel
 from prowler.lib.outputs.compliance.aws_well_architected.models import (
-    AWSWellArchitected as AWSWellArchitectedModel,
+    AWSWellArchitectedModel,
 )
 from prowler.lib.outputs.compliance.compliance_output import ComplianceOutput
 from prowler.lib.outputs.finding import Finding
@@ -70,6 +70,35 @@ class AWSWellArchitected(ComplianceOutput):
                             Muted=finding.muted,
                         )
                         self._data.append(compliance_row)
+        # Add manual requirements to the compliance output
+        for requirement in compliance.Requirements:
+            if not requirement.Checks:
+                for attribute in requirement.Attributes:
+                    compliance_row = AWSWellArchitectedModel(
+                        Provider=compliance.Provider.lower(),
+                        Description=compliance.Description,
+                        AccountId="",
+                        Region="",
+                        AssessmentDate=str(finding.timestamp),
+                        Requirements_Id=requirement.Id,
+                        Requirements_Description=requirement.Description,
+                        Requirements_Attributes_Name=attribute.Name,
+                        Requirements_Attributes_WellArchitectedQuestionId=attribute.WellArchitectedQuestionId,
+                        Requirements_Attributes_WellArchitectedPracticeId=attribute.WellArchitectedPracticeId,
+                        Requirements_Attributes_Section=attribute.Section,
+                        Requirements_Attributes_SubSection=attribute.SubSection,
+                        Requirements_Attributes_LevelOfRisk=attribute.LevelOfRisk,
+                        Requirements_Attributes_AssessmentMethod=attribute.AssessmentMethod,
+                        Requirements_Attributes_Description=attribute.Description,
+                        Requirements_Attributes_ImplementationGuidanceUrl=attribute.ImplementationGuidanceUrl,
+                        Status="MANUAL",
+                        StatusExtended="Manual check",
+                        ResourceId="manual_check",
+                        ResourceName="Manual check",
+                        CheckId="manual",
+                        Muted=False,
+                    )
+                    self._data.append(compliance_row)
 
     def batch_write_data_to_file(self) -> None:
         """

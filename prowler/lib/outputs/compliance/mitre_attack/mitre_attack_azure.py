@@ -3,7 +3,7 @@ from venv import logger
 
 from prowler.lib.check.compliance_models import ComplianceBaseModel
 from prowler.lib.outputs.compliance.compliance_output import ComplianceOutput
-from prowler.lib.outputs.compliance.mitre_attack.models import MitreAttackAzure
+from prowler.lib.outputs.compliance.mitre_attack.models import AzureMitreAttackModel
 from prowler.lib.outputs.finding import Finding
 from prowler.lib.outputs.utils import unroll_list
 
@@ -43,7 +43,7 @@ class AzureMitreAttack(ComplianceOutput):
             finding_requirements = finding.compliance.get(compliance_name, [])
             for requirement in compliance.Requirements:
                 if requirement.Id in finding_requirements:
-                    compliance_row = MitreAttackAzure(
+                    compliance_row = AzureMitreAttackModel(
                         Provider=finding.provider,
                         Description=compliance.Description,
                         SubscriptionId=finding.account_uid,
@@ -77,6 +77,46 @@ class AzureMitreAttack(ComplianceOutput):
                         ResourceName=finding.resource_name,
                         CheckId=finding.check_id,
                         Muted=finding.muted,
+                    )
+                    self._data.append(compliance_row)
+        # Add manual requirements to the compliance output
+        for requirement in compliance.Requirements:
+            if not requirement.Checks:
+                for attribute in requirement.Attributes:
+                    compliance_row = AzureMitreAttackModel(
+                        Provider=compliance.Provider.lower(),
+                        Description=compliance.Description,
+                        SubscriptionId="",
+                        Location="",
+                        AssessmentDate=str(finding.timestamp),
+                        Requirements_Id=requirement.Id,
+                        Requirements_Name=requirement.Name,
+                        Requirements_Description=requirement.Description,
+                        Requirements_Tactics=unroll_list(requirement.Tactics),
+                        Requirements_SubTechniques=unroll_list(
+                            requirement.SubTechniques
+                        ),
+                        Requirements_Platforms=unroll_list(requirement.Platforms),
+                        Requirements_TechniqueURL=requirement.TechniqueURL,
+                        Requirements_Attributes_Services=", ".join(
+                            attribute.AzureService
+                            for attribute in requirement.Attributes
+                        ),
+                        Requirements_Attributes_Categories=", ".join(
+                            attribute.Category for attribute in requirement.Attributes
+                        ),
+                        Requirements_Attributes_Values=", ".join(
+                            attribute.Value for attribute in requirement.Attributes
+                        ),
+                        Requirements_Attributes_Comments=", ".join(
+                            attribute.Comment for attribute in requirement.Attributes
+                        ),
+                        Status="MANUAL",
+                        StatusExtended="Manual check",
+                        ResourceId="manual_check",
+                        ResourceName="Manual check",
+                        CheckId="manual",
+                        Muted=False,
                     )
                     self._data.append(compliance_row)
 

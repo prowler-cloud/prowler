@@ -3,7 +3,7 @@ from csv import DictWriter
 from prowler.lib import logger
 from prowler.lib.check.compliance_models import ComplianceBaseModel
 from prowler.lib.outputs.compliance.compliance_output import ComplianceOutput
-from prowler.lib.outputs.compliance.iso27001.models import ISO27001AWS
+from prowler.lib.outputs.compliance.iso27001.models import AWSISO27001Model
 from prowler.lib.outputs.finding import Finding
 
 
@@ -43,7 +43,7 @@ class AWSISO27001(ComplianceOutput):
             for requirement in compliance.Requirements:
                 if requirement.Id in finding_requirements:
                     for attribute in requirement.Attributes:
-                        compliance_row = ISO27001AWS(
+                        compliance_row = AWSISO27001Model(
                             Provider=finding.provider,
                             Description=compliance.Description,
                             AccountId=finding.account_uid,
@@ -61,6 +61,28 @@ class AWSISO27001(ComplianceOutput):
                             ResourceName=finding.resource_name,
                         )
                         self._data.append(compliance_row)
+        # Add manual requirements to the compliance output
+        for requirement in compliance.Requirements:
+            if not requirement.Checks:
+                for attribute in requirement.Attributes:
+                    compliance_row = AWSISO27001Model(
+                        Provider=compliance.Provider.lower(),
+                        Description=compliance.Description,
+                        AccountId="",
+                        Region="",
+                        AssessmentDate=str(finding.timestamp),
+                        Requirements_Attributes_Category=attribute.Category,
+                        Requirements_Attributes_Objetive_ID=attribute.Objetive_ID,
+                        Requirements_Attributes_Objetive_Name=attribute.Objetive_Name,
+                        Requirements_Attributes_Check_Summary=attribute.Check_Summary,
+                        Status="MANUAL",
+                        StatusExtended="Manual check",
+                        ResourceId="manual_check",
+                        ResourceName="Manual check",
+                        CheckId="manual",
+                        Muted=False,
+                    )
+                    self._data.append(compliance_row)
 
     def batch_write_data_to_file(self) -> None:
         """

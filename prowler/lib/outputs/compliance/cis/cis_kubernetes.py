@@ -1,8 +1,9 @@
 from csv import DictWriter
+from datetime import datetime
 from venv import logger
 
 from prowler.lib.check.compliance_models import ComplianceBaseModel
-from prowler.lib.outputs.compliance.cis.models import CISKubernetes
+from prowler.lib.outputs.compliance.cis.models import KubernetesCISModel
 from prowler.lib.outputs.compliance.compliance_output import ComplianceOutput
 from prowler.lib.outputs.finding import Finding
 
@@ -43,7 +44,7 @@ class KubernetesCIS(ComplianceOutput):
             for requirement in compliance.Requirements:
                 if requirement.Id in finding_requirements:
                     for attribute in requirement.Attributes:
-                        compliance_row = CISKubernetes(
+                        compliance_row = KubernetesCISModel(
                             Provider=finding.provider,
                             Description=compliance.Description,
                             Context=finding.account_name,
@@ -70,6 +71,37 @@ class KubernetesCIS(ComplianceOutput):
                             Muted=finding.muted,
                         )
                         self._data.append(compliance_row)
+        # Add manual requirements to the compliance output
+        for requirement in compliance.Requirements:
+            if not requirement.Checks:
+                for attribute in requirement.Attributes:
+                    compliance_row = KubernetesCISModel(
+                        Provider=compliance.Provider.lower(),
+                        Description=compliance.Description,
+                        Context="",
+                        Namespace="",
+                        AssessmentDate=str(datetime.now()),
+                        Requirements_Id=requirement.Id,
+                        Requirements_Description=requirement.Description,
+                        Requirements_Attributes_Section=attribute.Section,
+                        Requirements_Attributes_Profile=attribute.Profile,
+                        Requirements_Attributes_AssessmentStatus=attribute.AssessmentStatus,
+                        Requirements_Attributes_Description=attribute.Description,
+                        Requirements_Attributes_RationaleStatement=attribute.RationaleStatement,
+                        Requirements_Attributes_ImpactStatement=attribute.ImpactStatement,
+                        Requirements_Attributes_RemediationProcedure=attribute.RemediationProcedure,
+                        Requirements_Attributes_AuditProcedure=attribute.AuditProcedure,
+                        Requirements_Attributes_AdditionalInformation=attribute.AdditionalInformation,
+                        Requirements_Attributes_References=attribute.References,
+                        Requirements_Attributes_DefaultValue=attribute.DefaultValue,
+                        Status="MANUAL",
+                        StatusExtended="Manual check",
+                        ResourceId="manual_check",
+                        ResourceName="Manual check",
+                        CheckId="manual",
+                        Muted=False,
+                    )
+                    self._data.append(compliance_row)
 
     def batch_write_data_to_file(self) -> None:
         try:

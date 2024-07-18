@@ -3,7 +3,7 @@ from csv import DictWriter
 from prowler.lib import logger
 from prowler.lib.check.compliance_models import ComplianceBaseModel
 from prowler.lib.outputs.compliance.compliance_output import ComplianceOutput
-from prowler.lib.outputs.compliance.ens.models import ENSAWS
+from prowler.lib.outputs.compliance.ens.models import AWSENSModel
 from prowler.lib.outputs.finding import Finding
 
 
@@ -43,7 +43,7 @@ class AWSENS(ComplianceOutput):
             for requirement in compliance.Requirements:
                 if requirement.Id in finding_requirements:
                     for attribute in requirement.Attributes:
-                        compliance_row = ENSAWS(
+                        compliance_row = AWSENSModel(
                             Provider=finding.provider,
                             Description=compliance.Description,
                             AccountId=finding.account_uid,
@@ -67,11 +67,44 @@ class AWSENS(ComplianceOutput):
                             Status=finding.status,
                             StatusExtended=finding.status_extended,
                             ResourceId=finding.resource_uid,
+                            ResourceName=finding.resource_name,
                             CheckId=finding.check_id,
                             Muted=finding.muted,
-                            ResourceName=finding.resource_name,
                         )
                         self._data.append(compliance_row)
+        # Add manual requirements to the compliance output
+        for requirement in compliance.Requirements:
+            if not requirement.Checks:
+                for attribute in requirement.Attributes:
+                    compliance_row = AWSENSModel(
+                        Provider=compliance.Provider.lower(),
+                        Description=compliance.Description,
+                        AccountId="",
+                        Region="",
+                        AssessmentDate=str(finding.timestamp),
+                        Requirements_Id=requirement.Id,
+                        Requirements_Description=requirement.Description,
+                        Requirements_Attributes_IdGrupoControl=attribute.IdGrupoControl,
+                        Requirements_Attributes_Marco=attribute.Marco,
+                        Requirements_Attributes_Categoria=attribute.Categoria,
+                        Requirements_Attributes_DescripcionControl=attribute.DescripcionControl,
+                        Requirements_Attributes_Nivel=attribute.Nivel,
+                        Requirements_Attributes_Tipo=attribute.Tipo,
+                        Requirements_Attributes_Dimensiones=",".join(
+                            attribute.Dimensiones
+                        ),
+                        Requirements_Attributes_ModoEjecucion=attribute.ModoEjecucion,
+                        Requirements_Attributes_Dependencias=",".join(
+                            attribute.Dependencias
+                        ),
+                        Status="MANUAL",
+                        StatusExtended="Manual check",
+                        ResourceId="manual_check",
+                        ResourceName="Manual check",
+                        CheckId="manual",
+                        Muted=False,
+                    )
+                    self._data.append(compliance_row)
 
     def batch_write_data_to_file(self) -> None:
         """
