@@ -8,7 +8,7 @@ from prowler.lib.outputs.compliance.aws_well_architected.aws_well_architected im
     AWSWellArchitected,
 )
 from prowler.lib.outputs.compliance.aws_well_architected.models import (
-    AWSWellArchitected as AWSWellArchitectedModel,
+    AWSWellArchitectedModel,
 )
 from tests.lib.outputs.compliance.fixtures import AWS_WELL_ARCHITECTED
 from tests.lib.outputs.fixtures.fixtures import generate_finding_output

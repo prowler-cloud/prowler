@@ -3,9 +3,9 @@ from typing import Optional
 from pydantic import BaseModel
 
 
-class AWSWellArchitected(BaseModel):
+class AWSWellArchitectedModel(BaseModel):
     """
-    AWSWellArchitected generates a finding's output in AWS Well-Architected Framework format.
+    AWSWellArchitectedModel generates a finding's output in AWS Well-Architected Framework format.
     """
 
     Provider: str

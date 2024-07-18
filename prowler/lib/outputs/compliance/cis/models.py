@@ -1,9 +1,9 @@
 from pydantic import BaseModel
 
 
-class CISAWS(BaseModel):
+class AWSCISModel(BaseModel):
     """
-    CISAWS generates a finding's output in AWS CIS Compliance format.
+    AWSCISModel generates a finding's output in AWS CIS Compliance format.
     """
 
     Provider: str
@@ -31,9 +31,9 @@ class CISAWS(BaseModel):
     Muted: bool
 
 
-class CISAzure(BaseModel):
+class AzureCISModel(BaseModel):
     """
-    CISAzure generates a finding's output in Azure CIS Compliance format.
+    AzureCISModel generates a finding's output in Azure CIS Compliance format.
     """
 
     Provider: str
@@ -62,9 +62,9 @@ class CISAzure(BaseModel):
     Muted: bool
 
 
-class CISGCP(BaseModel):
+class GCPCISModel(BaseModel):
     """
-    CISGCP generates a finding's output in GCP CIS Compliance format.
+    GCPCISModel generates a finding's output in GCP CIS Compliance format.
     """
 
     Provider: str
@@ -92,9 +92,9 @@ class CISGCP(BaseModel):
     Muted: bool
 
 
-class CISKubernetes(BaseModel):
+class KubernetesCISModel(BaseModel):
     """
-    CISKubernetes generates a finding's output in Kubernetes CIS Compliance format.
+    KubernetesCISModel generates a finding's output in Kubernetes CIS Compliance format.
     """
 
     Provider: str

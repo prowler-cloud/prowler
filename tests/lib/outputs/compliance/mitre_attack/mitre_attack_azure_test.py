@@ -7,7 +7,7 @@ from mock import patch
 from prowler.lib.outputs.compliance.mitre_attack.mitre_attack_azure import (
     AzureMitreAttack,
 )
-from prowler.lib.outputs.compliance.mitre_attack.models import MitreAttackAzure
+from prowler.lib.outputs.compliance.mitre_attack.models import AzureMitreAttackModel
 from prowler.lib.outputs.utils import unroll_list
 from tests.lib.outputs.compliance.fixtures import MITRE_ATTACK_AZURE
 from tests.lib.outputs.fixtures.fixtures import generate_finding_output
@@ -31,7 +31,7 @@ class TestAzureMITREAttack:
 
         output = AzureMitreAttack(findings, MITRE_ATTACK_AZURE)
         output_data = output.data[0]
-        assert isinstance(output_data, MitreAttackAzure)
+        assert isinstance(output_data, AzureMitreAttackModel)
         assert output_data.Provider == "azure"
         assert output_data.Description == MITRE_ATTACK_AZURE.Description
         assert output_data.SubscriptionId == AZURE_SUBSCRIPTION_ID

@@ -1,9 +1,6 @@
-from csv import DictWriter
-
-from prowler.lib import logger
 from prowler.lib.check.compliance_models import ComplianceBaseModel
 from prowler.lib.outputs.compliance.compliance_output import ComplianceOutput
-from prowler.lib.outputs.compliance.iso27001.models import ISO27001AWS
+from prowler.lib.outputs.compliance.iso27001.models import AWSISO27001Model
 from prowler.lib.outputs.finding import Finding
 
 
@@ -17,7 +14,6 @@ class AWSISO27001(ComplianceOutput):
 
     Methods:
         - transform: Transforms findings into AWS ENS compliance format.
-        - batch_write_data_to_file: Writes the findings data to a CSV file in AWS ENS compliance format.
     """
 
     def transform(
@@ -43,7 +39,7 @@ class AWSISO27001(ComplianceOutput):
             for requirement in compliance.Requirements:
                 if requirement.Id in finding_requirements:
                     for attribute in requirement.Attributes:
-                        compliance_row = ISO27001AWS(
+                        compliance_row = AWSISO27001Model(
                             Provider=finding.provider,
                             Description=compliance.Description,
                             AccountId=finding.account_uid,
@@ -65,7 +61,7 @@ class AWSISO27001(ComplianceOutput):
         for requirement in compliance.Requirements:
             if not requirement.Checks:
                 for attribute in requirement.Attributes:
-                    compliance_row = ISO27001AWS(
+                    compliance_row = AWSISO27001Model(
                         Provider=compliance.Provider.lower(),
                         Description=compliance.Description,
                         AccountId="",
@@ -83,32 +79,3 @@ class AWSISO27001(ComplianceOutput):
                         Muted=False,
                     )
                     self._data.append(compliance_row)
-
-    def batch_write_data_to_file(self) -> None:
-        """
-        Writes the findings data to a CSV file in AWS ENS compliance format.
-
-        Returns:
-            - None
-        """
-        try:
-            if (
-                getattr(self, "_file_descriptor", None)
-                and not self._file_descriptor.closed
-                and self._data
-            ):
-                csv_writer = DictWriter(
-                    self._file_descriptor,
-                    fieldnames=[field.upper() for field in self._data[0].dict().keys()],
-                    delimiter=";",
-                )
-                csv_writer.writeheader()
-                for finding in self._data:
-                    csv_writer.writerow(
-                        {k.upper(): v for k, v in finding.dict().items()}
-                    )
-                self._file_descriptor.close()
-        except Exception as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )

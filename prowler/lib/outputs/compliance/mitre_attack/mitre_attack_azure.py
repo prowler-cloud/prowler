@@ -1,9 +1,6 @@
-from csv import DictWriter
-from venv import logger
-
 from prowler.lib.check.compliance_models import ComplianceBaseModel
 from prowler.lib.outputs.compliance.compliance_output import ComplianceOutput
-from prowler.lib.outputs.compliance.mitre_attack.models import MitreAttackAzure
+from prowler.lib.outputs.compliance.mitre_attack.models import AzureMitreAttackModel
 from prowler.lib.outputs.finding import Finding
 from prowler.lib.outputs.utils import unroll_list
 
@@ -18,7 +15,6 @@ class AzureMitreAttack(ComplianceOutput):
 
     Methods:
         - transform: Transforms findings into Azure MITRE ATT&CK compliance format.
-        - batch_write_data_to_file: Writes the findings data to a CSV file in Azure MITRE ATT&CK compliance format.
     """
 
     def transform(
@@ -43,7 +39,7 @@ class AzureMitreAttack(ComplianceOutput):
             finding_requirements = finding.compliance.get(compliance_name, [])
             for requirement in compliance.Requirements:
                 if requirement.Id in finding_requirements:
-                    compliance_row = MitreAttackAzure(
+                    compliance_row = AzureMitreAttackModel(
                         Provider=finding.provider,
                         Description=compliance.Description,
                         SubscriptionId=finding.account_uid,
@@ -83,7 +79,7 @@ class AzureMitreAttack(ComplianceOutput):
         for requirement in compliance.Requirements:
             if not requirement.Checks:
                 for attribute in requirement.Attributes:
-                    compliance_row = MitreAttackAzure(
+                    compliance_row = AzureMitreAttackModel(
                         Provider=compliance.Provider.lower(),
                         Description=compliance.Description,
                         SubscriptionId="",
@@ -119,32 +115,3 @@ class AzureMitreAttack(ComplianceOutput):
                         Muted=False,
                     )
                     self._data.append(compliance_row)
-
-    def batch_write_data_to_file(self) -> None:
-        """
-        Writes the findings data to a CSV file in Azure MITRE ATT&CK compliance format.
-
-        Returns:
-            - None
-        """
-        try:
-            if (
-                getattr(self, "_file_descriptor", None)
-                and not self._file_descriptor.closed
-                and self._data
-            ):
-                csv_writer = DictWriter(
-                    self._file_descriptor,
-                    fieldnames=[field.upper() for field in self._data[0].dict().keys()],
-                    delimiter=";",
-                )
-                csv_writer.writeheader()
-                for finding in self._data:
-                    csv_writer.writerow(
-                        {k.upper(): v for k, v in finding.dict().items()}
-                    )
-                self._file_descriptor.close()
-        except Exception as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )

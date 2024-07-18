@@ -5,7 +5,7 @@ from freezegun import freeze_time
 from mock import patch
 
 from prowler.lib.outputs.compliance.ens.ens_aws import AWSENS
-from prowler.lib.outputs.compliance.ens.models import ENSAWS
+from prowler.lib.outputs.compliance.ens.models import AWSENSModel
 from tests.lib.outputs.compliance.fixtures import ENS_RD2022_AWS
 from tests.lib.outputs.fixtures.fixtures import generate_finding_output
 from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, AWS_REGION_EU_WEST_1
@@ -19,7 +19,7 @@ class TestAWSENS:
 
         output = AWSENS(findings, ENS_RD2022_AWS)
         output_data = output.data[0]
-        assert isinstance(output_data, ENSAWS)
+        assert isinstance(output_data, AWSENSModel)
         assert output_data.Provider == "aws"
         assert output_data.AccountId == AWS_ACCOUNT_NUMBER
         assert output_data.Region == AWS_REGION_EU_WEST_1

@@ -434,19 +434,20 @@ isodate = ">=0.6.1"
 
 [[package]]
 name = "azure-mgmt-keyvault"
-version = "10.3.0"
+version = "10.3.1"
 description = "Microsoft Azure Key Vault Management Client Library for Python"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "azure-mgmt-keyvault-10.3.0.tar.gz", hash = "sha256:183b4164cf1868b8ea7efeaa98edad7d2a4e14a9bd977c2818b12b75150cd2a2"},
-    {file = "azure_mgmt_keyvault-10.3.0-py3-none-any.whl", hash = "sha256:3410cf6c703e9570ed3c8e9716e483c02b1804adde6ab437ddc8feac4545acd6"},
+    {file = "azure-mgmt-keyvault-10.3.1.tar.gz", hash = "sha256:34b92956aefbdd571cae5a03f7078e037d8087b2c00cfa6748835dc73abb5a30"},
+    {file = "azure_mgmt_keyvault-10.3.1-py3-none-any.whl", hash = "sha256:a18a27a06551482d31f92bc43ac8b0846af02cd69511f80090865b4c5caa3c21"},
 ]
 
 [package.dependencies]
-azure-common = ">=1.1,<2.0"
-azure-mgmt-core = ">=1.3.2,<2.0.0"
-isodate = ">=0.6.1,<1.0.0"
+azure-common = ">=1.1"
+azure-mgmt-core = ">=1.3.2"
+isodate = ">=0.6.1"
+typing-extensions = ">=4.6.0"
 
 [[package]]
 name = "azure-mgmt-monitor"
@@ -2648,18 +2649,18 @@ dev = ["bumpver", "isort", "mypy", "pylint", "pytest", "yapf"]
 
 [[package]]
 name = "msgraph-sdk"
-version = "1.5.2"
+version = "1.5.3"
 description = "The Microsoft Graph Python SDK"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "msgraph_sdk-1.5.2-py3-none-any.whl", hash = "sha256:e3ee67dbbb5b2233aae291996cb846c0d32017f085a23476ab98198aa513a0dd"},
-    {file = "msgraph_sdk-1.5.2.tar.gz", hash = "sha256:62f2b1e7f8e9438a5a30b1e1761b8c4cbc4dc026a54088c381861aab6f266f92"},
+    {file = "msgraph_sdk-1.5.3-py3-none-any.whl", hash = "sha256:47aecbeb3bdb76fcfb4b7535aa5defc336249c42b0d7cbb9480244045449cb12"},
+    {file = "msgraph_sdk-1.5.3.tar.gz", hash = "sha256:34dd5a9a55287cfc8a3d5e301acdf65e46462011d451f2992fdbf31851a94e8f"},
 ]
 
 [package.dependencies]
 azure-identity = ">=1.12.0"
-microsoft-kiota-abstractions = ">=1.0.0,<2.0.0"
+microsoft-kiota-abstractions = ">=1.3.0,<2.0.0"
 microsoft-kiota-authentication-azure = ">=1.0.0,<2.0.0"
 microsoft-kiota-http = ">=1.0.0,<2.0.0"
 microsoft-kiota-serialization-form = ">=0.1.0"
@@ -4900,4 +4901,4 @@ test = ["big-O", "jaraco.functools", "jaraco.itertools", "jaraco.test", "more-it
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "e3709dfbfaeba997390895158c7e1a0cc14689523ccd06a4f61e1794262df5fc"
+content-hash = "8ce508ddd00b006c83034ad4337f7f850574e0e8c8616ad4cfd6b42fe20b8a35"

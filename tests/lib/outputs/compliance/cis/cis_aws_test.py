@@ -5,7 +5,7 @@ from freezegun import freeze_time
 from mock import patch
 
 from prowler.lib.outputs.compliance.cis.cis_aws import AWSCIS
-from prowler.lib.outputs.compliance.cis.models import CISAWS
+from prowler.lib.outputs.compliance.cis.models import AWSCISModel
 from tests.lib.outputs.compliance.fixtures import CIS_1_4_AWS
 from tests.lib.outputs.fixtures.fixtures import generate_finding_output
 from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, AWS_REGION_EU_WEST_1
@@ -17,7 +17,7 @@ class TestAWSCIS:
 
         output = AWSCIS(findings, CIS_1_4_AWS)
         output_data = output.data[0]
-        assert isinstance(output_data, CISAWS)
+        assert isinstance(output_data, AWSCISModel)
         assert output_data.Provider == "aws"
         assert output_data.AccountId == AWS_ACCOUNT_NUMBER
         assert output_data.Region == AWS_REGION_EU_WEST_1

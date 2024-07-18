@@ -5,7 +5,7 @@ from freezegun import freeze_time
 from mock import patch
 
 from prowler.lib.outputs.compliance.cis.cis_gcp import GCPCIS
-from prowler.lib.outputs.compliance.cis.models import CISGCP
+from prowler.lib.outputs.compliance.cis.models import GCPCISModel
 from tests.lib.outputs.compliance.fixtures import CIS_2_0_GCP
 from tests.lib.outputs.fixtures.fixtures import generate_finding_output
 from tests.providers.gcp.gcp_fixtures import GCP_PROJECT_ID
@@ -25,7 +25,7 @@ class TestGCPCIS:
 
         output = GCPCIS(findings, CIS_2_0_GCP)
         output_data = output.data[0]
-        assert isinstance(output_data, CISGCP)
+        assert isinstance(output_data, GCPCISModel)
         assert output_data.Provider == "gcp"
         assert output_data.ProjectId == GCP_PROJECT_ID
         assert output_data.Location == ""

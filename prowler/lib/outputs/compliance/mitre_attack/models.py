@@ -1,9 +1,9 @@
 from pydantic import BaseModel
 
 
-class MitreAttackAWS(BaseModel):
+class AWSMitreAttackModel(BaseModel):
     """
-    MitreAttackAWS generates a finding's output in CSV MITRE ATTACK format for AWS.
+    AWSMitreAttackModel generates a finding's output in CSV MITRE ATTACK format for AWS.
     """
 
     Provider: str
@@ -30,9 +30,9 @@ class MitreAttackAWS(BaseModel):
     ResourceName: str
 
 
-class MitreAttackAzure(BaseModel):
+class AzureMitreAttackModel(BaseModel):
     """
-    MitreAttackAzure generates a finding's output in CSV MITRE ATTACK format for Azure.
+    AzureMitreAttackModel generates a finding's output in CSV MITRE ATTACK format for Azure.
     """
 
     Provider: str
@@ -59,9 +59,9 @@ class MitreAttackAzure(BaseModel):
     Location: str
 
 
-class MitreAttackGCP(BaseModel):
+class GCPMitreAttackModel(BaseModel):
     """
-    MitreAttackGCP generates a finding's output in CSV MITRE ATTACK format for AWS.
+    GCPMitreAttackModel generates a finding's output in CSV MITRE ATTACK format for AWS.
     """
 
     Provider: str
