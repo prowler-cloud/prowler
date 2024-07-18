@@ -411,7 +411,7 @@ class TestOutputs:
         finding_1.status = "FAIL"
         finding_1.muted = True
         finding_1.subscription = "test_subscription_2"
-        finding_1.check_metadata.ServiceName = "test_service_1"
+        finding_1.location = "test_location_1"
         finding_1.check_metadata.Provider = "azure"
         finding_1.status_extended = "Extended status 1"
 
@@ -419,7 +419,7 @@ class TestOutputs:
         finding_2.status = "PASS"
         finding_2.muted = False
         finding_2.subscription = "test_subscription_1"
-        finding_2.check_metadata.ServiceName = "test_service_2"
+        finding_2.location = "test_location_2"
         finding_2.check_metadata.Provider = "azure"
         finding_2.status_extended = "Extended status 2"
 
@@ -446,7 +446,7 @@ class TestOutputs:
             )  # Check if the list was sorted
 
             mocked_print.assert_any_call(
-                f"\t{Fore.GREEN}PASS{Style.RESET_ALL} test_service_2: Extended status 2"
+                f"\t{Fore.GREEN}PASS{Style.RESET_ALL} test_location_2: Extended status 2"
             )
             mocked_print.assert_called()  # Verifying that print was called
 
@@ -456,7 +456,7 @@ class TestOutputs:
         finding_1.status = "FAIL"
         finding_1.muted = False
         finding_1.subscription = "test_subscription_2"
-        finding_1.check_metadata.ServiceName = "test_service_1"
+        finding_1.location = "test_location_1"
         finding_1.check_metadata.Provider = "azure"
         finding_1.status_extended = "Extended status 1"
 
@@ -464,7 +464,7 @@ class TestOutputs:
         finding_2.status = "PASS"
         finding_2.muted = False
         finding_2.subscription = "test_subscription_1"
-        finding_2.check_metadata.ServiceName = "test_service_2"
+        finding_2.location = "test_location_2"
         finding_2.check_metadata.Provider = "azure"
         finding_2.status_extended = "Extended status 2"
 
@@ -491,7 +491,7 @@ class TestOutputs:
             )  # Check if the list was sorted
 
             mocked_print.assert_any_call(
-                f"\t{Fore.RED}FAIL{Style.RESET_ALL} test_service_1: Extended status 1"
+                f"\t{Fore.RED}FAIL{Style.RESET_ALL} test_location_1: Extended status 1"
             )
             mocked_print.assert_called()  # Verifying that print was called
 
@@ -501,7 +501,7 @@ class TestOutputs:
         finding_1.status = "FAIL"
         finding_1.muted = True
         finding_1.subscription = "test_subscription_2"
-        finding_1.check_metadata.ServiceName = "test_service_1"
+        finding_1.location = "test_location_1"
         finding_1.check_metadata.Provider = "azure"
         finding_1.status_extended = "Extended status 1"
 
@@ -509,7 +509,7 @@ class TestOutputs:
         finding_2.status = "PASS"
         finding_2.muted = False
         finding_2.subscription = "test_subscription_1"
-        finding_2.check_metadata.ServiceName = "test_service_2"
+        finding_2.location = "test_location_2"
         finding_2.check_metadata.Provider = "azure"
         finding_2.status_extended = "Extended status 2"
 
@@ -536,7 +536,7 @@ class TestOutputs:
             )  # Check if the list was sorted
 
             mocked_print.assert_any_call(
-                f"\t{orange_color}MUTED (FAIL){Style.RESET_ALL} test_service_1: Extended status 1"
+                f"\t{orange_color}MUTED (FAIL){Style.RESET_ALL} test_location_1: Extended status 1"
             )
             mocked_print.assert_called()  # Verifying that print was called
 
