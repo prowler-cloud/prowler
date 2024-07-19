@@ -38,7 +38,7 @@
 </p>
 <hr>
 <p align="center">
-  <img align="center" src="https://github.com/prowler-cloud/prowler/blob/master/docs/img/prowler-cli-quick.gif" width="50%" height="50%">
+  <img align="center" src="https://github.com/prowler-cloud/prowler/tree/PRWLR-4195-add-new-gif-to-readme/docs/img/prowler-cli-quick.gif" width="50%" height="50%">
 </p>
 
 # Description
