@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from io import TextIOWrapper
-from os import path
+from pathlib import Path
 from typing import List
 
 from prowler.lib.logger import logger
@@ -40,7 +40,7 @@ class Output(ABC):
         self._data = []
 
         if not file_extension and file_path:
-            _, self._file_extension = path.splitext(file_path)
+            self._file_extension = "".join(Path(file_path).suffixes)
         if file_extension:
             self._file_extension = file_extension
 

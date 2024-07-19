@@ -1,4 +1,4 @@
-from io import TextIOWrapper
+from os import path
 from typing import List
 
 from prowler.lib.check.compliance_models import ComplianceBaseModel
@@ -23,17 +23,21 @@ class ComplianceOutput(Output):
         create_file_descriptor: Method to create a file descriptor for writing data to a file.
     """
 
-    _data: list
-    _file_descriptor: TextIOWrapper
-
     def __init__(
         self,
         findings: List[Finding],
         compliance: ComplianceBaseModel,
         create_file_descriptor: bool = False,
         file_path: str = None,
+        file_extension: str = "",
     ) -> None:
         self._data = []
+
+        if not file_extension and file_path:
+            _, self._file_extension = path.splitext(file_path)
+        if file_extension:
+            self._file_extension = file_extension
+
         if findings:
             # Get the compliance name of the model
             compliance_name = (
