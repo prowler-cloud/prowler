@@ -44,6 +44,7 @@ class Test_logging_sink_created:
             )
 
             logging_client.project_ids = [GCP_PROJECT_ID]
+            logging_client.region = GCP_EU1_LOCATION
             logging_client.sinks = []
 
             check = logging_sink_created()
