@@ -37,6 +37,9 @@
   <a href="https://twitter.com/prowlercloud"><img alt="Twitter" src="https://img.shields.io/twitter/follow/prowlercloud?style=social"></a>
 </p>
 <hr>
+<p align="center">
+  <img align="center" src="/docs/img/prowler-cli-quick.gif" width="100%" height="100%">
+</p>
 
 # Description
 
