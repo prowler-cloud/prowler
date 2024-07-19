@@ -1,4 +1,3 @@
-import re
 from unittest import mock
 
 from tests.providers.gcp.gcp_fixtures import (
@@ -9,7 +8,7 @@ from tests.providers.gcp.gcp_fixtures import (
 
 
 class Test_iam_sa_no_administrative_privileges:
-    def test_iam_no_bindings(self):
+    def test_iam_sa_no_bindings(self):
         cloudresourcemanager_client = mock.MagicMock
         iam_client = mock.MagicMock
 
@@ -26,17 +25,16 @@ class Test_iam_sa_no_administrative_privileges:
             from prowler.providers.gcp.services.iam.iam_sa_no_administrative_privileges.iam_sa_no_administrative_privileges import (
                 iam_sa_no_administrative_privileges,
             )
+            from prowler.providers.gcp.services.iam.iam_service import ServiceAccount
 
             iam_client.project_ids = [GCP_PROJECT_ID]
             iam_client.region = GCP_US_CENTER1_LOCATION
 
-            from prowler.providers.gcp.services.iam.iam_service import ServiceAccount
-
             iam_client.service_accounts = [
                 ServiceAccount(
-                    name="service1",
-                    email="service1",
-                    display_name="service1",
+                    name="projects/my-project/serviceAccounts/my-service-account@my-project.iam.gserviceaccount.com",
+                    email="my-service-account@my-project.iam.gserviceaccount.com",
+                    display_name="My service account",
                     keys=[],
                     project_id=GCP_PROJECT_ID,
                 )
@@ -49,18 +47,17 @@ class Test_iam_sa_no_administrative_privileges:
             check = iam_sa_no_administrative_privileges()
             result = check.execute()
             assert len(result) == 1
-            for idx, r in enumerate(result):
-                assert r.status == "PASS"
-                assert re.search(
-                    "Account .* has no administrative privileges.",
-                    r.status_extended,
-                )
-                assert r.resource_id == iam_client.service_accounts[0].email
-                assert r.project_id == GCP_PROJECT_ID
-                assert r.location == iam_client.region
-                assert r.resource_name == iam_client.service_accounts[0].name
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == f"Account {iam_client.service_accounts[0].email} has no administrative privileges."
+            )
+            assert result[0].resource_id == iam_client.service_accounts[0].email
+            assert result[0].project_id == GCP_PROJECT_ID
+            assert result[0].location == GCP_US_CENTER1_LOCATION
+            assert result[0].resource_name == iam_client.service_accounts[0].name
 
-    def test_iam_viewer_role_binding(self):
+    def test_iam_sa_viewer_role_binding(self):
         cloudresourcemanager_client = mock.MagicMock
         iam_client = mock.MagicMock
 
@@ -74,20 +71,22 @@ class Test_iam_sa_no_administrative_privileges:
             "prowler.providers.gcp.services.iam.iam_sa_no_administrative_privileges.iam_sa_no_administrative_privileges.iam_client",
             new=iam_client,
         ):
+            from prowler.providers.gcp.services.cloudresourcemanager.cloudresourcemanager_service import (
+                Binding,
+            )
             from prowler.providers.gcp.services.iam.iam_sa_no_administrative_privileges.iam_sa_no_administrative_privileges import (
                 iam_sa_no_administrative_privileges,
             )
+            from prowler.providers.gcp.services.iam.iam_service import ServiceAccount
 
             iam_client.project_ids = [GCP_PROJECT_ID]
             iam_client.region = GCP_US_CENTER1_LOCATION
 
-            from prowler.providers.gcp.services.iam.iam_service import ServiceAccount
-
             iam_client.service_accounts = [
                 ServiceAccount(
-                    name="service1",
-                    email="service1",
-                    display_name="service1",
+                    name="projects/my-project/serviceAccounts/my-service-account@my-project.iam.gserviceaccount.com",
+                    email="my-service-account@my-project.iam.gserviceaccount.com",
+                    display_name="My service account",
                     keys=[],
                     project_id=GCP_PROJECT_ID,
                 )
@@ -95,15 +94,13 @@ class Test_iam_sa_no_administrative_privileges:
 
             cloudresourcemanager_client.project_ids = [GCP_PROJECT_ID]
             cloudresourcemanager_client.region = GCP_US_CENTER1_LOCATION
-
-            from prowler.providers.gcp.services.cloudresourcemanager.cloudresourcemanager_service import (
-                Binding,
-            )
 
             cloudresourcemanager_client.bindings = [
                 Binding(
                     role="roles/viewer",
-                    members=["serviceAccount:service1"],
+                    members=[
+                        "serviceAccount:my-service-account@my-project.iam.gserviceaccount.com"
+                    ],
                     project_id=GCP_PROJECT_ID,
                 )
             ]
@@ -111,18 +108,17 @@ class Test_iam_sa_no_administrative_privileges:
             check = iam_sa_no_administrative_privileges()
             result = check.execute()
             assert len(result) == 1
-            for idx, r in enumerate(result):
-                assert r.status == "PASS"
-                assert re.search(
-                    "Account .* has no administrative privileges.",
-                    r.status_extended,
-                )
-                assert r.resource_id == iam_client.service_accounts[0].email
-                assert r.project_id == GCP_PROJECT_ID
-                assert r.location == iam_client.region
-                assert r.resource_name == iam_client.service_accounts[0].name
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == f"Account {iam_client.service_accounts[0].email} has no administrative privileges."
+            )
+            assert result[0].resource_id == iam_client.service_accounts[0].email
+            assert result[0].project_id == GCP_PROJECT_ID
+            assert result[0].location == GCP_US_CENTER1_LOCATION
+            assert result[0].resource_name == iam_client.service_accounts[0].name
 
-    def test_iam_admin_role_binding(self):
+    def test_iam_sa_admin_role_binding(self):
         cloudresourcemanager_client = mock.MagicMock
         iam_client = mock.MagicMock
 
@@ -136,20 +132,22 @@ class Test_iam_sa_no_administrative_privileges:
             "prowler.providers.gcp.services.iam.iam_sa_no_administrative_privileges.iam_sa_no_administrative_privileges.iam_client",
             new=iam_client,
         ):
+            from prowler.providers.gcp.services.cloudresourcemanager.cloudresourcemanager_service import (
+                Binding,
+            )
             from prowler.providers.gcp.services.iam.iam_sa_no_administrative_privileges.iam_sa_no_administrative_privileges import (
                 iam_sa_no_administrative_privileges,
             )
+            from prowler.providers.gcp.services.iam.iam_service import ServiceAccount
 
             iam_client.project_ids = [GCP_PROJECT_ID]
             iam_client.region = GCP_US_CENTER1_LOCATION
 
-            from prowler.providers.gcp.services.iam.iam_service import ServiceAccount
-
             iam_client.service_accounts = [
                 ServiceAccount(
-                    name="service1",
-                    email="service1",
-                    display_name="service1",
+                    name="projects/my-project/serviceAccounts/my-service-account@my-project.iam.gserviceaccount.com",
+                    email="my-service-account@my-project.iam.gserviceaccount.com",
+                    display_name="My service account",
                     keys=[],
                     project_id=GCP_PROJECT_ID,
                 )
@@ -157,15 +155,13 @@ class Test_iam_sa_no_administrative_privileges:
 
             cloudresourcemanager_client.project_ids = [GCP_PROJECT_ID]
             cloudresourcemanager_client.region = GCP_US_CENTER1_LOCATION
-
-            from prowler.providers.gcp.services.cloudresourcemanager.cloudresourcemanager_service import (
-                Binding,
-            )
 
             cloudresourcemanager_client.bindings = [
                 Binding(
                     role="roles/admin",
-                    members=["serviceAccount:service1"],
+                    members=[
+                        "serviceAccount:my-service-account@my-project.iam.gserviceaccount.com"
+                    ],
                     project_id=GCP_PROJECT_ID,
                 )
             ]
@@ -173,18 +169,17 @@ class Test_iam_sa_no_administrative_privileges:
             check = iam_sa_no_administrative_privileges()
             result = check.execute()
             assert len(result) == 1
-            for idx, r in enumerate(result):
-                assert r.status == "FAIL"
-                assert re.search(
-                    "Account .* has administrative privileges with .*",
-                    r.status_extended,
-                )
-                assert r.resource_id == iam_client.service_accounts[0].email
-                assert r.project_id == GCP_PROJECT_ID
-                assert r.location == iam_client.region
-                assert r.resource_name == iam_client.service_accounts[0].name
+            assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == f"Account {iam_client.service_accounts[0].email} has administrative privileges with {cloudresourcemanager_client.bindings[0].role}."
+            )
+            assert result[0].resource_id == iam_client.service_accounts[0].email
+            assert result[0].project_id == GCP_PROJECT_ID
+            assert result[0].location == GCP_US_CENTER1_LOCATION
+            assert result[0].resource_name == iam_client.service_accounts[0].name
 
-    def test_iam_owner_role_binding(self):
+    def test_iam_sa_owner_role_binding(self):
         cloudresourcemanager_client = mock.MagicMock
         iam_client = mock.MagicMock
 
@@ -198,20 +193,22 @@ class Test_iam_sa_no_administrative_privileges:
             "prowler.providers.gcp.services.iam.iam_sa_no_administrative_privileges.iam_sa_no_administrative_privileges.iam_client",
             new=iam_client,
         ):
+            from prowler.providers.gcp.services.cloudresourcemanager.cloudresourcemanager_service import (
+                Binding,
+            )
             from prowler.providers.gcp.services.iam.iam_sa_no_administrative_privileges.iam_sa_no_administrative_privileges import (
                 iam_sa_no_administrative_privileges,
             )
+            from prowler.providers.gcp.services.iam.iam_service import ServiceAccount
 
             iam_client.project_ids = [GCP_PROJECT_ID]
             iam_client.region = GCP_US_CENTER1_LOCATION
 
-            from prowler.providers.gcp.services.iam.iam_service import ServiceAccount
-
             iam_client.service_accounts = [
                 ServiceAccount(
-                    name="service1",
-                    email="service1",
-                    display_name="service1",
+                    name="projects/my-project/serviceAccounts/my-service-account@my-project.iam.gserviceaccount.com",
+                    email="my-service-account@my-project.iam.gserviceaccount.com",
+                    display_name="My service account",
                     keys=[],
                     project_id=GCP_PROJECT_ID,
                 )
@@ -219,15 +216,13 @@ class Test_iam_sa_no_administrative_privileges:
 
             cloudresourcemanager_client.project_ids = [GCP_PROJECT_ID]
             cloudresourcemanager_client.region = GCP_US_CENTER1_LOCATION
-
-            from prowler.providers.gcp.services.cloudresourcemanager.cloudresourcemanager_service import (
-                Binding,
-            )
 
             cloudresourcemanager_client.bindings = [
                 Binding(
                     role="roles/owner",
-                    members=["serviceAccount:service1"],
+                    members=[
+                        "serviceAccount:my-service-account@my-project.iam.gserviceaccount.com"
+                    ],
                     project_id=GCP_PROJECT_ID,
                 )
             ]
@@ -235,18 +230,17 @@ class Test_iam_sa_no_administrative_privileges:
             check = iam_sa_no_administrative_privileges()
             result = check.execute()
             assert len(result) == 1
-            for idx, r in enumerate(result):
-                assert r.status == "FAIL"
-                assert re.search(
-                    "Account .* has administrative privileges with .*",
-                    r.status_extended,
-                )
-                assert r.resource_id == iam_client.service_accounts[0].email
-                assert r.project_id == GCP_PROJECT_ID
-                assert r.location == iam_client.region
-                assert r.resource_name == iam_client.service_accounts[0].name
+            assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == f"Account {iam_client.service_accounts[0].email} has administrative privileges with {cloudresourcemanager_client.bindings[0].role}."
+            )
+            assert result[0].resource_id == iam_client.service_accounts[0].email
+            assert result[0].project_id == GCP_PROJECT_ID
+            assert result[0].location == GCP_US_CENTER1_LOCATION
+            assert result[0].resource_name == iam_client.service_accounts[0].name
 
-    def test_iam_editor_role_binding(self):
+    def test_iam_sa_editor_role_binding(self):
         cloudresourcemanager_client = mock.MagicMock
         iam_client = mock.MagicMock
 
@@ -260,20 +254,22 @@ class Test_iam_sa_no_administrative_privileges:
             "prowler.providers.gcp.services.iam.iam_sa_no_administrative_privileges.iam_sa_no_administrative_privileges.iam_client",
             new=iam_client,
         ):
+            from prowler.providers.gcp.services.cloudresourcemanager.cloudresourcemanager_service import (
+                Binding,
+            )
             from prowler.providers.gcp.services.iam.iam_sa_no_administrative_privileges.iam_sa_no_administrative_privileges import (
                 iam_sa_no_administrative_privileges,
             )
+            from prowler.providers.gcp.services.iam.iam_service import ServiceAccount
 
             iam_client.project_ids = [GCP_PROJECT_ID]
             iam_client.region = GCP_US_CENTER1_LOCATION
 
-            from prowler.providers.gcp.services.iam.iam_service import ServiceAccount
-
             iam_client.service_accounts = [
                 ServiceAccount(
-                    name="service1",
-                    email="service1",
-                    display_name="service1",
+                    name="projects/my-project/serviceAccounts/my-service-account@my-project.iam.gserviceaccount.com",
+                    email="my-service-account@my-project.iam.gserviceaccount.com",
+                    display_name="My service account",
                     keys=[],
                     project_id=GCP_PROJECT_ID,
                 )
@@ -281,15 +277,13 @@ class Test_iam_sa_no_administrative_privileges:
 
             cloudresourcemanager_client.project_ids = [GCP_PROJECT_ID]
             cloudresourcemanager_client.region = GCP_US_CENTER1_LOCATION
-
-            from prowler.providers.gcp.services.cloudresourcemanager.cloudresourcemanager_service import (
-                Binding,
-            )
 
             cloudresourcemanager_client.bindings = [
                 Binding(
                     role="roles/editor",
-                    members=["serviceAccount:service1"],
+                    members=[
+                        "serviceAccount:my-service-account@my-project.iam.gserviceaccount.com"
+                    ],
                     project_id=GCP_PROJECT_ID,
                 )
             ]
@@ -297,18 +291,17 @@ class Test_iam_sa_no_administrative_privileges:
             check = iam_sa_no_administrative_privileges()
             result = check.execute()
             assert len(result) == 1
-            for idx, r in enumerate(result):
-                assert r.status == "FAIL"
-                assert re.search(
-                    "Account .* has administrative privileges with .*",
-                    r.status_extended,
-                )
-                assert r.resource_id == iam_client.service_accounts[0].email
-                assert r.project_id == GCP_PROJECT_ID
-                assert r.location == iam_client.region
-                assert r.resource_name == iam_client.service_accounts[0].name
+            assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == f"Account {iam_client.service_accounts[0].email} has administrative privileges with {cloudresourcemanager_client.bindings[0].role}."
+            )
+            assert result[0].resource_id == iam_client.service_accounts[0].email
+            assert result[0].project_id == GCP_PROJECT_ID
+            assert result[0].location == GCP_US_CENTER1_LOCATION
+            assert result[0].resource_name == iam_client.service_accounts[0].name
 
-    def test_iam_role_binding_different_email(self):
+    def test_iam_sa_role_binding_different_email(self):
         cloudresourcemanager_client = mock.MagicMock
         iam_client = mock.MagicMock
 
@@ -322,20 +315,22 @@ class Test_iam_sa_no_administrative_privileges:
             "prowler.providers.gcp.services.iam.iam_sa_no_administrative_privileges.iam_sa_no_administrative_privileges.iam_client",
             new=iam_client,
         ):
+            from prowler.providers.gcp.services.cloudresourcemanager.cloudresourcemanager_service import (
+                Binding,
+            )
             from prowler.providers.gcp.services.iam.iam_sa_no_administrative_privileges.iam_sa_no_administrative_privileges import (
                 iam_sa_no_administrative_privileges,
             )
+            from prowler.providers.gcp.services.iam.iam_service import ServiceAccount
 
             iam_client.project_ids = [GCP_PROJECT_ID]
             iam_client.region = GCP_US_CENTER1_LOCATION
 
-            from prowler.providers.gcp.services.iam.iam_service import ServiceAccount
-
             iam_client.service_accounts = [
                 ServiceAccount(
-                    name="service1",
-                    email="service1",
-                    display_name="service1",
+                    name="projects/my-project/serviceAccounts/my-service-account@my-project.iam.gserviceaccount.com",
+                    email="my-service-account@my-project.iam.gserviceaccount.com",
+                    display_name="My service account",
                     keys=[],
                     project_id=GCP_PROJECT_ID,
                 )
@@ -344,14 +339,12 @@ class Test_iam_sa_no_administrative_privileges:
             cloudresourcemanager_client.project_ids = [GCP_PROJECT_ID]
             cloudresourcemanager_client.region = GCP_US_CENTER1_LOCATION
 
-            from prowler.providers.gcp.services.cloudresourcemanager.cloudresourcemanager_service import (
-                Binding,
-            )
-
             cloudresourcemanager_client.bindings = [
                 Binding(
                     role="roles/admin",
-                    members=["serviceAccount:service2"],
+                    members=[
+                        "serviceAccount:my-new-service-account@my-project.iam.gserviceaccount.com"
+                    ],
                     project_id=GCP_PROJECT_ID,
                 )
             ]
@@ -359,13 +352,12 @@ class Test_iam_sa_no_administrative_privileges:
             check = iam_sa_no_administrative_privileges()
             result = check.execute()
             assert len(result) == 1
-            for idx, r in enumerate(result):
-                assert r.status == "PASS"
-                assert re.search(
-                    "Account .* has no administrative privileges.",
-                    r.status_extended,
-                )
-                assert r.resource_id == iam_client.service_accounts[0].email
-                assert r.project_id == GCP_PROJECT_ID
-                assert r.location == iam_client.region
-                assert r.resource_name == iam_client.service_accounts[0].name
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == f"Account {iam_client.service_accounts[0].email} has no administrative privileges."
+            )
+            assert result[0].resource_id == iam_client.service_accounts[0].email
+            assert result[0].project_id == GCP_PROJECT_ID
+            assert result[0].location == GCP_US_CENTER1_LOCATION
+            assert result[0].resource_name == iam_client.service_accounts[0].name
