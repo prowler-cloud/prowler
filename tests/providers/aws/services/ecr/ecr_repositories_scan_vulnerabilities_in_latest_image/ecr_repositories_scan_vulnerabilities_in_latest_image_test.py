@@ -18,6 +18,11 @@ repository_arn = (
     f"arn:aws:ecr:eu-west-1:{AWS_ACCOUNT_NUMBER}:repository/{repository_name}"
 )
 latest_tag = "test-tag"
+latest_digest = "test-digest"
+docker_container_image_artifact_media_type = (
+    "application/vnd.docker.container.image.v1+json"
+)
+oci_media_type = "application/vnd.oci.artifact.v1+json"
 repo_policy_public = {
     "Version": "2012-10-17",
     "Statement": [
@@ -118,7 +123,7 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
             result = check.execute()
             assert len(result) == 0
 
-    def test_image_scaned_without_findings(self):
+    def test_oci_artifact_media_type(self):
         ecr_client = mock.MagicMock
         ecr_client.registries = {}
         ecr_client.registries[AWS_REGION_EU_WEST_1] = Registry(
@@ -135,7 +140,55 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
                     images_details=[
                         ImageDetails(
                             latest_tag=latest_tag,
-                            latest_digest="test-digest",
+                            latest_digest=latest_digest,
+                            image_pushed_at=datetime(2023, 1, 1),
+                            scan_findings_status="COMPLETE",
+                            scan_findings_severity_count=FindingSeverityCounts(
+                                critical=0, high=0, medium=0
+                            ),
+                            artifact_media_type=oci_media_type,
+                        ),
+                    ],
+                    lifecycle_policy=None,
+                )
+            ],
+            rules=[],
+        )
+        ecr_client.audit_config = {}
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_aws_provider(),
+        ), mock.patch(
+            "prowler.providers.aws.services.ecr.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_client",
+            ecr_client,
+        ):
+            from prowler.providers.aws.services.ecr.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_repositories_scan_vulnerabilities_in_latest_image import (
+                ecr_repositories_scan_vulnerabilities_in_latest_image,
+            )
+
+            check = ecr_repositories_scan_vulnerabilities_in_latest_image()
+            result = check.execute()
+            assert len(result) == 0
+
+    def test_no_artifact_media_type(self):
+        ecr_client = mock.MagicMock
+        ecr_client.registries = {}
+        ecr_client.registries[AWS_REGION_EU_WEST_1] = Registry(
+            id=AWS_ACCOUNT_NUMBER,
+            region=AWS_REGION_EU_WEST_1,
+            scan_type="BASIC",
+            repositories=[
+                Repository(
+                    name=repository_name,
+                    arn=repository_arn,
+                    region=AWS_REGION_EU_WEST_1,
+                    scan_on_push=True,
+                    policy=repo_policy_public,
+                    images_details=[
+                        ImageDetails(
+                            latest_tag=latest_tag,
+                            latest_digest=latest_digest,
                             image_pushed_at=datetime(2023, 1, 1),
                             scan_findings_status="COMPLETE",
                             scan_findings_severity_count=FindingSeverityCounts(
@@ -163,11 +216,59 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
 
             check = ecr_repositories_scan_vulnerabilities_in_latest_image()
             result = check.execute()
+            assert len(result) == 0
+
+    def test_image_scaned_without_findings(self):
+        ecr_client = mock.MagicMock
+        ecr_client.registries = {}
+        ecr_client.registries[AWS_REGION_EU_WEST_1] = Registry(
+            id=AWS_ACCOUNT_NUMBER,
+            region=AWS_REGION_EU_WEST_1,
+            scan_type="BASIC",
+            repositories=[
+                Repository(
+                    name=repository_name,
+                    arn=repository_arn,
+                    region=AWS_REGION_EU_WEST_1,
+                    scan_on_push=True,
+                    policy=repo_policy_public,
+                    images_details=[
+                        ImageDetails(
+                            latest_tag=latest_tag,
+                            latest_digest=latest_digest,
+                            image_pushed_at=datetime(2023, 1, 1),
+                            scan_findings_status="COMPLETE",
+                            scan_findings_severity_count=FindingSeverityCounts(
+                                critical=0, high=0, medium=0
+                            ),
+                            artifact_media_type=docker_container_image_artifact_media_type,
+                        ),
+                    ],
+                    lifecycle_policy=None,
+                )
+            ],
+            rules=[],
+        )
+        ecr_client.audit_config = {}
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_aws_provider(),
+        ), mock.patch(
+            "prowler.providers.aws.services.ecr.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_client",
+            ecr_client,
+        ):
+            from prowler.providers.aws.services.ecr.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_repositories_scan_vulnerabilities_in_latest_image import (
+                ecr_repositories_scan_vulnerabilities_in_latest_image,
+            )
+
+            check = ecr_repositories_scan_vulnerabilities_in_latest_image()
+            result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"ECR repository {repository_name} has imageTag {latest_tag} scanned without findings."
+                == f"ECR repository '{repository_name}' has scanned the Docker container image with digest '{latest_digest}' and tag '{latest_tag}' without findings."
             )
             assert result[0].resource_id == repository_name
             assert result[0].resource_arn == repository_arn
@@ -189,12 +290,13 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
                     images_details=[
                         ImageDetails(
                             latest_tag=latest_tag,
-                            latest_digest="test-digest",
+                            latest_digest=latest_digest,
                             image_pushed_at=datetime(2023, 1, 1),
                             scan_findings_status="COMPLETE",
                             scan_findings_severity_count=FindingSeverityCounts(
                                 critical=12, high=34, medium=7
                             ),
+                            artifact_media_type=docker_container_image_artifact_media_type,
                         )
                     ],
                     lifecycle_policy=None,
@@ -225,7 +327,7 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"ECR repository {repository_name} has imageTag {latest_tag} scanned with findings: CRITICAL->{12}, HIGH->{34}, MEDIUM->{7}."
+                == f"ECR repository '{repository_name}' has scanned the Docker container image with digest '{latest_digest}' and tag '{latest_tag}' with findings: CRITICAL->{12}, HIGH->{34}, MEDIUM->{7}."
             )
             assert result[0].resource_id == repository_name
             assert result[0].resource_arn == repository_arn
@@ -247,12 +349,13 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
                     images_details=[
                         ImageDetails(
                             latest_tag=latest_tag,
-                            latest_digest="test-digest",
+                            latest_digest=latest_digest,
                             image_pushed_at=datetime(2023, 1, 1),
                             scan_findings_status="COMPLETE",
                             scan_findings_severity_count=FindingSeverityCounts(
                                 critical=12, high=34, medium=7
                             ),
+                            artifact_media_type=docker_container_image_artifact_media_type,
                         )
                     ],
                     lifecycle_policy=None,
@@ -283,7 +386,7 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"ECR repository {repository_name} has imageTag {latest_tag} scanned with findings: CRITICAL->{12}, HIGH->{34}."
+                == f"ECR repository '{repository_name}' has scanned the Docker container image with digest '{latest_digest}' and tag '{latest_tag}' with findings: CRITICAL->{12}, HIGH->{34}."
             )
             assert result[0].resource_id == repository_name
             assert result[0].resource_arn == repository_arn
@@ -305,12 +408,13 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
                     images_details=[
                         ImageDetails(
                             latest_tag=latest_tag,
-                            latest_digest="test-digest",
+                            latest_digest=latest_digest,
                             image_pushed_at=datetime(2023, 1, 1),
                             scan_findings_status="COMPLETE",
                             scan_findings_severity_count=FindingSeverityCounts(
                                 critical=12, high=34, medium=7
                             ),
+                            artifact_media_type=docker_container_image_artifact_media_type,
                         )
                     ],
                     lifecycle_policy=None,
@@ -341,7 +445,7 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"ECR repository {repository_name} has imageTag {latest_tag} scanned with findings: CRITICAL->{12}."
+                == f"ECR repository '{repository_name}' has scanned the Docker container image with digest '{latest_digest}' and tag '{latest_tag}' with findings: CRITICAL->{12}."
             )
             assert result[0].resource_id == repository_name
             assert result[0].resource_arn == repository_arn
@@ -363,12 +467,13 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
                     images_details=[
                         ImageDetails(
                             latest_tag=latest_tag,
-                            latest_digest="test-digest",
+                            latest_digest=latest_digest,
                             image_pushed_at=datetime(2023, 1, 1),
                             scan_findings_status="COMPLETE",
                             scan_findings_severity_count=FindingSeverityCounts(
                                 critical=0, high=34, medium=7
                             ),
+                            artifact_media_type=docker_container_image_artifact_media_type,
                         )
                     ],
                     lifecycle_policy=None,
@@ -399,7 +504,7 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"ECR repository {repository_name} has imageTag {latest_tag} scanned without findings."
+                == f"ECR repository '{repository_name}' has scanned the Docker container image with digest '{latest_digest}' and tag '{latest_tag}' without findings."
             )
             assert result[0].resource_id == repository_name
             assert result[0].resource_arn == repository_arn
@@ -423,12 +528,13 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
                     images_details=[
                         ImageDetails(
                             latest_tag=latest_tag,
-                            latest_digest="test-digest",
+                            latest_digest=latest_digest,
                             image_pushed_at=datetime(2023, 1, 1),
                             scan_findings_status="COMPLETE",
                             scan_findings_severity_count=FindingSeverityCounts(
                                 critical=0, high=0, medium=7
                             ),
+                            artifact_media_type=docker_container_image_artifact_media_type,
                         )
                     ],
                     lifecycle_policy=None,
@@ -459,7 +565,7 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"ECR repository {repository_name} has imageTag {latest_tag} scanned without findings."
+                == f"ECR repository '{repository_name}' has scanned the Docker container image with digest '{latest_digest}' and tag '{latest_tag}' without findings."
             )
             assert result[0].resource_id == repository_name
             assert result[0].resource_arn == repository_arn
@@ -481,12 +587,13 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
                     images_details=[
                         ImageDetails(
                             latest_tag=latest_tag,
-                            latest_digest="test-digest",
+                            latest_digest=latest_digest,
                             image_pushed_at=datetime(2023, 1, 1),
                             scan_findings_status="FAILED",
                             scan_findings_severity_count=FindingSeverityCounts(
                                 critical=0, high=0, medium=0
                             ),
+                            artifact_media_type=docker_container_image_artifact_media_type,
                         )
                     ],
                     lifecycle_policy=None,
@@ -513,7 +620,7 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"ECR repository {repository_name} with scan status FAILED."
+                == f"ECR repository '{repository_name}' has scanned the Docker container image with digest '{latest_digest}' and tag '{latest_tag}' with scan status FAILED."
             )
             assert result[0].resource_id == repository_name
             assert result[0].resource_arn == repository_arn
@@ -535,12 +642,13 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
                     images_details=[
                         ImageDetails(
                             latest_tag=latest_tag,
-                            latest_digest="test-digest",
+                            latest_digest=latest_digest,
                             image_pushed_at=datetime(2023, 1, 1),
                             scan_findings_status="",
                             scan_findings_severity_count=FindingSeverityCounts(
                                 critical=0, high=0, medium=0
                             ),
+                            artifact_media_type=docker_container_image_artifact_media_type,
                         )
                     ],
                     lifecycle_policy=None,
@@ -567,7 +675,7 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"ECR repository {repository_name} has imageTag {latest_tag} without a scan."
+                == f"ECR repository '{repository_name}' has scanned the Docker container image with digest '{latest_digest}' and tag '{latest_tag}' without a scan."
             )
             assert result[0].resource_id == repository_name
             assert result[0].resource_arn == repository_arn

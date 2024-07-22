@@ -48,6 +48,7 @@ def mock_make_api_call(self, operation_name, kwarg):
                     "imageScanFindingsSummary": {
                         "findingSeverityCounts": {"CRITICAL": 1, "HIGH": 2, "MEDIUM": 3}
                     },
+                    "artifactMediaType": "application/vnd.docker.container.image.v1+json",
                 },
             ],
         }
@@ -316,6 +317,13 @@ class Test_ECR_Service:
             .images_details[1]
             .scan_findings_severity_count.medium
             == 3
+        )
+        assert (
+            ecr.registries[AWS_REGION_EU_WEST_1]
+            .repositories[0]
+            .images_details[1]
+            .artifact_media_type
+            == "application/vnd.docker.container.image.v1+json"
         )
 
     # Test get ECR Registries Scanning Configuration
