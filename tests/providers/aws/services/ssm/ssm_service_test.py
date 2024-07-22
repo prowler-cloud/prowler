@@ -196,5 +196,9 @@ class Test_SSM_Service:
         assert ssm.compliance_resources
         assert ssm.compliance_resources[instance_id]
         assert ssm.compliance_resources[instance_id].id == instance_id
+        assert (
+            ssm.compliance_resources[instance_id].arn
+            == f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:instance/{instance_id}"
+        )
         assert ssm.compliance_resources[instance_id].region == AWS_REGION_US_EAST_1
         assert ssm.compliance_resources[instance_id].status == ResourceStatus.COMPLIANT
