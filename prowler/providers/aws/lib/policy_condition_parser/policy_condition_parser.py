@@ -1,5 +1,8 @@
 def is_condition_block_restrictive(
-    condition_statement: dict, source_account: str, is_cross_account_allowed=False
+    condition_statement: dict,
+    source_account: str,
+    is_cross_account_allowed=False,
+    org_id: str = None,
 ):
     """
     is_condition_block_restrictive parses the IAM Condition policy block and, by default, returns True if the source_account passed as argument is within, False if not.
@@ -15,6 +18,10 @@ def is_condition_block_restrictive(
         }
 
     @param source_account: str with a 12-digit AWS Account number, e.g.: 111122223333
+
+    @param is_cross_account_allowed: bool to allow cross-account access, e.g.: True
+
+    @param org_id: str with AWS Organization ID, e.g.: o-123456789012
     """
     is_condition_valid = False
 
@@ -31,6 +38,7 @@ def is_condition_block_restrictive(
             "aws:sourcearn",
             "aws:sourcevpc",
             "aws:sourcevpce",
+            "aws:principalorgid",
         ],
         "StringLike": [
             "aws:sourceaccount",
@@ -41,6 +49,7 @@ def is_condition_block_restrictive(
             "aws:principalaccount",
             "aws:sourcevpc",
             "aws:sourcevpce",
+            "aws:principalorgid",
         ],
         "ArnLike": ["aws:sourcearn", "aws:principalarn"],
         "ArnEquals": ["aws:sourcearn", "aws:principalarn"],
@@ -68,7 +77,7 @@ def is_condition_block_restrictive(
                             # if there is an arn/account without the source account -> we do not consider it safe
                             # here by default we assume is true and look for false entries
                             for item in condition_statement[condition_operator][value]:
-                                if source_account not in item:
+                                if source_account not in item or org_id not in item:
                                     is_condition_key_restrictive = False
                                     break
 
@@ -85,6 +94,8 @@ def is_condition_block_restrictive(
                         else:
                             if (
                                 source_account
+                                in condition_statement[condition_operator][value]
+                                or org_id
                                 in condition_statement[condition_operator][value]
                             ):
                                 is_condition_valid = True
