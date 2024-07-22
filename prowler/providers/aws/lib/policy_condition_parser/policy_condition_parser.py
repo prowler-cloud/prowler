@@ -77,7 +77,10 @@ def is_condition_block_restrictive(
                             # if there is an arn/account without the source account -> we do not consider it safe
                             # here by default we assume is true and look for false entries
                             for item in condition_statement[condition_operator][value]:
-                                if source_account not in item or org_id not in item:
+                                if source_account not in item:
+                                    is_condition_key_restrictive = False
+                                    break
+                                if org_id is not None and org_id not in item:
                                     is_condition_key_restrictive = False
                                     break
 
@@ -92,12 +95,9 @@ def is_condition_block_restrictive(
                         if is_cross_account_allowed:
                             is_condition_valid = True
                         else:
-                            if (
-                                source_account
-                                in condition_statement[condition_operator][value]
-                                or org_id
-                                in condition_statement[condition_operator][value]
-                            ):
+                            if source_account in condition_statement[
+                                condition_operator
+                            ][value] or (org_id is not None and org_id in item):
                                 is_condition_valid = True
 
     return is_condition_valid
