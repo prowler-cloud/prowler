@@ -8,6 +8,21 @@ from prowler.lib.outputs.output import Output
 
 
 class S3:
+    """
+    A class representing an S3 bucket.
+
+    Attributes:
+    - _session: An instance of the `Session` class representing the AWS session.
+    - _bucket_name: A string representing the name of the S3 bucket.
+    - _output_directory: A string representing the output directory path.
+
+    Methods:
+    - __init__: Initializes a new instance of the `S3` class.
+    - get_object_path: Returns the object path within the S3 bucket based on the provided output directory.
+    - generate_subfolder_name_by_extension: Generates a subfolder name based on the provided file extension.
+    - send_to_bucket: Sends the provided outputs to the S3 bucket.
+    """
+
     _session: Session
     _bucket_name: str
     _output_directory: str
@@ -15,6 +30,14 @@ class S3:
     def __init__(
         self, session: Session, bucket_name: str, output_directory: str
     ) -> None:
+        """
+        Initializes a new instance of the `S3` class.
+
+        Parameters:
+        - session: An instance of the `Session` class representing the AWS session.
+        - bucket_name: A string representing the name of the S3 bucket.
+        - output_directory: A string representing the output directory path.
+        """
         self._session = session.client(__class__.__name__.lower())
         self._bucket_name = bucket_name
         self._output_directory = output_directory
