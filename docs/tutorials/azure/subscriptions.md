@@ -11,25 +11,21 @@ Where you can pass from 1 up to N subscriptions to be scanned.
 
 ## Assigning proper permissions
 
-Regarding the subscription scope, Prowler by default scans all the subscriptions that is able to list, so it is required to add the following RBAC builtin roles per subscription to the entity that is going to be assumed by the tool:
-
-- `Security Reader`
-- `Reader`
+Regarding the subscription scope, Prowler by default scans all subscriptions that it is able to list, so it is necessary to add the `Reader` RBAC built-in roles per subscription or management group (recommended for multiple subscriptions, see it in the [next section](#recommendation-for-multiple-subscriptions)) to the entity that will be adopted by the tool:
 
 To assign this roles, follow the instructions:
 
 1. Access your subscription, then select your subscription.
 2. Select "Access control (IAM)".
 3. In the overview, select "Roles".
-  ![IAM Page](../../img/page-IAM.png)
 4. Click on "+ Add" and select "Add role assignment".
-5. In the search bar, type `Security Reader`, select it and click on "Next".
+5. In the search bar, type `Reader`, select it and click on "Next".
 6. In the Members tab, click on "+ Select members" and add the members you want to assign this role.
 7. Click on "Review + assign" to apply the new role.
 
-*Repeat these steps for `Reader` role*
+![Add reader role to subscription](../../img/add-reader-role.gif)
 
-Moreover, some additional read-only permissions are needed for some checks, for this kind of checks that are not covered by built-in roles we use a custom role. This role is defined in [prowler-azure-custom-role](https://github.com/prowler-cloud/prowler/blob/master/permissions/prowler-azure-custom-role.json). Please be sure to change the `assignableScopes` field for your subscriptions or management group. Once the cusotm role is created, repeat the steps mentioned above to assign the new `ProwlerRole` to an identity.
+Moreover, some additional read-only permissions are needed for some checks, for this kind of checks that are not covered by built-in roles we use a custom role. This role is defined in [prowler-azure-custom-role](https://github.com/prowler-cloud/prowler/blob/master/permissions/prowler-azure-custom-role.json). Once the cusotm role is created, repeat the steps mentioned above to assign the new `ProwlerRole` to an identity.
 
 ## Recommendation for multiple subscriptions
 
