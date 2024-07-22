@@ -141,6 +141,9 @@ class ECR(AWSService):
                                 if image is not None:
                                     severity_counts = None
                                     last_scan_status = None
+                                    artifact_media_type = image.get(
+                                        "artifactMediaType", None
+                                    )
                                     if "imageScanStatus" in image:
                                         last_scan_status = image["imageScanStatus"][
                                             "status"
@@ -175,6 +178,7 @@ class ECR(AWSService):
                                             latest_digest=image["imageDigest"],
                                             scan_findings_status=last_scan_status,
                                             scan_findings_severity_count=severity_counts,
+                                            artifact_media_type=artifact_media_type,
                                         )
                                     )
                                     # Sort the repository images by date pushed
@@ -264,6 +268,7 @@ class ImageDetails(BaseModel):
     image_pushed_at: datetime
     scan_findings_status: Optional[str]
     scan_findings_severity_count: Optional[FindingSeverityCounts]
+    artifact_media_type: Optional[str]
 
 
 class Repository(BaseModel):
