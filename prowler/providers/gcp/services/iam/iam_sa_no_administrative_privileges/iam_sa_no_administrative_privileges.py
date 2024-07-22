@@ -21,9 +21,9 @@ class iam_sa_no_administrative_privileges(Check):
             for binding in cloudresourcemanager_client.bindings:
                 if f"serviceAccount:{account.email}" in binding.members and (
                     "admin" in binding.role.lower()
-                    or "owner" in binding.role.lower()
-                    or "editor" in binding.role.lower()
+                    or binding.role.lower() in ["roles/editor", "roles/owner"]
                 ):
+
                     report.status = "FAIL"
                     report.status_extended = f"Account {account.email} has administrative privileges with {binding.role}."
             findings.append(report)
