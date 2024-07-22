@@ -36,7 +36,7 @@ class sqs_queues_not_publicly_accessible(Check):
                                     statement["Condition"],
                                     sqs_client.audited_account,
                                     True,
-                                ):
+                                )[0]:
                                     report.status_extended = f"SQS queue {queue.id} is not public because its policy only allows access from the same account."
                                 else:
                                     report.status = "FAIL"

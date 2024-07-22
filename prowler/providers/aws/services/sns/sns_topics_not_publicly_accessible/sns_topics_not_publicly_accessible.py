@@ -33,15 +33,18 @@ class sns_topics_not_publicly_accessible(Check):
                                 and "*" in statement["Principal"]["CanonicalUser"]
                             )
                         ):
-                            if (
-                                "Condition" in statement
-                                and is_condition_block_restrictive(
-                                    statement["Condition"],
-                                    sns_client.audited_account,
-                                    sns_client.audited_org_id,
+                            if "Condition" in statement:
+                                account_condition, org_condition = (
+                                    is_condition_block_restrictive(
+                                        statement["Condition"],
+                                        sns_client.audited_account,
+                                        sns_client.audited_org_id,
+                                    )
                                 )
-                            ):
-                                report.status_extended = f"SNS topic {topic.name} is not public because its policy only allows access from the same account."
+                                if org_condition:
+                                    report.status_extended = f"SNS topic {topic.name} is not public because its policy only allows access from the same organization."
+                                elif account_condition:
+                                    report.status_extended = f"SNS topic {topic.name} is not public because its policy only allows access from the same account."
                             else:
                                 report.status = "FAIL"
                                 report.status_extended = f"SNS topic {topic.name} is public because its policy allows public access."

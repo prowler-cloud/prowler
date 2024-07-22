@@ -43,9 +43,10 @@ class dynamodb_table_cross_account_access(Check):
                                     cross_account_access = True
                                     # Check if the condition block is restrictive
                                     conditions = statement.get("Condition", {})
-                                    if is_condition_block_restrictive(
+                                    account_condition = is_condition_block_restrictive(
                                         conditions, dynamodb_client.audited_account
-                                    ):
+                                    )[0]
+                                    if account_condition:
                                         cross_account_access = False
                     else:
                         break

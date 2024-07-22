@@ -37,7 +37,7 @@ class vpc_endpoint_connections_trust_boundaries(Check):
                             for account_id in trusted_account_ids:
                                 if is_condition_block_restrictive(
                                     statement["Condition"], account_id
-                                ):
+                                )[0]:
                                     access_from_trusted_accounts = True
                                 else:
                                     access_from_trusted_accounts = False
@@ -76,7 +76,7 @@ class vpc_endpoint_connections_trust_boundaries(Check):
                                     for account_id in trusted_account_ids:
                                         if is_condition_block_restrictive(
                                             statement["Condition"], account_id
-                                        ):
+                                        )[0]:
                                             access_from_trusted_accounts = True
                                         else:
                                             access_from_trusted_accounts = False
@@ -108,7 +108,7 @@ class vpc_endpoint_connections_trust_boundaries(Check):
                                     for account_id in trusted_account_ids:
                                         if is_condition_block_restrictive(
                                             statement["Condition"], account_id
-                                        ):
+                                        )[0]:
                                             access_from_trusted_accounts = True
                                         else:
                                             access_from_trusted_accounts = False

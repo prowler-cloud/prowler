@@ -58,7 +58,7 @@ class s3_bucket_public_access(Check):
                                     and statement["Effect"] == "Allow"
                                     and not is_condition_block_restrictive(
                                         statement.get("Condition", {}), "", True
-                                    )
+                                    )[0]
                                     and (
                                         not is_condition_restricting_from_private_ip(
                                             statement.get("Condition", {})

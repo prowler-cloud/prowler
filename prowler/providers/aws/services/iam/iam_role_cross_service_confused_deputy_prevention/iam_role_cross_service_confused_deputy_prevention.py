@@ -33,7 +33,7 @@ class iam_role_cross_service_confused_deputy_prevention(Check):
                             and "Condition" in statement
                             and is_condition_block_restrictive(
                                 statement["Condition"], iam_client.audited_account
-                            )
+                            )[0]
                         ):
                             report.status = "PASS"
                             report.status_extended = f"IAM Service Role {role.name} prevents against a cross-service confused deputy attack."

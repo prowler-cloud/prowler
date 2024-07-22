@@ -22,9 +22,11 @@ def is_condition_block_restrictive(
     @param is_cross_account_allowed: bool to allow cross-account access, e.g.: True
 
     @param org_id: str with AWS Organization ID, e.g.: o-123456789012
-    """
-    is_condition_valid = False
 
+    @return: tuple with two bools, the first one is True if the source_account is within the Condition block, False if not. The second one is True if the org_id is within the Condition block, False if not.
+    """
+    is_condition_key_restrictive_account = False
+    is_condition_key_restrictive_org = False
     # The conditions must be defined in lowercase since the context key names are not case-sensitive.
     # For example, including the aws:SourceAccount context key is equivalent to testing for AWS:SourceAccount
     # https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_condition.html
@@ -70,22 +72,23 @@ def is_condition_block_restrictive(
                         condition_statement[condition_operator][value],
                         list,
                     ):
-                        is_condition_key_restrictive = True
+                        is_condition_key_restrictive_account = True
+                        is_condition_key_restrictive_org = True
                         # if cross account is not allowed check for each condition block looking for accounts
                         # different than default
                         if not is_cross_account_allowed:
                             # if there is an arn/account without the source account -> we do not consider it safe
                             # here by default we assume is true and look for false entries
                             for item in condition_statement[condition_operator][value]:
-                                if source_account not in item:
-                                    is_condition_key_restrictive = False
+                                if (
+                                    source_account is not None
+                                    and source_account not in item
+                                ):
+                                    is_condition_key_restrictive_account = False
                                     break
                                 if org_id is not None and org_id not in item:
-                                    is_condition_key_restrictive = False
+                                    is_condition_key_restrictive_org = False
                                     break
-
-                        if is_condition_key_restrictive:
-                            is_condition_valid = True
 
                     # value is a string
                     elif isinstance(
@@ -93,11 +96,15 @@ def is_condition_block_restrictive(
                         str,
                     ):
                         if is_cross_account_allowed:
-                            is_condition_valid = True
+                            is_condition_key_restrictive_account = True
                         else:
-                            if source_account in condition_statement[
-                                condition_operator
-                            ][value] or (org_id is not None and org_id in item):
-                                is_condition_valid = True
+                            if (
+                                source_account
+                                in condition_statement[condition_operator][value]
+                            ):
+                                is_condition_key_restrictive_account = True
 
-    return is_condition_valid
+                            if org_id is not None and org_id in item:
+                                is_condition_key_restrictive_org = True
+
+    return is_condition_key_restrictive_account, is_condition_key_restrictive_org
