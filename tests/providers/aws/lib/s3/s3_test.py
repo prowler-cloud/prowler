@@ -5,7 +5,7 @@ import boto3
 from moto import mock_aws
 
 from prowler.lib.outputs.compliance.iso27001.iso27001_aws import AWSISO27001
-from prowler.lib.outputs.csv.models import CSV
+from prowler.lib.outputs.csv.csv import CSV
 from prowler.lib.outputs.html.html import HTML
 from prowler.lib.outputs.ocsf.ocsf import OCSF
 from prowler.providers.aws.lib.s3.s3 import S3
