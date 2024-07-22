@@ -1,5 +1,6 @@
-from django.db import models
 import uuid
+
+from django.db import models
 
 
 class Base(models.Model):
@@ -19,15 +20,6 @@ class Base(models.Model):
 class Tenant(Base):
     """
     The Tenant is the basic grouping in the system. It is used to separate data between customers.
-    """
-
-    name = models.CharField(max_length=100)
-
-
-class TestModel(models.Model):
-    """To delete.
-
-    Use this model for development/testing purposes.
     """
 
     name = models.CharField(max_length=100)

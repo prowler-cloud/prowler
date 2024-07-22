@@ -16,3 +16,15 @@ DATABASES = {
         "PORT": env("POSTGRES_PORT", default="5432"),
     }
 }
+
+
+REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"] = tuple(  # noqa: F405
+    render_class
+    for render_class in REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"]  # noqa: F405
+) + ("rest_framework_json_api.renderers.BrowsableAPIRenderer",)
+
+REST_FRAMEWORK["DEFAULT_FILTER_BACKENDS"] = tuple(  # noqa: F405
+    filter_backend
+    for filter_backend in REST_FRAMEWORK["DEFAULT_FILTER_BACKENDS"]  # noqa: F405
+    if "DjangoFilterBackend" not in filter_backend
+) + ("api.filters.CustomDjangoFilterBackend",)

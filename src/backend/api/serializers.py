@@ -1,20 +1,14 @@
-from rest_framework import serializers
+from rest_framework_json_api import serializers
 
-from api.models import TestModel, Tenant
-
-
-class TestModelSerializer(serializers.ModelSerializer):
-    """To delete.
-
-    Use this serializer for development/testing purposes.
-    """
-
-    class Meta:
-        model = TestModel
-        fields = "__all__"
+from api.models import Tenant
 
 
-class TenantSerializer(serializers.ModelSerializer):
+class BaseSerializerV1(serializers.ModelSerializer):
+    def get_root_meta(self, _resource, _many):
+        return {"version": "v1"}
+
+
+class TenantSerializer(BaseSerializerV1):
     """
     Serializer for the Tenant model.
     """
