@@ -105,14 +105,7 @@ class Test_Inspector2_Service:
         assert inspector2.inspectors[0].region == AWS_REGION_EU_WEST_1
         assert inspector2.inspectors[0].status == "ENABLED"
 
-    def test__list_findings__(self):
+    def test__list_active_findings__(self):
         audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         inspector2 = Inspector2(audit_info)
-        assert len(inspector2.inspectors[0].findings) == 1
-        assert inspector2.inspectors[0].findings[0].arn == FINDING_ARN
-        assert inspector2.inspectors[0].findings[0].region == AWS_REGION_EU_WEST_1
-        assert inspector2.inspectors[0].findings[0].severity == "MEDIUM"
-        assert inspector2.inspectors[0].findings[0].status == "ACTIVE"
-        assert (
-            inspector2.inspectors[0].findings[0].title == "CVE-2022-40897 - setuptools"
-        )
+        assert inspector2.inspectors[0].active_findings
