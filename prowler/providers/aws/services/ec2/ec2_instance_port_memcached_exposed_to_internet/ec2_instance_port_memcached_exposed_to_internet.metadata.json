@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "ec2_instance_port_kafka_exposed_to_internet",
+  "CheckID": "ec2_instance_port_memcached_exposed_to_internet",
   "CheckTitle": "Ensure no EC2 instances allow ingress from the internet to TCP port 11211 (Memcached).",
   "CheckType": [
     "Infrastructure Security"

@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "neptune_cluster_encrypted",
+  "CheckID": "neptune_cluster_storage_encrypted",
   "CheckTitle": "Check if Neptune Clusters storage is encrypted at rest.",
   "CheckType": [],
   "ServiceName": "neptune",
