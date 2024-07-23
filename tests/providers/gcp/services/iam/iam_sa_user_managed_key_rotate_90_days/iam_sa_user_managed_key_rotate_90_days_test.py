@@ -9,6 +9,28 @@ from tests.providers.gcp.gcp_fixtures import (
 
 
 class Test_iam_sa_user_managed_key_rotate_90_days:
+    def test_iam_no_sa(self):
+        iam_client = mock.MagicMock
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_gcp_provider(),
+        ), mock.patch(
+            "prowler.providers.gcp.services.iam.iam_sa_user_managed_key_rotate_90_days.iam_sa_user_managed_key_rotate_90_days.iam_client",
+            new=iam_client,
+        ):
+            from prowler.providers.gcp.services.iam.iam_sa_user_managed_key_rotate_90_days.iam_sa_user_managed_key_rotate_90_days import (
+                iam_sa_user_managed_key_rotate_90_days,
+            )
+
+            iam_client.project_ids = [GCP_PROJECT_ID]
+            iam_client.region = GCP_US_CENTER1_LOCATION
+            iam_client.service_accounts = []
+
+            check = iam_sa_user_managed_key_rotate_90_days()
+            result = check.execute()
+            assert len(result) == 0
+
     def test_iam_sa_no_keys(self):
         iam_client = mock.MagicMock
 
@@ -72,7 +94,7 @@ class Test_iam_sa_user_managed_key_rotate_90_days:
                             name="projects/my-project/serviceAccounts/my-service-account@my-project.iam.gserviceaccount.com/keys/90c48f61c65cd56224a12ab18e6ee9ca9c3aee7c",
                             origin="GOOGLE_PROVIDED",
                             type="USER_MANAGED",
-                            valid_after=datetime.strptime("2024-07-10", "%Y-%m-%d"),
+                            valid_after=datetime.now(),
                             valid_before=datetime.strptime("9999-12-31", "%Y-%m-%d"),
                         )
                     ],
