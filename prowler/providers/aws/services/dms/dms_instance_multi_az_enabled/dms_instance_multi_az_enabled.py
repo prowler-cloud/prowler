@@ -2,7 +2,7 @@ from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.dms.dms_client import dms_client
 
 
-class dms_instance_multi_az(Check):
+class dms_instance_multi_az_enabled(Check):
     def execute(self):
         findings = []
         for instance in dms_client.instances:
