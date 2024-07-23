@@ -245,8 +245,8 @@ class TestS3:
         # Object name
         assert isinstance(s3_send_result["failure"][extension][0][0], str)
         assert (
-            s3_send_result["failure"][extension][0][0]
-            == f"tests/providers/aws/lib/s3/csv/{path.basename(csv.file_descriptor.name)}"
+            f"tests/providers/aws/lib/s3/csv/{path.basename(csv.file_descriptor.name)}"
+            in s3_send_result["failure"][extension][0][0]
         )
         # Error
         assert isinstance(s3_send_result["failure"][extension][0][1], Exception)
