@@ -2,12 +2,12 @@ from django.urls import path, include
 from drf_spectacular.views import SpectacularRedocView
 from rest_framework import routers
 
-from api.views.v1.views import SchemaView, TenantViewSet
+from api.views.v1.views import SchemaView, TenantViewSet, ProviderViewSet
 
 router = routers.DefaultRouter(trailing_slash=False)
 
-router.register(r"tenants", TenantViewSet)
-
+router.register(r"tenants", TenantViewSet, basename="tenant")
+router.register(r"providers", ProviderViewSet, basename="provider")
 
 urlpatterns = [
     path("", include(router.urls)),

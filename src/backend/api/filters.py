@@ -29,3 +29,8 @@ class TenantFilter(BaseFilter):
             **BaseFilter.Meta.fields,
             "name": ["exact", "icontains"],
         }
+
+
+class ProviderFilter(BaseFilter):
+    # TODO implement proper filter
+    pass
