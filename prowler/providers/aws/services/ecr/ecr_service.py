@@ -157,6 +157,7 @@ class ECR(AWSService):
                                     # in the DescribeImages API.
                                     if "imageScanStatus" not in image:
                                         try:
+                                            # use "image" for scan findings to get data the same way as for an image
                                             image = client.describe_image_scan_findings(
                                                 registryId=self.registries[
                                                     regional_client.region
@@ -210,10 +211,10 @@ class ECR(AWSService):
                                             artifact_media_type=artifact_media_type,
                                         )
                                     )
-                                    # Sort the repository images by date pushed
-                                    repository.images_details.sort(
-                                        key=lambda image: image.image_pushed_at
-                                    )
+                        # Sort the repository images by date pushed
+                        repository.images_details.sort(
+                            key=lambda image: image.image_pushed_at
+                        )
 
         except Exception as error:
             logger.error(
