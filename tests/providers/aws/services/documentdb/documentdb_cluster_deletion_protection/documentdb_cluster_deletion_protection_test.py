@@ -21,11 +21,11 @@ class Test_documentdb_cluster_deletion_protection:
             "prowler.providers.aws.services.documentdb.documentdb_service.DocumentDB",
             new=documentdb_client,
         ):
-            from prowler.providers.aws.services.documentdb.documentdb_cluster_deletion_protection.documentdb_cluster_deletion_protection import (
-                documentdb_cluster_deletion_protection,
+            from prowler.providers.aws.services.documentdb.documentdb_cluster_deletion_protection_enabled.documentdb_cluster_deletion_protection_enabled import (
+                documentdb_cluster_deletion_protection_enabled,
             )
 
-            check = documentdb_cluster_deletion_protection()
+            check = documentdb_cluster_deletion_protection_enabled()
             result = check.execute()
             assert len(result) == 0
 
@@ -52,11 +52,11 @@ class Test_documentdb_cluster_deletion_protection:
             "prowler.providers.aws.services.documentdb.documentdb_service.DocumentDB",
             new=documentdb_client,
         ):
-            from prowler.providers.aws.services.documentdb.documentdb_cluster_deletion_protection.documentdb_cluster_deletion_protection import (
-                documentdb_cluster_deletion_protection,
+            from prowler.providers.aws.services.documentdb.documentdb_cluster_deletion_protection_enabled.documentdb_cluster_deletion_protection_enabled import (
+                documentdb_cluster_deletion_protection_enabled,
             )
 
-            check = documentdb_cluster_deletion_protection()
+            check = documentdb_cluster_deletion_protection_enabled()
             result = check.execute()
 
             assert len(result) == 1
@@ -91,11 +91,11 @@ class Test_documentdb_cluster_deletion_protection:
             "prowler.providers.aws.services.documentdb.documentdb_service.DocumentDB",
             new=documentdb_client,
         ):
-            from prowler.providers.aws.services.documentdb.documentdb_cluster_deletion_protection.documentdb_cluster_deletion_protection import (
-                documentdb_cluster_deletion_protection,
+            from prowler.providers.aws.services.documentdb.documentdb_cluster_deletion_protection_enabled.documentdb_cluster_deletion_protection_enabled import (
+                documentdb_cluster_deletion_protection_enabled,
             )
 
-            check = documentdb_cluster_deletion_protection()
+            check = documentdb_cluster_deletion_protection_enabled()
             result = check.execute()
             assert result[0].status == "PASS"
             assert (

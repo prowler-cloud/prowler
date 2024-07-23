@@ -4,7 +4,7 @@ from prowler.providers.aws.services.documentdb.documentdb_client import (
 )
 
 
-class documentdb_cluster_deletion_protection(Check):
+class documentdb_cluster_deletion_protection_enabled(Check):
     def execute(self):
         findings = []
         for cluster in documentdb_client.db_clusters.values():
