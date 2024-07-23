@@ -144,38 +144,67 @@ class ECR(AWSService):
                                     artifact_media_type = image.get(
                                         "artifactMediaType", None
                                     )
+                                    image_digest = image.get("imageDigest")
+                                    latest_tag = image.get("imageTags", ["None"])[0]
+                                    image_pushed_at = image.get("imagePushedAt")
+                                    image_scan_findings_field_name = (
+                                        "imageScanFindingsSummary"
+                                    )
+
+                                    # If imageScanStatus is not present or imageScanFindingsSummary is missing,
+                                    # we need to call DescribeImageScanFindings because AWS' new version of
+                                    # basic scanning does not support imageScanFindingsSummary and imageScanStatus
+                                    # in the DescribeImages API.
+                                    if "imageScanStatus" not in image:
+                                        try:
+                                            image = client.describe_image_scan_findings(
+                                                registryId=self.registries[
+                                                    regional_client.region
+                                                ].id,
+                                                repositoryName=repository.name,
+                                                imageId={"imageDigest": image_digest},
+                                            )
+                                            image_scan_findings_field_name = (
+                                                "imageScanFindings"
+                                            )
+                                        except client.exceptions.ImageNotFoundException:
+                                            logger.warning(
+                                                f"Image not found for digest: {image_digest}"
+                                            )
+                                            continue
+                                        except Exception as e:
+                                            logger.error(
+                                                f"Error retrieving scan findings for image {image_digest}: {str(e)}"
+                                            )
+                                            continue
+
                                     if "imageScanStatus" in image:
                                         last_scan_status = image["imageScanStatus"][
                                             "status"
                                         ]
 
-                                    if "imageScanFindingsSummary" in image:
+                                    if image_scan_findings_field_name in image:
                                         severity_counts = FindingSeverityCounts(
                                             critical=0, high=0, medium=0
                                         )
                                         finding_severity_counts = image[
-                                            "imageScanFindingsSummary"
+                                            image_scan_findings_field_name
                                         ]["findingSeverityCounts"]
-                                        if "CRITICAL" in finding_severity_counts:
-                                            severity_counts.critical = (
-                                                finding_severity_counts["CRITICAL"]
-                                            )
-                                        if "HIGH" in finding_severity_counts:
-                                            severity_counts.high = (
-                                                finding_severity_counts["HIGH"]
-                                            )
-                                        if "MEDIUM" in finding_severity_counts:
-                                            severity_counts.medium = (
-                                                finding_severity_counts["MEDIUM"]
-                                            )
-                                    latest_tag = "None"
-                                    if image.get("imageTags"):
-                                        latest_tag = image["imageTags"][0]
+                                        severity_counts.critical = (
+                                            finding_severity_counts.get("CRITICAL", 0)
+                                        )
+                                        severity_counts.high = (
+                                            finding_severity_counts.get("HIGH", 0)
+                                        )
+                                        severity_counts.medium = (
+                                            finding_severity_counts.get("MEDIUM", 0)
+                                        )
+
                                     repository.images_details.append(
                                         ImageDetails(
                                             latest_tag=latest_tag,
-                                            image_pushed_at=image["imagePushedAt"],
-                                            latest_digest=image["imageDigest"],
+                                            image_pushed_at=image_pushed_at,
+                                            latest_digest=image_digest,
                                             scan_findings_status=last_scan_status,
                                             scan_findings_severity_count=severity_counts,
                                             artifact_media_type=artifact_media_type,
