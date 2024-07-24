@@ -88,9 +88,6 @@ class Test_sns_topics_not_publicly_accessible:
     def test_no_topics(self):
         sns_client = mock.MagicMock
         sns_client.topics = []
-        sns_client.provider = mock.MagicMock()
-        sns_client.provider.organizations_metadata = mock.MagicMock()
-        sns_client.provider.organizations_metadata.organization_id = org_id
         with mock.patch(
             "prowler.providers.aws.services.sns.sns_service.SNS",
             sns_client,
@@ -114,9 +111,7 @@ class Test_sns_topics_not_publicly_accessible:
                 region=AWS_REGION_EU_WEST_1,
             )
         )
-        sns_client.provider = mock.MagicMock()
-        sns_client.provider.organizations_metadata = mock.MagicMock()
-        sns_client.provider.organizations_metadata.organization_id = org_id
+
         with mock.patch(
             "prowler.providers.aws.services.sns.sns_service.SNS",
             sns_client,
@@ -144,9 +139,7 @@ class Test_sns_topics_not_publicly_accessible:
         sns_client.topics.append(
             Topic(arn=topic_arn, name=topic_name, region=AWS_REGION_EU_WEST_1)
         )
-        sns_client.provider = mock.MagicMock()
-        sns_client.provider.organizations_metadata = mock.MagicMock()
-        sns_client.provider.organizations_metadata.organization_id = org_id
+
         with mock.patch(
             "prowler.providers.aws.services.sns.sns_service.SNS",
             sns_client,
@@ -180,9 +173,6 @@ class Test_sns_topics_not_publicly_accessible:
                 region=AWS_REGION_EU_WEST_1,
             )
         )
-        sns_client.provider = mock.MagicMock()
-        sns_client.provider.organizations_metadata = mock.MagicMock()
-        sns_client.provider.organizations_metadata.organization_id = org_id
         with mock.patch(
             "prowler.providers.aws.services.sns.sns_service.SNS",
             sns_client,
@@ -216,9 +206,6 @@ class Test_sns_topics_not_publicly_accessible:
                 region=AWS_REGION_EU_WEST_1,
             )
         )
-        sns_client.provider = mock.MagicMock()
-        sns_client.provider.organizations_metadata = mock.MagicMock()
-        sns_client.provider.organizations_metadata.organization_id = org_id
         with mock.patch(
             "prowler.providers.aws.services.sns.sns_service.SNS",
             sns_client,
@@ -251,9 +238,6 @@ class Test_sns_topics_not_publicly_accessible:
                 policy=test_policy_not_restricted,
             )
         )
-        sns_client.provider = mock.MagicMock()
-        sns_client.provider.organizations_metadata = mock.MagicMock()
-        sns_client.provider.organizations_metadata.organization_id = org_id
         with mock.patch(
             "prowler.providers.aws.services.sns.sns_service.SNS",
             sns_client,

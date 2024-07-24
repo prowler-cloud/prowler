@@ -11,9 +11,12 @@ class sns_topics_not_publicly_accessible(Check):
         findings = []
         for topic in sns_client.topics:
             # Get the organization id from the provider if it is not available in the client
-            org_id = sns_client.provider.get("organizations_metadata", {}).get(
-                "organization_id", None
-            )
+            org_id = None
+            if (
+                sns_client.provider.organizations_metadata
+                and sns_client.provider.organizations_metadata.organization_id
+            ):
+                org_id = sns_client.provider.organizations_metadata.organization_id
             if org_id is None:
                 sns_client.audit_config.get("organization_id", None)
             report = Check_Report_AWS(self.metadata())
