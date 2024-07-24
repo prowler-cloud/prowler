@@ -71,11 +71,17 @@ To use each one you need to pass the proper flag to the execution. Prowler for A
     - `Policy.Read.All`
     - `UserAuthenticationMethod.Read.All`
 - **Subscription scope permissions**: Required to launch the checks against your resources, mandatory to launch the tool. It is required to add the following RBAC builtin roles per subscription to the entity that is going to be assumed by the tool:
-    - `Security Reader`
     - `Reader`
     - `ProwlerRole` (custom role defined in [prowler-azure-custom-role](https://github.com/prowler-cloud/prowler/blob/master/permissions/prowler-azure-custom-role.json))
 
 To assign the permissions, follow the instructions in the [Microsoft Entra ID permissions](../tutorials/azure/create-prowler-service-principal.md#assigning-the-proper-permissions) section and the [Azure subscriptions permissions](../tutorials/azure/subscriptions.md#assigning-proper-permissions) section, respectively.
+
+#### Checks that require ProwlerRole
+
+The following checks require the `ProwlerRole` custom role to be executed, if you want to run them, make sure you have assigned the role to the identity that is going to be assumed by Prowler:
+
+- `app_function_access_keys_configured`
+- `app_function_ftps_deployment_disabled`
 
 ## Google Cloud
 

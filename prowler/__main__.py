@@ -66,7 +66,7 @@ from prowler.lib.outputs.ocsf.ocsf import OCSF
 from prowler.lib.outputs.outputs import extract_findings_statistics
 from prowler.lib.outputs.slack.slack import Slack
 from prowler.lib.outputs.summary_table import display_summary_table
-from prowler.providers.aws.lib.s3.s3 import send_to_s3_bucket
+from prowler.providers.aws.lib.s3.s3 import S3
 from prowler.providers.aws.lib.security_hub.security_hub import SecurityHub
 from prowler.providers.common.provider import Provider
 from prowler.providers.common.quick_inventory import run_provider_quick_inventory
@@ -306,6 +306,8 @@ def prowler():
         Finding.generate_output(global_provider, finding) for finding in findings
     ]
 
+    generated_outputs = {"regular": [], "compliance": []}
+
     if args.output_formats:
         for mode in args.output_formats:
             filename = (
@@ -318,6 +320,7 @@ def prowler():
                     create_file_descriptor=True,
                     file_path=f"{filename}{csv_file_suffix}",
                 )
+                generated_outputs["regular"].append(csv_output)
                 # Write CSV Finding Object to file
                 csv_output.batch_write_data_to_file()
 
@@ -327,6 +330,7 @@ def prowler():
                     create_file_descriptor=True,
                     file_path=f"{filename}{json_asff_file_suffix}",
                 )
+                generated_outputs["regular"].append(asff_output)
                 # Write ASFF Finding Object to file
                 asff_output.batch_write_data_to_file()
 
@@ -336,6 +340,7 @@ def prowler():
                     create_file_descriptor=True,
                     file_path=f"{filename}{json_ocsf_file_suffix}",
                 )
+                generated_outputs["regular"].append(json_output)
                 json_output.batch_write_data_to_file()
             if mode == "html":
                 html_output = HTML(
@@ -343,26 +348,9 @@ def prowler():
                     create_file_descriptor=True,
                     file_path=f"{filename}{html_file_suffix}",
                 )
+                generated_outputs["regular"].append(html_output)
                 html_output.batch_write_data_to_file(
                     provider=global_provider, stats=stats
-                )
-
-            # Send output to S3 if needed (-B / -D)
-            if provider == "aws" and (
-                args.output_bucket or args.output_bucket_no_assume
-            ):
-                output_bucket = args.output_bucket
-                bucket_session = global_provider.session.current_session
-                # Check if -D was input
-                if args.output_bucket_no_assume:
-                    output_bucket = args.output_bucket_no_assume
-                    bucket_session = global_provider.session.original_session
-                send_to_s3_bucket(
-                    global_provider.output_options.output_filename,
-                    args.output_directory,
-                    mode,
-                    output_bucket,
-                    bucket_session,
                 )
 
     # Compliance Frameworks
@@ -377,65 +365,70 @@ def prowler():
                     f"{global_provider.output_options.output_directory}/compliance/"
                     f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
                 )
-                cis_finding = AWSCIS(
+                cis = AWSCIS(
                     findings=finding_outputs,
                     compliance=bulk_compliance_frameworks[compliance_name],
                     create_file_descriptor=True,
                     file_path=filename,
                 )
-                cis_finding.batch_write_data_to_file()
+                generated_outputs["compliance"].append(cis)
+                cis.batch_write_data_to_file()
             elif compliance_name == "mitre_attack_aws":
                 # Generate MITRE ATT&CK Finding Object
                 filename = (
                     f"{global_provider.output_options.output_directory}/compliance/"
                     f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
                 )
-                mitre_attack_finding = AWSMitreAttack(
+                mitre_attack = AWSMitreAttack(
                     findings=finding_outputs,
                     compliance=bulk_compliance_frameworks[compliance_name],
                     create_file_descriptor=True,
                     file_path=filename,
                 )
-                mitre_attack_finding.batch_write_data_to_file()
+                generated_outputs["compliance"].append(mitre_attack)
+                mitre_attack.batch_write_data_to_file()
             elif compliance_name.startswith("ens_"):
                 # Generate ENS Finding Object
                 filename = (
                     f"{global_provider.output_options.output_directory}/compliance/"
                     f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
                 )
-                ens_finding = AWSENS(
+                ens = AWSENS(
                     findings=finding_outputs,
                     compliance=bulk_compliance_frameworks[compliance_name],
                     create_file_descriptor=True,
                     file_path=filename,
                 )
-                ens_finding.batch_write_data_to_file()
+                generated_outputs["compliance"].append(ens)
+                ens.batch_write_data_to_file()
             elif compliance_name.startswith("aws_well_architected_framework"):
                 # Generate AWS Well-Architected Finding Object
                 filename = (
                     f"{global_provider.output_options.output_directory}/compliance/"
                     f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
                 )
-                aws_well_architected_finding = AWSWellArchitected(
+                aws_well_architected = AWSWellArchitected(
                     findings=finding_outputs,
                     compliance=bulk_compliance_frameworks[compliance_name],
                     create_file_descriptor=True,
                     file_path=filename,
                 )
-                aws_well_architected_finding.batch_write_data_to_file()
+                generated_outputs["compliance"].append(aws_well_architected)
+                aws_well_architected.batch_write_data_to_file()
             elif compliance_name.startswith("iso27001_"):
                 # Generate ISO27001 Finding Object
                 filename = (
                     f"{global_provider.output_options.output_directory}/compliance/"
                     f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
                 )
-                iso27001_finding = AWSISO27001(
+                iso27001 = AWSISO27001(
                     findings=finding_outputs,
                     compliance=bulk_compliance_frameworks[compliance_name],
                     create_file_descriptor=True,
                     file_path=filename,
                 )
-                iso27001_finding.batch_write_data_to_file()
+                generated_outputs["compliance"].append(iso27001)
+                iso27001.batch_write_data_to_file()
             else:
                 filename = (
                     f"{global_provider.output_options.output_directory}/compliance/"
@@ -447,6 +440,7 @@ def prowler():
                     create_file_descriptor=True,
                     file_path=filename,
                 )
+                generated_outputs["compliance"].append(generic_compliance)
                 generic_compliance.batch_write_data_to_file()
 
     elif provider == "azure":
@@ -457,26 +451,28 @@ def prowler():
                     f"{global_provider.output_options.output_directory}/compliance/"
                     f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
                 )
-                cis_finding = AzureCIS(
+                cis = AzureCIS(
                     findings=finding_outputs,
                     compliance=bulk_compliance_frameworks[compliance_name],
                     create_file_descriptor=True,
                     file_path=filename,
                 )
-                cis_finding.batch_write_data_to_file()
+                generated_outputs["compliance"].append(cis)
+                cis.batch_write_data_to_file()
             elif compliance_name == "mitre_attack_azure":
                 # Generate MITRE ATT&CK Finding Object
                 filename = (
                     f"{global_provider.output_options.output_directory}/compliance/"
                     f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
                 )
-                mitre_attack_finding = AzureMitreAttack(
+                mitre_attack = AzureMitreAttack(
                     findings=finding_outputs,
                     compliance=bulk_compliance_frameworks[compliance_name],
                     create_file_descriptor=True,
                     file_path=filename,
                 )
-                mitre_attack_finding.batch_write_data_to_file()
+                generated_outputs["compliance"].append(mitre_attack)
+                mitre_attack.batch_write_data_to_file()
             else:
                 filename = (
                     f"{global_provider.output_options.output_directory}/compliance/"
@@ -488,6 +484,7 @@ def prowler():
                     create_file_descriptor=True,
                     file_path=filename,
                 )
+                generated_outputs["compliance"].append(generic_compliance)
                 generic_compliance.batch_write_data_to_file()
 
     elif provider == "gcp":
@@ -498,26 +495,28 @@ def prowler():
                     f"{global_provider.output_options.output_directory}/compliance/"
                     f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
                 )
-                cis_finding = GCPCIS(
+                cis = GCPCIS(
                     findings=finding_outputs,
                     compliance=bulk_compliance_frameworks[compliance_name],
                     create_file_descriptor=True,
                     file_path=filename,
                 )
-                cis_finding.batch_write_data_to_file()
+                generated_outputs["compliance"].append(cis)
+                cis.batch_write_data_to_file()
             elif compliance_name == "mitre_attack_gcp":
                 # Generate MITRE ATT&CK Finding Object
                 filename = (
                     f"{global_provider.output_options.output_directory}/compliance/"
                     f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
                 )
-                mitre_attack_finding = GCPMitreAttack(
+                mitre_attack = GCPMitreAttack(
                     findings=finding_outputs,
                     compliance=bulk_compliance_frameworks[compliance_name],
                     create_file_descriptor=True,
                     file_path=filename,
                 )
-                mitre_attack_finding.batch_write_data_to_file()
+                generated_outputs["compliance"].append(mitre_attack)
+                mitre_attack.batch_write_data_to_file()
             else:
                 filename = (
                     f"{global_provider.output_options.output_directory}/compliance/"
@@ -529,6 +528,7 @@ def prowler():
                     create_file_descriptor=True,
                     file_path=filename,
                 )
+                generated_outputs["compliance"].append(generic_compliance)
                 generic_compliance.batch_write_data_to_file()
 
     elif provider == "kubernetes":
@@ -539,13 +539,14 @@ def prowler():
                     f"{global_provider.output_options.output_directory}/compliance/"
                     f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
                 )
-                cis_finding = KubernetesCIS(
+                cis = KubernetesCIS(
                     findings=finding_outputs,
                     compliance=bulk_compliance_frameworks[compliance_name],
                     create_file_descriptor=True,
                     file_path=filename,
                 )
-                cis_finding.batch_write_data_to_file()
+                generated_outputs["compliance"].append(cis)
+                cis.batch_write_data_to_file()
             else:
                 filename = (
                     f"{global_provider.output_options.output_directory}/compliance/"
@@ -557,44 +558,62 @@ def prowler():
                     create_file_descriptor=True,
                     file_path=filename,
                 )
+                generated_outputs["compliance"].append(generic_compliance)
                 generic_compliance.batch_write_data_to_file()
 
     # AWS Security Hub Integration
-    if provider == "aws" and args.security_hub:
-        print(
-            f"{Style.BRIGHT}\nSending findings to AWS Security Hub, please wait...{Style.RESET_ALL}"
-        )
-
-        security_hub_regions = (
-            global_provider.get_available_aws_service_regions("securityhub")
-            if not global_provider.identity.audited_regions
-            else global_provider.identity.audited_regions
-        )
-
-        security_hub = SecurityHub(
-            aws_account_id=global_provider.identity.account,
-            aws_partition=global_provider.identity.partition,
-            aws_session=global_provider.session.current_session,
-            findings=asff_output.data,
-            status=global_provider.output_options.status,
-            send_only_fails=global_provider.output_options.send_sh_only_fails,
-            aws_security_hub_available_regions=security_hub_regions,
-        )
-        # Send the findings to Security Hub
-        findings_sent_to_security_hub = security_hub.batch_send_to_security_hub()
-        print(
-            f"{Style.BRIGHT}{Fore.GREEN}\n{findings_sent_to_security_hub} findings sent to AWS Security Hub!{Style.RESET_ALL}"
-        )
-
-        # Resolve previous fails of Security Hub
-        if not args.skip_sh_update:
-            print(
-                f"{Style.BRIGHT}\nArchiving previous findings in AWS Security Hub, please wait...{Style.RESET_ALL}"
+    if provider == "aws":
+        # Send output to S3 if needed (-B / -D) for all the output formats
+        if args.output_bucket or args.output_bucket_no_assume:
+            output_bucket = args.output_bucket
+            bucket_session = global_provider.session.current_session
+            # Check if -D was input
+            if args.output_bucket_no_assume:
+                output_bucket = args.output_bucket_no_assume
+                bucket_session = global_provider.session.original_session
+            s3 = S3(
+                session=bucket_session,
+                bucket_name=output_bucket,
+                output_directory=args.output_directory,
             )
-            findings_archived_in_security_hub = security_hub.archive_previous_findings()
+            s3.send_to_bucket(generated_outputs)
+        if args.security_hub:
             print(
-                f"{Style.BRIGHT}{Fore.GREEN}\n{findings_archived_in_security_hub} findings archived in AWS Security Hub!{Style.RESET_ALL}"
+                f"{Style.BRIGHT}\nSending findings to AWS Security Hub, please wait...{Style.RESET_ALL}"
             )
+
+            security_hub_regions = (
+                global_provider.get_available_aws_service_regions("securityhub")
+                if not global_provider.identity.audited_regions
+                else global_provider.identity.audited_regions
+            )
+
+            security_hub = SecurityHub(
+                aws_account_id=global_provider.identity.account,
+                aws_partition=global_provider.identity.partition,
+                aws_session=global_provider.session.current_session,
+                findings=asff_output.data,
+                status=global_provider.output_options.status,
+                send_only_fails=global_provider.output_options.send_sh_only_fails,
+                aws_security_hub_available_regions=security_hub_regions,
+            )
+            # Send the findings to Security Hub
+            findings_sent_to_security_hub = security_hub.batch_send_to_security_hub()
+            print(
+                f"{Style.BRIGHT}{Fore.GREEN}\n{findings_sent_to_security_hub} findings sent to AWS Security Hub!{Style.RESET_ALL}"
+            )
+
+            # Resolve previous fails of Security Hub
+            if not args.skip_sh_update:
+                print(
+                    f"{Style.BRIGHT}\nArchiving previous findings in AWS Security Hub, please wait...{Style.RESET_ALL}"
+                )
+                findings_archived_in_security_hub = (
+                    security_hub.archive_previous_findings()
+                )
+                print(
+                    f"{Style.BRIGHT}{Fore.GREEN}\n{findings_archived_in_security_hub} findings archived in AWS Security Hub!{Style.RESET_ALL}"
+                )
 
     # Display summary table
     if not args.only_logs:

@@ -1,9 +1,9 @@
 {
   "properties": {
     "roleName": "ProwlerRole",
-    "description": "",
+    "description": "Role used for checks that require read-only access to Azure resources and are not covered by the Reader role.",
     "assignableScopes": [
-      "/providers/Microsoft.Management/managementGroups/<name_management_group> or /subscriptions/<subscription_id>"
+      "/"
     ],
     "permissions": [
       {

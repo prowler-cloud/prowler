@@ -19,11 +19,11 @@ class Test_dms_instance_multi_az:
             "prowler.providers.aws.services.dms.dms_service.DMS",
             new=dms_client,
         ):
-            from prowler.providers.aws.services.dms.dms_instance_multi_az.dms_instance_multi_az import (
-                dms_instance_multi_az,
+            from prowler.providers.aws.services.dms.dms_instance_multi_az_enabled.dms_instance_multi_az_enabled import (
+                dms_instance_multi_az_enabled,
             )
 
-            check = dms_instance_multi_az()
+            check = dms_instance_multi_az_enabled()
             result = check.execute()
             assert len(result) == 0
 
@@ -47,11 +47,11 @@ class Test_dms_instance_multi_az:
             "prowler.providers.aws.services.dms.dms_service.DMS",
             new=dms_client,
         ):
-            from prowler.providers.aws.services.dms.dms_instance_multi_az.dms_instance_multi_az import (
-                dms_instance_multi_az,
+            from prowler.providers.aws.services.dms.dms_instance_multi_az_enabled.dms_instance_multi_az_enabled import (
+                dms_instance_multi_az_enabled,
             )
 
-            check = dms_instance_multi_az()
+            check = dms_instance_multi_az_enabled()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -83,11 +83,11 @@ class Test_dms_instance_multi_az:
             "prowler.providers.aws.services.dms.dms_service.DMS",
             new=dms_client,
         ):
-            from prowler.providers.aws.services.dms.dms_instance_multi_az.dms_instance_multi_az import (
-                dms_instance_multi_az,
+            from prowler.providers.aws.services.dms.dms_instance_multi_az_enabled.dms_instance_multi_az_enabled import (
+                dms_instance_multi_az_enabled,
             )
 
-            check = dms_instance_multi_az()
+            check = dms_instance_multi_az_enabled()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"

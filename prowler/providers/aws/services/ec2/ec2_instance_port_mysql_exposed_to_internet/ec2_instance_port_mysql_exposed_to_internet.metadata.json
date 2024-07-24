@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "ec2_instance_port_ssh_exposed_to_internet",
+  "CheckID": "ec2_instance_port_mysql_exposed_to_internet",
   "CheckTitle": "Ensure no EC2 instances allow ingress from the internet to TCP port 3306 (MySQL).",
   "CheckType": [
     "Infrastructure Security"

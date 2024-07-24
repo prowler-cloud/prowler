@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "documentdb_cluster_deletion_protection_enabled",
+  "CheckID": "documentdb_cluster_deletion_protection",
   "CheckTitle": "Check if DocumentDB Clusters has deletion protection enabled.",
   "CheckType": [],
   "ServiceName": "documentdb",

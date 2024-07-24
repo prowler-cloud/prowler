@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "documentdb_cluster_backup_retention",
+  "CheckID": "documentdb_cluster_backup_enabled",
   "CheckTitle": "Check if DocumentDB Clusters have backup enabled.",
   "CheckType": [],
   "ServiceName": "DocumentDB",

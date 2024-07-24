@@ -1,9 +1,15 @@
 from unittest import mock
 
 import pytest
-from colorama import Fore
+from colorama import Fore, Style
+from mock import MagicMock
 
-from prowler.lib.outputs.outputs import extract_findings_statistics, set_report_color
+from prowler.config.config import orange_color
+from prowler.lib.outputs.outputs import (
+    extract_findings_statistics,
+    report,
+    set_report_color,
+)
 from prowler.lib.outputs.utils import (
     parse_html_string,
     parse_json_tags,
@@ -269,3 +275,721 @@ class TestOutputs:
         assert stats["resources_count"] == 1
         assert stats["findings_count"] == 2
         assert not stats["all_fails_are_muted"]
+
+    def test_report_with_aws_provider_not_muted_pass(self):
+        # Mocking check_findings and provider
+        finding_1 = MagicMock()
+        finding_1.status = "FAIL"
+        finding_1.muted = True
+        finding_1.region = "us-east-1"
+        finding_1.check_metadata.Provider = "aws"
+        finding_1.status_extended = "Extended status 1"
+
+        finding_2 = MagicMock()
+        finding_2.status = "PASS"
+        finding_2.muted = False
+        finding_2.region = "us-west-2"
+        finding_2.check_metadata.Provider = "aws"
+        finding_2.status_extended = "Extended status 2"
+
+        check_findings = [finding_2, finding_1]  # Unsorted list
+
+        output_options = MagicMock()
+        output_options.verbose = True
+        output_options.status = ["PASS", "FAIL"]
+        output_options.fixer = False
+
+        provider = MagicMock()
+        provider.type = "aws"
+        provider.output_options = output_options
+
+        # Assertions
+        with mock.patch("builtins.print") as mocked_print:
+            # Call the report method
+            report(check_findings, provider)
+
+            # Assertions
+            check_findings_sorted = [finding_1, finding_2]
+            assert (
+                check_findings == check_findings_sorted
+            )  # Check if the list was sorted
+
+            mocked_print.assert_any_call(
+                f"\t{Fore.GREEN}PASS{Style.RESET_ALL} us-west-2: Extended status 2"
+            )
+            mocked_print.assert_called()  # Verifying that print was called
+
+    def test_report_with_aws_provider_not_muted_fail(self):
+        # Mocking check_findings and provider
+        finding_1 = MagicMock()
+        finding_1.status = "FAIL"
+        finding_1.muted = True
+        finding_1.region = "us-east-1"
+        finding_1.check_metadata.Provider = "aws"
+        finding_1.status_extended = "Extended status 1"
+
+        finding_2 = MagicMock()
+        finding_2.status = "FAIL"
+        finding_2.muted = False
+        finding_2.region = "us-west-2"
+        finding_2.check_metadata.Provider = "aws"
+        finding_2.status_extended = "Extended status 2"
+
+        check_findings = [finding_2, finding_1]  # Unsorted list
+
+        output_options = MagicMock()
+        output_options.verbose = True
+        output_options.status = ["PASS", "FAIL"]
+        output_options.fixer = False
+
+        provider = MagicMock()
+        provider.type = "aws"
+        provider.output_options = output_options
+
+        # Assertions
+        with mock.patch("builtins.print") as mocked_print:
+            # Call the report method
+            report(check_findings, provider)
+
+            # Assertions
+            check_findings_sorted = [finding_1, finding_2]
+            assert (
+                check_findings == check_findings_sorted
+            )  # Check if the list was sorted
+
+            mocked_print.assert_any_call(
+                f"\t{Fore.RED}FAIL{Style.RESET_ALL} us-west-2: Extended status 2"
+            )
+            mocked_print.assert_called()  # Verifying that print was called
+
+    def test_report_with_aws_provider_not_muted_manual(self):
+        # Mocking check_findings and provider
+        finding_1 = MagicMock()
+        finding_1.status = "FAIL"
+        finding_1.muted = True
+        finding_1.region = "us-east-1"
+        finding_1.check_metadata.Provider = "aws"
+        finding_1.status_extended = "Extended status 1"
+
+        finding_2 = MagicMock()
+        finding_2.status = "MANUAL"
+        finding_2.muted = False
+        finding_2.region = "us-west-2"
+        finding_2.check_metadata.Provider = "aws"
+        finding_2.status_extended = "Extended status 2"
+
+        check_findings = [finding_2, finding_1]  # Unsorted list
+
+        output_options = MagicMock()
+        output_options.verbose = True
+        output_options.status = ["PASS", "FAIL", "MANUAL"]
+        output_options.fixer = False
+
+        provider = MagicMock()
+        provider.type = "aws"
+        provider.output_options = output_options
+
+        # Assertions
+        with mock.patch("builtins.print") as mocked_print:
+            # Call the report method
+            report(check_findings, provider)
+
+            # Assertions
+            check_findings_sorted = [finding_1, finding_2]
+            assert (
+                check_findings == check_findings_sorted
+            )  # Check if the list was sorted
+
+            mocked_print.assert_any_call(
+                f"\t{Fore.YELLOW}MANUAL{Style.RESET_ALL} us-west-2: Extended status 2"
+            )
+            mocked_print.assert_called()  # Verifying that print was called
+
+    def test_report_with_aws_provider_muted(self):
+        # Mocking check_findings and provider
+        finding_1 = MagicMock()
+        finding_1.status = "FAIL"
+        finding_1.muted = True
+        finding_1.region = "us-east-1"
+        finding_1.check_metadata.Provider = "aws"
+        finding_1.status_extended = "Extended status 1"
+
+        finding_2 = MagicMock()
+        finding_2.status = "PASS"
+        finding_2.muted = True
+        finding_2.region = "us-west-2"
+        finding_2.check_metadata.Provider = "aws"
+        finding_2.status_extended = "Extended status 2"
+
+        check_findings = [finding_2, finding_1]  # Unsorted list
+
+        output_options = MagicMock()
+        output_options.verbose = True
+        output_options.status = ["PASS", "FAIL"]
+        output_options.fixer = False
+
+        provider = MagicMock()
+        provider.type = "aws"
+        provider.output_options = output_options
+
+        # Assertions
+        with mock.patch("builtins.print") as mocked_print:
+            # Call the report method
+            report(check_findings, provider)
+
+            # Assertions
+            check_findings_sorted = [finding_1, finding_2]
+            assert (
+                check_findings == check_findings_sorted
+            )  # Check if the list was sorted
+
+            mocked_print.assert_any_call(
+                f"\t{orange_color}MUTED (FAIL){Style.RESET_ALL} us-east-1: Extended status 1"
+            )
+            mocked_print.assert_called()  # Verifying that print was called
+
+    def test_report_with_azure_provider_not_muted_pass(self):
+        # Mocking check_findings and provider
+        finding_1 = MagicMock()
+        finding_1.status = "FAIL"
+        finding_1.muted = True
+        finding_1.subscription = "test_subscription_2"
+        finding_1.location = "test_location_1"
+        finding_1.check_metadata.Provider = "azure"
+        finding_1.status_extended = "Extended status 1"
+
+        finding_2 = MagicMock()
+        finding_2.status = "PASS"
+        finding_2.muted = False
+        finding_2.subscription = "test_subscription_1"
+        finding_2.location = "test_location_2"
+        finding_2.check_metadata.Provider = "azure"
+        finding_2.status_extended = "Extended status 2"
+
+        check_findings = [finding_2, finding_1]  # Unsorted list
+
+        output_options = MagicMock()
+        output_options.verbose = True
+        output_options.status = ["PASS", "FAIL"]
+        output_options.fixer = False
+
+        provider = MagicMock()
+        provider.type = "azure"
+        provider.output_options = output_options
+
+        # Assertions
+        with mock.patch("builtins.print") as mocked_print:
+            # Call the report method
+            report(check_findings, provider)
+
+            # Assertions
+            check_findings_sorted = [finding_2, finding_1]
+            assert (
+                check_findings == check_findings_sorted
+            )  # Check if the list was sorted
+
+            mocked_print.assert_any_call(
+                f"\t{Fore.GREEN}PASS{Style.RESET_ALL} test_location_2: Extended status 2"
+            )
+            mocked_print.assert_called()  # Verifying that print was called
+
+    def test_report_with_azure_provider_not_muted_fail(self):
+        # Mocking check_findings and provider
+        finding_1 = MagicMock()
+        finding_1.status = "FAIL"
+        finding_1.muted = False
+        finding_1.subscription = "test_subscription_2"
+        finding_1.location = "test_location_1"
+        finding_1.check_metadata.Provider = "azure"
+        finding_1.status_extended = "Extended status 1"
+
+        finding_2 = MagicMock()
+        finding_2.status = "PASS"
+        finding_2.muted = False
+        finding_2.subscription = "test_subscription_1"
+        finding_2.location = "test_location_2"
+        finding_2.check_metadata.Provider = "azure"
+        finding_2.status_extended = "Extended status 2"
+
+        check_findings = [finding_2, finding_1]  # Unsorted list
+
+        output_options = MagicMock()
+        output_options.verbose = True
+        output_options.status = ["PASS", "FAIL"]
+        output_options.fixer = False
+
+        provider = MagicMock()
+        provider.type = "azure"
+        provider.output_options = output_options
+
+        # Assertions
+        with mock.patch("builtins.print") as mocked_print:
+            # Call the report method
+            report(check_findings, provider)
+
+            # Assertions
+            check_findings_sorted = [finding_2, finding_1]
+            assert (
+                check_findings == check_findings_sorted
+            )  # Check if the list was sorted
+
+            mocked_print.assert_any_call(
+                f"\t{Fore.RED}FAIL{Style.RESET_ALL} test_location_1: Extended status 1"
+            )
+            mocked_print.assert_called()  # Verifying that print was called
+
+    def test_report_with_azure_provider_not_muted_manual(self):
+        # Mocking check_findings and provider
+        finding_1 = MagicMock()
+        finding_1.status = "MANUAL"
+        finding_1.muted = False
+        finding_1.subscription = "test_subscription_2"
+        finding_1.location = "test_location_1"
+        finding_1.check_metadata.Provider = "azure"
+        finding_1.status_extended = "Extended status 1"
+
+        finding_2 = MagicMock()
+        finding_2.status = "PASS"
+        finding_2.muted = False
+        finding_2.subscription = "test_subscription_1"
+        finding_2.location = "test_location_2"
+        finding_2.check_metadata.Provider = "azure"
+        finding_2.status_extended = "Extended status 2"
+
+        check_findings = [finding_2, finding_1]  # Unsorted list
+
+        output_options = MagicMock()
+        output_options.verbose = True
+        output_options.status = ["PASS", "FAIL", "MANUAL"]
+        output_options.fixer = False
+
+        provider = MagicMock()
+        provider.type = "azure"
+        provider.output_options = output_options
+
+        # Assertions
+        with mock.patch("builtins.print") as mocked_print:
+            # Call the report method
+            report(check_findings, provider)
+
+            # Assertions
+            check_findings_sorted = [finding_2, finding_1]
+            assert (
+                check_findings == check_findings_sorted
+            )  # Check if the list was sorted
+
+            mocked_print.assert_any_call(
+                f"\t{Fore.YELLOW}MANUAL{Style.RESET_ALL} test_location_1: Extended status 1"
+            )
+            mocked_print.assert_called()  # Verifying that print was called
+
+    def test_report_with_azure_provider_muted(self):
+        # Mocking check_findings and provider
+        finding_1 = MagicMock()
+        finding_1.status = "FAIL"
+        finding_1.muted = True
+        finding_1.subscription = "test_subscription_2"
+        finding_1.location = "test_location_1"
+        finding_1.check_metadata.Provider = "azure"
+        finding_1.status_extended = "Extended status 1"
+
+        finding_2 = MagicMock()
+        finding_2.status = "PASS"
+        finding_2.muted = False
+        finding_2.subscription = "test_subscription_1"
+        finding_2.location = "test_location_2"
+        finding_2.check_metadata.Provider = "azure"
+        finding_2.status_extended = "Extended status 2"
+
+        check_findings = [finding_2, finding_1]  # Unsorted list
+
+        output_options = MagicMock()
+        output_options.verbose = True
+        output_options.status = ["PASS", "FAIL"]
+        output_options.fixer = False
+
+        provider = MagicMock()
+        provider.type = "azure"
+        provider.output_options = output_options
+
+        # Assertions
+        with mock.patch("builtins.print") as mocked_print:
+            # Call the report method
+            report(check_findings, provider)
+
+            # Assertions
+            check_findings_sorted = [finding_2, finding_1]
+            assert (
+                check_findings == check_findings_sorted
+            )  # Check if the list was sorted
+
+            mocked_print.assert_any_call(
+                f"\t{orange_color}MUTED (FAIL){Style.RESET_ALL} test_location_1: Extended status 1"
+            )
+            mocked_print.assert_called()  # Verifying that print was called
+
+    def test_report_with_gcp_provider_not_muted_pass(self):
+        # Mocking check_findings and provider
+        finding_1 = MagicMock()
+        finding_1.status = "FAIL"
+        finding_1.muted = True
+        finding_1.location = "test_location_1"
+        finding_1.check_metadata.Provider = "gcp"
+        finding_1.status_extended = "Extended status 1"
+
+        finding_2 = MagicMock()
+        finding_2.status = "PASS"
+        finding_2.muted = False
+        finding_2.location = "test_location_2"
+        finding_2.check_metadata.Provider = "gcp"
+        finding_2.status_extended = "Extended status 2"
+
+        check_findings = [finding_2, finding_1]  # Unsorted list
+
+        output_options = MagicMock()
+        output_options.verbose = True
+        output_options.status = ["PASS", "FAIL"]
+        output_options.fixer = False
+
+        provider = MagicMock()
+        provider.type = "gcp"
+        provider.output_options = output_options
+
+        # Assertions
+        with mock.patch("builtins.print") as mocked_print:
+            # Call the report method
+            report(check_findings, provider)
+
+            # Assertions
+            check_findings_sorted = [finding_2, finding_1]
+            assert (
+                check_findings == check_findings_sorted
+            )  # Check if the list was sorted
+
+            mocked_print.assert_any_call(
+                f"\t{Fore.GREEN}PASS{Style.RESET_ALL} test_location_2: Extended status 2"
+            )
+            mocked_print.assert_called()  # Verifying that print was called
+
+    def test_report_with_gcp_provider_not_muted_fail(self):
+        # Mocking check_findings and provider
+        finding_1 = MagicMock()
+        finding_1.status = "FAIL"
+        finding_1.muted = False
+        finding_1.location = "test_location_1"
+        finding_1.check_metadata.Provider = "gcp"
+        finding_1.status_extended = "Extended status 1"
+
+        finding_2 = MagicMock()
+        finding_2.status = "PASS"
+        finding_2.muted = False
+        finding_2.location = "test_location_2"
+        finding_2.check_metadata.Provider = "gcp"
+        finding_2.status_extended = "Extended status 2"
+
+        check_findings = [finding_2, finding_1]  # Unsorted list
+
+        output_options = MagicMock()
+        output_options.verbose = True
+        output_options.status = ["PASS", "FAIL"]
+        output_options.fixer = False
+
+        provider = MagicMock()
+        provider.type = "gcp"
+        provider.output_options = output_options
+
+        # Assertions
+        with mock.patch("builtins.print") as mocked_print:
+            # Call the report method
+            report(check_findings, provider)
+
+            # Assertions
+            check_findings_sorted = [finding_2, finding_1]
+            assert (
+                check_findings == check_findings_sorted
+            )  # Check if the list was sorted
+
+            mocked_print.assert_any_call(
+                f"\t{Fore.RED}FAIL{Style.RESET_ALL} test_location_1: Extended status 1"
+            )
+            mocked_print.assert_called()  # Verifying that print was called
+
+    def test_report_with_gcp_provider_not_muted_manual(self):
+        # Mocking check_findings and provider
+        finding_1 = MagicMock()
+        finding_1.status = "MANUAL"
+        finding_1.muted = False
+        finding_1.location = "test_location_1"
+        finding_1.check_metadata.Provider = "gcp"
+        finding_1.status_extended = "Extended status 1"
+
+        finding_2 = MagicMock()
+        finding_2.status = "PASS"
+        finding_2.muted = False
+        finding_2.location = "test_location_2"
+        finding_2.check_metadata.Provider = "gcp"
+        finding_2.status_extended = "Extended status 2"
+
+        check_findings = [finding_2, finding_1]  # Unsorted list
+
+        output_options = MagicMock()
+        output_options.verbose = True
+        output_options.status = ["PASS", "FAIL", "MANUAL"]
+        output_options.fixer = False
+
+        provider = MagicMock()
+        provider.type = "gcp"
+        provider.output_options = output_options
+
+        # Assertions
+        with mock.patch("builtins.print") as mocked_print:
+            # Call the report method
+            report(check_findings, provider)
+
+            # Assertions
+            check_findings_sorted = [finding_2, finding_1]
+            assert (
+                check_findings == check_findings_sorted
+            )  # Check if the list was sorted
+
+            mocked_print.assert_any_call(
+                f"\t{Fore.YELLOW}MANUAL{Style.RESET_ALL} test_location_1: Extended status 1"
+            )
+            mocked_print.assert_called()  # Verifying that print was called
+
+    def test_report_with_gcp_provider_muted(self):
+        # Mocking check_findings and provider
+        finding_1 = MagicMock()
+        finding_1.status = "FAIL"
+        finding_1.muted = True
+        finding_1.location = "test_location_1"
+        finding_1.check_metadata.Provider = "gcp"
+        finding_1.status_extended = "Extended status 1"
+
+        finding_2 = MagicMock()
+        finding_2.status = "PASS"
+        finding_2.muted = False
+        finding_2.location = "test_location_2"
+        finding_2.check_metadata.Provider = "gcp"
+        finding_2.status_extended = "Extended status 2"
+
+        check_findings = [finding_2, finding_1]  # Unsorted list
+
+        output_options = MagicMock()
+        output_options.verbose = True
+        output_options.status = ["PASS", "FAIL"]
+        output_options.fixer = False
+
+        provider = MagicMock()
+        provider.type = "gcp"
+        provider.output_options = output_options
+
+        # Assertions
+        with mock.patch("builtins.print") as mocked_print:
+            # Call the report method
+            report(check_findings, provider)
+
+            # Assertions
+            check_findings_sorted = [finding_2, finding_1]
+            assert (
+                check_findings == check_findings_sorted
+            )  # Check if the list was sorted
+
+            mocked_print.assert_any_call(
+                f"\t{orange_color}MUTED (FAIL){Style.RESET_ALL} test_location_1: Extended status 1"
+            )
+            mocked_print.assert_called()  # Verifying that print was called
+
+    def test_report_with_kubernetes_provider_not_muted_pass(self):
+        # Mocking check_findings and provider
+        finding_1 = MagicMock()
+        finding_1.status = "FAIL"
+        finding_1.muted = True
+        finding_1.namespace = "test_namespace_1"
+        finding_1.check_metadata.Provider = "kubernetes"
+        finding_1.status_extended = "Extended status 1"
+
+        finding_2 = MagicMock()
+        finding_2.status = "PASS"
+        finding_2.muted = False
+        finding_2.namespace = "test_namespace_2"
+        finding_2.check_metadata.Provider = "kubernetes"
+        finding_2.status_extended = "Extended status 2"
+
+        check_findings = [finding_2, finding_1]  # Unsorted list
+
+        output_options = MagicMock()
+        output_options.verbose = True
+        output_options.status = ["PASS", "FAIL"]
+        output_options.fixer = False
+
+        provider = MagicMock()
+        provider.type = "kubernetes"
+        provider.output_options = output_options
+
+        # Assertions
+        with mock.patch("builtins.print") as mocked_print:
+            # Call the report method
+            report(check_findings, provider)
+
+            # Assertions
+            check_findings_sorted = [finding_2, finding_1]
+            assert (
+                check_findings == check_findings_sorted
+            )  # Check if the list was sorted
+
+            mocked_print.assert_any_call(
+                f"\t{Fore.GREEN}PASS{Style.RESET_ALL} test_namespace_2: Extended status 2"
+            )
+            mocked_print.assert_called()  # Verifying that print was called
+
+    def test_report_with_kubernetes_provider_not_muted_fail(self):
+        # Mocking check_findings and provider
+        finding_1 = MagicMock()
+        finding_1.status = "FAIL"
+        finding_1.muted = False
+        finding_1.namespace = "test_namespace_1"
+        finding_1.check_metadata.Provider = "kubernetes"
+        finding_1.status_extended = "Extended status 1"
+
+        finding_2 = MagicMock()
+        finding_2.status = "PASS"
+        finding_2.muted = False
+        finding_2.namespace = "test_namespace_2"
+        finding_2.check_metadata.Provider = "kubernetes"
+        finding_2.status_extended = "Extended status 2"
+
+        check_findings = [finding_2, finding_1]  # Unsorted list
+
+        output_options = MagicMock()
+        output_options.verbose = True
+        output_options.status = ["PASS", "FAIL"]
+        output_options.fixer = False
+
+        provider = MagicMock()
+        provider.type = "kubernetes"
+        provider.output_options = output_options
+
+        # Assertions
+        with mock.patch("builtins.print") as mocked_print:
+            # Call the report method
+            report(check_findings, provider)
+
+            # Assertions
+            check_findings_sorted = [finding_2, finding_1]
+            assert (
+                check_findings == check_findings_sorted
+            )  # Check if the list was sorted
+
+            mocked_print.assert_any_call(
+                f"\t{Fore.RED}FAIL{Style.RESET_ALL} test_namespace_1: Extended status 1"
+            )
+            mocked_print.assert_called()  # Verifying that print was called
+
+    def test_report_with_kubernetes_provider_not_muted_manual(self):
+        # Mocking check_findings and provider
+        finding_1 = MagicMock()
+        finding_1.status = "MANUAL"
+        finding_1.muted = False
+        finding_1.namespace = "test_namespace_1"
+        finding_1.check_metadata.Provider = "kubernetes"
+        finding_1.status_extended = "Extended status 1"
+
+        finding_2 = MagicMock()
+        finding_2.status = "PASS"
+        finding_2.muted = False
+        finding_2.namespace = "test_namespace_2"
+        finding_2.check_metadata.Provider = "kubernetes"
+        finding_2.status_extended = "Extended status 2"
+
+        check_findings = [finding_2, finding_1]  # Unsorted list
+
+        output_options = MagicMock()
+        output_options.verbose = True
+        output_options.status = ["PASS", "FAIL", "MANUAL"]
+        output_options.fixer = False
+
+        provider = MagicMock()
+        provider.type = "kubernetes"
+        provider.output_options = output_options
+
+        # Assertions
+        with mock.patch("builtins.print") as mocked_print:
+            # Call the report method
+            report(check_findings, provider)
+
+            # Assertions
+            check_findings_sorted = [finding_2, finding_1]
+            assert (
+                check_findings == check_findings_sorted
+            )  # Check if the list was sorted
+
+            mocked_print.assert_any_call(
+                f"\t{Fore.YELLOW}MANUAL{Style.RESET_ALL} test_namespace_1: Extended status 1"
+            )
+            mocked_print.assert_called()  # Verifying that print was called
+
+    def test_report_with_kubernetes_provider_muted(self):
+        # Mocking check_findings and provider
+        finding_1 = MagicMock()
+        finding_1.status = "FAIL"
+        finding_1.muted = True
+        finding_1.namespace = "test_namespace_1"
+        finding_1.check_metadata.Provider = "kubernetes"
+        finding_1.status_extended = "Extended status 1"
+
+        finding_2 = MagicMock()
+        finding_2.status = "PASS"
+        finding_2.muted = False
+        finding_2.namespace = "test_namespace_2"
+        finding_2.check_metadata.Provider = "kubernetes"
+        finding_2.status_extended = "Extended status 2"
+
+        check_findings = [finding_2, finding_1]  # Unsorted list
+
+        output_options = MagicMock()
+        output_options.verbose = True
+        output_options.status = ["PASS", "FAIL"]
+        output_options.fixer = False
+
+        provider = MagicMock()
+        provider.type = "kubernetes"
+        provider.output_options = output_options
+
+        # Assertions
+        with mock.patch("builtins.print") as mocked_print:
+            # Call the report method
+            report(check_findings, provider)
+
+            # Assertions
+            check_findings_sorted = [finding_2, finding_1]
+            assert (
+                check_findings == check_findings_sorted
+            )  # Check if the list was sorted
+
+            mocked_print.assert_any_call(
+                f"\t{orange_color}MUTED (FAIL){Style.RESET_ALL} test_namespace_1: Extended status 1"
+            )
+            mocked_print.assert_called()  # Verifying that print was called
+
+    def test_report_with_no_findings(self):
+        # Mocking check_findings and provider
+        check_findings = []
+
+        output_options = MagicMock()
+        output_options.verbose = True
+        output_options.status = ["PASS", "FAIL"]
+        output_options.fixer = True
+
+        provider = MagicMock()
+        provider.type = "azure"
+        provider.output_options = output_options
+
+        with mock.patch("builtins.print") as mocked_print:
+            report(check_findings, provider)
+
+            # Assertions
+            mocked_print.assert_any_call(
+                f"\t{Fore.YELLOW}INFO{Style.RESET_ALL} There are no resources"
+            )
+            mocked_print.assert_called()  # Verifying that print was called
