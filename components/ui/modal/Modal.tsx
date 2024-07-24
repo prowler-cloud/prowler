@@ -10,12 +10,12 @@ import React from "react";
 
 interface ModalProps {
   title: string;
-  isOpen: boolean;
-  onOpenChange: (isOpen: boolean) => void;
   body: React.ReactNode;
-  onCloseText?: string;
+  closeText?: string;
   actionText?: string;
   onAction?: () => void;
+  isOpen: boolean;
+  onOpenChange: (isOpen: boolean) => void;
   isDismissable?: boolean;
 }
 
@@ -24,10 +24,10 @@ export const Modal: React.FC<ModalProps> = ({
   isOpen,
   onOpenChange,
   body,
-  onCloseText = "Close",
-  actionText = "Save",
+  closeText,
+  actionText,
   onAction,
-  isDismissable = true,
+  isDismissable,
 }) => {
   const hasActionButton = actionText && onAction;
 
@@ -48,7 +48,7 @@ export const Modal: React.FC<ModalProps> = ({
               <ModalBody>{body}</ModalBody>
               <ModalFooter>
                 <Button color="danger" variant="light" onPress={onClose}>
-                  {onCloseText && onCloseText}
+                  {closeText && closeText}
                 </Button>
                 {hasActionButton && (
                   <Button color="primary" onPress={onAction}>
