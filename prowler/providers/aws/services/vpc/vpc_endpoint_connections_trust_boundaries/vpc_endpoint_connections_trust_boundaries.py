@@ -2,7 +2,7 @@ from re import compile
 
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.lib.policy_condition_parser.policy_condition_parser import (
-    is_condition_block_restrictive_account,
+    is_condition_block_restrictive,
 )
 from prowler.providers.aws.services.vpc.vpc_client import vpc_client
 
@@ -35,7 +35,7 @@ class vpc_endpoint_connections_trust_boundaries(Check):
 
                         if "Condition" in statement:
                             for account_id in trusted_account_ids:
-                                if is_condition_block_restrictive_account(
+                                if is_condition_block_restrictive(
                                     statement["Condition"], account_id
                                 ):
                                     access_from_trusted_accounts = True
@@ -74,7 +74,7 @@ class vpc_endpoint_connections_trust_boundaries(Check):
                                 access_from_trusted_accounts = False
                                 if "Condition" in statement:
                                     for account_id in trusted_account_ids:
-                                        if is_condition_block_restrictive_account(
+                                        if is_condition_block_restrictive(
                                             statement["Condition"], account_id
                                         ):
                                             access_from_trusted_accounts = True
@@ -106,7 +106,7 @@ class vpc_endpoint_connections_trust_boundaries(Check):
 
                                 if "Condition" in statement:
                                     for account_id in trusted_account_ids:
-                                        if is_condition_block_restrictive_account(
+                                        if is_condition_block_restrictive(
                                             statement["Condition"], account_id
                                         ):
                                             access_from_trusted_accounts = True

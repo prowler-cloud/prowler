@@ -1,5 +1,5 @@
 from prowler.providers.aws.lib.policy_condition_parser.policy_condition_parser import (
-    is_condition_block_restrictive_account,
+    is_condition_block_restrictive,
     is_condition_block_restrictive_organization,
 )
 
@@ -16,7 +16,7 @@ class Test_policy_condition_parser:
         condition_statement = {
             "StringEquals": {"aws:SourceAccount": [TRUSTED_AWS_ACCOUNT_NUMBER]}
         }
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -29,7 +29,7 @@ class Test_policy_condition_parser:
                 ]
             }
         }
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -37,7 +37,7 @@ class Test_policy_condition_parser:
         condition_statement = {
             "StringEquals": {"aws:SourceAccount": TRUSTED_AWS_ACCOUNT_NUMBER}
         }
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -45,7 +45,7 @@ class Test_policy_condition_parser:
         condition_statement = {
             "StringEquals": {"aws:SourceAccount": NON_TRUSTED_AWS_ACCOUNT_NUMBER}
         }
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -53,7 +53,7 @@ class Test_policy_condition_parser:
         condition_statement = {
             "StringLike": {"aws:SourceAccount": [TRUSTED_AWS_ACCOUNT_NUMBER]}
         }
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -66,7 +66,7 @@ class Test_policy_condition_parser:
                 ]
             }
         }
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -74,7 +74,7 @@ class Test_policy_condition_parser:
         condition_statement = {
             "StringLike": {"aws:SourceAccount": TRUSTED_AWS_ACCOUNT_NUMBER}
         }
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -82,7 +82,7 @@ class Test_policy_condition_parser:
         condition_statement = {
             "StringLike": {"aws:SourceAccount": NON_TRUSTED_AWS_ACCOUNT_NUMBER}
         }
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -90,7 +90,7 @@ class Test_policy_condition_parser:
         condition_statement = {
             "StringEquals": {"aws:SourceOwner": TRUSTED_AWS_ACCOUNT_NUMBER}
         }
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -98,7 +98,7 @@ class Test_policy_condition_parser:
         condition_statement = {
             "StringEquals": {"aws:SourceOwner": NON_TRUSTED_AWS_ACCOUNT_NUMBER}
         }
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -106,7 +106,7 @@ class Test_policy_condition_parser:
         condition_statement = {
             "StringEquals": {"aws:SourceOwner": [TRUSTED_AWS_ACCOUNT_NUMBER]}
         }
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -119,7 +119,7 @@ class Test_policy_condition_parser:
                 ]
             }
         }
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -127,7 +127,7 @@ class Test_policy_condition_parser:
         condition_statement = {
             "StringLike": {"aws:SourceOwner": [TRUSTED_AWS_ACCOUNT_NUMBER]}
         }
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -140,7 +140,7 @@ class Test_policy_condition_parser:
                 ]
             }
         }
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -148,7 +148,7 @@ class Test_policy_condition_parser:
         condition_statement = {
             "StringLike": {"aws:SourceOwner": TRUSTED_AWS_ACCOUNT_NUMBER}
         }
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -156,7 +156,7 @@ class Test_policy_condition_parser:
         condition_statement = {
             "StringLike": {"aws:SourceOwner": NON_TRUSTED_AWS_ACCOUNT_NUMBER}
         }
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -164,7 +164,7 @@ class Test_policy_condition_parser:
         condition_statement = {
             "StringEquals": {"s3:ResourceAccount": [TRUSTED_AWS_ACCOUNT_NUMBER]}
         }
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -177,7 +177,7 @@ class Test_policy_condition_parser:
                 ]
             }
         }
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -185,7 +185,7 @@ class Test_policy_condition_parser:
         condition_statement = {
             "StringEquals": {"s3:ResourceAccount": TRUSTED_AWS_ACCOUNT_NUMBER}
         }
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -193,7 +193,7 @@ class Test_policy_condition_parser:
         condition_statement = {
             "StringEquals": {"s3:ResourceAccount": NON_TRUSTED_AWS_ACCOUNT_NUMBER}
         }
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -201,7 +201,7 @@ class Test_policy_condition_parser:
         condition_statement = {
             "StringEquals": {"aws:PrincipalAccount": [TRUSTED_AWS_ACCOUNT_NUMBER]}
         }
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -214,7 +214,7 @@ class Test_policy_condition_parser:
                 ]
             }
         }
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -222,7 +222,7 @@ class Test_policy_condition_parser:
         condition_statement = {
             "StringEquals": {"aws:PrincipalAccount": TRUSTED_AWS_ACCOUNT_NUMBER}
         }
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -230,7 +230,7 @@ class Test_policy_condition_parser:
         condition_statement = {
             "StringEquals": {"aws:PrincipalAccount": NON_TRUSTED_AWS_ACCOUNT_NUMBER}
         }
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -240,7 +240,7 @@ class Test_policy_condition_parser:
                 "aws:SourceArn": f"arn:aws:cloudtrail:*:{TRUSTED_AWS_ACCOUNT_NUMBER}:trail/*"
             }
         }
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -250,7 +250,7 @@ class Test_policy_condition_parser:
                 "aws:SourceArn": f"arn:aws:cloudtrail:*:{NON_TRUSTED_AWS_ACCOUNT_NUMBER}:trail/*"
             }
         }
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -258,7 +258,7 @@ class Test_policy_condition_parser:
         condition_statement = {
             "StringLike": {"aws:PrincipalAccount": [TRUSTED_AWS_ACCOUNT_NUMBER]}
         }
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -271,7 +271,7 @@ class Test_policy_condition_parser:
                 ]
             }
         }
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -279,7 +279,7 @@ class Test_policy_condition_parser:
         condition_statement = {
             "StringLike": {"aws:PrincipalAccount": TRUSTED_AWS_ACCOUNT_NUMBER}
         }
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -287,7 +287,7 @@ class Test_policy_condition_parser:
         condition_statement = {
             "StringLike": {"aws:PrincipalAccount": NON_TRUSTED_AWS_ACCOUNT_NUMBER}
         }
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -300,7 +300,7 @@ class Test_policy_condition_parser:
             }
         }
 
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -314,7 +314,7 @@ class Test_policy_condition_parser:
             }
         }
 
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -325,7 +325,7 @@ class Test_policy_condition_parser:
             }
         }
 
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -336,7 +336,7 @@ class Test_policy_condition_parser:
             }
         }
 
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -349,7 +349,7 @@ class Test_policy_condition_parser:
             }
         }
 
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -363,7 +363,7 @@ class Test_policy_condition_parser:
             }
         }
 
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -374,7 +374,7 @@ class Test_policy_condition_parser:
             }
         }
 
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -385,7 +385,7 @@ class Test_policy_condition_parser:
             }
         }
 
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -398,7 +398,7 @@ class Test_policy_condition_parser:
             }
         }
 
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -412,7 +412,7 @@ class Test_policy_condition_parser:
             }
         }
 
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -423,7 +423,7 @@ class Test_policy_condition_parser:
             }
         }
 
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -434,7 +434,7 @@ class Test_policy_condition_parser:
             }
         }
 
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -447,7 +447,7 @@ class Test_policy_condition_parser:
             }
         }
 
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -461,7 +461,7 @@ class Test_policy_condition_parser:
             }
         }
 
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -472,7 +472,7 @@ class Test_policy_condition_parser:
             }
         }
 
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -483,7 +483,7 @@ class Test_policy_condition_parser:
             }
         }
 
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -496,7 +496,7 @@ class Test_policy_condition_parser:
             }
         }
 
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -510,7 +510,7 @@ class Test_policy_condition_parser:
             }
         }
 
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -521,7 +521,7 @@ class Test_policy_condition_parser:
             }
         }
 
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -532,7 +532,7 @@ class Test_policy_condition_parser:
             }
         }
 
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -545,7 +545,7 @@ class Test_policy_condition_parser:
             }
         }
 
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -559,7 +559,7 @@ class Test_policy_condition_parser:
             }
         }
 
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -570,7 +570,7 @@ class Test_policy_condition_parser:
             }
         }
 
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -581,7 +581,7 @@ class Test_policy_condition_parser:
             }
         }
 
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -589,7 +589,7 @@ class Test_policy_condition_parser:
         condition_statement = {
             "StringEquals": {"aws:ResourceAccount": [TRUSTED_AWS_ACCOUNT_NUMBER]}
         }
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -602,7 +602,7 @@ class Test_policy_condition_parser:
                 ]
             }
         }
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -610,7 +610,7 @@ class Test_policy_condition_parser:
         condition_statement = {
             "StringEquals": {"aws:ResourceAccount": TRUSTED_AWS_ACCOUNT_NUMBER}
         }
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -618,7 +618,7 @@ class Test_policy_condition_parser:
         condition_statement = {
             "StringEquals": {"aws:ResourceAccount": NON_TRUSTED_AWS_ACCOUNT_NUMBER}
         }
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -626,7 +626,7 @@ class Test_policy_condition_parser:
         condition_statement = {
             "StringLike": {"aws:ResourceAccount": [TRUSTED_AWS_ACCOUNT_NUMBER]}
         }
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -639,7 +639,7 @@ class Test_policy_condition_parser:
                 ]
             }
         }
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -647,7 +647,7 @@ class Test_policy_condition_parser:
         condition_statement = {
             "StringLike": {"aws:ResourceAccount": TRUSTED_AWS_ACCOUNT_NUMBER}
         }
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -655,7 +655,7 @@ class Test_policy_condition_parser:
         condition_statement = {
             "StringLike": {"aws:ResourceAccount": NON_TRUSTED_AWS_ACCOUNT_NUMBER}
         }
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -664,7 +664,7 @@ class Test_policy_condition_parser:
         condition_statement = {
             "StringEquals": {"AWS:SourceAccount": [TRUSTED_AWS_ACCOUNT_NUMBER]}
         }
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -677,7 +677,7 @@ class Test_policy_condition_parser:
                 ]
             }
         }
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -685,7 +685,7 @@ class Test_policy_condition_parser:
         condition_statement = {
             "StringEquals": {"AWS:SourceAccount": TRUSTED_AWS_ACCOUNT_NUMBER}
         }
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -693,7 +693,7 @@ class Test_policy_condition_parser:
         condition_statement = {
             "StringEquals": {"AWS:SourceAccount": NON_TRUSTED_AWS_ACCOUNT_NUMBER}
         }
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -701,7 +701,7 @@ class Test_policy_condition_parser:
         condition_statement = {
             "StringLike": {"AWS:SourceAccount": [TRUSTED_AWS_ACCOUNT_NUMBER]}
         }
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -714,7 +714,7 @@ class Test_policy_condition_parser:
                 ]
             }
         }
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -722,7 +722,7 @@ class Test_policy_condition_parser:
         condition_statement = {
             "StringLike": {"AWS:SourceAccount": TRUSTED_AWS_ACCOUNT_NUMBER}
         }
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -730,7 +730,7 @@ class Test_policy_condition_parser:
         condition_statement = {
             "StringLike": {"AWS:SourceAccount": NON_TRUSTED_AWS_ACCOUNT_NUMBER}
         }
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -738,7 +738,7 @@ class Test_policy_condition_parser:
         condition_statement = {
             "StringEquals": {"AWS:SourceOwner": TRUSTED_AWS_ACCOUNT_NUMBER}
         }
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -746,7 +746,7 @@ class Test_policy_condition_parser:
         condition_statement = {
             "StringEquals": {"AWS:SourceOwner": NON_TRUSTED_AWS_ACCOUNT_NUMBER}
         }
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -754,7 +754,7 @@ class Test_policy_condition_parser:
         condition_statement = {
             "StringEquals": {"AWS:SourceOwner": [TRUSTED_AWS_ACCOUNT_NUMBER]}
         }
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -767,7 +767,7 @@ class Test_policy_condition_parser:
                 ]
             }
         }
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -775,7 +775,7 @@ class Test_policy_condition_parser:
         condition_statement = {
             "StringLike": {"AWS:SourceOwner": [TRUSTED_AWS_ACCOUNT_NUMBER]}
         }
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -788,7 +788,7 @@ class Test_policy_condition_parser:
                 ]
             }
         }
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -796,7 +796,7 @@ class Test_policy_condition_parser:
         condition_statement = {
             "StringLike": {"AWS:SourceOwner": TRUSTED_AWS_ACCOUNT_NUMBER}
         }
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -804,7 +804,7 @@ class Test_policy_condition_parser:
         condition_statement = {
             "StringLike": {"AWS:SourceOwner": NON_TRUSTED_AWS_ACCOUNT_NUMBER}
         }
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -812,7 +812,7 @@ class Test_policy_condition_parser:
         condition_statement = {
             "StringEquals": {"S3:ResourceAccount": [TRUSTED_AWS_ACCOUNT_NUMBER]}
         }
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -825,7 +825,7 @@ class Test_policy_condition_parser:
                 ]
             }
         }
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -833,7 +833,7 @@ class Test_policy_condition_parser:
         condition_statement = {
             "StringEquals": {"S3:ResourceAccount": TRUSTED_AWS_ACCOUNT_NUMBER}
         }
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -841,7 +841,7 @@ class Test_policy_condition_parser:
         condition_statement = {
             "StringEquals": {"S3:ResourceAccount": NON_TRUSTED_AWS_ACCOUNT_NUMBER}
         }
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -849,7 +849,7 @@ class Test_policy_condition_parser:
         condition_statement = {
             "StringEquals": {"AWS:PrincipalAccount": [TRUSTED_AWS_ACCOUNT_NUMBER]}
         }
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -862,7 +862,7 @@ class Test_policy_condition_parser:
                 ]
             }
         }
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -870,7 +870,7 @@ class Test_policy_condition_parser:
         condition_statement = {
             "StringEquals": {"AWS:PrincipalAccount": TRUSTED_AWS_ACCOUNT_NUMBER}
         }
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -878,7 +878,7 @@ class Test_policy_condition_parser:
         condition_statement = {
             "StringEquals": {"AWS:PrincipalAccount": NON_TRUSTED_AWS_ACCOUNT_NUMBER}
         }
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -886,7 +886,7 @@ class Test_policy_condition_parser:
         condition_statement = {
             "StringLike": {"AWS:PrincipalAccount": [TRUSTED_AWS_ACCOUNT_NUMBER]}
         }
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -899,7 +899,7 @@ class Test_policy_condition_parser:
                 ]
             }
         }
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -907,7 +907,7 @@ class Test_policy_condition_parser:
         condition_statement = {
             "StringLike": {"AWS:PrincipalAccount": TRUSTED_AWS_ACCOUNT_NUMBER}
         }
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -915,7 +915,7 @@ class Test_policy_condition_parser:
         condition_statement = {
             "StringLike": {"AWS:PrincipalAccount": NON_TRUSTED_AWS_ACCOUNT_NUMBER}
         }
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -928,7 +928,7 @@ class Test_policy_condition_parser:
             }
         }
 
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -942,7 +942,7 @@ class Test_policy_condition_parser:
             }
         }
 
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -953,7 +953,7 @@ class Test_policy_condition_parser:
             }
         }
 
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -964,7 +964,7 @@ class Test_policy_condition_parser:
             }
         }
 
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -977,7 +977,7 @@ class Test_policy_condition_parser:
             }
         }
 
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -991,7 +991,7 @@ class Test_policy_condition_parser:
             }
         }
 
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -1002,7 +1002,7 @@ class Test_policy_condition_parser:
             }
         }
 
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -1013,7 +1013,7 @@ class Test_policy_condition_parser:
             }
         }
 
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -1026,7 +1026,7 @@ class Test_policy_condition_parser:
             }
         }
 
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -1040,7 +1040,7 @@ class Test_policy_condition_parser:
             }
         }
 
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -1051,7 +1051,7 @@ class Test_policy_condition_parser:
             }
         }
 
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -1062,7 +1062,7 @@ class Test_policy_condition_parser:
             }
         }
 
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -1075,7 +1075,7 @@ class Test_policy_condition_parser:
             }
         }
 
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -1089,7 +1089,7 @@ class Test_policy_condition_parser:
             }
         }
 
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -1100,7 +1100,7 @@ class Test_policy_condition_parser:
             }
         }
 
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -1111,7 +1111,7 @@ class Test_policy_condition_parser:
             }
         }
 
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -1124,7 +1124,7 @@ class Test_policy_condition_parser:
             }
         }
 
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -1138,7 +1138,7 @@ class Test_policy_condition_parser:
             }
         }
 
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -1149,7 +1149,7 @@ class Test_policy_condition_parser:
             }
         }
 
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -1160,7 +1160,7 @@ class Test_policy_condition_parser:
             }
         }
 
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -1173,7 +1173,7 @@ class Test_policy_condition_parser:
             }
         }
 
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -1187,7 +1187,7 @@ class Test_policy_condition_parser:
             }
         }
 
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -1198,7 +1198,7 @@ class Test_policy_condition_parser:
             }
         }
 
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -1209,7 +1209,7 @@ class Test_policy_condition_parser:
             }
         }
 
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -1217,7 +1217,7 @@ class Test_policy_condition_parser:
         condition_statement = {
             "StringEquals": {"AWS:ResourceAccount": [TRUSTED_AWS_ACCOUNT_NUMBER]}
         }
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -1230,7 +1230,7 @@ class Test_policy_condition_parser:
                 ]
             }
         }
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -1238,7 +1238,7 @@ class Test_policy_condition_parser:
         condition_statement = {
             "StringEquals": {"AWS:ResourceAccount": TRUSTED_AWS_ACCOUNT_NUMBER}
         }
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -1246,7 +1246,7 @@ class Test_policy_condition_parser:
         condition_statement = {
             "StringEquals": {"AWS:ResourceAccount": NON_TRUSTED_AWS_ACCOUNT_NUMBER}
         }
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -1254,7 +1254,7 @@ class Test_policy_condition_parser:
         condition_statement = {
             "StringLike": {"AWS:ResourceAccount": [TRUSTED_AWS_ACCOUNT_NUMBER]}
         }
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -1267,7 +1267,7 @@ class Test_policy_condition_parser:
                 ]
             }
         }
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -1275,7 +1275,7 @@ class Test_policy_condition_parser:
         condition_statement = {
             "StringLike": {"AWS:ResourceAccount": TRUSTED_AWS_ACCOUNT_NUMBER}
         }
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -1283,7 +1283,7 @@ class Test_policy_condition_parser:
         condition_statement = {
             "StringLike": {"AWS:ResourceAccount": NON_TRUSTED_AWS_ACCOUNT_NUMBER}
         }
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -1302,7 +1302,7 @@ class Test_policy_condition_parser:
                 ]
             },
         }
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -1319,7 +1319,7 @@ class Test_policy_condition_parser:
                 ]
             },
         }
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -1337,7 +1337,7 @@ class Test_policy_condition_parser:
                 ]
             },
         }
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -1355,7 +1355,7 @@ class Test_policy_condition_parser:
                 ]
             },
         }
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
@@ -1367,21 +1367,21 @@ class Test_policy_condition_parser:
                 ]
             },
         }
-        assert not is_condition_block_restrictive_account(
+        assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER, True
         )
 
     def test_condition_parser_string_equals_vpc(self):
         condition_statement = {"StringEquals": {"aws:SourceVpc": "vpc-123456"}}
 
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER, True
         )
 
     def test_condition_parser_string_equals_vpc_list(self):
         condition_statement = {"StringEquals": {"aws:sourcevpc": ["vpc-123456"]}}
 
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER, True
         )
 
@@ -1390,7 +1390,7 @@ class Test_policy_condition_parser:
             "StringEquals": {"aws:SourceVpc": ["vpc-123456", "vpc-654321"]}
         }
 
-        assert is_condition_block_restrictive_account(
+        assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER, True
         )
 

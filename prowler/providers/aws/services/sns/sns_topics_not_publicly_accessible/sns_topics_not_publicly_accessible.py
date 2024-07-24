@@ -1,6 +1,6 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.lib.policy_condition_parser.policy_condition_parser import (
-    is_condition_block_restrictive_account,
+    is_condition_block_restrictive,
     is_condition_block_restrictive_organization,
 )
 from prowler.providers.aws.services.sns.sns_client import sns_client
@@ -42,7 +42,7 @@ class sns_topics_not_publicly_accessible(Check):
                             condition_org = False
                             if (
                                 "Condition" in statement
-                                and is_condition_block_restrictive_account(
+                                and is_condition_block_restrictive(
                                     statement["Condition"],
                                     sns_client.audited_account,
                                 )

@@ -73,7 +73,7 @@ jobs:
       - name: Safety
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |
-          poetry run safety check --ignore 70612,40459
+          poetry run safety check --ignore 70612
       - name: Vulture
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |

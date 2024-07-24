@@ -1,6 +1,6 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.lib.policy_condition_parser.policy_condition_parser import (
-    is_condition_block_restrictive_account,
+    is_condition_block_restrictive,
 )
 from prowler.providers.aws.services.sqs.sqs_client import sqs_client
 
@@ -32,7 +32,7 @@ class sqs_queues_not_publicly_accessible(Check):
                             )
                         ):
                             if "Condition" in statement:
-                                if is_condition_block_restrictive_account(
+                                if is_condition_block_restrictive(
                                     statement["Condition"],
                                     sqs_client.audited_account,
                                     True,

@@ -1,10 +1,10 @@
-def is_condition_block_restrictive_account(
+def is_condition_block_restrictive(
     condition_statement: dict,
     source_account: str,
     is_cross_account_allowed=False,
 ):
     """
-    is_condition_block_restrictive_account parses the IAM Condition policy block and, by default, returns True if the source_account passed as argument is within, False if not.
+    is_condition_block_restrictive parses the IAM Condition policy block and, by default, returns True if the source_account passed as argument is within, False if not.
 
     If argument is_cross_account_allowed is True it tests if the Condition block includes any of the operators allowlisted returning True if does, False if not.
 
@@ -36,7 +36,6 @@ def is_condition_block_restrictive_account(
             "aws:sourcearn",
             "aws:sourcevpc",
             "aws:sourcevpce",
-            "aws:principalorgid",
         ],
         "StringLike": [
             "aws:sourceaccount",
@@ -47,7 +46,6 @@ def is_condition_block_restrictive_account(
             "aws:principalaccount",
             "aws:sourcevpc",
             "aws:sourcevpce",
-            "aws:principalorgid",
         ],
         "ArnLike": ["aws:sourcearn", "aws:principalarn"],
         "ArnEquals": ["aws:sourcearn", "aws:principalarn"],
