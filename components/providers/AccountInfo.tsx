@@ -40,7 +40,7 @@ export const AccountInfo: React.FC<AccountInfoProps> = ({
   };
 
   return (
-    <div className="border-none max-w-fit">
+    <div className="max-w-fit">
       <div className="flex items-center space-x-4">
         <div className="flex-shrink-0">{getIcon()}</div>
         <div className="flex-shrink-0 mx-2">{getProviderLogo()}</div>
