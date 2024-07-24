@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "neptune_cluster_deletion_protection_enabled",
+  "CheckID": "neptune_cluster_deletion_protection",
   "CheckTitle": "Check if Neptune Clusters storage has deletion protection enabled.",
   "CheckType": [],
   "ServiceName": "neptune",

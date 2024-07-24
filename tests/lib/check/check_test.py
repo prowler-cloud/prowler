@@ -1,3 +1,4 @@
+import json
 import os
 import pathlib
 import traceback
@@ -8,7 +9,6 @@ from pkgutil import ModuleInfo
 
 from boto3 import client
 from colorama import Fore, Style
-from fixtures.bulk_checks_metadata import test_bulk_checks_metadata
 from mock import Mock, patch
 from moto import mock_aws
 
@@ -29,6 +29,7 @@ from prowler.lib.check.check import (
 )
 from prowler.lib.check.models import load_check_metadata
 from prowler.providers.aws.aws_provider import AwsProvider
+from tests.lib.check.fixtures.bulk_checks_metadata import test_bulk_checks_metadata
 from tests.providers.aws.utils import AWS_REGION_US_EAST_1
 
 # AWS_ACCOUNT_NUMBER = "123456789012"
@@ -876,3 +877,77 @@ class TestCheck:
                 capsys.readouterr().out
                 == f"Something went wrong in {check.CheckID}, please use --log-level ERROR\n"
             )
+
+    def test_aws_checks_metadata_is_valid(self):
+        # Check if the checkID in the metadata.json of the checks is correct
+        # Define the base directory for the checks
+        base_directory = os.path.abspath(
+            os.path.join(
+                os.path.dirname(__file__), "../../../", "prowler/providers/aws/services"
+            )
+        )
+        self.verify_metadata_check_id(base_directory)
+
+    def test_azure_checks_metadata_is_valid(self):
+        # Check if the checkID in the metadata.json of the checks is correct
+        # Define the base directory for the checks
+        base_directory = os.path.abspath(
+            os.path.join(
+                os.path.dirname(__file__),
+                "../../../",
+                "prowler/providers/azure/services",
+            )
+        )
+        self.verify_metadata_check_id(base_directory)
+
+    def test_gcp_checks_metadata_is_valid(self):
+        # Check if the checkID in the metadata.json of the checks is correct
+        # Define the base directory for the checks
+        base_directory = os.path.abspath(
+            os.path.join(
+                os.path.dirname(__file__), "../../../", "prowler/providers/gcp/services"
+            )
+        )
+        self.verify_metadata_check_id(base_directory)
+
+    def test_kubernetes_checks_metadata_is_valid(self):
+        # Check if the checkID in the metadata.json of the checks is correct
+        # Define the base directory for the checks
+        base_directory = os.path.abspath(
+            os.path.join(
+                os.path.dirname(__file__),
+                "../../../",
+                "prowler/providers/kubernetes/services",
+            )
+        )
+        self.verify_metadata_check_id(base_directory)
+
+    def verify_metadata_check_id(self, provider_path):
+        # Walk through the base directory to find all service directories
+        for root, dirs, _ in os.walk(provider_path):
+            # We only want to look at directories that are direct children of the base directory
+            if root == provider_path:
+                for service_dir in dirs:
+                    service_path = os.path.join(root, service_dir)
+
+                    # Walk through each service directory to find check directories
+                    for check_root, check_dirs, _ in os.walk(service_path):
+                        for check_dir in check_dirs:
+                            check_directory = os.path.join(check_root, check_dir)
+                            metadata_file_name = f"{check_dir}.metadata.json"
+                            metadata_file_path = os.path.join(
+                                check_directory, metadata_file_name
+                            )
+
+                            if os.path.isfile(metadata_file_path):
+                                # Read the JSON file
+                                with open(metadata_file_path, "r") as f:
+                                    data = json.load(f)
+
+                                # Extract the CheckID field
+                                check_id = data.get("CheckID", None)
+
+                                # Compare CheckID to the check name
+                                assert (
+                                    check_id == check_dir
+                                ), f"CheckID in metadata does not match the check name in {check_directory}. Found CheckID: {check_id}"
