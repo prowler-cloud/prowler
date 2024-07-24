@@ -54,6 +54,14 @@ def mock_make_api_call(self, operation_name, kwarg):
                 {
                     "imageDigest": "sha256:83251ac64627fc331584f6c498b3aba5badc01574e2c70b2499af3af16630eed",
                     "imageTags": [
+                        "sha256-abcdefg123456.sig",
+                    ],
+                    "imagePushedAt": datetime(2023, 1, 2),
+                    "artifactMediaType": "application/vnd.docker.container.image.v1+json",
+                },
+                {
+                    "imageDigest": "sha256:83251ac64627fc331584f6c498b3aba5badc01574e2c70b2499af3af16630eed",
+                    "imageTags": [
                         "test-tag2",
                     ],
                     "imagePushedAt": datetime(2023, 1, 2),

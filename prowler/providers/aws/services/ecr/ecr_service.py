@@ -1,4 +1,3 @@
-import re
 from datetime import datetime
 from json import loads
 from typing import Optional
@@ -127,15 +126,12 @@ class ECR(AWSService):
             if artifact_media_type is None:
                 return False
 
-            # Regex pattern to match "sha-[Hash].sig"
-            non_scannable_tag_pattern = r"^sha-[a-fA-F0-9]+\.sig$"
-
             # Check if any of the tags indicate non-scannability
             for tag in tags:
-                if re.match(non_scannable_tag_pattern, tag):
+                if tag.startswith("sha256-") and tag.endswith(".sig"):
                     return False
 
-            scannable_media_types = [
+            scannable_artifact_media_types = [
                 "application/vnd.docker.container.image.v1+json",  # Docker image configuration
                 "application/vnd.docker.image.rootfs.diff.tar",  # Docker image layer as a tar archive
                 "application/vnd.docker.image.rootfs.diff.tar.gzip"  # Docker image layer that is compressed using gzip
@@ -144,11 +140,7 @@ class ECR(AWSService):
                 "application/vnd.oci.image.layer.v1.tar+gzip",  # Compressed OCI image layer
             ]
 
-            # Check if the media type is in the list of scannable types
-            if artifact_media_type not in scannable_media_types:
-                return False
-
-            return True
+            return artifact_media_type in scannable_artifact_media_types
 
         try:
             if regional_client.region in self.registries:
