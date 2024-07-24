@@ -1,11 +1,10 @@
-def is_condition_block_restrictive(
+def is_condition_block_restrictive_account(
     condition_statement: dict,
     source_account: str,
     is_cross_account_allowed=False,
-    org_id: str = None,
 ):
     """
-    is_condition_block_restrictive parses the IAM Condition policy block and, by default, returns True if the source_account passed as argument is within, False if not.
+    is_condition_block_restrictive_account parses the IAM Condition policy block and, by default, returns True if the source_account passed as argument is within, False if not.
 
     If argument is_cross_account_allowed is True it tests if the Condition block includes any of the operators allowlisted returning True if does, False if not.
 
@@ -21,7 +20,6 @@ def is_condition_block_restrictive(
 
     @param is_cross_account_allowed: bool to allow cross-account access, e.g.: True
 
-    @param org_id: str with AWS Organization ID, e.g.: o-123456789012
     """
     is_condition_valid = False
 
@@ -77,7 +75,7 @@ def is_condition_block_restrictive(
                             # if there is an arn/account without the source account -> we do not consider it safe
                             # here by default we assume is true and look for false entries
                             for item in condition_statement[condition_operator][value]:
-                                if source_account not in item or org_id not in item:
+                                if source_account not in item:
                                     is_condition_key_restrictive = False
                                     break
 
@@ -95,9 +93,80 @@ def is_condition_block_restrictive(
                             if (
                                 source_account
                                 in condition_statement[condition_operator][value]
-                                or org_id
-                                in condition_statement[condition_operator][value]
                             ):
                                 is_condition_valid = True
+
+    return is_condition_valid
+
+
+def is_condition_block_restrictive_organization(
+    condition_statement: dict,
+    source_organization: str,
+):
+    """
+    is_condition_block_restrictive_organization parses the IAM Condition policy block and returns True if the source_organization passed as argument is within, False if not.
+
+
+    @param condition_statement: dict with an IAM Condition block, e.g.:
+        {
+            "StringLike": {
+                "AWS:PrincipalOrgID": "o-111122223333"
+            }
+        }
+
+    @param source_organization: str with a 12-digit AWS Organization ID, e.g.: o-111122223333
+
+
+    """
+    is_condition_valid = False
+
+    # The conditions must be defined in lowercase since the context key names are not case-sensitive.
+    # For example, including the aws:PrincipalOrgID context key is equivalent to testing for AWS:PrincipalOrgID
+    # https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_condition.html
+    valid_condition_options = {
+        "StringEquals": [
+            "aws:principalorgid",
+        ],
+        "StringLike": [
+            "aws:principalorgid",
+        ],
+    }
+
+    for condition_operator, condition_operator_key in valid_condition_options.items():
+        if condition_operator in condition_statement:
+            for value in condition_operator_key:
+                # We need to transform the condition_statement into lowercase
+                condition_statement[condition_operator] = {
+                    k.lower(): v
+                    for k, v in condition_statement[condition_operator].items()
+                }
+
+                if value in condition_statement[condition_operator]:
+                    # values are a list
+                    if isinstance(
+                        condition_statement[condition_operator][value],
+                        list,
+                    ):
+                        is_condition_key_restrictive = True
+                        # if there is an arn/organization without the source organization -> we do not consider it safe
+                        # here by default we assume is true and look for false entries
+                        for item in condition_statement[condition_operator][value]:
+                            if source_organization not in item:
+                                is_condition_key_restrictive = False
+                                break
+
+                        if is_condition_key_restrictive:
+                            is_condition_valid = True
+
+                    # value is a string
+                    elif isinstance(
+                        condition_statement[condition_operator][value],
+                        str,
+                    ):
+                        if (
+                            source_organization
+                            in condition_statement[condition_operator][value]
+                        ):
+                            is_condition_valid = True
 
     return is_condition_valid

@@ -1,6 +1,6 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.lib.policy_condition_parser.policy_condition_parser import (
-    is_condition_block_restrictive,
+    is_condition_block_restrictive_account,
 )
 from prowler.providers.aws.services.iam.lib.policy import (
     is_condition_restricting_from_private_ip,
@@ -56,7 +56,7 @@ class s3_bucket_public_access(Check):
                                 if (
                                     "Principal" in statement
                                     and statement["Effect"] == "Allow"
-                                    and not is_condition_block_restrictive(
+                                    and not is_condition_block_restrictive_account(
                                         statement.get("Condition", {}), "", True
                                     )
                                     and (

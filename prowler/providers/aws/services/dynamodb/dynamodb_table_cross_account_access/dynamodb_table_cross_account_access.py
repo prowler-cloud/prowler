@@ -1,6 +1,6 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.lib.policy_condition_parser.policy_condition_parser import (
-    is_condition_block_restrictive,
+    is_condition_block_restrictive_account,
 )
 from prowler.providers.aws.services.dynamodb.dynamodb_client import dynamodb_client
 
@@ -43,7 +43,7 @@ class dynamodb_table_cross_account_access(Check):
                                     cross_account_access = True
                                     # Check if the condition block is restrictive
                                     conditions = statement.get("Condition", {})
-                                    if is_condition_block_restrictive(
+                                    if is_condition_block_restrictive_account(
                                         conditions, dynamodb_client.audited_account
                                     ):
                                         cross_account_access = False
