@@ -9,7 +9,6 @@ from pkgutil import ModuleInfo
 
 from boto3 import client
 from colorama import Fore, Style
-from fixtures.bulk_checks_metadata import test_bulk_checks_metadata
 from mock import Mock, patch
 from moto import mock_aws
 
@@ -30,6 +29,7 @@ from prowler.lib.check.check import (
 )
 from prowler.lib.check.models import load_check_metadata
 from prowler.providers.aws.aws_provider import AwsProvider
+from tests.lib.check.fixtures.bulk_checks_metadata import test_bulk_checks_metadata
 from tests.providers.aws.utils import AWS_REGION_US_EAST_1
 
 # AWS_ACCOUNT_NUMBER = "123456789012"
