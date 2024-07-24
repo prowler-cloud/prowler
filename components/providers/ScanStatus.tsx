@@ -18,8 +18,8 @@ export const ScanStatus: React.FC<ScanStatusProps> = ({
   const formattedDuration = formatDuration(duration, { delimiter: ", " });
 
   return (
-    <div className="border-none max-w-fit">
-      <div className="flex flex-col space-y-2">
+    <div className="max-w-fit">
+      <div className="flex flex-col">
         <span className="text-md font-semibold">{status}</span>
         <span className="text-sm text-gray-500">{formattedDuration}</span>
       </div>
