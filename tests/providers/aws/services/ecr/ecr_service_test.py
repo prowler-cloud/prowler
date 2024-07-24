@@ -35,6 +35,7 @@ def mock_make_api_call(self, operation_name, kwarg):
                     "imageScanFindingsSummary": {
                         "findingSeverityCounts": {"CRITICAL": 1, "HIGH": 2, "MEDIUM": 3}
                     },
+                    "artifactMediaType": "application/vnd.docker.container.image.v1+json",
                 },
                 {
                     "imageDigest": "sha256:83251ac64627fc331584f6c498b3aba5badc01574e2c70b2499af3af16630eed",
@@ -49,6 +50,49 @@ def mock_make_api_call(self, operation_name, kwarg):
                         "findingSeverityCounts": {"CRITICAL": 1, "HIGH": 2, "MEDIUM": 3}
                     },
                     "artifactMediaType": "application/vnd.docker.container.image.v1+json",
+                },
+                {
+                    "imageDigest": "sha256:83251ac64627fc331584f6c498b3aba5badc01574e2c70b2499af3af16630eed",
+                    "imageTags": [
+                        "test-tag2",
+                    ],
+                    "imagePushedAt": datetime(2023, 1, 2),
+                    "imageScanFindings": {
+                        "findingSeverityCounts": {"CRITICAL": 1, "HIGH": 2, "MEDIUM": 3}
+                    },
+                    "artifactMediaType": "application/vnd.docker.container.image.v1+json",
+                },
+                {
+                    "imageDigest": "sha256:83251ac64627fc331584f6c498b3aba5badc01574e2c70b2499af3af16630eed",
+                    "imageTags": [
+                        "sha-83251ac64627fc331584f6c498b3aba5badc01574e2c70b2499af3af16630eed.sig",
+                    ],
+                    "imagePushedAt": datetime(2023, 1, 2),
+                    "imageScanStatus": {
+                        "status": "FAILED",
+                    },
+                    "artifactMediaType": "application/vnd.oci.image.config.v1+json",
+                },
+                {
+                    "imageDigest": "sha256:83251ac64627fc331584f6c498b3aba5badc01574e2c70b2499af3af16630eed",
+                    "imageTags": [
+                        "test-tag2",
+                    ],
+                    "imagePushedAt": datetime(2023, 1, 2),
+                    "imageScanStatus": {
+                        "status": "FAILED",
+                    },
+                    "artifactMediaType": "application/vnd.cncf.notary.v2.signature",
+                },
+                {
+                    "imageDigest": "sha256:83251ac64627fc331584f6c498b3aba5badc01574e2c70b2499af3af16630eed",
+                    "imageTags": [
+                        "test-tag2",
+                    ],
+                    "imagePushedAt": datetime(2023, 1, 2),
+                    "imageScanStatus": {
+                        "status": "FAILED",
+                    },
                 },
             ],
         }
@@ -216,6 +260,7 @@ class Test_ECR_Service:
         )
         aws_provider = set_mocked_aws_provider()
         ecr = ECR(aws_provider)
+
         assert len(ecr.registries) == 1
         assert len(ecr.registries[AWS_REGION_EU_WEST_1].repositories) == 1
         assert ecr.registries[AWS_REGION_EU_WEST_1].repositories[0].name == repo_name
@@ -270,6 +315,13 @@ class Test_ECR_Service:
             .images_details[0]
             .scan_findings_severity_count.medium
             == 3
+        )
+        assert (
+            ecr.registries[AWS_REGION_EU_WEST_1]
+            .repositories[0]
+            .images_details[0]
+            .artifact_media_type
+            == "application/vnd.docker.container.image.v1+json"
         )
 
         # Second image pushed

@@ -1,3 +1,4 @@
+import re
 from datetime import datetime
 from json import loads
 from typing import Optional
@@ -121,6 +122,34 @@ class ECR(AWSService):
 
     def __get_image_details__(self, regional_client):
         logger.info("ECR - Getting images details...")
+
+        def is_artifact_scannable(artifact_media_type, tags):
+            if artifact_media_type is None:
+                return False
+
+            # Regex pattern to match "sha-[Hash].sig"
+            non_scannable_tag_pattern = r"^sha-[a-fA-F0-9]+\.sig$"
+
+            # Check if any of the tags indicate non-scannability
+            for tag in tags:
+                if re.match(non_scannable_tag_pattern, tag):
+                    return False
+
+            scannable_media_types = [
+                "application/vnd.docker.container.image.v1+json",  # Docker image configuration
+                "application/vnd.docker.image.rootfs.diff.tar",  # Docker image layer as a tar archive
+                "application/vnd.docker.image.rootfs.diff.tar.gzip"  # Docker image layer that is compressed using gzip
+                "application/vnd.oci.image.config.v1+json",  # OCI image configuration, ArtefactType aber auch für .sig
+                "application/vnd.oci.image.layer.v1.tar",  # Uncompressed OCI image layer
+                "application/vnd.oci.image.layer.v1.tar+gzip",  # Compressed OCI image layer
+            ]
+
+            # Check if the media type is in the list of scannable types
+            if artifact_media_type not in scannable_media_types:
+                return False
+
+            return True
+
         try:
             if regional_client.region in self.registries:
                 for repository in self.registries[regional_client.region].repositories:
@@ -139,78 +168,88 @@ class ECR(AWSService):
                                 # The following condition is required since sometimes
                                 # the AWS ECR API returns None using the iterator
                                 if image is not None:
-                                    severity_counts = None
-                                    last_scan_status = None
                                     artifact_media_type = image.get(
                                         "artifactMediaType", None
                                     )
-                                    image_digest = image.get("imageDigest")
-                                    latest_tag = image.get("imageTags", ["None"])[0]
-                                    image_pushed_at = image.get("imagePushedAt")
-                                    image_scan_findings_field_name = (
-                                        "imageScanFindingsSummary"
-                                    )
-
-                                    # If imageScanStatus is not present or imageScanFindingsSummary is missing,
-                                    # we need to call DescribeImageScanFindings because AWS' new version of
-                                    # basic scanning does not support imageScanFindingsSummary and imageScanStatus
-                                    # in the DescribeImages API.
-                                    if "imageScanStatus" not in image:
-                                        try:
-                                            # use "image" for scan findings to get data the same way as for an image
-                                            image = client.describe_image_scan_findings(
-                                                registryId=self.registries[
-                                                    regional_client.region
-                                                ].id,
-                                                repositoryName=repository.name,
-                                                imageId={"imageDigest": image_digest},
-                                            )
-                                            image_scan_findings_field_name = (
-                                                "imageScanFindings"
-                                            )
-                                        except client.exceptions.ImageNotFoundException:
-                                            logger.warning(
-                                                f"Image not found for digest: {image_digest}"
-                                            )
-                                            continue
-                                        except Exception as e:
-                                            logger.error(
-                                                f"Error retrieving scan findings for image {image_digest}: {str(e)}"
-                                            )
-                                            continue
-
-                                    if "imageScanStatus" in image:
-                                        last_scan_status = image["imageScanStatus"][
-                                            "status"
-                                        ]
-
-                                    if image_scan_findings_field_name in image:
-                                        severity_counts = FindingSeverityCounts(
-                                            critical=0, high=0, medium=0
-                                        )
-                                        finding_severity_counts = image[
-                                            image_scan_findings_field_name
-                                        ]["findingSeverityCounts"]
-                                        severity_counts.critical = (
-                                            finding_severity_counts.get("CRITICAL", 0)
-                                        )
-                                        severity_counts.high = (
-                                            finding_severity_counts.get("HIGH", 0)
-                                        )
-                                        severity_counts.medium = (
-                                            finding_severity_counts.get("MEDIUM", 0)
+                                    tags = image.get("imageTags", [])
+                                    if is_artifact_scannable(artifact_media_type, tags):
+                                        severity_counts = None
+                                        last_scan_status = None
+                                        image_digest = image.get("imageDigest")
+                                        latest_tag = image.get("imageTags", ["None"])[0]
+                                        image_pushed_at = image.get("imagePushedAt")
+                                        image_scan_findings_field_name = (
+                                            "imageScanFindingsSummary"
                                         )
 
-                                    repository.images_details.append(
-                                        ImageDetails(
-                                            latest_tag=latest_tag,
-                                            image_pushed_at=image_pushed_at,
-                                            latest_digest=image_digest,
-                                            scan_findings_status=last_scan_status,
-                                            scan_findings_severity_count=severity_counts,
-                                            artifact_media_type=artifact_media_type,
+                                        # If imageScanStatus is not present or imageScanFindingsSummary is missing,
+                                        # we need to call DescribeImageScanFindings because AWS' new version of
+                                        # basic scanning does not support imageScanFindingsSummary and imageScanStatus
+                                        # in the DescribeImages API.
+                                        if "imageScanStatus" not in image:
+                                            try:
+                                                # use "image" for scan findings to get data the same way as for an image
+                                                image = (
+                                                    client.describe_image_scan_findings(
+                                                        registryId=self.registries[
+                                                            regional_client.region
+                                                        ].id,
+                                                        repositoryName=repository.name,
+                                                        imageId={
+                                                            "imageDigest": image_digest
+                                                        },
+                                                    )
+                                                )
+                                                image_scan_findings_field_name = (
+                                                    "imageScanFindings"
+                                                )
+                                            except (
+                                                client.exceptions.ImageNotFoundException
+                                            ):
+                                                logger.warning(
+                                                    f"Image not found for digest: {image_digest}"
+                                                )
+                                                continue
+                                            except Exception as e:
+                                                logger.error(
+                                                    f"Error retrieving scan findings for image {image_digest}: {str(e)}"
+                                                )
+                                                continue
+
+                                        if "imageScanStatus" in image:
+                                            last_scan_status = image["imageScanStatus"][
+                                                "status"
+                                            ]
+
+                                        if image_scan_findings_field_name in image:
+                                            severity_counts = FindingSeverityCounts(
+                                                critical=0, high=0, medium=0
+                                            )
+                                            finding_severity_counts = image[
+                                                image_scan_findings_field_name
+                                            ]["findingSeverityCounts"]
+                                            severity_counts.critical = (
+                                                finding_severity_counts.get(
+                                                    "CRITICAL", 0
+                                                )
+                                            )
+                                            severity_counts.high = (
+                                                finding_severity_counts.get("HIGH", 0)
+                                            )
+                                            severity_counts.medium = (
+                                                finding_severity_counts.get("MEDIUM", 0)
+                                            )
+
+                                        repository.images_details.append(
+                                            ImageDetails(
+                                                latest_tag=latest_tag,
+                                                image_pushed_at=image_pushed_at,
+                                                latest_digest=image_digest,
+                                                scan_findings_status=last_scan_status,
+                                                scan_findings_severity_count=severity_counts,
+                                                artifact_media_type=artifact_media_type,
+                                            )
                                         )
-                                    )
                         # Sort the repository images by date pushed
                         repository.images_details.sort(
                             key=lambda image: image.image_pushed_at

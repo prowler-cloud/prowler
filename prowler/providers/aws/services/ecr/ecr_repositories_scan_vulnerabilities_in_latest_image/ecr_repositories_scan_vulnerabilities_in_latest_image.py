@@ -15,20 +15,8 @@ class ecr_repositories_scan_vulnerabilities_in_latest_image(Check):
             for repository in registry.repositories:
                 # First check if the repository has images
                 if len(repository.images_details) > 0:
-                    # Find the newest pushed image with the specified artifact_media_type
-                    image = next(
-                        (
-                            img
-                            for img in reversed(repository.images_details)
-                            if img.artifact_media_type
-                            == "application/vnd.docker.container.image.v1+json"
-                        ),
-                        None,
-                    )
-                    # If no image with the specified artifact_media_type is found, skip this repository
-                    if not image:
-                        continue
-
+                    # We only want to check the latest image pushed that is scannable
+                    image = repository.images_details[-1]
                     report = Check_Report_AWS(self.metadata())
                     report.region = repository.region
                     report.resource_id = repository.name
