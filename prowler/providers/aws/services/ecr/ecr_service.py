@@ -126,7 +126,7 @@ class ECR(AWSService):
             if artifact_media_type is None:
                 return False
 
-            # Check if any of the tags indicate non-scannability
+            # Check if any of the tags indicate non-scannability, e.g. GoogleContainerTools/jib tags signatures accordingly
             for tag in tags:
                 if tag.startswith("sha256-") and tag.endswith(".sig"):
                     return False
@@ -135,7 +135,7 @@ class ECR(AWSService):
                 "application/vnd.docker.container.image.v1+json",  # Docker image configuration
                 "application/vnd.docker.image.rootfs.diff.tar",  # Docker image layer as a tar archive
                 "application/vnd.docker.image.rootfs.diff.tar.gzip"  # Docker image layer that is compressed using gzip
-                "application/vnd.oci.image.config.v1+json",  # OCI image configuration, ArtefactType aber auch für .sig
+                "application/vnd.oci.image.config.v1+json",  # OCI image configuration, but also used by GoogleContainerTools/jib for signatures
                 "application/vnd.oci.image.layer.v1.tar",  # Uncompressed OCI image layer
                 "application/vnd.oci.image.layer.v1.tar+gzip",  # Compressed OCI image layer
             ]
