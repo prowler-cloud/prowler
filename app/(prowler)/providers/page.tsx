@@ -31,15 +31,15 @@ export default function Providers() {
       />
       <Spacer />
       <ModalWrap
-        title="Modal Title"
-        body={
+        modalTitle="Modal Title"
+        modalBody={
           <>
             <p>Modal body content</p>
           </>
         }
-        actionText="Save"
+        actionButtonLabel="Save"
         onAction={onSave}
-        triggerText="Open Modal"
+        openButtonLabel="Open Modal"
       />
     </>
   );

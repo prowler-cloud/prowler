@@ -9,28 +9,28 @@ import {
 import React from "react";
 
 interface ModalProps {
-  title: string;
-  body: React.ReactNode;
-  closeText?: string;
-  actionText?: string;
-  onAction?: () => void;
+  modalTitle: string;
+  modalBody: React.ReactNode;
+  closeButtonLabel?: string;
+  actionButtonLabel?: string;
+  onAction: () => void;
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
   isDismissable?: boolean;
+  isKeyboardDismissDisabled?: boolean;
+  hideCloseButton?: boolean;
 }
 
 export const Modal: React.FC<ModalProps> = ({
-  title,
+  modalTitle,
+  modalBody,
+  closeButtonLabel,
+  actionButtonLabel,
+  onAction,
   isOpen,
   onOpenChange,
-  body,
-  closeText,
-  actionText,
-  onAction,
   isDismissable,
 }) => {
-  const hasActionButton = actionText && onAction;
-
   return (
     <>
       <ModalContainer
@@ -44,17 +44,17 @@ export const Modal: React.FC<ModalProps> = ({
         <ModalContent>
           {(onClose) => (
             <>
-              <ModalHeader className="flex flex-col gap-1">{title}</ModalHeader>
-              <ModalBody>{body}</ModalBody>
+              <ModalHeader className="flex flex-col gap-1">
+                {modalTitle}
+              </ModalHeader>
+              <ModalBody>{modalBody}</ModalBody>
               <ModalFooter>
                 <Button color="danger" variant="light" onPress={onClose}>
-                  {closeText && closeText}
+                  {closeButtonLabel}
                 </Button>
-                {hasActionButton && (
-                  <Button color="primary" onPress={onAction}>
-                    {actionText}
-                  </Button>
-                )}
+                <Button color="primary" onPress={onAction}>
+                  {actionButtonLabel}
+                </Button>
               </ModalFooter>
             </>
           )}

@@ -6,38 +6,38 @@ import React from "react";
 import { Modal } from "@/components";
 
 interface ModalWrapProps {
-  title: string;
-  body: React.ReactNode;
-  closeText?: string;
-  actionText?: string;
-  onAction?: () => void;
-  triggerText?: string;
+  modalTitle: string;
+  modalBody: React.ReactNode;
+  closeButtonLabel?: string;
+  actionButtonLabel?: string;
+  onAction: () => void;
+  openButtonLabel?: string;
   isDismissable?: boolean;
 }
 
 export const ModalWrap: React.FC<ModalWrapProps> = ({
-  title,
-  body,
-  closeText = "Close",
-  actionText = "Save",
+  modalTitle,
+  modalBody,
+  closeButtonLabel = "Close",
+  actionButtonLabel = "Save",
   onAction,
+  openButtonLabel = "Open",
   isDismissable = true,
-  triggerText = "Open",
 }) => {
   const { isOpen, onOpen, onClose, onOpenChange } = useDisclosure();
   const closeOnAction = () => {
-    onAction && onAction();
+    onAction?.();
     onClose();
   };
 
   return (
     <>
-      <Button onPress={onOpen}>{triggerText}</Button>
+      <Button onPress={onOpen}>{openButtonLabel}</Button>
       <Modal
-        title={title}
-        body={body}
-        closeText={closeText}
-        actionText={actionText}
+        modalTitle={modalTitle}
+        modalBody={modalBody}
+        closeButtonLabel={closeButtonLabel}
+        actionButtonLabel={actionButtonLabel}
         onAction={closeOnAction}
         isDismissable={isDismissable}
         isOpen={isOpen}
