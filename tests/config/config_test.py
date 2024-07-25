@@ -62,6 +62,13 @@ old_config_aws = {
     "organizations_trusted_delegated_administrators": [],
     "check_rds_instance_replicas": False,
     "days_to_expire_threshold": 7,
+    "eks_required_log_types": [
+        "api",
+        "audit",
+        "authenticator",
+        "controllerManager",
+        "scheduler",
+    ],
 }
 config_aws = {
     "mute_non_default_regions": False,
@@ -255,6 +262,13 @@ config_aws = {
     ],
     "check_rds_instance_replicas": False,
     "days_to_expire_threshold": 7,
+    "eks_required_log_types": [
+        "api",
+        "audit",
+        "authenticator",
+        "controllerManager",
+        "scheduler",
+    ],
 }
 
 config_azure = {
