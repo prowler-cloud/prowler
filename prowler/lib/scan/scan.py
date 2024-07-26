@@ -1,7 +1,6 @@
 from typing import Any
 
 from prowler.lib.check.check import execute, update_audit_metadata
-from prowler.lib.check.models import Check_Report
 from prowler.lib.logger import logger
 from prowler.providers.common.models import Audit_Metadata
 from prowler.providers.common.provider import Provider
@@ -66,7 +65,7 @@ class Scan:
     def scan(
         self,
         custom_checks_metadata: Any,
-    ) -> list[Check_Report]:
+    ):
         try:
             checks_to_execute = self.checks_to_execute
             # Initialize the Audit Metadata
