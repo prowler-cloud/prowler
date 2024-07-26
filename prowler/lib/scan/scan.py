@@ -79,7 +79,7 @@ class Scan:
                 audit_progress=0,
             )
 
-            for check_name in checks_to_execute:
+            for i, check_name in enumerate(checks_to_execute, 1):
                 try:
                     # Recover service from check name
                     service = get_service_name_from_check_name(check_name)
@@ -91,6 +91,9 @@ class Scan:
                         self._provider,
                         custom_checks_metadata,
                     )
+                    # Yield the progress and the findings
+                    yield i, len(checks_to_execute), check_findings
+
                     # Store findings
                     self._findings.extend(check_findings)
 
