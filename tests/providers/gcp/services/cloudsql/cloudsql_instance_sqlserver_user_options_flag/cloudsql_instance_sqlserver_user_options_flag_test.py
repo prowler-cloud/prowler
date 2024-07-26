@@ -181,7 +181,7 @@ class Test_cloudsql_instance_sqlserver_user_options_flag:
                     ssl=False,
                     automated_backups=True,
                     authorized_networks=[],
-                    flags=[{"name": "user options", "value": "some_value"}],
+                    flags=[{"name": "user options", "value": "0"}],
                     project_id=GCP_PROJECT_ID,
                 )
             ]

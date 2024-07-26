@@ -15,7 +15,10 @@ class cloudsql_instance_mysql_skip_show_database_flag(Check):
                 report.status = "FAIL"
                 report.status_extended = f"MySQL Instance {instance.name} does not have 'skip_show_database' flag set to 'on'."
                 for flag in instance.flags:
-                    if flag["name"] == "skip_show_database" and flag["value"] == "on":
+                    if (
+                        flag.get("name", "") == "skip_show_database"
+                        and flag.get("value", "off") == "on"
+                    ):
                         report.status = "PASS"
                         report.status_extended = f"MySQL Instance {instance.name} has 'skip_show_database' flag set to 'on'."
                         break
