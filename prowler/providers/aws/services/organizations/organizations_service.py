@@ -143,7 +143,7 @@ class Organizations(AWSService):
                 if isinstance(policy_content, str):
                     policy_content = json.loads(policy_content)
 
-                return policy_content  # This could be not be a dict, because json.loads could return a list or a string depending on the content of policy_content object.
+            return policy_content  # This could be not be a dict, because json.loads could return a list or a string depending on the content of policy_content object.
 
         except Exception as error:
             logger.error(
