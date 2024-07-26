@@ -2,7 +2,7 @@ from prowler.lib.check.models import Check, Check_Report_GCP
 from prowler.providers.gcp.services.kms.kms_client import kms_client
 
 
-class kms_key_not_publicly_accessible(Check):
+class kms_key_not_public_access(Check):
     def execute(self) -> Check_Report_GCP:
         findings = []
         for key in kms_client.crypto_keys:

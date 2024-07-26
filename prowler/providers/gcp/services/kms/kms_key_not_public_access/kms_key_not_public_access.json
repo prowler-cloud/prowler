@@ -1,6 +1,6 @@
 {
   "Provider": "gcp",
-  "CheckID": "kms_key_not_publicly_accessible",
+  "CheckID": "kms_key_not_public_access",
   "CheckTitle": "Check for Publicly Accessible Cloud KMS Keys",
   "CheckType": [],
   "ServiceName": "kms",
