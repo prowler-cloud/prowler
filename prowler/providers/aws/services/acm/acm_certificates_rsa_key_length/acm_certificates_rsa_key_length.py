@@ -3,6 +3,8 @@ from prowler.providers.aws.services.acm.acm_client import acm_client
 
 
 class acm_certificates_rsa_key_length(Check):
+    insecure_algorithms = ["RSA_1024"]
+
     def execute(self):
         findings = []
         for certificate in acm_client.certificates:
@@ -16,7 +18,7 @@ class acm_certificates_rsa_key_length(Check):
             report.status = "PASS"
             report.status_extended = f"ACM Certificate {certificate.id} for {certificate.name} meet minimum key size requirements."
 
-            if certificate.key_algorithm == "RSA_1024":
+            if certificate.key_algorithm in self.insecure_algorithms:
                 report.status = "FAIL"
                 report.status_extended = f"ACM Certificate {certificate.id} for {certificate.name} uses RSA_1024 which is not secure enough."
             findings.append(report)
