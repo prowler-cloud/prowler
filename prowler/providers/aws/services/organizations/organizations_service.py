@@ -149,6 +149,7 @@ class Organizations(AWSService):
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+            return {}
 
     def __list_targets_for_policy__(self, policy_id) -> list:
         logger.info("Organizations - List Targets for policy: %s ...", policy_id)
@@ -159,12 +160,14 @@ class Organizations(AWSService):
                 targets_for_policy = self.client.list_targets_for_policy(
                     PolicyId=policy_id
                 )["Targets"]
+
+            return targets_for_policy
+
         except Exception as error:
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-        finally:
-            return targets_for_policy
+            return []
 
     def __list_delegated_administrators__(self):
         logger.info("Organizations - List Delegated Administrators")
