@@ -49,6 +49,7 @@ class ACM(AWSService):
                                 name=certificate["DomainName"],
                                 id=certificate["CertificateArn"].split("/")[-1],
                                 type=certificate["Type"],
+                                key_algorithm=certificate["KeyAlgorithm"],
                                 expiration_days=certificate_expiration_time,
                                 in_use=certificate.get("InUse", False),
                                 transparency_logging=False,
@@ -98,6 +99,7 @@ class Certificate(BaseModel):
     name: str
     id: str
     type: str
+    key_algorithm: str
     tags: Optional[list] = []
     expiration_days: int
     in_use: bool
