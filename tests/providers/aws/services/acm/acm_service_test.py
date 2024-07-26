@@ -18,6 +18,7 @@ make_api_call = botocore.client.BaseClient._make_api_call
 certificate_arn = f"arn:aws:acm:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:certificate/{str(uuid.uuid4())}"
 certificate_name = "test-certificate.com"
 certificate_type = "AMAZON_ISSUED"
+certificate_key_algorithm = "RSA_4096"
 
 
 def mock_make_api_call(self, operation_name, kwargs):
@@ -142,6 +143,7 @@ class Test_ACM_Service:
         assert acm.certificates[0].arn == certificate_arn
         assert acm.certificates[0].name == certificate_name
         assert acm.certificates[0].type == certificate_type
+        assert acm.certificates[0].key_algorithm == certificate_key_algorithm
         assert acm.certificates[0].expiration_days == 365
         assert acm.certificates[0].transparency_logging is False
         assert acm.certificates[0].region == AWS_REGION_US_EAST_1
