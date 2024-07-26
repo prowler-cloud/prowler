@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta, timezone
-from re import search
 from unittest import mock
 
 from boto3 import client
@@ -42,6 +41,9 @@ class Test_cloudtrail_cloudwatch_logging_enabled:
 
     @mock_aws
     def test_trails_sending_logs_during_and_not_last_day(self):
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
+        )
         cloudtrail_client_us_east_1 = client(
             "cloudtrail", region_name=AWS_REGION_US_EAST_1
         )
@@ -72,17 +74,11 @@ class Test_cloudtrail_cloudwatch_logging_enabled:
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider(
-                [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
-            ),
+            return_value=aws_provider,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.cloudtrail.cloudtrail_cloudwatch_logging_enabled.cloudtrail_cloudwatch_logging_enabled.cloudtrail_client",
-                new=Cloudtrail(
-                    set_mocked_aws_provider(
-                        [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
-                    )
-                ),
+                new=Cloudtrail(aws_provider),
             ) as service_client:
                 # Test Check
                 from prowler.providers.aws.services.cloudtrail.cloudtrail_cloudwatch_logging_enabled.cloudtrail_cloudwatch_logging_enabled import (
@@ -112,25 +108,29 @@ class Test_cloudtrail_cloudwatch_logging_enabled:
                         assert report.resource_id == trail_name_us
                         assert report.resource_arn == trail_us["TrailARN"]
                         assert report.status == "PASS"
-                        assert search(
-                            report.status_extended,
-                            f"Single region trail {trail_name_us} has been logging the last 24h.",
+                        assert (
+                            report.status_extended
+                            == f"Single region trail {trail_name_us} has been logging in the last 24h."
                         )
+
                         assert report.resource_tags == []
                         assert report.region == AWS_REGION_US_EAST_1
                     if report.resource_id == trail_name_eu:
                         assert report.resource_id == trail_name_eu
                         assert report.resource_arn == trail_eu["TrailARN"]
                         assert report.status == "FAIL"
-                        assert search(
-                            report.status_extended,
-                            f"Single region trail {trail_name_eu} is not logging in the last 24h.",
+                        assert (
+                            report.status_extended
+                            == f"Single region trail {trail_name_eu} has not been logging in the last 24h."
                         )
                         assert report.resource_tags == []
                         assert report.region == AWS_REGION_EU_WEST_1
 
     @mock_aws
     def test_multi_region_and_single_region_logging_and_not(self):
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
+        )
         cloudtrail_client_us_east_1 = client(
             "cloudtrail", region_name=AWS_REGION_US_EAST_1
         )
@@ -161,17 +161,11 @@ class Test_cloudtrail_cloudwatch_logging_enabled:
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider(
-                [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
-            ),
+            return_value=aws_provider,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.cloudtrail.cloudtrail_cloudwatch_logging_enabled.cloudtrail_cloudwatch_logging_enabled.cloudtrail_client",
-                new=Cloudtrail(
-                    set_mocked_aws_provider(
-                        [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
-                    )
-                ),
+                new=Cloudtrail(aws_provider),
             ) as service_client:
                 # Test Check
                 from prowler.providers.aws.services.cloudtrail.cloudtrail_cloudwatch_logging_enabled.cloudtrail_cloudwatch_logging_enabled import (
@@ -201,26 +195,29 @@ class Test_cloudtrail_cloudwatch_logging_enabled:
                         assert report.resource_id == trail_name_us
                         assert report.resource_arn == trail_us["TrailARN"]
                         assert report.status == "PASS"
-                        assert search(
-                            report.status_extended,
-                            f"Multiregion trail {trail_name_us} has been logging the last 24h.",
+                        assert (
+                            report.status_extended
+                            == f"Multiregion trail {trail_name_us} has been logging in the last 24h."
                         )
+
+                        assert report.region == AWS_REGION_US_EAST_1
                         assert report.resource_tags == []
-                    if (
-                        report.resource_id == trail_name_eu
-                        and report.region == AWS_REGION_EU_WEST_1
-                    ):
+                    if report.resource_id == trail_name_eu:
                         assert report.resource_id == trail_name_eu
                         assert report.resource_arn == trail_eu["TrailARN"]
                         assert report.status == "FAIL"
-                        assert search(
-                            report.status_extended,
-                            f"Single region trail {trail_name_eu} is not logging in the last 24h.",
+                        assert (
+                            report.status_extended
+                            == f"Single region trail {trail_name_eu} has not been logging in the last 24h."
                         )
+                        assert report.region == AWS_REGION_EU_WEST_1
                         assert report.resource_tags == []
 
     @mock_aws
     def test_trails_sending_and_not_sending_logs(self):
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
+        )
         cloudtrail_client_us_east_1 = client(
             "cloudtrail", region_name=AWS_REGION_US_EAST_1
         )
@@ -251,17 +248,11 @@ class Test_cloudtrail_cloudwatch_logging_enabled:
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider(
-                [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
-            ),
+            return_value=aws_provider,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.cloudtrail.cloudtrail_cloudwatch_logging_enabled.cloudtrail_cloudwatch_logging_enabled.cloudtrail_client",
-                new=Cloudtrail(
-                    set_mocked_aws_provider(
-                        [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
-                    )
-                ),
+                new=Cloudtrail(aws_provider),
             ) as service_client:
                 # Test Check
                 from prowler.providers.aws.services.cloudtrail.cloudtrail_cloudwatch_logging_enabled.cloudtrail_cloudwatch_logging_enabled import (
@@ -291,8 +282,9 @@ class Test_cloudtrail_cloudwatch_logging_enabled:
                         assert report.status == "PASS"
                         assert (
                             report.status_extended
-                            == f"Single region trail {trail_name_us} has been logging the last 24h."
+                            == f"Single region trail {trail_name_us} has been logging in the last 24h."
                         )
+                        assert report.region == AWS_REGION_US_EAST_1
                         assert report.resource_tags == []
                     if report.resource_id == trail_name_eu:
                         assert report.resource_id == trail_name_eu
@@ -300,29 +292,27 @@ class Test_cloudtrail_cloudwatch_logging_enabled:
                         assert report.status == "FAIL"
                         assert (
                             report.status_extended
-                            == f"Single region trail {trail_name_eu} is not logging in the last 24h or not configured to deliver logs."
+                            == f"Single region trail {trail_name_eu} has not been logging in the last 24h or is not configured to deliver logs."
                         )
+                        assert report.region == AWS_REGION_EU_WEST_1
                         assert report.resource_tags == []
 
     @mock_aws
     def test_access_denied(self):
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
+        )
         from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
             Cloudtrail,
         )
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider(
-                [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
-            ),
+            return_value=aws_provider,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.cloudtrail.cloudtrail_cloudwatch_logging_enabled.cloudtrail_cloudwatch_logging_enabled.cloudtrail_client",
-                new=Cloudtrail(
-                    set_mocked_aws_provider(
-                        [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
-                    )
-                ),
+                new=Cloudtrail(aws_provider),
             ) as service_client:
                 # Test Check
                 from prowler.providers.aws.services.cloudtrail.cloudtrail_cloudwatch_logging_enabled.cloudtrail_cloudwatch_logging_enabled import (
@@ -334,3 +324,50 @@ class Test_cloudtrail_cloudwatch_logging_enabled:
                 check = cloudtrail_cloudwatch_logging_enabled()
                 result = check.execute()
                 assert len(result) == 0
+
+    @mock_aws
+    def test_trail_multi_region_auditing_other_region(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        cloudtrail_client_us_east_1 = client(
+            "cloudtrail", region_name=AWS_REGION_US_EAST_1
+        )
+        s3_client_us_east_1 = client("s3", region_name=AWS_REGION_US_EAST_1)
+
+        trail_name_us = "trail_test_us"
+        bucket_name_us = "bucket_test_us"
+
+        s3_client_us_east_1.create_bucket(Bucket=bucket_name_us)
+
+        trail_us = cloudtrail_client_us_east_1.create_trail(
+            Name=trail_name_us, S3BucketName=bucket_name_us, IsMultiRegionTrail=True
+        )
+
+        from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
+            Cloudtrail,
+        )
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ):
+            with mock.patch(
+                "prowler.providers.aws.services.cloudtrail.cloudtrail_cloudwatch_logging_enabled.cloudtrail_cloudwatch_logging_enabled.cloudtrail_client",
+                new=Cloudtrail(aws_provider),
+            ):
+                # Test Check
+                from prowler.providers.aws.services.cloudtrail.cloudtrail_cloudwatch_logging_enabled.cloudtrail_cloudwatch_logging_enabled import (
+                    cloudtrail_cloudwatch_logging_enabled,
+                )
+
+                check = cloudtrail_cloudwatch_logging_enabled()
+                result = check.execute()
+                assert len(result) == 1
+                assert result[0].resource_id == trail_name_us
+                assert result[0].resource_arn == trail_us["TrailARN"]
+                assert result[0].status == "FAIL"
+                assert (
+                    result[0].status_extended
+                    == f"Multiregion trail {trail_name_us} has not been logging in the last 24h or is not configured to deliver logs."
+                )
+                assert result[0].region == AWS_REGION_US_EAST_1
+                assert result[0].resource_tags == []

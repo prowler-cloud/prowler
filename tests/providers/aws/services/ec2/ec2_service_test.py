@@ -1,6 +1,6 @@
 import ipaddress
 import re
-from base64 import b64decode
+from base64 import b64decode, b64encode
 from datetime import datetime
 
 import botocore
@@ -10,6 +10,7 @@ from dateutil.tz import tzutc
 from freezegun import freeze_time
 from moto import mock_aws
 
+from prowler.config.config import enconding_format_utf_8
 from prowler.providers.aws.services.ec2.ec2_service import EC2
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
@@ -320,7 +321,9 @@ class Test_EC2_Service:
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
         ec2 = EC2(aws_provider)
-        assert user_data == b64decode(ec2.instances[0].user_data).decode("utf-8")
+        assert user_data == b64decode(ec2.instances[0].user_data).decode(
+            enconding_format_utf_8
+        )
 
     # Test EC2 Get EBS Encryption by default
     @mock_aws
@@ -615,3 +618,92 @@ class Test_EC2_Service:
         assert ec2.volumes[0].tags == [
             {"Key": "test", "Value": "test"},
         ]
+
+    # Test EC2 Describe Launch Templates
+    @mock_aws
+    def test__describe_launch_templates__(self):
+        # Generate EC2 Client
+        ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
+
+        TEMPLATE_NAME = "tester1"
+        TEMPLATE_INSTANCE_TYPE = "c5.large"
+        KNOWN_SECRET_USER_DATA = "DB_PASSWORD=foobar123"
+
+        # Create EC2 Launch Template API
+        ec2_client.create_launch_template(
+            LaunchTemplateName=TEMPLATE_NAME,
+            VersionDescription="Test EC Launch Template 1 (Secret in UserData)",
+            LaunchTemplateData={
+                "InstanceType": TEMPLATE_INSTANCE_TYPE,
+                "UserData": b64encode(
+                    KNOWN_SECRET_USER_DATA.encode(enconding_format_utf_8)
+                ).decode(enconding_format_utf_8),
+            },
+        )
+
+        # EC2 client for this test class
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        )
+        ec2 = EC2(aws_provider)
+
+        assert len(ec2.launch_templates) == 1
+        assert ec2.launch_templates[0].name == TEMPLATE_NAME
+        assert ec2.launch_templates[0].region == AWS_REGION_US_EAST_1
+        assert (
+            ec2.launch_templates[0].arn
+            == f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:launch-template/{ec2.launch_templates[0].id}"
+        )
+
+    # Test EC2 Describe Launch Templates
+    @mock_aws
+    def test__get_launch_template_versions__(self):
+        # Generate EC2 Client
+        ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
+
+        TEMPLATE_NAME = "tester1"
+        TEMPLATE_INSTANCE_TYPE = "c5.large"
+        KNOWN_SECRET_USER_DATA = "DB_PASSWORD=foobar123"
+
+        # Create EC2 Launch Template API
+        ec2_client.create_launch_template(
+            LaunchTemplateName=TEMPLATE_NAME,
+            VersionDescription="Test EC Launch Template 1",
+            LaunchTemplateData={
+                "InstanceType": TEMPLATE_INSTANCE_TYPE,
+            },
+        )
+
+        # Create EC2 Launch Template Version API
+        ec2_client.create_launch_template_version(
+            LaunchTemplateName=TEMPLATE_NAME,
+            VersionDescription="Updated Test EC Launch Template 1",
+            LaunchTemplateData={
+                "InstanceType": TEMPLATE_INSTANCE_TYPE,
+                "UserData": b64encode(
+                    KNOWN_SECRET_USER_DATA.encode(enconding_format_utf_8)
+                ).decode(enconding_format_utf_8),
+            },
+        )
+
+        # EC2 client for this test class
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        )
+        ec2 = EC2(aws_provider)
+
+        assert len(ec2.launch_templates) == 1
+        assert ec2.launch_templates[0].name == TEMPLATE_NAME
+        assert ec2.launch_templates[0].region == AWS_REGION_US_EAST_1
+
+        assert len(ec2.launch_templates[0].versions) == 2
+
+        version1, version2 = ec2.launch_templates[0].versions
+
+        assert version1.template_data["InstanceType"] == TEMPLATE_INSTANCE_TYPE
+
+        assert version2.template_data["InstanceType"] == TEMPLATE_INSTANCE_TYPE
+        assert (
+            b64decode(version2.template_data["UserData"]).decode(enconding_format_utf_8)
+            == KNOWN_SECRET_USER_DATA
+        )

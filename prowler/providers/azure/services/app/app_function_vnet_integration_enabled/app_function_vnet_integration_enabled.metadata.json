@@ -1,0 +1,30 @@
+{
+  "Provider": "azure",
+  "CheckID": "app_function_vnet_integration_enabled",
+  "CheckTitle": "Ensure Virtual Network Integration is Enabled for Azure Functions",
+  "CheckType": [],
+  "ServiceName": "app",
+  "SubServiceName": "function",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Microsoft.Web/sites",
+  "Description": "Enabling Virtual Network Integration for Azure Functions provides an additional layer of security by restricting access to selected virtual network subnets. This helps to protect your Function Apps from unauthorized access and potential threats.",
+  "Risk": "Without Virtual Network Integration, your Function Apps may be exposed to the public internet, increasing the risk of unauthorized access and potential security breaches.",
+  "RelatedUrl": "https://docs.microsoft.com/en-us/azure/azure-functions/functions-networking-options#virtual-network-integration",
+  "Remediation": {
+    "Code": {
+      "CLI": "az functionapp vnet-integration update --name <function_app_name> --resource-group <resource_group_name> --vnet <vnet_name> --subnet <subnet_name>",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/Functions/azure-function-vnet-integration-on.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "It is recommended to enable Virtual Network Integration for Azure Functions to enhance security and protect against unauthorized access.",
+      "Url": "https://docs.microsoft.com/en-us/azure/azure-functions/functions-networking-options#enable-virtual-network-integration"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

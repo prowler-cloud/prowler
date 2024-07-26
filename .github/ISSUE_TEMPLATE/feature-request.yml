@@ -1,7 +1,6 @@
-name:  💡 Feature Request
+name: 💡 Feature Request
 description: Suggest an idea for this project
 labels: ["feature-request", "status/needs-triage"]
-
 
 body:
   - type: textarea

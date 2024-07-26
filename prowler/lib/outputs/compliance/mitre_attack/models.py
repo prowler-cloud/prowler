@@ -1,9 +1,9 @@
 from pydantic import BaseModel
 
 
-class MitreAttackAWS(BaseModel):
+class AWSMitreAttackModel(BaseModel):
     """
-    MitreAttackAWS generates a finding's output in CSV MITRE ATTACK format for AWS.
+    AWSMitreAttackModel generates a finding's output in CSV MITRE ATTACK format for AWS.
     """
 
     Provider: str
@@ -27,11 +27,12 @@ class MitreAttackAWS(BaseModel):
     ResourceId: str
     CheckId: str
     Muted: bool
+    ResourceName: str
 
 
-class MitreAttackAzure(BaseModel):
+class AzureMitreAttackModel(BaseModel):
     """
-    MitreAttackAzure generates a finding's output in CSV MITRE ATTACK format for Azure.
+    AzureMitreAttackModel generates a finding's output in CSV MITRE ATTACK format for Azure.
     """
 
     Provider: str
@@ -54,11 +55,13 @@ class MitreAttackAzure(BaseModel):
     ResourceId: str
     CheckId: str
     Muted: bool
+    ResourceName: str
+    Location: str
 
 
-class MitreAttackGCP(BaseModel):
+class GCPMitreAttackModel(BaseModel):
     """
-    MitreAttackGCP generates a finding's output in CSV MITRE ATTACK format for AWS.
+    GCPMitreAttackModel generates a finding's output in CSV MITRE ATTACK format for AWS.
     """
 
     Provider: str
@@ -81,3 +84,9 @@ class MitreAttackGCP(BaseModel):
     ResourceId: str
     CheckId: str
     Muted: bool
+    ResourceName: str
+    Location: str
+
+
+# TODO: Create a parent class for the common fields of MITRE ATT&CK and have the specific classes from each provider to inherit from it.
+# It is not done yet because it is needed to respect the current order of the fields in the output file.

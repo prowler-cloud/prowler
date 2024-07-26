@@ -4,10 +4,14 @@ You can extend Prowler Open Source in many different ways, in most cases you wil
 
 ## Get the code and install all dependencies
 
-First of all, you need a version of Python 3.9 or higher and also pip installed to be able to install all dependencies required. Once that is satisfied go a head and clone the repo:
+First of all, you need a version of Python 3.9 or higher and also `pip` installed to be able to install all dependencies required.
+
+Then, to start working with the Prowler Github repository you need to fork it to be able to propose changes for new features, bug fixing, etc. To fork the Prowler repo please refer to [this guide](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/fork-a-repo?tool=webui#forking-a-repository).
+
+Once that is satisfied go ahead and clone your forked repo:
 
 ```
-git clone https://github.com/prowler-cloud/prowler
+git clone https://github.com/<your-github-user>/prowler
 cd prowler
 ```
 For isolation and avoid conflicts with other environments, we recommend usage of `poetry`:
@@ -43,6 +47,11 @@ Before we merge any of your pull requests we pass checks to the code, we use the
 - [`vulture`](https://pypi.org/project/vulture/), [`flake8`](https://pypi.org/project/flake8/), [`black`](https://pypi.org/project/black/) and [`pylint`](https://pypi.org/project/pylint/) for formatting and best practices.
 
 You can see all dependencies in file `pyproject.toml`.
+
+Moreover, you would need to install [`TruffleHog`](https://github.com/trufflesecurity/trufflehog) on the latest version to check for secrets in the code. You can install it using the official installation guide [here](https://github.com/trufflesecurity/trufflehog?tab=readme-ov-file#floppy_disk-installation).
+
+???+ note
+    If you have any trouble when committing to the Prowler repository, add the `--no-verify` flag to the `git commit` command.
 
 ## Pull Request Checklist
 

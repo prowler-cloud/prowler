@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "ec2_instance_port_elasticsearch_kibana_exposed_to_internet",
+  "CheckTitle": "Ensure no EC2 instances allow ingress from the internet to Elasticsearch and Kibana ports (TCP 9200, 9300, 5601).",
+  "CheckType": [
+    "Infrastructure Security"
+  ],
+  "ServiceName": "ec2",
+  "SubServiceName": "instance",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "critical",
+  "ResourceType": "AwsEc2Instance",
+  "Description": "Ensure no EC2 instances allow ingress from the internet to Elasticsearch and Kibana ports (TCP 9200, 9300, 5601).",
+  "Risk": "Elasticsearch and Kibana are commonly used for log and data analysis. Allowing ingress from the internet to these ports can expose sensitive data to unauthorized users.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Modify the security group to remove the rule that allows ingress from the internet to TCP ports 9200, 9300, 5601.",
+      "Url": "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

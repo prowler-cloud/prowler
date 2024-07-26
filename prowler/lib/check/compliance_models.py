@@ -91,7 +91,6 @@ class CIS_Requirement_Attribute(BaseModel):
     AdditionalInformation: str
     DefaultValue: Optional[str]
     References: str
-    DefaultValue: Optional[str]
 
 
 # Well Architected Requirement Attribute
@@ -189,8 +188,8 @@ class Compliance_Requirement(BaseModel):
     Checks: list[str]
 
 
-class Compliance_Base_Model(BaseModel):
-    """Compliance_Base_Model holds the base model for every compliance framework"""
+class ComplianceBaseModel(BaseModel):
+    """ComplianceBaseModel holds the base model for every compliance framework"""
 
     Framework: str
     Provider: str
@@ -218,10 +217,10 @@ class Compliance_Base_Model(BaseModel):
 # Testing Pending
 def load_compliance_framework(
     compliance_specification_file: str,
-) -> Compliance_Base_Model:
+) -> ComplianceBaseModel:
     """load_compliance_framework loads and parse a Compliance Framework Specification"""
     try:
-        compliance_framework = Compliance_Base_Model.parse_file(
+        compliance_framework = ComplianceBaseModel.parse_file(
             compliance_specification_file
         )
     except ValidationError as error:

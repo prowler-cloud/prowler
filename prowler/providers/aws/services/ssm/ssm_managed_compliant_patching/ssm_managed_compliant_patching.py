@@ -10,7 +10,7 @@ class ssm_managed_compliant_patching(Check):
             report = Check_Report_AWS(self.metadata())
             report.region = resource.region
             report.resource_id = resource.id
-
+            report.resource_arn = resource.arn
             if resource.status == ResourceStatus.COMPLIANT:
                 report.status = "PASS"
                 report.status_extended = (

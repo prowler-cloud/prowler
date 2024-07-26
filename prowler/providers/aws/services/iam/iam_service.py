@@ -5,6 +5,7 @@ from typing import Optional
 from botocore.client import ClientError
 from pydantic import BaseModel
 
+from prowler.config.config import enconding_format_utf_8
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
@@ -144,7 +145,9 @@ class IAM(AWSService):
                 if report_status["State"] == "COMPLETE":
                     report_is_completed = True
             # Convert credential report to list of dictionaries
-            credential = self.client.get_credential_report()["Content"].decode("utf-8")
+            credential = self.client.get_credential_report()["Content"].decode(
+                enconding_format_utf_8
+            )
             credential_lines = credential.split("\n")
             csv_reader = csv.DictReader(credential_lines, delimiter=",")
             credential_list = list(csv_reader)
@@ -274,16 +277,26 @@ class IAM(AWSService):
                     if not self.audit_resources or (
                         is_resource_filtered(user["Arn"], self.audit_resources)
                     ):
-                        if "PasswordLastUsed" not in user:
-                            users.append(User(name=user["UserName"], arn=user["Arn"]))
-                        else:
-                            users.append(
-                                User(
-                                    name=user["UserName"],
-                                    arn=user["Arn"],
-                                    password_last_used=user["PasswordLastUsed"],
-                                )
+                        try:
+                            user_login_profile = self.client.get_login_profile(
+                                UserName=user["UserName"]
                             )
+                        except self.client.exceptions.NoSuchEntityException:
+                            user_login_profile = None
+                        except Exception as error:
+                            user_login_profile = None
+                            logger.error(
+                                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                            )
+
+                        users.append(
+                            User(
+                                name=user["UserName"],
+                                arn=user["Arn"],
+                                password_last_used=user.get("PasswordLastUsed", None),
+                                console_access=True if user_login_profile else False,
+                            )
+                        )
         except Exception as error:
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -935,6 +948,7 @@ class User(BaseModel):
     arn: str
     mfa_devices: list[MFADevice] = []
     password_last_used: Optional[datetime]
+    console_access: Optional[bool]
     attached_policies: list[dict] = []
     inline_policies: list[str] = []
     tags: Optional[list] = []

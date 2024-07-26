@@ -19,7 +19,6 @@ from prowler.lib.check.compliance_models import load_compliance_framework
 from prowler.lib.check.custom_checks_metadata import update_check_metadata
 from prowler.lib.check.models import Check, load_check_metadata
 from prowler.lib.logger import logger
-from prowler.lib.mutelist.mutelist import mutelist_findings
 from prowler.lib.outputs.outputs import report
 from prowler.lib.utils.utils import open_file, parse_json_file, print_boxes
 from prowler.providers.common.models import Audit_Metadata
@@ -126,9 +125,10 @@ def parse_checks_from_file(input_file: str, provider: str) -> set:
 
 
 # Load checks from custom folder
-def parse_checks_from_folder(provider, input_folder: str) -> int:
+def parse_checks_from_folder(provider, input_folder: str) -> set:
+    # TODO: move the AWS-specific code into the provider
     try:
-        imported_checks = 0
+        custom_checks = set()
         # Check if input folder is a S3 URI
         if provider.type == "aws" and re.search(
             "^s3://([^/]+)/(.*?([^/]+))/$", input_folder
@@ -156,8 +156,8 @@ def parse_checks_from_folder(provider, input_folder: str) -> int:
                     if os.path.exists(prowler_module):
                         shutil.rmtree(prowler_module)
                     shutil.copytree(check_module, prowler_module)
-                    imported_checks += 1
-        return imported_checks
+                    custom_checks.add(check.name)
+        return custom_checks
     except Exception as error:
         logger.critical(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
@@ -438,7 +438,7 @@ def import_check(check_path: str) -> ModuleType:
     return lib
 
 
-def run_check(check: Check, output_options) -> list:
+def run_check(check: Check, verbose: bool = False, only_logs: bool = False) -> list:
     """
     Run the check and return the findings
     Args:
@@ -448,7 +448,7 @@ def run_check(check: Check, output_options) -> list:
         list: list of findings
     """
     findings = []
-    if output_options.verbose or output_options.fixer:
+    if verbose:
         print(
             f"\nCheck ID: {check.CheckID} - {Fore.MAGENTA}{check.ServiceName}{Fore.YELLOW} [{check.Severity}]{Style.RESET_ALL}"
         )
@@ -456,7 +456,7 @@ def run_check(check: Check, output_options) -> list:
     try:
         findings = check.execute()
     except Exception as error:
-        if not output_options.only_logs:
+        if not only_logs:
             print(
                 f"Something went wrong in {check.CheckID}, please use --log-level ERROR"
             )
@@ -616,9 +616,9 @@ def execute_checks(
     else:
         # Prepare your messages
         messages = [f"Config File: {Fore.YELLOW}{config_file}{Style.RESET_ALL}"]
-        if global_provider.mutelist_file_path:
+        if global_provider.mutelist.mutelist_file_path:
             messages.append(
-                f"Mutelist File: {Fore.YELLOW}{global_provider.mutelist_file_path}{Style.RESET_ALL}"
+                f"Mutelist File: {Fore.YELLOW}{global_provider.mutelist.mutelist_file_path}{Style.RESET_ALL}"
             )
         if global_provider.type == "aws":
             messages.append(
@@ -708,14 +708,30 @@ def execute(
             )
 
         # Run check
-        check_findings = run_check(check_class, global_provider.output_options)
+        verbose = (
+            global_provider.output_options.verbose
+            or global_provider.output_options.fixer
+        )
+        check_findings = run_check(
+            check_class, verbose, global_provider.output_options.only_logs
+        )
 
         # Mutelist findings
-        if hasattr(global_provider, "mutelist") and global_provider.mutelist:
-            check_findings = mutelist_findings(
-                global_provider,
-                check_findings,
-            )
+        if hasattr(global_provider, "mutelist") and global_provider.mutelist.mutelist:
+            # TODO: make this prettier
+            is_finding_muted_args = {}
+            if global_provider.type == "aws":
+                is_finding_muted_args["aws_account_id"] = (
+                    global_provider.identity.account
+                )
+            elif global_provider.type == "kubernetes":
+                is_finding_muted_args["cluster"] = global_provider.identity.cluster
+
+            for finding in check_findings:
+                is_finding_muted_args["finding"] = finding
+                finding.muted = global_provider.mutelist.is_finding_muted(
+                    **is_finding_muted_args
+                )
 
         # Refactor(Outputs)
         # Report the check's findings

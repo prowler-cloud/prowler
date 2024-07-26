@@ -1,12 +1,15 @@
+import json
 import os
 import pathlib
+import traceback
 from argparse import Namespace
 from importlib.machinery import FileFinder
+from logging import DEBUG, ERROR
 from pkgutil import ModuleInfo
 
 from boto3 import client
-from fixtures.bulk_checks_metadata import test_bulk_checks_metadata
-from mock import patch
+from colorama import Fore, Style
+from mock import Mock, patch
 from moto import mock_aws
 
 from prowler.lib.check.check import (
@@ -21,10 +24,12 @@ from prowler.lib.check.check import (
     recover_checks_from_provider,
     recover_checks_from_service,
     remove_custom_checks_module,
+    run_check,
     update_audit_metadata,
 )
 from prowler.lib.check.models import load_check_metadata
 from prowler.providers.aws.aws_provider import AwsProvider
+from tests.lib.check.fixtures.bulk_checks_metadata import test_bulk_checks_metadata
 from tests.providers.aws.utils import AWS_REGION_US_EAST_1
 
 # AWS_ACCOUNT_NUMBER = "123456789012"
@@ -449,14 +454,14 @@ class TestCheck:
                     "path": test_checks_folder,
                     "provider": "aws",
                 },
-                "expected": 3,
+                "expected": {"check11", "check12", "check7777"},
             },
             {
                 "input": {
                     "path": "s3://test/checks_folder/",
                     "provider": "aws",
                 },
-                "expected": 3,
+                "expected": {"check11", "check12", "check7777"},
             },
         ]
 
@@ -786,3 +791,163 @@ class TestCheck:
             checks_json
             == '{\n  "aws": [\n    "awslambda_function_invoke_api_operations_cloudtrail_logging_enabled",\n    "awslambda_function_no_secrets_in_code",\n    "awslambda_function_no_secrets_in_variables",\n    "awslambda_function_not_publicly_accessible",\n    "awslambda_function_url_cors_policy",\n    "awslambda_function_url_public",\n    "awslambda_function_using_supported_runtimes"\n  ]\n}'
         )
+
+    def test_run_check(self, caplog):
+        caplog.set_level(DEBUG)
+
+        findings = []
+        check = Mock()
+        check.CheckID = "test-check"
+        check.execute = Mock(return_value=findings)
+
+        with patch("prowler.lib.check.check.execute", return_value=findings):
+            assert run_check(check) == findings
+            assert caplog.record_tuples == [
+                (
+                    "root",
+                    DEBUG,
+                    f"Executing check: {check.CheckID}",
+                )
+            ]
+
+    def test_run_check_verbose(self, capsys):
+
+        findings = []
+        check = Mock()
+        check.CheckID = "test-check"
+        check.ServiceName = "test-service"
+        check.Severity = "test-severity"
+        check.execute = Mock(return_value=findings)
+
+        with patch("prowler.lib.check.check.execute", return_value=findings):
+            assert run_check(check, verbose=True) == findings
+            assert (
+                capsys.readouterr().out
+                == f"\nCheck ID: {check.CheckID} - {Fore.MAGENTA}{check.ServiceName}{Fore.YELLOW} [{check.Severity}]{Style.RESET_ALL}\n"
+            )
+
+    def test_run_check_exception_only_logs(self, caplog):
+        caplog.set_level(ERROR)
+
+        findings = []
+        check = Mock()
+        check.CheckID = "test-check"
+        check.ServiceName = "test-service"
+        check.Severity = "test-severity"
+        error = Exception()
+        check.execute = Mock(side_effect=error)
+
+        with patch("prowler.lib.check.check.execute", return_value=findings):
+            assert run_check(check, only_logs=True) == findings
+            assert caplog.record_tuples == [
+                (
+                    "root",
+                    ERROR,
+                    f"{check.CheckID} -- {error.__class__.__name__}[{traceback.extract_tb(error.__traceback__)[-1].lineno}]: {error}",
+                )
+            ]
+
+    def test_run_check_exception(self, caplog, capsys):
+        caplog.set_level(ERROR)
+
+        findings = []
+        check = Mock()
+        check.CheckID = "test-check"
+        check.ServiceName = "test-service"
+        check.Severity = "test-severity"
+        error = Exception()
+        check.execute = Mock(side_effect=error)
+
+        with patch("prowler.lib.check.check.execute", return_value=findings):
+            assert (
+                run_check(
+                    check,
+                    verbose=False,
+                )
+                == findings
+            )
+            assert caplog.record_tuples == [
+                (
+                    "root",
+                    ERROR,
+                    f"{check.CheckID} -- {error.__class__.__name__}[{traceback.extract_tb(error.__traceback__)[-1].lineno}]: {error}",
+                )
+            ]
+            assert (
+                capsys.readouterr().out
+                == f"Something went wrong in {check.CheckID}, please use --log-level ERROR\n"
+            )
+
+    def test_aws_checks_metadata_is_valid(self):
+        # Check if the checkID in the metadata.json of the checks is correct
+        # Define the base directory for the checks
+        base_directory = os.path.abspath(
+            os.path.join(
+                os.path.dirname(__file__), "../../../", "prowler/providers/aws/services"
+            )
+        )
+        self.verify_metadata_check_id(base_directory)
+
+    def test_azure_checks_metadata_is_valid(self):
+        # Check if the checkID in the metadata.json of the checks is correct
+        # Define the base directory for the checks
+        base_directory = os.path.abspath(
+            os.path.join(
+                os.path.dirname(__file__),
+                "../../../",
+                "prowler/providers/azure/services",
+            )
+        )
+        self.verify_metadata_check_id(base_directory)
+
+    def test_gcp_checks_metadata_is_valid(self):
+        # Check if the checkID in the metadata.json of the checks is correct
+        # Define the base directory for the checks
+        base_directory = os.path.abspath(
+            os.path.join(
+                os.path.dirname(__file__), "../../../", "prowler/providers/gcp/services"
+            )
+        )
+        self.verify_metadata_check_id(base_directory)
+
+    def test_kubernetes_checks_metadata_is_valid(self):
+        # Check if the checkID in the metadata.json of the checks is correct
+        # Define the base directory for the checks
+        base_directory = os.path.abspath(
+            os.path.join(
+                os.path.dirname(__file__),
+                "../../../",
+                "prowler/providers/kubernetes/services",
+            )
+        )
+        self.verify_metadata_check_id(base_directory)
+
+    def verify_metadata_check_id(self, provider_path):
+        # Walk through the base directory to find all service directories
+        for root, dirs, _ in os.walk(provider_path):
+            # We only want to look at directories that are direct children of the base directory
+            if root == provider_path:
+                for service_dir in dirs:
+                    service_path = os.path.join(root, service_dir)
+
+                    # Walk through each service directory to find check directories
+                    for check_root, check_dirs, _ in os.walk(service_path):
+                        for check_dir in check_dirs:
+                            check_directory = os.path.join(check_root, check_dir)
+                            metadata_file_name = f"{check_dir}.metadata.json"
+                            metadata_file_path = os.path.join(
+                                check_directory, metadata_file_name
+                            )
+
+                            if os.path.isfile(metadata_file_path):
+                                # Read the JSON file
+                                with open(metadata_file_path, "r") as f:
+                                    data = json.load(f)
+
+                                # Extract the CheckID field
+                                check_id = data.get("CheckID", None)
+
+                                # Compare CheckID to the check name
+                                assert (
+                                    check_id == check_dir
+                                ), f"CheckID in metadata does not match the check name in {check_directory}. Found CheckID: {check_id}"

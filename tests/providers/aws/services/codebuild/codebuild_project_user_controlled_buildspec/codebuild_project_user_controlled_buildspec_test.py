@@ -12,15 +12,15 @@ class Test_codebuild_project_user_controlled_buildspec:
         codebuild_client = mock.MagicMock
         project_name = "test-project"
         project_arn = f"arn:aws:codebuild:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:project/{project_name}"
-        codebuild_client.projects = [
-            Project(
+        codebuild_client.projects = {
+            project_arn: Project(
                 name=project_name,
                 arn=project_arn,
                 region="eu-west-1",
                 last_invoked_time=None,
                 buildspec=None,
             )
-        ]
+        }
         with mock.patch(
             "prowler.providers.aws.services.codebuild.codebuild_service.Codebuild",
             codebuild_client,
@@ -47,15 +47,16 @@ class Test_codebuild_project_user_controlled_buildspec:
         codebuild_client = mock.MagicMock
         project_name = "test-project"
         project_arn = f"arn:aws:codebuild:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:project/{project_name}"
-        codebuild_client.projects = [
-            Project(
+        codebuild_client.projects = {
+            project_arn: Project(
                 name=project_name,
                 arn=project_arn,
                 region="eu-west-1",
                 last_invoked_time=None,
                 buildspec="arn:aws:s3:::my-codebuild-sample2/buildspec.out",
             )
-        ]
+        }
+
         with mock.patch(
             "prowler.providers.aws.services.codebuild.codebuild_service.Codebuild",
             codebuild_client,
@@ -82,15 +83,15 @@ class Test_codebuild_project_user_controlled_buildspec:
         codebuild_client = mock.MagicMock
         project_name = "test-project"
         project_arn = f"arn:aws:codebuild:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:project/{project_name}"
-        codebuild_client.projects = [
-            Project(
+        codebuild_client.projects = {
+            project_arn: Project(
                 name=project_name,
                 arn=project_arn,
                 region="eu-west-1",
                 last_invoked_time=None,
                 buildspec="arn:aws:s3:::my-codebuild-sample2/buildspec.yaml",
             )
-        ]
+        }
         with mock.patch(
             "prowler.providers.aws.services.codebuild.codebuild_service.Codebuild",
             codebuild_client,
@@ -116,15 +117,15 @@ class Test_codebuild_project_user_controlled_buildspec:
         codebuild_client = mock.MagicMock
         project_name = "test-project"
         project_arn = f"arn:aws:codebuild:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:project/{project_name}"
-        codebuild_client.projects = [
-            Project(
+        codebuild_client.projects = {
+            project_arn: Project(
                 name=project_name,
                 arn=project_arn,
                 region="eu-west-1",
                 last_invoked_time=None,
                 buildspec="arn:aws:s3:::my-codebuild-sample2/buildspecyaml",
             )
-        ]
+        }
         with mock.patch(
             "prowler.providers.aws.services.codebuild.codebuild_service.Codebuild",
             codebuild_client,

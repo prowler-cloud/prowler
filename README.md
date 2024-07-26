@@ -1,6 +1,6 @@
 <p align="center">
-  <img align="center" src="https://github.com/prowler-cloud/prowler/blob/master/docs/img/prowler-logo-black.png?raw=True#gh-light-mode-only" width="350" height="115">
-  <img align="center" src="https://github.com/prowler-cloud/prowler/blob/master/docs/img/prowler-logo-white.png?raw=True#gh-dark-mode-only" width="350" height="115">
+  <img align="center" src="https://github.com/prowler-cloud/prowler/blob/master/docs/img/prowler-logo-black.png#gh-light-mode-only" width="50%" height="50%">
+  <img align="center" src="https://github.com/prowler-cloud/prowler/blob/master/docs/img/prowler-logo-white.png#gh-dark-mode-only" width="50%" height="50%">
 </p>
 <p align="center">
   <b><i>Prowler SaaS </b> and <b>Prowler Open Source</b> are as dynamic and adaptable as the environment they’re meant to protect. Trusted by the leaders in security.
@@ -10,11 +10,10 @@
 </p>
 
 <p align="center">
-<a href="https://join.slack.com/t/prowler-workspace/shared_invite/zt-1hix76xsl-2uq222JIXrC7Q8It~9ZNog"><img width="30" height="30" alt="Prowler community on Slack" src="https://github.com/prowler-cloud/prowler/assets/3985464/3617e470-670c-47c9-9794-ce895ebdb627"></a>
+<a href="https://join.slack.com/t/prowler-workspace/shared_invite/zt-1hix76xsl-2uq222JIXrC7Q8It~9ZNog"><img width="30" height="30" alt="Prowler community on Slack" src="https://github.com/prowler-cloud/prowler/assets/38561120/3c8b4ec5-6849-41a5-b5e1-52bbb94af73a"></a>
   <br>
 <a href="https://join.slack.com/t/prowler-workspace/shared_invite/zt-1hix76xsl-2uq222JIXrC7Q8It~9ZNog">Join our Prowler community!</a>
 </p>
-
 <hr>
 <p align="center">
   <a href="https://join.slack.com/t/prowler-workspace/shared_invite/zt-1hix76xsl-2uq222JIXrC7Q8It~9ZNog"><img alt="Slack Shield" src="https://img.shields.io/badge/slack-prowler-brightgreen.svg?logo=slack"></a>
@@ -38,6 +37,9 @@
   <a href="https://twitter.com/prowlercloud"><img alt="Twitter" src="https://img.shields.io/twitter/follow/prowlercloud?style=social"></a>
 </p>
 <hr>
+<p align="center">
+  <img align="center" src="/docs/img/prowler-cli-quick.gif" width="100%" height="100%">
+</p>
 
 # Description
 
@@ -61,9 +63,9 @@ It contains hundreds of controls covering CIS, NIST 800, NIST CSF, CISA, RBI, Fe
 
 | Provider | Checks | Services | [Compliance Frameworks](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/compliance/) | [Categories](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/misc/#categories) |
 |---|---|---|---|---|
-| AWS | 339 | 65 -> `prowler aws --list-services` | 28 -> `prowler aws --list-compliance` | 6 -> `prowler aws --list-categories` |
+| AWS | 385 | 67 -> `prowler aws --list-services` | 28 -> `prowler aws --list-compliance` | 7 -> `prowler aws --list-categories` |
 | GCP | 77 | 13 -> `prowler gcp --list-services` | 1 -> `prowler gcp --list-compliance` | 2 -> `prowler gcp --list-categories`|
-| Azure | 127 | 16 -> `prowler azure --list-services` | 2 -> `prowler azure --list-compliance` | 2 -> `prowler azure --list-categories` |
+| Azure | 135 | 16 -> `prowler azure --list-services` | 2 -> `prowler azure --list-compliance` | 2 -> `prowler azure --list-categories` |
 | Kubernetes | 83 | 7 -> `prowler kubernetes --list-services` | 1 -> `prowler kubernetes --list-compliance` | 7 -> `prowler kubernetes --list-categories` |
 
 # 💻 Installation
@@ -75,7 +77,7 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler-clo
 pip install prowler
 prowler -v
 ```
-More details at [https://docs.prowler.com](https://docs.prowler.com/projects/prowler-open-source/en/latest/)
+>More details at [https://docs.prowler.com](https://docs.prowler.com/projects/prowler-open-source/en/latest/)
 
 ## Containers
 
@@ -92,7 +94,7 @@ The container images are available here:
 - [DockerHub](https://hub.docker.com/r/toniblyx/prowler/tags)
 - [AWS Public ECR](https://gallery.ecr.aws/prowler-cloud/prowler)
 
-## From Github
+## From GitHub
 
 Python >= 3.9, < 3.13 is required with pip and poetry:
 
@@ -103,8 +105,7 @@ poetry shell
 poetry install
 python prowler.py -v
 ```
-???+ note
-  If you want to clone Prowler from Windows, use `git config core.longpaths true` to allow long file paths.
+> If you want to clone Prowler from Windows, use `git config core.longpaths true` to allow long file paths.
 # 📐✏️ High level architecture
 
 You can run Prowler from your workstation, a Kubernetes Job, a Google Compute Engine, an Azure VM, an EC2 instance, Fargate or any other container, CloudShell and many more.
@@ -120,7 +121,6 @@ You can run Prowler from your workstation, a Kubernetes Job, a Google Compute En
 - The CSV output format is common for all the providers.
 
 We have deprecated some of our outputs formats:
-- The HTML is replaced for the new Prowler Dashboard, run `prowler dashboard`.
 - The native JSON is replaced for the JSON [OCSF](https://schema.ocsf.io/) v1.1.0, common for all the providers.
 
 ## AWS

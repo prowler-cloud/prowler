@@ -34,6 +34,7 @@ class AWSAssumeRoleInfo:
     external_id: str
     mfa_enabled: bool
     role_session_name: str
+    sts_region: str
 
 
 @dataclass

@@ -189,7 +189,6 @@ You can run Prowler from your workstation, a Kubernetes Job, a Google Compute En
 
 We have deprecated some of our outputs formats:
 
-- The HTML is replaced for the new Prowler Dashboard, run `prowler dashboard`.
 - The native JSON is replaced for the JSON [OCSF](https://schema.ocsf.io/) v1.1.0, common for all the providers.
 
 ### AWS
@@ -213,10 +212,10 @@ prowler <provider>
 
 If you miss the former output you can use `--verbose` but Prowler v4 is smoking fast, so you won't see much ;
 
-By default, Prowler will generate a CSV, JSON and HTML reports, however you can generate a JSON-ASFF (used by AWS Security Hub) report with `-M` or `--output-modes`:
+By default, Prowler generates CSV, JSON-OCSF and HTML reports. However, you can generate a JSON-ASFF report (used by AWS Security Hub) with `-M` or `--output-modes`:
 
 ```console
-prowler <provider> -M csv json json-asff html
+prowler <provider> -M csv json-asff json-ocsf html
 ```
 The html report will be located in the output directory as the other files and it will look like:
 

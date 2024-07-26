@@ -1,0 +1,30 @@
+{
+  "Provider": "aws",
+  "CheckID": "neptune_cluster_backup_enabled",
+  "CheckTitle": "Check for Neptune Clusters Backup Retention Period.",
+  "CheckType": [],
+  "ServiceName": "neptune",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-instance",
+  "Severity": "medium",
+  "ResourceType": "AwsRdsDbCluster",
+  "Description": "Check if Neptune Clusters have backup enabled.",
+  "Risk": "Ensure that your Amazon Neptune graph database clusters have set a minimum backup retention period of 7 days or greater in order to achieve your organization compliance requirements. The retention period represents the number of days to retain automated snapshots.",
+  "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/neptune-controls.html#neptune-5",
+  "Remediation": {
+    "Code": {
+      "CLI": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Neptune/sufficient-backup-retention-period.html#",
+      "NativeIaC": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Neptune/sufficient-backup-retention-period.html#",
+      "Other": "",
+      "Terraform": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Neptune/sufficient-backup-retention-period.html#"
+    },
+    "Recommendation": {
+      "Text": "Enable automated backup for production data. Define a retention period and periodically test backup restoration. A Disaster Recovery process should be in place to govern Data Protection approach.",
+      "Url": "https://docs.aws.amazon.com/securityhub/latest/userguide/neptune-controls.html#neptune-5"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

@@ -1,5 +1,6 @@
 from typing import Optional
 
+from botocore.exceptions import ClientError
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
@@ -41,9 +42,9 @@ class Glue(AWSService):
                         self.connections.append(
                             Connection(
                                 arn=arn,
-                                name=conn["Name"],
-                                type=conn["ConnectionType"],
-                                properties=conn["ConnectionProperties"],
+                                name=conn.get("Name", ""),
+                                type=conn.get("ConnectionType", ""),
+                                properties=conn.get("ConnectionProperties", {}),
                                 region=regional_client.region,
                             )
                         )
@@ -72,6 +73,18 @@ class Glue(AWSService):
                                 region=regional_client.region,
                             )
                         )
+        except ClientError as error:
+            # Check if the operation is not supported in the region
+            if error.response["Error"]["Message"].startswith(
+                "Operation is not supported"
+            ):
+                logger.warning(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

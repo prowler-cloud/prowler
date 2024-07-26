@@ -1,5 +1,8 @@
 import datetime
 
+import pytz
+from dateutil import parser
+
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.iam.iam_client import iam_client
 
@@ -32,13 +35,9 @@ class iam_rotate_access_key_90_days(Check):
                     user["access_key_1_last_rotated"] != "N/A"
                     and user["access_key_1_active"] == "true"
                 ):
-                    access_key_1_last_rotated = (
-                        datetime.datetime.now()
-                        - datetime.datetime.strptime(
-                            user["access_key_1_last_rotated"],
-                            "%Y-%m-%dT%H:%M:%S+00:00",
-                        )
-                    )
+                    access_key_1_last_rotated = datetime.datetime.now(
+                        pytz.utc
+                    ) - parser.parse(user["access_key_1_last_rotated"])
                     if access_key_1_last_rotated.days > maximum_expiration_days:
                         old_access_keys = True
                         report = Check_Report_AWS(self.metadata())
@@ -52,13 +51,9 @@ class iam_rotate_access_key_90_days(Check):
                     user["access_key_2_last_rotated"] != "N/A"
                     and user["access_key_2_active"] == "true"
                 ):
-                    access_key_2_last_rotated = (
-                        datetime.datetime.now()
-                        - datetime.datetime.strptime(
-                            user["access_key_2_last_rotated"],
-                            "%Y-%m-%dT%H:%M:%S+00:00",
-                        )
-                    )
+                    access_key_2_last_rotated = datetime.datetime.now(
+                        pytz.utc
+                    ) - parser.parse(user["access_key_2_last_rotated"])
                     if access_key_2_last_rotated.days > maximum_expiration_days:
                         old_access_keys = True
                         report = Check_Report_AWS(self.metadata())

@@ -945,7 +945,7 @@ def filter_data(
         color_mapping_status = {
             "FAIL": fail_color,
             "PASS": pass_color,
-            "INFO": info_color,
+            "LOW": info_color,
             "MANUAL": manual_color,
             "WARNING": muted_fail_color,
             "MUTED (FAIL)": muted_fail_color,
@@ -1533,7 +1533,7 @@ def generate_table(data, index, color_mapping_severity, color_mapping_status):
                                                     [
                                                         html.P(
                                                             html.Strong(
-                                                                "Resource uid: ",
+                                                                "ResourceUid: ",
                                                                 style={
                                                                     "margin-right": "5px"
                                                                 },
@@ -1553,7 +1553,7 @@ def generate_table(data, index, color_mapping_severity, color_mapping_status):
                                                     [
                                                         html.P(
                                                             html.Strong(
-                                                                "Finding uid: ",
+                                                                "FindingUid: ",
                                                                 style={
                                                                     "margin-right": "5px"
                                                                 },
@@ -1564,7 +1564,10 @@ def generate_table(data, index, color_mapping_severity, color_mapping_status):
                                                                 data.get(
                                                                     "FINDING_UID", ""
                                                                 )
-                                                            )
+                                                            ),
+                                                            style={
+                                                                "margin-left": "5px"
+                                                            },
                                                         ),
                                                     ],
                                                     style={"display": "flex"},
@@ -1573,7 +1576,7 @@ def generate_table(data, index, color_mapping_severity, color_mapping_status):
                                                     [
                                                         html.P(
                                                             html.Strong(
-                                                                "Check id: ",
+                                                                "CheckId: ",
                                                                 style={
                                                                     "margin-right": "5px"
                                                                 },
@@ -1628,6 +1631,30 @@ def generate_table(data, index, color_mapping_severity, color_mapping_status):
                                                     ],
                                                     style={"display": "flex"},
                                                 ),
+                                                html.Div(
+                                                    [
+                                                        html.P(
+                                                            html.Strong(
+                                                                "StatusExtended: ",
+                                                                style={
+                                                                    "margin-right": "5px"
+                                                                },
+                                                            )
+                                                        ),
+                                                        html.P(
+                                                            str(
+                                                                data.get(
+                                                                    "STATUS_EXTENDED",
+                                                                    "",
+                                                                )
+                                                            ),
+                                                            style={
+                                                                "margin-left": "5px"
+                                                            },
+                                                        ),
+                                                    ],
+                                                    style={"display": "flex"},
+                                                ),
                                             ],
                                             style={
                                                 "width": "50%",
@@ -1647,7 +1674,10 @@ def generate_table(data, index, color_mapping_severity, color_mapping_status):
                                                             )
                                                         ),
                                                         html.P(
-                                                            str(data.get("RISK", ""))
+                                                            str(data.get("RISK", "")),
+                                                            style={
+                                                                "margin-left": "5px"
+                                                            },
                                                         ),
                                                     ],
                                                     style={"display": "flex"},
@@ -1702,7 +1732,10 @@ def generate_table(data, index, color_mapping_severity, color_mapping_status):
                                                                     "REMEDIATION_RECOMMENDATION_TEXT",
                                                                     "",
                                                                 )
-                                                            )
+                                                            ),
+                                                            style={
+                                                                "margin-left": "5px"
+                                                            },
                                                         ),
                                                     ],
                                                     style={"display": "flex"},
@@ -1730,7 +1763,10 @@ def generate_table(data, index, color_mapping_severity, color_mapping_status):
                                                                     "",
                                                                 )
                                                             ),
-                                                            style={"color": "#3182ce"},
+                                                            style={
+                                                                "color": "#3182ce",
+                                                                "margin-left": "5px",
+                                                            },
                                                         ),
                                                     ],
                                                     style={"display": "flex"},

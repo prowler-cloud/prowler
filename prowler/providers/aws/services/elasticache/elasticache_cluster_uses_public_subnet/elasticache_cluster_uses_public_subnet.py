@@ -16,9 +16,12 @@ class elasticache_cluster_uses_public_subnet(Check):
             report.region = cluster.region
 
             report.status = "PASS"
-            report.status_extended = (
-                f"Cluster {cluster.id} is not using public subnets."
-            )
+            if cluster.engine == "redis":
+                report.status_extended = (
+                    f"Elasticache Redis Node {cluster.id} is not using public subnets."
+                )
+            else:
+                report.status_extended = f"Elasticache Memcached Cluster {cluster.id} is not using public subnets."
 
             public_subnets = []
             for subnet in cluster.subnets:
@@ -30,7 +33,10 @@ class elasticache_cluster_uses_public_subnet(Check):
 
             if len(public_subnets) > 0:
                 report.status = "FAIL"
-                report.status_extended = f"Cluster {cluster.id} is using {', '.join(public_subnets)} public subnets."
+                if cluster.engine == "redis":
+                    report.status_extended = f"Elasticache Redis Node {cluster.id} is using {', '.join(public_subnets)} public subnets."
+                else:
+                    report.status_extended = f"Elasticache Memcached Cluster {cluster.id} is using {', '.join(public_subnets)} public subnets."
 
             findings.append(report)
 

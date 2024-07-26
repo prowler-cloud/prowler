@@ -1,28 +1,15 @@
-import os
-from os import path, remove
 from unittest import mock
 
 import pytest
-from colorama import Fore
+from colorama import Fore, Style
+from mock import MagicMock
 
-from prowler.config.config import (
-    csv_file_suffix,
-    html_file_suffix,
-    json_asff_file_suffix,
-    json_ocsf_file_suffix,
-    output_file_timestamp,
+from prowler.config.config import orange_color
+from prowler.lib.outputs.outputs import (
+    extract_findings_statistics,
+    report,
+    set_report_color,
 )
-from prowler.lib.check.compliance_models import (
-    CIS_Requirement_Attribute,
-    Compliance_Base_Model,
-    Compliance_Requirement,
-)
-from prowler.lib.check.models import Check_Report, load_check_metadata
-from prowler.lib.outputs.common_models import FindingOutput
-from prowler.lib.outputs.compliance.compliance import get_check_compliance
-from prowler.lib.outputs.csv.csv import generate_csv_fields
-from prowler.lib.outputs.file_descriptors import fill_file_descriptors
-from prowler.lib.outputs.outputs import extract_findings_statistics, set_report_color
 from prowler.lib.outputs.utils import (
     parse_html_string,
     parse_json_tags,
@@ -31,81 +18,9 @@ from prowler.lib.outputs.utils import (
     unroll_list,
     unroll_tags,
 )
-from prowler.lib.utils.utils import open_file
-from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, set_mocked_aws_provider
 
 
 class TestOutputs:
-    def test_fill_file_descriptors_aws(self):
-        audited_account = AWS_ACCOUNT_NUMBER
-        output_directory = f"{os.path.dirname(os.path.realpath(__file__))}"
-        aws_provider = set_mocked_aws_provider()
-        test_output_modes = [
-            ["csv"],
-            ["json-asff"],
-            ["json-ocsf"],
-            ["html"],
-            ["csv", "json-asff", "json-ocsf", "html"],
-        ]
-        output_filename = f"prowler-output-{audited_account}-{output_file_timestamp}"
-        expected = [
-            {
-                "csv": open_file(
-                    f"{output_directory}/{output_filename}{csv_file_suffix}",
-                    "a",
-                )
-            },
-            {
-                "json-asff": open_file(
-                    f"{output_directory}/{output_filename}{json_asff_file_suffix}",
-                    "a",
-                )
-            },
-            {
-                "json-ocsf": open_file(
-                    f"{output_directory}/{output_filename}{json_ocsf_file_suffix}",
-                    "a",
-                )
-            },
-            {
-                "html": open_file(
-                    f"{output_directory}/{output_filename}{html_file_suffix}",
-                    "a",
-                )
-            },
-            {
-                "csv": open_file(
-                    f"{output_directory}/{output_filename}{csv_file_suffix}",
-                    "a",
-                ),
-                "json-asff": open_file(
-                    f"{output_directory}/{output_filename}{json_asff_file_suffix}",
-                    "a",
-                ),
-                "json-ocsf": open_file(
-                    f"{output_directory}/{output_filename}{json_ocsf_file_suffix}",
-                    "a",
-                ),
-                "html": open_file(
-                    f"{output_directory}/{output_filename}{html_file_suffix}",
-                    "a",
-                ),
-            },
-        ]
-
-        for index, output_mode_list in enumerate(test_output_modes):
-            test_output_file_descriptors = fill_file_descriptors(
-                output_mode_list,
-                output_directory,
-                output_filename,
-                aws_provider,
-            )
-            for output_mode in output_mode_list:
-                assert (
-                    test_output_file_descriptors[output_mode].name
-                    == expected[index][output_mode].name
-                )
-                remove(expected[index][output_mode].name)
 
     def test_set_report_color(self):
         test_status = ["PASS", "FAIL", "MANUAL"]
@@ -122,53 +37,6 @@ class TestOutputs:
 
         assert "Invalid Report Status. Must be PASS, FAIL or MANUAL" in str(exc.value)
         assert exc.type == Exception
-
-    def test_generate_common_csv_fields(self):
-        expected = [
-            "auth_method",
-            "timestamp",
-            "account_uid",
-            "account_name",
-            "account_email",
-            "account_organization_uid",
-            "account_organization_name",
-            "account_tags",
-            "finding_uid",
-            "provider",
-            "check_id",
-            "check_title",
-            "check_type",
-            "status",
-            "status_extended",
-            "muted",
-            "service_name",
-            "subservice_name",
-            "severity",
-            "resource_type",
-            "resource_uid",
-            "resource_name",
-            "resource_details",
-            "resource_tags",
-            "partition",
-            "region",
-            "description",
-            "risk",
-            "related_url",
-            "remediation_recommendation_text",
-            "remediation_recommendation_url",
-            "remediation_code_nativeiac",
-            "remediation_code_terraform",
-            "remediation_code_cli",
-            "remediation_code_other",
-            "compliance",
-            "categories",
-            "depends_on",
-            "related_to",
-            "notes",
-            "prowler_version",
-        ]
-
-        assert generate_csv_fields(FindingOutput) == expected
 
     def test_unroll_list_no_separator(self):
         list = ["test", "test1", "test2"]
@@ -408,338 +276,720 @@ class TestOutputs:
         assert stats["findings_count"] == 2
         assert not stats["all_fails_are_muted"]
 
-    def test_get_check_compliance_aws(self):
-        bulk_check_metadata = [
-            Compliance_Base_Model(
-                Framework="CIS",
-                Provider="AWS",
-                Version="1.4",
-                Description="The CIS Benchmark for CIS Amazon Web Services Foundations Benchmark, v1.4.0, Level 1 and 2 provides prescriptive guidance for configuring security options for a subset of Amazon Web Services. It has an emphasis on foundational, testable, and architecture agnostic settings",
-                Requirements=[
-                    Compliance_Requirement(
-                        Checks=[],
-                        Id="2.1.3",
-                        Description="Ensure MFA Delete is enabled on S3 buckets",
-                        Attributes=[
-                            CIS_Requirement_Attribute(
-                                Section="2.1. Simple Storage Service (S3)",
-                                Profile="Level 1",
-                                AssessmentStatus="Automated",
-                                Description="Once MFA Delete is enabled on your sensitive and classified S3 bucket it requires the user to have two forms of authentication.",
-                                RationaleStatement="Adding MFA delete to an S3 bucket, requires additional authentication when you change the version state of your bucket or you delete and object version adding another layer of security in the event your security credentials are compromised or unauthorized access is granted.",
-                                ImpactStatement="",
-                                RemediationProcedure="Perform the steps below to enable MFA delete on an S3 bucket.\n\nNote:\n-You cannot enable MFA Delete using the AWS Management Console. You must use the AWS CLI or API.\n-You must use your 'root' account to enable MFA Delete on S3 buckets.\n\n**From Command line:**\n\n1. Run the s3api put-bucket-versioning command\n\n```\naws s3api put-bucket-versioning --profile my-root-profile --bucket Bucket_Name --versioning-configuration Status=Enabled,MFADelete=Enabled --mfa “arn:aws:iam::aws_account_id:mfa/root-account-mfa-device passcode”\n```",
-                                AuditProcedure='Perform the steps below to confirm MFA delete is configured on an S3 Bucket\n\n**From Console:**\n\n1. Login to the S3 console at `https://console.aws.amazon.com/s3/`\n\n2. Click the `Check` box next to the Bucket name you want to confirm\n\n3. In the window under `Properties`\n\n4. Confirm that Versioning is `Enabled`\n\n5. Confirm that MFA Delete is `Enabled`\n\n**From Command Line:**\n\n1. Run the `get-bucket-versioning`\n```\naws s3api get-bucket-versioning --bucket my-bucket\n```\n\nOutput example:\n```\n<VersioningConfiguration xmlns="http://s3.amazonaws.com/doc/2006-03-01/"> \n <Status>Enabled</Status>\n <MfaDelete>Enabled</MfaDelete> \n</VersioningConfiguration>\n```\n\nIf the Console or the CLI output does not show Versioning and MFA Delete `enabled` refer to the remediation below.',
-                                AdditionalInformation="",
-                                References="https://docs.aws.amazon.com/AmazonS3/latest/dev/Versioning.html#MultiFactorAuthenticationDelete:https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingMFADelete.html:https://aws.amazon.com/blogs/security/securing-access-to-aws-using-mfa-part-3/:https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_mfa_lost-or-broken.html",
-                            )
-                        ],
-                    )
-                ],
-            ),
-            Compliance_Base_Model(
-                Framework="CIS",
-                Provider="AWS",
-                Version="1.5",
-                Description="The CIS Amazon Web Services Foundations Benchmark provides prescriptive guidance for configuring security options for a subset of Amazon Web Services with an emphasis on foundational, testable, and architecture agnostic settings.",
-                Requirements=[
-                    Compliance_Requirement(
-                        Checks=[],
-                        Id="2.1.3",
-                        Description="Ensure MFA Delete is enabled on S3 buckets",
-                        Attributes=[
-                            CIS_Requirement_Attribute(
-                                Section="2.1. Simple Storage Service (S3)",
-                                Profile="Level 1",
-                                AssessmentStatus="Automated",
-                                Description="Once MFA Delete is enabled on your sensitive and classified S3 bucket it requires the user to have two forms of authentication.",
-                                RationaleStatement="Adding MFA delete to an S3 bucket, requires additional authentication when you change the version state of your bucket or you delete and object version adding another layer of security in the event your security credentials are compromised or unauthorized access is granted.",
-                                ImpactStatement="",
-                                RemediationProcedure="Perform the steps below to enable MFA delete on an S3 bucket.\n\nNote:\n-You cannot enable MFA Delete using the AWS Management Console. You must use the AWS CLI or API.\n-You must use your 'root' account to enable MFA Delete on S3 buckets.\n\n**From Command line:**\n\n1. Run the s3api put-bucket-versioning command\n\n```\naws s3api put-bucket-versioning --profile my-root-profile --bucket Bucket_Name --versioning-configuration Status=Enabled,MFADelete=Enabled --mfa “arn:aws:iam::aws_account_id:mfa/root-account-mfa-device passcode”\n```",
-                                AuditProcedure='Perform the steps below to confirm MFA delete is configured on an S3 Bucket\n\n**From Console:**\n\n1. Login to the S3 console at `https://console.aws.amazon.com/s3/`\n\n2. Click the `Check` box next to the Bucket name you want to confirm\n\n3. In the window under `Properties`\n\n4. Confirm that Versioning is `Enabled`\n\n5. Confirm that MFA Delete is `Enabled`\n\n**From Command Line:**\n\n1. Run the `get-bucket-versioning`\n```\naws s3api get-bucket-versioning --bucket my-bucket\n```\n\nOutput example:\n```\n<VersioningConfiguration xmlns="http://s3.amazonaws.com/doc/2006-03-01/"> \n <Status>Enabled</Status>\n <MfaDelete>Enabled</MfaDelete> \n</VersioningConfiguration>\n```\n\nIf the Console or the CLI output does not show Versioning and MFA Delete `enabled` refer to the remediation below.',
-                                AdditionalInformation="",
-                                References="https://docs.aws.amazon.com/AmazonS3/latest/dev/Versioning.html#MultiFactorAuthenticationDelete:https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingMFADelete.html:https://aws.amazon.com/blogs/security/securing-access-to-aws-using-mfa-part-3/:https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_mfa_lost-or-broken.html",
-                            )
-                        ],
-                    )
-                ],
-            ),
-        ]
+    def test_report_with_aws_provider_not_muted_pass(self):
+        # Mocking check_findings and provider
+        finding_1 = MagicMock()
+        finding_1.status = "FAIL"
+        finding_1.muted = True
+        finding_1.region = "us-east-1"
+        finding_1.check_metadata.Provider = "aws"
+        finding_1.status_extended = "Extended status 1"
 
-        finding = Check_Report(
-            load_check_metadata(
-                f"{path.dirname(path.realpath(__file__))}/fixtures/metadata.json"
-            ).json()
-        )
-        finding.resource_details = "Test resource details"
-        finding.resource_id = "test-resource"
-        finding.resource_arn = "test-arn"
-        finding.region = "eu-west-1"
-        finding.status = "PASS"
-        finding.status_extended = "This is a test"
+        finding_2 = MagicMock()
+        finding_2.status = "PASS"
+        finding_2.muted = False
+        finding_2.region = "us-west-2"
+        finding_2.check_metadata.Provider = "aws"
+        finding_2.status_extended = "Extended status 2"
 
-        output_options = mock.MagicMock()
-        output_options.bulk_checks_metadata = {}
-        output_options.bulk_checks_metadata["iam_user_accesskey_unused"] = (
-            mock.MagicMock()
-        )
-        output_options.bulk_checks_metadata["iam_user_accesskey_unused"].Compliance = (
-            bulk_check_metadata
-        )
+        check_findings = [finding_2, finding_1]  # Unsorted list
 
-        assert get_check_compliance(finding, "aws", output_options) == {
-            "CIS-1.4": ["2.1.3"],
-            "CIS-1.5": ["2.1.3"],
-        }
+        output_options = MagicMock()
+        output_options.verbose = True
+        output_options.status = ["PASS", "FAIL"]
+        output_options.fixer = False
 
-    def test_get_check_compliance_gcp(self):
-        bulk_check_metadata = [
-            Compliance_Base_Model(
-                Framework="CIS",
-                Provider="GCP",
-                Version="2.0",
-                Description="This CIS Benchmark is the product of a community consensus process and consists of secure configuration guidelines developed for Google Cloud Computing Platform",
-                Requirements=[
-                    Compliance_Requirement(
-                        Checks=[],
-                        Id="2.1.3",
-                        Description="Ensure compute instances do not use the default service account with full access to all Cloud APIs",
-                        Attributes=[
-                            CIS_Requirement_Attribute(
-                                Section="2.1. Compute Engine",
-                                Profile="Level 1",
-                                AssessmentStatus="Automated",
-                                Description="The default service account should not be used for compute instances as it has full access to all Cloud APIs.",
-                                RationaleStatement="The default service account has full access to all Cloud APIs and should not be used for compute instances.",
-                                ImpactStatement="",
-                                RemediationProcedure="Perform the following to ensure compute instances do not use the default service account with full access to all Cloud APIs:\n\n1. Navigate to the 'Compute Engine' section of the Google Cloud Console at `https://console.cloud.google.com/compute/instances`\n2. Click on the instance to be modified\n3. Click the 'Edit' button\n4. In the 'Service account' section, select a service account that has the least privilege necessary for the instance\n5. Click 'Save' to apply the changes",
-                                AuditProcedure="Perform the following to ensure compute instances do not use the default service account with full access to all Cloud APIs:\n\n1. Navigate to the section of the Google Cloud Console at `https://console.cloud.google.com/compute/instances`\n2. Click on the instance to be audited\n3. In the section, verify that the service account selected has the least privilege necessary for the instance",
-                                AdditionalInformation="",
-                                References="https://cloud.google.com/compute/docs/access/service-accounts#default_service_account",
-                            )
-                        ],
-                    )
-                ],
-            ),
-            Compliance_Base_Model(
-                Framework="CIS",
-                Provider="GCP",
-                Version="2.1",
-                Description="This CIS Benchmark is the product of a community consensus process and consists of secure configuration guidelines developed for Google Cloud Computing Platform",
-                Requirements=[
-                    Compliance_Requirement(
-                        Checks=[],
-                        Id="2.1.3",
-                        Description="Ensure compute instances do not use the default service account with full access to all Cloud APIs",
-                        Attributes=[
-                            CIS_Requirement_Attribute(
-                                Section="2.1. Compute Engine",
-                                Profile="Level 1",
-                                AssessmentStatus="Automated",
-                                Description="The default service account should not be used for compute instances as it has full access to all Cloud APIs.",
-                                RationaleStatement="The default service account has full access to all Cloud APIs and should not be used for compute instances.",
-                                ImpactStatement="",
-                                RemediationProcedure="Perform the following to ensure compute instances do not use the default service account with full access to all Cloud APIs:\n\n1. Navigate to the 'Compute Engine' section of the Google Cloud Console at `https://console.cloud.google.com/compute/instances`\n2. Click on the instance to be modified\n3. Click the 'Edit' button\n4. In the 'Service account' section, select a service account that has the least privilege necessary for the instance\n5. Click 'Save' to apply the changes",
-                                AuditProcedure="Perform the following to ensure compute instances do not use the default service account with full access to all Cloud APIs:\n\n1. Navigate to the section of the Google Cloud Console at `https://console.cloud.google.com/compute/instances`\n2. Click on the instance to be audited\n3. In the section, verify that the service account selected has the least privilege necessary for the instance",
-                                AdditionalInformation="",
-                                References="https://cloud.google.com/compute/docs/access/service-accounts#default_service_account",
-                            )
-                        ],
-                    )
-                ],
-            ),
-        ]
+        provider = MagicMock()
+        provider.type = "aws"
+        provider.output_options = output_options
 
-        finding = Check_Report(
-            load_check_metadata(
-                f"{path.dirname(path.realpath(__file__))}/fixtures/metadata.json"
-            ).json()
-        )
-        finding.resource_details = "Test resource details"
-        finding.resource_id = "test-resource"
-        finding.resource_arn = "test-arn"
-        finding.region = "eu-west-1"
-        finding.status = "PASS"
-        finding.status_extended = "This is a test"
+        # Assertions
+        with mock.patch("builtins.print") as mocked_print:
+            # Call the report method
+            report(check_findings, provider)
 
-        output_options = mock.MagicMock()
-        output_options.bulk_checks_metadata = {}
-        output_options.bulk_checks_metadata["iam_user_accesskey_unused"] = (
-            mock.MagicMock()
-        )
-        output_options.bulk_checks_metadata["iam_user_accesskey_unused"].Compliance = (
-            bulk_check_metadata
-        )
+            # Assertions
+            check_findings_sorted = [finding_1, finding_2]
+            assert (
+                check_findings == check_findings_sorted
+            )  # Check if the list was sorted
 
-        assert get_check_compliance(finding, "gcp", output_options) == {
-            "CIS-2.0": ["2.1.3"],
-            "CIS-2.1": ["2.1.3"],
-        }
+            mocked_print.assert_any_call(
+                f"\t{Fore.GREEN}PASS{Style.RESET_ALL} us-west-2: Extended status 2"
+            )
+            mocked_print.assert_called()  # Verifying that print was called
 
-    def test_get_check_compliance_azure(self):
-        bulk_check_metadata = [
-            Compliance_Base_Model(
-                Framework="CIS",
-                Provider="Azure",
-                Version="2.0",
-                Description="This CIS Benchmark is the product of a community consensus process and consists of secure configuration guidelines developed for Azuee Platform",
-                Requirements=[
-                    Compliance_Requirement(
-                        Checks=[],
-                        Id="2.1.3",
-                        Description="Ensure compute instances do not use the default service account with full access to all Cloud APIs",
-                        Attributes=[
-                            CIS_Requirement_Attribute(
-                                Section="2.1. Compute Engine",
-                                Profile="Level 1",
-                                AssessmentStatus="Automated",
-                                Description="The default service account should not be used for compute instances as it has full access to all Cloud APIs.",
-                                RationaleStatement="The default service account has full access to all Cloud APIs and should not be used for compute instances.",
-                                ImpactStatement="",
-                                RemediationProcedure="Perform the following to ensure compute instances do not use the default service account with full access to all Cloud APIs:\n\n1. Navigate to the 'Compute Engine' section of the Google Cloud Console at `https://console.cloud.google.com/compute/instances`\n2. Click on the instance to be modified\n3. Click the 'Edit' button\n4. In the 'Service account' section, select a service account that has the least privilege necessary for the instance\n5. Click 'Save' to apply the changes",
-                                AuditProcedure="Perform the following to ensure compute instances do not use the default service account with full access to all Cloud APIs:\n\n1. Navigate to the section of the Google Cloud Console at `https://console.cloud.google.com/compute/instances`\n2. Click on the instance to be audited\n3. In the section, verify that the service account selected has the least privilege necessary for the instance",
-                                AdditionalInformation="",
-                                References="https://cloud.google.com/compute/docs/access/service-accounts#default_service_account",
-                            )
-                        ],
-                    )
-                ],
-            ),
-            Compliance_Base_Model(
-                Framework="CIS",
-                Provider="Azure",
-                Version="2.1",
-                Description="This CIS Benchmark is the product of a community consensus process and consists of secure configuration guidelines developed for Azure Platform",
-                Requirements=[
-                    Compliance_Requirement(
-                        Checks=[],
-                        Id="2.1.3",
-                        Description="Ensure compute instances do not use the default service account with full access to all Cloud APIs",
-                        Attributes=[
-                            CIS_Requirement_Attribute(
-                                Section="2.1. Compute Engine",
-                                Profile="Level 1",
-                                AssessmentStatus="Automated",
-                                Description="The default service account should not be used for compute instances as it has full access to all Cloud APIs.",
-                                RationaleStatement="The default service account has full access to all Cloud APIs and should not be used for compute instances.",
-                                ImpactStatement="",
-                                RemediationProcedure="Perform the following to ensure compute instances do not use the default service account with full access to all Cloud APIs:\n\n1. Navigate to the 'Compute Engine' section of the Google Cloud Console at `https://console.cloud.google.com/compute/instances`\n2. Click on the instance to be modified\n3. Click the 'Edit' button\n4. In the 'Service account' section, select a service account that has the least privilege necessary for the instance\n5. Click 'Save' to apply the changes",
-                                AuditProcedure="Perform the following to ensure compute instances do not use the default service account with full access to all Cloud APIs:\n\n1. Navigate to the section of the Google Cloud Console at `https://console.cloud.google.com/compute/instances`\n2. Click on the instance to be audited\n3. In the section, verify that the service account selected has the least privilege necessary for the instance",
-                                AdditionalInformation="",
-                                References="https://cloud.google.com/compute/docs/access/service-accounts#default_service_account",
-                            )
-                        ],
-                    )
-                ],
-            ),
-        ]
+    def test_report_with_aws_provider_not_muted_fail(self):
+        # Mocking check_findings and provider
+        finding_1 = MagicMock()
+        finding_1.status = "FAIL"
+        finding_1.muted = True
+        finding_1.region = "us-east-1"
+        finding_1.check_metadata.Provider = "aws"
+        finding_1.status_extended = "Extended status 1"
 
-        finding = Check_Report(
-            load_check_metadata(
-                f"{path.dirname(path.realpath(__file__))}/fixtures/metadata.json"
-            ).json()
-        )
-        finding.resource_details = "Test resource details"
-        finding.resource_id = "test-resource"
-        finding.resource_arn = "test-arn"
-        finding.region = "eu-west-1"
-        finding.status = "PASS"
-        finding.status_extended = "This is a test"
+        finding_2 = MagicMock()
+        finding_2.status = "FAIL"
+        finding_2.muted = False
+        finding_2.region = "us-west-2"
+        finding_2.check_metadata.Provider = "aws"
+        finding_2.status_extended = "Extended status 2"
 
-        output_options = mock.MagicMock()
-        output_options.bulk_checks_metadata = {}
-        output_options.bulk_checks_metadata["iam_user_accesskey_unused"] = (
-            mock.MagicMock()
-        )
-        output_options.bulk_checks_metadata["iam_user_accesskey_unused"].Compliance = (
-            bulk_check_metadata
-        )
+        check_findings = [finding_2, finding_1]  # Unsorted list
 
-        assert get_check_compliance(finding, "azure", output_options) == {
-            "CIS-2.0": ["2.1.3"],
-            "CIS-2.1": ["2.1.3"],
-        }
+        output_options = MagicMock()
+        output_options.verbose = True
+        output_options.status = ["PASS", "FAIL"]
+        output_options.fixer = False
 
-    def test_get_check_compliance_kubernetes(self):
-        bulk_check_metadata = [
-            Compliance_Base_Model(
-                Framework="CIS",
-                Provider="Kubernetes",
-                Version="2.0",
-                Description="This CIS Benchmark is the product of a community consensus process and consists of secure configuration guidelines developed for Kubernetes Platform",
-                Requirements=[
-                    Compliance_Requirement(
-                        Checks=[],
-                        Id="2.1.3",
-                        Description="Ensure compute instances do not use the default service account with full access to all Cloud APIs",
-                        Attributes=[
-                            CIS_Requirement_Attribute(
-                                Section="2.1. Compute Engine",
-                                Profile="Level 1",
-                                AssessmentStatus="Automated",
-                                Description="The default service account should not be used for compute instances as it has full access to all Cloud APIs.",
-                                RationaleStatement="The default service account has full access to all Cloud APIs and should not be used for compute instances.",
-                                ImpactStatement="",
-                                RemediationProcedure="Perform the following to ensure compute instances do not use the default service account with full access to all Cloud APIs:\n\n1. Navigate to the 'Compute Engine' section of the Google Cloud Console at `https://console.cloud.google.com/compute/instances`\n2. Click on the instance to be modified\n3. Click the 'Edit' button\n4. In the 'Service account' section, select a service account that has the least privilege necessary for the instance\n5. Click 'Save' to apply the changes",
-                                AuditProcedure="Perform the following to ensure compute instances do not use the default service account with full access to all Cloud APIs:\n\n1. Navigate to the section of the Google Cloud Console at `https://console.cloud.google.com/compute/instances`\n2. Click on the instance to be audited\n3. In the section, verify that the service account selected has the least privilege necessary for the instance",
-                                AdditionalInformation="",
-                                References="https://cloud.google.com/compute/docs/access/service-accounts#default_service_account",
-                            )
-                        ],
-                    )
-                ],
-            ),
-            Compliance_Base_Model(
-                Framework="CIS",
-                Provider="Kubernetes",
-                Version="2.1",
-                Description="This CIS Benchmark is the product of a community consensus process and consists of secure configuration guidelines developed for Kubernetes Platform",
-                Requirements=[
-                    Compliance_Requirement(
-                        Checks=[],
-                        Id="2.1.3",
-                        Description="Ensure compute instances do not use the default service account with full access to all Cloud APIs",
-                        Attributes=[
-                            CIS_Requirement_Attribute(
-                                Section="2.1. Compute Engine",
-                                Profile="Level 1",
-                                AssessmentStatus="Automated",
-                                Description="The default service account should not be used for compute instances as it has full access to all Cloud APIs.",
-                                RationaleStatement="The default service account has full access to all Cloud APIs and should not be used for compute instances.",
-                                ImpactStatement="",
-                                RemediationProcedure="Perform the following to ensure compute instances do not use the default service account with full access to all Cloud APIs:\n\n1. Navigate to the 'Compute Engine' section of the Google Cloud Console at `https://console.cloud.google.com/compute/instances`\n2. Click on the instance to be modified\n3. Click the 'Edit' button\n4. In the 'Service account' section, select a service account that has the least privilege necessary for the instance\n5. Click 'Save' to apply the changes",
-                                AuditProcedure="Perform the following to ensure compute instances do not use the default service account with full access to all Cloud APIs:\n\n1. Navigate to the section of the Google Cloud Console at `https://console.cloud.google.com/compute/instances`\n2. Click on the instance to be audited\n3. In the section, verify that the service account selected has the least privilege necessary for the instance",
-                                AdditionalInformation="",
-                                References="https://cloud.google.com/compute/docs/access/service-accounts#default_service_account",
-                            )
-                        ],
-                    )
-                ],
-            ),
-        ]
+        provider = MagicMock()
+        provider.type = "aws"
+        provider.output_options = output_options
 
-        finding = Check_Report(
-            load_check_metadata(
-                f"{path.dirname(path.realpath(__file__))}/fixtures/metadata.json"
-            ).json()
-        )
-        finding.resource_details = "Test resource details"
-        finding.resource_id = "test-resource"
-        finding.resource_arn = "test-arn"
-        finding.region = "eu-west-1"
-        finding.status = "PASS"
-        finding.status_extended = "This is a test"
+        # Assertions
+        with mock.patch("builtins.print") as mocked_print:
+            # Call the report method
+            report(check_findings, provider)
 
-        output_options = mock.MagicMock()
-        output_options.bulk_checks_metadata = {}
-        output_options.bulk_checks_metadata["iam_user_accesskey_unused"] = (
-            mock.MagicMock()
-        )
-        output_options.bulk_checks_metadata["iam_user_accesskey_unused"].Compliance = (
-            bulk_check_metadata
-        )
+            # Assertions
+            check_findings_sorted = [finding_1, finding_2]
+            assert (
+                check_findings == check_findings_sorted
+            )  # Check if the list was sorted
 
-        assert get_check_compliance(finding, "kubernetes", output_options) == {
-            "CIS-2.0": ["2.1.3"],
-            "CIS-2.1": ["2.1.3"],
-        }
+            mocked_print.assert_any_call(
+                f"\t{Fore.RED}FAIL{Style.RESET_ALL} us-west-2: Extended status 2"
+            )
+            mocked_print.assert_called()  # Verifying that print was called
+
+    def test_report_with_aws_provider_not_muted_manual(self):
+        # Mocking check_findings and provider
+        finding_1 = MagicMock()
+        finding_1.status = "FAIL"
+        finding_1.muted = True
+        finding_1.region = "us-east-1"
+        finding_1.check_metadata.Provider = "aws"
+        finding_1.status_extended = "Extended status 1"
+
+        finding_2 = MagicMock()
+        finding_2.status = "MANUAL"
+        finding_2.muted = False
+        finding_2.region = "us-west-2"
+        finding_2.check_metadata.Provider = "aws"
+        finding_2.status_extended = "Extended status 2"
+
+        check_findings = [finding_2, finding_1]  # Unsorted list
+
+        output_options = MagicMock()
+        output_options.verbose = True
+        output_options.status = ["PASS", "FAIL", "MANUAL"]
+        output_options.fixer = False
+
+        provider = MagicMock()
+        provider.type = "aws"
+        provider.output_options = output_options
+
+        # Assertions
+        with mock.patch("builtins.print") as mocked_print:
+            # Call the report method
+            report(check_findings, provider)
+
+            # Assertions
+            check_findings_sorted = [finding_1, finding_2]
+            assert (
+                check_findings == check_findings_sorted
+            )  # Check if the list was sorted
+
+            mocked_print.assert_any_call(
+                f"\t{Fore.YELLOW}MANUAL{Style.RESET_ALL} us-west-2: Extended status 2"
+            )
+            mocked_print.assert_called()  # Verifying that print was called
+
+    def test_report_with_aws_provider_muted(self):
+        # Mocking check_findings and provider
+        finding_1 = MagicMock()
+        finding_1.status = "FAIL"
+        finding_1.muted = True
+        finding_1.region = "us-east-1"
+        finding_1.check_metadata.Provider = "aws"
+        finding_1.status_extended = "Extended status 1"
+
+        finding_2 = MagicMock()
+        finding_2.status = "PASS"
+        finding_2.muted = True
+        finding_2.region = "us-west-2"
+        finding_2.check_metadata.Provider = "aws"
+        finding_2.status_extended = "Extended status 2"
+
+        check_findings = [finding_2, finding_1]  # Unsorted list
+
+        output_options = MagicMock()
+        output_options.verbose = True
+        output_options.status = ["PASS", "FAIL"]
+        output_options.fixer = False
+
+        provider = MagicMock()
+        provider.type = "aws"
+        provider.output_options = output_options
+
+        # Assertions
+        with mock.patch("builtins.print") as mocked_print:
+            # Call the report method
+            report(check_findings, provider)
+
+            # Assertions
+            check_findings_sorted = [finding_1, finding_2]
+            assert (
+                check_findings == check_findings_sorted
+            )  # Check if the list was sorted
+
+            mocked_print.assert_any_call(
+                f"\t{orange_color}MUTED (FAIL){Style.RESET_ALL} us-east-1: Extended status 1"
+            )
+            mocked_print.assert_called()  # Verifying that print was called
+
+    def test_report_with_azure_provider_not_muted_pass(self):
+        # Mocking check_findings and provider
+        finding_1 = MagicMock()
+        finding_1.status = "FAIL"
+        finding_1.muted = True
+        finding_1.subscription = "test_subscription_2"
+        finding_1.location = "test_location_1"
+        finding_1.check_metadata.Provider = "azure"
+        finding_1.status_extended = "Extended status 1"
+
+        finding_2 = MagicMock()
+        finding_2.status = "PASS"
+        finding_2.muted = False
+        finding_2.subscription = "test_subscription_1"
+        finding_2.location = "test_location_2"
+        finding_2.check_metadata.Provider = "azure"
+        finding_2.status_extended = "Extended status 2"
+
+        check_findings = [finding_2, finding_1]  # Unsorted list
+
+        output_options = MagicMock()
+        output_options.verbose = True
+        output_options.status = ["PASS", "FAIL"]
+        output_options.fixer = False
+
+        provider = MagicMock()
+        provider.type = "azure"
+        provider.output_options = output_options
+
+        # Assertions
+        with mock.patch("builtins.print") as mocked_print:
+            # Call the report method
+            report(check_findings, provider)
+
+            # Assertions
+            check_findings_sorted = [finding_2, finding_1]
+            assert (
+                check_findings == check_findings_sorted
+            )  # Check if the list was sorted
+
+            mocked_print.assert_any_call(
+                f"\t{Fore.GREEN}PASS{Style.RESET_ALL} test_location_2: Extended status 2"
+            )
+            mocked_print.assert_called()  # Verifying that print was called
+
+    def test_report_with_azure_provider_not_muted_fail(self):
+        # Mocking check_findings and provider
+        finding_1 = MagicMock()
+        finding_1.status = "FAIL"
+        finding_1.muted = False
+        finding_1.subscription = "test_subscription_2"
+        finding_1.location = "test_location_1"
+        finding_1.check_metadata.Provider = "azure"
+        finding_1.status_extended = "Extended status 1"
+
+        finding_2 = MagicMock()
+        finding_2.status = "PASS"
+        finding_2.muted = False
+        finding_2.subscription = "test_subscription_1"
+        finding_2.location = "test_location_2"
+        finding_2.check_metadata.Provider = "azure"
+        finding_2.status_extended = "Extended status 2"
+
+        check_findings = [finding_2, finding_1]  # Unsorted list
+
+        output_options = MagicMock()
+        output_options.verbose = True
+        output_options.status = ["PASS", "FAIL"]
+        output_options.fixer = False
+
+        provider = MagicMock()
+        provider.type = "azure"
+        provider.output_options = output_options
+
+        # Assertions
+        with mock.patch("builtins.print") as mocked_print:
+            # Call the report method
+            report(check_findings, provider)
+
+            # Assertions
+            check_findings_sorted = [finding_2, finding_1]
+            assert (
+                check_findings == check_findings_sorted
+            )  # Check if the list was sorted
+
+            mocked_print.assert_any_call(
+                f"\t{Fore.RED}FAIL{Style.RESET_ALL} test_location_1: Extended status 1"
+            )
+            mocked_print.assert_called()  # Verifying that print was called
+
+    def test_report_with_azure_provider_not_muted_manual(self):
+        # Mocking check_findings and provider
+        finding_1 = MagicMock()
+        finding_1.status = "MANUAL"
+        finding_1.muted = False
+        finding_1.subscription = "test_subscription_2"
+        finding_1.location = "test_location_1"
+        finding_1.check_metadata.Provider = "azure"
+        finding_1.status_extended = "Extended status 1"
+
+        finding_2 = MagicMock()
+        finding_2.status = "PASS"
+        finding_2.muted = False
+        finding_2.subscription = "test_subscription_1"
+        finding_2.location = "test_location_2"
+        finding_2.check_metadata.Provider = "azure"
+        finding_2.status_extended = "Extended status 2"
+
+        check_findings = [finding_2, finding_1]  # Unsorted list
+
+        output_options = MagicMock()
+        output_options.verbose = True
+        output_options.status = ["PASS", "FAIL", "MANUAL"]
+        output_options.fixer = False
+
+        provider = MagicMock()
+        provider.type = "azure"
+        provider.output_options = output_options
+
+        # Assertions
+        with mock.patch("builtins.print") as mocked_print:
+            # Call the report method
+            report(check_findings, provider)
+
+            # Assertions
+            check_findings_sorted = [finding_2, finding_1]
+            assert (
+                check_findings == check_findings_sorted
+            )  # Check if the list was sorted
+
+            mocked_print.assert_any_call(
+                f"\t{Fore.YELLOW}MANUAL{Style.RESET_ALL} test_location_1: Extended status 1"
+            )
+            mocked_print.assert_called()  # Verifying that print was called
+
+    def test_report_with_azure_provider_muted(self):
+        # Mocking check_findings and provider
+        finding_1 = MagicMock()
+        finding_1.status = "FAIL"
+        finding_1.muted = True
+        finding_1.subscription = "test_subscription_2"
+        finding_1.location = "test_location_1"
+        finding_1.check_metadata.Provider = "azure"
+        finding_1.status_extended = "Extended status 1"
+
+        finding_2 = MagicMock()
+        finding_2.status = "PASS"
+        finding_2.muted = False
+        finding_2.subscription = "test_subscription_1"
+        finding_2.location = "test_location_2"
+        finding_2.check_metadata.Provider = "azure"
+        finding_2.status_extended = "Extended status 2"
+
+        check_findings = [finding_2, finding_1]  # Unsorted list
+
+        output_options = MagicMock()
+        output_options.verbose = True
+        output_options.status = ["PASS", "FAIL"]
+        output_options.fixer = False
+
+        provider = MagicMock()
+        provider.type = "azure"
+        provider.output_options = output_options
+
+        # Assertions
+        with mock.patch("builtins.print") as mocked_print:
+            # Call the report method
+            report(check_findings, provider)
+
+            # Assertions
+            check_findings_sorted = [finding_2, finding_1]
+            assert (
+                check_findings == check_findings_sorted
+            )  # Check if the list was sorted
+
+            mocked_print.assert_any_call(
+                f"\t{orange_color}MUTED (FAIL){Style.RESET_ALL} test_location_1: Extended status 1"
+            )
+            mocked_print.assert_called()  # Verifying that print was called
+
+    def test_report_with_gcp_provider_not_muted_pass(self):
+        # Mocking check_findings and provider
+        finding_1 = MagicMock()
+        finding_1.status = "FAIL"
+        finding_1.muted = True
+        finding_1.location = "test_location_1"
+        finding_1.check_metadata.Provider = "gcp"
+        finding_1.status_extended = "Extended status 1"
+
+        finding_2 = MagicMock()
+        finding_2.status = "PASS"
+        finding_2.muted = False
+        finding_2.location = "test_location_2"
+        finding_2.check_metadata.Provider = "gcp"
+        finding_2.status_extended = "Extended status 2"
+
+        check_findings = [finding_2, finding_1]  # Unsorted list
+
+        output_options = MagicMock()
+        output_options.verbose = True
+        output_options.status = ["PASS", "FAIL"]
+        output_options.fixer = False
+
+        provider = MagicMock()
+        provider.type = "gcp"
+        provider.output_options = output_options
+
+        # Assertions
+        with mock.patch("builtins.print") as mocked_print:
+            # Call the report method
+            report(check_findings, provider)
+
+            # Assertions
+            check_findings_sorted = [finding_2, finding_1]
+            assert (
+                check_findings == check_findings_sorted
+            )  # Check if the list was sorted
+
+            mocked_print.assert_any_call(
+                f"\t{Fore.GREEN}PASS{Style.RESET_ALL} test_location_2: Extended status 2"
+            )
+            mocked_print.assert_called()  # Verifying that print was called
+
+    def test_report_with_gcp_provider_not_muted_fail(self):
+        # Mocking check_findings and provider
+        finding_1 = MagicMock()
+        finding_1.status = "FAIL"
+        finding_1.muted = False
+        finding_1.location = "test_location_1"
+        finding_1.check_metadata.Provider = "gcp"
+        finding_1.status_extended = "Extended status 1"
+
+        finding_2 = MagicMock()
+        finding_2.status = "PASS"
+        finding_2.muted = False
+        finding_2.location = "test_location_2"
+        finding_2.check_metadata.Provider = "gcp"
+        finding_2.status_extended = "Extended status 2"
+
+        check_findings = [finding_2, finding_1]  # Unsorted list
+
+        output_options = MagicMock()
+        output_options.verbose = True
+        output_options.status = ["PASS", "FAIL"]
+        output_options.fixer = False
+
+        provider = MagicMock()
+        provider.type = "gcp"
+        provider.output_options = output_options
+
+        # Assertions
+        with mock.patch("builtins.print") as mocked_print:
+            # Call the report method
+            report(check_findings, provider)
+
+            # Assertions
+            check_findings_sorted = [finding_2, finding_1]
+            assert (
+                check_findings == check_findings_sorted
+            )  # Check if the list was sorted
+
+            mocked_print.assert_any_call(
+                f"\t{Fore.RED}FAIL{Style.RESET_ALL} test_location_1: Extended status 1"
+            )
+            mocked_print.assert_called()  # Verifying that print was called
+
+    def test_report_with_gcp_provider_not_muted_manual(self):
+        # Mocking check_findings and provider
+        finding_1 = MagicMock()
+        finding_1.status = "MANUAL"
+        finding_1.muted = False
+        finding_1.location = "test_location_1"
+        finding_1.check_metadata.Provider = "gcp"
+        finding_1.status_extended = "Extended status 1"
+
+        finding_2 = MagicMock()
+        finding_2.status = "PASS"
+        finding_2.muted = False
+        finding_2.location = "test_location_2"
+        finding_2.check_metadata.Provider = "gcp"
+        finding_2.status_extended = "Extended status 2"
+
+        check_findings = [finding_2, finding_1]  # Unsorted list
+
+        output_options = MagicMock()
+        output_options.verbose = True
+        output_options.status = ["PASS", "FAIL", "MANUAL"]
+        output_options.fixer = False
+
+        provider = MagicMock()
+        provider.type = "gcp"
+        provider.output_options = output_options
+
+        # Assertions
+        with mock.patch("builtins.print") as mocked_print:
+            # Call the report method
+            report(check_findings, provider)
+
+            # Assertions
+            check_findings_sorted = [finding_2, finding_1]
+            assert (
+                check_findings == check_findings_sorted
+            )  # Check if the list was sorted
+
+            mocked_print.assert_any_call(
+                f"\t{Fore.YELLOW}MANUAL{Style.RESET_ALL} test_location_1: Extended status 1"
+            )
+            mocked_print.assert_called()  # Verifying that print was called
+
+    def test_report_with_gcp_provider_muted(self):
+        # Mocking check_findings and provider
+        finding_1 = MagicMock()
+        finding_1.status = "FAIL"
+        finding_1.muted = True
+        finding_1.location = "test_location_1"
+        finding_1.check_metadata.Provider = "gcp"
+        finding_1.status_extended = "Extended status 1"
+
+        finding_2 = MagicMock()
+        finding_2.status = "PASS"
+        finding_2.muted = False
+        finding_2.location = "test_location_2"
+        finding_2.check_metadata.Provider = "gcp"
+        finding_2.status_extended = "Extended status 2"
+
+        check_findings = [finding_2, finding_1]  # Unsorted list
+
+        output_options = MagicMock()
+        output_options.verbose = True
+        output_options.status = ["PASS", "FAIL"]
+        output_options.fixer = False
+
+        provider = MagicMock()
+        provider.type = "gcp"
+        provider.output_options = output_options
+
+        # Assertions
+        with mock.patch("builtins.print") as mocked_print:
+            # Call the report method
+            report(check_findings, provider)
+
+            # Assertions
+            check_findings_sorted = [finding_2, finding_1]
+            assert (
+                check_findings == check_findings_sorted
+            )  # Check if the list was sorted
+
+            mocked_print.assert_any_call(
+                f"\t{orange_color}MUTED (FAIL){Style.RESET_ALL} test_location_1: Extended status 1"
+            )
+            mocked_print.assert_called()  # Verifying that print was called
+
+    def test_report_with_kubernetes_provider_not_muted_pass(self):
+        # Mocking check_findings and provider
+        finding_1 = MagicMock()
+        finding_1.status = "FAIL"
+        finding_1.muted = True
+        finding_1.namespace = "test_namespace_1"
+        finding_1.check_metadata.Provider = "kubernetes"
+        finding_1.status_extended = "Extended status 1"
+
+        finding_2 = MagicMock()
+        finding_2.status = "PASS"
+        finding_2.muted = False
+        finding_2.namespace = "test_namespace_2"
+        finding_2.check_metadata.Provider = "kubernetes"
+        finding_2.status_extended = "Extended status 2"
+
+        check_findings = [finding_2, finding_1]  # Unsorted list
+
+        output_options = MagicMock()
+        output_options.verbose = True
+        output_options.status = ["PASS", "FAIL"]
+        output_options.fixer = False
+
+        provider = MagicMock()
+        provider.type = "kubernetes"
+        provider.output_options = output_options
+
+        # Assertions
+        with mock.patch("builtins.print") as mocked_print:
+            # Call the report method
+            report(check_findings, provider)
+
+            # Assertions
+            check_findings_sorted = [finding_2, finding_1]
+            assert (
+                check_findings == check_findings_sorted
+            )  # Check if the list was sorted
+
+            mocked_print.assert_any_call(
+                f"\t{Fore.GREEN}PASS{Style.RESET_ALL} test_namespace_2: Extended status 2"
+            )
+            mocked_print.assert_called()  # Verifying that print was called
+
+    def test_report_with_kubernetes_provider_not_muted_fail(self):
+        # Mocking check_findings and provider
+        finding_1 = MagicMock()
+        finding_1.status = "FAIL"
+        finding_1.muted = False
+        finding_1.namespace = "test_namespace_1"
+        finding_1.check_metadata.Provider = "kubernetes"
+        finding_1.status_extended = "Extended status 1"
+
+        finding_2 = MagicMock()
+        finding_2.status = "PASS"
+        finding_2.muted = False
+        finding_2.namespace = "test_namespace_2"
+        finding_2.check_metadata.Provider = "kubernetes"
+        finding_2.status_extended = "Extended status 2"
+
+        check_findings = [finding_2, finding_1]  # Unsorted list
+
+        output_options = MagicMock()
+        output_options.verbose = True
+        output_options.status = ["PASS", "FAIL"]
+        output_options.fixer = False
+
+        provider = MagicMock()
+        provider.type = "kubernetes"
+        provider.output_options = output_options
+
+        # Assertions
+        with mock.patch("builtins.print") as mocked_print:
+            # Call the report method
+            report(check_findings, provider)
+
+            # Assertions
+            check_findings_sorted = [finding_2, finding_1]
+            assert (
+                check_findings == check_findings_sorted
+            )  # Check if the list was sorted
+
+            mocked_print.assert_any_call(
+                f"\t{Fore.RED}FAIL{Style.RESET_ALL} test_namespace_1: Extended status 1"
+            )
+            mocked_print.assert_called()  # Verifying that print was called
+
+    def test_report_with_kubernetes_provider_not_muted_manual(self):
+        # Mocking check_findings and provider
+        finding_1 = MagicMock()
+        finding_1.status = "MANUAL"
+        finding_1.muted = False
+        finding_1.namespace = "test_namespace_1"
+        finding_1.check_metadata.Provider = "kubernetes"
+        finding_1.status_extended = "Extended status 1"
+
+        finding_2 = MagicMock()
+        finding_2.status = "PASS"
+        finding_2.muted = False
+        finding_2.namespace = "test_namespace_2"
+        finding_2.check_metadata.Provider = "kubernetes"
+        finding_2.status_extended = "Extended status 2"
+
+        check_findings = [finding_2, finding_1]  # Unsorted list
+
+        output_options = MagicMock()
+        output_options.verbose = True
+        output_options.status = ["PASS", "FAIL", "MANUAL"]
+        output_options.fixer = False
+
+        provider = MagicMock()
+        provider.type = "kubernetes"
+        provider.output_options = output_options
+
+        # Assertions
+        with mock.patch("builtins.print") as mocked_print:
+            # Call the report method
+            report(check_findings, provider)
+
+            # Assertions
+            check_findings_sorted = [finding_2, finding_1]
+            assert (
+                check_findings == check_findings_sorted
+            )  # Check if the list was sorted
+
+            mocked_print.assert_any_call(
+                f"\t{Fore.YELLOW}MANUAL{Style.RESET_ALL} test_namespace_1: Extended status 1"
+            )
+            mocked_print.assert_called()  # Verifying that print was called
+
+    def test_report_with_kubernetes_provider_muted(self):
+        # Mocking check_findings and provider
+        finding_1 = MagicMock()
+        finding_1.status = "FAIL"
+        finding_1.muted = True
+        finding_1.namespace = "test_namespace_1"
+        finding_1.check_metadata.Provider = "kubernetes"
+        finding_1.status_extended = "Extended status 1"
+
+        finding_2 = MagicMock()
+        finding_2.status = "PASS"
+        finding_2.muted = False
+        finding_2.namespace = "test_namespace_2"
+        finding_2.check_metadata.Provider = "kubernetes"
+        finding_2.status_extended = "Extended status 2"
+
+        check_findings = [finding_2, finding_1]  # Unsorted list
+
+        output_options = MagicMock()
+        output_options.verbose = True
+        output_options.status = ["PASS", "FAIL"]
+        output_options.fixer = False
+
+        provider = MagicMock()
+        provider.type = "kubernetes"
+        provider.output_options = output_options
+
+        # Assertions
+        with mock.patch("builtins.print") as mocked_print:
+            # Call the report method
+            report(check_findings, provider)
+
+            # Assertions
+            check_findings_sorted = [finding_2, finding_1]
+            assert (
+                check_findings == check_findings_sorted
+            )  # Check if the list was sorted
+
+            mocked_print.assert_any_call(
+                f"\t{orange_color}MUTED (FAIL){Style.RESET_ALL} test_namespace_1: Extended status 1"
+            )
+            mocked_print.assert_called()  # Verifying that print was called
+
+    def test_report_with_no_findings(self):
+        # Mocking check_findings and provider
+        check_findings = []
+
+        output_options = MagicMock()
+        output_options.verbose = True
+        output_options.status = ["PASS", "FAIL"]
+        output_options.fixer = True
+
+        provider = MagicMock()
+        provider.type = "azure"
+        provider.output_options = output_options
+
+        with mock.patch("builtins.print") as mocked_print:
+            report(check_findings, provider)
+
+            # Assertions
+            mocked_print.assert_any_call(
+                f"\t{Fore.YELLOW}INFO{Style.RESET_ALL} There are no resources"
+            )
+            mocked_print.assert_called()  # Verifying that print was called

@@ -16,12 +16,12 @@ from prowler.lib.banner import print_banner
 warnings.filterwarnings("ignore")
 
 cli = sys.modules["flask.cli"]
-print_banner(verbose=False)
+print_banner()
 print(
     f"{Fore.GREEN}Loading all CSV files from the folder {folder_path_overview} ...\n{Style.RESET_ALL}"
 )
 cli.show_server_banner = lambda *x: click.echo(
-    f"{Fore.YELLOW}NOTE:{Style.RESET_ALL} If you are a {Fore.GREEN}{Style.BRIGHT}Prowler SaaS{Style.RESET_ALL} customer and you want to use your data from your S3 bucket,\nrun: `{orange_color}aws s3 cp s3://<your-bucket>/output/csv ./output --recursive{Style.RESET_ALL}`\nand then run `prowler dashboard` again to load the new files."
+    f"{Fore.YELLOW}NOTE:{Style.RESET_ALL} If you are using {Fore.GREEN}{Style.BRIGHT}Prowler SaaS{Style.RESET_ALL} with the S3 integration or that integration \nfrom {Fore.CYAN}{Style.BRIGHT}Prowler Open Source{Style.RESET_ALL} and you want to use your data from your S3 bucket,\nrun: `{orange_color}aws s3 cp s3://<your-bucket>/output/csv ./output --recursive{Style.RESET_ALL}`\nand then run `prowler dashboard` again to load the new files."
 )
 
 # Initialize the app - incorporate css

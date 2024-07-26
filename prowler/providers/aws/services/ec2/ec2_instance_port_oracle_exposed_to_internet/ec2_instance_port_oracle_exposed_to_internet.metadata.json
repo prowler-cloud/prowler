@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "ec2_instance_port_oracle_exposed_to_internet",
+  "CheckTitle": "Ensure no EC2 instances allow ingress from the internet to TCP port 1521, 2483 or 2484 (Oracle).",
+  "CheckType": [
+    "Infrastructure Security"
+  ],
+  "ServiceName": "ec2",
+  "SubServiceName": "instance",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "critical",
+  "ResourceType": "AwsEc2Instance",
+  "Description": "Ensure no EC2 instances allow ingress from the internet to TCP port 1521, 2483 or 2484 (Oracle).",
+  "Risk": "Oracle database servers are a high value target for attackers. Allowing internet access to these ports could lead to unauthorized access to the database.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Modify the security group to remove the rule that allows ingress from the internet to TCP port 1521, 2483 or 2484.",
+      "Url": "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

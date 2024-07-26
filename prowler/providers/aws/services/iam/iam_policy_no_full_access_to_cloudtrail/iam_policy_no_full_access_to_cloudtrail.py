@@ -1,5 +1,6 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.iam.iam_client import iam_client
+from prowler.providers.aws.services.iam.lib.policy import check_full_service_access
 
 critical_service = "cloudtrail"
 
@@ -17,24 +18,12 @@ class iam_policy_no_full_access_to_cloudtrail(Check):
                 report.resource_tags = policy.tags
                 report.status = "PASS"
                 report.status_extended = f"Custom Policy {policy.name} does not allow '{critical_service}:*' privileges."
-                if policy.document:
-                    if not isinstance(policy.document["Statement"], list):
-                        policy_statements = [policy.document["Statement"]]
-                    else:
-                        policy_statements = policy.document["Statement"]
-                    # Check the statements, if one includes kms:* stop iterating over the rest
-                    for statement in policy_statements:
-                        if (
-                            statement["Effect"] == "Allow"
-                            and "Action" in statement
-                            and critical_service + ":*" in statement["Action"]
-                            and (
-                                statement["Resource"] == "*"
-                                or statement["Resource"] == ["*"]
-                            )
-                        ):
-                            report.status = "FAIL"
-                            report.status_extended = f"Custom Policy {policy.name} allows '{critical_service}:*' privileges."
-                            break
+
+                if policy.document and check_full_service_access(
+                    critical_service, policy.document
+                ):
+                    report.status = "FAIL"
+                    report.status_extended = f"Custom Policy {policy.name} allows '{critical_service}:*' privileges."
+
                 findings.append(report)
         return findings

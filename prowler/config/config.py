@@ -1,6 +1,5 @@
 import os
 import pathlib
-import sys
 from datetime import datetime, timezone
 from os import getcwd
 
@@ -11,9 +10,9 @@ from prowler.lib.logger import logger
 
 timestamp = datetime.today()
 timestamp_utc = datetime.now(timezone.utc).replace(tzinfo=timezone.utc)
-prowler_version = "4.1.0"
+prowler_version = "4.2.4"
 html_logo_url = "https://github.com/prowler-cloud/prowler/"
-square_logo_img = "https://raw.githubusercontent.com/prowler-cloud/prowler/master/docs/img/prowler-logo-black.png#gh-light-mode-onlyg"
+square_logo_img = "https://prowler.com/wp-content/uploads/logo-html.png"
 aws_logo = "https://user-images.githubusercontent.com/38561120/235953920-3e3fba08-0795-41dc-b480-9bea57db9f2e.png"
 azure_logo = "https://user-images.githubusercontent.com/38561120/235927375-b23e2e0f-8932-49ec-b59c-d89f61c8041d.png"
 gcp_logo = "https://user-images.githubusercontent.com/38561120/235928332-eb4accdc-c226-4391-8e97-6ca86a91cf50.png"
@@ -65,6 +64,8 @@ default_config_file_path = (
 default_fixer_config_file_path = (
     f"{pathlib.Path(os.path.dirname(os.path.realpath(__file__)))}/fixer_config.yaml"
 )
+enconding_format_utf_8 = "utf-8"
+available_output_formats = ["csv", "json-asff", "json-ocsf", "html"]
 
 
 def get_default_mute_file_path(provider: str):
@@ -99,52 +100,84 @@ def check_current_version():
 
 def load_and_validate_config_file(provider: str, config_file_path: str) -> dict:
     """
-    load_and_validate_config_file reads the Prowler config file in YAML format from the default location or the file passed with the --config-file flag
+    Reads the Prowler config file in YAML format from the default location or the file passed with the --config-file flag.
+
+    Args:
+        provider (str): The provider name (e.g., 'aws', 'gcp', 'azure', 'kubernetes').
+        config_file_path (str): The path to the configuration file.
+
+    Returns:
+        dict: The configuration dictionary for the specified provider.
     """
     try:
-        with open(config_file_path) as f:
-            config = {}
+        with open(config_file_path, "r", encoding=enconding_format_utf_8) as f:
             config_file = yaml.safe_load(f)
 
-            # Not to introduce a breaking change we have to allow the old format config file without any provider keys
-            # and a new format with a key for each provider to include their configuration values within
-            # Check if the new format is passed
-            if (
-                "aws" in config_file
-                or "gcp" in config_file
-                or "azure" in config_file
-                or "kubernetes" in config_file
-            ):
+            # Not to introduce a breaking change, allow the old format config file without any provider keys
+            # and a new format with a key for each provider to include their configuration values within.
+            if any(key in config_file for key in ["aws", "gcp", "azure", "kubernetes"]):
                 config = config_file.get(provider, {})
             else:
                 config = config_file if config_file else {}
-                # Not to break Azure, K8s and GCP does not support neither use the old config format
+                # Not to break Azure, K8s and GCP does not support or use the old config format
                 if provider in ["azure", "gcp", "kubernetes"]:
                     config = {}
 
             return config
 
-    except Exception as error:
-        logger.critical(
+    except FileNotFoundError as error:
+        logger.error(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
         )
-        sys.exit(1)
+    except yaml.YAMLError as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+        )
+    except UnicodeDecodeError as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+        )
+    except Exception as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+        )
+
+    return {}
 
 
 def load_and_validate_fixer_config_file(
     provider: str, fixer_config_file_path: str
 ) -> dict:
     """
-    load_and_validate_fixer_config_file reads the Prowler fixer config file in YAML format from the default location or the file passed with the --fixer-config flag
+    Reads the Prowler fixer config file in YAML format from the default location or the file passed with the --fixer-config flag.
+
+    Args:
+        provider (str): The provider name (e.g., 'aws', 'gcp', 'azure', 'kubernetes').
+        fixer_config_file_path (str): The path to the fixer configuration file.
+
+    Returns:
+        dict: The fixer configuration dictionary for the specified provider.
     """
     try:
-        with open(fixer_config_file_path) as f:
+        with open(fixer_config_file_path, "r", encoding=enconding_format_utf_8) as f:
             fixer_config_file = yaml.safe_load(f)
-
             return fixer_config_file.get(provider, {})
 
-    except Exception as error:
-        logger.critical(
+    except FileNotFoundError as error:
+        logger.error(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
         )
-        sys.exit(1)
+    except yaml.YAMLError as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+        )
+    except UnicodeDecodeError as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+        )
+    except Exception as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+        )
+
+    return {}

@@ -1,0 +1,20 @@
+{
+  "properties": {
+    "roleName": "ProwlerRole",
+    "description": "Role used for checks that require read-only access to Azure resources and are not covered by the Reader role.",
+    "assignableScopes": [
+      "/"
+    ],
+    "permissions": [
+      {
+        "actions": [
+          "Microsoft.Web/sites/host/listkeys/action",
+          "Microsoft.Web/sites/config/list/Action"
+        ],
+        "notActions": [],
+        "dataActions": [],
+        "notDataActions": []
+      }
+    ]
+  }
+}

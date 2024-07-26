@@ -1,6 +1,6 @@
 {
   "Provider": "azure",
-  "CheckID": "monitor_alert_create_update_policy_assignment",
+  "CheckID": "monitor_alert_create_update_nsg",
   "CheckTitle": "Ensure that Activity Log Alert exists for Create or Update Network Security Group",
   "CheckType": [],
   "ServiceName": "monitor",

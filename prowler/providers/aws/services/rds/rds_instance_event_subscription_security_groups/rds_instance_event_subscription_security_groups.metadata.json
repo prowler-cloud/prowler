@@ -1,0 +1,30 @@
+{
+  "Provider": "aws",
+  "CheckID": "rds_instance_event_subscription_security_groups",
+  "CheckTitle": "Check if RDS Security Group events are subscribed.",
+  "CheckType": [],
+  "ServiceName": "rds",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:rds:region:account-id:es",
+  "Severity": "medium",
+  "ResourceType": "AwsRdsEventSubscription",
+  "Description": "Ensure that Amazon RDS event notification subscriptions are enabled for database security groups events.",
+  "Risk": "Amazon RDS event subscriptions for database security groups are designed to provide incident notification of events that may affect the security, availability, and reliability of the RDS database instances associated with these security groups.",
+  "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-22",
+  "Remediation": {
+    "Code": {
+      "CLI": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/rds-db-security-groups-events.html#",
+      "NativeIaC": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/rds-db-security-groups-events.html#",
+      "Other": "",
+      "Terraform": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/rds-db-security-groups-events.html#"
+    },
+    "Recommendation": {
+      "Text": "To subscribe to RDS instance event notifications, see Subscribing to Amazon RDS event notification in the Amazon RDS User Guide.",
+      "Url": "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-22"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

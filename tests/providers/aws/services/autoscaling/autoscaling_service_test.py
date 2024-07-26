@@ -3,6 +3,7 @@ from base64 import b64decode
 from boto3 import client
 from moto import mock_aws
 
+from prowler.config.config import enconding_format_utf_8
 from prowler.providers.aws.services.autoscaling.autoscaling_service import AutoScaling
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
@@ -72,7 +73,9 @@ class Test_AutoScaling_Service:
         assert len(autoscaling.launch_configurations) == 2
         assert autoscaling.launch_configurations[0].name == "tester1"
         assert (
-            b64decode(autoscaling.launch_configurations[0].user_data).decode("utf-8")
+            b64decode(autoscaling.launch_configurations[0].user_data).decode(
+                enconding_format_utf_8
+            )
             == "DB_PASSWORD=foobar123"
         )
         assert autoscaling.launch_configurations[0].image_id == "ami-12c6146b"
@@ -91,7 +94,7 @@ class Test_AutoScaling_Service:
             KeyName="the_keys",
             SecurityGroups=["default", "default2"],
         )
-        asg = autoscaling_client.create_auto_scaling_group(
+        _ = autoscaling_client.create_auto_scaling_group(
             AutoScalingGroupName="my-autoscaling-group",
             LaunchConfigurationName="test",
             MinSize=0,
@@ -109,7 +112,6 @@ class Test_AutoScaling_Service:
         # AutoScaling client for this test class
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         autoscaling = AutoScaling(aws_provider)
-        print("asg", asg)
         assert len(autoscaling.groups) == 1
         # create_auto_scaling_group doesn't return the ARN, can't check it
         # assert autoscaling.groups[0].arn ==

@@ -1,0 +1,30 @@
+{
+  "Provider": "aws",
+  "CheckID": "documentdb_cluster_backup_enabled",
+  "CheckTitle": "Check if DocumentDB Clusters have backup enabled.",
+  "CheckType": [],
+  "ServiceName": "DocumentDB",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-cluster",
+  "Severity": "medium",
+  "ResourceType": "AwsRdsDbCluster",
+  "Description": "Check if DocumentDB Clusters have backup enabled.",
+  "Risk": "Ensure that your Amazon DocumentDB database clusters have set a minimum backup retention period in order to achieve compliance requirements in your organization.",
+  "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/documentdb-controls.html#documentdb-2",
+  "Remediation": {
+    "Code": {
+      "CLI": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DocumentDB/sufficient-backup-retention-period.html#",
+      "NativeIaC": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DocumentDB/sufficient-backup-retention-period.html#",
+      "Other": "",
+      "Terraform": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DocumentDB/sufficient-backup-retention-period.html#"
+    },
+    "Recommendation": {
+      "Text": "Enable automated backup for production data. Define a retention period and periodically test backup restoration. A Disaster Recovery process should be in place to govern Data Protection approach.",
+      "Url": "https://docs.aws.amazon.com/securityhub/latest/userguide/documentdb-controls.html#documentdb-2"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

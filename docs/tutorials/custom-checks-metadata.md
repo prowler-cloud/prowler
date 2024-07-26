@@ -54,7 +54,7 @@ CustomChecksMetadata:
         RelatedUrl: https://docs.aws.amazon.com/AmazonS3/latest/dev/Versioning.html
         Remediation:
           Code:
-            CLI: aws s3api put-bucket-versioning --bucket <bucket-name> --versioning-configuration Status=Enabled
+            CLI: aws s3api put-bucket-versioning --bucket <bucket-name> --versioning-configuration Status=Enabled,MFADelete=Enabled
             NativeIaC: https://aws.amazon.com/es/s3/features/versioning/
             Other: https://docs.aws.amazon.com/AmazonS3/latest/dev/Versioning.html
             Terraform: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_versioning

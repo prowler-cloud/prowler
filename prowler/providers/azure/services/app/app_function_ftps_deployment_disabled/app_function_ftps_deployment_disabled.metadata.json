@@ -1,0 +1,31 @@
+{
+  "Provider": "azure",
+  "CheckID": "app_function_ftps_deployment_disabled",
+  "CheckTitle": "Ensure that FTP and FTPS deployments are disabled for Azure Functions to prevent unauthorized access and data breaches.",
+  "CheckType": [],
+  "ServiceName": "app",
+  "SubServiceName": "function",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Microsoft.Web/sites",
+  "Description": "Azure FTP deployment endpoints are unencrypted and public, making them vulnerable to attacks. Disabling FTP and FTPS deployments enhances security by preventing unauthorized access to login credentials and sensitive codebases.",
+  "Risk": "If left enabled, attackers can intercept network traffic and gain full control of the app or service, leading to potential data breaches and unauthorized modifications.",
+  "RelatedUrl": "https://docs.microsoft.com/en-us/azure/app-service/deploy-ftp",
+  "Remediation": {
+    "Code": {
+      "CLI": "az webapp config set --resource-group <resource-group> --name <app-name> --ftps-state Disabled",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": "",
+      "Arm": ""
+    },
+    "Recommendation": {
+      "Text": "It is recommended to disable FTP and FTPS deployments for Azure Functions to mitigate security risks. Instead, consider using more secure deployment methods such as Docker contianer or enabling continuous deployment with GitHub Actions.",
+      "Url": "https://learn.microsoft.com/en-us/azure/azure-functions/functions-deployment-technologies?tabs=windows#trigger-syncing"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check ensures that Azure Functions are deployed securely, reducing the attack surface and protecting sensitive information."
+}

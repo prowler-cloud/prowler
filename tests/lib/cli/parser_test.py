@@ -1229,6 +1229,14 @@ class Test_Parser:
         assert parsed.provider == "gcp"
         assert parsed.list_project_id
 
+    def test_parser_gcp_impersonate_service_account(self):
+        argument = "--impersonate-service-account"
+        service_account = "test@test.iam.gserviceaccount.com"
+        command = [prowler_command, "gcp", argument, service_account]
+        parsed = self.parser.parse(command)
+        assert parsed.provider == "gcp"
+        assert parsed.impersonate_service_account == service_account
+
     def test_parser_kubernetes_auth_kubeconfig_file(self):
         argument = "--kubeconfig-file"
         file = "config"

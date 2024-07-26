@@ -5,84 +5,14 @@ from unittest import mock
 from boto3 import client
 from moto import mock_aws
 
+from prowler.providers.aws.services.iam.lib.privilege_escalation import (
+    privilege_escalation_policies_combination,
+)
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
     set_mocked_aws_provider,
 )
-
-# Keep this up-to-date with the check's actions that allows for privilege escalation
-privilege_escalation_policies_combination = {
-    "OverPermissiveIAM": {"iam:*"},
-    "IAMPut": {"iam:Put*"},
-    "CreatePolicyVersion": {"iam:CreatePolicyVersion"},
-    "SetDefaultPolicyVersion": {"iam:SetDefaultPolicyVersion"},
-    "iam:PassRole": {"iam:PassRole"},
-    "PassRole+EC2": {
-        "iam:PassRole",
-        "ec2:RunInstances",
-    },
-    "PassRole+CreateLambda+Invoke": {
-        "iam:PassRole",
-        "lambda:CreateFunction",
-        "lambda:InvokeFunction",
-    },
-    "PassRole+CreateLambda+ExistingDynamo": {
-        "iam:PassRole",
-        "lambda:CreateFunction",
-        "lambda:CreateEventSourceMapping",
-    },
-    "PassRole+CreateLambda+NewDynamo": {
-        "iam:PassRole",
-        "lambda:CreateFunction",
-        "lambda:CreateEventSourceMapping",
-        "dynamodb:CreateTable",
-        "dynamodb:PutItem",
-    },
-    "PassRole+GlueEndpoint": {
-        "iam:PassRole",
-        "glue:CreateDevEndpoint",
-        "glue:GetDevEndpoint",
-    },
-    "PassRole+GlueEndpoints": {
-        "iam:PassRole",
-        "glue:CreateDevEndpoint",
-        "glue:GetDevEndpoints",
-    },
-    "PassRole+CloudFormation": {
-        "iam:PassRole",
-        "cloudformation:CreateStack",
-        "cloudformation:DescribeStacks",
-    },
-    "PassRole+DataPipeline": {
-        "iam:PassRole",
-        "datapipeline:CreatePipeline",
-        "datapipeline:PutPipelineDefinition",
-        "datapipeline:ActivatePipeline",
-    },
-    "GlueUpdateDevEndpoint": {"glue:UpdateDevEndpoint"},
-    "GlueUpdateDevEndpoints": {"glue:UpdateDevEndpoints"},
-    "lambda:UpdateFunctionCode": {"lambda:UpdateFunctionCode"},
-    "iam:CreateAccessKey": {"iam:CreateAccessKey"},
-    "iam:CreateLoginProfile": {"iam:CreateLoginProfile"},
-    "iam:UpdateLoginProfile": {"iam:UpdateLoginProfile"},
-    "iam:AttachUserPolicy": {"iam:AttachUserPolicy"},
-    "iam:AttachGroupPolicy": {"iam:AttachGroupPolicy"},
-    "iam:AttachRolePolicy": {"iam:AttachRolePolicy"},
-    "AssumeRole+AttachRolePolicy": {"sts:AssumeRole", "iam:AttachRolePolicy"},
-    "iam:PutGroupPolicy": {"iam:PutGroupPolicy"},
-    "iam:PutRolePolicy": {"iam:PutRolePolicy"},
-    "AssumeRole+PutRolePolicy": {"sts:AssumeRole", "iam:PutRolePolicy"},
-    "iam:PutUserPolicy": {"iam:PutUserPolicy"},
-    "iam:AddUserToGroup": {"iam:AddUserToGroup"},
-    "iam:UpdateAssumeRolePolicy": {"iam:UpdateAssumeRolePolicy"},
-    "AssumeRole+UpdateAssumeRolePolicy": {
-        "sts:AssumeRole",
-        "iam:UpdateAssumeRolePolicy",
-    },
-    # TO-DO: We have to handle AssumeRole just if the resource is * and without conditions
-    # "sts:AssumeRole": {"sts:AssumeRole"},
-}
 
 
 class Test_iam_policy_allows_privilege_escalation:
@@ -524,7 +454,6 @@ class Test_iam_policy_allows_privilege_escalation:
         iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
         policy_name = "privileged_policy"
         for values in privilege_escalation_policies_combination.values():
-            print(list(values))
             # We create a new statement in each loop with the combinations required to allow the privilege escalation
             policy_document = {
                 "Version": "2012-10-17",

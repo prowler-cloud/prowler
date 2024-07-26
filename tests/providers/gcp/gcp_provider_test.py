@@ -1,9 +1,9 @@
 from argparse import Namespace
 from datetime import datetime
-from os import rmdir
+from os import environ, rmdir
 
 from freezegun import freeze_time
-from mock import patch
+from mock import MagicMock, patch
 
 from prowler.config.config import (
     default_config_file_path,
@@ -20,6 +20,7 @@ class TestGCPProvider:
         arguments.excluded_project_id = []
         arguments.list_project_id = False
         arguments.credentials_file = ""
+        arguments.impersonate_service_account = ""
         arguments.config_file = default_config_file_path
         arguments.fixer_config = default_fixer_config_file_path
 
@@ -56,6 +57,7 @@ class TestGCPProvider:
         arguments.excluded_project_id = []
         arguments.list_project_id = False
         arguments.credentials_file = ""
+        arguments.impersonate_service_account = ""
         arguments.config_file = default_config_file_path
         arguments.fixer_config = default_fixer_config_file_path
 
@@ -128,6 +130,7 @@ class TestGCPProvider:
         arguments.excluded_project_id = []
         arguments.list_project_id = False
         arguments.credentials_file = ""
+        arguments.impersonate_service_account = ""
         arguments.config_file = default_config_file_path
         arguments.fixer_config = default_fixer_config_file_path
 
@@ -176,3 +179,252 @@ class TestGCPProvider:
             input_project = "prowler-test-project"
             project_to_match = "prowler-test"
             assert not gcp_provider.is_project_matching(input_project, project_to_match)
+
+    def test_setup_session_with_credentials_file_no_impersonate(self):
+        mocked_credentials = MagicMock()
+
+        mocked_credentials.refresh.return_value = None
+        mocked_credentials._service_account_email = "test-service-account-email"
+
+        arguments = Namespace()
+        arguments.project_id = []
+        arguments.excluded_project_id = []
+        arguments.list_project_id = False
+        arguments.credentials_file = "test_credentials_file"
+        arguments.impersonate_service_account = ""
+        arguments.config_file = default_config_file_path
+        arguments.fixer_config = default_fixer_config_file_path
+
+        projects = {
+            "test-project": GCPProject(
+                number="55555555",
+                id="project/55555555",
+                name="test-project",
+                labels=["test:value"],
+                lifecycle_state="",
+            )
+        }
+        with patch(
+            "prowler.providers.gcp.gcp_provider.GcpProvider.get_projects",
+            return_value=projects,
+        ), patch(
+            "prowler.providers.gcp.gcp_provider.GcpProvider.update_projects_with_organizations",
+            return_value=None,
+        ), patch(
+            "os.path.abspath",
+            return_value="test_credentials_file",
+        ), patch(
+            "prowler.providers.gcp.gcp_provider.default",
+            return_value=(mocked_credentials, MagicMock()),
+        ):
+            gcp_provider = GcpProvider(arguments)
+            assert environ["GOOGLE_APPLICATION_CREDENTIALS"] == "test_credentials_file"
+            assert gcp_provider.session is not None
+            assert gcp_provider.identity.profile == "test-service-account-email"
+
+    def test_setup_session_with_credentials_file_and_impersonate(self):
+        mocked_credentials = MagicMock()
+
+        mocked_credentials.refresh.return_value = None
+        mocked_credentials._service_account_email = "test-service-account-email"
+
+        arguments = Namespace()
+        arguments.project_id = []
+        arguments.excluded_project_id = []
+        arguments.list_project_id = False
+        arguments.credentials_file = "test_credentials_file"
+        arguments.impersonate_service_account = "test-impersonate-service-account"
+        arguments.config_file = default_config_file_path
+        arguments.fixer_config = default_fixer_config_file_path
+
+        projects = {
+            "test-project": GCPProject(
+                number="55555555",
+                id="project/55555555",
+                name="test-project",
+                labels=["test:value"],
+                lifecycle_state="",
+            )
+        }
+        with patch(
+            "prowler.providers.gcp.gcp_provider.GcpProvider.get_projects",
+            return_value=projects,
+        ), patch(
+            "prowler.providers.gcp.gcp_provider.GcpProvider.update_projects_with_organizations",
+            return_value=None,
+        ), patch(
+            "os.path.abspath",
+            return_value="test_credentials_file",
+        ), patch(
+            "prowler.providers.gcp.gcp_provider.default",
+            return_value=(mocked_credentials, MagicMock()),
+        ):
+            gcp_provider = GcpProvider(arguments)
+            assert environ["GOOGLE_APPLICATION_CREDENTIALS"] == "test_credentials_file"
+            assert gcp_provider.session is not None
+            assert (
+                gcp_provider.session.service_account_email
+                == "test-impersonate-service-account"
+            )
+            assert gcp_provider.identity.profile == "default"
+            assert (
+                gcp_provider.impersonated_service_account
+                == "test-impersonate-service-account"
+            )
+
+    def test_print_credentials_default_options(self, capsys):
+        mocked_credentials = MagicMock()
+
+        mocked_credentials.refresh.return_value = None
+        mocked_credentials._service_account_email = "test-service-account-email"
+
+        arguments = Namespace()
+        arguments.project_id = []
+        arguments.excluded_project_id = []
+        arguments.list_project_id = False
+        arguments.credentials_file = "test_credentials_file"
+        arguments.impersonate_service_account = ""
+        arguments.config_file = default_config_file_path
+        arguments.fixer_config = default_fixer_config_file_path
+
+        projects = {
+            "test-project": GCPProject(
+                number="55555555",
+                id="project/55555555",
+                name="test-project",
+                labels=["test:value"],
+                lifecycle_state="",
+            )
+        }
+        with patch(
+            "prowler.providers.gcp.gcp_provider.GcpProvider.get_projects",
+            return_value=projects,
+        ), patch(
+            "prowler.providers.gcp.gcp_provider.GcpProvider.update_projects_with_organizations",
+            return_value=None,
+        ), patch(
+            "os.path.abspath",
+            return_value="test_credentials_file",
+        ), patch(
+            "prowler.providers.gcp.gcp_provider.default",
+            return_value=(mocked_credentials, MagicMock()),
+        ):
+            gcp_provider = GcpProvider(arguments)
+            gcp_provider.print_credentials()
+            captured = capsys.readouterr()
+            assert "Using the GCP credentials below:" in captured.out
+            assert (
+                "GCP Account:" in captured.out
+                and "test-service-account-email" in captured.out
+            )
+            assert "GCP Project IDs:" in captured.out and "test-project" in captured.out
+            assert "Impersonated Service Account" not in captured.out
+            assert "Excluded GCP Project IDs" not in captured.out
+
+    def test_print_credentials_impersonated_service_account(self, capsys):
+        mocked_credentials = MagicMock()
+
+        mocked_credentials.refresh.return_value = None
+        mocked_credentials._service_account_email = "test-service-account-email"
+
+        arguments = Namespace()
+        arguments.project_id = []
+        arguments.excluded_project_id = []
+        arguments.list_project_id = False
+        arguments.credentials_file = "test_credentials_file"
+        arguments.impersonate_service_account = "test-impersonate-service-account"
+        arguments.config_file = default_config_file_path
+        arguments.fixer_config = default_fixer_config_file_path
+
+        projects = {
+            "test-project": GCPProject(
+                number="55555555",
+                id="project/55555555",
+                name="test-project",
+                labels=["test:value"],
+                lifecycle_state="",
+            )
+        }
+        with patch(
+            "prowler.providers.gcp.gcp_provider.GcpProvider.get_projects",
+            return_value=projects,
+        ), patch(
+            "prowler.providers.gcp.gcp_provider.GcpProvider.update_projects_with_organizations",
+            return_value=None,
+        ), patch(
+            "os.path.abspath",
+            return_value="test_credentials_file",
+        ), patch(
+            "prowler.providers.gcp.gcp_provider.default",
+            return_value=(mocked_credentials, MagicMock()),
+        ):
+            gcp_provider = GcpProvider(arguments)
+            gcp_provider.print_credentials()
+            captured = capsys.readouterr()
+            assert "Using the GCP credentials below:" in captured.out
+            assert "GCP Account:" in captured.out and "default" in captured.out
+            assert "GCP Project IDs:" in captured.out and "test-project" in captured.out
+            assert (
+                "Impersonated Service Account:" in captured.out
+                and "test-impersonate-service-account" in captured.out
+            )
+            assert "Excluded GCP Project IDs" not in captured.out
+
+    def test_print_credentials_excluded_project_ids(self, capsys):
+        mocked_credentials = MagicMock()
+
+        mocked_credentials.refresh.return_value = None
+        mocked_credentials._service_account_email = "test-service-account-email"
+
+        arguments = Namespace()
+        arguments.project_id = []
+        arguments.excluded_project_id = ["test-excluded-project"]
+        arguments.list_project_id = False
+        arguments.credentials_file = "test_credentials_file"
+        arguments.impersonate_service_account = ""
+        arguments.config_file = default_config_file_path
+        arguments.fixer_config = default_fixer_config_file_path
+
+        projects = {
+            "test-project": GCPProject(
+                number="55555555",
+                id="project/55555555",
+                name="test-project",
+                labels=["test:value"],
+                lifecycle_state="",
+            ),
+            "test-excluded-project": GCPProject(
+                number="12345678",
+                id="project/12345678",
+                name="test-excluded-project",
+                labels=["test:value"],
+                lifecycle_state="",
+            ),
+        }
+        with patch(
+            "prowler.providers.gcp.gcp_provider.GcpProvider.get_projects",
+            return_value=projects,
+        ), patch(
+            "prowler.providers.gcp.gcp_provider.GcpProvider.update_projects_with_organizations",
+            return_value=None,
+        ), patch(
+            "os.path.abspath",
+            return_value="test_credentials_file",
+        ), patch(
+            "prowler.providers.gcp.gcp_provider.default",
+            return_value=(mocked_credentials, MagicMock()),
+        ):
+            gcp_provider = GcpProvider(arguments)
+            gcp_provider.print_credentials()
+            captured = capsys.readouterr()
+            assert "Using the GCP credentials below:" in captured.out
+            assert (
+                "GCP Account:" in captured.out
+                and "test-service-account-email" in captured.out
+            )
+            assert "GCP Project IDs:" in captured.out and "test-project" in captured.out
+            assert "Impersonated Service Account" not in captured.out
+            assert (
+                "Excluded GCP Project IDs:" in captured.out
+                and "test-excluded-project" in captured.out
+            )

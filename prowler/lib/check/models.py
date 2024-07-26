@@ -96,13 +96,15 @@ class Check(ABC, Check_Metadata_Model):
         data = Check_Metadata_Model.parse_file(metadata_file).dict()
         # Calls parents init function
         super().__init__(**data)
+        # TODO: verify that the CheckID is the same as the filename and classname
+        # to mimic the test done at test_<provider>_checks_metadata_is_valid
 
     def metadata(self) -> dict:
         """Return the JSON representation of the check's metadata"""
         return self.json()
 
     @abstractmethod
-    def execute(self):
+    def execute(self) -> list:
         """Execute the check's logic"""
 
 

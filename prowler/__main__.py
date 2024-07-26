@@ -6,7 +6,13 @@ from os import environ
 
 from colorama import Fore, Style
 
-from prowler.config.config import get_available_compliance_frameworks
+from prowler.config.config import (
+    csv_file_suffix,
+    get_available_compliance_frameworks,
+    html_file_suffix,
+    json_asff_file_suffix,
+    json_ocsf_file_suffix,
+)
 from prowler.lib.banner import print_banner
 from prowler.lib.check.check import (
     bulk_load_checks_metadata,
@@ -36,19 +42,32 @@ from prowler.lib.check.custom_checks_metadata import (
 )
 from prowler.lib.cli.parser import ProwlerArgumentParser
 from prowler.lib.logger import logger, set_logging_config
-from prowler.lib.outputs.compliance.compliance import display_compliance_table
-from prowler.lib.outputs.html.html import add_html_footer, fill_html_overview_statistics
-from prowler.lib.outputs.json.json import close_json
-from prowler.lib.outputs.outputs import extract_findings_statistics
-from prowler.lib.outputs.slack import send_slack_message
-from prowler.lib.outputs.summary_table import display_summary_table
-from prowler.providers.aws.lib.s3.s3 import send_to_s3_bucket
-from prowler.providers.aws.lib.security_hub.security_hub import (
-    batch_send_to_security_hub,
-    prepare_security_hub_findings,
-    resolve_security_hub_previous_findings,
-    verify_security_hub_integration_enabled_per_region,
+from prowler.lib.outputs.asff.asff import ASFF
+from prowler.lib.outputs.compliance.aws_well_architected.aws_well_architected import (
+    AWSWellArchitected,
 )
+from prowler.lib.outputs.compliance.cis.cis_aws import AWSCIS
+from prowler.lib.outputs.compliance.cis.cis_azure import AzureCIS
+from prowler.lib.outputs.compliance.cis.cis_gcp import GCPCIS
+from prowler.lib.outputs.compliance.cis.cis_kubernetes import KubernetesCIS
+from prowler.lib.outputs.compliance.compliance import display_compliance_table
+from prowler.lib.outputs.compliance.ens.ens_aws import AWSENS
+from prowler.lib.outputs.compliance.generic.generic import GenericCompliance
+from prowler.lib.outputs.compliance.iso27001.iso27001_aws import AWSISO27001
+from prowler.lib.outputs.compliance.mitre_attack.mitre_attack_aws import AWSMitreAttack
+from prowler.lib.outputs.compliance.mitre_attack.mitre_attack_azure import (
+    AzureMitreAttack,
+)
+from prowler.lib.outputs.compliance.mitre_attack.mitre_attack_gcp import GCPMitreAttack
+from prowler.lib.outputs.csv.csv import CSV
+from prowler.lib.outputs.finding import Finding
+from prowler.lib.outputs.html.html import HTML
+from prowler.lib.outputs.ocsf.ocsf import OCSF
+from prowler.lib.outputs.outputs import extract_findings_statistics
+from prowler.lib.outputs.slack.slack import Slack
+from prowler.lib.outputs.summary_table import display_summary_table
+from prowler.providers.aws.lib.s3.s3 import S3
+from prowler.providers.aws.lib.security_hub.security_hub import SecurityHub
 from prowler.providers.common.provider import Provider
 from prowler.providers.common.quick_inventory import run_provider_quick_inventory
 
@@ -89,7 +108,8 @@ def prowler():
     )
 
     if not args.no_banner:
-        print_banner(args.verbose, getattr(args, "fixer", None))
+        legend = args.verbose or getattr(args, "fixer", None)
+        print_banner(legend)
 
     # We treat the compliance framework as another output format
     if compliance_framework:
@@ -179,7 +199,17 @@ def prowler():
 
     # Import custom checks from folder
     if checks_folder:
-        parse_checks_from_folder(global_provider, checks_folder)
+        custom_checks = parse_checks_from_folder(global_provider, checks_folder)
+        # Workaround to be able to execute custom checks alongside all checks if nothing is explicitly set
+        if (
+            not checks_file
+            and not checks
+            and not services
+            and not severities
+            and not compliance_framework
+            and not categories
+        ):
+            checks_to_execute.update(custom_checks)
 
     # Exclude checks if -e/--excluded-checks
     if excluded_checks:
@@ -248,109 +278,342 @@ def prowler():
     stats = extract_findings_statistics(findings)
 
     if args.slack:
-        if "SLACK_API_TOKEN" in environ and "SLACK_CHANNEL_ID" in environ:
-            _ = send_slack_message(
-                environ["SLACK_API_TOKEN"],
-                environ["SLACK_CHANNEL_ID"],
-                stats,
-                global_provider,
+        # TODO: this should be also in a config file
+        if "SLACK_API_TOKEN" in environ and (
+            "SLACK_CHANNEL_NAME" in environ or "SLACK_CHANNEL_ID" in environ
+        ):
+
+            token = environ["SLACK_API_TOKEN"]
+            channel = (
+                environ["SLACK_CHANNEL_NAME"]
+                if "SLACK_CHANNEL_NAME" in environ
+                else environ["SLACK_CHANNEL_ID"]
             )
+            prowler_args = " ".join(sys.argv[1:])
+            slack = Slack(token, channel, global_provider)
+            _ = slack.send(stats, prowler_args)
         else:
+            # Refactor(CLI)
             logger.critical(
-                "Slack integration needs SLACK_API_TOKEN and SLACK_CHANNEL_ID environment variables (see more in https://docs.prowler.cloud/en/latest/tutorials/integrations/#slack)."
+                "Slack integration needs SLACK_API_TOKEN and SLACK_CHANNEL_NAME environment variables (see more in https://docs.prowler.cloud/en/latest/tutorials/integrations/#slack)."
             )
             sys.exit(1)
 
+    # Outputs
+    # TODO: this part is needed since the checks generates a Check_Report_XXX and the output uses Finding
+    # This will be refactored for the outputs generate directly the Finding
+    finding_outputs = [
+        Finding.generate_output(global_provider, finding) for finding in findings
+    ]
+
+    generated_outputs = {"regular": [], "compliance": []}
+
     if args.output_formats:
         for mode in args.output_formats:
-            # Close json file if exists
-            if "json" in mode:
-                close_json(
-                    global_provider.output_options.output_filename,
-                    global_provider.output_options.output_directory,
-                    mode,
+            filename = (
+                f"{global_provider.output_options.output_directory}/"
+                f"{global_provider.output_options.output_filename}"
+            )
+            if mode == "csv":
+                csv_output = CSV(
+                    findings=finding_outputs,
+                    create_file_descriptor=True,
+                    file_path=f"{filename}{csv_file_suffix}",
+                )
+                generated_outputs["regular"].append(csv_output)
+                # Write CSV Finding Object to file
+                csv_output.batch_write_data_to_file()
+
+            if mode == "json-asff":
+                asff_output = ASFF(
+                    findings=finding_outputs,
+                    create_file_descriptor=True,
+                    file_path=f"{filename}{json_asff_file_suffix}",
+                )
+                generated_outputs["regular"].append(asff_output)
+                # Write ASFF Finding Object to file
+                asff_output.batch_write_data_to_file()
+
+            if mode == "json-ocsf":
+                json_output = OCSF(
+                    findings=finding_outputs,
+                    create_file_descriptor=True,
+                    file_path=f"{filename}{json_ocsf_file_suffix}",
+                )
+                generated_outputs["regular"].append(json_output)
+                json_output.batch_write_data_to_file()
+            if mode == "html":
+                html_output = HTML(
+                    findings=finding_outputs,
+                    create_file_descriptor=True,
+                    file_path=f"{filename}{html_file_suffix}",
+                )
+                generated_outputs["regular"].append(html_output)
+                html_output.batch_write_data_to_file(
+                    provider=global_provider, stats=stats
                 )
 
-            if "html" in mode:
-                add_html_footer(
-                    global_provider.output_options.output_filename,
-                    global_provider.output_options.output_directory,
+    # Compliance Frameworks
+    input_compliance_frameworks = set(
+        global_provider.output_options.output_modes
+    ).intersection(get_available_compliance_frameworks(provider))
+    if provider == "aws":
+        for compliance_name in input_compliance_frameworks:
+            if compliance_name.startswith("cis_"):
+                # Generate CIS Finding Object
+                filename = (
+                    f"{global_provider.output_options.output_directory}/compliance/"
+                    f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
                 )
-                fill_html_overview_statistics(
-                    stats,
-                    global_provider.output_options.output_filename,
-                    global_provider.output_options.output_directory,
+                cis = AWSCIS(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    create_file_descriptor=True,
+                    file_path=filename,
                 )
+                generated_outputs["compliance"].append(cis)
+                cis.batch_write_data_to_file()
+            elif compliance_name == "mitre_attack_aws":
+                # Generate MITRE ATT&CK Finding Object
+                filename = (
+                    f"{global_provider.output_options.output_directory}/compliance/"
+                    f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
+                )
+                mitre_attack = AWSMitreAttack(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    create_file_descriptor=True,
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(mitre_attack)
+                mitre_attack.batch_write_data_to_file()
+            elif compliance_name.startswith("ens_"):
+                # Generate ENS Finding Object
+                filename = (
+                    f"{global_provider.output_options.output_directory}/compliance/"
+                    f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
+                )
+                ens = AWSENS(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    create_file_descriptor=True,
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(ens)
+                ens.batch_write_data_to_file()
+            elif compliance_name.startswith("aws_well_architected_framework"):
+                # Generate AWS Well-Architected Finding Object
+                filename = (
+                    f"{global_provider.output_options.output_directory}/compliance/"
+                    f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
+                )
+                aws_well_architected = AWSWellArchitected(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    create_file_descriptor=True,
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(aws_well_architected)
+                aws_well_architected.batch_write_data_to_file()
+            elif compliance_name.startswith("iso27001_"):
+                # Generate ISO27001 Finding Object
+                filename = (
+                    f"{global_provider.output_options.output_directory}/compliance/"
+                    f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
+                )
+                iso27001 = AWSISO27001(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    create_file_descriptor=True,
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(iso27001)
+                iso27001.batch_write_data_to_file()
+            else:
+                filename = (
+                    f"{global_provider.output_options.output_directory}/compliance/"
+                    f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
+                )
+                generic_compliance = GenericCompliance(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    create_file_descriptor=True,
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(generic_compliance)
+                generic_compliance.batch_write_data_to_file()
 
-            # Send output to S3 if needed (-B / -D)
-            if provider == "aws" and (
-                args.output_bucket or args.output_bucket_no_assume
-            ):
-                output_bucket = args.output_bucket
-                bucket_session = global_provider.session.current_session
-                # Check if -D was input
-                if args.output_bucket_no_assume:
-                    output_bucket = args.output_bucket_no_assume
-                    bucket_session = global_provider.session.original_session
-                send_to_s3_bucket(
-                    global_provider.output_options.output_filename,
-                    args.output_directory,
-                    mode,
-                    output_bucket,
-                    bucket_session,
+    elif provider == "azure":
+        for compliance_name in input_compliance_frameworks:
+            if compliance_name.startswith("cis_"):
+                # Generate CIS Finding Object
+                filename = (
+                    f"{global_provider.output_options.output_directory}/compliance/"
+                    f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
                 )
+                cis = AzureCIS(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    create_file_descriptor=True,
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(cis)
+                cis.batch_write_data_to_file()
+            elif compliance_name == "mitre_attack_azure":
+                # Generate MITRE ATT&CK Finding Object
+                filename = (
+                    f"{global_provider.output_options.output_directory}/compliance/"
+                    f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
+                )
+                mitre_attack = AzureMitreAttack(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    create_file_descriptor=True,
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(mitre_attack)
+                mitre_attack.batch_write_data_to_file()
+            else:
+                filename = (
+                    f"{global_provider.output_options.output_directory}/compliance/"
+                    f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
+                )
+                generic_compliance = GenericCompliance(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    create_file_descriptor=True,
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(generic_compliance)
+                generic_compliance.batch_write_data_to_file()
+
+    elif provider == "gcp":
+        for compliance_name in input_compliance_frameworks:
+            if compliance_name.startswith("cis_"):
+                # Generate CIS Finding Object
+                filename = (
+                    f"{global_provider.output_options.output_directory}/compliance/"
+                    f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
+                )
+                cis = GCPCIS(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    create_file_descriptor=True,
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(cis)
+                cis.batch_write_data_to_file()
+            elif compliance_name == "mitre_attack_gcp":
+                # Generate MITRE ATT&CK Finding Object
+                filename = (
+                    f"{global_provider.output_options.output_directory}/compliance/"
+                    f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
+                )
+                mitre_attack = GCPMitreAttack(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    create_file_descriptor=True,
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(mitre_attack)
+                mitre_attack.batch_write_data_to_file()
+            else:
+                filename = (
+                    f"{global_provider.output_options.output_directory}/compliance/"
+                    f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
+                )
+                generic_compliance = GenericCompliance(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    create_file_descriptor=True,
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(generic_compliance)
+                generic_compliance.batch_write_data_to_file()
+
+    elif provider == "kubernetes":
+        for compliance_name in input_compliance_frameworks:
+            if compliance_name.startswith("cis_"):
+                # Generate CIS Finding Object
+                filename = (
+                    f"{global_provider.output_options.output_directory}/compliance/"
+                    f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
+                )
+                cis = KubernetesCIS(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    create_file_descriptor=True,
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(cis)
+                cis.batch_write_data_to_file()
+            else:
+                filename = (
+                    f"{global_provider.output_options.output_directory}/compliance/"
+                    f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
+                )
+                generic_compliance = GenericCompliance(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    create_file_descriptor=True,
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(generic_compliance)
+                generic_compliance.batch_write_data_to_file()
 
     # AWS Security Hub Integration
-    if provider == "aws" and args.security_hub:
-        print(
-            f"{Style.BRIGHT}\nSending findings to AWS Security Hub, please wait...{Style.RESET_ALL}"
-        )
-        # Verify where AWS Security Hub is enabled
-        aws_security_enabled_regions = []
-        security_hub_regions = (
-            global_provider.get_available_aws_service_regions("securityhub")
-            if not global_provider.identity.audited_regions
-            else global_provider.identity.audited_regions
-        )
-        for region in security_hub_regions:
-            # Save the regions where AWS Security Hub is enabled
-            if verify_security_hub_integration_enabled_per_region(
-                global_provider.identity.partition,
-                region,
-                global_provider.session.current_session,
-                global_provider.identity.account,
-            ):
-                aws_security_enabled_regions.append(region)
-
-        # Prepare the findings to be sent to Security Hub
-        security_hub_findings_per_region = prepare_security_hub_findings(
-            findings,
-            global_provider,
-            global_provider.output_options,
-            aws_security_enabled_regions,
-        )
-
-        # Send the findings to Security Hub
-        findings_sent_to_security_hub = batch_send_to_security_hub(
-            security_hub_findings_per_region, global_provider.session.current_session
-        )
-
-        print(
-            f"{Style.BRIGHT}{Fore.GREEN}\n{findings_sent_to_security_hub} findings sent to AWS Security Hub!{Style.RESET_ALL}"
-        )
-
-        # Resolve previous fails of Security Hub
-        if not args.skip_sh_update:
+    if provider == "aws":
+        # Send output to S3 if needed (-B / -D) for all the output formats
+        if args.output_bucket or args.output_bucket_no_assume:
+            output_bucket = args.output_bucket
+            bucket_session = global_provider.session.current_session
+            # Check if -D was input
+            if args.output_bucket_no_assume:
+                output_bucket = args.output_bucket_no_assume
+                bucket_session = global_provider.session.original_session
+            s3 = S3(
+                session=bucket_session,
+                bucket_name=output_bucket,
+                output_directory=args.output_directory,
+            )
+            s3.send_to_bucket(generated_outputs)
+        if args.security_hub:
             print(
-                f"{Style.BRIGHT}\nArchiving previous findings in AWS Security Hub, please wait...{Style.RESET_ALL}"
+                f"{Style.BRIGHT}\nSending findings to AWS Security Hub, please wait...{Style.RESET_ALL}"
             )
-            findings_archived_in_security_hub = resolve_security_hub_previous_findings(
-                security_hub_findings_per_region,
-                global_provider,
+
+            security_hub_regions = (
+                global_provider.get_available_aws_service_regions("securityhub")
+                if not global_provider.identity.audited_regions
+                else global_provider.identity.audited_regions
             )
+
+            security_hub = SecurityHub(
+                aws_account_id=global_provider.identity.account,
+                aws_partition=global_provider.identity.partition,
+                aws_session=global_provider.session.current_session,
+                findings=asff_output.data,
+                status=global_provider.output_options.status,
+                send_only_fails=global_provider.output_options.send_sh_only_fails,
+                aws_security_hub_available_regions=security_hub_regions,
+            )
+            # Send the findings to Security Hub
+            findings_sent_to_security_hub = security_hub.batch_send_to_security_hub()
             print(
-                f"{Style.BRIGHT}{Fore.GREEN}\n{findings_archived_in_security_hub} findings archived in AWS Security Hub!{Style.RESET_ALL}"
+                f"{Style.BRIGHT}{Fore.GREEN}\n{findings_sent_to_security_hub} findings sent to AWS Security Hub!{Style.RESET_ALL}"
             )
+
+            # Resolve previous fails of Security Hub
+            if not args.skip_sh_update:
+                print(
+                    f"{Style.BRIGHT}\nArchiving previous findings in AWS Security Hub, please wait...{Style.RESET_ALL}"
+                )
+                findings_archived_in_security_hub = (
+                    security_hub.archive_previous_findings()
+                )
+                print(
+                    f"{Style.BRIGHT}{Fore.GREEN}\n{findings_archived_in_security_hub} findings archived in AWS Security Hub!{Style.RESET_ALL}"
+                )
 
     # Display summary table
     if not args.only_logs:

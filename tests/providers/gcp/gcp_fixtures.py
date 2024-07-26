@@ -7,13 +7,17 @@ from prowler.providers.gcp.models import GCPIdentityInfo
 
 GCP_PROJECT_ID = "123456789012"
 
+GCP_EU1_LOCATION = "europe-west1"
+GCP_US_CENTER1_LOCATION = "us-central1"
+
 
 def set_mocked_gcp_provider(
     project_ids: list[str] = [], profile: str = ""
 ) -> GcpProvider:
     provider = MagicMock()
     provider.type = "gcp"
-    provider.session = None
+    provider.session = MagicMock()
+    provider.session._service_account_email = "test@test.com"
     provider.project_ids = project_ids
     provider.identity = GCPIdentityInfo(
         profile=profile,

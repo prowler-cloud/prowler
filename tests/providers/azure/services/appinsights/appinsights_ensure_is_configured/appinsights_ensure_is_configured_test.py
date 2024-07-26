@@ -63,6 +63,7 @@ class Test_appinsights_ensure_is_configured:
                     resource_id="/subscriptions/resource_id",
                     resource_name="AppInsightsTest",
                     location="westeurope",
+                    instrumentation_key="",
                 )
             }
         }
