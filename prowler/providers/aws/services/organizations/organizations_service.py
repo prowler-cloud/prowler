@@ -140,14 +140,15 @@ class Organizations(AWSService):
                     .get("Policy", {})
                     .get("Content", "")
                 )
+
+                if isinstance(policy_content, str):
+                    policy_content = json.loads(policy_content)
+
         except Exception as error:
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         finally:
-            if isinstance(policy_content, str):
-                policy_content = json.loads(policy_content)
-
             return policy_content if isinstance(policy_content, dict) else {}
 
     def __list_targets_for_policy__(self, policy_id) -> list:

@@ -52,6 +52,12 @@ class Test_Organizations_Service:
             Name="Test",
             Type="SERVICE_CONTROL_POLICY",
         )
+        response_unexpected_policy = conn.create_policy(
+            Content='"Version":"2012-10-17","Statement":[]',
+            Description="Test",
+            Name="TestInvalid",
+            Type="SERVICE_CONTROL_POLICY",
+        )
         # Mock
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         organizations = Organizations(aws_provider)
@@ -61,4 +67,12 @@ class Test_Organizations_Service:
                 assert policy.type == "SERVICE_CONTROL_POLICY"
                 assert policy.aws_managed is False
                 assert policy.content == json.loads(response["Policy"]["Content"])
+                assert policy.targets == []
+            elif (
+                policy.arn
+                == response_unexpected_policy["Policy"]["PolicySummary"]["Arn"]
+            ):
+                assert policy.type == "SERVICE_CONTROL_POLICY"
+                assert policy.aws_managed is False
+                assert policy.content == {}
                 assert policy.targets == []
