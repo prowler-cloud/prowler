@@ -128,7 +128,7 @@ class Organizations(AWSService):
         finally:
             return self.policies
 
-    def __describe_policy__(self, policy_id):
+    def __describe_policy__(self, policy_id) -> dict:
         logger.info("Organizations - Describe policy: %s ...", policy_id)
 
         # This operation can be called only from the organization’s management account or by a member account that is a delegated administrator for an Amazon Web Services service.
@@ -145,9 +145,12 @@ class Organizations(AWSService):
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         finally:
-            return json.loads(policy_content)
+            if isinstance(policy_content, str):
+                policy_content = json.loads(policy_content)
 
-    def __list_targets_for_policy__(self, policy_id):
+            return policy_content if isinstance(policy_content, dict) else {}
+
+    def __list_targets_for_policy__(self, policy_id) -> list:
         logger.info("Organizations - List Targets for policy: %s ...", policy_id)
 
         try:
@@ -161,7 +164,7 @@ class Organizations(AWSService):
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         finally:
-            return targets_for_policy
+            return targets_for_policy if isinstance(targets_for_policy, list) else []
 
     def __list_delegated_administrators__(self):
         logger.info("Organizations - List Delegated Administrators")
