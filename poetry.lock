@@ -469,13 +469,13 @@ isodate = ">=0.6.1,<1.0.0"
 
 [[package]]
 name = "azure-mgmt-network"
-version = "25.4.0"
+version = "26.0.0"
 description = "Microsoft Azure Network Management Client Library for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "azure-mgmt-network-25.4.0.tar.gz", hash = "sha256:a338e62d81fdbf050f802143c28cb965b07edd43800ef0504cdfa6b8854d7554"},
-    {file = "azure_mgmt_network-25.4.0-py3-none-any.whl", hash = "sha256:ae30f9ff25c22e14e0394d432d7aebc06ac1c5bf4de24cf226972c12bd664035"},
+    {file = "azure-mgmt-network-26.0.0.tar.gz", hash = "sha256:4de676184195053fdb106a6ea1042a894e70c731a6d3c8a633d52f5229f4ee1b"},
+    {file = "azure_mgmt_network-26.0.0-py3-none-any.whl", hash = "sha256:15d6a77d7429bdcc76f8482158845d42f9d9434529e1ad2b6778269cc14627e9"},
 ]
 
 [package.dependencies]
@@ -4512,4 +4512,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "jaraco.test", "more
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "4d123542555a5dcaf68ec25c406a034c77926af6ca506758cc9fb7ebcd817bb3"
+content-hash = "e168af61076a21b9e91bf3a6ca89cd44a9d1900d2ebaa28b995d55b5c62debc1"
