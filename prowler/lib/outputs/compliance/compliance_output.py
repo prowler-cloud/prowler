@@ -1,5 +1,5 @@
 from csv import DictWriter
-from io import TextIOWrapper
+from pathlib import Path
 from typing import List
 
 from prowler.lib.check.compliance_models import ComplianceBaseModel
@@ -25,17 +25,21 @@ class ComplianceOutput(Output):
         create_file_descriptor: Method to create a file descriptor for writing data to a file.
     """
 
-    _data: list
-    _file_descriptor: TextIOWrapper
-
     def __init__(
         self,
         findings: List[Finding],
         compliance: ComplianceBaseModel,
         create_file_descriptor: bool = False,
         file_path: str = None,
+        file_extension: str = "",
     ) -> None:
         self._data = []
+
+        if not file_extension and file_path:
+            self._file_extension = "".join(Path(file_path).suffixes)
+        if file_extension:
+            self._file_extension = file_extension
+
         if findings:
             # Get the compliance name of the model
             compliance_name = (

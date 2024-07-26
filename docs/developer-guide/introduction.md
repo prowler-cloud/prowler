@@ -48,7 +48,10 @@ Before we merge any of your pull requests we pass checks to the code, we use the
 
 You can see all dependencies in file `pyproject.toml`.
 
-Moreover, you would need to install [`TruffleHog`](https://github.com/trufflesecurity/trufflehog) to check for secrets in the code. You can install it using the official installation guide [here](https://github.com/trufflesecurity/trufflehog?tab=readme-ov-file#floppy_disk-installation).
+Moreover, you would need to install [`TruffleHog`](https://github.com/trufflesecurity/trufflehog) on the latest version to check for secrets in the code. You can install it using the official installation guide [here](https://github.com/trufflesecurity/trufflehog?tab=readme-ov-file#floppy_disk-installation).
+
+???+ note
+    If you have any trouble when committing to the Prowler repository, add the `--no-verify` flag to the `git commit` command.
 
 ## Pull Request Checklist
 

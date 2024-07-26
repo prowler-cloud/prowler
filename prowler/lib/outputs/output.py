@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from io import TextIOWrapper
-from os import path
+from pathlib import Path
 from typing import List
 
 from prowler.lib.logger import logger
@@ -40,13 +40,13 @@ class Output(ABC):
         self._data = []
 
         if not file_extension and file_path:
-            _, self._file_extension = path.splitext(file_path)
+            self._file_extension = "".join(Path(file_path).suffixes)
         if file_extension:
             self._file_extension = file_extension
 
         if findings:
             self.transform(findings)
-            if create_file_descriptor:
+            if create_file_descriptor and file_path:
                 self.create_file_descriptor(file_path)
 
     @property
@@ -73,7 +73,7 @@ class Output(ABC):
     def batch_write_data_to_file(self) -> None:
         raise NotImplementedError
 
-    def create_file_descriptor(self, file_path) -> None:
+    def create_file_descriptor(self, file_path: str) -> None:
         """
         Creates a file descriptor for writing data to a file.
 

@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "neptune_cluster_backup_retention",
+  "CheckID": "neptune_cluster_backup_enabled",
   "CheckTitle": "Check for Neptune Clusters Backup Retention Period.",
   "CheckType": [],
   "ServiceName": "neptune",
