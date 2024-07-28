@@ -37,7 +37,7 @@
       "id": "16aaeb4e-d3cd-4bb6-86f8-6c39cf93821e",
       "type": "providers",
       "attributes": {
-        "provider": "aws",
+        "provider": "azure",
         "provider_id": "1234567891",
         "alias": "mock_aws_not_connected",
         "connection": {
