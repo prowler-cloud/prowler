@@ -12,7 +12,7 @@ class Scan:
     # Refactor(Core): This should replace the Audit_Metadata
     _number_of_checks_to_execute: int = 0
     _number_of_checks_completed: int = 0
-    # TODO: these should hold a list of Checks()
+    # TODO the str should be a set of Check objects
     _checks_to_execute: set[str]
     _service_checks_to_execute: dict[str, set[str]]
     _service_checks_completed: dict[str, set[str]]
@@ -78,7 +78,7 @@ class Scan:
                 audit_progress=0,
             )
 
-            for i, check_name in enumerate(checks_to_execute, 1):
+            for check_name in checks_to_execute:
                 try:
                     # Recover service from check name
                     service = get_service_name_from_check_name(check_name)
@@ -90,8 +90,6 @@ class Scan:
                         self._provider,
                         custom_checks_metadata,
                     )
-                    # Yield the progress and the findings
-                    yield i, len(checks_to_execute), check_findings
 
                     # Store findings
                     self._findings.extend(check_findings)
@@ -115,6 +113,9 @@ class Scan:
                         self.get_completed_checks(),
                     )
 
+                    # Yield the progress and the findings
+                    yield self._provider.audit_metadata, check_findings
+
                 # If check does not exists in the provider or is from another provider
                 except ModuleNotFoundError:
                     logger.error(
@@ -128,8 +129,6 @@ class Scan:
             logger.error(
                 f"{check_name} - {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-
-        return self._findings
 
     def get_completed_services(self):
         return self._service_checks_completed.keys()
