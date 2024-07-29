@@ -35,12 +35,12 @@ class autoscaling_find_secrets_ec2_launch_configuration(Check):
                     else:
                         user_data = user_data.decode(encoding_format_utf_8)
                 except UnicodeDecodeError as error:
-                    logger.error(
+                    logger.warning(
                         f"{configuration.region} -- Unable to decode autoscaling {configuration.name} User Data[{error.__traceback__.tb_lineno}]: {error}"
                     )
                     continue
                 except Exception as error:
-                    logger.error(
+                    logger.warning(
                         f"{configuration.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
                     continue
