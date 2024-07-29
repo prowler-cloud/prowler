@@ -15,7 +15,10 @@ class cloudsql_instance_postgres_log_disconnections_flag(Check):
                 report.status = "FAIL"
                 report.status_extended = f"PostgreSQL Instance {instance.name} does not have 'log_disconnections' flag set to 'on'."
                 for flag in instance.flags:
-                    if flag["name"] == "log_disconnections" and flag["value"] == "on":
+                    if (
+                        flag.get("name", "") == "log_disconnections"
+                        and flag.get("value", "off") == "on"
+                    ):
                         report.status = "PASS"
                         report.status_extended = f"PostgreSQL Instance {instance.name} has 'log_disconnections' flag set to 'on'."
                         break

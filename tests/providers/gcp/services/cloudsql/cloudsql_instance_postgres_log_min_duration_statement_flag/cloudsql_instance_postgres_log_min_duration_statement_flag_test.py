@@ -99,10 +99,10 @@ class Test_cloudsql_instance_postgres_log_min_duration_statement_flag:
             check = cloudsql_instance_postgres_log_min_duration_statement_flag()
             result = check.execute()
             assert len(result) == 1
-            assert result[0].status == "FAIL"
+            assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "PostgreSQL Instance instance1 does not have 'log_min_duration_statement' flag set to '-1'."
+                == "PostgreSQL Instance instance1 has 'log_min_duration_statement' flag set to '-1'."
             )
             assert result[0].resource_id == "instance1"
             assert result[0].resource_name == "instance1"

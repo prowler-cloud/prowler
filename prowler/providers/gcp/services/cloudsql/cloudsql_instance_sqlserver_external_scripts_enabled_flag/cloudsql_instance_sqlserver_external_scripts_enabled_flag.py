@@ -16,8 +16,8 @@ class cloudsql_instance_sqlserver_external_scripts_enabled_flag(Check):
                 report.status_extended = f"SQL Server Instance {instance.name} has 'external scripts enabled' flag set to 'off'."
                 for flag in instance.flags:
                     if (
-                        flag["name"] == "external scripts enabled"
-                        and flag["value"] == "on"
+                        flag.get("name", "") == "external scripts enabled"
+                        and flag.get("value", "off") == "on"
                     ):
                         report.status = "FAIL"
                         report.status_extended = f"SQL Server Instance {instance.name} does not have 'external scripts enabled' flag set to 'off'."
