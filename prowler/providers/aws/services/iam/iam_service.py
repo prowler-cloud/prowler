@@ -5,7 +5,7 @@ from typing import Optional
 from botocore.client import ClientError
 from pydantic import BaseModel
 
-from prowler.config.config import enconding_format_utf_8
+from prowler.config.config import encoding_format_utf_8
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
@@ -146,7 +146,7 @@ class IAM(AWSService):
                     report_is_completed = True
             # Convert credential report to list of dictionaries
             credential = self.client.get_credential_report()["Content"].decode(
-                enconding_format_utf_8
+                encoding_format_utf_8
             )
             credential_lines = credential.split("\n")
             csv_reader = csv.DictReader(credential_lines, delimiter=",")
