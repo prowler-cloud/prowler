@@ -258,6 +258,13 @@ config_aws = {
     "insecure_algorithms": [
         "RSA_1024",
     ],
+    "eks_required_log_types": [
+        "api",
+        "audit",
+        "authenticator",
+        "controllerManager",
+        "scheduler",
+    ],
 }
 
 config_azure = {
