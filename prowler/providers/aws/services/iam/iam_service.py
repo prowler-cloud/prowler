@@ -5,6 +5,10 @@ from typing import Optional
 from botocore.client import ClientError
 from pydantic import BaseModel
 
+<<<<<<< HEAD
+=======
+from prowler.config.config import encoding_format_utf_8
+>>>>>>> 2cd840a2 (fix(autoscaling): Add exception manage while decoding UserData  (#4562))
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
@@ -144,7 +148,13 @@ class IAM(AWSService):
                 if report_status["State"] == "COMPLETE":
                     report_is_completed = True
             # Convert credential report to list of dictionaries
+<<<<<<< HEAD
             credential = self.client.get_credential_report()["Content"].decode("utf-8")
+=======
+            credential = self.client.get_credential_report()["Content"].decode(
+                encoding_format_utf_8
+            )
+>>>>>>> 2cd840a2 (fix(autoscaling): Add exception manage while decoding UserData  (#4562))
             credential_lines = credential.split("\n")
             csv_reader = csv.DictReader(credential_lines, delimiter=",")
             credential_list = list(csv_reader)

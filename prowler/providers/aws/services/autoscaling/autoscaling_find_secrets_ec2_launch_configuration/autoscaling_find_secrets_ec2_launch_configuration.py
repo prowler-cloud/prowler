@@ -6,7 +6,12 @@ from base64 import b64decode
 from detect_secrets import SecretsCollection
 from detect_secrets.settings import default_settings
 
+<<<<<<< HEAD
+=======
+from prowler.config.config import encoding_format_utf_8
+>>>>>>> 2cd840a2 (fix(autoscaling): Add exception manage while decoding UserData  (#4562))
 from prowler.lib.check.models import Check, Check_Report_AWS
+from prowler.lib.logger import logger
 from prowler.providers.aws.services.autoscaling.autoscaling_client import (
     autoscaling_client,
 )
@@ -25,12 +30,32 @@ class autoscaling_find_secrets_ec2_launch_configuration(Check):
                 temp_user_data_file = tempfile.NamedTemporaryFile(delete=False)
                 user_data = b64decode(configuration.user_data)
 
+<<<<<<< HEAD
                 if user_data[0:2] == b"\x1f\x8b":  # GZIP magic number
                     user_data = zlib.decompress(user_data, zlib.MAX_WBITS | 32).decode(
                         "utf-8"
                     )
                 else:
                     user_data = user_data.decode("utf-8")
+=======
+                try:
+                    if user_data[0:2] == b"\x1f\x8b":  # GZIP magic number
+                        user_data = zlib.decompress(
+                            user_data, zlib.MAX_WBITS | 32
+                        ).decode(encoding_format_utf_8)
+                    else:
+                        user_data = user_data.decode(encoding_format_utf_8)
+                except UnicodeDecodeError as error:
+                    logger.warning(
+                        f"{configuration.region} -- Unable to decode user data in autoscaling launch configuration {configuration.name}: {error}"
+                    )
+                    continue
+                except Exception as error:
+                    logger.warning(
+                        f"{configuration.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+                    continue
+>>>>>>> 2cd840a2 (fix(autoscaling): Add exception manage while decoding UserData  (#4562))
 
                 temp_user_data_file.write(
                     bytes(user_data, encoding="raw_unicode_escape")

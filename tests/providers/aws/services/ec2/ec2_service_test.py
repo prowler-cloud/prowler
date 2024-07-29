@@ -8,6 +8,10 @@ from dateutil.tz import tzutc
 from freezegun import freeze_time
 from moto import mock_aws
 
+<<<<<<< HEAD
+=======
+from prowler.config.config import encoding_format_utf_8
+>>>>>>> 2cd840a2 (fix(autoscaling): Add exception manage while decoding UserData  (#4562))
 from prowler.providers.aws.services.ec2.ec2_service import EC2
 from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
@@ -315,8 +319,15 @@ class Test_EC2_Service:
         audit_info = set_mocked_aws_audit_info(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
+<<<<<<< HEAD
         ec2 = EC2(audit_info)
         assert user_data == b64decode(ec2.instances[0].user_data).decode("utf-8")
+=======
+        ec2 = EC2(aws_provider)
+        assert user_data == b64decode(ec2.instances[0].user_data).decode(
+            encoding_format_utf_8
+        )
+>>>>>>> 2cd840a2 (fix(autoscaling): Add exception manage while decoding UserData  (#4562))
 
     # Test EC2 Get EBS Encryption by default
     @mock_aws
@@ -512,3 +523,95 @@ class Test_EC2_Service:
         assert ec2.volumes[0].tags == [
             {"Key": "test", "Value": "test"},
         ]
+<<<<<<< HEAD
+=======
+
+    # Test EC2 Describe Launch Templates
+    @mock_aws
+    def test__describe_launch_templates__(self):
+        # Generate EC2 Client
+        ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
+
+        TEMPLATE_NAME = "tester1"
+        TEMPLATE_INSTANCE_TYPE = "c5.large"
+        KNOWN_SECRET_USER_DATA = "DB_PASSWORD=foobar123"
+
+        # Create EC2 Launch Template API
+        ec2_client.create_launch_template(
+            LaunchTemplateName=TEMPLATE_NAME,
+            VersionDescription="Test EC Launch Template 1 (Secret in UserData)",
+            LaunchTemplateData={
+                "InstanceType": TEMPLATE_INSTANCE_TYPE,
+                "UserData": b64encode(
+                    KNOWN_SECRET_USER_DATA.encode(encoding_format_utf_8)
+                ).decode(encoding_format_utf_8),
+            },
+        )
+
+        # EC2 client for this test class
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        )
+        ec2 = EC2(aws_provider)
+
+        assert len(ec2.launch_templates) == 1
+        assert ec2.launch_templates[0].name == TEMPLATE_NAME
+        assert ec2.launch_templates[0].region == AWS_REGION_US_EAST_1
+        assert (
+            ec2.launch_templates[0].arn
+            == f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:launch-template/{ec2.launch_templates[0].id}"
+        )
+
+    # Test EC2 Describe Launch Templates
+    @mock_aws
+    def test__get_launch_template_versions__(self):
+        # Generate EC2 Client
+        ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
+
+        TEMPLATE_NAME = "tester1"
+        TEMPLATE_INSTANCE_TYPE = "c5.large"
+        KNOWN_SECRET_USER_DATA = "DB_PASSWORD=foobar123"
+
+        # Create EC2 Launch Template API
+        ec2_client.create_launch_template(
+            LaunchTemplateName=TEMPLATE_NAME,
+            VersionDescription="Test EC Launch Template 1",
+            LaunchTemplateData={
+                "InstanceType": TEMPLATE_INSTANCE_TYPE,
+            },
+        )
+
+        # Create EC2 Launch Template Version API
+        ec2_client.create_launch_template_version(
+            LaunchTemplateName=TEMPLATE_NAME,
+            VersionDescription="Updated Test EC Launch Template 1",
+            LaunchTemplateData={
+                "InstanceType": TEMPLATE_INSTANCE_TYPE,
+                "UserData": b64encode(
+                    KNOWN_SECRET_USER_DATA.encode(encoding_format_utf_8)
+                ).decode(encoding_format_utf_8),
+            },
+        )
+
+        # EC2 client for this test class
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        )
+        ec2 = EC2(aws_provider)
+
+        assert len(ec2.launch_templates) == 1
+        assert ec2.launch_templates[0].name == TEMPLATE_NAME
+        assert ec2.launch_templates[0].region == AWS_REGION_US_EAST_1
+
+        assert len(ec2.launch_templates[0].versions) == 2
+
+        version1, version2 = ec2.launch_templates[0].versions
+
+        assert version1.template_data["InstanceType"] == TEMPLATE_INSTANCE_TYPE
+
+        assert version2.template_data["InstanceType"] == TEMPLATE_INSTANCE_TYPE
+        assert (
+            b64decode(version2.template_data["UserData"]).decode(encoding_format_utf_8)
+            == KNOWN_SECRET_USER_DATA
+        )
+>>>>>>> 2cd840a2 (fix(autoscaling): Add exception manage while decoding UserData  (#4562))
