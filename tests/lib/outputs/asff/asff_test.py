@@ -462,7 +462,7 @@ class TestASFF:
                 "RecordState": "ACTIVE",
                 "ProductFields": {
                     "ProviderName": "Prowler",
-                    "ProviderVersion": "4.2.4",
+                    "ProviderVersion": "4.3.0",
                     "ProwlerResourceName": "test-arn",
                 },
                 "GeneratorId": "prowler-test-check-id",
