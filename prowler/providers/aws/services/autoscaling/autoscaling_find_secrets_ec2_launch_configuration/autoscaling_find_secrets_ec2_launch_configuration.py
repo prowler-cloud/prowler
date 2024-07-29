@@ -8,6 +8,7 @@ from detect_secrets.settings import default_settings
 
 from prowler.config.config import encoding_format_utf_8
 from prowler.lib.check.models import Check, Check_Report_AWS
+from prowler.lib.logger import logger
 from prowler.providers.aws.services.autoscaling.autoscaling_client import (
     autoscaling_client,
 )
@@ -34,14 +35,14 @@ class autoscaling_find_secrets_ec2_launch_configuration(Check):
                     else:
                         user_data = user_data.decode(encoding_format_utf_8)
                 except UnicodeDecodeError as error:
-                    report.status = "FAIL"
-                    report.status_extended = f"Unable to decode autoscaling {configuration.name} User Data: {error}"
-                    findings.append(report)
+                    logger.error(
+                        f"{configuration.region} -- Unable to decode autoscaling {configuration.name} User Data[{error.__traceback__.tb_lineno}]: {error}"
+                    )
                     continue
                 except Exception as error:
-                    report.status = "FAIL"
-                    report.status_extended = f"Unexpected error decoding autoscaling {configuration.name} User Data: {error}"
-                    findings.append(report)
+                    logger.error(
+                        f"{configuration.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
                     continue
 
                 temp_user_data_file.write(

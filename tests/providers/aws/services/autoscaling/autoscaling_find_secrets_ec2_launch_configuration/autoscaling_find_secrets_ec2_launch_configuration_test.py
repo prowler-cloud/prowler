@@ -299,9 +299,6 @@ class Test_autoscaling_find_secrets_ec2_launch_configuration:
             SecurityGroups=["default", "default2"],
             UserData=invalid_utf8_bytes,
         )
-        launch_configuration_arn = autoscaling_client.describe_launch_configurations(
-            LaunchConfigurationNames=[launch_configuration_name]
-        )["LaunchConfigurations"][0]["LaunchConfigurationARN"]
 
         from prowler.providers.aws.services.autoscaling.autoscaling_service import (
             AutoScaling,
@@ -323,15 +320,7 @@ class Test_autoscaling_find_secrets_ec2_launch_configuration:
             check = autoscaling_find_secrets_ec2_launch_configuration()
             result = check.execute()
 
-            assert len(result) == 1
-            assert result[0].status == "FAIL"
-            assert (
-                result[0].status_extended
-                == f"Unable to decode autoscaling {launch_configuration_name} User Data: 'utf-8' codec can't decode byte 0xc0 in position 0: invalid start byte"
-            )
-            assert result[0].resource_id == launch_configuration_name
-            assert result[0].resource_arn == launch_configuration_arn
-            assert result[0].region == AWS_REGION_US_EAST_1
+            assert len(result) == 0
 
     @mock_aws
     def test_one_autoscaling_file_invalid_gzip_error(self):
@@ -347,9 +336,6 @@ class Test_autoscaling_find_secrets_ec2_launch_configuration:
             SecurityGroups=["default", "default2"],
             UserData=invalid_gzip_bytes,
         )
-        launch_configuration_arn = autoscaling_client.describe_launch_configurations(
-            LaunchConfigurationNames=[launch_configuration_name]
-        )["LaunchConfigurations"][0]["LaunchConfigurationARN"]
 
         from prowler.providers.aws.services.autoscaling.autoscaling_service import (
             AutoScaling,
@@ -371,12 +357,4 @@ class Test_autoscaling_find_secrets_ec2_launch_configuration:
             check = autoscaling_find_secrets_ec2_launch_configuration()
             result = check.execute()
 
-            assert len(result) == 1
-            assert result[0].status == "FAIL"
-            assert (
-                result[0].status_extended
-                == f"Unexpected error decoding autoscaling {launch_configuration_name} User Data: Error -3 while decompressing data: unknown compression method"
-            )
-            assert result[0].resource_id == launch_configuration_name
-            assert result[0].resource_arn == launch_configuration_arn
-            assert result[0].region == AWS_REGION_US_EAST_1
+            assert len(result) == 0
