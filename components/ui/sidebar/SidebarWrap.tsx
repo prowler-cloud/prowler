@@ -17,8 +17,9 @@ import { sectionItemsWithTeams } from "./SidebarItems";
 import { UserAvatar } from "./UserAvatar";
 
 export const SidebarWrap = () => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(
+    !!localStorage.getItem("isCollapsed") ?? true,
+  );
 
   const pathname = usePathname();
   const currentPath = pathname === "/" ? "overview" : pathname.split("/")?.[1];
@@ -32,7 +33,6 @@ export const SidebarWrap = () => {
     if (savedState !== null) {
       setIsCollapsed(JSON.parse(savedState));
     }
-    setIsLoaded(true);
   }, []);
 
   const onToggle = useCallback(() => {
@@ -42,8 +42,6 @@ export const SidebarWrap = () => {
       return newState;
     });
   }, []);
-
-  if (!isLoaded) return null;
 
   return (
     <div
