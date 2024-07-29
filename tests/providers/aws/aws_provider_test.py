@@ -414,7 +414,7 @@ class TestAWSProvider:
         arguments.external_id = "test-external-id"
 
         with patch(
-            "prowler.providers.aws.aws_provider.AwsProvider.__input_role_mfa_token_and_code__",
+            "prowler.providers.aws.aws_provider.AwsProvider.input_role_mfa_token_and_code",
             return_value=AWSMFAInfo(
                 arn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:mfa/test-role-mfa",
                 totp="111111",

@@ -90,7 +90,7 @@ class AwsProvider(Provider):
         logger.info("Generating original session ...")
 
         # Configure the initial AWS Session using the local credentials: profile or environment variables
-        aws_session = self.setup_session(input_mfa, input_profile, input_role)
+        aws_session = self.setup_session(input_mfa, input_profile)
         session_config = self.set_session_config(aws_retries_max_attempts)
         # Current session and the original session points to the same session object until we get a new one, if needed
         self._session = AWSSession(
@@ -135,13 +135,13 @@ class AwsProvider(Provider):
             # Validate the input role
             valid_role_arn = parse_iam_credentials_arn(input_role)
             # Set assume IAM Role information
-            assumed_role_information = self.set_assumed_role_info(
-                valid_role_arn,
-                input_external_id,
-                input_mfa,
-                input_session_duration,
-                input_role_session_name,
-                sts_region,
+            assumed_role_information = AWSAssumeRoleInfo(
+                role_arn=valid_role_arn,
+                session_duration=input_session_duration,
+                external_id=input_external_id,
+                mfa_enabled=input_mfa,
+                role_session_name=input_role_session_name,
+                sts_region=sts_region,
             )
             # Assume the IAM Role
             logger.info(f"Assuming role: {assumed_role_information.role_arn.arn}")
@@ -180,14 +180,15 @@ class AwsProvider(Provider):
             # Validate the input role
             valid_role_arn = parse_iam_credentials_arn(organizations_role_arn)
             # Set assume IAM Role information
-            organizations_assumed_role_information = self.set_assumed_role_info(
-                valid_role_arn,
-                input_external_id,
-                input_mfa,
-                input_session_duration,
-                input_role_session_name,
-                sts_region,
+            organizations_assumed_role_information = AWSAssumeRoleInfo(
+                role_arn=valid_role_arn,
+                session_duration=input_session_duration,
+                external_id=input_external_id,
+                mfa_enabled=input_mfa,
+                role_session_name=input_role_session_name,
+                sts_region=sts_region,
             )
+
             # Assume the Organizations IAM Role
             logger.info(
                 f"Assuming the AWS Organizations IAM Role: {organizations_assumed_role_information.role_arn.arn}"
@@ -411,11 +412,10 @@ class AwsProvider(Provider):
     def setup_session(
         input_mfa: bool = False,
         input_profile: str = None,
-        input_role: str = None,
     ) -> Session:
         try:
             logger.info("Creating original session ...")
-            if input_mfa and not input_role:
+            if input_mfa:
                 mfa_info = AwsProvider.input_role_mfa_token_and_code()
                 # TODO: validate MFA ARN here
                 get_session_token_arguments = {
@@ -446,28 +446,6 @@ class AwsProvider(Provider):
             )
             # TODO: review this for the SDK usage
             sys.exit(1)
-
-    def set_assumed_role_info(
-        self,
-        role_arn: str,
-        input_external_id: str,
-        input_mfa: str,
-        session_duration: int,
-        role_session_name: str,
-        sts_region: str = AWS_STS_GLOBAL_ENDPOINT_REGION,
-    ) -> AWSAssumeRoleInfo:
-        """
-        set_assumed_role_info returns a AWSAssumeRoleInfo object
-        """
-        logger.info("Setting assume IAM Role information ...")
-        return AWSAssumeRoleInfo(
-            role_arn=role_arn,
-            session_duration=session_duration,
-            external_id=input_external_id,
-            mfa_enabled=input_mfa,
-            role_session_name=role_session_name,
-            sts_region=sts_region,
-        )
 
     def setup_assumed_session(
         self,
@@ -823,7 +801,7 @@ class AwsProvider(Provider):
                 assume_role_arguments["ExternalId"] = assumed_role_info.external_id
 
             if assumed_role_info.mfa_enabled:
-                mfa_info = self.__input_role_mfa_token_and_code__()
+                mfa_info = self.input_role_mfa_token_and_code()
                 assume_role_arguments["SerialNumber"] = mfa_info.arn
                 assume_role_arguments["TokenCode"] = mfa_info.totp
             sts_client = AwsProvider.create_sts_session(
@@ -900,6 +878,10 @@ class AwsProvider(Provider):
     ) -> tuple[bool, Union[AWSCallerIdentity, Exception]]:
         """
         Validates AWS credentials using the provided session and AWS region.
+
+        If no session is provided, the method will create a new session using the Boto3 default session.
+
+        If you are assuming a role you need to pass the session with the assumed role.
 
         Args:
             session (Session): The AWS session object.

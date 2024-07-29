@@ -5,6 +5,7 @@ from boto3.session import Session
 from botocore.config import Config
 
 from prowler.config.config import output_file_timestamp
+from prowler.providers.aws.config import AWS_STS_GLOBAL_ENDPOINT_REGION
 from prowler.providers.aws.lib.arn.models import ARN
 from prowler.providers.common.models import ProviderOutputOptions
 
@@ -34,7 +35,7 @@ class AWSAssumeRoleInfo:
     external_id: str
     mfa_enabled: bool
     role_session_name: str
-    sts_region: str
+    sts_region: str = AWS_STS_GLOBAL_ENDPOINT_REGION
 
 
 @dataclass
