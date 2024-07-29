@@ -13,6 +13,8 @@
         "provider": "aws",
         "provider_id": "1234567890",
         "alias": "mock_aws_connected",
+        "status": "cancelled",
+        "resources": 101,
         "connection": {
           "connected": true,
           "last_checked_at": "2024-07-17T09:55:14.191475Z"
@@ -40,6 +42,8 @@
         "provider": "azure",
         "provider_id": "1234567891",
         "alias": "mock_aws_not_connected",
+        "status": "pending",
+        "resources": 222,
         "connection": {
           "connected": false,
           "last_checked_at": "2024-07-17T09:55:18.987425Z"
@@ -67,6 +71,8 @@
         "provider": "gcp",
         "provider_id": "1234567895",
         "alias": "mock_gcp",
+        "status": "completed",
+        "resources": 143,
         "connection": {
           "connected": true,
           "last_checked_at": "2024-07-17T09:55:18.987425Z"

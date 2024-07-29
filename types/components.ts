@@ -16,6 +16,8 @@ export interface ProviderProps {
     provider: "aws" | "azure" | "gcp";
     provider_id: string;
     alias: string;
+    status: "completed" | "pending" | "cancelled";
+    resources: number;
     connection: {
       connected: boolean;
       last_checked_at: string;
