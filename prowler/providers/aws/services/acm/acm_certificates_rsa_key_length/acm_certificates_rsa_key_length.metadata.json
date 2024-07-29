@@ -12,7 +12,7 @@
   "ResourceType": "AwsCertificateManagerCertificate",
   "Description": "Check if ACM Certificates use a secure RSA key size",
   "Risk": "Certificates with weak RSA keys can be compromised.",
-  "RelatedUrl": "https://docs.aws.amazon.com/es_es/acm/latest/userguide/acm-certificate.html",
+  "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/acm-controls.html#acm-2",
   "Remediation": {
     "Code": {
       "CLI": "",
@@ -22,7 +22,7 @@
     },
     "Recommendation": {
       "Text": "Ensure that all ACM certificates use RSA keys of at least 2048 bits. If any certificates use smaller keys, regenerate them with a secure key size and update any systems that rely on these certificates.",
-      "Url": "https://docs.aws.amazon.com/es_es/acm/latest/userguide/acm-certificate.html"
+      "Url": "https://docs.aws.amazon.com/securityhub/latest/userguide/acm-controls.html#acm-2"
     }
   },
   "Categories": [],
