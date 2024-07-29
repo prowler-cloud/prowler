@@ -7,7 +7,7 @@ AWS_REGION = "us-east-1"
 AWS_ACCOUNT_NUMBER = "123456789012"
 
 
-class Test_acm_certificates_rsa_key_length:
+class Test_acm_certificates_insecure_algorithms:
     def test_no_acm_certificates(self):
         acm_client = mock.MagicMock
         acm_client.certificates = []
@@ -17,16 +17,16 @@ class Test_acm_certificates_rsa_key_length:
             new=acm_client,
         ):
             # Test Check
-            from prowler.providers.aws.services.acm.acm_certificates_rsa_key_length.acm_certificates_rsa_key_length import (
-                acm_certificates_rsa_key_length,
+            from prowler.providers.aws.services.acm.acm_certificates_insecure_algorithms.acm_certificates_insecure_algorithms import (
+                acm_certificates_insecure_algorithms,
             )
 
-            check = acm_certificates_rsa_key_length()
+            check = acm_certificates_insecure_algorithms()
             result = check.execute()
 
             assert len(result) == 0
 
-    def test_acm_certificate_valid_key_length(self):
+    def test_acm_certificate_secure_algorithm(self):
         certificate_id = str(uuid.uuid4())
         certificate_arn = f"arn:aws:acm:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:certificate/{certificate_id}"
         certificate_name = "test-certificate.com"
@@ -55,11 +55,11 @@ class Test_acm_certificates_rsa_key_length:
             new=acm_client,
         ):
             # Test Check
-            from prowler.providers.aws.services.acm.acm_certificates_rsa_key_length.acm_certificates_rsa_key_length import (
-                acm_certificates_rsa_key_length,
+            from prowler.providers.aws.services.acm.acm_certificates_insecure_algorithms.acm_certificates_insecure_algorithms import (
+                acm_certificates_insecure_algorithms,
             )
 
-            check = acm_certificates_rsa_key_length()
+            check = acm_certificates_insecure_algorithms()
             result = check.execute()
 
             assert len(result) == 1
@@ -73,7 +73,7 @@ class Test_acm_certificates_rsa_key_length:
             assert result[0].region == AWS_REGION
             assert result[0].resource_tags == []
 
-    def test_acm_certificate_short_RSA_key(self):
+    def test_acm_certificate_insecure_algorithm(self):
         certificate_id = str(uuid.uuid4())
         certificate_arn = f"arn:aws:acm:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:certificate/{certificate_id}"
         certificate_name = "test-certificate.com"
@@ -102,11 +102,11 @@ class Test_acm_certificates_rsa_key_length:
             new=acm_client,
         ):
             # Test Check
-            from prowler.providers.aws.services.acm.acm_certificates_rsa_key_length.acm_certificates_rsa_key_length import (
-                acm_certificates_rsa_key_length,
+            from prowler.providers.aws.services.acm.acm_certificates_insecure_algorithms.acm_certificates_insecure_algorithms import (
+                acm_certificates_insecure_algorithms,
             )
 
-            check = acm_certificates_rsa_key_length()
+            check = acm_certificates_insecure_algorithms()
             result = check.execute()
 
             assert len(result) == 1

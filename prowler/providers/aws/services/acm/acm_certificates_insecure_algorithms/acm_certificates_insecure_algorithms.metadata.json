@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "acm_certificates_rsa_key_length",
+  "CheckID": "acm_certificates_insecure_algorithms",
   "CheckTitle": "Check if ACM Certificates use a secure RSA key size",
   "CheckType": [
     "Data Protection"

@@ -2,7 +2,7 @@ from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.acm.acm_client import acm_client
 
 
-class acm_certificates_rsa_key_length(Check):
+class acm_certificates_insecure_algorithms(Check):
     def execute(self):
         findings = []
         for certificate in acm_client.certificates:
