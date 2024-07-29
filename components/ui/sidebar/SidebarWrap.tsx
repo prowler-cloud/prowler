@@ -4,8 +4,10 @@ import { Icon } from "@iconify/react";
 import { Button, ScrollShadow, Spacer, Tooltip } from "@nextui-org/react";
 import clsx from "clsx";
 import { usePathname } from "next/navigation";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback } from "react";
 import { useMediaQuery } from "usehooks-ts";
+
+import { useLocalStorage } from "@/hooks/useLocalStorage";
 
 import {
   ProwlerExtended,
@@ -17,31 +19,18 @@ import { sectionItemsWithTeams } from "./SidebarItems";
 import { UserAvatar } from "./UserAvatar";
 
 export const SidebarWrap = () => {
-  const [isCollapsed, setIsCollapsed] = useState(
-    !!localStorage.getItem("isCollapsed") ?? true,
-  );
-
   const pathname = usePathname();
-  const currentPath = pathname === "/" ? "overview" : pathname.split("/")?.[1];
+  const [isCollapsed, setIsCollapsed] = useLocalStorage("isCollapsed", true);
 
   const isMobile = useMediaQuery("(max-width: 768px)");
 
-  const isCompact = isCollapsed || isMobile;
-
-  useEffect(() => {
-    const savedState = localStorage.getItem("isCollapsed");
-    if (savedState !== null) {
-      setIsCollapsed(JSON.parse(savedState));
-    }
-  }, []);
+  const isCompact = Boolean(isCollapsed) || isMobile;
 
   const onToggle = useCallback(() => {
-    setIsCollapsed((prev) => {
-      const newState = !prev;
-      localStorage.setItem("isCollapsed", JSON.stringify(newState));
-      return newState;
-    });
-  }, []);
+    setIsCollapsed(!isCollapsed);
+  }, [isCollapsed]);
+
+  const currentPath = pathname === "/" ? "overview" : pathname.split("/")?.[1];
 
   return (
     <div
