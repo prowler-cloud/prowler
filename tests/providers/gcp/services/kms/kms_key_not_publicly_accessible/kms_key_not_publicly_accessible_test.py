@@ -7,7 +7,7 @@ from tests.providers.gcp.gcp_fixtures import (
 )
 
 
-class Test_kms_key_not_public_access:
+class Test_kms_key_not_publicly_accessible:
     def test_kms_no_key(self):
         kms_client = mock.MagicMock
 
@@ -15,18 +15,18 @@ class Test_kms_key_not_public_access:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_gcp_provider(),
         ), mock.patch(
-            "prowler.providers.gcp.services.kms.kms_key_not_public_access.kms_key_not_public_access.kms_client",
+            "prowler.providers.gcp.services.kms.kms_key_not_publicly_accessible.kms_key_not_publicly_accessible.kms_client",
             new=kms_client,
         ):
-            from prowler.providers.gcp.services.kms.kms_key_not_public_access.kms_key_not_public_access import (
-                kms_key_not_public_access,
+            from prowler.providers.gcp.services.kms.kms_key_not_publicly_accessible.kms_key_not_publicly_accessible import (
+                kms_key_not_publicly_accessible,
             )
 
             kms_client.project_ids = [GCP_PROJECT_ID]
             kms_client.region = GCP_US_CENTER1_LOCATION
             kms_client.crypto_keys = []
 
-            check = kms_key_not_public_access()
+            check = kms_key_not_publicly_accessible()
             result = check.execute()
             assert len(result) == 0
 
@@ -37,11 +37,11 @@ class Test_kms_key_not_public_access:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_gcp_provider(),
         ), mock.patch(
-            "prowler.providers.gcp.services.kms.kms_key_not_public_access.kms_key_not_public_access.kms_client",
+            "prowler.providers.gcp.services.kms.kms_key_not_publicly_accessible.kms_key_not_publicly_accessible.kms_client",
             new=kms_client,
         ):
-            from prowler.providers.gcp.services.kms.kms_key_not_public_access.kms_key_not_public_access import (
-                kms_key_not_public_access,
+            from prowler.providers.gcp.services.kms.kms_key_not_publicly_accessible.kms_key_not_publicly_accessible import (
+                kms_key_not_publicly_accessible,
             )
             from prowler.providers.gcp.services.kms.kms_service import (
                 CriptoKey,
@@ -73,7 +73,7 @@ class Test_kms_key_not_public_access:
                 )
             ]
 
-            check = kms_key_not_public_access()
+            check = kms_key_not_publicly_accessible()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -93,11 +93,11 @@ class Test_kms_key_not_public_access:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_gcp_provider(),
         ), mock.patch(
-            "prowler.providers.gcp.services.kms.kms_key_not_public_access.kms_key_not_public_access.kms_client",
+            "prowler.providers.gcp.services.kms.kms_key_not_publicly_accessible.kms_key_not_publicly_accessible.kms_client",
             new=kms_client,
         ):
-            from prowler.providers.gcp.services.kms.kms_key_not_public_access.kms_key_not_public_access import (
-                kms_key_not_public_access,
+            from prowler.providers.gcp.services.kms.kms_key_not_publicly_accessible.kms_key_not_publicly_accessible import (
+                kms_key_not_publicly_accessible,
             )
             from prowler.providers.gcp.services.kms.kms_service import (
                 CriptoKey,
@@ -129,7 +129,7 @@ class Test_kms_key_not_public_access:
                 )
             ]
 
-            check = kms_key_not_public_access()
+            check = kms_key_not_publicly_accessible()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
@@ -149,11 +149,11 @@ class Test_kms_key_not_public_access:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_gcp_provider(),
         ), mock.patch(
-            "prowler.providers.gcp.services.kms.kms_key_not_public_access.kms_key_not_public_access.kms_client",
+            "prowler.providers.gcp.services.kms.kms_key_not_publicly_accessible.kms_key_not_publicly_accessible.kms_client",
             new=kms_client,
         ):
-            from prowler.providers.gcp.services.kms.kms_key_not_public_access.kms_key_not_public_access import (
-                kms_key_not_public_access,
+            from prowler.providers.gcp.services.kms.kms_key_not_publicly_accessible.kms_key_not_publicly_accessible import (
+                kms_key_not_publicly_accessible,
             )
             from prowler.providers.gcp.services.kms.kms_service import (
                 CriptoKey,
@@ -185,7 +185,7 @@ class Test_kms_key_not_public_access:
                 )
             ]
 
-            check = kms_key_not_public_access()
+            check = kms_key_not_publicly_accessible()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
