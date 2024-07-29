@@ -17,10 +17,8 @@ from tzlocal import get_localzone
 
 from prowler.providers.aws.aws_provider import (
     AwsProvider,
-    create_sts_session,
     get_aws_available_regions,
     get_aws_region_for_sts,
-    validate_aws_credentials,
 )
 from prowler.providers.aws.config import (
     AWS_STS_GLOBAL_ENDPOINT_REGION,
@@ -367,7 +365,7 @@ class TestAWSProvider:
         arguments.mfa = True
 
         with patch(
-            "prowler.providers.aws.aws_provider.AwsProvider.__input_role_mfa_token_and_code__",
+            "prowler.providers.aws.aws_provider.AwsProvider.input_role_mfa_token_and_code",
             return_value=AWSMFAInfo(
                 arn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:mfa/test-role-mfa",
                 totp="111111",
@@ -1120,8 +1118,11 @@ aws:
             region_name=aws_region,
         )
 
-        get_caller_identity = validate_aws_credentials(current_session, aws_region)
+        connected, get_caller_identity = AwsProvider.test_connection(
+            current_session, aws_region
+        )
 
+        assert connected
         assert isinstance(get_caller_identity, AWSCallerIdentity)
 
         assert re.match("[0-9a-zA-Z]{20}", get_caller_identity.user_id)
@@ -1162,8 +1163,11 @@ aws:
         # To use GovCloud or China it is either required:
         # - Set the AWS profile region with a valid partition region
         # - Use the -f/--region with a valid partition region
-        get_caller_identity = validate_aws_credentials(current_session, aws_region)
+        connected, get_caller_identity = AwsProvider.test_connection(
+            current_session, aws_region
+        )
 
+        assert connected
         assert isinstance(get_caller_identity, AWSCallerIdentity)
 
         assert re.match("[0-9a-zA-Z]{20}", get_caller_identity.user_id)
@@ -1204,8 +1208,41 @@ aws:
         # To use GovCloud or China it is either required:
         # - Set the AWS profile region with a valid partition region
         # - Use the -f/--region with a valid partition region
-        get_caller_identity = validate_aws_credentials(current_session, aws_region)
+        connected, get_caller_identity = AwsProvider.test_connection(
+            current_session, aws_region
+        )
 
+        assert connected
+        assert isinstance(get_caller_identity, AWSCallerIdentity)
+
+        assert re.match("[0-9a-zA-Z]{20}", get_caller_identity.user_id)
+        assert get_caller_identity.account == AWS_ACCOUNT_NUMBER
+        assert get_caller_identity.region == aws_region
+
+        assert isinstance(get_caller_identity.arn, ARN)
+        assert get_caller_identity.arn.partition == aws_partition
+        assert get_caller_identity.arn.region is None
+        assert get_caller_identity.arn.resource == "test-user"
+        assert get_caller_identity.arn.resource_type == "user"
+
+    @mock_aws
+    def test_validate_credentials_without_a_session(self, monkeypatch):
+        aws_region = AWS_REGION_US_EAST_1
+        aws_partition = AWS_COMMERCIAL_PARTITION
+        # Create a mock IAM user
+        iam_client = client("iam", region_name=aws_region)
+        iam_user = iam_client.create_user(UserName="test-user")["User"]
+        # Create a mock IAM access keys
+        access_key = iam_client.create_access_key(UserName=iam_user["UserName"])[
+            "AccessKey"
+        ]
+
+        monkeypatch.setenv("AWS_ACCESS_KEY_ID", access_key["AccessKeyId"])
+        monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", access_key["SecretAccessKey"])
+
+        connected, get_caller_identity = AwsProvider.test_connection()
+
+        assert connected
         assert isinstance(get_caller_identity, AWSCallerIdentity)
 
         assert re.match("[0-9a-zA-Z]{20}", get_caller_identity.user_id)
@@ -1222,7 +1259,7 @@ aws:
     def test_create_sts_session(self):
         current_session = session.Session()
         aws_region = AWS_REGION_US_EAST_1
-        sts_session = create_sts_session(current_session, aws_region)
+        sts_session = AwsProvider.create_sts_session(current_session, aws_region)
 
         assert sts_session._service_model.service_name == "sts"
         assert sts_session._client_config.region_name == aws_region
@@ -1233,7 +1270,7 @@ aws:
     def test_create_sts_session_gov_cloud(self):
         current_session = session.Session()
         aws_region = AWS_REGION_GOV_CLOUD_US_EAST_1
-        sts_session = create_sts_session(current_session, aws_region)
+        sts_session = AwsProvider.create_sts_session(current_session, aws_region)
 
         assert sts_session._service_model.service_name == "sts"
         assert sts_session._client_config.region_name == aws_region
@@ -1244,7 +1281,7 @@ aws:
     def test_create_sts_session_china(self):
         current_session = session.Session()
         aws_region = AWS_REGION_CN_NORTH_1
-        sts_session = create_sts_session(current_session, aws_region)
+        sts_session = AwsProvider.create_sts_session(current_session, aws_region)
 
         assert sts_session._service_model.service_name == "sts"
         assert sts_session._client_config.region_name == aws_region

@@ -3,8 +3,9 @@ import pathlib
 import sys
 from argparse import Namespace
 from datetime import datetime
+from typing import Union
 
-from boto3 import client, session
+from boto3 import client
 from boto3.session import Session
 from botocore.config import Config
 from botocore.credentials import RefreshableCredentials
@@ -106,9 +107,13 @@ class AwsProvider(Provider):
             self.session.current_session.region_name, input_regions
         )
 
-        caller_identity = validate_aws_credentials(
+        connected, caller_identity = self.test_connection(
             self.session.current_session, sts_region
         )
+        # TODO: review this for CLI and SDK usage
+        if not connected:
+            sys.exit(1)
+
         logger.info("Credentials validated")
         ########
 
@@ -402,16 +407,16 @@ class AwsProvider(Provider):
             audited_regions=input_regions,
         )
 
+    @staticmethod
     def setup_session(
-        self,
-        input_mfa: bool,
-        input_profile: str,
+        input_mfa: bool = False,
+        input_profile: str = None,
         input_role: str = None,
     ) -> Session:
         try:
             logger.info("Creating original session ...")
             if input_mfa and not input_role:
-                mfa_info = self.__input_role_mfa_token_and_code__()
+                mfa_info = AwsProvider.input_role_mfa_token_and_code()
                 # TODO: validate MFA ARN here
                 get_session_token_arguments = {
                     "SerialNumber": mfa_info.arn,
@@ -439,6 +444,7 @@ class AwsProvider(Provider):
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+            # TODO: review this for the SDK usage
             sys.exit(1)
 
     def set_assumed_role_info(
@@ -484,7 +490,7 @@ class AwsProvider(Provider):
             assumed_session = get_session()
             assumed_session._credentials = assumed_refreshable_credentials
             assumed_session.set_config_variable("region", self._identity.profile_region)
-            return session.Session(
+            return Session(
                 profile_name=self._identity.profile,
                 botocore_session=assumed_session,
             )
@@ -762,7 +768,8 @@ class AwsProvider(Provider):
             global_region = "aws-iso-global"
         return global_region
 
-    def __input_role_mfa_token_and_code__(self) -> AWSMFAInfo:
+    @staticmethod
+    def input_role_mfa_token_and_code() -> AWSMFAInfo:
         """input_role_mfa_token_and_code ask for the AWS MFA ARN and TOTP and returns it."""
         mfa_ARN = input("Enter ARN of MFA: ")
         mfa_TOTP = input("Enter MFA code: ")
@@ -819,7 +826,9 @@ class AwsProvider(Provider):
                 mfa_info = self.__input_role_mfa_token_and_code__()
                 assume_role_arguments["SerialNumber"] = mfa_info.arn
                 assume_role_arguments["TokenCode"] = mfa_info.totp
-            sts_client = create_sts_session(session, assumed_role_info.sts_region)
+            sts_client = AwsProvider.create_sts_session(
+                session, assumed_role_info.sts_region
+            )
             assumed_credentials = sts_client.assume_role(**assume_role_arguments)
             # Convert the UTC datetime object to your local timezone
             credentials_expiration_local_time = (
@@ -840,6 +849,7 @@ class AwsProvider(Provider):
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
             )
+            # TODO: review this for the SDK usage
             sys.exit(1)
 
     def get_aws_enabled_regions(self, current_session: Session) -> set:
@@ -883,6 +893,77 @@ class AwsProvider(Provider):
             )
             sys.exit(1)
 
+    @staticmethod
+    def test_connection(
+        session: Session = None,
+        aws_region: str = AWS_STS_GLOBAL_ENDPOINT_REGION,
+    ) -> tuple[bool, Union[AWSCallerIdentity, Exception]]:
+        """
+        Validates AWS credentials using the provided session and AWS region.
+
+        Args:
+            session (Session): The AWS session object.
+            aws_region (str): The AWS region to validate the credentials in.
+
+        Returns:
+            tuple[bool, AWSCallerIdentity]: A tuple containing a boolean value indicating
+            the success of the validation and an AWSCallerIdentity object representing
+            the caller's identity.
+
+        Raises:
+            Exception: If an error occurs during the validation process.
+
+        """
+        try:
+            validate_credentials_client = AwsProvider.create_sts_session(
+                session if session else AwsProvider.setup_session(), aws_region
+            )
+            caller_identity = validate_credentials_client.get_caller_identity()
+            # Include the region where the caller_identity has validated the credentials
+            return True, AWSCallerIdentity(
+                user_id=caller_identity.get("UserId"),
+                account=caller_identity.get("Account"),
+                arn=ARN(caller_identity.get("Arn")),
+                region=aws_region,
+            )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return False, error
+
+    @staticmethod
+    def create_sts_session(
+        session: Session, aws_region: str = AWS_STS_GLOBAL_ENDPOINT_REGION
+    ) -> Session.client:
+        """
+        Create an STS session client.
+
+        Parameters:
+        - session (session.Session): The AWS session object.
+        - aws_region (str): The AWS region to use for the session.
+
+        Returns:
+        - session.Session.client: The STS session client.
+
+        Example:
+            session = boto3.session.Session()
+            sts_client = create_sts_session(session, 'us-west-2')
+        """
+        try:
+            sts_endpoint_url = (
+                f"https://sts.{aws_region}.amazonaws.com"
+                if "cn-" not in aws_region
+                else f"https://sts.{aws_region}.amazonaws.com.cn"
+            )
+            return session.client("sts", aws_region, endpoint_url=sts_endpoint_url)
+        except Exception as error:
+            logger.critical(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            # TODO: review this for the SDK usage
+            sys.exit(1)
+
 
 def read_aws_regions_file() -> dict:
     """
@@ -921,32 +1002,6 @@ def get_aws_available_regions() -> set:
 
 
 # TODO: This can be moved to another class since it doesn't need self
-# TODO: rename to validate_credentials
-def validate_aws_credentials(
-    session: Session,
-    aws_region: str,
-) -> AWSCallerIdentity:
-    """
-    validate_aws_credentials returns the get_caller_identity() answer, exits if something exception is raised.
-    """
-    try:
-        validate_credentials_client = create_sts_session(session, aws_region)
-        caller_identity = validate_credentials_client.get_caller_identity()
-        # Include the region where the caller_identity has validated the credentials
-        return AWSCallerIdentity(
-            user_id=caller_identity.get("UserId"),
-            account=caller_identity.get("Account"),
-            arn=ARN(caller_identity.get("Arn")),
-            region=aws_region,
-        )
-    except Exception as error:
-        logger.critical(
-            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-        )
-        sys.exit(1)
-
-
-# TODO: This can be moved to another class since it doesn't need self
 def get_aws_region_for_sts(session_region: str, input_regions: set[str]) -> str:
     # If there is no region passed with -f/--region/--filter-region
     if input_regions is None or len(input_regions) == 0:
@@ -962,35 +1017,3 @@ def get_aws_region_for_sts(session_region: str, input_regions: set[str]) -> str:
         aws_region = input_regions[0]
 
     return aws_region
-
-
-# TODO: This can be moved to another class since it doesn't need self
-def create_sts_session(
-    session: session.Session, aws_region: str = AWS_STS_GLOBAL_ENDPOINT_REGION
-) -> session.Session.client:
-    """
-    Create an STS session client.
-
-    Parameters:
-    - session (session.Session): The AWS session object.
-    - aws_region (str): The AWS region to use for the session.
-
-    Returns:
-    - session.Session.client: The STS session client.
-
-    Example:
-        session = boto3.session.Session()
-        sts_client = create_sts_session(session, 'us-west-2')
-    """
-    try:
-        sts_endpoint_url = (
-            f"https://sts.{aws_region}.amazonaws.com"
-            if "cn-" not in aws_region
-            else f"https://sts.{aws_region}.amazonaws.com.cn"
-        )
-        return session.client("sts", aws_region, endpoint_url=sts_endpoint_url)
-    except Exception as error:
-        logger.critical(
-            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-        )
-        sys.exit(1)
