@@ -26,12 +26,23 @@ class autoscaling_find_secrets_ec2_launch_configuration(Check):
                 temp_user_data_file = tempfile.NamedTemporaryFile(delete=False)
                 user_data = b64decode(configuration.user_data)
 
-                if user_data[0:2] == b"\x1f\x8b":  # GZIP magic number
-                    user_data = zlib.decompress(user_data, zlib.MAX_WBITS | 32).decode(
-                        encoding_format_utf_8
-                    )
-                else:
-                    user_data = user_data.decode(encoding_format_utf_8)
+                try:
+                    if user_data[0:2] == b"\x1f\x8b":  # GZIP magic number
+                        user_data = zlib.decompress(
+                            user_data, zlib.MAX_WBITS | 32
+                        ).decode(encoding_format_utf_8)
+                    else:
+                        user_data = user_data.decode(encoding_format_utf_8)
+                except UnicodeDecodeError as error:
+                    report.status = "FAIL"
+                    report.status_extended = f"Unable to decode autoscaling {configuration.name} User Data: {error}"
+                    findings.append(report)
+                    continue
+                except Exception as error:
+                    report.status = "FAIL"
+                    report.status_extended = f"Unexpected error decoding autoscaling {configuration.name} User Data: {error}"
+                    findings.append(report)
+                    continue
 
                 temp_user_data_file.write(
                     bytes(user_data, encoding="raw_unicode_escape")
