@@ -7,7 +7,7 @@ from tests.providers.gcp.gcp_fixtures import (
 )
 
 
-class Test_kms_key_not_publicly_accessible:
+class Test_kms_key_not_publicly_accessible_gcp:
     def test_kms_no_key(self):
         kms_client = mock.MagicMock
 
