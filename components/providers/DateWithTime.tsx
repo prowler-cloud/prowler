@@ -16,7 +16,7 @@ export const DateWithTime: React.FC<DateWithTimeProps> = ({
 
   return (
     <div className="max-w-fit">
-      <div className="flex flex-col items-center">
+      <div className="flex flex-col items-start">
         <span className="text-md font-semibold">{formattedDate}</span>
         {showTime && (
           <span className="text-sm text-gray-500">{formattedTime}</span>
