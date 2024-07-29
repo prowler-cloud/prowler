@@ -48,6 +48,8 @@ class Test_acm_certificates_rsa_key_length:
             )
         ]
 
+        acm_client.audit_config = {"insecure_algorithm": ["RSA_1024"]}
+
         with mock.patch(
             "prowler.providers.aws.services.acm.acm_service.ACM",
             new=acm_client,
@@ -93,6 +95,8 @@ class Test_acm_certificates_rsa_key_length:
             )
         ]
 
+        acm_client.audit_config = {"insecure_algorithm": ["RSA_1024"]}
+
         with mock.patch(
             "prowler.providers.aws.services.acm.acm_service.ACM",
             new=acm_client,
@@ -109,7 +113,7 @@ class Test_acm_certificates_rsa_key_length:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"ACM Certificate {certificate_id} for {certificate_name} uses RSA_1024 which is not secure enough."
+                == f"ACM Certificate {certificate_id} for {certificate_name} uses a not secure key length."
             )
             assert result[0].resource_id == certificate_id
             assert result[0].resource_arn == certificate_arn
