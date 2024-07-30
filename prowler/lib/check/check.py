@@ -706,6 +706,13 @@ def execute(
             check_class, verbose, global_provider.output_options.only_logs
         )
 
+        # Exclude findings per status
+        check_findings = [
+            finding
+            for finding in check_findings
+            if finding.status in global_provider.output_options.status
+        ]
+
         # Update Audit Status
         services_executed.add(service)
         checks_executed.add(check_name)
