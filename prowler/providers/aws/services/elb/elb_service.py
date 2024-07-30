@@ -7,12 +7,11 @@ from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################### ELB
 class ELB(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
-        self.loadbalancers = []
+        self.loadbalancers = {}
         self.__threading_call__(self.__describe_load_balancers__)
         self.__threading_call__(self.__describe_load_balancer_attributes__)
         self.__describe_tags__()
@@ -37,17 +36,14 @@ class ELB(AWSService):
                                     policies=listener["PolicyNames"],
                                 )
                             )
-                        self.loadbalancers.append(
-                            LoadBalancer(
-                                name=elb["LoadBalancerName"],
-                                arn=arn,
-                                dns=elb["DNSName"],
-                                region=regional_client.region,
-                                scheme=elb["Scheme"],
-                                listeners=listeners,
-                            )
-                        )
 
+                        self.loadbalancers[arn] = LoadBalancer(
+                            name=elb["LoadBalancerName"],
+                            dns=elb["DNSName"],
+                            region=regional_client.region,
+                            scheme=elb["Scheme"],
+                            listeners=listeners,
+                        )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -56,7 +52,7 @@ class ELB(AWSService):
     def __describe_load_balancer_attributes__(self, regional_client):
         logger.info("ELB - Describing attributes...")
         try:
-            for lb in self.loadbalancers:
+            for lb in self.loadbalancers.values():
                 if lb.region == regional_client.region:
                     attributes = regional_client.describe_load_balancer_attributes(
                         LoadBalancerName=lb.name
@@ -72,7 +68,7 @@ class ELB(AWSService):
     def __describe_tags__(self):
         logger.info("ELB - List Tags...")
         try:
-            for lb in self.loadbalancers:
+            for lb in self.loadbalancers.values():
                 regional_client = self.regional_clients[lb.region]
                 response = regional_client.describe_tags(LoadBalancerNames=[lb.name])[
                     "TagDescriptions"
@@ -92,7 +88,6 @@ class Listener(BaseModel):
 class LoadBalancer(BaseModel):
     name: str
     dns: str
-    arn: str
     region: str
     scheme: str
     access_logs: Optional[bool]
