@@ -8,18 +8,18 @@ import {
   WifiOffIcon,
 } from "../icons";
 
-interface AccountInfoProps {
+interface ProviderInfoProps {
   connected: boolean;
   provider: "aws" | "azure" | "gcp";
-  accountName: string;
-  accountId: string;
+  providerAlias: string;
+  providerId: string;
 }
 
-export const AccountInfo: React.FC<AccountInfoProps> = ({
+export const ProviderInfo: React.FC<ProviderInfoProps> = ({
   connected,
   provider,
-  accountName,
-  accountId,
+  providerAlias,
+  providerId,
 }) => {
   const getIcon = () => {
     return connected ? <WifiIcon size={22} /> : <WifiOffIcon size={22} />;
@@ -45,8 +45,8 @@ export const AccountInfo: React.FC<AccountInfoProps> = ({
         <div className="flex-shrink-0">{getIcon()}</div>
         <div className="flex-shrink-0 mx-2">{getProviderLogo()}</div>
         <div className="flex flex-col">
-          <span className="text-md font-semibold">{accountName}</span>
-          <span className="text-sm text-gray-500">{accountId}</span>
+          <span className="text-md font-semibold">{providerAlias}</span>
+          <span className="text-sm text-gray-500">{providerId}</span>
         </div>
       </div>
     </div>

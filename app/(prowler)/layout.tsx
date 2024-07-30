@@ -1,12 +1,12 @@
 import "@/styles/globals.css";
 
-import clsx from "clsx";
 import { Metadata, Viewport } from "next";
 import React from "react";
 
 import { SidebarWrap } from "@/components";
 import { fontSans } from "@/config/fonts";
 import { siteConfig } from "@/config/site";
+import { cn } from "@/lib/utils";
 
 import { Providers } from "../providers";
 
@@ -37,7 +37,8 @@ export default function RootLayout({
     <html suppressHydrationWarning lang="en">
       <head />
       <body
-        className={clsx(
+        suppressHydrationWarning
+        className={cn(
           "min-h-screen bg-background font-sans antialiased",
           fontSans.variable,
         )}
