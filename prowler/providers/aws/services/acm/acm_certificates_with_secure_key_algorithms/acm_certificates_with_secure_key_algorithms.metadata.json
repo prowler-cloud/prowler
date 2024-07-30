@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "acm_certificates_with_secure_key_algorithms",
+  "CheckTitle": "Check if ACM Certificates use a secure key algorithm",
+  "CheckType": [
+    "Data Protection"
+  ],
+  "ServiceName": "acm",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:acm:region:account-id:certificate/resource-id",
+  "Severity": "high",
+  "ResourceType": "AwsCertificateManagerCertificate",
+  "Description": "Check if ACM Certificates use a secure key algorithm (RSA 2048 bits or more, or ECDSA 256 bits or more). For example certificates that use RSA_1024 can be compromised.",
+  "Risk": "Certificates with weak RSA or ECDSA keys can be compromised.",
+  "RelatedUrl": "https://docs.aws.amazon.com/acm/latest/userguide/acm-certificate.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure that all ACM certificates use a secure key algorithm. If any certificates use smaller keys, regenerate them with a secure key size and update any systems that rely on these certificates.",
+      "Url": "https://docs.aws.amazon.com/acm/latest/userguide/gs.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

@@ -7,7 +7,7 @@ AWS_REGION = "us-east-1"
 AWS_ACCOUNT_NUMBER = "123456789012"
 
 
-class Test_acm_certificates_insecure_algorithms:
+class Test_acm_certificates_with_secure_key_algorithms:
     def test_no_acm_certificates(self):
         acm_client = mock.MagicMock
         acm_client.certificates = []
@@ -17,11 +17,11 @@ class Test_acm_certificates_insecure_algorithms:
             new=acm_client,
         ):
             # Test Check
-            from prowler.providers.aws.services.acm.acm_certificates_insecure_algorithms.acm_certificates_insecure_algorithms import (
-                acm_certificates_insecure_algorithms,
+            from prowler.providers.aws.services.acm.acm_certificates_with_secure_key_algorithms.acm_certificates_with_secure_key_algorithms import (
+                acm_certificates_with_secure_key_algorithms,
             )
 
-            check = acm_certificates_insecure_algorithms()
+            check = acm_certificates_with_secure_key_algorithms()
             result = check.execute()
 
             assert len(result) == 0
@@ -55,18 +55,18 @@ class Test_acm_certificates_insecure_algorithms:
             new=acm_client,
         ):
             # Test Check
-            from prowler.providers.aws.services.acm.acm_certificates_insecure_algorithms.acm_certificates_insecure_algorithms import (
-                acm_certificates_insecure_algorithms,
+            from prowler.providers.aws.services.acm.acm_certificates_with_secure_key_algorithms.acm_certificates_with_secure_key_algorithms import (
+                acm_certificates_with_secure_key_algorithms,
             )
 
-            check = acm_certificates_insecure_algorithms()
+            check = acm_certificates_with_secure_key_algorithms()
             result = check.execute()
 
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"ACM Certificate {certificate_id} for {certificate_name} meet minimum key size requirements."
+                == f"ACM Certificate {certificate_id} for {certificate_name} uses a secure key algorithm."
             )
             assert result[0].resource_id == certificate_id
             assert result[0].resource_arn == certificate_arn
@@ -102,18 +102,18 @@ class Test_acm_certificates_insecure_algorithms:
             new=acm_client,
         ):
             # Test Check
-            from prowler.providers.aws.services.acm.acm_certificates_insecure_algorithms.acm_certificates_insecure_algorithms import (
-                acm_certificates_insecure_algorithms,
+            from prowler.providers.aws.services.acm.acm_certificates_with_secure_key_algorithms.acm_certificates_with_secure_key_algorithms import (
+                acm_certificates_with_secure_key_algorithms,
             )
 
-            check = acm_certificates_insecure_algorithms()
+            check = acm_certificates_with_secure_key_algorithms()
             result = check.execute()
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"ACM Certificate {certificate_id} for {certificate_name} uses a not secure key length."
+                == f"ACM Certificate {certificate_id} for {certificate_name} does not use a secure key algorithm."
             )
             assert result[0].resource_id == certificate_id
             assert result[0].resource_arn == certificate_arn
