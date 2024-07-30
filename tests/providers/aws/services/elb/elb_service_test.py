@@ -45,7 +45,7 @@ class Test_ELB_Service:
             GroupName="sg01", Description="Test security group sg01"
         )
 
-        elb.create_load_balancer(
+        dns_name = elb.create_load_balancer(
             LoadBalancerName="my-lb",
             Listeners=[
                 {"Protocol": "tcp", "LoadBalancerPort": 80, "InstancePort": 8080},
@@ -54,18 +54,21 @@ class Test_ELB_Service:
             AvailabilityZones=[f"{AWS_REGION_US_EAST_1}a"],
             Scheme="internal",
             SecurityGroups=[security_group.id],
-        )
+        )["DNSName"]
+        elb_arn = f"arn:aws:elasticloadbalancing:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:loadbalancer/my-lb"
         # ELB client for this test class
         aws_provider = set_mocked_aws_provider()
         elb = ELB(aws_provider)
         assert len(elb.loadbalancers) == 1
-        assert elb.loadbalancers[0].name == "my-lb"
-        assert elb.loadbalancers[0].region == AWS_REGION_US_EAST_1
-        assert elb.loadbalancers[0].scheme == "internal"
-        assert (
-            elb.loadbalancers[0].arn
-            == f"arn:aws:elasticloadbalancing:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:loadbalancer/my-lb"
-        )
+        assert elb.loadbalancers[elb_arn].name == "my-lb"
+        assert elb.loadbalancers[elb_arn].region == AWS_REGION_US_EAST_1
+        assert elb.loadbalancers[elb_arn].scheme == "internal"
+        assert elb.loadbalancers[elb_arn].dns == dns_name
+        assert len(elb.loadbalancers[elb_arn].listeners) == 2
+        assert elb.loadbalancers[elb_arn].listeners[0].protocol == "TCP"
+        assert elb.loadbalancers[elb_arn].listeners[0].policies == []
+        assert elb.loadbalancers[elb_arn].listeners[1].protocol == "HTTP"
+        assert elb.loadbalancers[elb_arn].listeners[1].policies == []
 
     # Test ELB Describe Load Balancers Attributes
     @mock_aws
@@ -99,14 +102,11 @@ class Test_ELB_Service:
                 }
             },
         )
+        elb_arn = f"arn:aws:elasticloadbalancing:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:loadbalancer/my-lb"
         # ELB client for this test class
         aws_provider = set_mocked_aws_provider()
         elb = ELB(aws_provider)
-        assert elb.loadbalancers[0].name == "my-lb"
-        assert elb.loadbalancers[0].region == AWS_REGION_US_EAST_1
-        assert elb.loadbalancers[0].scheme == "internal"
-        assert elb.loadbalancers[0].access_logs
-        assert (
-            elb.loadbalancers[0].arn
-            == f"arn:aws:elasticloadbalancing:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:loadbalancer/my-lb"
-        )
+        assert elb.loadbalancers[elb_arn].name == "my-lb"
+        assert elb.loadbalancers[elb_arn].region == AWS_REGION_US_EAST_1
+        assert elb.loadbalancers[elb_arn].scheme == "internal"
+        assert elb.loadbalancers[elb_arn].access_logs
