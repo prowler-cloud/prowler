@@ -28,7 +28,10 @@ export default async function Providers() {
           openButtonLabel="Add Cloud Accounts"
         />
         <Spacer y={6} />
-        <DataTable columns={ColumnsProviders} data={providers.providers.data} />
+        <DataTable
+          columns={ColumnsProviders}
+          data={providers?.providers.data ?? []}
+        />
       </div>
     </>
   );
