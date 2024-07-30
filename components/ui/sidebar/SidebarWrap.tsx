@@ -20,7 +20,7 @@ import { UserAvatar } from "./UserAvatar";
 
 export const SidebarWrap = () => {
   const pathname = usePathname();
-  const [isCollapsed, setIsCollapsed] = useLocalStorage("isCollapsed", true);
+  const [isCollapsed, setIsCollapsed] = useLocalStorage("isCollapsed", false);
 
   const isMobile = useMediaQuery("(max-width: 768px)");
 
