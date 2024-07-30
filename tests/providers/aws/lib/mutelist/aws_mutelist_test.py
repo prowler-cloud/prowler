@@ -7,7 +7,7 @@ from boto3 import client, resource
 from mock import MagicMock, patch
 from moto import mock_aws
 
-from prowler.config.config import enconding_format_utf_8
+from prowler.config.config import encoding_format_utf_8
 from prowler.providers.aws.lib.mutelist.mutelist import AWSMutelist
 from tests.providers.aws.services.awslambda.awslambda_service_test import (
     create_zip_file,
@@ -46,7 +46,7 @@ def mock_make_api_call(self, operation_name, kwarg):
                             }
                         }
                     }
-                ).encode(enconding_format_utf_8)
+                ).encode(encoding_format_utf_8)
             )
         }
 

@@ -74,6 +74,15 @@ class Test_eks_control_plane_logging_all_types_enabled:
                 ),
             )
         )
+        eks_client.audit_config = {
+            "eks_required_log_types": [
+                "api",
+                "audit",
+                "authenticator",
+                "controllerManager",
+                "scheduler",
+            ]
+        }
 
         with mock.patch(
             "prowler.providers.aws.services.eks.eks_service.EKS",
@@ -88,7 +97,7 @@ class Test_eks_control_plane_logging_all_types_enabled:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert search(
-                "Control plane logging enabled but not all log types collected",
+                "Control plane logging is enabled but not all required log types are enabled for EKS cluster cluster_test. Required log types: api, audit, authenticator, controllerManager, scheduler. Enabled log types: api, audit, authenticator, controllerManager.",
                 result[0].status_extended,
             )
             assert result[0].resource_id == cluster_name
@@ -114,6 +123,15 @@ class Test_eks_control_plane_logging_all_types_enabled:
                 ),
             )
         )
+        eks_client.audit_config = {
+            "eks_required_log_types": [
+                "api",
+                "audit",
+                "authenticator",
+                "controllerManager",
+                "scheduler",
+            ]
+        }
 
         with mock.patch(
             "prowler.providers.aws.services.eks.eks_service.EKS",
@@ -128,7 +146,7 @@ class Test_eks_control_plane_logging_all_types_enabled:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert search(
-                "Control plane logging enabled and correctly configured",
+                "Control plane logging and all required log types are enabled for EKS cluster",
                 result[0].status_extended,
             )
             assert result[0].resource_id == cluster_name

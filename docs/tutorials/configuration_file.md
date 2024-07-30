@@ -44,6 +44,7 @@ The following list includes all the AWS checks with configurable variables that 
 | `ec2_securitygroup_allow_ingress_from_internet_to_any_port`   | `ec2_allowed_instance_owners`                    | List of Strings |
 | `acm_certificates_expiration_check`                           | `days_to_expire_threshold`                       | Integer         |
 | `sns_topics_not_publicly_accessible`                          | `organization_id`                                | String          |
+| `eks_control_plane_logging_all_types_enabled`                 | `eks_required_log_types`                         | List of Strings |
 
 
 ## Azure
@@ -359,6 +360,18 @@ aws:
   # AWS SNS Configuration
   # aws.sns_topics_not_publicly_accessible
   organization_id: null
+
+  # AWS EKS Configuration
+  # aws.eks_control_plane_logging_all_types_enabled
+  # EKS control plane logging types that must be enabled
+  eks_required_log_types:
+    [
+      "api",
+      "audit",
+      "authenticator",
+      "controllerManager",
+      "scheduler",
+    ]
 
 # Azure Configuration
 azure:

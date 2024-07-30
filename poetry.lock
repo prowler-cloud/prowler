@@ -372,35 +372,37 @@ isodate = ">=0.6.1,<1.0.0"
 
 [[package]]
 name = "azure-mgmt-compute"
-version = "31.0.0"
+version = "32.0.0"
 description = "Microsoft Azure Compute Management Client Library for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "azure-mgmt-compute-31.0.0.tar.gz", hash = "sha256:5a5b1c4fc1a19ecb022a12ded1be8b1b155f6979d03fb9efc04642f606644bbf"},
-    {file = "azure_mgmt_compute-31.0.0-py3-none-any.whl", hash = "sha256:39cad123d814390cca6adbe02afe2269aa179b9051dc022c7f07134ebd416207"},
+    {file = "azure-mgmt-compute-32.0.0.tar.gz", hash = "sha256:8d5a86e0116c71a07bcedd8e69d2e09270db3880932656521f3143c6f9475072"},
+    {file = "azure_mgmt_compute-32.0.0-py3-none-any.whl", hash = "sha256:8578dbeee034a58c41331a71ddd2503e1e5c65a2cc233ebfe9adc5e16ca3d037"},
 ]
 
 [package.dependencies]
 azure-common = ">=1.1"
 azure-mgmt-core = ">=1.3.2"
 isodate = ">=0.6.1"
+typing-extensions = ">=4.6.0"
 
 [[package]]
 name = "azure-mgmt-containerservice"
-version = "30.0.0"
+version = "31.0.0"
 description = "Microsoft Azure Container Service Management Client Library for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "azure-mgmt-containerservice-30.0.0.tar.gz", hash = "sha256:6c62e6ac590e34fedd739fe24b31b3750713a014616696ea8d44c7bcc81c06b7"},
-    {file = "azure_mgmt_containerservice-30.0.0-py3-none-any.whl", hash = "sha256:795a6a50d6632344910216853167b9bd47b09d50cb2afa28b2a18e58f5088c3f"},
+    {file = "azure-mgmt-containerservice-31.0.0.tar.gz", hash = "sha256:134358d7f88c4d29b4009f91d7619861e1fad5dbea5e147402dd61ad96b5624a"},
+    {file = "azure_mgmt_containerservice-31.0.0-py3-none-any.whl", hash = "sha256:75c6dbbaf27ed6c8251e34b86fefcfb001fe096c69df9ce93c163de71a2b5275"},
 ]
 
 [package.dependencies]
 azure-common = ">=1.1"
 azure-mgmt-core = ">=1.3.2"
 isodate = ">=0.6.1"
+typing-extensions = ">=4.6.0"
 
 [[package]]
 name = "azure-mgmt-core"
@@ -467,13 +469,13 @@ isodate = ">=0.6.1,<1.0.0"
 
 [[package]]
 name = "azure-mgmt-network"
-version = "25.4.0"
+version = "26.0.0"
 description = "Microsoft Azure Network Management Client Library for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "azure-mgmt-network-25.4.0.tar.gz", hash = "sha256:a338e62d81fdbf050f802143c28cb965b07edd43800ef0504cdfa6b8854d7554"},
-    {file = "azure_mgmt_network-25.4.0-py3-none-any.whl", hash = "sha256:ae30f9ff25c22e14e0394d432d7aebc06ac1c5bf4de24cf226972c12bd664035"},
+    {file = "azure-mgmt-network-26.0.0.tar.gz", hash = "sha256:4de676184195053fdb106a6ea1042a894e70c731a6d3c8a633d52f5229f4ee1b"},
+    {file = "azure_mgmt_network-26.0.0-py3-none-any.whl", hash = "sha256:15d6a77d7429bdcc76f8482158845d42f9d9434529e1ad2b6778269cc14627e9"},
 ]
 
 [package.dependencies]
@@ -710,17 +712,17 @@ files = [
 
 [[package]]
 name = "boto3"
-version = "1.34.146"
+version = "1.34.149"
 description = "The AWS SDK for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "boto3-1.34.146-py3-none-any.whl", hash = "sha256:7ec568fb19bce82a70be51f08fddac1ef927ca3fb0896cbb34303a012ba228d8"},
-    {file = "boto3-1.34.146.tar.gz", hash = "sha256:5686fe2a6d1aa1de8a88e9589cdcc33361640d3d7a13da718a30717248886124"},
+    {file = "boto3-1.34.149-py3-none-any.whl", hash = "sha256:11edeeacdd517bda3b7615b754d8440820cdc9ddd66794cc995a9693ddeaa3be"},
+    {file = "boto3-1.34.149.tar.gz", hash = "sha256:f4e6489ba9dc7fb37d53e0e82dbc97f2cb0a4969ef3970e2c88b8f94023ae81a"},
 ]
 
 [package.dependencies]
-botocore = ">=1.34.146,<1.35.0"
+botocore = ">=1.34.149,<1.35.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.10.0,<0.11.0"
 
@@ -729,13 +731,13 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "botocore"
-version = "1.34.147"
+version = "1.34.150"
 description = "Low-level, data-driven core of boto 3."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "botocore-1.34.147-py3-none-any.whl", hash = "sha256:be94a2f4874b1d1705cae2bd512c475047497379651678593acb6c61c50d91de"},
-    {file = "botocore-1.34.147.tar.gz", hash = "sha256:2e8f000b77e4ca345146cb2edab6403769a517b564f627bb084ab335417f3dbe"},
+    {file = "botocore-1.34.150-py3-none-any.whl", hash = "sha256:b988d47f4d502df85befce11a48002421e4e6ea4289997b5e0261bac5fa76ce6"},
+    {file = "botocore-1.34.150.tar.gz", hash = "sha256:4d23387e0f076d87b637a2a35c0ff2b8daca16eace36b63ce27f65630c6b375a"},
 ]
 
 [package.dependencies]
@@ -1584,13 +1586,13 @@ grpcio-gcp = ["grpcio-gcp (>=0.2.2,<1.0.dev0)"]
 
 [[package]]
 name = "google-api-python-client"
-version = "2.137.0"
+version = "2.138.0"
 description = "Google API Client Library for Python"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "google_api_python_client-2.137.0-py2.py3-none-any.whl", hash = "sha256:a8b5c5724885e5be9f5368739aa0ccf416627da4ebd914b410a090c18f84d692"},
-    {file = "google_api_python_client-2.137.0.tar.gz", hash = "sha256:e739cb74aac8258b1886cb853b0722d47c81fe07ad649d7f2206f06530513c04"},
+    {file = "google_api_python_client-2.138.0-py2.py3-none-any.whl", hash = "sha256:1dd279124e4e77cbda4769ffb4abe7e7c32528ef1e18739320fef2a07b750764"},
+    {file = "google_api_python_client-2.138.0.tar.gz", hash = "sha256:31080fbf0e64687876135cc23d1bec1ca3b80d7702177dd17b04131ea889eb70"},
 ]
 
 [package.dependencies]
@@ -3560,13 +3562,13 @@ diagrams = ["jinja2", "railroad-diagrams"]
 
 [[package]]
 name = "pytest"
-version = "8.3.1"
+version = "8.3.2"
 description = "pytest: simple powerful testing with Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "pytest-8.3.1-py3-none-any.whl", hash = "sha256:e9600ccf4f563976e2c99fa02c7624ab938296551f280835ee6516df8bc4ae8c"},
-    {file = "pytest-8.3.1.tar.gz", hash = "sha256:7e8e5c5abd6e93cb1cc151f23e57adc31fcf8cfd2a3ff2da63e23f732de35db6"},
+    {file = "pytest-8.3.2-py3-none-any.whl", hash = "sha256:4ba08f9ae7dcf84ded419494d229b48d0903ea6407b030eaec46df5e6a73bba5"},
+    {file = "pytest-8.3.2.tar.gz", hash = "sha256:c132345d12ce551242c87269de812483f5bcc87cdbb4722e48487ba194f9fdce"},
 ]
 
 [package.dependencies]
@@ -4896,4 +4898,4 @@ test = ["big-O", "jaraco.functools", "jaraco.itertools", "jaraco.test", "more-it
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "bf68f73c3ff8d1551673b52840bbd8f9c3408a98fdf3afea89d006cec4d02d98"
+content-hash = "97181474bd8e13193f35529d5a173633b0c14079676c10536839912a136a95e3"

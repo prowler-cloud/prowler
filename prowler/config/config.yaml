@@ -276,6 +276,18 @@ aws:
   # aws.sns_topics_not_publicly_accessible
   organization_id: null
 
+  # AWS EKS Configuration
+  # aws.eks_control_plane_logging_all_types_enabled
+  # EKS control plane logging types that must be enabled
+  eks_required_log_types:
+    [
+      "api",
+      "audit",
+      "authenticator",
+      "controllerManager",
+      "scheduler",
+    ]
+
 # Azure Configuration
 azure:
   # Azure Network Configuration

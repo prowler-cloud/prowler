@@ -64,6 +64,51 @@ class Test_cloudsql_instance_sqlserver_external_scripts_enabled_flag:
             result = check.execute()
             assert len(result) == 0
 
+    def test_cloudsql_sqlserver_instance_no_flags(self):
+        cloudsql_client = mock.MagicMock
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_gcp_provider(),
+        ), mock.patch(
+            "prowler.providers.gcp.services.cloudsql.cloudsql_instance_sqlserver_external_scripts_enabled_flag.cloudsql_instance_sqlserver_external_scripts_enabled_flag.cloudsql_client",
+            new=cloudsql_client,
+        ):
+            from prowler.providers.gcp.services.cloudsql.cloudsql_instance_sqlserver_external_scripts_enabled_flag.cloudsql_instance_sqlserver_external_scripts_enabled_flag import (
+                cloudsql_instance_sqlserver_external_scripts_enabled_flag,
+            )
+            from prowler.providers.gcp.services.cloudsql.cloudsql_service import (
+                Instance,
+            )
+
+            cloudsql_client.instances = [
+                Instance(
+                    name="instance1",
+                    version="SQLSERVER_2019",
+                    ip_addresses=[],
+                    region=GCP_EU1_LOCATION,
+                    public_ip=False,
+                    ssl=False,
+                    automated_backups=True,
+                    authorized_networks=[],
+                    flags=[],
+                    project_id=GCP_PROJECT_ID,
+                )
+            ]
+
+            check = cloudsql_instance_sqlserver_external_scripts_enabled_flag()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == "SQL Server Instance instance1 has 'external scripts enabled' flag set to 'off'."
+            )
+            assert result[0].resource_id == "instance1"
+            assert result[0].resource_name == "instance1"
+            assert result[0].location == GCP_EU1_LOCATION
+            assert result[0].project_id == GCP_PROJECT_ID
+
     def test_cloudsql_sqlserver_instance_external_scripts_enabled_flag_on(self):
         cloudsql_client = mock.MagicMock
 

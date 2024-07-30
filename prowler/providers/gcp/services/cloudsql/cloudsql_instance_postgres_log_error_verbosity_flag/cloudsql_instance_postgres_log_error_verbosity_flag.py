@@ -12,15 +12,15 @@ class cloudsql_instance_postgres_log_error_verbosity_flag(Check):
                 report.resource_id = instance.name
                 report.resource_name = instance.name
                 report.location = instance.region
-                report.status = "FAIL"
-                report.status_extended = f"PostgreSQL Instance {instance.name} does not have 'log_error_verbosity' flag set to 'default'."
+                report.status = "PASS"
+                report.status_extended = f"PostgreSQL Instance {instance.name} has 'log_error_verbosity' flag set to 'default'."
                 for flag in instance.flags:
                     if (
-                        flag["name"] == "log_error_verbosity"
-                        and flag["value"] == "default"
+                        flag.get("name", "") == "log_error_verbosity"
+                        and flag.get("value", "default") != "default"
                     ):
-                        report.status = "PASS"
-                        report.status_extended = f"PostgreSQL Instance {instance.name} has 'log_error_verbosity' flag set to 'default'."
+                        report.status = "FAIL"
+                        report.status_extended = f"PostgreSQL Instance {instance.name} does not have 'log_error_verbosity' flag set to 'default'."
                         break
                 findings.append(report)
 

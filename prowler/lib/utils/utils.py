@@ -22,14 +22,14 @@ from colorama import Style
 from detect_secrets import SecretsCollection
 from detect_secrets.settings import default_settings
 
-from prowler.config.config import enconding_format_utf_8
+from prowler.config.config import encoding_format_utf_8
 from prowler.lib.logger import logger
 
 
 def open_file(input_file: str, mode: str = "r") -> TextIOWrapper:
     """open_file returns a handler to the file using the specified mode."""
     try:
-        f = open(input_file, mode, encoding=enconding_format_utf_8)
+        f = open(input_file, mode, encoding=encoding_format_utf_8)
     except OSError as os_error:
         if os_error.strerror == "Too many open files":
             logger.critical(
@@ -77,7 +77,7 @@ def file_exists(filename: str):
 
 def hash_sha512(string: str) -> str:
     """hash_sha512 returns the first 9 bytes of the SHA512 representation for the given string."""
-    return sha512(string.encode(enconding_format_utf_8)).hexdigest()[0:9]
+    return sha512(string.encode(encoding_format_utf_8)).hexdigest()[0:9]
 
 
 def detect_secrets_scan(data):

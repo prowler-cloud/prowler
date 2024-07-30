@@ -16,8 +16,8 @@ class cloudsql_instance_postgres_enable_pgaudit_flag(Check):
                 report.status_extended = f"PostgreSQL Instance {instance.name} does not have 'cloudsql.enable_pgaudit' flag set to 'on'."
                 for flag in instance.flags:
                     if (
-                        flag["name"] == "cloudsql.enable_pgaudit"
-                        and flag["value"] == "on"
+                        flag.get("name", "") == "cloudsql.enable_pgaudit"
+                        and flag.get("value", "off") == "on"
                     ):
                         report.status = "PASS"
                         report.status_extended = f"PostgreSQL Instance {instance.name} has 'cloudsql.enable_pgaudit' flag set to 'on'."
