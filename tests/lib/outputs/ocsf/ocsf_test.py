@@ -107,7 +107,7 @@ class TestOCSF:
                     "product": {
                         "name": "Prowler",
                         "vendor_name": "Prowler",
-                        "version": "4.2.4",
+                        "version": prowler_version,
                     },
                     "version": "1.2.0",
                 },
