@@ -8,7 +8,7 @@ export const getProvider = async () => {
   if (!key) return undefined;
 
   try {
-    const providers = await fetch(`${key}/api/proiders`);
+    const providers = await fetch(`${key}/api/providers`);
 
     const data = await providers.json();
 
