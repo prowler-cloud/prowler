@@ -118,6 +118,8 @@ class Test_opensearch_service_domains_not_publicly_accessible:
             )
             assert result[0].resource_id == domain_name
             assert result[0].resource_arn == domain_arn
+            assert result[0].region == AWS_REGION_EU_WEST_1
+            assert result[0].resource_tags == []
 
     def test_policy_data_not_restricted_with_principal_AWS(self):
         opensearch_client = mock.MagicMock
@@ -150,6 +152,8 @@ class Test_opensearch_service_domains_not_publicly_accessible:
             )
             assert result[0].resource_id == domain_name
             assert result[0].resource_arn == domain_arn
+            assert result[0].region == AWS_REGION_EU_WEST_1
+            assert result[0].resource_tags == []
 
     def test_policy_data_not_restricted_with_principal_no_AWS(self):
         opensearch_client = mock.MagicMock
@@ -182,6 +186,8 @@ class Test_opensearch_service_domains_not_publicly_accessible:
             )
             assert result[0].resource_id == domain_name
             assert result[0].resource_arn == domain_arn
+            assert result[0].region == AWS_REGION_EU_WEST_1
+            assert result[0].resource_tags == []
 
     def test_policy_data_not_restricted_ip_full(self):
         opensearch_client = mock.MagicMock
@@ -214,6 +220,8 @@ class Test_opensearch_service_domains_not_publicly_accessible:
             )
             assert result[0].resource_id == domain_name
             assert result[0].resource_arn == domain_arn
+            assert result[0].region == AWS_REGION_EU_WEST_1
+            assert result[0].resource_tags == []
 
     def test_policy_data_not_restricted_whole_internet(self):
         opensearch_client = mock.MagicMock
@@ -246,6 +254,8 @@ class Test_opensearch_service_domains_not_publicly_accessible:
             )
             assert result[0].resource_id == domain_name
             assert result[0].resource_arn == domain_arn
+            assert result[0].region == AWS_REGION_EU_WEST_1
+            assert result[0].resource_tags == []
 
     def test_domain_inside_vpc(self):
         opensearch_client = mock.MagicMock
@@ -278,3 +288,5 @@ class Test_opensearch_service_domains_not_publicly_accessible:
             )
             assert result[0].resource_id == domain_name
             assert result[0].resource_arn == domain_arn
+            assert result[0].region == AWS_REGION_EU_WEST_1
+            assert result[0].resource_tags == []
