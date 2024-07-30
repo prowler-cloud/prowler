@@ -18,6 +18,7 @@ class Test_ec2_securitygroup_allow_wide_open_public_ipv4:
         ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
+        from prowler.providers.aws.services.vpc.vpc_service import VPC
 
         current_audit_info = set_mocked_aws_audit_info(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
@@ -28,7 +29,14 @@ class Test_ec2_securitygroup_allow_wide_open_public_ipv4:
             new=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_wide_open_public_ipv4.ec2_securitygroup_allow_wide_open_public_ipv4.ec2_client",
+<<<<<<< HEAD
             new=EC2(current_audit_info),
+=======
+            new=EC2(aws_provider),
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_wide_open_public_ipv4.ec2_securitygroup_allow_wide_open_public_ipv4.vpc_client",
+            new=VPC(aws_provider),
+>>>>>>> b9b5f660 (fix(test): solve VPC import in tests (#4574))
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_securitygroup_allow_wide_open_public_ipv4.ec2_securitygroup_allow_wide_open_public_ipv4 import (
@@ -66,6 +74,7 @@ class Test_ec2_securitygroup_allow_wide_open_public_ipv4:
         )
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
+        from prowler.providers.aws.services.vpc.vpc_service import VPC
 
         current_audit_info = set_mocked_aws_audit_info(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
@@ -76,7 +85,14 @@ class Test_ec2_securitygroup_allow_wide_open_public_ipv4:
             new=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_wide_open_public_ipv4.ec2_securitygroup_allow_wide_open_public_ipv4.ec2_client",
+<<<<<<< HEAD
             new=EC2(current_audit_info),
+=======
+            new=EC2(aws_provider),
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_wide_open_public_ipv4.ec2_securitygroup_allow_wide_open_public_ipv4.vpc_client",
+            new=VPC(aws_provider),
+>>>>>>> b9b5f660 (fix(test): solve VPC import in tests (#4574))
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_securitygroup_allow_wide_open_public_ipv4.ec2_securitygroup_allow_wide_open_public_ipv4 import (
@@ -125,6 +141,7 @@ class Test_ec2_securitygroup_allow_wide_open_public_ipv4:
         )
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
+        from prowler.providers.aws.services.vpc.vpc_service import VPC
 
         current_audit_info = set_mocked_aws_audit_info(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
@@ -135,7 +152,14 @@ class Test_ec2_securitygroup_allow_wide_open_public_ipv4:
             new=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_wide_open_public_ipv4.ec2_securitygroup_allow_wide_open_public_ipv4.ec2_client",
+<<<<<<< HEAD
             new=EC2(current_audit_info),
+=======
+            new=EC2(aws_provider),
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_wide_open_public_ipv4.ec2_securitygroup_allow_wide_open_public_ipv4.vpc_client",
+            new=VPC(aws_provider),
+>>>>>>> b9b5f660 (fix(test): solve VPC import in tests (#4574))
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_securitygroup_allow_wide_open_public_ipv4.ec2_securitygroup_allow_wide_open_public_ipv4 import (

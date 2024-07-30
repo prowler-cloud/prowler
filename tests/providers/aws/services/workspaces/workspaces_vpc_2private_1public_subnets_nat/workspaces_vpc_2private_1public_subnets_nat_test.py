@@ -4,7 +4,6 @@ from uuid import uuid4
 from boto3 import client, resource
 from moto import mock_aws
 
-from prowler.providers.aws.services.vpc.vpc_service import VPC
 from prowler.providers.aws.services.workspaces.workspaces_service import WorkSpace
 from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
@@ -51,6 +50,7 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
                 root_volume_encryption_enabled=True,
             )
         )
+        from prowler.providers.aws.services.vpc.vpc_service import VPC
 
         current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
@@ -119,6 +119,7 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
                 subnet_id=subnet_private["Subnet"]["SubnetId"],
             )
         )
+        from prowler.providers.aws.services.vpc.vpc_service import VPC
 
         current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
@@ -204,6 +205,7 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
                 subnet_id=subnet_private["Subnet"]["SubnetId"],
             )
         )
+        from prowler.providers.aws.services.vpc.vpc_service import VPC
 
         current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
@@ -309,7 +311,12 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
             )
         )
 
+<<<<<<< HEAD
         current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+=======
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        from prowler.providers.aws.services.vpc.vpc_service import VPC
+>>>>>>> b9b5f660 (fix(test): solve VPC import in tests (#4574))
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -413,6 +420,7 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
                 subnet_id=subnet_private["Subnet"]["SubnetId"],
             )
         )
+        from prowler.providers.aws.services.vpc.vpc_service import VPC
 
         current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
