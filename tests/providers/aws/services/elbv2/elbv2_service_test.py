@@ -76,10 +76,18 @@ class Test_ELBv2_Service:
         )
         elbv2 = ELBv2(aws_provider)
         assert len(elbv2.loadbalancersv2) == 1
-        assert elbv2.loadbalancersv2[0].name == "my-lb"
-        assert elbv2.loadbalancersv2[0].region == AWS_REGION_EU_WEST_1
-        assert elbv2.loadbalancersv2[0].scheme == "internal"
-        assert elbv2.loadbalancersv2[0].arn == lb["LoadBalancerArn"]
+        assert lb["LoadBalancerArn"] in elbv2.loadbalancersv2.keys()
+        assert elbv2.loadbalancersv2[lb["LoadBalancerArn"]].name == "my-lb"
+        assert (
+            elbv2.loadbalancersv2[lb["LoadBalancerArn"]].region == AWS_REGION_EU_WEST_1
+        )
+        assert elbv2.loadbalancersv2[lb["LoadBalancerArn"]].scheme == "internal"
+        assert elbv2.loadbalancersv2[lb["LoadBalancerArn"]].type == "application"
+        assert elbv2.loadbalancersv2[lb["LoadBalancerArn"]].listeners == {}
+        assert (
+            elbv2.loadbalancersv2[lb["LoadBalancerArn"]].dns
+            == "my-lb-1.eu-west-1.elb.amazonaws.com"
+        )
 
     # Test ELBv2 Describe Listeners
     @mock_aws
@@ -109,7 +117,7 @@ class Test_ELBv2_Service:
             Scheme="internal",
         )["LoadBalancers"][0]
 
-        conn.create_listener(
+        listener_arn = conn.create_listener(
             LoadBalancerArn=lb["LoadBalancerArn"],
             Protocol="HTTP",
             Port=443,
@@ -123,15 +131,34 @@ class Test_ELBv2_Service:
                     },
                 }
             ],
-        )
+        )["Listeners"][0]["ListenerArn"]
         # ELBv2 client for this test class
         aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
         elbv2 = ELBv2(aws_provider)
-        assert len(elbv2.loadbalancersv2[0].listeners) == 1
-        assert elbv2.loadbalancersv2[0].listeners[0].protocol == "HTTP"
-        assert elbv2.loadbalancersv2[0].listeners[0].port == 443
+        assert len(elbv2.loadbalancersv2[lb["LoadBalancerArn"]].listeners) == 1
+        assert listener_arn in elbv2.loadbalancersv2[lb["LoadBalancerArn"]].listeners
+        assert (
+            elbv2.loadbalancersv2[lb["LoadBalancerArn"]].listeners[listener_arn].region
+            == AWS_REGION_EU_WEST_1
+        )
+        assert (
+            elbv2.loadbalancersv2[lb["LoadBalancerArn"]]
+            .listeners[listener_arn]
+            .protocol
+            == "HTTP"
+        )
+        assert (
+            elbv2.loadbalancersv2[lb["LoadBalancerArn"]].listeners[listener_arn].port
+            == 443
+        )
+        assert (
+            elbv2.loadbalancersv2[lb["LoadBalancerArn"]]
+            .listeners[listener_arn]
+            .ssl_policy
+            == "ELBSecurityPolicy-2016-08"
+        )
 
     # Test ELBv2 Describe Load Balancers Attributes
     @mock_aws
@@ -179,10 +206,18 @@ class Test_ELBv2_Service:
         )
         elbv2 = ELBv2(aws_provider)
         assert len(elbv2.loadbalancersv2) == 1
-        assert elbv2.loadbalancersv2[0].desync_mitigation_mode == "defensive"
-        assert elbv2.loadbalancersv2[0].access_logs == "true"
-        assert elbv2.loadbalancersv2[0].deletion_protection == "true"
-        assert elbv2.loadbalancersv2[0].drop_invalid_header_fields == "false"
+        assert (
+            elbv2.loadbalancersv2[lb["LoadBalancerArn"]].desync_mitigation_mode
+            == "defensive"
+        )
+        assert elbv2.loadbalancersv2[lb["LoadBalancerArn"]].access_logs == "true"
+        assert (
+            elbv2.loadbalancersv2[lb["LoadBalancerArn"]].deletion_protection == "true"
+        )
+        assert (
+            elbv2.loadbalancersv2[lb["LoadBalancerArn"]].drop_invalid_header_fields
+            == "false"
+        )
 
     # Test ELBv2 Describe Load Balancers Attributes
     @mock_aws
@@ -222,15 +257,21 @@ class Test_ELBv2_Service:
                 },
             }
         ]
-        conn.create_listener(
+        listener_arn = conn.create_listener(
             LoadBalancerArn=lb["LoadBalancerArn"],
             Protocol="HTTP",
             DefaultActions=actions,
-        )
+        )["Listeners"][0]["ListenerArn"]
         # ELBv2 client for this test class
         aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
         elbv2 = ELBv2(aws_provider)
         assert len(elbv2.loadbalancersv2) == 1
-        assert elbv2.loadbalancersv2[0].listeners[0].rules[0].actions == actions
+        assert (
+            elbv2.loadbalancersv2[lb["LoadBalancerArn"]]
+            .listeners[listener_arn]
+            .rules[0]
+            .actions
+            == actions
+        )
