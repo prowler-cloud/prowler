@@ -274,7 +274,7 @@ class Test_opensearch_service_domains_not_publicly_accessible:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Opensearch domain {domain_name} is in a VPC."
+                == f"Opensearch domain {domain_name} is in a VPC, then it is not publicly accessible."
             )
             assert result[0].resource_id == domain_name
             assert result[0].resource_arn == domain_arn
