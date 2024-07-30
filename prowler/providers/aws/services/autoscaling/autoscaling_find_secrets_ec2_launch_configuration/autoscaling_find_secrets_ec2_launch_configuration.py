@@ -40,7 +40,7 @@ class autoscaling_find_secrets_ec2_launch_configuration(Check):
                     )
                     continue
                 except Exception as error:
-                    logger.warning(
+                    logger.error(
                         f"{configuration.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
                     continue
