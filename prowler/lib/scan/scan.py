@@ -25,16 +25,8 @@ class Scan:
 
         self._number_of_checks_to_execute = len(checks_to_execute)
 
-        service_checks_to_execute = dict()
+        service_checks_to_execute = get_service_checks_to_execute(checks_to_execute)
         service_checks_completed = dict()
-
-        for check in checks_to_execute:
-            # check -> accessanalyzer_enabled
-            # service -> accessanalyzer
-            service = get_service_name_from_check_name(check)
-            if service not in service_checks_to_execute:
-                service_checks_to_execute[service] = set()
-            service_checks_to_execute[service].add(check)
 
         self._service_checks_to_execute = service_checks_to_execute
         self._service_checks_completed = service_checks_completed
@@ -149,3 +141,15 @@ def get_service_name_from_check_name(check_name: str) -> str:
         get_service_name_from_check_name("ec2_instance_public") -> "ec2"
     """
     return check_name.split("_")[0]
+
+
+def get_service_checks_to_execute(checks_to_execute: set[str]) -> dict[str, set[str]]:
+    service_checks_to_execute = dict()
+    for check in checks_to_execute:
+        # check -> accessanalyzer_enabled
+        # service -> accessanalyzer
+        service = get_service_name_from_check_name(check)
+        if service not in service_checks_to_execute:
+            service_checks_to_execute[service] = set()
+        service_checks_to_execute[service].add(check)
+    return service_checks_to_execute
