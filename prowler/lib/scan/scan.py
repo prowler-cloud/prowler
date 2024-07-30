@@ -21,6 +21,7 @@ class Scan:
 
     def __init__(self, provider, checks_to_execute):
         self._provider = provider
+        self._checks_to_execute = checks_to_execute
 
         self._number_of_checks_to_execute = len(checks_to_execute)
 
@@ -64,7 +65,7 @@ class Scan:
 
     def scan(
         self,
-        custom_checks_metadata: Any,
+        custom_checks_metadata: Any = {},
     ):
         try:
             checks_to_execute = self.checks_to_execute
