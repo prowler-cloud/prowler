@@ -246,3 +246,35 @@ class Test_opensearch_service_domains_not_publicly_accessible:
             )
             assert result[0].resource_id == domain_name
             assert result[0].resource_arn == domain_arn
+
+    def test_domain_inside_vpc(self):
+        opensearch_client = mock.MagicMock
+        opensearch_client.opensearch_domains = []
+        opensearch_client.opensearch_domains.append(
+            OpenSearchDomain(
+                name=domain_name,
+                region=AWS_REGION_EU_WEST_1,
+                arn=domain_arn,
+                vpc_id="vpc-123456",
+            )
+        )
+        opensearch_client.opensearch_domains[0].logging = []
+
+        with mock.patch(
+            "prowler.providers.aws.services.opensearch.opensearch_service.OpenSearchService",
+            opensearch_client,
+        ):
+            from prowler.providers.aws.services.opensearch.opensearch_service_domains_not_publicly_accessible.opensearch_service_domains_not_publicly_accessible import (
+                opensearch_service_domains_not_publicly_accessible,
+            )
+
+            check = opensearch_service_domains_not_publicly_accessible()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == f"Opensearch domain {domain_name} is in a VPC."
+            )
+            assert result[0].resource_id == domain_name
+            assert result[0].resource_arn == domain_arn

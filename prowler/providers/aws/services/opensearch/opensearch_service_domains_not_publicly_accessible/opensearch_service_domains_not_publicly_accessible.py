@@ -17,7 +17,11 @@ class opensearch_service_domains_not_publicly_accessible(Check):
             report.status_extended = (
                 f"Opensearch domain {domain.name} does not allow anonymous access."
             )
-            if domain.access_policy:
+
+            if domain.vpc_id:
+                report.status = "PASS"
+                report.status_extended = f"Opensearch domain {domain.name} is in a VPC."
+            elif domain.access_policy:
                 for statement in domain.access_policy["Statement"]:
                     # look for open policies
                     if (
