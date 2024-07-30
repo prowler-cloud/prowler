@@ -19,8 +19,7 @@ class opensearch_service_domains_not_publicly_accessible(Check):
             )
 
             if domain.vpc_id:
-                report.status = "PASS"
-                report.status_extended = f"Opensearch domain {domain.name} is in a VPC."
+                report.status_extended = f"Opensearch domain {domain.name} is in a VPC, then it is not publicly accessible."
             elif domain.access_policy:
                 for statement in domain.access_policy["Statement"]:
                     # look for open policies
