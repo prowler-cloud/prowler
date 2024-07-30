@@ -160,7 +160,7 @@ class Test_OpenSearchService_Service:
         assert opensearch.opensearch_domains[0].arn == domain_arn
         assert opensearch.opensearch_domains[0].access_policy
         assert (
-            opensearch.opensearch_domains[0].endpoint_vpc
+            opensearch.opensearch_domains[0].vpc_endpoints
             == "vpc-endpoint-h2dsd34efgyghrtguk5gt6j2foh4.us-east-1.es.amazonaws.com"
         )
         assert opensearch.opensearch_domains[0].vpc_id == "test-vpc-id"
