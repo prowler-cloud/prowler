@@ -6,6 +6,7 @@ from argparse import Namespace
 from importlib.machinery import FileFinder
 from logging import DEBUG, ERROR
 from pkgutil import ModuleInfo
+from unittest import mock
 
 from boto3 import client
 from colorama import Fore, Style
@@ -15,6 +16,7 @@ from moto import mock_aws
 from prowler.lib.check.check import (
     exclude_checks_to_run,
     exclude_services_to_run,
+    execute,
     list_categories,
     list_checks_json,
     list_modules,
@@ -29,8 +31,16 @@ from prowler.lib.check.check import (
 )
 from prowler.lib.check.models import load_check_metadata
 from prowler.providers.aws.aws_provider import AwsProvider
+from prowler.providers.aws.services.accessanalyzer.accessanalyzer_service import (
+    Analyzer,
+)
 from tests.lib.check.fixtures.bulk_checks_metadata import test_bulk_checks_metadata
-from tests.providers.aws.utils import AWS_REGION_US_EAST_1
+from tests.providers.aws.utils import (
+    AWS_ACCOUNT_ARN,
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_US_EAST_1,
+    set_mocked_aws_provider,
+)
 
 # AWS_ACCOUNT_NUMBER = "123456789012"
 # AWS_REGION = "us-east-1"
@@ -791,6 +801,65 @@ class TestCheck:
             checks_json
             == '{\n  "aws": [\n    "awslambda_function_invoke_api_operations_cloudtrail_logging_enabled",\n    "awslambda_function_no_secrets_in_code",\n    "awslambda_function_no_secrets_in_variables",\n    "awslambda_function_not_publicly_accessible",\n    "awslambda_function_url_cors_policy",\n    "awslambda_function_url_public",\n    "awslambda_function_using_supported_runtimes"\n  ]\n}'
         )
+
+    def test_execute(self):
+        accessanalyzer_client = mock.MagicMock
+        accessanalyzer_client.region = AWS_REGION_US_EAST_1
+        accessanalyzer_client.analyzers = [
+            Analyzer(
+                arn=AWS_ACCOUNT_ARN,
+                name=AWS_ACCOUNT_NUMBER,
+                status="NOT_AVAILABLE",
+                tags=[],
+                type="",
+                region=AWS_REGION_US_EAST_1,
+            )
+        ]
+        with mock.patch(
+            "prowler.providers.aws.services.accessanalyzer.accessanalyzer_service.AccessAnalyzer",
+            accessanalyzer_client,
+        ):
+            findings = execute(
+                service="accessanalyzer",
+                check_name="accessanalyzer_enabled",
+                global_provider=set_mocked_aws_provider(
+                    expected_checks=["accessanalyzer_enabled"]
+                ),
+                services_executed={"accessanalyzer"},
+                checks_executed={"accessanalyzer_enabled"},
+                custom_checks_metadata=None,
+            )
+            assert len(findings) == 1
+
+    def test_execute_with_filtering_status(self):
+        accessanalyzer_client = mock.MagicMock
+        accessanalyzer_client.region = AWS_REGION_US_EAST_1
+        accessanalyzer_client.analyzers = [
+            Analyzer(
+                arn=AWS_ACCOUNT_ARN,
+                name=AWS_ACCOUNT_NUMBER,
+                status="NOT_AVAILABLE",
+                tags=[],
+                type="",
+                region=AWS_REGION_US_EAST_1,
+            )
+        ]
+        status = ["PASS"]
+        with mock.patch(
+            "prowler.providers.aws.services.accessanalyzer.accessanalyzer_service.AccessAnalyzer",
+            accessanalyzer_client,
+        ):
+            findings = execute(
+                service="accessanalyzer",
+                check_name="accessanalyzer_enabled",
+                global_provider=set_mocked_aws_provider(
+                    status=status, expected_checks=["accessanalyzer_enabled"]
+                ),
+                services_executed={"accessanalyzer"},
+                checks_executed={"accessanalyzer_enabled"},
+                custom_checks_metadata=None,
+            )
+            assert len(findings) == 0
 
     def test_run_check(self, caplog):
         caplog.set_level(DEBUG)

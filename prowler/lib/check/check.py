@@ -707,11 +707,12 @@ def execute(
         )
 
         # Exclude findings per status
-        check_findings = [
-            finding
-            for finding in check_findings
-            if finding.status in global_provider.output_options.status
-        ]
+        if global_provider.output_options.status:
+            check_findings = [
+                finding
+                for finding in check_findings
+                if finding.status in global_provider.output_options.status
+            ]
 
         # Update Audit Status
         services_executed.add(service)
