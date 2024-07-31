@@ -33,7 +33,7 @@ pass_html_finding = """
                             <td><p class="show-read-more">test-risk</p></td>
                             <td><p class="show-read-more"></p> <a class="read-more" href=""><i class="fas fa-external-link-alt"></i></a></td>
                             <td><p class="show-read-more">
-&#x2022;test-compliance: test-compliance
+&#x2022;test-compliance=test-compliance
 </p></td>
                         </tr>
                         """
@@ -51,7 +51,7 @@ fail_html_finding = """
                             <td><p class="show-read-more">test-risk</p></td>
                             <td><p class="show-read-more"></p> <a class="read-more" href=""><i class="fas fa-external-link-alt"></i></a></td>
                             <td><p class="show-read-more">
-&#x2022;test-compliance: test-compliance
+&#x2022;test-compliance=test-compliance
 </p></td>
                         </tr>
                         """
@@ -69,7 +69,7 @@ muted_html_finding = """
                             <td><p class="show-read-more">test-risk</p></td>
                             <td><p class="show-read-more"></p> <a class="read-more" href=""><i class="fas fa-external-link-alt"></i></a></td>
                             <td><p class="show-read-more">
-&#x2022;test-compliance: test-compliance
+&#x2022;test-compliance=test-compliance
 </p></td>
                         </tr>
                         """
@@ -87,7 +87,7 @@ manual_html_finding = """
                             <td><p class="show-read-more">test-risk</p></td>
                             <td><p class="show-read-more"></p> <a class="read-more" href=""><i class="fas fa-external-link-alt"></i></a></td>
                             <td><p class="show-read-more">
-&#x2022;test-compliance: test-compliance
+&#x2022;test-compliance=test-compliance
 </p></td>
                         </tr>
                         """

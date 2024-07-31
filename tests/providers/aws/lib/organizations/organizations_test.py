@@ -70,4 +70,4 @@ class Test_AWS_Organizations:
             == f"arn:aws:organizations::{AWS_ACCOUNT_NUMBER}:account/{organization_name}/{AWS_ACCOUNT_NUMBER}"
         )
         assert org.organization_arn == arn
-        assert org.account_tags == ["test-key:test-value"]
+        assert org.account_tags == {"test-key": "test-value"}

@@ -40,7 +40,7 @@ class TestASFF:
             resource_details="Test resource details",
             resource_name="test-resource",
             resource_uid="test-arn",
-            resource_tags="key1=value1",
+            resource_tags={"key1": "value1"},
         )
 
         timestamp = timestamp_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -70,7 +70,7 @@ class TestASFF:
                     Type=finding.resource_type,
                     Partition=AWS_COMMERCIAL_PARTITION,
                     Region=AWS_REGION_EU_WEST_1,
-                    Tags=ASFF.format_resource_tags(finding.resource_tags),
+                    Tags=(finding.resource_tags if finding.resource_tags else None),
                 )
             ],
             Compliance=Compliance(
@@ -103,7 +103,7 @@ class TestASFF:
             resource_details="Test resource details",
             resource_name="test-resource",
             resource_uid="test-arn",
-            resource_tags="key1=value1",
+            resource_tags={"key1": "value1"},
         )
         finding.remediation_recommendation_url = ""
 
@@ -136,7 +136,7 @@ class TestASFF:
                     Type=finding.resource_type,
                     Partition=AWS_COMMERCIAL_PARTITION,
                     Region=AWS_REGION_EU_WEST_1,
-                    Tags=ASFF.format_resource_tags(finding.resource_tags),
+                    Tags=(finding.resource_tags if finding.resource_tags else None),
                 )
             ],
             Compliance=Compliance(
@@ -171,7 +171,7 @@ class TestASFF:
             resource_details="Test resource details",
             resource_name="test-resource",
             resource_uid="test-arn",
-            resource_tags="key1=value1",
+            resource_tags={"key1": "value1"},
         )
         finding.remediation_recommendation_url = ""
         finding.remediation_recommendation_text = "x" * 513
@@ -205,7 +205,7 @@ class TestASFF:
                     Type=finding.resource_type,
                     Partition=AWS_COMMERCIAL_PARTITION,
                     Region=AWS_REGION_EU_WEST_1,
-                    Tags=ASFF.format_resource_tags(finding.resource_tags),
+                    Tags=(finding.resource_tags if finding.resource_tags else None),
                 )
             ],
             Compliance=Compliance(
@@ -239,7 +239,7 @@ class TestASFF:
             resource_details="Test resource details",
             resource_name="test-resource",
             resource_uid="test-arn",
-            resource_tags="key1=value1",
+            resource_tags={"key1": "value1"},
             compliance={
                 "CISA": ["your-systems-3", "your-data-2"],
                 "SOC2": ["cc_2_1", "cc_7_2", "cc_a_1_2"],
@@ -412,7 +412,7 @@ class TestASFF:
                     Type=finding.resource_type,
                     Partition=AWS_COMMERCIAL_PARTITION,
                     Region=AWS_REGION_EU_WEST_1,
-                    Tags=ASFF.format_resource_tags(finding.resource_tags),
+                    Tags=(finding.resource_tags if finding.resource_tags else None),
                 )
             ],
             Compliance=Compliance(
@@ -517,14 +517,3 @@ class TestASFF:
         assert ASFF.generate_status("FAIL") == "FAILED"
         assert ASFF.generate_status("FAIL", True) == "WARNING"
         assert ASFF.generate_status("SOMETHING ELSE") == "NOT_AVAILABLE"
-
-    def test_asff_format_resource_tags(self):
-        assert ASFF.format_resource_tags(None) is None
-        assert ASFF.format_resource_tags("") is None
-        assert ASFF.format_resource_tags([]) is None
-        assert ASFF.format_resource_tags([{}]) is None
-        assert ASFF.format_resource_tags("key1=value1") == {"key1": "value1"}
-        assert ASFF.format_resource_tags("key1=value1 | key2=value2") == {
-            "key1": "value1",
-            "key2": "value2",
-        }

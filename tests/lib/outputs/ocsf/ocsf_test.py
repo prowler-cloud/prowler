@@ -58,7 +58,7 @@ class TestOCSF:
         assert output_data.status_code == findings[0].status
         assert output_data.status_detail == findings[0].status_extended
         assert output_data.risk_details == findings[0].risk
-        assert output_data.resources[0].labels == []
+        assert output_data.resources[0].labels == {}
         assert output_data.resources[0].name == findings[0].resource_name
         assert output_data.resources[0].uid == findings[0].resource_uid
         assert output_data.resources[0].type == findings[0].resource_type
@@ -248,7 +248,7 @@ class TestOCSF:
         assert len(resource_details) == 1
         assert isinstance(resource_details, list)
         assert isinstance(resource_details[0], ResourceDetails)
-        assert resource_details[0].labels == []
+        assert resource_details[0].labels == {}
         assert resource_details[0].name == finding_output.resource_name
         assert resource_details[0].uid == finding_output.resource_uid
         assert resource_details[0].type == finding_output.resource_type

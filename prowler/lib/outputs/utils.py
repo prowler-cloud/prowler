@@ -14,6 +14,12 @@ def unroll_list(listed_items: list, separator: str = "|"):
 
 
 def unroll_tags(tags: list):
+    """
+    Unrolls tags from a list of dictionaries into a single dictionary.
+    Example:
+    tags = [{'Key': 'Name', 'Value': 'test'}, {'Key': 'Environment', 'Value': 'test'}]
+    unroll_tags(tags) -> {'Name': 'test', 'Environment': 'test'}
+    """
     if tags and tags != [{}] and tags != [None]:
         if "key" in tags[0]:
             return {item["key"]: item["value"] for item in tags}
@@ -31,9 +37,9 @@ def unroll_dict(dict: dict):
         if isinstance(value, list):
             value = ", ".join(value)
         if not unrolled_items:
-            unrolled_items = f"{key}: {value}"
+            unrolled_items = f"{key}={value}"
         else:
-            unrolled_items = f"{unrolled_items} {separator} {key}: {value}"
+            unrolled_items = f"{unrolled_items} {separator} {key}={value}"
 
     return unrolled_items
 
