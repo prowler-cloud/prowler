@@ -184,14 +184,14 @@ class ECR(AWSService):
                                                 )
                                             except (
                                                 client.exceptions.ImageNotFoundException
-                                            ):
+                                            ) as error:
                                                 logger.warning(
-                                                    f"Image not found for digest: {image_digest}"
+                                                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                                                 )
                                                 continue
                                             except Exception as error:
                                                 logger.error(
-                                                    f"Error retrieving scan findings for image {image_digest}: {error}"
+                                                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                                                 )
                                                 continue
 
