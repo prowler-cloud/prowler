@@ -25,6 +25,7 @@ def stdout_report(finding, color, verbose, status, fix):
             )
 
 
+# TODO: Only pass check_findings, provider.output_options and provider.type
 def report(check_findings, provider):
     try:
         output_options = provider.output_options
