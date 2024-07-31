@@ -15,23 +15,27 @@ class ecr_repositories_scan_vulnerabilities_in_latest_image(Check):
             for repository in registry.repositories:
                 # First check if the repository has images
                 if len(repository.images_details) > 0:
-                    # We only want to check the latest image pushed
+                    # We only want to check the latest image pushed that is scannable
                     image = repository.images_details[-1]
-
                     report = Check_Report_AWS(self.metadata())
                     report.region = repository.region
                     report.resource_id = repository.name
                     report.resource_arn = repository.arn
                     report.resource_tags = repository.tags
                     report.status = "PASS"
-                    report.status_extended = f"ECR repository {repository.name} has imageTag {image.latest_tag} scanned without findings."
+                    status_extended_prefix = f"ECR repository '{repository.name}' has scanned the {image.type} container image with digest '{image.latest_digest}' and tag '{image.latest_tag}' "
+                    report.status_extended = (
+                        status_extended_prefix + "without findings."
+                    )
                     if not image.scan_findings_status:
                         report.status = "FAIL"
-                        report.status_extended = f"ECR repository {repository.name} has imageTag {image.latest_tag} without a scan."
+                        report.status_extended = (
+                            status_extended_prefix + "without a scan."
+                        )
                     elif image.scan_findings_status == "FAILED":
                         report.status = "FAIL"
                         report.status_extended = (
-                            f"ECR repository {repository.name} with scan status FAILED."
+                            status_extended_prefix + "with scan status FAILED."
                         )
                     elif (
                         image.scan_findings_status != "FAILED"
@@ -42,20 +46,29 @@ class ecr_repositories_scan_vulnerabilities_in_latest_image(Check):
                             and image.scan_findings_severity_count.critical
                         ):
                             report.status = "FAIL"
-                            report.status_extended = f"ECR repository {repository.name} has imageTag {image.latest_tag} scanned with findings: CRITICAL->{image.scan_findings_severity_count.critical}."
+                            report.status_extended = (
+                                status_extended_prefix
+                                + f"with findings: CRITICAL->{image.scan_findings_severity_count.critical}."
+                            )
                         elif minimum_severity == "HIGH" and (
                             image.scan_findings_severity_count.critical
                             or image.scan_findings_severity_count.high
                         ):
                             report.status = "FAIL"
-                            report.status_extended = f"ECR repository {repository.name} has imageTag {image.latest_tag} scanned with findings: CRITICAL->{image.scan_findings_severity_count.critical}, HIGH->{image.scan_findings_severity_count.high}."
+                            report.status_extended = (
+                                status_extended_prefix
+                                + f"with findings: CRITICAL->{image.scan_findings_severity_count.critical}, HIGH->{image.scan_findings_severity_count.high}."
+                            )
                         elif minimum_severity == "MEDIUM" and (
                             image.scan_findings_severity_count.critical
                             or image.scan_findings_severity_count.high
                             or image.scan_findings_severity_count.medium
                         ):
                             report.status = "FAIL"
-                            report.status_extended = f"ECR repository {repository.name} has imageTag {image.latest_tag} scanned with findings: CRITICAL->{image.scan_findings_severity_count.critical}, HIGH->{image.scan_findings_severity_count.high}, MEDIUM->{image.scan_findings_severity_count.medium}."
+                            report.status_extended = (
+                                status_extended_prefix
+                                + f"with findings: CRITICAL->{image.scan_findings_severity_count.critical}, HIGH->{image.scan_findings_severity_count.high}, MEDIUM->{image.scan_findings_severity_count.medium}."
+                            )
 
                     findings.append(report)
 
