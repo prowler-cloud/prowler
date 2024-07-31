@@ -37,7 +37,7 @@ class Test_ELB_Service:
 
     # Test ELB Describe Load Balancers
     @mock_aws
-    def test__describe_load_balancers__(self):
+    def test_describe_load_balancers(self):
         elb = client("elb", region_name=AWS_REGION_US_EAST_1)
         ec2 = resource("ec2", region_name=AWS_REGION_US_EAST_1)
 
@@ -72,7 +72,7 @@ class Test_ELB_Service:
 
     # Test ELB Describe Load Balancers Attributes
     @mock_aws
-    def test__describe_load_balancer_attributes__(self):
+    def test_describe_load_balancer_attributes(self):
         elb = client("elb", region_name=AWS_REGION_US_EAST_1)
         ec2 = resource("ec2", region_name=AWS_REGION_US_EAST_1)
 

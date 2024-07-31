@@ -14,7 +14,7 @@ class WorkSpaces(AWSService):
         super().__init__(__class__.__name__, provider)
         self.workspaces = []
         self.__threading_call__(self.__describe_workspaces__)
-        self.__describe_tags__()
+        self._describe_tags()
 
     def __describe_workspaces__(self, regional_client):
         logger.info("WorkSpaces - describing workspaces...")
@@ -51,7 +51,7 @@ class WorkSpaces(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_tags__(self):
+    def _describe_tags(self):
         logger.info("Workspaces - List Tags...")
         try:
             for workspace in self.workspaces:

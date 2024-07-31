@@ -45,7 +45,7 @@ class Test_ELBv2_Service:
 
     # Test ELBv2 Describe Load Balancers
     @mock_aws
-    def test__describe_load_balancers__(self):
+    def test_describe_load_balancers(self):
         conn = client("elbv2", region_name=AWS_REGION_EU_WEST_1)
         ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
 
@@ -91,7 +91,7 @@ class Test_ELBv2_Service:
 
     # Test ELBv2 Describe Listeners
     @mock_aws
-    def test__describe_listeners__(self):
+    def test_describe_listeners(self):
         conn = client("elbv2", region_name=AWS_REGION_EU_WEST_1)
         ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
 
@@ -162,7 +162,7 @@ class Test_ELBv2_Service:
 
     # Test ELBv2 Describe Load Balancers Attributes
     @mock_aws
-    def test__describe_load_balancer_attributes__(self):
+    def test_describe_load_balancer_attributes(self):
         conn = client("elbv2", region_name=AWS_REGION_EU_WEST_1)
         ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
 
@@ -221,7 +221,7 @@ class Test_ELBv2_Service:
 
     # Test ELBv2 Describe Load Balancers Attributes
     @mock_aws
-    def test__describe_rules__(self):
+    def test_describe_rules(self):
         conn = client("elbv2", region_name=AWS_REGION_EU_WEST_1)
         ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
 

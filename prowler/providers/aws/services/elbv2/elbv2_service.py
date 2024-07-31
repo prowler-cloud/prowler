@@ -13,13 +13,13 @@ class ELBv2(AWSService):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.loadbalancersv2 = {}
-        self.__threading_call__(self.__describe_load_balancers__)
-        self.__threading_call__(self.__describe_listeners__)
-        self.__threading_call__(self.__describe_load_balancer_attributes__)
-        self.__threading_call__(self.__describe_rules__)
-        self.__describe_tags__()
+        self.__threading_call__(self._describe_load_balancers)
+        self.__threading_call__(self._describe_listeners)
+        self.__threading_call__(self._describe_load_balancer_attributes)
+        self.__threading_call__(self._describe_rules)
+        self._describe_tags()
 
-    def __describe_load_balancers__(self, regional_client):
+    def _describe_load_balancers(self, regional_client):
         logger.info("ELBv2 - Describing load balancers...")
         try:
             describe_elbv2_paginator = regional_client.get_paginator(
@@ -44,7 +44,7 @@ class ELBv2(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_listeners__(self, regional_client):
+    def _describe_listeners(self, regional_client):
         logger.info("ELBv2 - Describing listeners...")
         try:
             for lb_arn, lb in self.loadbalancersv2.items():
@@ -82,7 +82,7 @@ class ELBv2(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_load_balancer_attributes__(self, regional_client):
+    def _describe_load_balancer_attributes(self, regional_client):
         logger.info("ELBv2 - Describing attributes...")
         try:
             for lb_arn, lb in self.loadbalancersv2.items():
@@ -128,7 +128,7 @@ class ELBv2(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_rules__(self, regional_client):
+    def _describe_rules(self, regional_client):
         logger.info("ELBv2 - Describing Rules...")
         try:
             for lb in self.loadbalancersv2.values():
@@ -163,7 +163,7 @@ class ELBv2(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_tags__(self):
+    def _describe_tags(self):
         logger.info("ELBv2 - List Tags...")
         try:
             for lb_arn, lb in self.loadbalancersv2.items():

@@ -12,11 +12,11 @@ class ELB(AWSService):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.loadbalancers = {}
-        self.__threading_call__(self.__describe_load_balancers__)
-        self.__threading_call__(self.__describe_load_balancer_attributes__)
-        self.__describe_tags__()
+        self.__threading_call__(self._describe_load_balancers)
+        self.__threading_call__(self._describe_load_balancer_attributes)
+        self._describe_tags()
 
-    def __describe_load_balancers__(self, regional_client):
+    def _describe_load_balancers(self, regional_client):
         logger.info("ELB - Describing load balancers...")
         try:
             describe_elb_paginator = regional_client.get_paginator(
@@ -49,7 +49,7 @@ class ELB(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_load_balancer_attributes__(self, regional_client):
+    def _describe_load_balancer_attributes(self, regional_client):
         logger.info("ELB - Describing attributes...")
         try:
             for lb in self.loadbalancers.values():
@@ -65,7 +65,7 @@ class ELB(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_tags__(self):
+    def _describe_tags(self):
         logger.info("ELB - List Tags...")
         try:
             for lb in self.loadbalancers.values():
