@@ -14,11 +14,11 @@ class ACM(AWSService):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.certificates = []
-        self.__threading_call__(self.__list_certificates__)
-        self.__describe_certificates__()
-        self.__list_tags_for_certificate__()
+        self.__threading_call__(self._list_certificates)
+        self._describe_certificates()
+        self._list_tags_for_certificate()
 
-    def __list_certificates__(self, regional_client):
+    def _list_certificates(self, regional_client):
         logger.info("ACM - Listing Certificates...")
         try:
             list_certificates_paginator = regional_client.get_paginator(
@@ -61,7 +61,7 @@ class ACM(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_certificates__(self):
+    def _describe_certificates(self):
         logger.info("ACM - Describing Certificates...")
         try:
             for certificate in self.certificates:
@@ -79,7 +79,7 @@ class ACM(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __list_tags_for_certificate__(self):
+    def _list_tags_for_certificate(self):
         logger.info("ACM - List Tags...")
         try:
             for certificate in self.certificates:
