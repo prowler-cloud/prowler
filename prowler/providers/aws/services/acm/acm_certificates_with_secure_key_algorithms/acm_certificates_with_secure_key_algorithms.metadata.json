@@ -22,7 +22,7 @@
     },
     "Recommendation": {
       "Text": "Ensure that all ACM certificates use a secure key algorithm. If any certificates use smaller keys, regenerate them with a secure key size and update any systems that rely on these certificates.",
-      "Url": "https://docs.aws.amazon.com/acm/latest/userguide/gs.html"
+      "Url": "https://docs.aws.amazon.com/securityhub/latest/userguide/acm-controls.html#acm-2"
     }
   },
   "Categories": [],
