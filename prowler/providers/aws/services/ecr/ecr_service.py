@@ -320,8 +320,8 @@ class ECR(AWSService):
             if artifact_media_type is None:
                 return False
 
-            # Check if any of the tags indicate non-scannability, e.g. GoogleContainerTools/jib tags signatures accordingly
-            # TODO: add more context about this
+            # Tools like GoogleContainerTools/jib uses `application/vnd.oci.image.config.v1+json`` also for signatures, which are not scannable.
+            # Luckily, these are tagged with sha-<HASH-CODE>.sig, so that they can still be easily recognized.
             for tag in tags:
                 if tag.startswith("sha256-") and tag.endswith(".sig"):
                     return False
