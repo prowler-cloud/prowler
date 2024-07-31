@@ -30,7 +30,7 @@ export default async function Providers() {
         <Spacer y={6} />
         <DataTable
           columns={ColumnsProviders}
-          data={providers?.providers.data ?? []}
+          data={providers?.providers?.data ?? []}
         />
       </div>
     </>
