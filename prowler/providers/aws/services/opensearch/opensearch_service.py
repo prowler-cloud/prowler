@@ -53,12 +53,9 @@ class OpenSearchService(AWSService):
                     "INDEX_SLOW_LOGS",
                     "AUDIT_LOGS",
                 ]:
-                    if (
-                        logging_key
-                        in describe_domain["DomainConfig"]["LogPublishingOptions"][
-                            "Options"
-                        ]
-                    ):
+                    if logging_key in describe_domain["DomainConfig"].get(
+                        "LogPublishingOptions", {}
+                    ).get("Options", {}):
                         domain.logging.append(
                             PublishingLoggingOption(
                                 name=logging_key,
