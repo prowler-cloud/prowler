@@ -308,7 +308,7 @@ class Test_opensearch_service_domains_not_publicly_accessible:
             assert result[0].resource_tags == []
 
     def test_domain_inside_vpc(self):
-        domain_arn = f"arn:aws:es:us-west-2:{AWS_ACCOUNT_NUMBER}:domain/{domain_name}"
+        domain_arn = f"arn:aws:es:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:domain/{domain_name}"
         opensearch_client = mock.MagicMock
         opensearch_client.opensearch_domains = []
         opensearch_client.opensearch_domains.append(
