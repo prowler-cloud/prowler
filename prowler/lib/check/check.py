@@ -714,6 +714,21 @@ def execute(
             check_class, verbose, global_provider.output_options.only_logs
         )
 
+        # Exclude findings per status
+        if global_provider.output_options.status:
+            check_findings = [
+                finding
+                for finding in check_findings
+                if finding.status in global_provider.output_options.status
+            ]
+
+        # Update Audit Status
+        services_executed.add(service)
+        checks_executed.add(check_name)
+        global_provider.audit_metadata = update_audit_metadata(
+            global_provider.audit_metadata, services_executed, checks_executed
+        )
+
         # Mutelist findings
         if hasattr(global_provider, "mutelist") and global_provider.mutelist.mutelist:
             # TODO: make this prettier

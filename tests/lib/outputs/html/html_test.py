@@ -3,7 +3,7 @@ from io import StringIO
 
 from mock import patch
 
-from prowler.config.config import timestamp
+from prowler.config.config import prowler_version, timestamp
 from prowler.lib.outputs.html.html import HTML
 from tests.lib.outputs.fixtures.fixtures import generate_finding_output
 from tests.providers.aws.utils import AWS_REGION_EU_WEST_1, set_mocked_aws_provider
@@ -276,7 +276,7 @@ def get_aws_html_header(args: list) -> str:
                 <li class="list-group-item">
                 <div class="row">
                     <div class="col-md-auto">
-                    <b>Version:</b> 4.2.4
+                    <b>Version:</b> {prowler_version}
                     </div>
                 </div>
                 </li>
