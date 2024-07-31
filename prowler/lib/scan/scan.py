@@ -7,7 +7,6 @@ from prowler.providers.common.provider import Provider
 
 
 class Scan:
-    # Maybe not needed
     _provider: Provider
     # Refactor(Core): This should replace the Audit_Metadata
     _number_of_checks_to_execute: int = 0
@@ -20,8 +19,15 @@ class Scan:
     _findings: list = []
 
     def __init__(self, provider, checks_to_execute):
+        """
+        Scan is the class that executes the checks and yields the progress and the findings.
+
+        Params:
+            provider: Provider -> The provider to scan
+            checks_to_execute: set[str] -> The checks to execute
+        """
         self._provider = provider
-        self._checks_to_execute = checks_to_execute
+        self._checks_to_execute = set(checks_to_execute)
 
         self._number_of_checks_to_execute = len(checks_to_execute)
 
@@ -49,7 +55,9 @@ class Scan:
 
     @property
     def progress(self) -> float:
-        return self._number_of_checks_completed / self._number_of_checks_to_execute
+        return (
+            self._number_of_checks_completed / self._number_of_checks_to_execute * 100
+        )
 
     @property
     def findings(self) -> list:
@@ -59,13 +67,20 @@ class Scan:
         self,
         custom_checks_metadata: Any = {},
     ):
+        """
+        scan executes the checks and yields the progress and the findings.
+
+        Params:
+            custom_checks_metadata: Any = {} -> Custom checks metadata
+
+        """
         try:
             checks_to_execute = self.checks_to_execute
             # Initialize the Audit Metadata
             # TODO: this should be done in the provider class
             # Refactor(Core): Audit manager?
             self._provider.audit_metadata = Audit_Metadata(
-                services_scanned=0,  # Refactor(Core): This shouldn't be nee
+                services_scanned=0,
                 expected_checks=checks_to_execute,
                 completed_checks=0,
                 audit_progress=0,
@@ -124,9 +139,21 @@ class Scan:
             )
 
     def get_completed_services(self):
+        """
+        get_completed_services returns the services that have been completed.
+
+        Example:
+            get_completed_services() -> {"ec2", "s3"}
+        """
         return self._service_checks_completed.keys()
 
     def get_completed_checks(self):
+        """
+        get_completed_checks returns the checks that have been completed.
+
+        Example:
+            get_completed_checks() -> {"ec2_instance_public_ip", "s3_bucket_public"}
+        """
         completed_checks = set()
         for checks in self._service_checks_completed.values():
             completed_checks.update(checks)
@@ -144,6 +171,13 @@ def get_service_name_from_check_name(check_name: str) -> str:
 
 
 def get_service_checks_to_execute(checks_to_execute: set[str]) -> dict[str, set[str]]:
+    """
+    get_service_checks_to_execute returns a dictionary with the services and the checks to execute.
+
+    Example:
+        get_service_checks_to_execute({"accessanalyzer_enabled", "ec2_instance_public_ip"})
+        -> {"accessanalyzer": {"accessanalyzer_enabled"}, "ec2": {"ec2_instance_public_ip"}}
+    """
     service_checks_to_execute = dict()
     for check in checks_to_execute:
         # check -> accessanalyzer_enabled
