@@ -14,40 +14,14 @@ def unroll_list(listed_items: list, separator: str = "|"):
 
 
 def unroll_tags(tags: list):
-    unrolled_items = ""
-    separator = "|"
     if tags and tags != [{}] and tags != [None]:
-        for item in tags:
-            # Check if there are tags in list
-            if isinstance(item, dict):
-                for key, value in item.items():
-                    if not unrolled_items:
-                        # Check the pattern of tags (Key:Value or Key:key/Value:value)
-                        if "Key" != key and "Value" != key:
-                            unrolled_items = f"{key}={value}"
-                        else:
-                            if "Key" == key:
-                                unrolled_items = f"{value}="
-                            else:
-                                unrolled_items = f"{value}"
-                    else:
-                        if "Key" != key and "Value" != key:
-                            unrolled_items = (
-                                f"{unrolled_items} {separator} {key}={value}"
-                            )
-                        else:
-                            if "Key" == key:
-                                unrolled_items = (
-                                    f"{unrolled_items} {separator} {value}="
-                                )
-                            else:
-                                unrolled_items = f"{unrolled_items}{value}"
-            elif not unrolled_items:
-                unrolled_items = f"{item}"
-            else:
-                unrolled_items = f"{unrolled_items} {separator} {item}"
-
-    return unrolled_items
+        if "key" in tags[0]:
+            return {item["key"]: item["value"] for item in tags}
+        elif "Key" in tags[0]:
+            return {item["Key"]: item["Value"] for item in tags}
+        else:
+            return {key: value for d in tags for key, value in d.items()}
+    return {}
 
 
 def unroll_dict(dict: dict):

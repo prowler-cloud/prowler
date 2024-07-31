@@ -712,7 +712,7 @@ class AwsProvider(Provider):
             for tag in input_resource_tags:
                 key = tag.split("=")[0]
                 value = tag.split("=")[1]
-                resource_tags.append({"Key": key, "Values": [value]})
+                resource_tags.append({"Key": key, "Value": [value]})
             # Get Resources with resource_tags for all regions
             for regional_client in self.generate_regional_clients(
                 "resourcegroupstaggingapi"

@@ -1,7 +1,7 @@
 from typing import Any
 
 from prowler.lib.mutelist.mutelist import Mutelist
-from prowler.lib.outputs.utils import unroll_tags
+from prowler.lib.outputs.utils import unroll_dict, unroll_tags
 
 
 class GCPMutelist(Mutelist):
@@ -14,5 +14,5 @@ class GCPMutelist(Mutelist):
             finding.check_metadata.CheckID,
             finding.location,
             finding.resource_name,
-            unroll_tags(finding.resource_tags),
+            unroll_dict(unroll_tags(finding.resource_tags)),
         )

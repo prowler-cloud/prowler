@@ -448,7 +448,7 @@ class TestASFF:
             resource_details="Test resource details",
             resource_name="test-resource",
             resource_uid="test-arn",
-            resource_tags="key1=value1",
+            resource_tags={"key1": "value1"},
         )
         finding.remediation_recommendation_url = ""
 

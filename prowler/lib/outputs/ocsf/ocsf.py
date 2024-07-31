@@ -98,11 +98,7 @@ class OCSF(Output):
                     resources=[
                         ResourceDetails(
                             # TODO: Check labels for other providers
-                            labels=(
-                                finding.resource_tags.split(",")
-                                if finding.resource_tags
-                                else []
-                            ),
+                            labels=finding.resource_tags,
                             name=finding.resource_name,
                             uid=finding.resource_uid,
                             group=Group(name=finding.service_name),

@@ -141,7 +141,7 @@ class TestOCSF:
                         "region": "eu-west-1",
                         "data": {"details": "resource_details"},
                         "group": {"name": "test-service"},
-                        "labels": [],
+                        "labels": {},
                         "name": "resource_name",
                         "type": "test-resource",
                         "uid": "resource-id",
@@ -157,7 +157,7 @@ class TestOCSF:
                         "type": "AWS_Account",
                         "type_id": 10,
                         "uid": "123456789012",
-                        "labels": ["test-tag:test-value"],
+                        "labels": {"test-tag": "test-value"},
                     },
                     "org": {
                         "name": "test-organization",

@@ -408,7 +408,7 @@ class TestFinding:
         assert finding_output.account_email == "mock_account_email"
         assert finding_output.account_organization_uid == "mock_organization_id"
         assert finding_output.account_organization_name == "mock_account_org_name"
-        assert finding_output.account_tags == ["label1", "label2"]
+        assert finding_output.account_tags == {"key1": "label1", "key2": "label2"}
         assert finding_output.prowler_version == "1.0.0"
         assert finding_output.timestamp == 1622520000
 
