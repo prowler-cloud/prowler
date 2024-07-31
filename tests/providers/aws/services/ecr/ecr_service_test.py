@@ -132,6 +132,13 @@ def mock_make_api_call(self, operation_name, kwarg):
             },
         }
 
+    if operation_name == "DescribeImageScanFindings":
+        return {
+            "imageScanFindings": {
+                "findingSeverityCounts": {"CRITICAL": 1, "HIGH": 2, "MEDIUM": 3}
+            }
+        }
+
     return make_api_call(self, operation_name, kwarg)
 
 
@@ -400,3 +407,41 @@ class Test_ECR_Service:
                 scan_filters=[{"filter": "*", "filterType": "WILDCARD"}],
             )
         ]
+
+    def test_is_artifact_scannable_docker(self):
+        assert ECR._is_artifact_scannable(
+            "application/vnd.docker.container.image.v1+json"
+        )
+
+    def test_is_artifact_scannable_layer_tar(self):
+        assert ECR._is_artifact_scannable(
+            "application/vnd.docker.image.rootfs.diff.tar"
+        )
+
+    def test_is_artifact_scannable_layer_gzip(self):
+        assert ECR._is_artifact_scannable(
+            "application/vnd.docker.image.rootfs.diff.tar.gzip"
+        )
+
+    def test_is_artifact_scannable_oci(self):
+        assert ECR._is_artifact_scannable("application/vnd.oci.image.config.v1+json")
+
+    def test_is_artifact_scannable_oci_tar(self):
+        assert ECR._is_artifact_scannable("application/vnd.oci.image.layer.v1.tar")
+
+    def test_is_artifact_scannable_oci_compressed(self):
+        assert ECR._is_artifact_scannable("application/vnd.oci.image.layer.v1.tar+gzip")
+
+    def test_is_artifact_scannable_none(self):
+        assert not ECR._is_artifact_scannable(None)
+
+    def test_is_artifact_scannable_empty(self):
+        assert not ECR._is_artifact_scannable("")
+
+    def test_is_artifact_scannable_non_scannable_tags(self):
+        assert not ECR._is_artifact_scannable("", ["sha256-abcdefg123456.sig"])
+
+    def test_is_artifact_scannable_scannable_tags(self):
+        assert ECR._is_artifact_scannable(
+            "application/vnd.docker.container.image.v1+json", ["abcdefg123456"]
+        )

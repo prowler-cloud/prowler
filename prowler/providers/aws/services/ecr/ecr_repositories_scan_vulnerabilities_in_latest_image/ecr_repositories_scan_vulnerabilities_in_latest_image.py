@@ -23,7 +23,7 @@ class ecr_repositories_scan_vulnerabilities_in_latest_image(Check):
                     report.resource_arn = repository.arn
                     report.resource_tags = repository.tags
                     report.status = "PASS"
-                    status_extended_prefix = f"ECR repository '{repository.name}' has scanned the Docker container image with digest '{image.latest_digest}' and tag '{image.latest_tag}' "
+                    status_extended_prefix = f"ECR repository '{repository.name}' has scanned the {image.type} container image with digest '{image.latest_digest}' and tag '{image.latest_tag}' "
                     report.status_extended = (
                         status_extended_prefix + "without findings."
                     )

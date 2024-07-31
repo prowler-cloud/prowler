@@ -17,14 +17,14 @@ class ECR(AWSService):
         super().__init__(__class__.__name__, provider)
         self.registry_id = self.audited_account
         self.registries = {}
-        self.__threading_call__(self.__describe_registries_and_repositories__)
-        self.__threading_call__(self.__describe_repository_policies__)
-        self.__threading_call__(self.__get_image_details__)
-        self.__threading_call__(self.__get_repository_lifecycle_policy__)
-        self.__threading_call__(self.__get_registry_scanning_configuration__)
-        self.__threading_call__(self.__list_tags_for_resource__)
+        self.__threading_call__(self._describe_registries_and_repositories)
+        self.__threading_call__(self._describe_repository_policies)
+        self.__threading_call__(self._get_image_details)
+        self.__threading_call__(self._get_repository_lifecycle_policy)
+        self.__threading_call__(self._get_registry_scanning_configuration)
+        self.__threading_call__(self._list_tags_for_resource)
 
-    def __describe_registries_and_repositories__(self, regional_client):
+    def _describe_registries_and_repositories(self, regional_client):
         logger.info("ECR - Describing registries and repositories...")
         regional_registry_repositories = []
         try:
@@ -64,7 +64,7 @@ class ECR(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_repository_policies__(self, regional_client):
+    def _describe_repository_policies(self, regional_client):
         logger.info("ECR - Describing repository policies...")
         try:
             if regional_client.region in self.registries:
@@ -91,7 +91,7 @@ class ECR(AWSService):
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
-    def __get_repository_lifecycle_policy__(self, regional_client):
+    def _get_repository_lifecycle_policy(self, regional_client):
         logger.info("ECR - Getting repository lifecycle policy...")
         try:
             if regional_client.region in self.registries:
@@ -119,29 +119,8 @@ class ECR(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_image_details__(self, regional_client):
+    def _get_image_details(self, regional_client):
         logger.info("ECR - Getting images details...")
-
-        def is_artifact_scannable(artifact_media_type, tags):
-            if artifact_media_type is None:
-                return False
-
-            # Check if any of the tags indicate non-scannability, e.g. GoogleContainerTools/jib tags signatures accordingly
-            for tag in tags:
-                if tag.startswith("sha256-") and tag.endswith(".sig"):
-                    return False
-
-            scannable_artifact_media_types = [
-                "application/vnd.docker.container.image.v1+json",  # Docker image configuration
-                "application/vnd.docker.image.rootfs.diff.tar",  # Docker image layer as a tar archive
-                "application/vnd.docker.image.rootfs.diff.tar.gzip"  # Docker image layer that is compressed using gzip
-                "application/vnd.oci.image.config.v1+json",  # OCI image configuration, but also used by GoogleContainerTools/jib for signatures
-                "application/vnd.oci.image.layer.v1.tar",  # Uncompressed OCI image layer
-                "application/vnd.oci.image.layer.v1.tar+gzip",  # Compressed OCI image layer
-            ]
-
-            return artifact_media_type in scannable_artifact_media_types
-
         try:
             if regional_client.region in self.registries:
                 for repository in self.registries[regional_client.region].repositories:
@@ -164,7 +143,9 @@ class ECR(AWSService):
                                         "artifactMediaType", None
                                     )
                                     tags = image.get("imageTags", [])
-                                    if is_artifact_scannable(artifact_media_type, tags):
+                                    if ECR._is_artifact_scannable(
+                                        artifact_media_type, tags
+                                    ):
                                         severity_counts = None
                                         last_scan_status = None
                                         image_digest = image.get("imageDigest")
@@ -173,6 +154,12 @@ class ECR(AWSService):
                                         image_scan_findings_field_name = (
                                             "imageScanFindingsSummary"
                                         )
+                                        if "docker" in artifact_media_type:
+                                            type = "Docker"
+                                        elif "oci" in artifact_media_type:
+                                            type = "OCI"
+                                        else:
+                                            type = ""
 
                                         # If imageScanStatus is not present or imageScanFindingsSummary is missing,
                                         # we need to call DescribeImageScanFindings because AWS' new version of
@@ -202,9 +189,9 @@ class ECR(AWSService):
                                                     f"Image not found for digest: {image_digest}"
                                                 )
                                                 continue
-                                            except Exception as e:
+                                            except Exception as error:
                                                 logger.error(
-                                                    f"Error retrieving scan findings for image {image_digest}: {str(e)}"
+                                                    f"Error retrieving scan findings for image {image_digest}: {error}"
                                                 )
                                                 continue
 
@@ -240,6 +227,7 @@ class ECR(AWSService):
                                                 scan_findings_status=last_scan_status,
                                                 scan_findings_severity_count=severity_counts,
                                                 artifact_media_type=artifact_media_type,
+                                                type=type,
                                             )
                                         )
                         # Sort the repository images by date pushed
@@ -252,7 +240,7 @@ class ECR(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __list_tags_for_resource__(self, regional_client):
+    def _list_tags_for_resource(self, regional_client):
         logger.info("ECR - List Tags...")
         try:
             if regional_client.region in self.registries:
@@ -280,7 +268,7 @@ class ECR(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_registry_scanning_configuration__(self, regional_client):
+    def _get_registry_scanning_configuration(self, regional_client):
         logger.info("ECR - Getting Registry Scanning Configuration...")
         try:
             if regional_client.region in self.registries:
@@ -316,6 +304,44 @@ class ECR(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    @staticmethod
+    def _is_artifact_scannable(artifact_media_type: str, tags: list[str] = []) -> bool:
+        """
+        Check if an artifact is scannable based on its media type and tags.
+
+        Args:
+            artifact_media_type (str): The media type of the artifact.
+            tags (list): The list of tags associated with the artifact.
+
+        Returns:
+            bool: True if the artifact is scannable, False otherwise.
+        """
+        try:
+            if artifact_media_type is None:
+                return False
+
+            # Check if any of the tags indicate non-scannability, e.g. GoogleContainerTools/jib tags signatures accordingly
+            # TODO: add more context about this
+            for tag in tags:
+                if tag.startswith("sha256-") and tag.endswith(".sig"):
+                    return False
+
+            scannable_artifact_media_types = [
+                "application/vnd.docker.container.image.v1+json",  # Docker image configuration
+                "application/vnd.docker.image.rootfs.diff.tar",  # Docker image layer as a tar archive
+                "application/vnd.docker.image.rootfs.diff.tar.gzip",  # Docker image layer that is compressed using gzip
+                "application/vnd.oci.image.config.v1+json",  # OCI image configuration, but also used by GoogleContainerTools/jib for signatures
+                "application/vnd.oci.image.layer.v1.tar",  # Uncompressed OCI image layer
+                "application/vnd.oci.image.layer.v1.tar+gzip",  # Compressed OCI image layer
+            ]
+
+            return artifact_media_type in scannable_artifact_media_types
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return False
+
 
 class FindingSeverityCounts(BaseModel):
     critical: int
@@ -330,6 +356,7 @@ class ImageDetails(BaseModel):
     scan_findings_status: Optional[str]
     scan_findings_severity_count: Optional[FindingSeverityCounts]
     artifact_media_type: Optional[str]
+    type: str
 
 
 class Repository(BaseModel):

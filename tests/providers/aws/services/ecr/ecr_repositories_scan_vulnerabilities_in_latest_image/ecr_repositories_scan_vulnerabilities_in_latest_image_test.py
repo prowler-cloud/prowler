@@ -37,8 +37,6 @@ repo_policy_public = {
 
 
 class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
-    # Mocked Audit Info
-
     def test_no_registries(self):
         ecr_client = mock.MagicMock
         ecr_client.registries = {}
@@ -123,7 +121,7 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
             result = check.execute()
             assert len(result) == 0
 
-    def test_image_scaned_without_findings(self):
+    def test_docker_image_scaned_without_findings(self):
         ecr_client = mock.MagicMock
         ecr_client.registries = {}
         ecr_client.registries[AWS_REGION_EU_WEST_1] = Registry(
@@ -147,6 +145,7 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
                                 critical=0, high=0, medium=0
                             ),
                             artifact_media_type=docker_container_image_artifact_media_type,
+                            type="Docker",
                         ),
                     ],
                     lifecycle_policy=None,
@@ -177,6 +176,66 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
             )
             assert result[0].resource_id == repository_name
             assert result[0].resource_arn == repository_arn
+            assert result[0].region == AWS_REGION_EU_WEST_1
+            assert result[0].resource_tags == []
+
+    def test_oci_image_scaned_without_findings(self):
+        ecr_client = mock.MagicMock
+        ecr_client.registries = {}
+        ecr_client.registries[AWS_REGION_EU_WEST_1] = Registry(
+            id=AWS_ACCOUNT_NUMBER,
+            region=AWS_REGION_EU_WEST_1,
+            scan_type="BASIC",
+            repositories=[
+                Repository(
+                    name=repository_name,
+                    arn=repository_arn,
+                    region=AWS_REGION_EU_WEST_1,
+                    scan_on_push=True,
+                    policy=repo_policy_public,
+                    images_details=[
+                        ImageDetails(
+                            latest_tag=latest_tag,
+                            latest_digest=latest_digest,
+                            image_pushed_at=datetime(2023, 1, 1),
+                            scan_findings_status="COMPLETE",
+                            scan_findings_severity_count=FindingSeverityCounts(
+                                critical=0, high=0, medium=0
+                            ),
+                            artifact_media_type=docker_container_image_artifact_media_type,
+                            type="OCI",
+                        ),
+                    ],
+                    lifecycle_policy=None,
+                )
+            ],
+            rules=[],
+        )
+        ecr_client.audit_config = {}
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_aws_provider(),
+        ), mock.patch(
+            "prowler.providers.aws.services.ecr.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_client",
+            ecr_client,
+        ):
+            from prowler.providers.aws.services.ecr.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_repositories_scan_vulnerabilities_in_latest_image import (
+                ecr_repositories_scan_vulnerabilities_in_latest_image,
+            )
+
+            check = ecr_repositories_scan_vulnerabilities_in_latest_image()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == f"ECR repository '{repository_name}' has scanned the OCI container image with digest '{latest_digest}' and tag '{latest_tag}' without findings."
+            )
+            assert result[0].resource_id == repository_name
+            assert result[0].resource_arn == repository_arn
+            assert result[0].region == AWS_REGION_EU_WEST_1
+            assert result[0].resource_tags == []
 
     def test_image_scanned_with_findings_default_severity_MEDIUM(self):
         ecr_client = mock.MagicMock
@@ -202,6 +261,7 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
                                 critical=12, high=34, medium=7
                             ),
                             artifact_media_type=docker_container_image_artifact_media_type,
+                            type="Docker",
                         )
                     ],
                     lifecycle_policy=None,
@@ -236,6 +296,8 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
             )
             assert result[0].resource_id == repository_name
             assert result[0].resource_arn == repository_arn
+            assert result[0].region == AWS_REGION_EU_WEST_1
+            assert result[0].resource_tags == []
 
     def test_image_scanned_with_findings_default_severity_HIGH(self):
         ecr_client = mock.MagicMock
@@ -261,6 +323,7 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
                                 critical=12, high=34, medium=7
                             ),
                             artifact_media_type=docker_container_image_artifact_media_type,
+                            type="Docker",
                         )
                     ],
                     lifecycle_policy=None,
@@ -295,6 +358,8 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
             )
             assert result[0].resource_id == repository_name
             assert result[0].resource_arn == repository_arn
+            assert result[0].region == AWS_REGION_EU_WEST_1
+            assert result[0].resource_tags == []
 
     def test_image_scanned_with_findings_default_severity_CRITICAL(self):
         ecr_client = mock.MagicMock
@@ -320,6 +385,7 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
                                 critical=12, high=34, medium=7
                             ),
                             artifact_media_type=docker_container_image_artifact_media_type,
+                            type="Docker",
                         )
                     ],
                     lifecycle_policy=None,
@@ -354,6 +420,8 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
             )
             assert result[0].resource_id == repository_name
             assert result[0].resource_arn == repository_arn
+            assert result[0].region == AWS_REGION_EU_WEST_1
+            assert result[0].resource_tags == []
 
     def test_image_scanned_without_CRITICAL_findings_default_severity_CRITICAL(self):
         ecr_client = mock.MagicMock
@@ -379,6 +447,7 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
                                 critical=0, high=34, medium=7
                             ),
                             artifact_media_type=docker_container_image_artifact_media_type,
+                            type="Docker",
                         )
                     ],
                     lifecycle_policy=None,
@@ -440,6 +509,7 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
                                 critical=0, high=0, medium=7
                             ),
                             artifact_media_type=docker_container_image_artifact_media_type,
+                            type="Docker",
                         )
                     ],
                     lifecycle_policy=None,
@@ -474,6 +544,8 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
             )
             assert result[0].resource_id == repository_name
             assert result[0].resource_arn == repository_arn
+            assert result[0].region == AWS_REGION_EU_WEST_1
+            assert result[0].resource_tags == []
 
     def test_image_scanned_fail_scan(self):
         ecr_client = mock.MagicMock
@@ -499,6 +571,7 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
                                 critical=0, high=0, medium=0
                             ),
                             artifact_media_type=docker_container_image_artifact_media_type,
+                            type="Docker",
                         )
                     ],
                     lifecycle_policy=None,
@@ -529,6 +602,8 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
             )
             assert result[0].resource_id == repository_name
             assert result[0].resource_arn == repository_arn
+            assert result[0].region == AWS_REGION_EU_WEST_1
+            assert result[0].resource_tags == []
 
     def test_image_not_scanned(self):
         ecr_client = mock.MagicMock
@@ -554,6 +629,7 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
                                 critical=0, high=0, medium=0
                             ),
                             artifact_media_type=docker_container_image_artifact_media_type,
+                            type="Docker",
                         )
                     ],
                     lifecycle_policy=None,
@@ -584,3 +660,5 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
             )
             assert result[0].resource_id == repository_name
             assert result[0].resource_arn == repository_arn
+            assert result[0].region == AWS_REGION_EU_WEST_1
+            assert result[0].resource_tags == []
