@@ -1,9 +1,15 @@
 from prowler.providers.aws.lib.policy_condition_parser.policy_condition_parser import (
     is_condition_block_restrictive,
+    is_condition_block_restrictive_organization,
 )
 
 TRUSTED_AWS_ACCOUNT_NUMBER = "123456789012"
 NON_TRUSTED_AWS_ACCOUNT_NUMBER = "111222333444"
+
+TRUSTED_ORGANIZATION_ID = "o-123456789012"
+NON_TRUSTED_ORGANIZATION_ID = "o-111222333444"
+
+ALL_ORGS = "*"
 
 
 class Test_policy_condition_parser:
@@ -1389,3 +1395,45 @@ class Test_policy_condition_parser:
         assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER, True
         )
+
+    def test_condition_parser_string_equals_aws_PrincipalOrgID_list(self):
+        condition_statement = {
+            "StringEquals": {"aws:PrincipalOrgID": [TRUSTED_ORGANIZATION_ID]}
+        }
+        assert is_condition_block_restrictive_organization(condition_statement)
+
+    def test_condition_parser_string_equals_aws_PrincipalOrgID_list_multiple_items(
+        self,
+    ):
+        condition_statement = {
+            "StringEquals": {
+                "aws:PrincipalOrgID": [
+                    TRUSTED_ORGANIZATION_ID,
+                    NON_TRUSTED_ORGANIZATION_ID,
+                ]
+            }
+        }
+        assert is_condition_block_restrictive_organization(condition_statement)
+
+    def test_condition_parser_string_equals_aws_PrincipalOrgID_str(self):
+        condition_statement = {
+            "StringEquals": {"aws:PrincipalOrgID": TRUSTED_ORGANIZATION_ID}
+        }
+        assert is_condition_block_restrictive_organization(condition_statement)
+
+    def test_condition_parser_string_equals_aws_All_Orgs_list_multiple_items(
+        self,
+    ):
+        condition_statement = {
+            "StringEquals": {
+                "aws:PrincipalOrgID": [
+                    TRUSTED_ORGANIZATION_ID,
+                    ALL_ORGS,
+                ]
+            }
+        }
+        assert not is_condition_block_restrictive_organization(condition_statement)
+
+    def test_condition_parser_string_equals_aws_All_Orgs_str(self):
+        condition_statement = {"StringEquals": {"aws:PrincipalOrgID": ALL_ORGS}}
+        assert not is_condition_block_restrictive_organization(condition_statement)
