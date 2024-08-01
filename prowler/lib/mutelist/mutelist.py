@@ -65,7 +65,6 @@ class Mutelist(ABC):
         finding_resource: str,
         finding_tags,
     ) -> bool:
-        print(finding_tags)
         """
         Check if the provided finding is muted for the audited account, check, region, resource and tags.
 
@@ -173,7 +172,7 @@ class Mutelist(ABC):
                     muted_in_resource = self.is_item_matched(
                         muted_resources, finding_resource
                     )
-                    muted_in_tags = self.is_tag_matched(muted_tags, finding_tags)
+                    muted_in_tags = self.is_item_matched(muted_tags, finding_tags)
 
                     # For a finding to be muted requires the following set to True:
                     # - muted_in_check -> True
@@ -241,7 +240,7 @@ class Mutelist(ABC):
                 )
 
                 excepted_tags = exceptions.get("Tags", [])
-                is_tag_excepted = self.is_tag_matched(excepted_tags, finding_tags)
+                is_tag_excepted = self.is_item_matched(excepted_tags, finding_tags)
 
                 if (
                     not is_account_excepted
@@ -285,38 +284,6 @@ class Mutelist(ABC):
                     if re.match(item, finding_items):
                         is_item_matched = True
                         break
-            return is_item_matched
-        except Exception as error:
-            logger.error(
-                f"{error.__class__.__name__} -- {error}[{error.__traceback__.tb_lineno}]"
-            )
-            return False
-
-    @staticmethod
-    def is_tag_matched(matched_tags, finding_tags):
-        """
-        Check if any of the tags in matched_tags are present in finding_tags.
-
-        Args:
-            matched_tags (list): List of tags to be matched.
-            finding_tags (str): String to search for matched tags.
-
-        Returns:
-            bool: True if any of the matched_tags are present in finding_tags, otherwise False.
-        """
-        try:
-            is_item_matched = False
-            if matched_tags and (finding_tags or finding_tags == ""):
-                for item in matched_tags:
-                    if item.startswith("*"):
-                        item = ".*" + item[1:]
-                    if re.match(item, finding_tags):
-                        is_item_matched = True
-                        break
-                    if item in finding_tags:
-                        is_item_matched = True
-                        break
-                    # TODO: Cover case of "environment=dev|environment=prod"
             return is_item_matched
         except Exception as error:
             logger.error(
