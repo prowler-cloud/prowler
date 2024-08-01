@@ -18,7 +18,9 @@ class CSV(Output):
             for finding in findings:
                 finding_dict = {k.upper(): v for k, v in finding.dict().items()}
                 finding_dict["RESOURCE_TAGS"] = unroll_dict(finding.resource_tags)
-                finding_dict["COMPLIANCE"] = unroll_dict(finding.compliance)
+                finding_dict["COMPLIANCE"] = unroll_dict(
+                    finding.compliance, separator=": "
+                )
                 finding_dict["ACCOUNT_TAGS"] = unroll_dict(finding.account_tags)
                 finding_dict["STATUS"] = finding.status.value
                 finding_dict["SEVERITY"] = finding.severity.value
