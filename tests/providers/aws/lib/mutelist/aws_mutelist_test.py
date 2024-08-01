@@ -1223,35 +1223,32 @@ class TestAWSMutelist:
     def test_is_muted_in_tags(self):
         mutelist_tags = ["environment=dev", "project=prowler"]
 
-        assert AWSMutelist.is_item_matched(mutelist_tags, "environment=dev")
+        assert AWSMutelist.is_item_matched(mutelist_tags, "environment=dev", tag=True)
 
         assert AWSMutelist.is_item_matched(
-            mutelist_tags,
-            "environment=dev | project=prowler",
+            mutelist_tags, "environment=dev | project=prowler", tag=True
+        )
+
+        assert AWSMutelist.is_item_matched(
+            mutelist_tags, "environment=pro | project=prowler", tag=True
         )
 
         assert not (
-            AWSMutelist.is_item_matched(
-                mutelist_tags,
-                "environment=pro",
-            )
+            AWSMutelist.is_item_matched(mutelist_tags, "environment=pro", tag=True)
         )
 
     def test_is_muted_in_tags_regex(self):
         mutelist_tags = ["environment=(dev|test)", ".*=prowler"]
         assert AWSMutelist.is_item_matched(
-            mutelist_tags,
-            "environment=test | proj=prowler",
+            mutelist_tags, "environment=test | proj=prowler", tag=True
         )
 
         assert AWSMutelist.is_item_matched(
-            mutelist_tags,
-            "env=prod | project=prowler",
+            mutelist_tags, "env=prod | project=prowler", tag=True
         )
 
         assert not AWSMutelist.is_item_matched(
-            mutelist_tags,
-            "environment=prod | project=myproj",
+            mutelist_tags, "environment=prod | project=myproj", tag=True
         )
 
     def test_is_muted_in_tags_with_no_tags_in_finding(self):
