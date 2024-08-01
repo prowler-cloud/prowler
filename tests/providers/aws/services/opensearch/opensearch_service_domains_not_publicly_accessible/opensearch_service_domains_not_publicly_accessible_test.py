@@ -4,12 +4,9 @@ from unittest import mock
 from boto3 import client
 from moto import mock_aws
 
-from prowler.providers.aws.services.opensearch.opensearch_service import (
-    OpenSearchDomain,
-)
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
-    AWS_REGION_EU_WEST_1,
+    AWS_REGION_US_WEST_2,
     set_mocked_aws_provider,
 )
 
@@ -81,7 +78,7 @@ policy_data_source_whole_internet = {
 class Test_opensearch_service_domains_not_publicly_accessible:
     @mock_aws
     def test_no_domains(self):
-        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_WEST_2])
 
         from prowler.providers.aws.services.opensearch.opensearch_service import (
             OpenSearchService,
@@ -104,7 +101,7 @@ class Test_opensearch_service_domains_not_publicly_accessible:
 
     @mock_aws
     def test_policy_data_restricted(self):
-        opensearch_client = client("opensearch", region_name=AWS_REGION_EU_WEST_1)
+        opensearch_client = client("opensearch", region_name=AWS_REGION_US_WEST_2)
         domain_arn = opensearch_client.create_domain(DomainName=domain_name)[
             "DomainStatus"
         ]["ARN"]
@@ -113,7 +110,7 @@ class Test_opensearch_service_domains_not_publicly_accessible:
             AccessPolicies=str(policy_data_restricted),
         )
 
-        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_WEST_2])
 
         from prowler.providers.aws.services.opensearch.opensearch_service import (
             OpenSearchService,
@@ -140,12 +137,12 @@ class Test_opensearch_service_domains_not_publicly_accessible:
             )
             assert result[0].resource_id == domain_name
             assert result[0].resource_arn == domain_arn
-            assert result[0].region == AWS_REGION_EU_WEST_1
+            assert result[0].region == AWS_REGION_US_WEST_2
             assert result[0].resource_tags == []
 
     @mock_aws
     def test_policy_data_not_restricted_with_principal_AWS(self):
-        opensearch_client = client("opensearch", region_name=AWS_REGION_EU_WEST_1)
+        opensearch_client = client("opensearch", region_name=AWS_REGION_US_WEST_2)
         domain_arn = opensearch_client.create_domain(DomainName=domain_name)[
             "DomainStatus"
         ]["ARN"]
@@ -154,7 +151,7 @@ class Test_opensearch_service_domains_not_publicly_accessible:
             AccessPolicies=dumps(policy_data_not_restricted),
         )
 
-        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_WEST_2])
 
         from prowler.providers.aws.services.opensearch.opensearch_service import (
             OpenSearchService,
@@ -181,12 +178,12 @@ class Test_opensearch_service_domains_not_publicly_accessible:
             )
             assert result[0].resource_id == domain_name
             assert result[0].resource_arn == domain_arn
-            assert result[0].region == AWS_REGION_EU_WEST_1
+            assert result[0].region == AWS_REGION_US_WEST_2
             assert result[0].resource_tags == []
 
     @mock_aws
     def test_policy_data_not_restricted_with_principal_no_AWS(self):
-        opensearch_client = client("opensearch", region_name=AWS_REGION_EU_WEST_1)
+        opensearch_client = client("opensearch", region_name=AWS_REGION_US_WEST_2)
         domain_arn = opensearch_client.create_domain(DomainName=domain_name)[
             "DomainStatus"
         ]["ARN"]
@@ -195,7 +192,7 @@ class Test_opensearch_service_domains_not_publicly_accessible:
             AccessPolicies=dumps(policy_data_not_restricted_principal),
         )
 
-        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_WEST_2])
 
         from prowler.providers.aws.services.opensearch.opensearch_service import (
             OpenSearchService,
@@ -222,12 +219,12 @@ class Test_opensearch_service_domains_not_publicly_accessible:
             )
             assert result[0].resource_id == domain_name
             assert result[0].resource_arn == domain_arn
-            assert result[0].region == AWS_REGION_EU_WEST_1
+            assert result[0].region == AWS_REGION_US_WEST_2
             assert result[0].resource_tags == []
 
     @mock_aws
     def test_policy_data_not_restricted_ip_full(self):
-        opensearch_client = client("opensearch", region_name=AWS_REGION_EU_WEST_1)
+        opensearch_client = client("opensearch", region_name=AWS_REGION_US_WEST_2)
         domain_arn = opensearch_client.create_domain(DomainName=domain_name)[
             "DomainStatus"
         ]["ARN"]
@@ -236,7 +233,7 @@ class Test_opensearch_service_domains_not_publicly_accessible:
             AccessPolicies=dumps(policy_data_source_ip_full),
         )
 
-        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_WEST_2])
 
         from prowler.providers.aws.services.opensearch.opensearch_service import (
             OpenSearchService,
@@ -263,12 +260,12 @@ class Test_opensearch_service_domains_not_publicly_accessible:
             )
             assert result[0].resource_id == domain_name
             assert result[0].resource_arn == domain_arn
-            assert result[0].region == AWS_REGION_EU_WEST_1
+            assert result[0].region == AWS_REGION_US_WEST_2
             assert result[0].resource_tags == []
 
     @mock_aws
     def test_policy_data_not_restricted_whole_internet(self):
-        opensearch_client = client("opensearch", region_name=AWS_REGION_EU_WEST_1)
+        opensearch_client = client("opensearch", region_name=AWS_REGION_US_WEST_2)
         domain_arn = opensearch_client.create_domain(DomainName=domain_name)[
             "DomainStatus"
         ]["ARN"]
@@ -277,7 +274,7 @@ class Test_opensearch_service_domains_not_publicly_accessible:
             AccessPolicies=dumps(policy_data_source_whole_internet),
         )
 
-        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_WEST_2])
 
         from prowler.providers.aws.services.opensearch.opensearch_service import (
             OpenSearchService,
@@ -304,29 +301,32 @@ class Test_opensearch_service_domains_not_publicly_accessible:
             )
             assert result[0].resource_id == domain_name
             assert result[0].resource_arn == domain_arn
-            assert result[0].region == AWS_REGION_EU_WEST_1
+            assert result[0].region == AWS_REGION_US_WEST_2
             assert result[0].resource_tags == []
 
+    @mock_aws
     def test_domain_inside_vpc(self):
-        opensearch_domain_arn = f"arn:aws:es:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:domain/{domain_name}"
         opensearch_client = mock.MagicMock
         opensearch_client.opensearch_domains = []
-        opensearch_client.opensearch_domains.append(
-            OpenSearchDomain(
-                name=domain_name,
-                region=AWS_REGION_EU_WEST_1,
-                arn=opensearch_domain_arn,
-                vpc_id="vpc-123456",
-            )
-        )
-        opensearch_client.opensearch_domains[0].logging = []
 
         with mock.patch(
             "prowler.providers.aws.services.opensearch.opensearch_service.OpenSearchService",
             opensearch_client,
         ):
+            from prowler.providers.aws.services.opensearch.opensearch_service import (
+                OpenSearchDomain,
+            )
             from prowler.providers.aws.services.opensearch.opensearch_service_domains_not_publicly_accessible.opensearch_service_domains_not_publicly_accessible import (
                 opensearch_service_domains_not_publicly_accessible,
+            )
+
+            opensearch_client.opensearch_domains.append(
+                OpenSearchDomain(
+                    name=domain_name,
+                    region=AWS_REGION_US_WEST_2,
+                    arn=f"arn:aws:es:{AWS_REGION_US_WEST_2}:{AWS_ACCOUNT_NUMBER}:domain/{domain_name}",
+                    vpc_id="vpc-123456",
+                )
             )
 
             check = opensearch_service_domains_not_publicly_accessible()
@@ -338,6 +338,9 @@ class Test_opensearch_service_domains_not_publicly_accessible:
                 == f"Opensearch domain {domain_name} is in a VPC, then it is not publicly accessible."
             )
             assert result[0].resource_id == domain_name
-            assert result[0].resource_arn == opensearch_domain_arn
-            assert result[0].region == AWS_REGION_EU_WEST_1
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:es:{AWS_REGION_US_WEST_2}:{AWS_ACCOUNT_NUMBER}:domain/{domain_name}"
+            )
+            assert result[0].region == AWS_REGION_US_WEST_2
             assert result[0].resource_tags == []
