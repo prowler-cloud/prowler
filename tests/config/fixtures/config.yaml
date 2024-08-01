@@ -272,10 +272,6 @@ aws:
   # aws.acm_certificates_expiration_check
   days_to_expire_threshold: 7
 
-  # AWS SNS Configuration
-  # aws.sns_topics_not_publicly_accessible
-  organization_id: null
-  
   # AWS EKS Configuration
   # aws.eks_control_plane_logging_all_types_enabled
   # EKS control plane logging types that must be enabled
@@ -287,7 +283,6 @@ aws:
         "controllerManager",
         "scheduler",
     ]
-
 
 # Azure Configuration
 azure:

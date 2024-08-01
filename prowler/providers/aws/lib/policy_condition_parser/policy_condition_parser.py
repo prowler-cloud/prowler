@@ -99,11 +99,9 @@ def is_condition_block_restrictive(
 
 def is_condition_block_restrictive_organization(
     condition_statement: dict,
-    source_organization: str,
 ):
     """
-    is_condition_block_restrictive_organization parses the IAM Condition policy block and returns True if the source_organization passed as argument is within, False if not.
-
+    is_condition_block_restrictive_organization parses the IAM Condition policy block and returns True if the condition_statement is restrictive for the organization, False if not.
 
     @param condition_statement: dict with an IAM Condition block, e.g.:
         {
@@ -111,9 +109,6 @@ def is_condition_block_restrictive_organization(
                 "AWS:PrincipalOrgID": "o-111122223333"
             }
         }
-
-    @param source_organization: str with a 12-digit AWS Organization ID, e.g.: o-111122223333
-
 
     """
     is_condition_valid = False
@@ -145,26 +140,19 @@ def is_condition_block_restrictive_organization(
                         condition_statement[condition_operator][value],
                         list,
                     ):
-                        is_condition_key_restrictive = True
-                        # if there is an arn/organization without the source organization -> we do not consider it safe
-                        # here by default we assume is true and look for false entries
+                        is_condition_valid = True
+                        # i
                         for item in condition_statement[condition_operator][value]:
-                            if source_organization not in item:
-                                is_condition_key_restrictive = False
+                            if item == "*":
+                                is_condition_valid = False
                                 break
-
-                        if is_condition_key_restrictive:
-                            is_condition_valid = True
 
                     # value is a string
                     elif isinstance(
                         condition_statement[condition_operator][value],
                         str,
                     ):
-                        if (
-                            source_organization
-                            in condition_statement[condition_operator][value]
-                        ):
+                        if "*" not in condition_statement[condition_operator][value]:
                             is_condition_valid = True
 
     return is_condition_valid

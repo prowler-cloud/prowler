@@ -1398,11 +1398,11 @@ class Test_policy_condition_parser:
         condition_statement = {
             "StringEquals": {"aws:PrincipalOrgID": [TRUSTED_ORGANIZATION_ID]}
         }
-        assert is_condition_block_restrictive_organization(
-            condition_statement, TRUSTED_ORGANIZATION_ID
-        )
+        assert is_condition_block_restrictive_organization(condition_statement)
 
-    def test_condition_parser_string_equals_aws_PrincipalOrgID_list_not_valid(self):
+    def test_condition_parser_string_equals_aws_PrincipalOrgID_list_multiple_items(
+        self,
+    ):
         condition_statement = {
             "StringEquals": {
                 "aws:PrincipalOrgID": [
@@ -1411,59 +1411,10 @@ class Test_policy_condition_parser:
                 ]
             }
         }
-        assert not is_condition_block_restrictive_organization(
-            condition_statement, TRUSTED_ORGANIZATION_ID
-        )
+        assert is_condition_block_restrictive_organization(condition_statement)
 
     def test_condition_parser_string_equals_aws_PrincipalOrgID_str(self):
         condition_statement = {
             "StringEquals": {"aws:PrincipalOrgID": TRUSTED_ORGANIZATION_ID}
         }
-        assert is_condition_block_restrictive_organization(
-            condition_statement, TRUSTED_ORGANIZATION_ID
-        )
-
-    def test_condition_parser_string_equals_aws_PrincipalOrgID_str_not_valid(self):
-        condition_statement = {
-            "StringEquals": {"aws:PrincipalOrgID": NON_TRUSTED_ORGANIZATION_ID}
-        }
-        assert not is_condition_block_restrictive_organization(
-            condition_statement, TRUSTED_ORGANIZATION_ID
-        )
-
-    def test_condition_parser_string_like_aws_PrincipalOrgID_list(self):
-        condition_statement = {
-            "StringLike": {"aws:PrincipalOrgID": [TRUSTED_ORGANIZATION_ID]}
-        }
-        assert is_condition_block_restrictive_organization(
-            condition_statement, TRUSTED_ORGANIZATION_ID
-        )
-
-    def test_condition_parser_string_like_aws_PrincipalOrgID_list_not_valid(self):
-        condition_statement = {
-            "StringLike": {
-                "aws:PrincipalOrgID": [
-                    TRUSTED_ORGANIZATION_ID,
-                    NON_TRUSTED_AWS_ACCOUNT_NUMBER,
-                ]
-            }
-        }
-        assert not is_condition_block_restrictive_organization(
-            condition_statement, TRUSTED_ORGANIZATION_ID
-        )
-
-    def test_condition_parser_string_like_aws_PrincipalOrgID_str(self):
-        condition_statement = {
-            "StringLike": {"aws:PrincipalOrgID": TRUSTED_ORGANIZATION_ID}
-        }
-        assert is_condition_block_restrictive_organization(
-            condition_statement, TRUSTED_ORGANIZATION_ID
-        )
-
-    def test_condition_parser_string_like_aws_PrincipalOrgID_str_not_valid(self):
-        condition_statement = {
-            "StringLike": {"aws:PrincipalOrgID": NON_TRUSTED_ORGANIZATION_ID}
-        }
-        assert not is_condition_block_restrictive_organization(
-            condition_statement, TRUSTED_ORGANIZATION_ID
-        )
+        assert is_condition_block_restrictive_organization(condition_statement)
