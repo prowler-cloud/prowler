@@ -3,7 +3,7 @@ import "@/styles/globals.css";
 import { Metadata, Viewport } from "next";
 import React from "react";
 
-import { SidebarWrap } from "@/components";
+import { SidebarWrap } from "@/components/ui/sidebar";
 import { fontSans } from "@/config/fonts";
 import { siteConfig } from "@/config/site";
 import { cn } from "@/lib/utils";

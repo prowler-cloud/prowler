@@ -3,6 +3,7 @@ export * from "./providers/ProviderInfo";
 export * from "./providers/ScanStatus";
 export * from "./providers/table/ColumnsProviders";
 export * from "./providers/table/DataTable";
+export * from "./ui/alert/Alert";
 export * from "./ui/header/Header";
 export * from "./ui/modal";
 export * from "./ui/sidebar";
