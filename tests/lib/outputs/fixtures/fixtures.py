@@ -16,7 +16,7 @@ def generate_finding_output(
     resource_details: str = "",
     resource_uid: str = "",
     resource_name: str = "",
-    resource_tags: list = [],
+    resource_tags: dict = {},
     compliance: dict = {"test-compliance": "test-compliance"},
     timestamp: datetime = None,
     provider: str = "aws",
