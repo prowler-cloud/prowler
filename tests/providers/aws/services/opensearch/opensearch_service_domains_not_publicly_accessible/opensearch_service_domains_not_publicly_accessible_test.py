@@ -308,14 +308,14 @@ class Test_opensearch_service_domains_not_publicly_accessible:
             assert result[0].resource_tags == []
 
     def test_domain_inside_vpc(self):
-        domain_arn = f"arn:aws:es:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:domain/{domain_name}"
+        opensearch_domain_arn = f"arn:aws:es:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:domain/{domain_name}"
         opensearch_client = mock.MagicMock
         opensearch_client.opensearch_domains = []
         opensearch_client.opensearch_domains.append(
             OpenSearchDomain(
                 name=domain_name,
                 region=AWS_REGION_EU_WEST_1,
-                arn=domain_arn,
+                arn=opensearch_domain_arn,
                 vpc_id="vpc-123456",
             )
         )
@@ -338,6 +338,6 @@ class Test_opensearch_service_domains_not_publicly_accessible:
                 == f"Opensearch domain {domain_name} is in a VPC, then it is not publicly accessible."
             )
             assert result[0].resource_id == domain_name
-            assert result[0].resource_arn == domain_arn
+            assert result[0].resource_arn == opensearch_domain_arn
             assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_tags == []
