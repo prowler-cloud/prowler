@@ -165,12 +165,12 @@ class TestOutputs:
 
     def test_unroll_dict_to_list(self):
         dict_A = {"A": "B"}
-        list_A = ["A: B"]
+        list_A = ["A=B"]
 
         assert unroll_dict_to_list(dict_A) == list_A
 
         dict_B = {"A": ["B", "C"]}
-        list_B = ["A: B, C"]
+        list_B = ["A=B, C"]
 
         assert unroll_dict_to_list(dict_B) == list_B
 

@@ -21,7 +21,9 @@ class CSV(Output):
                 finding_dict["COMPLIANCE"] = unroll_dict(
                     finding.compliance, separator=": "
                 )
-                finding_dict["ACCOUNT_TAGS"] = unroll_dict(finding.account_tags)
+                finding_dict["ACCOUNT_TAGS"] = unroll_dict(
+                    finding.account_tags, separator=":"
+                )
                 finding_dict["STATUS"] = finding.status.value
                 finding_dict["SEVERITY"] = finding.severity.value
                 self._data.append(finding_dict)

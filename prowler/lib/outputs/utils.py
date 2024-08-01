@@ -50,13 +50,19 @@ def unroll_dict(dict: dict, separator: str = "="):
 
 
 def unroll_dict_to_list(dict: dict):
+    """
+    Unrolls a dictionary into a list.
+    Example:
+    dict = {'Name': 'test', 'Environment': 'dev'}
+    unroll_dict_to_list(dict) -> ['Name=test', 'Environment=dev']
+    """
     dict_list = []
     for key, value in dict.items():
         if isinstance(value, list):
             value = ", ".join(value)
-            dict_list.append(f"{key}: {value}")
+            dict_list.append(f"{key}={value}")
         else:
-            dict_list.append(f"{key}: {value}")
+            dict_list.append(f"{key}={value}")
 
     return dict_list
 

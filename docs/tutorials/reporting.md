@@ -151,7 +151,7 @@ The JSON-OCSF output format implements the [Detection Finding](https://schema.oc
             "group": {
                 "name": "cloudtrail"
             },
-            "labels": {},
+            "labels": [],
             "name": "123456789012",
             "type": "AwsCloudTrailTrail",
             "uid": "arn:aws:cloudtrail:ap-northeast-1:123456789012:trail",

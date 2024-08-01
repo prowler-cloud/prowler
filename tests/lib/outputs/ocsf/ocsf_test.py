@@ -141,7 +141,7 @@ class TestOCSF:
                         "region": "eu-west-1",
                         "data": {"details": "resource_details"},
                         "group": {"name": "test-service"},
-                        "labels": {},
+                        "labels": [],
                         "name": "resource_name",
                         "type": "test-resource",
                         "uid": "resource-id",

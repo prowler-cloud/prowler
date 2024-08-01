@@ -78,7 +78,7 @@ class TestCSV:
         assert (
             output_data["RESOURCE_DETAILS"] == "Detailed information about the resource"
         )
-        assert output_data["RESOURCE_TAGS"] == "tag1:value1"
+        assert output_data["RESOURCE_TAGS"] == "tag1=value1"
         assert output_data["PARTITION"] == "aws"
         assert output_data["REGION"] == AWS_REGION_EU_WEST_1
         assert output_data["DESCRIPTION"] == "Description of the finding"
