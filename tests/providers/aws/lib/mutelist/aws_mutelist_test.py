@@ -1237,6 +1237,23 @@ class TestAWSMutelist:
             AWSMutelist.is_item_matched(mutelist_tags, "environment=pro", tag=True)
         )
 
+    def test_is_muted_in_tags_with_piped_tags(self):
+        mutelist_tags = ["environment=dev|project=prowler"]
+
+        assert AWSMutelist.is_item_matched(mutelist_tags, "environment=dev", tag=True)
+
+        assert AWSMutelist.is_item_matched(
+            mutelist_tags, "environment=dev | project=prowler", tag=True
+        )
+
+        assert AWSMutelist.is_item_matched(
+            mutelist_tags, "environment=pro | project=prowler", tag=True
+        )
+
+        assert not (
+            AWSMutelist.is_item_matched(mutelist_tags, "environment=pro", tag=True)
+        )
+
     def test_is_muted_in_tags_regex(self):
         mutelist_tags = ["environment=(dev|test)", ".*=prowler"]
         assert AWSMutelist.is_item_matched(
