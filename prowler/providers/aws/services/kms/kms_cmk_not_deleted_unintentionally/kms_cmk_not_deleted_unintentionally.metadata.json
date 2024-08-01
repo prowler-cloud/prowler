@@ -12,12 +12,12 @@
   "ResourceType": "AwsKmsKey",
   "Description": "Ensure there is no customer keys scheduled for deletion.",
   "Risk": "KMS keys cannot be recovered once deleted, also, all the data under a KMS key is also permanently unrecoverable if the KMS key is deleted.",
-  "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/kms-controls.html#kms-3",
+  "RelatedUrl": "https://docs.aws.amazon.com/kms/latest/developerguide/deleting-keys-scheduling-key-deletion.html",
   "Remediation": {
     "Code": {
       "CLI": "aws kms cancel-key-deletion --key-id <key-id>",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/kms-controls.html#kms-3",
       "Terraform": ""
     },
     "Recommendation": {
