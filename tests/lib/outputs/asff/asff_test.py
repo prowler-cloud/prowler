@@ -70,7 +70,7 @@ class TestASFF:
                     Type=finding.resource_type,
                     Partition=AWS_COMMERCIAL_PARTITION,
                     Region=AWS_REGION_EU_WEST_1,
-                    Tags=(finding.resource_tags if finding.resource_tags else None),
+                    Tags=finding.resource_tags,
                 )
             ],
             Compliance=Compliance(
@@ -136,7 +136,7 @@ class TestASFF:
                     Type=finding.resource_type,
                     Partition=AWS_COMMERCIAL_PARTITION,
                     Region=AWS_REGION_EU_WEST_1,
-                    Tags=(finding.resource_tags if finding.resource_tags else None),
+                    Tags=finding.resource_tags,
                 )
             ],
             Compliance=Compliance(
@@ -205,7 +205,7 @@ class TestASFF:
                     Type=finding.resource_type,
                     Partition=AWS_COMMERCIAL_PARTITION,
                     Region=AWS_REGION_EU_WEST_1,
-                    Tags=(finding.resource_tags if finding.resource_tags else None),
+                    Tags=finding.resource_tags,
                 )
             ],
             Compliance=Compliance(
@@ -412,7 +412,7 @@ class TestASFF:
                     Type=finding.resource_type,
                     Partition=AWS_COMMERCIAL_PARTITION,
                     Region=AWS_REGION_EU_WEST_1,
-                    Tags=(finding.resource_tags if finding.resource_tags else None),
+                    Tags=finding.resource_tags,
                 )
             ],
             Compliance=Compliance(

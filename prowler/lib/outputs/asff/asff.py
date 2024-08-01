@@ -96,11 +96,7 @@ class ASFF(Output):
                                 Type=finding.resource_type,
                                 Partition=finding.partition,
                                 Region=finding.region,
-                                Tags=(
-                                    finding.resource_tags
-                                    if finding.resource_tags
-                                    else None
-                                ),
+                                Tags=finding.resource_tags,
                             )
                         ],
                         Compliance=Compliance(
