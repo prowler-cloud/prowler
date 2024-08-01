@@ -1,7 +1,8 @@
-from typing import Any
+from typing import Generator
 
 from prowler.lib.check.check import execute, update_audit_metadata
 from prowler.lib.logger import logger
+from prowler.lib.outputs.finding import Finding
 from prowler.providers.common.models import Audit_Metadata
 from prowler.providers.common.provider import Provider
 
@@ -66,14 +67,21 @@ class Scan:
 
     def scan(
         self,
-        custom_checks_metadata: Any = {},
-    ):
+        custom_checks_metadata: dict = {},
+    ) -> Generator[float, list[Finding], None]:
         """
-        scan executes the checks and yields the progress and the findings.
+        Executes the scan by iterating over the checks to execute and executing each check.
+        Yields the progress and findings for each check.
 
-        Params:
-            custom_checks_metadata: Any = {} -> Custom checks metadata
+        Args:
+            custom_checks_metadata (dict): Custom metadata for the checks (default: {}).
 
+        Yields:
+            Tuple[float, list[Finding]]: A tuple containing the progress and findings for each check.
+
+        Raises:
+            ModuleNotFoundError: If the check does not exist in the provider or is from another provider.
+            Exception: If any other error occurs during the execution of a check.
         """
         try:
             checks_to_execute = self.checks_to_execute
@@ -122,7 +130,11 @@ class Scan:
                         self.get_completed_checks(),
                     )
 
-                    yield self.progress, check_findings
+                    findings = [
+                        Finding.generate_output(self._provider, finding)
+                        for finding in check_findings
+                    ]
+                    yield self.progress, findings
 
                 # If check does not exists in the provider or is from another provider
                 except ModuleNotFoundError:
