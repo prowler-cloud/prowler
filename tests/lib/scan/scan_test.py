@@ -6,6 +6,30 @@ from prowler.lib.scan.scan import Scan, get_service_checks_to_execute
 from tests.lib.outputs.fixtures.fixtures import generate_finding_output
 from tests.providers.aws.utils import set_mocked_aws_provider
 
+finding = generate_finding_output(
+    status="PASS",
+    status_extended="status-extended",
+    resource_uid="resource-123",
+    resource_name="Example Resource",
+    resource_details="Detailed information about the resource",
+    resource_tags="tag1,tag2",
+    partition="aws",
+    description="Description of the finding",
+    risk="High",
+    related_url="http://example.com",
+    remediation_recommendation_text="Recommendation text",
+    remediation_recommendation_url="http://example.com/remediation",
+    remediation_code_nativeiac="native-iac-code",
+    remediation_code_terraform="terraform-code",
+    remediation_code_other="other-code",
+    remediation_code_cli="cli-code",
+    compliance={"compliance_key": "compliance_value"},
+    categories="category1,category2",
+    depends_on="dependency",
+    related_to="related finding",
+    notes="Notes about the finding",
+)
+
 
 @pytest.fixture
 def mock_provider():
@@ -15,31 +39,7 @@ def mock_provider():
 @pytest.fixture
 def mock_execute():
     with mock.patch("prowler.lib.scan.scan.execute", autospec=True) as mock_exec:
-        findings = [
-            generate_finding_output(
-                status="PASS",
-                status_extended="status-extended",
-                resource_uid="resource-123",
-                resource_name="Example Resource",
-                resource_details="Detailed information about the resource",
-                resource_tags="tag1,tag2",
-                partition="aws",
-                description="Description of the finding",
-                risk="High",
-                related_url="http://example.com",
-                remediation_recommendation_text="Recommendation text",
-                remediation_recommendation_url="http://example.com/remediation",
-                remediation_code_nativeiac="native-iac-code",
-                remediation_code_terraform="terraform-code",
-                remediation_code_other="other-code",
-                remediation_code_cli="cli-code",
-                compliance={"compliance_key": "compliance_value"},
-                categories="category1,category2",
-                depends_on="dependency",
-                related_to="related finding",
-                notes="Notes about the finding",
-            )
-        ]
+        findings = [finding]
         mock_exec.side_effect = lambda *args, **kwargs: findings
         yield mock_exec
 
@@ -57,6 +57,15 @@ def mock_global_provider(mock_provider):
         return_value=mock_provider,
     ):
         yield mock_provider
+
+
+@pytest.fixture
+def mock_generate_output():
+    with mock.patch(
+        "prowler.lib.outputs.finding.Finding.generate_output", autospec=True
+    ) as mock_gen_output:
+        mock_gen_output.side_effect = lambda provider, finding: finding
+        yield mock_gen_output
 
 
 class TestScan:
@@ -194,7 +203,9 @@ class TestScan:
         assert scan.get_completed_services() == set()
         assert scan.get_completed_checks() == set()
 
-    def test_scan(mock_global_provider, mock_execute, mock_logger):
+    def test_scan(
+        mock_global_provider, mock_execute, mock_logger, mock_generate_output
+    ):
         checks_to_execute = {"accessanalyzer_enabled", "ec2_instance_public"}
         custom_checks_metadata = {}
 
@@ -203,6 +214,9 @@ class TestScan:
 
         # Execute the scan
         results = list(scan.scan(custom_checks_metadata))
+
+        # Verify that generate_output was called with the correct findings
+        assert mock_generate_output.call_count == 2 * len(mock_execute.side_effect())
 
         # Verify that execute was called twice
         assert mock_execute.call_count == 2

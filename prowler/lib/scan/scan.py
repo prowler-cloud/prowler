@@ -134,6 +134,7 @@ class Scan:
                         Finding.generate_output(self._provider, finding)
                         for finding in check_findings
                     ]
+
                     yield self.progress, findings
 
                 # If check does not exists in the provider or is from another provider
