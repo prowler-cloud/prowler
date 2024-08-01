@@ -7658,6 +7658,13 @@
     "payment-cryptography": {
       "regions": {
         "aws": [
+<<<<<<< HEAD
+=======
+          "ap-northeast-1",
+          "ap-southeast-1",
+          "eu-central-1",
+          "eu-west-1",
+>>>>>>> 8ec6e89e (chore(regions_update): Changes in regions for AWS services. (#4607))
           "us-east-1",
           "us-east-2",
           "us-west-2"
