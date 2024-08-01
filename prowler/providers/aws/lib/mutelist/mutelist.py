@@ -1,10 +1,10 @@
 import re
-from typing import Any
 
 import yaml
 from boto3 import Session
 from boto3.dynamodb.conditions import Attr
 
+from prowler.lib.check.models import Check_Report_AWS
 from prowler.lib.logger import logger
 from prowler.lib.mutelist.mutelist import Mutelist
 from prowler.lib.outputs.utils import unroll_dict, unroll_tags
@@ -45,7 +45,7 @@ class AWSMutelist(Mutelist):
 
     def is_finding_muted(
         self,
-        finding: Any,
+        finding: Check_Report_AWS,
         aws_account_id: str,
     ) -> bool:
         return self.is_muted(
