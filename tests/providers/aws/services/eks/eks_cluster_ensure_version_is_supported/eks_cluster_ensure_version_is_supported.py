@@ -26,6 +26,7 @@ class Test_eks_cluster_ensure_version_is_supported:
     
     def test_cluster_below_supported_verison(self):
         eks_client = mock.MagicMock
+        eks_client.audit_config = {"eks_cluster_is_supported_version": "1.28"}
         eks_client.clusters = []
         eks_client.clusters.append(
             EKSCluster(
@@ -60,6 +61,7 @@ class Test_eks_cluster_ensure_version_is_supported:
     
     def test_cluster_below_supported_verison2(self):
         eks_client = mock.MagicMock
+        eks_client.audit_config = {"eks_cluster_is_supported_version": "1.28"}
         eks_client.clusters = []
         eks_client.clusters.append(
             EKSCluster(
@@ -94,6 +96,7 @@ class Test_eks_cluster_ensure_version_is_supported:
     
     def test_cluster_above_supported_verison(self):
         eks_client = mock.MagicMock
+        eks_client.audit_config = {"eks_cluster_is_supported_version": "1.28"}
         eks_client.clusters = []
         eks_client.clusters.append(
             EKSCluster(
@@ -128,6 +131,7 @@ class Test_eks_cluster_ensure_version_is_supported:
         
     def test_cluster_above_supported_verison2(self):
         eks_client = mock.MagicMock
+        eks_client.audit_config = {"eks_cluster_is_supported_version": "1.28"}
         eks_client.clusters = []
         eks_client.clusters.append(
             EKSCluster(

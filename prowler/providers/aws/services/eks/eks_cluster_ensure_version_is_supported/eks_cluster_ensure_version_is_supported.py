@@ -14,17 +14,23 @@ class eks_cluster_ensure_version_is_supported(Check):
             report.resource_tags = cluster.tags
             report.status_extended = f"EKS cluster {cluster.name} version is supported."
 
-            version_nums = cluster.version.split(".")
-            if int(version_nums[0]) < 1 :
+            user_version_num = cluster.version.split(".")
+
+            eks_latest_version = eks_client.audit_config.get(
+                "eks_cluster_is_supported_version", "1.28"
+            )
+            eks_version_num = eks_latest_version.split(".")
+
+            if int(user_version_num[0]) < int(eks_version_num[0]) :
                 report.status = "FAIL"
                 report.status_extended = (
-                    f"EKS cluster {cluster.name} must have a version of 1.28 or greater."
+                    f"EKS cluster {cluster.name} must have a version of {eks_latest_version} or greater."
                 )
 
-            if int(version_nums[0]) == 1 and int(version_nums[1]) < 28:
+            if int(user_version_num[0]) == int(eks_version_num[0]) and int(user_version_num[1]) < int(eks_version_num[1]):
                 report.status = "FAIL"
                 report.status_extended = (
-                    f"EKS cluster {cluster.name} must have a version of 1.28 or greater."
+                    f"EKS cluster {cluster.name} must have a version of {eks_latest_version} or greater."
                 )
 
 
