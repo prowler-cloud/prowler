@@ -102,7 +102,7 @@ class EKSCluster(BaseModel):
     name: str
     arn: str
     region: str
-    version: str
+    version: str = None
     logging: EKSClusterLoggingEntity = None
     security_group_id: str = None
     endpoint_public_access: bool = None
