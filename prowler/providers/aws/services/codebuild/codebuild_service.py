@@ -1,5 +1,5 @@
 import datetime
-from typing import Optional
+from typing import List, Optional
 
 from pydantic import BaseModel
 
@@ -75,10 +75,15 @@ class Codebuild(AWSService):
         logger.info("Codebuild - Getting projects...")
         try:
             regional_client = self.regional_clients[project.region]
-            project_source = regional_client.batch_get_projects(names=[project.name])[
+            project_data = regional_client.batch_get_projects(names=[project.name])[
                 "projects"
-            ][0]["source"]
-            project.buildspec = project_source.get("buildspec", "")
+            ][0]
+            environment = project_data.get("environment", {})
+            env_vars = environment.get("environmentVariables", [])
+            project.environment_variables = [
+                EnvironmentVariable(**var) for var in env_vars
+            ]
+            project.buildspec = project_data.get("source", {}).get("buildspec", "")
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -89,6 +94,12 @@ class Build(BaseModel):
     id: str
 
 
+class EnvironmentVariable(BaseModel):
+    name: str
+    value: str
+    type: str
+
+
 class Project(BaseModel):
     name: str
     arn: str
@@ -96,3 +107,4 @@ class Project(BaseModel):
     last_build: Optional[Build]
     last_invoked_time: Optional[datetime.datetime]
     buildspec: Optional[str]
+    environment_variables: Optional[List[EnvironmentVariable]] = []
