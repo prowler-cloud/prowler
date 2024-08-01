@@ -60,7 +60,7 @@ class TestCSV:
         assert output_data["ACCOUNT_EMAIL"] == ""
         assert output_data["ACCOUNT_ORGANIZATION_UID"] == "test-organization-id"
         assert output_data["ACCOUNT_ORGANIZATION_NAME"] == "test-organization"
-        assert output_data["ACCOUNT_TAGS"] == "test-tag=test-value"
+        assert output_data["ACCOUNT_TAGS"] == "test-tag:test-value"
         assert output_data["FINDING_UID"] == "test-unique-finding"
         assert output_data["PROVIDER"] == "aws"
         assert output_data["CHECK_ID"] == "test-check-id"

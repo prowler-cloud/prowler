@@ -30,16 +30,21 @@ def unroll_tags(tags: list):
     return {}
 
 
-def unroll_dict(dict: dict):
+def unroll_dict(dict: dict, separator: str = "="):
+    """
+    Unrolls a dictionary into a string.
+    Example:
+    dict = {'Name': 'test', 'Environment': 'test'}
+    unroll_dict(dict) -> 'Name=test | Environment=test'
+    """
     unrolled_items = ""
-    separator = "|"
     for key, value in dict.items():
         if isinstance(value, list):
             value = ", ".join(value)
         if not unrolled_items:
-            unrolled_items = f"{key}={value}"
+            unrolled_items = f"{key}{separator}{value}"
         else:
-            unrolled_items = f"{unrolled_items} {separator} {key}={value}"
+            unrolled_items = f"{unrolled_items} | {key}{separator}{value}"
 
     return unrolled_items
 
