@@ -12,22 +12,23 @@ class Scan:
     _number_of_checks_to_execute: int = 0
     _number_of_checks_completed: int = 0
     # TODO the str should be a set of Check objects
-    _checks_to_execute: set[str]
+    _checks_to_execute: list[str]
     _service_checks_to_execute: dict[str, set[str]]
     _service_checks_completed: dict[str, set[str]]
     _progress: float = 0.0
     _findings: list = []
 
-    def __init__(self, provider, checks_to_execute):
+    def __init__(self, provider: Provider, checks_to_execute: list[str]):
         """
         Scan is the class that executes the checks and yields the progress and the findings.
 
         Params:
             provider: Provider -> The provider to scan
-            checks_to_execute: set[str] -> The checks to execute
+            checks_to_execute: list[str] -> The checks to execute
         """
         self._provider = provider
-        self._checks_to_execute = set(checks_to_execute)
+        # Remove duplicated checks and sort them
+        self._checks_to_execute = sorted(list(set(checks_to_execute)))
 
         self._number_of_checks_to_execute = len(checks_to_execute)
 
@@ -121,8 +122,7 @@ class Scan:
                         self.get_completed_checks(),
                     )
 
-                    # Yield the progress and the findings
-                    yield self._provider.audit_metadata, check_findings
+                    yield self.progress, check_findings
 
                 # If check does not exists in the provider or is from another provider
                 except ModuleNotFoundError:
@@ -138,7 +138,7 @@ class Scan:
                 f"{check_name} - {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def get_completed_services(self):
+    def get_completed_services(self) -> set[str]:
         """
         get_completed_services returns the services that have been completed.
 
@@ -147,7 +147,7 @@ class Scan:
         """
         return self._service_checks_completed.keys()
 
-    def get_completed_checks(self):
+    def get_completed_checks(self) -> set[str]:
         """
         get_completed_checks returns the checks that have been completed.
 
