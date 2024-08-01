@@ -93,7 +93,7 @@ class TestCSV:
         assert output_data["REMEDIATION_CODE_TERRAFORM"] == "terraform-code"
         assert output_data["REMEDIATION_CODE_CLI"] == "cli-code"
         assert output_data["REMEDIATION_CODE_OTHER"] == "other-code"
-        assert output_data["COMPLIANCE"] == "compliance_key=compliance_value"
+        assert output_data["COMPLIANCE"] == "compliance_key: compliance_value"
         assert output_data["CATEGORIES"] == "category1,category2"
         assert output_data["DEPENDS_ON"] == "dependency"
         assert output_data["RELATED_TO"] == "related finding"
@@ -113,7 +113,7 @@ class TestCSV:
             output.batch_write_data_to_file()
 
         mock_file.seek(0)
-        expected_csv = f"AUTH_METHOD;TIMESTAMP;ACCOUNT_UID;ACCOUNT_NAME;ACCOUNT_EMAIL;ACCOUNT_ORGANIZATION_UID;ACCOUNT_ORGANIZATION_NAME;ACCOUNT_TAGS;FINDING_UID;PROVIDER;CHECK_ID;CHECK_TITLE;CHECK_TYPE;STATUS;STATUS_EXTENDED;MUTED;SERVICE_NAME;SUBSERVICE_NAME;SEVERITY;RESOURCE_TYPE;RESOURCE_UID;RESOURCE_NAME;RESOURCE_DETAILS;RESOURCE_TAGS;PARTITION;REGION;DESCRIPTION;RISK;RELATED_URL;REMEDIATION_RECOMMENDATION_TEXT;REMEDIATION_RECOMMENDATION_URL;REMEDIATION_CODE_NATIVEIAC;REMEDIATION_CODE_TERRAFORM;REMEDIATION_CODE_CLI;REMEDIATION_CODE_OTHER;COMPLIANCE;CATEGORIES;DEPENDS_ON;RELATED_TO;NOTES;PROWLER_VERSION\r\nprofile: default;{datetime.now()};123456789012;123456789012;;test-organization-id;test-organization;test-tag=test-value;test-unique-finding;aws;test-check-id;test-check-id;test-type;PASS;;False;test-service;;high;test-resource;;;;;aws;eu-west-1;check description;test-risk;test-url;;;;;;;test-compliance=test-compliance;test-category;test-dependency;test-related-to;test-notes;{prowler_version}\r\n"
+        expected_csv = f"AUTH_METHOD;TIMESTAMP;ACCOUNT_UID;ACCOUNT_NAME;ACCOUNT_EMAIL;ACCOUNT_ORGANIZATION_UID;ACCOUNT_ORGANIZATION_NAME;ACCOUNT_TAGS;FINDING_UID;PROVIDER;CHECK_ID;CHECK_TITLE;CHECK_TYPE;STATUS;STATUS_EXTENDED;MUTED;SERVICE_NAME;SUBSERVICE_NAME;SEVERITY;RESOURCE_TYPE;RESOURCE_UID;RESOURCE_NAME;RESOURCE_DETAILS;RESOURCE_TAGS;PARTITION;REGION;DESCRIPTION;RISK;RELATED_URL;REMEDIATION_RECOMMENDATION_TEXT;REMEDIATION_RECOMMENDATION_URL;REMEDIATION_CODE_NATIVEIAC;REMEDIATION_CODE_TERRAFORM;REMEDIATION_CODE_CLI;REMEDIATION_CODE_OTHER;COMPLIANCE;CATEGORIES;DEPENDS_ON;RELATED_TO;NOTES;PROWLER_VERSION\r\nprofile: default;{datetime.now()};123456789012;123456789012;;test-organization-id;test-organization;test-tag:test-value;test-unique-finding;aws;test-check-id;test-check-id;test-type;PASS;;False;test-service;;high;test-resource;;;;;aws;eu-west-1;check description;test-risk;test-url;;;;;;;test-compliance: test-compliance;test-category;test-dependency;test-related-to;test-notes;{prowler_version}\r\n"
         content = mock_file.read()
 
         assert content == expected_csv
@@ -193,7 +193,7 @@ class TestCSV:
             with patch.object(temp_file, "close", return_value=None):
                 csv.batch_write_data_to_file()
 
-            expected_csv = f"AUTH_METHOD;TIMESTAMP;ACCOUNT_UID;ACCOUNT_NAME;ACCOUNT_EMAIL;ACCOUNT_ORGANIZATION_UID;ACCOUNT_ORGANIZATION_NAME;ACCOUNT_TAGS;FINDING_UID;PROVIDER;CHECK_ID;CHECK_TITLE;CHECK_TYPE;STATUS;STATUS_EXTENDED;MUTED;SERVICE_NAME;SUBSERVICE_NAME;SEVERITY;RESOURCE_TYPE;RESOURCE_UID;RESOURCE_NAME;RESOURCE_DETAILS;RESOURCE_TAGS;PARTITION;REGION;DESCRIPTION;RISK;RELATED_URL;REMEDIATION_RECOMMENDATION_TEXT;REMEDIATION_RECOMMENDATION_URL;REMEDIATION_CODE_NATIVEIAC;REMEDIATION_CODE_TERRAFORM;REMEDIATION_CODE_CLI;REMEDIATION_CODE_OTHER;COMPLIANCE;CATEGORIES;DEPENDS_ON;RELATED_TO;NOTES;PROWLER_VERSION\nprofile: default;{datetime.now()};123456789012;123456789012;;test-organization-id;test-organization;test-tag=test-value;test-unique-finding;aws;test-check-id;test-check-id;test-type;PASS;;False;test-service;;high;test-resource;;;;;aws;eu-west-1;check description;test-risk;test-url;;;;;;;test-compliance=test-compliance;test-category;test-dependency;test-related-to;test-notes;{prowler_version}\n"
+            expected_csv = f"AUTH_METHOD;TIMESTAMP;ACCOUNT_UID;ACCOUNT_NAME;ACCOUNT_EMAIL;ACCOUNT_ORGANIZATION_UID;ACCOUNT_ORGANIZATION_NAME;ACCOUNT_TAGS;FINDING_UID;PROVIDER;CHECK_ID;CHECK_TITLE;CHECK_TYPE;STATUS;STATUS_EXTENDED;MUTED;SERVICE_NAME;SUBSERVICE_NAME;SEVERITY;RESOURCE_TYPE;RESOURCE_UID;RESOURCE_NAME;RESOURCE_DETAILS;RESOURCE_TAGS;PARTITION;REGION;DESCRIPTION;RISK;RELATED_URL;REMEDIATION_RECOMMENDATION_TEXT;REMEDIATION_RECOMMENDATION_URL;REMEDIATION_CODE_NATIVEIAC;REMEDIATION_CODE_TERRAFORM;REMEDIATION_CODE_CLI;REMEDIATION_CODE_OTHER;COMPLIANCE;CATEGORIES;DEPENDS_ON;RELATED_TO;NOTES;PROWLER_VERSION\nprofile: default;{datetime.now()};123456789012;123456789012;;test-organization-id;test-organization;test-tag:test-value;test-unique-finding;aws;test-check-id;test-check-id;test-type;PASS;;False;test-service;;high;test-resource;;;;;aws;eu-west-1;check description;test-risk;test-url;;;;;;;test-compliance: test-compliance;test-category;test-dependency;test-related-to;test-notes;{prowler_version}\n"
 
             temp_file.seek(0)
 
