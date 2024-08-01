@@ -47,7 +47,7 @@ class Test_S3_Service:
 
     # Test S3 List Buckets
     @mock_aws
-    def test__list_buckets__(self):
+    def test_list_buckets(self):
         # Generate S3 Client
         s3_client = client("s3")
         # Create S3 Bucket
@@ -68,7 +68,7 @@ class Test_S3_Service:
 
     # Test S3 Get Bucket Versioning
     @mock_aws
-    def test__get_bucket_versioning__(self):
+    def test_get_bucket_versioning(self):
         # Generate S3 Client
         s3_client = client("s3")
         # Create S3 Bucket
@@ -92,7 +92,7 @@ class Test_S3_Service:
 
     # Test S3 Get Bucket ACL
     @mock_aws
-    def test__get_bucket_acl__(self):
+    def test_get_bucket_acl(self):
         s3_client = client("s3")
         bucket_name = "test-bucket"
         s3_client.create_bucket(Bucket=bucket_name)
@@ -131,7 +131,7 @@ class Test_S3_Service:
 
     # Test S3 Get Bucket Logging
     @mock_aws
-    def test__get_bucket_logging__(self):
+    def test_get_bucket_logging(self):
         # Generate S3 Client
         s3_client = client("s3")
         # Create S3 Bucket
@@ -205,7 +205,7 @@ class Test_S3_Service:
 
     # Test S3 Get Bucket Policy
     @mock_aws
-    def test__get_bucket_policy__(self):
+    def test_get_bucket_policy(self):
         s3_client = client("s3")
         bucket_name = "test-bucket"
         s3_client.create_bucket(Bucket=bucket_name)
@@ -226,7 +226,7 @@ class Test_S3_Service:
 
     # Test S3 Get Bucket Encryption
     @mock_aws
-    def test__get_bucket_encryption__(self):
+    def test_get_bucket_encryption(self):
         # Generate S3 Client
         s3_client = client("s3")
         # Create S3 Bucket
@@ -259,7 +259,7 @@ class Test_S3_Service:
 
     # Test S3 Get Bucket Ownership Controls
     @mock_aws
-    def test__get_bucket_ownership_controls__(self):
+    def test_get_bucket_ownership_controls(self):
         # Generate S3 Client
         s3_client = client("s3")
         # Create S3 Bucket
@@ -281,7 +281,7 @@ class Test_S3_Service:
 
     # Test S3 Get Public Access Block
     @mock_aws
-    def test__get_public_access_block__(self):
+    def test_get_public_access_block(self):
         # Generate S3 Client
         s3_client = client("s3")
         # Create S3 Bucket
@@ -314,7 +314,7 @@ class Test_S3_Service:
 
     # Test S3 Get Bucket Tagging
     @mock_aws
-    def test__get_bucket_tagging__(self):
+    def test_get_bucket_tagging(self):
         # Generate S3 Client
         s3_client = client("s3")
         # Create S3 Bucket
@@ -339,7 +339,7 @@ class Test_S3_Service:
 
     # Test S3 Control Account Get Public Access Block
     @mock_aws
-    def test__get_public_access_block__s3_control(self):
+    def test_get_public_access_blocks3_control(self):
         # Generate S3Control Client
         s3control_client = client("s3control", region_name=AWS_REGION_US_EAST_1)
         s3control_client.put_public_access_block(
@@ -361,7 +361,7 @@ class Test_S3_Service:
 
     # Test S3 Get Bucket Object Lock
     @mock_aws
-    def test__get_object_lock_configuration__(self):
+    def test_get_object_lock_configuration(self):
         # Generate S3 Client
         s3_client = client("s3")
         # Create S3 Bucket
