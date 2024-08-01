@@ -281,6 +281,12 @@ class Resource(BaseModel):
     Region: str
     Tags: Optional[dict]
 
+    @validator("Tags", pre=True, always=True)
+    def tags_cannot_be_empty_dict(tags):
+        if not tags:
+            return None
+        return tags
+
 
 class Compliance(BaseModel):
     """
