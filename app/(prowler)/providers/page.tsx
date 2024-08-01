@@ -1,11 +1,16 @@
 import { Spacer } from "@nextui-org/react";
-import React from "react";
+import React, { Suspense } from "react";
 
-import { ColumnsProviders, DataTable, Header, ModalWrap } from "@/components";
+import {
+  ColumnsProviders,
+  DataTable,
+  Header,
+  ModalWrap,
+  SkeletonTableProvider,
+} from "@/components";
 import { getProvider } from "@/lib/actions";
 
 export default async function Providers() {
-  const providers = await getProvider();
   const onSave = async () => {
     "use server";
     // event we want to pass down, ex. console.log("### hello");
@@ -28,11 +33,21 @@ export default async function Providers() {
           openButtonLabel="Add Cloud Accounts"
         />
         <Spacer y={6} />
-        <DataTable
-          columns={ColumnsProviders}
-          data={providers?.providers?.data ?? []}
-        />
+        <Suspense fallback={<SkeletonTableProvider />}>
+          <SSRDataTable />
+        </Suspense>
       </div>
     </>
   );
 }
+
+const SSRDataTable = async () => {
+  const providersData = await getProvider();
+  const [providers] = await Promise.all([providersData]);
+  return (
+    <DataTable
+      columns={ColumnsProviders}
+      data={providers?.providers?.data ?? []}
+    />
+  );
+};
