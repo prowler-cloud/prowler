@@ -44,7 +44,7 @@ The following list includes all the AWS checks with configurable variables that 
 | `ec2_securitygroup_allow_ingress_from_internet_to_any_port`   | `ec2_allowed_instance_owners`                    | List of Strings |
 | `acm_certificates_expiration_check`                           | `days_to_expire_threshold`                       | Integer         |
 | `eks_control_plane_logging_all_types_enabled`                 | `eks_required_log_types`                         | List of Strings |
-
+| `eks_cluster_ensure_version_is_supported`                     | `eks_cluster_is_supported_version`               | String          |
 
 ## Azure
 
@@ -367,6 +367,10 @@ aws:
       "controllerManager",
       "scheduler",
     ]
+  
+  # aws.eks_ensure_cluster_version_is_supported
+  # EKS clusters must be version 1.28 or higher
+  eks_cluster_is_supported_version: "1.28"
 
 # Azure Configuration
 azure:

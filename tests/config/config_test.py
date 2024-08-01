@@ -269,6 +269,7 @@ config_aws = {
         "controllerManager",
         "scheduler",
     ],
+    "eks_cluster_is_supported_version": "1.28",
 }
 
 config_azure = {
