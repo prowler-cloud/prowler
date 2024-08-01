@@ -262,7 +262,6 @@ config_aws = {
     ],
     "check_rds_instance_replicas": False,
     "days_to_expire_threshold": 7,
-    "organization_id": None,
     "eks_required_log_types": [
         "api",
         "audit",

@@ -141,7 +141,6 @@ def is_condition_block_restrictive_organization(
                         list,
                     ):
                         is_condition_valid = True
-                        # i
                         for item in condition_statement[condition_operator][value]:
                             if item == "*":
                                 is_condition_valid = False
