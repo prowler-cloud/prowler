@@ -85,8 +85,7 @@ class EKS(AWSService):
                 if "encryptionConfig" in describe_cluster["cluster"]:
                     cluster.encryptionConfig = True
                 cluster.tags = [describe_cluster["cluster"].get("tags")]
-                if "version" in describe_cluster["cluster"]:
-                    cluster.version = describe_cluster["cluster"]["version"]
+                cluster.version = describe_cluster["cluster"].get("version", "")
 
         except Exception as error:
             logger.error(

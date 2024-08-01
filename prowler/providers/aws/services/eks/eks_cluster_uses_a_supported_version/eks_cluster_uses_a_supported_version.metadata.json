@@ -1,0 +1,34 @@
+{
+    "Provider": "aws",
+    "CheckID": "eks_cluster_uses_a_supported_version",
+    "CheckTitle": "Ensure Kubernetes cluster runs on a supported Kubernetes version",
+    "CheckType": [
+    ],
+    "ServiceName": "eks",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+    "Severity": "high",
+    "ResourceType": "AwsEksCluster",
+    "Description": "Ensure Kubernetes cluster runs on a supported Kubernetes version",
+    "Risk": "Running an Amazon EKS cluster on an unsupported Kubernetes version exposes it to common security vulnerabilities",
+    "RelatedUrl": "",
+    "Remediation": {
+      "Code": {
+        "CLI": "",
+        "NativeIaC": "",
+        "Other": "",
+        "Terraform": ""
+      },
+      "Recommendation": {
+        "Text": "If your application doesn't require a specific version of Kubernetes, we recommend that you use the latest available Kubernetes version that is supported by EKS for your clusters.",
+        "Url": "https://docs.aws.amazon.com/eks/latest/userguide/platform-versions.html"
+      }
+    },
+    "Categories": [
+      "vulnerabilities"
+    ],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": ""
+  }
+  
