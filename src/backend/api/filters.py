@@ -1,7 +1,7 @@
 from django_filters.rest_framework import FilterSet
 from rest_framework_json_api.django_filters.backends import DjangoFilterBackend
 
-from api.models import Tenant
+from api.rls import Tenant
 
 
 class CustomDjangoFilterBackend(DjangoFilterBackend):

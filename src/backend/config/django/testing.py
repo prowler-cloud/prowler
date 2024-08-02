@@ -15,3 +15,5 @@ DATABASES = {
         "PORT": env("POSTGRES_PORT", default="5432"),
     }
 }
+
+DATABASE_ROUTERS = []

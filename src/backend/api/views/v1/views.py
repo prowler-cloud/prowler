@@ -7,10 +7,11 @@ from drf_spectacular.views import SpectacularAPIView
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework_json_api.views import Response
-
 from api.filters import TenantFilter
-from api.models import Tenant
-from api.serializers import TenantSerializer
+from rest_framework.generics import ListCreateAPIView
+from api.models import Test
+from api.rls import Tenant
+from api.serializers import TenantSerializer, TestSerializer
 from api.views.base_views import BaseViewSet
 
 CACHE_DECORATOR = cache_control(
@@ -317,3 +318,8 @@ class ProviderViewSet(viewsets.ViewSet):
         }
 
         return Response(connection_data_mock, status=status.HTTP_200_OK)
+
+
+class TestView(ListCreateAPIView):
+    serializer_class = TestSerializer
+    queryset = Test.objects.all()

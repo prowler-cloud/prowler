@@ -10,11 +10,19 @@ DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": env("POSTGRES_DB", default="prowler_db"),
-        "USER": env("POSTGRES_USER", default="prowler"),
-        "PASSWORD": env("POSTGRES_PASSWORD", default="S3cret"),
+        "USER": env("POSTGRES_USER", default="prowler_user"),
+        "PASSWORD": env("POSTGRES_PASSWORD", default="prowler"),
         "HOST": env("POSTGRES_HOST", default="postgres-db"),
         "PORT": env("POSTGRES_PORT", default="5432"),
-    }
+    },
+    "admin": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": env("POSTGRES_DB", default="prowler_db"),
+        "USER": env("POSTGRES_ADMIN_USER", default="prowler"),
+        "PASSWORD": env("POSTGRES_ADMIN_PASSWORD", default="S3cret"),
+        "HOST": env("POSTGRES_HOST", default="postgres-db"),
+        "PORT": env("POSTGRES_PORT", default="5432"),
+    },
 }
 
 

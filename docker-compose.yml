@@ -50,14 +50,14 @@ services:
     volumes:
       - ./_data/postgres:/var/lib/postgresql/data
     environment:
-      - POSTGRES_USER=${POSTGRES_USER:-prowler}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-S3cret}
+      - POSTGRES_USER=${POSTGRES_ADMIN_USER:-prowler}
+      - POSTGRES_PASSWORD=${POSTGRES_ADMIN_PASSWORD:-S3cret}
       - POSTGRES_DB=${POSTGRES_DB:-prowler_db}
     env_file:
       - path: ./.env
         required: false
     healthcheck:
-      test: ["CMD-SHELL", "sh -c 'pg_isready -U prowler -d prowler_db'"]
+      test: ["CMD-SHELL", "sh -c 'pg_isready -U ${POSTGRES_ADMIN_USER:-prowler} -d ${POSTGRES_DB:-prowler_db}'"]
       interval: 5s
       timeout: 5s
       retries: 5

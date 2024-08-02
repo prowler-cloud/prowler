@@ -3,7 +3,7 @@
 
 apply_migrations() {
   echo "Applying database migrations..."
-  poetry run python manage.py migrate
+  poetry run python manage.py migrate --database admin
 }
 
 start_dev_server() {

@@ -2,7 +2,7 @@ import pytest
 from django.urls import reverse
 from rest_framework import status
 
-from api.models import Tenant
+from api.rls import Tenant
 
 API_JSON_CONTENT_TYPE = "application/vnd.api+json"
 
