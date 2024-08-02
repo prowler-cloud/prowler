@@ -221,7 +221,7 @@ class Test_Lambda_Service:
                 lambda_arn_1
             ].url_config.cors_config.allow_origins == ["*"]
 
-            assert awslambda.functions[lambda_arn_1].tags == [{"test": "test"}]
+            assert awslambda.functions[lambda_arn_1].tags == {"test": "test"}
 
             # Lambda 2
             assert awslambda.functions[lambda_arn_2].name == lambda_name_2

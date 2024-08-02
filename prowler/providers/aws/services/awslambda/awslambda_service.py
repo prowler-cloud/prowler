@@ -161,7 +161,7 @@ class Lambda(AWSService):
                 try:
                     regional_client = self.regional_clients[function.region]
                     response = regional_client.list_tags(Resource=function.arn)["Tags"]
-                    function.tags = [response]
+                    function.tags = response
                 except ClientError as e:
                     if e.response["Error"]["Code"] == "ResourceNotFoundException":
                         function.tags = []
@@ -202,4 +202,4 @@ class Function(BaseModel):
     policy: dict = None
     code: LambdaCode = None
     url_config: URLConfig = None
-    tags: Optional[list] = []
+    tags: Optional[dict] = []
