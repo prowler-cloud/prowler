@@ -99,6 +99,7 @@ export const ColumnsProviders: ColumnDef<ProviderProps>[] = [
               </Button>
             </DropdownTrigger>
             <DropdownMenu>
+              <DropdownItem>Check connection</DropdownItem>
               <DropdownItem>Manage</DropdownItem>
               <DropdownItem>Delete</DropdownItem>
             </DropdownMenu>

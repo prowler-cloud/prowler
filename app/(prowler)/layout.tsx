@@ -3,6 +3,7 @@ import "@/styles/globals.css";
 import { Metadata, Viewport } from "next";
 import React from "react";
 
+import { Toaster } from "@/components";
 import { SidebarWrap } from "@/components/ui/sidebar";
 import { fontSans } from "@/config/fonts";
 import { siteConfig } from "@/config/site";
@@ -48,6 +49,7 @@ export default function RootLayout({
             <SidebarWrap />
             <main className="w-full h-full flex-1 flex-col p-4 mb-auto overflow-y-auto">
               {children}
+              <Toaster />
             </main>
           </div>
         </Providers>
