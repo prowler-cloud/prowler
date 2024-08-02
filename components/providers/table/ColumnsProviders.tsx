@@ -45,9 +45,9 @@ export const ColumnsProviders: ColumnDef<ProviderProps>[] = [
   {
     accessorKey: "status",
     header: "Scan Status",
-    cell: ({ row }) => {
-      const { status } = getProviderAttributes(row);
-      return <StatusBadge status={status} />;
+    cell: () => {
+      // Temporarily overwriting the value until the API is functional.
+      return <StatusBadge status={"completed"} />;
     },
   },
   {
@@ -72,9 +72,9 @@ export const ColumnsProviders: ColumnDef<ProviderProps>[] = [
   {
     accessorKey: "resources",
     header: "Resources",
-    cell: ({ row }) => {
-      const { resources } = getProviderAttributes(row);
-      return <p className="font-medium">{resources}</p>;
+    cell: () => {
+      // Temporarily overwriting the value until the API is functional.
+      return <p className="font-medium">{288}</p>;
     },
   },
   {

@@ -1,6 +1,7 @@
 import { Spacer } from "@nextui-org/react";
 import React, { Suspense } from "react";
 
+import { getProvider } from "@/actions";
 import {
   ColumnsProviders,
   DataTable,
@@ -8,7 +9,6 @@ import {
   ModalWrap,
   SkeletonTableProvider,
 } from "@/components";
-import { getProvider } from "@/lib/actions";
 
 export default async function Providers() {
   const onSave = async () => {
@@ -44,10 +44,5 @@ export default async function Providers() {
 const SSRDataTable = async () => {
   const providersData = await getProvider();
   const [providers] = await Promise.all([providersData]);
-  return (
-    <DataTable
-      columns={ColumnsProviders}
-      data={providers?.providers?.data ?? []}
-    />
-  );
+  return <DataTable columns={ColumnsProviders} data={providers?.data ?? []} />;
 };
