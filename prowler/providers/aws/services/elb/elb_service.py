@@ -13,8 +13,10 @@ class ELB(AWSService):
         super().__init__(__class__.__name__, provider)
         self.loadbalancers = {}
         self.__threading_call__(self._describe_load_balancers)
-        self.__threading_call__(self._describe_load_balancer_attributes)
-        self._describe_tags()
+        self.__threading_call__(
+            self._describe_load_balancer_attributes, self.loadbalancers.values()
+        )
+        self.__threading_call__(self._describe_tags, self.loadbalancers.values())
 
     def _describe_load_balancers(self, regional_client):
         logger.info("ELB - Describing load balancers...")
@@ -49,31 +51,34 @@ class ELB(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def _describe_load_balancer_attributes(self, regional_client):
+    def _describe_load_balancer_attributes(self, load_balancer):
         logger.info("ELB - Describing attributes...")
         try:
-            for lb in self.loadbalancers.values():
-                if lb.region == regional_client.region:
-                    attributes = regional_client.describe_load_balancer_attributes(
-                        LoadBalancerName=lb.name
-                    )["LoadBalancerAttributes"]
-                    if "AccessLog" in attributes:
-                        lb.access_logs = attributes["AccessLog"]["Enabled"]
+            regional_client = self.regional_clients[load_balancer.region]
+            attributes = regional_client.describe_load_balancer_attributes(
+                LoadBalancerName=load_balancer.name
+            )["LoadBalancerAttributes"]
+
+            load_balancer.access_logs = attributes.get("AccessLog", {}).get(
+                "Enabled", False
+            )
 
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def _describe_tags(self):
+    def _describe_tags(self, load_balancer):
         logger.info("ELB - List Tags...")
         try:
-            for lb in self.loadbalancers.values():
-                regional_client = self.regional_clients[lb.region]
-                response = regional_client.describe_tags(LoadBalancerNames=[lb.name])[
-                    "TagDescriptions"
-                ][0]
-                lb.tags = response.get("Tags")
+            regional_client = self.regional_clients[load_balancer.region]
+
+            tags = regional_client.describe_tags(
+                LoadBalancerNames=[load_balancer.name]
+            )["TagDescriptions"][0].get("Tags", [])
+
+            load_balancer.tags = tags
+
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
