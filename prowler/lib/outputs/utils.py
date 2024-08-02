@@ -1,4 +1,24 @@
-def unroll_list(listed_items: list, separator: str = "|"):
+def unroll_list(listed_items: list, separator: str = "|") -> str:
+    """
+    Unrolls a list of items into a single string, separated by a specified separator.
+
+    Args:
+        listed_items (list): The list of items to be unrolled.
+        separator (str, optional): The separator to be used between the items. Defaults to "|".
+
+    Returns:
+        str: The unrolled string.
+
+    Examples:
+        >>> unroll_list(['apple', 'banana', 'orange'])
+        'apple | banana | orange'
+
+        >>> unroll_list(['apple', 'banana', 'orange'], separator=',')
+        'apple, banana, orange'
+
+        >>> unroll_list([])
+        ''
+    """
     unrolled_items = ""
     if listed_items:
         for item in listed_items:
@@ -13,12 +33,28 @@ def unroll_list(listed_items: list, separator: str = "|"):
     return unrolled_items
 
 
-def unroll_tags(tags: list):
+def unroll_tags(tags: list) -> str:
     """
-    Unrolls tags from a list of dictionaries into a single dictionary.
-    Example:
-    tags = [{'Key': 'Name', 'Value': 'test'}, {'Key': 'Environment', 'Value': 'test'}]
-    unroll_tags(tags) -> {'Name': 'test', 'Environment': 'test'}
+    Unrolls a list of tags into a string representation.
+
+    Args:
+        tags (list): A list of tags. Each tag can be a dictionary or a string.
+
+    Returns:
+        str: A string representation of the unrolled tags.
+
+    Examples:
+        >>> tags = [{'Key': 'Name', 'Value': 'John'}, {'Key': 'Age', 'Value': '30'}]
+        >>> unroll_tags(tags)
+        'Name=John | Age=30'
+
+        >>> tags = ['Tag1', 'Tag2', 'Tag3']
+        >>> unroll_tags(tags)
+        'Tag1 | Tag2 | Tag3'
+
+        >>> tags = []
+        >>> unroll_tags(tags)
+        ''
     """
     if tags and tags != [{}] and tags != [None]:
         if "key" in tags[0]:
@@ -30,13 +66,22 @@ def unroll_tags(tags: list):
     return {}
 
 
-def unroll_dict(dict: dict, separator: str = "="):
+def unroll_dict(dict: dict, separator: str = "=") -> str:
     """
-    Unrolls a dictionary into a string.
-    Example:
-    dict = {'Name': 'test', 'Environment': 'test'}
-    unroll_dict(dict) -> 'Name=test | Environment=test'
+    Unrolls a dictionary into a string representation.
+
+    Args:
+        dict (dict): The dictionary to be unrolled.
+
+    Returns:
+        str: The unrolled string representation of the dictionary.
+
+    Examples:
+        >>> my_dict = {'name': 'John', 'age': 30, 'hobbies': ['reading', 'coding']}
+        >>> unroll_dict(my_dict)
+        'name: John | age: 30 | hobbies: reading, coding'
     """
+
     unrolled_items = ""
     for key, value in dict.items():
         if isinstance(value, list):
@@ -49,13 +94,22 @@ def unroll_dict(dict: dict, separator: str = "="):
     return unrolled_items
 
 
-def unroll_dict_to_list(dict: dict):
+def unroll_dict_to_list(dict: dict) -> []:
     """
-    Unrolls a dictionary into a list.
-    Example:
-    dict = {'Name': 'test', 'Environment': 'dev'}
-    unroll_dict_to_list(dict) -> ['Name:test', 'Environment:dev']
+    Unrolls a dictionary into a list of key-value pairs.
+
+    Args:
+        dict (dict): The dictionary to be unrolled.
+
+    Returns:
+        list: A list of key-value pairs, where each pair is represented as a string.
+
+    Examples:
+        >>> my_dict = {'name': 'John', 'age': 30, 'hobbies': ['reading', 'coding']}
+        >>> unroll_dict_to_list(my_dict)
+        ['name: John', 'age: 30', 'hobbies: reading, coding']
     """
+
     dict_list = []
     for key, value in dict.items():
         if isinstance(value, list):
@@ -67,7 +121,26 @@ def unroll_dict_to_list(dict: dict):
     return dict_list
 
 
-def parse_json_tags(tags: list):
+def parse_json_tags(tags: list) -> dict[str, str]:
+    """
+    Parses a list of JSON tags and returns a dictionary of key-value pairs.
+
+    Args:
+        tags (list): A list of JSON tags.
+
+    Returns:
+        dict: A dictionary containing the parsed key-value pairs from the tags.
+
+    Examples:
+        >>> tags = [
+        ...     {"Key": "Name", "Value": "John"},
+        ...     {"Key": "Age", "Value": "30"},
+        ...     {"Key": "City", "Value": "New York"}
+        ... ]
+        >>> parse_json_tags(tags)
+        {'Name': 'John', 'Age': '30', 'City': 'New York'}
+    """
+
     dict_tags = {}
     if tags and tags != [{}] and tags != [None]:
         for tag in tags:
@@ -79,7 +152,23 @@ def parse_json_tags(tags: list):
     return dict_tags
 
 
-def parse_html_string(str: str):
+def parse_html_string(str: str) -> str:
+    """
+    Parses a string and returns a formatted HTML string.
+
+    This function takes an input string and splits it using the delimiter " | ".
+    It then formats each element of the split string as a bullet point in HTML format.
+
+    Args:
+        str (str): The input string to be parsed.
+
+    Returns:
+        str: The formatted HTML string.
+
+    Example:
+        >>> parse_html_string("item1 | item2 | item3")
+        '\n&#x2022;item1\n\n&#x2022;item2\n\n&#x2022;item3\n'
+    """
     string = ""
     for elem in str.split(" | "):
         if elem:

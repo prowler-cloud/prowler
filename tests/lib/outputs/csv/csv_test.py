@@ -25,7 +25,7 @@ class TestCSV:
                 resource_uid="resource-123",
                 resource_name="Example Resource",
                 resource_details="Detailed information about the resource",
-                resource_tags={"tag1": "value1"},
+                resource_tags={"tag1": "value1", "tag2": "value2"},
                 partition="aws",
                 description="Description of the finding",
                 risk="High",
@@ -78,7 +78,7 @@ class TestCSV:
         assert (
             output_data["RESOURCE_DETAILS"] == "Detailed information about the resource"
         )
-        assert output_data["RESOURCE_TAGS"] == "tag1=value1"
+        assert output_data["RESOURCE_TAGS"] == "tag1=value1 | tag2=value2"
         assert output_data["PARTITION"] == "aws"
         assert output_data["REGION"] == AWS_REGION_EU_WEST_1
         assert output_data["DESCRIPTION"] == "Description of the finding"
