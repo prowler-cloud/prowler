@@ -3,6 +3,7 @@ import sys
 from os import getenv
 
 import requests
+from azure.core.exceptions import HttpResponseError
 from azure.identity import DefaultAzureCredential, InteractiveBrowserCredential
 from azure.mgmt.subscription import SubscriptionClient
 from colorama import Fore, Style
@@ -203,13 +204,15 @@ class AzureProvider(Provider):
         print_boxes(report_lines, report_title)
 
     # TODO: setup_session or setup_credentials?
+    # This should be setup_credentials, since it is setting up the credentials for the provider
+    @staticmethod
     def setup_session(
         self, az_cli_auth, sp_env_auth, browser_auth, managed_entity_auth, tenant_id
     ):
         # Browser auth creds cannot be set with DefaultAzureCredentials()
         if not browser_auth:
             if sp_env_auth:
-                self.__check_service_principal_creds_env_vars__()
+                self.check_service_principal_creds_env_vars()
             try:
                 # Since the input vars come as True when it is wanted to be used, we need to inverse it since
                 # DefaultAzureCredential sets the auth method excluding the others
@@ -244,7 +247,39 @@ class AzureProvider(Provider):
 
         return credentials
 
-    def __check_service_principal_creds_env_vars__(self):
+    @staticmethod
+    def test_connection(credentials):
+        """
+        Test the connection to an Azure subscription using the provided credentials.
+
+        Args:
+            credentials: The credentials object used to authenticate with Azure.
+
+        Returns:
+            bool: True if the connection is successful, False otherwise.
+        """
+        try:
+            # Create a SubscriptionClient
+            subscription_client = SubscriptionClient(credentials)
+
+            # Get info from the first subscription
+            subscription = next(subscription_client.subscriptions.list())
+
+            logger.info(f"Connected to Azure subscription: {subscription.display_name}")
+            return True
+
+        except HttpResponseError as e:
+            logger.critical(
+                f"Failed to connect to Azure subscription: {e.error.error.message}"
+            )
+
+        except Exception as ex:
+            logger.critical(
+                f"Failed to connect to Azure subscription: {ex.__class__.__name__}[{ex.__traceback__.tb_lineno}] -- {ex}"
+            )
+
+    @staticmethod
+    def check_service_principal_creds_env_vars(self):
         logger.info(
             "Azure provider: checking service principal environment variables  ..."
         )
