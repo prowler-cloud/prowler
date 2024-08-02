@@ -275,3 +275,55 @@ class Test_ELBv2_Service:
             .actions
             == actions
         )
+
+    # Test ELBv2 Describe Tags
+    @mock_aws
+    def test_describe_tags(self):
+        conn = client("elbv2", region_name=AWS_REGION_EU_WEST_1)
+        ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
+
+        security_group = ec2.create_security_group(
+            GroupName="a-security-group", Description="First One"
+        )
+        vpc = ec2.create_vpc(CidrBlock="172.28.7.0/24", InstanceTenancy="default")
+        subnet1 = ec2.create_subnet(
+            VpcId=vpc.id,
+            CidrBlock="172.28.7.192/26",
+            AvailabilityZone=AWS_REGION_EU_WEST_1_AZA,
+        )
+        subnet2 = ec2.create_subnet(
+            VpcId=vpc.id,
+            CidrBlock="172.28.7.0/26",
+            AvailabilityZone=AWS_REGION_EU_WEST_1_AZB,
+        )
+
+        lb = conn.create_load_balancer(
+            Name="my-lb",
+            Subnets=[subnet1.id, subnet2.id],
+            SecurityGroups=[security_group.id],
+            Scheme="internal",
+        )["LoadBalancers"][0]
+
+        conn.add_tags(
+            ResourceArns=[lb["LoadBalancerArn"]],
+            Tags=[
+                {"Key": "Name", "Value": "my-lb"},
+                {"Key": "Environment", "Value": "dev"},
+            ],
+        )
+
+        # ELBv2 client for this test class
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        )
+
+        elbv2 = ELBv2(aws_provider)
+
+        assert len(elbv2.loadbalancersv2) == 1
+        assert len(elbv2.loadbalancersv2[lb["LoadBalancerArn"]].tags) == 2
+        assert elbv2.loadbalancersv2[lb["LoadBalancerArn"]].tags[0]["Key"] == "Name"
+        assert elbv2.loadbalancersv2[lb["LoadBalancerArn"]].tags[0]["Value"] == "my-lb"
+        assert (
+            elbv2.loadbalancersv2[lb["LoadBalancerArn"]].tags[1]["Key"] == "Environment"
+        )
+        assert elbv2.loadbalancersv2[lb["LoadBalancerArn"]].tags[1]["Value"] == "dev"
