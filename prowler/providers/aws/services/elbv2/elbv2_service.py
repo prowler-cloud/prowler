@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Dict, Optional
 
 from botocore.client import ClientError
 from pydantic import BaseModel
@@ -14,10 +14,19 @@ class ELBv2(AWSService):
         super().__init__(__class__.__name__, provider)
         self.loadbalancersv2 = {}
         self.__threading_call__(self._describe_load_balancers)
-        self.__threading_call__(self._describe_listeners)
-        self.__threading_call__(self._describe_load_balancer_attributes)
-        self.__threading_call__(self._describe_rules)
-        self._describe_tags()
+        self.__threading_call__(self._describe_listeners, self.loadbalancersv2.items())
+        self.__threading_call__(
+            self._describe_load_balancer_attributes, self.loadbalancersv2.items()
+        )
+        self.__threading_call__(
+            self._describe_rules,
+            [
+                (listener_arn, listener)
+                for lb in self.loadbalancersv2.values()
+                for listener_arn, listener in lb.listeners.items()
+            ],
+        )
+        self.__threading_call__(self._describe_tags, self.loadbalancersv2.items())
 
     def _describe_load_balancers(self, regional_client):
         logger.info("ELBv2 - Describing load balancers...")
@@ -44,148 +53,122 @@ class ELBv2(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def _describe_listeners(self, regional_client):
+    def _describe_listeners(self, load_balancer):
         logger.info("ELBv2 - Describing listeners...")
         try:
-            for lb_arn, lb in self.loadbalancersv2.items():
-                try:
-                    if lb.region == regional_client.region:
-                        describe_elbv2_paginator = regional_client.get_paginator(
-                            "describe_listeners"
-                        )
-                        for page in describe_elbv2_paginator.paginate(
-                            LoadBalancerArn=lb_arn
-                        ):
-                            for listener in page["Listeners"]:
-                                lb.listeners[listener["ListenerArn"]] = Listenerv2(
-                                    region=regional_client.region,
-                                    port=listener.get("Port", 0),
-                                    ssl_policy=listener.get("SslPolicy", ""),
-                                    protocol=listener.get("Protocol", ""),
-                                )
+            # load_balancer is a tuple with the LoadBalancerArn and the LoadBalancer object
+            regional_client = self.regional_clients[load_balancer[1].region]
 
-                except ClientError as error:
-                    if error.response["Error"]["Code"] == "LoadBalancerNotFound":
-                        logger.warning(
-                            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                        )
-                    else:
-                        logger.error(
-                            f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                        )
-                except Exception as error:
-                    logger.error(
-                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            describe_elbv2_paginator = regional_client.get_paginator(
+                "describe_listeners"
+            )
+
+            for page in describe_elbv2_paginator.paginate(
+                LoadBalancerArn=load_balancer[0]
+            ):
+                for listener in page["Listeners"]:
+                    load_balancer[1].listeners[listener["ListenerArn"]] = Listenerv2(
+                        region=regional_client.region,
+                        port=listener.get("Port", 0),
+                        ssl_policy=listener.get("SslPolicy", ""),
+                        protocol=listener.get("Protocol", ""),
                     )
+
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "LoadBalancerNotFound":
+                logger.warning(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def _describe_load_balancer_attributes(self, regional_client):
+    def _describe_load_balancer_attributes(self, load_balancer):
         logger.info("ELBv2 - Describing attributes...")
         try:
-            for lb_arn, lb in self.loadbalancersv2.items():
-                try:
-                    if lb.region == regional_client.region:
-                        for (
-                            attribute
-                        ) in regional_client.describe_load_balancer_attributes(
-                            LoadBalancerArn=lb_arn
-                        )[
-                            "Attributes"
-                        ]:
-                            if (
-                                attribute["Key"]
-                                == "routing.http.desync_mitigation_mode"
-                            ):
-                                lb.desync_mitigation_mode = attribute["Value"]
-                            if attribute["Key"] == "deletion_protection.enabled":
-                                lb.deletion_protection = attribute["Value"]
-                            if attribute["Key"] == "access_logs.s3.enabled":
-                                lb.access_logs = attribute["Value"]
-                            if (
-                                attribute["Key"]
-                                == "routing.http.drop_invalid_header_fields.enabled"
-                            ):
-                                lb.drop_invalid_header_fields = attribute["Value"]
+            regional_client = self.regional_clients[load_balancer[1].region]
 
-                except ClientError as error:
-                    if error.response["Error"]["Code"] == "LoadBalancerNotFound":
-                        logger.warning(
-                            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                        )
-                    else:
-                        logger.error(
-                            f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                        )
-                except Exception as error:
-                    logger.error(
-                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                    )
+            for attribute in regional_client.describe_load_balancer_attributes(
+                LoadBalancerArn=load_balancer[0]
+            )["Attributes"]:
+                if attribute["Key"] == "routing.http.desync_mitigation_mode":
+                    load_balancer[1].desync_mitigation_mode = attribute["Value"]
+                if attribute["Key"] == "deletion_protection.enabled":
+                    load_balancer[1].deletion_protection = attribute["Value"]
+                if attribute["Key"] == "access_logs.s3.enabled":
+                    load_balancer[1].access_logs = attribute["Value"]
+                if (
+                    attribute["Key"]
+                    == "routing.http.drop_invalid_header_fields.enabled"
+                ):
+                    load_balancer[1].drop_invalid_header_fields = attribute["Value"]
+
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "LoadBalancerNotFound":
+                logger.warning(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def _describe_rules(self, regional_client):
+    def _describe_rules(self, listener):
         logger.info("ELBv2 - Describing Rules...")
         try:
-            for lb in self.loadbalancersv2.values():
-                if lb.region == regional_client.region:
-                    for listener_arn, listener in lb.listeners.items():
-                        try:
-                            for rule in regional_client.describe_rules(
-                                ListenerArn=listener_arn
-                            )["Rules"]:
-                                listener.rules.append(
-                                    ListenerRule(
-                                        arn=rule["RuleArn"],
-                                        actions=rule["Actions"],
-                                        conditions=rule["Conditions"],
-                                    )
-                                )
-                        except ClientError as error:
-                            if error.response["Error"]["Code"] == "ListenerNotFound":
-                                logger.warning(
-                                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                                )
-                            else:
-                                logger.error(
-                                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                                )
-                        except Exception as error:
-                            logger.error(
-                                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                            )
+            # listener is a tuple with the ListenerArn and the Listener object
+            regional_client = self.regional_clients[listener[1].region]
+
+            for rule in regional_client.describe_rules(ListenerArn=listener[0])[
+                "Rules"
+            ]:
+                listener[1].rules.append(
+                    ListenerRule(
+                        arn=rule["RuleArn"],
+                        actions=rule["Actions"],
+                        conditions=rule["Conditions"],
+                    )
+                )
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "ListenerNotFound":
+                logger.warning(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def _describe_tags(self):
+    def _describe_tags(self, load_balancer):
         logger.info("ELBv2 - List Tags...")
         try:
-            for lb_arn, lb in self.loadbalancersv2.items():
-                try:
-                    regional_client = self.regional_clients[lb.region]
-                    response = regional_client.describe_tags(ResourceArns=[lb_arn])[
-                        "TagDescriptions"
-                    ][0]
-                    lb.tags = response.get("Tags")
-                except ClientError as error:
-                    if error.response["Error"]["Code"] == "LoadBalancerNotFound":
-                        logger.warning(
-                            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                        )
-                    else:
-                        logger.error(
-                            f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                        )
-                except Exception as error:
-                    logger.error(
-                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                    )
+            regional_client = self.regional_clients[load_balancer[1].region]
+
+            load_balancer[1].tags = regional_client.describe_tags(
+                ResourceArns=[load_balancer[0]]
+            )["TagDescriptions"][0].get("Tags", [])
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "LoadBalancerNotFound":
+                logger.warning(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -215,6 +198,6 @@ class LoadBalancerv2(BaseModel):
     deletion_protection: Optional[str]
     dns: Optional[str]
     drop_invalid_header_fields: Optional[str]
-    listeners: dict = {}
+    listeners: Dict[str, Listenerv2] = {}
     scheme: Optional[str]
     tags: Optional[list] = []
