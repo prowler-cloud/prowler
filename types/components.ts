@@ -35,3 +35,15 @@ export interface ProviderProps {
     };
   };
 }
+
+export interface FindingsProps {
+  id: string;
+  attributes: {
+    CheckTitle: string;
+    severity: string;
+    status: string;
+    region: string;
+    service: string;
+    account: string;
+  };
+}

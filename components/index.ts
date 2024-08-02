@@ -1,3 +1,5 @@
+export * from "./findings/ColumnsFindings";
+export * from "./findings/SkeletonTableFindings";
 export * from "./providers/DateWithTime";
 export * from "./providers/ProviderInfo";
 export * from "./providers/ScanStatus";
