@@ -212,7 +212,7 @@ class GcpProvider(Provider):
 
             if credentials_file:
                 logger.info(f"Using credentials file: {credentials_file}")
-                self.__set_gcp_creds_env_var__(credentials_file)
+                self._set_gcp_creds_env_var(credentials_file)
 
             # Get default credentials
             credentials, _ = default(scopes=scopes)
@@ -238,12 +238,42 @@ class GcpProvider(Provider):
             )
             sys.exit(1)
 
-    def __set_gcp_creds_env_var__(self, credentials_file):
+    def _set_gcp_creds_env_var(self, credentials_file):
         logger.info(
             "GCP provider: Setting GOOGLE_APPLICATION_CREDENTIALS environment variable..."
         )
         client_secrets_path = os.path.abspath(credentials_file)
         os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = client_secrets_path
+
+    @staticmethod
+    def test_connection(session: Credentials) -> bool:
+        """
+        Test the connection to GCP using the provided session
+        Args:
+            session: Credentials
+        Returns:
+            bool: True if connection is successful, False otherwise
+        """
+        try:
+            service = discovery.build("cloudresourcemanager", "v1", credentials=session)
+            request = service.projects().list()
+            response = request.execute()
+            if response:
+                return True
+        except HttpError as http_error:
+            if "Cloud Resource Manager API has not been used" in str(http_error):
+                logger.error(
+                    "Cloud Resource Manager API has not been used before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/cloudresourcemanager.googleapis.com/ then retry."
+                )
+            else:
+                logger.error(
+                    f"{http_error.__class__.__name__}[{http_error.__traceback__.tb_lineno}]: {http_error}"
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return False
 
     def print_credentials(self):
         # TODO: Beautify audited profile, set "default" if there is no profile set
