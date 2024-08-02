@@ -98,6 +98,15 @@ class TestOutputs:
             {"Key": "environment", "Value": "dev"},
             {"Key": "terraform", "Value": "true"},
         ]
+
+        assert unroll_tags(dict_list) == {
+            "environment": "dev",
+            "name": "test",
+            "project": "prowler",
+            "terraform": "true",
+        }
+
+    def test_unroll_tags_unique(self):
         unique_dict_list = [
             {
                 "test1": "value1",
@@ -105,16 +114,25 @@ class TestOutputs:
                 "test3": "value3",
             }
         ]
+        assert unroll_tags(unique_dict_list) == {
+            "test1": "value1",
+            "test2": "value2",
+            "test3": "value3",
+        }
+
+    def test_unroll_tags_lowercase(self):
+        dict_list = [
+            {"key": "name", "value": "test"},
+            {"key": "project", "value": "prowler"},
+            {"key": "environment", "value": "dev"},
+            {"key": "terraform", "value": "true"},
+        ]
+
         assert unroll_tags(dict_list) == {
             "environment": "dev",
             "name": "test",
             "project": "prowler",
             "terraform": "true",
-        }
-        assert unroll_tags(unique_dict_list) == {
-            "test1": "value1",
-            "test2": "value2",
-            "test3": "value3",
         }
 
     def test_unroll_dict(self):

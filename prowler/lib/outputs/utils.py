@@ -33,28 +33,32 @@ def unroll_list(listed_items: list, separator: str = "|") -> str:
     return unrolled_items
 
 
-def unroll_tags(tags: list) -> str:
+def unroll_tags(tags: list) -> dict:
     """
-    Unrolls a list of tags into a string representation.
+    Unrolls a list of tags into a dictionary.
 
     Args:
-        tags (list): A list of tags. Each tag can be a dictionary or a string.
+        tags (list): A list of tags.
 
     Returns:
-        str: A string representation of the unrolled tags.
+        dict: A dictionary containing the unrolled tags.
 
     Examples:
-        >>> tags = [{'Key': 'Name', 'Value': 'John'}, {'Key': 'Age', 'Value': '30'}]
+        >>> tags = [{"key": "name", "value": "John"}, {"key": "age", "value": "30"}]
         >>> unroll_tags(tags)
-        'Name=John | Age=30'
+        {'name': 'John', 'age': '30'}
 
-        >>> tags = ['Tag1', 'Tag2', 'Tag3']
+        >>> tags = [{"Key": "name", "Value": "John"}, {"Key": "age", "Value": "30"}]
         >>> unroll_tags(tags)
-        'Tag1 | Tag2 | Tag3'
+        {'name': 'John', 'age': '30'}
+
+        >>> tags = [{"name": "John", "age": "30"}]
+        >>> unroll_tags(tags)
+        {'name': 'John', 'age': '30'}
 
         >>> tags = []
         >>> unroll_tags(tags)
-        ''
+        {}
     """
     if tags and tags != [{}] and tags != [None]:
         if "key" in tags[0]:
@@ -94,7 +98,7 @@ def unroll_dict(dict: dict, separator: str = "=") -> str:
     return unrolled_items
 
 
-def unroll_dict_to_list(dict: dict) -> []:
+def unroll_dict_to_list(dict: dict) -> list:
     """
     Unrolls a dictionary into a list of key-value pairs.
 
