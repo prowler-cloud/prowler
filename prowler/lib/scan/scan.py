@@ -68,7 +68,7 @@ class Scan:
     def scan(
         self,
         custom_checks_metadata: dict = {},
-    ) -> Generator[float, list[Finding], None]:
+    ) -> Generator[tuple[float, list[Finding]], None, None]:
         """
         Executes the scan by iterating over the checks to execute and executing each check.
         Yields the progress and findings for each check.
