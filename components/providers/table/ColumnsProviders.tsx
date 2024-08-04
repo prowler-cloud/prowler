@@ -14,12 +14,12 @@ import { VerticalDotsIcon } from "@/components/icons";
 import { StatusBadge } from "@/components/ui/table/StatusBadge";
 import { ProviderProps } from "@/types";
 
-import { DateWithTime } from "../DateWithTime";
-import { ProviderInfo } from "../ProviderInfo";
-import { DeleteProvider } from "../DeleteProvider";
 import { CheckConnectionProvider } from "../CheckConnectionProvider";
+import { DateWithTime } from "../DateWithTime";
+import { DeleteProvider } from "../DeleteProvider";
+import { ProviderInfo } from "../ProviderInfo";
 
-const getProviderData= (row: { original: ProviderProps }) => {
+const getProviderData = (row: { original: ProviderProps }) => {
   return row.original;
 };
 
@@ -32,7 +32,9 @@ export const ColumnsProviders: ColumnDef<ProviderProps>[] = [
     accessorKey: "account",
     header: "Account",
     cell: ({ row }) => {
-      const { attributes: { connection, provider, alias, provider_id } } = getProviderData(row);
+      const {
+        attributes: { connection, provider, alias, provider_id },
+      } = getProviderData(row);
       return (
         <ProviderInfo
           connected={connection.connected}
@@ -55,7 +57,9 @@ export const ColumnsProviders: ColumnDef<ProviderProps>[] = [
     accessorKey: "lastScan",
     header: "Last Scan",
     cell: ({ row }) => {
-      const { attributes: {updated_at} } = getProviderData(row);
+      const {
+        attributes: { updated_at },
+      } = getProviderData(row);
       return <DateWithTime dateTime={updated_at} />;
     },
   },
@@ -63,7 +67,9 @@ export const ColumnsProviders: ColumnDef<ProviderProps>[] = [
     accessorKey: "nextScan",
     header: "Next Scan",
     cell: ({ row }) => {
-      const { attributes: {updated_at} } = getProviderData(row);
+      const {
+        attributes: { updated_at },
+      } = getProviderData(row);
       const nextDay = add(new Date(updated_at), {
         hours: 24,
       });
@@ -82,7 +88,9 @@ export const ColumnsProviders: ColumnDef<ProviderProps>[] = [
     accessorKey: "added",
     header: "Added",
     cell: ({ row }) => {
-      const { attributes: {inserted_at} } = getProviderData(row);
+      const {
+        attributes: { inserted_at },
+      } = getProviderData(row);
       return <DateWithTime dateTime={inserted_at} showTime={false} />;
     },
   },
@@ -101,7 +109,9 @@ export const ColumnsProviders: ColumnDef<ProviderProps>[] = [
               </Button>
             </DropdownTrigger>
             <DropdownMenu>
-              <DropdownItem><CheckConnectionProvider id={id} /></DropdownItem>
+              <DropdownItem>
+                <CheckConnectionProvider id={id} />
+              </DropdownItem>
               <DropdownItem>
                 <DeleteProvider id={id} />
               </DropdownItem>

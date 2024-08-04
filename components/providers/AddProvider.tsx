@@ -1,22 +1,24 @@
 "use client";
 
-import { addProvider } from "@/actions";
 import { useRef } from "react";
+
+import { addProvider } from "@/actions";
+
 import { useToast } from "../ui/toast";
 import { ButtonAddProvider } from "./ButtonAddProvider";
 
 export const AddProvider = () => {
-  const ref = useRef<HTMLFormElement>(null)
-  const { toast } = useToast()
-  
-  async function clientAction(formData:FormData) {
+  const ref = useRef<HTMLFormElement>(null);
+  const { toast } = useToast();
+
+  async function clientAction(formData: FormData) {
     // reset the form
     ref.current?.reset();
     // client-side validation
-    const data = await addProvider(formData)
+    const data = await addProvider(formData);
     if (data?.errors) {
       data.errors.forEach((error: { detail: string }) => {
-        let errorMessage = `${error.detail}`;
+        const errorMessage = `${error.detail}`;
         // show error
         toast({
           title: "Wops! Something went wrong",
