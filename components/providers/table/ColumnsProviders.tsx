@@ -17,6 +17,7 @@ import { ProviderProps } from "@/types";
 import { DateWithTime } from "../DateWithTime";
 import { ProviderInfo } from "../ProviderInfo";
 import { DeleteProvider } from "../DeleteProvider";
+import { CheckConnectionProvider } from "../CheckConnectionProvider";
 
 const getProviderData= (row: { original: ProviderProps }) => {
   return row.original;
@@ -100,8 +101,7 @@ export const ColumnsProviders: ColumnDef<ProviderProps>[] = [
               </Button>
             </DropdownTrigger>
             <DropdownMenu>
-              <DropdownItem>Check connection</DropdownItem>
-              <DropdownItem>Manage</DropdownItem>
+              <DropdownItem><CheckConnectionProvider id={id} /></DropdownItem>
               <DropdownItem>
                 <DeleteProvider id={id} />
               </DropdownItem>

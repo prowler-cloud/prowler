@@ -13,9 +13,9 @@ export const AddProvider = () => {
     // reset the form
     ref.current?.reset();
     // client-side validation
-    const result = await addProvider(formData)
-    if (result?.errors) {
-      result.errors.forEach((error: { detail: string }) => {
+    const data = await addProvider(formData)
+    if (data?.errors) {
+      data.errors.forEach((error: { detail: string }) => {
         let errorMessage = `${error.detail}`;
         // show error
         toast({

@@ -328,6 +328,26 @@ export const DeleteIcon: React.FC<IconSvgProps> = ({
   </svg>
 );
 
+export const CheckIcon: React.FC<IconSvgProps> = ({
+  size = 48,
+  width,
+  height,
+  ...props
+}) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size || width}
+    height={size || height}
+    viewBox="0 0 2048 2048"
+    {...props}
+  >
+    <path
+      fill="currentColor"
+      d="M2048 1024q0 142-36 272t-103 245t-160 207t-208 160t-245 103t-272 37q-142 0-272-36t-245-103t-207-160t-160-208t-103-245t-37-272q0-141 36-272t103-245t160-207t208-160T752 37t272-37q141 0 272 36t245 103t207 160t160 208t103 245t37 272m-1024 896q123 0 237-32t214-90t182-141t140-181t91-214t32-238q0-123-32-237t-90-214t-141-182t-181-140t-214-91t-238-32q-124 0-238 32t-213 90t-182 141t-140 181t-91 214t-32 238q0 124 32 238t90 213t141 182t181 140t214 91t238 32m0-512q55 0 107-15t98-45t81-69t61-91l116 56q-32 67-80 121t-109 92t-130 58t-144 21q-110 0-210-45t-174-128v173H512v-384h384v128H738q54 60 129 94t157 34m384-723V512h128v384h-384V768h158q-54-60-129-94t-157-34q-55 0-107 15t-98 45t-81 69t-61 91l-116-56q32-67 80-121t109-92t130-58t144-21q110 0 210 45t174 128"
+    />
+  </svg>
+);
+
 export const RocketIcon: React.FC<IconSvgProps> = ({
   size = 24,
   width,

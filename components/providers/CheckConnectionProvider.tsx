@@ -2,12 +2,12 @@
 
 import { useRef } from "react";
 
-import { deleteProvider } from "@/actions";
+import { checkConnectionProvider } from "@/actions";
 
 import { useToast } from "../ui/toast";
-import { ButtonDeleteProvider } from "./ButtonDeleteProvider";
+import { ButtonCheckConnectionProvider } from "./ButtonCheckConnectionProvider";
 
-export const DeleteProvider = ({ id }: { id: string }) => {
+export const CheckConnectionProvider = ({ id }: { id: string }) => {
   const ref = useRef<HTMLFormElement>(null);
   const { toast } = useToast();
 
@@ -15,7 +15,7 @@ export const DeleteProvider = ({ id }: { id: string }) => {
     // reset the form
     ref.current?.reset();
     // client-side validation
-    const data = await deleteProvider(formData);
+    const data = await checkConnectionProvider(formData);
     if (data?.errors && data.errors.length > 0) {
       const error = data.errors[0];
       const errorMessage = `${error.detail}`;
@@ -27,14 +27,14 @@ export const DeleteProvider = ({ id }: { id: string }) => {
     } else {
       toast({
         title: "Success!",
-        description: "The provider was removed successfully.",
+        description: "The connection was updated successfully.",
       });
     }
   }
   return (
     <form ref={ref} action={clientAction} className="flex gap-x-2">
       <input type="hidden" name="id" value={id} />
-      <ButtonDeleteProvider />
+      <ButtonCheckConnectionProvider />
     </form>
   );
 };

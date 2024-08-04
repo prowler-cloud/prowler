@@ -21,6 +21,7 @@ export const getProvider = async () => {
 	}
 };
 
+
 export const addProvider = async (formData: FormData) => {
 	const keyServer = process.env.LOCAL_SERVER_URL;
 
@@ -58,26 +59,49 @@ export const addProvider = async (formData: FormData) => {
 	revalidatePath("/providers")
 };
 
+export const checkConnectionProvider = async (formData: FormData) => {
+	const keyServer = process.env.LOCAL_SERVER_URL;
+
+	const providerId = formData.get("id");
+
+	try {
+		const response = await fetch(`${keyServer}/providers/${providerId}/connection`, {
+			method: "POST",
+			headers: {
+				"X-Tenant-ID": `${process.env.HEADER_TENANT_ID}`,
+			},
+		});
+		const data = await response.json();
+		revalidatePath("/providers")
+		return parseStringify(data);
+	} catch (error) {
+		return {
+			error: getErrorMessage(error),
+		}
+	}
+};
+
 export const deleteProvider = async (formData: FormData) => {
 	const keyServer = process.env.LOCAL_SERVER_URL;
 
 	const providerId = formData.get("id");
 
 	try {
-		await fetch(`${keyServer}/providers/${providerId}`, {
+		const response = await fetch(`${keyServer}/providers/${providerId}`, {
 			method: "DELETE",
 			headers: {
 				"X-Tenant-ID": `${process.env.HEADER_TENANT_ID}`,
 			},
 		});
+		const data = await response.json();
+		revalidatePath("/providers")
+		return parseStringify(data);
 	} catch (error) {
 		return {
 			error: getErrorMessage(error),
 		}
 	}
-	revalidatePath("/providers")
 };
-
 export const getErrorMessage = (error: unknown): string => {
 	let message: string;
 
