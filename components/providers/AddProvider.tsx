@@ -2,34 +2,35 @@
 
 import { addProvider } from "@/actions";
 import { useRef } from "react";
+import { useToast } from "../ui/toast";
 import { ButtonAddProvider } from "./ButtonAddProvider";
-import { toast, useToast } from "../ui/toast";
-import { ToastAction } from "@radix-ui/react-toast";
 
 export const AddProvider = () => {
   const ref = useRef<HTMLFormElement>(null)
   const { toast } = useToast()
+  
   async function clientAction(formData:FormData) {
     // reset the form
     ref.current?.reset();
     // client-side validation
     const result = await addProvider(formData)
-    if (result?.error) {
-
-      const error = result.error
-      //show error
-      toast({
-        title: `${error}`,
-        description: "There was a problem with your request.",
-      })
+    if (result?.errors) {
+      result.errors.forEach((error: { detail: string }) => {
+        let errorMessage = `${error.detail}`;
+        // show error
+        toast({
+          title: "Wops! Something went wrong",
+          description: errorMessage,
+        });
+      });
     } else {
       toast({
         title: "Success!",
         description: "The provider was added successfully.",
-      })
+      });
     }
-
   }
+
   return (
     <form ref={ref} action={clientAction} className="flex gap-x-2">
       <input
@@ -51,8 +52,6 @@ export const AddProvider = () => {
         className="py-2 px-3 rounded-sm"
       />
       <ButtonAddProvider />
-
-
     </form>
   );
 };

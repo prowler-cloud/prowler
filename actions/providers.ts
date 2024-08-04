@@ -13,8 +13,8 @@ export const getProvider = async () => {
 				"X-Tenant-ID": `${process.env.HEADER_TENANT_ID}`,
 			},
 		});
-
 		const data = await providers.json();
+		revalidatePath("/providers")
 		return parseStringify(data);
 	} catch (error) {
 		return undefined;
@@ -47,10 +47,8 @@ export const addProvider = async (formData: FormData) => {
 			}),
 		});
 		const data = await response.json();
-
-		if (!response.ok) {
-			throw new Error(data.message || "Request error");
-		}
+		revalidatePath("/providers")
+		return parseStringify(data);
 	} catch (error) {
 		console.error(error)
 		return {
@@ -58,7 +56,6 @@ export const addProvider = async (formData: FormData) => {
 		}
 	}
 	revalidatePath("/providers")
-	
 };
 
 export const deleteProvider = async (formData: FormData) => {
@@ -73,15 +70,12 @@ export const deleteProvider = async (formData: FormData) => {
 				"X-Tenant-ID": `${process.env.HEADER_TENANT_ID}`,
 			},
 		});
-
 	} catch (error) {
-		console.error(error)
 		return {
 			error: getErrorMessage(error),
 		}
 	}
 	revalidatePath("/providers")
-	
 };
 
 export const getErrorMessage = (error: unknown): string => {

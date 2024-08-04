@@ -16,9 +16,10 @@ import { ProviderProps } from "@/types";
 
 import { DateWithTime } from "../DateWithTime";
 import { ProviderInfo } from "../ProviderInfo";
+import { DeleteProvider } from "../DeleteProvider";
 
-const getProviderAttributes = (row: { original: ProviderProps }) => {
-  return row.original.attributes;
+const getProviderData= (row: { original: ProviderProps }) => {
+  return row.original;
 };
 
 export const ColumnsProviders: ColumnDef<ProviderProps>[] = [
@@ -30,8 +31,7 @@ export const ColumnsProviders: ColumnDef<ProviderProps>[] = [
     accessorKey: "account",
     header: "Account",
     cell: ({ row }) => {
-      const { connection, provider, alias, provider_id } =
-        getProviderAttributes(row);
+      const { attributes: { connection, provider, alias, provider_id } } = getProviderData(row);
       return (
         <ProviderInfo
           connected={connection.connected}
@@ -54,7 +54,7 @@ export const ColumnsProviders: ColumnDef<ProviderProps>[] = [
     accessorKey: "lastScan",
     header: "Last Scan",
     cell: ({ row }) => {
-      const { updated_at } = getProviderAttributes(row);
+      const { attributes: {updated_at} } = getProviderData(row);
       return <DateWithTime dateTime={updated_at} />;
     },
   },
@@ -62,7 +62,7 @@ export const ColumnsProviders: ColumnDef<ProviderProps>[] = [
     accessorKey: "nextScan",
     header: "Next Scan",
     cell: ({ row }) => {
-      const { updated_at } = getProviderAttributes(row);
+      const { attributes: {updated_at} } = getProviderData(row);
       const nextDay = add(new Date(updated_at), {
         hours: 24,
       });
@@ -81,7 +81,7 @@ export const ColumnsProviders: ColumnDef<ProviderProps>[] = [
     accessorKey: "added",
     header: "Added",
     cell: ({ row }) => {
-      const { inserted_at } = getProviderAttributes(row);
+      const { attributes: {inserted_at} } = getProviderData(row);
       return <DateWithTime dateTime={inserted_at} showTime={false} />;
     },
   },
@@ -89,7 +89,8 @@ export const ColumnsProviders: ColumnDef<ProviderProps>[] = [
     accessorKey: "actions",
     header: () => <div className="text-right">Actions</div>,
     id: "actions",
-    cell: () => {
+    cell: ({ row }) => {
+      const { id } = getProviderData(row);
       return (
         <div className="relative flex justify-end items-center gap-2">
           <Dropdown className="bg-background border-1 border-default-200">
@@ -101,7 +102,9 @@ export const ColumnsProviders: ColumnDef<ProviderProps>[] = [
             <DropdownMenu>
               <DropdownItem>Check connection</DropdownItem>
               <DropdownItem>Manage</DropdownItem>
-              <DropdownItem>Delete</DropdownItem>
+              <DropdownItem>
+                <DeleteProvider id={id} />
+              </DropdownItem>
             </DropdownMenu>
           </Dropdown>
         </div>

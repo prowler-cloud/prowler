@@ -1,4 +1,6 @@
 export * from "./providers/AddProvider";
+export * from "./providers/ButtonAddProvider";
+export * from "./providers/ButtonDeleteProvider";
 export * from "./providers/DateWithTime";
 export * from "./providers/ProviderInfo";
 export * from "./providers/ScanStatus";
