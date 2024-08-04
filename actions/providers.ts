@@ -1,5 +1,3 @@
-// import "server-only";
-
 "use server";
 
 import { revalidatePath } from "next/cache";
@@ -12,7 +10,7 @@ export const getProvider = async () => {
 	try {
 		const providers = await fetch(`${keyServer}/providers`, {
 			headers: {
-				"X-Tenant-ID": "12646005-9067-4d2a-a098-8bb378604362",
+				"X-Tenant-ID": `${process.env.HEADER_TENANT_ID}`,
 			},
 		});
 
@@ -27,15 +25,14 @@ export const addProvider = async (formData: FormData) => {
 	const keyServer = process.env.LOCAL_SERVER_URL;
 
 	const provider = formData.get("provider");
-	const articleId = formData.get("id");
+	const providerId = formData.get("id");
 	const alias = formData.get("alias");
-	console.log(provider, articleId, alias)
 
 	try {
 		const response = await fetch(`${keyServer}/providers`, {
 			method: "POST",
 			headers: {
-				"X-Tenant-ID": "12646005-9067-4d2a-a098-8bb378604362",
+				"X-Tenant-ID": `${process.env.HEADER_TENANT_ID}`,
 				"Content-Type": "application/vnd.api+json",
 			},
 			body: JSON.stringify({
@@ -43,7 +40,7 @@ export const addProvider = async (formData: FormData) => {
 					type: "Provider",
 					attributes: {
 						provider: provider, 
-						provider_id: articleId,
+						provider_id: providerId,
 						alias: alias, 
 					},
 				}
@@ -51,11 +48,32 @@ export const addProvider = async (formData: FormData) => {
 		});
 		const data = await response.json();
 
-		console.log(data, 'triana')
 		if (!response.ok) {
 			throw new Error(data.message || "Request error");
 		}
-		// return parseStringify(data);
+	} catch (error) {
+		console.error(error)
+		return {
+			error: getErrorMessage(error),
+		}
+	}
+	revalidatePath("/providers")
+	
+};
+
+export const deleteProvider = async (formData: FormData) => {
+	const keyServer = process.env.LOCAL_SERVER_URL;
+
+	const providerId = formData.get("id");
+
+	try {
+		await fetch(`${keyServer}/providers/${providerId}`, {
+			method: "DELETE",
+			headers: {
+				"X-Tenant-ID": `${process.env.HEADER_TENANT_ID}`,
+			},
+		});
+
 	} catch (error) {
 		console.error(error)
 		return {
