@@ -1,10 +1,9 @@
 import os
 import pathlib
 import sys
-from argparse import Namespace
+from argparse import ArgumentTypeError, Namespace
 from datetime import datetime
 from re import fullmatch
-from typing import Union
 
 from boto3 import client
 from boto3.session import Session
@@ -108,7 +107,7 @@ class AwsProvider(Provider):
         )
 
         connected, caller_identity = self.test_connection(
-            self.session.current_session, sts_region
+            session=self.session.current_session, aws_region=sts_region
         )
         # TODO: review this for CLI and SDK usage
         if not connected:
@@ -903,7 +902,7 @@ class AwsProvider(Provider):
         session_duration: int = 3600,
         external_id: str = None,
         mfa_enabled: bool = False,
-    ) -> tuple[bool, Union[AWSCallerIdentity, Exception]]:
+    ) -> tuple[bool, AWSCallerIdentity | Exception]:
         """
         Validates AWS credentials using the provided session and AWS region.
 
@@ -928,6 +927,16 @@ class AwsProvider(Provider):
 
         Raises:
             Exception: If an error occurs during the validation process.
+
+        Examples:
+            >>> AwsProvider.test_connection(
+                role_arn="arn:aws:iam::111122223333:role/ProwlerRole",
+                external_id="67f7a641-ecb0-4f6d-921d-3587febd379c"
+            )
+            (True, AWSCallerIdentity(user_id='AROAAAAAAAAAAAAAAAAAA:ProwlerAssessmentSession', account='111122223333', arn=ARN(arn='arn:aws:sts::111122223333:assumed-role/ProwlerRole/ProwlerAssessmentSession', partition='aws', service='sts', region=None, account_id='111122223333', resource='ProwlerRole/ProwlerAssessmentSession', resource_type='assumed-role'), region='us-east-1'))
+
+            >>> AwsProvider.test_connection(profile="test")
+            (True, AWSCallerIdentity(user_id='AROAAAAAAAAAAAAAAAAAA:test-user', account='111122223333', arn=ARN(arn='arn:aws:sts::111122223333:user/test-user', partition='aws', service='sts', region=None, account_id='111122223333', resource='test-user', resource_type='user'), region='us-east-1'))
         """
         try:
             # Create the default session if no session is given
@@ -1073,12 +1082,12 @@ def validate_session_duration(duration: int) -> int:
         int: The validated session duration.
 
     Raises:
-        ValueError: If the session duration is not within the valid range.
+        ArgumentTypeError: If the session duration is not within the valid range.
     """
     duration = int(duration)
     # Since the range(i,j) goes from i to j-1 we have to j+1
     if duration not in range(900, 43201):
-        raise ValueError("Session duration must be between 900 and 43200")
+        raise ArgumentTypeError("Session duration must be between 900 and 43200")
     return duration
 
 
@@ -1094,7 +1103,7 @@ def validate_role_session_name(session_name) -> str:
         str: The validated role session name.
 
     Raises:
-        ValueError: If the role session name is invalid.
+        ArgumentTypeError: If the role session name is invalid.
 
     Documentation:
         - AWS STS AssumeRole API: https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html
@@ -1102,6 +1111,6 @@ def validate_role_session_name(session_name) -> str:
     if fullmatch(r"[\w+=,.@-]{2,64}", session_name):
         return session_name
     else:
-        raise ValueError(
+        raise ArgumentTypeError(
             "Role Session Name must be 2-64 characters long and consist only of upper- and lower-case alphanumeric characters with no spaces. You can also include underscores or any of the following characters: =,.@-"
         )

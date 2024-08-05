@@ -23,6 +23,7 @@ from prowler.providers.aws.aws_provider import (
 from prowler.providers.aws.config import (
     AWS_STS_GLOBAL_ENDPOINT_REGION,
     BOTO3_USER_AGENT_EXTRA,
+    ROLE_SESSION_NAME,
 )
 from prowler.providers.aws.lib.arn.models import ARN
 from prowler.providers.aws.lib.mutelist.mutelist import AWSMutelist
@@ -1098,11 +1099,8 @@ aws:
 
     @mock_aws
     def test_validate_credentials_commercial_partition_with_regions(self):
-        # AWS Region for AWS COMMERCIAL
-        aws_region = AWS_REGION_EU_WEST_1
-        aws_partition = AWS_COMMERCIAL_PARTITION
         # Create a mock IAM user
-        iam_client = client("iam", region_name=aws_region)
+        iam_client = client("iam", region_name=AWS_REGION_EU_WEST_1)
         iam_user = iam_client.create_user(UserName="test-user")["User"]
         # Create a mock IAM access keys
         access_key = iam_client.create_access_key(UserName=iam_user["UserName"])[
@@ -1115,11 +1113,11 @@ aws:
         current_session = session.Session(
             aws_access_key_id=access_key_id,
             aws_secret_access_key=secret_access_key,
-            region_name=aws_region,
+            region_name=AWS_REGION_EU_WEST_1,
         )
 
         connected, get_caller_identity = AwsProvider.test_connection(
-            current_session, aws_region
+            session=current_session, aws_region=AWS_REGION_EU_WEST_1
         )
 
         assert connected
@@ -1127,10 +1125,10 @@ aws:
 
         assert re.match("[0-9a-zA-Z]{20}", get_caller_identity.user_id)
         assert get_caller_identity.account == AWS_ACCOUNT_NUMBER
-        assert get_caller_identity.region == aws_region
+        assert get_caller_identity.region == AWS_REGION_EU_WEST_1
 
         assert isinstance(get_caller_identity.arn, ARN)
-        assert get_caller_identity.arn.partition == aws_partition
+        assert get_caller_identity.arn.partition == AWS_COMMERCIAL_PARTITION
         assert get_caller_identity.arn.region is None
         assert get_caller_identity.arn.resource == "test-user"
         assert get_caller_identity.arn.resource_type == "user"
@@ -1140,11 +1138,8 @@ aws:
         "botocore.client.BaseClient._make_api_call", new=mock_get_caller_identity_china
     )
     def test_validate_credentials_china_partition(self):
-        # AWS Region for AWS CHINA
-        aws_region = AWS_REGION_CN_NORTH_1
-        aws_partition = AWS_CHINA_PARTITION
         # Create a mock IAM user
-        iam_client = client("iam", region_name=aws_region)
+        iam_client = client("iam", region_name=AWS_REGION_CN_NORTH_1)
         iam_user = iam_client.create_user(UserName="test-user")["User"]
         # Create a mock IAM access keys
         access_key = iam_client.create_access_key(UserName=iam_user["UserName"])[
@@ -1157,14 +1152,14 @@ aws:
         current_session = session.Session(
             aws_access_key_id=access_key_id,
             aws_secret_access_key=secret_access_key,
-            region_name=aws_region,
+            region_name=AWS_REGION_CN_NORTH_1,
         )
 
         # To use GovCloud or China it is either required:
         # - Set the AWS profile region with a valid partition region
         # - Use the -f/--region with a valid partition region
         connected, get_caller_identity = AwsProvider.test_connection(
-            current_session, aws_region
+            session=current_session, aws_region=AWS_REGION_CN_NORTH_1
         )
 
         assert connected
@@ -1172,10 +1167,10 @@ aws:
 
         assert re.match("[0-9a-zA-Z]{20}", get_caller_identity.user_id)
         assert get_caller_identity.account == AWS_ACCOUNT_NUMBER
-        assert get_caller_identity.region == aws_region
+        assert get_caller_identity.region == AWS_REGION_CN_NORTH_1
 
         assert isinstance(get_caller_identity.arn, ARN)
-        assert get_caller_identity.arn.partition == aws_partition
+        assert get_caller_identity.arn.partition == AWS_CHINA_PARTITION
         assert get_caller_identity.arn.region is None
         assert get_caller_identity.arn.resource == "test-user"
         assert get_caller_identity.arn.resource_type == "user"
@@ -1186,10 +1181,8 @@ aws:
         new=mock_get_caller_identity_gov_cloud,
     )
     def test_validate_credentials_gov_cloud_partition(self):
-        aws_region = AWS_REGION_GOV_CLOUD_US_EAST_1
-        aws_partition = AWS_GOV_CLOUD_PARTITION
         # Create a mock IAM user
-        iam_client = client("iam", region_name=aws_region)
+        iam_client = client("iam", region_name=AWS_REGION_GOV_CLOUD_US_EAST_1)
         iam_user = iam_client.create_user(UserName="test-user")["User"]
         # Create a mock IAM access keys
         access_key = iam_client.create_access_key(UserName=iam_user["UserName"])[
@@ -1202,14 +1195,14 @@ aws:
         current_session = session.Session(
             aws_access_key_id=access_key_id,
             aws_secret_access_key=secret_access_key,
-            region_name=aws_region,
+            region_name=AWS_REGION_GOV_CLOUD_US_EAST_1,
         )
 
         # To use GovCloud or China it is either required:
         # - Set the AWS profile region with a valid partition region
         # - Use the -f/--region with a valid partition region
         connected, get_caller_identity = AwsProvider.test_connection(
-            current_session, aws_region
+            session=current_session, aws_region=AWS_REGION_GOV_CLOUD_US_EAST_1
         )
 
         assert connected
@@ -1217,20 +1210,18 @@ aws:
 
         assert re.match("[0-9a-zA-Z]{20}", get_caller_identity.user_id)
         assert get_caller_identity.account == AWS_ACCOUNT_NUMBER
-        assert get_caller_identity.region == aws_region
+        assert get_caller_identity.region == AWS_REGION_GOV_CLOUD_US_EAST_1
 
         assert isinstance(get_caller_identity.arn, ARN)
-        assert get_caller_identity.arn.partition == aws_partition
+        assert get_caller_identity.arn.partition == AWS_GOV_CLOUD_PARTITION
         assert get_caller_identity.arn.region is None
         assert get_caller_identity.arn.resource == "test-user"
         assert get_caller_identity.arn.resource_type == "user"
 
     @mock_aws
     def test_validate_credentials_without_a_session(self, monkeypatch):
-        aws_region = AWS_REGION_US_EAST_1
-        aws_partition = AWS_COMMERCIAL_PARTITION
         # Create a mock IAM user
-        iam_client = client("iam", region_name=aws_region)
+        iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
         iam_user = iam_client.create_user(UserName="test-user")["User"]
         # Create a mock IAM access keys
         access_key = iam_client.create_access_key(UserName=iam_user["UserName"])[
@@ -1247,13 +1238,93 @@ aws:
 
         assert re.match("[0-9a-zA-Z]{20}", get_caller_identity.user_id)
         assert get_caller_identity.account == AWS_ACCOUNT_NUMBER
-        assert get_caller_identity.region == aws_region
+        assert get_caller_identity.region == AWS_REGION_US_EAST_1
 
         assert isinstance(get_caller_identity.arn, ARN)
-        assert get_caller_identity.arn.partition == aws_partition
+        assert get_caller_identity.arn.partition == AWS_COMMERCIAL_PARTITION
         assert get_caller_identity.arn.region is None
         assert get_caller_identity.arn.resource == "test-user"
         assert get_caller_identity.arn.resource_type == "user"
+
+    @mock_aws
+    def test_test_connection_with_role_from_env_without_mfa(self, monkeypatch):
+        # Create a mock IAM user
+        iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
+        iam_user = iam_client.create_user(UserName="test-user")["User"]
+        # Create a mock IAM access keys
+        access_key = iam_client.create_access_key(UserName=iam_user["UserName"])[
+            "AccessKey"
+        ]
+
+        monkeypatch.setenv("AWS_ACCESS_KEY_ID", access_key["AccessKeyId"])
+        monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", access_key["SecretAccessKey"])
+
+        role_name = "test-role"
+        role_arn = (
+            f"arn:{AWS_COMMERCIAL_PARTITION}:iam::{AWS_ACCOUNT_NUMBER}:role/{role_name}"
+        )
+
+        connected, get_caller_identity = AwsProvider.test_connection(role_arn=role_arn)
+
+        assert connected
+        assert isinstance(get_caller_identity, AWSCallerIdentity)
+
+        assert re.match("[0-9a-zA-Z]{20}", get_caller_identity.user_id)
+        assert get_caller_identity.account == AWS_ACCOUNT_NUMBER
+        assert get_caller_identity.region == AWS_REGION_US_EAST_1
+
+        assert isinstance(get_caller_identity.arn, ARN)
+        assert get_caller_identity.arn.partition == AWS_COMMERCIAL_PARTITION
+        assert get_caller_identity.arn.region is None
+        assert get_caller_identity.arn.resource == f"{role_name}/{ROLE_SESSION_NAME}"
+        assert get_caller_identity.arn.resource_type == "assumed-role"
+
+    @mock_aws
+    def test_test_connection_with_role_from_env_invalid_session_duration(self):
+        role_name = "test-role"
+        role_arn = (
+            f"arn:{AWS_COMMERCIAL_PARTITION}:iam::{AWS_ACCOUNT_NUMBER}:role/{role_name}"
+        )
+
+        connected, exception = AwsProvider.test_connection(
+            role_arn=role_arn, session_duration=899
+        )
+
+        assert not connected
+        assert isinstance(exception, Exception)
+        assert exception.args[0] == "Session duration must be between 900 and 43200"
+
+    @mock_aws
+    def test_test_connection_with_role_from_env_invalid_session_name(self):
+        role_name = "test-role"
+        role_arn = (
+            f"arn:{AWS_COMMERCIAL_PARTITION}:iam::{AWS_ACCOUNT_NUMBER}:role/{role_name}"
+        )
+
+        connected, exception = AwsProvider.test_connection(
+            role_arn=role_arn, role_session_name="???"
+        )
+
+        assert not connected
+        assert isinstance(exception, Exception)
+        assert (
+            exception.args[0]
+            == "Role Session Name must be 2-64 characters long and consist only of upper- and lower-case alphanumeric characters with no spaces. You can also include underscores or any of the following characters: =,.@-"
+        )
+
+    @mock_aws
+    def test_test_connection_with_role_from_env_invalid_role_arn(self):
+        role_name = "test-role"
+        role_arn = f"arn:{AWS_COMMERCIAL_PARTITION}:iam::{AWS_ACCOUNT_NUMBER}:not-role/{role_name}"
+
+        connected, exception = AwsProvider.test_connection(role_arn=role_arn)
+
+        assert not connected
+        assert isinstance(exception, Exception)
+        assert (
+            exception.args[0]
+            == "The assumed role ARN contains a value for resource type different than role, please input a valid ARN"
+        )
 
     @mock_aws
     def test_create_sts_session(self):
