@@ -14,9 +14,13 @@ class Test_opensearch_service_domains_https_communications_enforced:
     def test_no_domains(self):
         opensearch_client = mock.MagicMock
         opensearch_client.opensearch_domains = []
+
         with mock.patch(
             "prowler.providers.aws.services.opensearch.opensearch_service.OpenSearchService",
-            opensearch_client,
+            new=opensearch_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.opensearch.opensearch_service_domains_https_communications_enforced.opensearch_service_domains_https_communications_enforced.opensearch_client",
+            new=opensearch_client,
         ):
             from prowler.providers.aws.services.opensearch.opensearch_service_domains_https_communications_enforced.opensearch_service_domains_https_communications_enforced import (
                 opensearch_service_domains_https_communications_enforced,
@@ -41,7 +45,10 @@ class Test_opensearch_service_domains_https_communications_enforced:
 
         with mock.patch(
             "prowler.providers.aws.services.opensearch.opensearch_service.OpenSearchService",
-            opensearch_client,
+            new=opensearch_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.opensearch.opensearch_service_domains_https_communications_enforced.opensearch_service_domains_https_communications_enforced.opensearch_client",
+            new=opensearch_client,
         ):
             from prowler.providers.aws.services.opensearch.opensearch_service_domains_https_communications_enforced.opensearch_service_domains_https_communications_enforced import (
                 opensearch_service_domains_https_communications_enforced,
@@ -72,7 +79,10 @@ class Test_opensearch_service_domains_https_communications_enforced:
 
         with mock.patch(
             "prowler.providers.aws.services.opensearch.opensearch_service.OpenSearchService",
-            opensearch_client,
+            new=opensearch_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.opensearch.opensearch_service_domains_https_communications_enforced.opensearch_service_domains_https_communications_enforced.opensearch_client",
+            new=opensearch_client,
         ):
             from prowler.providers.aws.services.opensearch.opensearch_service_domains_https_communications_enforced.opensearch_service_domains_https_communications_enforced import (
                 opensearch_service_domains_https_communications_enforced,

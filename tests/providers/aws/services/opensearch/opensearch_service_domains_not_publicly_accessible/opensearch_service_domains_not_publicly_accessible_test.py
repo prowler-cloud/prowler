@@ -304,14 +304,18 @@ class Test_opensearch_service_domains_not_publicly_accessible:
             assert result[0].region == AWS_REGION_US_WEST_2
             assert result[0].resource_tags == []
 
-    @mock_aws
     def test_domain_inside_vpc(self):
         opensearch_client = mock.MagicMock
         opensearch_client.opensearch_domains = []
 
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_WEST_2])
+
         with mock.patch(
-            "prowler.providers.aws.services.opensearch.opensearch_service.OpenSearchService",
-            opensearch_client,
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.opensearch.opensearch_service_domains_not_publicly_accessible.opensearch_service_domains_not_publicly_accessible.opensearch_client",
+            new=opensearch_client,
         ):
             from prowler.providers.aws.services.opensearch.opensearch_service import (
                 OpenSearchDomain,
