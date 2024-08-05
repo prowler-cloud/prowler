@@ -904,29 +904,33 @@ class AwsProvider(Provider):
         external_id: str = None,
         mfa_enabled: bool = False,
     ) -> tuple[bool, Union[AWSCallerIdentity, Exception]]:
-        # TODO: update docsting
         """
         Validates AWS credentials using the provided session and AWS region.
 
         If no session is provided, the method will create a new session using the Boto3 default session.
 
-        If you are assuming a role you need to pass the session with the assumed role.
+        If you are assuming a role, you need to pass the session with the assumed role.
 
         Args:
             session (Session): The AWS session object.
+            profile (str): The AWS profile to use for the session.
             aws_region (str): The AWS region to validate the credentials in.
+            role_arn (str): The ARN of the IAM role to assume.
+            role_session_name (str): The name of the role session.
+            session_duration (int): The duration of the assumed role session in seconds.
+            external_id (str): The external ID to use when assuming the role.
+            mfa_enabled (bool): Whether MFA (Multi-Factor Authentication) is enabled.
 
         Returns:
-            tuple[bool, AWSCallerIdentity]: A tuple containing a boolean value indicating
-            the success of the validation and an AWSCallerIdentity object representing
-            the caller's identity.
+            tuple[bool, Union[AWSCallerIdentity, Exception]]: A tuple containing a boolean value indicating
+            the success of the validation and either an AWSCallerIdentity object representing
+            the caller's identity or an Exception object if an error occurs.
 
         Raises:
             Exception: If an error occurs during the validation process.
-
         """
         try:
-            # Create first the default session if no session is given
+            # Create the default session if no session is given
             session = (
                 session if session else AwsProvider.setup_session(mfa_enabled, profile)
             )
