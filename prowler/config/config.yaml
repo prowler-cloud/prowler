@@ -284,6 +284,15 @@ aws:
       "scheduler",
     ]
 
+  # AWS CodeBuild Configuration
+  # aws.codebuild_project_no_plaintext_credentials
+  # CodeBuild sensitive variables that must not be stored in plaintext
+  sensitive_environment_variables:
+    [
+      "AWS_ACCESS_KEY_ID",
+      "AWS_SECRET_ACCESS_KEY",
+    ]
+
 # Azure Configuration
 azure:
   # Azure Network Configuration
