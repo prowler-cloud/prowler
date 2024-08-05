@@ -80,38 +80,91 @@ class AzureProvider(Provider):
 
     @property
     def identity(self):
+        """
+        Returns the identity of the Azure provider.
+
+        :return: The identity of the Azure provider.
+        """
         return self._identity
 
     @property
     def type(self):
+        """
+        Returns the type of the Azure provider.
+
+        :return: The type of the Azure provider.
+        """
         return self._type
 
     @property
     def session(self):
+        """
+        Returns the session object associated with the Azure provider.
+
+        Returns:
+            session (object): The session object.
+        """
         return self._session
 
     @property
     def region_config(self):
+        """
+        Returns the region configuration for the Azure provider.
+
+        Returns:
+            dict: A dictionary containing the region configuration.
+        """
         return self._region_config
 
     @property
     def locations(self):
+        """
+        Returns a list of available locations for the Azure provider.
+
+        Returns:
+            list: A list of available locations.
+        """
         return self._locations
 
     @property
     def audit_config(self):
+        """
+        Returns the audit configuration for the Azure provider.
+
+        :return: The audit configuration.
+        """
         return self._audit_config
 
     @property
     def fixer_config(self):
+        """
+        Returns the fixer configuration.
+
+        Returns:
+            dict: The fixer configuration.
+        """
         return self._fixer_config
 
     @property
     def output_options(self):
+        """
+        Returns the output options for the Azure provider.
+
+        :return: A dictionary containing the output options.
+        """
         return self._output_options
 
     @output_options.setter
     def output_options(self, options: tuple):
+        """
+        Sets the output options for the Azure provider.
+
+        Args:
+            options (tuple): A tuple containing the arguments and bulk checks metadata.
+
+        Returns:
+            None
+        """
         arguments, bulk_checks_metadata = options
         self._output_options = AzureOutputOptions(
             arguments, bulk_checks_metadata, self._identity
@@ -120,7 +173,10 @@ class AzureProvider(Provider):
     @property
     def mutelist(self) -> AzureMutelist:
         """
-        mutelist method returns the provider's mutelist.
+        Returns the AzureMutelist object associated with this Azure provider.
+
+        Returns:
+            AzureMutelist: The AzureMutelist object.
         """
         return self._mutelist
 
@@ -137,6 +193,12 @@ class AzureProvider(Provider):
 
     @property
     def get_output_mapping(self):
+        """
+        Returns a dictionary that maps output keys to their corresponding values.
+
+        Returns:
+            dict: A dictionary containing the output mapping.
+        """
         return {
             # identity_type: identity_id
             # "auth_method": "identity.profile",
@@ -159,6 +221,21 @@ class AzureProvider(Provider):
     def validate_arguments(
         self, az_cli_auth, sp_env_auth, browser_auth, managed_entity_auth, tenant_id
     ):
+        """
+        Validates the authentication arguments for the Azure provider.
+
+        Args:
+            az_cli_auth (bool): Flag indicating whether AZ CLI authentication is enabled.
+            sp_env_auth (bool): Flag indicating whether Service Principal environment authentication is enabled.
+            browser_auth (bool): Flag indicating whether browser authentication is enabled.
+            managed_entity_auth (bool): Flag indicating whether managed identity authentication is enabled.
+            tenant_id (str): The Azure Tenant ID.
+
+        Raises:
+            SystemExit: If none of the authentication methods are set.
+            SystemExit: If browser authentication is enabled but the tenant ID is not provided.
+            SystemExit: If tenant ID is provided but browser authentication is not enabled.
+        """
         if (
             not az_cli_auth
             and not sp_env_auth
@@ -179,6 +256,16 @@ class AzureProvider(Provider):
             )
 
     def setup_region_config(self, region):
+        """
+        Sets up the region configuration for the Azure provider.
+
+        Args:
+            region (str): The name of the region.
+
+        Returns:
+            AzureRegionConfig: The region configuration object.
+
+        """
         config = get_regions_config(region)
         return AzureRegionConfig(
             name=region,
@@ -188,6 +275,18 @@ class AzureProvider(Provider):
         )
 
     def print_credentials(self):
+        """
+        Prints the Azure credentials information.
+
+        This method prints the Azure Tenant Domain, Azure Tenant ID, Azure Region,
+        Azure Subscriptions, Azure Identity Type, and Azure Identity ID.
+
+        Args:
+            None
+
+        Returns:
+            None
+        """
         printed_subscriptions = []
         for key, value in self._identity.subscriptions.items():
             intermediate = key + ": " + value
@@ -209,6 +308,23 @@ class AzureProvider(Provider):
     def setup_session(
         self, az_cli_auth, sp_env_auth, browser_auth, managed_entity_auth, tenant_id
     ):
+        """
+        Set up the Azure session with the specified authentication method.
+
+        Args:
+            az_cli_auth (bool): Flag indicating whether to use Azure CLI authentication.
+            sp_env_auth (bool): Flag indicating whether to use Service Principal authentication with environment variables.
+            browser_auth (bool): Flag indicating whether to use interactive browser authentication.
+            managed_entity_auth (bool): Flag indicating whether to use managed identity authentication.
+            tenant_id (str): The Azure Active Directory tenant ID.
+
+        Returns:
+            credentials: The Azure credentials object.
+
+        Raises:
+            Exception: If failed to retrieve Azure credentials.
+
+        """
         # Browser auth creds cannot be set with DefaultAzureCredentials()
         if not browser_auth:
             if sp_env_auth:
@@ -285,13 +401,23 @@ class AzureProvider(Provider):
 
     @staticmethod
     def check_service_principal_creds_env_vars(self):
+        """
+        Checks the presence of required environment variables for service principal authentication against Azure.
+
+        This method checks for the presence of the following environment variables:
+        - AZURE_CLIENT_ID: Azure client ID
+        - AZURE_TENANT_ID: Azure tenant ID
+        - AZURE_CLIENT_SECRET: Azure client secret
+
+        If any of the environment variables is missing, it logs a critical error and exits the program.
+        """
         logger.info(
             "Azure provider: checking service principal environment variables  ..."
         )
         for env_var in ["AZURE_CLIENT_ID", "AZURE_TENANT_ID", "AZURE_CLIENT_SECRET"]:
             if not getenv(env_var):
                 logger.critical(
-                    f"Azure provider: Missing environment variable {env_var} needed to autenticate against Azure"
+                    f"Azure provider: Missing environment variable {env_var} needed to authenticate against Azure"
                 )
                 sys.exit(1)
 
@@ -303,6 +429,19 @@ class AzureProvider(Provider):
         managed_entity_auth,
         subscription_ids,
     ):
+        """
+        Sets up the identity for the Azure provider.
+
+        Args:
+            az_cli_auth (bool): Flag indicating if Azure CLI authentication is used.
+            sp_env_auth (bool): Flag indicating if Service Principal environment authentication is used.
+            browser_auth (bool): Flag indicating if browser authentication is used.
+            managed_entity_auth (bool): Flag indicating if managed entity authentication is used.
+            subscription_ids (list): List of subscription IDs.
+
+        Returns:
+            AzureIdentityInfo: An instance of AzureIdentityInfo containing the identity information.
+        """
         credentials = self.session
         # TODO: fill this object with real values not default and set to none
         identity = AzureIdentityInfo()
@@ -413,6 +552,16 @@ class AzureProvider(Provider):
         return identity
 
     def get_locations(self, credentials) -> dict[str, list[str]]:
+        """
+        Retrieves the locations available for each subscription using the provided credentials.
+
+        Args:
+            credentials: The credentials object used to authenticate the request.
+
+        Returns:
+            A dictionary containing the locations available for each subscription. The dictionary
+            has subscription display names as keys and lists of location names as values.
+        """
         locations = None
         if credentials:
             locations = {}
