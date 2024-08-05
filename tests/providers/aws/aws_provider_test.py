@@ -270,7 +270,7 @@ class TestAWSProvider:
         assert isinstance(aws_provider.organizations_metadata, AWSOrganizationsInfo)
         assert aws_provider.organizations_metadata.account_email == "master@example.com"
         assert aws_provider.organizations_metadata.account_name == "master"
-        assert aws_provider.organizations_metadata.account_tags == ["tagged:true"]
+        assert aws_provider.organizations_metadata.account_tags == {"tagged": "true"}
         assert (
             aws_provider.organizations_metadata.organization_account_arn
             == f"arn:aws:organizations::{AWS_ACCOUNT_NUMBER}:account/{organization['Id']}/{AWS_ACCOUNT_NUMBER}"
@@ -351,7 +351,7 @@ class TestAWSProvider:
         assert isinstance(aws_provider.organizations_metadata, AWSOrganizationsInfo)
         assert aws_provider.organizations_metadata.account_email == "master@example.com"
         assert aws_provider.organizations_metadata.account_name == "master"
-        assert aws_provider.organizations_metadata.account_tags == ["tagged:true"]
+        assert aws_provider.organizations_metadata.account_tags == {"tagged": "true"}
         assert (
             aws_provider.organizations_metadata.organization_account_arn
             == f"arn:aws:organizations::{AWS_ACCOUNT_NUMBER}:account/{organization['Id']}/{AWS_ACCOUNT_NUMBER}"
