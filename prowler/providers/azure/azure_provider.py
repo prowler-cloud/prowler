@@ -364,20 +364,39 @@ class AzureProvider(Provider):
         return credentials
 
     @staticmethod
-    def test_connection(credentials=None) -> bool:
+    def test_connection(
+        self,
+        az_cli_auth,
+        sp_env_auth,
+        browser_auth,
+        managed_entity_auth,
+        tenant_id,
+        credentials=None,
+    ) -> bool:
         """
         Test the connection to an Azure subscription using the provided credentials.
 
         Args:
             credentials: The credentials object used to authenticate with Azure.
+            az_cli_auth (bool): Flag indicating whether to use Azure CLI authentication.
+            sp_env_auth (bool): Flag indicating whether to use Service Principal authentication with environment variables.
+            browser_auth (bool): Flag indicating whether to use interactive browser authentication.
+            managed_entity_auth (bool): Flag indicating whether to use managed identity authentication.
+            tenant_id (str): The Azure Active Directory tenant ID.
 
         Returns:
             bool: True if the connection is successful, False otherwise.
         """
         try:
-            # If no credentials are provided, use the DefaultAzureCredential
+            # If no credentials are provided, set them up
             if not credentials:
-                credentials = DefaultAzureCredential()
+                credentials = self.setup_session(
+                    az_cli_auth,
+                    sp_env_auth,
+                    browser_auth,
+                    managed_entity_auth,
+                    tenant_id,
+                )
             # Create a SubscriptionClient
             subscription_client = SubscriptionClient(credentials)
 
