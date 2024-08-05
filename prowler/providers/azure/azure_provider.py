@@ -51,13 +51,19 @@ class AzureProvider(Provider):
 
         logger.info("Checking if region is different than default one")
         region = arguments.azure_region
-        self.validate_arguments(
-            az_cli_auth, sp_env_auth, browser_auth, managed_entity_auth, tenant_id
-        )
         self._region_config = self.setup_region_config(region)
-        self._session = self.setup_session(
-            az_cli_auth, sp_env_auth, browser_auth, managed_entity_auth, tenant_id
+        test_connection = self.test_connection(
+            az_cli_auth,
+            sp_env_auth,
+            browser_auth,
+            managed_entity_auth,
+            tenant_id,
         )
+        # If the connection test fails, exit the program
+        if not test_connection[0]:
+            sys.exit(1)
+        self._session = test_connection[1]
+
         self._identity = self.setup_identity(
             az_cli_auth,
             sp_env_auth,
@@ -324,6 +330,10 @@ class AzureProvider(Provider):
             Exception: If failed to retrieve Azure credentials.
 
         """
+        # Validate the authentication arguments
+        self.validate_arguments(
+            az_cli_auth, sp_env_auth, browser_auth, managed_entity_auth, tenant_id
+        )
         # Browser auth creds cannot be set with DefaultAzureCredentials()
         if not browser_auth:
             if sp_env_auth:
@@ -362,7 +372,6 @@ class AzureProvider(Provider):
 
         return credentials
 
-    @staticmethod
     def test_connection(
         self,
         az_cli_auth,
@@ -371,7 +380,7 @@ class AzureProvider(Provider):
         managed_entity_auth,
         tenant_id,
         credentials=None,
-    ) -> bool:
+    ) -> tuple[bool, DefaultAzureCredential]:
         """
         Test the connection to an Azure subscription using the provided credentials.
 
@@ -384,7 +393,7 @@ class AzureProvider(Provider):
             tenant_id (str): The Azure Active Directory tenant ID.
 
         Returns:
-            bool: True if the connection is successful, False otherwise.
+            tuple: A tuple containing a boolean value indicating whether the connection was successful and the credentials object.
         """
         try:
             # If no credentials are provided, set them up
@@ -403,19 +412,19 @@ class AzureProvider(Provider):
             subscription = next(subscription_client.subscriptions.list())
 
             logger.info(f"Connected to Azure subscription: {subscription.display_name}")
-            return True
+            return True, credentials
 
         except HttpResponseError as e:
             logger.critical(
                 f"Failed to connect to Azure subscription: {e.error.error.message}"
             )
-            return False
+            return False, None
 
         except Exception as ex:
             logger.critical(
                 f"Failed to connect to Azure subscription: {ex.__class__.__name__}[{ex.__traceback__.tb_lineno}] -- {ex}"
             )
-            return False
+            return False, None
 
     @staticmethod
     def check_service_principal_creds_env_vars(self):
