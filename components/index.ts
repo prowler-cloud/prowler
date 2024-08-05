@@ -1,6 +1,7 @@
 export * from "./findings/ColumnsFindings";
 export * from "./findings/SkeletonTableFindings";
 export * from "./providers/AddProvider";
+export * from "./providers/AddProviderModal";
 export * from "./providers/ButtonAddProvider";
 export * from "./providers/ButtonCheckConnectionProvider";
 export * from "./providers/ButtonDeleteProvider";
@@ -12,6 +13,7 @@ export * from "./providers/table/ColumnsProviders";
 export * from "./providers/table/DataTable";
 export * from "./providers/table/SkeletonTableProvider";
 export * from "./ui/alert/Alert";
+export * from "./ui/dialog/Dialog";
 export * from "./ui/header/Header";
 export * from "./ui/modal";
 export * from "./ui/sidebar";
