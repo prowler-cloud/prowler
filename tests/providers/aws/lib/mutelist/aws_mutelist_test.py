@@ -7,7 +7,7 @@ from boto3 import client, resource
 from mock import MagicMock, patch
 from moto import mock_aws
 
-from prowler.config.config import enconding_format_utf_8
+from prowler.config.config import encoding_format_utf_8
 from prowler.providers.aws.lib.mutelist.mutelist import AWSMutelist
 from tests.providers.aws.services.awslambda.awslambda_service_test import (
     create_zip_file,
@@ -46,7 +46,7 @@ def mock_make_api_call(self, operation_name, kwarg):
                             }
                         }
                     }
-                ).encode(enconding_format_utf_8)
+                ).encode(encoding_format_utf_8)
             )
         }
 
@@ -1223,35 +1223,49 @@ class TestAWSMutelist:
     def test_is_muted_in_tags(self):
         mutelist_tags = ["environment=dev", "project=prowler"]
 
-        assert AWSMutelist.is_item_matched(mutelist_tags, "environment=dev")
+        assert AWSMutelist.is_item_matched(mutelist_tags, "environment=dev", tag=True)
 
         assert AWSMutelist.is_item_matched(
-            mutelist_tags,
-            "environment=dev | project=prowler",
+            mutelist_tags, "environment=dev | project=prowler", tag=True
+        )
+
+        assert AWSMutelist.is_item_matched(
+            mutelist_tags, "environment=pro | project=prowler", tag=True
         )
 
         assert not (
-            AWSMutelist.is_item_matched(
-                mutelist_tags,
-                "environment=pro",
-            )
+            AWSMutelist.is_item_matched(mutelist_tags, "environment=pro", tag=True)
+        )
+
+    def test_is_muted_in_tags_with_piped_tags(self):
+        mutelist_tags = ["environment=dev|project=prowler"]
+
+        assert AWSMutelist.is_item_matched(mutelist_tags, "environment=dev", tag=True)
+
+        assert AWSMutelist.is_item_matched(
+            mutelist_tags, "environment=dev | project=prowler", tag=True
+        )
+
+        assert AWSMutelist.is_item_matched(
+            mutelist_tags, "environment=pro | project=prowler", tag=True
+        )
+
+        assert not (
+            AWSMutelist.is_item_matched(mutelist_tags, "environment=pro", tag=True)
         )
 
     def test_is_muted_in_tags_regex(self):
         mutelist_tags = ["environment=(dev|test)", ".*=prowler"]
         assert AWSMutelist.is_item_matched(
-            mutelist_tags,
-            "environment=test | proj=prowler",
+            mutelist_tags, "environment=test | proj=prowler", tag=True
         )
 
         assert AWSMutelist.is_item_matched(
-            mutelist_tags,
-            "env=prod | project=prowler",
+            mutelist_tags, "env=prod | project=prowler", tag=True
         )
 
         assert not AWSMutelist.is_item_matched(
-            mutelist_tags,
-            "environment=prod | project=myproj",
+            mutelist_tags, "environment=prod | project=myproj", tag=True
         )
 
     def test_is_muted_in_tags_with_no_tags_in_finding(self):
