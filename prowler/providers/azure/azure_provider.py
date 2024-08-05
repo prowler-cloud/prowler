@@ -248,7 +248,7 @@ class AzureProvider(Provider):
         return credentials
 
     @staticmethod
-    def test_connection(credentials):
+    def test_connection(credentials=None) -> bool:
         """
         Test the connection to an Azure subscription using the provided credentials.
 
@@ -259,6 +259,9 @@ class AzureProvider(Provider):
             bool: True if the connection is successful, False otherwise.
         """
         try:
+            # If no credentials are provided, use the DefaultAzureCredential
+            if not credentials:
+                credentials = DefaultAzureCredential()
             # Create a SubscriptionClient
             subscription_client = SubscriptionClient(credentials)
 
@@ -272,11 +275,13 @@ class AzureProvider(Provider):
             logger.critical(
                 f"Failed to connect to Azure subscription: {e.error.error.message}"
             )
+            return False
 
         except Exception as ex:
             logger.critical(
                 f"Failed to connect to Azure subscription: {ex.__class__.__name__}[{ex.__traceback__.tb_lineno}] -- {ex}"
             )
+            return False
 
     @staticmethod
     def check_service_principal_creds_env_vars(self):
