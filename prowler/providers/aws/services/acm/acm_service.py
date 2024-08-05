@@ -21,10 +21,21 @@ class ACM(AWSService):
     def _list_certificates(self, regional_client):
         logger.info("ACM - Listing Certificates...")
         try:
+            includes = {
+                "keyTypes": [
+                    "RSA_1024",
+                    "RSA_2048",
+                    "RSA_3072",
+                    "RSA_4096",
+                    "EC_prime256v1",
+                    "EC_secp384r1",
+                    "EC_secp521r1",
+                ]
+            }
             list_certificates_paginator = regional_client.get_paginator(
                 "list_certificates"
             )
-            for page in list_certificates_paginator.paginate():
+            for page in list_certificates_paginator.paginate(Includes=includes):
                 for certificate in page["CertificateSummaryList"]:
                     if not self.audit_resources or (
                         is_resource_filtered(
