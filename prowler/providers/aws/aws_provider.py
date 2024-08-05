@@ -3,13 +3,13 @@ import pathlib
 import sys
 from argparse import Namespace
 from datetime import datetime
+from re import fullmatch
 from typing import Union
 
 from boto3 import client
 from boto3.session import Session
 from botocore.config import Config
 from botocore.credentials import RefreshableCredentials
-from botocore.session import get_session
 from colorama import Fore, Style
 from pytz import utc
 from tzlocal import get_localzone
@@ -451,10 +451,32 @@ class AwsProvider(Provider):
         self,
         assumed_role_credentials: AWSCredentials,
     ) -> Session:
+        """
+        Sets up an assumed session using the provided assumed role credentials.
+
+        This method creates a new session with temporary credentials obtained by assuming an AWS IAM role.
+        It uses the `RefreshableCredentials` class from the `botocore` library to manage the automatic
+        refreshing of the assumed role credentials.
+
+        Args:
+            assumed_role_credentials (AWSCredentials): The assumed role credentials.
+
+        Returns:
+            Session: The assumed session.
+
+        Raises:
+            Exception: If an error occurs during the setup process.
+
+        References:
+            - `RefreshableCredentials` class in botocore:
+              [GitHub](https://github.com/boto/botocore/blob/098cc255f81a25b852e1ecdeb7adebd94c7b1b73/botocore/credentials.py#L395)
+            - AWS STS AssumeRole API:
+              [AWS Documentation](https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html)
+        """
         try:
             # From botocore we can use RefreshableCredentials class, which has an attribute (refresh_using)
             # that needs to be a method without arguments that retrieves a new set of fresh credentials
-            # asuming the role again. -> https://github.com/boto/botocore/blob/098cc255f81a25b852e1ecdeb7adebd94c7b1b73/botocore/credentials.py#L395
+            # assuming the role again.
             assumed_refreshable_credentials = RefreshableCredentials(
                 access_key=assumed_role_credentials.aws_access_key_id,
                 secret_key=assumed_role_credentials.aws_secret_access_key,
@@ -465,7 +487,7 @@ class AwsProvider(Provider):
             )
 
             # Here we need the botocore session since it needs to use refreshable credentials
-            assumed_session = get_session()
+            assumed_session = Session()
             assumed_session._credentials = assumed_refreshable_credentials
             assumed_session.set_config_variable("region", self._identity.profile_region)
             return Session(
@@ -775,8 +797,8 @@ class AwsProvider(Provider):
 
         return default_session_config
 
+    @staticmethod
     def assume_role(
-        self,
         session: Session,
         assumed_role_info: AWSAssumeRoleInfo,
     ) -> AWSCredentials:
@@ -801,7 +823,7 @@ class AwsProvider(Provider):
                 assume_role_arguments["ExternalId"] = assumed_role_info.external_id
 
             if assumed_role_info.mfa_enabled:
-                mfa_info = self.input_role_mfa_token_and_code()
+                mfa_info = AwsProvider.input_role_mfa_token_and_code()
                 assume_role_arguments["SerialNumber"] = mfa_info.arn
                 assume_role_arguments["TokenCode"] = mfa_info.totp
             sts_client = AwsProvider.create_sts_session(
@@ -874,8 +896,15 @@ class AwsProvider(Provider):
     @staticmethod
     def test_connection(
         session: Session = None,
+        profile: str = None,
         aws_region: str = AWS_STS_GLOBAL_ENDPOINT_REGION,
+        role_arn: str = None,
+        role_session_name: str = ROLE_SESSION_NAME,
+        session_duration: int = 3600,
+        external_id: str = None,
+        mfa_enabled: bool = False,
     ) -> tuple[bool, Union[AWSCallerIdentity, Exception]]:
+        # TODO: update docsting
         """
         Validates AWS credentials using the provided session and AWS region.
 
@@ -897,10 +926,37 @@ class AwsProvider(Provider):
 
         """
         try:
-            validate_credentials_client = AwsProvider.create_sts_session(
-                session if session else AwsProvider.setup_session(), aws_region
+            # Create first the default session if no session is given
+            session = (
+                session if session else AwsProvider.setup_session(mfa_enabled, profile)
             )
-            caller_identity = validate_credentials_client.get_caller_identity()
+
+            # Test Connection using the IAM Role
+            if role_arn:
+                session_duration = validate_session_duration(session_duration)
+                role_session_name = validate_role_session_name(role_session_name)
+                role_arn = parse_iam_credentials_arn(role_arn)
+                assumed_role_information = AWSAssumeRoleInfo(
+                    role_arn=role_arn,
+                    session_duration=session_duration,
+                    external_id=external_id,
+                    mfa_enabled=mfa_enabled,
+                    role_session_name=role_session_name,
+                )
+                assumed_role_credentials = AwsProvider.assume_role(
+                    session,
+                    assumed_role_information,
+                )
+                session = Session(
+                    aws_access_key_id=assumed_role_credentials.aws_access_key_id,
+                    aws_secret_access_key=assumed_role_credentials.aws_secret_access_key,
+                    aws_session_token=assumed_role_credentials.aws_session_token,
+                    region_name=aws_region,
+                    profile_name=profile,
+                )
+
+            sts_client = AwsProvider.create_sts_session(session, aws_region)
+            caller_identity = sts_client.get_caller_identity()
             # Include the region where the caller_identity has validated the credentials
             return True, AWSCallerIdentity(
                 user_id=caller_identity.get("UserId"),
@@ -999,3 +1055,49 @@ def get_aws_region_for_sts(session_region: str, input_regions: set[str]) -> str:
         aws_region = input_regions[0]
 
     return aws_region
+
+
+# TODO: this duplicates the provider arguments validation library
+def validate_session_duration(duration: int) -> int:
+    """
+    validate_session_duration validates that the AWS STS Assume Role Session Duration is between 900 and 43200 seconds.
+
+    Args:
+        duration (int): The session duration in seconds.
+
+    Returns:
+        int: The validated session duration.
+
+    Raises:
+        ValueError: If the session duration is not within the valid range.
+    """
+    duration = int(duration)
+    # Since the range(i,j) goes from i to j-1 we have to j+1
+    if duration not in range(900, 43201):
+        raise ValueError("Session duration must be between 900 and 43200")
+    return duration
+
+
+# TODO: this duplicates the provider arguments validation library
+def validate_role_session_name(session_name) -> str:
+    """
+    Validates that the role session name is valid.
+
+    Args:
+        session_name (str): The role session name to be validated.
+
+    Returns:
+        str: The validated role session name.
+
+    Raises:
+        ValueError: If the role session name is invalid.
+
+    Documentation:
+        - AWS STS AssumeRole API: https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html
+    """
+    if fullmatch(r"[\w+=,.@-]{2,64}", session_name):
+        return session_name
+    else:
+        raise ValueError(
+            "Role Session Name must be 2-64 characters long and consist only of upper- and lower-case alphanumeric characters with no spaces. You can also include underscores or any of the following characters: =,.@-"
+        )
