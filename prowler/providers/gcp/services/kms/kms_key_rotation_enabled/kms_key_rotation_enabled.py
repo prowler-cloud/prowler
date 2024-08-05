@@ -8,7 +8,7 @@ class kms_key_rotation_enabled(Check):
         for key in kms_client.crypto_keys:
             report = Check_Report_GCP(self.metadata())
             report.project_id = key.project_id
-            report.resource_id = key.name
+            report.resource_id = key.id
             report.resource_name = key.name
             report.location = key.location
             report.status = "FAIL"

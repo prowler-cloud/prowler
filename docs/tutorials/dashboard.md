@@ -10,8 +10,10 @@ prowler dashboard
 To run Prowler local dashboard with Docker, use:
 
 ```sh
-docker run --env HOST=0.0.0.0 --publish 127.0.0.1:11666:11666 toniblyx/prowler:latest dashboard
+docker run -v /your/local/dir/prowler-output:/home/prowler/output --env HOST=0.0.0.0 --publish 127.0.0.1:11666:11666 toniblyx/prowler:latest dashboard
 ```
+
+Make sure you update the `/your/local/dir/prowler-output` to match the path that contains your prowler output.
 
 ???+ note
     **Remember that the `dashboard` server is not authenticated, if you expose it to the internet, you are running it at your own risk.**

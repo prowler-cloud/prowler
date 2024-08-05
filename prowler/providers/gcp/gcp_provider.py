@@ -279,9 +279,9 @@ class GcpProvider(Provider):
                 response = request.execute()
 
                 for project in response.get("projects", []):
-                    labels = []
+                    labels = {}
                     for key, value in project.get("labels", {}).items():
-                        labels.append(f"{key}:{value}")
+                        labels[key] = value
 
                     project_id = project["projectId"]
                     gcp_project = GCPProject(
