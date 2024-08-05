@@ -304,7 +304,6 @@ class AzureProvider(Provider):
 
     # TODO: setup_session or setup_credentials?
     # This should be setup_credentials, since it is setting up the credentials for the provider
-    @staticmethod
     def setup_session(
         self, az_cli_auth, sp_env_auth, browser_auth, managed_entity_auth, tenant_id
     ):
