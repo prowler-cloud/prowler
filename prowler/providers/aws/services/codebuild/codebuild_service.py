@@ -14,10 +14,10 @@ class Codebuild(AWSService):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.projects = {}
-        self._threading_call(self._list_projects)
-        self._threading_call(self._list_builds_for_project, self.projects.values())
-        self._threading_call(self._batch_get_builds, self.projects.values())
-        self._threading_call(self._batch_get_projects, self.projects.values())
+        self.__threading_call__(self._list_projects)
+        self.__threading_call__(self._list_builds_for_project, self.projects.values())
+        self.__threading_call__(self._batch_get_builds, self.projects.values())
+        self.__threading_call__(self._batch_get_projects, self.projects.values())
 
     def _list_projects(self, regional_client):
         logger.info("Codebuild - Listing projects...")
