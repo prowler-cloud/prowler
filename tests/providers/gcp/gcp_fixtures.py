@@ -583,6 +583,7 @@ def mock_api_instances_calls(client: MagicMock, service: str):
                     "settings": {
                         "ipConfiguration": {
                             "requireSsl": True,
+                            "sslMode": "ENCRYPTED_ONLY",
                             "authorizedNetworks": [{"value": "test"}],
                         },
                         "backupConfiguration": {"enabled": True},
@@ -597,6 +598,7 @@ def mock_api_instances_calls(client: MagicMock, service: str):
                     "settings": {
                         "ipConfiguration": {
                             "requireSsl": False,
+                            "sslMode": "ALLOW_UNENCRYPTED_AND_ENCRYPTED",
                             "authorizedNetworks": [{"value": "test"}],
                         },
                         "backupConfiguration": {"enabled": False},
