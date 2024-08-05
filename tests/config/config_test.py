@@ -263,7 +263,7 @@ config_aws = {
     "check_rds_instance_replicas": False,
     "days_to_expire_threshold": 7,
     "insecure_key_algorithms": [
-        "RSA_1024",
+        "RSA-1024",
     ],
     "eks_required_log_types": [
         "api",

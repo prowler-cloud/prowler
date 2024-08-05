@@ -18,7 +18,7 @@ make_api_call = botocore.client.BaseClient._make_api_call
 certificate_arn = f"arn:aws:acm:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:certificate/{str(uuid.uuid4())}"
 certificate_name = "test-certificate.com"
 certificate_type = "AMAZON_ISSUED"
-certificate_key_algorithm = "RSA_4096"
+certificate_key_algorithm = "RSA-4096"
 
 
 def mock_make_api_call(self, operation_name, kwargs):
@@ -41,7 +41,7 @@ def mock_make_api_call(self, operation_name, kwargs):
                     "HasAdditionalSubjectAlternativeNames": False,
                     "Status": "ISSUED",
                     "Type": certificate_type,
-                    "KeyAlgorithm": "RSA_4096",
+                    "KeyAlgorithm": "RSA-4096",
                     "KeyUsages": ["DIGITAL_SIGNATURE"],
                     "ExtendedKeyUsages": ["TLS_WEB_SERVER_AUTHENTICATION"],
                     "InUse": True,
@@ -128,7 +128,7 @@ class Test_ACM_Service:
 
     # Test ACM List Certificates
     # @mock_acm
-    def test__list_and_describe_certificates__(self):
+    def test_list_and_describe_certificates(self):
         # Generate ACM Client
         # acm_client = client("acm", region_name=AWS_REGION)
         # Request ACM certificate
@@ -150,7 +150,7 @@ class Test_ACM_Service:
 
     # Test ACM List Tags
     # @mock_acm
-    def test__list_tags_for_certificate__(self):
+    def test_list_tags_for_certificate(self):
         # Generate ACM Client
         # acm_client = client("acm", region_name=AWS_REGION)
         # Request ACM certificate

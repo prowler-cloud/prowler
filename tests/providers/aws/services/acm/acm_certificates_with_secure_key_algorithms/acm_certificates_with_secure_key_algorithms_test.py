@@ -31,7 +31,7 @@ class Test_acm_certificates_with_secure_key_algorithms:
         certificate_arn = f"arn:aws:acm:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:certificate/{certificate_id}"
         certificate_name = "test-certificate.com"
         certificate_type = "AMAZON_ISSUED"
-        certificate_key_algorithm = "RSA_2048"
+        certificate_key_algorithm = "RSA-2048"
 
         acm_client = mock.MagicMock
         acm_client.certificates = [
@@ -78,7 +78,7 @@ class Test_acm_certificates_with_secure_key_algorithms:
         certificate_arn = f"arn:aws:acm:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:certificate/{certificate_id}"
         certificate_name = "test-certificate.com"
         certificate_type = "AMAZON_ISSUED"
-        certificate_key_algorithm = "RSA_1024"
+        certificate_key_algorithm = "RSA-1024"
 
         acm_client = mock.MagicMock
         acm_client.certificates = [
