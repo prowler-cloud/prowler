@@ -6,6 +6,7 @@ import { useRef, useState } from "react";
 import { addProvider } from "@/actions";
 import {
   ButtonAddProvider,
+  CustomRadioProvider,
   Dialog,
   DialogContent,
   DialogDescription,
@@ -63,32 +64,34 @@ export const AddProviderModal = () => {
           ref={ref}
           action={clientAction}
           onSubmit={() => setOpen(false)}
-          className="flex flex-col gap-x-2"
+          className="grid sm:grid-cols-2 gap-6"
         >
-          <Input
-            type="text"
-            name="provider"
-            labelPlacement="outside"
-            placeholder="provider"
-            className="py-2 px-3 rounded-sm"
-          />
-          <Input
-            type="text"
-            name="id"
-            label="Provider ID"
-            labelPlacement="outside"
-            placeholder="provider ID"
-            className="py-2 px-3 rounded-sm"
-          />
-          <Input
-            type="text"
-            name="alias"
-            label="Alias"
-            labelPlacement="outside"
-            placeholder="alias"
-            className="py-2 px-3 rounded-sm"
-          />
-          <ButtonAddProvider />
+          <div className="col-span-1">
+            <CustomRadioProvider />
+          </div>
+          <div className="col-span-1 flex flex-col gap-y-2 my-auto">
+            <Input
+              type="text"
+              name="id"
+              label="Provider ID"
+              labelPlacement="outside"
+              placeholder="Provider ID"
+              className="w-full rounded-sm"
+              aria-label="Enter Provider ID"
+            />
+            <Input
+              type="text"
+              name="alias"
+              label="Alias"
+              labelPlacement="outside"
+              placeholder="alias"
+              className="w-full rounded-sm"
+              aria-label="Enter Provider alias"
+            />
+          </div>
+          <div className="col-span-2 flex justify-center mt-4">
+            <ButtonAddProvider />
+          </div>
         </form>
       </DialogContent>
     </Dialog>
