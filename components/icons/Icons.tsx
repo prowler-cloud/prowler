@@ -329,7 +329,7 @@ export const DeleteIcon: React.FC<IconSvgProps> = ({
 );
 
 export const CheckIcon: React.FC<IconSvgProps> = ({
-  size = 48,
+  size = 24,
   width,
   height,
   ...props
@@ -345,6 +345,50 @@ export const CheckIcon: React.FC<IconSvgProps> = ({
       fill="currentColor"
       d="M2048 1024q0 142-36 272t-103 245t-160 207t-208 160t-245 103t-272 37q-142 0-272-36t-245-103t-207-160t-160-208t-103-245t-37-272q0-141 36-272t103-245t160-207t208-160T752 37t272-37q141 0 272 36t245 103t207 160t160 208t103 245t37 272m-1024 896q123 0 237-32t214-90t182-141t140-181t91-214t32-238q0-123-32-237t-90-214t-141-182t-181-140t-214-91t-238-32q-124 0-238 32t-213 90t-182 141t-140 181t-91 214t-32 238q0 124 32 238t90 213t141 182t181 140t214 91t238 32m0-512q55 0 107-15t98-45t81-69t61-91l116 56q-32 67-80 121t-109 92t-130 58t-144 21q-110 0-210-45t-174-128v173H512v-384h384v128H738q54 60 129 94t157 34m384-723V512h128v384h-384V768h158q-54-60-129-94t-157-34q-55 0-107 15t-98 45t-81 69t-61 91l-116-56q32-67 80-121t109-92t130-58t144-21q110 0 210 45t174 128"
     />
+  </svg>
+);
+
+export const CrossIcon: React.FC<IconSvgProps> = ({
+  size = 24,
+  width,
+  height,
+  ...props
+}) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size || width}
+    height={size || height}
+    viewBox="0 0 24 24"
+    {...props}
+  >
+    <path
+      fill="currentColor"
+      d="M16.066 8.995a.75.75 0 1 0-1.06-1.061L12 10.939L8.995 7.934a.75.75 0 1 0-1.06 1.06L10.938 12l-3.005 3.005a.75.75 0 0 0 1.06 1.06L12 13.06l3.005 3.006a.75.75 0 0 0 1.06-1.06L13.062 12z"
+    />
+  </svg>
+);
+
+export const PassIcon: React.FC<IconSvgProps> = ({
+  size = 24,
+  width,
+  height,
+  ...props
+}) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size || width}
+    height={size || height}
+    viewBox="0 0 16 16"
+    {...props}
+  >
+    <g fill="currentColor">
+      <path d="M6.27 10.87h.71l4.56-4.56l-.71-.71l-4.2 4.21l-1.92-1.92L4 8.6z" />
+      <path
+        fillRule="evenodd"
+        d="M8.6 1c1.6.1 3.1.9 4.2 2c1.3 1.4 2 3.1 2 5.1c0 1.6-.6 3.1-1.6 4.4c-1 1.2-2.4 2.1-4 2.4s-3.2.1-4.6-.7s-2.5-2-3.1-3.5S.8 7.5 1.3 6c.5-1.6 1.4-2.9 2.8-3.8C5.4 1.3 7 .9 8.6 1m.5 12.9c1.3-.3 2.5-1 3.4-2.1c.8-1.1 1.3-2.4 1.2-3.8c0-1.6-.6-3.2-1.7-4.3c-1-1-2.2-1.6-3.6-1.7c-1.3-.1-2.7.2-3.8 1S2.7 4.9 2.3 6.3c-.4 1.3-.4 2.7.2 4q.9 1.95 2.7 3c1.2.7 2.6.9 3.9.6"
+        clipRule="evenodd"
+      />
+    </g>
   </svg>
 );
 

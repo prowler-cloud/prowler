@@ -21,8 +21,9 @@ export const AddProvider = () => {
         const errorMessage = `${error.detail}`;
         // show error
         toast({
-          title: "Wops! Something went wrong",
-          description: errorMessage,
+          variant: "destructive",
+          title: "Ups! Something went wrong",
+          description: errorMessage
         });
       });
     } else {

@@ -21,7 +21,8 @@ export const DeleteProvider = ({ id }: { id: string }) => {
       const errorMessage = `${error.detail}`;
       // show error
       toast({
-        title: "Wops! Something went wrong",
+        variant: "destructive",
+        title: "Ups! Something went wrong",
         description: errorMessage,
       });
     } else {
