@@ -2181,13 +2181,13 @@ pendulum = ">=3.0.0"
 
 [[package]]
 name = "microsoft-kiota-serialization-json"
-version = "1.2.0"
+version = "1.3.0"
 description = "Implementation of Kiota Serialization interfaces for JSON"
 optional = false
 python-versions = "*"
 files = [
-    {file = "microsoft_kiota_serialization_json-1.2.0-py2.py3-none-any.whl", hash = "sha256:cf68ef323157b3566b043d2282b292479bca6af0ffcf08385c806c812e507a58"},
-    {file = "microsoft_kiota_serialization_json-1.2.0.tar.gz", hash = "sha256:89a4ec0128958bc92287db0cf5b6616a9f66ac42f6c7bcfe8894393d2156bed9"},
+    {file = "microsoft_kiota_serialization_json-1.3.0-py2.py3-none-any.whl", hash = "sha256:fbf82835d8b77ef21b496aa711a512fe4494fa94dfe88f7fd014dffe33778e20"},
+    {file = "microsoft_kiota_serialization_json-1.3.0.tar.gz", hash = "sha256:235b680e6eb646479ffb7b59d2a6f0216c4f7e1c2ff1219fd4d59e898fa6b124"},
 ]
 
 [package.dependencies]
@@ -2462,13 +2462,13 @@ dev = ["bumpver", "isort", "mypy", "pylint", "pytest", "yapf"]
 
 [[package]]
 name = "msgraph-sdk"
-version = "1.5.3"
+version = "1.5.4"
 description = "The Microsoft Graph Python SDK"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "msgraph_sdk-1.5.3-py3-none-any.whl", hash = "sha256:47aecbeb3bdb76fcfb4b7535aa5defc336249c42b0d7cbb9480244045449cb12"},
-    {file = "msgraph_sdk-1.5.3.tar.gz", hash = "sha256:34dd5a9a55287cfc8a3d5e301acdf65e46462011d451f2992fdbf31851a94e8f"},
+    {file = "msgraph_sdk-1.5.4-py3-none-any.whl", hash = "sha256:9ea349f30cc4a03edb587e26554c7a4839a38c2ef30d4b5396882fd2be82dcac"},
+    {file = "msgraph_sdk-1.5.4.tar.gz", hash = "sha256:b0e146328d136d1db175938d8fc901f3bb32acf3ea6fe93c0dc7c5a0abc45e39"},
 ]
 
 [package.dependencies]
@@ -2477,7 +2477,7 @@ microsoft-kiota-abstractions = ">=1.3.0,<2.0.0"
 microsoft-kiota-authentication-azure = ">=1.0.0,<2.0.0"
 microsoft-kiota-http = ">=1.0.0,<2.0.0"
 microsoft-kiota-serialization-form = ">=0.1.0"
-microsoft-kiota-serialization-json = ">=1.0.0,<2.0.0"
+microsoft-kiota-serialization-json = ">=1.3.0,<2.0.0"
 microsoft-kiota-serialization-multipart = ">=0.1.0"
 microsoft-kiota-serialization-text = ">=1.0.0,<2.0.0"
 msgraph_core = ">=1.0.0"
@@ -4512,4 +4512,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "jaraco.test", "more
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "656a61444beb6ba9557ea1a89ada691ae5f53543ba7bea74d6303fccb199e4c8"
+content-hash = "833096b5de6fd7232066cf05753cfcb0e41d1a9c61848e925d2f7701f2c36a78"
