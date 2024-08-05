@@ -1,3 +1,5 @@
+export * from "./findings/ColumnsFindings";
+export * from "./findings/SkeletonTableFindings";
 export * from "./providers/AddProvider";
 export * from "./providers/ButtonAddProvider";
 export * from "./providers/ButtonCheckConnectionProvider";
