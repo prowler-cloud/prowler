@@ -8,6 +8,26 @@ from prowler.lib.mutelist.models import mutelist_schema
 
 
 class Mutelist(ABC):
+    """
+    Abstract base class for managing a mutelist.
+
+    Attributes:
+        _mutelist (dict): Dictionary containing information about muted checks for different accounts.
+        _mutelist_file_path (str): Path to the mutelist file.
+        MUTELIST_KEY (str): Key used to access the mutelist in the mutelist file.
+
+    Methods:
+        __init__: Initializes a Mutelist object.
+        mutelist: Property that returns the mutelist dictionary.
+        mutelist_file_path: Property that returns the mutelist file path.
+        is_finding_muted: Abstract method to check if a finding is muted.
+        get_mutelist_file_from_local_file: Retrieves the mutelist file from a local file.
+        validate_mutelist: Validates the mutelist against a schema.
+        is_muted: Checks if a finding is muted for the audited account, check, region, resource, and tags.
+        is_muted_in_check: Checks if a check is muted.
+        is_excepted: Checks if the account, region, resource, and tags are excepted based on the exceptions.
+    """
+
     _mutelist: dict = {}
     _mutelist_file_path: str = None
 
@@ -67,6 +87,25 @@ class Mutelist(ABC):
     ) -> bool:
         """
         Check if the provided finding is muted for the audited account, check, region, resource and tags.
+
+        The Mutelist works in a way that each field is ANDed, so if a check is muted for an account, region, resource and tags, it will be muted.
+        The exceptions are ORed, so if a check is excepted for an account, region, resource or tags, it will not be muted.
+        The only particularity is the tags, which are ORed.
+
+        So, for the following Mutelist:
+        ```
+        Mutelist:
+            Accounts:
+                '*':
+                Checks:
+                    ec2_instance_detailed_monitoring_enabled:
+                        Regions: ['*']
+                        Resources:
+                            - 'i-123456789'
+                        Tags:
+                            - 'Name=AdminInstance | Environment=Prod'
+        ```
+        The check `ec2_instance_detailed_monitoring_enabled` will be muted for all accounts and regions and for the resource_id 'i-123456789' with at least one of the tags 'Name=AdminInstance' or 'Environment=Prod'.
 
         Args:
             mutelist (dict): Dictionary containing information about muted checks for different accounts.
@@ -172,7 +211,9 @@ class Mutelist(ABC):
                     muted_in_resource = self.is_item_matched(
                         muted_resources, finding_resource
                     )
-                    muted_in_tags = self.is_item_matched(muted_tags, finding_tags)
+                    muted_in_tags = self.is_item_matched(
+                        muted_tags, finding_tags, tag=True
+                    )
 
                     # For a finding to be muted requires the following set to True:
                     # - muted_in_check -> True
@@ -240,7 +281,9 @@ class Mutelist(ABC):
                 )
 
                 excepted_tags = exceptions.get("Tags", [])
-                is_tag_excepted = self.is_item_matched(excepted_tags, finding_tags)
+                is_tag_excepted = self.is_item_matched(
+                    excepted_tags, finding_tags, tag=True
+                )
 
                 if (
                     not is_account_excepted
@@ -264,7 +307,7 @@ class Mutelist(ABC):
             return False
 
     @staticmethod
-    def is_item_matched(matched_items, finding_items):
+    def is_item_matched(matched_items, finding_items, tag=False):
         """
         Check if any of the items in matched_items are present in finding_items.
 
@@ -278,10 +321,15 @@ class Mutelist(ABC):
         try:
             is_item_matched = False
             if matched_items and (finding_items or finding_items == ""):
+                # If we use tags, we need to use re.search instead of re.match because we need to match the tags in the format key1=value1 | key2=value2
+                if tag:
+                    operation = re.search
+                else:
+                    operation = re.match
                 for item in matched_items:
                     if item.startswith("*"):
                         item = ".*" + item[1:]
-                    if re.match(item, finding_items):
+                    if operation(item, finding_items):
                         is_item_matched = True
                         break
             return is_item_matched
