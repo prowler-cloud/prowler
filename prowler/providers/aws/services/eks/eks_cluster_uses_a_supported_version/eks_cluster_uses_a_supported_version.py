@@ -15,13 +15,13 @@ class eks_cluster_uses_a_supported_version(Check):
             report.resource_tags = cluster.tags
             report.status_extended = f"EKS cluster {cluster.name} is using version {cluster.version} that is supported by AWS."
 
-            eks_latest_version = eks_client.audit_config.get(
+            eks_supported_versions = eks_client.audit_config.get(
                 "eks_cluster_supported_versions", ["1.28", "1.29", "1.30"]
             )
 
-            if cluster.version not in eks_latest_version:
+            if cluster.version not in eks_supported_versions:
                 report.status = "FAIL"
-                report.status_extended = f"EKS cluster {cluster.name} must have a version of {eks_latest_version}"
+                report.status_extended = f"EKS cluster {cluster.name} is in version {cluster.version}. It should be one of the next supported versions: {', '.join(eks_supported_versions)}"
 
             findings.append(report)
 
