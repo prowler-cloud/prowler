@@ -6,6 +6,7 @@ export * from "./providers/ButtonAddProvider";
 export * from "./providers/ButtonCheckConnectionProvider";
 export * from "./providers/ButtonDeleteProvider";
 export * from "./providers/CheckConnectionProvider";
+export * from "./providers/CustomRadioProvider";
 export * from "./providers/DateWithTime";
 export * from "./providers/ProviderInfo";
 export * from "./providers/ScanStatus";
