@@ -35,6 +35,7 @@ class Test_kms_cmk_not_deleted_unintentionally:
 
         kms_client = client("kms", region_name=AWS_REGION_US_EAST_1)
         key = kms_client.create_key()["KeyMetadata"]
+        kms_client.disable_key(KeyId=key["KeyId"])
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
