@@ -12,7 +12,7 @@ class kms_cmk_not_deleted_unintentionally(Check):
                 report.resource_tags = key.tags
                 report.status = "PASS"
                 report.status_extended = (
-                    f"KMS CMK {key.id} is not scheduled for deletion."
+                    f"KMS CMK {key.id} is not used and is not scheduled for deletion."
                 )
                 report.resource_id = key.id
                 report.resource_arn = key.arn
@@ -21,5 +21,7 @@ class kms_cmk_not_deleted_unintentionally(Check):
                     report.status_extended = (
                         f"KMS CMK {key.id} is scheduled for deletion."
                     )
+                elif key.state == "Enabled":
+                    report.status_extended = f"KMS CMK {key.id} is being used."
                 findings.append(report)
         return findings

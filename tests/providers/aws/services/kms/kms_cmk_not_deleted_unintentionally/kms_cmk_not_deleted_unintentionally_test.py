@@ -56,7 +56,7 @@ class Test_kms_cmk_not_deleted_unintentionally:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"KMS CMK {key['KeyId']} is not scheduled for deletion."
+                == f"KMS CMK {key['KeyId']} is not used and is not scheduled for deletion."
             )
             assert result[0].resource_id == key["KeyId"]
             assert result[0].resource_arn == key["Arn"]
@@ -91,5 +91,35 @@ class Test_kms_cmk_not_deleted_unintentionally:
                 result[0].status_extended
                 == f"KMS CMK {key['KeyId']} is scheduled for deletion."
             )
+            assert result[0].resource_id == key["KeyId"]
+            assert result[0].resource_arn == key["Arn"]
+
+    @mock_aws
+    def test_kms_cmk_enabled(self):
+        from prowler.providers.aws.services.kms.kms_service import KMS
+
+        kms_client = client("kms", region_name=AWS_REGION_US_EAST_1)
+        key = kms_client.create_key()["KeyMetadata"]
+        kms_client.enable_key(KeyId=key["KeyId"])
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.kms.kms_cmk_not_deleted_unintentionally.kms_cmk_not_deleted_unintentionally.kms_client",
+            new=KMS(aws_provider),
+        ):
+            from prowler.providers.aws.services.kms.kms_cmk_not_deleted_unintentionally.kms_cmk_not_deleted_unintentionally import (
+                kms_cmk_not_deleted_unintentionally,
+            )
+
+            check = kms_cmk_not_deleted_unintentionally()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert result[0].status_extended == f"KMS CMK {key['KeyId']} is being used."
             assert result[0].resource_id == key["KeyId"]
             assert result[0].resource_arn == key["Arn"]
