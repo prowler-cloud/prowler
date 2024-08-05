@@ -88,6 +88,7 @@ class KMS(GCPService):
                     for key in response.get("cryptoKeys", []):
                         self.crypto_keys.append(
                             CriptoKey(
+                                id=key["name"],
                                 name=key["name"].split("/")[-1],
                                 location=key["name"].split("/")[3],
                                 rotation_period=key.get("rotationPeriod"),
@@ -139,6 +140,7 @@ class KeyRing(BaseModel):
 
 
 class CriptoKey(BaseModel):
+    id: str
     name: str
     location: str
     rotation_period: Optional[str]
