@@ -8,7 +8,6 @@ from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################### Codebuild
 class Codebuild(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
@@ -105,4 +104,4 @@ class Project(BaseModel):
     last_build: Optional[Build]
     last_invoked_time: Optional[datetime.datetime]
     buildspec: Optional[str]
-    environment_variables: Optional[List[EnvironmentVariable]] = []
+    environment_variables: Optional[List[EnvironmentVariable]]

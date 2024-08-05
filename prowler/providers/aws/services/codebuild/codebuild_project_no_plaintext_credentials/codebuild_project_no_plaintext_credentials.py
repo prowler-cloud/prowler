@@ -11,12 +11,12 @@ class codebuild_project_no_plaintext_credentials(Check):
             report.resource_id = project.name
             report.resource_arn = project.arn
             report.status = "PASS"
-            report.status_extended = f"CodeBuild project {project.name} does not have environment plaintext credentials."
+            report.status_extended = f"CodeBuild project {project.name} does not have sensitive environment plaintext credentials."
             sensitive_vars = ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"]
             for var in project.environment_variables:
                 if var.name in sensitive_vars and var.type == "PLAINTEXT":
                     report.status = "FAIL"
-                    report.status_extended = f"CodeBuild project {project.name} has environment plaintext credentials."
+                    report.status_extended = f"CodeBuild project {project.name} has sensitive environment plaintext credentials."
                     break
             findings.append(report)
 
