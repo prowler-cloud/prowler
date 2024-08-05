@@ -45,11 +45,15 @@ fail_html_finding = """
                             <td>eu-west-1</td>
                             <td>test-check-id</td>
                             <td>test-check-id</td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
+                            <td>test-resource-uid</td>
+                            <td>
+&#x2022;key1=value1
+
+&#x2022;key2=value2
+</td>
+                            <td>test-status-extended</td>
                             <td><p class="show-read-more">test-risk</p></td>
-                            <td><p class="show-read-more"></p> <a class="read-more" href=""><i class="fas fa-external-link-alt"></i></a></td>
+                            <td><p class="show-read-more">test-remediation-recommendation-text</p> <a class="read-more" href=""><i class="fas fa-external-link-alt"></i></a></td>
                             <td><p class="show-read-more">
 &#x2022;test-compliance: test-compliance
 </p></td>
@@ -421,7 +425,23 @@ html_footer = """
 
 class TestHTML:
     def test_transform_fail_finding(self):
-        findings = [generate_finding_output(status="FAIL")]
+        findings = [
+            generate_finding_output(
+                status="FAIL",
+                resource_tags={"key1": "value1", "key2": "value2"},
+                severity="high",
+                service_name="test-service",
+                region=AWS_REGION_EU_WEST_1,
+                check_id="test-check-id",
+                check_title="test-check-id",
+                resource_uid="test-resource-uid",
+                status_extended="test-status-extended",
+                risk="test-risk",
+                remediation_recommendation_text="test-remediation-recommendation-text",
+                compliance={"test-compliance": "test-compliance"},
+            )
+        ]
+
         html = HTML(findings)
         output_data = html.data[0]
         assert isinstance(output_data, str)

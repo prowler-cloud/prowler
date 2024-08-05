@@ -22,7 +22,7 @@ class GCPProject(BaseModel):
     id: str
     name: str
     organization: Optional[GCPOrganization]
-    labels: list[str]
+    labels: dict
     lifecycle_state: str
 
 
