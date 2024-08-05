@@ -30,9 +30,9 @@ def get_organizations_metadata(
 def parse_organizations_metadata(metadata: dict, tags: dict) -> AWSOrganizationsInfo:
     try:
         # Convert Tags dictionary to String
-        account_details_tags = []
+        account_details_tags = {}
         for tag in tags.get("Tags", {}):
-            account_details_tags.append(f"{tag['Key']}:{tag['Value']}")
+            account_details_tags[tag["Key"]] = tag["Value"]
 
         account_details = metadata.get("Account", {})
 

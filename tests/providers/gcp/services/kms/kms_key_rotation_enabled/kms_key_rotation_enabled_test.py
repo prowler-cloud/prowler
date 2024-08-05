@@ -65,6 +65,7 @@ class Test_kms_key_rotation_enabled:
             kms_client.crypto_keys = [
                 CriptoKey(
                     name="key1",
+                    id="projects/123/locations/us-central1/keyRings/keyring1/cryptoKeys/key1",
                     project_id=GCP_PROJECT_ID,
                     key_ring=keyring.name,
                     location=keylocation.name,
@@ -80,7 +81,7 @@ class Test_kms_key_rotation_enabled:
                 result[0].status_extended
                 == f"Key {kms_client.crypto_keys[0].name} is not rotated every 90 days or less."
             )
-            assert result[0].resource_id == kms_client.crypto_keys[0].name
+            assert result[0].resource_id == kms_client.crypto_keys[0].id
             assert result[0].resource_name == kms_client.crypto_keys[0].name
             assert result[0].location == kms_client.crypto_keys[0].location
             assert result[0].project_id == kms_client.crypto_keys[0].project_id
@@ -120,6 +121,7 @@ class Test_kms_key_rotation_enabled:
             kms_client.crypto_keys = [
                 CriptoKey(
                     name="key1",
+                    id="projects/123/locations/us-central1/keyRings/keyring1/cryptoKeys/key1",
                     project_id=GCP_PROJECT_ID,
                     rotation_period="8776000s",
                     key_ring=keyring.name,
@@ -136,7 +138,7 @@ class Test_kms_key_rotation_enabled:
                 result[0].status_extended
                 == f"Key {kms_client.crypto_keys[0].name} is not rotated every 90 days or less."
             )
-            assert result[0].resource_id == kms_client.crypto_keys[0].name
+            assert result[0].resource_id == kms_client.crypto_keys[0].id
             assert result[0].resource_name == kms_client.crypto_keys[0].name
             assert result[0].location == kms_client.crypto_keys[0].location
             assert result[0].project_id == kms_client.crypto_keys[0].project_id
@@ -176,6 +178,7 @@ class Test_kms_key_rotation_enabled:
             kms_client.crypto_keys = [
                 CriptoKey(
                     name="key1",
+                    id="projects/123/locations/us-central1/keyRings/keyring1/cryptoKeys/key1",
                     project_id=GCP_PROJECT_ID,
                     rotation_period="7776000s",
                     key_ring=keyring.name,
@@ -192,7 +195,7 @@ class Test_kms_key_rotation_enabled:
                 result[0].status_extended
                 == f"Key {kms_client.crypto_keys[0].name} is rotated every 90 days or less."
             )
-            assert result[0].resource_id == kms_client.crypto_keys[0].name
+            assert result[0].resource_id == kms_client.crypto_keys[0].id
             assert result[0].resource_name == kms_client.crypto_keys[0].name
             assert result[0].location == kms_client.crypto_keys[0].location
             assert result[0].project_id == kms_client.crypto_keys[0].project_id
