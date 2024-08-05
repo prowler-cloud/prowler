@@ -1098,7 +1098,7 @@ aws:
             rmdir(arguments.output_directory)
 
     @mock_aws
-    def test_validate_credentials_commercial_partition_with_regions(self):
+    def test_test_connection_commercial_partition_with_regions(self):
         # Create a mock IAM user
         iam_client = client("iam", region_name=AWS_REGION_EU_WEST_1)
         iam_user = iam_client.create_user(UserName="test-user")["User"]
@@ -1137,7 +1137,7 @@ aws:
     @patch(
         "botocore.client.BaseClient._make_api_call", new=mock_get_caller_identity_china
     )
-    def test_validate_credentials_china_partition(self):
+    def test_test_connection_china_partition(self):
         # Create a mock IAM user
         iam_client = client("iam", region_name=AWS_REGION_CN_NORTH_1)
         iam_user = iam_client.create_user(UserName="test-user")["User"]
@@ -1180,7 +1180,7 @@ aws:
         "botocore.client.BaseClient._make_api_call",
         new=mock_get_caller_identity_gov_cloud,
     )
-    def test_validate_credentials_gov_cloud_partition(self):
+    def test_test_connection_gov_cloud_partition(self):
         # Create a mock IAM user
         iam_client = client("iam", region_name=AWS_REGION_GOV_CLOUD_US_EAST_1)
         iam_user = iam_client.create_user(UserName="test-user")["User"]
@@ -1219,7 +1219,7 @@ aws:
         assert get_caller_identity.arn.resource_type == "user"
 
     @mock_aws
-    def test_validate_credentials_without_a_session(self, monkeypatch):
+    def test_test_connection_without_a_session(self, monkeypatch):
         # Create a mock IAM user
         iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
         iam_user = iam_client.create_user(UserName="test-user")["User"]
@@ -1247,7 +1247,7 @@ aws:
         assert get_caller_identity.arn.resource_type == "user"
 
     @mock_aws
-    def test_test_connection_with_role_from_env_without_mfa(self, monkeypatch):
+    def test_test_connection_with_role_from_env(self, monkeypatch):
         # Create a mock IAM user
         iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
         iam_user = iam_client.create_user(UserName="test-user")["User"]
