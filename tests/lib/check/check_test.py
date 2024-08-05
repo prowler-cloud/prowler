@@ -825,8 +825,6 @@ class TestCheck:
                 global_provider=set_mocked_aws_provider(
                     expected_checks=["accessanalyzer_enabled"]
                 ),
-                services_executed={"accessanalyzer"},
-                checks_executed={"accessanalyzer_enabled"},
                 custom_checks_metadata=None,
             )
             assert len(findings) == 1
@@ -855,8 +853,6 @@ class TestCheck:
                 global_provider=set_mocked_aws_provider(
                     status=status, expected_checks=["accessanalyzer_enabled"]
                 ),
-                services_executed={"accessanalyzer"},
-                checks_executed={"accessanalyzer_enabled"},
                 custom_checks_metadata=None,
             )
             assert len(findings) == 0
