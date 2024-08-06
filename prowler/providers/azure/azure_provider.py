@@ -431,17 +431,17 @@ class AzureProvider(Provider):
             logger.info(f"Connected to Azure subscription: {subscription.display_name}")
             return True, credentials, region_config
 
-        except HttpResponseError as e:
-            logger.critical(
-                f"Failed to connect to Azure subscription: {e.error.error.message}"
+        except HttpResponseError as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            return False, e, None
+            return False, error, None
 
-        except Exception as ex:
+        except Exception as error:
             logger.critical(
-                f"Failed to connect to Azure subscription: {ex.__class__.__name__}[{ex.__traceback__.tb_lineno}] -- {ex}"
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            return False, ex, None
+            raise error
 
     @staticmethod
     def check_service_principal_creds_env_vars():
