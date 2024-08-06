@@ -28,7 +28,7 @@ class Test_eks_cluster_ensure_version_is_supported:
     def test_eks_cluster_not_using_a_supported_version(self):
         eks_client = mock.MagicMock
         eks_client.audit_config = {
-            "eks_cluster_supported_versions": ["1.28", "1.29", "1.30"]
+            "eks_cluster_supported_versions": "1.28"
         }
         eks_client.clusters = []
         eks_client.clusters.append(
@@ -55,7 +55,7 @@ class Test_eks_cluster_ensure_version_is_supported:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"EKS cluster {cluster_name} is in version 1.22. It should be one of the next supported versions: 1.28, 1.29, 1.30"
+                == f"EKS cluster {cluster_name} is in version 1.22. It should be one of the next supported versions: 1.28 or higher"
             )
             assert result[0].resource_id == cluster_name
             assert result[0].resource_arn == cluster_arn
@@ -65,7 +65,7 @@ class Test_eks_cluster_ensure_version_is_supported:
     def test_eks_cluster_using_a_supported_version_ver_1_28(self):
         eks_client = mock.MagicMock
         eks_client.audit_config = {
-            "eks_cluster_supported_versions": ["1.28", "1.29", "1.30"]
+            "eks_cluster_supported_versions": "1.28"
         }
         eks_client.clusters = []
         eks_client.clusters.append(
@@ -102,7 +102,7 @@ class Test_eks_cluster_ensure_version_is_supported:
     def test_eks_cluster_using_a_supported_version_ver_1_29(self):
         eks_client = mock.MagicMock
         eks_client.audit_config = {
-            "eks_cluster_supported_versions": ["1.28", "1.29", "1.30"]
+            "eks_cluster_supported_versions": "1.28"
         }
         eks_client.clusters = []
         eks_client.clusters.append(
@@ -139,7 +139,7 @@ class Test_eks_cluster_ensure_version_is_supported:
     def test_eks_cluster_using_a_supported_version_ver_1_30(self):
         eks_client = mock.MagicMock
         eks_client.audit_config = {
-            "eks_cluster_supported_versions": ["1.28", "1.29", "1.30"]
+            "eks_cluster_supported_versions": "1.28"
         }
         eks_client.clusters = []
         eks_client.clusters.append(

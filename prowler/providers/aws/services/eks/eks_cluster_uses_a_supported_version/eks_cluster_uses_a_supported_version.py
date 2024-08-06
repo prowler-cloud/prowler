@@ -16,13 +16,24 @@ class eks_cluster_uses_a_supported_version(Check):
             report.status_extended = f"EKS cluster {cluster.name} is using version {cluster.version} that is supported by AWS."
 
             eks_supported_versions = eks_client.audit_config.get(
-                "eks_cluster_supported_versions", ["1.28", "1.29", "1.30"]
+                "eks_cluster_supported_versions", "1.28"
             )
 
-            if cluster.version not in eks_supported_versions:
-                report.status = "FAIL"
-                report.status_extended = f"EKS cluster {cluster.name} is in version {cluster.version}. It should be one of the next supported versions: {', '.join(eks_supported_versions)}"
+            user_version_num = cluster.version.split(".")
+            eks_version_num = eks_supported_versions.split(".")
 
+            if int(user_version_num[0]) < int(eks_version_num[0]) :
+                report.status = "FAIL"
+                report.status_extended = (
+                    f"EKS cluster {cluster.name} is in version {cluster.version}. It should be one of the next supported versions: {eks_supported_versions} or higher"
+                )
+
+            if int(user_version_num[0]) == int(eks_version_num[0]) and int(user_version_num[1]) < int(eks_version_num[1]):
+                report.status = "FAIL"
+                report.status_extended = (
+                    f"EKS cluster {cluster.name} is in version {cluster.version}. It should be one of the next supported versions: {eks_supported_versions} or higher"
+                )
+                
             findings.append(report)
 
         return findings
