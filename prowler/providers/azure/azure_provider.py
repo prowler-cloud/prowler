@@ -39,19 +39,23 @@ class AzureProvider(Provider):
     # TODO: this is not optional, enforce for all providers
     audit_metadata: Audit_Metadata
 
-    def __init__(self, arguments):
+    def __init__(
+        self,
+        az_cli_auth: bool,
+        sp_env_auth: bool,
+        browser_auth: bool,
+        managed_entity_auth: bool,
+        tenant_id: str,
+        region: str,
+        subscription_ids: list,
+        config_file: str,
+        fixer_config: str,
+    ):
         logger.info("Setting Azure provider ...")
-        subscription_ids = arguments.subscription_id
 
         logger.info("Checking if any credentials mode is set ...")
-        az_cli_auth = arguments.az_cli_auth
-        sp_env_auth = arguments.sp_env_auth
-        browser_auth = arguments.browser_auth
-        managed_entity_auth = arguments.managed_identity_auth
-        tenant_id = arguments.tenant_id
 
         logger.info("Checking if region is different than default one")
-        region = arguments.azure_region
         test_connection = self.test_connection(
             az_cli_auth,
             sp_env_auth,
@@ -79,12 +83,8 @@ class AzureProvider(Provider):
 
         # TODO: move this to the providers, pending for AWS, GCP, AZURE and K8s
         # Audit Config
-        self._audit_config = load_and_validate_config_file(
-            self._type, arguments.config_file
-        )
-        self._fixer_config = load_and_validate_config_file(
-            self._type, arguments.fixer_config
-        )
+        self._audit_config = load_and_validate_config_file(self._type, config_file)
+        self._fixer_config = load_and_validate_config_file(self._type, fixer_config)
 
     @property
     def identity(self):
