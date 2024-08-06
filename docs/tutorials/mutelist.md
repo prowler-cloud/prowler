@@ -37,20 +37,20 @@ Mutelist:
           Regions:
             - "us-east-1"
           Resources:
-            - "user-1"           # Will ignore user-1 in check iam_user_hardware_mfa_enabled
-            - "user-2"           # Will ignore user-2 in check iam_user_hardware_mfa_enabled
+            - "user-1"           # Will mute user-1 in check iam_user_hardware_mfa_enabled
+            - "user-2"           # Will mute user-2 in check iam_user_hardware_mfa_enabled
         "ec2_*":
           Regions:
             - "*"
           Resources:
-            - "*"                 # Will ignore every EC2 check in every account and region
+            - "*"                 # Will mute every EC2 check in every account and region
         "*":
           Regions:
             - "*"
           Resources:
             - "test"
           Tags:
-            - "test=test"         # Will ignore every resource containing the string "test" and the tags 'test=test' and
+            - "test=test"         # Will mute every resource containing the string "test" and the tags 'test=test' and
             - "project=test|project=stage" # either of ('project=test' OR project=stage) in account 123456789012 and every region
 
     "*":
@@ -60,9 +60,9 @@ Mutelist:
             - "eu-west-1"
             - "us-east-1"
           Resources:
-            - "ci-logs"           # Will ignore bucket "ci-logs" AND ALSO bucket "ci-logs-replica" in specified check and regions
-            - "logs"              # Will ignore EVERY BUCKET containing the string "logs" in specified check and regions
-            - ".+-logs"           # Will ignore all buckets containing the terms ci-logs, qa-logs, etc. in specified check and regions
+            - "ci-logs"           # Will mute bucket "ci-logs" AND ALSO bucket "ci-logs-replica" in specified check and regions
+            - "logs"              # Will mute EVERY BUCKET containing the string "logs" in specified check and regions
+            - ".+-logs"           # Will mute all buckets containing the terms ci-logs, qa-logs, etc. in specified check and regions
         "ecs_task_definitions_no_environment_secrets":
           Regions:
             - "*"
@@ -73,14 +73,14 @@ Mutelist:
               - "0123456789012"
             Regions:
               - "eu-west-1"
-              - "eu-south-2"        # Will ignore every resource in check ecs_task_definitions_no_environment_secrets except the ones in account 0123456789012 located in eu-south-2 or eu-west-1
+              - "eu-south-2"        # Will mute every resource in check ecs_task_definitions_no_environment_secrets except the ones in account 0123456789012 located in eu-south-2 or eu-west-1
         "*":
           Regions:
             - "*"
           Resources:
             - "*"
           Tags:
-            - "environment=dev"    # Will ignore every resource containing the tag 'environment=dev' in every account and region
+            - "environment=dev"    # Will mute every resource containing the tag 'environment=dev' in every account and region
 
     "123456789012":
       Checks:
@@ -93,18 +93,26 @@ Mutelist:
             Resources:
               - "test"
             Tags:
-              - "environment=prod"   # Will ignore every resource except in account 123456789012 except the ones containing the string "test" and tag environment=prod
+              - "environment=prod"   # Will mute every resource except in account 123456789012 except the ones containing the string "test" and tag environment=prod
+
+    "*":
+      Checks:
+        "ec2_*":
+          Regions:
+            - "*"
+          Resources:
+            - "test-resource" # Will mute the resource "test-resource" in all accounts and regions for whatever check from the EC2 service
 ```
 
 ### Account, Check, Region, Resource, and Tag
 
 | Field | Description | Logic |
 |----------|----------|----------|
-| `<account_id>`    | Use `*` to apply the mutelist to all accounts.    | `ANDed`    |
-| `<check_name>`    | The name of the Prowler check. Use `*` to apply the mutelist to all checks.    | `ANDed`    |
-| `<region>`    | The region identifier. Use `*` to apply the mutelist to all regions.    | `ANDed`    |
-| `<resource>`    | The resource identifier. Use `*` to apply the mutelist to all resources.    | `ANDed`    |
-| `<tag>`    | The tag value.    | `ORed`    |
+| `account_id`    | Use `*` to apply the mutelist to all accounts.    | `ANDed`    |
+| `check_name`    | The name of the Prowler check. Use `*` to apply the mutelist to all checks, or `service_*` to apply it to all service's checks.    | `ANDed`    |
+| `region`    | The region identifier. Use `*` to apply the mutelist to all regions.    | `ANDed`    |
+| `resource`    | The resource identifier. Use `*` to apply the mutelist to all resources.    | `ANDed`    |
+| `tag`    | The tag value.    | `ORed`    |
 
 
 ## How to Use the Mutelist
