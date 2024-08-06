@@ -9,6 +9,6 @@ export * from "./DateWithTime";
 export * from "./DeleteProvider";
 export * from "./ProviderInfo";
 export * from "./ScanStatus";
-export * from "./table/ColumnsProviders";
+export * from "./table/ColumnsProvider";
 export * from "./table/DataTable";
 export * from "./table/SkeletonTableProvider";

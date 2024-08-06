@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import { getProvider } from "@/actions";
 import {
   AddProviderModal,
-  ColumnsProviders,
+  ColumnsProvider,
   DataTable,
   SkeletonTableProvider,
 } from "@/components/providers";
@@ -31,5 +31,5 @@ export default async function Providers() {
 const SSRDataTable = async () => {
   const providersData = await getProvider();
   const [providers] = await Promise.all([providersData]);
-  return <DataTable columns={ColumnsProviders} data={providers?.data ?? []} />;
+  return <DataTable columns={ColumnsProvider} data={providers?.data ?? []} />;
 };
