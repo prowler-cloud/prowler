@@ -29,7 +29,7 @@ from prowler.providers.common.provider import Provider
 
 class AzureProvider(Provider):
     _type: str = "azure"
-    _session: DefaultAzureCredential
+    _credentials: DefaultAzureCredential
     _identity: AzureIdentityInfo
     _audit_config: dict
     _region_config: AzureRegionConfig
@@ -53,8 +53,6 @@ class AzureProvider(Provider):
     ):
         logger.info("Setting Azure provider ...")
 
-        logger.info("Checking if any credentials mode is set ...")
-
         logger.info("Checking if region is different than default one")
         test_connection = self.test_connection(
             az_cli_auth,
@@ -67,7 +65,7 @@ class AzureProvider(Provider):
         # If the connection test fails, exit the program
         if not test_connection[0]:
             sys.exit(1)
-        self._session = test_connection[1]
+        self._credentials = test_connection[1]
         self._region_config = test_connection[2]
 
         self._identity = self.setup_identity(
@@ -79,7 +77,7 @@ class AzureProvider(Provider):
         )
 
         # TODO: should we keep this here or within the identity?
-        self._locations = self.get_locations(self.session)
+        self._locations = self.get_locations(self.credentials)
 
         # TODO: move this to the providers, pending for AWS, GCP, AZURE and K8s
         # Audit Config
@@ -105,14 +103,14 @@ class AzureProvider(Provider):
         return self._type
 
     @property
-    def session(self):
+    def credentials(self) -> DefaultAzureCredential:
         """
-        Returns the session object associated with the Azure provider.
+        Returns the Azure credentials object.
 
         Returns:
-            session (object): The session object.
+            DefaultAzureCredential: The Azure credentials object.
         """
-        return self._session
+        return self._credentials
 
     @property
     def region_config(self):
@@ -312,10 +310,8 @@ class AzureProvider(Provider):
         )
         print_boxes(report_lines, report_title)
 
-    # TODO: setup_session or setup_credentials?
-    # This should be setup_credentials, since it is setting up the credentials for the provider
     @staticmethod
-    def setup_session(
+    def setup_credentials(
         az_cli_auth,
         sp_env_auth,
         browser_auth,
@@ -324,7 +320,7 @@ class AzureProvider(Provider):
         region_config,
     ):
         """
-        Set up the Azure session with the specified authentication method.
+        Sets up the Azure credentials based on the authentication method.
 
         Args:
             az_cli_auth (bool): Flag indicating whether to use Azure CLI authentication.
@@ -391,13 +387,11 @@ class AzureProvider(Provider):
         managed_entity_auth,
         tenant_id,
         region,
-        credentials=None,
     ) -> tuple[bool, DefaultAzureCredential | Exception, AzureRegionConfig]:
         """
-        Test the connection to an Azure subscription using the provided credentials.
+        Tests the connection to Azure using the specified authentication method.
 
         Args:
-            credentials: The credentials object used to authenticate with Azure.
             az_cli_auth (bool): Flag indicating whether to use Azure CLI authentication.
             sp_env_auth (bool): Flag indicating whether to use Service Principal authentication with environment variables.
             browser_auth (bool): Flag indicating whether to use interactive browser authentication.
@@ -412,16 +406,16 @@ class AzureProvider(Provider):
             region_config = AzureProvider.setup_region_config(
                 validate_azure_region(region)
             )
-            # If no credentials are provided, set them up
-            if not credentials:
-                credentials = AzureProvider.setup_session(
-                    az_cli_auth,
-                    sp_env_auth,
-                    browser_auth,
-                    managed_entity_auth,
-                    tenant_id,
-                    region_config,
-                )
+
+            # Set up the Azure credentials
+            credentials = AzureProvider.setup_credentials(
+                az_cli_auth,
+                sp_env_auth,
+                browser_auth,
+                managed_entity_auth,
+                tenant_id,
+                region_config,
+            )
             # Create a SubscriptionClient
             subscription_client = SubscriptionClient(credentials)
 
@@ -486,7 +480,7 @@ class AzureProvider(Provider):
         Returns:
             AzureIdentityInfo: An instance of AzureIdentityInfo containing the identity information.
         """
-        credentials = self.session
+        credentials = self.credentials
         # TODO: fill this object with real values not default and set to none
         identity = AzureIdentityInfo()
 
