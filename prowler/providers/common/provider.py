@@ -136,9 +136,9 @@ class Provider(ABC):
         """
         raise NotImplementedError()
 
-    # TODO: uncomment this once all the providers have implemented the is_connected method
+    # TODO: uncomment this once all the providers have implemented the test_connection method
     # @abstractmethod
-    def is_connected(self) -> tuple[bool, Any]:
+    def test_connection(self) -> Any:
         """
         test_connection tests the connection to the provider.
 

@@ -4,7 +4,6 @@ import sys
 from argparse import ArgumentTypeError, Namespace
 from datetime import datetime
 from re import fullmatch
-from typing import Union
 
 from boto3 import client
 from boto3.session import Session
@@ -112,12 +111,9 @@ class AwsProvider(Provider):
                 self.session.current_session.region_name, input_regions
             )
 
-            connected, caller_identity = self.is_connected(
+            caller_identity = self.test_connection(
                 session=self.session.current_session, aws_region=sts_region
             )
-            # TODO: review this for CLI and SDK usage, this is temporary
-            if not connected:
-                sys.exit(1)
 
             logger.info("Credentials validated")
             ########
@@ -260,8 +256,7 @@ class AwsProvider(Provider):
                 self._fixer_config = load_and_validate_fixer_config_file(
                     self._type, arguments.fixer_config
                 )
-        # This is a generic exception only raised for critical errors that will abort the execution
-        # TODO: It should be done in the caller level and not here
+        # Any exception raised during the initialization of the provider will stop the execution
         except Exception:
             sys.exit(1)
 
@@ -909,7 +904,7 @@ class AwsProvider(Provider):
             raise error
 
     @staticmethod
-    def is_connected(
+    def test_connection(
         session: Session = None,
         profile: str = None,
         aws_region: str = AWS_STS_GLOBAL_ENDPOINT_REGION,
@@ -918,13 +913,11 @@ class AwsProvider(Provider):
         session_duration: int = 3600,
         external_id: str = None,
         mfa_enabled: bool = False,
-    ) -> tuple[bool, Union[AWSCallerIdentity, None]]:
+    ) -> AWSCallerIdentity:
         """
         Validates AWS credentials using the provided session and AWS region.
 
         If no session is provided, the method will create a new session using the Boto3 default session.
-
-        If you are assuming a role, you need to pass the session with the assumed role.
 
         Args:
             session (Session): The AWS session object.
@@ -937,7 +930,7 @@ class AwsProvider(Provider):
             mfa_enabled (bool): Whether MFA (Multi-Factor Authentication) is enabled.
 
         Returns:
-            tuple[bool, Union[AWSCallerIdentity, Exception]]: A tuple containing a boolean value indicating
+            AWSCallerIdentity: A tuple containing a boolean value indicating
             the success of the validation and either an AWSCallerIdentity object representing
             the caller's identity or an Exception object if an error occurs.
 
@@ -949,10 +942,10 @@ class AwsProvider(Provider):
                 role_arn="arn:aws:iam::111122223333:role/ProwlerRole",
                 external_id="67f7a641-ecb0-4f6d-921d-3587febd379c"
             )
-            (True, AWSCallerIdentity(user_id='AROAAAAAAAAAAAAAAAAAA:ProwlerAssessmentSession', account='111122223333', arn=ARN(arn='arn:aws:sts::111122223333:assumed-role/ProwlerRole/ProwlerAssessmentSession', partition='aws', service='sts', region=None, account_id='111122223333', resource='ProwlerRole/ProwlerAssessmentSession', resource_type='assumed-role'), region='us-east-1'))
+            AWSCallerIdentity(user_id='AROAAAAAAAAAAAAAAAAAA:ProwlerAssessmentSession', account='111122223333', arn=ARN(arn='arn:aws:sts::111122223333:assumed-role/ProwlerRole/ProwlerAssessmentSession', partition='aws', service='sts', region=None, account_id='111122223333', resource='ProwlerRole/ProwlerAssessmentSession', resource_type='assumed-role'), region='us-east-1')
 
             >>> AwsProvider.test_connection(profile="test")
-            (True, AWSCallerIdentity(user_id='AROAAAAAAAAAAAAAAAAAA:test-user', account='111122223333', arn=ARN(arn='arn:aws:sts::111122223333:user/test-user', partition='aws', service='sts', region=None, account_id='111122223333', resource='test-user', resource_type='user'), region='us-east-1'))
+            AWSCallerIdentity(user_id='AROAAAAAAAAAAAAAAAAAA:test-user', account='111122223333', arn=ARN(arn='arn:aws:sts::111122223333:user/test-user', partition='aws', service='sts', region=None, account_id='111122223333', resource='test-user', resource_type='user'), region='us-east-1')
         """
         try:
             # Create the default session if no session is given
@@ -987,20 +980,14 @@ class AwsProvider(Provider):
             sts_client = AwsProvider.create_sts_session(session, aws_region)
             caller_identity = sts_client.get_caller_identity()
             # Include the region where the caller_identity has validated the credentials
-            return True, AWSCallerIdentity(
+            return AWSCallerIdentity(
                 user_id=caller_identity.get("UserId"),
                 account=caller_identity.get("Account"),
                 arn=ARN(caller_identity.get("Arn")),
                 region=aws_region,
             )
 
-        except (ClientError, ProfileNotFound) as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-            return False, None
-
-        except ArgumentTypeError as error:
+        except (ClientError, ProfileNotFound, ArgumentTypeError) as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
