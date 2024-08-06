@@ -240,11 +240,12 @@ class GcpProvider(Provider):
     @staticmethod
     def test_connection(credentials_file: str, service_account: str) -> Credentials:
         """
-        Test the connection to GCP using the provided session
+        Test the connection with the provided credentials file or service account to impersonate
         Args:
-            session: Credentials
+            credentials_file: str
+            service_account: str
         Returns:
-            bool: True if connection is successful, False otherwise
+            Credentials object
         """
         try:
             session = GcpProvider.setup_session(credentials_file, service_account)
