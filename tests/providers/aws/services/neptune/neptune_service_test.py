@@ -154,3 +154,32 @@ class Test_Neptune_Service:
             subnets=[SUBNET_1, SUBNET_2],
             tags=NEPTUNE_CLUSTER_TAGS,
         )
+
+    # @mock_aws
+    # def test_describe_db_cluster_snapshots(self):
+    #     neptune_client = client("neptune", region_name=AWS_REGION_US_EAST_1)
+    #     neptune_client.create_db_cluster(
+    #         AvailabilityZones=[AWS_REGION_US_EAST_1_AZA, AWS_REGION_US_EAST_1_AZB],
+    #         BackupRetentionPeriod=1,
+    #         CopyTagsToSnapshot=True,
+    #         Engine=NEPTUNE_ENGINE,
+    #         DatabaseName="cluster-1",
+    #         DBClusterIdentifier=NEPTUNE_CLUSTER_NAME,
+    #         Port=123,
+    #         Tags=NEPTUNE_CLUSTER_TAGS,
+    #         EnableIAMDatabaseAuthentication=False,
+    #         DeletionProtection=False,
+    #     )["DBCluster"]
+
+    #     neptune_client.create_db_cluster_snapshot(
+    #         DBClusterSnapshotIdentifier="snapshot-1", DBClusterIdentifier=NEPTUNE_CLUSTER_NAME,
+    #     )
+
+    #     aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+    #     neptune = Neptune(aws_provider)
+
+    #     assert len(neptune.db_cluster_snapshots) == 1
+    #     assert neptune.db_cluster_snapshots[0].id == "snapshot-1"
+    #     assert neptune.db_cluster_snapshots[0].cluster_id == NEPTUNE_CLUSTER_NAME
+    #     assert neptune.db_cluster_snapshots[0].region == AWS_REGION_US_EAST_1
+    #     assert not neptune.db_cluster_snapshots[0].public
