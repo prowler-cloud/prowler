@@ -22,18 +22,16 @@ class eks_cluster_uses_a_supported_version(Check):
             user_version_num = cluster.version.split(".")
             eks_version_num = eks_supported_versions.split(".")
 
-            if int(user_version_num[0]) < int(eks_version_num[0]) :
+            if int(user_version_num[0]) < int(eks_version_num[0]):
                 report.status = "FAIL"
-                report.status_extended = (
-                    f"EKS cluster {cluster.name} is in version {cluster.version}. It should be one of the next supported versions: {eks_supported_versions} or higher"
-                )
+                report.status_extended = f"EKS cluster {cluster.name} is in version {cluster.version}. It should be one of the next supported versions: {eks_supported_versions} or higher"
 
-            if int(user_version_num[0]) == int(eks_version_num[0]) and int(user_version_num[1]) < int(eks_version_num[1]):
+            if int(user_version_num[0]) == int(eks_version_num[0]) and int(
+                user_version_num[1]
+            ) < int(eks_version_num[1]):
                 report.status = "FAIL"
-                report.status_extended = (
-                    f"EKS cluster {cluster.name} is in version {cluster.version}. It should be one of the next supported versions: {eks_supported_versions} or higher"
-                )
-                
+                report.status_extended = f"EKS cluster {cluster.name} is in version {cluster.version}. It should be one of the next supported versions: {eks_supported_versions} or higher"
+
             findings.append(report)
 
         return findings
