@@ -51,12 +51,13 @@ class AzureProvider(Provider):
 
         logger.info("Checking if region is different than default one")
         region = arguments.azure_region
-        self._region_config = self.setup_region_config(region)
+        # self._region_config = self.setup_region_config(region)
         test_connection = self.test_connection(
             az_cli_auth,
             sp_env_auth,
             browser_auth,
             managed_entity_auth,
+            region,
             tenant_id,
         )
         # If the connection test fails, exit the program
@@ -224,8 +225,9 @@ class AzureProvider(Provider):
 
     # TODO: this should be moved to the argparse, if not we need to enforce it from the Provider
     # previously was using the AzureException
+    @staticmethod
     def validate_arguments(
-        self, az_cli_auth, sp_env_auth, browser_auth, managed_entity_auth, tenant_id
+        az_cli_auth, sp_env_auth, browser_auth, managed_entity_auth, tenant_id
     ):
         """
         Validates the authentication arguments for the Azure provider.
@@ -261,7 +263,8 @@ class AzureProvider(Provider):
                 "Azure Tenant ID (--tenant-id) is required only for browser authentication mode"
             )
 
-    def setup_region_config(self, region):
+    @staticmethod
+    def setup_region_config(region):
         """
         Sets up the region configuration for the Azure provider.
 
@@ -311,7 +314,12 @@ class AzureProvider(Provider):
     # TODO: setup_session or setup_credentials?
     # This should be setup_credentials, since it is setting up the credentials for the provider
     def setup_session(
-        self, az_cli_auth, sp_env_auth, browser_auth, managed_entity_auth, tenant_id
+        az_cli_auth,
+        sp_env_auth,
+        browser_auth,
+        managed_entity_auth,
+        tenant_id,
+        region_config,
     ):
         """
         Set up the Azure session with the specified authentication method.
@@ -331,13 +339,13 @@ class AzureProvider(Provider):
 
         """
         # Validate the authentication arguments
-        self.validate_arguments(
+        AzureProvider.validate_arguments(
             az_cli_auth, sp_env_auth, browser_auth, managed_entity_auth, tenant_id
         )
         # Browser auth creds cannot be set with DefaultAzureCredentials()
         if not browser_auth:
             if sp_env_auth:
-                self.check_service_principal_creds_env_vars()
+                AzureProvider.check_service_principal_creds_env_vars()
             try:
                 # Since the input vars come as True when it is wanted to be used, we need to inverse it since
                 # DefaultAzureCredential sets the auth method excluding the others
@@ -352,7 +360,7 @@ class AzureProvider(Provider):
                     # Azure Auth using PowerShell is not supported
                     exclude_powershell_credential=True,
                     # set Authority of a Microsoft Entra endpoint
-                    authority=self.region_config.authority,
+                    authority=region_config.authority,
                 )
             except Exception as error:
                 logger.critical("Failed to retrieve azure credentials")
@@ -372,13 +380,14 @@ class AzureProvider(Provider):
 
         return credentials
 
+    @staticmethod
     def test_connection(
-        self,
         az_cli_auth,
         sp_env_auth,
         browser_auth,
         managed_entity_auth,
         tenant_id,
+        region,
         credentials=None,
     ) -> tuple[bool, DefaultAzureCredential]:
         """
@@ -396,14 +405,16 @@ class AzureProvider(Provider):
             tuple: A tuple containing a boolean value indicating whether the connection was successful and the credentials object.
         """
         try:
+            region_config = AzureProvider.setup_region_config(region)
             # If no credentials are provided, set them up
             if not credentials:
-                credentials = self.setup_session(
+                credentials = AzureProvider.setup_session(
                     az_cli_auth,
                     sp_env_auth,
                     browser_auth,
                     managed_entity_auth,
                     tenant_id,
+                    region_config,
                 )
             # Create a SubscriptionClient
             subscription_client = SubscriptionClient(credentials)
@@ -427,7 +438,7 @@ class AzureProvider(Provider):
             return False, None
 
     @staticmethod
-    def check_service_principal_creds_env_vars(self):
+    def check_service_principal_creds_env_vars():
         """
         Checks the presence of required environment variables for service principal authentication against Azure.
 
