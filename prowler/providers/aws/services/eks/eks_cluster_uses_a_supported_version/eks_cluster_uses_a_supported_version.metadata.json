@@ -21,7 +21,7 @@
       },
       "Recommendation": {
         "Text": "If your application doesn't require a specific version of Kubernetes, we recommend that you use the latest available Kubernetes version that is supported by EKS for your clusters.",
-        "Url": "https://docs.aws.amazon.com/eks/latest/userguide/platform-versions.html"
+        "Url": "https://docs.aws.amazon.com/securityhub/latest/userguide/eks-controls.html#eks-2"
       }
     },
     "Categories": [
