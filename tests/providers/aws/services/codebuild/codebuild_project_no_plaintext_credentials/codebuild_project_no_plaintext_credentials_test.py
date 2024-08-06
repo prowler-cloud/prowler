@@ -7,13 +7,6 @@ class Test_codebuild_project_no_plantext_credentials:
     def test_no_project(self):
         codebuild_client = mock.MagicMock
 
-        codebuild_client.audit_config = {
-            "sensitive_environment_variables": [
-                "AWS_ACCESS_KEY_ID",
-                "AWS_SECRET_ACCESS_KEY",
-            ]
-        }
-
         with mock.patch(
             "prowler.providers.aws.services.codebuild.codebuild_service.Codebuild",
             codebuild_client,
