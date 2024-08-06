@@ -283,10 +283,10 @@ aws:
         "controllerManager",
         "scheduler",
     ]
-  
+
   # aws.eks_cluster_uses_a_supported_version
   # EKS clusters must be version 1.28 or higher
-  eks_cluster_supported_versions: "1.28"
+  eks_cluster_oldest_version_supported: "1.28"
 
 # Azure Configuration
 azure:

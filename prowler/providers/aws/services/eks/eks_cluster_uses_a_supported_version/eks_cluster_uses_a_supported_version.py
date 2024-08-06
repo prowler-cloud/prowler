@@ -6,34 +6,34 @@ class eks_cluster_uses_a_supported_version(Check):
     def execute(self) -> Check_Report_AWS:
         findings = []
 
+        eks_cluster_oldest_version_supported = eks_client.audit_config.get(
+            "eks_cluster_oldest_version_supported", "1.28"
+        )
+        eks_version_major, eks_version_minor = map(
+            int, eks_cluster_oldest_version_supported.split(".")
+        )
+
         for cluster in eks_client.clusters:
             report = Check_Report_AWS(self.metadata())
-            report.status = "PASS"
             report.region = cluster.region
             report.resource_id = cluster.name
             report.resource_arn = cluster.arn
             report.resource_tags = cluster.tags
-            report.status_extended = f"EKS cluster {cluster.name} is using version {cluster.version} that is supported by AWS."
 
-            eks_supported_versions = eks_client.audit_config.get(
-                "eks_cluster_supported_versions", "1.28"
+            cluster_version_major, cluster_version_minor = map(
+                int, cluster.version.split(".")
             )
 
-            user_version_num = cluster.version.split(".")
-            eks_version_num = eks_supported_versions.split(".")
-
-            if int(user_version_num[0]) < int(eks_version_num[0]) :
+            if (cluster_version_major < eks_version_major) or (
+                cluster_version_major == eks_version_major
+                and cluster_version_minor < eks_version_minor
+            ):
                 report.status = "FAIL"
-                report.status_extended = (
-                    f"EKS cluster {cluster.name} is in version {cluster.version}. It should be one of the next supported versions: {eks_supported_versions} or higher"
-                )
+                report.status_extended = f"EKS cluster {cluster.name} is using version {cluster.version}. It should be one of the supported versions: {eks_cluster_oldest_version_supported} or higher."
+            else:
+                report.status = "PASS"
+                report.status_extended = f"EKS cluster {cluster.name} is using version {cluster.version} that is supported by AWS."
 
-            if int(user_version_num[0]) == int(eks_version_num[0]) and int(user_version_num[1]) < int(eks_version_num[1]):
-                report.status = "FAIL"
-                report.status_extended = (
-                    f"EKS cluster {cluster.name} is in version {cluster.version}. It should be one of the next supported versions: {eks_supported_versions} or higher"
-                )
-                
             findings.append(report)
 
         return findings
