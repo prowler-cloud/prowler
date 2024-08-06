@@ -3,12 +3,24 @@ from unittest import mock
 from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, AWS_REGION_US_EAST_1
 
 
-class Test_codebuild_project_no_plantext_credentials:
+class Test_codebuild_project_no_plaintext_credentials:
     def test_no_project(self):
         codebuild_client = mock.MagicMock
 
+        codebuild_client.audit_config = {
+            "sensitive_environment_variables": [
+                "AWS_ACCESS_KEY_ID",
+                "AWS_SECRET_ACCESS_KEY",
+            ]
+        }
+
+        codebuild_client.projects = {}
+
         with mock.patch(
             "prowler.providers.aws.services.codebuild.codebuild_service.Codebuild",
+            codebuild_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.codebuild.codebuild_project_no_plaintext_credentials.codebuild_project_no_plaintext_credentials.codebuild_client",
             codebuild_client,
         ):
             from prowler.providers.aws.services.codebuild.codebuild_project_no_plaintext_credentials.codebuild_project_no_plaintext_credentials import (
@@ -46,6 +58,9 @@ class Test_codebuild_project_no_plantext_credentials:
 
         with mock.patch(
             "prowler.providers.aws.services.codebuild.codebuild_service.Codebuild",
+            codebuild_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.codebuild.codebuild_project_no_plaintext_credentials.codebuild_project_no_plaintext_credentials.codebuild_client",
             codebuild_client,
         ):
             from prowler.providers.aws.services.codebuild.codebuild_project_no_plaintext_credentials.codebuild_project_no_plaintext_credentials import (
@@ -98,6 +113,9 @@ class Test_codebuild_project_no_plantext_credentials:
         with mock.patch(
             "prowler.providers.aws.services.codebuild.codebuild_service.Codebuild",
             codebuild_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.codebuild.codebuild_project_no_plaintext_credentials.codebuild_project_no_plaintext_credentials.codebuild_client",
+            codebuild_client,
         ):
             from prowler.providers.aws.services.codebuild.codebuild_project_no_plaintext_credentials.codebuild_project_no_plaintext_credentials import (
                 codebuild_project_no_plaintext_credentials,
@@ -149,6 +167,9 @@ class Test_codebuild_project_no_plantext_credentials:
         with mock.patch(
             "prowler.providers.aws.services.codebuild.codebuild_service.Codebuild",
             codebuild_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.codebuild.codebuild_project_no_plaintext_credentials.codebuild_project_no_plaintext_credentials.codebuild_client",
+            codebuild_client,
         ):
             from prowler.providers.aws.services.codebuild.codebuild_project_no_plaintext_credentials.codebuild_project_no_plaintext_credentials import (
                 codebuild_project_no_plaintext_credentials,
@@ -199,6 +220,9 @@ class Test_codebuild_project_no_plantext_credentials:
 
         with mock.patch(
             "prowler.providers.aws.services.codebuild.codebuild_service.Codebuild",
+            codebuild_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.codebuild.codebuild_project_no_plaintext_credentials.codebuild_project_no_plaintext_credentials.codebuild_client",
             codebuild_client,
         ):
             from prowler.providers.aws.services.codebuild.codebuild_project_no_plaintext_credentials.codebuild_project_no_plaintext_credentials import (
