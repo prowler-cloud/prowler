@@ -46,7 +46,7 @@ class GcpProvider(Provider):
         self._impersonated_service_account = arguments.impersonate_service_account
         list_project_ids = arguments.list_project_id
 
-        self._session = self.setup_session(
+        self._session = GcpProvider.test_connection(
             credentials_file, self._impersonated_service_account
         )
 
@@ -198,7 +198,8 @@ class GcpProvider(Provider):
             # "partition": "identity.partition",
         }
 
-    def setup_session(self, credentials_file: str, service_account: str) -> Credentials:
+    @staticmethod
+    def setup_session(credentials_file: str, service_account: str) -> Credentials:
         """
         Setup the GCP session with the provided credentials file or service account to impersonate
         Args:
@@ -207,46 +208,37 @@ class GcpProvider(Provider):
         Returns:
             Credentials object
         """
-        try:
-            scopes = ["https://www.googleapis.com/auth/cloud-platform"]
+        scopes = ["https://www.googleapis.com/auth/cloud-platform"]
 
-            if credentials_file:
-                logger.info(f"Using credentials file: {credentials_file}")
-                self._set_gcp_creds_env_var(credentials_file)
-
-            # Get default credentials
-            credentials, _ = default(scopes=scopes)
-
-            # Refresh the credentials to ensure they are valid
-            credentials.refresh(Request())
-
-            logger.info(f"Initial credentials: {credentials}")
-
-            if service_account:
-                # Create the impersonated credentials
-                credentials = impersonated_credentials.Credentials(
-                    source_credentials=credentials,
-                    target_principal=service_account,
-                    target_scopes=scopes,
-                )
-                logger.info(f"Impersonated credentials: {credentials}")
-
-            return credentials
-        except Exception as error:
-            logger.critical(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+        if credentials_file:
+            logger.info(f"Using credentials file: {credentials_file}")
+            logger.info(
+                "GCP provider: Setting GOOGLE_APPLICATION_CREDENTIALS environment variable..."
             )
-            sys.exit(1)
+            client_secrets_path = os.path.abspath(credentials_file)
+            os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = client_secrets_path
 
-    def _set_gcp_creds_env_var(self, credentials_file):
-        logger.info(
-            "GCP provider: Setting GOOGLE_APPLICATION_CREDENTIALS environment variable..."
-        )
-        client_secrets_path = os.path.abspath(credentials_file)
-        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = client_secrets_path
+        # Get default credentials
+        credentials, _ = default(scopes=scopes)
+
+        # Refresh the credentials to ensure they are valid
+        credentials.refresh(Request())
+
+        logger.info(f"Initial credentials: {credentials}")
+
+        if service_account:
+            # Create the impersonated credentials
+            credentials = impersonated_credentials.Credentials(
+                source_credentials=credentials,
+                target_principal=service_account,
+                target_scopes=scopes,
+            )
+            logger.info(f"Impersonated credentials: {credentials}")
+
+        return credentials
 
     @staticmethod
-    def test_connection(session: Credentials) -> bool:
+    def test_connection(credentials_file: str, service_account: str) -> Credentials:
         """
         Test the connection to GCP using the provided session
         Args:
@@ -255,25 +247,29 @@ class GcpProvider(Provider):
             bool: True if connection is successful, False otherwise
         """
         try:
+            session = GcpProvider.setup_session(credentials_file, service_account)
             service = discovery.build("cloudresourcemanager", "v1", credentials=session)
             request = service.projects().list()
-            response = request.execute()
-            if response:
-                return True
+            request.execute()
+            return session
         except HttpError as http_error:
             if "Cloud Resource Manager API has not been used" in str(http_error):
-                logger.error(
+                logger.critical(
+                    "Cloud Resource Manager API has not been used before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/cloudresourcemanager.googleapis.com/ then retry."
+                )
+                raise Exception(
                     "Cloud Resource Manager API has not been used before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/cloudresourcemanager.googleapis.com/ then retry."
                 )
             else:
-                logger.error(
+                logger.critical(
                     f"{http_error.__class__.__name__}[{http_error.__traceback__.tb_lineno}]: {http_error}"
                 )
+            raise http_error
         except Exception as error:
-            logger.error(
+            logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-        return False
+            raise error
 
     def print_credentials(self):
         # TODO: Beautify audited profile, set "default" if there is no profile set
