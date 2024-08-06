@@ -52,19 +52,19 @@ class AzureProvider(Provider):
 
         logger.info("Checking if region is different than default one")
         region = arguments.azure_region
-        # self._region_config = self.setup_region_config(region)
         test_connection = self.test_connection(
             az_cli_auth,
             sp_env_auth,
             browser_auth,
             managed_entity_auth,
-            region,
             tenant_id,
+            region,
         )
         # If the connection test fails, exit the program
         if not test_connection[0]:
             sys.exit(1)
         self._session = test_connection[1]
+        self._region_config = test_connection[2]
 
         self._identity = self.setup_identity(
             az_cli_auth,
@@ -314,6 +314,7 @@ class AzureProvider(Provider):
 
     # TODO: setup_session or setup_credentials?
     # This should be setup_credentials, since it is setting up the credentials for the provider
+    @staticmethod
     def setup_session(
         az_cli_auth,
         sp_env_auth,
@@ -331,6 +332,7 @@ class AzureProvider(Provider):
             browser_auth (bool): Flag indicating whether to use interactive browser authentication.
             managed_entity_auth (bool): Flag indicating whether to use managed identity authentication.
             tenant_id (str): The Azure Active Directory tenant ID.
+            region_config (AzureRegionConfig): The region configuration object.
 
         Returns:
             credentials: The Azure credentials object.
@@ -390,7 +392,7 @@ class AzureProvider(Provider):
         tenant_id,
         region,
         credentials=None,
-    ) -> tuple[bool, DefaultAzureCredential | Exception]:
+    ) -> tuple[bool, DefaultAzureCredential | Exception, AzureRegionConfig]:
         """
         Test the connection to an Azure subscription using the provided credentials.
 
@@ -401,9 +403,10 @@ class AzureProvider(Provider):
             browser_auth (bool): Flag indicating whether to use interactive browser authentication.
             managed_entity_auth (bool): Flag indicating whether to use managed identity authentication.
             tenant_id (str): The Azure Active Directory tenant ID.
+            region (str): The Azure region.
 
         Returns:
-            tuple: A tuple containing a boolean value indicating whether the connection was successful and the credentials object.
+            tuple: A tuple containing the connection status, the credentials object, and the region configuration object.
         """
         try:
             region_config = AzureProvider.setup_region_config(
@@ -426,19 +429,19 @@ class AzureProvider(Provider):
             subscription = next(subscription_client.subscriptions.list())
 
             logger.info(f"Connected to Azure subscription: {subscription.display_name}")
-            return True, credentials
+            return True, credentials, region_config
 
         except HttpResponseError as e:
             logger.critical(
                 f"Failed to connect to Azure subscription: {e.error.error.message}"
             )
-            return False, e
+            return False, e, None
 
         except Exception as ex:
             logger.critical(
                 f"Failed to connect to Azure subscription: {ex.__class__.__name__}[{ex.__traceback__.tb_lineno}] -- {ex}"
             )
-            return False, ex
+            return False, ex, None
 
     @staticmethod
     def check_service_principal_creds_env_vars():
