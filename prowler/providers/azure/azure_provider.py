@@ -15,6 +15,7 @@ from prowler.config.config import (
 )
 from prowler.lib.logger import logger
 from prowler.lib.utils.utils import print_boxes
+from prowler.providers.azure.lib.arguments.arguments import validate_azure_region
 from prowler.providers.azure.lib.mutelist.mutelist import AzureMutelist
 from prowler.providers.azure.lib.regions.regions import get_regions_config
 from prowler.providers.azure.models import (
@@ -389,7 +390,7 @@ class AzureProvider(Provider):
         tenant_id,
         region,
         credentials=None,
-    ) -> tuple[bool, DefaultAzureCredential]:
+    ) -> tuple[bool, DefaultAzureCredential | Exception]:
         """
         Test the connection to an Azure subscription using the provided credentials.
 
@@ -405,7 +406,9 @@ class AzureProvider(Provider):
             tuple: A tuple containing a boolean value indicating whether the connection was successful and the credentials object.
         """
         try:
-            region_config = AzureProvider.setup_region_config(region)
+            region_config = AzureProvider.setup_region_config(
+                validate_azure_region(region)
+            )
             # If no credentials are provided, set them up
             if not credentials:
                 credentials = AzureProvider.setup_session(
@@ -429,13 +432,13 @@ class AzureProvider(Provider):
             logger.critical(
                 f"Failed to connect to Azure subscription: {e.error.error.message}"
             )
-            return False, None
+            return False, e
 
         except Exception as ex:
             logger.critical(
                 f"Failed to connect to Azure subscription: {ex.__class__.__name__}[{ex.__traceback__.tb_lineno}] -- {ex}"
             )
-            return False, None
+            return False, ex
 
     @staticmethod
     def check_service_principal_creds_env_vars():
