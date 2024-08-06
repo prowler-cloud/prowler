@@ -39,19 +39,21 @@ class AzureProvider(Provider):
     # TODO: this is not optional, enforce for all providers
     audit_metadata: Audit_Metadata
 
-    def __init__(self, arguments):
+    def __init__(
+        self,
+        az_cli_auth: bool,
+        sp_env_auth: bool,
+        browser_auth: bool,
+        managed_entity_auth: bool,
+        tenant_id: str,
+        region: str,
+        subscription_ids: list,
+        config_file: str,
+        fixer_config: str,
+    ):
         logger.info("Setting Azure provider ...")
-        subscription_ids = arguments.subscription_id
 
-        logger.info("Checking if any credentials mode is set ...")
-        az_cli_auth = arguments.az_cli_auth
-        sp_env_auth = arguments.sp_env_auth
-        browser_auth = arguments.browser_auth
-        managed_entity_auth = arguments.managed_identity_auth
-        tenant_id = arguments.tenant_id
-
-        logger.info("Checking if region is different than default one")
-        region = arguments.azure_region
+        # Set up the Azure provider using the specified authentication method
         test_connection = self.test_connection(
             az_cli_auth,
             sp_env_auth,
@@ -79,12 +81,8 @@ class AzureProvider(Provider):
 
         # TODO: move this to the providers, pending for AWS, GCP, AZURE and K8s
         # Audit Config
-        self._audit_config = load_and_validate_config_file(
-            self._type, arguments.config_file
-        )
-        self._fixer_config = load_and_validate_config_file(
-            self._type, arguments.fixer_config
-        )
+        self._audit_config = load_and_validate_config_file(self._type, config_file)
+        self._fixer_config = load_and_validate_config_file(self._type, fixer_config)
 
     @property
     def identity(self):
@@ -105,12 +103,12 @@ class AzureProvider(Provider):
         return self._type
 
     @property
-    def session(self):
+    def session(self) -> DefaultAzureCredential:
         """
-        Returns the session object associated with the Azure provider.
+        Returns the Azure credentials object.
 
         Returns:
-            session (object): The session object.
+            DefaultAzureCredential: The Azure credentials object.
         """
         return self._session
 
@@ -312,8 +310,6 @@ class AzureProvider(Provider):
         )
         print_boxes(report_lines, report_title)
 
-    # TODO: setup_session or setup_credentials?
-    # This should be setup_credentials, since it is setting up the credentials for the provider
     @staticmethod
     def setup_session(
         az_cli_auth,
@@ -324,7 +320,7 @@ class AzureProvider(Provider):
         region_config,
     ):
         """
-        Set up the Azure session with the specified authentication method.
+        Sets up the Azure credentials based on the authentication method.
 
         Args:
             az_cli_auth (bool): Flag indicating whether to use Azure CLI authentication.
@@ -391,13 +387,11 @@ class AzureProvider(Provider):
         managed_entity_auth,
         tenant_id,
         region,
-        credentials=None,
     ) -> tuple[bool, DefaultAzureCredential | Exception, AzureRegionConfig]:
         """
-        Test the connection to an Azure subscription using the provided credentials.
+        Tests the connection to Azure using the specified authentication method.
 
         Args:
-            credentials: The credentials object used to authenticate with Azure.
             az_cli_auth (bool): Flag indicating whether to use Azure CLI authentication.
             sp_env_auth (bool): Flag indicating whether to use Service Principal authentication with environment variables.
             browser_auth (bool): Flag indicating whether to use interactive browser authentication.
@@ -409,19 +403,21 @@ class AzureProvider(Provider):
             tuple: A tuple containing the connection status, the credentials object, and the region configuration object.
         """
         try:
+            logger.info("Checking if region is different than default one")
+
             region_config = AzureProvider.setup_region_config(
                 validate_azure_region(region)
             )
-            # If no credentials are provided, set them up
-            if not credentials:
-                credentials = AzureProvider.setup_session(
-                    az_cli_auth,
-                    sp_env_auth,
-                    browser_auth,
-                    managed_entity_auth,
-                    tenant_id,
-                    region_config,
-                )
+
+            # Set up the Azure credentials
+            credentials = AzureProvider.setup_session(
+                az_cli_auth,
+                sp_env_auth,
+                browser_auth,
+                managed_entity_auth,
+                tenant_id,
+                region_config,
+            )
             # Create a SubscriptionClient
             subscription_client = SubscriptionClient(credentials)
 

@@ -168,7 +168,20 @@ class Provider(ABC):
                 import_module(provider_class_path), provider_class_name
             )
             if not isinstance(Provider._global, provider_class):
-                global_provider = provider_class(arguments)
+                if "Azure" in provider_class_name:
+                    global_provider = provider_class(
+                        arguments.az_cli_auth,
+                        arguments.sp_env_auth,
+                        arguments.browser_auth,
+                        arguments.managed_identity_auth,
+                        arguments.tenant_id,
+                        arguments.azure_region,
+                        arguments.subscription_id,
+                        arguments.config_file,
+                        arguments.fixer_config,
+                    )
+                else:
+                    global_provider = provider_class(arguments)
 
             Provider._global = global_provider
         except TypeError as error:
