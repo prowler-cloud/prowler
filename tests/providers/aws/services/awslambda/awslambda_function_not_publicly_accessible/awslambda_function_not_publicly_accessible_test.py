@@ -110,7 +110,7 @@ class Test_awslambda_function_not_publicly_accessible:
                 result[0].status_extended
                 == f"Lambda function {function_name} has a policy resource-based policy with public access."
             )
-            assert result[0].resource_tags == {"tag1": "value1", "tag2": "value2"}
+            assert result[0].resource_tags == [{"tag1": "value1", "tag2": "value2"}]
 
     @mock_aws
     def test_function_not_public(self):
@@ -186,7 +186,7 @@ class Test_awslambda_function_not_publicly_accessible:
                 result[0].status_extended
                 == f"Lambda function {function_name} has a policy resource-based policy not public."
             )
-            assert result[0].resource_tags == {"tag1": "value1", "tag2": "value2"}
+            assert result[0].resource_tags == [{"tag1": "value1", "tag2": "value2"}]
 
     def test_function_public_with_canonical(self):
         lambda_client = mock.MagicMock
