@@ -29,7 +29,7 @@ from prowler.providers.common.provider import Provider
 
 class AzureProvider(Provider):
     _type: str = "azure"
-    _credentials: DefaultAzureCredential
+    _session: DefaultAzureCredential
     _identity: AzureIdentityInfo
     _audit_config: dict
     _region_config: AzureRegionConfig
@@ -65,7 +65,7 @@ class AzureProvider(Provider):
         # If the connection test fails, exit the program
         if not test_connection[0]:
             sys.exit(1)
-        self._credentials = test_connection[1]
+        self._session = test_connection[1]
         self._region_config = test_connection[2]
 
         self._identity = self.setup_identity(
@@ -77,7 +77,7 @@ class AzureProvider(Provider):
         )
 
         # TODO: should we keep this here or within the identity?
-        self._locations = self.get_locations(self.credentials)
+        self._locations = self.get_locations(self.session)
 
         # TODO: move this to the providers, pending for AWS, GCP, AZURE and K8s
         # Audit Config
@@ -103,14 +103,14 @@ class AzureProvider(Provider):
         return self._type
 
     @property
-    def credentials(self) -> DefaultAzureCredential:
+    def session(self) -> DefaultAzureCredential:
         """
         Returns the Azure credentials object.
 
         Returns:
             DefaultAzureCredential: The Azure credentials object.
         """
-        return self._credentials
+        return self._session
 
     @property
     def region_config(self):
@@ -311,7 +311,7 @@ class AzureProvider(Provider):
         print_boxes(report_lines, report_title)
 
     @staticmethod
-    def setup_credentials(
+    def setup_session(
         az_cli_auth,
         sp_env_auth,
         browser_auth,
@@ -410,7 +410,7 @@ class AzureProvider(Provider):
             )
 
             # Set up the Azure credentials
-            credentials = AzureProvider.setup_credentials(
+            credentials = AzureProvider.setup_session(
                 az_cli_auth,
                 sp_env_auth,
                 browser_auth,
@@ -482,7 +482,7 @@ class AzureProvider(Provider):
         Returns:
             AzureIdentityInfo: An instance of AzureIdentityInfo containing the identity information.
         """
-        credentials = self.credentials
+        credentials = self.session
         # TODO: fill this object with real values not default and set to none
         identity = AzureIdentityInfo()
 
