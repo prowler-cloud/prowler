@@ -1,6 +1,5 @@
 import os
 import pathlib
-import sys
 from argparse import ArgumentTypeError, Namespace
 from datetime import datetime
 from re import fullmatch
@@ -66,199 +65,185 @@ class AwsProvider(Provider):
     audit_metadata: Audit_Metadata
 
     def __init__(self, arguments: Namespace):
-        try:
-            logger.info("Initializing AWS provider ...")
-            ######## Parse Arguments
-            # Session
-            aws_retries_max_attempts = getattr(
-                arguments, "aws_retries_max_attempts", None
+        logger.info("Initializing AWS provider ...")
+        ######## Parse Arguments
+        # Session
+        aws_retries_max_attempts = getattr(arguments, "aws_retries_max_attempts", None)
+
+        # Assume Role
+        input_role = getattr(arguments, "role", None)
+        input_session_duration = getattr(arguments, "session_duration", None)
+        input_external_id = getattr(arguments, "external_id", None)
+        input_role_session_name = getattr(arguments, "role_session_name", None)
+
+        # MFA Configuration (false by default)
+        input_mfa = getattr(arguments, "mfa", None)
+        input_profile = getattr(arguments, "profile", None)
+        input_regions = getattr(arguments, "region", set())
+        organizations_role_arn = getattr(arguments, "organizations_role", None)
+
+        # Set if unused services must be scanned
+        scan_unused_services = getattr(arguments, "scan_unused_services", None)
+        ########
+
+        ######## AWS Session
+        logger.info("Generating original session ...")
+
+        # Configure the initial AWS Session using the local credentials: profile or environment variables
+        aws_session = self.setup_session(input_mfa, input_profile)
+        session_config = self.set_session_config(aws_retries_max_attempts)
+        # Current session and the original session points to the same session object until we get a new one, if needed
+        self._session = AWSSession(
+            current_session=aws_session,
+            session_config=session_config,
+            original_session=aws_session,
+        )
+        ########
+
+        ######## Validate AWS credentials
+        # After the session is created, validate it
+        logger.info("Validating credentials ...")
+        sts_region = get_aws_region_for_sts(
+            self.session.current_session.region_name, input_regions
+        )
+
+        caller_identity = self.test_connection(
+            session=self.session.current_session, aws_region=sts_region
+        )
+
+        logger.info("Credentials validated")
+        ########
+
+        ######## AWS Provider Identity
+        # Get profile region
+        profile_region = self.get_profile_region(self._session.current_session)
+
+        # Set identity
+        self._identity = self.set_identity(
+            caller_identity=caller_identity,
+            input_profile=input_profile,
+            input_regions=input_regions,
+            profile_region=profile_region,
+        )
+        ########
+
+        ######## AWS Session with Assume Role (if needed)
+        if input_role:
+            # Validate the input role
+            valid_role_arn = parse_iam_credentials_arn(input_role)
+            # Set assume IAM Role information
+            assumed_role_information = AWSAssumeRoleInfo(
+                role_arn=valid_role_arn,
+                session_duration=input_session_duration,
+                external_id=input_external_id,
+                mfa_enabled=input_mfa,
+                role_session_name=input_role_session_name,
+                sts_region=sts_region,
+            )
+            # Assume the IAM Role
+            logger.info(f"Assuming role: {assumed_role_information.role_arn.arn}")
+            assumed_role_credentials = self.assume_role(
+                self._session.current_session,
+                assumed_role_information,
+            )
+            logger.info(f"IAM Role assumed: {assumed_role_information.role_arn.arn}")
+
+            assumed_role_configuration = AWSAssumeRoleConfiguration(
+                info=assumed_role_information, credentials=assumed_role_credentials
+            )
+            # Store the assumed role configuration since it'll be needed to refresh the credentials
+            self._assumed_role_configuration = assumed_role_configuration
+
+            # Store a new current session using the assumed IAM Role
+            self._session.current_session = self.setup_assumed_session(
+                assumed_role_configuration.credentials
+            )
+            logger.info("Audit session is the new session created assuming an IAM Role")
+
+            # Modify identity for the IAM Role assumed since this will be the identity to audit with
+            logger.info("Setting new identity for the AWS IAM Role assumed")
+            self._identity.account = assumed_role_configuration.info.role_arn.account_id
+            self._identity.partition = (
+                assumed_role_configuration.info.role_arn.partition
+            )
+            self._identity.account_arn = f"arn:{assumed_role_configuration.info.role_arn.partition}:iam::{assumed_role_configuration.info.role_arn.account_id}:root"
+        ########
+
+        ######## AWS Organizations Metadata
+        # This is needed in the case we don't assume an AWS Organizations IAM Role
+        aws_organizations_session = self._session.original_session
+        # Get a new session if the organizations_role_arn is set
+        if organizations_role_arn:
+            # Validate the input role
+            valid_role_arn = parse_iam_credentials_arn(organizations_role_arn)
+            # Set assume IAM Role information
+            organizations_assumed_role_information = AWSAssumeRoleInfo(
+                role_arn=valid_role_arn,
+                session_duration=input_session_duration,
+                external_id=input_external_id,
+                mfa_enabled=input_mfa,
+                role_session_name=input_role_session_name,
+                sts_region=sts_region,
             )
 
-            # Assume Role
-            input_role = getattr(arguments, "role", None)
-            input_session_duration = getattr(arguments, "session_duration", None)
-            input_external_id = getattr(arguments, "external_id", None)
-            input_role_session_name = getattr(arguments, "role_session_name", None)
-
-            # MFA Configuration (false by default)
-            input_mfa = getattr(arguments, "mfa", None)
-            input_profile = getattr(arguments, "profile", None)
-            input_regions = getattr(arguments, "region", set())
-            organizations_role_arn = getattr(arguments, "organizations_role", None)
-
-            # Set if unused services must be scanned
-            scan_unused_services = getattr(arguments, "scan_unused_services", None)
-            ########
-
-            ######## AWS Session
-            logger.info("Generating original session ...")
-
-            # Configure the initial AWS Session using the local credentials: profile or environment variables
-            aws_session = self.setup_session(input_mfa, input_profile)
-            session_config = self.set_session_config(aws_retries_max_attempts)
-            # Current session and the original session points to the same session object until we get a new one, if needed
-            self._session = AWSSession(
-                current_session=aws_session,
-                session_config=session_config,
-                original_session=aws_session,
+            # Assume the Organizations IAM Role
+            logger.info(
+                f"Assuming the AWS Organizations IAM Role: {organizations_assumed_role_information.role_arn.arn}"
             )
-            ########
-
-            ######## Validate AWS credentials
-            # After the session is created, validate it
-            logger.info("Validating credentials ...")
-            sts_region = get_aws_region_for_sts(
-                self.session.current_session.region_name, input_regions
+            # Since here we can have _session.current_session with an IAM Role
+            # we'll use the _session.original_session
+            organizations_assumed_role_credentials = self.assume_role(
+                self._session.original_session,
+                organizations_assumed_role_information,
+            )
+            logger.info(
+                f"AWS Organizations IAM Role assumed: {organizations_assumed_role_information.role_arn.arn}"
+            )
+            organizations_assumed_role_configuration = AWSAssumeRoleConfiguration(
+                info=organizations_assumed_role_information,
+                credentials=organizations_assumed_role_credentials,
+            )
+            # Get a new session using the AWS Organizations IAM Role assumed
+            aws_organizations_session = self.setup_assumed_session(
+                organizations_assumed_role_configuration.credentials
+            )
+            logger.info(
+                "Generated new session for to get the AWS Organizations metadata"
             )
 
-            caller_identity = self.test_connection(
-                session=self.session.current_session, aws_region=sts_region
+        self._organizations_metadata = self.get_organizations_info(
+            aws_organizations_session, self._identity.account
+        )
+        ########
+
+        # Parse Scan Tags
+        if getattr(arguments, "resource_tags", None):
+            self._audit_resources = self.get_tagged_resources(arguments.resource_tags)
+
+        # Parse Input Resource ARNs
+        if getattr(arguments, "resource_arn", None):
+            self._audit_resources = arguments.resource_arn
+
+        # Get Enabled Regions
+        self._enabled_regions = self.get_aws_enabled_regions(
+            self._session.current_session
+        )
+
+        # Set ignore unused services
+        self._scan_unused_services = scan_unused_services
+
+        # TODO: move this to the providers, pending for AWS, GCP, AZURE and K8s
+        # Audit Config
+        self._audit_config = {}
+        if hasattr(arguments, "config_file"):
+            self._audit_config = load_and_validate_config_file(
+                self._type, arguments.config_file
             )
-
-            logger.info("Credentials validated")
-            ########
-
-            ######## AWS Provider Identity
-            # Get profile region
-            profile_region = self.get_profile_region(self._session.current_session)
-
-            # Set identity
-            self._identity = self.set_identity(
-                caller_identity=caller_identity,
-                input_profile=input_profile,
-                input_regions=input_regions,
-                profile_region=profile_region,
+        self._fixer_config = {}
+        if hasattr(arguments, "fixer_config"):
+            self._fixer_config = load_and_validate_fixer_config_file(
+                self._type, arguments.fixer_config
             )
-            ########
-
-            ######## AWS Session with Assume Role (if needed)
-            if input_role:
-                # Validate the input role
-                valid_role_arn = parse_iam_credentials_arn(input_role)
-                # Set assume IAM Role information
-                assumed_role_information = AWSAssumeRoleInfo(
-                    role_arn=valid_role_arn,
-                    session_duration=input_session_duration,
-                    external_id=input_external_id,
-                    mfa_enabled=input_mfa,
-                    role_session_name=input_role_session_name,
-                    sts_region=sts_region,
-                )
-                # Assume the IAM Role
-                logger.info(f"Assuming role: {assumed_role_information.role_arn.arn}")
-                assumed_role_credentials = self.assume_role(
-                    self._session.current_session,
-                    assumed_role_information,
-                )
-                logger.info(
-                    f"IAM Role assumed: {assumed_role_information.role_arn.arn}"
-                )
-
-                assumed_role_configuration = AWSAssumeRoleConfiguration(
-                    info=assumed_role_information, credentials=assumed_role_credentials
-                )
-                # Store the assumed role configuration since it'll be needed to refresh the credentials
-                self._assumed_role_configuration = assumed_role_configuration
-
-                # Store a new current session using the assumed IAM Role
-                self._session.current_session = self.setup_assumed_session(
-                    assumed_role_configuration.credentials
-                )
-                logger.info(
-                    "Audit session is the new session created assuming an IAM Role"
-                )
-
-                # Modify identity for the IAM Role assumed since this will be the identity to audit with
-                logger.info("Setting new identity for the AWS IAM Role assumed")
-                self._identity.account = (
-                    assumed_role_configuration.info.role_arn.account_id
-                )
-                self._identity.partition = (
-                    assumed_role_configuration.info.role_arn.partition
-                )
-                self._identity.account_arn = f"arn:{assumed_role_configuration.info.role_arn.partition}:iam::{assumed_role_configuration.info.role_arn.account_id}:root"
-            ########
-
-            ######## AWS Organizations Metadata
-            # This is needed in the case we don't assume an AWS Organizations IAM Role
-            aws_organizations_session = self._session.original_session
-            # Get a new session if the organizations_role_arn is set
-            if organizations_role_arn:
-                # Validate the input role
-                valid_role_arn = parse_iam_credentials_arn(organizations_role_arn)
-                # Set assume IAM Role information
-                organizations_assumed_role_information = AWSAssumeRoleInfo(
-                    role_arn=valid_role_arn,
-                    session_duration=input_session_duration,
-                    external_id=input_external_id,
-                    mfa_enabled=input_mfa,
-                    role_session_name=input_role_session_name,
-                    sts_region=sts_region,
-                )
-
-                # Assume the Organizations IAM Role
-                logger.info(
-                    f"Assuming the AWS Organizations IAM Role: {organizations_assumed_role_information.role_arn.arn}"
-                )
-                # Since here we can have _session.current_session with an IAM Role
-                # we'll use the _session.original_session
-                organizations_assumed_role_credentials = self.assume_role(
-                    self._session.original_session,
-                    organizations_assumed_role_information,
-                )
-                logger.info(
-                    f"AWS Organizations IAM Role assumed: {organizations_assumed_role_information.role_arn.arn}"
-                )
-                organizations_assumed_role_configuration = AWSAssumeRoleConfiguration(
-                    info=organizations_assumed_role_information,
-                    credentials=organizations_assumed_role_credentials,
-                )
-                # Get a new session using the AWS Organizations IAM Role assumed
-                aws_organizations_session = self.setup_assumed_session(
-                    organizations_assumed_role_configuration.credentials
-                )
-                logger.info(
-                    "Generated new session for to get the AWS Organizations metadata"
-                )
-
-            self._organizations_metadata = self.get_organizations_info(
-                aws_organizations_session, self._identity.account
-            )
-            ########
-
-            # Parse Scan Tags
-            if getattr(arguments, "resource_tags", None):
-                self._audit_resources = self.get_tagged_resources(
-                    arguments.resource_tags
-                )
-
-            # Parse Input Resource ARNs
-            if getattr(arguments, "resource_arn", None):
-                self._audit_resources = arguments.resource_arn
-
-            # Get Enabled Regions
-            self._enabled_regions = self.get_aws_enabled_regions(
-                self._session.current_session
-            )
-
-            # Set ignore unused services
-            self._scan_unused_services = scan_unused_services
-
-            # TODO: move this to the providers, pending for AWS, GCP, AZURE and K8s
-            # Audit Config
-            self._audit_config = {}
-            if hasattr(arguments, "config_file"):
-                self._audit_config = load_and_validate_config_file(
-                    self._type, arguments.config_file
-                )
-            self._fixer_config = {}
-            if hasattr(arguments, "fixer_config"):
-                self._fixer_config = load_and_validate_fixer_config_file(
-                    self._type, arguments.fixer_config
-                )
-        # Any exception raised during the initialization of the provider will stop the execution
-        except Exception:
-            sys.exit(1)
 
     @property
     def identity(self):
