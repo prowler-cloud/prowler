@@ -14,11 +14,13 @@ import { VerticalDotsIcon } from "@/components/icons";
 import { StatusBadge } from "@/components/ui/table/StatusBadge";
 import { ProviderProps } from "@/types";
 
+import { CheckConnectionProvider } from "../CheckConnectionProvider";
 import { DateWithTime } from "../DateWithTime";
+import { DeleteProvider } from "../DeleteProvider";
 import { ProviderInfo } from "../ProviderInfo";
 
-const getProviderAttributes = (row: { original: ProviderProps }) => {
-  return row.original.attributes;
+const getProviderData = (row: { original: ProviderProps }) => {
+  return row.original;
 };
 
 export const ColumnsProviders: ColumnDef<ProviderProps>[] = [
@@ -30,8 +32,9 @@ export const ColumnsProviders: ColumnDef<ProviderProps>[] = [
     accessorKey: "account",
     header: "Account",
     cell: ({ row }) => {
-      const { connection, provider, alias, provider_id } =
-        getProviderAttributes(row);
+      const {
+        attributes: { connection, provider, alias, provider_id },
+      } = getProviderData(row);
       return (
         <ProviderInfo
           connected={connection.connected}
@@ -45,16 +48,18 @@ export const ColumnsProviders: ColumnDef<ProviderProps>[] = [
   {
     accessorKey: "status",
     header: "Scan Status",
-    cell: ({ row }) => {
-      const { status } = getProviderAttributes(row);
-      return <StatusBadge status={status} />;
+    cell: () => {
+      // Temporarily overwriting the value until the API is functional.
+      return <StatusBadge status={"completed"} />;
     },
   },
   {
     accessorKey: "lastScan",
     header: "Last Scan",
     cell: ({ row }) => {
-      const { updated_at } = getProviderAttributes(row);
+      const {
+        attributes: { updated_at },
+      } = getProviderData(row);
       return <DateWithTime dateTime={updated_at} />;
     },
   },
@@ -62,7 +67,9 @@ export const ColumnsProviders: ColumnDef<ProviderProps>[] = [
     accessorKey: "nextScan",
     header: "Next Scan",
     cell: ({ row }) => {
-      const { updated_at } = getProviderAttributes(row);
+      const {
+        attributes: { updated_at },
+      } = getProviderData(row);
       const nextDay = add(new Date(updated_at), {
         hours: 24,
       });
@@ -72,16 +79,18 @@ export const ColumnsProviders: ColumnDef<ProviderProps>[] = [
   {
     accessorKey: "resources",
     header: "Resources",
-    cell: ({ row }) => {
-      const { resources } = getProviderAttributes(row);
-      return <p className="font-medium">{resources}</p>;
+    cell: () => {
+      // Temporarily overwriting the value until the API is functional.
+      return <p className="font-medium">{288}</p>;
     },
   },
   {
     accessorKey: "added",
     header: "Added",
     cell: ({ row }) => {
-      const { inserted_at } = getProviderAttributes(row);
+      const {
+        attributes: { inserted_at },
+      } = getProviderData(row);
       return <DateWithTime dateTime={inserted_at} showTime={false} />;
     },
   },
@@ -89,7 +98,8 @@ export const ColumnsProviders: ColumnDef<ProviderProps>[] = [
     accessorKey: "actions",
     header: () => <div className="text-right">Actions</div>,
     id: "actions",
-    cell: () => {
+    cell: ({ row }) => {
+      const { id } = getProviderData(row);
       return (
         <div className="relative flex justify-end items-center gap-2">
           <Dropdown className="bg-background border-1 border-default-200">
@@ -99,8 +109,12 @@ export const ColumnsProviders: ColumnDef<ProviderProps>[] = [
               </Button>
             </DropdownTrigger>
             <DropdownMenu>
-              <DropdownItem>Manage</DropdownItem>
-              <DropdownItem>Delete</DropdownItem>
+              <DropdownItem>
+                <CheckConnectionProvider id={id} />
+              </DropdownItem>
+              <DropdownItem>
+                <DeleteProvider id={id} />
+              </DropdownItem>
             </DropdownMenu>
           </Dropdown>
         </div>

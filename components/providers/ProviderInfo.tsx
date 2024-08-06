@@ -6,10 +6,11 @@ import {
   GoogleCloudProvider,
   WifiIcon,
   WifiOffIcon,
+  WifiPendingIcon,
 } from "../icons";
 
 interface ProviderInfoProps {
-  connected: boolean;
+  connected: boolean | null;
   provider: "aws" | "azure" | "gcp";
   providerAlias: string;
   providerId: string;
@@ -22,7 +23,15 @@ export const ProviderInfo: React.FC<ProviderInfoProps> = ({
   providerId,
 }) => {
   const getIcon = () => {
-    return connected ? <WifiIcon size={22} /> : <WifiOffIcon size={22} />;
+    switch (connected) {
+      case true:
+        return <WifiIcon size={22} />;
+      case false:
+        return <WifiOffIcon size={22} />;
+      case null:
+      default:
+        return <WifiPendingIcon size={22} />;
+    }
   };
 
   const getProviderLogo = () => {
