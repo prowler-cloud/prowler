@@ -60,11 +60,8 @@ class AzureProvider(Provider):
             tenant_id,
             region,
         )
-        # If the connection test fails, exit the program
-        if not test_connection[0]:
-            sys.exit(1)
-        self._session = test_connection[1]
-        self._region_config = test_connection[2]
+        self._session = test_connection[0]
+        self._region_config = test_connection[1]
 
         self._identity = self.setup_identity(
             az_cli_auth,
@@ -391,8 +388,7 @@ class AzureProvider(Provider):
         managed_entity_auth,
         tenant_id,
         region,
-        credentials=None,
-    ) -> tuple[bool, DefaultAzureCredential | Exception, AzureRegionConfig]:
+    ) -> tuple[DefaultAzureCredential, AzureRegionConfig]:
         """
         Test the connection to an Azure subscription using the provided credentials.
 
@@ -406,22 +402,22 @@ class AzureProvider(Provider):
             region (str): The Azure region.
 
         Returns:
-            tuple: A tuple containing the connection status, the credentials object, and the region configuration object.
+            tuple: A tuple containing the credentials and region configuration objects.
         """
         try:
             region_config = AzureProvider.setup_region_config(
                 validate_azure_region(region)
             )
-            # If no credentials are provided, set them up
-            if not credentials:
-                credentials = AzureProvider.setup_session(
-                    az_cli_auth,
-                    sp_env_auth,
-                    browser_auth,
-                    managed_entity_auth,
-                    tenant_id,
-                    region_config,
-                )
+
+            # Set up the Azure session
+            credentials = AzureProvider.setup_session(
+                az_cli_auth,
+                sp_env_auth,
+                browser_auth,
+                managed_entity_auth,
+                tenant_id,
+                region_config,
+            )
             # Create a SubscriptionClient
             subscription_client = SubscriptionClient(credentials)
 
@@ -429,13 +425,13 @@ class AzureProvider(Provider):
             subscription = next(subscription_client.subscriptions.list())
 
             logger.info(f"Connected to Azure subscription: {subscription.display_name}")
-            return True, credentials, region_config
+            return credentials, region_config
 
         except HttpResponseError as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            return False, error, None
+            raise error
 
         except Exception as error:
             logger.critical(
