@@ -5,8 +5,6 @@ import { useRef, useState } from "react";
 
 import { addProvider } from "@/actions";
 import {
-  ButtonAddProvider,
-  CustomRadioProvider,
   Dialog,
   DialogContent,
   DialogDescription,
@@ -15,6 +13,9 @@ import {
   DialogTrigger,
   useToast,
 } from "@/components";
+
+import { ButtonAddProvider } from "./ButtonAddProvider";
+import { CustomRadioProvider } from "./CustomRadioProvider";
 
 export const AddProviderModal = () => {
   const [open, setOpen] = useState(false);
