@@ -29,7 +29,7 @@ WORKDIR /home/prowler/backend
 FROM build as dev
 
 USER 0
-RUN apk --no-cache add curl=8.8.0-r0 vim=9.1.0414-r0
+RUN apk --no-cache add curl=8.9.0-r0 vim=9.1.0414-r0
 
 USER prowler
 

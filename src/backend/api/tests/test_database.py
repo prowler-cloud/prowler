@@ -4,7 +4,6 @@ from django.db.migrations.recorder import MigrationRecorder
 from django.db.utils import ConnectionRouter
 
 from api.db_router import MainRouter
-from api.models import Test
 from api.rls import Tenant
 from config.django.base import DATABASE_ROUTERS as PROD_DATABASE_ROUTERS
 
@@ -17,7 +16,7 @@ class TestMainDatabaseRouter:
         yield ConnectionRouter()
         settings.DATABASE_ROUTERS = testing_routers
 
-    @pytest.mark.parametrize("api_model", [Tenant, Test])
+    @pytest.mark.parametrize("api_model", [Tenant])
     def test_router_api_models(self, api_model, router):
         assert router.db_for_read(api_model) == MainRouter.default_db
         assert router.db_for_write(api_model) == MainRouter.default_db

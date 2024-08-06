@@ -1,7 +1,11 @@
 import uuid
 
+import django.core.validators
+import django.db.models.deletion
 from django.conf import settings
 from django.db import migrations, models
+
+import api.rls
 
 DB_NAME = settings.DATABASES["default"]["NAME"]
 DB_USER_NAME = settings.DATABASES["default"]["USER"]
@@ -60,5 +64,81 @@ class Migration(migrations.Migration):
             f"""
             GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE tenant TO {DB_USER_NAME};
             """
+        ),
+        migrations.CreateModel(
+            name="Provider",
+            fields=[
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("inserted_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "provider",
+                    models.CharField(
+                        choices=[
+                            ("aws", "Aws"),
+                            ("azure", "Azure"),
+                            ("gcp", "Gcp"),
+                            ("kubernetes", "Kubernetes"),
+                        ],
+                        default="aws",
+                        max_length=10,
+                    ),
+                ),
+                (
+                    "provider_id",
+                    models.CharField(
+                        max_length=63,
+                        validators=[django.core.validators.MinLengthValidator(3)],
+                    ),
+                ),
+                (
+                    "alias",
+                    models.CharField(
+                        blank=True,
+                        null=True,
+                        max_length=100,
+                        validators=[django.core.validators.MinLengthValidator(3)],
+                    ),
+                ),
+                ("connected", models.BooleanField(blank=True, null=True)),
+                (
+                    "connection_last_checked_at",
+                    models.DateTimeField(blank=True, null=True),
+                ),
+                ("metadata", models.JSONField(default=dict)),
+                ("scanner_args", models.JSONField(default=dict)),
+                (
+                    "tenant",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="api.tenant"
+                    ),
+                ),
+            ],
+            options={
+                "abstract": False,
+            },
+        ),
+        migrations.AddConstraint(
+            model_name="provider",
+            constraint=api.rls.RowLevelSecurityConstraint(
+                "tenant_id",
+                name="rls_on_provider",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="provider",
+            constraint=models.UniqueConstraint(
+                fields=("tenant_id", "provider", "provider_id"),
+                name="unique_provider_ids",
+            ),
         ),
     ]

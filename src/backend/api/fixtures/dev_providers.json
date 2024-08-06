@@ -1,0 +1,109 @@
+[
+  {
+    "model": "api.provider",
+    "pk": "37b065f8-26b0-4218-a665-0b23d07b27d9",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-08-01T17:20:27.050Z",
+      "updated_at": "2024-08-01T17:20:27.050Z",
+      "provider": "gcp",
+      "provider_id": "a12322-test321",
+      "alias": "gcp_testing_2",
+      "connected": null,
+      "connection_last_checked_at": null,
+      "metadata": {}
+    }
+  },
+  {
+    "model": "api.provider",
+    "pk": "8851db6b-42e5-4533-aa9e-30a32d67e875",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-08-01T17:19:42.453Z",
+      "updated_at": "2024-08-01T17:19:42.453Z",
+      "provider": "gcp",
+      "provider_id": "a12345-test123",
+      "alias": "gcp_testing_1",
+      "connected": null,
+      "connection_last_checked_at": null,
+      "metadata": {}
+    }
+  },
+  {
+    "model": "api.provider",
+    "pk": "b85601a8-4b45-4194-8135-03fb980ef428",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-08-01T17:19:09.556Z",
+      "updated_at": "2024-08-01T17:19:09.556Z",
+      "provider": "aws",
+      "provider_id": "123456789020",
+      "alias": "aws_testing_2",
+      "connected": null,
+      "connection_last_checked_at": null,
+      "metadata": {}
+    }
+  },
+  {
+    "model": "api.provider",
+    "pk": "baa7b895-8bac-4f47-b010-4226d132856e",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-08-01T17:20:16.962Z",
+      "updated_at": "2024-08-01T17:20:16.962Z",
+      "provider": "gcp",
+      "provider_id": "a12322-test123",
+      "alias": "gcp_testing_3",
+      "connected": null,
+      "connection_last_checked_at": null,
+      "metadata": {}
+    }
+  },
+  {
+    "model": "api.provider",
+    "pk": "d7c7ea89-d9af-423b-a364-1290dcad5a01",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-08-01T17:18:58.132Z",
+      "updated_at": "2024-08-01T17:18:58.132Z",
+      "provider": "aws",
+      "provider_id": "123456789015",
+      "alias": "aws_testing_1",
+      "connected": null,
+      "connection_last_checked_at": null,
+      "metadata": {}
+    }
+  },
+  {
+    "model": "api.provider",
+    "pk": "1b59e032-3eb6-4694-93a5-df84cd9b3ce2",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-08-06T16:03:26.176Z",
+      "updated_at": "2024-08-06T16:03:26.176Z",
+      "provider": "azure",
+      "provider_id": "8851db6b-42e5-4533-aa9e-30a32d67e875",
+      "alias": "azure_testing",
+      "connected": null,
+      "connection_last_checked_at": null,
+      "metadata": {},
+      "scanner_args": {}
+    }
+  },
+  {
+    "model": "api.provider",
+    "pk": "26e55a24-cb2c-4cef-ac87-6f91fddb2c97",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-08-06T16:03:07.037Z",
+      "updated_at": "2024-08-06T16:03:07.037Z",
+      "provider": "kubernetes",
+      "provider_id": "kubernetes-test-12345",
+      "alias": "k8s_testing",
+      "connected": null,
+      "connection_last_checked_at": null,
+      "metadata": {},
+      "scanner_args": {}
+    }
+  }
+]

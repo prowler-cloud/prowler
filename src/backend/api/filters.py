@@ -1,6 +1,7 @@
-from django_filters.rest_framework import FilterSet
+from django_filters.rest_framework import FilterSet, BooleanFilter
 from rest_framework_json_api.django_filters.backends import DjangoFilterBackend
 
+from api.models import Provider
 from api.rls import Tenant
 
 
@@ -13,24 +14,25 @@ class CustomDjangoFilterBackend(DjangoFilterBackend):
         return None
 
 
-class BaseFilter(FilterSet):
+class TenantFilter(FilterSet):
     class Meta:
-        model = None
+        model = Tenant
         fields = {
+            "name": ["exact", "icontains"],
             "inserted_at": ["exact", "gte", "lte"],
             "updated_at": ["exact", "gte", "lte"],
         }
 
 
-class TenantFilter(BaseFilter):
-    class Meta(BaseFilter.Meta):
-        model = Tenant
+class ProviderFilter(FilterSet):
+    connected = BooleanFilter()
+
+    class Meta:
+        model = Provider
         fields = {
-            **BaseFilter.Meta.fields,
-            "name": ["exact", "icontains"],
+            "provider": ["exact"],
+            "provider_id": ["exact", "icontains"],
+            "alias": ["exact", "icontains"],
+            "inserted_at": ["exact", "gte", "lte"],
+            "updated_at": ["exact", "gte", "lte"],
         }
-
-
-class ProviderFilter(BaseFilter):
-    # TODO implement proper filter
-    pass

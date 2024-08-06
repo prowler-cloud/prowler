@@ -7,30 +7,132 @@ info:
 
     This file is auto-generated.
 paths:
-  /api/v1/schema:
+  /api/v1/providers:
     get:
-      operationId: schema_retrieve
-      description: |-
-        OpenApi3 schema for this API. Format can be selected via content negotiation.
-
-        - YAML: application/vnd.oai.openapi
-        - JSON: application/vnd.oai.openapi+json
+      operationId: providers_list
+      description: Retrieve a list of all providers with options for filtering by
+        various criteria.
+      summary: List all providers
       parameters:
       - in: query
-        name: format
+        name: fields[Provider]
         schema:
-          type: string
-          enum:
-          - json
-          - yaml
+          type: array
+          items:
+            type: string
+            enum:
+            - inserted_at
+            - updated_at
+            - provider
+            - provider_id
+            - alias
+            - connection
+            - metadata
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
       - in: query
-        name: lang
+        name: filter[alias]
+        schema:
+          type: string
+      - in: query
+        name: filter[alias__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[connected]
+        schema:
+          type: boolean
+      - in: query
+        name: filter[inserted_at]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[inserted_at__gte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[inserted_at__lte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[provider]
         schema:
           type: string
           enum:
-          - en
+          - aws
+          - azure
+          - gcp
+          - kubernetes
+        description: |-
+          * `aws` - Aws
+          * `azure` - Azure
+          * `gcp` - Gcp
+          * `kubernetes` - Kubernetes
+      - in: query
+        name: filter[provider_id]
+        schema:
+          type: string
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: filter[updated_at]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[updated_at__gte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[updated_at__lte]
+        schema:
+          type: string
+          format: date-time
+      - name: page[number]
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page[size]
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - provider
+            - -provider
+            - provider_id
+            - -provider_id
+            - alias
+            - -alias
+            - connected
+            - -connected
+            - inserted_at
+            - -inserted_at
+            - updated_at
+            - -updated_at
+        explode: false
       tags:
-      - schema
+      - Provider
       security:
       - cookieAuth: []
       - basicAuth: []
@@ -38,24 +140,749 @@ paths:
       responses:
         '200':
           content:
-            application/vnd.oai.openapi:
+            application/vnd.api+json:
               schema:
-                type: object
-                additionalProperties: {}
-            application/yaml:
-              schema:
-                type: object
-                additionalProperties: {}
-            application/vnd.oai.openapi+json:
-              schema:
-                type: object
-                additionalProperties: {}
-            application/json:
-              schema:
-                type: object
-                additionalProperties: {}
+                $ref: '#/components/schemas/PaginatedProviderList'
           description: ''
+    post:
+      operationId: providers_create
+      description: Add a new provider to the system by providing the required provider
+        details.
+      summary: Create a new provider
+      tags:
+      - Provider
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/ProviderRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ProviderRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProviderRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ProviderResponse'
+          description: ''
+  /api/v1/providers/{id}:
+    get:
+      operationId: providers_retrieve
+      description: Fetch detailed information about a specific provider by their ID.
+      summary: Retrieve data from a provider
+      parameters:
+      - in: query
+        name: fields[Provider]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - inserted_at
+            - updated_at
+            - provider
+            - provider_id
+            - alias
+            - connection
+            - metadata
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this provider.
+        required: true
+      tags:
+      - Provider
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ProviderResponse'
+          description: ''
+    patch:
+      operationId: providers_partial_update
+      description: Update certain fields of an existing provider's information without
+        affecting other fields.
+      summary: Partially update a provider
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this provider.
+        required: true
+      tags:
+      - Provider
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/PatchedProviderRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedProviderRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedProviderRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ProviderResponse'
+          description: ''
+    delete:
+      operationId: providers_destroy
+      description: Remove a provider from the system by their ID.
+      summary: Delete a provider
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this provider.
+        required: true
+      tags:
+      - Provider
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '202':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/SerializerMetaclassResponse'
+          description: ''
+  /api/v1/providers/{id}/connection:
+    post:
+      operationId: providers_connection_create
+      description: Try to verify connection. For instance, Role & Credentials are
+        set correctly
+      summary: Check connection
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this provider.
+        required: true
+      tags:
+      - Provider
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '202':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/SerializerMetaclassResponse'
+          description: ''
+  /api/v1/tenants:
+    get:
+      operationId: tenants_list
+      description: Retrieve a list of all tenants with options for filtering by various
+        criteria.
+      summary: List all tenants
+      parameters:
+      - in: query
+        name: fields[Tenant]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - inserted_at
+            - updated_at
+            - name
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[inserted_at]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[inserted_at__gte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[inserted_at__lte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[name]
+        schema:
+          type: string
+      - in: query
+        name: filter[name__icontains]
+        schema:
+          type: string
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: filter[updated_at]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[updated_at__gte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[updated_at__lte]
+        schema:
+          type: string
+          format: date-time
+      - name: page[number]
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page[size]
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - name
+            - -name
+            - inserted_at
+            - -inserted_at
+            - updated_at
+            - -updated_at
+        explode: false
+      tags:
+      - Tenant
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/PaginatedTenantList'
+          description: ''
+    post:
+      operationId: tenants_create
+      description: Add a new tenant to the system by providing the required tenant
+        details.
+      summary: Create a new tenant
+      tags:
+      - Tenant
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/TenantRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TenantRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TenantRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/TenantResponse'
+          description: ''
+  /api/v1/tenants/{id}:
+    get:
+      operationId: tenants_retrieve
+      description: Fetch detailed information about a specific tenant by their ID.
+      summary: Retrieve data from a tenant
+      parameters:
+      - in: query
+        name: fields[Tenant]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - inserted_at
+            - updated_at
+            - name
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this tenant.
+        required: true
+      tags:
+      - Tenant
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/TenantResponse'
+          description: ''
+    patch:
+      operationId: tenants_partial_update
+      description: Update certain fields of an existing tenant's information without
+        affecting other fields.
+      summary: Partially update a tenant
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this tenant.
+        required: true
+      tags:
+      - Tenant
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/PatchedTenantRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedTenantRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedTenantRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/TenantResponse'
+          description: ''
+    delete:
+      operationId: tenants_destroy
+      description: Remove a tenant from the system by their ID.
+      summary: Delete a tenant
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this tenant.
+        required: true
+      tags:
+      - Tenant
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '204':
+          description: No response body
 components:
+  schemas:
+    PaginatedProviderList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Provider'
+      required:
+      - data
+    PaginatedTenantList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tenant'
+      required:
+      - data
+    PatchedProviderRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          - id
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - Provider
+            id:
+              type: string
+              format: uuid
+            attributes:
+              type: object
+              properties:
+                inserted_at:
+                  type: string
+                  format: date-time
+                  readOnly: true
+                updated_at:
+                  type: string
+                  format: date-time
+                  readOnly: true
+                provider:
+                  enum:
+                  - aws
+                  - azure
+                  - gcp
+                  - kubernetes
+                  type: string
+                  description: |-
+                    * `aws` - Aws
+                    * `azure` - Azure
+                    * `gcp` - Gcp
+                    * `kubernetes` - Kubernetes
+                provider_id:
+                  type: string
+                  minLength: 3
+                  maxLength: 63
+                alias:
+                  type: string
+                  minLength: 3
+                  maxLength: 100
+                connection:
+                  type: object
+                  properties:
+                    connected:
+                      type: boolean
+                    last_checked_at:
+                      type: string
+                      format: date-time
+                  readOnly: true
+                metadata: {}
+              required:
+              - provider_id
+              - alias
+      required:
+      - data
+    PatchedTenantRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          - id
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - Tenant
+            id:
+              type: string
+              format: uuid
+            attributes:
+              type: object
+              properties:
+                inserted_at:
+                  type: string
+                  format: date-time
+                  readOnly: true
+                updated_at:
+                  type: string
+                  format: date-time
+                  readOnly: true
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 100
+              required:
+              - name
+      required:
+      - data
+    Provider:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/ProviderTypeEnum'
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+        id:
+          type: string
+          format: uuid
+        attributes:
+          type: object
+          properties:
+            inserted_at:
+              type: string
+              format: date-time
+              readOnly: true
+            updated_at:
+              type: string
+              format: date-time
+              readOnly: true
+            provider:
+              enum:
+              - aws
+              - azure
+              - gcp
+              - kubernetes
+              type: string
+              description: |-
+                * `aws` - Aws
+                * `azure` - Azure
+                * `gcp` - Gcp
+                * `kubernetes` - Kubernetes
+            provider_id:
+              type: string
+              maxLength: 63
+              minLength: 3
+            alias:
+              type: string
+              maxLength: 100
+              minLength: 3
+            connection:
+              type: object
+              properties:
+                connected:
+                  type: boolean
+                last_checked_at:
+                  type: string
+                  format: date-time
+              readOnly: true
+            metadata: {}
+          required:
+          - provider_id
+          - alias
+    ProviderRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - Provider
+            attributes:
+              type: object
+              properties:
+                inserted_at:
+                  type: string
+                  format: date-time
+                  readOnly: true
+                updated_at:
+                  type: string
+                  format: date-time
+                  readOnly: true
+                provider:
+                  enum:
+                  - aws
+                  - azure
+                  - gcp
+                  - kubernetes
+                  type: string
+                  description: |-
+                    * `aws` - Aws
+                    * `azure` - Azure
+                    * `gcp` - Gcp
+                    * `kubernetes` - Kubernetes
+                provider_id:
+                  type: string
+                  minLength: 3
+                  maxLength: 63
+                alias:
+                  type: string
+                  minLength: 3
+                  maxLength: 100
+                connection:
+                  type: object
+                  properties:
+                    connected:
+                      type: boolean
+                    last_checked_at:
+                      type: string
+                      format: date-time
+                  readOnly: true
+                metadata: {}
+              required:
+              - provider_id
+              - alias
+      required:
+      - data
+    ProviderResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Provider'
+      required:
+      - data
+    ProviderTypeEnum:
+      type: string
+      enum:
+      - Provider
+    SerializerMetaclassResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Provider'
+      required:
+      - data
+    Tenant:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/TenantTypeEnum'
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+        id:
+          type: string
+          format: uuid
+        attributes:
+          type: object
+          properties:
+            inserted_at:
+              type: string
+              format: date-time
+              readOnly: true
+            updated_at:
+              type: string
+              format: date-time
+              readOnly: true
+            name:
+              type: string
+              maxLength: 100
+          required:
+          - name
+    TenantRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - Tenant
+            attributes:
+              type: object
+              properties:
+                inserted_at:
+                  type: string
+                  format: date-time
+                  readOnly: true
+                updated_at:
+                  type: string
+                  format: date-time
+                  readOnly: true
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 100
+              required:
+              - name
+      required:
+      - data
+    TenantResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Tenant'
+      required:
+      - data
+    TenantTypeEnum:
+      type: string
+      enum:
+      - Tenant
   securitySchemes:
     basicAuth:
       type: http
