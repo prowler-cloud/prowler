@@ -4,11 +4,13 @@ import sys
 from argparse import ArgumentTypeError, Namespace
 from datetime import datetime
 from re import fullmatch
+from typing import Union
 
 from boto3 import client
 from boto3.session import Session
 from botocore.config import Config
 from botocore.credentials import RefreshableCredentials
+from botocore.session import Session as BotocoreSession
 from colorama import Fore, Style
 from pytz import utc
 from tzlocal import get_localzone
@@ -486,7 +488,7 @@ class AwsProvider(Provider):
             )
 
             # Here we need the botocore session since it needs to use refreshable credentials
-            assumed_session = Session()
+            assumed_session = BotocoreSession()
             assumed_session._credentials = assumed_refreshable_credentials
             assumed_session.set_config_variable("region", self._identity.profile_region)
             return Session(
@@ -902,7 +904,7 @@ class AwsProvider(Provider):
         session_duration: int = 3600,
         external_id: str = None,
         mfa_enabled: bool = False,
-    ) -> tuple[bool, AWSCallerIdentity | Exception]:
+    ) -> tuple[bool, Union[AWSCallerIdentity, Exception]]:
         """
         Validates AWS credentials using the provided session and AWS region.
 
@@ -978,7 +980,7 @@ class AwsProvider(Provider):
                 region=aws_region,
             )
         except Exception as error:
-            logger.error(
+            logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             return False, error
