@@ -53,7 +53,7 @@ class AzureProvider(Provider):
     ):
         logger.info("Setting Azure provider ...")
 
-        logger.info("Checking if region is different than default one")
+        # Set up the Azure provider using the specified authentication method
         test_connection = self.test_connection(
             az_cli_auth,
             sp_env_auth,
@@ -403,6 +403,8 @@ class AzureProvider(Provider):
             tuple: A tuple containing the connection status, the credentials object, and the region configuration object.
         """
         try:
+            logger.info("Checking if region is different than default one")
+
             region_config = AzureProvider.setup_region_config(
                 validate_azure_region(region)
             )
