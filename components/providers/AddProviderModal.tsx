@@ -12,7 +12,7 @@ import {
   DialogTitle,
   DialogTrigger,
   useToast,
-} from "@/components";
+} from "@/components/ui";
 
 import { ButtonAddProvider } from "./ButtonAddProvider";
 import { CustomRadioProvider } from "./CustomRadioProvider";

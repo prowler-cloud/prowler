@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useEffect } from "react";
 
-import { Alert, AlertDescription, AlertTitle } from "@/components";
 import { RocketIcon } from "@/components/icons";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui";
 
 export default function Error({
   error,

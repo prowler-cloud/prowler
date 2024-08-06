@@ -2,13 +2,13 @@ import { Spacer } from "@nextui-org/react";
 import { Suspense } from "react";
 
 import { getProvider } from "@/actions";
-import { Header } from "@/components";
 import {
   AddProviderModal,
   ColumnsProviders,
   DataTable,
   SkeletonTableProvider,
 } from "@/components/providers";
+import { Header } from "@/components/ui";
 
 export default async function Providers() {
   return (

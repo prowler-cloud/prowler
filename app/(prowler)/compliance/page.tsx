@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Header } from "@/components";
+import { Header } from "@/components/ui";
 
 export default function Compliance() {
   return (

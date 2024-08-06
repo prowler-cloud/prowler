@@ -3,7 +3,7 @@
 import { Button, useDisclosure } from "@nextui-org/react";
 import React from "react";
 
-import { Modal } from "@/components";
+import { Modal } from "@/components/ui";
 
 interface ModalWrapProps {
   modalTitle: string;

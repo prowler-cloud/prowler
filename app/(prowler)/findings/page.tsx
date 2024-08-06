@@ -1,8 +1,9 @@
 import { Spacer } from "@nextui-org/react";
 import React, { Suspense } from "react";
 
-import { ColumnsFindings, Header, SkeletonTableFindings } from "@/components";
+import { ColumnsFindings, SkeletonTableFindings } from "@/components";
 import { DataTable } from "@/components/providers";
+import { Header } from "@/components/ui";
 
 export default async function Findings() {
   return (
