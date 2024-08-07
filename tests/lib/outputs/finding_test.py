@@ -12,7 +12,7 @@ def mock_get_provider_data_mapping_aws(_):
         "account_email": "mock_account_email",
         "account_organization_uid": "mock_account_org_uid",
         "account_organization_name": "mock_account_org_name",
-        "account_tags": ["tag1", "tag2"],
+        "account_tags": {"tag1": "value1"},
         "finding_uid": "mock_finding_uid",
         "provider": "aws",
         "check_id": "mock_check_id",
@@ -28,7 +28,7 @@ def mock_get_provider_data_mapping_aws(_):
         "resource_uid": "mock_resource_uid",
         "resource_name": "mock_resource_name",
         "resource_details": "mock_resource_details",
-        "resource_tags": "mock_resource_tags",
+        "resource_tags": {"tag1": "value1"},
         "partition": None,
         "region": "mock_region",
         "description": "mock_description",
@@ -58,7 +58,7 @@ def mock_get_provider_data_mapping_azure(_):
         "account_email": "mock_account_email",
         "account_organization_uid": "mock_account_org_uid",
         "account_organization_name": "mock_account_org_name",
-        "account_tags": ["tag1", "tag2"],
+        "account_tags": {"tag1": "value1"},
         "finding_uid": "mock_finding_uid",
         "provider": "azure",
         "check_id": "mock_check_id",
@@ -74,7 +74,7 @@ def mock_get_provider_data_mapping_azure(_):
         "resource_uid": "mock_resource_uid",
         "resource_name": "mock_resource_name",
         "resource_details": "mock_resource_details",
-        "resource_tags": "mock_resource_tags",
+        "resource_tags": {"tag1": "value1"},
         "partition": None,
         "description": "mock_description",
         "risk": "mock_risk",
@@ -103,7 +103,7 @@ def mock_get_provider_data_mapping_gcp(_):
         "account_email": "mock_account_email",
         "account_organization_uid": "mock_account_org_uid",
         "account_organization_name": "mock_account_org_name",
-        "account_tags": ["tag1", "tag2"],
+        "account_tags": {"tag1": "value1"},
         "finding_uid": "mock_finding_uid",
         "provider": "gcp",
         "check_id": "mock_check_id",
@@ -119,7 +119,7 @@ def mock_get_provider_data_mapping_gcp(_):
         "resource_uid": "mock_resource_uid",
         "resource_name": "mock_resource_name",
         "resource_details": "mock_resource_details",
-        "resource_tags": "mock_resource_tags",
+        "resource_tags": {"tag1": "value1"},
         "partition": None,
         "description": "mock_description",
         "risk": "mock_risk",
@@ -148,7 +148,7 @@ def mock_get_provider_data_mapping_kubernetes(_):
         "account_email": "mock_account_email",
         "account_organization_uid": "mock_account_org_uid",
         "account_organization_name": "mock_account_org_name",
-        "account_tags": ["tag1", "tag2"],
+        "account_tags": {"tag1": "value1"},
         "finding_uid": "mock_finding_uid",
         "provider": "kubernetes",
         "check_id": "mock_check_id",
@@ -164,7 +164,7 @@ def mock_get_provider_data_mapping_kubernetes(_):
         "resource_uid": "mock_resource_uid",
         "resource_name": "mock_resource_name",
         "resource_details": "mock_resource_details",
-        "resource_tags": "mock_resource_tags",
+        "resource_tags": {"tag1": "value1"},
         "partition": None,
         "description": "mock_description",
         "risk": "mock_risk",
@@ -240,7 +240,7 @@ class TestFinding:
         assert finding_output.subservice_name == "mock_subservice_name"
         assert finding_output.severity == Severity.high
         assert finding_output.resource_type == "mock_resource_type"
-        assert finding_output.resource_tags == "mock_resource_tags"
+        assert finding_output.resource_tags == {"tag1": "value1"}
         assert finding_output.partition is None
         assert finding_output.description == "mock_description"
         assert finding_output.risk == "mock_risk"
@@ -260,7 +260,7 @@ class TestFinding:
         assert finding_output.account_email == "mock_account_email"
         assert finding_output.account_organization_uid == "mock_account_org_uid"
         assert finding_output.account_organization_name == "mock_account_org_name"
-        assert finding_output.account_tags == ["tag1", "tag2"]
+        assert finding_output.account_tags == {"tag1": "value1"}
         assert finding_output.prowler_version == "1.0.0"
 
     @patch(
@@ -318,7 +318,7 @@ class TestFinding:
         assert finding_output.subservice_name == "mock_subservice_name"
         assert finding_output.severity == Severity.high
         assert finding_output.resource_type == "mock_resource_type"
-        assert finding_output.resource_tags == "mock_resource_tags"
+        assert finding_output.resource_tags == {"tag1": "value1"}
         assert finding_output.partition is None
         assert finding_output.description == "mock_description"
         assert finding_output.risk == "mock_risk"
@@ -353,7 +353,7 @@ class TestFinding:
         organization.display_name = "mock_organization_name"
         project.id = "mock_project_id"
         project.name = "mock_project_name"
-        project.labels = ["label1", "label2"]
+        project.labels = {"tag1": "value1"}
         project.organization = organization
 
         provider.projects = {"mock_project_id": project}
@@ -388,7 +388,7 @@ class TestFinding:
         assert finding_output.subservice_name == "mock_subservice_name"
         assert finding_output.severity == Severity.high
         assert finding_output.resource_type == "mock_resource_type"
-        assert finding_output.resource_tags == "mock_resource_tags"
+        assert finding_output.resource_tags == {"tag1": "value1"}
         assert finding_output.partition is None
         assert finding_output.description == "mock_description"
         assert finding_output.risk == "mock_risk"
@@ -408,7 +408,7 @@ class TestFinding:
         assert finding_output.account_email == "mock_account_email"
         assert finding_output.account_organization_uid == "mock_organization_id"
         assert finding_output.account_organization_name == "mock_account_org_name"
-        assert finding_output.account_tags == ["label1", "label2"]
+        assert finding_output.account_tags == {"tag1": "value1"}
         assert finding_output.prowler_version == "1.0.0"
         assert finding_output.timestamp == 1622520000
 
@@ -459,7 +459,7 @@ class TestFinding:
         assert finding_output.subservice_name == "mock_subservice_name"
         assert finding_output.severity == Severity.high
         assert finding_output.resource_type == "mock_resource_type"
-        assert finding_output.resource_tags == "mock_resource_tags"
+        assert finding_output.resource_tags == {"tag1": "value1"}
         assert finding_output.partition is None
         assert finding_output.description == "mock_description"
         assert finding_output.risk == "mock_risk"
@@ -479,6 +479,6 @@ class TestFinding:
         assert finding_output.account_email == "mock_account_email"
         assert finding_output.account_organization_uid == "mock_account_org_uid"
         assert finding_output.account_organization_name == "mock_account_org_name"
-        assert finding_output.account_tags == ["tag1", "tag2"]
+        assert finding_output.account_tags == {"tag1": "value1"}
         assert finding_output.prowler_version == "1.0.0"
         assert finding_output.timestamp == 1622520000

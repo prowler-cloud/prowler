@@ -39,12 +39,13 @@ The following list includes all the AWS checks with configurable variables that 
 | `cloudtrail_threat_detection_enumeration`                     | `threat_detection_enumeration_entropy`           | Integer         |
 | `cloudtrail_threat_detection_enumeration`                     | `threat_detection_enumeration_minutes`           | Integer         |
 | `cloudtrail_threat_detection_enumeration`                     | `threat_detection_enumeration_actions`           | List of Strings |
+| `codebuild_project_no_secrets_in_variables`                   | `excluded_sensitive_environment_variables`       | List of Strings |
 | `rds_instance_backup_enabled`                                 | `check_rds_instance_replicas`                    | Boolean         |
 | `ec2_securitygroup_allow_ingress_from_internet_to_any_port`   | `ec2_allowed_interface_types`                    | List of Strings |
 | `ec2_securitygroup_allow_ingress_from_internet_to_any_port`   | `ec2_allowed_instance_owners`                    | List of Strings |
 | `acm_certificates_expiration_check`                           | `days_to_expire_threshold`                       | Integer         |
 | `eks_control_plane_logging_all_types_enabled`                 | `eks_required_log_types`                         | List of Strings |
-| `codebuild_project_no_secrets_in_variables`                   | `excluded_sensitive_environment_variables`       | List of Strings |
+| `eks_cluster_uses_a_supported_version`                        | `eks_cluster_oldest_version_supported`                 | String          |
 
 
 ## Azure
@@ -368,6 +369,10 @@ aws:
       "controllerManager",
       "scheduler",
     ]
+
+  # aws.eks_cluster_uses_a_supported_version
+  # EKS clusters must be version 1.28 or higher
+  eks_cluster_oldest_version_supported: "1.28"
 
 # Azure Configuration
 azure:

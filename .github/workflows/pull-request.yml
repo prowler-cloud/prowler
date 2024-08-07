@@ -5,10 +5,12 @@ on:
     branches:
       - "master"
       - "v3"
+      - "v4.*"
   pull_request:
     branches:
       - "master"
       - "v3"
+      - "v4.*"
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -29,6 +31,7 @@ jobs:
             docs/**
             permissions/**
             mkdocs.yml
+            .backportrc.json
       - name: Install poetry
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |

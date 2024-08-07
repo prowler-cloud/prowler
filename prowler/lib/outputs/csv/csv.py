@@ -3,7 +3,7 @@ from csv import DictWriter
 from prowler.lib.logger import logger
 from prowler.lib.outputs.finding import Finding
 from prowler.lib.outputs.output import Output
-from prowler.lib.outputs.utils import unroll_dict, unroll_list
+from prowler.lib.outputs.utils import unroll_dict
 
 
 class CSV(Output):
@@ -17,8 +17,13 @@ class CSV(Output):
         try:
             for finding in findings:
                 finding_dict = {k.upper(): v for k, v in finding.dict().items()}
-                finding_dict["COMPLIANCE"] = unroll_dict(finding.compliance)
-                finding_dict["ACCOUNT_TAGS"] = unroll_list(finding.account_tags)
+                finding_dict["RESOURCE_TAGS"] = unroll_dict(finding.resource_tags)
+                finding_dict["COMPLIANCE"] = unroll_dict(
+                    finding.compliance, separator=": "
+                )
+                finding_dict["ACCOUNT_TAGS"] = unroll_dict(
+                    finding.account_tags, separator=":"
+                )
                 finding_dict["STATUS"] = finding.status.value
                 finding_dict["SEVERITY"] = finding.severity.value
                 self._data.append(finding_dict)

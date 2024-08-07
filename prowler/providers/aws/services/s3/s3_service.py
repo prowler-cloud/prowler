@@ -9,25 +9,24 @@ from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################## S3
 class S3(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.account_arn_template = f"arn:{self.audited_partition}:s3:{self.region}:{self.audited_account}:account"
         self.regions_with_buckets = []
-        self.buckets = self.__list_buckets__(provider)
-        self.__threading_call__(self.__get_bucket_versioning__, self.buckets)
-        self.__threading_call__(self.__get_bucket_logging__, self.buckets)
-        self.__threading_call__(self.__get_bucket_policy__, self.buckets)
-        self.__threading_call__(self.__get_bucket_acl__, self.buckets)
-        self.__threading_call__(self.__get_public_access_block__, self.buckets)
-        self.__threading_call__(self.__get_bucket_encryption__, self.buckets)
-        self.__threading_call__(self.__get_bucket_ownership_controls__, self.buckets)
-        self.__threading_call__(self.__get_object_lock_configuration__, self.buckets)
-        self.__threading_call__(self.__get_bucket_tagging__, self.buckets)
+        self.buckets = self._list_buckets(provider)
+        self.__threading_call__(self._get_bucket_versioning, self.buckets)
+        self.__threading_call__(self._get_bucket_logging, self.buckets)
+        self.__threading_call__(self._get_bucket_policy, self.buckets)
+        self.__threading_call__(self._get_bucket_acl, self.buckets)
+        self.__threading_call__(self._get_public_access_block, self.buckets)
+        self.__threading_call__(self._get_bucket_encryption, self.buckets)
+        self.__threading_call__(self._get_bucket_ownership_controls, self.buckets)
+        self.__threading_call__(self._get_object_lock_configuration, self.buckets)
+        self.__threading_call__(self._get_bucket_tagging, self.buckets)
 
-    def __list_buckets__(self, provider):
+    def _list_buckets(self, provider):
         logger.info("S3 - Listing buckets...")
         buckets = []
         try:
@@ -92,7 +91,7 @@ class S3(AWSService):
             )
         return buckets
 
-    def __get_bucket_versioning__(self, bucket):
+    def _get_bucket_versioning(self, bucket):
         logger.info("S3 - Get buckets versioning...")
         try:
             regional_client = self.regional_clients[bucket.region]
@@ -124,7 +123,7 @@ class S3(AWSService):
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
-    def __get_bucket_encryption__(self, bucket):
+    def _get_bucket_encryption(self, bucket):
         logger.info("S3 - Get buckets encryption...")
         try:
             regional_client = self.regional_clients[bucket.region]
@@ -156,7 +155,7 @@ class S3(AWSService):
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
-    def __get_bucket_logging__(self, bucket):
+    def _get_bucket_logging(self, bucket):
         logger.info("S3 - Get buckets logging...")
         try:
             regional_client = self.regional_clients[bucket.region]
@@ -185,7 +184,7 @@ class S3(AWSService):
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
-    def __get_public_access_block__(self, bucket):
+    def _get_public_access_block(self, bucket):
         logger.info("S3 - Get buckets public access block...")
         try:
             regional_client = self.regional_clients[bucket.region]
@@ -228,7 +227,7 @@ class S3(AWSService):
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
-    def __get_bucket_acl__(self, bucket):
+    def _get_bucket_acl(self, bucket):
         logger.info("S3 - Get buckets acl...")
         try:
             regional_client = self.regional_clients[bucket.region]
@@ -265,7 +264,7 @@ class S3(AWSService):
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
-    def __get_bucket_policy__(self, bucket):
+    def _get_bucket_policy(self, bucket):
         logger.info("S3 - Get buckets policy...")
         try:
             regional_client = self.regional_clients[bucket.region]
@@ -293,7 +292,7 @@ class S3(AWSService):
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
-    def __get_bucket_ownership_controls__(self, bucket):
+    def _get_bucket_ownership_controls(self, bucket):
         logger.info("S3 - Get buckets ownership controls...")
         try:
             regional_client = self.regional_clients[bucket.region]
@@ -321,7 +320,7 @@ class S3(AWSService):
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
-    def __get_object_lock_configuration__(self, bucket):
+    def _get_object_lock_configuration(self, bucket):
         logger.info("S3 - Get buckets ownership controls...")
         try:
             regional_client = self.regional_clients[bucket.region]
@@ -351,7 +350,7 @@ class S3(AWSService):
                         f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
 
-    def __get_bucket_tagging__(self, bucket):
+    def _get_bucket_tagging(self, bucket):
         logger.info("S3 - Get buckets logging...")
         try:
             regional_client = self.regional_clients[bucket.region]
@@ -381,14 +380,16 @@ class S3(AWSService):
                 )
 
 
-################## S3Control
 class S3Control(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
-        super().__init__(__class__.__name__, provider, global_service=True)
-        self.account_public_access_block = self.__get_public_access_block__()
+        super().__init__(__class__.__name__, provider)
+        self.account_public_access_block = self._get_public_access_block()
+        self.access_points = {}
+        self.__threading_call__(self._list_access_points)
+        self.__threading_call__(self._get_access_point, self.access_points.values())
 
-    def __get_public_access_block__(self):
+    def _get_public_access_block(self):
         logger.info("S3 - Get account public access block...")
         try:
             public_access_block = self.client.get_public_access_block(
@@ -413,6 +414,58 @@ class S3Control(AWSService):
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _list_access_points(self, regional_client):
+        logger.info("S3 - Listing account access points...")
+        try:
+            list_access_points = regional_client.list_access_points(
+                AccountId=self.audited_account
+            )["AccessPointList"]
+            for ap in list_access_points:
+                self.access_points[ap["AccessPointArn"]] = AccessPoint(
+                    account_id=self.audited_account,
+                    name=ap["Name"],
+                    bucket=ap["Bucket"],
+                    region=regional_client.region,
+                )
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "NoSuchMultiRegionAccessPoint":
+                logger.warning(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _get_access_point(self, ap):
+        logger.info("S3 - Get account access point...")
+        try:
+            access_point = self.regional_clients[ap.region].get_access_point(
+                AccountId=ap.account_id, Name=ap.name
+            )
+            ap.public_access_block = PublicAccessBlock(
+                block_public_acls=access_point.get(
+                    "PublicAccessBlockConfiguration", {}
+                ).get("BlockPublicAcls", False),
+                ignore_public_acls=access_point.get(
+                    "PublicAccessBlockConfiguration", {}
+                ).get("IgnorePublicAcls", False),
+                block_public_policy=access_point.get(
+                    "PublicAccessBlockConfiguration", {}
+                ).get("BlockPublicPolicy", False),
+                restrict_public_buckets=access_point.get(
+                    "PublicAccessBlockConfiguration", {}
+                ).get("RestrictPublicBuckets", False),
+            )
+        except Exception as error:
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class ACL_Grantee(BaseModel):
     display_name: Optional[str]
@@ -427,6 +480,14 @@ class PublicAccessBlock(BaseModel):
     ignore_public_acls: bool
     block_public_policy: bool
     restrict_public_buckets: bool
+
+
+class AccessPoint(BaseModel):
+    account_id: str
+    name: str
+    bucket: str
+    public_access_block: Optional[PublicAccessBlock]
+    region: str
 
 
 class Bucket(BaseModel):

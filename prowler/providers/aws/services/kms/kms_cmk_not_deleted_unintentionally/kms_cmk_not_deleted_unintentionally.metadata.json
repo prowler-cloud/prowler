@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "kms_cmk_not_deleted_unintentionally",
+  "CheckTitle": "AWS KMS keys should not be deleted unintentionally",
+  "CheckType": [
+    "Data Deletion Protection"
+  ],
+  "ServiceName": "kms",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:kms:region:account-id:certificate/resource-id",
+  "Severity": "critical",
+  "ResourceType": "AwsKmsKey",
+  "Description": "Ensure there is no customer keys scheduled for deletion.",
+  "Risk": "KMS keys cannot be recovered once deleted, also, all the data under a KMS key is also permanently unrecoverable if the KMS key is deleted.",
+  "RelatedUrl": "https://docs.aws.amazon.com/kms/latest/developerguide/deleting-keys-scheduling-key-deletion.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws kms cancel-key-deletion --key-id <key-id>",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/kms-controls.html#kms-3",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Cancel the deletion before the end of the period unless you really want to delete that CMK, as it will no longer be usable.",
+      "Url": "https://docs.aws.amazon.com/kms/latest/developerguide/deleting-keys-scheduling-key-deletion.html#deleting-keys-scheduling-key-deletion-console"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
