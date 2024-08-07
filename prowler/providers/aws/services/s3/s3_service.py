@@ -383,9 +383,11 @@ class S3(AWSService):
 class S3Control(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
-        super().__init__(__class__.__name__, provider, global_service=True)
+        super().__init__(__class__.__name__, provider)
         self.account_public_access_block = self._get_public_access_block()
-        self.access_points = self._list_access_points()
+        self.access_points = {}
+        self.__threading_call__(self._list_access_points)
+        self.__threading_call__(self._get_access_point, self.access_points.values())
 
     def _get_public_access_block(self):
         logger.info("S3 - Get account public access block...")
@@ -412,16 +414,19 @@ class S3Control(AWSService):
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def _list_access_points(self):
+    def _list_access_points(self, regional_client):
         logger.info("S3 - Listing account access points...")
-        access_points = []
         try:
-            list_access_points = self.client.list_access_points(
+            list_access_points = regional_client.list_access_points(
                 AccountId=self.audited_account
             )["AccessPointList"]
             for ap in list_access_points:
-                access_point = self._get_access_point(self.audited_account, ap["Name"])
-                access_points.append(access_point)
+                self.access_points[ap["AccessPointArn"]] = AccessPoint(
+                    account_id=self.audited_account,
+                    name=ap["Name"],
+                    bucket=ap["Bucket"],
+                    region=regional_client.region,
+                )
         except ClientError as error:
             if error.response["Error"]["Code"] == "NoSuchMultiRegionAccessPoint":
                 logger.warning(
@@ -435,13 +440,14 @@ class S3Control(AWSService):
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-        return access_points
 
-    def _get_access_point(self, account_id, name):
+    def _get_access_point(self, ap):
         logger.info("S3 - Get account access point...")
         try:
-            access_point = self.client.get_access_point(AccountId=account_id, Name=name)
-            pab_configuration = PublicAccessBlock(
+            access_point = self.regional_clients[ap.region].get_access_point(
+                AccountId=ap.account_id, Name=ap.name
+            )
+            ap.public_access_block = PublicAccessBlock(
                 block_public_acls=access_point.get(
                     "PublicAccessBlockConfiguration", {}
                 ).get("BlockPublicAcls", False),
@@ -454,12 +460,6 @@ class S3Control(AWSService):
                 restrict_public_buckets=access_point.get(
                     "PublicAccessBlockConfiguration", {}
                 ).get("RestrictPublicBuckets", False),
-            )
-            return AccessPoint(
-                account_id=account_id,
-                name=access_point["Name"],
-                bucket=access_point["Bucket"],
-                public_access_block_configuration=pab_configuration,
             )
         except Exception as error:
             logger.error(
@@ -486,7 +486,8 @@ class AccessPoint(BaseModel):
     account_id: str
     name: str
     bucket: str
-    public_access_block_configuration: PublicAccessBlock
+    public_access_block: Optional[PublicAccessBlock]
+    region: str
 
 
 class Bucket(BaseModel):

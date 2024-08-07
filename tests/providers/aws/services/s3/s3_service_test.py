@@ -1,5 +1,7 @@
 import json
+from unittest.mock import patch
 
+import botocore
 from boto3 import client
 from moto import mock_aws
 
@@ -10,9 +12,27 @@ from tests.providers.aws.utils import (
     set_mocked_aws_provider,
 )
 
+# Original botocore _make_api_call function
+orig = botocore.client.BaseClient._make_api_call
+
+
+# Mocked botocore _make_api_call function
+def mock_make_api_call(self, operation_name, kwarg):
+    if operation_name == "ListAccessPoints":
+        return {
+            "AccessPointList": [
+                {
+                    "Name": "test-access-point",
+                    "Bucket": "test-bucket",
+                    "AccessPointArn": f"arn:aws:s3:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:accesspoint/test-access-point",
+                }
+            ]
+        }
+
+    return orig(self, operation_name, kwarg)
+
 
 class Test_S3_Service:
-
     # Test S3 Service
     @mock_aws
     def test_service(self):
@@ -382,3 +402,108 @@ class Test_S3_Service:
             == f"arn:{aws_provider.identity.partition}:s3:::{bucket_name}"
         )
         assert s3.buckets[0].object_lock
+
+    # Test S3 List Access Points
+    @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
+    @mock_aws
+    def test_list_access_points(self):
+        arn = f"arn:aws:s3:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:accesspoint/test-access-point"
+
+        # Generate S3 Client
+        s3_client = client("s3", region_name=AWS_REGION_US_EAST_1)
+
+        # Generate Bucket
+        s3_client.create_bucket(
+            Bucket="test-bucket", ObjectOwnership="BucketOwnerEnforced"
+        )
+        sse_config = {
+            "Rules": [
+                {
+                    "ApplyServerSideEncryptionByDefault": {
+                        "SSEAlgorithm": "AES256",
+                    }
+                }
+            ]
+        }
+        s3_client.put_bucket_encryption(
+            Bucket="test-bucket", ServerSideEncryptionConfiguration=sse_config
+        )
+
+        # Generate S3Control Client
+        s3control_client = client("s3control", region_name=AWS_REGION_US_EAST_1)
+
+        s3control_client.create_access_point(
+            AccountId=AWS_ACCOUNT_NUMBER,
+            Name="test-access-point",
+            Bucket="test-bucket",
+            PublicAccessBlockConfiguration={
+                "BlockPublicAcls": True,
+                "IgnorePublicAcls": True,
+                "BlockPublicPolicy": True,
+                "RestrictPublicBuckets": True,
+            },
+        )
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        s3control = S3Control(aws_provider)
+
+        assert len(s3control.access_points) == 1
+        assert s3control.access_points[arn].account_id == AWS_ACCOUNT_NUMBER
+        assert s3control.access_points[arn].name == "test-access-point"
+        assert s3control.access_points[arn].bucket == "test-bucket"
+        assert s3control.access_points[arn].region == AWS_REGION_US_EAST_1
+
+    # Test S3 Get Access Point
+    @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
+    @mock_aws
+    def test_get_access_point(self):
+        arn = f"arn:aws:s3:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:accesspoint/test-access-point"
+
+        # Generate S3 Client
+        s3_client = client("s3", region_name=AWS_REGION_US_EAST_1)
+
+        # Generate Bucket
+        s3_client.create_bucket(
+            Bucket="test-bucket", ObjectOwnership="BucketOwnerEnforced"
+        )
+        sse_config = {
+            "Rules": [
+                {
+                    "ApplyServerSideEncryptionByDefault": {
+                        "SSEAlgorithm": "AES256",
+                    }
+                }
+            ]
+        }
+        s3_client.put_bucket_encryption(
+            Bucket="test-bucket", ServerSideEncryptionConfiguration=sse_config
+        )
+
+        # Generate S3Control Client
+        s3control_client = client("s3control", region_name=AWS_REGION_US_EAST_1)
+
+        s3control_client.create_access_point(
+            AccountId=AWS_ACCOUNT_NUMBER,
+            Name="test-access-point",
+            Bucket="test-bucket",
+            PublicAccessBlockConfiguration={
+                "BlockPublicAcls": True,
+                "IgnorePublicAcls": True,
+                "BlockPublicPolicy": True,
+                "RestrictPublicBuckets": True,
+            },
+        )
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        s3control = S3Control(aws_provider)
+
+        assert len(s3control.access_points) == 1
+        assert s3control.access_points[arn].account_id == AWS_ACCOUNT_NUMBER
+        assert s3control.access_points[arn].name == "test-access-point"
+        assert s3control.access_points[arn].bucket == "test-bucket"
+        assert s3control.access_points[arn].region == AWS_REGION_US_EAST_1
+        assert s3control.access_points[arn].public_access_block
+        assert s3control.access_points[arn].public_access_block.block_public_acls
+        assert s3control.access_points[arn].public_access_block.ignore_public_acls
+        assert s3control.access_points[arn].public_access_block.block_public_policy
+        assert s3control.access_points[arn].public_access_block.restrict_public_buckets
