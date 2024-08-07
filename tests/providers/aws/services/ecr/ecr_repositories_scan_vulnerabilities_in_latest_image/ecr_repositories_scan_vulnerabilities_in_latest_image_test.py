@@ -214,8 +214,8 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
         ecr_client.audit_config = {}
 
         with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider(),
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            set_mocked_aws_audit_info(),
         ), mock.patch(
             "prowler.providers.aws.services.ecr.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_client",
             ecr_client,

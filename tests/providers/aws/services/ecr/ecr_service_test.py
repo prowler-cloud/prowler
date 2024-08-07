@@ -182,15 +182,9 @@ class Test_ECR_Service:
             assert regional_client.__class__.__name__ == "ECR"
 
     # Test ECR session
-<<<<<<< HEAD
-    def test__get_session__(self):
+    def test_get_session(self):
         audit_info = set_mocked_aws_audit_info()
         ecr = ECR(audit_info)
-=======
-    def test_get_session(self):
-        aws_provider = set_mocked_aws_provider()
-        ecr = ECR(aws_provider)
->>>>>>> 26a5ffaf (fix(aws): only check artifacts that can be scanned for vulnerabilities by `ecr_repositories_scan_vulnerabilities_in_latest_image` (#4507))
         assert ecr.session.__class__.__name__ == "Session"
 
     # Test describe ECR repositories
@@ -272,14 +266,8 @@ class Test_ECR_Service:
             repositoryName=repo_name,
             imageScanningConfiguration={"scanOnPush": True},
         )
-<<<<<<< HEAD
         audit_info = set_mocked_aws_audit_info()
         ecr = ECR(audit_info)
-=======
-        aws_provider = set_mocked_aws_provider()
-        ecr = ECR(aws_provider)
-
->>>>>>> 26a5ffaf (fix(aws): only check artifacts that can be scanned for vulnerabilities by `ecr_repositories_scan_vulnerabilities_in_latest_image` (#4507))
         assert len(ecr.registries) == 1
         assert len(ecr.registries[AWS_REGION_EU_WEST_1].repositories) == 1
         assert ecr.registries[AWS_REGION_EU_WEST_1].repositories[0].name == repo_name
@@ -369,15 +357,9 @@ class Test_ECR_Service:
 
     # Test get ECR Registries Scanning Configuration
     @mock_aws
-<<<<<<< HEAD
-    def test__get_registry_scanning_configuration__(self):
+    def test_get_registry_scanning_configuration(self):
         audit_info = set_mocked_aws_audit_info()
         ecr = ECR(audit_info)
-=======
-    def test_get_registry_scanning_configuration(self):
-        aws_provider = set_mocked_aws_provider()
-        ecr = ECR(aws_provider)
->>>>>>> 26a5ffaf (fix(aws): only check artifacts that can be scanned for vulnerabilities by `ecr_repositories_scan_vulnerabilities_in_latest_image` (#4507))
         assert len(ecr.registries) == 1
         assert ecr.registries[AWS_REGION_EU_WEST_1].id == AWS_ACCOUNT_NUMBER
         assert ecr.registries[AWS_REGION_EU_WEST_1].scan_type == "BASIC"
