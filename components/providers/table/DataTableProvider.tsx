@@ -18,7 +18,7 @@ import {
   TableRow,
 } from "@/components/ui/table/Table";
 
-interface DataTableProps<TData, TValue> {
+interface DataTableProviderProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
 }
@@ -26,7 +26,7 @@ interface DataTableProps<TData, TValue> {
 export function DataTableProvider<TData, TValue>({
   columns,
   data,
-}: DataTableProps<TData, TValue>) {
+}: DataTableProviderProps<TData, TValue>) {
   const table = useReactTable({
     data,
     columns,

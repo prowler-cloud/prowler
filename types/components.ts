@@ -36,7 +36,7 @@ export interface ProviderProps {
   };
 }
 
-export interface FindingsProps {
+export interface FindingProps {
   id: string;
   attributes: {
     CheckTitle: string;
@@ -45,5 +45,23 @@ export interface FindingsProps {
     region: string;
     service: string;
     account: string;
+  };
+  card: {
+    resourceId: string;
+    resourceLink: string;
+    resourceARN: string;
+    checkId: string;
+    checkLink: string;
+    type: string;
+    scanTime: string;
+    findingId: string;
+    findingLink: string;
+    details: string;
+    riskLink: string;
+    riskDetails: string;
+    recommendationLink: string;
+    recommendationDetails: string;
+    referenceInformation: string;
+    referenceLink: string;
   };
 }
