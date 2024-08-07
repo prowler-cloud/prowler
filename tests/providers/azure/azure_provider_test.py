@@ -225,3 +225,52 @@ class TestAzureProvider:
                 # TODO: move this to a fixtures file
                 rmdir(f"{arguments.output_directory}/compliance")
                 rmdir(arguments.output_directory)
+
+    def test_test_connection(self):
+        arguments = Namespace()
+        arguments.subscription_id = None
+        arguments.tenant_id = None
+        # We need to set exactly one auth method
+        arguments.az_cli_auth = None
+        arguments.sp_env_auth = True
+        arguments.browser_auth = None
+        arguments.managed_identity_auth = None
+
+        arguments.config_file = default_config_file_path
+        arguments.fixer_config = default_fixer_config_file_path
+        arguments.azure_region = "AzureCloud"
+
+        with patch(
+            "prowler.providers.azure.azure_provider.AzureProvider.setup_identity",
+            return_value=AzureIdentityInfo(),
+        ), patch(
+            "prowler.providers.azure.azure_provider.AzureProvider.get_locations",
+            return_value={},
+        ), patch(
+            "prowler.providers.azure.azure_provider.AzureProvider.setup_session",
+            return_value=DefaultAzureCredential(),
+        ):
+
+            azure_provider = AzureProvider(arguments)
+            assert isinstance(
+                azure_provider.test_connection(
+                    arguments.az_cli_auth,
+                    arguments.sp_env_auth,
+                    arguments.browser_auth,
+                    arguments.managed_identity_auth,
+                    arguments.tenant_id,
+                    arguments.azure_region,
+                )[0],
+                DefaultAzureCredential,
+            )
+            assert isinstance(
+                azure_provider.test_connection(
+                    arguments.az_cli_auth,
+                    arguments.sp_env_auth,
+                    arguments.browser_auth,
+                    arguments.managed_identity_auth,
+                    arguments.tenant_id,
+                    arguments.azure_region,
+                )[1],
+                AzureRegionConfig,
+            )

@@ -47,7 +47,7 @@ class AzureProvider(Provider):
         az_cli_auth = arguments.az_cli_auth
         sp_env_auth = arguments.sp_env_auth
         browser_auth = arguments.browser_auth
-        managed_entity_auth = arguments.managed_identity_auth
+        managed_identity_auth = arguments.managed_identity_auth
         tenant_id = arguments.tenant_id
 
         logger.info("Checking if region is different than default one")
@@ -56,7 +56,7 @@ class AzureProvider(Provider):
             az_cli_auth,
             sp_env_auth,
             browser_auth,
-            managed_entity_auth,
+            managed_identity_auth,
             tenant_id,
             region,
         )
@@ -67,7 +67,7 @@ class AzureProvider(Provider):
             az_cli_auth,
             sp_env_auth,
             browser_auth,
-            managed_entity_auth,
+            managed_identity_auth,
             subscription_ids,
         )
 
@@ -225,7 +225,7 @@ class AzureProvider(Provider):
     # previously was using the AzureException
     @staticmethod
     def validate_arguments(
-        az_cli_auth, sp_env_auth, browser_auth, managed_entity_auth, tenant_id
+        az_cli_auth, sp_env_auth, browser_auth, managed_identity_auth, tenant_id
     ):
         """
         Validates the authentication arguments for the Azure provider.
@@ -234,7 +234,7 @@ class AzureProvider(Provider):
             az_cli_auth (bool): Flag indicating whether AZ CLI authentication is enabled.
             sp_env_auth (bool): Flag indicating whether Service Principal environment authentication is enabled.
             browser_auth (bool): Flag indicating whether browser authentication is enabled.
-            managed_entity_auth (bool): Flag indicating whether managed identity authentication is enabled.
+            managed_identity_auth (bool): Flag indicating whether managed identity authentication is enabled.
             tenant_id (str): The Azure Tenant ID.
 
         Raises:
@@ -246,7 +246,7 @@ class AzureProvider(Provider):
             not az_cli_auth
             and not sp_env_auth
             and not browser_auth
-            and not managed_entity_auth
+            and not managed_identity_auth
         ):
             raise SystemExit(
                 "Azure provider requires at least one authentication method set: [--az-cli-auth | --sp-env-auth | --browser-auth | --managed-identity-auth]"
@@ -316,7 +316,7 @@ class AzureProvider(Provider):
         az_cli_auth,
         sp_env_auth,
         browser_auth,
-        managed_entity_auth,
+        managed_identity_auth,
         tenant_id,
         region_config,
     ):
@@ -327,7 +327,7 @@ class AzureProvider(Provider):
             az_cli_auth (bool): Flag indicating whether to use Azure CLI authentication.
             sp_env_auth (bool): Flag indicating whether to use Service Principal authentication with environment variables.
             browser_auth (bool): Flag indicating whether to use interactive browser authentication.
-            managed_entity_auth (bool): Flag indicating whether to use managed identity authentication.
+            managed_identity_auth (bool): Flag indicating whether to use managed identity authentication.
             tenant_id (str): The Azure Active Directory tenant ID.
             region_config (AzureRegionConfig): The region configuration object.
 
@@ -340,7 +340,7 @@ class AzureProvider(Provider):
         """
         # Validate the authentication arguments
         AzureProvider.validate_arguments(
-            az_cli_auth, sp_env_auth, browser_auth, managed_entity_auth, tenant_id
+            az_cli_auth, sp_env_auth, browser_auth, managed_identity_auth, tenant_id
         )
         # Browser auth creds cannot be set with DefaultAzureCredentials()
         if not browser_auth:
@@ -352,7 +352,7 @@ class AzureProvider(Provider):
                 credentials = DefaultAzureCredential(
                     exclude_environment_credential=not sp_env_auth,
                     exclude_cli_credential=not az_cli_auth,
-                    exclude_managed_identity_credential=not managed_entity_auth,
+                    exclude_managed_identity_credential=not managed_identity_auth,
                     # Azure Auth using Visual Studio is not supported
                     exclude_visual_studio_code_credential=True,
                     # Azure Auth using Shared Token Cache is not supported
@@ -385,7 +385,7 @@ class AzureProvider(Provider):
         az_cli_auth,
         sp_env_auth,
         browser_auth,
-        managed_entity_auth,
+        managed_identity_auth,
         tenant_id,
         region,
     ) -> tuple[DefaultAzureCredential, AzureRegionConfig]:
@@ -397,7 +397,7 @@ class AzureProvider(Provider):
             az_cli_auth (bool): Flag indicating whether to use Azure CLI authentication.
             sp_env_auth (bool): Flag indicating whether to use Service Principal authentication with environment variables.
             browser_auth (bool): Flag indicating whether to use interactive browser authentication.
-            managed_entity_auth (bool): Flag indicating whether to use managed identity authentication.
+            managed_identity_auth (bool): Flag indicating whether to use managed identity authentication.
             tenant_id (str): The Azure Active Directory tenant ID.
             region (str): The Azure region.
 
@@ -414,7 +414,7 @@ class AzureProvider(Provider):
                 az_cli_auth,
                 sp_env_auth,
                 browser_auth,
-                managed_entity_auth,
+                managed_identity_auth,
                 tenant_id,
                 region_config,
             )
@@ -466,7 +466,7 @@ class AzureProvider(Provider):
         az_cli_auth,
         sp_env_auth,
         browser_auth,
-        managed_entity_auth,
+        managed_identity_auth,
         subscription_ids,
     ):
         """
@@ -476,7 +476,7 @@ class AzureProvider(Provider):
             az_cli_auth (bool): Flag indicating if Azure CLI authentication is used.
             sp_env_auth (bool): Flag indicating if Service Principal environment authentication is used.
             browser_auth (bool): Flag indicating if browser authentication is used.
-            managed_entity_auth (bool): Flag indicating if managed entity authentication is used.
+            managed_identity_auth (bool): Flag indicating if managed entity authentication is used.
             subscription_ids (list): List of subscription IDs.
 
         Returns:
@@ -538,7 +538,7 @@ class AzureProvider(Provider):
             asyncio.get_event_loop().run_until_complete(get_azure_identity())
 
         # Managed identities only can be assigned resource, resource group and subscription scope permissions
-        elif managed_entity_auth:
+        elif managed_identity_auth:
             identity.identity_id = "Default Managed Identity ID"
             identity.identity_type = "Managed Identity"
             # Pending extracting info from managed identity
