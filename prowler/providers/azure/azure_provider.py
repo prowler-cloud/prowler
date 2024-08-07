@@ -388,6 +388,7 @@ class AzureProvider(Provider):
         managed_identity_auth,
         tenant_id,
         region,
+        credentials=None,
     ) -> tuple[DefaultAzureCredential, AzureRegionConfig]:
         """
         Test the connection to an Azure subscription using the provided credentials.
@@ -410,14 +411,15 @@ class AzureProvider(Provider):
             )
 
             # Set up the Azure session
-            credentials = AzureProvider.setup_session(
-                az_cli_auth,
-                sp_env_auth,
-                browser_auth,
-                managed_identity_auth,
-                tenant_id,
-                region_config,
-            )
+            if not credentials:
+                credentials = AzureProvider.setup_session(
+                    az_cli_auth,
+                    sp_env_auth,
+                    browser_auth,
+                    managed_identity_auth,
+                    tenant_id,
+                    region_config,
+                )
             # Create a SubscriptionClient
             subscription_client = SubscriptionClient(credentials)
 
