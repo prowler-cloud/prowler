@@ -15,12 +15,12 @@ class acm_certificates_with_secure_key_algorithms(Check):
                 report.resource_tags = certificate.tags
 
                 report.status = "PASS"
-                report.status_extended = f"ACM Certificate {certificate.id} for {certificate.name} uses a secure key algorithm."
+                report.status_extended = f"ACM Certificate {certificate.id} for {certificate.name} uses a secure key algorithm ({certificate.key_algorithm})."
                 if certificate.key_algorithm in acm_client.audit_config.get(
                     "insecure_algorithms", ["RSA-1024"]
                 ):
                     report.status = "FAIL"
-                    report.status_extended = f"ACM Certificate {certificate.id} for {certificate.name} does not use a secure key algorithm."
+                    report.status_extended = f"ACM Certificate {certificate.id} for {certificate.name} does not use a secure key algorithm ({certificate.key_algorithm})."
                 findings.append(report)
 
         return findings

@@ -48,7 +48,7 @@ class Test_acm_certificates_with_secure_key_algorithms:
             )
         ]
 
-        acm_client.audit_config = {"insecure_algorithm": ["RSA_1024"]}
+        acm_client.audit_config = {"insecure_algorithm": ["RSA-1024"]}
 
         with mock.patch(
             "prowler.providers.aws.services.acm.acm_service.ACM",
@@ -66,7 +66,7 @@ class Test_acm_certificates_with_secure_key_algorithms:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"ACM Certificate {certificate_id} for {certificate_name} uses a secure key algorithm."
+                == f"ACM Certificate {certificate_id} for {certificate_name} uses a secure key algorithm ({certificate_key_algorithm})."
             )
             assert result[0].resource_id == certificate_id
             assert result[0].resource_arn == certificate_arn
@@ -95,7 +95,7 @@ class Test_acm_certificates_with_secure_key_algorithms:
             )
         ]
 
-        acm_client.audit_config = {"insecure_algorithm": ["RSA_1024"]}
+        acm_client.audit_config = {"insecure_algorithm": ["RSA-1024"]}
 
         with mock.patch(
             "prowler.providers.aws.services.acm.acm_service.ACM",
@@ -113,7 +113,7 @@ class Test_acm_certificates_with_secure_key_algorithms:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"ACM Certificate {certificate_id} for {certificate_name} does not use a secure key algorithm."
+                == f"ACM Certificate {certificate_id} for {certificate_name} does not use a secure key algorithm ({certificate_key_algorithm})."
             )
             assert result[0].resource_id == certificate_id
             assert result[0].resource_arn == certificate_arn
