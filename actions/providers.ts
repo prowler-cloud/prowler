@@ -20,7 +20,6 @@ export const getProvider = async () => {
     return undefined;
   }
 };
-
 export const addProvider = async (formData: FormData) => {
   const keyServer = process.env.LOCAL_SERVER_URL;
 
@@ -57,7 +56,6 @@ export const addProvider = async (formData: FormData) => {
   }
   revalidatePath("/providers");
 };
-
 export const checkConnectionProvider = async (formData: FormData) => {
   const keyServer = process.env.LOCAL_SERVER_URL;
 
@@ -82,7 +80,6 @@ export const checkConnectionProvider = async (formData: FormData) => {
     };
   }
 };
-
 export const deleteProvider = async (formData: FormData) => {
   const keyServer = process.env.LOCAL_SERVER_URL;
 
