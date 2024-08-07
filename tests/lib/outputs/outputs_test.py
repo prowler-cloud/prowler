@@ -106,6 +106,21 @@ class TestOutputs:
             "terraform": "true",
         }
 
+    def test_unroll_dict_tags(self):
+        tags_dict = {
+            "environment": "dev",
+            "name": "test",
+            "project": "prowler",
+            "terraform": "true",
+        }
+
+        assert unroll_tags(tags_dict) == {
+            "environment": "dev",
+            "name": "test",
+            "project": "prowler",
+            "terraform": "true",
+        }
+
     def test_unroll_tags_unique(self):
         unique_dict_list = [
             {
