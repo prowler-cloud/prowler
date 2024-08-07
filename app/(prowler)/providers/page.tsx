@@ -1,14 +1,14 @@
 import { Spacer } from "@nextui-org/react";
-import React, { Suspense } from "react";
+import { Suspense } from "react";
 
 import { getProvider } from "@/actions";
 import {
   AddProviderModal,
-  ColumnsProviders,
-  DataTable,
-  Header,
+  ColumnsProvider,
+  DataTableProvider,
   SkeletonTableProvider,
-} from "@/components";
+} from "@/components/providers";
+import { Header } from "@/components/ui";
 
 export default async function Providers() {
   return (
@@ -31,5 +31,7 @@ export default async function Providers() {
 const SSRDataTable = async () => {
   const providersData = await getProvider();
   const [providers] = await Promise.all([providersData]);
-  return <DataTable columns={ColumnsProviders} data={providers?.data ?? []} />;
+  return (
+    <DataTableProvider columns={ColumnsProvider} data={providers?.data ?? []} />
+  );
 };

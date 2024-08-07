@@ -11,7 +11,7 @@ export const ButtonDeleteProvider = () => {
   return (
     <Button
       variant="light"
-      spinner={pending ? "Removing..." : " Remove"}
+      spinner={pending ? "Removing..." : "Remove"}
       type="submit"
       area-disabled={pending}
     >

@@ -23,7 +23,7 @@ const getProviderData = (row: { original: ProviderProps }) => {
   return row.original;
 };
 
-export const ColumnsProviders: ColumnDef<ProviderProps>[] = [
+export const ColumnsProvider: ColumnDef<ProviderProps>[] = [
   {
     header: "ID",
     cell: ({ row }) => <p className="text-medium">{row.index + 1}</p>,
