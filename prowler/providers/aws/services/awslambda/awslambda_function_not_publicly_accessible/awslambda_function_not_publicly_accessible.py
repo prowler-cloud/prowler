@@ -31,6 +31,10 @@ class awslambda_function_not_publicly_accessible(Check):
                             None,  # Bug: If prowler is filtering by ARN, this will fail because loadbalancersv2 are filtered
                         )
                         if lb and lb.scheme == "internet-facing":
+                            # 1.1 Check if the ALB security group allows public access
+                            for sg_id in lb.security_group_ids:
+                                pass
+
                             target_group_redirects_alb_to_function = tg_arn
                             break
 

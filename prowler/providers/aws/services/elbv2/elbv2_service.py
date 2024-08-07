@@ -49,6 +49,7 @@ class ELBv2(AWSService):
                             type=elbv2["Type"],
                             dns=elbv2.get("DNSName", None),
                             scheme=elbv2.get("Scheme", None),
+                            security_group_ids=elbv2.get("SecurityGroups", []),
                         )
         except Exception as error:
             logger.error(
@@ -231,6 +232,7 @@ class LoadBalancerv2(BaseModel):
     drop_invalid_header_fields: Optional[str]
     listeners: Dict[str, Listenerv2] = {}
     scheme: Optional[str]
+    security_group_ids: list[str]
     tags: Optional[list] = []
 
 
