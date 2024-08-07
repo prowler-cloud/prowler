@@ -5,10 +5,12 @@ on:
     branches:
       - "master"
       - "v3"
+      - "v4.*"
   pull_request:
     branches:
       - "master"
       - "v3"
+      - "v4.*"
 jobs:
   build:
     runs-on: ubuntu-latest
