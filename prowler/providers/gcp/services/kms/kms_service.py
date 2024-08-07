@@ -92,6 +92,7 @@ class KMS(GCPService):
                                 name=key["name"].split("/")[-1],
                                 location=key["name"].split("/")[3],
                                 rotation_period=key.get("rotationPeriod"),
+                                next_rotation_time=key.get("nextRotationTime"),
                                 key_ring=ring.name,
                                 project_id=ring.project_id,
                             )
@@ -144,6 +145,7 @@ class CriptoKey(BaseModel):
     name: str
     location: str
     rotation_period: Optional[str]
+    next_rotation_time: Optional[str]
     key_ring: str
     members: list = []
     project_id: str

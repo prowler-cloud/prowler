@@ -88,6 +88,8 @@ class Test_elb_ssl_listeners:
             assert result[0].status_extended == "ELB my-lb has non-encrypted listeners."
             assert result[0].resource_id == "my-lb"
             assert result[0].resource_arn == elb_arn
+            assert result[0].resource_tags == []
+            assert result[0].region == AWS_REGION
 
     @mock_aws
     def test_elb_with_HTTPS_listener(self):
@@ -132,3 +134,5 @@ class Test_elb_ssl_listeners:
             assert result[0].status_extended == "ELB my-lb has HTTPS listeners only."
             assert result[0].resource_id == "my-lb"
             assert result[0].resource_arn == elb_arn
+            assert result[0].resource_tags == []
+            assert result[0].region == AWS_REGION
