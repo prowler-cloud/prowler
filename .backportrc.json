@@ -9,6 +9,6 @@
   ],
   "copySourcePRLabels": false,
   "copySourcePRReviewers": true,
-  "prTitle": "chore(backport): {{commitMessages}} backport for {{targetBranch}}",
+  "prTitle": "{{commitMessages}}",
   "commitConflicts": true
 }
