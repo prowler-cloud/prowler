@@ -7,21 +7,18 @@ class kms_cmk_not_deleted_unintentionally(Check):
         findings = []
         for key in kms_client.keys:
             if key.manager == "CUSTOMER":
-                report = Check_Report_AWS(self.metadata())
-                report.region = key.region
-                report.resource_tags = key.tags
-                report.status = "PASS"
-                report.status_extended = (
-                    f"KMS CMK {key.id} is not used and is not scheduled for deletion."
-                )
-                report.resource_id = key.id
-                report.resource_arn = key.arn
-                if key.state == "PendingDeletion":
-                    report.status = "FAIL"
+                if key.state != "Disabled" or kms_client.provider.scan_unused_services:
+                    report = Check_Report_AWS(self.metadata())
+                    report.region = key.region
+                    report.resource_tags = key.tags
+                    report.status = "PASS"
                     report.status_extended = (
-                        f"KMS CMK {key.id} is scheduled for deletion."
+                        f"KMS CMK {key.id} is not scheduled for deletion."
                     )
-                elif key.state == "Enabled":
-                    report.status_extended = f"KMS CMK {key.id} is being used."
-                findings.append(report)
+                    report.resource_id = key.id
+                    report.resource_arn = key.arn
+                    if key.state == "PendingDeletion":
+                        report.status = "FAIL"
+                        report.status_extended = f"KMS CMK {key.id} is scheduled for deletion, revert it if it was unintentionally."
+                    findings.append(report)
         return findings
