@@ -61,25 +61,7 @@ html_file_suffix = ".html"
 default_config_file_path = (
     f"{pathlib.Path(os.path.dirname(os.path.realpath(__file__)))}/config.yaml"
 )
-<<<<<<< HEAD
-=======
-default_fixer_config_file_path = (
-    f"{pathlib.Path(os.path.dirname(os.path.realpath(__file__)))}/fixer_config.yaml"
-)
 encoding_format_utf_8 = "utf-8"
-available_output_formats = ["csv", "json-asff", "json-ocsf", "html"]
-
-
-def get_default_mute_file_path(provider: str):
-    """
-    get_default_mute_file_path returns the default mute file path for the provider
-    """
-    # TODO: create default mutelist file for kubernetes, azure and gcp
-    mutelist_path = f"{pathlib.Path(os.path.dirname(os.path.realpath(__file__)))}/{provider}_mutelist.yaml"
-    if not os.path.isfile(mutelist_path):
-        mutelist_path = None
-    return mutelist_path
->>>>>>> 2cd840a2 (fix(autoscaling): Add exception manage while decoding UserData  (#4562))
 
 
 def check_current_version():
@@ -121,12 +103,7 @@ def load_and_validate_config_file(provider: str, config_file_path: str) -> dict:
     load_and_validate_config_file reads the Prowler config file in YAML format from the default location or the file passed with the --config-file flag
     """
     try:
-<<<<<<< HEAD
-        with open(config_file_path) as f:
-            config = {}
-=======
         with open(config_file_path, "r", encoding=encoding_format_utf_8) as f:
->>>>>>> 2cd840a2 (fix(autoscaling): Add exception manage while decoding UserData  (#4562))
             config_file = yaml.safe_load(f)
 
             # Not to introduce a breaking change we have to allow the old format config file without any provider keys
@@ -146,47 +123,4 @@ def load_and_validate_config_file(provider: str, config_file_path: str) -> dict:
         logger.critical(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
         )
-<<<<<<< HEAD
         sys.exit(1)
-=======
-
-    return {}
-
-
-def load_and_validate_fixer_config_file(
-    provider: str, fixer_config_file_path: str
-) -> dict:
-    """
-    Reads the Prowler fixer config file in YAML format from the default location or the file passed with the --fixer-config flag.
-
-    Args:
-        provider (str): The provider name (e.g., 'aws', 'gcp', 'azure', 'kubernetes').
-        fixer_config_file_path (str): The path to the fixer configuration file.
-
-    Returns:
-        dict: The fixer configuration dictionary for the specified provider.
-    """
-    try:
-        with open(fixer_config_file_path, "r", encoding=encoding_format_utf_8) as f:
-            fixer_config_file = yaml.safe_load(f)
-            return fixer_config_file.get(provider, {})
-
-    except FileNotFoundError as error:
-        logger.error(
-            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
-        )
-    except yaml.YAMLError as error:
-        logger.error(
-            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
-        )
-    except UnicodeDecodeError as error:
-        logger.error(
-            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
-        )
-    except Exception as error:
-        logger.error(
-            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
-        )
-
-    return {}
->>>>>>> 2cd840a2 (fix(autoscaling): Add exception manage while decoding UserData  (#4562))

@@ -12,21 +12,14 @@ from time import mktime
 from detect_secrets import SecretsCollection
 from detect_secrets.settings import default_settings
 
-<<<<<<< HEAD
-=======
 from prowler.config.config import encoding_format_utf_8
->>>>>>> 2cd840a2 (fix(autoscaling): Add exception manage while decoding UserData  (#4562))
 from prowler.lib.logger import logger
 
 
 def open_file(input_file: str, mode: str = "r") -> TextIOWrapper:
     """open_file returns a handler to the file using the specified mode."""
     try:
-<<<<<<< HEAD
-        f = open(input_file, mode)
-=======
         f = open(input_file, mode, encoding=encoding_format_utf_8)
->>>>>>> 2cd840a2 (fix(autoscaling): Add exception manage while decoding UserData  (#4562))
     except OSError as os_error:
         if os_error.strerror == "Too many open files":
             logger.critical(
@@ -74,11 +67,7 @@ def file_exists(filename: str):
 
 def hash_sha512(string: str) -> str:
     """hash_sha512 returns the first 9 bytes of the SHA512 representation for the given string."""
-<<<<<<< HEAD
-    return sha512(string.encode("utf-8")).hexdigest()[0:9]
-=======
     return sha512(string.encode(encoding_format_utf_8)).hexdigest()[0:9]
->>>>>>> 2cd840a2 (fix(autoscaling): Add exception manage while decoding UserData  (#4562))
 
 
 def detect_secrets_scan(data):

@@ -1,6 +1,6 @@
 import ipaddress
 import re
-from base64 import b64decode
+from base64 import b64decode, b64encode
 from datetime import datetime
 
 from boto3 import client, resource
@@ -8,10 +8,7 @@ from dateutil.tz import tzutc
 from freezegun import freeze_time
 from moto import mock_aws
 
-<<<<<<< HEAD
-=======
 from prowler.config.config import encoding_format_utf_8
->>>>>>> 2cd840a2 (fix(autoscaling): Add exception manage while decoding UserData  (#4562))
 from prowler.providers.aws.services.ec2.ec2_service import EC2
 from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
@@ -319,15 +316,10 @@ class Test_EC2_Service:
         audit_info = set_mocked_aws_audit_info(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
-<<<<<<< HEAD
         ec2 = EC2(audit_info)
-        assert user_data == b64decode(ec2.instances[0].user_data).decode("utf-8")
-=======
-        ec2 = EC2(aws_provider)
         assert user_data == b64decode(ec2.instances[0].user_data).decode(
             encoding_format_utf_8
         )
->>>>>>> 2cd840a2 (fix(autoscaling): Add exception manage while decoding UserData  (#4562))
 
     # Test EC2 Get EBS Encryption by default
     @mock_aws
@@ -523,8 +515,6 @@ class Test_EC2_Service:
         assert ec2.volumes[0].tags == [
             {"Key": "test", "Value": "test"},
         ]
-<<<<<<< HEAD
-=======
 
     # Test EC2 Describe Launch Templates
     @mock_aws
@@ -549,10 +539,10 @@ class Test_EC2_Service:
         )
 
         # EC2 client for this test class
-        aws_provider = set_mocked_aws_provider(
+        audit_info = set_mocked_aws_audit_info(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
-        ec2 = EC2(aws_provider)
+        ec2 = EC2(audit_info)
 
         assert len(ec2.launch_templates) == 1
         assert ec2.launch_templates[0].name == TEMPLATE_NAME
@@ -594,10 +584,10 @@ class Test_EC2_Service:
         )
 
         # EC2 client for this test class
-        aws_provider = set_mocked_aws_provider(
+        audit_info = set_mocked_aws_audit_info(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
-        ec2 = EC2(aws_provider)
+        ec2 = EC2(audit_info)
 
         assert len(ec2.launch_templates) == 1
         assert ec2.launch_templates[0].name == TEMPLATE_NAME
@@ -614,4 +604,3 @@ class Test_EC2_Service:
             b64decode(version2.template_data["UserData"]).decode(encoding_format_utf_8)
             == KNOWN_SECRET_USER_DATA
         )
->>>>>>> 2cd840a2 (fix(autoscaling): Add exception manage while decoding UserData  (#4562))

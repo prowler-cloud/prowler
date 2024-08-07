@@ -3,7 +3,6 @@ from boto3 import resource
 from mock import MagicMock
 from moto import mock_aws
 
-<<<<<<< HEAD:tests/providers/aws/lib/allowlist/allowlist_test.py
 from prowler.providers.aws.lib.allowlist.allowlist import (
     allowlist_findings,
     is_allowlisted,
@@ -13,12 +12,6 @@ from prowler.providers.aws.lib.allowlist.allowlist import (
     is_allowlisted_in_tags,
     is_excepted,
     parse_allowlist_file,
-=======
-from prowler.config.config import encoding_format_utf_8
-from prowler.providers.aws.lib.mutelist.mutelist import AWSMutelist
-from tests.providers.aws.services.awslambda.awslambda_service_test import (
-    create_zip_file,
->>>>>>> 2cd840a2 (fix(autoscaling): Add exception manage while decoding UserData  (#4562)):tests/providers/aws/lib/mutelist/aws_mutelist_test.py
 )
 from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
@@ -30,42 +23,8 @@ from tests.providers.aws.audit_info_utils import (
 )
 
 
-<<<<<<< HEAD:tests/providers/aws/lib/allowlist/allowlist_test.py
 class Test_Allowlist:
     # Test S3 allowlist
-=======
-MUTELIST_FIXTURE_PATH = "tests/providers/aws/lib/mutelist/fixtures/aws_mutelist.yaml"
-
-
-def mock_make_api_call(self, operation_name, kwarg):
-    if operation_name == "Invoke":
-        return {
-            "Payload": io.BytesIO(
-                dumps(
-                    {
-                        "Mutelist": {
-                            "Accounts": {
-                                "*": {
-                                    "Checks": {
-                                        "*": {
-                                            "Regions": ["*"],
-                                            "Resources": ["*"],
-                                            "Tags": ["key:value"],
-                                        },
-                                    }
-                                },
-                            }
-                        }
-                    }
-                ).encode(encoding_format_utf_8)
-            )
-        }
-
-    return make_api_call(self, operation_name, kwarg)
-
-
-class TestAWSMutelist:
->>>>>>> 2cd840a2 (fix(autoscaling): Add exception manage while decoding UserData  (#4562)):tests/providers/aws/lib/mutelist/aws_mutelist_test.py
     @mock_aws
     def test_s3_allowlist(self):
         audit_info = set_mocked_aws_audit_info()
