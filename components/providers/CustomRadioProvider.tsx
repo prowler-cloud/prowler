@@ -57,7 +57,7 @@ export const CustomRadioProvider = () => {
       <CustomRadio description="Amazon Web Services" value="aws">
         <div className="flex items-center">
           <AwsProvider size={26} />
-          <span className="ml-2">GCP</span>
+          <span className="ml-2">AWS</span>
         </div>
       </CustomRadio>
       <CustomRadio description="Google Cloud Platform" value="gcp">
