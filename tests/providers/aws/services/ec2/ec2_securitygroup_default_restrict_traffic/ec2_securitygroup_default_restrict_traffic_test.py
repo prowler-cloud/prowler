@@ -33,6 +33,7 @@ class Test_ec2_securitygroup_default_restrict_traffic:
         )
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
+        from prowler.providers.aws.services.vpc.vpc_service import VPC
 
         current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
@@ -42,6 +43,9 @@ class Test_ec2_securitygroup_default_restrict_traffic:
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_default_restrict_traffic.ec2_securitygroup_default_restrict_traffic.ec2_client",
             new=EC2(current_audit_info),
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_securitygroup_default_restrict_traffic.ec2_securitygroup_default_restrict_traffic.vpc_client",
+            new=VPC(current_audit_info),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_securitygroup_default_restrict_traffic.ec2_securitygroup_default_restrict_traffic import (
@@ -96,6 +100,7 @@ class Test_ec2_securitygroup_default_restrict_traffic:
         )
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
+        from prowler.providers.aws.services.vpc.vpc_service import VPC
 
         current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
@@ -105,6 +110,9 @@ class Test_ec2_securitygroup_default_restrict_traffic:
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_default_restrict_traffic.ec2_securitygroup_default_restrict_traffic.ec2_client",
             new=EC2(current_audit_info),
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_securitygroup_default_restrict_traffic.ec2_securitygroup_default_restrict_traffic.vpc_client",
+            new=VPC(current_audit_info),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_securitygroup_default_restrict_traffic.ec2_securitygroup_default_restrict_traffic import (
@@ -159,6 +167,7 @@ class Test_ec2_securitygroup_default_restrict_traffic:
         )
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
+        from prowler.providers.aws.services.vpc.vpc_service import VPC
 
         current_audit_info = set_mocked_aws_audit_info(
             audited_regions=[AWS_REGION_US_EAST_1], ignore_unused_services=True
@@ -170,6 +179,9 @@ class Test_ec2_securitygroup_default_restrict_traffic:
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_default_restrict_traffic.ec2_securitygroup_default_restrict_traffic.ec2_client",
             new=EC2(current_audit_info),
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_securitygroup_default_restrict_traffic.ec2_securitygroup_default_restrict_traffic.vpc_client",
+            new=VPC(current_audit_info),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_securitygroup_default_restrict_traffic.ec2_securitygroup_default_restrict_traffic import (
@@ -193,6 +205,7 @@ class Test_ec2_securitygroup_default_restrict_traffic:
         default_sg_name = default_sg["GroupName"]
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
+        from prowler.providers.aws.services.vpc.vpc_service import VPC
 
         current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
@@ -202,6 +215,9 @@ class Test_ec2_securitygroup_default_restrict_traffic:
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_default_restrict_traffic.ec2_securitygroup_default_restrict_traffic.ec2_client",
             new=EC2(current_audit_info),
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_securitygroup_default_restrict_traffic.ec2_securitygroup_default_restrict_traffic.vpc_client",
+            new=VPC(current_audit_info),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_securitygroup_default_restrict_traffic.ec2_securitygroup_default_restrict_traffic import (
