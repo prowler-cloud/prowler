@@ -321,5 +321,5 @@ class TestAzureProvider:
 
             # Verificar que el error fue registrado correctamente
             mock_logger.error.assert_called_once_with(
-                "HttpResponseError[413]: Simulated HttpResponseError"
+                "HttpResponseError[415]: Simulated HttpResponseError"
             )
