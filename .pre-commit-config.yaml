@@ -72,7 +72,7 @@ repos:
       - id: bandit
         name: bandit
         description: "Bandit is a tool for finding common security issues in Python code"
-        entry: bash -c 'poetry run bandit -q -lll -x '*_test.py,./contrib/' -r .'
+        entry: bash -c 'poetry run bandit -q -lll -x '*_test.py,./contrib/,./.venv/' -r .'
         language: system
         files: '.*\.py'
 
@@ -85,6 +85,6 @@ repos:
       - id: vulture
         name: vulture
         description: "Vulture finds unused code in Python programs."
-        entry: bash -c 'poetry run vulture --exclude "contrib" --min-confidence 100 .'
+        entry: bash -c 'poetry run vulture --exclude "contrib,.venv" --min-confidence 100 .'
         language: system
         files: '.*\.py'

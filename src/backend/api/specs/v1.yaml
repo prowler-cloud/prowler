@@ -1,9 +1,9 @@
 openapi: 3.0.3
 info:
-  title: Prowler RESTful API
+  title: Prowler API
   version: 1.0.0
   description: |-
-    Prowler RESTful API specification.
+    Prowler API specification.
 
     This file is auto-generated.
 paths:

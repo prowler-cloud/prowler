@@ -31,10 +31,10 @@ class SchemaView(SpectacularAPIView):
     serializer_class = None
 
     def get(self, request, *args, **kwargs):
-        spectacular_settings.TITLE = "Prowler RESTful API"
+        spectacular_settings.TITLE = "Prowler API"
         spectacular_settings.VERSION = "1.0.0"
         spectacular_settings.DESCRIPTION = (
-            "Prowler RESTful API specification.\n\nThis file is auto-generated."
+            "Prowler API specification.\n\nThis file is auto-generated."
         )
         return super().get(request, *args, **kwargs)
 

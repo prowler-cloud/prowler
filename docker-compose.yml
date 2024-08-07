@@ -1,8 +1,8 @@
 services:
-  restful-api:
+  api:
     build:
       dockerfile: Dockerfile
-    image: prowler-restful-api
+    image: prowler-api
     env_file:
       - path: ./.env
         required: false
@@ -17,11 +17,11 @@ services:
       - "../docker-entrypoint.sh"
       - "prod"
 
-  restful-api-dev:
+  api-dev:
     build:
       dockerfile: Dockerfile
       target: dev
-    image: prowler-restful-api-dev
+    image: prowler-api-dev
     environment:
       - DJANGO_SETTINGS_MODULE=config.django.devel
       - DJANGO_LOGGING_FORMATTER=human_readable

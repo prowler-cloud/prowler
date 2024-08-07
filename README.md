@@ -50,10 +50,10 @@ This method requires installing a Python virtual environment and keep dependenci
 
 ```console
 # HTTPS
-git clone https://github.com/prowler-cloud/restful-api.git
+git clone https://github.com/prowler-cloud/api.git
 
 # SSH
-git clone git@github.com:prowler-cloud/restful-api.git
+git clone git@github.com:prowler-cloud/api.git
 
 ```
 
@@ -85,10 +85,10 @@ This method requires `docker` and `docker compose`.
 
 ```console
 # HTTPS
-git clone https://github.com/prowler-cloud/restful-api.git
+git clone https://github.com/prowler-cloud/api.git
 
 # SSH
-git clone git@github.com:prowler-cloud/restful-api.git
+git clone git@github.com:prowler-cloud/api.git
 
 ```
 

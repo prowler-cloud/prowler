@@ -1,6 +1,6 @@
 FROM python:3.12-alpine as build
 
-LABEL maintainer="https://github.com/prowler-cloud/restful-api"
+LABEL maintainer="https://github.com/prowler-cloud/api"
 
 RUN apk --no-cache upgrade && \
     addgroup -g 1000 prowler && \

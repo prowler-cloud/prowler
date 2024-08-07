@@ -4,9 +4,9 @@ requires = ["poetry-core"]
 
 [tool.poetry]
 authors = ["Prowler Team"]
-description = "Prowler's RESTful API (Django/DRF)"
+description = "Prowler's API (Django/DRF)"
 license = "AGPL-3.0"
-name = "prowler-rest-api"
+name = "prowler-api"
 package-mode = false
 version = "1.0.0"
 
