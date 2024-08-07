@@ -2,7 +2,7 @@ from django.urls import path, include
 from drf_spectacular.views import SpectacularRedocView
 from rest_framework import routers
 
-from api.views.v1.views import SchemaView, TenantViewSet, ProviderViewSet
+from api.v1.views import SchemaView, TenantViewSet, ProviderViewSet
 
 router = routers.DefaultRouter(trailing_slash=False)
 
