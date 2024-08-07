@@ -1,11 +1,13 @@
 from argparse import Namespace
 from datetime import datetime
 from os import rmdir
+from unittest import mock
+from unittest.mock import patch
 
 import pytest
+from azure.core.exceptions import HttpResponseError
 from azure.identity import DefaultAzureCredential
 from freezegun import freeze_time
-from mock import patch
 
 from prowler.config.config import (
     default_config_file_path,
@@ -252,25 +254,72 @@ class TestAzureProvider:
         ):
 
             azure_provider = AzureProvider(arguments)
+            test_connection = azure_provider.test_connection(
+                arguments.az_cli_auth,
+                arguments.sp_env_auth,
+                arguments.browser_auth,
+                arguments.managed_identity_auth,
+                arguments.tenant_id,
+                arguments.azure_region,
+            )
             assert isinstance(
-                azure_provider.test_connection(
-                    arguments.az_cli_auth,
-                    arguments.sp_env_auth,
-                    arguments.browser_auth,
-                    arguments.managed_identity_auth,
-                    arguments.tenant_id,
-                    arguments.azure_region,
-                )[0],
+                test_connection[0],
                 DefaultAzureCredential,
             )
             assert isinstance(
-                azure_provider.test_connection(
-                    arguments.az_cli_auth,
-                    arguments.sp_env_auth,
-                    arguments.browser_auth,
-                    arguments.managed_identity_auth,
-                    arguments.tenant_id,
-                    arguments.azure_region,
-                )[1],
+                test_connection[1],
                 AzureRegionConfig,
+            )
+
+    def test_test_connection_with_httpresponseerror(self):
+        arguments = Namespace()
+        arguments.subscription_id = None
+        arguments.tenant_id = None
+        # We need to set exactly one auth method
+        arguments.az_cli_auth = None
+        arguments.sp_env_auth = True
+        arguments.browser_auth = None
+        arguments.managed_identity_auth = None
+
+        arguments.config_file = default_config_file_path
+        arguments.fixer_config = default_fixer_config_file_path
+        arguments.azure_region = "AzureCloud"
+
+        with patch(
+            "prowler.providers.azure.azure_provider.AzureProvider.setup_identity",
+            return_value=AzureIdentityInfo(),
+        ), patch(
+            "prowler.providers.azure.azure_provider.AzureProvider.get_locations",
+            return_value={},
+        ), patch(
+            "prowler.providers.azure.azure_provider.AzureProvider.setup_session"
+        ) as mock_setup_session, patch(
+            "prowler.providers.azure.azure_provider.logger"
+        ) as mock_logger:
+
+            # Configurar el mock para setup_session y simular HttpResponseError
+            mock_setup_session.side_effect = HttpResponseError(
+                "Simulated HttpResponseError"
+            )
+
+            with pytest.raises(HttpResponseError) as excinfo:
+                AzureProvider(arguments)
+
+            # Verificar que el error ha sido levantado correctamente
+            assert excinfo.type == HttpResponseError
+            assert str(excinfo.value) == "Simulated HttpResponseError"
+
+            # Verificar que los mocks fueron llamados correctamente
+            mock_setup_session.assert_called_once_with(
+                arguments.az_cli_auth,
+                arguments.sp_env_auth,
+                arguments.browser_auth,
+                arguments.managed_identity_auth,
+                arguments.tenant_id,
+                mock.ANY,
+            )
+
+            # Verificar que el error fue registrado correctamente
+            mock_logger.error.assert_called_once_with(
+                "HttpResponseError[413]: Simulated HttpResponseError"
             )
