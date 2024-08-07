@@ -11,6 +11,7 @@ from prowler.config.config import (
 )
 from prowler.providers.gcp.gcp_provider import GcpProvider
 from prowler.providers.gcp.models import GCPIdentityInfo, GCPOutputOptions, GCPProject
+from tests.providers.gcp.gcp_fixtures import mock_api_client
 
 
 class TestGCPProvider:
@@ -33,6 +34,13 @@ class TestGCPProvider:
                 lifecycle_state="",
             )
         }
+
+        mocked_service = MagicMock()
+
+        mocked_service.projects.list.return_value = MagicMock(
+            execute=MagicMock(return_value={"projects": projects})
+        )
+
         with patch(
             "prowler.providers.gcp.gcp_provider.GcpProvider.setup_session",
             return_value=None,
@@ -42,6 +50,9 @@ class TestGCPProvider:
         ), patch(
             "prowler.providers.gcp.gcp_provider.GcpProvider.update_projects_with_organizations",
             return_value=None,
+        ), patch(
+            "prowler.providers.gcp.gcp_provider.discovery.build",
+            return_value=mocked_service,
         ):
             gcp_provider = GcpProvider(arguments)
             assert gcp_provider.session is None
@@ -79,6 +90,12 @@ class TestGCPProvider:
                 lifecycle_state="",
             )
         }
+
+        mocked_service = MagicMock()
+
+        mocked_service.projects.list.return_value = MagicMock(
+            execute=MagicMock(return_value={"projects": projects})
+        )
         with patch(
             "prowler.providers.gcp.gcp_provider.GcpProvider.setup_session",
             return_value=None,
@@ -88,6 +105,12 @@ class TestGCPProvider:
         ), patch(
             "prowler.providers.gcp.gcp_provider.GcpProvider.update_projects_with_organizations",
             return_value=None,
+        ), patch(
+            "prowler.providers.gcp.gcp_provider.discovery.build",
+            new=mock_api_client,
+        ), patch(
+            "prowler.providers.gcp.gcp_provider.discovery.build",
+            return_value=mocked_service,
         ):
             gcp_provider = GcpProvider(arguments)
             # This is needed since the output_options requires to get the global provider to get the audit config
@@ -152,6 +175,12 @@ class TestGCPProvider:
                 lifecycle_state="",
             )
         }
+
+        mocked_service = MagicMock()
+
+        mocked_service.projects.list.return_value = MagicMock(
+            execute=MagicMock(return_value={"projects": projects})
+        )
         with patch(
             "prowler.providers.gcp.gcp_provider.GcpProvider.setup_session",
             return_value=None,
@@ -161,6 +190,9 @@ class TestGCPProvider:
         ), patch(
             "prowler.providers.gcp.gcp_provider.GcpProvider.update_projects_with_organizations",
             return_value=None,
+        ), patch(
+            "prowler.providers.gcp.gcp_provider.discovery.build",
+            return_value=mocked_service,
         ):
             gcp_provider = GcpProvider(arguments)
 
@@ -204,6 +236,12 @@ class TestGCPProvider:
                 lifecycle_state="",
             )
         }
+
+        mocked_service = MagicMock()
+
+        mocked_service.projects.list.return_value = MagicMock(
+            execute=MagicMock(return_value={"projects": projects})
+        )
         with patch(
             "prowler.providers.gcp.gcp_provider.GcpProvider.get_projects",
             return_value=projects,
@@ -216,6 +254,9 @@ class TestGCPProvider:
         ), patch(
             "prowler.providers.gcp.gcp_provider.default",
             return_value=(mocked_credentials, MagicMock()),
+        ), patch(
+            "prowler.providers.gcp.gcp_provider.discovery.build",
+            return_value=mocked_service,
         ):
             gcp_provider = GcpProvider(arguments)
             assert environ["GOOGLE_APPLICATION_CREDENTIALS"] == "test_credentials_file"
@@ -246,6 +287,12 @@ class TestGCPProvider:
                 lifecycle_state="",
             )
         }
+
+        mocked_service = MagicMock()
+
+        mocked_service.projects.list.return_value = MagicMock(
+            execute=MagicMock(return_value={"projects": projects})
+        )
         with patch(
             "prowler.providers.gcp.gcp_provider.GcpProvider.get_projects",
             return_value=projects,
@@ -258,6 +305,9 @@ class TestGCPProvider:
         ), patch(
             "prowler.providers.gcp.gcp_provider.default",
             return_value=(mocked_credentials, MagicMock()),
+        ), patch(
+            "prowler.providers.gcp.gcp_provider.discovery.build",
+            return_value=mocked_service,
         ):
             gcp_provider = GcpProvider(arguments)
             assert environ["GOOGLE_APPLICATION_CREDENTIALS"] == "test_credentials_file"
@@ -296,6 +346,12 @@ class TestGCPProvider:
                 lifecycle_state="",
             )
         }
+
+        mocked_service = MagicMock()
+
+        mocked_service.projects.list.return_value = MagicMock(
+            execute=MagicMock(return_value={"projects": projects})
+        )
         with patch(
             "prowler.providers.gcp.gcp_provider.GcpProvider.get_projects",
             return_value=projects,
@@ -308,6 +364,9 @@ class TestGCPProvider:
         ), patch(
             "prowler.providers.gcp.gcp_provider.default",
             return_value=(mocked_credentials, MagicMock()),
+        ), patch(
+            "prowler.providers.gcp.gcp_provider.discovery.build",
+            return_value=mocked_service,
         ):
             gcp_provider = GcpProvider(arguments)
             gcp_provider.print_credentials()
@@ -345,6 +404,12 @@ class TestGCPProvider:
                 lifecycle_state="",
             )
         }
+
+        mocked_service = MagicMock()
+
+        mocked_service.projects.list.return_value = MagicMock(
+            execute=MagicMock(return_value={"projects": projects})
+        )
         with patch(
             "prowler.providers.gcp.gcp_provider.GcpProvider.get_projects",
             return_value=projects,
@@ -357,6 +422,9 @@ class TestGCPProvider:
         ), patch(
             "prowler.providers.gcp.gcp_provider.default",
             return_value=(mocked_credentials, MagicMock()),
+        ), patch(
+            "prowler.providers.gcp.gcp_provider.discovery.build",
+            return_value=mocked_service,
         ):
             gcp_provider = GcpProvider(arguments)
             gcp_provider.print_credentials()
@@ -401,6 +469,13 @@ class TestGCPProvider:
                 lifecycle_state="",
             ),
         }
+
+        mocked_service = MagicMock()
+
+        mocked_service.projects.list.return_value = MagicMock(
+            execute=MagicMock(return_value={"projects": projects})
+        )
+
         with patch(
             "prowler.providers.gcp.gcp_provider.GcpProvider.get_projects",
             return_value=projects,
@@ -413,6 +488,9 @@ class TestGCPProvider:
         ), patch(
             "prowler.providers.gcp.gcp_provider.default",
             return_value=(mocked_credentials, MagicMock()),
+        ), patch(
+            "prowler.providers.gcp.gcp_provider.discovery.build",
+            return_value=mocked_service,
         ):
             gcp_provider = GcpProvider(arguments)
             gcp_provider.print_credentials()
