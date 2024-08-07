@@ -120,7 +120,7 @@ class Test_s3_access_point_public_access_block:
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == f"Access Point {ap_name_us} of bucket {bucket_name_us} does have Public Access Block enabled."
+                    == f"Access Point {ap_name_us} of bucket {bucket_name_us} in account {AWS_ACCOUNT_NUMBER} does have Public Access Block enabled."
                 )
                 assert result[0].resource_id == ap_name_us
                 assert (
@@ -133,7 +133,7 @@ class Test_s3_access_point_public_access_block:
                 assert result[1].status == "PASS"
                 assert (
                     result[1].status_extended
-                    == f"Access Point {ap_name_eu} of bucket {bucket_name_eu} does have Public Access Block enabled."
+                    == f"Access Point {ap_name_eu} of bucket {bucket_name_eu} in account {AWS_ACCOUNT_NUMBER} does have Public Access Block enabled."
                 )
                 assert result[1].resource_id == ap_name_eu
                 assert (
@@ -214,7 +214,7 @@ class Test_s3_access_point_public_access_block:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == f"Access Point {ap_name_us} of bucket {bucket_name_us} does not have Public Access Block enabled."
+                    == f"Access Point {ap_name_us} of bucket {bucket_name_us} in account {AWS_ACCOUNT_NUMBER} does not have Public Access Block enabled."
                 )
                 assert result[0].resource_id == ap_name_us
                 assert (
@@ -227,7 +227,7 @@ class Test_s3_access_point_public_access_block:
                 assert result[1].status == "FAIL"
                 assert (
                     result[1].status_extended
-                    == f"Access Point {ap_name_eu} of bucket {bucket_name_eu} does not have Public Access Block enabled."
+                    == f"Access Point {ap_name_eu} of bucket {bucket_name_eu} in account {AWS_ACCOUNT_NUMBER} does not have Public Access Block enabled."
                 )
                 assert result[1].resource_id == ap_name_eu
                 assert (
@@ -308,7 +308,7 @@ class Test_s3_access_point_public_access_block:
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == f"Access Point {ap_name_us} of bucket {bucket_name_us} does have Public Access Block enabled."
+                    == f"Access Point {ap_name_us} of bucket {bucket_name_us} in account {AWS_ACCOUNT_NUMBER} does have Public Access Block enabled."
                 )
                 assert result[0].resource_id == ap_name_us
                 assert (
@@ -321,7 +321,7 @@ class Test_s3_access_point_public_access_block:
                 assert result[1].status == "FAIL"
                 assert (
                     result[1].status_extended
-                    == f"Access Point {ap_name_eu} of bucket {bucket_name_eu} does not have Public Access Block enabled."
+                    == f"Access Point {ap_name_eu} of bucket {bucket_name_eu} in account {AWS_ACCOUNT_NUMBER} does not have Public Access Block enabled."
                 )
                 assert result[1].resource_id == ap_name_eu
                 assert (
