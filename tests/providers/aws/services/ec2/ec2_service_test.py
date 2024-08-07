@@ -8,6 +8,7 @@ from dateutil.tz import tzutc
 from freezegun import freeze_time
 from moto import mock_aws
 
+from prowler.config.config import encoding_format_utf_8
 from prowler.providers.aws.services.ec2.ec2_service import EC2
 from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
@@ -316,7 +317,9 @@ class Test_EC2_Service:
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
         ec2 = EC2(audit_info)
-        assert user_data == b64decode(ec2.instances[0].user_data).decode("utf-8")
+        assert user_data == b64decode(ec2.instances[0].user_data).decode(
+            encoding_format_utf_8
+        )
 
     # Test EC2 Get EBS Encryption by default
     @mock_aws

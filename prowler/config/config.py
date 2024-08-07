@@ -61,6 +61,7 @@ html_file_suffix = ".html"
 default_config_file_path = (
     f"{pathlib.Path(os.path.dirname(os.path.realpath(__file__)))}/config.yaml"
 )
+encoding_format_utf_8 = "utf-8"
 
 
 def check_current_version():
@@ -102,8 +103,7 @@ def load_and_validate_config_file(provider: str, config_file_path: str) -> dict:
     load_and_validate_config_file reads the Prowler config file in YAML format from the default location or the file passed with the --config-file flag
     """
     try:
-        with open(config_file_path) as f:
-            config = {}
+        with open(config_file_path, "r", encoding=encoding_format_utf_8) as f:
             config_file = yaml.safe_load(f)
 
             # Not to introduce a breaking change we have to allow the old format config file without any provider keys
