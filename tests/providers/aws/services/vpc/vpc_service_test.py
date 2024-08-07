@@ -3,13 +3,8 @@ import json
 from boto3 import client, resource
 from moto import mock_aws
 
-<<<<<<< HEAD
-from prowler.providers.aws.services.vpc.vpc_service import VPC, Route
-from tests.providers.aws.audit_info_utils import (
-=======
 from prowler.providers.aws.services.vpc.vpc_service import Route
-from tests.providers.aws.utils import (
->>>>>>> b9b5f660 (fix(test): solve VPC import in tests (#4574))
+from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
     AWS_REGION_US_EAST_1,
@@ -26,13 +21,9 @@ class Test_VPC_Service:
         audit_info = set_mocked_aws_audit_info(
             [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
         )
-<<<<<<< HEAD
-        vpc = VPC(audit_info)
-=======
         from prowler.providers.aws.services.vpc.vpc_service import VPC
 
-        vpc = VPC(aws_provider)
->>>>>>> b9b5f660 (fix(test): solve VPC import in tests (#4574))
+        vpc = VPC(audit_info)
         assert vpc.service == "ec2"
 
     # Test VPC Client
@@ -42,13 +33,9 @@ class Test_VPC_Service:
         audit_info = set_mocked_aws_audit_info(
             [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
         )
-<<<<<<< HEAD
-        vpc = VPC(audit_info)
-=======
         from prowler.providers.aws.services.vpc.vpc_service import VPC
 
-        vpc = VPC(aws_provider)
->>>>>>> b9b5f660 (fix(test): solve VPC import in tests (#4574))
+        vpc = VPC(audit_info)
         for regional_client in vpc.regional_clients.values():
             assert regional_client.__class__.__name__ == "EC2"
 
@@ -59,13 +46,9 @@ class Test_VPC_Service:
         audit_info = set_mocked_aws_audit_info(
             [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
         )
-<<<<<<< HEAD
-        vpc = VPC(audit_info)
-=======
         from prowler.providers.aws.services.vpc.vpc_service import VPC
 
-        vpc = VPC(aws_provider)
->>>>>>> b9b5f660 (fix(test): solve VPC import in tests (#4574))
+        vpc = VPC(audit_info)
         assert vpc.session.__class__.__name__ == "Session"
 
     # Test VPC Session
@@ -75,13 +58,9 @@ class Test_VPC_Service:
         audit_info = set_mocked_aws_audit_info(
             [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
         )
-<<<<<<< HEAD
-        vpc = VPC(audit_info)
-=======
         from prowler.providers.aws.services.vpc.vpc_service import VPC
 
-        vpc = VPC(aws_provider)
->>>>>>> b9b5f660 (fix(test): solve VPC import in tests (#4574))
+        vpc = VPC(audit_info)
         assert vpc.audited_account == AWS_ACCOUNT_NUMBER
 
     # Test VPC Describe VPCs
@@ -105,13 +84,9 @@ class Test_VPC_Service:
         audit_info = set_mocked_aws_audit_info(
             [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
         )
-<<<<<<< HEAD
-        vpc = VPC(audit_info)
-=======
         from prowler.providers.aws.services.vpc.vpc_service import VPC
 
-        vpc = VPC(aws_provider)
->>>>>>> b9b5f660 (fix(test): solve VPC import in tests (#4574))
+        vpc = VPC(audit_info)
         assert (
             len(vpc.vpcs) == 3
         )  # Number of AWS regions + created VPC, one default VPC per region
@@ -142,13 +117,9 @@ class Test_VPC_Service:
         audit_info = set_mocked_aws_audit_info(
             [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
         )
-<<<<<<< HEAD
-        vpc = VPC(audit_info)
-=======
         from prowler.providers.aws.services.vpc.vpc_service import VPC
 
-        vpc = VPC(aws_provider)
->>>>>>> b9b5f660 (fix(test): solve VPC import in tests (#4574))
+        vpc = VPC(audit_info)
         # Search created VPC among default ones
         for vpc_iter in vpc.vpcs.values():
             if vpc_iter.id == new_vpc["VpcId"]:
@@ -183,13 +154,9 @@ class Test_VPC_Service:
         audit_info = set_mocked_aws_audit_info(
             [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
         )
-<<<<<<< HEAD
-        vpc = VPC(audit_info)
-=======
         from prowler.providers.aws.services.vpc.vpc_service import VPC
 
-        vpc = VPC(aws_provider)
->>>>>>> b9b5f660 (fix(test): solve VPC import in tests (#4574))
+        vpc = VPC(audit_info)
         assert len(vpc.vpc_peering_connections) == 1
         assert vpc.vpc_peering_connections[0].id == vpc_pcx_id
         assert vpc.vpc_peering_connections[0].tags == [
@@ -230,13 +197,9 @@ class Test_VPC_Service:
         audit_info = set_mocked_aws_audit_info(
             [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
         )
-<<<<<<< HEAD
-        vpc = VPC(audit_info)
-=======
         from prowler.providers.aws.services.vpc.vpc_service import VPC
 
-        vpc = VPC(aws_provider)
->>>>>>> b9b5f660 (fix(test): solve VPC import in tests (#4574))
+        vpc = VPC(audit_info)
         vpc.vpc_peering_connections[0].route_tables = [
             Route(
                 id=main_route_table_id,
@@ -285,13 +248,9 @@ class Test_VPC_Service:
         audit_info = set_mocked_aws_audit_info(
             [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
         )
-<<<<<<< HEAD
-        vpc = VPC(audit_info)
-=======
         from prowler.providers.aws.services.vpc.vpc_service import VPC
 
-        vpc = VPC(aws_provider)
->>>>>>> b9b5f660 (fix(test): solve VPC import in tests (#4574))
+        vpc = VPC(audit_info)
         assert len(vpc.vpc_endpoints) == 1
         assert vpc.vpc_endpoints[0].id == endpoint
         assert vpc.vpc_endpoints[0].tags == [
@@ -340,13 +299,9 @@ class Test_VPC_Service:
         audit_info = set_mocked_aws_audit_info(
             [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
         )
-<<<<<<< HEAD
-        vpc = VPC(audit_info)
-=======
         from prowler.providers.aws.services.vpc.vpc_service import VPC
 
-        vpc = VPC(aws_provider)
->>>>>>> b9b5f660 (fix(test): solve VPC import in tests (#4574))
+        vpc = VPC(audit_info)
 
         for vpce in vpc.vpc_endpoint_services:
             assert vpce.arn == endpoint_arn
@@ -375,13 +330,9 @@ class Test_VPC_Service:
         audit_info = set_mocked_aws_audit_info(
             [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
         )
-<<<<<<< HEAD
-        vpc = VPC(audit_info)
-=======
         from prowler.providers.aws.services.vpc.vpc_service import VPC
 
-        vpc = VPC(aws_provider)
->>>>>>> b9b5f660 (fix(test): solve VPC import in tests (#4574))
+        vpc = VPC(audit_info)
         assert (
             len(vpc.vpcs) == 3
         )  # Number of AWS regions + created VPC, one default VPC per region

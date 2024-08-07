@@ -311,12 +311,8 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
             )
         )
 
-<<<<<<< HEAD
         current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-=======
-        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         from prowler.providers.aws.services.vpc.vpc_service import VPC
->>>>>>> b9b5f660 (fix(test): solve VPC import in tests (#4574))
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",

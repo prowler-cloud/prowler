@@ -3,12 +3,7 @@ from unittest import mock
 from boto3 import client, resource
 from moto import mock_aws
 
-<<<<<<< HEAD
-from prowler.providers.aws.services.vpc.vpc_service import VPC
 from tests.providers.aws.audit_info_utils import (
-=======
-from tests.providers.aws.utils import (
->>>>>>> b9b5f660 (fix(test): solve VPC import in tests (#4574))
     AWS_REGION_EU_WEST_1,
     AWS_REGION_US_EAST_1,
     set_mocked_aws_audit_info,
@@ -112,10 +107,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
                     )
                     assert (
                         sg.resource_arn
-<<<<<<< HEAD
                         == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION_US_EAST_1}:{current_audit_info.audited_account}:security-group/{default_sg_id}"
-=======
-                        == f"arn:{aws_provider.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{aws_provider.identity.account}:security-group/{default_sg_id}"
                     )
                     assert sg.resource_details == default_sg_name
                     assert sg.resource_tags == []
@@ -123,7 +115,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
     @mock_aws
     def test_check_enis(self):
 
-        aws_provider = set_mocked_aws_provider(
+        current_audit_info = set_mocked_aws_audit_info(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1],
             audit_config={
                 "ec2_allowed_interface_types": ["api_gateway_managed", "vpc_endpoint"],
@@ -135,10 +127,10 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
+            return_value=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_client",
-            new=EC2(aws_provider),
+            new=EC2(current_audit_info),
         ):
             from unittest.mock import Mock
 
@@ -248,20 +240,20 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
         from prowler.providers.aws.services.ec2.ec2_service import EC2
         from prowler.providers.aws.services.vpc.vpc_service import VPC
 
-        aws_provider = set_mocked_aws_provider(
+        current_audit_info = set_mocked_aws_audit_info(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1],
             audit_config={"ec2_allowed_interface_types": [eni_type]},
         )
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
+            return_value=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_client",
-            new=EC2(aws_provider),
+            new=EC2(current_audit_info),
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_securitygroup_allow_ingress_from_internet_to_any_port.vpc_client",
-            new=VPC(aws_provider),
+            new=VPC(current_audit_info),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_securitygroup_allow_ingress_from_internet_to_any_port import (
@@ -284,7 +276,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
                     )
                     assert (
                         sg.resource_arn
-                        == f"arn:{aws_provider.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{aws_provider.identity.account}:security-group/{default_sg_id}"
+                        == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION_US_EAST_1}:{current_audit_info.audited_account}:security-group/{default_sg_id}"
                     )
                     assert sg.resource_details == default_sg_name
                     assert sg.resource_tags == []
@@ -341,20 +333,20 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
         from prowler.providers.aws.services.ec2.ec2_service import EC2
         from prowler.providers.aws.services.vpc.vpc_service import VPC
 
-        aws_provider = set_mocked_aws_provider(
+        current_audit_info = set_mocked_aws_audit_info(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1],
             audit_config={"ec2_allowed_instance_owners": [eni_owner]},
         )
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
+            return_value=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_client",
-            new=EC2(aws_provider),
+            new=EC2(current_audit_info),
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_securitygroup_allow_ingress_from_internet_to_any_port.vpc_client",
-            new=VPC(aws_provider),
+            new=VPC(current_audit_info),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_securitygroup_allow_ingress_from_internet_to_any_port import (
@@ -377,8 +369,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
                     )
                     assert (
                         sg.resource_arn
-                        == f"arn:{aws_provider.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{aws_provider.identity.account}:security-group/{default_sg_id}"
->>>>>>> b9b5f660 (fix(test): solve VPC import in tests (#4574))
+                        == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION_US_EAST_1}:{current_audit_info.audited_account}:security-group/{default_sg_id}"
                     )
                     assert sg.resource_details == default_sg_name
                     assert sg.resource_tags == []
@@ -472,6 +463,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
         )
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
+        from prowler.providers.aws.services.vpc.vpc_service import VPC
 
         current_audit_info = set_mocked_aws_audit_info(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1],

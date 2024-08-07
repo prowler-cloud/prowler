@@ -42,14 +42,10 @@ class Test_ec2_securitygroup_default_restrict_traffic:
             new=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_default_restrict_traffic.ec2_securitygroup_default_restrict_traffic.ec2_client",
-<<<<<<< HEAD
             new=EC2(current_audit_info),
-=======
-            new=EC2(aws_provider),
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_default_restrict_traffic.ec2_securitygroup_default_restrict_traffic.vpc_client",
-            new=VPC(aws_provider),
->>>>>>> b9b5f660 (fix(test): solve VPC import in tests (#4574))
+            new=VPC(current_audit_info),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_securitygroup_default_restrict_traffic.ec2_securitygroup_default_restrict_traffic import (
@@ -113,14 +109,10 @@ class Test_ec2_securitygroup_default_restrict_traffic:
             new=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_default_restrict_traffic.ec2_securitygroup_default_restrict_traffic.ec2_client",
-<<<<<<< HEAD
             new=EC2(current_audit_info),
-=======
-            new=EC2(aws_provider),
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_default_restrict_traffic.ec2_securitygroup_default_restrict_traffic.vpc_client",
-            new=VPC(aws_provider),
->>>>>>> b9b5f660 (fix(test): solve VPC import in tests (#4574))
+            new=VPC(current_audit_info),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_securitygroup_default_restrict_traffic.ec2_securitygroup_default_restrict_traffic import (
@@ -186,14 +178,10 @@ class Test_ec2_securitygroup_default_restrict_traffic:
             new=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_default_restrict_traffic.ec2_securitygroup_default_restrict_traffic.ec2_client",
-<<<<<<< HEAD
             new=EC2(current_audit_info),
-=======
-            new=EC2(aws_provider),
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_default_restrict_traffic.ec2_securitygroup_default_restrict_traffic.vpc_client",
-            new=VPC(aws_provider),
->>>>>>> b9b5f660 (fix(test): solve VPC import in tests (#4574))
+            new=VPC(current_audit_info),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_securitygroup_default_restrict_traffic.ec2_securitygroup_default_restrict_traffic import (
@@ -226,14 +214,10 @@ class Test_ec2_securitygroup_default_restrict_traffic:
             new=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_default_restrict_traffic.ec2_securitygroup_default_restrict_traffic.ec2_client",
-<<<<<<< HEAD
             new=EC2(current_audit_info),
-=======
-            new=EC2(aws_provider),
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_default_restrict_traffic.ec2_securitygroup_default_restrict_traffic.vpc_client",
-            new=VPC(aws_provider),
->>>>>>> b9b5f660 (fix(test): solve VPC import in tests (#4574))
+            new=VPC(current_audit_info),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_securitygroup_default_restrict_traffic.ec2_securitygroup_default_restrict_traffic import (
