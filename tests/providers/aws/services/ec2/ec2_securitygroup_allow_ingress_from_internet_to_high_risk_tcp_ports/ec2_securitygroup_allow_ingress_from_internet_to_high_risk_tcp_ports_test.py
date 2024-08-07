@@ -16,6 +16,21 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports:
         # Create EC2 Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
         ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
+        ec2_client.audit_config = {
+            "ec2_high_risk_ports": [
+                25,
+                110,
+                135,
+                143,
+                445,
+                3000,
+                4333,
+                5000,
+                5500,
+                8080,
+                8088,
+            ]
+        }
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
         from prowler.providers.aws.services.vpc.vpc_service import VPC
@@ -44,35 +59,52 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports:
             )
             result = check.execute()
 
-            # One default sg per region
-            assert len(result) == 3
-            # All are compliant by default
-            assert result[0].status == "PASS"
-            assert result[1].status == "PASS"
-            assert result[2].status == "PASS"
+            # One default sg per region, each port should be checked
+            expected_findings_count = (
+                len(ec2_client.audit_config["ec2_high_risk_ports"]) * 3
+            )  # 3 security groups
+            assert len(result) == expected_findings_count
+            # Search changed sg
+            for sg in result:
+                # All are compliant by default
+                assert sg.status == "PASS"
 
     @mock_aws
     def test_ec2_non_compliant_default_sg(self):
         # Create EC2 Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
         ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
-        default_sg = ec2_client.describe_security_groups(GroupNames=["default"])[
+        security_groups = ec2_client.describe_security_groups(GroupNames=["default"])[
             "SecurityGroups"
-        ][0]
-        default_sg_id = default_sg["GroupId"]
-        default_sg_name = default_sg["GroupName"]
+        ]
+        default_sg_id = security_groups[0]["GroupId"]
+        default_sg_name = security_groups[0]["GroupName"]
         ec2_client.authorize_security_group_ingress(
             GroupId=default_sg_id,
             IpPermissions=[
                 {
                     "IpProtocol": "tcp",
-                    "FromPort": 25,
-                    "ToPort": 8088,
+                    "FromPort": 20,
+                    "ToPort": 9000,
                     "IpRanges": [{"CidrIp": "0.0.0.0/0"}],
                 }
             ],
         )
-
+        ec2_client.audit_config = {
+            "ec2_high_risk_ports": [
+                25,
+                110,
+                135,
+                143,
+                445,
+                3000,
+                4333,
+                5000,
+                5500,
+                8080,
+                8088,
+            ]
+        }
         from prowler.providers.aws.services.ec2.ec2_service import EC2
         from prowler.providers.aws.services.vpc.vpc_service import VPC
 
@@ -100,16 +132,21 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports:
             )
             result = check.execute()
 
-            # One default sg per region
-            assert len(result) == 3
+            # One default sg per region, each port should be checked
+            expected_findings_count = (
+                len(ec2_client.audit_config["ec2_high_risk_ports"]) * 3
+            )  # 3 security groups
+            assert len(result) == expected_findings_count
             # Search changed sg
+            iterator = 0
             for sg in result:
+                port = ec2_client.audit_config["ec2_high_risk_ports"][iterator]
                 if sg.resource_id == default_sg_id:
                     assert sg.status == "FAIL"
                     assert sg.region == AWS_REGION_US_EAST_1
                     assert (
                         sg.status_extended
-                        == f"Security group {default_sg_name} ({default_sg_id}) has a high risk port open to the Internet."
+                        == f"Security group {default_sg_name} ({default_sg_id}) has port {port} (high risk port) open to the Internet."
                     )
                     assert (
                         sg.resource_arn
@@ -117,6 +154,9 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports:
                     )
                     assert sg.resource_details == default_sg_name
                     assert sg.resource_tags == []
+                    iterator = (iterator + 1) % len(
+                        ec2_client.audit_config["ec2_high_risk_ports"]
+                    )
 
     @mock_aws
     def test_ec2_compliant_default_sg(self):
@@ -133,12 +173,27 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports:
             IpPermissions=[
                 {
                     "IpProtocol": "tcp",
-                    "FromPort": 25,
-                    "ToPort": 8088,
+                    "FromPort": 20,
+                    "ToPort": 9000,
                     "IpRanges": [{"CidrIp": "123.123.123.123/32"}],
                 }
             ],
         )
+        ec2_client.audit_config = {
+            "ec2_high_risk_ports": [
+                25,
+                110,
+                135,
+                143,
+                445,
+                3000,
+                4333,
+                5000,
+                5500,
+                8080,
+                8088,
+            ]
+        }
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
         from prowler.providers.aws.services.vpc.vpc_service import VPC
@@ -167,16 +222,21 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports:
             )
             result = check.execute()
 
-            # One default sg per region
-            assert len(result) == 3
+            # One default sg per region, each port should be checked
+            expected_findings_count = (
+                len(ec2_client.audit_config["ec2_high_risk_ports"]) * 3
+            )  # 3 security groups
+            assert len(result) == expected_findings_count
             # Search changed sg
+            iterator = 0
             for sg in result:
+                port = ec2_client.audit_config["ec2_high_risk_ports"][iterator]
                 if sg.resource_id == default_sg_id:
                     assert sg.status == "PASS"
                     assert sg.region == AWS_REGION_US_EAST_1
                     assert (
                         sg.status_extended
-                        == f"Security group {default_sg_name} ({default_sg_id}) does not have any high risk port open to the Internet."
+                        == f"Security group {default_sg_name} ({default_sg_id}) does not have port {port} open to the Internet."
                     )
                     assert (
                         sg.resource_arn
@@ -184,12 +244,30 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports:
                     )
                     assert sg.resource_details == default_sg_name
                     assert sg.resource_tags == []
+                    iterator = (iterator + 1) % len(
+                        ec2_client.audit_config["ec2_high_risk_ports"]
+                    )
 
     @mock_aws
     def test_ec2_default_sgs_ignoring(self):
         # Create EC2 Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
         ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
+        ec2_client.audit_config = {
+            "ec2_high_risk_ports": [
+                25,
+                110,
+                135,
+                143,
+                445,
+                3000,
+                4333,
+                5000,
+                5500,
+                8080,
+                8088,
+            ]
+        }
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
         from prowler.providers.aws.services.vpc.vpc_service import VPC
@@ -229,11 +307,21 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports:
         subnet = ec2.create_subnet(VpcId=vpc.id, CidrBlock="10.0.0.0/18")
         ec2.create_network_interface(SubnetId=subnet.id)
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
-        default_sg = ec2_client.describe_security_groups(GroupNames=["default"])[
-            "SecurityGroups"
-        ][0]
-        default_sg["GroupId"]
-        default_sg["GroupName"]
+        ec2_client.audit_config = {
+            "ec2_high_risk_ports": [
+                25,
+                110,
+                135,
+                143,
+                445,
+                3000,
+                4333,
+                5000,
+                5500,
+                8080,
+                8088,
+            ]
+        }
         from prowler.providers.aws.services.ec2.ec2_service import EC2
         from prowler.providers.aws.services.vpc.vpc_service import VPC
 
@@ -262,9 +350,13 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports:
             )
             result = check.execute()
 
-            assert len(result) == 1
-            assert result[0].status == "PASS"
-            assert result[0].region == AWS_REGION_US_EAST_1
+            expected_findings_count = len(
+                ec2_client.audit_config["ec2_high_risk_ports"]
+            )  # 1 security group in use
+            assert len(result) == expected_findings_count
+            for sg in result:
+                assert sg.status == "PASS"
+                assert sg.region == AWS_REGION_US_EAST_1
 
     @mock_aws
     def test_ec2_non_compliant_default_sg_pass_to_avoid_fail_twice(self):
@@ -293,6 +385,21 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports:
                 },
             ],
         )
+        ec2_client.audit_config = {
+            "ec2_high_risk_ports": [
+                25,
+                110,
+                135,
+                143,
+                445,
+                3000,
+                4333,
+                5000,
+                5500,
+                8080,
+                8088,
+            ]
+        }
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
         from prowler.providers.aws.services.vpc.vpc_service import VPC
@@ -345,16 +452,24 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports:
                 )
                 result_specific_port = check_specific_port.execute()
 
-                # One default sg per region
-                assert len(result_specific_port) == 3
+                # One default sg per region, each port should be checked
+                expected_findings_count = (
+                    len(ec2_client.audit_config["ec2_high_risk_ports"]) * 3
+                )  # 2 default security groups + 1 added
+                assert len(result_specific_port) == expected_findings_count
                 # Search changed sg
+                iterator = 0
                 for sg in result_specific_port:
+                    port = ec2_client.audit_config["ec2_high_risk_ports"][iterator]
                     if sg.resource_id == default_sg_id:
                         assert sg.status == "PASS"
                         assert sg.region == AWS_REGION_US_EAST_1
                         assert (
                             sg.status_extended
-                            == f"Security group {sg.resource_details} ({sg.resource_id}) has all ports open to the Internet and therefore was not checked against any of the high risk ports (25,110,135,143,445,3000,4333,5000,5500,8080,8088)."
+                            == f"Security group {sg.resource_details} ({sg.resource_id}) has all ports open to the Internet and therefore was not checked against port {port}."
                         )
                         assert sg.resource_tags == []
                         assert sg.resource_details == default_sg_name
+                        iterator = (iterator + 1) % len(
+                            ec2_client.audit_config["ec2_high_risk_ports"]
+                        )
