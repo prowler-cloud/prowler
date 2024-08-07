@@ -5,6 +5,15 @@ import sys
 from os import environ
 
 from colorama import Fore, Style
+from prowler.providers.aws.services.ec2.ec2_service import PaginatedDict, PaginatedList
+import pdb
+import psutil
+import os
+
+def check_memory_usage():
+    process = psutil.Process(os.getpid())
+    memory_info = process.memory_info()
+    return memory_info.rss  # Resident Set Size: memory in bytes
 
 from prowler.config.config import (
     csv_file_suffix,
@@ -70,9 +79,18 @@ from prowler.providers.aws.lib.s3.s3 import S3
 from prowler.providers.aws.lib.security_hub.security_hub import SecurityHub
 from prowler.providers.common.provider import Provider
 from prowler.providers.common.quick_inventory import run_provider_quick_inventory
+from memory_profiler import profile
 
+from pympler import asizeof
+from pympler import tracker
+from pympler import muppy
+from pympler import summary
+import objgraph
+
+from memory_profiler import profile
 
 def prowler():
+    #tr = tracker.SummaryTracker()
     # Parse Arguments
     # Refactor(CLI)
     parser = ProwlerArgumentParser()
@@ -178,7 +196,9 @@ def prowler():
         categories,
         provider,
     )
-
+    #pdb.set_trace()  # Break
+    memory_usage = check_memory_usage()
+    print(f"Memory usage at checks_to_execute: {memory_usage / (1024 * 1024)} MB")
     # if --list-checks-json, dump a json file and exit
     if args.list_checks_json:
         print(list_checks_json(provider, sorted(checks_to_execute)))
@@ -193,6 +213,10 @@ def prowler():
     Provider.set_global_provider(args)
     global_provider = Provider.get_global_provider()
 
+    memory_usage = check_memory_usage()
+    print(f"Memory usage at global_provider = Provider. __main__.py:217 : {memory_usage / (1024 * 1024)} MB")
+    #pdb.set_trace()  # Break
+    
     # Print Provider Credentials
     if not args.only_logs:
         global_provider.print_credentials()
@@ -242,7 +266,11 @@ def prowler():
         sys.exit()
 
     # Execute checks
-    findings = []
+    paginated = 0
+    if paginated:
+        findings = PaginatedList()
+    else:
+        findings = []
 
     if len(checks_to_execute):
         findings = execute_checks(
@@ -255,7 +283,9 @@ def prowler():
         logger.error(
             "There are no checks to execute. Please, check your input arguments"
         )
-
+    memory_usage = check_memory_usage()
+    print(f"Memory usage at execute_checks __main__.py:284 {memory_usage / (1024 * 1024)} MB")
+    #pdb.set_trace()  # Break
     # Prowler Fixer
     if global_provider.output_options.fixer:
         print(f"{Style.BRIGHT}\nRunning Prowler Fixer, please wait...{Style.RESET_ALL}")
@@ -307,6 +337,11 @@ def prowler():
     ]
 
     generated_outputs = {"regular": [], "compliance": []}
+    logger.debug("Output generated")
+
+    #pdb.set_trace()  # Break
+    memory_usage = check_memory_usage()
+    print(f"Memory usage at findings_output: {memory_usage / (1024 * 1024)} MB")
 
     if args.output_formats:
         for mode in args.output_formats:
@@ -323,7 +358,9 @@ def prowler():
                 generated_outputs["regular"].append(csv_output)
                 # Write CSV Finding Object to file
                 csv_output.batch_write_data_to_file()
-
+                #pdb.set_trace()  # Break
+                memory_usage = check_memory_usage()
+                print(f"Memory usage at csv_output_batch_write_data: {memory_usage / (1024 * 1024)} MB")
             if mode == "json-asff":
                 asff_output = ASFF(
                     findings=finding_outputs,
@@ -352,7 +389,9 @@ def prowler():
                 html_output.batch_write_data_to_file(
                     provider=global_provider, stats=stats
                 )
-
+                #pdb.set_trace()  # Break
+                memory_usage = check_memory_usage()
+                print(f"Memory usage at html_output_batch_write: {memory_usage / (1024 * 1024)} MB")
     # Compliance Frameworks
     input_compliance_frameworks = set(
         global_provider.output_options.output_modes
@@ -647,12 +686,22 @@ def prowler():
                 print(
                     f"\nDetailed compliance results are in {Fore.YELLOW}{global_provider.output_options.output_directory}/compliance/{Style.RESET_ALL}\n"
                 )
+        # Print the memory usage of the largest objects
+        #all_objects = muppy.get_objects()
+        #sum1 = summary.summarize(all_objects)
+        #summary.print_(sum1)
+        #objgraph.show_most_common_types(limit=20)
+        #objgraph.show_growth()
+        
 
     # If custom checks were passed, remove the modules
     if checks_folder:
         remove_custom_checks_module(checks_folder, provider)
 
     # If there are failed findings exit code 3, except if -z is input
+    #pdb.set_trace()  # Break
+    memory_usage = check_memory_usage()
+    print(f"Memory usage at ending: {memory_usage / (1024 * 1024)} MB")
     if (
         not args.ignore_exit_code_3
         and stats["total_fail"] > 0

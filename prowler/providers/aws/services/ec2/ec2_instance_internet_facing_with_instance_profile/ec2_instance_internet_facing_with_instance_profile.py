@@ -1,6 +1,6 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.ec2.ec2_client import ec2_client
-
+from prowler.providers.aws.services.ec2.ec2_service import PaginatedDict, PaginatedList
 
 class ec2_instance_internet_facing_with_instance_profile(Check):
     def execute(self):

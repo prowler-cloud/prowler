@@ -9,6 +9,7 @@ import traceback
 from pkgutil import walk_packages
 from types import ModuleType
 from typing import Any
+from memory_profiler import profile
 
 from alive_progress import alive_bar
 from colorama import Fore, Style
@@ -23,6 +24,14 @@ from prowler.lib.outputs.outputs import report
 from prowler.lib.utils.utils import open_file, parse_json_file, print_boxes
 from prowler.providers.common.models import Audit_Metadata
 
+import pdb
+import psutil
+import os
+
+def check_memory_usage():
+    process = psutil.Process(os.getpid())
+    memory_info = process.memory_info()
+    return memory_info.rss  # Resident Set Size: memory in bytes
 
 # Load all checks metadata
 def bulk_load_checks_metadata(provider: str) -> dict:
@@ -433,10 +442,13 @@ def list_modules(provider: str, service: str):
 
 
 # Import an input check using its path
-def import_check(check_path: str) -> ModuleType:
-    lib = importlib.import_module(f"{check_path}")
-    return lib
 
+def import_check(check_path: str) -> ModuleType:
+
+    print(f"{check_memory_usage() / (1024 * 1024)} MB : Memory usage before import {check_path}")
+    lib = importlib.import_module(f"{check_path}")
+    print(f"{check_memory_usage() / (1024 * 1024)} MB : Memory usage after import {check_path}")
+    return lib
 
 def run_check(check: Check, verbose: bool = False, only_logs: bool = False) -> list:
     """

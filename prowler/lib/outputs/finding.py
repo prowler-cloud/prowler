@@ -86,6 +86,7 @@ class Finding(BaseModel):
     notes: str
     prowler_version: str = prowler_version
 
+
     @classmethod
     def generate_output(
         cls, provider: Provider, check_output: Check_Report
@@ -186,7 +187,7 @@ class Finding(BaseModel):
                 f"prowler-{provider.type}-{check_output.check_metadata.CheckID}-{output_data['account_uid']}-"
                 f"{output_data['region']}-{output_data['resource_name']}"
             )
-
+            logger.debug("Generating finding: = %s", output_data["finding_uid"])
             return cls(**output_data)
         except Exception as error:
             logger.error(

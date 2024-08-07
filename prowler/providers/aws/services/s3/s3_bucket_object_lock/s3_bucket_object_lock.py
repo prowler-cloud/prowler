@@ -1,6 +1,8 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.s3.s3_client import s3_client
-
+import importlib
+import sys
+import gc 
 
 class s3_bucket_object_lock(Check):
     def execute(self):
@@ -23,4 +25,7 @@ class s3_bucket_object_lock(Check):
                 )
             findings.append(report)
 
+        
+        del sys.modules['prowler.providers.aws.services.s3.s3_client']
+        gc.collect()
         return findings

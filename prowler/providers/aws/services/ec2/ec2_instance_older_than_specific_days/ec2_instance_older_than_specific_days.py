@@ -1,8 +1,10 @@
 from datetime import datetime, timezone
+from pympler import asizeof
 
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.ec2.ec2_client import ec2_client
-
+import sys
+import gc 
 
 class ec2_instance_older_than_specific_days(Check):
     def execute(self):
@@ -12,6 +14,10 @@ class ec2_instance_older_than_specific_days(Check):
         max_ec2_instance_age_in_days = ec2_client.audit_config.get(
             "max_ec2_instance_age_in_days", 180
         )
+        size_bytes = asizeof.asizeof(ec2_client.instances)
+        size_mb = size_bytes / (1024 * 1024)
+        print("Size of dictionary:", size_mb, "MB")
+
         for instance in ec2_client.instances:
             report = Check_Report_AWS(self.metadata())
             report.region = instance.region
@@ -31,4 +37,6 @@ class ec2_instance_older_than_specific_days(Check):
 
             findings.append(report)
 
+        
+        ec2_client.cleanup()
         return findings

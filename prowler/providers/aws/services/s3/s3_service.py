@@ -7,7 +7,272 @@ from pydantic import BaseModel
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
+import os 
+import dill as pickle
+import os
+import atexit
+from collections import deque
+from sys import getsizeof
+import tempfile
 
+
+class PaginatedList:
+    instance_counter = 0
+
+    def __init__(self, page_size=10):
+        self.page_size = page_size
+        self.file_paths = []
+        self.cache = {}
+        self.length = 0  # Track the length dynamically
+        self.instance_id = PaginatedList.instance_counter
+        PaginatedList.instance_counter += 1
+        self.temp_dir = tempfile.mkdtemp(prefix=f'paginated_list_{self.instance_id}_', dir='/Users/snaow/repos/prowler')
+        atexit.register(self.cleanup)
+        
+    def _save_page(self, page_data, page_num):
+        file_path = os.path.join(self.temp_dir, f'page_{page_num}.pkl')
+        with open(file_path, 'wb') as f:
+            pickle.dump(page_data, f)
+        if page_num >= len(self.file_paths):
+            self.file_paths.append(file_path)
+        else:
+            self.file_paths[page_num] = file_path
+
+    def _load_page(self, page_num):
+        if page_num in self.cache:
+            return self.cache[page_num]
+        with open(self.file_paths[page_num], 'rb') as f:
+            page_data = pickle.load(f)
+        self.cache[page_num] = page_data
+        return page_data
+
+    def __getitem__(self, index):
+        if index < 0 or index >= self.length:
+            raise IndexError('Index out of range')
+        page_num = index // self.page_size
+        page_index = index % self.page_size
+        page_data = self._load_page(page_num)
+        return page_data[page_index]
+
+    def __setitem__(self, index, value):
+        if index < 0 or index >= self.length:
+            raise IndexError('Index out of range')
+        page_num = index // self.page_size
+        page_index = index % self.page_size
+        page_data = self._load_page(page_num)
+        page_data[page_index] = value
+        self.cache[page_num] = page_data
+        self._save_page(page_data, page_num)
+
+    def __delitem__(self, index):
+        if index < 0 or index >= self.length:
+            raise IndexError('Index out of range')
+        page_num = index // self.page_size
+        page_index = index % self.page_size
+        page_data = self._load_page(page_num)
+        del page_data[page_index]
+        self.cache[page_num] = page_data
+        self._save_page(page_data, page_num)
+        self.length -= 1
+
+        # Shift subsequent elements
+        for i in range(index, self.length):
+            next_page_num = (i + 1) // self.page_size
+            next_page_index = (i + 1) % self.page_size
+            if next_page_index == 0:
+                self._save_page(page_data, page_num)
+                page_num = next_page_num
+                page_data = self._load_page(page_num)
+            page_data[page_index] = page_data.pop(next_page_index)
+            page_index = next_page_index
+
+        # Save the last page
+        self._save_page(page_data, page_num)
+        
+        # Remove the last page if it's empty
+        if self.length % self.page_size == 0:
+            os.remove(self.file_paths.pop())
+            self.cache.pop(page_num, None)
+
+    def __len__(self):
+        return self.length
+
+    def __iter__(self):
+        for page_num in range(len(self.file_paths)):
+            page_data = self._load_page(page_num)
+            for item in page_data:
+                yield item
+
+    def append(self, value):
+        page_num = self.length // self.page_size
+        page_index = self.length % self.page_size
+        if page_num >= len(self.file_paths):
+            self._save_page([], page_num)
+        page_data = self._load_page(page_num)
+        page_data.append(value)
+        self.cache[page_num] = page_data
+        self._save_page(page_data, page_num)
+        self.length += 1
+
+    def extend(self, values):
+        for value in values:
+            self.append(value)
+
+    def remove(self, value):
+        for index, item in enumerate(self):
+            if item == value:
+                del self[index]
+                return
+        raise ValueError(f"{value} not in list")
+
+    def pop(self, index=-1):
+        if self.length == 0:
+            raise IndexError("pop from empty list")
+        if index < 0:
+            index += self.length
+        value = self[index]
+        del self[index]
+        return value
+
+    def clear(self):
+        self.cache.clear()
+        self.file_paths = []
+        self.length = 0
+
+    def index(self, value, start=0, stop=None):
+        if stop is None:
+            stop = self.length
+        for i in range(start, stop):
+            if self[i] == value:
+                return i
+        raise ValueError(f"{value} is not in list")
+    
+    def get(self, index, default=None):
+        try:
+            return self[index]
+        except IndexError:
+            return default
+
+    def cleanup(self):
+        if hasattr(self, 'file_paths'):
+            for file_path in self.file_paths:
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+            if os.path.exists(self.temp_dir):
+                os.rmdir(self.temp_dir)
+
+    def __del__(self):
+        self.cleanup()
+
+
+class PaginatedDict:
+    instance_counter = 0
+
+    def __init__(self, page_size=1):
+        self.page_size = page_size
+        self.file_paths = []
+        self.cache = {}
+        self.key_to_page = {}
+        self.length = 0  # Track the number of items
+        self.instance_id = PaginatedDict.instance_counter
+        PaginatedDict.instance_counter += 1
+        self.temp_dir = tempfile.mkdtemp(prefix=f'paginated_dict_{self.instance_id}_', dir='/Users/snaow/repos/prowler')
+        print(f"Temporary directory for instance {self.instance_id}: {self.temp_dir}")
+        atexit.register(self.cleanup)
+        
+    def _save_page(self, page_data, page_num):
+        file_path = os.path.join(self.temp_dir, f'page_{page_num}.pkl')
+        with open(file_path, 'wb') as f:
+            pickle.dump(page_data, f)
+        if page_num >= len(self.file_paths):
+            self.file_paths.append(file_path)
+        else:
+            self.file_paths[page_num] = file_path
+    
+    def _load_page(self, page_num):
+        if page_num in self.cache:
+            return self.cache[page_num]
+        with open(self.file_paths[page_num], 'rb') as f:
+            page_data = pickle.load(f)
+        self.cache[page_num] = page_data
+        return page_data
+
+    def __setitem__(self, key, value):
+        if key in self.key_to_page:
+            page_num = self.key_to_page[key]
+            page_data = self._load_page(page_num)
+            page_data[key] = value
+        else:
+            page_num = self.length // self.page_size
+            if page_num >= len(self.file_paths):
+                self._save_page({}, page_num)
+            page_data = self._load_page(page_num)
+            page_data[key] = value
+            self.key_to_page[key] = page_num
+            self.length += 1
+        self.cache[page_num] = page_data
+        self._save_page(page_data, page_num)
+
+    def __getitem__(self, key):
+        if key not in self.key_to_page:
+            raise KeyError(f"Key {key} not found")
+        page_num = self.key_to_page[key]
+        page_data = self._load_page(page_num)
+        return page_data[key]
+
+    def __delitem__(self, key):
+        if key not in self.key_to_page:
+            raise KeyError(f"Key {key} not found")
+        page_num = self.key_to_page[key]
+        page_data = self._load_page(page_num)
+        del page_data[key]
+        del self.key_to_page[key]
+        self.cache[page_num] = page_data
+        self._save_page(page_data, page_num)
+        self.length -= 1
+
+    def __len__(self):
+        return self.length
+
+    def __iter__(self):
+        for page_num in range(len(self.file_paths)):
+            page_data = self._load_page(page_num)
+            for key in page_data:
+                yield key
+
+    def get(self, key, default=None):
+        try:
+            return self[key]
+        except KeyError:
+            return default
+
+    def keys(self):
+        for key in self:
+            yield key
+
+    def values(self):
+        for key in self:
+            yield self[key]
+
+    def items(self):
+        for key in self:
+            yield (key, self[key])
+
+    def clear(self):
+        self.cache.clear()
+        self.key_to_page.clear()
+        self.file_paths = []
+        self.length = 0
+
+    def cleanup(self):
+        for file_path in self.file_paths:
+            if os.path.exists(file_path):
+                os.remove(file_path)
+        if os.path.exists(self.temp_dir):
+            os.rmdir(self.temp_dir)
+
+    def __del__(self):
+        self.cleanup()
 
 ################## S3
 class S3(AWSService):
@@ -27,9 +292,13 @@ class S3(AWSService):
         self.__threading_call__(self.__get_object_lock_configuration__, self.buckets)
         self.__threading_call__(self.__get_bucket_tagging__, self.buckets)
 
+    def cleanup(self):
+        del self.regions_with_buckets
+        del self.buckets
+
     def __list_buckets__(self, provider):
         logger.info("S3 - Listing buckets...")
-        buckets = []
+        buckets = PaginatedList()
         try:
             list_buckets = self.client.list_buckets()
             for bucket in list_buckets["Buckets"]:

@@ -4,6 +4,7 @@ import sys
 from argparse import Namespace
 from datetime import datetime
 
+
 from boto3 import client, session
 from boto3.session import Session
 from botocore.config import Config
@@ -49,7 +50,6 @@ from prowler.providers.aws.models import (
 from prowler.providers.common.models import Audit_Metadata
 from prowler.providers.common.provider import Provider
 
-
 class AwsProvider(Provider):
     _type: str = "aws"
     _identity: AWSIdentityInfo
@@ -62,7 +62,7 @@ class AwsProvider(Provider):
     _output_options: AWSOutputOptions
     # TODO: this is not optional, enforce for all providers
     audit_metadata: Audit_Metadata
-
+    
     def __init__(self, arguments: Namespace):
         logger.info("Initializing AWS provider ...")
         ######## Parse Arguments

@@ -94,6 +94,7 @@ class Check(ABC, Check_Metadata_Model):
         )
         # Store it to validate them with Pydantic
         data = Check_Metadata_Model.parse_file(metadata_file).dict()
+        # data = {}
         # Calls parents init function
         super().__init__(**data)
         # TODO: verify that the CheckID is the same as the filename and classname

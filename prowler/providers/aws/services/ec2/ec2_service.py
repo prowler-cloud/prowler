@@ -3,67 +3,430 @@ from typing import Optional
 
 from botocore.client import ClientError
 from pydantic import BaseModel
+from pympler import asizeof
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
+import sys 
+import gc 
 
+import dill as pickle
+import os
+import atexit
+from collections import deque
+from sys import getsizeof
+import tempfile
+
+import boto3
+from moto import mock_aws
+from memory_profiler import profile
+import pdb
+import psutil
+import os
+
+def check_memory_usage():
+    process = psutil.Process(os.getpid())
+    memory_info = process.memory_info()
+    return memory_info.rss  # Resident Set Size: memory in bytes
+
+
+class PaginatedList:
+    instance_counter = 0
+
+    def __init__(self, page_size=1):
+        self.page_size = page_size
+        self.file_paths = []
+        self.cache = {}
+        self.length = 0  # Track the length dynamically
+        self.instance_id = PaginatedList.instance_counter
+        PaginatedList.instance_counter += 1
+        self.temp_dir = tempfile.mkdtemp(prefix=f'paginated_list_{self.instance_id}_', dir='/Users/snaow/repos/prowler')
+        atexit.register(self.cleanup)
+        
+    def _save_page(self, page_data, page_num):
+        file_path = os.path.join(self.temp_dir, f'page_{page_num}.pkl')
+        with open(file_path, 'wb') as f:
+            pickle.dump(page_data, f)
+        if page_num >= len(self.file_paths):
+            self.file_paths.append(file_path)
+        else:
+            self.file_paths[page_num] = file_path
+
+    def _load_page(self, page_num):
+        if page_num in self.cache:
+            return self.cache[page_num]
+        with open(self.file_paths[page_num], 'rb') as f:
+            page_data = pickle.load(f)
+        self.cache[page_num] = page_data
+        return page_data
+
+    def __getitem__(self, index):
+        if index < 0 or index >= self.length:
+            raise IndexError('Index out of range')
+        page_num = index // self.page_size
+        page_index = index % self.page_size
+        page_data = self._load_page(page_num)
+        return page_data[page_index]
+
+    def __setitem__(self, index, value):
+        if index < 0 or index >= self.length:
+            raise IndexError('Index out of range')
+        page_num = index // self.page_size
+        page_index = index % self.page_size
+        page_data = self._load_page(page_num)
+        page_data[page_index] = value
+        self.cache[page_num] = page_data
+        self._save_page(page_data, page_num)
+
+    def __delitem__(self, index):
+        if index < 0 or index >= self.length:
+            raise IndexError('Index out of range')
+        page_num = index // self.page_size
+        page_index = index % self.page_size
+        page_data = self._load_page(page_num)
+        del page_data[page_index]
+        self.cache[page_num] = page_data
+        self._save_page(page_data, page_num)
+        self.length -= 1
+
+        # Shift subsequent elements
+        for i in range(index, self.length):
+            next_page_num = (i + 1) // self.page_size
+            next_page_index = (i + 1) % self.page_size
+            if next_page_index == 0:
+                self._save_page(page_data, page_num)
+                page_num = next_page_num
+                page_data = self._load_page(page_num)
+            page_data[page_index] = page_data.pop(next_page_index)
+            page_index = next_page_index
+
+        # Save the last page
+        self._save_page(page_data, page_num)
+        
+        # Remove the last page if it's empty
+        if self.length % self.page_size == 0:
+            os.remove(self.file_paths.pop())
+            self.cache.pop(page_num, None)
+
+    def __len__(self):
+        return self.length
+
+    def __iter__(self):
+        for page_num in range(len(self.file_paths)):
+            page_data = self._load_page(page_num)
+            for item in page_data:
+                yield item
+
+    def append(self, value):
+        page_num = self.length // self.page_size
+        page_index = self.length % self.page_size
+        if page_num >= len(self.file_paths):
+            self._save_page([], page_num)
+        page_data = self._load_page(page_num)
+        page_data.append(value)
+        self.cache[page_num] = page_data
+        self._save_page(page_data, page_num)
+        self.length += 1
+
+    def extend(self, values):
+        for value in values:
+            self.append(value)
+
+    def remove(self, value):
+        for index, item in enumerate(self):
+            if item == value:
+                del self[index]
+                return
+        raise ValueError(f"{value} not in list")
+
+    def pop(self, index=-1):
+        if self.length == 0:
+            raise IndexError("pop from empty list")
+        if index < 0:
+            index += self.length
+        value = self[index]
+        del self[index]
+        return value
+
+    def clear(self):
+        self.cache.clear()
+        self.file_paths = []
+        self.length = 0
+
+    def index(self, value, start=0, stop=None):
+        if stop is None:
+            stop = self.length
+        for i in range(start, stop):
+            if self[i] == value:
+                return i
+        raise ValueError(f"{value} is not in list")
+    
+    def get(self, index, default=None):
+        try:
+            return self[index]
+        except IndexError:
+            return default
+
+    def cleanup(self):
+        for file_path in self.file_paths:
+            if os.path.exists(file_path):
+                os.remove(file_path)
+        if os.path.exists(self.temp_dir):
+            os.rmdir(self.temp_dir)
+
+    def __del__(self):
+        self.cleanup()
+
+
+class PaginatedDict:
+    instance_counter = 0
+
+    def __init__(self, page_size=1):
+        self.page_size = page_size
+        self.file_paths = []
+        self.cache = {}
+        self.key_to_page = {}
+        self.length = 0  # Track the number of items
+        self.instance_id = PaginatedDict.instance_counter
+        PaginatedDict.instance_counter += 1
+        self.temp_dir = tempfile.mkdtemp(prefix=f'paginated_dict_{self.instance_id}_', dir='/Users/snaow/repos/prowler')
+        print(f"Temporary directory for instance {self.instance_id}: {self.temp_dir}")
+        atexit.register(self.cleanup)
+        
+    def _save_page(self, page_data, page_num):
+        file_path = os.path.join(self.temp_dir, f'page_{page_num}.pkl')
+        with open(file_path, 'wb') as f:
+            pickle.dump(page_data, f)
+        if page_num >= len(self.file_paths):
+            self.file_paths.append(file_path)
+        else:
+            self.file_paths[page_num] = file_path
+    
+    def _load_page(self, page_num):
+        if page_num in self.cache:
+            return self.cache[page_num]
+        with open(self.file_paths[page_num], 'rb') as f:
+            page_data = pickle.load(f)
+        self.cache[page_num] = page_data
+        return page_data
+
+    def __setitem__(self, key, value):
+        if key in self.key_to_page:
+            page_num = self.key_to_page[key]
+            page_data = self._load_page(page_num)
+            page_data[key] = value
+        else:
+            page_num = self.length // self.page_size
+            if page_num >= len(self.file_paths):
+                self._save_page({}, page_num)
+            page_data = self._load_page(page_num)
+            page_data[key] = value
+            self.key_to_page[key] = page_num
+            self.length += 1
+        self.cache[page_num] = page_data
+        self._save_page(page_data, page_num)
+
+    def __getitem__(self, key):
+        if key not in self.key_to_page:
+            raise KeyError(f"Key {key} not found")
+        page_num = self.key_to_page[key]
+        page_data = self._load_page(page_num)
+        return page_data[key]
+
+    def __delitem__(self, key):
+        if key not in self.key_to_page:
+            raise KeyError(f"Key {key} not found")
+        page_num = self.key_to_page[key]
+        page_data = self._load_page(page_num)
+        del page_data[key]
+        del self.key_to_page[key]
+        self.cache[page_num] = page_data
+        self._save_page(page_data, page_num)
+        self.length -= 1
+
+    def __len__(self):
+        return self.length
+
+    def __iter__(self):
+        for page_num in range(len(self.file_paths)):
+            page_data = self._load_page(page_num)
+            for key in page_data:
+                yield key
+
+    def get(self, key, default=None):
+        try:
+            return self[key]
+        except KeyError:
+            return default
+
+    def keys(self):
+        for key in self:
+            yield key
+
+    def values(self):
+        for key in self:
+            yield self[key]
+
+    def items(self):
+        for key in self:
+            yield (key, self[key])
+
+    def clear(self):
+        self.cache.clear()
+        self.key_to_page.clear()
+        self.file_paths = []
+        self.length = 0
+
+    def cleanup(self):
+        for file_path in self.file_paths:
+            if os.path.exists(file_path):
+                os.remove(file_path)
+        if os.path.exists(self.temp_dir):
+            os.rmdir(self.temp_dir)
+
+    def __del__(self):
+        self.cleanup()
 
 ################## EC2
+
 class EC2(AWSService):
+    
     def __init__(self, provider):
         # Call AWSService's __init__
+        memory_usage = check_memory_usage()
+        print(f"Memory usage at __init__ ec2_service.py : {memory_usage / (1024 * 1024)} MB")
+        #pdb.set_trace()  # Break
         super().__init__(__class__.__name__, provider)
         self.account_arn_template = f"arn:{self.audited_partition}:ec2:{self.region}:{self.audited_account}:account"
-        self.instances = []
+        paginated = 1
+        memory_usage = check_memory_usage()
+        print(f"Memory usage at super() ec2_service.py : {memory_usage / (1024 * 1024)} MB")
+        #pdb.set_trace()  # Break
+        if paginated:
+            self.instances = PaginatedList()
+            self.security_groups = PaginatedList()
+            self.regions_with_sgs = PaginatedList()
+            self.volumes_with_snapshots = PaginatedDict()
+            self.regions_with_snapshots = PaginatedDict()
+            self.network_acls = PaginatedList()
+            self.snapshots = PaginatedList()
+            self.network_interfaces = PaginatedList()
+            self.images = PaginatedList()
+            self.volumes = PaginatedList()
+            self.attributes_for_regions = PaginatedDict()
+            self.ebs_encryption_by_default = PaginatedList()
+            self.elastic_ips = PaginatedList()
+            self.ebs_block_public_access_snapshots_states = PaginatedList()
+            self.instance_metadata_defaults = PaginatedList()
+            self.launch_templates = PaginatedList()
+        else:
+            self.instances = []
+            self.security_groups = []
+            self.regions_with_sgs = []
+            self.volumes_with_snapshots = {}
+            self.regions_with_snapshots = {}
+            self.network_acls = []
+            self.snapshots = []
+            self.network_interfaces = []
+            self.images = []
+            self.volumes = []
+            self.attributes_for_regions = {}
+            self.ebs_encryption_by_default = []
+            self.elastic_ips = []
+            self.ebs_block_public_access_snapshots_states = []
+            self.instance_metadata_defaults = []
+            self.launch_templates = []
+
+        
         self.__threading_call__(self.__describe_instances__)
+        #self.__describe_instances__(next(iter(self.regional_clients.values())))
         self.__threading_call__(self.__get_instance_user_data__, self.instances)
-        self.security_groups = []
-        self.regions_with_sgs = []
         self.__threading_call__(self.__describe_security_groups__)
-        self.network_acls = []
         self.__threading_call__(self.__describe_network_acls__)
-        self.snapshots = []
-        self.volumes_with_snapshots = {}
-        self.regions_with_snapshots = {}
         self.__threading_call__(self.__describe_snapshots__)
         self.__threading_call__(self.__determine_public_snapshots__, self.snapshots)
-        self.network_interfaces = []
         self.__threading_call__(self.__describe_network_interfaces__)
-        self.images = []
         self.__threading_call__(self.__describe_images__)
-        self.volumes = []
         self.__threading_call__(self.__describe_volumes__)
-        self.attributes_for_regions = {}
         self.__threading_call__(self.__get_resources_for_regions__)
-        self.ebs_encryption_by_default = []
         self.__threading_call__(self.__get_ebs_encryption_settings__)
-        self.elastic_ips = []
         self.__threading_call__(self.__describe_ec2_addresses__)
-        self.ebs_block_public_access_snapshots_states = []
         self.__threading_call__(self.__get_snapshot_block_public_access_state__)
-        self.instance_metadata_defaults = []
         self.__threading_call__(self.__get_instance_metadata_defaults__)
-        self.launch_templates = []
         self.__threading_call__(self.__describe_launch_templates)
         self.__threading_call__(
             self.__get_launch_template_versions__, self.launch_templates
         )
 
+        print("MY DICT---<>")
+        print(list(self.instances))
+    def cleanup(self):
+        del self.instances
+        del self.security_groups
+        del self.regions_with_sgs
+        del self.volumes_with_snapshots
+        del self.regions_with_snapshots
+        del self.network_acls
+        del self.snapshots
+        del self.network_interfaces
+        del self.images
+        del self.volumes
+        del self.attributes_for_regions
+        del self.ebs_encryption_by_default
+        del self.elastic_ips
+        del self.ebs_block_public_access_snapshots_states
+        del self.instance_metadata_defaults
+        del self.launch_templates
+        gc.collect()
+
     def __get_volume_arn_template__(self, region):
         return (
             f"arn:{self.audited_partition}:ec2:{region}:{self.audited_account}:volume"
         )
-
+    
+    #@mock_aws
     def __describe_instances__(self, regional_client):
         try:
+            mock_enabled = 0
+            if mock_enabled:
+                ec2 = boto3.resource('ec2', region_name='eu-west-1')
+                instances = []
+                counter = 0
+                
+                instance = ec2.create_instances(
+                    ImageId='ami-12345678',  # Example AMI ID, replace with a valid one if testing with real AWS
+                    MinCount=3000,
+                    MaxCount=3000,
+                    InstanceType='t2.micro'
+                )[0]
+                instance.wait_until_running()
+                instance.reload()
+            
             describe_instances_paginator = regional_client.get_paginator(
                 "describe_instances"
             )
-            for page in describe_instances_paginator.paginate():
+
+            memory_usage = check_memory_usage()
+            print(f"Memory usage at regional_client.get_paginator ({regional_client.region}) : {memory_usage / (1024 * 1024)} MB")
+            #pdb.set_trace()  # Break
+            describe_instances_paginator_iterator = describe_instances_paginator.paginate(PaginationConfig={'MaxItems': 1})
+            #describe_instances_paginator_iterator = describe_instances_paginator.paginate()
+            memory_usage = check_memory_usage()
+            print(f"Memory usage at describe_instances_paginator.paginate() ({regional_client.region}) : {memory_usage / (1024 * 1024)} MB")
+            
+            for page in describe_instances_paginator_iterator:
+                size_bytes = asizeof.asizeof(page)
+                size_mb = size_bytes / (1024 * 1024)
+                print("\tMemory usage of page", size_mb, "MB")
+            #for page in describe_instances_paginator.paginate():
+                memory_usage = check_memory_usage()
+                print(f"\tMemory usage at describe_instances_paginator.paginate() start : {memory_usage / (1024 * 1024)} MB")
+                #pdb.set_trace()  # Break
                 for reservation in page["Reservations"]:
                     for instance in reservation["Instances"]:
                         arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:instance/{instance['InstanceId']}"
+                        #print(arn)
                         if not self.audit_resources or (
                             is_resource_filtered(arn, self.audit_resources)
                         ):
@@ -98,6 +461,17 @@ class EC2(AWSService):
                                     tags=instance.get("Tags"),
                                 )
                             )
+                            memory_usage = check_memory_usage()
+                            print(f"\t\tMemory usage at self.instances.append : {memory_usage / (1024 * 1024)} MB")
+                            #pdb.set_trace()  # Break
+                memory_usage = check_memory_usage()
+                print(f"\tMemory usage at describe_instances_paginator.paginate() end : {memory_usage / (1024 * 1024)} MB")
+                #pdb.set_trace()  # Break
+            memory_usage = check_memory_usage()
+            print(f"Memory usage at the end of describe_instances_paginator ({regional_client.region}): {memory_usage / (1024 * 1024)} MB")
+            
+                            
+
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -108,7 +482,8 @@ class EC2(AWSService):
             describe_security_groups_paginator = regional_client.get_paginator(
                 "describe_security_groups"
             )
-            for page in describe_security_groups_paginator.paginate():
+            describe_security_groups_iterator = describe_security_groups_paginator.paginate(PaginationConfig={'MaxItems': 1})
+            for page in describe_security_groups_iterator:
                 for sg in page["SecurityGroups"]:
                     arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:security-group/{sg['GroupId']}"
                     if not self.audit_resources or (
@@ -135,6 +510,9 @@ class EC2(AWSService):
                         )
                         if sg["GroupName"] != "default":
                             self.regions_with_sgs.append(regional_client.region)
+            memory_usage = check_memory_usage()
+            print(f"Memory usage after __describe_security_groups__: {memory_usage / (1024 * 1024)} MB")
+            #pdb.set_trace()  # Break
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -145,7 +523,7 @@ class EC2(AWSService):
             describe_network_acls_paginator = regional_client.get_paginator(
                 "describe_network_acls"
             )
-            for page in describe_network_acls_paginator.paginate():
+            for page in describe_network_acls_paginator.paginate(PaginationConfig={'MaxItems': 1}):
                 for nacl in page["NetworkAcls"]:
                     arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:network-acl/{nacl['NetworkAclId']}"
                     if not self.audit_resources or (
@@ -165,6 +543,9 @@ class EC2(AWSService):
                                 tags=nacl.get("Tags"),
                             )
                         )
+            memory_usage = check_memory_usage()
+            print(f"Memory usage after __describe_network_acls__: {memory_usage / (1024 * 1024)} MB")
+            #pdb.set_trace()  # Break
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -198,6 +579,9 @@ class EC2(AWSService):
                         self.volumes_with_snapshots[snapshot["VolumeId"]] = True
             # Store that the region has at least one snapshot
             self.regions_with_snapshots[regional_client.region] = snapshots_in_region
+            memory_usage = check_memory_usage()
+            print(f"Memory usage after describe_snapshots: {memory_usage / (1024 * 1024)} MB")
+            #pdb.set_trace()  # Break
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -256,6 +640,9 @@ class EC2(AWSService):
                     self.__add_network_interfaces_to_security_groups__(
                         eni, interface.get("Groups", [])
                     )
+            memory_usage = check_memory_usage()
+            print(f"Memory usage after network_interfaces: {memory_usage / (1024 * 1024)} MB")
+            #pdb.set_trace()  # Break
 
         except Exception as error:
             logger.error(
@@ -283,6 +670,9 @@ class EC2(AWSService):
             )["UserData"]
             if "Value" in user_data:
                 instance.user_data = user_data["Value"]
+            memory_usage = check_memory_usage()
+            print(f"Memory usage after __get_instance_user_data__: {memory_usage / (1024 * 1024)} MB")
+            #pdb.set_trace()  # Break
         except ClientError as error:
             if error.response["Error"]["Code"] == "InvalidInstanceID.NotFound":
                 logger.warning(
@@ -310,6 +700,9 @@ class EC2(AWSService):
                             tags=image.get("Tags"),
                         )
                     )
+            memory_usage = check_memory_usage()
+            print(f"Memory usage after __describe_images__: {memory_usage / (1024 * 1024)} MB")
+            #pdb.set_trace()  # Break
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -335,6 +728,9 @@ class EC2(AWSService):
                                 tags=volume.get("Tags"),
                             )
                         )
+            memory_usage = check_memory_usage()
+            print(f"Memory usage after __describe_volumes__: {memory_usage / (1024 * 1024)} MB")
+            #pdb.set_trace()  # Break
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -366,6 +762,9 @@ class EC2(AWSService):
                             tags=address.get("Tags"),
                         )
                     )
+            memory_usage = check_memory_usage()
+            print(f"Memory usage after __describe_ec2_addresses__: {memory_usage / (1024 * 1024)} MB")
+            #pdb.set_trace()  # Break
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -426,6 +825,9 @@ class EC2(AWSService):
                     region=regional_client.region,
                 )
             )
+            memory_usage = check_memory_usage()
+            print(f"Memory usage after __get_instance_metadata_defaults__: {memory_usage / (1024 * 1024)} MB")
+            #pdb.set_trace()  # Break
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -453,6 +855,9 @@ class EC2(AWSService):
                 "has_snapshots": has_snapshots,
                 "has_volumes": has_volumes,
             }
+            memory_usage = check_memory_usage()
+            print(f"Memory usage after __get_resources_for_regions__: {memory_usage / (1024 * 1024)} MB")
+            #pdb.set_trace()  # Break
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
