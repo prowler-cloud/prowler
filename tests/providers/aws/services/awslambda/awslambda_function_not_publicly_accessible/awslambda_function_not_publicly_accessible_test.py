@@ -13,6 +13,7 @@ class Test_awslambda_function_not_publicly_accessible:
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
         from prowler.providers.aws.services.awslambda.awslambda_service import Lambda
+        from prowler.providers.aws.services.elbv2.elbv2_service import ELBv2
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
@@ -20,6 +21,9 @@ class Test_awslambda_function_not_publicly_accessible:
         ), mock.patch(
             "prowler.providers.aws.services.awslambda.awslambda_function_not_publicly_accessible.awslambda_function_not_publicly_accessible.awslambda_client",
             new=Lambda(aws_provider),
+        ), mock.patch(
+            "prowler.providers.aws.services.awslambda.awslambda_function_not_publicly_accessible.awslambda_function_not_publicly_accessible.elbv2_client",
+            new=ELBv2(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.awslambda.awslambda_function_not_publicly_accessible.awslambda_function_not_publicly_accessible import (
@@ -79,6 +83,7 @@ class Test_awslambda_function_not_publicly_accessible:
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
         from prowler.providers.aws.services.awslambda.awslambda_service import Lambda
+        from prowler.providers.aws.services.elbv2.elbv2_service import ELBv2
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
@@ -86,6 +91,9 @@ class Test_awslambda_function_not_publicly_accessible:
         ), mock.patch(
             "prowler.providers.aws.services.awslambda.awslambda_function_not_publicly_accessible.awslambda_function_not_publicly_accessible.awslambda_client",
             new=Lambda(aws_provider),
+        ), mock.patch(
+            "prowler.providers.aws.services.awslambda.awslambda_function_not_publicly_accessible.awslambda_function_not_publicly_accessible.elbv2_client",
+            new=ELBv2(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.awslambda.awslambda_function_not_publicly_accessible.awslambda_function_not_publicly_accessible import (
@@ -163,7 +171,7 @@ class Test_awslambda_function_not_publicly_accessible:
             AssumeRolePolicyDocument=dumps(assume_role_policy_document),
         )["Role"]["Arn"]
 
-        function_name = "test-lambda"
+        function_name = "test-public-lambda"
 
         # Create the lambda function using boto3 client
         lambda_client = client("lambda", region_name=AWS_REGION_EU_WEST_1)
@@ -221,7 +229,7 @@ class Test_awslambda_function_not_publicly_accessible:
 
         # Create the Target Group for Lambda
         target_group = elbv2_client.create_target_group(
-            Name="test-tg",
+            Name="test-public-lambda-tg",
             TargetType="lambda",
         )
         target_group_arn = target_group["TargetGroups"][0]["TargetGroupArn"]
@@ -252,6 +260,7 @@ class Test_awslambda_function_not_publicly_accessible:
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
         from prowler.providers.aws.services.awslambda.awslambda_service import Lambda
+        from prowler.providers.aws.services.elbv2.elbv2_service import ELBv2
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
@@ -259,6 +268,9 @@ class Test_awslambda_function_not_publicly_accessible:
         ), mock.patch(
             "prowler.providers.aws.services.awslambda.awslambda_function_not_publicly_accessible.awslambda_function_not_publicly_accessible.awslambda_client",
             new=Lambda(aws_provider),
+        ), mock.patch(
+            "prowler.providers.aws.services.awslambda.awslambda_function_not_publicly_accessible.awslambda_function_not_publicly_accessible.elbv2_client",
+            new=ELBv2(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.awslambda.awslambda_function_not_publicly_accessible.awslambda_function_not_publicly_accessible import (
@@ -425,6 +437,7 @@ class Test_awslambda_function_not_publicly_accessible:
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
         from prowler.providers.aws.services.awslambda.awslambda_service import Lambda
+        from prowler.providers.aws.services.elbv2.elbv2_service import ELBv2
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
@@ -432,6 +445,9 @@ class Test_awslambda_function_not_publicly_accessible:
         ), mock.patch(
             "prowler.providers.aws.services.awslambda.awslambda_function_not_publicly_accessible.awslambda_function_not_publicly_accessible.awslambda_client",
             new=Lambda(aws_provider),
+        ), mock.patch(
+            "prowler.providers.aws.services.awslambda.awslambda_function_not_publicly_accessible.awslambda_function_not_publicly_accessible.elbv2_client",
+            new=ELBv2(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.awslambda.awslambda_function_not_publicly_accessible.awslambda_function_not_publicly_accessible import (
