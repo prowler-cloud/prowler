@@ -3,16 +3,9 @@ from unittest import mock
 from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, AWS_REGION_US_EAST_1
 
 
-class Test_codebuild_project_no_plaintext_credentials:
+class Test_codebuild_project_no_secrets_in_variables:
     def test_no_project(self):
         codebuild_client = mock.MagicMock
-
-        codebuild_client.audit_config = {
-            "sensitive_environment_variables": [
-                "AWS_ACCESS_KEY_ID",
-                "AWS_SECRET_ACCESS_KEY",
-            ]
-        }
 
         codebuild_client.projects = {}
 
@@ -20,14 +13,14 @@ class Test_codebuild_project_no_plaintext_credentials:
             "prowler.providers.aws.services.codebuild.codebuild_service.Codebuild",
             codebuild_client,
         ), mock.patch(
-            "prowler.providers.aws.services.codebuild.codebuild_project_no_plaintext_credentials.codebuild_project_no_plaintext_credentials.codebuild_client",
+            "prowler.providers.aws.services.codebuild.codebuild_project_no_secrets_in_variables.codebuild_project_no_secrets_in_variables.codebuild_client",
             codebuild_client,
         ):
-            from prowler.providers.aws.services.codebuild.codebuild_project_no_plaintext_credentials.codebuild_project_no_plaintext_credentials import (
-                codebuild_project_no_plaintext_credentials,
+            from prowler.providers.aws.services.codebuild.codebuild_project_no_secrets_in_variables.codebuild_project_no_secrets_in_variables import (
+                codebuild_project_no_secrets_in_variables,
             )
 
-            check = codebuild_project_no_plaintext_credentials()
+            check = codebuild_project_no_secrets_in_variables()
             result = check.execute()
 
             assert len(result) == 0
@@ -49,25 +42,18 @@ class Test_codebuild_project_no_plaintext_credentials:
             )
         }
 
-        codebuild_client.audit_config = {
-            "sensitive_environment_variables": [
-                "AWS_ACCESS_KEY_ID",
-                "AWS_SECRET_ACCESS_KEY",
-            ]
-        }
-
         with mock.patch(
             "prowler.providers.aws.services.codebuild.codebuild_service.Codebuild",
             codebuild_client,
         ), mock.patch(
-            "prowler.providers.aws.services.codebuild.codebuild_project_no_plaintext_credentials.codebuild_project_no_plaintext_credentials.codebuild_client",
+            "prowler.providers.aws.services.codebuild.codebuild_project_no_secrets_in_variables.codebuild_project_no_secrets_in_variables.codebuild_client",
             codebuild_client,
         ):
-            from prowler.providers.aws.services.codebuild.codebuild_project_no_plaintext_credentials.codebuild_project_no_plaintext_credentials import (
-                codebuild_project_no_plaintext_credentials,
+            from prowler.providers.aws.services.codebuild.codebuild_project_no_secrets_in_variables.codebuild_project_no_secrets_in_variables import (
+                codebuild_project_no_secrets_in_variables,
             )
 
-            check = codebuild_project_no_plaintext_credentials()
+            check = codebuild_project_no_secrets_in_variables()
             result = check.execute()
 
             assert len(result) == 1
@@ -96,32 +82,25 @@ class Test_codebuild_project_no_plaintext_credentials:
                 environment_variables=[
                     {
                         "name": "AWS_ACCESS_KEY_ID",
-                        "value": "ExampleValue",
+                        "value": "AKIAIOSFODNN7EXAMPLE",
                         "type": "PARAMETER_STORE",
                     }
                 ],
             )
         }
 
-        codebuild_client.audit_config = {
-            "sensitive_environment_variables": [
-                "AWS_ACCESS_KEY_ID",
-                "AWS_SECRET_ACCESS_KEY",
-            ]
-        }
-
         with mock.patch(
             "prowler.providers.aws.services.codebuild.codebuild_service.Codebuild",
             codebuild_client,
         ), mock.patch(
-            "prowler.providers.aws.services.codebuild.codebuild_project_no_plaintext_credentials.codebuild_project_no_plaintext_credentials.codebuild_client",
+            "prowler.providers.aws.services.codebuild.codebuild_project_no_secrets_in_variables.codebuild_project_no_secrets_in_variables.codebuild_client",
             codebuild_client,
         ):
-            from prowler.providers.aws.services.codebuild.codebuild_project_no_plaintext_credentials.codebuild_project_no_plaintext_credentials import (
-                codebuild_project_no_plaintext_credentials,
+            from prowler.providers.aws.services.codebuild.codebuild_project_no_secrets_in_variables.codebuild_project_no_secrets_in_variables import (
+                codebuild_project_no_secrets_in_variables,
             )
 
-            check = codebuild_project_no_plaintext_credentials()
+            check = codebuild_project_no_secrets_in_variables()
             result = check.execute()
 
             assert len(result) == 1
@@ -157,25 +136,18 @@ class Test_codebuild_project_no_plaintext_credentials:
             )
         }
 
-        codebuild_client.audit_config = {
-            "sensitive_environment_variables": [
-                "AWS_ACCESS_KEY_ID",
-                "AWS_SECRET_ACCESS_KEY",
-            ]
-        }
-
         with mock.patch(
             "prowler.providers.aws.services.codebuild.codebuild_service.Codebuild",
             codebuild_client,
         ), mock.patch(
-            "prowler.providers.aws.services.codebuild.codebuild_project_no_plaintext_credentials.codebuild_project_no_plaintext_credentials.codebuild_client",
+            "prowler.providers.aws.services.codebuild.codebuild_project_no_secrets_in_variables.codebuild_project_no_secrets_in_variables.codebuild_client",
             codebuild_client,
         ):
-            from prowler.providers.aws.services.codebuild.codebuild_project_no_plaintext_credentials.codebuild_project_no_plaintext_credentials import (
-                codebuild_project_no_plaintext_credentials,
+            from prowler.providers.aws.services.codebuild.codebuild_project_no_secrets_in_variables.codebuild_project_no_secrets_in_variables import (
+                codebuild_project_no_secrets_in_variables,
             )
 
-            check = codebuild_project_no_plaintext_credentials()
+            check = codebuild_project_no_secrets_in_variables()
             result = check.execute()
 
             assert len(result) == 1
@@ -204,32 +176,25 @@ class Test_codebuild_project_no_plaintext_credentials:
                 environment_variables=[
                     {
                         "name": "AWS_ACCESS_KEY_ID",
-                        "value": "ExampleValue",
+                        "value": "AKIAIOSFODNN7EXAMPLE",
                         "type": "PLAINTEXT",
                     }
                 ],
             )
         }
 
-        codebuild_client.audit_config = {
-            "sensitive_environment_variables": [
-                "AWS_ACCESS_KEY_ID",
-                "AWS_SECRET_ACCESS_KEY",
-            ]
-        }
-
         with mock.patch(
             "prowler.providers.aws.services.codebuild.codebuild_service.Codebuild",
             codebuild_client,
         ), mock.patch(
-            "prowler.providers.aws.services.codebuild.codebuild_project_no_plaintext_credentials.codebuild_project_no_plaintext_credentials.codebuild_client",
+            "prowler.providers.aws.services.codebuild.codebuild_project_no_secrets_in_variables.codebuild_project_no_secrets_in_variables.codebuild_client",
             codebuild_client,
         ):
-            from prowler.providers.aws.services.codebuild.codebuild_project_no_plaintext_credentials.codebuild_project_no_plaintext_credentials import (
-                codebuild_project_no_plaintext_credentials,
+            from prowler.providers.aws.services.codebuild.codebuild_project_no_secrets_in_variables.codebuild_project_no_secrets_in_variables import (
+                codebuild_project_no_secrets_in_variables,
             )
 
-            check = codebuild_project_no_plaintext_credentials()
+            check = codebuild_project_no_secrets_in_variables()
             result = check.execute()
 
             assert len(result) == 1
