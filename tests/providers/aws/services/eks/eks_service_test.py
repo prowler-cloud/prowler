@@ -138,3 +138,4 @@ class Test_EKS_Service:
         assert eks.clusters[0].endpoint_private_access
         assert eks.clusters[0].public_access_cidrs == ["0.0.0.0/0"]
         assert eks.clusters[0].encryptionConfig
+        assert eks.clusters[0].version == "1.10"

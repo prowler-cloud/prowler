@@ -33,7 +33,8 @@ class TestCloudSQLService:
                 {"type": "PRIMARY", "ipAddress": "66.66.66.66"}
             ]
             assert cloudsql_client.instances[0].public_ip
-            assert cloudsql_client.instances[0].ssl
+            assert cloudsql_client.instances[0].require_ssl
+            assert cloudsql_client.instances[0].ssl_mode == "ENCRYPTED_ONLY"
             assert cloudsql_client.instances[0].automated_backups
             assert cloudsql_client.instances[0].authorized_networks == [
                 {"value": "test"}
@@ -48,7 +49,11 @@ class TestCloudSQLService:
                 {"type": "PRIMARY", "ipAddress": "22.22.22.22"}
             ]
             assert cloudsql_client.instances[1].public_ip
-            assert not cloudsql_client.instances[1].ssl
+            assert not cloudsql_client.instances[1].require_ssl
+            assert (
+                cloudsql_client.instances[1].ssl_mode
+                == "ALLOW_UNENCRYPTED_AND_ENCRYPTED"
+            )
             assert not cloudsql_client.instances[1].automated_backups
             assert cloudsql_client.instances[1].authorized_networks == [
                 {"value": "test"}
