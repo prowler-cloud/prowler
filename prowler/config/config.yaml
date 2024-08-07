@@ -284,6 +284,14 @@ aws:
       "scheduler",
     ]
 
+  # AWS CodeBuild Configuration
+  # aws.codebuild_project_no_secrets_in_variables
+  # CodeBuild sensitive variables that are excluded from the check
+  excluded_sensitive_environment_variables:
+    [
+  
+    ]
+
 # Azure Configuration
 azure:
   # Azure Network Configuration

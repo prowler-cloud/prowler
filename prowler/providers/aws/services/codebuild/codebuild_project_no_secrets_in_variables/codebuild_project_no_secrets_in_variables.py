@@ -12,6 +12,9 @@ from prowler.providers.aws.services.codebuild.codebuild_client import codebuild_
 class codebuild_project_no_secrets_in_variables(Check):
     def execute(self):
         findings = []
+        sensitive_vars_excluded = codebuild_client.audit_config.get(
+            "excluded_sensitive_environment_variables", []
+        )
         for project in codebuild_client.projects.values():
             report = Check_Report_AWS(self.metadata())
             report.region = project.region
@@ -23,7 +26,10 @@ class codebuild_project_no_secrets_in_variables(Check):
 
             if project.environment_variables:
                 for env_var in project.environment_variables:
-                    if env_var.type == "PLAINTEXT":
+                    if (
+                        env_var.type == "PLAINTEXT"
+                        and env_var.name not in sensitive_vars_excluded
+                    ):
                         temp_file = tempfile.NamedTemporaryFile(delete=False)
                         temp_file.write(
                             bytes(
@@ -37,14 +43,19 @@ class codebuild_project_no_secrets_in_variables(Check):
                         with default_settings():
                             secrets.scan_file(temp_file.name)
 
-                        if secrets.json():
-                            secrets_found.append(env_var.name)
+                        detect_secrets_output = secrets.json()
+                        if detect_secrets_output:
+                            secrets_info = [
+                                f"{secret['type']} in variable {env_var.name}"
+                                for secret in detect_secrets_output[temp_file.name]
+                            ]
+                            secrets_found.extend(secrets_info)
 
                         os.remove(temp_file.name)
 
             if secrets_found:
                 report.status = "FAIL"
-                report.status_extended = f"CodeBuild project {project.name} has sensitive environment plaintext credentials."
+                report.status_extended = f"CodeBuild project {project.name} has sensitive environment plaintext credentials in variables: {', '.join(secrets_found)}."
 
             findings.append(report)
 
