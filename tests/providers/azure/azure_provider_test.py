@@ -297,7 +297,6 @@ class TestAzureProvider:
             "prowler.providers.azure.azure_provider.logger"
         ) as mock_logger:
 
-            # Configurar el mock para setup_session y simular HttpResponseError
             mock_setup_session.side_effect = HttpResponseError(
                 "Simulated HttpResponseError"
             )
@@ -305,11 +304,9 @@ class TestAzureProvider:
             with pytest.raises(HttpResponseError) as excinfo:
                 AzureProvider(arguments)
 
-            # Verificar que el error ha sido levantado correctamente
             assert excinfo.type == HttpResponseError
             assert str(excinfo.value) == "Simulated HttpResponseError"
 
-            # Verificar que los mocks fueron llamados correctamente
             mock_setup_session.assert_called_once_with(
                 arguments.az_cli_auth,
                 arguments.sp_env_auth,
@@ -319,7 +316,53 @@ class TestAzureProvider:
                 mock.ANY,
             )
 
-            # Verificar que el error fue registrado correctamente
             mock_logger.error.assert_called_once_with(
                 "HttpResponseError[415]: Simulated HttpResponseError"
+            )
+
+    def test_test_connection_with_exception(self):
+        arguments = Namespace()
+        arguments.subscription_id = None
+        arguments.tenant_id = None
+        # We need to set exactly one auth method
+        arguments.az_cli_auth = None
+        arguments.sp_env_auth = True
+        arguments.browser_auth = None
+        arguments.managed_identity_auth = None
+
+        arguments.config_file = default_config_file_path
+        arguments.fixer_config = default_fixer_config_file_path
+        arguments.azure_region = "AzureCloud"
+
+        with patch(
+            "prowler.providers.azure.azure_provider.AzureProvider.setup_identity",
+            return_value=AzureIdentityInfo(),
+        ), patch(
+            "prowler.providers.azure.azure_provider.AzureProvider.get_locations",
+            return_value={},
+        ), patch(
+            "prowler.providers.azure.azure_provider.AzureProvider.setup_session"
+        ) as mock_setup_session, patch(
+            "prowler.providers.azure.azure_provider.logger"
+        ) as mock_logger:
+
+            mock_setup_session.side_effect = Exception("Simulated Exception")
+
+            with pytest.raises(Exception) as excinfo:
+                AzureProvider(arguments)
+
+            assert excinfo.type == Exception
+            assert str(excinfo.value) == "Simulated Exception"
+
+            mock_setup_session.assert_called_once_with(
+                arguments.az_cli_auth,
+                arguments.sp_env_auth,
+                arguments.browser_auth,
+                arguments.managed_identity_auth,
+                arguments.tenant_id,
+                mock.ANY,
+            )
+
+            mock_logger.critical.assert_called_once_with(
+                "Exception[415]: Simulated Exception"
             )
