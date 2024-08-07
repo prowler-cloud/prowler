@@ -1,14 +1,14 @@
 {
   "Provider": "aws",
   "CheckID": "awslambda_function_not_publicly_accessible",
-  "CheckTitle": "Check if Lambda functions have resource-based policy set as Public.",
+  "CheckTitle": "Check if Lambda functions is publicly accessible through Internet",
   "CheckType": [],
   "ServiceName": "lambda",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:lambda:region:account-id:function/function-name",
   "Severity": "critical",
   "ResourceType": "AwsLambdaFunction",
-  "Description": "Check if Lambda functions have resource-based policy set as Public.",
+  "Description": "Check if Lambda functions is publicly accessible through Internet via ALB and function's permission.",
   "Risk": "Publicly accessible services could expose sensitive data to bad actors.",
   "RelatedUrl": "https://docs.aws.amazon.com/lambda/latest/dg/access-control-resource-based.html",
   "Remediation": {
