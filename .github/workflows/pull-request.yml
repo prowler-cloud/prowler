@@ -31,6 +31,7 @@ jobs:
             docs/**
             permissions/**
             mkdocs.yml
+            .backportrc.json
       - name: Install poetry
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |
