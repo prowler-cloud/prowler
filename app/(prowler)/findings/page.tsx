@@ -2,7 +2,7 @@ import { Spacer } from "@nextui-org/react";
 import React, { Suspense } from "react";
 
 import { ColumnsFindings, SkeletonTableFindings } from "@/components";
-import { DataTable } from "@/components/providers";
+import { DataTableProvider } from "@/components/providers";
 import { Header } from "@/components/ui";
 
 export default async function Findings() {
@@ -22,7 +22,7 @@ export default async function Findings() {
 
 const SSRDataTable = async () => {
   return (
-    <DataTable
+    <DataTableProvider
       columns={ColumnsFindings}
       data={[
         {
