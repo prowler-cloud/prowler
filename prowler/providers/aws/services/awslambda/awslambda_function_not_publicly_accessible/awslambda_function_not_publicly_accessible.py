@@ -47,7 +47,7 @@ class awslambda_function_not_publicly_accessible(Check):
                             or "*" in statement["Principal"].get("AWS", "")
                             or "*" in statement["Principal"].get("CanonicalUser", "")
                             or "elasticloadbalancing.amazonaws.com"
-                            in statement["Principal"].get("Service", "")
+                            == statement["Principal"].get("Service", "")
                         )
                         and (
                             "*" in statement["Action"]
