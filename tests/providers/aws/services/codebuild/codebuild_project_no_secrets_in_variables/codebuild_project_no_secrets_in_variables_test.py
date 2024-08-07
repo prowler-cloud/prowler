@@ -408,9 +408,7 @@ class Test_codebuild_project_no_secrets_in_variables:
             )
         }
 
-        codebuild_client.audit_config = {
-            "excluded_sensitive_environment_variables": []
-        }
+        codebuild_client.audit_config = {"excluded_sensitive_environment_variables": []}
 
         with mock.patch(
             "prowler.providers.aws.services.codebuild.codebuild_service.Codebuild",

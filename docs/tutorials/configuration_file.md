@@ -47,7 +47,6 @@ The following list includes all the AWS checks with configurable variables that 
 | `eks_control_plane_logging_all_types_enabled`                 | `eks_required_log_types`                         | List of Strings |
 | `eks_cluster_uses_a_supported_version`                        | `eks_cluster_oldest_version_supported`                 | String          |
 
-
 ## Azure
 
 ### Configurable Checks
@@ -373,6 +372,14 @@ aws:
   # aws.eks_cluster_uses_a_supported_version
   # EKS clusters must be version 1.28 or higher
   eks_cluster_oldest_version_supported: "1.28"
+
+  # AWS CodeBuild Configuration
+  # aws.codebuild_project_no_secrets_in_variables
+  # CodeBuild sensitive variables that are excluded from the check
+  excluded_sensitive_environment_variables:
+    [
+
+    ]
 
 # Azure Configuration
 azure:
