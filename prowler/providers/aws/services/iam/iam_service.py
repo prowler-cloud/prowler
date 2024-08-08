@@ -386,7 +386,7 @@ class IAM(AWSService):
                         mfa_serial_number = mfa_device["SerialNumber"]
                         try:
                             mfa_type = mfa_serial_number.split(":")[5].split("/")[0]
-                        except Exception:
+                        except IndexError:
                             mfa_type = "unknown"
                         mfa_devices.append(
                             MFADevice(serial_number=mfa_serial_number, type=mfa_type)
