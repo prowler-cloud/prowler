@@ -17,21 +17,6 @@ ec2_allowed_instance_owners:
   [
       "amazon-elb"
   ]
-  # aws.ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports
-ec2_sg_high_risk_ports:
-    [
-        25,
-        110,
-        135,
-        143,
-        445,
-        3000,
-        4333,
-        5000,
-        5500,
-        8080,
-        8088,
-    ]
 
 # AWS VPC Configuration (vpc_endpoint_connections_trust_boundaries, vpc_endpoint_services_allowed_principals_trust_boundaries)
 # Single account environment: No action required. The AWS account number will be automatically added by the checks.
