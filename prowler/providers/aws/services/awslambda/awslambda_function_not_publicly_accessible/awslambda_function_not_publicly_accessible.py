@@ -1,5 +1,7 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.awslambda.awslambda_client import awslambda_client
+from prowler.providers.aws.services.ec2.ec2_client import ec2_client
+from prowler.providers.aws.services.ec2.lib.security_groups import check_security_group
 from prowler.providers.aws.services.elbv2.elbv2_client import elbv2_client
 
 
@@ -19,7 +21,7 @@ class awslambda_function_not_publicly_accessible(Check):
             )
 
             # 1. Check if the function is associated with a public load balancer
-            target_group_redirects_alb_to_function = ""
+            target_group_redirects_public_alb_to_function = ""
 
             for tg_arn, target_group in elbv2_client.target_groups.items():
                 if (
@@ -33,15 +35,24 @@ class awslambda_function_not_publicly_accessible(Check):
                         if lb and lb.scheme == "internet-facing":
                             # 1.1 Check if the ALB security group allows public access
                             for sg_id in lb.security_group_ids:
-                                pass
-
-                            target_group_redirects_alb_to_function = tg_arn
-                            break
+                                security_group = ec2_client.security_groups.get(
+                                    f"arn:{awslambda_client.audited_partition}:ec2:{awslambda_client.region}:{awslambda_client.audited_account}:security-group/{sg_id}",
+                                    None,
+                                )
+                                if security_group:
+                                    for ingress_rule in security_group.ingress_rules:
+                                        if check_security_group(
+                                            ingress_rule, protocol="-1", ports=None
+                                        ):
+                                            target_group_redirects_public_alb_to_function = (
+                                                tg_arn
+                                            )
+                                            break
 
             public_policy = False
 
             # 2. Check if the function policy allows public access
-            if target_group_redirects_alb_to_function and function.policy:
+            if target_group_redirects_public_alb_to_function and function.policy:
                 for statement in function.policy["Statement"]:
                     # Only check allow statements
                     if (
@@ -67,7 +78,7 @@ class awslambda_function_not_publicly_accessible(Check):
                                 statement["Condition"]
                                 .get("ArnLike", {})
                                 .get("AWS:SourceArn", "")
-                                == target_group_redirects_alb_to_function
+                                == target_group_redirects_public_alb_to_function
                             ):
                                 public_policy = True
                                 break
