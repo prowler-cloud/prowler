@@ -166,7 +166,6 @@ class DocumentDB(AWSService):
                     response = regional_client.describe_db_cluster_snapshot_attributes(
                         DBClusterSnapshotIdentifier=snapshot.id
                     )["DBClusterSnapshotAttributesResult"]
-                    logger.debug(f"Response: {response}")
                     for att in response["DBClusterSnapshotAttributes"]:
                         if "all" in att["AttributeValues"]:
                             snapshot.public = True
