@@ -972,11 +972,17 @@ class AwsProvider(Provider):
                 region=aws_region,
             )
 
-        except (ClientError, ProfileNotFound, ArgumentTypeError) as error:
+        except (ClientError, ProfileNotFound) as credentials_error:
             logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{credentials_error.__class__.__name__}[{credentials_error.__traceback__.tb_lineno}]: {credentials_error}"
             )
-            raise error
+            raise credentials_error
+
+        except ArgumentTypeError as validation_error:
+            logger.error(
+                f"{validation_error.__class__.__name__}[{validation_error.__traceback__.tb_lineno}]: {validation_error}"
+            )
+            raise validation_error
 
         except Exception as error:
             logger.critical(
@@ -1005,7 +1011,7 @@ class AwsProvider(Provider):
         try:
             sts_endpoint_url = (
                 f"https://sts.{aws_region}.amazonaws.com"
-                if "cn-" not in aws_region
+                if not aws_region.startswith("cn-")
                 else f"https://sts.{aws_region}.amazonaws.com.cn"
             )
             return session.client("sts", aws_region, endpoint_url=sts_endpoint_url)
