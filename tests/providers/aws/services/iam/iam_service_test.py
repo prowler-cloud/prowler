@@ -480,7 +480,7 @@ class Test_IAM_Service:
         assert len(iam.users) == 1
         assert len(iam.users[0].mfa_devices) == 1
         assert iam.users[0].mfa_devices[0].serial_number == virtual_mfa_device
-        assert iam.users[0].mfa_devices[0].type == "unknown"
+        assert iam.users[0].mfa_devices[0].type == "hardware"
 
     # Test IAM List Virtual MFA Device
     @mock_aws
