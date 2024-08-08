@@ -424,7 +424,7 @@ class Test_IAM_Service:
 
     # Test IAM List MFA Device
     @mock_aws
-    def test__list_mfa_devices__(self):
+    def test__list_mfa_devices_arn__(self):
         # Generate IAM Client
         iam_client = client("iam")
         # Generate IAM user
@@ -454,6 +454,33 @@ class Test_IAM_Service:
             == f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:mfa/{mfa_device_name}"
         )
         assert iam.users[0].mfa_devices[0].type == "mfa"
+
+    # Test IAM List MFA Device
+    @mock_aws
+    def test__list_mfa_devices_number__(self):
+        # Generate IAM Client
+        iam_client = client("iam")
+        # Generate IAM user
+        iam_client.create_user(
+            UserName="user1",
+        )
+        # Create Unknown MFA device
+        virtual_mfa_device = "XXXXXXXXX"
+        iam_client.enable_mfa_device(
+            UserName="user1",
+            SerialNumber=virtual_mfa_device,
+            AuthenticationCode1="123456",
+            AuthenticationCode2="123456",
+        )
+
+        # IAM client for this test class
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        iam = IAM(aws_provider)
+
+        assert len(iam.users) == 1
+        assert len(iam.users[0].mfa_devices) == 1
+        assert iam.users[0].mfa_devices[0].serial_number == virtual_mfa_device
+        assert iam.users[0].mfa_devices[0].type == "unknown"
 
     # Test IAM List Virtual MFA Device
     @mock_aws
