@@ -1120,7 +1120,7 @@ aws:
 
         get_caller_identity = AwsProvider.test_connection(
             session=current_session, aws_region=AWS_REGION_EU_WEST_1
-        )
+        ).result
 
         assert isinstance(get_caller_identity, AWSCallerIdentity)
 
@@ -1161,7 +1161,7 @@ aws:
         # - Use the -f/--region with a valid partition region
         get_caller_identity = AwsProvider.test_connection(
             session=current_session, aws_region=AWS_REGION_CN_NORTH_1
-        )
+        ).result
 
         assert isinstance(get_caller_identity, AWSCallerIdentity)
 
@@ -1203,7 +1203,7 @@ aws:
         # - Use the -f/--region with a valid partition region
         get_caller_identity = AwsProvider.test_connection(
             session=current_session, aws_region=AWS_REGION_GOV_CLOUD_US_EAST_1
-        )
+        ).result
 
         assert isinstance(get_caller_identity, AWSCallerIdentity)
 
@@ -1230,7 +1230,7 @@ aws:
         monkeypatch.setenv("AWS_ACCESS_KEY_ID", access_key["AccessKeyId"])
         monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", access_key["SecretAccessKey"])
 
-        get_caller_identity = AwsProvider.test_connection()
+        get_caller_identity = AwsProvider.test_connection().result
 
         assert isinstance(get_caller_identity, AWSCallerIdentity)
 
@@ -1262,7 +1262,7 @@ aws:
             f"arn:{AWS_COMMERCIAL_PARTITION}:iam::{AWS_ACCOUNT_NUMBER}:role/{role_name}"
         )
 
-        get_caller_identity = AwsProvider.test_connection(role_arn=role_arn)
+        get_caller_identity = AwsProvider.test_connection(role_arn=role_arn).result
 
         assert isinstance(get_caller_identity, AWSCallerIdentity)
 

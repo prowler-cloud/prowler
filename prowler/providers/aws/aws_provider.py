@@ -55,21 +55,9 @@ from prowler.providers.common.provider import Provider
 
 @dataclass
 class TestConnection:
-    _connected: bool = False
-    _error: Exception = None
-    _result: Any = None
-
-    @property
-    def connected(self) -> bool:
-        return self._connected
-
-    @property
-    def error(self) -> Exception:
-        return self._error
-
-    @property
-    def result(self) -> Any:
-        return self._result
+    connected: bool = False
+    error: Exception = None
+    result: Any = None
 
 
 class AwsProvider(Provider):
@@ -132,8 +120,8 @@ class AwsProvider(Provider):
         caller_identity = self.test_connection(
             session=self.session.current_session,
             aws_region=sts_region,
-            raise_exception=True,
-        )
+            raise_on_exception=True,
+        ).result
 
         logger.info("Credentials validated")
         ########
@@ -1157,22 +1145,3 @@ def validate_role_session_name(session_name) -> str:
         raise ArgumentTypeError(
             "Role Session Name must be 2-64 characters long and consist only of upper- and lower-case alphanumeric characters with no spaces. You can also include underscores or any of the following characters: =,.@-"
         )
-
-
-@dataclass
-class TestConnection:
-    _connected: bool = False
-    _error: Exception = None
-    _result: Any = None
-
-    @property
-    def connected(self) -> bool:
-        return self._connected
-
-    @property
-    def error(self) -> Exception:
-        return self._error
-
-    @property
-    def result(self) -> Any:
-        return self._result
