@@ -18,6 +18,7 @@ from tzlocal import get_localzone
 
 from prowler.providers.aws.aws_provider import (
     AwsProvider,
+    TestConnection,
     get_aws_available_regions,
     get_aws_region_for_sts,
 )
@@ -1118,9 +1119,13 @@ aws:
             region_name=AWS_REGION_EU_WEST_1,
         )
 
-        get_caller_identity = AwsProvider.test_connection(
+        test_connection = AwsProvider.test_connection(
             session=current_session, aws_region=AWS_REGION_EU_WEST_1
-        ).result
+        )
+
+        assert isinstance(test_connection, TestConnection)
+
+        get_caller_identity = test_connection.result
 
         assert isinstance(get_caller_identity, AWSCallerIdentity)
 
@@ -1159,9 +1164,13 @@ aws:
         # To use GovCloud or China it is either required:
         # - Set the AWS profile region with a valid partition region
         # - Use the -f/--region with a valid partition region
-        get_caller_identity = AwsProvider.test_connection(
+        test_connection = AwsProvider.test_connection(
             session=current_session, aws_region=AWS_REGION_CN_NORTH_1
-        ).result
+        )
+
+        assert isinstance(test_connection, TestConnection)
+
+        get_caller_identity = test_connection.result
 
         assert isinstance(get_caller_identity, AWSCallerIdentity)
 
@@ -1201,9 +1210,13 @@ aws:
         # To use GovCloud or China it is either required:
         # - Set the AWS profile region with a valid partition region
         # - Use the -f/--region with a valid partition region
-        get_caller_identity = AwsProvider.test_connection(
+        test_connection = AwsProvider.test_connection(
             session=current_session, aws_region=AWS_REGION_GOV_CLOUD_US_EAST_1
-        ).result
+        )
+
+        assert isinstance(test_connection, TestConnection)
+
+        get_caller_identity = test_connection.result
 
         assert isinstance(get_caller_identity, AWSCallerIdentity)
 
@@ -1230,7 +1243,11 @@ aws:
         monkeypatch.setenv("AWS_ACCESS_KEY_ID", access_key["AccessKeyId"])
         monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", access_key["SecretAccessKey"])
 
-        get_caller_identity = AwsProvider.test_connection().result
+        test_connection = AwsProvider.test_connection()
+
+        assert isinstance(test_connection, TestConnection)
+
+        get_caller_identity = test_connection.result
 
         assert isinstance(get_caller_identity, AWSCallerIdentity)
 
@@ -1262,7 +1279,11 @@ aws:
             f"arn:{AWS_COMMERCIAL_PARTITION}:iam::{AWS_ACCOUNT_NUMBER}:role/{role_name}"
         )
 
-        get_caller_identity = AwsProvider.test_connection(role_arn=role_arn).result
+        test_connection = AwsProvider.test_connection(role_arn=role_arn)
+
+        assert isinstance(test_connection, TestConnection)
+
+        get_caller_identity = test_connection.result
 
         assert isinstance(get_caller_identity, AWSCallerIdentity)
 
