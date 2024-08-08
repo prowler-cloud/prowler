@@ -4,19 +4,36 @@ import { revalidatePath } from "next/cache";
 
 import { parseStringify } from "@/lib";
 
-export const getProvider = async () => {
+interface PaginationOptions {
+  page?: number;
+}
+
+export const getProvider = async ({ page = 1 }: PaginationOptions) => {
+  if (isNaN(Number(page))) page = 1;
+  if (page < 1) page = 1;
+
   const keyServer = process.env.LOCAL_SERVER_URL;
 
   try {
-    const providers = await fetch(`${keyServer}/providers`, {
-      headers: {
-        "X-Tenant-ID": `${process.env.HEADER_TENANT_ID}`,
+    const providers = await fetch(
+      `${keyServer}/providers?page%5Bnumber%5D=${page}`,
+      {
+        headers: {
+          "X-Tenant-ID": `${process.env.HEADER_TENANT_ID}`,
+        },
       },
-    });
+    );
     const data = await providers.json();
+    const parsedData = parseStringify(data);
     revalidatePath("/providers");
-    return parseStringify(data);
+    return {
+      providerDetails: parsedData?.data,
+      currentPage: parsedData?.meta?.pagination?.page,
+      totalPages: parsedData?.meta?.pagination?.pages,
+      totalItems: parsedData?.meta?.pagination?.count,
+    };
   } catch (error) {
+    console.error("Error fetching providers:", error);
     return undefined;
   }
 };

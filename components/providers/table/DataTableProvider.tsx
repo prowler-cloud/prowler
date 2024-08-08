@@ -45,7 +45,6 @@ export function DataTableProvider<TData, TValue>({
       sorting,
     },
   });
-
   return (
     <>
       <div className="rounded-md border w-full">

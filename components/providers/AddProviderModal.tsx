@@ -48,7 +48,9 @@ export const AddProviderModal = () => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost">Add Cloud Account</Button>
+        <Button aria-label="Add Cloud Account" variant="ghost">
+          Add Cloud Account
+        </Button>
       </DialogTrigger>
       <DialogContent className="flex flex-col sm:max-w-md md:max-w-4xl">
         <DialogHeader className="mb-6 space-y-3">

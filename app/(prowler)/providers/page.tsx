@@ -1,4 +1,5 @@
 import { Spacer } from "@nextui-org/react";
+import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
 import { getProvider } from "@/actions";
@@ -8,9 +9,16 @@ import {
   DataTableProvider,
   SkeletonTableProvider,
 } from "@/components/providers";
-import { Header } from "@/components/ui";
+import { Header, Pagination } from "@/components/ui";
 
-export default async function Providers() {
+export default async function Providers({
+  searchParams,
+}: {
+  searchParams: {
+    page: number;
+  };
+}) {
+  console.log({ searchParams }, "los searchParamsss!");
   return (
     <>
       <Header title="Providers" icon="fluent:cloud-sync-24-regular" />
@@ -20,18 +28,40 @@ export default async function Providers() {
           <AddProviderModal />
         </div>
         <Spacer y={6} />
-        <Suspense fallback={<SkeletonTableProvider />}>
-          <SSRDataTable />
+        <Suspense key={searchParams.page} fallback={<SkeletonTableProvider />}>
+          <SSRDataTable searchParams={searchParams} />
         </Suspense>
       </div>
     </>
   );
 }
 
-const SSRDataTable = async () => {
-  const providersData = await getProvider();
-  const [providers] = await Promise.all([providersData]);
+const SSRDataTable = async ({
+  searchParams,
+}: {
+  searchParams: {
+    page: number;
+  };
+}) => {
+  // const perPage = searchParams['per_page'] ?? '5'
+  // const page = searchParams.page ? parseInt(searchParams.page) : 1;
+  const providersData = await getProvider({});
+  // const [providers] = await Promise.all([providersData]);
+  // const { providerDetails, currentPage, totalPages, totalItems } = providersData;
+  // console.log(currentPage, totalPages, 'hehe')
+  // if (providers.meta.pagination.count === 0) {
+  //   redirect('/');
+  // }
+  // console.log(providers);
+  // const currentPage = providers.meta.pagination.page;
+  // const pages = providers.meta.pagination.pages;
+  // const count = providers.meta.pagination.count;
+
+  // console.log(`Pages: ${pages}, Count: ${count}`);
   return (
-    <DataTableProvider columns={ColumnsProvider} data={providers?.data ?? []} />
+    <>
+      {/* <DataTableProvider columns={ColumnsProvider} data={providerDetails ?? []} /> */}
+      {/* <Pagination totalPages={totalPages} currentPage={currentPage} /> */}
+    </>
   );
 };
