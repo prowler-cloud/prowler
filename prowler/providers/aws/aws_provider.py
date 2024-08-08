@@ -1,8 +1,10 @@
 import os
 import pathlib
 from argparse import ArgumentTypeError, Namespace
+from dataclasses import dataclass
 from datetime import datetime
 from re import fullmatch
+from typing import Any
 
 from boto3 import client
 from boto3.session import Session
@@ -49,6 +51,25 @@ from prowler.providers.aws.models import (
 )
 from prowler.providers.common.models import Audit_Metadata
 from prowler.providers.common.provider import Provider
+
+
+@dataclass
+class TestConnection:
+    _connected: bool = False
+    _error: Exception = None
+    _result: Any = None
+
+    @property
+    def connected(self) -> bool:
+        return self._connected
+
+    @property
+    def error(self) -> Exception:
+        return self._error
+
+    @property
+    def result(self) -> Any:
+        return self._result
 
 
 class AwsProvider(Provider):
@@ -107,8 +128,11 @@ class AwsProvider(Provider):
             self.session.current_session.region_name, input_regions
         )
 
+        # Use test_connection to validate the credentials
         caller_identity = self.test_connection(
-            session=self.session.current_session, aws_region=sts_region
+            session=self.session.current_session,
+            aws_region=sts_region,
+            raise_exception=True,
         )
 
         logger.info("Credentials validated")
@@ -898,7 +922,8 @@ class AwsProvider(Provider):
         session_duration: int = 3600,
         external_id: str = None,
         mfa_enabled: bool = False,
-    ) -> AWSCallerIdentity:
+        raise_on_exception: bool = True,
+    ) -> TestConnection:
         """
         Validates AWS credentials using the provided session and AWS region.
 
@@ -913,11 +938,14 @@ class AwsProvider(Provider):
             session_duration (int): The duration of the assumed role session in seconds.
             external_id (str): The external ID to use when assuming the role.
             mfa_enabled (bool): Whether MFA (Multi-Factor Authentication) is enabled.
+            raise_on_exception (bool): Whether to raise an exception if an error occurs.
 
         Returns:
-            AWSCallerIdentity: A tuple containing a boolean value indicating
-            the success of the validation and either an AWSCallerIdentity object representing
-            the caller's identity or an Exception object if an error occurs.
+
+            TestConnection: A named tuple containing the result of the validation.
+                - connected (bool): Indicates whether the validation was successful.
+                - result (AWSCallerIdentity): An object representing the caller's identity if the validation was successful.
+                - error (Exception): An exception object if an error occurs during the validation.
 
         Raises:
             Exception: If an error occurs during the validation process.
@@ -965,24 +993,33 @@ class AwsProvider(Provider):
             sts_client = AwsProvider.create_sts_session(session, aws_region)
             caller_identity = sts_client.get_caller_identity()
             # Include the region where the caller_identity has validated the credentials
-            return AWSCallerIdentity(
-                user_id=caller_identity.get("UserId"),
-                account=caller_identity.get("Account"),
-                arn=ARN(caller_identity.get("Arn")),
-                region=aws_region,
+            return TestConnection(
+                connected=True,
+                result=AWSCallerIdentity(
+                    user_id=caller_identity.get("UserId"),
+                    account=caller_identity.get("Account"),
+                    arn=ARN(caller_identity.get("Arn")),
+                    region=aws_region,
+                ),
             )
 
         except (ClientError, ProfileNotFound) as credentials_error:
             logger.error(
                 f"{credentials_error.__class__.__name__}[{credentials_error.__traceback__.tb_lineno}]: {credentials_error}"
             )
-            raise credentials_error
+            if raise_on_exception:
+                raise credentials_error
+            else:
+                return TestConnection(error=credentials_error)
 
         except ArgumentTypeError as validation_error:
             logger.error(
                 f"{validation_error.__class__.__name__}[{validation_error.__traceback__.tb_lineno}]: {validation_error}"
             )
-            raise validation_error
+            if raise_on_exception:
+                raise validation_error
+            else:
+                return TestConnection(error=validation_error)
 
         except Exception as error:
             logger.critical(
@@ -1120,3 +1157,22 @@ def validate_role_session_name(session_name) -> str:
         raise ArgumentTypeError(
             "Role Session Name must be 2-64 characters long and consist only of upper- and lower-case alphanumeric characters with no spaces. You can also include underscores or any of the following characters: =,.@-"
         )
+
+
+@dataclass
+class TestConnection:
+    _connected: bool = False
+    _error: Exception = None
+    _result: Any = None
+
+    @property
+    def connected(self) -> bool:
+        return self._connected
+
+    @property
+    def error(self) -> Exception:
+        return self._error
+
+    @property
+    def result(self) -> Any:
+        return self._result
