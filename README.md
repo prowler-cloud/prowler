@@ -108,3 +108,30 @@ You can access the server in `http://localhost:8080`.
 All changes in the code will be automatically reloaded in the server.
 
 > **NOTE:** notice how the port is different. When developing using docker, the port will be `8080` to prevent conflicts.
+
+## Modify environment variables
+
+Under the root path of the project, you can find a file called `.env.example`. This file shows all the environment variables that the project uses. You can create a new file called `.env` and set the values for the variables.
+
+All these variables will have a default value for the devel environment, but credentials or database connectors will be required for the production one.
+
+Keep in mind if you export the `.env` file to use it with local deployment that you will have to do it within the context of the Poetry interpreter, not before. Otherwise, variables will not be loaded properly.
+
+
+
+## Apply migrations
+
+For migrations, you need to force the `admin` database router. Assuming you have the correct environment variables and Python virtual environment, run:
+
+```console
+python manage.py migrate --database admin
+```
+
+## Apply fixtures
+
+As for migrations, with the same requirements, run:
+
+```console
+# For dev tenants
+python manage.py loaddata api/fixtures/dev_tenants.json --database admin
+```
