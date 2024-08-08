@@ -30,6 +30,7 @@ class Test_ec2_securitygroup_default_restrict_traffic:
         )
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
+        from prowler.providers.aws.services.vpc.vpc_service import VPC
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
@@ -39,6 +40,9 @@ class Test_ec2_securitygroup_default_restrict_traffic:
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_default_restrict_traffic.ec2_securitygroup_default_restrict_traffic.ec2_client",
             new=EC2(aws_provider),
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_securitygroup_default_restrict_traffic.ec2_securitygroup_default_restrict_traffic.vpc_client",
+            new=VPC(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_securitygroup_default_restrict_traffic.ec2_securitygroup_default_restrict_traffic import (
@@ -93,6 +97,7 @@ class Test_ec2_securitygroup_default_restrict_traffic:
         )
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
+        from prowler.providers.aws.services.vpc.vpc_service import VPC
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
@@ -102,6 +107,9 @@ class Test_ec2_securitygroup_default_restrict_traffic:
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_default_restrict_traffic.ec2_securitygroup_default_restrict_traffic.ec2_client",
             new=EC2(aws_provider),
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_securitygroup_default_restrict_traffic.ec2_securitygroup_default_restrict_traffic.vpc_client",
+            new=VPC(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_securitygroup_default_restrict_traffic.ec2_securitygroup_default_restrict_traffic import (
@@ -156,6 +164,7 @@ class Test_ec2_securitygroup_default_restrict_traffic:
         )
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
+        from prowler.providers.aws.services.vpc.vpc_service import VPC
 
         aws_provider = set_mocked_aws_provider(
             audited_regions=[AWS_REGION_US_EAST_1], scan_unused_services=False
@@ -167,6 +176,9 @@ class Test_ec2_securitygroup_default_restrict_traffic:
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_default_restrict_traffic.ec2_securitygroup_default_restrict_traffic.ec2_client",
             new=EC2(aws_provider),
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_securitygroup_default_restrict_traffic.ec2_securitygroup_default_restrict_traffic.vpc_client",
+            new=VPC(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_securitygroup_default_restrict_traffic.ec2_securitygroup_default_restrict_traffic import (
@@ -190,6 +202,7 @@ class Test_ec2_securitygroup_default_restrict_traffic:
         default_sg_name = default_sg["GroupName"]
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
+        from prowler.providers.aws.services.vpc.vpc_service import VPC
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
@@ -199,6 +212,9 @@ class Test_ec2_securitygroup_default_restrict_traffic:
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_default_restrict_traffic.ec2_securitygroup_default_restrict_traffic.ec2_client",
             new=EC2(aws_provider),
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_securitygroup_default_restrict_traffic.ec2_securitygroup_default_restrict_traffic.vpc_client",
+            new=VPC(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_securitygroup_default_restrict_traffic.ec2_securitygroup_default_restrict_traffic import (
