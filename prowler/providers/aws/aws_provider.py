@@ -1,10 +1,8 @@
 import os
 import pathlib
 from argparse import ArgumentTypeError, Namespace
-from dataclasses import dataclass
 from datetime import datetime
 from re import fullmatch
-from typing import Any
 
 from boto3 import client
 from boto3.session import Session
@@ -51,13 +49,7 @@ from prowler.providers.aws.models import (
 )
 from prowler.providers.common.models import Audit_Metadata
 from prowler.providers.common.provider import Provider
-
-
-@dataclass
-class TestConnection:
-    connected: bool = False
-    error: Exception = None
-    result: Any = None
+from prowler.providers.common.test_connection_dataclass import TestConnection
 
 
 class AwsProvider(Provider):

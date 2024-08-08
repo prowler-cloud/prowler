@@ -18,7 +18,6 @@ from tzlocal import get_localzone
 
 from prowler.providers.aws.aws_provider import (
     AwsProvider,
-    TestConnection,
     get_aws_available_regions,
     get_aws_region_for_sts,
 )
@@ -39,6 +38,7 @@ from prowler.providers.aws.models import (
     AWSOutputOptions,
 )
 from prowler.providers.common.provider import Provider
+from prowler.providers.common.test_connection_dataclass import TestConnection
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_ARN,
     AWS_ACCOUNT_NUMBER,
