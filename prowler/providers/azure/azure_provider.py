@@ -28,6 +28,42 @@ from prowler.providers.common.provider import Provider
 
 
 class AzureProvider(Provider):
+    """
+    Represents an Azure provider.
+
+    This class provides functionality to interact with the Azure cloud provider.
+    It handles authentication, region configuration, and provides access to various properties and methods
+    related to the Azure provider.
+
+    Attributes:
+        _type (str): The type of the provider, which is set to "azure".
+        _session (DefaultAzureCredential): The session object associated with the Azure provider.
+        _identity (AzureIdentityInfo): The identity information for the Azure provider.
+        _audit_config (dict): The audit configuration for the Azure provider.
+        _region_config (AzureRegionConfig): The region configuration for the Azure provider.
+        _locations (dict): A dictionary containing the available locations for the Azure provider.
+        _output_options (AzureOutputOptions): The output options for the Azure provider.
+        _mutelist (AzureMutelist): The mutelist object associated with the Azure provider.
+        audit_metadata (Audit_Metadata): The audit metadata for the Azure provider.
+
+    Methods:
+        __init__(self, arguments): Initializes the AzureProvider object.
+        identity(self): Returns the identity of the Azure provider.
+        type(self): Returns the type of the Azure provider.
+        session(self): Returns the session object associated with the Azure provider.
+        region_config(self): Returns the region configuration for the Azure provider.
+        locations(self): Returns a list of available locations for the Azure provider.
+        audit_config(self): Returns the audit configuration for the Azure provider.
+        fixer_config(self): Returns the fixer configuration.
+        output_options(self, options: tuple): Sets the output options for the Azure provider.
+        mutelist(self) -> AzureMutelist: Returns the mutelist object associated with the Azure provider.
+        get_output_mapping(self): Returns a dictionary that maps output keys to their corresponding values.
+        validate_arguments(cls, az_cli_auth, sp_env_auth, browser_auth, managed_identity_auth, tenant_id): Validates the authentication arguments for the Azure provider.
+        setup_region_config(cls, region): Sets up the region configuration for the Azure provider.
+        print_credentials(self): Prints the Azure credentials information.
+        setup_session(cls, az_cli_auth, sp_env_auth, browser_auth, managed_identity_auth, tenant_id, region_config): Set up the Azure session with the specified authentication method.
+    """
+
     _type: str = "azure"
     _session: DefaultAzureCredential
     _identity: AzureIdentityInfo
@@ -52,7 +88,7 @@ class AzureProvider(Provider):
 
         logger.info("Checking if region is different than default one")
         region = arguments.azure_region
-        test_connection = self.test_connection(
+        self._session, self._region_config = self.test_connection(
             az_cli_auth,
             sp_env_auth,
             browser_auth,
@@ -60,8 +96,6 @@ class AzureProvider(Provider):
             tenant_id,
             region,
         )
-        self._session = test_connection[0]
-        self._region_config = test_connection[1]
 
         self._identity = self.setup_identity(
             az_cli_auth,
@@ -85,84 +119,49 @@ class AzureProvider(Provider):
 
     @property
     def identity(self):
-        """
-        Returns the identity of the Azure provider.
-
-        :return: The identity of the Azure provider.
-        """
+        """Returns the identity of the Azure provider."""
         return self._identity
 
     @property
     def type(self):
-        """
-        Returns the type of the Azure provider.
-
-        :return: The type of the Azure provider.
-        """
+        """Returns the type of the Azure provider."""
         return self._type
 
     @property
     def session(self):
-        """
-        Returns the session object associated with the Azure provider.
-
-        Returns:
-            session (object): The session object.
-        """
+        """Returns the session object associated with the Azure provider."""
         return self._session
 
     @property
     def region_config(self):
-        """
-        Returns the region configuration for the Azure provider.
-
-        Returns:
-            dict: A dictionary containing the region configuration.
-        """
+        """Returns the region configuration for the Azure provider."""
         return self._region_config
 
     @property
     def locations(self):
-        """
-        Returns a list of available locations for the Azure provider.
-
-        Returns:
-            list: A list of available locations.
-        """
+        """Returns a list of available locations for the Azure provider."""
         return self._locations
 
     @property
     def audit_config(self):
-        """
-        Returns the audit configuration for the Azure provider.
-
-        :return: The audit configuration.
-        """
+        """Returns the audit configuration for the Azure provider."""
         return self._audit_config
 
     @property
     def fixer_config(self):
-        """
-        Returns the fixer configuration.
-
-        Returns:
-            dict: The fixer configuration.
-        """
+        """Returns the fixer configuration."""
         return self._fixer_config
 
     @property
     def output_options(self):
-        """
-        Returns the output options for the Azure provider.
-
-        :return: A dictionary containing the output options.
-        """
+        """Returns the output options for the Azure provider."""
         return self._output_options
 
     @output_options.setter
     def output_options(self, options: tuple):
-        """
-        Sets the output options for the Azure provider.
+        """Set output options for the Azure provider.
+
+        Sets the output options for the Azure provider using the provided arguments and bulk checks metadata.
 
         Args:
             options (tuple): A tuple containing the arguments and bulk checks metadata.
@@ -177,12 +176,7 @@ class AzureProvider(Provider):
 
     @property
     def mutelist(self) -> AzureMutelist:
-        """
-        Returns the AzureMutelist object associated with this Azure provider.
-
-        Returns:
-            AzureMutelist: The AzureMutelist object.
-        """
+        """Mutelist object associated with this Azure provider."""
         return self._mutelist
 
     @mutelist.setter
@@ -198,12 +192,7 @@ class AzureProvider(Provider):
 
     @property
     def get_output_mapping(self):
-        """
-        Returns a dictionary that maps output keys to their corresponding values.
-
-        Returns:
-            dict: A dictionary containing the output mapping.
-        """
+        """Dictionary that maps output keys to their corresponding values."""
         return {
             # identity_type: identity_id
             # "auth_method": "identity.profile",
@@ -282,8 +271,7 @@ class AzureProvider(Provider):
         )
 
     def print_credentials(self):
-        """
-        Prints the Azure credentials information.
+        """Azure credentials information.
 
         This method prints the Azure Tenant Domain, Azure Tenant ID, Azure Region,
         Azure Subscriptions, Azure Identity Type, and Azure Identity ID.
@@ -320,7 +308,8 @@ class AzureProvider(Provider):
         tenant_id,
         region_config,
     ):
-        """
+        """Returns the Azure credentials object.
+
         Set up the Azure session with the specified authentication method.
 
         Args:
@@ -382,15 +371,16 @@ class AzureProvider(Provider):
 
     @staticmethod
     def test_connection(
-        az_cli_auth,
-        sp_env_auth,
-        browser_auth,
-        managed_identity_auth,
-        tenant_id,
-        region,
+        az_cli_auth=False,
+        sp_env_auth=False,
+        browser_auth=False,
+        managed_identity_auth=False,
+        tenant_id=None,
+        region=None,
         credentials=None,
     ) -> tuple[DefaultAzureCredential, AzureRegionConfig]:
-        """
+        """Test connection to Azure subscription.
+
         Test the connection to an Azure subscription using the provided credentials.
 
         Args:
@@ -404,11 +394,25 @@ class AzureProvider(Provider):
 
         Returns:
             tuple: A tuple containing the credentials and region configuration objects.
+
+        Raises:
+            HttpResponseError: If an HTTP response error occurs.
+            Exception: If an error occurs while setting up the Azure region configuration.
+
+        Examples:
+            >>> AzureProvider.test_connection(az_cli_auth=True, sp_env_auth=False, browser_auth=False, managed_identity_auth=False, tenant_id="tenant_id", region="eastus")
+            (<azure.identity._credentials.default.DefaultAzureCredential object at 0x000001D1A9C7D4C0>, <prowler.providers.azure.models.AzureRegionConfig object at 0x000001D1A9C7D4C0>)
         """
         try:
-            region_config = AzureProvider.setup_region_config(
-                validate_azure_region(region)
-            )
+            try:
+                region_config = AzureProvider.setup_region_config(
+                    validate_azure_region(region)
+                )
+            except Exception as validation_error:
+                logger.error(
+                    f"{validation_error.__class__.__name__}[{validation_error.__traceback__.tb_lineno}]: {validation_error}"
+                )
+                raise validation_error
 
             # Set up the Azure session
             if not credentials:
@@ -429,11 +433,11 @@ class AzureProvider(Provider):
             logger.info(f"Connected to Azure subscription: {subscription.display_name}")
             return credentials, region_config
 
-        except HttpResponseError as error:
+        except HttpResponseError as credentials_error:
             logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{credentials_error.__class__.__name__}[{credentials_error.__traceback__.tb_lineno}]: {credentials_error}"
             )
-            raise error
+            raise credentials_error
 
         except Exception as error:
             logger.critical(
