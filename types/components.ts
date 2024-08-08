@@ -40,8 +40,8 @@ export interface FindingProps {
   id: string;
   attributes: {
     CheckTitle: string;
-    severity: string;
-    status: string;
+    severity: "critical" | "high" | "medium" | "low";
+    status: "fail" | "success" | "muted";
     region: string;
     service: string;
     account: string;
