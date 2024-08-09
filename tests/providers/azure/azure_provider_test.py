@@ -1,7 +1,6 @@
 from argparse import Namespace
 from datetime import datetime
 from os import rmdir
-from unittest import mock
 from unittest.mock import patch
 
 import pytest
@@ -317,7 +316,12 @@ class TestAzureProvider:
                 arguments.browser_auth,
                 arguments.managed_identity_auth,
                 arguments.tenant_id,
-                mock.ANY,
+                AzureRegionConfig(
+                    name=arguments.azure_region,
+                    authority=None,
+                    base_url="https://management.azure.com",
+                    credential_scopes=["https://management.azure.com/.default"],
+                ),
             )
 
             mock_logger.error.assert_called_once_with(
@@ -372,7 +376,12 @@ class TestAzureProvider:
                 arguments.browser_auth,
                 arguments.managed_identity_auth,
                 arguments.tenant_id,
-                mock.ANY,
+                AzureRegionConfig(
+                    name=arguments.azure_region,
+                    authority=None,
+                    base_url="https://management.azure.com",
+                    credential_scopes=["https://management.azure.com/.default"],
+                ),
             )
 
             mock_logger.critical.assert_called_once_with(
