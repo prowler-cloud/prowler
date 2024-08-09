@@ -4,9 +4,11 @@ from os import rmdir
 from unittest.mock import patch
 
 import pytest
-from azure.core.exceptions import HttpResponseError
+from azure.core.credentials import AccessToken
+from azure.core.exceptions import ClientAuthenticationError, HttpResponseError
 from azure.identity import DefaultAzureCredential
 from freezegun import freeze_time
+from mock import MagicMock
 
 from prowler.config.config import (
     default_config_file_path,
@@ -243,17 +245,28 @@ class TestAzureProvider:
         arguments.azure_region = "AzureCloud"
 
         with patch(
-            "prowler.providers.azure.azure_provider.AzureProvider.setup_identity",
-            return_value=AzureIdentityInfo(),
-        ), patch(
-            "prowler.providers.azure.azure_provider.AzureProvider.get_locations",
-            return_value={},
-        ), patch(
+            "prowler.providers.azure.azure_provider.DefaultAzureCredential"
+        ) as mock_default_credential, patch(
             "prowler.providers.azure.azure_provider.AzureProvider.setup_session"
-        ) as mock_setup_session:
+        ) as mock_setup_session, patch(
+            "azure.mgmt.resource.ResourceManagementClient"
+        ) as mock_resource_client:
 
-            mock_setup_session.return_value = DefaultAzureCredential()
-            # We need to set exactly one auth method
+            # Mock the return value of DefaultAzureCredential
+            mock_credentials = MagicMock()
+            mock_credentials.get_token.return_value = AccessToken(
+                token="fake_token", expires_on=9999999999
+            )
+            mock_default_credential.return_value = mock_credentials
+
+            # Mock setup_session to return a mocked session object
+            mock_session = MagicMock()
+            mock_setup_session.return_value = mock_session
+
+            # Mock ResourceManagementClient to avoid real API calls
+            mock_client = MagicMock()
+            mock_resource_client.return_value = mock_client
+
             test_connection = AzureProvider.test_connection(
                 arguments.az_cli_auth,
                 arguments.sp_env_auth,
@@ -267,6 +280,62 @@ class TestAzureProvider:
             assert isinstance(test_connection, Connection)
             assert test_connection.is_connected
             assert test_connection.error is None
+
+    def test_test_connection_with_ClientAuthenticationError(self):
+        arguments = Namespace()
+        arguments.subscription_id = None
+        arguments.tenant_id = "test-tenant-id"
+        # We need to set exactly one auth method
+        arguments.az_cli_auth = False
+        arguments.sp_env_auth = False
+        arguments.browser_auth = True
+        arguments.managed_identity_auth = None
+
+        arguments.config_file = default_config_file_path
+        arguments.fixer_config = default_fixer_config_file_path
+        arguments.azure_region = "AzureCloud"
+
+        with patch(
+            "prowler.providers.azure.azure_provider.AzureProvider.setup_identity",
+            return_value=AzureIdentityInfo(),
+        ), patch(
+            "prowler.providers.azure.azure_provider.AzureProvider.get_locations",
+            return_value={},
+        ), patch(
+            "prowler.providers.azure.azure_provider.DefaultAzureCredential"
+        ) as mock_default_credential, patch(
+            "prowler.providers.azure.azure_provider.AzureProvider.setup_session"
+        ) as mock_setup_session, patch(
+            "azure.mgmt.resource.ResourceManagementClient"
+        ) as mock_resource_client:
+
+            # Mock the return value of DefaultAzureCredential
+            mock_credentials = MagicMock()
+            mock_token = MagicMock()
+            mock_token.token = "fake-token"
+            mock_credentials.get_token.return_value = mock_token
+            mock_default_credential.return_value = mock_credentials
+
+            # Mock setup_session to return a mocked session object
+            mock_session = MagicMock()
+            mock_setup_session.return_value = mock_session
+
+            # Mock ResourceManagementClient to avoid real API calls
+            mock_client = MagicMock()
+            mock_resource_client.return_value = mock_client
+
+            with pytest.raises(ClientAuthenticationError) as excinfo:
+                AzureProvider.test_connection(
+                    arguments.az_cli_auth,
+                    arguments.sp_env_auth,
+                    arguments.browser_auth,
+                    arguments.managed_identity_auth,
+                    arguments.tenant_id,
+                    arguments.azure_region,
+                    raise_on_exception=True,
+                )
+
+            assert excinfo.type == ClientAuthenticationError
 
     def test_test_connection_with_httpresponseerror(self):
         arguments = Namespace()
