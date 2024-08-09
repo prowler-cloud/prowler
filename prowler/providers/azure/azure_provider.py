@@ -438,7 +438,7 @@ class AzureProvider(Provider):
             )
             if raise_exception:
                 raise credentials_error
-            return Connection(is_connected=False, error=credentials_error)
+            return Connection(error=credentials_error)
 
         except Exception as error:
             logger.critical(
@@ -446,7 +446,7 @@ class AzureProvider(Provider):
             )
             if raise_exception:
                 raise error
-            return Connection(is_connected=False, error=error)
+            return Connection(error=error)
 
     @staticmethod
     def check_service_principal_creds_env_vars():

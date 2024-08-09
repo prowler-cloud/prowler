@@ -260,7 +260,12 @@ class TestAzureProvider:
                 arguments.browser_auth,
                 arguments.managed_identity_auth,
                 arguments.tenant_id,
-                arguments.azure_region,
+                AzureRegionConfig(
+                    name=arguments.azure_region,
+                    authority=None,
+                    base_url="https://management.azure.com",
+                    credential_scopes=["https://management.azure.com/.default"],
+                ),
             )
 
             assert isinstance(test_connection, Connection)
