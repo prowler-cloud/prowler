@@ -20,7 +20,7 @@ class ec2_instance_port_oracle_exposed_to_internet(Check):
             report.resource_tags = instance.tags
             is_open_port = False
             if instance.security_groups:
-                for sg in ec2_client.security_groups:
+                for sg in ec2_client.security_groups.values():
                     if sg.id in instance.security_groups:
                         for ingress_rule in sg.ingress_rules:
                             if check_security_group(
