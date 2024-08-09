@@ -8,7 +8,7 @@ from boto3 import client
 from boto3.session import Session
 from botocore.config import Config
 from botocore.credentials import RefreshableCredentials
-from botocore.exceptions import ClientError, ProfileNotFound
+from botocore.exceptions import ClientError, NoCredentialsError, ProfileNotFound
 from botocore.session import Session as BotocoreSession
 from colorama import Fore, Style
 from pytz import utc
@@ -47,9 +47,8 @@ from prowler.providers.aws.models import (
     AWSOutputOptions,
     AWSSession,
 )
-from prowler.providers.common.models import Audit_Metadata
+from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
-from prowler.providers.common.test_connection_dataclass import TestConnection
 
 
 class AwsProvider(Provider):
@@ -109,11 +108,10 @@ class AwsProvider(Provider):
         )
 
         # Use test_connection to validate the credentials
-        caller_identity = self.test_connection(
+        caller_identity = self.validate_credentials(
             session=self.session.current_session,
             aws_region=sts_region,
-            raise_on_exception=True,
-        ).result
+        )
 
         logger.info("Credentials validated")
         ########
@@ -561,11 +559,11 @@ class AwsProvider(Provider):
         ]
         # If -A is set, print Assumed Role ARN
         if (
-            hasattr(self, "_assumed_role")
-            and self._assumed_role.info.role_arn is not None
+            hasattr(self, "_assumed_role_configuration")
+            and self._assumed_role_configuration.info.role_arn is not None
         ):
             report_lines.append(
-                f"Assumed Role ARN: {Fore.YELLOW}[{self._assumed_role.info.role_arn.arn}]{Style.RESET_ALL}"
+                f"Assumed Role ARN: {Fore.YELLOW}[{self._assumed_role_configuration.info.role_arn.arn}]{Style.RESET_ALL}"
             )
         report_title = (
             f"{Style.BRIGHT}Using the AWS credentials below:{Style.RESET_ALL}"
@@ -892,9 +890,40 @@ class AwsProvider(Provider):
             )
             raise error
 
+    # TODO: rename to validate_credentials
+    @staticmethod
+    def validate_credentials(
+        session: Session,
+        aws_region: str,
+    ) -> AWSCallerIdentity:
+        """
+        Validates the AWS credentials using the provided session and AWS region.
+        Args:
+            session (Session): The AWS session object.
+            aws_region (str): The AWS region to validate the credentials.
+        Returns:
+            AWSCallerIdentity: An object containing the caller identity information.
+        Raises:
+            Exception: If an error occurs during the validation process.
+        """
+        try:
+            sts_client = AwsProvider.create_sts_session(session, aws_region)
+            caller_identity = sts_client.get_caller_identity()
+            # Include the region where the caller_identity has validated the credentials
+            return AWSCallerIdentity(
+                user_id=caller_identity.get("UserId"),
+                account=caller_identity.get("Account"),
+                arn=ARN(caller_identity.get("Arn")),
+                region=aws_region,
+            )
+        except Exception as error:
+            logger.critical(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            raise error
+
     @staticmethod
     def test_connection(
-        session: Session = None,
         profile: str = None,
         aws_region: str = AWS_STS_GLOBAL_ENDPOINT_REGION,
         role_arn: str = None,
@@ -903,14 +932,13 @@ class AwsProvider(Provider):
         external_id: str = None,
         mfa_enabled: bool = False,
         raise_on_exception: bool = True,
-    ) -> TestConnection:
+    ) -> Connection:
         """
         Validates AWS credentials using the provided session and AWS region.
 
         If no session is provided, the method will create a new session using the Boto3 default session.
 
         Args:
-            session (Session): The AWS session object.
             profile (str): The AWS profile to use for the session.
             aws_region (str): The AWS region to validate the credentials in.
             role_arn (str): The ARN of the IAM role to assume.
@@ -922,9 +950,8 @@ class AwsProvider(Provider):
 
         Returns:
 
-            TestConnection: A named tuple containing the result of the validation.
-                - connected (bool): Indicates whether the validation was successful.
-                - result (AWSCallerIdentity): An object representing the caller's identity if the validation was successful.
+            Connection: A named tuple containing the result of the validation.
+                - is_connected (bool): Indicates whether the validation was successful.
                 - error (Exception): An exception object if an error occurs during the validation.
 
         Raises:
@@ -942,9 +969,7 @@ class AwsProvider(Provider):
         """
         try:
             # Create the default session if no session is given
-            session = (
-                session if session else AwsProvider.setup_session(mfa_enabled, profile)
-            )
+            session = AwsProvider.setup_session(mfa_enabled, profile)
 
             # Test Connection using the IAM Role
             if role_arn:
@@ -971,26 +996,20 @@ class AwsProvider(Provider):
                 )
 
             sts_client = AwsProvider.create_sts_session(session, aws_region)
-            caller_identity = sts_client.get_caller_identity()
+            _ = sts_client.get_caller_identity()
             # Include the region where the caller_identity has validated the credentials
-            return TestConnection(
-                connected=True,
-                result=AWSCallerIdentity(
-                    user_id=caller_identity.get("UserId"),
-                    account=caller_identity.get("Account"),
-                    arn=ARN(caller_identity.get("Arn")),
-                    region=aws_region,
-                ),
+            return Connection(
+                is_connected=True,
             )
 
-        except (ClientError, ProfileNotFound) as credentials_error:
+        except (ClientError, ProfileNotFound, NoCredentialsError) as credentials_error:
             logger.error(
                 f"{credentials_error.__class__.__name__}[{credentials_error.__traceback__.tb_lineno}]: {credentials_error}"
             )
             if raise_on_exception:
                 raise credentials_error
-            else:
-                return TestConnection(error=credentials_error)
+
+            return Connection(error=credentials_error)
 
         except ArgumentTypeError as validation_error:
             logger.error(
@@ -998,8 +1017,8 @@ class AwsProvider(Provider):
             )
             if raise_on_exception:
                 raise validation_error
-            else:
-                return TestConnection(error=validation_error)
+
+            return Connection(error=validation_error)
 
         except Exception as error:
             logger.critical(
