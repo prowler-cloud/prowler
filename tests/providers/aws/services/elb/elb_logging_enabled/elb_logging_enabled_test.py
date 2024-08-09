@@ -91,6 +91,8 @@ class Test_elb_logging_enabled:
             )
             assert result[0].resource_id == "my-lb"
             assert result[0].resource_arn == elb_arn
+            assert result[0].region == AWS_REGION
+            assert result[0].resource_tags == []
 
     @mock_aws
     def test_elb_with_deletion_protection(self):
@@ -152,3 +154,5 @@ class Test_elb_logging_enabled:
             )
             assert result[0].resource_id == "my-lb"
             assert result[0].resource_arn == elb_arn
+            assert result[0].region == AWS_REGION
+            assert result[0].resource_tags == []

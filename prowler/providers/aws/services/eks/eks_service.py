@@ -85,6 +85,7 @@ class EKS(AWSService):
                 if "encryptionConfig" in describe_cluster["cluster"]:
                     cluster.encryptionConfig = True
                 cluster.tags = [describe_cluster["cluster"].get("tags")]
+                cluster.version = describe_cluster["cluster"].get("version", "")
 
         except Exception as error:
             logger.error(
@@ -101,6 +102,7 @@ class EKSCluster(BaseModel):
     name: str
     arn: str
     region: str
+    version: str = None
     logging: EKSClusterLoggingEntity = None
     security_group_id: str = None
     endpoint_public_access: bool = None

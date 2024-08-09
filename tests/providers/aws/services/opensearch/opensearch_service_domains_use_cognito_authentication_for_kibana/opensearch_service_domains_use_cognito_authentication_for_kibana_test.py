@@ -13,9 +13,13 @@ class Test_opensearch_service_domains_use_cognito_authentication_for_kibana:
     def test_no_domains(self):
         opensearch_client = mock.MagicMock
         opensearch_client.opensearch_domains = []
+
         with mock.patch(
             "prowler.providers.aws.services.opensearch.opensearch_service.OpenSearchService",
             opensearch_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.opensearch.opensearch_service_domains_use_cognito_authentication_for_kibana.opensearch_service_domains_use_cognito_authentication_for_kibana.opensearch_client",
+            new=opensearch_client,
         ):
             from prowler.providers.aws.services.opensearch.opensearch_service_domains_use_cognito_authentication_for_kibana.opensearch_service_domains_use_cognito_authentication_for_kibana import (
                 opensearch_service_domains_use_cognito_authentication_for_kibana,
@@ -41,6 +45,9 @@ class Test_opensearch_service_domains_use_cognito_authentication_for_kibana:
         with mock.patch(
             "prowler.providers.aws.services.opensearch.opensearch_service.OpenSearchService",
             opensearch_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.opensearch.opensearch_service_domains_use_cognito_authentication_for_kibana.opensearch_service_domains_use_cognito_authentication_for_kibana.opensearch_client",
+            new=opensearch_client,
         ):
             from prowler.providers.aws.services.opensearch.opensearch_service_domains_use_cognito_authentication_for_kibana.opensearch_service_domains_use_cognito_authentication_for_kibana import (
                 opensearch_service_domains_use_cognito_authentication_for_kibana,
@@ -74,6 +81,9 @@ class Test_opensearch_service_domains_use_cognito_authentication_for_kibana:
         with mock.patch(
             "prowler.providers.aws.services.opensearch.opensearch_service.OpenSearchService",
             opensearch_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.opensearch.opensearch_service_domains_use_cognito_authentication_for_kibana.opensearch_service_domains_use_cognito_authentication_for_kibana.opensearch_client",
+            new=opensearch_client,
         ):
             from prowler.providers.aws.services.opensearch.opensearch_service_domains_use_cognito_authentication_for_kibana.opensearch_service_domains_use_cognito_authentication_for_kibana import (
                 opensearch_service_domains_use_cognito_authentication_for_kibana,
@@ -108,6 +118,9 @@ class Test_opensearch_service_domains_use_cognito_authentication_for_kibana:
         with mock.patch(
             "prowler.providers.aws.services.opensearch.opensearch_service.OpenSearchService",
             opensearch_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.opensearch.opensearch_service_domains_use_cognito_authentication_for_kibana.opensearch_service_domains_use_cognito_authentication_for_kibana.opensearch_client",
+            new=opensearch_client,
         ):
             from prowler.providers.aws.services.opensearch.opensearch_service_domains_use_cognito_authentication_for_kibana.opensearch_service_domains_use_cognito_authentication_for_kibana import (
                 opensearch_service_domains_use_cognito_authentication_for_kibana,
