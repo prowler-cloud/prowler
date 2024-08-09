@@ -245,6 +245,73 @@ class Test_ARN_Parsing:
                     "resource": IAM_ROLE,
                 },
             },
+            # Root user
+            {
+                "input_arn": f"arn:aws:{IAM_SERVICE}::{ACCOUNT_ID}:root",
+                "expected": {
+                    "partition": COMMERCIAL_PARTITION,
+                    "service": IAM_SERVICE,
+                    "region": None,
+                    "account_id": ACCOUNT_ID,
+                    "resource_type": "root",
+                    "resource": "root",
+                },
+            },
+            {
+                "input_arn": f"arn:{CHINA_PARTITION}:{IAM_SERVICE}::{ACCOUNT_ID}:root",
+                "expected": {
+                    "partition": CHINA_PARTITION,
+                    "service": IAM_SERVICE,
+                    "region": None,
+                    "account_id": ACCOUNT_ID,
+                    "resource_type": "root",
+                    "resource": "root",
+                },
+            },
+            {
+                "input_arn": f"arn:{GOVCLOUD_PARTITION}:{IAM_SERVICE}::{ACCOUNT_ID}:root",
+                "expected": {
+                    "partition": GOVCLOUD_PARTITION,
+                    "service": IAM_SERVICE,
+                    "region": None,
+                    "account_id": ACCOUNT_ID,
+                    "resource_type": "root",
+                    "resource": "root",
+                },
+            },
+            {
+                "input_arn": f"arn:aws:sts::{ACCOUNT_ID}:federated-user/Bob",
+                "expected": {
+                    "partition": COMMERCIAL_PARTITION,
+                    "service": "sts",
+                    "region": None,
+                    "account_id": ACCOUNT_ID,
+                    "resource_type": "federated-user",
+                    "resource": "Bob",
+                },
+            },
+            {
+                "input_arn": f"arn:{CHINA_PARTITION}:sts::{ACCOUNT_ID}:federated-user/Bob",
+                "expected": {
+                    "partition": CHINA_PARTITION,
+                    "service": "sts",
+                    "region": None,
+                    "account_id": ACCOUNT_ID,
+                    "resource_type": "federated-user",
+                    "resource": "Bob",
+                },
+            },
+            {
+                "input_arn": f"arn:{GOVCLOUD_PARTITION}:sts::{ACCOUNT_ID}:federated-user/Bob",
+                "expected": {
+                    "partition": GOVCLOUD_PARTITION,
+                    "service": "sts",
+                    "region": None,
+                    "account_id": ACCOUNT_ID,
+                    "resource_type": "federated-user",
+                    "resource": "Bob",
+                },
+            },
         ]
         for test in test_cases:
             input_arn = test["input_arn"]
@@ -319,6 +386,7 @@ class Test_ARN_Parsing:
             "arn:aws:lambda:eu-west-1:123456789012:function:lambda-function"
         )
         assert is_valid_arn("arn:aws:sns:eu-west-1:123456789012:test.fifo")
+
         assert not is_valid_arn("arn:azure:::012345678910:user/test")
         assert not is_valid_arn("arn:aws:iam::account:user/test")
         assert not is_valid_arn("arn:aws:::012345678910:resource")
