@@ -222,7 +222,7 @@ class ec2_securitygroup_with_many_ingress_egress_rules(Check):
         max_security_group_rules = ec2_client.audit_config.get(
             "max_security_group_rules", 50
         )
-        for security_group in ec2_client.security_groups:
+        for security_group_arn, security_group in ec2_client.security_groups.items():
 ```
 
 ```yaml title="config.yaml"

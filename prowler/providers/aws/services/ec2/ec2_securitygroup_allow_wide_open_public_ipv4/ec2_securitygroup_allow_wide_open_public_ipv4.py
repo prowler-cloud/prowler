@@ -9,7 +9,7 @@ class ec2_securitygroup_allow_wide_open_public_ipv4(Check):
     def execute(self):
         findings = []
         cidr_treshold = 24
-        for security_group in ec2_client.security_groups:
+        for security_group_arn, security_group in ec2_client.security_groups.items():
             # Check if ignoring flag is set and if the VPC and the SG is in use
             if ec2_client.provider.scan_unused_services or (
                 security_group.vpc_id in vpc_client.vpcs
@@ -20,7 +20,7 @@ class ec2_securitygroup_allow_wide_open_public_ipv4(Check):
                 report.region = security_group.region
                 report.resource_details = security_group.name
                 report.resource_id = security_group.id
-                report.resource_arn = security_group.arn
+                report.resource_arn = security_group_arn
                 report.resource_tags = security_group.tags
                 report.status = "PASS"
                 report.status_extended = f"Security group {security_group.name} ({security_group.id}) has no potential wide-open non-RFC1918 address."
