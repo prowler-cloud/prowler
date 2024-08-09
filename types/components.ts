@@ -9,6 +9,12 @@ export type IconProps = {
   style?: React.CSSProperties;
 };
 
+export interface searchParamsProps {
+  searchParams: {
+    page?: string;
+  };
+}
+
 export interface ProviderProps {
   id: string;
   type: "providers";
@@ -64,4 +70,13 @@ export interface FindingProps {
     referenceInformation: string;
     referenceLink: string;
   };
+}
+
+export interface MetaDataProps {
+  pagination: {
+    page: number;
+    pages: number;
+    count: number;
+  };
+  version: string;
 }

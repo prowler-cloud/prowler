@@ -1,13 +1,15 @@
 "use client";
 
-import { Button } from "@nextui-org/react";
 import {
   ColumnDef,
   flexRender,
   getCoreRowModel,
   getPaginationRowModel,
+  getSortedRowModel,
+  SortingState,
   useReactTable,
 } from "@tanstack/react-table";
+import { useState } from "react";
 
 import {
   Table,
@@ -17,23 +19,34 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table/Table";
+import { MetaDataProps } from "@/types";
+
+import { DataTablePagination } from "./DataTablePagination";
 
 interface DataTableProviderProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
+  metadata?: MetaDataProps;
 }
 
 export function DataTableProvider<TData, TValue>({
   columns,
   data,
+  metadata,
 }: DataTableProviderProps<TData, TValue>) {
+  const [sorting, setSorting] = useState<SortingState>([]);
   const table = useReactTable({
     data,
     columns,
+    enableSorting: true,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    onSortingChange: setSorting,
+    getSortedRowModel: getSortedRowModel(),
+    state: {
+      sorting,
+    },
   });
-
   return (
     <>
       <div className="rounded-md border w-full">
@@ -86,23 +99,8 @@ export function DataTableProvider<TData, TValue>({
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
-        <Button
-          variant="solid"
-          size="sm"
-          onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
-        >
-          Previous
-        </Button>
-        <Button
-          variant="solid"
-          size="sm"
-          onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}
-        >
-          Next
-        </Button>
+      <div className="flex items-center w-full space-x-2 py-4">
+        <DataTablePagination metadata={metadata} />
       </div>
     </>
   );

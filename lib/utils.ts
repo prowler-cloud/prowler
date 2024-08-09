@@ -1,6 +1,8 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
+import { MetaDataProps } from "@/types";
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
@@ -8,6 +10,14 @@ export function cn(...inputs: ClassValue[]) {
 export const parseStringify = (value: any) => JSON.parse(JSON.stringify(value));
 
 export const convertFileToUrl = (file: File) => URL.createObjectURL(file);
+
+export const extractPaginationInfo = (metadata: MetaDataProps) => {
+  const currentPage = metadata?.pagination.page ?? "1";
+  const totalPages = metadata?.pagination.pages;
+  const totalEntries = metadata?.pagination.count;
+
+  return { currentPage, totalPages, totalEntries };
+};
 
 // FORMAT DATE TIME
 export const formatDateTime = (

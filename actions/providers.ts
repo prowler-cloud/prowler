@@ -1,22 +1,30 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 import { parseStringify } from "@/lib";
 
-export const getProvider = async () => {
+export const getProvider = async ({ page = 1 }) => {
+  if (isNaN(Number(page)) || page < 1) redirect("/providers");
+
   const keyServer = process.env.LOCAL_SERVER_URL;
 
   try {
-    const providers = await fetch(`${keyServer}/providers`, {
-      headers: {
-        "X-Tenant-ID": `${process.env.HEADER_TENANT_ID}`,
+    const providers = await fetch(
+      `${keyServer}/providers?page%5Bnumber%5D=${page}`,
+      {
+        headers: {
+          "X-Tenant-ID": `${process.env.HEADER_TENANT_ID}`,
+        },
       },
-    });
+    );
     const data = await providers.json();
+    const parsedData = parseStringify(data);
     revalidatePath("/providers");
-    return parseStringify(data);
+    return parsedData;
   } catch (error) {
+    console.error("Error fetching providers:", error);
     return undefined;
   }
 };
