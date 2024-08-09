@@ -10,19 +10,20 @@ import {
 import { ColumnDef } from "@tanstack/react-table";
 
 import { VerticalDotsIcon } from "@/components/icons";
-import { FindingsProps } from "@/types";
+import { StatusBadge } from "@/components/ui";
+import { FindingProps } from "@/types";
 
-const getFindingsAttributes = (row: { original: FindingsProps }) => {
+const getFindingsAttributes = (row: { original: FindingProps }) => {
   return row.original.attributes;
 };
 
-export const ColumnsFindings: ColumnDef<FindingsProps>[] = [
+export const ColumnsFindings: ColumnDef<FindingProps>[] = [
   {
     accessorKey: "checkTitle",
     header: "Check",
     cell: ({ row }) => {
       const { CheckTitle } = getFindingsAttributes(row);
-      return <p className="text-medium">{CheckTitle}</p>;
+      return <p className="text-sm">{CheckTitle}</p>;
     },
   },
   {
@@ -30,7 +31,7 @@ export const ColumnsFindings: ColumnDef<FindingsProps>[] = [
     header: "Severity",
     cell: ({ row }) => {
       const { severity } = getFindingsAttributes(row);
-      return <p className="text-medium">{severity}</p>;
+      return <p className="text-sm text-nowrap">{severity}</p>;
     },
   },
   {
@@ -38,7 +39,7 @@ export const ColumnsFindings: ColumnDef<FindingsProps>[] = [
     header: "Status",
     cell: ({ row }) => {
       const { status } = getFindingsAttributes(row);
-      return <p className="text-medium">{status}</p>;
+      return <StatusBadge status={status} />;
     },
   },
   {
@@ -46,7 +47,7 @@ export const ColumnsFindings: ColumnDef<FindingsProps>[] = [
     header: "Region",
     cell: ({ row }) => {
       const { region } = getFindingsAttributes(row);
-      return <p className="text-medium">{region}</p>;
+      return <p className="text-sm text-nowrap">{region}</p>;
     },
   },
   {
@@ -54,7 +55,7 @@ export const ColumnsFindings: ColumnDef<FindingsProps>[] = [
     header: "Service",
     cell: ({ row }) => {
       const { service } = getFindingsAttributes(row);
-      return <p className="text-medium">{service}</p>;
+      return <p className="text-sm">{service}</p>;
     },
   },
   {
@@ -62,7 +63,7 @@ export const ColumnsFindings: ColumnDef<FindingsProps>[] = [
     header: "Account",
     cell: ({ row }) => {
       const { account } = getFindingsAttributes(row);
-      return <p className="text-medium">{account}</p>;
+      return <p className="text-sm">{account}</p>;
     },
   },
   {

@@ -23,7 +23,7 @@ import { MetaDataProps } from "@/types";
 
 import { DataTablePagination } from "./DataTablePagination";
 
-interface DataTableProps<TData, TValue> {
+interface DataTableProviderProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   metadata?: MetaDataProps;
@@ -33,7 +33,7 @@ export function DataTableProvider<TData, TValue>({
   columns,
   data,
   metadata,
-}: DataTableProps<TData, TValue>) {
+}: DataTableProviderProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const table = useReactTable({
     data,
