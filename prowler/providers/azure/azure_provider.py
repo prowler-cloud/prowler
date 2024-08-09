@@ -23,7 +23,7 @@ from prowler.providers.azure.models import (
     AzureOutputOptions,
     AzureRegionConfig,
 )
-from prowler.providers.common.models import Audit_Metadata
+from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
 
 
@@ -88,15 +88,18 @@ class AzureProvider(Provider):
 
         logger.info("Checking if region is different than default one")
         region = arguments.azure_region
-        self._session, self._region_config = self.test_connection(
+        self._region_config = self.setup_region_config(region)
+
+        # Set up the Azure session
+        self._session = self.setup_session(
             az_cli_auth,
             sp_env_auth,
             browser_auth,
             managed_identity_auth,
             tenant_id,
-            region,
         )
 
+        # Set up the identity
         self._identity = self.setup_identity(
             az_cli_auth,
             sp_env_auth,
@@ -262,6 +265,14 @@ class AzureProvider(Provider):
             AzureRegionConfig: The region configuration object.
 
         """
+        try:
+            validate_azure_region(region)
+        except Exception as validation_error:
+            logger.error(
+                f"{validation_error.__class__.__name__}[{validation_error.__traceback__.tb_lineno}]: {validation_error}"
+            )
+            raise validation_error
+
         config = get_regions_config(region)
         return AzureRegionConfig(
             name=region,
@@ -299,14 +310,13 @@ class AzureProvider(Provider):
 
     # TODO: setup_session or setup_credentials?
     # This should be setup_credentials, since it is setting up the credentials for the provider
-    @staticmethod
     def setup_session(
+        self,
         az_cli_auth,
         sp_env_auth,
         browser_auth,
         managed_identity_auth,
         tenant_id,
-        region_config,
     ):
         """Returns the Azure credentials object.
 
@@ -328,13 +338,13 @@ class AzureProvider(Provider):
 
         """
         # Validate the authentication arguments
-        AzureProvider.validate_arguments(
+        self.validate_arguments(
             az_cli_auth, sp_env_auth, browser_auth, managed_identity_auth, tenant_id
         )
         # Browser auth creds cannot be set with DefaultAzureCredentials()
         if not browser_auth:
             if sp_env_auth:
-                AzureProvider.check_service_principal_creds_env_vars()
+                self.check_service_principal_creds_env_vars()
             try:
                 # Since the input vars come as True when it is wanted to be used, we need to inverse it since
                 # DefaultAzureCredential sets the auth method excluding the others
@@ -349,7 +359,7 @@ class AzureProvider(Provider):
                     # Azure Auth using PowerShell is not supported
                     exclude_powershell_credential=True,
                     # set Authority of a Microsoft Entra endpoint
-                    authority=region_config.authority,
+                    authority=self.region_config.authority,
                 )
             except Exception as error:
                 logger.critical("Failed to retrieve azure credentials")
@@ -376,54 +386,43 @@ class AzureProvider(Provider):
         browser_auth=False,
         managed_identity_auth=False,
         tenant_id=None,
-        region=None,
-        credentials=None,
-    ) -> tuple[DefaultAzureCredential, AzureRegionConfig]:
+        region="AzureGlobal",
+        raise_exception=True,
+    ) -> bool:
         """Test connection to Azure subscription.
 
         Test the connection to an Azure subscription using the provided credentials.
 
         Args:
-            credentials: The credentials object used to authenticate with Azure.
-            az_cli_auth (bool): Flag indicating whether to use Azure CLI authentication.
-            sp_env_auth (bool): Flag indicating whether to use Service Principal authentication with environment variables.
-            browser_auth (bool): Flag indicating whether to use interactive browser authentication.
-            managed_identity_auth (bool): Flag indicating whether to use managed identity authentication.
+            az_cli_auth (bool): Flag indicating if Azure CLI authentication is used.
+            sp_env_auth (bool): Flag indicating if Service Principal environment authentication is used.
+            browser_auth (bool): Flag indicating if browser authentication is used.
+            managed_identity_auth (bool): Flag indicating if managed entity authentication is used.
             tenant_id (str): The Azure Active Directory tenant ID.
             region (str): The Azure region.
+            raise_exception (bool): Flag indicating whether to raise an exception if the connection fails.
 
         Returns:
-            tuple: A tuple containing the credentials and region configuration objects.
+            bool: True if the connection is successful, False otherwise.
 
         Raises:
-            HttpResponseError: If an HTTP response error occurs.
-            Exception: If an error occurs while setting up the Azure region configuration.
+            Exception: If failed to test the connection to Azure subscription.
 
         Examples:
-            >>> AzureProvider.test_connection(az_cli_auth=True, sp_env_auth=False, browser_auth=False, managed_identity_auth=False, tenant_id="tenant_id", region="eastus")
-            (<azure.identity._credentials.default.DefaultAzureCredential object at 0x000001D1A9C7D4C0>, <prowler.providers.azure.models.AzureRegionConfig object at 0x000001D1A9C7D4C0>)
+            >>> AzureProvider.test_connection(az_cli_auth=True)
+            True
         """
         try:
-            try:
-                region_config = AzureProvider.setup_region_config(
-                    validate_azure_region(region)
-                )
-            except Exception as validation_error:
-                logger.error(
-                    f"{validation_error.__class__.__name__}[{validation_error.__traceback__.tb_lineno}]: {validation_error}"
-                )
-                raise validation_error
-
+            region_config = AzureProvider.setup_region_config(region)
             # Set up the Azure session
-            if not credentials:
-                credentials = AzureProvider.setup_session(
-                    az_cli_auth,
-                    sp_env_auth,
-                    browser_auth,
-                    managed_identity_auth,
-                    tenant_id,
-                    region_config,
-                )
+            credentials = AzureProvider.setup_session(
+                az_cli_auth,
+                sp_env_auth,
+                browser_auth,
+                managed_identity_auth,
+                tenant_id,
+                region_config,
+            )
             # Create a SubscriptionClient
             subscription_client = SubscriptionClient(credentials)
 
@@ -431,19 +430,23 @@ class AzureProvider(Provider):
             subscription = next(subscription_client.subscriptions.list())
 
             logger.info(f"Connected to Azure subscription: {subscription.display_name}")
-            return credentials, region_config
+            return Connection(is_connected=True)
 
         except HttpResponseError as credentials_error:
             logger.error(
                 f"{credentials_error.__class__.__name__}[{credentials_error.__traceback__.tb_lineno}]: {credentials_error}"
             )
-            raise credentials_error
+            if raise_exception:
+                raise credentials_error
+            return Connection(is_connected=False, error=credentials_error)
 
         except Exception as error:
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            raise error
+            if raise_exception:
+                raise error
+            return Connection(is_connected=False, error=error)
 
     @staticmethod
     def check_service_principal_creds_env_vars():
