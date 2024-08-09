@@ -12,7 +12,7 @@ from prowler.config.config import (
 )
 from prowler.lib.logger import logger
 from prowler.lib.utils.utils import print_boxes
-from prowler.providers.common.models import Audit_Metadata
+from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
 from prowler.providers.kubernetes.lib.mutelist.mutelist import KubernetesMutelist
 from prowler.providers.kubernetes.models import (
@@ -40,9 +40,7 @@ class KubernetesProvider(Provider):
             arguments (dict): A dictionary containing configuration arguments.
         """
         logger.info("Instantiating Kubernetes Provider ...")
-        self._session = KubernetesProvider.test_connection(
-            arguments.kubeconfig_file, arguments.context
-        )
+        self._session = self.setup_session(arguments.kubeconfig_file, arguments.context)
         if not arguments.namespace:
             logger.info("Retrieving all namespaces ...")
             self._namespaces = self.get_all_namespaces()
@@ -181,7 +179,9 @@ class KubernetesProvider(Provider):
         return KubernetesSession(api_client=client.ApiClient(), context=context)
 
     @staticmethod
-    def test_connection(kubeconfig_file, input_context) -> KubernetesSession:
+    def test_connection(
+        kubeconfig_file: str, input_context: str, raise_on_exception: bool = True
+    ) -> Connection:
         """
         Tests the connection to the Kubernetes cluster.
 
@@ -193,14 +193,16 @@ class KubernetesProvider(Provider):
             KubernetesSession: A Kubernetes session.
         """
         try:
-            session = KubernetesProvider.setup_session(kubeconfig_file, input_context)
+            KubernetesProvider.setup_session(kubeconfig_file, input_context)
             client.CoreV1Api().list_namespace(timeout_seconds=2, _request_timeout=2)
-            return session
+            return Connection(is_connected=True)
         except Exception as error:
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            raise error
+            if raise_on_exception:
+                raise error
+            return Connection(error=error)
 
     def search_and_save_roles(
         self, roles: list, role_bindings, context_user: str, role_binding_type: str
