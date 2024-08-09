@@ -19,6 +19,7 @@ from prowler.providers.azure.models import (
     AzureOutputOptions,
     AzureRegionConfig,
 )
+from prowler.providers.common.models import Connection
 
 
 class TestAzureProvider:
@@ -262,14 +263,9 @@ class TestAzureProvider:
                 arguments.tenant_id,
                 arguments.azure_region,
             )
-            assert isinstance(
-                test_connection[0],
-                DefaultAzureCredential,
-            )
-            assert isinstance(
-                test_connection[1],
-                AzureRegionConfig,
-            )
+
+            assert isinstance(test_connection, Connection)
+            assert test_connection.is_connected
 
     def test_test_connection_with_httpresponseerror(self):
         arguments = Namespace()
@@ -302,7 +298,15 @@ class TestAzureProvider:
             )
 
             with pytest.raises(HttpResponseError) as excinfo:
-                AzureProvider(arguments)
+                AzureProvider.test_connection(
+                    arguments.az_cli_auth,
+                    arguments.sp_env_auth,
+                    arguments.browser_auth,
+                    arguments.managed_identity_auth,
+                    arguments.tenant_id,
+                    arguments.azure_region,
+                    raise_exception=True,
+                )
 
             assert excinfo.type == HttpResponseError
             assert str(excinfo.value) == "Simulated HttpResponseError"
@@ -317,7 +321,7 @@ class TestAzureProvider:
             )
 
             mock_logger.error.assert_called_once_with(
-                "HttpResponseError[415]: Simulated HttpResponseError"
+                "HttpResponseError[418]: Simulated HttpResponseError"
             )
 
     def test_test_connection_with_exception(self):
@@ -349,7 +353,15 @@ class TestAzureProvider:
             mock_setup_session.side_effect = Exception("Simulated Exception")
 
             with pytest.raises(Exception) as excinfo:
-                AzureProvider(arguments)
+                AzureProvider.test_connection(
+                    arguments.az_cli_auth,
+                    arguments.sp_env_auth,
+                    arguments.browser_auth,
+                    arguments.managed_identity_auth,
+                    arguments.tenant_id,
+                    arguments.azure_region,
+                    raise_exception=True,
+                )
 
             assert excinfo.type == Exception
             assert str(excinfo.value) == "Simulated Exception"
@@ -364,5 +376,5 @@ class TestAzureProvider:
             )
 
             mock_logger.critical.assert_called_once_with(
-                "Exception[415]: Simulated Exception"
+                "Exception[418]: Simulated Exception"
             )
