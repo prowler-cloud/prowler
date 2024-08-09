@@ -23,3 +23,20 @@ def get_tenant():
 @pytest.fixture
 def tenant_header(get_tenant):
     return {"X-Tenant-ID": str(get_tenant.id)}
+
+
+# Put this in your conftest.py
+@pytest.fixture(scope="session")
+def celery_config():
+    return {
+        "broker_url": "redis://",
+        "result_backend": "redis://",
+        "broker_connection_retry_on_startup": True,
+    }
+
+
+@pytest.fixture(scope="session")
+def celery_includes():
+    return [
+        "tasks",
+    ]

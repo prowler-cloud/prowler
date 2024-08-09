@@ -16,6 +16,11 @@ start_prod_server() {
   poetry run gunicorn -c config/guniconf.py config.wsgi:application
 }
 
+start_worker() {
+  echo "Starting the development worker..."
+  poetry run python -m celery -A config.celery worker -l "${DJANGO_LOGGING_LEVEL:-info}"
+}
+
 case "$1" in
   dev)
     apply_migrations
@@ -25,8 +30,11 @@ case "$1" in
     apply_migrations
     start_prod_server
     ;;
+  worker)
+    start_worker
+    ;;
   *)
-    echo "Usage: $0 {dev|prod}"
+    echo "Usage: $0 {dev|prod|worker}"
     exit 1
     ;;
 esac

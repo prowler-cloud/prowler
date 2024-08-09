@@ -13,6 +13,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      valkey:
+        condition: service_healthy
     entrypoint:
       - "../docker-entrypoint.sh"
       - "prod"
@@ -38,6 +40,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      valkey:
+        condition: service_healthy
     entrypoint:
       - "../docker-entrypoint.sh"
       - "dev"
@@ -61,3 +65,38 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+
+  valkey:
+    image: valkey/valkey:7-alpine3.19
+    ports:
+      - "${VALKEY_PORT:-6379}:6379"
+    hostname: "valkey"
+    volumes:
+      - ./_data/valkey:/data
+    env_file:
+      - path: ./.env
+        required: false
+    healthcheck:
+      test: ["CMD-SHELL", "sh -c 'valkey-cli ping'"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  worker:
+    build:
+      dockerfile: Dockerfile
+    image: prowler-worker
+    env_file:
+      - path: ./.env
+        required: false
+    profiles:
+      - dev
+      - prod
+    depends_on:
+      valkey:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    entrypoint:
+      - "../docker-entrypoint.sh"
+      - "worker"

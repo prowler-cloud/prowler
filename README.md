@@ -19,7 +19,7 @@
 
 **Prowler** is an Open Source security tool to perform AWS, Azure, Google Cloud and Kubernetes security best practices assessments, audits, incident response, continuous monitoring, hardening and forensics readiness, and also remediations! We have Prowler CLI (Command Line Interface) that we call Prowler Open Source and a service on top of it that we call <a href="https://prowler.com">Prowler SaaS</a>.
 
-This repository contains the REST API and Task Runner components for Prowler, which facilitate a complete backend that interacts with the Prowler SDK and is used by the Prowler UI.
+This repository contains the JSON API and Task Runner components for Prowler, which facilitate a complete backend that interacts with the Prowler SDK and is used by the Prowler UI.
 
 # Production deployment
 
@@ -28,6 +28,27 @@ This repository contains the REST API and Task Runner components for Prowler, wh
 ```console
 poetry install
 poetry shell
+```
+
+## Modify environment variables
+
+Under the root path of the project, you can find a file called `.env.example`. This file shows all the environment variables that the project uses. You can *must* create a new file called `.env` and set the values for the variables.
+
+Keep in mind if you export the `.env` file to use it with local deployment that you will have to do it within the context of the Poetry interpreter, not before. Otherwise, variables will not be loaded properly.
+
+## Run migrations
+
+For migrations, you need to force the `admin` database router. Assuming you have the correct environment variables and Python virtual environment, run:
+
+```console
+python manage.py migrate --database admin
+```
+
+## Run the Celery worker
+
+```console
+cd src/backend
+python -m celery -A config.celery worker -l info -E
 ```
 
 ## Run the Django server with Gunicorn
@@ -39,8 +60,20 @@ gunicorn -c backend/guniconf.py backend.wsgi:application
 
 > By default, the Gunicorn server will try to use as many workers as your machine can handle. You can manually change that in the `src/backend/backend/guniconf.py` file.
 
-
 # 💻 Development guide
+
+The Prowler API is composed of the following components:
+
+- The JSON API, which is the main component of the API.
+- The Celery worker, which is responsible for executing the background tasks that are defined in the JSON API.
+- The PostgreSQL database, which is used to store the data.
+- The Valkey database, which is used to manage the background tasks.
+
+## Note about Valkey
+
+[Valkey](https://valkey.io/) is an open source (BSD) high performance key/value datastore.
+
+Valkey exposes a Redis 7.2 compliant API. Any service that exposes the Redis API can be used with Prowler API.
 
 ## Local deployment
 
@@ -57,6 +90,14 @@ git clone git@github.com:prowler-cloud/api.git
 
 ```
 
+### Start the PostgreSQL database and Valkey
+
+The PostgreSQL database and Valkey are required for the development environment. To make development easier, we have provided a docker-compose file that will start them for you.
+
+```console
+docker compose up postgres valkey -d
+```
+
 ### Install the Python dependencies
 
 > You must have Poetry installed
@@ -66,16 +107,32 @@ poetry install
 poetry shell
 ```
 
+### Apply migrations
+
+For migrations, you need to force the `admin` database router. Assuming you have the correct environment variables and Python virtual environment, run:
+
+```console
+python manage.py migrate --database admin
+```
+
 ### Run the Django development server
 
 ```console
 cd backend
+python manage.py migrate --database admin
 python manage.py runserver
 ```
 
 You can access the server in `http://localhost:8000`.
 All changes in the code will be automatically reloaded in the server.
 
+### Run the Celery worker
+
+```console
+python -m celery -A config.celery worker -l info -E
+```
+
+The Celery worker does not detect and reload changes in the code, so you need to restart it manually when you make changes.
 
 ## Docker deployment
 
@@ -100,8 +157,10 @@ docker compose --profile dev build
 
 ### Run the development service
 
+This command will start the Django development server and the Celery worker and also the Valkey and PostgreSQL databases.
+
 ```console
-docker compose --profile dev up
+docker compose --profile dev up -d
 ```
 
 You can access the server in `http://localhost:8080`.
@@ -109,29 +168,47 @@ All changes in the code will be automatically reloaded in the server.
 
 > **NOTE:** notice how the port is different. When developing using docker, the port will be `8080` to prevent conflicts.
 
-## Modify environment variables
+### View the development server logs
 
-Under the root path of the project, you can find a file called `.env.example`. This file shows all the environment variables that the project uses. You can create a new file called `.env` and set the values for the variables.
+For Django
 
-All these variables will have a default value for the devel environment, but credentials or database connectors will be required for the production one.
+```console
+docker logs -f api-api-dev-1
+```
 
-Keep in mind if you export the `.env` file to use it with local deployment that you will have to do it within the context of the Poetry interpreter, not before. Otherwise, variables will not be loaded properly.
+or for the Celery worker:
 
+```console
+docker logs -f api-worker-dev-1
+```
 
-
-## Apply migrations
+## Applying migrations
 
 For migrations, you need to force the `admin` database router. Assuming you have the correct environment variables and Python virtual environment, run:
 
 ```console
+poetry shell
 python manage.py migrate --database admin
 ```
 
 ## Apply fixtures
 
-As for migrations, with the same requirements, run:
+Fixtures are used to populate the database with initial development data.
 
 ```console
+poetry shell
 # For dev tenants
 python manage.py loaddata api/fixtures/dev_tenants.json --database admin
+```
+
+## Run tests
+
+Note that the tests will fail if you use the same `.env` file as the development environment.
+
+For best results, run in a new shell with no environment variables set.
+
+```console
+poetry shell
+cd src/backend
+pytest
 ```
