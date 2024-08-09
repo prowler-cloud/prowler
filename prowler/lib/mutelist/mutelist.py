@@ -211,9 +211,7 @@ class Mutelist(ABC):
                     muted_in_resource = self.is_item_matched(
                         muted_resources, finding_resource
                     )
-                    muted_in_tags = self.is_item_matched(
-                        muted_tags, finding_tags, tag=True
-                    )
+                    muted_in_tags = self.is_item_matched(muted_tags, finding_tags)
 
                     # For a finding to be muted requires the following set to True:
                     # - muted_in_check -> True
@@ -281,9 +279,7 @@ class Mutelist(ABC):
                 )
 
                 excepted_tags = exceptions.get("Tags", [])
-                is_tag_excepted = self.is_item_matched(
-                    excepted_tags, finding_tags, tag=True
-                )
+                is_tag_excepted = self.is_item_matched(excepted_tags, finding_tags)
 
                 if (
                     not is_account_excepted
@@ -307,7 +303,7 @@ class Mutelist(ABC):
             return False
 
     @staticmethod
-    def is_item_matched(matched_items, finding_items, tag=False):
+    def is_item_matched(matched_items, finding_items):
         """
         Check if any of the items in matched_items are present in finding_items.
 
@@ -321,15 +317,10 @@ class Mutelist(ABC):
         try:
             is_item_matched = False
             if matched_items and (finding_items or finding_items == ""):
-                # If we use tags, we need to use re.search instead of re.match because we need to match the tags in the format key1=value1 | key2=value2
-                if tag:
-                    operation = re.search
-                else:
-                    operation = re.match
                 for item in matched_items:
                     if item.startswith("*"):
                         item = ".*" + item[1:]
-                    if operation(item, finding_items):
+                    if re.search(item, finding_items):
                         is_item_matched = True
                         break
             return is_item_matched

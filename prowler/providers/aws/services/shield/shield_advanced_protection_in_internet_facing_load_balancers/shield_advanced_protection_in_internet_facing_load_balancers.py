@@ -7,18 +7,18 @@ class shield_advanced_protection_in_internet_facing_load_balancers(Check):
     def execute(self):
         findings = []
         if shield_client.enabled:
-            for elbv2 in elbv2_client.loadbalancersv2:
+            for elbv2_arn, elbv2 in elbv2_client.loadbalancersv2.items():
                 if elbv2.type == "application" and elbv2.scheme == "internet-facing":
                     report = Check_Report_AWS(self.metadata())
                     report.region = shield_client.region
                     report.resource_id = elbv2.name
-                    report.resource_arn = elbv2.arn
+                    report.resource_arn = elbv2_arn
                     report.resource_tags = elbv2.tags
                     report.status = "FAIL"
                     report.status_extended = f"ELBv2 ALB {elbv2.name} is not protected by AWS Shield Advanced."
 
                     for protection in shield_client.protections.values():
-                        if elbv2.arn == protection.resource_arn:
+                        if elbv2_arn == protection.resource_arn:
                             report.status = "PASS"
                             report.status_extended = f"ELBv2 ALB {elbv2.name} is protected by AWS Shield Advanced."
                             break

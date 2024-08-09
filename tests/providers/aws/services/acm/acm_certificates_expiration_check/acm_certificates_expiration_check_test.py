@@ -32,6 +32,7 @@ class Test_acm_certificates_expiration_check:
         certificate_arn = f"arn:aws:acm:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:certificate/{certificate_id}"
         certificate_name = "test-certificate.com"
         certificate_type = "AMAZON_ISSUED"
+        certificate_key_algorithm = "RSA_2048"
         expiration_days = 5
         in_use = True
 
@@ -42,6 +43,7 @@ class Test_acm_certificates_expiration_check:
                 id=certificate_id,
                 name=certificate_name,
                 type=certificate_type,
+                key_algorithm=certificate_key_algorithm,
                 expiration_days=expiration_days,
                 in_use=in_use,
                 transparency_logging=True,
@@ -80,6 +82,7 @@ class Test_acm_certificates_expiration_check:
         certificate_arn = f"arn:aws:acm:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:certificate/{certificate_id}"
         certificate_name = "test-certificate.com"
         certificate_type = "AMAZON_ISSUED"
+        certificate_key_algorithm = "RSA_2048"
         expiration_days = -400
         in_use = True
 
@@ -90,6 +93,7 @@ class Test_acm_certificates_expiration_check:
                 id=certificate_id,
                 name=certificate_name,
                 type=certificate_type,
+                key_algorithm=certificate_key_algorithm,
                 expiration_days=expiration_days,
                 in_use=in_use,
                 transparency_logging=True,
@@ -127,6 +131,7 @@ class Test_acm_certificates_expiration_check:
         certificate_arn = f"arn:aws:acm:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:certificate/{certificate_id}"
         certificate_name = "test-certificate.com"
         certificate_type = "AMAZON_ISSUED"
+        certificate_key_algorithm = "RSA_2048"
         expiration_days = 365
         in_use = True
 
@@ -137,6 +142,7 @@ class Test_acm_certificates_expiration_check:
                 id=certificate_id,
                 name=certificate_name,
                 type=certificate_type,
+                key_algorithm=certificate_key_algorithm,
                 expiration_days=expiration_days,
                 in_use=in_use,
                 transparency_logging=True,
@@ -173,6 +179,7 @@ class Test_acm_certificates_expiration_check:
         certificate_arn = f"arn:aws:acm:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:certificate/{certificate_id}"
         certificate_name = "test-certificate.com"
         certificate_type = "AMAZON_ISSUED"
+        certificate_key_algorithm = "RSA_2048"
         expiration_days = 365
         in_use = False
 
@@ -183,6 +190,7 @@ class Test_acm_certificates_expiration_check:
                 id=certificate_id,
                 name=certificate_name,
                 type=certificate_type,
+                key_algorithm=certificate_key_algorithm,
                 expiration_days=expiration_days,
                 in_use=in_use,
                 transparency_logging=True,
@@ -212,6 +220,7 @@ class Test_acm_certificates_expiration_check:
         certificate_arn = f"arn:aws:acm:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:certificate/{certificate_id}"
         certificate_name = "test-certificate.com"
         certificate_type = "AMAZON_ISSUED"
+        certificate_key_algorithm = "RSA_2048"
         expiration_days = -400
         in_use = False
 
@@ -222,6 +231,7 @@ class Test_acm_certificates_expiration_check:
                 id=certificate_id,
                 name=certificate_name,
                 type=certificate_type,
+                key_algorithm=certificate_key_algorithm,
                 expiration_days=expiration_days,
                 in_use=in_use,
                 transparency_logging=True,

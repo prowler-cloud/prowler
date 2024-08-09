@@ -8,11 +8,11 @@ class elb_insecure_ssl_ciphers(Check):
         secure_ssl_policies = [
             "ELBSecurityPolicy-TLS-1-2-2017-01",
         ]
-        for lb in elb_client.loadbalancers:
+        for lb_arn, lb in elb_client.loadbalancers.items():
             report = Check_Report_AWS(self.metadata())
             report.region = lb.region
             report.resource_id = lb.name
-            report.resource_arn = lb.arn
+            report.resource_arn = lb_arn
             report.resource_tags = lb.tags
             report.status = "PASS"
             report.status_extended = (
