@@ -474,8 +474,8 @@ class Test_IAM_Service:
         )
 
         # IAM client for this test class
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
-        iam = IAM(aws_provider)
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        iam = IAM(audit_info)
 
         assert len(iam.users) == 1
         assert len(iam.users[0].mfa_devices) == 1
