@@ -12,12 +12,12 @@ def init_parser(self):
     azure_auth_modes_group.add_argument(
         "--az-cli-auth",
         action="store_true",
-        help="Use Azure cli credentials to log in against azure",
+        help="Use Azure CLI credentials to log in against Azure",
     )
     azure_auth_modes_group.add_argument(
         "--sp-env-auth",
         action="store_true",
-        help="Use service principal env variables authentication to log in against azure",
+        help="Use Service Principal environment variables authentication to log in against Azure",
     )
     azure_auth_modes_group.add_argument(
         "--browser-auth",
@@ -27,7 +27,7 @@ def init_parser(self):
     azure_auth_modes_group.add_argument(
         "--managed-identity-auth",
         action="store_true",
-        help="Use managed identity authentication to log in against azure ",
+        help="Use managed identity authentication to log in against Azure ",
     )
     # Subscriptions
     azure_subscriptions_subparser = azure_parser.add_argument_group("Subscriptions")
