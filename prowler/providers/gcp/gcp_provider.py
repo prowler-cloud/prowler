@@ -253,7 +253,7 @@ class GcpProvider(Provider):
             credentials_file: str
             service_account: str
         Returns:
-            Credentials object
+            Connection object
         """
         try:
             session = GcpProvider.setup_session(credentials_file, service_account)
