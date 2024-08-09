@@ -1,5 +1,6 @@
 import asyncio
 import sys
+from argparse import ArgumentTypeError
 from os import getenv
 
 import requests
@@ -102,6 +103,7 @@ class AzureProvider(Provider):
             browser_auth,
             managed_identity_auth,
             tenant_id,
+            self._region_config,
         )
 
         # Set up the identity
@@ -277,18 +279,23 @@ class AzureProvider(Provider):
         try:
             validate_azure_region(region)
             config = get_regions_config(region)
+
+            return AzureRegionConfig(
+                name=region,
+                authority=config["authority"],
+                base_url=config["base_url"],
+                credential_scopes=config["credential_scopes"],
+            )
+        except ArgumentTypeError as validation_error:
+            logger.error(
+                f"{validation_error.__class__.__name__}[{validation_error.__traceback__.tb_lineno}]: {validation_error}"
+            )
+            raise validation_error
         except Exception as validation_error:
             logger.error(
                 f"{validation_error.__class__.__name__}[{validation_error.__traceback__.tb_lineno}]: {validation_error}"
             )
             raise validation_error
-
-        return AzureRegionConfig(
-            name=region,
-            authority=config["authority"],
-            base_url=config["base_url"],
-            credential_scopes=config["credential_scopes"],
-        )
 
     def print_credentials(self):
         """Azure credentials information.
@@ -319,13 +326,14 @@ class AzureProvider(Provider):
 
     # TODO: setup_session or setup_credentials?
     # This should be setup_credentials, since it is setting up the credentials for the provider
+    @staticmethod
     def setup_session(
-        self,
-        az_cli_auth,
-        sp_env_auth,
-        browser_auth,
-        managed_identity_auth,
-        tenant_id,
+        az_cli_auth: bool,
+        sp_env_auth: bool,
+        browser_auth: bool,
+        managed_identity_auth: bool,
+        tenant_id: str,
+        region_config: AzureRegionConfig,
     ):
         """Returns the Azure credentials object.
 
@@ -349,7 +357,7 @@ class AzureProvider(Provider):
         # Browser auth creds cannot be set with DefaultAzureCredentials()
         if not browser_auth:
             if sp_env_auth:
-                self.check_service_principal_creds_env_vars()
+                AzureProvider.check_service_principal_creds_env_vars()
             try:
                 # Since the input vars come as True when it is wanted to be used, we need to inverse it since
                 # DefaultAzureCredential sets the auth method excluding the others
@@ -364,7 +372,7 @@ class AzureProvider(Provider):
                     # Azure Auth using PowerShell is not supported
                     exclude_powershell_credential=True,
                     # set Authority of a Microsoft Entra endpoint
-                    authority=self.region_config.authority,
+                    authority=region_config.authority,
                 )
             except Exception as error:
                 logger.critical("Failed to retrieve azure credentials")
@@ -391,7 +399,7 @@ class AzureProvider(Provider):
         browser_auth=False,
         managed_identity_auth=False,
         tenant_id=None,
-        region="AzureGlobal",
+        region="AzureCloud",
         raise_on_exception=True,
     ) -> Connection:
         """Test connection to Azure subscription.
@@ -418,6 +426,9 @@ class AzureProvider(Provider):
             True
         """
         try:
+            AzureProvider.validate_arguments(
+                az_cli_auth, sp_env_auth, browser_auth, managed_identity_auth, tenant_id
+            )
             region_config = AzureProvider.setup_region_config(region)
             # Set up the Azure session
             credentials = AzureProvider.setup_session(
@@ -444,6 +455,22 @@ class AzureProvider(Provider):
             if raise_on_exception:
                 raise credentials_error
             return Connection(error=credentials_error)
+
+        except ArgumentTypeError as validation_error:
+            logger.error(
+                f"{validation_error.__class__.__name__}[{validation_error.__traceback__.tb_lineno}]: {validation_error}"
+            )
+            if raise_on_exception:
+                raise validation_error
+            return Connection(error=validation_error)
+
+        except SystemExit as exit_error:
+            logger.error(
+                f"{exit_error.__class__.__name__}[{exit_error.__traceback__.tb_lineno}]: {exit_error}"
+            )
+            if raise_on_exception:
+                raise exit_error
+            return Connection(error=exit_error)
 
         except Exception as error:
             logger.critical(
