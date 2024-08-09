@@ -92,4 +92,3 @@ eks_required_log_types:
       "controllerManager",
       "scheduler",
   ]
-
