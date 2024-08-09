@@ -465,10 +465,10 @@ class Test_IAM_Service:
             UserName="user1",
         )
         # Create Unknown MFA device
-        virtual_mfa_device = "XXXXXXXXX"
+        hardware_mfa_devide = "XXXXXXXXX"
         iam_client.enable_mfa_device(
             UserName="user1",
-            SerialNumber=virtual_mfa_device,
+            SerialNumber=hardware_mfa_devide,
             AuthenticationCode1="123456",
             AuthenticationCode2="123456",
         )
@@ -479,7 +479,7 @@ class Test_IAM_Service:
 
         assert len(iam.users) == 1
         assert len(iam.users[0].mfa_devices) == 1
-        assert iam.users[0].mfa_devices[0].serial_number == virtual_mfa_device
+        assert iam.users[0].mfa_devices[0].serial_number == hardware_mfa_devide
         assert iam.users[0].mfa_devices[0].type == "hardware"
 
     # Test IAM List Virtual MFA Device
