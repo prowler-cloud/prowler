@@ -150,11 +150,11 @@ class Test_EC2_Service:
         ec2 = EC2(aws_provider)
 
         assert sg_id in str(ec2.security_groups)
-        for security_group in ec2.security_groups:
+        for sg_arn, security_group in ec2.security_groups.items():
             if security_group.id == sg_id:
                 assert security_group.name == "test-security-group"
                 assert (
-                    security_group.arn
+                    sg_arn
                     == f"arn:{aws_provider.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:security-group/{security_group.id}"
                 )
                 assert re.match(r"sg-[0-9a-z]{17}", security_group.id)
@@ -524,7 +524,7 @@ class Test_EC2_Service:
             {"Key": "string", "Value": "string"},
         ]
         # Check if ENI was added to security group
-        for sg in ec2.security_groups:
+        for sg in ec2.security_groups.values():
             if sg.id == eni.groups[0]["GroupId"]:
                 assert sg.network_interfaces == ec2.network_interfaces
 
