@@ -190,7 +190,7 @@ class KubernetesProvider(Provider):
             input_context (str): Context name.
 
         Returns:
-            KubernetesSession: A Kubernetes session.
+            Connection: A Connection object.
         """
         try:
             KubernetesProvider.setup_session(kubeconfig_file, input_context)
