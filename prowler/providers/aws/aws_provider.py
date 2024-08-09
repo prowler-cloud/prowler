@@ -933,7 +933,7 @@ class AwsProvider(Provider):
         raise_on_exception: bool = True,
     ) -> Connection:
         """
-        Test the connection to AWS.
+        Test the connection to AWS with one of the Boto3 credentials methods.
 
         Args:
             profile (str): The AWS profile to use for the session.
@@ -951,7 +951,11 @@ class AwsProvider(Provider):
                 - error (Exception): An exception object if an error occurs during the validation.
 
         Raises:
-            Exception: If an error occurs during the validation process.
+            ClientError: If there is an error with the AWS client.
+            ProfileNotFound: If the specified profile is not found.
+            NoCredentialsError: If there are no AWS credentials found.
+            ArgumentTypeError: If there is a validation error with the arguments.
+            Exception: If there is an unexpected error.
 
         Examples:
             >>> AwsProvider.test_connection(
