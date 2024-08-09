@@ -3,9 +3,8 @@ from datetime import datetime
 from os import rmdir
 from unittest.mock import patch
 
-from mock import MagicMock
 import pytest
-from azure.core.exceptions import HttpResponseError, ClientAuthenticationError
+from azure.core.exceptions import HttpResponseError
 from azure.identity import DefaultAzureCredential
 from freezegun import freeze_time
 
@@ -254,17 +253,16 @@ class TestAzureProvider:
         ) as mock_setup_session:
 
             mock_setup_session.return_value = DefaultAzureCredential()
-
+            # We need to set exactly one auth method
             test_connection = AzureProvider.test_connection(
-                    arguments.az_cli_auth,
-                    arguments.sp_env_auth,
-                    arguments.browser_auth,
-                    arguments.managed_identity_auth,
-                    arguments.tenant_id,
-                    arguments.azure_region,
-                    raise_exception=True,
-                )
-
+                arguments.az_cli_auth,
+                arguments.sp_env_auth,
+                arguments.browser_auth,
+                arguments.managed_identity_auth,
+                arguments.tenant_id,
+                arguments.azure_region,
+                raise_exception=True,
+            )
 
             assert isinstance(test_connection, Connection)
             assert test_connection.is_connected
