@@ -7,7 +7,7 @@ import {
   DoubleArrowRightIcon,
 } from "@radix-ui/react-icons";
 import Link from "next/link";
-import { redirect, usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 
 import { extractPaginationInfo } from "@/lib";
 import { MetaDataProps } from "@/types";
