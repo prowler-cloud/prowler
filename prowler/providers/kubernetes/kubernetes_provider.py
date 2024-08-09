@@ -180,7 +180,9 @@ class KubernetesProvider(Provider):
 
     @staticmethod
     def test_connection(
-        kubeconfig_file: str, input_context: str, raise_on_exception: bool = True
+        kubeconfig_file: str = "~/.kube/config",
+        input_context: str = "",
+        raise_on_exception: bool = True,
     ) -> Connection:
         """
         Tests the connection to the Kubernetes cluster.
