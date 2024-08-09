@@ -3,8 +3,9 @@ from datetime import datetime
 from os import rmdir
 from unittest.mock import patch
 
+from mock import MagicMock
 import pytest
-from azure.core.exceptions import HttpResponseError
+from azure.core.exceptions import HttpResponseError, ClientAuthenticationError
 from azure.identity import DefaultAzureCredential
 from freezegun import freeze_time
 
@@ -231,11 +232,11 @@ class TestAzureProvider:
     def test_test_connection(self):
         arguments = Namespace()
         arguments.subscription_id = None
-        arguments.tenant_id = None
+        arguments.tenant_id = "test-tenant-id"
         # We need to set exactly one auth method
-        arguments.az_cli_auth = None
-        arguments.sp_env_auth = True
-        arguments.browser_auth = None
+        arguments.az_cli_auth = False
+        arguments.sp_env_auth = False
+        arguments.browser_auth = True
         arguments.managed_identity_auth = None
 
         arguments.config_file = default_config_file_path
@@ -249,23 +250,25 @@ class TestAzureProvider:
             "prowler.providers.azure.azure_provider.AzureProvider.get_locations",
             return_value={},
         ), patch(
-            "prowler.providers.azure.azure_provider.AzureProvider.setup_session",
-            return_value=DefaultAzureCredential(),
-        ):
+            "prowler.providers.azure.azure_provider.AzureProvider.setup_session"
+        ) as mock_setup_session:
 
-            azure_provider = AzureProvider(arguments)
-            test_connection = azure_provider.test_connection(
-                arguments.az_cli_auth,
-                arguments.sp_env_auth,
-                arguments.browser_auth,
-                arguments.managed_identity_auth,
-                arguments.tenant_id,
-                arguments.azure_region,
-                raise_exception=True,
-            )
+            mock_setup_session.return_value = DefaultAzureCredential()
+
+            test_connection = AzureProvider.test_connection(
+                    arguments.az_cli_auth,
+                    arguments.sp_env_auth,
+                    arguments.browser_auth,
+                    arguments.managed_identity_auth,
+                    arguments.tenant_id,
+                    arguments.azure_region,
+                    raise_exception=True,
+                )
+
 
             assert isinstance(test_connection, Connection)
             assert test_connection.is_connected
+            assert test_connection.error is None
 
     def test_test_connection_with_httpresponseerror(self):
         arguments = Namespace()
