@@ -19,20 +19,22 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table/Table";
+import { MetaDataProps } from "@/types";
 
 import { DataTablePagination } from "./DataTablePagination";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
+  metadata?: MetaDataProps;
 }
 
 export function DataTableProvider<TData, TValue>({
   columns,
   data,
+  metadata,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
-
   const table = useReactTable({
     data,
     columns,
@@ -97,8 +99,8 @@ export function DataTableProvider<TData, TValue>({
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
-        <DataTablePagination table={table} />
+      <div className="flex items-center w-full space-x-2 py-4">
+        <DataTablePagination metadata={metadata} />
       </div>
     </>
   );

@@ -1,16 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 import { parseStringify } from "@/lib";
 
-interface PaginationOptions {
-  page?: number;
-}
-
-export const getProvider = async ({ page = 1 }: PaginationOptions) => {
-  if (isNaN(Number(page))) page = 1;
-  if (page < 1) page = 1;
+export const getProvider = async ({ page = 1 }) => {
+  if (isNaN(Number(page)) || page < 1) redirect("/providers");
 
   const keyServer = process.env.LOCAL_SERVER_URL;
 
@@ -26,12 +22,7 @@ export const getProvider = async ({ page = 1 }: PaginationOptions) => {
     const data = await providers.json();
     const parsedData = parseStringify(data);
     revalidatePath("/providers");
-    return {
-      providerDetails: parsedData?.data,
-      currentPage: parsedData?.meta?.pagination?.page,
-      totalPages: parsedData?.meta?.pagination?.pages,
-      totalItems: parsedData?.meta?.pagination?.count,
-    };
+    return parsedData;
   } catch (error) {
     console.error("Error fetching providers:", error);
     return undefined;

@@ -9,16 +9,10 @@ import {
   DataTableProvider,
   SkeletonTableProvider,
 } from "@/components/providers";
-import { Header, Pagination } from "@/components/ui";
+import { Header } from "@/components/ui";
+import { searchParamsProps } from "@/types";
 
-export default async function Providers({
-  searchParams,
-}: {
-  searchParams: {
-    page: number;
-  };
-}) {
-  console.log({ searchParams }, "los searchParamsss!");
+export default async function Providers({ searchParams }: searchParamsProps) {
   return (
     <>
       <Header title="Providers" icon="fluent:cloud-sync-24-regular" />
@@ -36,32 +30,18 @@ export default async function Providers({
   );
 }
 
-const SSRDataTable = async ({
-  searchParams,
-}: {
-  searchParams: {
-    page: number;
-  };
-}) => {
-  // const perPage = searchParams['per_page'] ?? '5'
-  // const page = searchParams.page ? parseInt(searchParams.page) : 1;
-  const providersData = await getProvider({});
-  // const [providers] = await Promise.all([providersData]);
-  // const { providerDetails, currentPage, totalPages, totalItems } = providersData;
-  // console.log(currentPage, totalPages, 'hehe')
-  // if (providers.meta.pagination.count === 0) {
-  //   redirect('/');
-  // }
-  // console.log(providers);
-  // const currentPage = providers.meta.pagination.page;
-  // const pages = providers.meta.pagination.pages;
-  // const count = providers.meta.pagination.count;
+const SSRDataTable = async ({ searchParams }: searchParamsProps) => {
+  const page = searchParams.page ? parseInt(searchParams.page) : 1;
+  const providersData = await getProvider({ page });
+  const [providers] = await Promise.all([providersData]);
 
-  // console.log(`Pages: ${pages}, Count: ${count}`);
+  if (providers?.errors) redirect("/providers");
+
   return (
-    <>
-      {/* <DataTableProvider columns={ColumnsProvider} data={providerDetails ?? []} /> */}
-      {/* <Pagination totalPages={totalPages} currentPage={currentPage} /> */}
-    </>
+    <DataTableProvider
+      columns={ColumnsProvider}
+      data={providers?.data ?? []}
+      metadata={providers?.meta}
+    />
   );
 };

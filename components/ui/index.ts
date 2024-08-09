@@ -1,7 +1,6 @@
 export * from "./alert/Alert";
 export * from "./dialog/Dialog";
 export * from "./header/Header";
-export * from "./pagination/Pagination";
 export * from "./select/Select";
 export * from "./sidebar";
 export * from "./table/StatusBadge";
