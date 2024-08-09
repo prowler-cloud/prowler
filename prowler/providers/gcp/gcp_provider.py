@@ -245,15 +245,20 @@ class GcpProvider(Provider):
 
     @staticmethod
     def test_connection(
-        credentials_file: str, service_account: str, raise_on_exception: bool = True
+        credentials_file: str = None,
+        service_account: str = None,
+        raise_on_exception: bool = True,
     ) -> Connection:
         """
-        Test the connection with the provided credentials file or service account to impersonate
+        Test the connection to GCP with the provided credentials file or service account to impersonate.
+        If the connection is successful, return a Connection object with is_connected set to True. If the connection fails, return a Connection object with error set to the exception.
+        Raise an exception if raise_on_exception is set to True.
+        If the Cloud Resource Manager API has not been used before or it is disabled, log a critical message and return a Connection object with error set to the exception.
         Args:
             credentials_file: str
             service_account: str
         Returns:
-            Connection object
+            Connection object with is_connected set to True if the connection is successful, or error set to the exception if the connection fails
         """
         try:
             session = GcpProvider.setup_session(credentials_file, service_account)
@@ -266,9 +271,10 @@ class GcpProvider(Provider):
                 logger.critical(
                     "Cloud Resource Manager API has not been used before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/cloudresourcemanager.googleapis.com/ then retry."
                 )
-                raise Exception(
-                    "Cloud Resource Manager API has not been used before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/cloudresourcemanager.googleapis.com/ then retry."
-                )
+                if raise_on_exception:
+                    raise Exception(
+                        "Cloud Resource Manager API has not been used before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/cloudresourcemanager.googleapis.com/ then retry."
+                    )
             else:
                 logger.critical(
                     f"{http_error.__class__.__name__}[{http_error.__traceback__.tb_lineno}]: {http_error}"
