@@ -37,6 +37,7 @@ REPLICATION_GROUP_MULTI_AZ = "enabled"
 REPLICATION_GROUP_TAGS = [
     {"Key": "environment", "Value": "test"},
 ]
+AUTO_MINOR_VERSION_UPGRADE = True
 
 
 # Mocking Access Analyzer Calls
@@ -60,6 +61,7 @@ def mock_make_api_call(self, operation_name, kwargs):
                     "ARN": ELASTICACHE_CLUSTER_ARN,
                     "Engine": ELASTICACHE_ENGINE,
                     "SecurityGroups": [],
+                    "AutoMinorVersionUpgrade": AUTO_MINOR_VERSION_UPGRADE,
                 },
             ]
         }
@@ -166,6 +168,7 @@ class Test_ElastiCache_Service:
             cache_subnet_group_id=SUBNET_GROUP_NAME,
             subnets=[SUBNET_1, SUBNET_2],
             tags=ELASTICACHE_CLUSTER_TAGS,
+            auto_minor_version_upgrade=AUTO_MINOR_VERSION_UPGRADE,
         )
 
     # Test Elasticache Redis cache clusters
