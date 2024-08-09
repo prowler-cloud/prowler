@@ -261,7 +261,7 @@ class TestAzureProvider:
                 arguments.managed_identity_auth,
                 arguments.tenant_id,
                 arguments.azure_region,
-                raise_exception=True,
+                raise_on_exception=True,
             )
 
             assert isinstance(test_connection, Connection)
@@ -306,7 +306,7 @@ class TestAzureProvider:
                     arguments.managed_identity_auth,
                     arguments.tenant_id,
                     arguments.azure_region,
-                    raise_exception=True,
+                    raise_on_exception=True,
                 )
 
             assert excinfo.type == HttpResponseError
@@ -327,7 +327,7 @@ class TestAzureProvider:
             )
 
             mock_logger.error.assert_called_once_with(
-                "HttpResponseError[418]: Simulated HttpResponseError"
+                "HttpResponseError[423]: Simulated HttpResponseError"
             )
 
     def test_test_connection_with_exception(self):
@@ -366,7 +366,7 @@ class TestAzureProvider:
                     arguments.managed_identity_auth,
                     arguments.tenant_id,
                     arguments.azure_region,
-                    raise_exception=True,
+                    raise_on_exception=True,
                 )
 
             assert excinfo.type == Exception
@@ -387,5 +387,5 @@ class TestAzureProvider:
             )
 
             mock_logger.critical.assert_called_once_with(
-                "Exception[418]: Simulated Exception"
+                "Exception[423]: Simulated Exception"
             )
