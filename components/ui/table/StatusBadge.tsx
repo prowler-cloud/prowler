@@ -9,26 +9,34 @@ type Status =
   | "success"
   | "muted";
 
-export const statusColorMap: Record<
+const statusColorMap: Record<
   Status,
-  "success" | "danger" | "warning" | "default"
+  | "text-white bg-green-600"
+  | "bg-yellow-200"
+  | "text-white bg-red-600"
+  | "bg-gray-300"
 > = {
-  completed: "success",
-  pending: "warning",
-  cancelled: "danger",
-  fail: "danger",
-  success: "success",
-  muted: "default",
+  completed: "text-white bg-green-600",
+  pending: "bg-yellow-200",
+  cancelled: "text-white bg-red-600",
+  fail: "text-white bg-red-600",
+  success: "text-white bg-green-600",
+  muted: "bg-gray-300",
 };
+
+const getStatusColor: (status: Status) => string = (status) =>
+  // eslint-disable-next-line security/detect-object-injection
+  statusColorMap[status];
 
 export const StatusBadge = ({ status }: { status: Status }) => {
   return (
     <Chip
-      className="capitalize border-none gap-1 text-default-600"
-      // eslint-disable-next-line security/detect-object-injection
-      color={statusColorMap[status]}
+      classNames={{
+        base: `capitalize border-none gap-1 text-gray-600 ${getStatusColor(status)}`,
+        content: "font-semibold",
+      }}
       size="sm"
-      variant="flat"
+      variant="solid"
     >
       {status}
     </Chip>

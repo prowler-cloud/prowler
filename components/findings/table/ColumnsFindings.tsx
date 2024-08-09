@@ -11,6 +11,7 @@ import { ColumnDef } from "@tanstack/react-table";
 
 import { VerticalDotsIcon } from "@/components/icons";
 import { StatusBadge } from "@/components/ui";
+import { SeverityBadge } from "@/components/ui";
 import { FindingProps } from "@/types";
 
 const getFindingsAttributes = (row: { original: FindingProps }) => {
@@ -31,7 +32,7 @@ export const ColumnsFindings: ColumnDef<FindingProps>[] = [
     header: "Severity",
     cell: ({ row }) => {
       const { severity } = getFindingsAttributes(row);
-      return <p className="text-sm text-nowrap">{severity}</p>;
+      return <SeverityBadge severity={severity} />;
     },
   },
   {
