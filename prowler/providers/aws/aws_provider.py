@@ -890,7 +890,6 @@ class AwsProvider(Provider):
             )
             raise error
 
-    # TODO: rename to validate_credentials
     @staticmethod
     def validate_credentials(
         session: Session,
@@ -934,9 +933,7 @@ class AwsProvider(Provider):
         raise_on_exception: bool = True,
     ) -> Connection:
         """
-        Validates AWS credentials using the provided session and AWS region.
-
-        If no session is provided, the method will create a new session using the Boto3 default session.
+        Test the connection to AWS.
 
         Args:
             profile (str): The AWS profile to use for the session.
@@ -949,8 +946,7 @@ class AwsProvider(Provider):
             raise_on_exception (bool): Whether to raise an exception if an error occurs.
 
         Returns:
-
-            Connection: A named tuple containing the result of the validation.
+            Connection: An object tha contains the result of the test connection operation.
                 - is_connected (bool): Indicates whether the validation was successful.
                 - error (Exception): An exception object if an error occurs during the validation.
 
@@ -960,18 +956,20 @@ class AwsProvider(Provider):
         Examples:
             >>> AwsProvider.test_connection(
                 role_arn="arn:aws:iam::111122223333:role/ProwlerRole",
-                external_id="67f7a641-ecb0-4f6d-921d-3587febd379c"
+                external_id="67f7a641-ecb0-4f6d-921d-3587febd379c",
+                raise_on_exception=False)
             )
-            AWSCallerIdentity(user_id='AROAAAAAAAAAAAAAAAAAA:ProwlerAssessmentSession', account='111122223333', arn=ARN(arn='arn:aws:sts::111122223333:assumed-role/ProwlerRole/ProwlerAssessmentSession', partition='aws', service='sts', region=None, account_id='111122223333', resource='ProwlerRole/ProwlerAssessmentSession', resource_type='assumed-role'), region='us-east-1')
-
-            >>> AwsProvider.test_connection(profile="test")
-            AWSCallerIdentity(user_id='AROAAAAAAAAAAAAAAAAAA:test-user', account='111122223333', arn=ARN(arn='arn:aws:sts::111122223333:user/test-user', partition='aws', service='sts', region=None, account_id='111122223333', resource='test-user', resource_type='user'), region='us-east-1')
+            Connection(is_connected=True, Error=None)
+            >>> AwsProvider.test_connection(profile="test", raise_on_exception=False)
+            Connection(is_connected=True, Error=None)
+            >>> AwsProvider.test_connection(profile="not-found", raise_on_exception=False))
+            Connection(is_connected=False, Error=ProfileNotFound('The config profile (not-found) could not be found'))
+            >>> AwsProvider.test_connection(raise_on_exception=False))
+            Connection(is_connected=False, Error=NoCredentialsError('Unable to locate credentials'))
         """
         try:
-            # Create the default session if no session is given
             session = AwsProvider.setup_session(mfa_enabled, profile)
 
-            # Test Connection using the IAM Role
             if role_arn:
                 session_duration = validate_session_duration(session_duration)
                 role_session_name = validate_role_session_name(role_session_name)
@@ -997,7 +995,6 @@ class AwsProvider(Provider):
 
             sts_client = AwsProvider.create_sts_session(session, aws_region)
             _ = sts_client.get_caller_identity()
-            # Include the region where the caller_identity has validated the credentials
             return Connection(
                 is_connected=True,
             )
