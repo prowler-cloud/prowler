@@ -59,8 +59,14 @@ def unroll_tags(tags: list) -> dict:
         >>> tags = []
         >>> unroll_tags(tags)
         {}
+
+        >>> tags = {"name": "John", "age": "30"}
+        >>> unroll_tags(tags)
+        {'name': 'John', 'age': '30'}
     """
     if tags and tags != [{}] and tags != [None]:
+        if isinstance(tags, dict):
+            return tags
         if "key" in tags[0]:
             return {item["key"]: item["value"] for item in tags}
         elif "Key" in tags[0]:
