@@ -5,6 +5,7 @@ from os import getcwd
 
 import requests
 import yaml
+from packaging import version
 
 from prowler.lib.logger import logger
 
@@ -82,15 +83,11 @@ def get_default_mute_file_path(provider: str):
 def check_current_version():
     try:
         prowler_version_string = f"Prowler {prowler_version}"
-        prowler_version_tuple = tuple(
-            map(int, (prowler_version.lstrip("v").split(".")))
-        )
         release_response = requests.get(
             "https://api.github.com/repos/prowler-cloud/prowler/tags", timeout=1
         )
         latest_version = release_response.json()[0]["name"]
-        latest_version_tuple = tuple(map(int, (latest_version.lstrip("v").split("."))))
-        if latest_version_tuple > prowler_version_tuple:
+        if version.parse(latest_version) > version.parse(prowler_version):
             return f"{prowler_version_string} (latest is {latest_version}, upgrade for the latest features)"
         else:
             return (
