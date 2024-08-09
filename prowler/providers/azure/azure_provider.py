@@ -86,6 +86,11 @@ class AzureProvider(Provider):
         managed_identity_auth = arguments.managed_identity_auth
         tenant_id = arguments.tenant_id
 
+        # Validate the authentication arguments
+        self.validate_arguments(
+            az_cli_auth, sp_env_auth, browser_auth, managed_identity_auth, tenant_id
+        )
+
         logger.info("Checking if region is different than default one")
         region = arguments.azure_region
         self._region_config = self.setup_region_config(region)
@@ -217,7 +222,11 @@ class AzureProvider(Provider):
     # previously was using the AzureException
     @staticmethod
     def validate_arguments(
-        az_cli_auth, sp_env_auth, browser_auth, managed_identity_auth, tenant_id
+        az_cli_auth: bool,
+        sp_env_auth: bool,
+        browser_auth: bool,
+        managed_identity_auth: bool,
+        tenant_id: str,
     ):
         """
         Validates the authentication arguments for the Azure provider.
@@ -267,13 +276,13 @@ class AzureProvider(Provider):
         """
         try:
             validate_azure_region(region)
+            config = get_regions_config(region)
         except Exception as validation_error:
             logger.error(
                 f"{validation_error.__class__.__name__}[{validation_error.__traceback__.tb_lineno}]: {validation_error}"
             )
             raise validation_error
 
-        config = get_regions_config(region)
         return AzureRegionConfig(
             name=region,
             authority=config["authority"],
@@ -337,10 +346,6 @@ class AzureProvider(Provider):
             Exception: If failed to retrieve Azure credentials.
 
         """
-        # Validate the authentication arguments
-        self.validate_arguments(
-            az_cli_auth, sp_env_auth, browser_auth, managed_identity_auth, tenant_id
-        )
         # Browser auth creds cannot be set with DefaultAzureCredentials()
         if not browser_auth:
             if sp_env_auth:
@@ -387,8 +392,8 @@ class AzureProvider(Provider):
         managed_identity_auth=False,
         tenant_id=None,
         region="AzureGlobal",
-        raise_exception=True,
-    ) -> bool:
+        raise_on_exception=True,
+    ) -> Connection:
         """Test connection to Azure subscription.
 
         Test the connection to an Azure subscription using the provided credentials.
@@ -400,7 +405,7 @@ class AzureProvider(Provider):
             managed_identity_auth (bool): Flag indicating if managed entity authentication is used.
             tenant_id (str): The Azure Active Directory tenant ID.
             region (str): The Azure region.
-            raise_exception (bool): Flag indicating whether to raise an exception if the connection fails.
+            raise_on_exception (bool): Flag indicating whether to raise an exception if the connection fails.
 
         Returns:
             bool: True if the connection is successful, False otherwise.
@@ -436,7 +441,7 @@ class AzureProvider(Provider):
             logger.error(
                 f"{credentials_error.__class__.__name__}[{credentials_error.__traceback__.tb_lineno}]: {credentials_error}"
             )
-            if raise_exception:
+            if raise_on_exception:
                 raise credentials_error
             return Connection(error=credentials_error)
 
@@ -444,7 +449,7 @@ class AzureProvider(Provider):
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            if raise_exception:
+            if raise_on_exception:
                 raise error
             return Connection(error=error)
 
