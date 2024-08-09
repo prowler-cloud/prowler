@@ -374,9 +374,10 @@ class IAM(AWSService):
                 for page in list_mfa_devices_paginator.paginate(UserName=user.name):
                     for mfa_device in page["MFADevices"]:
                         mfa_serial_number = mfa_device["SerialNumber"]
-                        mfa_type = (
-                            mfa_device["SerialNumber"].split(":")[5].split("/")[0]
-                        )
+                        try:
+                            mfa_type = mfa_serial_number.split(":")[5].split("/")[0]
+                        except IndexError:
+                            mfa_type = "hardware"
                         mfa_devices.append(
                             MFADevice(serial_number=mfa_serial_number, type=mfa_type)
                         )
