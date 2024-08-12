@@ -40,18 +40,21 @@ export const AddProvider = () => {
         type="text"
         name="provider"
         placeholder="Provider"
+        aria-label="Provider"
         className="py-2 px-3 rounded-sm"
       />
       <input
         type="text"
         name="id"
         placeholder="Provider ID"
+        aria-label="Provider ID"
         className="py-2 px-3 rounded-sm"
       />
       <input
         type="text"
         name="alias"
         placeholder="Alias"
+        aria-label="Alias"
         className="py-2 px-3 rounded-sm"
       />
       <ButtonAddProvider />

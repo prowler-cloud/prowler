@@ -15,7 +15,7 @@ import {
   Tooltip,
 } from "@nextui-org/react";
 import clsx from "clsx";
-import React from "react";
+import React, { useState } from "react";
 
 export enum SidebarItemType {
   Nest = "nest",
@@ -61,8 +61,7 @@ const Sidebar = React.forwardRef<HTMLElement, SidebarProps>(
     },
     ref,
   ) => {
-    const [selected, setSelected] =
-      React.useState<React.Key>(defaultSelectedKey);
+    const [selected, setSelected] = useState<React.Key>(defaultSelectedKey);
 
     const sectionClasses = {
       ...sectionClassesProp,
@@ -100,6 +99,7 @@ const Sidebar = React.forwardRef<HTMLElement, SidebarProps>(
           <ListboxItem
             {...item}
             key={item.key}
+            aria-label={item.title}
             classNames={{
               base: clsx(
                 {
@@ -123,6 +123,7 @@ const Sidebar = React.forwardRef<HTMLElement, SidebarProps>(
                     iconClassName,
                   )}
                   icon={item.icon}
+                  aria-hidden={"true"}
                   width={24}
                 />
               ) : (
@@ -140,6 +141,7 @@ const Sidebar = React.forwardRef<HTMLElement, SidebarProps>(
                         "text-default-500 group-data-[selected=true]:text-foreground",
                         iconClassName,
                       )}
+                      aria-hidden={"true"}
                       icon={item.icon}
                       width={24}
                     />
@@ -169,6 +171,7 @@ const Sidebar = React.forwardRef<HTMLElement, SidebarProps>(
                             "text-default-500 group-data-[selected=true]:text-foreground",
                             iconClassName,
                           )}
+                          aria-hidden="true"
                           icon={item.icon}
                           width={24}
                         />
@@ -275,6 +278,7 @@ const Sidebar = React.forwardRef<HTMLElement, SidebarProps>(
           list: clsx("items-center", classNames?.list),
         }}
         color="default"
+        aria-label="Navigation Menu"
         itemClasses={{
           ...itemClasses,
           base: clsx(

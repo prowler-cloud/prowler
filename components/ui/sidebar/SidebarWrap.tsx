@@ -90,6 +90,7 @@ export const SidebarWrap = () => {
           placement="right"
         >
           <Button
+            aria-label="Help & Feedback"
             fullWidth
             className={clsx(
               "justify-start truncate text-default-500 data-[hover=true]:text-foreground",
@@ -104,6 +105,7 @@ export const SidebarWrap = () => {
                   className="flex-none text-default-500"
                   icon="solar:info-circle-line-duotone"
                   width={24}
+                  aria-hidden="true"
                 />
               )
             }
@@ -114,6 +116,7 @@ export const SidebarWrap = () => {
                 className="text-default-500"
                 icon="solar:info-circle-line-duotone"
                 width={24}
+                aria-hidden="true"
               />
             ) : (
               "Help & Information"
@@ -122,6 +125,7 @@ export const SidebarWrap = () => {
         </Tooltip>
         <Tooltip content="Log Out" isDisabled={!isCompact} placement="right">
           <Button
+            aria-label="Log Out"
             className={clsx(
               "justify-start text-default-500 data-[hover=true]:text-foreground",
               {
@@ -135,6 +139,7 @@ export const SidebarWrap = () => {
                   className="flex-none rotate-180 text-default-500"
                   icon="solar:minus-circle-line-duotone"
                   width={24}
+                  aria-hidden="true"
                 />
               )
             }
@@ -145,6 +150,7 @@ export const SidebarWrap = () => {
                 className="rotate-180 text-default-500"
                 icon="solar:minus-circle-line-duotone"
                 width={24}
+                aria-hidden="true"
               />
             ) : (
               "Log Out"
@@ -154,8 +160,8 @@ export const SidebarWrap = () => {
       </div>
       <div
         className={clsx("mt-auto flex justify-end gap-3", {
-          " flex-col items-center ": isCompact,
-          " items-baseline ": !isCompact,
+          "flex-col items-center": isCompact,
+          "items-baseline": !isCompact,
         })}
       >
         <Tooltip
@@ -170,7 +176,7 @@ export const SidebarWrap = () => {
               },
             )}
           >
-            <ThemeSwitch />
+            <ThemeSwitch aria-label="Toggle theme" />
           </div>
         </Tooltip>
         <Tooltip
@@ -178,6 +184,7 @@ export const SidebarWrap = () => {
           placement={isCompact ? "right" : "top"}
         >
           <Button
+            aria-label={isCompact ? "Open sidebar" : "Close sidebar"}
             className={clsx(
               "text-default-500 data-[hover=true]:text-foreground px-0",
               {
@@ -194,6 +201,7 @@ export const SidebarWrap = () => {
               height={24}
               icon="solar:sidebar-minimalistic-outline"
               width={24}
+              aria-hidden="true"
             />
           </Button>
         </Tooltip>

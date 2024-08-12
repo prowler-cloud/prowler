@@ -109,10 +109,10 @@ export const ColumnsProvider: ColumnDef<ProviderProps>[] = [
               </Button>
             </DropdownTrigger>
             <DropdownMenu>
-              <DropdownItem>
+              <DropdownItem textValue="Check Connection">
                 <CheckConnectionProvider id={id} />
               </DropdownItem>
-              <DropdownItem>
+              <DropdownItem textValue="Delete Provider">
                 <DeleteProvider id={id} />
               </DropdownItem>
             </DropdownMenu>

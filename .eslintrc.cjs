@@ -4,12 +4,12 @@ module.exports = {
     es2021: true,
   },
   parser: "@typescript-eslint/parser",
-  plugins: ["prettier", "@typescript-eslint", "simple-import-sort"],
+  plugins: ["prettier", "@typescript-eslint", "simple-import-sort", "jsx-a11y"],
   extends: [
     "eslint:recommended",
-    "plugin:@typescript-eslint/eslint-recommended",
     "plugin:@typescript-eslint/recommended",
     "plugin:security/recommended-legacy",
+    "plugin:jsx-a11y/recommended",
     "prettier",
   ],
   parserOptions: {
@@ -22,7 +22,6 @@ module.exports = {
   rules: {
     "no-console": 1,
     eqeqeq: 2,
-    // indent: ["error", 2, { SwitchCase: 1 }], // disabled because it clashes with prettier's indent
     quotes: ["error", "double", "avoid-escape"],
     "@typescript-eslint/no-explicit-any": "off",
     "prettier/prettier": [
@@ -36,5 +35,7 @@ module.exports = {
     "eol-last": ["error", "always"],
     "simple-import-sort/imports": "error",
     "simple-import-sort/exports": "error",
+    "jsx-a11y/anchor-is-valid": "error",
+    "jsx-a11y/alt-text": "error",
   },
 };
