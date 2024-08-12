@@ -25,6 +25,7 @@ class S3(AWSService):
         self.__threading_call__(self._get_bucket_ownership_controls, self.buckets)
         self.__threading_call__(self._get_object_lock_configuration, self.buckets)
         self.__threading_call__(self._get_bucket_tagging, self.buckets)
+        self.__threading_call__(self._get_bucket_replication, self.buckets)
 
     def _list_buckets(self, provider):
         logger.info("S3 - Listing buckets...")
@@ -379,6 +380,37 @@ class S3(AWSService):
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
+    def _get_bucket_replication(self, bucket):
+        logger.info("S3 - Get buckets replication...")
+        try:
+            regional_client = self.regional_clients[bucket.region]
+            bucket.replication = regional_client.get_bucket_replication(
+                Bucket=bucket.name
+            )["ReplicationConfiguration"]["Rules"]
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "NoSuchBucket":
+                logger.warning(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            elif (
+                error.response["Error"]["Code"]
+                == "ReplicationConfigurationNotFoundError"
+            ):
+                bucket.replication = {}
+            else:
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+        except Exception as error:
+            if regional_client:
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
 
 class S3Control(AWSService):
     def __init__(self, provider):
@@ -505,4 +537,4 @@ class Bucket(BaseModel):
     object_lock: bool = False
     mfa_delete: bool = False
     tags: Optional[list] = []
-    replication: Optional[dict] = {}
+    replication: Optional[list] = []
