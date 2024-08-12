@@ -4,7 +4,7 @@ from prowler.providers.aws.services.documentdb.documentdb_client import (
 )
 
 
-class documentdb_cluster_snapshot_not_public(Check):
+class documentdb_cluster_public_snapshot(Check):
     def execute(self):
         findings = []
         for db_snap in documentdb_client.db_cluster_snapshots:

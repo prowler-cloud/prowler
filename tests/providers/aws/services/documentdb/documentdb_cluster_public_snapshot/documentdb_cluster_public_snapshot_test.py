@@ -13,7 +13,7 @@ DOC_DB_CLUSTER_ARN = f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:c
 DOC_DB_ENGINE_VERSION = "5.0.0"
 
 
-class Test_documentdb_cluster_snapshot_not_public:
+class Test_documentdb_cluster_public_snapshot:
     def test_documentdb_no_snapshot(self):
         documentdb_client = mock.MagicMock
         documentdb_client.db_clusters = {}
@@ -23,11 +23,11 @@ class Test_documentdb_cluster_snapshot_not_public:
             "prowler.providers.aws.services.documentdb.documentdb_service.DocumentDB",
             new=documentdb_client,
         ):
-            from prowler.providers.aws.services.documentdb.documentdb_cluster_snapshot_not_public.documentdb_cluster_snapshot_not_public import (
-                documentdb_cluster_snapshot_not_public,
+            from prowler.providers.aws.services.documentdb.documentdb_cluster_public_snapshot.documentdb_cluster_public_snapshot import (
+                documentdb_cluster_public_snapshot,
             )
 
-            check = documentdb_cluster_snapshot_not_public()
+            check = documentdb_cluster_public_snapshot()
             result = check.execute()
             assert len(result) == 0
 
@@ -64,11 +64,11 @@ class Test_documentdb_cluster_snapshot_not_public:
             "prowler.providers.aws.services.documentdb.documentdb_service.DocumentDB",
             new=documentdb_client,
         ):
-            from prowler.providers.aws.services.documentdb.documentdb_cluster_snapshot_not_public.documentdb_cluster_snapshot_not_public import (
-                documentdb_cluster_snapshot_not_public,
+            from prowler.providers.aws.services.documentdb.documentdb_cluster_public_snapshot.documentdb_cluster_public_snapshot import (
+                documentdb_cluster_public_snapshot,
             )
 
-            check = documentdb_cluster_snapshot_not_public()
+            check = documentdb_cluster_public_snapshot()
             result = check.execute()
 
             assert len(result) == 1
@@ -117,12 +117,12 @@ class Test_documentdb_cluster_snapshot_not_public:
             "prowler.providers.aws.services.documentdb.documentdb_service.DocumentDB",
             new=documentdb_client,
         ):
-            from prowler.providers.aws.services.documentdb.documentdb_cluster_snapshot_not_public.documentdb_cluster_snapshot_not_public import (
-                documentdb_cluster_snapshot_not_public,
+            from prowler.providers.aws.services.documentdb.documentdb_cluster_public_snapshot.documentdb_cluster_public_snapshot import (
+                documentdb_cluster_public_snapshot,
             )
 
             documentdb_client.db_cluster_snapshots[0].public = True
-            check = documentdb_cluster_snapshot_not_public()
+            check = documentdb_cluster_public_snapshot()
             result = check.execute()
 
             assert len(result) == 1
