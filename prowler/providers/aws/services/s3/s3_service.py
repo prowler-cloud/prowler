@@ -505,3 +505,4 @@ class Bucket(BaseModel):
     object_lock: bool = False
     mfa_delete: bool = False
     tags: Optional[list] = []
+    replication: Optional[dict] = {}
