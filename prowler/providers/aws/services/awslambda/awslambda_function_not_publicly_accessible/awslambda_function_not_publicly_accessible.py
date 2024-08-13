@@ -19,26 +19,32 @@ class awslambda_function_not_publicly_accessible(Check):
             if function.policy:
                 for statement in function.policy["Statement"]:
                     # Only check allow statements
-                    if statement["Effect"] == "Allow":
-                        if (
-                            "*" in statement["Principal"]
-                            or "*" in statement["Principal"].get("AWS", "")
-                            or "*" in statement["Principal"].get("CanonicalUser", "")
-                            or (
-                                (
-                                    "elasticloadbalancing.amazonaws.com"
-                                    == statement["Principal"].get("Service", "")
-                                    or "apigateway.amazonaws.com"
-                                    == statement["Principal"].get("Service", "")
-                                )
-                                and (
-                                    "*" in statement.get("Action", "")
-                                    or "InvokeFunction" in statement.get("Action", "")
+                    if statement["Effect"] == "Allow" and (
+                        "*" in statement["Principal"]
+                        or (
+                            isinstance(statement["Principal"], dict)
+                            and (
+                                "*" in statement["Principal"].get("AWS", "")
+                                or "*"
+                                in statement["Principal"].get("CanonicalUser", "")
+                                or (  # Check if function can be invoked by other AWS services
+                                    (
+                                        "elasticloadbalancing.amazonaws.com"
+                                        == statement["Principal"].get("Service", "")
+                                        or "apigateway.amazonaws.com"
+                                        == statement["Principal"].get("Service", "")
+                                    )
+                                    and (
+                                        "*" in statement.get("Action", "")
+                                        or "InvokeFunction"
+                                        in statement.get("Action", "")
+                                    )
                                 )
                             )
-                        ):
-                            public_access = True
-                            break
+                        )
+                    ):
+                        public_access = True
+                        break
 
             if public_access:
                 report.status = "FAIL"
