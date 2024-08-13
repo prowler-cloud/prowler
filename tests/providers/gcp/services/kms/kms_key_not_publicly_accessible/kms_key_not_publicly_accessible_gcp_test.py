@@ -65,8 +65,10 @@ class Test_kms_key_not_publicly_accessible_gcp:
             kms_client.crypto_keys = [
                 CriptoKey(
                     name="key1",
+                    id="projects/123/locations/us-central1/keyRings/keyring1/cryptoKeys/key1",
                     project_id=GCP_PROJECT_ID,
                     rotation_period="7776000s",
+                    next_rotation_time="2021-01-01T00:00:00Z",
                     key_ring=keyring.name,
                     location=keylocation.name,
                     members=["allUsers"],
@@ -81,7 +83,7 @@ class Test_kms_key_not_publicly_accessible_gcp:
                 result[0].status_extended
                 == f"Key {kms_client.crypto_keys[0].name} may be publicly accessible."
             )
-            assert result[0].resource_id == kms_client.crypto_keys[0].name
+            assert result[0].resource_id == kms_client.crypto_keys[0].id
             assert result[0].resource_name == kms_client.crypto_keys[0].name
             assert result[0].location == kms_client.crypto_keys[0].location
             assert result[0].project_id == kms_client.crypto_keys[0].project_id
@@ -121,8 +123,10 @@ class Test_kms_key_not_publicly_accessible_gcp:
             kms_client.crypto_keys = [
                 CriptoKey(
                     name="key1",
+                    id="projects/123/locations/us-central1/keyRings/keyring1/cryptoKeys/key1",
                     project_id=GCP_PROJECT_ID,
                     rotation_period="7776000s",
+                    next_rotation_time="2021-01-01T00:00:00Z",
                     key_ring=keyring.name,
                     location=keylocation.name,
                     members=["user:jane@example.com"],
@@ -137,7 +141,7 @@ class Test_kms_key_not_publicly_accessible_gcp:
                 result[0].status_extended
                 == f"Key {kms_client.crypto_keys[0].name} is not exposed to Public."
             )
-            assert result[0].resource_id == kms_client.crypto_keys[0].name
+            assert result[0].resource_id == kms_client.crypto_keys[0].id
             assert result[0].resource_name == kms_client.crypto_keys[0].name
             assert result[0].location == kms_client.crypto_keys[0].location
             assert result[0].project_id == kms_client.crypto_keys[0].project_id
@@ -177,8 +181,10 @@ class Test_kms_key_not_publicly_accessible_gcp:
             kms_client.crypto_keys = [
                 CriptoKey(
                     name="key1",
+                    id="projects/123/locations/us-central1/keyRings/keyring1/cryptoKeys/key1",
                     project_id=GCP_PROJECT_ID,
                     rotation_period="7776000s",
+                    next_rotation_time="2021-01-01T00:00:00Z",
                     key_ring=keyring.name,
                     location=keylocation.name,
                     members=[],
@@ -193,7 +199,7 @@ class Test_kms_key_not_publicly_accessible_gcp:
                 result[0].status_extended
                 == f"Key {kms_client.crypto_keys[0].name} is not exposed to Public."
             )
-            assert result[0].resource_id == kms_client.crypto_keys[0].name
+            assert result[0].resource_id == kms_client.crypto_keys[0].id
             assert result[0].resource_name == kms_client.crypto_keys[0].name
             assert result[0].location == kms_client.crypto_keys[0].location
             assert result[0].project_id == kms_client.crypto_keys[0].project_id
