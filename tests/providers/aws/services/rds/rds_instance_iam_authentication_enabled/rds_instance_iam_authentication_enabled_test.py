@@ -96,7 +96,7 @@ class Test_rds_instance_iam_authentication_enabled:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == "RDS Instance db-master-1 does not have IAM authentication enabled."
+                    == "RDS Instance db-master-1 which is not clustered does not have IAM authentication enabled."
                 )
                 assert result[0].resource_id == "db-master-1"
                 assert result[0].region == AWS_REGION_US_EAST_1
@@ -148,7 +148,7 @@ class Test_rds_instance_iam_authentication_enabled:
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == "RDS Instance db-master-1 has IAM authentication enabled."
+                    == "RDS Instance db-master-1 which is not clustered has IAM authentication enabled."
                 )
                 assert result[0].resource_id == "db-master-1"
                 assert result[0].region == AWS_REGION_US_EAST_1
@@ -200,7 +200,7 @@ class Test_rds_instance_iam_authentication_enabled:
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == "RDS Instance db-master-1 has IAM authentication enabled."
+                    == "RDS Instance db-master-1 which is not clustered has IAM authentication enabled."
                 )
                 assert result[0].resource_id == "db-master-1"
                 assert result[0].region == AWS_REGION_US_EAST_1
@@ -252,7 +252,7 @@ class Test_rds_instance_iam_authentication_enabled:
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == "RDS Instance db-master-1 has IAM authentication enabled."
+                    == "RDS Instance db-master-1 which is not clustered has IAM authentication enabled."
                 )
                 assert result[0].resource_id == "db-master-1"
                 assert result[0].region == AWS_REGION_US_EAST_1

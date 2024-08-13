@@ -16,7 +16,7 @@ class rds_instance_default_admin(Check):
                 report.status = "FAIL"
                 report.status_extended = f"RDS Instance {db_instance.id} which is not clustered is using the default master username."
 
-                if db_instance.username not in ["admin", "postgress"]:
+                if db_instance.username not in ["admin", "postgres"]:
                     report.status = "PASS"
                     report.status_extended = f"RDS Instance {db_instance.id} which is not clustered is not using the default master username."
 

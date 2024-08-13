@@ -95,7 +95,7 @@ class Test_rds_instance_default_admin:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == "RDS Instance db-master-1 is using the default master username."
+                    == "RDS Instance db-master-1 which is not clustered is using the default master username."
                 )
                 assert result[0].resource_id == "db-master-1"
                 assert result[0].region == AWS_REGION_US_EAST_1
@@ -146,7 +146,7 @@ class Test_rds_instance_default_admin:
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == "RDS Instance db-master-1 is not using the default master username."
+                    == "RDS Instance db-master-1 which is not clustered is not using the default master username."
                 )
                 assert result[0].resource_id == "db-master-1"
                 assert result[0].region == AWS_REGION_US_EAST_1

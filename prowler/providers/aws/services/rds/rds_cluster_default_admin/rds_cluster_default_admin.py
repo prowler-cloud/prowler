@@ -15,7 +15,7 @@ class rds_cluster_default_admin(Check):
             report.status_extended = f"RDS Cluster {rds_client.db_clusters[db_cluster].id} is using the default master username."
             if rds_client.db_clusters[db_cluster].username not in [
                 "admin",
-                "postgress",
+                "postgres",
             ]:
                 report.status = "PASS"
                 report.status_extended = f"RDS Cluster {rds_client.db_clusters[db_cluster].id} is not using the default master username."
