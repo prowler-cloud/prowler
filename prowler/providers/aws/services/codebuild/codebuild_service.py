@@ -14,12 +14,14 @@ class Codebuild(AWSService):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.projects = {}
-        self.__threading_call__(self._list_projects)
-        self.__threading_call__(self._list_builds_for_project, self.projects.values())
-        self.__threading_call__(self._batch_get_builds, self.projects.values())
-        self.__threading_call__(self._batch_get_projects, self.projects.values())
+        self.__threading_call__(self.__list_projects__)
+        self.__threading_call__(
+            self.__list_builds_for_project__, self.projects.values()
+        )
+        self.__threading_call__(self.__batch_get_builds__, self.projects.values())
+        self.__threading_call__(self.__batch_get_projects__, self.projects.values())
 
-    def _list_projects(self, regional_client):
+    def __list_projects__(self, regional_client):
         logger.info("Codebuild - Listing projects...")
         try:
             list_projects_paginator = regional_client.get_paginator("list_projects")
@@ -40,7 +42,7 @@ class Codebuild(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def _list_builds_for_project(self, project):
+    def __list_builds_for_project__(self, project):
         logger.info("Codebuild - Listing builds...")
         try:
             regional_client = self.regional_clients[project.region]
@@ -54,7 +56,7 @@ class Codebuild(AWSService):
                 f"{project.region}: {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def _batch_get_builds(self, project):
+    def __batch_get_builds__(self, project):
         logger.info("Codebuild - Getting builds...")
         try:
             if project.last_build and project.last_build.id:
@@ -69,21 +71,14 @@ class Codebuild(AWSService):
                 f"{regional_client.region}: {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def _batch_get_projects(self, project):
+    def __batch_get_projects__(self, project):
         logger.info("Codebuild - Getting projects...")
         try:
             regional_client = self.regional_clients[project.region]
-            project_info = regional_client.batch_get_projects(names=[project.name])[
+            project_source = regional_client.batch_get_projects(names=[project.name])[
                 "projects"
-            ][0]
-            project.buildspec = project_info["source"].get("buildspec")
-            bitbucket_urls = []
-            if project_info["source"]["type"] == "BITBUCKET":
-                bitbucket_urls.append(project_info["source"]["location"])
-            for secondary_source in project_info.get("secondarySources", []):
-                if secondary_source["type"] == "BITBUCKET":
-                    bitbucket_urls.append(secondary_source["location"])
-            project.bitbucket_urls = bitbucket_urls
+            ][0]["source"]
+            project.buildspec = project_source.get("buildspec", "")
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -101,4 +96,3 @@ class Project(BaseModel):
     last_build: Optional[Build]
     last_invoked_time: Optional[datetime.datetime]
     buildspec: Optional[str]
-    bitbucket_urls: Optional[list] = []
