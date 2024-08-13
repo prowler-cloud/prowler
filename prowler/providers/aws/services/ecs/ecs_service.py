@@ -15,7 +15,9 @@ class ECS(AWSService):
         super().__init__(__class__.__name__, audit_info)
         self.task_definitions = []
         self.__threading_call__(self.__list_task_definitions__)
-        self.__describe_task_definition__()
+        self.__threading_call__(
+            self.__describe_task_definition__, self.task_definitions
+        )
 
     def __list_task_definitions__(self, regional_client):
         logger.info("ECS - Listing Task Definitions...")
@@ -41,32 +43,27 @@ class ECS(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_task_definition__(self):
+    def __describe_task_definition__(self, task_definition):
         logger.info("ECS - Describing Task Definitions...")
         try:
-            for task_definition in self.task_definitions:
-                client = self.regional_clients[task_definition.region]
-                response = client.describe_task_definition(
-                    taskDefinition=task_definition.arn,
-                    include=[
-                        "TAGS",
-                    ],
-                )
-                container_definitions = response["taskDefinition"][
-                    "containerDefinitions"
-                ]
-                for container in container_definitions:
-                    if "environment" in container:
-                        for env_var in container["environment"]:
-                            task_definition.environment_variables.append(
-                                ContainerEnvVariable(
-                                    name=env_var["name"], value=env_var["value"]
-                                )
+            client = self.regional_clients[task_definition.region]
+            response = client.describe_task_definition(
+                taskDefinition=task_definition.arn,
+                include=[
+                    "TAGS",
+                ],
+            )
+            container_definitions = response["taskDefinition"]["containerDefinitions"]
+            for container in container_definitions:
+                if "environment" in container:
+                    for env_var in container["environment"]:
+                        task_definition.environment_variables.append(
+                            ContainerEnvVariable(
+                                name=env_var["name"], value=env_var["value"]
                             )
-                task_definition.tags = response.get("tags")
-                task_definition.network_mode = response["taskDefinition"].get(
-                    "networkMode"
-                )
+                        )
+            task_definition.tags = response.get("tags")
+            task_definition.network_mode = response["taskDefinition"].get("networkMode")
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
