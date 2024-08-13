@@ -96,6 +96,7 @@ class Test_elb_insecure_ssl_ciphers:
             assert result[0].resource_id == "my-lb"
             assert result[0].resource_arn == elb_arn
             assert result[0].region == AWS_REGION_EU_WEST_1
+            assert result[0].resource_tags == []
 
     @mock_aws
     def test_elb_with_HTTPS_listener(self):
@@ -146,3 +147,4 @@ class Test_elb_insecure_ssl_ciphers:
             assert result[0].resource_id == "my-lb"
             assert result[0].resource_arn == elb_arn
             assert result[0].region == AWS_REGION_EU_WEST_1
+            assert result[0].resource_tags == []

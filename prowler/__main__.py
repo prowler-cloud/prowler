@@ -593,7 +593,6 @@ def prowler():
                 aws_partition=global_provider.identity.partition,
                 aws_session=global_provider.session.current_session,
                 findings=asff_output.data,
-                status=global_provider.output_options.status,
                 send_only_fails=global_provider.output_options.send_sh_only_fails,
                 aws_security_hub_available_regions=security_hub_regions,
             )

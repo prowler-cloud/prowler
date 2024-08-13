@@ -1,7 +1,11 @@
 from argparse import ArgumentTypeError, Namespace
-from re import fullmatch, search
+from re import search
 
-from prowler.providers.aws.aws_provider import get_aws_available_regions
+from prowler.providers.aws.aws_provider import (
+    get_aws_available_regions,
+    validate_role_session_name,
+    validate_session_duration,
+)
 from prowler.providers.aws.config import ROLE_SESSION_NAME
 from prowler.providers.aws.lib.arn.arn import arn_type
 
@@ -168,15 +172,6 @@ def init_parser(self):
     )
 
 
-def validate_session_duration(duration):
-    """validate_session_duration validates that the AWS STS Assume Role Session Duration is between 900 and 43200 seconds."""
-    duration = int(duration)
-    # Since the range(i,j) goes from i to j-1 we have to j+1
-    if duration not in range(900, 43201):
-        raise ArgumentTypeError("Session duration must be between 900 and 43200")
-    return duration
-
-
 def validate_arguments(arguments: Namespace) -> tuple[bool, str]:
     """validate_arguments returns {True, "} if the provider arguments passed are valid and can be used together. It performs an extra validation, specific for the AWS provider, apart from the argparse lib."""
 
@@ -202,17 +197,4 @@ def validate_bucket(bucket_name):
     else:
         raise ArgumentTypeError(
             "Bucket name must be valid (https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucketnamingrules.html)"
-        )
-
-
-def validate_role_session_name(session_name):
-    """
-    validates that the role session name is valid
-    Documentation: https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html
-    """
-    if fullmatch(r"[\w+=,.@-]{2,64}", session_name):
-        return session_name
-    else:
-        raise ArgumentTypeError(
-            "Role Session Name must be 2-64 characters long and consist only of upper- and lower-case alphanumeric characters with no spaces. You can also include underscores or any of the following characters: =,.@-"
         )

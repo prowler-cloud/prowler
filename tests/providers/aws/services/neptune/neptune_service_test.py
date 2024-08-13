@@ -126,6 +126,8 @@ class Test_Neptune_Service:
             DatabaseName=NEPTUNE_CLUSTER_NAME,
             DBClusterIdentifier=NEPTUNE_CLUSTER_NAME,
             Port=123,
+            StorageEncrypted=True,
+            KmsKeyId="default_kms_key_id",
             Tags=NEPTUNE_CLUSTER_TAGS,
             EnableIAMDatabaseAuthentication=False,
             DeletionProtection=False,

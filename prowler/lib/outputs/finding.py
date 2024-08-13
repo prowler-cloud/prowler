@@ -50,7 +50,7 @@ class Finding(BaseModel):
     # Optional since it depends on permissions
     account_organization_name: Optional[str]
     # Optional since it depends on permissions
-    account_tags: Optional[list[str]]
+    account_tags: dict = {}
     finding_uid: str
     provider: str
     check_id: str
@@ -66,7 +66,7 @@ class Finding(BaseModel):
     resource_uid: str
     resource_name: str
     resource_details: str
-    resource_tags: str
+    resource_tags: dict = {}
     # Only present for AWS and Azure
     partition: Optional[str]
     region: str
