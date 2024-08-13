@@ -1,7 +1,6 @@
 from unittest import mock
 
-from mock import MagicMock, patch
-from moto import mock_aws
+from mock import MagicMock
 
 from prowler.providers.aws.services.elasticache.elasticache_service import (
     ReplicationGroup,
@@ -16,17 +15,13 @@ from tests.providers.aws.services.elasticache.elasticache_service_test import (
     REPLICATION_GROUP_STATUS,
     REPLICATION_GROUP_TAGS,
     REPLICATION_GROUP_TRANSIT_ENCRYPTION,
-    mock_make_api_call,
 )
 from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provider
 
 VPC_ID = "vpc-12345678901234567"
 
 
-# Patch every AWS call using Boto3
-@patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
 class Test_elasticache_redis_cluster_auto_minor_version_upgrades:
-    @mock_aws
     def test_elasticache_no_clusters(self):
         # Mock VPC Service
         vpc_client = MagicMock
@@ -57,7 +52,6 @@ class Test_elasticache_redis_cluster_auto_minor_version_upgrades:
             result = check.execute()
             assert len(result) == 0
 
-    @mock_aws
     def test_elasticache_clusters_auto_minor_version_upgrades_undefined(self):
         # Mock ElastiCache Service
         elasticache_service = MagicMock
@@ -101,7 +95,6 @@ class Test_elasticache_redis_cluster_auto_minor_version_upgrades:
             assert result[0].resource_arn == REPLICATION_GROUP_ARN
             assert result[0].resource_tags == REPLICATION_GROUP_TAGS
 
-    @mock_aws
     def test_elasticache_clusters_auto_minor_version_upgrades_disabled(self):
         # Mock ElastiCache Service
         elasticache_service = MagicMock
@@ -146,7 +139,6 @@ class Test_elasticache_redis_cluster_auto_minor_version_upgrades:
             assert result[0].resource_arn == REPLICATION_GROUP_ARN
             assert result[0].resource_tags == REPLICATION_GROUP_TAGS
 
-    @mock_aws
     def test_elasticache_clusters_auto_minor_version_upgrades_enabled(self):
         # Mock ElastiCache Service
         elasticache_service = MagicMock

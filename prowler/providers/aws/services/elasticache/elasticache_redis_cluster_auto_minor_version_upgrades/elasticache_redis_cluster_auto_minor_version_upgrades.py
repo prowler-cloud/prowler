@@ -19,8 +19,6 @@ class elasticache_redis_cluster_auto_minor_version_upgrades(Check):
             if not repl_group.auto_minor_version_upgrade:
                 report.status = "FAIL"
                 report.status_extended = f"Elasticache Redis cache cluster {repl_group.id} does not have automated minor version upgrades enabled."
-                findings.append(report)
-                break
 
             findings.append(report)
 
