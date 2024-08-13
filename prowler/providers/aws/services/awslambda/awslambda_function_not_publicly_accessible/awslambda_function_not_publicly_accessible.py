@@ -22,13 +22,19 @@ class awslambda_function_not_publicly_accessible(Check):
                     if statement["Effect"] == "Allow":
                         if (
                             "*" in statement["Principal"]
+                            or "*" in statement["Principal"].get("AWS", "")
+                            or "*" in statement["Principal"].get("CanonicalUser", "")
                             or (
-                                "AWS" in statement["Principal"]
-                                and "*" in statement["Principal"]["AWS"]
-                            )
-                            or (
-                                "CanonicalUser" in statement["Principal"]
-                                and "*" in statement["Principal"]["CanonicalUser"]
+                                (
+                                    "elasticloadbalancing.amazonaws.com"
+                                    == statement["Principal"].get("Service", "")
+                                    or "apigateway.amazonaws.com"
+                                    == statement["Principal"].get("Service", "")
+                                )
+                                and (
+                                    "*" in statement.get("Action", "")
+                                    or "InvokeFunction" in statement.get("Action", "")
+                                )
                             )
                         ):
                             public_access = True
