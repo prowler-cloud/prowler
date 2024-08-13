@@ -103,6 +103,9 @@ class ElastiCache(AWSService):
                                 "TransitEncryptionEnabled", False
                             ),
                             multi_az=repl_group.get("MultiAZ", "disabled"),
+                            auto_minor_version_upgrade=repl_group.get(
+                                "AutoMinorVersionUpgrade", False
+                            ),
                         )
                 except Exception as error:
                     logger.error(
@@ -160,7 +163,7 @@ class Cluster(BaseModel):
     cache_subnet_group_id: Optional[str]
     subnets: list = []
     tags: Optional[list]
-    auto_minor_version_upgrade: Optional[bool] = False
+    auto_minor_version_upgrade: bool = False
 
 
 class ReplicationGroup(BaseModel):
@@ -173,3 +176,4 @@ class ReplicationGroup(BaseModel):
     transit_encryption: bool
     multi_az: str
     tags: Optional[list]
+    auto_minor_version_upgrade: bool = False

@@ -106,6 +106,7 @@ def mock_make_api_call(self, operation_name, kwargs):
                     "TransitEncryptionEnabled": REPLICATION_GROUP_TRANSIT_ENCRYPTION,
                     "AtRestEncryptionEnabled": REPLICATION_GROUP_ENCRYPTION,
                     "ARN": REPLICATION_GROUP_ARN,
+                    "AutoMinorVersionUpgrade": AUTO_MINOR_VERSION_UPGRADE,
                 },
             ]
         }
@@ -190,4 +191,5 @@ class Test_ElastiCache_Service:
             transit_encryption=REPLICATION_GROUP_TRANSIT_ENCRYPTION,
             multi_az=REPLICATION_GROUP_MULTI_AZ,
             tags=REPLICATION_GROUP_TAGS,
+            auto_minor_version_upgrade=AUTO_MINOR_VERSION_UPGRADE,
         )
