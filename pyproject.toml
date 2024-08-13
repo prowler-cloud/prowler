@@ -22,7 +22,7 @@ djangorestframework = "3.15.2"
 djangorestframework-jsonapi = "7.0.2"
 drf-spectacular = "0.27.2"
 drf-spectacular-jsonapi = "0.4.1"
-gunicorn = "22.0.0"
+gunicorn = "23.0.0"
 psycopg2-binary = "2.9.9"
 pytest-celery = {extras = ["redis"], version = "^1.0.1"}
 python = "^3.12"
