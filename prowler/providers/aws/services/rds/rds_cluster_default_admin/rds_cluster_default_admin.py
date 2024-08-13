@@ -13,10 +13,10 @@ class rds_cluster_default_admin(Check):
             report.resource_tags = rds_client.db_clusters[db_cluster].tags
             report.status = "FAIL"
             report.status_extended = f"RDS Cluster {rds_client.db_clusters[db_cluster].id} is using the default master username."
-            if (
-                rds_client.db_clusters[db_cluster].username != "admin"
-                and rds_client.db_clusters[db_cluster].username != "postgres"
-            ):
+            if rds_client.db_clusters[db_cluster].username not in [
+                "admin",
+                "postgress",
+            ]:
                 report.status = "PASS"
                 report.status_extended = f"RDS Cluster {rds_client.db_clusters[db_cluster].id} is not using the default master username."
 

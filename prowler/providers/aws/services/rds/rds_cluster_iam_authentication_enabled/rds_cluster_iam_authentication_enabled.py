@@ -14,23 +14,23 @@ class rds_cluster_iam_authentication_enabled(Check):
                 "aurora-mysql",
                 "aurora",
             ]
-            report = Check_Report_AWS(self.metadata())
-            report.region = rds_client.db_clusters[db_cluster].region
-            report.resource_id = rds_client.db_clusters[db_cluster].id
-            report.resource_arn = db_cluster
-            report.resource_tags = rds_client.db_clusters[db_cluster].tags
-            report.status = "PASS"
-            report.status_extended = f"RDS Cluster {rds_client.db_clusters[db_cluster].id} does not support IAM authentication."
             if (
                 engine in rds_client.db_clusters[db_cluster].engine
                 for engine in supported_engines
             ):
+                report = Check_Report_AWS(self.metadata())
+                report.region = rds_client.db_clusters[db_cluster].region
+                report.resource_id = rds_client.db_clusters[db_cluster].id
+                report.resource_arn = db_cluster
+                report.resource_tags = rds_client.db_clusters[db_cluster].tags
+
                 if rds_client.db_clusters[db_cluster].iam_auth:
+                    report.status = "PASS"
                     report.status_extended = f"RDS Cluster {rds_client.db_clusters[db_cluster].id} has IAM authentication enabled."
                 else:
                     report.status = "FAIL"
                     report.status_extended = f"RDS Cluster {rds_client.db_clusters[db_cluster].id} does not have IAM authentication enabled."
 
-            findings.append(report)
+                findings.append(report)
 
         return findings
