@@ -33,19 +33,4 @@ class rds_instance_iam_authentication_enabled(Check):
                     )
 
                 findings.append(report)
-
-        for db_cluster in rds_client.db_clusters:
-            report = Check_Report_AWS(self.metadata())
-            report.region = rds_client.db_clusters[db_cluster].region
-            report.resource_id = rds_client.db_clusters[db_cluster].id
-            report.resource_arn = db_cluster
-            report.resource_tags = rds_client.db_clusters[db_cluster].tags
-            report.status = "FAIL"
-            report.status_extended = f"RDS Cluster {rds_client.db_clusters[db_cluster].id} does not have IAM authentication enabled."
-            if rds_client.db_clusters[db_cluster].iam_auth:
-                report.status = "PASS"
-                report.status_extended = f"RDS Cluster {rds_client.db_clusters[db_cluster].id} has IAM authentication enabled."
-
-            findings.append(report)
-
         return findings
