@@ -27,8 +27,6 @@ class ELBv2(AWSService):
             ],
         )
         self.__threading_call__(self._describe_tags, self.loadbalancersv2.items())
-        self.target_groups = {}
-        self.__threading_call__(self._describe_target_groups)
 
     def _describe_load_balancers(self, regional_client):
         logger.info("ELBv2 - Describing load balancers...")
@@ -49,7 +47,6 @@ class ELBv2(AWSService):
                             type=elbv2["Type"],
                             dns=elbv2.get("DNSName", None),
                             scheme=elbv2.get("Scheme", None),
-                            security_group_ids=elbv2.get("SecurityGroups", []),
                         )
         except Exception as error:
             logger.error(
@@ -177,35 +174,6 @@ class ELBv2(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def _describe_target_groups(self, regional_client):
-        logger.info("ELBv2 - Describing target groups...")
-        try:
-            describe_target_groups_paginator = regional_client.get_paginator(
-                "describe_target_groups"
-            )
-            for page in describe_target_groups_paginator.paginate():
-                for target_group in page["TargetGroups"]:
-                    targets = {
-                        (tg["Target"]["Id"], tg["Target"].get("Port", 0))
-                        for tg in regional_client.describe_target_health(
-                            TargetGroupArn=target_group["TargetGroupArn"]
-                        )["TargetHealthDescriptions"]
-                    }
-
-                    self.target_groups[target_group["TargetGroupArn"]] = TargetGroup(
-                        name=target_group.get("TargetGroupName", ""),
-                        protocol=target_group.get("Protocol", ""),
-                        port=target_group.get("Port", 0),
-                        vpc_id=target_group.get("VpcId", ""),
-                        target_type=target_group.get("TargetType", ""),
-                        targets=dict(targets),
-                        load_balancer_arns=target_group.get("LoadBalancerArns", []),
-                    )
-        except Exception as error:
-            logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-
 
 class ListenerRule(BaseModel):
     arn: str
@@ -232,16 +200,4 @@ class LoadBalancerv2(BaseModel):
     drop_invalid_header_fields: Optional[str]
     listeners: Dict[str, Listenerv2] = {}
     scheme: Optional[str]
-    security_group_ids: list[str]
     tags: Optional[list] = []
-
-
-class TargetGroup(BaseModel):
-    name: str
-    protocol: str
-    port: int
-    vpc_id: str
-    target_type: str
-    # Key: ID, Value: Port (only available for IP targets)
-    targets: Dict[str, int] = []
-    load_balancer_arns: list[str]
