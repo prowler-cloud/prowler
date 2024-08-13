@@ -1,5 +1,6 @@
 from typing import Optional
 
+from botocore.client import ClientError
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
@@ -14,11 +15,14 @@ class Neptune(AWSService):
         self.service_name = "neptune"
         super().__init__(self.service_name, provider)
         self.clusters = {}
-        self.__threading_call__(self.__describe_clusters__)
-        self.__threading_call__(self.__describe_db_subnet_groups__)
-        self.__list_tags_for_resource__()
+        self.db_cluster_snapshots = []
+        self.__threading_call__(self._describe_clusters)
+        self.__threading_call__(self._describe_db_subnet_groups)
+        self.__threading_call__(self._describe_db_cluster_snapshots)
+        self.__threading_call__(self._describe_db_cluster_snapshot_attributes)
+        self._list_tags_for_resource()
 
-    def __describe_clusters__(self, regional_client):
+    def _describe_clusters(self, regional_client):
         logger.info("Neptune - Describing DB Clusters...")
         try:
             for cluster in regional_client.describe_db_clusters(
@@ -54,7 +58,7 @@ class Neptune(AWSService):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_db_subnet_groups__(self, regional_client):
+    def _describe_db_subnet_groups(self, regional_client):
         logger.info("Neptune - Describing DB Subnet Groups...")
         try:
             for cluster in self.clusters.values():
@@ -79,7 +83,7 @@ class Neptune(AWSService):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __list_tags_for_resource__(self):
+    def _list_tags_for_resource(self):
         logger.info("Neptune - Listing Tags...")
         try:
             for cluster in self.clusters.values():
@@ -92,6 +96,62 @@ class Neptune(AWSService):
                     logger.error(
                         f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _describe_db_cluster_snapshots(self, regional_client):
+        logger.info("NeptuneDB - Describe Cluster Snapshots...")
+        try:
+            describe_db_snapshots_paginator = regional_client.get_paginator(
+                "describe_db_cluster_snapshots"
+            )
+            for page in describe_db_snapshots_paginator.paginate():
+                for snapshot in page["DBClusterSnapshots"]:
+                    arn = f"arn:{self.audited_partition}:neptune:{regional_client.region}:{self.audited_account}:cluster-snapshot:{snapshot['DBClusterSnapshotIdentifier']}"
+                    if not self.audit_resources or (
+                        is_resource_filtered(
+                            arn,
+                            self.audit_resources,
+                        )
+                    ):
+                        if snapshot["Engine"] == "neptune":
+                            self.db_cluster_snapshots.append(
+                                ClusterSnapshot(
+                                    id=snapshot["DBClusterSnapshotIdentifier"],
+                                    arn=arn,
+                                    cluster_id=snapshot["DBClusterIdentifier"],
+                                    encrypted=snapshot.get("StorageEncrypted", False),
+                                    region=regional_client.region,
+                                    tags=snapshot.get("TagList", []),
+                                )
+                            )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _describe_db_cluster_snapshot_attributes(self, regional_client):
+        logger.info("NeptuneDB - Describe Cluster Snapshot Attributes...")
+        try:
+            for snapshot in self.db_cluster_snapshots:
+                if snapshot.region == regional_client.region:
+                    response = regional_client.describe_db_cluster_snapshot_attributes(
+                        DBClusterSnapshotIdentifier=snapshot.id
+                    )["DBClusterSnapshotAttributesResult"]
+                    for att in response["DBClusterSnapshotAttributes"]:
+                        if "all" in att["AttributeValues"]:
+                            snapshot.public = True
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "DBClusterSnapshotNotFoundFault":
+                logger.warning(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -112,3 +172,13 @@ class Cluster(BaseModel):
     db_subnet_group_id: str
     subnets: Optional[list]
     tags: Optional[list]
+
+
+class ClusterSnapshot(BaseModel):
+    id: str
+    cluster_id: str
+    arn: str
+    public: bool = False
+    encrypted: bool
+    region: str
+    tags: Optional[list] = []
