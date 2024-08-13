@@ -15,7 +15,7 @@
     "Code": {
       "CLI": "aws neptune modify-db-cluster-snapshot-attribute --db-cluster-snapshot-identifier <snapshot_id> --attribute-name restore --values-to-remove all",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/neptune-controls.html#neptune-3",
       "Terraform": ""
     },
     "Recommendation": {
