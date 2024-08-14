@@ -275,6 +275,9 @@ config_aws = {
     ],
     "check_rds_instance_replicas": False,
     "days_to_expire_threshold": 7,
+    "insecure_key_algorithms": [
+        "RSA-1024",
+    ],
     "eks_required_log_types": [
         "api",
         "audit",
@@ -283,6 +286,7 @@ config_aws = {
         "scheduler",
     ],
     "eks_cluster_oldest_version_supported": "1.28",
+    "excluded_sensitive_environment_variables": [],
 }
 
 config_azure = {
