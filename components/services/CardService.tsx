@@ -12,15 +12,17 @@ export const CardService: React.FC<CardServiceProps> = ({
 }) => {
   return (
     <Card fullWidth isPressable isHoverable shadow="sm">
-      <CardBody className="flex flex-row items-center space-x-4">
-        {getAWSIcon(serviceAlias)}
-        <div className="flex flex-col">
-          <h4 className="font-bold text-large">{serviceAlias}</h4>
-          <small className="text-default-500">
-            {fidingsFailed > 0
-              ? `${fidingsFailed} Failed Findings`
-              : "All findings passed"}
-          </small>
+      <CardBody className="flex flex-row items-center space-x-4 justify-between">
+        <div className="flex space-x-4 items-center">
+          {getAWSIcon(serviceAlias)}
+          <div className="flex flex-col">
+            <h4 className="font-bold text-large">{serviceAlias}</h4>
+            <small className="text-default-500">
+              {fidingsFailed > 0
+                ? `${fidingsFailed} Failed Findings`
+                : "All findings passed"}
+            </small>
+          </div>
         </div>
 
         <Chip

@@ -23,7 +23,7 @@ export const CustomDatePicker = () => {
   const nextMonth = startOfMonth(now.add({ months: 1 }));
 
   return (
-    <div className="flex flex-col gap-4 w-full">
+    <div className="flex flex-col md:gap-2 w-full">
       <DatePicker
         CalendarBottomContent={<div className="min-w-[380px]"></div>}
         CalendarTopContent={
@@ -55,7 +55,7 @@ export const CustomDatePicker = () => {
         size="sm"
         variant="flat"
       />
-      <p className="text-default-500 text-sm">
+      <p className="hidden md:flex text-default-500 text-sm">
         Selected date:{" "}
         {value ? formatter.format(value.toDate(getLocalTimeZone())) : "--"}
       </p>

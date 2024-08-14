@@ -303,7 +303,7 @@
         "updated_at": "2024-08-14T10:17:00.000000Z",
         "provider": "aws",
         "provider_id": "018",
-        "alias": "AWS Database Migration Service",
+        "alias": "AWS Database Migration",
         "regions": ["us-east-1", "us-east-2"],
         "findings": {
           "failed": 5,
@@ -439,7 +439,7 @@
         "updated_at": "2024-08-14T10:25:00.000000Z",
         "provider": "aws",
         "provider_id": "026",
-        "alias": "AWS Systems Manager Incident Manager",
+        "alias": "AWS Systems Manager",
         "regions": ["eu-west-1", "eu-west-3"],
         "findings": {
           "failed": 0,

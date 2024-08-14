@@ -895,7 +895,7 @@ export const getAWSIcon = (serviceAlias: string) => {
       return <AWSCloudWatchIcon />;
     case "AWS Config":
       return <AWSConfigIcon />;
-    case "AWS Database Migration Service":
+    case "AWS Database Migration":
       return <AWSDatabaseMigrationServiceIcon />;
     case "AWS Glue":
       return <AWSGlueIcon />;
@@ -911,7 +911,7 @@ export const getAWSIcon = (serviceAlias: string) => {
       return <AWSResourceExplorerIcon />;
     case "AWS Security Hub":
       return <AWSSecurityHubIcon />;
-    case "AWS Systems Manager Incident Manager":
+    case "AWS Systems Manager":
       return <AWSSystemsManagerIncidentManagerIcon />;
     case "AWS Trusted Advisor":
       return <AWSTrustedAdvisorIcon />;
