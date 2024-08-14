@@ -1,35 +1,29 @@
 from unittest import mock
 
 from prowler.providers.aws.services.rds.rds_service import DBCluster
-from tests.providers.aws.utils import (
-    AWS_ACCOUNT_NUMBER,
-    AWS_REGION_US_EAST_1,
-    set_mocked_aws_provider,
-)
+from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, AWS_REGION_US_EAST_1
 
 
 class Test_rds_cluster_minor_version_upgrade_enabled:
     def test_rds_no_clusters(self):
-        from prowler.providers.aws.services.rds.rds_service import RDS
-
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        rds_client = mock.MagicMock
+        rds_client.db_clusters = {}
 
         with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
+            "prowler.providers.aws.services.rds.rds_service.RDS",
+            new=rds_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.rds.rds_cluster_minor_version_upgrade_enabled.rds_cluster_minor_version_upgrade_enabled.rds_client",
+            new=rds_client,
         ):
-            with mock.patch(
-                "prowler.providers.aws.services.rds.rds_cluster_minor_version_upgrade_enabled.rds_cluster_minor_version_upgrade_enabled.rds_client",
-                new=RDS(aws_provider),
-            ):
-                from prowler.providers.aws.services.rds.rds_cluster_minor_version_upgrade_enabled.rds_cluster_minor_version_upgrade_enabled import (
-                    rds_cluster_minor_version_upgrade_enabled,
-                )
+            from prowler.providers.aws.services.rds.rds_cluster_minor_version_upgrade_enabled.rds_cluster_minor_version_upgrade_enabled import (
+                rds_cluster_minor_version_upgrade_enabled,
+            )
 
-                check = rds_cluster_minor_version_upgrade_enabled()
-                result = check.execute()
+            check = rds_cluster_minor_version_upgrade_enabled()
+            result = check.execute()
 
-                assert len(result) == 0
+            assert len(result) == 0
 
     def test_rds_cluster_no_multi(self):
         rds_client = mock.MagicMock
