@@ -1,8 +1,5 @@
 from unittest import mock
 
-import botocore
-from moto import mock_aws
-
 from prowler.providers.aws.services.rds.rds_service import DBCluster
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
@@ -10,27 +7,8 @@ from tests.providers.aws.utils import (
     set_mocked_aws_provider,
 )
 
-make_api_call = botocore.client.BaseClient._make_api_call
 
-
-def mock_make_api_call(self, operation_name, kwarg):
-    if operation_name == "DescribeDBEngineVersions":
-        return {
-            "DBEngineVersions": [
-                {
-                    "Engine": "mysql",
-                    "EngineVersion": "8.0.32",
-                    "DBEngineDescription": "description",
-                    "DBEngineVersionDescription": "description",
-                },
-            ]
-        }
-    return make_api_call(self, operation_name, kwarg)
-
-
-@mock.patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
 class Test_rds_cluster_minor_version_upgrade_enabled:
-    @mock_aws
     def test_rds_no_clusters(self):
         from prowler.providers.aws.services.rds.rds_service import RDS
 
