@@ -1,73 +1,47 @@
-import { FilterControls } from "@/components/filters";
-import {
-  AmazonEC2Icon,
-  AmazonEMRIcon,
-  AmazonGuardDutyIcon,
-  AmazonInspectorIcon,
-  AmazonMacieIcon,
-  AmazonRDSIcon,
-  AmazonRoute53Icon,
-  AmazonS3Icon,
-  AmazonSNSIcon,
-  AmazonVPCIcon,
-  AWSAccountIcon,
-  AWSAthenaIcon,
-  AWSCertificateManagerIcon,
-  AWSCloudFormationIcon,
-  AWSCloudTrailIcon,
-  AWSCloudWatchIcon,
-  AWSConfigIcon,
-  AWSDatabaseMigrationServiceIcon,
-  AWSGlueIcon,
-  AWSIAMIcon,
-  AWSLambdaIcon,
-  AWSNetworkFirewallIcon,
-  AWSOrganizationsIcon,
-  AWSResourceExplorerIcon,
-  AWSSecurityHubIcon,
-  AWSSystemsManagerIncidentManagerIcon,
-  AWSTrustedAdvisorIcon,
-  IAMAccessAnalyzerIcon,
-} from "@/components/icons";
-import { Header } from "@/components/ui";
+import { Spacer } from "@nextui-org/react";
+import { redirect } from "next/navigation";
+import { Suspense } from "react";
 
-export default function Services() {
+import { getService } from "@/actions/services";
+import { FilterControls } from "@/components/filters";
+import { SkeletonTableProvider } from "@/components/providers";
+import { CardService } from "@/components/services";
+import { Header } from "@/components/ui";
+import { searchParamsProps } from "@/types";
+
+export default async function Services({ searchParams }: searchParamsProps) {
   return (
     <>
       <Header
         title="Services"
         icon="material-symbols:linked-services-outline"
       />
+      <Spacer y={4} />
       <FilterControls />
-
-      <IAMAccessAnalyzerIcon />
-      <AWSAccountIcon />
-      <AWSCertificateManagerIcon />
-      <AWSAthenaIcon />
-      <AWSLambdaIcon />
-      <AWSCloudFormationIcon />
-      <AWSCloudTrailIcon />
-      <AWSCloudWatchIcon />
-      <AWSConfigIcon />
-      <AWSDatabaseMigrationServiceIcon />
-      <AmazonEC2Icon />
-      <AmazonEMRIcon />
-      <AWSGlueIcon />
-      <AmazonGuardDutyIcon />
-      <AmazonInspectorIcon />
-      <AWSIAMIcon />
-      <AmazonMacieIcon />
-      <AWSNetworkFirewallIcon />
-      <AWSOrganizationsIcon />
-      <AmazonRDSIcon />
-      <AWSResourceExplorerIcon />
-      <AmazonRoute53Icon />
-      <AmazonS3Icon />
-      <AWSSecurityHubIcon />
-      <AmazonSNSIcon />
-      <AWSSystemsManagerIncidentManagerIcon />
-      <AWSTrustedAdvisorIcon />
-      <AmazonVPCIcon />
+      <Spacer y={4} />
+      <Suspense key={searchParams.page} fallback={<SkeletonTableProvider />}>
+        <SSRServiceGrid searchParams={searchParams} />
+      </Suspense>
     </>
   );
 }
+
+const SSRServiceGrid = async ({ searchParams }: searchParamsProps) => {
+  const page = searchParams.page ? parseInt(searchParams.page) : 1;
+  const servicesData = await getService({ page });
+  const [services] = await Promise.all([servicesData]);
+
+  if (services?.errors) redirect("/services");
+
+  return (
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {services.services?.data.map((service: any) => (
+        <CardService
+          key={service.id}
+          fidingsFailed={service.attributes.findings.failed}
+          serviceAlias={service.attributes.alias}
+        />
+      ))}
+    </div>
+  );
+};

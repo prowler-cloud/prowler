@@ -858,3 +858,66 @@ export const AmazonVPCIcon: React.FC<IconSvgProps> = ({
     </g>
   </svg>
 );
+
+export const getAWSIcon = (serviceAlias: string) => {
+  switch (serviceAlias) {
+    case "Amazon EC2":
+      return <AmazonEC2Icon />;
+    case "Amazon EMR":
+      return <AmazonEMRIcon />;
+    case "Amazon GuardDuty":
+      return <AmazonGuardDutyIcon />;
+    case "Amazon Inspector":
+      return <AmazonInspectorIcon />;
+    case "Amazon Macie":
+      return <AmazonMacieIcon />;
+    case "Amazon RDS":
+      return <AmazonRDSIcon />;
+    case "Amazon Route 53":
+      return <AmazonRoute53Icon />;
+    case "Amazon S3":
+      return <AmazonS3Icon />;
+    case "Amazon SNS":
+      return <AmazonSNSIcon />;
+    case "Amazon VPC":
+      return <AmazonVPCIcon />;
+    case "AWS Account":
+      return <AWSAccountIcon />;
+    case "AWS Athena":
+      return <AWSAthenaIcon />;
+    case "AWS Certificate Manager":
+      return <AWSCertificateManagerIcon />;
+    case "AWS CloudFormation":
+      return <AWSCloudFormationIcon />;
+    case "AWS CloudTrail":
+      return <AWSCloudTrailIcon />;
+    case "AWS CloudWatch":
+      return <AWSCloudWatchIcon />;
+    case "AWS Config":
+      return <AWSConfigIcon />;
+    case "AWS Database Migration Service":
+      return <AWSDatabaseMigrationServiceIcon />;
+    case "AWS Glue":
+      return <AWSGlueIcon />;
+    case "AWS IAM":
+      return <AWSIAMIcon />;
+    case "AWS Lambda":
+      return <AWSLambdaIcon />;
+    case "AWS Network Firewall":
+      return <AWSNetworkFirewallIcon />;
+    case "AWS Organizations":
+      return <AWSOrganizationsIcon />;
+    case "AWS Resource Explorer":
+      return <AWSResourceExplorerIcon />;
+    case "AWS Security Hub":
+      return <AWSSecurityHubIcon />;
+    case "AWS Systems Manager Incident Manager":
+      return <AWSSystemsManagerIncidentManagerIcon />;
+    case "AWS Trusted Advisor":
+      return <AWSTrustedAdvisorIcon />;
+    case "IAM Access Analyzer":
+      return <IAMAccessAnalyzerIcon />;
+    default:
+      return null;
+  }
+};
