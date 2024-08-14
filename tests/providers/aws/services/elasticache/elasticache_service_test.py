@@ -37,6 +37,7 @@ REPLICATION_GROUP_MULTI_AZ = "enabled"
 REPLICATION_GROUP_TAGS = [
     {"Key": "environment", "Value": "test"},
 ]
+AUTO_MINOR_VERSION_UPGRADE = True
 
 
 # Mocking Access Analyzer Calls
@@ -60,6 +61,7 @@ def mock_make_api_call(self, operation_name, kwargs):
                     "ARN": ELASTICACHE_CLUSTER_ARN,
                     "Engine": ELASTICACHE_ENGINE,
                     "SecurityGroups": [],
+                    "AutoMinorVersionUpgrade": AUTO_MINOR_VERSION_UPGRADE,
                 },
             ]
         }
@@ -104,6 +106,7 @@ def mock_make_api_call(self, operation_name, kwargs):
                     "TransitEncryptionEnabled": REPLICATION_GROUP_TRANSIT_ENCRYPTION,
                     "AtRestEncryptionEnabled": REPLICATION_GROUP_ENCRYPTION,
                     "ARN": REPLICATION_GROUP_ARN,
+                    "AutoMinorVersionUpgrade": AUTO_MINOR_VERSION_UPGRADE,
                 },
             ]
         }
@@ -166,6 +169,7 @@ class Test_ElastiCache_Service:
             cache_subnet_group_id=SUBNET_GROUP_NAME,
             subnets=[SUBNET_1, SUBNET_2],
             tags=ELASTICACHE_CLUSTER_TAGS,
+            auto_minor_version_upgrade=AUTO_MINOR_VERSION_UPGRADE,
         )
 
     # Test Elasticache Redis cache clusters
@@ -187,4 +191,5 @@ class Test_ElastiCache_Service:
             transit_encryption=REPLICATION_GROUP_TRANSIT_ENCRYPTION,
             multi_az=REPLICATION_GROUP_MULTI_AZ,
             tags=REPLICATION_GROUP_TAGS,
+            auto_minor_version_upgrade=AUTO_MINOR_VERSION_UPGRADE,
         )
