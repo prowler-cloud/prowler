@@ -5,11 +5,11 @@ from prowler.providers.aws.services.s3.s3_client import s3_client
 class s3_bucket_no_mfa_delete(Check):
     def execute(self):
         findings = []
-        for bucket in s3_client.buckets:
+        for arn, bucket in s3_client.buckets.items():
             report = Check_Report_AWS(self.metadata())
             report.region = bucket.region
             report.resource_id = bucket.name
-            report.resource_arn = bucket.arn
+            report.resource_arn = arn
             report.resource_tags = bucket.tags
             if bucket.mfa_delete:
                 report.status = "PASS"

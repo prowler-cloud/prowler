@@ -185,7 +185,7 @@ class Test_cloudtrail_bucket_requires_mfa_delete:
             )
 
             # Empty s3 buckets to simulate the bucket is in another account
-            s3_client.buckets = []
+            s3_client.buckets = {}
 
             check = cloudtrail_bucket_requires_mfa_delete()
             result = check.execute()
@@ -240,7 +240,7 @@ class Test_cloudtrail_bucket_requires_mfa_delete:
             )
 
             # Empty s3 buckets to simulate the bucket is in another account
-            s3_client.buckets = []
+            s3_client.buckets = {}
 
             check = cloudtrail_bucket_requires_mfa_delete()
             result = check.execute()
@@ -281,7 +281,7 @@ class Test_cloudtrail_bucket_requires_mfa_delete:
             )
 
             cloudtrail_client.trails = None
-            s3_client.buckets = []
+            s3_client.buckets = {}
 
             check = cloudtrail_bucket_requires_mfa_delete()
             result = check.execute()

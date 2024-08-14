@@ -23,7 +23,7 @@ class cloudtrail_logs_s3_bucket_is_not_publicly_accessible(Check):
                         report.status_extended = f"S3 Bucket {trail_bucket} from multiregion trail {trail.name} is not publicly accessible."
                     else:
                         report.status_extended = f"S3 Bucket {trail_bucket} from single region trail {trail.name} is not publicly accessible."
-                    for bucket in s3_client.buckets:
+                    for bucket in s3_client.buckets.values():
                         # Here we need to ensure that acl_grantee is filled since if we don't have permissions to query the api for a concrete region
                         # (for example due to a SCP) we are going to try access an attribute from a None type
                         if trail_bucket == bucket.name:
