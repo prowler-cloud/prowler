@@ -18,7 +18,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table/Table";
+} from "@/components/ui";
 import { MetaDataProps } from "@/types";
 
 import { DataTablePagination } from "./DataTablePagination";

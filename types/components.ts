@@ -58,7 +58,7 @@ export interface FindingProps {
     resourceARN: string;
     checkId: string;
     checkLink: string;
-    type: string;
+    type: string[];
     scanTime: string;
     findingId: string;
     findingLink: string;

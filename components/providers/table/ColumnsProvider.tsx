@@ -11,7 +11,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { add } from "date-fns";
 
 import { VerticalDotsIcon } from "@/components/icons";
-import { StatusBadge } from "@/components/ui/table/StatusBadge";
+import { StatusBadge } from "@/components/ui";
 import { ProviderProps } from "@/types";
 
 import { CheckConnectionProvider } from "../CheckConnectionProvider";

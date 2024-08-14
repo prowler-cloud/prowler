@@ -3,8 +3,7 @@ import "@/styles/globals.css";
 import { Metadata, Viewport } from "next";
 import React from "react";
 
-import { Toaster } from "@/components/ui";
-import { SidebarWrap } from "@/components/ui/sidebar";
+import { SidebarWrap, Toaster } from "@/components/ui";
 import { fontSans } from "@/config/fonts";
 import { siteConfig } from "@/config/site";
 import { cn } from "@/lib/utils";

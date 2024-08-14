@@ -49,8 +49,8 @@ const SSRDataTable = async () => {
             checkId: "cloudformation_stack_outputs_find_secrets",
             checkLink:
               "https://app.prowler.pro/app/findings?date=2024-08-05&search=cloudformation_stack_outputs_find_secrets",
-            type: "Not applicable",
-            scanTime: "2024-08-05 @ 14:22:00 UTC",
+            type: ["Not applicable"],
+            scanTime: "2024-07-17T09:55:14.191475Z",
             findingId: "ba123291-03a5-49a1-b962-6fdb1d2b9c9b",
             findingLink:
               "https://app.prowler.pro/app/findings?date=2024-08-05&search=ba123291-03a5-49a1-b962-6fdb1d2b9c9b",
@@ -87,8 +87,12 @@ const SSRDataTable = async () => {
             checkId: "iam_root_mfa_enabled",
             checkLink:
               "https://app.prowler.pro/app/findings?search=iam_root_mfa_enabled",
-            type: "Software and Configuration Checks, Industry and Regulatory Standards, CIS AWS Foundations Benchmark",
-            scanTime: "2024-08-05 @ 14:22:00 UTC",
+            type: [
+              "Software and Configuration Checks",
+              "Industry and Regulatory Standards",
+              "CIS AWS Foundations Benchmark",
+            ],
+            scanTime: "2024-07-17T09:55:14.191475Z",
             findingId: "bc3a34e0-16f0-4ea1-ac62-f796c8af3448",
             findingLink:
               "https://app.prowler.pro/app/findings?date=2024-08-05&search=bc3a34e0-16f0-4ea1-ac62-f796c8af3448",
@@ -123,8 +127,8 @@ const SSRDataTable = async () => {
             checkId: "s3_bucket_public_access",
             checkLink:
               "https://app.prowler.pro/app/findings?date=2024-08-06&search=s3_bucket_public_access",
-            type: "Security",
-            scanTime: "2024-08-06 @ 10:45:00 UTC",
+            type: ["Security"],
+            scanTime: "2024-07-17T09:55:14.191475Z",
             findingId: "e7b3d6a2-39a1-4f0e-9b78-29f4e6f292d1",
             findingLink:
               "https://app.prowler.pro/app/findings?date=2024-08-06&search=e7b3d6a2-39a1-4f0e-9b78-29f4e6f292d1",
@@ -162,8 +166,8 @@ const SSRDataTable = async () => {
             checkId: "iam_password_policy_min_length",
             checkLink:
               "https://app.prowler.pro/app/findings?date=2024-08-06&search=iam_password_policy_min_length",
-            type: "Security",
-            scanTime: "2024-08-06 @ 11:10:00 UTC",
+            type: ["Security"],
+            scanTime: "2024-07-17T09:55:14.191475Z",
             findingId: "c2b3d1a4-7a9f-4d5c-a9ef-765a1d7f421c",
             findingLink:
               "https://app.prowler.pro/app/findings?date=2024-08-06&search=c2b3d1a4-7a9f-4d5c-a9ef-765a1d7f421c",
@@ -201,8 +205,8 @@ const SSRDataTable = async () => {
             checkId: "rds_instance_public_access",
             checkLink:
               "https://app.prowler.pro/app/findings?date=2024-08-06&search=rds_instance_public_access",
-            type: "Security",
-            scanTime: "2024-08-06 @ 13:15:00 UTC",
+            type: ["Security"],
+            scanTime: "2024-07-17T09:55:14.191475Z",
             findingId: "f3b4c5d6-19a7-45d8-bc3e-8c5f6a7d8e9b",
             findingLink:
               "https://app.prowler.pro/app/findings?date=2024-08-06&search=f3b4c5d6-19a7-45d8-bc3e-8c5f6a7d8e9b",
@@ -240,8 +244,8 @@ const SSRDataTable = async () => {
             checkId: "ebs_volume_encryption",
             checkLink:
               "https://app.prowler.pro/app/findings?date=2024-08-07&search=ebs_volume_encryption",
-            type: "Encryption",
-            scanTime: "2024-08-07 @ 09:30:00 UTC",
+            type: ["Encryption"],
+            scanTime: "2024-07-17T09:55:14.191475Z",
             findingId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
             findingLink:
               "https://app.prowler.pro/app/findings?date=2024-08-07&search=a1b2c3d4-e5f6-7890-abcd-ef1234567890",
@@ -278,8 +282,8 @@ const SSRDataTable = async () => {
             checkId: "cloudtrail_all_regions_enabled",
             checkLink:
               "https://app.prowler.pro/app/findings?date=2024-08-07&search=cloudtrail_all_regions_enabled",
-            type: "Logging",
-            scanTime: "2024-08-07 @ 11:00:00 UTC",
+            type: ["Logging"],
+            scanTime: "2024-07-17T09:55:14.191475Z",
             findingId: "b2c3d4e5-f6a7-8901-bcde-f123456789ab",
             findingLink:
               "https://app.prowler.pro/app/findings?date=2024-08-07&search=b2c3d4e5-f6a7-8901-bcde-f123456789ab",
@@ -317,8 +321,8 @@ const SSRDataTable = async () => {
             checkId: "ec2_instance_outdated_ami",
             checkLink:
               "https://app.prowler.pro/app/findings?date=2024-08-07&search=ec2_instance_outdated_ami",
-            type: "Configuration",
-            scanTime: "2024-08-07 @ 12:45:00 UTC",
+            type: ["Configuration"],
+            scanTime: "2024-07-17T09:55:14.191475Z",
             findingId: "c3d4e5f6-a789-0123-bcde-f234567890ab",
             findingLink:
               "https://app.prowler.pro/app/findings?date=2024-08-07&search=c3d4e5f6-a789-0123-bcde-f234567890ab",
@@ -357,8 +361,8 @@ const SSRDataTable = async () => {
             checkId: "cloudwatch_alarms_for_critical_events",
             checkLink:
               "https://app.prowler.pro/app/findings?date=2024-08-08&search=cloudwatch_alarms_for_critical_events",
-            type: "Monitoring",
-            scanTime: "2024-08-08 @ 09:50:00 UTC",
+            type: ["Monitoring"],
+            scanTime: "2024-07-17T09:55:14.191475Z",
             findingId: "d4e5f6a7-8901-bcde-f345678901ab",
             findingLink:
               "https://app.prowler.pro/app/findings?date=2024-08-08&search=d4e5f6a7-8901-bcde-f345678901ab",
@@ -396,8 +400,8 @@ const SSRDataTable = async () => {
             checkId: "iam_user_least_privilege",
             checkLink:
               "https://app.prowler.pro/app/findings?date=2024-08-08&search=iam_user_least_privilege",
-            type: "Security",
-            scanTime: "2024-08-08 @ 10:15:00 UTC",
+            type: ["Security"],
+            scanTime: "2024-07-17T09:55:14.191475Z",
             findingId: "e5f6a7b8-9012-bcde-f456789012ab",
             findingLink:
               "https://app.prowler.pro/app/findings?date=2024-08-08&search=e5f6a7b8-9012-bcde-f456789012ab",
