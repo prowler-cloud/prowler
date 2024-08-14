@@ -52,14 +52,12 @@ class S3(AWSService):
                         self.regions_with_buckets.append(bucket_region)
                         # Check if there are filter regions
                         # FIXME: what if the bucket comes from a CloudTrail bucket in another audited region
-                        if (
-                            provider.identity.audited_regions
-                            and bucket_region in provider.identity.audited_regions
-                        ):
-                            self.buckets[arn] = Bucket(
-                                name=bucket["Name"],
-                                region=bucket_region,
-                            )
+                        if provider.identity.audited_regions:
+                            if bucket_region in provider.identity.audited_regions:
+                                self.buckets[arn] = Bucket(
+                                    name=bucket["Name"],
+                                    region=bucket_region,
+                                )
                         else:
                             self.buckets[arn] = Bucket(
                                 name=bucket["Name"],
@@ -493,7 +491,6 @@ class AccessPoint(BaseModel):
 
 class Bucket(BaseModel):
     name: str
-    # arn: str
     versioning: bool = False
     logging: bool = False
     public_access_block: Optional[PublicAccessBlock]
