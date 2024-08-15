@@ -5,7 +5,7 @@ import { Suspense } from "react";
 import { getService } from "@/actions/services";
 import { FilterControls } from "@/components/filters";
 import { SkeletonTableProvider } from "@/components/providers";
-import { CardService } from "@/components/services";
+import { ServiceCard } from "@/components/services";
 import { Header } from "@/components/ui";
 import { searchParamsProps } from "@/types";
 
@@ -34,9 +34,9 @@ const SSRServiceGrid = async ({ searchParams }: searchParamsProps) => {
   if (services?.errors) redirect("/services");
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 3xl:grid-cols-5">
       {services.services?.data.map((service: any) => (
-        <CardService
+        <ServiceCard
           key={service.id}
           fidingsFailed={service.attributes.findings.failed}
           serviceAlias={service.attributes.alias}

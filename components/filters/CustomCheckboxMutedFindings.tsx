@@ -3,7 +3,7 @@ import React from "react";
 
 export const CustomCheckboxMutedFindings = () => {
   return (
-    <Checkbox className="lg:-mt-8" size="md" color="danger">
+    <Checkbox className="xl:-mt-8" size="md" color="danger">
       Include Muted Findings
     </Checkbox>
   );
