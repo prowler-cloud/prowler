@@ -2,7 +2,7 @@ import * as React from "react";
 
 import { IconSvgProps } from "@/types";
 
-export const AwsProvider: React.FC<IconSvgProps> = ({
+export const AWSProviderBadge: React.FC<IconSvgProps> = ({
   size,
   width,
   height,

@@ -1,17 +1,16 @@
 import React from "react";
 
+import { WifiIcon, WifiOffIcon, WifiPendingIcon } from "../icons";
 import {
-  AwsProvider,
-  AzureProvider,
-  GoogleCloudProvider,
-  WifiIcon,
-  WifiOffIcon,
-  WifiPendingIcon,
-} from "../icons";
+  AWSProviderBadge,
+  AzureProviderBadge,
+  GCPProviderBadge,
+  KS8ProviderBadge,
+} from "../icons/providers-badge";
 
 interface ProviderInfoProps {
   connected: boolean | null;
-  provider: "aws" | "azure" | "gcp";
+  provider: "aws" | "azure" | "gcp" | "kubernetes";
   providerAlias: string;
   providerId: string;
 }
@@ -37,12 +36,13 @@ export const ProviderInfo: React.FC<ProviderInfoProps> = ({
   const getProviderLogo = () => {
     switch (provider) {
       case "aws":
-        return <AwsProvider width={35} height={35} />;
+        return <AWSProviderBadge width={35} height={35} />;
       case "azure":
-        return <AzureProvider width={35} height={35} />;
-
+        return <AzureProviderBadge width={35} height={35} />;
       case "gcp":
-        return <GoogleCloudProvider width={35} height={35} />;
+        return <GCPProviderBadge width={35} height={35} />;
+      case "kubernetes":
+        return <KS8ProviderBadge width={35} height={35} />;
       default:
         return null;
     }

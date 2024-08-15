@@ -4,7 +4,8 @@ import { UseRadioProps } from "@nextui-org/radio/dist/use-radio";
 import { cn, RadioGroup, useRadio, VisuallyHidden } from "@nextui-org/react";
 import React from "react";
 
-import { AwsProvider, AzureProvider, GoogleCloudProvider } from "../icons";
+import { AWSProviderBadge, AzureProviderBadge } from "../icons/providers-badge";
+import { GCPProviderBadge } from "../icons/providers-badge/GCPProviderBadge";
 
 interface CustomRadioProps extends UseRadioProps {
   description?: string;
@@ -56,19 +57,19 @@ export const CustomRadioProvider = () => {
     <RadioGroup label="Select one provider" name="provider">
       <CustomRadio description="Amazon Web Services" value="aws">
         <div className="flex items-center">
-          <AwsProvider size={26} />
+          <AWSProviderBadge size={26} />
           <span className="ml-2">AWS</span>
         </div>
       </CustomRadio>
       <CustomRadio description="Google Cloud Platform" value="gcp">
         <div className="flex items-center">
-          <GoogleCloudProvider size={26} />
+          <GCPProviderBadge size={26} />
           <span className="ml-2">GCP</span>
         </div>
       </CustomRadio>
       <CustomRadio description="Microsoft Azure" value="azure">
         <div className="flex items-center">
-          <AzureProvider size={26} />
+          <AzureProviderBadge size={26} />
           <span className="ml-2">Azure</span>
         </div>
       </CustomRadio>

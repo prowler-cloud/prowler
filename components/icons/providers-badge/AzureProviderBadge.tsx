@@ -2,7 +2,7 @@ import * as React from "react";
 
 import { IconSvgProps } from "@/types";
 
-export const AzureProvider: React.FC<IconSvgProps> = ({
+export const AzureProviderBadge: React.FC<IconSvgProps> = ({
   size,
   width,
   height,

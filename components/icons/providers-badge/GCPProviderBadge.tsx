@@ -2,7 +2,7 @@ import * as React from "react";
 
 import { IconSvgProps } from "@/types";
 
-export const GoogleCloudProvider: React.FC<IconSvgProps> = ({
+export const GCPProviderBadge: React.FC<IconSvgProps> = ({
   size,
   width,
   height,

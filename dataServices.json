@@ -1,0 +1,494 @@
+{
+  "links": {
+    "first": "http://localhost:8080/api/v1/services?page%5Bnumber%5D=1",
+    "last": "http://localhost:8080/api/v1/services?page%5Bnumber%5D=1",
+    "next": null,
+    "prev": null
+  },
+  "data": [
+    {
+      "type": "Service",
+      "id": "001",
+      "attributes": {
+        "inserted_at": "2024-08-14T10:00:00.000000Z",
+        "updated_at": "2024-08-14T10:00:00.000000Z",
+        "provider": "aws",
+        "provider_id": "001",
+        "alias": "Amazon EC2",
+        "regions": ["us-east-1", "us-east-2"],
+        "findings": {
+          "failed": 3,
+          "last_checked_at": null
+        },
+        "scanner_args": {}
+      }
+    },
+    {
+      "type": "Service",
+      "id": "002",
+      "attributes": {
+        "inserted_at": "2024-08-14T10:01:00.000000Z",
+        "updated_at": "2024-08-14T10:01:00.000000Z",
+        "provider": "aws",
+        "provider_id": "002",
+        "alias": "Amazon EMR",
+        "regions": ["us-west-1", "us-west-2"],
+        "findings": {
+          "failed": 0,
+          "last_checked_at": null
+        },
+        "scanner_args": {}
+      }
+    },
+    {
+      "type": "Service",
+      "id": "003",
+      "attributes": {
+        "inserted_at": "2024-08-14T10:02:00.000000Z",
+        "updated_at": "2024-08-14T10:02:00.000000Z",
+        "provider": "aws",
+        "provider_id": "003",
+        "alias": "Amazon GuardDuty",
+        "regions": ["eu-west-1", "eu-west-2"],
+        "findings": {
+          "failed": 5,
+          "last_checked_at": null
+        },
+        "scanner_args": {}
+      }
+    },
+    {
+      "type": "Service",
+      "id": "004",
+      "attributes": {
+        "inserted_at": "2024-08-14T10:03:00.000000Z",
+        "updated_at": "2024-08-14T10:03:00.000000Z",
+        "provider": "aws",
+        "provider_id": "004",
+        "alias": "Amazon Inspector",
+        "regions": ["ap-southeast-1", "ap-southeast-2"],
+        "findings": {
+          "failed": 0,
+          "last_checked_at": null
+        },
+        "scanner_args": {}
+      }
+    },
+    {
+      "type": "Service",
+      "id": "005",
+      "attributes": {
+        "inserted_at": "2024-08-14T10:04:00.000000Z",
+        "updated_at": "2024-08-14T10:04:00.000000Z",
+        "provider": "aws",
+        "provider_id": "005",
+        "alias": "Amazon Macie",
+        "regions": ["eu-north-1", "eu-north-2"],
+        "findings": {
+          "failed": 2,
+          "last_checked_at": null
+        },
+        "scanner_args": {}
+      }
+    },
+    {
+      "type": "Service",
+      "id": "006",
+      "attributes": {
+        "inserted_at": "2024-08-14T10:05:00.000000Z",
+        "updated_at": "2024-08-14T10:05:00.000000Z",
+        "provider": "aws",
+        "provider_id": "006",
+        "alias": "Amazon RDS",
+        "regions": ["sa-east-1", "sa-east-2"],
+        "findings": {
+          "failed": 0,
+          "last_checked_at": null
+        },
+        "scanner_args": {}
+      }
+    },
+    {
+      "type": "Service",
+      "id": "007",
+      "attributes": {
+        "inserted_at": "2024-08-14T10:06:00.000000Z",
+        "updated_at": "2024-08-14T10:06:00.000000Z",
+        "provider": "aws",
+        "provider_id": "007",
+        "alias": "Amazon Route 53",
+        "regions": ["af-south-1", "af-south-2"],
+        "findings": {
+          "failed": 1,
+          "last_checked_at": null
+        },
+        "scanner_args": {}
+      }
+    },
+    {
+      "type": "Service",
+      "id": "008",
+      "attributes": {
+        "inserted_at": "2024-08-14T10:07:00.000000Z",
+        "updated_at": "2024-08-14T10:07:00.000000Z",
+        "provider": "aws",
+        "provider_id": "008",
+        "alias": "Amazon S3",
+        "regions": ["us-east-1", "us-west-1"],
+        "findings": {
+          "failed": 3,
+          "last_checked_at": null
+        },
+        "scanner_args": {}
+      }
+    },
+    {
+      "type": "Service",
+      "id": "009",
+      "attributes": {
+        "inserted_at": "2024-08-14T10:08:00.000000Z",
+        "updated_at": "2024-08-14T10:08:00.000000Z",
+        "provider": "aws",
+        "provider_id": "009",
+        "alias": "Amazon SNS",
+        "regions": ["eu-central-1", "eu-central-2"],
+        "findings": {
+          "failed": 0,
+          "last_checked_at": null
+        },
+        "scanner_args": {}
+      }
+    },
+    {
+      "type": "Service",
+      "id": "010",
+      "attributes": {
+        "inserted_at": "2024-08-14T10:09:00.000000Z",
+        "updated_at": "2024-08-14T10:09:00.000000Z",
+        "provider": "aws",
+        "provider_id": "010",
+        "alias": "Amazon VPC",
+        "regions": ["us-west-1", "us-west-2"],
+        "findings": {
+          "failed": 4,
+          "last_checked_at": null
+        },
+        "scanner_args": {}
+      }
+    },
+    {
+      "type": "Service",
+      "id": "011",
+      "attributes": {
+        "inserted_at": "2024-08-14T10:10:00.000000Z",
+        "updated_at": "2024-08-14T10:10:00.000000Z",
+        "provider": "aws",
+        "provider_id": "011",
+        "alias": "AWS Account",
+        "regions": ["eu-west-1", "eu-west-3"],
+        "findings": {
+          "failed": 0,
+          "last_checked_at": null
+        },
+        "scanner_args": {}
+      }
+    },
+    {
+      "type": "Service",
+      "id": "012",
+      "attributes": {
+        "inserted_at": "2024-08-14T10:11:00.000000Z",
+        "updated_at": "2024-08-14T10:11:00.000000Z",
+        "provider": "aws",
+        "provider_id": "012",
+        "alias": "AWS Athena",
+        "regions": ["us-east-1", "us-east-2"],
+        "findings": {
+          "failed": 5,
+          "last_checked_at": null
+        },
+        "scanner_args": {}
+      }
+    },
+    {
+      "type": "Service",
+      "id": "013",
+      "attributes": {
+        "inserted_at": "2024-08-14T10:12:00.000000Z",
+        "updated_at": "2024-08-14T10:12:00.000000Z",
+        "provider": "aws",
+        "provider_id": "013",
+        "alias": "AWS Certificate Manager",
+        "regions": ["us-west-1", "us-west-2"],
+        "findings": {
+          "failed": 1,
+          "last_checked_at": null
+        },
+        "scanner_args": {}
+      }
+    },
+    {
+      "type": "Service",
+      "id": "014",
+      "attributes": {
+        "inserted_at": "2024-08-14T10:13:00.000000Z",
+        "updated_at": "2024-08-14T10:13:00.000000Z",
+        "provider": "aws",
+        "provider_id": "014",
+        "alias": "AWS CloudFormation",
+        "regions": ["eu-central-1", "eu-central-2"],
+        "findings": {
+          "failed": 0,
+          "last_checked_at": null
+        },
+        "scanner_args": {}
+      }
+    },
+    {
+      "type": "Service",
+      "id": "015",
+      "attributes": {
+        "inserted_at": "2024-08-14T10:14:00.000000Z",
+        "updated_at": "2024-08-14T10:14:00.000000Z",
+        "provider": "aws",
+        "provider_id": "015",
+        "alias": "AWS CloudTrail",
+        "regions": ["us-east-1", "us-east-2"],
+        "findings": {
+          "failed": 4,
+          "last_checked_at": null
+        },
+        "scanner_args": {}
+      }
+    },
+    {
+      "type": "Service",
+      "id": "016",
+      "attributes": {
+        "inserted_at": "2024-08-14T10:15:00.000000Z",
+        "updated_at": "2024-08-14T10:15:00.000000Z",
+        "provider": "aws",
+        "provider_id": "016",
+        "alias": "AWS CloudWatch",
+        "regions": ["us-west-1", "us-west-2"],
+        "findings": {
+          "failed": 2,
+          "last_checked_at": null
+        },
+        "scanner_args": {}
+      }
+    },
+    {
+      "type": "Service",
+      "id": "017",
+      "attributes": {
+        "inserted_at": "2024-08-14T10:16:00.000000Z",
+        "updated_at": "2024-08-14T10:16:00.000000Z",
+        "provider": "aws",
+        "provider_id": "017",
+        "alias": "AWS Config",
+        "regions": ["eu-west-1", "eu-west-3"],
+        "findings": {
+          "failed": 0,
+          "last_checked_at": null
+        },
+        "scanner_args": {}
+      }
+    },
+    {
+      "type": "Service",
+      "id": "018",
+      "attributes": {
+        "inserted_at": "2024-08-14T10:17:00.000000Z",
+        "updated_at": "2024-08-14T10:17:00.000000Z",
+        "provider": "aws",
+        "provider_id": "018",
+        "alias": "AWS Database Migration",
+        "regions": ["us-east-1", "us-east-2"],
+        "findings": {
+          "failed": 5,
+          "last_checked_at": null
+        },
+        "scanner_args": {}
+      }
+    },
+    {
+      "type": "Service",
+      "id": "019",
+      "attributes": {
+        "inserted_at": "2024-08-14T10:18:00.000000Z",
+        "updated_at": "2024-08-14T10:18:00.000000Z",
+        "provider": "aws",
+        "provider_id": "019",
+        "alias": "AWS Glue",
+        "regions": ["us-west-1", "us-west-2"],
+        "findings": {
+          "failed": 1,
+          "last_checked_at": null
+        },
+        "scanner_args": {}
+      }
+    },
+    {
+      "type": "Service",
+      "id": "020",
+      "attributes": {
+        "inserted_at": "2024-08-14T10:19:00.000000Z",
+        "updated_at": "2024-08-14T10:19:00.000000Z",
+        "provider": "aws",
+        "provider_id": "020",
+        "alias": "AWS IAM",
+        "regions": ["eu-central-1", "eu-central-2"],
+        "findings": {
+          "failed": 0,
+          "last_checked_at": null
+        },
+        "scanner_args": {}
+      }
+    },
+    {
+      "type": "Service",
+      "id": "021",
+      "attributes": {
+        "inserted_at": "2024-08-14T10:20:00.000000Z",
+        "updated_at": "2024-08-14T10:20:00.000000Z",
+        "provider": "aws",
+        "provider_id": "021",
+        "alias": "AWS Lambda",
+        "regions": ["us-east-1", "us-east-2"],
+        "findings": {
+          "failed": 4,
+          "last_checked_at": null
+        },
+        "scanner_args": {}
+      }
+    },
+    {
+      "type": "Service",
+      "id": "022",
+      "attributes": {
+        "inserted_at": "2024-08-14T10:21:00.000000Z",
+        "updated_at": "2024-08-14T10:21:00.000000Z",
+        "provider": "aws",
+        "provider_id": "022",
+        "alias": "AWS Network Firewall",
+        "regions": ["us-west-1", "us-west-2"],
+        "findings": {
+          "failed": 2,
+          "last_checked_at": null
+        },
+        "scanner_args": {}
+      }
+    },
+    {
+      "type": "Service",
+      "id": "023",
+      "attributes": {
+        "inserted_at": "2024-08-14T10:22:00.000000Z",
+        "updated_at": "2024-08-14T10:22:00.000000Z",
+        "provider": "aws",
+        "provider_id": "023",
+        "alias": "AWS Organizations",
+        "regions": ["eu-west-1", "eu-west-3"],
+        "findings": {
+          "failed": 0,
+          "last_checked_at": null
+        },
+        "scanner_args": {}
+      }
+    },
+    {
+      "type": "Service",
+      "id": "024",
+      "attributes": {
+        "inserted_at": "2024-08-14T10:23:00.000000Z",
+        "updated_at": "2024-08-14T10:23:00.000000Z",
+        "provider": "aws",
+        "provider_id": "024",
+        "alias": "AWS Resource Explorer",
+        "regions": ["us-east-1", "us-east-2"],
+        "findings": {
+          "failed": 3,
+          "last_checked_at": null
+        },
+        "scanner_args": {}
+      }
+    },
+    {
+      "type": "Service",
+      "id": "025",
+      "attributes": {
+        "inserted_at": "2024-08-14T10:24:00.000000Z",
+        "updated_at": "2024-08-14T10:24:00.000000Z",
+        "provider": "aws",
+        "provider_id": "025",
+        "alias": "AWS Security Hub",
+        "regions": ["us-west-1", "us-west-2"],
+        "findings": {
+          "failed": 5,
+          "last_checked_at": null
+        },
+        "scanner_args": {}
+      }
+    },
+    {
+      "type": "Service",
+      "id": "026",
+      "attributes": {
+        "inserted_at": "2024-08-14T10:25:00.000000Z",
+        "updated_at": "2024-08-14T10:25:00.000000Z",
+        "provider": "aws",
+        "provider_id": "026",
+        "alias": "AWS Systems Manager",
+        "regions": ["eu-west-1", "eu-west-3"],
+        "findings": {
+          "failed": 0,
+          "last_checked_at": null
+        },
+        "scanner_args": {}
+      }
+    },
+    {
+      "type": "Service",
+      "id": "027",
+      "attributes": {
+        "inserted_at": "2024-08-14T10:26:00.000000Z",
+        "updated_at": "2024-08-14T10:26:00.000000Z",
+        "provider": "aws",
+        "provider_id": "027",
+        "alias": "AWS Trusted Advisor",
+        "regions": ["us-east-1", "us-east-2"],
+        "findings": {
+          "failed": 2,
+          "last_checked_at": null
+        },
+        "scanner_args": {}
+      }
+    },
+    {
+      "type": "Service",
+      "id": "028",
+      "attributes": {
+        "inserted_at": "2024-08-14T10:27:00.000000Z",
+        "updated_at": "2024-08-14T10:27:00.000000Z",
+        "provider": "aws",
+        "provider_id": "028",
+        "alias": "IAM Access Analyzer",
+        "regions": ["eu-west-1", "eu-west-3"],
+        "findings": {
+          "failed": 0,
+          "last_checked_at": null
+        },
+        "scanner_args": {}
+      }
+    }
+  ],
+  "meta": {
+    "pagination": {
+      "page": 1,
+      "pages": 1,
+      "count": 28
+    },
+    "version": "v1"
+  }
+}

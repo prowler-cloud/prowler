@@ -16,7 +16,7 @@ export default async function Providers({ searchParams }: searchParamsProps) {
   return (
     <>
       <Header title="Providers" icon="fluent:cloud-sync-24-regular" />
-      <Spacer />
+      <Spacer y={4} />
       <div className="flex flex-col items-end w-full">
         <div className="flex space-x-6">
           <AddProviderModal />
