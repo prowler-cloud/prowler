@@ -9,8 +9,9 @@ import {
   Row,
   useReactTable,
 } from "@tanstack/react-table";
+import clsx from "clsx";
 
-import { FindingsCard } from "@/components/findings/table/FindingsCard";
+import { FindingsCard } from "@/components/findings";
 import {
   Table,
   TableBody,
@@ -18,7 +19,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table/Table";
+} from "@/components/ui";
 import { FindingProps } from "@/types";
 
 interface DataTableFindingsProps<TData extends FindingProps, TValue> {
@@ -48,7 +49,12 @@ export function DataTableFindings<TData extends FindingProps, TValue>({
   return (
     <>
       <div className="flex flex-row w-full">
-        <div className="w-full">
+        <div
+          className={clsx("transition-all duration-300", {
+            "w-2/3": selectedRow,
+            "w-full": !selectedRow,
+          })}
+        >
           <div className="rounded-md border">
             <Table>
               <TableHeader>

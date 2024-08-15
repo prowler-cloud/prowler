@@ -1,46 +1,47 @@
 import { Chip } from "@nextui-org/react";
+import clsx from "clsx";
 import React from "react";
 
 import { AlertIcon } from "@/components/icons";
 
 type Severity = "critical" | "high" | "medium" | "low";
 
-const severityColorMap: Record<
-  Severity,
-  | "text-white bg-red-800"
-  | "text-white bg-red-600"
-  | "text-white bg-orange-500"
-  | "bg-yellow-200"
-> = {
-  critical: "text-white bg-red-800",
-  high: "text-white bg-red-600",
-  medium: "text-white bg-orange-500",
-  low: "bg-yellow-200",
-};
-
-const severityIconMap: Partial<Record<Severity, React.ReactNode>> = {
+const severityIconMap = {
   critical: <AlertIcon size={14} className="mr-1" />,
+} as const;
+
+const getSeverityColor = (
+  severity: Severity,
+): "danger" | "warning" | "default" => {
+  switch (severity) {
+    case "critical":
+      return "danger";
+    case "high":
+      return "danger";
+    case "medium":
+      return "warning";
+    case "low":
+      return "default";
+    default:
+      return "default"; // this is a fallback, though unnecessary due to typing
+  }
 };
 
-const getSeverityColor: (severity: Severity) => string = (severity) =>
-  // eslint-disable-next-line security/detect-object-injection
-  severityColorMap[severity];
-
-const getSeverityIcon: (severity: Severity) => React.ReactNode | null = (
-  severity,
-) =>
-  // eslint-disable-next-line security/detect-object-injection
-  severityIconMap[severity] || null;
+const getSeverityIcon = (severity: Severity): React.ReactNode | null => {
+  return severity === "critical" ? severityIconMap.critical : null;
+};
 
 export const SeverityBadge = ({ severity }: { severity: Severity }) => {
+  const color = getSeverityColor(severity);
+
   return (
     <Chip
-      classNames={{
-        base: `capitalize border-none gap-1 text-gray-600 ${getSeverityColor(severity)}`,
-        content: "font-semibold",
-      }}
+      className={clsx("capitalize border-none gap-1 text-default-600", {
+        "bg-rose-700/20": severity === "critical",
+      })}
       size="sm"
       variant="flat"
+      color={color}
       endContent={getSeverityIcon(severity)}
     >
       {severity}
