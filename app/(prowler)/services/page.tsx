@@ -4,8 +4,7 @@ import { Suspense } from "react";
 
 import { getService } from "@/actions/services";
 import { FilterControls } from "@/components/filters";
-import { SkeletonTableProvider } from "@/components/providers";
-import { ServiceCard } from "@/components/services";
+import { ServiceCard, ServiceSkeletonGrid } from "@/components/services";
 import { Header } from "@/components/ui";
 import { searchParamsProps } from "@/types";
 
@@ -19,7 +18,7 @@ export default async function Services({ searchParams }: searchParamsProps) {
       <Spacer y={4} />
       <FilterControls />
       <Spacer y={4} />
-      <Suspense key={searchParams.page} fallback={<SkeletonTableProvider />}>
+      <Suspense key={searchParams.page} fallback={<ServiceSkeletonGrid />}>
         <SSRServiceGrid searchParams={searchParams} />
       </Suspense>
     </>
