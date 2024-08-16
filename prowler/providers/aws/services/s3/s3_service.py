@@ -30,6 +30,7 @@ class S3(AWSService):
             self._get_object_lock_configuration, self.buckets.values()
         )
         self.__threading_call__(self._get_bucket_tagging, self.buckets.values())
+        self.__threading_call__(self._get_bucket_replication, self.buckets.values())
 
     def _list_buckets(self, provider):
         logger.info("S3 - Listing buckets...")
@@ -382,9 +383,14 @@ class S3(AWSService):
         logger.info("S3 - Get buckets replication...")
         try:
             regional_client = self.regional_clients[bucket.region]
-            bucket.replication = regional_client.get_bucket_replication(
+            replication_config = regional_client.get_bucket_replication(
                 Bucket=bucket.name
             )["ReplicationConfiguration"]["Rules"]
+            if replication_config:
+                bucket.replication = Rule(
+                    status=replication_config[0]["Status"],
+                    destination=replication_config[0]["Destination"]["Bucket"],
+                )
         except ClientError as error:
             if error.response["Error"]["Code"] == "NoSuchBucket":
                 logger.warning(
@@ -394,7 +400,7 @@ class S3(AWSService):
                 error.response["Error"]["Code"]
                 == "ReplicationConfigurationNotFoundError"
             ):
-                bucket.replication = {}
+                bucket.replication = None
             else:
                 logger.error(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -520,6 +526,11 @@ class AccessPoint(BaseModel):
     region: str
 
 
+class Rule(BaseModel):
+    status: str
+    destination: str
+
+
 class Bucket(BaseModel):
     name: str
     versioning: bool = False
@@ -534,4 +545,4 @@ class Bucket(BaseModel):
     object_lock: bool = False
     mfa_delete: bool = False
     tags: Optional[list] = []
-    replication: Optional[list] = []
+    replication: Optional[Rule]

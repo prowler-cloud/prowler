@@ -12,16 +12,28 @@ class s3_bucket_cross_region_replication(Check):
             report.resource_arn = arn
             report.resource_tags = bucket.tags
 
-            if bucket.versioning and bucket.replication:
-                for rule in bucket.replication:
-                    if rule["Status"] == "Enabled" and rule["Destination"]["Bucket"]:
-                        report.status = "PASS"
-                        report.status_extended = f"S3 Bucket {bucket.name} has cross region replication in bucket {rule["Destination"]["Bucket"]}."
-                    else:
-                        report.status = "FAIL"
-                        report.status_extended = f"S3 Bucket {bucket.name} does not have correct cross region replication configuration."
+            if (
+                bucket.versioning
+                and bucket.replication
+                and bucket.replication.status == "Enabled"
+                and bucket.replication.destination
+            ):
+                destination_bucket = s3_client.buckets.get(
+                    bucket.replication.destination
+                )
+                if (
+                    s3_client.buckets[bucket.replication.destination].region
+                    != bucket.region
+                ):
+                    report.status = "PASS"
+                    report.status_extended = f"S3 Bucket {bucket.name} has cross region replication in bucket {destination_bucket.name} located in region {destination_bucket.region}."
+                else:
+                    report.status = "FAIL"
+                    report.status_extended = f"S3 Bucket {bucket.name} does not have correct cross region replication configuration."
             else:
                 report.status = "FAIL"
                 report.status_extended = f"S3 Bucket {bucket.name} does not have correct cross region replication configuration."
+
             findings.append(report)
+
         return findings
