@@ -5,6 +5,7 @@ from os import getcwd
 
 import requests
 import yaml
+from packaging import version
 
 from prowler.lib.logger import logger
 
@@ -86,7 +87,7 @@ def check_current_version():
             "https://api.github.com/repos/prowler-cloud/prowler/tags", timeout=1
         )
         latest_version = release_response.json()[0]["name"]
-        if latest_version != prowler_version:
+        if version.parse(latest_version) > version.parse(prowler_version):
             return f"{prowler_version_string} (latest is {latest_version}, upgrade for the latest features)"
         else:
             return (
