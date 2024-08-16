@@ -206,7 +206,7 @@ class ECR(AWSService):
                                             )
                                             finding_severity_counts = image[
                                                 image_scan_findings_field_name
-                                            ]["findingSeverityCounts"]
+                                            ].get("findingSeverityCounts", {})
                                             severity_counts.critical = (
                                                 finding_severity_counts.get(
                                                     "CRITICAL", 0
