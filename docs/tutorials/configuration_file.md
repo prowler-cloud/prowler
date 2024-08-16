@@ -18,6 +18,7 @@ The following list includes all the AWS checks with configurable variables that 
 | `ec2_elastic_ip_shodan`                                       | `shodan_api_key`                                 | String          |
 | `ec2_securitygroup_with_many_ingress_egress_rules`            | `max_security_group_rules`                       | Integer         |
 | `ec2_instance_older_than_specific_days`                       | `max_ec2_instance_age_in_days`                   | Integer         |
+| `ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports`| `ec2_sg_high_risk_ports`                 | List of Integer |
 | `vpc_endpoint_connections_trust_boundaries`                   | `trusted_account_ids`                            | List of Strings |
 | `vpc_endpoint_services_allowed_principals_trust_boundaries`   | `trusted_account_ids`                            | List of Strings |
 | `cloudwatch_log_group_retention_policy_specific_days_enabled` | `log_group_retention_days`                       | Integer         |
@@ -125,6 +126,21 @@ aws:
   ec2_allowed_instance_owners:
     [
         "amazon-elb"
+    ]
+  # aws.ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports
+  ec2_sg_high_risk_ports:
+    [
+        25,
+        110,
+        135,
+        143,
+        445,
+        3000,
+        4333,
+        5000,
+        5500,
+        8080,
+        8088,
     ]
 
   # AWS VPC Configuration (vpc_endpoint_connections_trust_boundaries, vpc_endpoint_services_allowed_principals_trust_boundaries)
