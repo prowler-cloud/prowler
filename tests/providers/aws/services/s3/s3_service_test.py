@@ -72,6 +72,7 @@ class Test_S3_Service:
         s3_client = client("s3")
         # Create S3 Bucket
         bucket_name = "test-bucket"
+        bucket_arn = f"arn:aws:s3:::{bucket_name}"
         s3_client.create_bucket(Bucket=bucket_name)
 
         # S3 client for this test class
@@ -79,12 +80,9 @@ class Test_S3_Service:
         s3 = S3(aws_provider)
 
         assert len(s3.buckets) == 1
-        assert s3.buckets[0].name == bucket_name
-        assert (
-            s3.buckets[0].arn
-            == f"arn:{aws_provider.identity.partition}:s3:::{bucket_name}"
-        )
-        assert not s3.buckets[0].object_lock
+        assert s3.buckets[bucket_arn].name == bucket_name
+        assert s3.buckets[bucket_arn].region == AWS_REGION_US_EAST_1
+        assert not s3.buckets[bucket_arn].object_lock
 
     # Test S3 Get Bucket Versioning
     @mock_aws
@@ -93,6 +91,7 @@ class Test_S3_Service:
         s3_client = client("s3")
         # Create S3 Bucket
         bucket_name = "test-bucket"
+        bucket_arn = f"arn:aws:s3:::{bucket_name}"
         s3_client.create_bucket(Bucket=bucket_name)
         # Set Bucket Versioning
         s3_client.put_bucket_versioning(
@@ -103,18 +102,16 @@ class Test_S3_Service:
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         s3 = S3(aws_provider)
         assert len(s3.buckets) == 1
-        assert s3.buckets[0].name == bucket_name
-        assert (
-            s3.buckets[0].arn
-            == f"arn:{aws_provider.identity.partition}:s3:::{bucket_name}"
-        )
-        assert s3.buckets[0].versioning is True
+        assert s3.buckets[bucket_arn].name == bucket_name
+        assert s3.buckets[bucket_arn].region == AWS_REGION_US_EAST_1
+        assert s3.buckets[bucket_arn].versioning is True
 
     # Test S3 Get Bucket ACL
     @mock_aws
     def test_get_bucket_acl(self):
         s3_client = client("s3")
         bucket_name = "test-bucket"
+        bucket_arn = f"arn:aws:s3:::{bucket_name}"
         s3_client.create_bucket(Bucket=bucket_name)
         s3_client.put_bucket_acl(
             AccessControlPolicy={
@@ -136,16 +133,13 @@ class Test_S3_Service:
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         s3 = S3(aws_provider)
         assert len(s3.buckets) == 1
-        assert s3.buckets[0].name == bucket_name
+        assert s3.buckets[bucket_arn].name == bucket_name
+        assert s3.buckets[bucket_arn].region == AWS_REGION_US_EAST_1
+        assert s3.buckets[bucket_arn].acl_grantees[0].display_name == "test"
+        assert s3.buckets[bucket_arn].acl_grantees[0].ID == "test_ID"
+        assert s3.buckets[bucket_arn].acl_grantees[0].type == "Group"
         assert (
-            s3.buckets[0].arn
-            == f"arn:{aws_provider.identity.partition}:s3:::{bucket_name}"
-        )
-        assert s3.buckets[0].acl_grantees[0].display_name == "test"
-        assert s3.buckets[0].acl_grantees[0].ID == "test_ID"
-        assert s3.buckets[0].acl_grantees[0].type == "Group"
-        assert (
-            s3.buckets[0].acl_grantees[0].URI
+            s3.buckets[bucket_arn].acl_grantees[0].URI
             == "http://acs.amazonaws.com/groups/global/AllUsers"
         )
 
@@ -156,6 +150,7 @@ class Test_S3_Service:
         s3_client = client("s3")
         # Create S3 Bucket
         bucket_name = "test-bucket"
+        bucket_arn = f"arn:aws:s3:::{bucket_name}"
         s3_client.create_bucket(
             Bucket=bucket_name,
         )
@@ -216,18 +211,16 @@ class Test_S3_Service:
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         s3 = S3(aws_provider)
         assert len(s3.buckets) == 1
-        assert s3.buckets[0].name == bucket_name
-        assert (
-            s3.buckets[0].arn
-            == f"arn:{aws_provider.identity.partition}:s3:::{bucket_name}"
-        )
-        assert s3.buckets[0].logging is True
+        assert s3.buckets[bucket_arn].name == bucket_name
+        assert s3.buckets[bucket_arn].region == AWS_REGION_US_EAST_1
+        assert s3.buckets[bucket_arn].logging is True
 
     # Test S3 Get Bucket Policy
     @mock_aws
     def test_get_bucket_policy(self):
         s3_client = client("s3")
         bucket_name = "test-bucket"
+        bucket_arn = f"arn:aws:s3:::{bucket_name}"
         s3_client.create_bucket(Bucket=bucket_name)
         ssl_policy = '{"Version": "2012-10-17","Id": "PutObjPolicy","Statement": [{"Sid": "s3-bucket-ssl-requests-only","Effect": "Deny","Principal": "*","Action": "s3:GetObject","Resource": "arn:aws:s3:::bucket_test_us/*","Condition": {"Bool": {"aws:SecureTransport": "false"}}}]}'
         s3_client.put_bucket_policy(
@@ -237,12 +230,9 @@ class Test_S3_Service:
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         s3 = S3(aws_provider)
         assert len(s3.buckets) == 1
-        assert s3.buckets[0].name == bucket_name
-        assert (
-            s3.buckets[0].arn
-            == f"arn:{aws_provider.identity.partition}:s3:::{bucket_name}"
-        )
-        assert s3.buckets[0].policy == json.loads(ssl_policy)
+        assert s3.buckets[bucket_arn].name == bucket_name
+        assert s3.buckets[bucket_arn].region == AWS_REGION_US_EAST_1
+        assert s3.buckets[bucket_arn].policy == json.loads(ssl_policy)
 
     # Test S3 Get Bucket Encryption
     @mock_aws
@@ -251,6 +241,7 @@ class Test_S3_Service:
         s3_client = client("s3")
         # Create S3 Bucket
         bucket_name = "test-bucket"
+        bucket_arn = f"arn:aws:s3:::{bucket_name}"
         s3_client.create_bucket(Bucket=bucket_name)
         sse_config = {
             "Rules": [
@@ -270,12 +261,9 @@ class Test_S3_Service:
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         s3 = S3(aws_provider)
         assert len(s3.buckets) == 1
-        assert s3.buckets[0].name == bucket_name
-        assert (
-            s3.buckets[0].arn
-            == f"arn:{aws_provider.identity.partition}:s3:::{bucket_name}"
-        )
-        assert s3.buckets[0].encryption == "aws:kms"
+        assert s3.buckets[bucket_arn].name == bucket_name
+        assert s3.buckets[bucket_arn].region == AWS_REGION_US_EAST_1
+        assert s3.buckets[bucket_arn].encryption == "aws:kms"
 
     # Test S3 Get Bucket Ownership Controls
     @mock_aws
@@ -284,6 +272,7 @@ class Test_S3_Service:
         s3_client = client("s3")
         # Create S3 Bucket
         bucket_name = "test-bucket"
+        bucket_arn = f"arn:aws:s3:::{bucket_name}"
         s3_client.create_bucket(
             Bucket=bucket_name, ObjectOwnership="BucketOwnerEnforced"
         )
@@ -292,12 +281,9 @@ class Test_S3_Service:
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         s3 = S3(aws_provider)
         assert len(s3.buckets) == 1
-        assert s3.buckets[0].name == bucket_name
-        assert (
-            s3.buckets[0].arn
-            == f"arn:{aws_provider.identity.partition}:s3:::{bucket_name}"
-        )
-        assert s3.buckets[0].ownership == "BucketOwnerEnforced"
+        assert s3.buckets[bucket_arn].name == bucket_name
+        assert s3.buckets[bucket_arn].region == AWS_REGION_US_EAST_1
+        assert s3.buckets[bucket_arn].ownership == "BucketOwnerEnforced"
 
     # Test S3 Get Public Access Block
     @mock_aws
@@ -306,6 +292,7 @@ class Test_S3_Service:
         s3_client = client("s3")
         # Create S3 Bucket
         bucket_name = "test-bucket"
+        bucket_arn = f"arn:aws:s3:::{bucket_name}"
         s3_client.create_bucket(
             Bucket=bucket_name, ObjectOwnership="BucketOwnerEnforced"
         )
@@ -322,15 +309,12 @@ class Test_S3_Service:
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         s3 = S3(aws_provider)
         assert len(s3.buckets) == 1
-        assert s3.buckets[0].name == bucket_name
-        assert (
-            s3.buckets[0].arn
-            == f"arn:{aws_provider.identity.partition}:s3:::{bucket_name}"
-        )
-        assert s3.buckets[0].public_access_block.block_public_acls
-        assert s3.buckets[0].public_access_block.ignore_public_acls
-        assert s3.buckets[0].public_access_block.block_public_policy
-        assert s3.buckets[0].public_access_block.restrict_public_buckets
+        assert s3.buckets[bucket_arn].name == bucket_name
+        assert s3.buckets[bucket_arn].region == AWS_REGION_US_EAST_1
+        assert s3.buckets[bucket_arn].public_access_block.block_public_acls
+        assert s3.buckets[bucket_arn].public_access_block.ignore_public_acls
+        assert s3.buckets[bucket_arn].public_access_block.block_public_policy
+        assert s3.buckets[bucket_arn].public_access_block.restrict_public_buckets
 
     # Test S3 Get Bucket Tagging
     @mock_aws
@@ -339,6 +323,7 @@ class Test_S3_Service:
         s3_client = client("s3")
         # Create S3 Bucket
         bucket_name = "test-bucket"
+        bucket_arn = f"arn:aws:s3:::{bucket_name}"
         s3_client.create_bucket(Bucket=bucket_name)
         s3_client.put_bucket_tagging(
             Bucket=bucket_name,
@@ -353,7 +338,7 @@ class Test_S3_Service:
         s3 = S3(aws_provider)
 
         assert len(s3.buckets) == 1
-        assert s3.buckets[0].tags == [
+        assert s3.buckets[bucket_arn].tags == [
             {"Key": "test", "Value": "test"},
         ]
 
@@ -386,6 +371,7 @@ class Test_S3_Service:
         s3_client = client("s3")
         # Create S3 Bucket
         bucket_name = "test-bucket"
+        bucket_arn = f"arn:aws:s3:::{bucket_name}"
         s3_client.create_bucket(
             Bucket=bucket_name,
             ObjectOwnership="BucketOwnerEnforced",
@@ -396,12 +382,9 @@ class Test_S3_Service:
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         s3 = S3(aws_provider)
         assert len(s3.buckets) == 1
-        assert s3.buckets[0].name == bucket_name
-        assert (
-            s3.buckets[0].arn
-            == f"arn:{aws_provider.identity.partition}:s3:::{bucket_name}"
-        )
-        assert s3.buckets[0].object_lock
+        assert s3.buckets[bucket_arn].name == bucket_name
+        assert s3.buckets[bucket_arn].region == AWS_REGION_US_EAST_1
+        assert s3.buckets[bucket_arn].object_lock
 
     # Test S3 List Access Points
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
