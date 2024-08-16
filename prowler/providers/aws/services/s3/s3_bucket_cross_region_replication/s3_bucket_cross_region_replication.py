@@ -11,28 +11,27 @@ class s3_bucket_cross_region_replication(Check):
             report.resource_id = bucket.name
             report.resource_arn = arn
             report.resource_tags = bucket.tags
-
+            report.status = "FAIL"
+            report.status_extended = f"S3 Bucket {bucket.name} does not have correct cross region replication configuration."
             if (
                 bucket.versioning
                 and bucket.replication
                 and bucket.replication.status == "Enabled"
                 and bucket.replication.destination
             ):
-                destination_bucket = s3_client.buckets.get(
-                    bucket.replication.destination
-                )
-                if (
-                    s3_client.buckets[bucket.replication.destination].region
-                    != bucket.region
-                ):
-                    report.status = "PASS"
-                    report.status_extended = f"S3 Bucket {bucket.name} has cross region replication in bucket {destination_bucket.name} located in region {destination_bucket.region}."
-                else:
+                if bucket.replication.destination not in s3_client.buckets:
                     report.status = "FAIL"
-                    report.status_extended = f"S3 Bucket {bucket.name} does not have correct cross region replication configuration."
-            else:
-                report.status = "FAIL"
-                report.status_extended = f"S3 Bucket {bucket.name} does not have correct cross region replication configuration."
+                    report.status_extended = f"S3 Bucket {bucket.name} has cross region replication in bucket {bucket.replication.destination} which is out of Prowler's scope."
+                else:
+                    destination_bucket = s3_client.buckets[
+                        bucket.replication.destination
+                    ]
+                    if destination_bucket.region != bucket.region:
+                        report.status = "PASS"
+                        report.status_extended = f"S3 Bucket {bucket.name} has cross region replication in bucket {destination_bucket.name} located in region {destination_bucket.region}."
+                    else:
+                        report.status = "FAIL"
+                        report.status_extended = f"S3 Bucket {bucket.name} has cross region replication in bucket {destination_bucket.name} located in the same region."
 
             findings.append(report)
 

@@ -387,7 +387,7 @@ class S3(AWSService):
                 Bucket=bucket.name
             )["ReplicationConfiguration"]["Rules"]
             if replication_config:
-                bucket.replication = Rule(
+                bucket.replication = ReplicationRule(
                     status=replication_config[0]["Status"],
                     destination=replication_config[0]["Destination"]["Bucket"],
                 )
@@ -396,6 +396,11 @@ class S3(AWSService):
                 logger.warning(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
+            elif (
+                error.response["Error"]["Code"]
+                == "ReplicationConfigurationNotFoundError"
+            ):
+                bucket.replication = None
             else:
                 logger.error(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -521,7 +526,7 @@ class AccessPoint(BaseModel):
     region: str
 
 
-class Rule(BaseModel):
+class ReplicationRule(BaseModel):
     status: str
     destination: str
 
@@ -540,4 +545,4 @@ class Bucket(BaseModel):
     object_lock: bool = False
     mfa_delete: bool = False
     tags: Optional[list] = []
-    replication: Optional[Rule]
+    replication: Optional[ReplicationRule]
