@@ -38,7 +38,6 @@ class Test_s3_bucket_object_versioning:
 
                 assert len(result) == 0
 
-    # No Versioning
     @mock_aws
     def test_bucket_no_versioning(self):
         s3_client_us_east_1 = client("s3", region_name=AWS_REGION_US_EAST_1)
@@ -80,7 +79,6 @@ class Test_s3_bucket_object_versioning:
                 )
                 assert result[0].region == AWS_REGION_US_EAST_1
 
-    # No Replication
     @mock_aws
     def test_bucket_no_replication(self):
         s3_client_us_east_1 = client("s3", region_name=AWS_REGION_US_EAST_1)
@@ -128,7 +126,6 @@ class Test_s3_bucket_object_versioning:
                 )
                 assert result[0].region == AWS_REGION_US_EAST_1
 
-    # Versioning Enabled and Replication Disabled
     @mock_aws
     def test_bucket_versioning_enabled_replication_disabled(self):
         # EU-WEST-1 Destination Bucket
@@ -221,7 +218,6 @@ class Test_s3_bucket_object_versioning:
                 )
                 assert result[1].region == AWS_REGION_US_EAST_1
 
-    # Versioning Enabled and Replication Enabled
     @mock_aws
     def test_bucket_versioning_enabled_replication_enabled(self):
         # EU-WEST-1 Destination Bucket
@@ -315,7 +311,6 @@ class Test_s3_bucket_object_versioning:
                 )
                 assert result[1].region == AWS_REGION_US_EAST_1
 
-    # Versioning Enabled and Replication Enabled
     @mock_aws
     def test_buckets_in_same_region(self):
         s3_client_us_east_1 = client("s3", region_name=AWS_REGION_US_EAST_1)

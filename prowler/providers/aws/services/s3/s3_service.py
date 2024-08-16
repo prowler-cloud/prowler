@@ -396,11 +396,6 @@ class S3(AWSService):
                 logger.warning(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
-            elif (
-                error.response["Error"]["Code"]
-                == "ReplicationConfigurationNotFoundError"
-            ):
-                bucket.replication = None
             else:
                 logger.error(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
