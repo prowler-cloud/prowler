@@ -32,14 +32,13 @@ class Test_iam_root_hardware_mfa_enabled_test:
         iam_client.mfa_arn_template = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:mfa"
 
         current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_root_hardware_mfa_enabled.iam_root_hardware_mfa_enabled.iam_client",
-            new=IAM(current_audit_info),
+            new=iam_client,
         ):
             from prowler.providers.aws.services.iam.iam_root_hardware_mfa_enabled.iam_root_hardware_mfa_enabled import (
                 iam_root_hardware_mfa_enabled,
@@ -65,14 +64,13 @@ class Test_iam_root_hardware_mfa_enabled_test:
         iam_client.mfa_arn_template = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:mfa"
 
         current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_root_hardware_mfa_enabled.iam_root_hardware_mfa_enabled.iam_client",
-            new=IAM(current_audit_info),
+            new=iam_client,
         ):
             from prowler.providers.aws.services.iam.iam_root_hardware_mfa_enabled.iam_root_hardware_mfa_enabled import (
                 iam_root_hardware_mfa_enabled,
