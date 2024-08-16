@@ -29,10 +29,8 @@ class awslambda_function_not_publicly_accessible(Check):
                                 in statement["Principal"].get("CanonicalUser", "")
                                 or (  # Check if function can be invoked by other AWS services
                                     (
-                                        "elasticloadbalancing.amazonaws.com"
-                                        == statement["Principal"].get("Service", "")
-                                        or "apigateway.amazonaws.com"
-                                        == statement["Principal"].get("Service", "")
+                                        "amazonaws.com"
+                                        in statement["Principal"].get("Service", "")
                                     )
                                     and (
                                         "*" in statement.get("Action", "")
