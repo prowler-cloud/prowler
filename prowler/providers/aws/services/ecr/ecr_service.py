@@ -189,6 +189,13 @@ class ECR(AWSService):
                                                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                                                 )
                                                 continue
+                                            except (
+                                                client.exceptions.ScanNotFoundException
+                                            ) as error:
+                                                logger.warning(
+                                                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                                                )
+                                                continue
                                             except Exception as error:
                                                 logger.error(
                                                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
