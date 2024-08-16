@@ -15,6 +15,7 @@ from prowler.providers.aws.aws_provider import get_aws_available_regions
 
 MOCK_PROWLER_VERSION = "3.3.0"
 MOCK_OLD_PROWLER_VERSION = "0.0.0"
+MOCK_PROWLER_MASTER_VERSION = "3.4.0"
 
 
 def mock_prowler_get_latest_release(_, **kwargs):
@@ -342,6 +343,18 @@ class Test_Config:
         assert (
             check_current_version()
             == f"Prowler {MOCK_OLD_PROWLER_VERSION} (latest is {MOCK_PROWLER_VERSION}, upgrade for the latest features)"
+        )
+
+    @mock.patch(
+        "prowler.config.config.requests.get", new=mock_prowler_get_latest_release
+    )
+    @mock.patch(
+        "prowler.config.config.prowler_version", new=MOCK_PROWLER_MASTER_VERSION
+    )
+    def test_check_current_version_with_master_version(self):
+        assert (
+            check_current_version()
+            == f"Prowler {MOCK_PROWLER_MASTER_VERSION} (You are running the latest version, yay!)"
         )
 
     def test_get_available_compliance_frameworks(self):
