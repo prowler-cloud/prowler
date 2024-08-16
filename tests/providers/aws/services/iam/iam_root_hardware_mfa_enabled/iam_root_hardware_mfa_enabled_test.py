@@ -1,14 +1,7 @@
 from re import search
 from unittest import mock
 
-<<<<<<< HEAD
-from boto3 import client
-from moto import mock_aws
-
 from tests.providers.aws.audit_info_utils import (
-=======
-from tests.providers.aws.utils import (
->>>>>>> e6581255 (fix(iam): update logic of Root Hardware MFA check (#4726))
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
     set_mocked_aws_audit_info,
@@ -39,19 +32,15 @@ class Test_iam_root_hardware_mfa_enabled_test:
         iam_client.mfa_arn_template = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:mfa"
 
         current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_root_hardware_mfa_enabled.iam_root_hardware_mfa_enabled.iam_client",
-<<<<<<< HEAD
             new=IAM(current_audit_info),
-        ) as service_client:
-=======
-            new=iam_client,
         ):
->>>>>>> e6581255 (fix(iam): update logic of Root Hardware MFA check (#4726))
             from prowler.providers.aws.services.iam.iam_root_hardware_mfa_enabled.iam_root_hardware_mfa_enabled import (
                 iam_root_hardware_mfa_enabled,
             )
@@ -76,19 +65,15 @@ class Test_iam_root_hardware_mfa_enabled_test:
         iam_client.mfa_arn_template = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:mfa"
 
         current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_root_hardware_mfa_enabled.iam_root_hardware_mfa_enabled.iam_client",
-<<<<<<< HEAD
             new=IAM(current_audit_info),
-        ) as service_client:
-=======
-            new=iam_client,
         ):
->>>>>>> e6581255 (fix(iam): update logic of Root Hardware MFA check (#4726))
             from prowler.providers.aws.services.iam.iam_root_hardware_mfa_enabled.iam_root_hardware_mfa_enabled import (
                 iam_root_hardware_mfa_enabled,
             )
