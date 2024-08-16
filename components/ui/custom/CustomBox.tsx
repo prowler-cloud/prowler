@@ -1,6 +1,6 @@
 import { Card, CardBody, CardHeader, Divider } from "@nextui-org/react";
+import { CardProps as NextUICardProps } from "@nextui-org/react";
 import React from "react";
-
 interface CustomBoxProps {
   children: React.ReactNode;
   preTitle?: string;
@@ -13,9 +13,10 @@ export const CustomBox = ({
   preTitle,
   subTitle,
   title,
-}: CustomBoxProps) => {
+  ...props
+}: CustomBoxProps & NextUICardProps & React.HTMLAttributes<HTMLDivElement>) => {
   return (
-    <Card fullWidth>
+    <Card fullWidth {...props}>
       {(preTitle || subTitle || title) && (
         <>
           <CardHeader className="pt-4 pb-3 px-3 flex-col items-start">

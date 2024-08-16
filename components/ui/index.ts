@@ -1,4 +1,5 @@
 export * from "./alert/Alert";
+export * from "./chart/tempChart";
 export * from "./dialog/Dialog";
 export * from "./header/Header";
 export * from "./select/Select";
