@@ -40,7 +40,7 @@ class Test_ec2_transport_gateways_autoaccept_shared_attachments_enabled:
             Description="Test TGW with auto-accept enabled",
             Options={
                 "AutoAcceptSharedAttachments": "enable",
-            }
+            },
         )
         tgw_id = tgw["TransitGateway"]["TransitGatewayId"]
 
@@ -79,7 +79,7 @@ class Test_ec2_transport_gateways_autoaccept_shared_attachments_enabled:
             Description="Test TGW with auto-accept disabled",
             Options={
                 "AutoAcceptSharedAttachments": "disable",
-            }
+            },
         )
         tgw_id = tgw["TransitGateway"]["TransitGatewayId"]
 
@@ -120,18 +120,22 @@ class Test_ec2_transport_gateways_autoaccept_shared_attachments_enabled:
             Description="TGW with auto-accept enabled",
             Options={
                 "AutoAcceptSharedAttachments": "enable",
-            }
+            },
         )
-        tgw_with_auto_accept_id = tgw_with_auto_accept["TransitGateway"]["TransitGatewayId"]
+        tgw_with_auto_accept_id = tgw_with_auto_accept["TransitGateway"][
+            "TransitGatewayId"
+        ]
 
         # Create TGW with auto-accept disabled
         tgw_without_auto_accept = ec2_client.create_transit_gateway(
             Description="TGW with auto-accept disabled",
             Options={
                 "AutoAcceptSharedAttachments": "disable",
-            }
+            },
         )
-        tgw_without_auto_accept_id = tgw_without_auto_accept["TransitGateway"]["TransitGatewayId"]
+        tgw_without_auto_accept_id = tgw_without_auto_accept["TransitGateway"][
+            "TransitGatewayId"
+        ]
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 

@@ -516,13 +516,20 @@ class EC2(AWSService):
             for page in describe_transit_gateways_paginator.paginate():
                 for transit_gateway in page["TransitGateways"]:
                     if not self.audit_resources or (
-                        is_resource_filtered(transit_gateway["TransitGatewayArn"], self.audit_resources)
+                        is_resource_filtered(
+                            transit_gateway["TransitGatewayArn"], self.audit_resources
+                        )
                     ):
                         self.transit_gateways.append(
                             TransitGateway(
                                 id=transit_gateway["TransitGatewayId"],
                                 arn=transit_gateway["TransitGatewayArn"],
-                                auto_accept_shared_attachments = True if transit_gateway["Options"]["AutoAcceptSharedAttachments"] == "enable" else False,
+                                auto_accept_shared_attachments=(
+                                    transit_gateway["Options"][
+                                        "AutoAcceptSharedAttachments"
+                                    ]
+                                    == "enable"
+                                ),
                                 region=regional_client.region,
                                 tags=transit_gateway.get("Tags"),
                             )
@@ -532,6 +539,7 @@ class EC2(AWSService):
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+
 
 class Instance(BaseModel):
     id: str
@@ -653,6 +661,7 @@ class LaunchTemplate(BaseModel):
     arn: str
     region: str
     versions: list[LaunchTemplateVersion] = []
+
 
 class TransitGateway(BaseModel):
     id: str

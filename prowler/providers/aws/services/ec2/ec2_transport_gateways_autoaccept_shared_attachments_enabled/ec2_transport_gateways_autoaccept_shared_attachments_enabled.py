@@ -1,12 +1,3 @@
-import os
-import tempfile
-import zlib
-from base64 import b64decode
-
-from detect_secrets import SecretsCollection
-from detect_secrets.settings import default_settings
-
-from prowler.config.config import encoding_format_utf_8
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 
@@ -23,14 +14,10 @@ class ec2_transport_gateways_autoaccept_shared_attachments_enabled(Check):
 
             if tgw.auto_accept_shared_attachments:
                 report.status = "FAIL"
-                report.status_extended = (
-                    f"Transit Gateway {tgw.id} in region {tgw.region} is configured to automatically accept shared VPC attachments."
-                )
+                report.status_extended = f"Transit Gateway {tgw.id} in region {tgw.region} is configured to automatically accept shared VPC attachments."
             else:
                 report.status = "PASS"
-                report.status_extended = (
-                    f"Transit Gateway {tgw.id} in region {tgw.region} does not automatically accept shared VPC attachments."
-                )
+                report.status_extended = f"Transit Gateway {tgw.id} in region {tgw.region} does not automatically accept shared VPC attachments."
 
             findings.append(report)
 
