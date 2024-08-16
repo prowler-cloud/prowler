@@ -29,7 +29,7 @@ class awslambda_function_not_publicly_accessible(Check):
                                 in statement["Principal"].get("CanonicalUser", "")
                                 or (  # Check if function can be invoked by other AWS services
                                     (
-                                        "amazonaws.com"
+                                        ".amazonaws.com"
                                         in statement["Principal"].get("Service", "")
                                     )
                                     and (

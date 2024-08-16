@@ -28,5 +28,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "Exists a false PASS case. A function could be exposed publicly with a policy that allows the Principal as an AWS account ID and the Action as lambda:InvokeFunction. In this case the function could be exposed by other resource like an ALB or API Gateway inside of the Principal AWS Account."
+  "Notes": "It gives a false positive if the function is exposed publicly by an other public resource like an ALB or API Gateway in an AWS Account when an AWS account ID is set as the principal of the policy."
 }
