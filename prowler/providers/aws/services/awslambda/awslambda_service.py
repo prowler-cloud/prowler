@@ -44,7 +44,7 @@ class Lambda(AWSService):
                             name=lambda_name,
                             arn=lambda_arn,
                             security_groups=vpc_config.get("SecurityGroupIds", []),
-                            vpc_id=vpc_config.get("VpcId", ""),
+                            vpc_id=vpc_config.get("VpcId"),
                             region=regional_client.region,
                         )
                         if "Runtime" in function:

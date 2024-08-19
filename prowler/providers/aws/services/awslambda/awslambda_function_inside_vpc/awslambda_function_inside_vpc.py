@@ -14,7 +14,7 @@ class awslambda_function_inside_vpc(Check):
             report.resource_arn = function_arn
             report.resource_tags = function.tags
             report.status = "FAIL"
-            report.status_extended = f"Function {function.name} is not inside a VPC"
+            report.status_extended = f"Lambda function {function.name} is not inside a VPC"
 
             if function.vpc_id:
                 report.status = "PASS"
