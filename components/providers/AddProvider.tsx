@@ -22,7 +22,7 @@ export const AddProvider = () => {
         // show error
         toast({
           variant: "destructive",
-          title: "Ups! Something went wrong",
+          title: "Oops! Something went wrong",
           description: errorMessage,
         });
       });
