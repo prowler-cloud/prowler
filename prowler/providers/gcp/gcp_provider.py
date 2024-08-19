@@ -15,7 +15,7 @@ from prowler.config.config import (
 )
 from prowler.lib.logger import logger
 from prowler.lib.utils.utils import print_boxes
-from prowler.providers.common.models import Audit_Metadata
+from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
 from prowler.providers.gcp.lib.mutelist.mutelist import GCPMutelist
 from prowler.providers.gcp.models import (
@@ -198,7 +198,8 @@ class GcpProvider(Provider):
             # "partition": "identity.partition",
         }
 
-    def setup_session(self, credentials_file: str, service_account: str) -> Credentials:
+    @staticmethod
+    def setup_session(credentials_file: str, service_account: str) -> Credentials:
         """
         Setup the GCP session with the provided credentials file or service account to impersonate
         Args:
@@ -212,7 +213,11 @@ class GcpProvider(Provider):
 
             if credentials_file:
                 logger.info(f"Using credentials file: {credentials_file}")
-                self.__set_gcp_creds_env_var__(credentials_file)
+                logger.info(
+                    "GCP provider: Setting GOOGLE_APPLICATION_CREDENTIALS environment variable..."
+                )
+                client_secrets_path = os.path.abspath(credentials_file)
+                os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = client_secrets_path
 
             # Get default credentials
             credentials, _ = default(scopes=scopes)
@@ -238,12 +243,52 @@ class GcpProvider(Provider):
             )
             sys.exit(1)
 
-    def __set_gcp_creds_env_var__(self, credentials_file):
-        logger.info(
-            "GCP provider: Setting GOOGLE_APPLICATION_CREDENTIALS environment variable..."
-        )
-        client_secrets_path = os.path.abspath(credentials_file)
-        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = client_secrets_path
+    @staticmethod
+    def test_connection(
+        credentials_file: str = None,
+        service_account: str = None,
+        raise_on_exception: bool = True,
+    ) -> Connection:
+        """
+        Test the connection to GCP with the provided credentials file or service account to impersonate.
+        If the connection is successful, return a Connection object with is_connected set to True. If the connection fails, return a Connection object with error set to the exception.
+        Raise an exception if raise_on_exception is set to True.
+        If the Cloud Resource Manager API has not been used before or it is disabled, log a critical message and return a Connection object with error set to the exception.
+        Args:
+            credentials_file: str
+            service_account: str
+        Returns:
+            Connection object with is_connected set to True if the connection is successful, or error set to the exception if the connection fails
+        """
+        try:
+            session = GcpProvider.setup_session(credentials_file, service_account)
+            service = discovery.build("cloudresourcemanager", "v1", credentials=session)
+            request = service.projects().list()
+            request.execute()
+            return Connection(is_connected=True)
+        except HttpError as http_error:
+            if "Cloud Resource Manager API has not been used" in str(http_error):
+                logger.critical(
+                    "Cloud Resource Manager API has not been used before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/cloudresourcemanager.googleapis.com/ then retry."
+                )
+                if raise_on_exception:
+                    raise Exception(
+                        "Cloud Resource Manager API has not been used before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/cloudresourcemanager.googleapis.com/ then retry."
+                    )
+            else:
+                logger.critical(
+                    f"{http_error.__class__.__name__}[{http_error.__traceback__.tb_lineno}]: {http_error}"
+                )
+            if raise_on_exception:
+                raise http_error
+            return Connection(error=http_error)
+        except Exception as error:
+            logger.critical(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            if raise_on_exception:
+                raise error
+            return Connection(error=error)
 
     def print_credentials(self):
         # TODO: Beautify audited profile, set "default" if there is no profile set
