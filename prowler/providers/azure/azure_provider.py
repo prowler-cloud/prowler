@@ -1,5 +1,4 @@
 import asyncio
-import sys
 from argparse import ArgumentTypeError
 from os import getenv
 
@@ -378,16 +377,20 @@ class AzureProvider(Provider):
                 logger.critical(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
                 )
-                sys.exit(1)
+                raise RuntimeError("Failed to retrieve azure credentials") from error
         else:
             try:
                 credentials = InteractiveBrowserCredential(tenant_id=tenant_id)
             except Exception as error:
-                logger.critical("Failed to retrieve azure credentials")
+                logger.critical(
+                    "Failed to retrieve azure credentials using browser authentication"
+                )
                 logger.critical(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
                 )
-                sys.exit(1)
+                raise RuntimeError(
+                    "Failed to retrieve azure credentials using browser authentication"
+                ) from error
 
         return credentials
 
@@ -474,7 +477,9 @@ class AzureProvider(Provider):
                 logger.critical(
                     f"Azure provider: Missing environment variable {env_var} needed to authenticate against Azure"
                 )
-                sys.exit(1)
+                raise RuntimeError(
+                    f"Azure provider: Missing environment variable {env_var} needed to authenticate against Azure"
+                )
 
     def setup_identity(
         self,
@@ -589,7 +594,9 @@ class AzureProvider(Provider):
                 logger.critical(
                     "It was not possible to retrieve any subscriptions, please check your permission assignments"
                 )
-                sys.exit(1)
+                raise RuntimeError(
+                    "It was not possible to retrieve any subscriptions, please check your permission assignments"
+                )
 
             tenants = subscriptions_client.tenants.list()
             for tenant in tenants:
@@ -602,7 +609,9 @@ class AzureProvider(Provider):
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
             )
-            sys.exit(1)
+            raise RuntimeError(
+                "Error with credentials provided getting subscriptions and tenants to scan"
+            ) from error
 
         return identity
 
