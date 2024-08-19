@@ -30,6 +30,7 @@ class S3(AWSService):
             self._get_object_lock_configuration, self.buckets.values()
         )
         self.__threading_call__(self._get_bucket_tagging, self.buckets.values())
+        self.__threading_call__(self._get_bucket_lifecycle, self.buckets.values())
 
     def _list_buckets(self, provider):
         logger.info("S3 - Listing buckets...")
@@ -378,6 +379,46 @@ class S3(AWSService):
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
+    def _get_bucket_lifecycle(self, bucket):
+        logger.info("S3 - Get buckets lifecycle...")
+        try:
+            regional_client = self.regional_clients[bucket.region]
+            lifecycle_configuration = (
+                regional_client.get_bucket_lifecycle_configuration(Bucket=bucket.name)
+            )
+            for rule in lifecycle_configuration["Rules"]:
+                bucket.lifecycle.append(
+                    LifeCycleRule(
+                        id=rule["ID"],
+                        status=rule["Status"],
+                        expiration_days=rule.get("Expiration", {}).get("Days", None),
+                        transition_days=rule.get("Transition", {}).get("Days", None),
+                        transition_storage_class=rule.get("Transition", {}).get(
+                            "StorageClass", None
+                        ),
+                    )
+                )
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "NoSuchLifecycleConfiguration":
+                bucket.lifecycle = []
+            elif error.response["Error"]["Code"] == "NoSuchBucket":
+                logger.warning(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+        except Exception as error:
+            if regional_client:
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
 
 class S3Control(AWSService):
     def __init__(self, provider):
@@ -489,6 +530,23 @@ class AccessPoint(BaseModel):
     region: str
 
 
+class StorageClass(enumerate):
+    STANDARD_IA = "STANDARD_IA"
+    INTELLIGENT_TIERING = "INTELLIGENT_TIERING"
+    ONEZONE_IA = "ONEZONE_IA"
+    GLACIER = "GLACIER"
+    GLACIER_IR = "GLACIER_IR"
+    DEEP_ARCHIVE = "DEEP_ARCHIVE"
+
+
+class LifeCycleRule(BaseModel):
+    id: str
+    status: str
+    expiration_days: int
+    transition_days: int
+    transition_storage_class: StorageClass
+
+
 class Bucket(BaseModel):
     name: str
     versioning: bool = False
@@ -503,3 +561,4 @@ class Bucket(BaseModel):
     object_lock: bool = False
     mfa_delete: bool = False
     tags: Optional[list] = []
+    lifecycle: Optional[list[LifeCycleRule]] = []
