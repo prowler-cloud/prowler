@@ -44,6 +44,12 @@ module.exports = {
             light: "#feefc7",
             lighter: "#FFF9EB",
           },
+          severity: {
+            critical: "#AC1954",
+            high: "#F31260",
+            medium: "#FA7315",
+            low: "#fcd34d",
+          },
         },
       },
       fontFamily: {
