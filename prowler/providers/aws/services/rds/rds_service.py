@@ -98,6 +98,9 @@ class RDS(AWSService):
                                         "ReadReplicaSourceDBInstanceIdentifier"
                                     ),
                                     ca_cert=instance.get("CACertificateIdentifier"),
+                                    copy_tags_to_snapshot=instance.get(
+                                        "CopyTagsToSnapshot"
+                                    ),
                                 )
                             )
         except Exception as error:
@@ -254,6 +257,9 @@ class RDS(AWSService):
                                         ),
                                         region=regional_client.region,
                                         tags=cluster.get("TagList", []),
+                                        copy_tags_to_snapshot=cluster.get(
+                                            "CopyTagsToSnapshot"
+                                        ),
                                     )
                                     # We must use a unique value as the dict key to have unique keys
                                     self.db_clusters[db_cluster_arn] = db_cluster
@@ -499,6 +505,7 @@ class DBInstance(BaseModel):
     replica_source: Optional[str]
     ca_cert: Optional[str]
     cert: list[Certificate] = []
+    copy_tags_to_snapshot: bool
 
 
 class DBCluster(BaseModel):
@@ -522,6 +529,7 @@ class DBCluster(BaseModel):
     require_secure_transport: str = "OFF"
     region: str
     tags: Optional[list] = []
+    copy_tags_to_snapshot: bool
 
 
 class DBSnapshot(BaseModel):
