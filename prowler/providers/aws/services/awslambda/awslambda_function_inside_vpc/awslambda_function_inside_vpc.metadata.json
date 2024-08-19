@@ -14,9 +14,9 @@
   "Remediation": {
     "Code": {
       "CLI": "aws lambda update-function-configuration --region <region-name> --function-name <function-name> --vpc-config SubnetIds=<subnet-id-1>,<subnet-id-2>,SecurityGroupIds=<security-group-id>",
-      "NativeIaC": "",
+      "NativeIaC": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Lambda/function-in-vpc.html",
       "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/lambda-controls.html#lambda-3",
-      "Terraform": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Lambda/function-in-vpc.html"
+      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/ensure-that-aws-lambda-function-is-configured-inside-a-vpc-1/"
     },
     "Recommendation": {
       "Text": "Configure your AWS Lambda functions to operate within a Virtual Private Cloud (VPC) to enhance security and control network access.",
