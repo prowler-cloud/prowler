@@ -23,7 +23,7 @@ const cardData = [
 
 export const AttackSurface = () => {
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-2">
       {cardData.map((card, index) => (
         <ActionCard
           key={index}
