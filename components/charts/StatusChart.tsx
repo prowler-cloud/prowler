@@ -55,7 +55,7 @@ export function StatusChart() {
   }, []);
 
   return (
-    <div className="flex">
+    <div className="flex items-center justify-center self-center my-auto">
       <ChartContainer
         config={chartConfig}
         className="mx-auto aspect-square min-w-[200px] md:min-h-[250px]"
@@ -102,7 +102,7 @@ export function StatusChart() {
           </Pie>
         </PieChart>
       </ChartContainer>
-      <div className="flex flex-col justify-center gap-y-2 mx-6">
+      <div className="flex flex-col justify-center gap-2 mx-6 text-small">
         <div className="flex space-x-4">
           <Chip
             className="h-5"

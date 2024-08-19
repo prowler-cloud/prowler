@@ -40,35 +40,37 @@ const chartConfig = {
 
 export const SeverityChart = () => {
   return (
-    <ChartContainer config={chartConfig}>
-      <BarChart accessibilityLayer data={chartData} layout="vertical">
-        <YAxis
-          dataKey="severity"
-          type="category"
-          tickLine={false}
-          tickMargin={10}
-          axisLine={false}
-          tickFormatter={(value) =>
-            chartConfig[value as keyof typeof chartConfig]?.label
-          }
-        />
-        <XAxis dataKey="findings" type="number" hide>
-          <LabelList position="insideTop" offset={12} fontSize={12} />
-        </XAxis>
-        <ChartTooltip
-          cursor={false}
-          content={<ChartTooltipContent indicator="line" />}
-        />
-
-        <Bar dataKey="findings" layout="vertical" radius={12}>
-          <LabelList
-            position="insideRight"
-            offset={10}
-            className="fill-foreground font-bold"
-            fontSize={12}
+    <div className="my-auto">
+      <ChartContainer config={chartConfig}>
+        <BarChart accessibilityLayer data={chartData} layout="vertical">
+          <YAxis
+            dataKey="severity"
+            type="category"
+            tickLine={false}
+            tickMargin={10}
+            axisLine={false}
+            tickFormatter={(value) =>
+              chartConfig[value as keyof typeof chartConfig]?.label
+            }
           />
-        </Bar>
-      </BarChart>
-    </ChartContainer>
+          <XAxis dataKey="findings" type="number" hide>
+            <LabelList position="insideTop" offset={12} fontSize={12} />
+          </XAxis>
+          <ChartTooltip
+            cursor={false}
+            content={<ChartTooltipContent indicator="line" />}
+          />
+
+          <Bar dataKey="findings" layout="vertical" radius={12}>
+            <LabelList
+              position="insideRight"
+              offset={10}
+              className="fill-foreground font-bold"
+              fontSize={12}
+            />
+          </Bar>
+        </BarChart>
+      </ChartContainer>
+    </div>
   );
 };
