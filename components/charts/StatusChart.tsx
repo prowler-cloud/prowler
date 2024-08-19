@@ -39,21 +39,9 @@ const chartConfig = {
   number: {
     label: "Findings",
   },
-  chrome: {
-    label: "Chrome",
-    color: "hsl(var(--chart-1))",
-  },
   success: {
     label: "Success",
     color: "hsl(var(--chart-success))",
-  },
-  firefox: {
-    label: "Firefox",
-    color: "hsl(var(--chart-3))",
-  },
-  edge: {
-    label: "Edge",
-    color: "hsl(var(--chart-4))",
   },
   fail: {
     label: "Fail",

@@ -2,6 +2,7 @@ import { Spacer } from "@nextui-org/react";
 
 import { StatusChart } from "@/components/charts";
 import { FilterControls } from "@/components/filters";
+import { AttackSurface } from "@/components/overview";
 import { Header } from "@/components/ui";
 import { CustomBox } from "@/components/ui/custom";
 
@@ -29,7 +30,7 @@ export default function Home() {
           preTitle={"Attack Surface"}
           className="col-span-12 sm:col-span-12 xl:col-span-4 3xl:col-span-5"
         >
-          <p>hi hi</p>
+          <AttackSurface />
         </CustomBox>
       </div>
     </>

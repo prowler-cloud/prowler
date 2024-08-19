@@ -1,12 +1,27 @@
 import { type ClassValue, clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
+import { extendTailwindMerge } from "tailwind-merge";
 
+const COMMON_UNITS = ["small", "medium", "large"];
 import { MetaDataProps } from "@/types";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
-
+const twMerge = extendTailwindMerge({
+  extend: {
+    theme: {
+      opacity: ["disabled"],
+      spacing: ["divider"],
+      borderWidth: COMMON_UNITS,
+      borderRadius: COMMON_UNITS,
+    },
+    classGroups: {
+      shadow: [{ shadow: COMMON_UNITS }],
+      "font-size": [{ text: ["tiny", ...COMMON_UNITS] }],
+      "bg-image": ["bg-stripe-gradient"],
+    },
+  },
+});
 export const parseStringify = (value: any) => JSON.parse(JSON.stringify(value));
 
 export const convertFileToUrl = (file: File) => URL.createObjectURL(file);
