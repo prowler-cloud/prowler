@@ -16,9 +16,9 @@
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "https://docs.prowler.com/checks/aws/general-policies/ensure-that-s3-bucket-has-cross-region-replication-enabled/",
+      "NativeIaC": "",
       "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/s3-controls.html#s3-7",
-      "Terraform": ""
+      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/ensure-that-s3-bucket-has-cross-region-replication-enabled#terraform"
     },
     "Recommendation": {
       "Text": "Ensure that S3 buckets have corss region replication.",

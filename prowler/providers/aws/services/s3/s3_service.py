@@ -387,10 +387,14 @@ class S3(AWSService):
                 Bucket=bucket.name
             )["ReplicationConfiguration"]["Rules"]
             if replication_config:
-                bucket.replication = ReplicationRule(
-                    status=replication_config[0]["Status"],
-                    destination=replication_config[0]["Destination"]["Bucket"],
-                )
+                for rule in replication_config:
+                    bucket.replication_rules.append(
+                        ReplicationRule(
+                            id=rule["ID"],
+                            status=rule["Status"],
+                            destination=rule["Destination"]["Bucket"],
+                        )
+                    )
         except ClientError as error:
             if error.response["Error"]["Code"] == "NoSuchBucket":
                 logger.warning(
@@ -527,6 +531,7 @@ class AccessPoint(BaseModel):
 
 
 class ReplicationRule(BaseModel):
+    id: str
     status: str
     destination: str
 
@@ -545,4 +550,4 @@ class Bucket(BaseModel):
     object_lock: bool = False
     mfa_delete: bool = False
     tags: Optional[list] = []
-    replication: Optional[ReplicationRule]
+    replication_rules: Optional[list[ReplicationRule]] = []

@@ -13,26 +13,26 @@ class s3_bucket_cross_region_replication(Check):
             report.resource_tags = bucket.tags
             report.status = "FAIL"
             report.status_extended = f"S3 Bucket {bucket.name} does not have correct cross region replication configuration."
-            if (
-                bucket.versioning
-                and bucket.replication
-                and bucket.replication.status == "Enabled"
-                and bucket.replication.destination
-            ):
-                if bucket.replication.destination not in s3_client.buckets:
-                    report.status = "FAIL"
-                    report.status_extended = f"S3 Bucket {bucket.name} has cross region replication in bucket {bucket.replication.destination} which is out of Prowler's scope."
-                else:
-                    destination_bucket = s3_client.buckets[
-                        bucket.replication.destination
-                    ]
-                    if destination_bucket.region != bucket.region:
-                        report.status = "PASS"
-                        report.status_extended = f"S3 Bucket {bucket.name} has cross region replication in bucket {destination_bucket.name} located in region {destination_bucket.region}."
-                    else:
-                        report.status = "FAIL"
-                        report.status_extended = f"S3 Bucket {bucket.name} has cross region replication in bucket {destination_bucket.name} located in the same region."
-
+            if bucket.replication_rules:
+                for rule in bucket.replication_rules:
+                    if (
+                        bucket.versioning
+                        and rule.status == "Enabled"
+                        and rule.destination
+                    ):
+                        if rule.destination not in s3_client.buckets:
+                            report.status = "FAIL"
+                            report.status_extended = f"S3 Bucket {bucket.name} has cross region replication rule {rule.id} in bucket {rule.destination} which is out of Prowler's scope."
+                            break
+                        else:
+                            destination_bucket = s3_client.buckets[rule.destination]
+                            if destination_bucket.region != bucket.region:
+                                report.status = "PASS"
+                                report.status_extended = f"S3 Bucket {bucket.name} has cross region replication rule {rule.id} in bucket {destination_bucket.name} located in region {destination_bucket.region}."
+                            else:
+                                report.status = "FAIL"
+                                report.status_extended = f"S3 Bucket {bucket.name} has cross region replication rule {rule.id} in bucket {destination_bucket.name} located in the same region."
+                                break
             findings.append(report)
 
         return findings

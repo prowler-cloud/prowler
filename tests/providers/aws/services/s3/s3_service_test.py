@@ -426,8 +426,8 @@ class Test_S3_Service:
         assert len(s3.buckets) == 1
         assert s3.buckets[bucket_arn].name == bucket_name
         assert s3.buckets[bucket_arn].region == AWS_REGION_US_EAST_1
-        assert s3.buckets[bucket_arn].replication.status == "Enabled"
-        assert s3.buckets[bucket_arn].replication.destination == bucket_arn
+        assert s3.buckets[bucket_arn].replication_rules[0].status == "Enabled"
+        assert s3.buckets[bucket_arn].replication_rules[0].destination == bucket_arn
 
     # Test S3 List Access Points
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
