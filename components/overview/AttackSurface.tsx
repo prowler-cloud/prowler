@@ -1,6 +1,6 @@
 import React from "react";
 
-import ActionCard from "../ui/action-card/ActionCard";
+import { ActionCard } from "@/components/ui";
 
 const cardData = [
   {

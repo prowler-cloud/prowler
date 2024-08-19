@@ -67,7 +67,7 @@ export function StatusChart() {
             dataKey="number"
             nameKey="findings"
             innerRadius={60}
-            strokeWidth={5}
+            strokeWidth={50}
           >
             <Label
               content={({ viewBox }) => {
@@ -76,6 +76,7 @@ export function StatusChart() {
                     <text
                       x={viewBox.cx}
                       y={viewBox.cy}
+                      radius={70}
                       textAnchor="middle"
                       dominantBaseline="middle"
                     >

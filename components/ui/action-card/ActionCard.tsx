@@ -14,7 +14,7 @@ export type ActionCardProps = CardProps & {
   description: string;
 };
 
-const ActionCard = React.forwardRef<HTMLDivElement, ActionCardProps>(
+export const ActionCard = React.forwardRef<HTMLDivElement, ActionCardProps>(
   ({ color, title, icon, description, children, className, ...props }, ref) => {
     const colors = React.useMemo(() => {
       switch (color) {
@@ -82,5 +82,3 @@ const ActionCard = React.forwardRef<HTMLDivElement, ActionCardProps>(
 );
 
 ActionCard.displayName = "ActionCard";
-
-export default ActionCard;
