@@ -22,7 +22,7 @@ class s3_bucket_cross_region_replication(Check):
                     ):
                         if rule.destination not in s3_client.buckets:
                             report.status = "FAIL"
-                            report.status_extended = f"S3 Bucket {bucket.name} has cross region replication rule {rule.id} in bucket {rule.destination} which is out of Prowler's scope."
+                            report.status_extended = f"S3 Bucket {bucket.name} has cross region replication rule {rule.id} in bucket {rule.destination.split(":")[-1]} which is out of Prowler's scope."
                         else:
                             destination_bucket = s3_client.buckets[rule.destination]
                             if destination_bucket.region != bucket.region:
