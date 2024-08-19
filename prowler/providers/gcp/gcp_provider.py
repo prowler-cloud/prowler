@@ -38,13 +38,18 @@ class GcpProvider(Provider):
     # TODO: this is not optional, enforce for all providers
     audit_metadata: Audit_Metadata
 
-    def __init__(self, arguments):
+    def __init__(
+        self,
+        input_project_ids,
+        excluded_project_ids,
+        credentials_file,
+        impersonate_service_account,
+        list_project_ids,
+        config_file,
+        fixer_config,
+    ):
         logger.info("Instantiating GCP Provider ...")
-        input_project_ids = arguments.project_id
-        excluded_project_ids = arguments.excluded_project_id
-        credentials_file = arguments.credentials_file
-        self._impersonated_service_account = arguments.impersonate_service_account
-        list_project_ids = arguments.list_project_id
+        self._impersonated_service_account = impersonate_service_account
 
         self._session = self.setup_session(
             credentials_file, self._impersonated_service_account
@@ -105,12 +110,8 @@ class GcpProvider(Provider):
 
         # TODO: move this to the providers, pending for AWS, GCP, AZURE and K8s
         # Audit Config
-        self._audit_config = load_and_validate_config_file(
-            self._type, arguments.config_file
-        )
-        self._fixer_config = load_and_validate_config_file(
-            self._type, arguments.fixer_config
-        )
+        self._audit_config = load_and_validate_config_file(self._type, config_file)
+        self._fixer_config = load_and_validate_config_file(self._type, fixer_config)
 
     @property
     def identity(self):
