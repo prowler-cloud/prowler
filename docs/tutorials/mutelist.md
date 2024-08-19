@@ -9,7 +9,7 @@ Mutelist option works along with other options and will modify the output in the
 
 ## How the Mutelist Works
 
-The Mutelist uses an "ANDed" and "ORed" logic to determine which resources, checks, regions, and tags should be muted. For each check, the Mutelist checks if the account, region, and resource match the specified criteria, using an "ANDed" logic. If tags are specified, the mutelist uses and "ORed" logic to see if at least one tag is present in the resource.
+The Mutelist uses an "ANDed" and "ORed" logic to determine which resources, checks, regions, and tags should be muted. For each check, the Mutelist checks if the account, region, and resource match the specified criteria, using an "ANDed" logic. If tags are specified, the mutelist uses an "ANDed" logic to see if all of the tags are present in the resource.
 
 If any of the criteria do not match, the check is not muted.
 

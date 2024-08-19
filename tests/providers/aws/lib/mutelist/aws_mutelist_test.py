@@ -1132,7 +1132,7 @@ class TestAWSMutelist:
         }
         mutelist = AWSMutelist(mutelist_content=mutelist_content)
 
-        assert mutelist.is_muted(
+        assert not mutelist.is_muted(
             AWS_ACCOUNT_NUMBER,
             "check_test",
             AWS_REGION_US_EAST_1,
@@ -1321,7 +1321,7 @@ class TestAWSMutelist:
             AWS_ACCOUNT_NUMBER,
             "eu-central-1",
             "test",
-            "environment=test",
+            "environment=test | project=prowler",
         )
 
         assert mutelist.is_excepted(
@@ -1329,7 +1329,7 @@ class TestAWSMutelist:
             AWS_ACCOUNT_NUMBER,
             "eu-south-3",
             "test",
-            "environment=test",
+            "environment=test | project=prowler",
         )
 
         assert mutelist.is_excepted(
@@ -1337,7 +1337,7 @@ class TestAWSMutelist:
             AWS_ACCOUNT_NUMBER,
             "eu-south-3",
             "test123",
-            "environment=test",
+            "environment=test | project=prowler",
         )
 
     def test_is_excepted_only_in_account(self):
@@ -1413,7 +1413,7 @@ class TestAWSMutelist:
             "Accounts": [AWS_ACCOUNT_NUMBER],
             "Regions": [],
             "Resources": [],
-            "Tags": ["environment=test"],
+            "Tags": ["environment=test", "project=example"],
         }
         mutelist = AWSMutelist(mutelist_content={})
 
@@ -1422,7 +1422,7 @@ class TestAWSMutelist:
             AWS_ACCOUNT_NUMBER,
             AWS_REGION_EU_CENTRAL_1,
             "resource_1",
-            "environment=test",
+            "environment=test | project=example",
         )
 
         assert not mutelist.is_excepted(
