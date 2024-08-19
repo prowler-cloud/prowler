@@ -1,8 +1,8 @@
 ### Account, Check and/or Region can be * to apply for all the cases.
 ### Account == <Kubernetes Cluster Name> and Region == <Kubernetes Namespace Name>
 ### Resources and tags are lists that can have either Regex or Keywords.
-### Tags is an optional list that matches on tuples of 'key=value' and are "ANDed" together.
-### Use an alternation Regex to match one of multiple tags with "ORed" logic.
+### Tags is an optional list that matches on tuples of 'key=value' and are "ORed" together.
+### Use an alternation Regex to match one of multiple tags.
 ### For each check you can except Accounts, Regions, Resources and/or Tags.
 ###########################  MUTELIST EXAMPLE  ###########################
 Mutelist:

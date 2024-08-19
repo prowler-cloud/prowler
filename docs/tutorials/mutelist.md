@@ -25,8 +25,8 @@ The Mutelist file uses the [YAML](https://en.wikipedia.org/wiki/YAML) format wit
 ```yaml
 ### Account, Check and/or Region can be * to apply for all the cases.
 ### Resources and tags are lists that can have either Regex or Keywords.
-### Tags is an optional list that matches on tuples of 'key=value' and are "ANDed" together.
-### Use an alternation Regex to match one of multiple tags with "ORed" logic.
+### Tags is an optional list that matches on tuples of 'key=value' and are "ORed" together.
+### Use an alternation Regex to match one of multiple tags.
 ### For each check you can except Accounts, Regions, Resources and/or Tags.
 ###########################  MUTELIST EXAMPLE  ###########################
 Mutelist:
@@ -50,7 +50,7 @@ Mutelist:
           Resources:
             - "test"
           Tags:
-            - "test=test"         # Will mute every resource containing the string "test" and the tags 'test=test' and
+            - "test=test"         # Will mute every resource containing the string "test" and the tags 'test=test' or
             - "project=test|project=stage" # either of ('project=test' OR project=stage) in account 123456789012 and every region
 
     "*":
