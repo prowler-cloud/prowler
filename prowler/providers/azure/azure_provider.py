@@ -4,7 +4,6 @@ from argparse import ArgumentTypeError
 from os import getenv
 
 import requests
-from azure.core.exceptions import HttpResponseError
 from azure.identity import DefaultAzureCredential, InteractiveBrowserCredential
 from azure.mgmt.subscription import SubscriptionClient
 from colorama import Fore, Style
@@ -48,7 +47,7 @@ class AzureProvider(Provider):
         audit_metadata (Audit_Metadata): The audit metadata for the Azure provider.
 
     Methods:
-        __init__(self, arguments): Initializes the AzureProvider object.
+        __init__ -> Initializes the Azure provider.
         identity(self): Returns the identity of the Azure provider.
         type(self): Returns the type of the Azure provider.
         session(self): Returns the session object associated with the Azure provider.
@@ -81,7 +80,7 @@ class AzureProvider(Provider):
         az_cli_auth: bool,
         sp_env_auth: bool,
         browser_auth: bool,
-        managed_entity_auth: bool,
+        managed_identity_auth: bool,
         tenant_id: str,
         region: str,
         subscription_ids: list,
@@ -89,14 +88,8 @@ class AzureProvider(Provider):
         fixer_config: str,
     ):
         logger.info("Setting Azure provider ...")
-        subscription_ids = arguments.subscription_id
 
         logger.info("Checking if any credentials mode is set ...")
-        az_cli_auth = arguments.az_cli_auth
-        sp_env_auth = arguments.sp_env_auth
-        browser_auth = arguments.browser_auth
-        managed_identity_auth = arguments.managed_identity_auth
-        tenant_id = arguments.tenant_id
 
         # Validate the authentication arguments
         self.validate_arguments(
@@ -104,7 +97,6 @@ class AzureProvider(Provider):
         )
 
         logger.info("Checking if region is different than default one")
-        region = arguments.azure_region
         self._region_config = self.setup_region_config(region)
 
         # Set up the Azure session
