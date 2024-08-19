@@ -449,6 +449,8 @@ class AzureProvider(Provider):
 
             logger.info(f"Connected to Azure subscription: {subscription.display_name}")
 
+            return Connection(is_connected=True)
+
         except Exception as error:
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
