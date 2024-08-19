@@ -601,7 +601,7 @@ class Test_s3_bucket_cross_region_replication:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == f"S3 Bucket {bucket_name_us} has cross region replication rule {repl_rule_id} in bucket {arn_bucket_eu.split(":")[-1]} which is out of Prowler's scope."
+                    == f"S3 Bucket {bucket_name_us} has cross region replication rule {repl_rule_id} in bucket {arn_bucket_eu.split(':')[-1]} which is out of Prowler's scope."
                 )
                 assert result[0].resource_id == bucket_name_us
                 assert (
