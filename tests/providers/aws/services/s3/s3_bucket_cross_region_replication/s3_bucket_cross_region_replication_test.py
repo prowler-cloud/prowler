@@ -518,10 +518,10 @@ class Test_s3_bucket_cross_region_replication:
                 assert result[1].region == AWS_REGION_US_EAST_1
 
                 # US-EAST-1 Source Bucket
-                assert result[2].status == "FAIL"
+                assert result[2].status == "PASS"
                 assert (
                     result[2].status_extended
-                    == f"S3 Bucket {bucket_name_us_source} has cross region replication rule {repl_rule_id_2} in bucket {bucket_name_us_destination} located in the same region."
+                    == f"S3 Bucket {bucket_name_us_source} has cross region replication rule {repl_rule_id_1} in bucket {bucket_name_eu} located in region {AWS_REGION_EU_WEST_1}."
                 )
                 assert result[2].resource_id == bucket_name_us_source
                 assert (
