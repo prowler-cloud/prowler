@@ -18,7 +18,9 @@ class awslambda_function_inside_vpc(Check):
 
             if function.vpc_id:
                 report.status = "PASS"
-                report.status_extended = f"Function {function.name} is inside a VPC"
+                report.status_extended = (
+                    f"Function {function.name} is inside of VPC {function.vpc_id}"
+                )
 
             findings.append(report)
 
