@@ -276,16 +276,16 @@ class Test_ec2_instance_secrets_user_data:
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-        aws_provider = set_mocked_aws_provider(
+        current_audit_info = set_mocked_aws_audit_info(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
 
         with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_instance_secrets_user_data.ec2_instance_secrets_user_data.ec2_client",
-            new=EC2(aws_provider),
+            new=EC2(current_audit_info),
         ):
             from prowler.providers.aws.services.ec2.ec2_instance_secrets_user_data.ec2_instance_secrets_user_data import (
                 ec2_instance_secrets_user_data,
