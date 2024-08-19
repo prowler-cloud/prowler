@@ -444,3 +444,55 @@ class Test_ec2_launch_template_no_secrets:
             assert result[0].region == AWS_REGION_US_EAST_1
 
             assert result[1].status == "PASS"
+
+    @mock_aws
+    def test_one_launch_template_with_unicode_error(self):
+        launch_template_name = "tester"
+        invalid_utf8_bytes = b"\xc0\xaf"
+
+        ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
+        ec2_client.create_launch_template(
+            LaunchTemplateName=launch_template_name,
+            VersionDescription="Launch Template with secrets",
+            LaunchTemplateData={
+                "InstanceType": "t1.micro",
+                "UserData": b64encode(invalid_utf8_bytes).decode(encoding_format_utf_8),
+            },
+        )
+
+        launch_template_id = ec2_client.describe_launch_templates()["LaunchTemplates"][
+            0
+        ]["LaunchTemplateId"]
+
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_launch_template_no_secrets.ec2_launch_template_no_secrets.ec2_client",
+            new=EC2(aws_provider),
+        ):
+            # Test Check
+            from prowler.providers.aws.services.ec2.ec2_launch_template_no_secrets.ec2_launch_template_no_secrets import (
+                ec2_launch_template_no_secrets,
+            )
+
+            check = ec2_launch_template_no_secrets()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == f"No secrets found in User Data of any version for EC2 Launch Template {launch_template_name}."
+            )
+            assert result[0].resource_id == launch_template_id
+            assert result[0].region == AWS_REGION_US_EAST_1
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:ec2:us-east-1:123456789012:launch-template/{launch_template_id}"
+            )
+            assert result[0].resource_tags == []
