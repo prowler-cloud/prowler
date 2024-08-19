@@ -18,7 +18,7 @@ class EC2(AWSService):
         self.instances = []
         self.__threading_call__(self.__describe_instances__)
         self.__threading_call__(self.__get_instance_user_data__, self.instances)
-        self.security_groups = []
+        self.security_groups = {}
         self.regions_with_sgs = []
         self.__threading_call__(self.__describe_security_groups__)
         self.network_acls = []
@@ -120,18 +120,15 @@ class EC2(AWSService):
                             for sg_group in ingress_rule.get("UserIdGroupPairs", []):
                                 if sg_group.get("GroupId"):
                                     associated_sgs.append(sg_group["GroupId"])
-                        self.security_groups.append(
-                            SecurityGroup(
-                                name=sg["GroupName"],
-                                arn=arn,
-                                region=regional_client.region,
-                                id=sg["GroupId"],
-                                ingress_rules=sg["IpPermissions"],
-                                egress_rules=sg["IpPermissionsEgress"],
-                                associated_sgs=associated_sgs,
-                                vpc_id=sg["VpcId"],
-                                tags=sg.get("Tags"),
-                            )
+                        self.security_groups[arn] = SecurityGroup(
+                            name=sg["GroupName"],
+                            region=regional_client.region,
+                            id=sg["GroupId"],
+                            ingress_rules=sg["IpPermissions"],
+                            egress_rules=sg["IpPermissionsEgress"],
+                            associated_sgs=associated_sgs,
+                            vpc_id=sg["VpcId"],
+                            tags=sg.get("Tags"),
                         )
                         if sg["GroupName"] != "default":
                             self.regions_with_sgs.append(regional_client.region)
@@ -267,7 +264,7 @@ class EC2(AWSService):
     ):
         try:
             for sg in interface_security_groups:
-                for security_group in self.security_groups:
+                for security_group in self.security_groups.values():
                     if security_group.id == sg["GroupId"]:
                         security_group.network_interfaces.append(interface)
         except Exception as error:
@@ -563,7 +560,6 @@ class NetworkInterface(BaseModel):
 
 class SecurityGroup(BaseModel):
     name: str
-    arn: str
     region: str
     id: str
     vpc_id: str

@@ -1,11 +1,15 @@
 from argparse import Namespace
 from datetime import datetime
 from os import rmdir
+from unittest.mock import patch
+from uuid import uuid4
 
 import pytest
+from azure.core.credentials import AccessToken
+from azure.core.exceptions import ClientAuthenticationError, HttpResponseError
 from azure.identity import DefaultAzureCredential
 from freezegun import freeze_time
-from mock import patch
+from mock import MagicMock
 
 from prowler.config.config import (
     default_config_file_path,
@@ -17,6 +21,7 @@ from prowler.providers.azure.models import (
     AzureOutputOptions,
     AzureRegionConfig,
 )
+from prowler.providers.common.models import Connection
 
 
 class TestAzureProvider:
@@ -268,5 +273,102 @@ class TestAzureProvider:
 
                 # Delete testing directory
                 # TODO: move this to a fixtures file
-                rmdir(f"{output_directory}/compliance")
-                rmdir(output_directory)
+                rmdir(f"{arguments.output_directory}/compliance")
+                rmdir(arguments.output_directory)
+
+    def test_test_connection_browser_auth(self):
+        with patch(
+            "prowler.providers.azure.azure_provider.DefaultAzureCredential"
+        ) as mock_default_credential, patch(
+            "prowler.providers.azure.azure_provider.AzureProvider.setup_session"
+        ) as mock_setup_session, patch(
+            "prowler.providers.azure.azure_provider.SubscriptionClient"
+        ) as mock_resource_client:
+
+            # Mock the return value of DefaultAzureCredential
+            mock_credentials = MagicMock()
+            mock_credentials.get_token.return_value = AccessToken(
+                token="fake_token", expires_on=9999999999
+            )
+            mock_default_credential.return_value = mock_credentials
+
+            # Mock setup_session to return a mocked session object
+            mock_session = MagicMock()
+            mock_setup_session.return_value = mock_session
+
+            # Mock ResourceManagementClient to avoid real API calls
+            mock_client = MagicMock()
+            mock_resource_client.return_value = mock_client
+
+            test_connection = AzureProvider.test_connection(
+                browser_auth=True,
+                tenant_id=str(uuid4()),
+                region="AzureCloud",
+                raise_on_exception=False,
+            )
+
+            assert isinstance(test_connection, Connection)
+            assert test_connection.is_connected
+            assert test_connection.error is None
+
+    def test_test_connection_with_ClientAuthenticationError(self):
+        with pytest.raises(ClientAuthenticationError) as exception:
+            tenant_id = str(uuid4())
+            AzureProvider.test_connection(
+                browser_auth=True,
+                tenant_id=tenant_id,
+                region="AzureCloud",
+            )
+
+        assert exception.type == ClientAuthenticationError
+        assert (
+            exception.value.args[0]
+            == f"Authentication failed: Unable to get authority configuration for https://login.microsoftonline.com/{tenant_id}. Authority would typically be in a format of https://login.microsoftonline.com/your_tenant or https://tenant_name.ciamlogin.com or https://tenant_name.b2clogin.com/tenant.onmicrosoft.com/policy.  Also please double check your tenant name or GUID is correct."
+        )
+
+    def test_test_connection_without_any_method(self):
+        with pytest.raises(SystemExit) as exception:
+            AzureProvider.test_connection()
+
+        assert exception.type == SystemExit
+        assert (
+            exception.value.args[0]
+            == "Azure provider requires at least one authentication method set: [--az-cli-auth | --sp-env-auth | --browser-auth | --managed-identity-auth]"
+        )
+
+    def test_test_connection_with_httpresponseerror(self):
+        with patch(
+            "prowler.providers.azure.azure_provider.AzureProvider.get_locations",
+            return_value={},
+        ), patch(
+            "prowler.providers.azure.azure_provider.AzureProvider.setup_session"
+        ) as mock_setup_session:
+
+            mock_setup_session.side_effect = HttpResponseError(
+                "Simulated HttpResponseError"
+            )
+
+            with pytest.raises(HttpResponseError) as exception:
+                AzureProvider.test_connection(
+                    az_cli_auth=True,
+                    raise_on_exception=True,
+                )
+
+            assert exception.type == HttpResponseError
+            assert exception.value.args[0] == "Simulated HttpResponseError"
+
+    def test_test_connection_with_exception(self):
+        with patch(
+            "prowler.providers.azure.azure_provider.AzureProvider.setup_session"
+        ) as mock_setup_session:
+
+            mock_setup_session.side_effect = Exception("Simulated Exception")
+
+            with pytest.raises(Exception) as exception:
+                AzureProvider.test_connection(
+                    sp_env_auth=True,
+                    raise_on_exception=True,
+                )
+
+            assert exception.type == Exception
+            assert exception.value.args[0] == "Simulated Exception"

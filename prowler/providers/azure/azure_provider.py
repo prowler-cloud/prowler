@@ -1,5 +1,6 @@
 import asyncio
 import sys
+from argparse import ArgumentTypeError
 from os import getenv
 
 import requests
@@ -23,11 +24,47 @@ from prowler.providers.azure.models import (
     AzureOutputOptions,
     AzureRegionConfig,
 )
-from prowler.providers.common.models import Audit_Metadata
+from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
 
 
 class AzureProvider(Provider):
+    """
+    Represents an Azure provider.
+
+    This class provides functionality to interact with the Azure cloud provider.
+    It handles authentication, region configuration, and provides access to various properties and methods
+    related to the Azure provider.
+
+    Attributes:
+        _type (str): The type of the provider, which is set to "azure".
+        _session (DefaultAzureCredential): The session object associated with the Azure provider.
+        _identity (AzureIdentityInfo): The identity information for the Azure provider.
+        _audit_config (dict): The audit configuration for the Azure provider.
+        _region_config (AzureRegionConfig): The region configuration for the Azure provider.
+        _locations (dict): A dictionary containing the available locations for the Azure provider.
+        _output_options (AzureOutputOptions): The output options for the Azure provider.
+        _mutelist (AzureMutelist): The mutelist object associated with the Azure provider.
+        audit_metadata (Audit_Metadata): The audit metadata for the Azure provider.
+
+    Methods:
+        __init__(self, arguments): Initializes the AzureProvider object.
+        identity(self): Returns the identity of the Azure provider.
+        type(self): Returns the type of the Azure provider.
+        session(self): Returns the session object associated with the Azure provider.
+        region_config(self): Returns the region configuration for the Azure provider.
+        locations(self): Returns a list of available locations for the Azure provider.
+        audit_config(self): Returns the audit configuration for the Azure provider.
+        fixer_config(self): Returns the fixer configuration.
+        output_options(self, options: tuple): Sets the output options for the Azure provider.
+        mutelist(self) -> AzureMutelist: Returns the mutelist object associated with the Azure provider.
+        get_output_mapping(self): Returns a dictionary that maps output keys to their corresponding values.
+        validate_arguments(cls, az_cli_auth, sp_env_auth, browser_auth, managed_identity_auth, tenant_id): Validates the authentication arguments for the Azure provider.
+        setup_region_config(cls, region): Sets up the region configuration for the Azure provider.
+        print_credentials(self): Prints the Azure credentials information.
+        setup_session(cls, az_cli_auth, sp_env_auth, browser_auth, managed_identity_auth, tenant_id, region_config): Set up the Azure session with the specified authentication method.
+    """
+
     _type: str = "azure"
     _session: DefaultAzureCredential
     _identity: AzureIdentityInfo
@@ -52,27 +89,40 @@ class AzureProvider(Provider):
         fixer_config: str,
     ):
         logger.info("Setting Azure provider ...")
+        subscription_ids = arguments.subscription_id
 
-        # Set up the Azure provider using the specified authentication method
-        test_connection = self.test_connection(
+        logger.info("Checking if any credentials mode is set ...")
+        az_cli_auth = arguments.az_cli_auth
+        sp_env_auth = arguments.sp_env_auth
+        browser_auth = arguments.browser_auth
+        managed_identity_auth = arguments.managed_identity_auth
+        tenant_id = arguments.tenant_id
+
+        # Validate the authentication arguments
+        self.validate_arguments(
+            az_cli_auth, sp_env_auth, browser_auth, managed_identity_auth, tenant_id
+        )
+
+        logger.info("Checking if region is different than default one")
+        region = arguments.azure_region
+        self._region_config = self.setup_region_config(region)
+
+        # Set up the Azure session
+        self._session = self.setup_session(
             az_cli_auth,
             sp_env_auth,
             browser_auth,
-            managed_entity_auth,
+            managed_identity_auth,
             tenant_id,
-            region,
+            self._region_config,
         )
-        # If the connection test fails, exit the program
-        if not test_connection[0]:
-            sys.exit(1)
-        self._session = test_connection[1]
-        self._region_config = test_connection[2]
 
+        # Set up the identity
         self._identity = self.setup_identity(
             az_cli_auth,
             sp_env_auth,
             browser_auth,
-            managed_entity_auth,
+            managed_identity_auth,
             subscription_ids,
         )
 
@@ -86,84 +136,49 @@ class AzureProvider(Provider):
 
     @property
     def identity(self):
-        """
-        Returns the identity of the Azure provider.
-
-        :return: The identity of the Azure provider.
-        """
+        """Returns the identity of the Azure provider."""
         return self._identity
 
     @property
     def type(self):
-        """
-        Returns the type of the Azure provider.
-
-        :return: The type of the Azure provider.
-        """
+        """Returns the type of the Azure provider."""
         return self._type
 
     @property
-    def session(self) -> DefaultAzureCredential:
-        """
-        Returns the Azure credentials object.
-
-        Returns:
-            DefaultAzureCredential: The Azure credentials object.
-        """
+    def session(self):
+        """Returns the session object associated with the Azure provider."""
         return self._session
 
     @property
     def region_config(self):
-        """
-        Returns the region configuration for the Azure provider.
-
-        Returns:
-            dict: A dictionary containing the region configuration.
-        """
+        """Returns the region configuration for the Azure provider."""
         return self._region_config
 
     @property
     def locations(self):
-        """
-        Returns a list of available locations for the Azure provider.
-
-        Returns:
-            list: A list of available locations.
-        """
+        """Returns a list of available locations for the Azure provider."""
         return self._locations
 
     @property
     def audit_config(self):
-        """
-        Returns the audit configuration for the Azure provider.
-
-        :return: The audit configuration.
-        """
+        """Returns the audit configuration for the Azure provider."""
         return self._audit_config
 
     @property
     def fixer_config(self):
-        """
-        Returns the fixer configuration.
-
-        Returns:
-            dict: The fixer configuration.
-        """
+        """Returns the fixer configuration."""
         return self._fixer_config
 
     @property
     def output_options(self):
-        """
-        Returns the output options for the Azure provider.
-
-        :return: A dictionary containing the output options.
-        """
+        """Returns the output options for the Azure provider."""
         return self._output_options
 
     @output_options.setter
     def output_options(self, options: tuple):
-        """
-        Sets the output options for the Azure provider.
+        """Set output options for the Azure provider.
+
+        Sets the output options for the Azure provider using the provided arguments and bulk checks metadata.
 
         Args:
             options (tuple): A tuple containing the arguments and bulk checks metadata.
@@ -178,12 +193,7 @@ class AzureProvider(Provider):
 
     @property
     def mutelist(self) -> AzureMutelist:
-        """
-        Returns the AzureMutelist object associated with this Azure provider.
-
-        Returns:
-            AzureMutelist: The AzureMutelist object.
-        """
+        """Mutelist object associated with this Azure provider."""
         return self._mutelist
 
     @mutelist.setter
@@ -199,12 +209,7 @@ class AzureProvider(Provider):
 
     @property
     def get_output_mapping(self):
-        """
-        Returns a dictionary that maps output keys to their corresponding values.
-
-        Returns:
-            dict: A dictionary containing the output mapping.
-        """
+        """Dictionary that maps output keys to their corresponding values."""
         return {
             # identity_type: identity_id
             # "auth_method": "identity.profile",
@@ -226,7 +231,11 @@ class AzureProvider(Provider):
     # previously was using the AzureException
     @staticmethod
     def validate_arguments(
-        az_cli_auth, sp_env_auth, browser_auth, managed_entity_auth, tenant_id
+        az_cli_auth: bool,
+        sp_env_auth: bool,
+        browser_auth: bool,
+        managed_identity_auth: bool,
+        tenant_id: str,
     ):
         """
         Validates the authentication arguments for the Azure provider.
@@ -235,7 +244,7 @@ class AzureProvider(Provider):
             az_cli_auth (bool): Flag indicating whether AZ CLI authentication is enabled.
             sp_env_auth (bool): Flag indicating whether Service Principal environment authentication is enabled.
             browser_auth (bool): Flag indicating whether browser authentication is enabled.
-            managed_entity_auth (bool): Flag indicating whether managed identity authentication is enabled.
+            managed_identity_auth (bool): Flag indicating whether managed identity authentication is enabled.
             tenant_id (str): The Azure Tenant ID.
 
         Raises:
@@ -247,7 +256,7 @@ class AzureProvider(Provider):
             not az_cli_auth
             and not sp_env_auth
             and not browser_auth
-            and not managed_entity_auth
+            and not managed_identity_auth
         ):
             raise SystemExit(
                 "Azure provider requires at least one authentication method set: [--az-cli-auth | --sp-env-auth | --browser-auth | --managed-identity-auth]"
@@ -274,17 +283,29 @@ class AzureProvider(Provider):
             AzureRegionConfig: The region configuration object.
 
         """
-        config = get_regions_config(region)
-        return AzureRegionConfig(
-            name=region,
-            authority=config["authority"],
-            base_url=config["base_url"],
-            credential_scopes=config["credential_scopes"],
-        )
+        try:
+            validate_azure_region(region)
+            config = get_regions_config(region)
+
+            return AzureRegionConfig(
+                name=region,
+                authority=config["authority"],
+                base_url=config["base_url"],
+                credential_scopes=config["credential_scopes"],
+            )
+        except ArgumentTypeError as validation_error:
+            logger.error(
+                f"{validation_error.__class__.__name__}[{validation_error.__traceback__.tb_lineno}]: {validation_error}"
+            )
+            raise validation_error
+        except Exception as validation_error:
+            logger.error(
+                f"{validation_error.__class__.__name__}[{validation_error.__traceback__.tb_lineno}]: {validation_error}"
+            )
+            raise validation_error
 
     def print_credentials(self):
-        """
-        Prints the Azure credentials information.
+        """Azure credentials information.
 
         This method prints the Azure Tenant Domain, Azure Tenant ID, Azure Region,
         Azure Subscriptions, Azure Identity Type, and Azure Identity ID.
@@ -310,23 +331,26 @@ class AzureProvider(Provider):
         )
         print_boxes(report_lines, report_title)
 
+    # TODO: setup_session or setup_credentials?
+    # This should be setup_credentials, since it is setting up the credentials for the provider
     @staticmethod
     def setup_session(
-        az_cli_auth,
-        sp_env_auth,
-        browser_auth,
-        managed_entity_auth,
-        tenant_id,
-        region_config,
+        az_cli_auth: bool,
+        sp_env_auth: bool,
+        browser_auth: bool,
+        managed_identity_auth: bool,
+        tenant_id: str,
+        region_config: AzureRegionConfig,
     ):
-        """
-        Sets up the Azure credentials based on the authentication method.
+        """Returns the Azure credentials object.
+
+        Set up the Azure session with the specified authentication method.
 
         Args:
             az_cli_auth (bool): Flag indicating whether to use Azure CLI authentication.
             sp_env_auth (bool): Flag indicating whether to use Service Principal authentication with environment variables.
             browser_auth (bool): Flag indicating whether to use interactive browser authentication.
-            managed_entity_auth (bool): Flag indicating whether to use managed identity authentication.
+            managed_identity_auth (bool): Flag indicating whether to use managed identity authentication.
             tenant_id (str): The Azure Active Directory tenant ID.
             region_config (AzureRegionConfig): The region configuration object.
 
@@ -337,10 +361,6 @@ class AzureProvider(Provider):
             Exception: If failed to retrieve Azure credentials.
 
         """
-        # Validate the authentication arguments
-        AzureProvider.validate_arguments(
-            az_cli_auth, sp_env_auth, browser_auth, managed_entity_auth, tenant_id
-        )
         # Browser auth creds cannot be set with DefaultAzureCredentials()
         if not browser_auth:
             if sp_env_auth:
@@ -351,7 +371,7 @@ class AzureProvider(Provider):
                 credentials = DefaultAzureCredential(
                     exclude_environment_credential=not sp_env_auth,
                     exclude_cli_credential=not az_cli_auth,
-                    exclude_managed_identity_credential=not managed_entity_auth,
+                    exclude_managed_identity_credential=not managed_identity_auth,
                     # Azure Auth using Visual Studio is not supported
                     exclude_visual_studio_code_credential=True,
                     # Azure Auth using Shared Token Cache is not supported
@@ -381,40 +401,48 @@ class AzureProvider(Provider):
 
     @staticmethod
     def test_connection(
-        az_cli_auth,
-        sp_env_auth,
-        browser_auth,
-        managed_entity_auth,
-        tenant_id,
-        region,
-    ) -> tuple[bool, DefaultAzureCredential | Exception, AzureRegionConfig]:
-        """
-        Tests the connection to Azure using the specified authentication method.
+        az_cli_auth=False,
+        sp_env_auth=False,
+        browser_auth=False,
+        managed_identity_auth=False,
+        tenant_id=None,
+        region="AzureCloud",
+        raise_on_exception=True,
+    ) -> Connection:
+        """Test connection to Azure subscription.
+
+        Test the connection to an Azure subscription using the provided credentials.
 
         Args:
-            az_cli_auth (bool): Flag indicating whether to use Azure CLI authentication.
-            sp_env_auth (bool): Flag indicating whether to use Service Principal authentication with environment variables.
-            browser_auth (bool): Flag indicating whether to use interactive browser authentication.
-            managed_entity_auth (bool): Flag indicating whether to use managed identity authentication.
+            az_cli_auth (bool): Flag indicating if Azure CLI authentication is used.
+            sp_env_auth (bool): Flag indicating if Service Principal environment authentication is used.
+            browser_auth (bool): Flag indicating if browser authentication is used.
+            managed_identity_auth (bool): Flag indicating if managed entity authentication is used.
             tenant_id (str): The Azure Active Directory tenant ID.
             region (str): The Azure region.
+            raise_on_exception (bool): Flag indicating whether to raise an exception if the connection fails.
 
         Returns:
-            tuple: A tuple containing the connection status, the credentials object, and the region configuration object.
+            bool: True if the connection is successful, False otherwise.
+
+        Raises:
+            Exception: If failed to test the connection to Azure subscription.
+
+        Examples:
+            >>> AzureProvider.test_connection(az_cli_auth=True)
+            True
         """
         try:
-            logger.info("Checking if region is different than default one")
-
-            region_config = AzureProvider.setup_region_config(
-                validate_azure_region(region)
+            AzureProvider.validate_arguments(
+                az_cli_auth, sp_env_auth, browser_auth, managed_identity_auth, tenant_id
             )
-
-            # Set up the Azure credentials
+            region_config = AzureProvider.setup_region_config(region)
+            # Set up the Azure session
             credentials = AzureProvider.setup_session(
                 az_cli_auth,
                 sp_env_auth,
                 browser_auth,
-                managed_entity_auth,
+                managed_identity_auth,
                 tenant_id,
                 region_config,
             )
@@ -425,19 +453,14 @@ class AzureProvider(Provider):
             subscription = next(subscription_client.subscriptions.list())
 
             logger.info(f"Connected to Azure subscription: {subscription.display_name}")
-            return True, credentials, region_config
-
-        except HttpResponseError as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-            return False, error, None
 
         except Exception as error:
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            raise error
+            if raise_on_exception:
+                raise error
+            return Connection(error=error)
 
     @staticmethod
     def check_service_principal_creds_env_vars():
@@ -466,7 +489,7 @@ class AzureProvider(Provider):
         az_cli_auth,
         sp_env_auth,
         browser_auth,
-        managed_entity_auth,
+        managed_identity_auth,
         subscription_ids,
     ):
         """
@@ -476,7 +499,7 @@ class AzureProvider(Provider):
             az_cli_auth (bool): Flag indicating if Azure CLI authentication is used.
             sp_env_auth (bool): Flag indicating if Service Principal environment authentication is used.
             browser_auth (bool): Flag indicating if browser authentication is used.
-            managed_entity_auth (bool): Flag indicating if managed entity authentication is used.
+            managed_identity_auth (bool): Flag indicating if managed entity authentication is used.
             subscription_ids (list): List of subscription IDs.
 
         Returns:
@@ -538,7 +561,7 @@ class AzureProvider(Provider):
             asyncio.get_event_loop().run_until_complete(get_azure_identity())
 
         # Managed identities only can be assigned resource, resource group and subscription scope permissions
-        elif managed_entity_auth:
+        elif managed_identity_auth:
             identity.identity_id = "Default Managed Identity ID"
             identity.identity_type = "Managed Identity"
             # Pending extracting info from managed identity

@@ -136,6 +136,16 @@ class Provider(ABC):
         """
         raise NotImplementedError()
 
+    # TODO: uncomment this once all the providers have implemented the test_connection method
+    # @abstractmethod
+    def test_connection(self) -> Any:
+        """
+        test_connection tests the connection to the provider.
+
+        This method needs to be created in each provider.
+        """
+        raise NotImplementedError()
+
     # TODO: probably this won't be here since we want to do the arguments validation during the parse()
     def validate_arguments(self) -> None:
         """
@@ -145,6 +155,7 @@ class Provider(ABC):
         """
         raise NotImplementedError()
 
+    # TODO: review this since it is only used for AWS
     def get_checks_to_execute_by_audit_resources(self) -> set:
         """
         get_checks_to_execute_by_audit_resources returns a set of checks based on the input resources to scan.
@@ -167,6 +178,7 @@ class Provider(ABC):
             provider_class = getattr(
                 import_module(provider_class_path), provider_class_name
             )
+
             if not isinstance(Provider._global, provider_class):
                 if "Azure" in provider_class_name:
                     global_provider = provider_class(
