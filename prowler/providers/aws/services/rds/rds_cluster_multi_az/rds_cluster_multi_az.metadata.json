@@ -1,21 +1,21 @@
 {
   "Provider": "aws",
-  "CheckID": "rds_instance_multi_az",
-  "CheckTitle": "Check if RDS instances have multi-AZ enabled.",
+  "CheckID": "rds_cluster_multi_az",
+  "CheckTitle": "Check if RDS clusters have multi-AZ enabled.",
   "CheckType": [],
   "ServiceName": "rds",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-instance",
+  "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-cluster",
   "Severity": "medium",
-  "ResourceType": "AwsRdsDbInstance",
-  "Description": "Check if RDS instances have multi-AZ enabled.",
+  "ResourceType": "AwsRdsDbCluster",
+  "Description": "Check if RDS clusters have multi-AZ enabled. Instances that belongs to a cluster are covered too by this check.",
   "Risk": "In case of failure, with a single-AZ deployment configuration, should an availability zone specific database failure occur, Amazon RDS can not automatically fail over to the standby availability zone.",
   "RelatedUrl": "https://aws.amazon.com/rds/features/multi-az/",
   "Remediation": {
     "Code": {
-      "CLI": "aws rds create-db-instance --db-instance-identifier <db_instance_id> --multi-az true",
+      "CLI": "aws rds create-db-cluster --db-cluster-identifier <db_cluster_id> --multi-az true",
       "NativeIaC": "https://docs.prowler.com/checks/aws/general-policies/general_73#cloudformation",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/rds-multi-az.html",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-15",
       "Terraform": "https://docs.prowler.com/checks/aws/general-policies/general_73#terraform"
     },
     "Recommendation": {

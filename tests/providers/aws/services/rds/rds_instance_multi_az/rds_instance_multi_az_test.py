@@ -69,7 +69,7 @@ class Test_rds_instance_multi_az:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == "RDS Instance db-master-1 does not have multi-AZ enabled."
+                    == "RDS Instance db-master-1 which is not clustered does not have multi-AZ enabled."
                 )
                 assert result[0].resource_id == "db-master-1"
                 assert result[0].region == AWS_REGION_US_EAST_1
@@ -115,7 +115,7 @@ class Test_rds_instance_multi_az:
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == "RDS Instance db-master-1 has multi-AZ enabled."
+                    == "RDS Instance db-master-1 which is not clustered has multi-AZ enabled."
                 )
                 assert result[0].resource_id == "db-master-1"
                 assert result[0].region == AWS_REGION_US_EAST_1
