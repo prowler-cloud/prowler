@@ -28,5 +28,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": ""
+  "Notes": "It gives a false positive if the function is exposed publicly by an other public resource like an ALB or API Gateway in an AWS Account when an AWS account ID is set as the principal of the policy."
 }
