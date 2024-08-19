@@ -202,5 +202,5 @@ class Function(BaseModel):
     policy: dict = None
     code: LambdaCode = None
     url_config: URLConfig = None
-    vpc_id: str
+    vpc_id: Optional[str]
     tags: Optional[list] = []
