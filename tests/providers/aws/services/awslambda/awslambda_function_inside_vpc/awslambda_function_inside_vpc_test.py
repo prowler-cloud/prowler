@@ -85,7 +85,10 @@ class Test_awslambda_function_inside_vpc:
 
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert result[0].status_extended == "Function test_function is inside a VPC"
+            assert (
+                result[0].status_extended
+                == "Lambda function test_function is inside of VPC vpc-123abc"
+            )
             assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_id == function_name
             assert result[0].resource_arn == function_arn
@@ -144,7 +147,7 @@ class Test_awslambda_function_inside_vpc:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Function test_function is not inside a VPC"
+                == "Lambda function test_function is not inside a VPC"
             )
             assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_id == function_name
