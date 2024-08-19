@@ -1,6 +1,6 @@
 import { Spacer } from "@nextui-org/react";
 
-import { StatusChart } from "@/components/charts";
+import { SeverityChart, StatusChart } from "@/components/charts";
 import { FilterControls } from "@/components/filters";
 import { AttackSurface } from "@/components/overview";
 import { Header } from "@/components/ui";
@@ -15,20 +15,20 @@ export default function Home() {
       <Spacer y={10} />
       <div className="grid grid-cols-12 gap-4">
         <CustomBox
-          preTitle={"Status"}
-          className="col-span-12 md:col-span-8 xl:col-span-5 3xl:col-span-4"
+          preTitle={"Findings by Status"}
+          className="col-span-12 md:col-span-8 xl:col-span-5"
         >
           <StatusChart />
         </CustomBox>
         <CustomBox
-          preTitle={"Severity"}
+          preTitle={"Findings by Severity"}
           className="col-span-12 md:col-span-4 xl:col-span-3"
         >
-          <p>hi hi</p>
+          <SeverityChart />
         </CustomBox>
         <CustomBox
           preTitle={"Attack Surface"}
-          className="col-span-12 sm:col-span-12 xl:col-span-4 3xl:col-span-5"
+          className="col-span-12 sm:col-span-12 xl:col-span-4"
         >
           <AttackSurface />
         </CustomBox>

@@ -33,7 +33,7 @@ const SSRServiceGrid = async ({ searchParams }: searchParamsProps) => {
   if (services?.errors) redirect("/services");
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 3xl:grid-cols-5">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {services.services?.data.map((service: any) => (
         <ServiceCard
           key={service.id}
