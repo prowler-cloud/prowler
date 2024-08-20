@@ -1,5 +1,5 @@
 import datetime
-from typing import Optional
+from typing import List, Optional
 
 from pydantic import BaseModel
 
@@ -8,7 +8,6 @@ from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################### Codebuild
 class Codebuild(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
@@ -88,6 +87,12 @@ class Codebuild(AWSService):
                     type=secondary_source["type"], location=secondary_source["location"]
                 )
                 project.secondary_sources.append(source_obj)
+            environment = project_info.get("environment", {})
+            env_vars = environment.get("environmentVariables", [])
+            project.environment_variables = [
+                EnvironmentVariable(**var) for var in env_vars
+            ]
+            project.buildspec = project_info.get("source", {}).get("buildspec", "")
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -102,6 +107,12 @@ class Source(BaseModel):
     type: str
     location: str
 
+      
+class EnvironmentVariable(BaseModel):
+    name: str
+    value: str
+    type: str
+
 
 class Project(BaseModel):
     name: str
@@ -112,3 +123,4 @@ class Project(BaseModel):
     buildspec: Optional[str]
     source: Optional[Source]
     secondary_sources: Optional[list[Source]] = []
+    environment_variables: Optional[List[EnvironmentVariable]]

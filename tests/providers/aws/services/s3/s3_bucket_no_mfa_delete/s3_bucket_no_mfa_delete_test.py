@@ -73,6 +73,7 @@ class Test_s3_bucket_no_mfa_delete:
     def test_bucket_with_mfa(self):
         s3_client_us_east_1 = client("s3", region_name="us-east-1")
         bucket_name_us = "bucket_test_us"
+        bucket_arn = f"arn:aws:s3:::{bucket_name_us}"
         s3_client_us_east_1.create_bucket(Bucket=bucket_name_us)
         s3_client_us_east_1.put_bucket_versioning(
             Bucket=bucket_name_us,
@@ -95,7 +96,7 @@ class Test_s3_bucket_no_mfa_delete:
                     s3_bucket_no_mfa_delete,
                 )
 
-                service_client.buckets[0].mfa_delete = True
+                service_client.buckets[bucket_arn].mfa_delete = True
                 check = s3_bucket_no_mfa_delete()
                 result = check.execute()
 
