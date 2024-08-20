@@ -61,7 +61,7 @@ class GcpProvider(Provider):
         accessible_projects = self.get_projects()
         if not accessible_projects:
             logger.critical("No Project IDs can be accessed via Google Credentials.")
-            raise SystemExit("No Project IDs can be accessed via Google Credentials.")
+            raise SystemExit
 
         if input_project_ids:
             for input_project in input_project_ids:
@@ -93,9 +93,7 @@ class GcpProvider(Provider):
             logger.critical(
                 "No Input Project IDs can be accessed via Google Credentials."
             )
-            raise SystemExit(
-                "No Input Project IDs can be accessed via Google Credentials."
-            )
+            raise SystemExit
 
         if list_project_ids:
             print(
