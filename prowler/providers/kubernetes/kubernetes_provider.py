@@ -1,5 +1,4 @@
 import os
-import sys
 
 from colorama import Fore, Style
 from kubernetes.config.config_exception import ConfigException
@@ -53,7 +52,7 @@ class KubernetesProvider(Provider):
 
         if not self._session.api_client:
             logger.critical("Failed to set up a Kubernetes session.")
-            sys.exit(1)
+            raise RuntimeError("Failed to set up a Kubernetes session.")
 
         self._identity = KubernetesIdentityInfo(
             context=self._session.context["name"],
@@ -237,7 +236,7 @@ class KubernetesProvider(Provider):
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            sys.exit(1)
+            raise RuntimeError("Failed to search and save roles.") from error
 
     def get_context_user_roles(self):
         """
@@ -271,7 +270,7 @@ class KubernetesProvider(Provider):
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            sys.exit(1)
+            raise RuntimeError("Failed to retrieve context user roles.") from error
 
     def get_all_namespaces(self) -> list[str]:
         """
@@ -289,7 +288,7 @@ class KubernetesProvider(Provider):
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            sys.exit()
+            raise RuntimeError("Failed to retrieve all namespaces.") from error
 
     def get_pod_current_namespace(self):
         """
