@@ -377,7 +377,7 @@ class AzureProvider(Provider):
                 logger.critical(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
                 )
-                raise RuntimeError("Failed to retrieve azure credentials") from error
+                raise error
         else:
             try:
                 credentials = InteractiveBrowserCredential(tenant_id=tenant_id)
@@ -388,9 +388,7 @@ class AzureProvider(Provider):
                 logger.critical(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
                 )
-                raise RuntimeError(
-                    "Failed to retrieve azure credentials using browser authentication"
-                ) from error
+                raise error
 
         return credentials
 
@@ -479,7 +477,7 @@ class AzureProvider(Provider):
                 logger.critical(
                     f"Azure provider: Missing environment variable {env_var} needed to authenticate against Azure"
                 )
-                raise RuntimeError(
+                raise SystemExit(
                     f"Azure provider: Missing environment variable {env_var} needed to authenticate against Azure"
                 )
 
@@ -596,7 +594,7 @@ class AzureProvider(Provider):
                 logger.critical(
                     "It was not possible to retrieve any subscriptions, please check your permission assignments"
                 )
-                raise RuntimeError(
+                raise SystemExit(
                     "It was not possible to retrieve any subscriptions, please check your permission assignments"
                 )
 
@@ -611,9 +609,7 @@ class AzureProvider(Provider):
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
             )
-            raise RuntimeError(
-                "Error with credentials provided getting subscriptions and tenants to scan"
-            ) from error
+            raise error
 
         return identity
 
