@@ -15,11 +15,11 @@ class elbv2_is_in_multiple_az(Check):
             report.resource_arn = load_balancer_arn
             report.resource_tags = load_balancer.tags
             report.status = "FAIL"
-            report.status_extended = f"ELBv2 {load_balancer.name} is not in at least {elbv2_min_azs} AZs. Is only in {", ".join(load_balancer.availability_zones.keys())}."
+            report.status_extended = f"ELBv2 {load_balancer.name} is not in at least {elbv2_min_azs} AZs. Is only in {', '.join(load_balancer.availability_zones.keys())}."
 
             if len(load_balancer.availability_zones) >= elbv2_min_azs:
                 report.status = "PASS"
-                report.status_extended = f"ELBv2 {load_balancer.name} is at least in {elbv2_min_azs} AZs: {", ".join(load_balancer.availability_zones.keys())}."
+                report.status_extended = f"ELBv2 {load_balancer.name} is at least in {elbv2_min_azs} AZs: {', '.join(load_balancer.availability_zones.keys())}."
 
             findings.append(report)
 
