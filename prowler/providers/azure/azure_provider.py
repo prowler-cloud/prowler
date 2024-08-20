@@ -3,6 +3,7 @@ from argparse import ArgumentTypeError
 from os import getenv
 
 import requests
+from azure.core.exceptions import HttpResponseError
 from azure.identity import DefaultAzureCredential, InteractiveBrowserCredential
 from azure.mgmt.subscription import SubscriptionClient
 from colorama import Fore, Style
@@ -449,6 +450,29 @@ class AzureProvider(Provider):
 
             return Connection(is_connected=True)
 
+        except HttpResponseError as credentials_error:
+            logger.error(
+                f"{credentials_error.__class__.__name__}[{credentials_error.__traceback__.tb_lineno}]: {credentials_error}"
+            )
+            if raise_on_exception:
+                raise credentials_error
+            return Connection(error=credentials_error)
+
+        except ArgumentTypeError as validation_error:
+            logger.error(
+                f"{validation_error.__class__.__name__}[{validation_error.__traceback__.tb_lineno}]: {validation_error}"
+            )
+            if raise_on_exception:
+                raise validation_error
+            return Connection(error=validation_error)
+
+        except SystemExit as exit_error:
+            logger.error(
+                f"{exit_error.__class__.__name__}[{exit_error.__traceback__.tb_lineno}]: {exit_error}"
+            )
+            if raise_on_exception:
+                raise exit_error
+            return Connection(error=exit_error)
         except Exception as error:
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
