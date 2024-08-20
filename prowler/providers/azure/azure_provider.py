@@ -501,9 +501,7 @@ class AzureProvider(Provider):
                 logger.critical(
                     f"Azure provider: Missing environment variable {env_var} needed to authenticate against Azure"
                 )
-                raise SystemExit(
-                    f"Azure provider: Missing environment variable {env_var} needed to authenticate against Azure"
-                )
+                raise SystemExit
 
     def setup_identity(
         self,
@@ -618,9 +616,7 @@ class AzureProvider(Provider):
                 logger.critical(
                     "It was not possible to retrieve any subscriptions, please check your permission assignments"
                 )
-                raise SystemExit(
-                    "It was not possible to retrieve any subscriptions, please check your permission assignments"
-                )
+                raise SystemExit
 
             tenants = subscriptions_client.tenants.list()
             for tenant in tenants:
