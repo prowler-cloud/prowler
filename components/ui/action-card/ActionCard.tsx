@@ -60,18 +60,18 @@ export const ActionCard = React.forwardRef<HTMLDivElement, ActionCardProps>(
         shadow="sm"
         {...props}
       >
-        <CardBody className="flex h-full flex-row items-start gap-3 p-4">
+        <CardBody className="flex h-full flex-row gap-2 p-2 items-center">
           <div
             className={cn(
-              "item-center flex rounded-medium border p-2",
+              "item-center flex rounded-medium border p-1",
               colors?.iconWrapper,
             )}
           >
             <Icon className={colors?.icon} icon={icon} width={24} />
           </div>
           <div className="flex flex-col">
-            <p className="text-medium">{title}</p>
-            <p className="text-small text-default-400">
+            <p className="text-md">{title}</p>
+            <p className="text-sm text-default-400">
               {description || children}
             </p>
           </div>
