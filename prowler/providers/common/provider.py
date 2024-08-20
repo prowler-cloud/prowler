@@ -180,7 +180,25 @@ class Provider(ABC):
             )
 
             if not isinstance(Provider._global, provider_class):
-                global_provider = provider_class(arguments)
+                if "aws" in provider_class_name.lower():
+                    global_provider = provider_class(
+                        arguments.aws_retries_max_attempts,
+                        arguments.role,
+                        arguments.session_duration,
+                        arguments.external_id,
+                        arguments.role_session_name,
+                        arguments.mfa,
+                        arguments.profile,
+                        arguments.region,
+                        arguments.organizations_role,
+                        arguments.scan_unused_services,
+                        arguments.resource_tag,
+                        arguments.resource_arn,
+                        arguments.config_file,
+                        arguments.fixer_config,
+                    )
+                else:
+                    global_provider = provider_class(arguments)
 
             Provider._global = global_provider
         except TypeError as error:

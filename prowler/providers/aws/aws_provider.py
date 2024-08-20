@@ -1,6 +1,6 @@
 import os
 import pathlib
-from argparse import ArgumentTypeError, Namespace
+from argparse import ArgumentTypeError
 from datetime import datetime
 from re import fullmatch
 
@@ -64,27 +64,24 @@ class AwsProvider(Provider):
     # TODO: this is not optional, enforce for all providers
     audit_metadata: Audit_Metadata
 
-    def __init__(self, arguments: Namespace):
+    def __init__(
+        self,
+        aws_retries_max_attempts,
+        input_role,
+        input_session_duration,
+        input_external_id,
+        input_role_session_name,
+        input_mfa,
+        input_profile,
+        input_regions,
+        input_organizations_role_arn,
+        input_scan_unused_services,
+        input_resource_tags,
+        input_resource_arn,
+        input_config_file,
+        input_fixer_config,
+    ):
         logger.info("Initializing AWS provider ...")
-        ######## Parse Arguments
-        # Session
-        aws_retries_max_attempts = getattr(arguments, "aws_retries_max_attempts", None)
-
-        # Assume Role
-        input_role = getattr(arguments, "role", None)
-        input_session_duration = getattr(arguments, "session_duration", None)
-        input_external_id = getattr(arguments, "external_id", None)
-        input_role_session_name = getattr(arguments, "role_session_name", None)
-
-        # MFA Configuration (false by default)
-        input_mfa = getattr(arguments, "mfa", None)
-        input_profile = getattr(arguments, "profile", None)
-        input_regions = getattr(arguments, "region", set())
-        organizations_role_arn = getattr(arguments, "organizations_role", None)
-
-        # Set if unused services must be scanned
-        scan_unused_services = getattr(arguments, "scan_unused_services", None)
-        ########
 
         ######## AWS Session
         logger.info("Generating original session ...")
@@ -174,10 +171,10 @@ class AwsProvider(Provider):
         ######## AWS Organizations Metadata
         # This is needed in the case we don't assume an AWS Organizations IAM Role
         aws_organizations_session = self._session.original_session
-        # Get a new session if the organizations_role_arn is set
-        if organizations_role_arn:
+        # Get a new session if the input_organizations_role_arn is set
+        if input_organizations_role_arn:
             # Validate the input role
-            valid_role_arn = parse_iam_credentials_arn(organizations_role_arn)
+            valid_role_arn = parse_iam_credentials_arn(input_organizations_role_arn)
             # Set assume IAM Role information
             organizations_assumed_role_information = AWSAssumeRoleInfo(
                 role_arn=valid_role_arn,
@@ -219,12 +216,12 @@ class AwsProvider(Provider):
         ########
 
         # Parse Scan Tags
-        if getattr(arguments, "resource_tags", None):
-            self._audit_resources = self.get_tagged_resources(arguments.resource_tags)
+        if input_resource_tags:
+            self._audit_resources = self.get_tagged_resources(input_resource_tags)
 
         # Parse Input Resource ARNs
-        if getattr(arguments, "resource_arn", None):
-            self._audit_resources = arguments.resource_arn
+        if input_resource_arn:
+            self._audit_resources = input_resource_arn
 
         # Get Enabled Regions
         self._enabled_regions = self.get_aws_enabled_regions(
@@ -232,19 +229,19 @@ class AwsProvider(Provider):
         )
 
         # Set ignore unused services
-        self._scan_unused_services = scan_unused_services
+        self._scan_unused_services = input_scan_unused_services
 
         # TODO: move this to the providers, pending for AWS, GCP, AZURE and K8s
         # Audit Config
         self._audit_config = {}
-        if hasattr(arguments, "config_file"):
+        if input_config_file:
             self._audit_config = load_and_validate_config_file(
-                self._type, arguments.config_file
+                self._type, input_config_file
             )
         self._fixer_config = {}
-        if hasattr(arguments, "fixer_config"):
+        if input_fixer_config:
             self._fixer_config = load_and_validate_fixer_config_file(
-                self._type, arguments.fixer_config
+                self._type, input_fixer_config
             )
 
     @property
