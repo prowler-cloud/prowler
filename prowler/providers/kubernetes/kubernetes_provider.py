@@ -1,6 +1,5 @@
 import os
 import sys
-from argparse import Namespace
 
 from colorama import Fore, Style
 from kubernetes.config.config_exception import ConfigException
@@ -33,19 +32,20 @@ class KubernetesProvider(Provider):
     # TODO: this is not optional, enforce for all providers
     audit_metadata: Audit_Metadata
 
-    def __init__(self, arguments: Namespace):
+    def __init__(self, kubeconfig_file, context, namespace, config_file, fixer_config):
         """
         Initializes the KubernetesProvider instance.
         Args:
             arguments (dict): A dictionary containing configuration arguments.
         """
+
         logger.info("Instantiating Kubernetes Provider ...")
-        self._session = self.setup_session(arguments.kubeconfig_file, arguments.context)
-        if not arguments.namespace:
+        self._session = self.setup_session(kubeconfig_file, context)
+        if not namespace:
             logger.info("Retrieving all namespaces ...")
             self._namespaces = self.get_all_namespaces()
         else:
-            self._namespaces = arguments.namespace
+            self._namespaces = namespace
 
         if not self._session.api_client:
             logger.critical("Failed to set up a Kubernetes session.")
@@ -59,12 +59,8 @@ class KubernetesProvider(Provider):
 
         # TODO: move this to the providers, pending for AWS, GCP, AZURE and K8s
         # Audit Config
-        self._audit_config = load_and_validate_config_file(
-            self._type, arguments.config_file
-        )
-        self._fixer_config = load_and_validate_config_file(
-            self._type, arguments.fixer_config
-        )
+        self._audit_config = load_and_validate_config_file(self._type, config_file)
+        self._fixer_config = load_and_validate_config_file(self._type, fixer_config)
 
     @property
     def type(self):
