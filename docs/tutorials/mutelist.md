@@ -9,65 +9,12 @@ Mutelist option works along with other options and will modify the output in the
 
 ## How the Mutelist Works
 
-The **Mutelist** uses both "AND" and "OR" logic to determine which resources, checks, regions, and tags should be muted. For each check, the Mutelist evaluates whether the account, region, and resource match the specified criteria using "AND" logic. If tags are specified, the Mutelist can apply either "AND" or "OR" logic:
+The **Mutelist** uses both "AND" and "OR" logic to determine which resources, checks, regions, and tags should be muted. For each check, the Mutelist evaluates whether the account, region, and resource match the specified criteria using "AND" logic. If tags are specified, the Mutelist can apply either "AND" or "OR" logic.
 
-- **"AND" logic:** The Mutelist will mute all findings whose resource tags contain all the specified tags. Here’s an example:
-
-  ```yaml
-  Mutelist:
-    Accounts:
-      "*":
-        Checks:
-          "*":
-            Regions:
-              - "*"
-            Resources:
-              - "test"
-            Tags:
-              - "test=test"
-              - "project=test"
-  ```
-  This will mute all findings that contain BOTH tags at the same time.
-
-- **"OR" logic:** The Mutelist will mute findings that contain any of the specified resource tags. The `|` symbol is used to apply this logic:
-
-  ```yaml
-  Mutelist:
-    Accounts:
-      "*":
-        Checks:
-          "*":
-            Regions:
-              - "*"
-            Resources:
-              - "test"
-            Tags:
-              - "test=test|project=(test|dev)"
-  ```
-  This will mute all findings that contain EITHER the `test=test` OR `project=test` OR `project=dev`.
-
-To use both logics simultaneously, here’s an example:
-
-  ```yaml
-  Mutelist:
-    Accounts:
-      "*":
-        Checks:
-          "*":
-            Regions:
-              - "*"
-            Resources:
-              - "test"
-            Tags:
-              - "test=test"
-              - "project=test|project=stage"
-  ```
-This will mute every resource containing the string "test" and the tags `test=test` and either `project=test` OR `project=stage` in every account and region.
+If any of the criteria do not match, the check is not muted.
 
 ???+ note
     Remember that mutelist can be used with regular expressions.
-
-If any of the criteria do not match, the check is not muted.
 
 ## Mutelist Specification
 
@@ -108,6 +55,29 @@ Mutelist:
           Tags:
             - "test=test"         # Will mute every resource containing the string "test" and the tags 'test=test' and
             - "project=test|project=stage" # either of ('project=test' OR project=stage) in account 123456789012 and every region
+        "*":
+            Regions:
+              - "*"
+            Resources:
+              - "test"
+            Tags:
+              - "test=test"
+              - "project=test"    # This will mute every resource containing the string "test" and BOTH tags at the same time.
+        "*":
+            Regions:
+              - "*"
+            Resources:
+              - "test"
+            Tags:                 # This will mute every resource containing the string "test" and the ones that contain EITHER the `test=test` OR `project=test` OR `project=dev`
+              - "test=test|project=(test|dev)"
+        "*":
+            Regions:
+              - "*"
+            Resources:
+              - "test"
+            Tags:
+              - "test=test"       # This will mute every resource containing the string "test" and the tags `test=test` and either `project=test` OR `project=stage` in every account and region.
+              - "project=test|project=stage"
 
     "*":
       Checks:
