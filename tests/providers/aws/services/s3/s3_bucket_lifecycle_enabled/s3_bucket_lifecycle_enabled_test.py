@@ -72,7 +72,7 @@ class Test_s3_bucket_lifecycle_enabled:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == f"S3 Bucket {bucket_name} does not have Lifecycle Configuration."
+                    == f"S3 Bucket {bucket_name} does not have a correct Lifecycle Configuration."
                 )
                 assert result[0].resource_id == bucket_name
                 assert result[0].resource_arn == bucket_arn
@@ -188,7 +188,7 @@ class Test_s3_bucket_lifecycle_enabled:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == f"S3 Bucket {bucket_name} has Lifecycle rule {rule_id} disabled or misconfigurated."
+                    == f"S3 Bucket {bucket_name} does not have a correct Lifecycle Configuration."
                 )
                 assert result[0].resource_id == bucket_name
                 assert result[0].resource_arn == bucket_arn
@@ -243,7 +243,7 @@ class Test_s3_bucket_lifecycle_enabled:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == f"S3 Bucket {bucket_name} has Lifecycle rule {rule_id} disabled or misconfigurated."
+                    == f"S3 Bucket {bucket_name} does not have a correct Lifecycle Configuration."
                 )
                 assert result[0].resource_id == bucket_name
                 assert result[0].resource_arn == bucket_arn
@@ -298,7 +298,7 @@ class Test_s3_bucket_lifecycle_enabled:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == f"S3 Bucket {bucket_name} has Lifecycle rule {rule_id} disabled or misconfigurated."
+                    == f"S3 Bucket {bucket_name} does not have a correct Lifecycle Configuration."
                 )
                 assert result[0].resource_id == bucket_name
                 assert result[0].resource_arn == bucket_arn
