@@ -34,8 +34,9 @@ def mock_make_api_call(self, operation_name, kwarg):
                 {
                     "ID": "test",
                     "Status": "Enabled",
+                    "Prefix": "test",
                     "Expiration": {"Days": 1},
-                    "Transitions": [{"Days": 1, "StorageClass": "STANDARD_IA"}],
+                    "Transition": {"Days": 1, "StorageClass": "STANDARD_IA"},
                 }
             ]
         }
@@ -397,15 +398,36 @@ class Test_S3_Service:
         assert s3.buckets[bucket_arn].object_lock
 
     # Test S3 Get Bucket Lifecycle
-    @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     @mock_aws
+    @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     def test_get_bucket_lifecycle(self):
         # Generate S3 Client
         s3_client = client("s3")
+
         # Create S3 Bucket
         bucket_name = "test-bucket"
         bucket_arn = f"arn:aws:s3:::{bucket_name}"
-        s3_client.create_bucket(Bucket=bucket_name)
+        s3_client.create_bucket(
+            Bucket=bucket_name,
+            ObjectOwnership="BucketOwnerEnforced",
+            ObjectLockEnabledForBucket=True,
+        )
+
+        # DEPRECATED: Put Bucket LifeCycle
+        s3_client.put_bucket_lifecycle(
+            Bucket=bucket_name,
+            LifecycleConfiguration={
+                "Rules": [
+                    {
+                        "ID": "test",
+                        "Status": "Enabled",
+                        "Prefix": "test",
+                        "Expiration": {"Days": 1},
+                        "Transition": {"Days": 1, "StorageClass": "STANDARD_IA"},
+                    }
+                ]
+            },
+        )
 
         # S3 client for this test class
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
@@ -413,6 +435,7 @@ class Test_S3_Service:
         assert len(s3.buckets) == 1
         assert s3.buckets[bucket_arn].name == bucket_name
         assert s3.buckets[bucket_arn].region == AWS_REGION_US_EAST_1
+        assert len(s3.buckets[bucket_arn].lifecycle) == 1
         assert s3.buckets[bucket_arn].lifecycle[0].id == "test"
         assert s3.buckets[bucket_arn].lifecycle[0].status == "Enabled"
         assert s3.buckets[bucket_arn].lifecycle[0].expiration_days == 1
