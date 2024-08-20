@@ -6,7 +6,11 @@ class rds_instance_copy_tags(Check):
     def execute(self):
         findings = []
         for db_instance in rds_client.db_instances:
-            if not db_instance.engine == "aurora":
+            if db_instance.engine not in [
+                "aurora",
+                "aurora-mysql",
+                "aurora-postgresql",
+            ]:
                 report = Check_Report_AWS(self.metadata())
                 report.region = db_instance.region
                 report.resource_id = db_instance.id
@@ -14,10 +18,10 @@ class rds_instance_copy_tags(Check):
                 report.resource_tags = db_instance.tags
                 if db_instance.copy_tags_to_snapshot:
                     report.status = "PASS"
-                    report.status_extended = f"RDS Instance {db_instance.id} which is not clustered has IAM authentication enabled."
+                    report.status_extended = f"RDS Instance {db_instance.id} has copy tags to snapshots enabled."
                 else:
                     report.status = "FAIL"
-                    report.status_extended = f"RDS Instance {db_instance.id} which is not clustered does not have IAM authentication enabled."
+                    report.status_extended = f"RDS Instance {db_instance.id} does not have copy tags to snapshots enabled."
 
                 findings.append(report)
 

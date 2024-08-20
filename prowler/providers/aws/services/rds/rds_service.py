@@ -505,7 +505,7 @@ class DBInstance(BaseModel):
     replica_source: Optional[str]
     ca_cert: Optional[str]
     cert: list[Certificate] = []
-    copy_tags_to_snapshot: bool
+    copy_tags_to_snapshot: Optional[bool]
 
 
 class DBCluster(BaseModel):
@@ -529,7 +529,7 @@ class DBCluster(BaseModel):
     require_secure_transport: str = "OFF"
     region: str
     tags: Optional[list] = []
-    copy_tags_to_snapshot: bool
+    copy_tags_to_snapshot: Optional[bool]
 
 
 class DBSnapshot(BaseModel):
