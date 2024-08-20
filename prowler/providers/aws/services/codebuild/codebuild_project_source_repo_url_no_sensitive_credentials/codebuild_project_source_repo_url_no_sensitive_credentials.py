@@ -15,23 +15,25 @@ class codebuild_project_source_repo_url_no_sensitive_credentials(Check):
             report.resource_id = project.name
             report.resource_arn = project.arn
             report.status = "PASS"
-            report.status_extended = f"CodeBuild project {project.name} does not contain sensitive credentials in source repository URLs."
+            report.status_extended = f"CodeBuild project {project.name} does not contain sensitive credentials in any source repository URLs."
             secrets_found = []
 
             if project.source and project.source.type == "BITBUCKET":
                 if token_pattern.match(project.source.location):
-                    secrets_found.append(f"Token in URL {project.source.location}")
+                    secrets_found.append(
+                        f"Token in {project.source.type} URL {project.source.location}"
+                    )
                 elif user_pass_pattern.match(project.source.location):
                     secrets_found.append(
-                        f"Basic Auth Credentials in URL {project.source.location}"
+                        f"Basic Auth Credentials in {project.source.type} URL {project.source.location}"
                     )
             for url in project.secondary_sources:
                 if url.type == "BITBUCKET":
                     if token_pattern.match(url.location):
-                        secrets_found.append(f"Token in URL {url.location}")
+                        secrets_found.append(f"Token in {url.type} URL {url.location}")
                     elif user_pass_pattern.match(url.location):
                         secrets_found.append(
-                            f"Basic Auth Credentials in URL {url.location}"
+                            f"Basic Auth Credentials in {url.type} URL {url.location}"
                         )
             if secrets_found:
                 report.status = "FAIL"

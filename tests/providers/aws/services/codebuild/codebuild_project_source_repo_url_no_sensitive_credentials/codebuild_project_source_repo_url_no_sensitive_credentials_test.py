@@ -37,7 +37,7 @@ class Test_codebuild_project_source_repo_url_no_sensitive_credentials:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"CodeBuild project {project_name} does not contain sensitive credentials in source repository URLs."
+                == f"CodeBuild project {project_name} does not contain sensitive credentials in any source repository URLs."
             )
             assert result[0].resource_id == project_name
             assert result[0].resource_arn == project_arn
@@ -77,7 +77,7 @@ class Test_codebuild_project_source_repo_url_no_sensitive_credentials:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"CodeBuild project {project_name} does not contain sensitive credentials in source repository URLs."
+                == f"CodeBuild project {project_name} does not contain sensitive credentials in any source repository URLs."
             )
             assert result[0].resource_id == project_name
             assert result[0].resource_arn == project_arn
@@ -117,7 +117,7 @@ class Test_codebuild_project_source_repo_url_no_sensitive_credentials:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"CodeBuild project {project_name} has sensitive credentials in source repository URLs: Basic Auth Credentials in URL https://user:pass123@bitbucket.org/exampleuser/my-repo2.git."
+                == f"CodeBuild project {project_name} has sensitive credentials in source repository URLs: Basic Auth Credentials in BITBUCKET URL https://user:pass123@bitbucket.org/exampleuser/my-repo2.git."
             )
             assert result[0].resource_id == project_name
             assert result[0].resource_arn == project_arn
@@ -157,7 +157,7 @@ class Test_codebuild_project_source_repo_url_no_sensitive_credentials:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"CodeBuild project {project_name} has sensitive credentials in source repository URLs: Token in URL https://x-token-auth:7saBEbfXpRg-zlO-YQC9Lvh8vtKmdETITD_-GCqYw0ZHbV7ZbMDbUCybDGM4=053EA782@bitbucket.org/testissue4244/test4244.git."
+                == f"CodeBuild project {project_name} has sensitive credentials in source repository URLs: Token in BITBUCKET URL https://x-token-auth:7saBEbfXpRg-zlO-YQC9Lvh8vtKmdETITD_-GCqYw0ZHbV7ZbMDbUCybDGM4=053EA782@bitbucket.org/testissue4244/test4244.git."
             )
             assert result[0].resource_id == project_name
             assert result[0].resource_arn == project_arn
