@@ -61,7 +61,7 @@ class GcpProvider(Provider):
         accessible_projects = self.get_projects()
         if not accessible_projects:
             logger.critical("No Project IDs can be accessed via Google Credentials.")
-            raise RuntimeError("No Project IDs can be accessed via Google Credentials.")
+            raise SystemExit("No Project IDs can be accessed via Google Credentials.")
 
         if input_project_ids:
             for input_project in input_project_ids:
@@ -93,7 +93,7 @@ class GcpProvider(Provider):
             logger.critical(
                 "No Input Project IDs can be accessed via Google Credentials."
             )
-            raise RuntimeError(
+            raise SystemExit(
                 "No Input Project IDs can be accessed via Google Credentials."
             )
 
@@ -244,9 +244,7 @@ class GcpProvider(Provider):
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            raise RuntimeError(
-                f"Failed to setup GCP session with the provided credentials file or service account to impersonate: {error}"
-            ) from error
+            raise error
 
     @staticmethod
     def test_connection(
@@ -277,9 +275,7 @@ class GcpProvider(Provider):
                     "Cloud Resource Manager API has not been used before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/cloudresourcemanager.googleapis.com/ then retry."
                 )
                 if raise_on_exception:
-                    raise Exception(
-                        "Cloud Resource Manager API has not been used before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/cloudresourcemanager.googleapis.com/ then retry."
-                    )
+                    raise http_error
             else:
                 logger.critical(
                     f"{http_error.__class__.__name__}[{http_error.__traceback__.tb_lineno}]: {http_error}"
@@ -366,9 +362,7 @@ class GcpProvider(Provider):
                 logger.critical(
                     "Cloud Resource Manager API has not been used before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/cloudresourcemanager.googleapis.com/ then retry."
                 )
-                raise RuntimeError(
-                    "Cloud Resource Manager API has not been used before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/cloudresourcemanager.googleapis.com/ then retry."
-                ) from http_error
+                raise http_error
             else:
                 logger.error(
                     f"{http_error.__class__.__name__}[{http_error.__traceback__.tb_lineno}]: {http_error}"
@@ -377,7 +371,7 @@ class GcpProvider(Provider):
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            raise RuntimeError(f"Failed to get GCP projects: {error}") from error
+            raise error
         finally:
             return projects
 
