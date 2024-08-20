@@ -302,6 +302,10 @@ class GcpProvider(Provider):
             f"GCP Account: {Fore.YELLOW}{self.identity.profile}{Style.RESET_ALL}",
             f"GCP Project IDs: {Fore.YELLOW}{', '.join(self.project_ids)}{Style.RESET_ALL}",
         ]
+        if self.identity.profile:
+            report_lines.append(
+                f"Profile: {Fore.YELLOW}{self.identity.profile}{Style.RESET_ALL}"
+            )
         if self.impersonated_service_account:
             report_lines.append(
                 f"Impersonated Service Account: {Fore.YELLOW}{self.impersonated_service_account}{Style.RESET_ALL}"

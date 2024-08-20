@@ -180,7 +180,7 @@ class Provider(ABC):
             )
 
             if not isinstance(Provider._global, provider_class):
-                if "GCP" in provider_class_name:
+                if "Gcp" in provider_class_name:
                     global_provider = provider_class(
                         arguments.project_id,
                         arguments.excluded_project_id,
