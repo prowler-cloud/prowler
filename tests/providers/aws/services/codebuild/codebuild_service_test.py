@@ -88,5 +88,8 @@ class Test_Codebuild_Service:
         assert codebuild.projects[project_arn].last_invoked_time == last_invoked_time
         assert codebuild.projects[project_arn].last_build == Build(id=build_id)
         assert codebuild.projects[project_arn].buildspec == build_spec_project_arn
-        assert bitbucket_url in codebuild.projects[project_arn].bitbucket_urls
-        assert secondary_bitbucket_url in codebuild.projects[project_arn].bitbucket_urls
+        assert bitbucket_url == codebuild.projects[project_arn].source.location
+        assert (
+            secondary_bitbucket_url
+            in codebuild.projects[project_arn].secondary_sources[0].location
+        )

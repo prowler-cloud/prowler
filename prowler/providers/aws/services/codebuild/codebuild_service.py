@@ -77,13 +77,17 @@ class Codebuild(AWSService):
                 "projects"
             ][0]
             project.buildspec = project_info["source"].get("buildspec")
-            bitbucket_urls = []
-            if project_info["source"]["type"] == "BITBUCKET":
-                bitbucket_urls.append(project_info["source"]["location"])
+            if project_info["source"]["type"] != "NO_SOURCE":
+                project.source = Source(
+                    type=project_info["source"]["type"],
+                    location=project_info["source"]["location"],
+                )
+            project.secondary_sources = []
             for secondary_source in project_info.get("secondarySources", []):
-                if secondary_source["type"] == "BITBUCKET":
-                    bitbucket_urls.append(secondary_source["location"])
-            project.bitbucket_urls = bitbucket_urls
+                source_obj = Source(
+                    type=secondary_source["type"], location=secondary_source["location"]
+                )
+                project.secondary_sources.append(source_obj)
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -94,6 +98,11 @@ class Build(BaseModel):
     id: str
 
 
+class Source(BaseModel):
+    type: str
+    location: str
+
+
 class Project(BaseModel):
     name: str
     arn: str
@@ -101,4 +110,5 @@ class Project(BaseModel):
     last_build: Optional[Build]
     last_invoked_time: Optional[datetime.datetime]
     buildspec: Optional[str]
-    bitbucket_urls: Optional[list] = []
+    source: Optional[Source]
+    secondary_sources: Optional[list[Source]] = []

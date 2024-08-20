@@ -1,12 +1,12 @@
 from unittest import mock
 
-from prowler.providers.aws.services.codebuild.codebuild_service import Project
+from prowler.providers.aws.services.codebuild.codebuild_service import Project, Source
 
 AWS_REGION = "eu-west-1"
 AWS_ACCOUNT_NUMBER = "123456789012"
 
 
-class Test_codebuild_bitbucket_urls_no_sensitive_credentials:
+class Test_codebuild_project_source_repo_url_no_sensitive_credentials:
     def test_project_no_bitbucket_urls(self):
         codebuild_client = mock.MagicMock
         project_name = "test-project"
@@ -18,25 +18,26 @@ class Test_codebuild_bitbucket_urls_no_sensitive_credentials:
                 region="eu-west-1",
                 last_invoked_time=None,
                 buildspec="",
-                bitbucket_urls=[],
+                source=None,
+                secondary_sources=[],
             )
         }
         with mock.patch(
             "prowler.providers.aws.services.codebuild.codebuild_service.Codebuild",
             codebuild_client,
         ):
-            from prowler.providers.aws.services.codebuild.codebuild_bitbucket_urls_no_sensitive_credentials.codebuild_bitbucket_urls_no_sensitive_credentials import (
-                codebuild_bitbucket_urls_no_sensitive_credentials,
+            from prowler.providers.aws.services.codebuild.codebuild_project_source_repo_url_no_sensitive_credentials.codebuild_project_source_repo_url_no_sensitive_credentials import (
+                codebuild_project_source_repo_url_no_sensitive_credentials,
             )
 
-            check = codebuild_bitbucket_urls_no_sensitive_credentials()
+            check = codebuild_project_source_repo_url_no_sensitive_credentials()
             result = check.execute()
 
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"CodeBuild project {project_name} does not contain sensitive credentials in Bitbucket repository URLs."
+                == f"CodeBuild project {project_name} does not contain sensitive credentials in source repository URLs."
             )
             assert result[0].resource_id == project_name
             assert result[0].resource_arn == project_arn
@@ -54,25 +55,29 @@ class Test_codebuild_bitbucket_urls_no_sensitive_credentials:
                 region="eu-west-1",
                 last_invoked_time=None,
                 buildspec=None,
-                bitbucket_urls=["https://bitbucket.org/exampleuser/my-repo.git"],
+                source=Source(
+                    type="BITBUCKET",
+                    location="https://bitbucket.org/exampleuser/my-repo.git",
+                ),
+                secondary_sources=[],
             )
         }
         with mock.patch(
             "prowler.providers.aws.services.codebuild.codebuild_service.Codebuild",
             codebuild_client,
         ):
-            from prowler.providers.aws.services.codebuild.codebuild_bitbucket_urls_no_sensitive_credentials.codebuild_bitbucket_urls_no_sensitive_credentials import (
-                codebuild_bitbucket_urls_no_sensitive_credentials,
+            from prowler.providers.aws.services.codebuild.codebuild_project_source_repo_url_no_sensitive_credentials.codebuild_project_source_repo_url_no_sensitive_credentials import (
+                codebuild_project_source_repo_url_no_sensitive_credentials,
             )
 
-            check = codebuild_bitbucket_urls_no_sensitive_credentials()
+            check = codebuild_project_source_repo_url_no_sensitive_credentials()
             result = check.execute()
 
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"CodeBuild project {project_name} does not contain sensitive credentials in Bitbucket repository URLs."
+                == f"CodeBuild project {project_name} does not contain sensitive credentials in source repository URLs."
             )
             assert result[0].resource_id == project_name
             assert result[0].resource_arn == project_arn
@@ -90,27 +95,29 @@ class Test_codebuild_bitbucket_urls_no_sensitive_credentials:
                 region="eu-west-1",
                 last_invoked_time=None,
                 buildspec="arn:aws:s3:::my-codebuild-sample2/buildspec.yaml",
-                bitbucket_urls=[
-                    "https://user:pass123@bitbucket.org/exampleuser/my-repo2.git"
-                ],
+                source=Source(
+                    type="BITBUCKET",
+                    location="https://user:pass123@bitbucket.org/exampleuser/my-repo2.git",
+                ),
+                secondary_sources=[],
             )
         }
         with mock.patch(
             "prowler.providers.aws.services.codebuild.codebuild_service.Codebuild",
             codebuild_client,
         ):
-            from prowler.providers.aws.services.codebuild.codebuild_bitbucket_urls_no_sensitive_credentials.codebuild_bitbucket_urls_no_sensitive_credentials import (
-                codebuild_bitbucket_urls_no_sensitive_credentials,
+            from prowler.providers.aws.services.codebuild.codebuild_project_source_repo_url_no_sensitive_credentials.codebuild_project_source_repo_url_no_sensitive_credentials import (
+                codebuild_project_source_repo_url_no_sensitive_credentials,
             )
 
-            check = codebuild_bitbucket_urls_no_sensitive_credentials()
+            check = codebuild_project_source_repo_url_no_sensitive_credentials()
             result = check.execute()
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"CodeBuild project {project_name} has sensitive credentials in Bitbucket repository URLs: Basic Auth Credentials in URL https://user:pass123@bitbucket.org/exampleuser/my-repo2.git."
+                == f"CodeBuild project {project_name} has sensitive credentials in source repository URLs: Basic Auth Credentials in URL https://user:pass123@bitbucket.org/exampleuser/my-repo2.git."
             )
             assert result[0].resource_id == project_name
             assert result[0].resource_arn == project_arn
@@ -128,27 +135,29 @@ class Test_codebuild_bitbucket_urls_no_sensitive_credentials:
                 region="eu-west-1",
                 last_invoked_time=None,
                 buildspec="arn:aws:s3:::my-codebuild-sample2/buildspec.yaml",
-                bitbucket_urls=[
-                    "https://x-token-auth:7saBEbfXpRg-zlO-YQC9Lvh8vtKmdETITD_-GCqYw0ZHbV7ZbMDbUCybDGM4=053EA782@bitbucket.org/testissue4244/test4244.git"
-                ],
+                source=Source(
+                    type="BITBUCKET",
+                    location="https://x-token-auth:7saBEbfXpRg-zlO-YQC9Lvh8vtKmdETITD_-GCqYw0ZHbV7ZbMDbUCybDGM4=053EA782@bitbucket.org/testissue4244/test4244.git",
+                ),
+                secondary_sources=[],
             )
         }
         with mock.patch(
             "prowler.providers.aws.services.codebuild.codebuild_service.Codebuild",
             codebuild_client,
         ):
-            from prowler.providers.aws.services.codebuild.codebuild_bitbucket_urls_no_sensitive_credentials.codebuild_bitbucket_urls_no_sensitive_credentials import (
-                codebuild_bitbucket_urls_no_sensitive_credentials,
+            from prowler.providers.aws.services.codebuild.codebuild_project_source_repo_url_no_sensitive_credentials.codebuild_project_source_repo_url_no_sensitive_credentials import (
+                codebuild_project_source_repo_url_no_sensitive_credentials,
             )
 
-            check = codebuild_bitbucket_urls_no_sensitive_credentials()
+            check = codebuild_project_source_repo_url_no_sensitive_credentials()
             result = check.execute()
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"CodeBuild project {project_name} has sensitive credentials in Bitbucket repository URLs: Token in URL https://x-token-auth:7saBEbfXpRg-zlO-YQC9Lvh8vtKmdETITD_-GCqYw0ZHbV7ZbMDbUCybDGM4=053EA782@bitbucket.org/testissue4244/test4244.git."
+                == f"CodeBuild project {project_name} has sensitive credentials in source repository URLs: Token in URL https://x-token-auth:7saBEbfXpRg-zlO-YQC9Lvh8vtKmdETITD_-GCqYw0ZHbV7ZbMDbUCybDGM4=053EA782@bitbucket.org/testissue4244/test4244.git."
             )
             assert result[0].resource_id == project_name
             assert result[0].resource_arn == project_arn
