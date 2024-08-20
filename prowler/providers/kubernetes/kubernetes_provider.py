@@ -52,9 +52,7 @@ class KubernetesProvider(Provider):
 
         if not self._session.api_client:
             logger.critical("Failed to set up a Kubernetes session.")
-            raise SystemExit(
-                "Failed to set up a Kubernetes session. Please check the logs for more information."
-            )
+            raise SystemExit
 
         self._identity = KubernetesIdentityInfo(
             context=self._session.context["name"],
