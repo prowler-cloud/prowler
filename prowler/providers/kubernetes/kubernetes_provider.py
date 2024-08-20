@@ -52,7 +52,9 @@ class KubernetesProvider(Provider):
 
         if not self._session.api_client:
             logger.critical("Failed to set up a Kubernetes session.")
-            raise RuntimeError("Failed to set up a Kubernetes session.")
+            raise SystemExit(
+                "Failed to set up a Kubernetes session. Please check the logs for more information."
+            )
 
         self._identity = KubernetesIdentityInfo(
             context=self._session.context["name"],
@@ -236,7 +238,7 @@ class KubernetesProvider(Provider):
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            raise RuntimeError("Failed to search and save roles.") from error
+            raise error
 
     def get_context_user_roles(self):
         """
@@ -270,7 +272,7 @@ class KubernetesProvider(Provider):
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            raise RuntimeError("Failed to retrieve context user roles.") from error
+            raise error
 
     def get_all_namespaces(self) -> list[str]:
         """
@@ -288,7 +290,7 @@ class KubernetesProvider(Provider):
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            raise RuntimeError("Failed to retrieve all namespaces.") from error
+            raise error
 
     def get_pod_current_namespace(self):
         """
