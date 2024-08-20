@@ -1115,7 +1115,7 @@ class TestAWSMutelist:
             "",
         )
 
-    def test_is_muted_tags(self):
+    def test_is_muted_tags_example1(self):
         # Mutelist
         mutelist_content = {
             "Accounts": {
@@ -1132,7 +1132,7 @@ class TestAWSMutelist:
         }
         mutelist = AWSMutelist(mutelist_content=mutelist_content)
 
-        assert mutelist.is_muted(
+        assert not mutelist.is_muted(
             AWS_ACCOUNT_NUMBER,
             "check_test",
             AWS_REGION_US_EAST_1,
@@ -1156,6 +1156,203 @@ class TestAWSMutelist:
                 "test",
                 "environment=pro",
             )
+        )
+
+    def test_is_muted_tags_example2(self):
+        # Mutelist
+        mutelist_content = {
+            "Accounts": {
+                "*": {
+                    "Checks": {
+                        "check_test": {
+                            "Regions": [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1],
+                            "Resources": ["*"],
+                            "Tags": ["environment=dev", "project=test(?!\.)"],
+                        }
+                    }
+                }
+            }
+        }
+        mutelist = AWSMutelist(mutelist_content=mutelist_content)
+
+        assert mutelist.is_muted(
+            AWS_ACCOUNT_NUMBER,
+            "check_test",
+            AWS_REGION_US_EAST_1,
+            "prowler",
+            "environment=dev | project=test",
+        )
+
+        assert not mutelist.is_muted(
+            AWS_ACCOUNT_NUMBER,
+            "check_test",
+            AWS_REGION_US_EAST_1,
+            "prowler",
+            "environment=dev",
+        )
+
+        assert not mutelist.is_muted(
+            AWS_ACCOUNT_NUMBER,
+            "check_test",
+            AWS_REGION_US_EAST_1,
+            "prowler-test",
+            "environment=dev | project=prowler",
+        )
+
+        assert not mutelist.is_muted(
+            AWS_ACCOUNT_NUMBER,
+            "check_test",
+            AWS_REGION_US_EAST_1,
+            "prowler-test",
+            "environment=dev | project=test.",
+        )
+
+    def test_is_muted_tags_and_logic(self):
+        # Mutelist
+        mutelist_content = {
+            "Accounts": {
+                "*": {
+                    "Checks": {
+                        "check_test": {
+                            "Regions": [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1],
+                            "Resources": ["*"],
+                            "Tags": ["environment=dev", "project=prowler"],
+                        }
+                    }
+                }
+            }
+        }
+        mutelist = AWSMutelist(mutelist_content=mutelist_content)
+
+        assert mutelist.is_muted(
+            AWS_ACCOUNT_NUMBER,
+            "check_test",
+            AWS_REGION_US_EAST_1,
+            "prowler-test",
+            "environment=dev | project=prowler",
+        )
+
+        assert not mutelist.is_muted(
+            AWS_ACCOUNT_NUMBER,
+            "check_test",
+            AWS_REGION_US_EAST_1,
+            "prowler-test",
+            "environment=dev | project=myproj",
+        )
+
+    def test_is_muted_tags_or_logic_example1(self):
+        # Mutelist
+        mutelist_content = {
+            "Accounts": {
+                "*": {
+                    "Checks": {
+                        "check_test": {
+                            "Regions": [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1],
+                            "Resources": ["*"],
+                            "Tags": ["environment=dev|project=.*"],
+                        }
+                    }
+                }
+            }
+        }
+        mutelist = AWSMutelist(mutelist_content=mutelist_content)
+
+        assert mutelist.is_muted(
+            AWS_ACCOUNT_NUMBER,
+            "check_test",
+            AWS_REGION_US_EAST_1,
+            "prowler-test",
+            "environment=dev",
+        )
+
+        assert mutelist.is_muted(
+            AWS_ACCOUNT_NUMBER,
+            "check_test",
+            AWS_REGION_US_EAST_1,
+            "prowler-test",
+            "project=prowler",
+        )
+
+    def test_is_muted_tags_or_logic_example2(self):
+        # Mutelist
+        mutelist_content = {
+            "Accounts": {
+                "*": {
+                    "Checks": {
+                        "check_test": {
+                            "Regions": [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1],
+                            "Resources": ["*"],
+                            "Tags": ["project=(test|stage)"],
+                        }
+                    }
+                }
+            }
+        }
+        mutelist = AWSMutelist(mutelist_content=mutelist_content)
+
+        assert mutelist.is_muted(
+            AWS_ACCOUNT_NUMBER,
+            "check_test",
+            AWS_REGION_US_EAST_1,
+            "prowler-test",
+            "project=test",
+        )
+
+    def test_is_muted_tags_and_or_logic(self):
+        # Mutelist
+        mutelist_content = {
+            "Accounts": {
+                "*": {
+                    "Checks": {
+                        "check_test": {
+                            "Regions": [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1],
+                            "Resources": ["*"],
+                            "Tags": ["team=dev", "environment=dev|project=.*"],
+                        }
+                    }
+                }
+            }
+        }
+        mutelist = AWSMutelist(mutelist_content=mutelist_content)
+
+        assert mutelist.is_muted(
+            AWS_ACCOUNT_NUMBER,
+            "check_test",
+            AWS_REGION_US_EAST_1,
+            "prowler-test",
+            "team=dev | environment=dev",
+        )
+
+        assert mutelist.is_muted(
+            AWS_ACCOUNT_NUMBER,
+            "check_test",
+            AWS_REGION_US_EAST_1,
+            "prowler-test",
+            "team=dev | project=prowler",
+        )
+
+        assert not mutelist.is_muted(
+            AWS_ACCOUNT_NUMBER,
+            "check_test",
+            AWS_REGION_US_EAST_1,
+            "prowler-test",
+            "team=ops",
+        )
+
+        assert not mutelist.is_muted(
+            AWS_ACCOUNT_NUMBER,
+            "check_test",
+            AWS_REGION_US_EAST_1,
+            "prowler-test",
+            "environment=dev",
+        )
+
+        assert not mutelist.is_muted(
+            AWS_ACCOUNT_NUMBER,
+            "check_test",
+            AWS_REGION_US_EAST_1,
+            "prowler-test",
+            "project=myproj",
         )
 
     def test_is_muted_specific_account_with_other_account_excepted(self):
@@ -1315,8 +1512,7 @@ class TestAWSMutelist:
             "Tags": ["environment=test", "project=.*"],
         }
         mutelist = AWSMutelist(mutelist_content={})
-
-        assert mutelist.is_excepted(
+        assert not mutelist.is_excepted(
             exceptions,
             AWS_ACCOUNT_NUMBER,
             "eu-central-1",
@@ -1324,7 +1520,7 @@ class TestAWSMutelist:
             "environment=test",
         )
 
-        assert mutelist.is_excepted(
+        assert not mutelist.is_excepted(
             exceptions,
             AWS_ACCOUNT_NUMBER,
             "eu-south-3",
@@ -1332,7 +1528,7 @@ class TestAWSMutelist:
             "environment=test",
         )
 
-        assert mutelist.is_excepted(
+        assert not mutelist.is_excepted(
             exceptions,
             AWS_ACCOUNT_NUMBER,
             "eu-south-3",
@@ -1413,7 +1609,7 @@ class TestAWSMutelist:
             "Accounts": [AWS_ACCOUNT_NUMBER],
             "Regions": [],
             "Resources": [],
-            "Tags": ["environment=test"],
+            "Tags": ["environment=test", "project=example"],
         }
         mutelist = AWSMutelist(mutelist_content={})
 
@@ -1422,7 +1618,7 @@ class TestAWSMutelist:
             AWS_ACCOUNT_NUMBER,
             AWS_REGION_EU_CENTRAL_1,
             "resource_1",
-            "environment=test",
+            "environment=test | project=example",
         )
 
         assert not mutelist.is_excepted(
