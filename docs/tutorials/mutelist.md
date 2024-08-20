@@ -65,7 +65,7 @@ To use both logics simultaneously, here’s an example:
 This will mute every resource containing the string "test" and the tags `test=test` and either `project=test` OR `project=stage` in every account and region.
 
 ???+ note
-    Remember that mutelist can be used with regular expressions
+    Remember that mutelist can be used with regular expressions.
 
 If any of the criteria do not match, the check is not muted.
 
