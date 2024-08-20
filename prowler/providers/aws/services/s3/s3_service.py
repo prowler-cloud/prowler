@@ -530,21 +530,12 @@ class AccessPoint(BaseModel):
     region: str
 
 
-class StorageClass(enumerate):
-    STANDARD_IA = "STANDARD_IA"
-    INTELLIGENT_TIERING = "INTELLIGENT_TIERING"
-    ONEZONE_IA = "ONEZONE_IA"
-    GLACIER = "GLACIER"
-    GLACIER_IR = "GLACIER_IR"
-    DEEP_ARCHIVE = "DEEP_ARCHIVE"
-
-
 class LifeCycleRule(BaseModel):
     id: str
     status: str
     expiration_days: int
     transition_days: int
-    transition_storage_class: StorageClass
+    transition_storage_class: str
 
 
 class Bucket(BaseModel):
