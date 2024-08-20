@@ -22,7 +22,26 @@ from tests.providers.aws.utils import (
 EXAMPLE_AMI_ID = "ami-12c6146b"
 MOCK_DATETIME = datetime(2023, 1, 4, 7, 27, 30, tzinfo=tzutc())
 
-orig = botocore.client.BaseClient._make_api_call
+make_api_call = botocore.client.BaseClient._make_api_call
+
+
+def mock_make_api_call(self, operation_name, kwarg):
+    if operation_name == "DescribeClientVpnEndpoints":
+        return {
+            "ClientVpnEndpoints": [
+                {
+                    "ClientVpnEndpointId": "cvpn-endpoint-1234567890abcdef0",
+                    "ConnectionLogOptions": {
+                        "Enabled": True,
+                        "CloudwatchLogGroup": "string",
+                        "CloudwatchLogStream": "string",
+                    },
+                    "Tags": [{"Key": "vpnendpoint", "Value": "test"}],
+                }
+            ]
+        }
+    # Si no es la operación que queremos interceptar, llamamos al método original
+    return make_api_call(self, operation_name, kwarg)
 
 
 class Test_EC2_Service:
@@ -707,3 +726,19 @@ class Test_EC2_Service:
             b64decode(version2.template_data["UserData"]).decode(encoding_format_utf_8)
             == KNOWN_SECRET_USER_DATA
         )
+
+    # Test EC2 Describe VPN Endpoints
+    @mock.patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
+    @mock_aws
+    def test_describe_vpn_endpoints(self):
+        # EC2 client for this test class
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        ec2 = EC2(aws_provider)
+
+        assert len(ec2.vpn_endpoints) == 1
+        vpn_arn = f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:client-vpn-endpoint/cvpn-endpoint-1234567890abcdef0"
+        assert vpn_arn in ec2.vpn_endpoints
+        vpn_endpoint = ec2.vpn_endpoints[vpn_arn]
+        assert vpn_endpoint.id == "cvpn-endpoint-1234567890abcdef0"
+        assert vpn_endpoint.connection_logging
+        assert vpn_endpoint.region == AWS_REGION_US_EAST_1

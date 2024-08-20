@@ -49,6 +49,8 @@ class EC2(AWSService):
         self.__threading_call__(
             self.__get_launch_template_versions__, self.launch_templates
         )
+        self.vpn_endpoints = {}
+        self.__threading_call__(self._describe_vpn_endpoints)
 
     def __get_volume_arn_template__(self, region):
         return (
@@ -505,6 +507,33 @@ class EC2(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _describe_vpn_endpoints(self, regional_client):
+        try:
+            describe_client_vpn_endpoints_paginator = regional_client.get_paginator(
+                "describe_client_vpn_endpoints"
+            )
+
+            for page in describe_client_vpn_endpoints_paginator.paginate():
+                for vpn_endpoint in page["ClientVpnEndpoints"]:
+                    vpn_endpoint_arn = f"arn:aws:ec2:{regional_client.region}:{self.audited_account}:client-vpn-endpoint/{vpn_endpoint['ClientVpnEndpointId']}"
+                    if not self.audit_resources or (
+                        is_resource_filtered(vpn_endpoint_arn, self.audit_resources)
+                    ):
+                        self.vpn_endpoints[vpn_endpoint_arn] = VpnEndpoint(
+                            id=vpn_endpoint["ClientVpnEndpointId"],
+                            arn=vpn_endpoint_arn,
+                            connection_logging=vpn_endpoint["ConnectionLogOptions"][
+                                "Enabled"
+                            ],
+                            region=regional_client.region,
+                            tags=vpn_endpoint.get("Tags"),
+                        )
+
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class Instance(BaseModel):
     id: str
@@ -626,3 +655,10 @@ class LaunchTemplate(BaseModel):
     arn: str
     region: str
     versions: list[LaunchTemplateVersion] = []
+
+
+class VpnEndpoint(BaseModel):
+    id: str
+    connection_logging: bool
+    region: str
+    tags: Optional[list] = []
