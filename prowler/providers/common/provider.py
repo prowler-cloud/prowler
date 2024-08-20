@@ -180,7 +180,16 @@ class Provider(ABC):
             )
 
             if not isinstance(Provider._global, provider_class):
-                global_provider = provider_class(arguments)
+                if "Kubernetes" in provider_class_name:
+                    global_provider = provider_class(
+                        arguments.kubeconfig_file,
+                        arguments.context,
+                        arguments.namespace,
+                        arguments.config_file,
+                        arguments.fixer_config,
+                    )
+                else:
+                    global_provider = provider_class(arguments)
 
             Provider._global = global_provider
         except TypeError as error:

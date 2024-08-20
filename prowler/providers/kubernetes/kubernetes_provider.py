@@ -36,7 +36,11 @@ class KubernetesProvider(Provider):
         """
         Initializes the KubernetesProvider instance.
         Args:
-            arguments (dict): A dictionary containing configuration arguments.
+            kubeconfig_file (str): Path to the kubeconfig file.
+            context (str): Context name.
+            namespace (list): List of namespaces.
+            config_file (str): Path to the configuration file.
+            fixer_config (str): Path to the fixer configuration file
         """
 
         logger.info("Instantiating Kubernetes Provider ...")
