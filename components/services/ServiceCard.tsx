@@ -16,9 +16,7 @@ export const ServiceCard: React.FC<CardServiceProps> = ({
         <div className="flex space-x-4 items-center">
           {getAWSIcon(serviceAlias)}
           <div className="flex flex-col">
-            <h4 className="font-bold text-md 3xl:text-lg leading-5">
-              {serviceAlias}
-            </h4>
+            <h4 className="font-bold text-md leading-5">{serviceAlias}</h4>
             <small className="text-default-500">
               {fidingsFailed > 0
                 ? `${fidingsFailed} Failed Findings`
