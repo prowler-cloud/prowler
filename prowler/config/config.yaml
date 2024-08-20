@@ -318,15 +318,13 @@ aws:
 
   #AWS S3 Configuration
   # Recommended LifeCycle expiration days
-  min_valid_lifecycle_expiration_days: 1
-  max_valid_lifecycle_expiration_days: 36500
-
+  min_lifecycle_expiration_days: 1
+  max_lifecycle_expiration_days: 36500
   # Recommended LifeCycle transition days
-  min_valid_lifecycle_transition_days: 1
-  max_valid_lifecycle_transition_days: 36500
-
+  min_lifecycle_transition_days: 1
+  max_lifecycle_transition_days: 36500
   # Recommended LifeCycle transition storage classes
-  valid_lifecycle_transition_storage_classes:
+  lifecycle_transition_storage_classes:
     [
       "STANDARD_IA",
       "INTELLIGENT_TIERING",

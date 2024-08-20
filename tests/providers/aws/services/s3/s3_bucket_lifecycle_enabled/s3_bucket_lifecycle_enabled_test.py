@@ -93,14 +93,30 @@ class Test_s3_bucket_lifecycle_enabled:
                 s3_bucket_lifecycle_enabled,
             )
 
+            s3_client = mock.MagicMock()
+            s3_client.audit_config = {
+                "min_lifecycle_expiration_days": 1,
+                "max_lifecycle_expiration_days": 36500,
+                "min_lifecycle_transition_days": 1,
+                "max_lifecycle_transition_days": 36500,
+                "lifecycle_transition_storage_classes": [
+                    "STANDARD_IA",
+                    "INTELLIGENT_TIERING",
+                    "ONEZONE_IA",
+                    "GLACIER",
+                    "GLACIER_IR",
+                    "DEEP_ARCHIVE",
+                ],
+            }
+
             bucket_name = "bucket-test"
             bucket_arn = f"arn:aws:s3::{AWS_ACCOUNT_NUMBER}:{bucket_name}"
-            s3_client = mock.MagicMock()
             s3_client.buckets = {
                 bucket_arn: Bucket(
                     name=bucket_name,
                     region=AWS_REGION_US_EAST_1,
                     lifecycle=[
+                        # Valid Lifecycle Configuration
                         LifeCycleRule(
                             id="test-rule-1",
                             status="Enabled",
@@ -108,6 +124,7 @@ class Test_s3_bucket_lifecycle_enabled:
                             transition_days=30,
                             transition_storage_class="STANDARD_IA",
                         ),
+                        # Invalid Lifecycle Configuration
                         LifeCycleRule(
                             id="test-rule-2",
                             status="Enabled",
@@ -154,10 +171,25 @@ class Test_s3_bucket_lifecycle_enabled:
                 s3_bucket_lifecycle_enabled,
             )
 
+            s3_client = mock.MagicMock()
+            s3_client.audit_config = {
+                "min_lifecycle_expiration_days": 1,
+                "max_lifecycle_expiration_days": 36500,
+                "min_lifecycle_transition_days": 1,
+                "max_lifecycle_transition_days": 36500,
+                "lifecycle_transition_storage_classes": [
+                    "STANDARD_IA",
+                    "INTELLIGENT_TIERING",
+                    "ONEZONE_IA",
+                    "GLACIER",
+                    "GLACIER_IR",
+                    "DEEP_ARCHIVE",
+                ],
+            }
+
             bucket_name = "bucket-test"
             bucket_arn = f"arn:aws:s3::{AWS_ACCOUNT_NUMBER}:{bucket_name}"
             rule_id = "test-rule"
-            s3_client = mock.MagicMock()
             s3_client.buckets = {
                 bucket_arn: Bucket(
                     name=bucket_name,
@@ -209,10 +241,25 @@ class Test_s3_bucket_lifecycle_enabled:
                 s3_bucket_lifecycle_enabled,
             )
 
+            s3_client = mock.MagicMock()
+            s3_client.audit_config = {
+                "min_lifecycle_expiration_days": 1,
+                "max_lifecycle_expiration_days": 36500,
+                "min_lifecycle_transition_days": 1,
+                "max_lifecycle_transition_days": 36500,
+                "lifecycle_transition_storage_classes": [
+                    "STANDARD_IA",
+                    "INTELLIGENT_TIERING",
+                    "ONEZONE_IA",
+                    "GLACIER",
+                    "GLACIER_IR",
+                    "DEEP_ARCHIVE",
+                ],
+            }
+
             bucket_name = "bucket-test"
             bucket_arn = f"arn:aws:s3::{AWS_ACCOUNT_NUMBER}:{bucket_name}"
             rule_id = "test-rule"
-            s3_client = mock.MagicMock()
             s3_client.buckets = {
                 bucket_arn: Bucket(
                     name=bucket_name,
@@ -264,10 +311,25 @@ class Test_s3_bucket_lifecycle_enabled:
                 s3_bucket_lifecycle_enabled,
             )
 
+            s3_client = mock.MagicMock()
+            s3_client.audit_config = {
+                "min_lifecycle_expiration_days": 1,
+                "max_lifecycle_expiration_days": 36500,
+                "min_lifecycle_transition_days": 1,
+                "max_lifecycle_transition_days": 36500,
+                "lifecycle_transition_storage_classes": [
+                    "STANDARD_IA",
+                    "INTELLIGENT_TIERING",
+                    "ONEZONE_IA",
+                    "GLACIER",
+                    "GLACIER_IR",
+                    "DEEP_ARCHIVE",
+                ],
+            }
+
             bucket_name = "bucket-test"
             bucket_arn = f"arn:aws:s3::{AWS_ACCOUNT_NUMBER}:{bucket_name}"
             rule_id = "test-rule"
-            s3_client = mock.MagicMock()
             s3_client.buckets = {
                 bucket_arn: Bucket(
                     name=bucket_name,
