@@ -9,10 +9,6 @@ Mutelist option works along with other options and will modify the output in the
 
 ## How the Mutelist Works
 
-Here’s the improved version in English:
-
----
-
 The **Mutelist** uses both "AND" and "OR" logic to determine which resources, checks, regions, and tags should be muted. For each check, the Mutelist evaluates whether the account, region, and resource match the specified criteria using "AND" logic. If tags are specified, the Mutelist can apply either "AND" or "OR" logic:
 
 - **"AND" logic:** The Mutelist will mute all findings whose resource tags contain all the specified tags. Here’s an example:
@@ -46,9 +42,9 @@ The **Mutelist** uses both "AND" and "OR" logic to determine which resources, ch
             Resources:
               - "test"
             Tags:
-              - "test=test | project=test"
+              - "test=test|project=(test|dev)"
   ```
-  This will mute all findings that contain EITHER the `test=test` tag OR the `project=test` tag.
+  This will mute all findings that contain EITHER the `test=test` OR `project=test` OR `project=dev`.
 
 To use both logics simultaneously, here’s an example:
 
@@ -67,6 +63,9 @@ To use both logics simultaneously, here’s an example:
               - "project=test|project=stage"
   ```
 This will mute every resource containing the string "test" and the tags `test=test` and either `project=test` OR `project=stage` in every account and region.
+
+???+ note
+    Remember that mutelist can be used with regular expressions
 
 If any of the criteria do not match, the check is not muted.
 

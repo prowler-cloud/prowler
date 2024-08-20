@@ -1115,7 +1115,7 @@ class TestAWSMutelist:
             "",
         )
 
-    def test_is_muted_tags(self):
+    def test_is_muted_tags_example1(self):
         # Mutelist
         mutelist_content = {
             "Accounts": {
@@ -1158,6 +1158,55 @@ class TestAWSMutelist:
             )
         )
 
+    def test_is_muted_tags_example2(self):
+        # Mutelist
+        mutelist_content = {
+            "Accounts": {
+                "*": {
+                    "Checks": {
+                        "check_test": {
+                            "Regions": [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1],
+                            "Resources": ["*"],
+                            "Tags": ["environment=dev", "project=test(?!\.)"],
+                        }
+                    }
+                }
+            }
+        }
+        mutelist = AWSMutelist(mutelist_content=mutelist_content)
+
+        assert mutelist.is_muted(
+            AWS_ACCOUNT_NUMBER,
+            "check_test",
+            AWS_REGION_US_EAST_1,
+            "prowler",
+            "environment=dev | project=test",
+        )
+
+        assert not mutelist.is_muted(
+            AWS_ACCOUNT_NUMBER,
+            "check_test",
+            AWS_REGION_US_EAST_1,
+            "prowler",
+            "environment=dev",
+        )
+
+        assert not mutelist.is_muted(
+            AWS_ACCOUNT_NUMBER,
+            "check_test",
+            AWS_REGION_US_EAST_1,
+            "prowler-test",
+            "environment=dev | project=prowler",
+        )
+
+        assert not mutelist.is_muted(
+            AWS_ACCOUNT_NUMBER,
+            "check_test",
+            AWS_REGION_US_EAST_1,
+            "prowler-test",
+            "environment=dev | project=test.",
+        )
+
     def test_is_muted_tags_and_logic(self):
         # Mutelist
         mutelist_content = {
@@ -1191,7 +1240,7 @@ class TestAWSMutelist:
             "environment=dev | project=myproj",
         )
 
-    def test_is_muted_tags_or_logic(self):
+    def test_is_muted_tags_or_logic_example1(self):
         # Mutelist
         mutelist_content = {
             "Accounts": {
@@ -1222,6 +1271,31 @@ class TestAWSMutelist:
             AWS_REGION_US_EAST_1,
             "prowler-test",
             "project=prowler",
+        )
+
+    def test_is_muted_tags_or_logic_example2(self):
+        # Mutelist
+        mutelist_content = {
+            "Accounts": {
+                "*": {
+                    "Checks": {
+                        "check_test": {
+                            "Regions": [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1],
+                            "Resources": ["*"],
+                            "Tags": ["project=(test|stage)"],
+                        }
+                    }
+                }
+            }
+        }
+        mutelist = AWSMutelist(mutelist_content=mutelist_content)
+
+        assert mutelist.is_muted(
+            AWS_ACCOUNT_NUMBER,
+            "check_test",
+            AWS_REGION_US_EAST_1,
+            "prowler-test",
+            "project=test",
         )
 
     def test_is_muted_tags_and_or_logic(self):

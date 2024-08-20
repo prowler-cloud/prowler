@@ -215,10 +215,6 @@ class Mutelist(ABC):
                         muted_tags, finding_tags, tag=True
                     )
 
-                    print(muted_in_tags)
-                    print(muted_tags)
-                    print(finding_tags)
-
                     # For a finding to be muted requires the following set to True:
                     # - muted_in_check -> True
                     # - muted_in_region -> True
@@ -331,10 +327,6 @@ class Mutelist(ABC):
                     if item.startswith("*"):
                         item = ".*" + item[1:]
                     if tag:
-                        print(item)
-                        print(finding_items)
-                        value = re.search(item, finding_items)
-                        print(value)
                         if not re.search(item, finding_items):
                             is_item_matched = False
                             break
