@@ -7,8 +7,8 @@ from datetime import datetime, timedelta
 from json import dumps
 from os import rmdir
 from re import search
-
 from unittest import mock
+
 import botocore
 import botocore.exceptions
 from boto3 import client, resource, session
@@ -1277,13 +1277,24 @@ aws:
     @mock.patch("botocore.credentials.EnvProvider.load", return_value=None)
     @mock.patch("botocore.credentials.SharedCredentialProvider.load", return_value=None)
     @mock.patch("botocore.credentials.InstanceMetadataProvider.load", return_value=None)
-    @mock.patch.dict('os.environ', {
-        "AWS_ACCESS_KEY_ID": "",
-        "AWS_SECRET_ACCESS_KEY": "",
-        "AWS_SESSION_TOKEN": "",
-        "AWS_PROFILE": "",
-    }, clear=True)
-    def test_test_connection_without_credentials(self, mock_get_credentials, mock_get_scoped_config, mock_env_provider, mock_shared_provider, mock_instance_metadata):
+    @mock.patch.dict(
+        "os.environ",
+        {
+            "AWS_ACCESS_KEY_ID": "",
+            "AWS_SECRET_ACCESS_KEY": "",
+            "AWS_SESSION_TOKEN": "",
+            "AWS_PROFILE": "",
+        },
+        clear=True,
+    )
+    def test_test_connection_without_credentials(
+        self,
+        mock_get_credentials,
+        mock_get_scoped_config,
+        mock_env_provider,
+        mock_shared_provider,
+        mock_instance_metadata,
+    ):
         with raises(botocore.exceptions.NoCredentialsError) as exception:
             AwsProvider.test_connection(profile=None)
 
