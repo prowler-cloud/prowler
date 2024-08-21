@@ -996,12 +996,8 @@ class AwsProvider(Provider):
             Connection(is_connected=False, Error=NoCredentialsError('Unable to locate credentials'))
         """
         try:
-            print(mfa_enabled)
-            print(profile)
             session = AwsProvider.setup_session(mfa_enabled, profile)
-            print(f"Testing connection to AWS in region: {aws_region}")
-            print(session)
-            print(role_arn)
+
             if role_arn:
                 session_duration = validate_session_duration(session_duration)
                 role_session_name = validate_role_session_name(role_session_name)
