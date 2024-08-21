@@ -1277,7 +1277,7 @@ aws:
         monkeypatch.delenv("AWS_SECRET_ACCESS_KEY")
 
         with raises(botocore.exceptions.NoCredentialsError) as exception:
-            AwsProvider.test_connection()
+            AwsProvider.test_connection(profile="mock-profile")
 
         assert exception.type == botocore.exceptions.NoCredentialsError
         assert exception.value.args[0] == "Unable to locate credentials"
