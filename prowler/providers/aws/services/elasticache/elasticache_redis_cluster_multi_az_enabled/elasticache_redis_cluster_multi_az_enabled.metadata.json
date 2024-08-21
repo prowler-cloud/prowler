@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
   "CheckID": "elasticache_redis_cluster_multi_az_enabled",
-  "CheckTitle": "Ensure Elasticache Elasticache Redis cache cluster has Multi-AZ enabled.",
+  "CheckTitle": "Ensure Elasticache Redis cache cluster has Multi-AZ enabled.",
   "CheckType": [],
   "ServiceName": "elasticache",
   "SubServiceName": "",
