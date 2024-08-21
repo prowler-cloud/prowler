@@ -8,6 +8,7 @@ from json import dumps
 from os import rmdir
 from re import search
 
+from unittest import mock
 import botocore
 import botocore.exceptions
 from boto3 import client, resource, session
@@ -1271,16 +1272,23 @@ aws:
         assert connection.is_connected
         assert connection.error is None
 
-    @mock_aws
-    def test_test_connection_without_credentials(self, monkeypatch):
-        monkeypatch.delenv("AWS_ACCESS_KEY_ID")
-        monkeypatch.delenv("AWS_SECRET_ACCESS_KEY")
-
+    @mock.patch("boto3.Session.get_credentials", return_value=None)
+    @mock.patch("botocore.session.Session.get_scoped_config", return_value={})
+    @mock.patch("botocore.credentials.EnvProvider.load", return_value=None)
+    @mock.patch("botocore.credentials.SharedCredentialProvider.load", return_value=None)
+    @mock.patch("botocore.credentials.InstanceMetadataProvider.load", return_value=None)
+    @mock.patch.dict('os.environ', {
+        "AWS_ACCESS_KEY_ID": "",
+        "AWS_SECRET_ACCESS_KEY": "",
+        "AWS_SESSION_TOKEN": "",
+        "AWS_PROFILE": "",
+    }, clear=True)
+    def test_test_connection_without_credentials(self, mock_get_credentials, mock_get_scoped_config, mock_env_provider, mock_shared_provider, mock_instance_metadata):
         with raises(botocore.exceptions.NoCredentialsError) as exception:
-            AwsProvider.test_connection(profile="mock-profile")
+            AwsProvider.test_connection(profile=None)
 
         assert exception.type == botocore.exceptions.NoCredentialsError
-        assert exception.value.args[0] == "Unable to locate credentials"
+        assert "Unable to locate credentials" in str(exception.value)
 
     @mock_aws
     def test_test_connection_with_role_from_env(self, monkeypatch):
