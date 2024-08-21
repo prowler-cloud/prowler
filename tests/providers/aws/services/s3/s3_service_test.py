@@ -396,7 +396,50 @@ class Test_S3_Service:
         assert s3.buckets[bucket_arn].name == bucket_name
         assert s3.buckets[bucket_arn].region == AWS_REGION_US_EAST_1
         assert s3.buckets[bucket_arn].object_lock
+              
+    # Test S3 Get Bucket Replication
+    @mock_aws
+    def test_get_bucket_replication(self):
+        # Generate S3 Client
+        s3_client = client("s3")
+        # Create S3 Bucket
+        bucket_name = "test-bucket"
+        bucket_arn = f"arn:aws:s3:::{bucket_name}"
+        s3_client.create_bucket(
+            Bucket=bucket_name,
+            ObjectOwnership="BucketOwnerEnforced",
+        )
+        s3_client.put_bucket_versioning(
+            Bucket=bucket_name,
+            VersioningConfiguration={"Status": "Enabled"},
+        )
+        s3_client.put_bucket_replication(
+            Bucket=bucket_name,
+            ReplicationConfiguration={
+                "Role": "arn:aws:iam::123456789012:role/replication-role",
+                "Rules": [
+                    {
+                        "ID": "rule1",
+                        "Status": "Enabled",
+                        "Prefix": "",
+                        "Destination": {
+                            "Bucket": bucket_arn,
+                            "StorageClass": "STANDARD",
+                        },
+                    }
+                ],
+            },
+        )
 
+        # S3 client for this test class
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        s3 = S3(aws_provider)
+        assert len(s3.buckets) == 1
+        assert s3.buckets[bucket_arn].name == bucket_name
+        assert s3.buckets[bucket_arn].region == AWS_REGION_US_EAST_1
+        assert s3.buckets[bucket_arn].replication_rules[0].status == "Enabled"
+        assert s3.buckets[bucket_arn].replication_rules[0].destination == bucket_arn
+              
     # Test S3 Get Bucket Lifecycle
     @mock_aws
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)

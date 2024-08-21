@@ -14,7 +14,6 @@ from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################## Lambda
 class Lambda(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
@@ -38,13 +37,13 @@ class Lambda(AWSService):
                     ):
                         lambda_name = function["FunctionName"]
                         lambda_arn = function["FunctionArn"]
+                        vpc_config = function.get("VpcConfig", {})
                         # We must use the Lambda ARN as the dict key since we could have Lambdas in different regions with the same name
                         self.functions[lambda_arn] = Function(
                             name=lambda_name,
                             arn=lambda_arn,
-                            security_groups=function.get("VpcConfig", {}).get(
-                                "SecurityGroupIds", []
-                            ),
+                            security_groups=vpc_config.get("SecurityGroupIds", []),
+                            vpc_id=vpc_config.get("VpcId"),
                             region=regional_client.region,
                         )
                         if "Runtime" in function:
@@ -202,4 +201,5 @@ class Function(BaseModel):
     policy: dict = None
     code: LambdaCode = None
     url_config: URLConfig = None
+    vpc_id: Optional[str]
     tags: Optional[list] = []

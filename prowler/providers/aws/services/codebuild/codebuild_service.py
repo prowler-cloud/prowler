@@ -72,15 +72,27 @@ class Codebuild(AWSService):
         logger.info("Codebuild - Getting projects...")
         try:
             regional_client = self.regional_clients[project.region]
-            project_data = regional_client.batch_get_projects(names=[project.name])[
+            project_info = regional_client.batch_get_projects(names=[project.name])[
                 "projects"
             ][0]
-            environment = project_data.get("environment", {})
+            project.buildspec = project_info["source"].get("buildspec")
+            if project_info["source"]["type"] != "NO_SOURCE":
+                project.source = Source(
+                    type=project_info["source"]["type"],
+                    location=project_info["source"]["location"],
+                )
+            project.secondary_sources = []
+            for secondary_source in project_info.get("secondarySources", []):
+                source_obj = Source(
+                    type=secondary_source["type"], location=secondary_source["location"]
+                )
+                project.secondary_sources.append(source_obj)
+            environment = project_info.get("environment", {})
             env_vars = environment.get("environmentVariables", [])
             project.environment_variables = [
                 EnvironmentVariable(**var) for var in env_vars
             ]
-            project.buildspec = project_data.get("source", {}).get("buildspec", "")
+            project.buildspec = project_info.get("source", {}).get("buildspec", "")
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -89,6 +101,11 @@ class Codebuild(AWSService):
 
 class Build(BaseModel):
     id: str
+
+
+class Source(BaseModel):
+    type: str
+    location: str
 
 
 class EnvironmentVariable(BaseModel):
@@ -104,4 +121,6 @@ class Project(BaseModel):
     last_build: Optional[Build]
     last_invoked_time: Optional[datetime.datetime]
     buildspec: Optional[str]
+    source: Optional[Source]
+    secondary_sources: Optional[list[Source]] = []
     environment_variables: Optional[List[EnvironmentVariable]]
