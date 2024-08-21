@@ -121,6 +121,7 @@ config_aws = {
         "ruby2.5",
         "ruby2.7",
     ],
+    "lambda_min_azs": 2,
     "organizations_enabled_regions": [],
     "organizations_trusted_delegated_administrators": [],
     "ecr_repository_vulnerability_minimum_severity": "MEDIUM",
