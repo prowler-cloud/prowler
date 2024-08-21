@@ -170,6 +170,8 @@ class Test_ElastiCache_Service:
             subnets=[SUBNET_1, SUBNET_2],
             tags=ELASTICACHE_CLUSTER_TAGS,
             auto_minor_version_upgrade=AUTO_MINOR_VERSION_UPGRADE,
+            engine_version=None,
+            auth_token_enabled=False,
         )
 
     # Test Elasticache Redis cache clusters
