@@ -406,7 +406,7 @@ class S3(AWSService):
                 logger.warning(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
-                
+
     def _get_bucket_replication(self, bucket):
         logger.info("S3 - Get buckets replication...")
         try:
@@ -564,6 +564,7 @@ class LifeCycleRule(BaseModel):
     expiration_days: int
     transition_days: int
     transition_storage_class: str
+
 
 class ReplicationRule(BaseModel):
     id: str

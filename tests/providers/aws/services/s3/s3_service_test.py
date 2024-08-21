@@ -396,7 +396,7 @@ class Test_S3_Service:
         assert s3.buckets[bucket_arn].name == bucket_name
         assert s3.buckets[bucket_arn].region == AWS_REGION_US_EAST_1
         assert s3.buckets[bucket_arn].object_lock
-              
+
     # Test S3 Get Bucket Replication
     @mock_aws
     def test_get_bucket_replication(self):
@@ -439,7 +439,7 @@ class Test_S3_Service:
         assert s3.buckets[bucket_arn].region == AWS_REGION_US_EAST_1
         assert s3.buckets[bucket_arn].replication_rules[0].status == "Enabled"
         assert s3.buckets[bucket_arn].replication_rules[0].destination == bucket_arn
-              
+
     # Test S3 Get Bucket Lifecycle
     @mock_aws
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
