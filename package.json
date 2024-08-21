@@ -12,6 +12,7 @@
     "@tanstack/react-table": "^8.19.3",
     "add": "^2.0.6",
     "alert": "^6.0.2",
+    "bcrypt": "^5.1.1",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "date-fns": "^3.6.0",
