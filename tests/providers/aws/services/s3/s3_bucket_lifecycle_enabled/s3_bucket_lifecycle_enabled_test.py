@@ -1,6 +1,8 @@
 from unittest import mock
 from unittest.mock import patch
 
+from moto import mock_aws
+
 from prowler.providers.aws.services.s3.s3_service import S3, Bucket, LifeCycleRule
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
@@ -10,6 +12,7 @@ from tests.providers.aws.utils import (
 
 
 class Test_s3_bucket_lifecycle_enabled:
+    @mock_aws
     def test_no_buckets(self):
         from prowler.providers.aws.services.s3.s3_service import S3
 
@@ -20,15 +23,15 @@ class Test_s3_bucket_lifecycle_enabled:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.s3.s3_bucket_lifecycle_enabled.s3_bucket_lifecycle_enabled.s3_client",
+                "prowler.providers.aws.services.s3.s3_bucket_no_mfa_delete.s3_bucket_no_mfa_delete.s3_client",
                 new=S3(aws_provider),
             ):
                 # Test Check
-                from prowler.providers.aws.services.s3.s3_bucket_lifecycle_enabled.s3_bucket_lifecycle_enabled import (
-                    s3_bucket_lifecycle_enabled,
+                from prowler.providers.aws.services.s3.s3_bucket_no_mfa_delete.s3_bucket_no_mfa_delete import (
+                    s3_bucket_no_mfa_delete,
                 )
 
-                check = s3_bucket_lifecycle_enabled()
+                check = s3_bucket_no_mfa_delete()
                 result = check.execute()
 
                 assert len(result) == 0
@@ -94,21 +97,57 @@ class Test_s3_bucket_lifecycle_enabled:
             )
 
             s3_client = mock.MagicMock()
-            s3_client.audit_config = {
-                "min_lifecycle_expiration_days": 1,
-                "max_lifecycle_expiration_days": 36500,
-                "min_lifecycle_transition_days": 1,
-                "max_lifecycle_transition_days": 36500,
-                "lifecycle_transition_storage_classes": [
-                    "STANDARD_IA",
-                    "INTELLIGENT_TIERING",
-                    "ONEZONE_IA",
-                    "GLACIER",
-                    "GLACIER_IR",
-                    "DEEP_ARCHIVE",
-                ],
+            bucket_name = "bucket-test"
+            bucket_arn = f"arn:aws:s3::{AWS_ACCOUNT_NUMBER}:{bucket_name}"
+            s3_client.buckets = {
+                bucket_arn: Bucket(
+                    name=bucket_name,
+                    region=AWS_REGION_US_EAST_1,
+                    lifecycle=[
+                        LifeCycleRule(
+                            id="test-rule-1",
+                            status="Enabled",
+                            expiration_days=30,
+                            transition_days=30,
+                            transition_storage_class="STANDARD_IA",
+                        ),
+                    ],
+                )
             }
 
+            with patch(
+                "prowler.providers.aws.services.s3.s3_bucket_lifecycle_enabled.s3_bucket_lifecycle_enabled.s3_client",
+                s3_client,
+            ):
+                check = s3_bucket_lifecycle_enabled()
+                result = check.execute()
+
+                assert len(result) == 1
+                assert result[0].status == "PASS"
+                assert (
+                    result[0].status_extended
+                    == f"At least one LifeCycle Configuration is correct for S3 Bucket {bucket_name}."
+                )
+                assert result[0].resource_id == bucket_name
+                assert result[0].resource_arn == bucket_arn
+                assert result[0].region == AWS_REGION_US_EAST_1
+
+    def test_several_lifecycle_configurations(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.s3.s3_bucket_lifecycle_enabled.s3_bucket_lifecycle_enabled.s3_client",
+            new=S3(aws_provider),
+        ):
+            # Test Check
+            from prowler.providers.aws.services.s3.s3_bucket_lifecycle_enabled.s3_bucket_lifecycle_enabled import (
+                s3_bucket_lifecycle_enabled,
+            )
+
+            s3_client = mock.MagicMock()
             bucket_name = "bucket-test"
             bucket_arn = f"arn:aws:s3::{AWS_ACCOUNT_NUMBER}:{bucket_name}"
             s3_client.buckets = {
@@ -143,14 +182,11 @@ class Test_s3_bucket_lifecycle_enabled:
                 check = s3_bucket_lifecycle_enabled()
                 result = check.execute()
 
-                # ALL REGIONS
                 assert len(result) == 1
-
-                # AWS_REGION_US_EAST_1
-                assert result[0].status == "PASS"
+                assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == f"At least one LifeCycle Configuration is correct for S3 Bucket {bucket_name}."
+                    == f"S3 Bucket {bucket_name} does not have a correct Lifecycle Configuration."
                 )
                 assert result[0].resource_id == bucket_name
                 assert result[0].resource_arn == bucket_arn
@@ -172,21 +208,6 @@ class Test_s3_bucket_lifecycle_enabled:
             )
 
             s3_client = mock.MagicMock()
-            s3_client.audit_config = {
-                "min_lifecycle_expiration_days": 1,
-                "max_lifecycle_expiration_days": 36500,
-                "min_lifecycle_transition_days": 1,
-                "max_lifecycle_transition_days": 36500,
-                "lifecycle_transition_storage_classes": [
-                    "STANDARD_IA",
-                    "INTELLIGENT_TIERING",
-                    "ONEZONE_IA",
-                    "GLACIER",
-                    "GLACIER_IR",
-                    "DEEP_ARCHIVE",
-                ],
-            }
-
             bucket_name = "bucket-test"
             bucket_arn = f"arn:aws:s3::{AWS_ACCOUNT_NUMBER}:{bucket_name}"
             rule_id = "test-rule"
@@ -213,10 +234,7 @@ class Test_s3_bucket_lifecycle_enabled:
                 check = s3_bucket_lifecycle_enabled()
                 result = check.execute()
 
-                # ALL REGIONS
                 assert len(result) == 1
-
-                # AWS_REGION_US_EAST_1
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
@@ -242,21 +260,6 @@ class Test_s3_bucket_lifecycle_enabled:
             )
 
             s3_client = mock.MagicMock()
-            s3_client.audit_config = {
-                "min_lifecycle_expiration_days": 1,
-                "max_lifecycle_expiration_days": 36500,
-                "min_lifecycle_transition_days": 1,
-                "max_lifecycle_transition_days": 36500,
-                "lifecycle_transition_storage_classes": [
-                    "STANDARD_IA",
-                    "INTELLIGENT_TIERING",
-                    "ONEZONE_IA",
-                    "GLACIER",
-                    "GLACIER_IR",
-                    "DEEP_ARCHIVE",
-                ],
-            }
-
             bucket_name = "bucket-test"
             bucket_arn = f"arn:aws:s3::{AWS_ACCOUNT_NUMBER}:{bucket_name}"
             rule_id = "test-rule"
@@ -283,10 +286,7 @@ class Test_s3_bucket_lifecycle_enabled:
                 check = s3_bucket_lifecycle_enabled()
                 result = check.execute()
 
-                # ALL REGIONS
                 assert len(result) == 1
-
-                # AWS_REGION_US_EAST_1
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
@@ -312,21 +312,6 @@ class Test_s3_bucket_lifecycle_enabled:
             )
 
             s3_client = mock.MagicMock()
-            s3_client.audit_config = {
-                "min_lifecycle_expiration_days": 1,
-                "max_lifecycle_expiration_days": 36500,
-                "min_lifecycle_transition_days": 1,
-                "max_lifecycle_transition_days": 36500,
-                "lifecycle_transition_storage_classes": [
-                    "STANDARD_IA",
-                    "INTELLIGENT_TIERING",
-                    "ONEZONE_IA",
-                    "GLACIER",
-                    "GLACIER_IR",
-                    "DEEP_ARCHIVE",
-                ],
-            }
-
             bucket_name = "bucket-test"
             bucket_arn = f"arn:aws:s3::{AWS_ACCOUNT_NUMBER}:{bucket_name}"
             rule_id = "test-rule"
@@ -353,10 +338,7 @@ class Test_s3_bucket_lifecycle_enabled:
                 check = s3_bucket_lifecycle_enabled()
                 result = check.execute()
 
-                # ALL REGIONS
                 assert len(result) == 1
-
-                # AWS_REGION_US_EAST_1
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
