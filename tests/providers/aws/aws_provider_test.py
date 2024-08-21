@@ -1276,11 +1276,11 @@ aws:
         monkeypatch.delenv("AWS_ACCESS_KEY_ID")
         monkeypatch.delenv("AWS_SECRET_ACCESS_KEY")
 
-        with raises(botocore.exceptions.NoCredentialsError) as exception:
-            AwsProvider.test_connection()
+        connection = AwsProvider.test_connection()
 
-        assert exception.type == botocore.exceptions.NoCredentialsError
-        assert exception.value.args[0] == "Unable to locate credentials"
+        assert isinstance(connection, Connection)
+        assert connection.is_connected
+        assert connection.error is None
 
     @mock_aws
     def test_test_connection_with_role_from_env(self, monkeypatch):
