@@ -459,7 +459,6 @@ class AwsProvider(Provider):
                     profile_name=input_profile,
                 )
             else:
-                print(Session(profile_name=input_profile))
                 return Session(
                     profile_name=input_profile,
                 )
