@@ -15,12 +15,12 @@
     "Code": {
       "CLI": "aws rds modify-db-cluster --db-cluster-identifier <cluster-identifier> --copy-tags-to-snapshot",
       "NativeIaC": "",
-      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-17",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-16",
       "Terraform": ""
     },
     "Recommendation": {
       "Text": "Ensure that the `CopyTagsToSnapshot` setting is enabled for all RDS clusters to propagate cluster tags to their snapshots for improved tracking and compliance.",
-      "Url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Overview.DBcluster.Modifying.html"
+      "Url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_Tagging.html#USER_Tagging.CopyTags"
     }
   },
   "Categories": [],
