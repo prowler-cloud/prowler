@@ -66,21 +66,47 @@ class AwsProvider(Provider):
 
     def __init__(
         self,
-        aws_retries_max_attempts,
-        input_role,
-        input_session_duration,
-        input_external_id,
-        input_role_session_name,
-        input_mfa,
-        input_profile,
-        input_regions,
-        input_organizations_role_arn,
-        input_scan_unused_services,
-        input_resource_tags,
-        input_resource_arn,
-        input_config_file,
-        input_fixer_config,
+        aws_retries_max_attempts=3,
+        input_role=None,
+        input_session_duration=None,
+        input_external_id=None,
+        input_role_session_name=None,
+        input_mfa=None,
+        input_profile=None,
+        input_regions=None,
+        input_organizations_role_arn=None,
+        input_scan_unused_services=None,
+        input_resource_tags=None,
+        input_resource_arn=None,
+        input_config_file=None,
+        input_fixer_config=None,
     ):
+        """
+        Initializes the AWS provider.
+
+        Arguments:
+            - aws_retries_max_attempts: The maximum number of retries for the AWS client.
+            - input_role: The ARN of the IAM role to assume.
+            - input_session_duration: The duration of the session in seconds.
+            - input_external_id: The external ID to use when assuming the IAM role.
+            - input_role_session_name: The name of the session when assuming the IAM role.
+            - input_mfa: A boolean indicating whether MFA is enabled.
+            - input_profile: The name of the AWS CLI profile to use.
+            - input_regions: A set of regions to audit.
+            - input_organizations_role_arn: The ARN of the AWS Organizations IAM role to assume.
+            - input_scan_unused_services: A boolean indicating whether to scan unused services.
+            - input_resource_tags: A list of tags to filter the resources to audit.
+            - input_resource_arn: A list of ARNs of the resources to audit.
+            - input_config_file: The path to the configuration file.
+            - input_fixer_config: The path to the fixer configuration
+
+        Raises:
+            - ArgumentTypeError: If the input MFA ARN is invalid.
+            - ArgumentTypeError: If the input session duration is invalid.
+            - ArgumentTypeError: If the input external ID is invalid.
+            - ArgumentTypeError: If the input role session name is invalid.
+
+        """
         logger.info("Initializing AWS provider ...")
 
         ######## AWS Session
@@ -104,7 +130,7 @@ class AwsProvider(Provider):
             self.session.current_session.region_name, input_regions
         )
 
-        # Use test_connection to validate the credentials
+        # Validate the credentials
         caller_identity = self.validate_credentials(
             session=self.session.current_session,
             aws_region=sts_region,
@@ -433,6 +459,7 @@ class AwsProvider(Provider):
                     profile_name=input_profile,
                 )
             else:
+                print(Session(profile_name=input_profile))
                 return Session(
                     profile_name=input_profile,
                 )
@@ -969,8 +996,12 @@ class AwsProvider(Provider):
             Connection(is_connected=False, Error=NoCredentialsError('Unable to locate credentials'))
         """
         try:
+            print(mfa_enabled)
+            print(profile)
             session = AwsProvider.setup_session(mfa_enabled, profile)
-
+            print(f"Testing connection to AWS in region: {aws_region}")
+            print(session)
+            print(role_arn)
             if role_arn:
                 session_duration = validate_session_duration(session_duration)
                 role_session_name = validate_role_session_name(role_session_name)
@@ -995,6 +1026,7 @@ class AwsProvider(Provider):
                 )
 
             sts_client = AwsProvider.create_sts_session(session, aws_region)
+            print(sts_client.get_caller_identity())
             _ = sts_client.get_caller_identity()
             return Connection(
                 is_connected=True,
