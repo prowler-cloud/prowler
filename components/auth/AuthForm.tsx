@@ -9,6 +9,7 @@ import { authenticate } from "@/actions";
 
 import { ProwlerExtended } from "../icons";
 import { ThemeSwitch } from "../ThemeSwitch";
+import { AuthButton } from "./AuthButton";
 
 export const AuthForm = ({ type }: { type: string }) => {
   const [isVisible, setIsVisible] = useState(false);
@@ -89,9 +90,7 @@ export const AuthForm = ({ type }: { type: string }) => {
               Forgot password?
             </Link>
           </div>
-          <Button color="primary" type="submit">
-            {type === "sign-in" ? "Log In" : "Sign Up"}
-          </Button>
+          <AuthButton type={type} />
         </form>
         {type === "sign-in" && (
           <>

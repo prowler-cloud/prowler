@@ -11,6 +11,7 @@ export async function authenticate(
   formData: FormData,
 ) {
   try {
+    // await new Promise((resolve) => setTimeout(resolve, 2000));
     console.log(formData);
     await signIn("credentials", formData);
   } catch (error) {
