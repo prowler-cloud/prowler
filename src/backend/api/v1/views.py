@@ -11,14 +11,15 @@ from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
 from rest_framework_json_api.views import Response
 
-from api.base_views import BaseRLSViewSet
-from api.base_views import BaseViewSet
-from api.filters import ProviderFilter
-from api.filters import TenantFilter
+from api.base_views import BaseRLSViewSet, BaseViewSet
+from api.filters import ProviderFilter, TenantFilter
 from api.models import Provider
 from api.rls import Tenant
-from api.v1.serializers import ProviderSerializer, ProviderUpdateSerializer
-from api.v1.serializers import TenantSerializer
+from api.v1.serializers import (
+    ProviderSerializer,
+    ProviderUpdateSerializer,
+    TenantSerializer,
+)
 
 CACHE_DECORATOR = cache_control(
     max_age=django_settings.CACHE_MAX_AGE,

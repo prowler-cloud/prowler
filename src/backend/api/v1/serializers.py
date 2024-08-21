@@ -45,6 +45,10 @@ class TenantSerializer(BaseSerializerV1):
 
 
 # Providers
+class ProviderEnumField(serializers.ChoiceField):
+    def __init__(self, **kwargs):
+        kwargs["choices"] = Provider.ProviderChoices.choices
+        super().__init__(**kwargs)
 
 
 class ProviderSerializer(RLSSerializer):
@@ -52,6 +56,7 @@ class ProviderSerializer(RLSSerializer):
     Serializer for the Provider model.
     """
 
+    provider = ProviderEnumField(choices=Provider.ProviderChoices.choices)
     connection = serializers.SerializerMethodField(read_only=True)
 
     class Meta:

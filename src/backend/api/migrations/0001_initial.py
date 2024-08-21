@@ -1,4 +1,5 @@
 import uuid
+from functools import partial
 
 import django.core.validators
 import django.db.models.deletion
@@ -6,14 +7,28 @@ from django.conf import settings
 from django.db import migrations, models
 
 import api.rls
+from api.db_utils import (
+    PostgresEnumMigration,
+    register_enum,
+    ProviderEnumField,
+    ProviderEnum,
+)
+from api.models import Provider
 
 DB_NAME = settings.DATABASES["default"]["NAME"]
 DB_USER_NAME = settings.DATABASES["default"]["USER"]
 DB_USER_PASSWORD = settings.DATABASES["default"]["PASSWORD"]
 
+ProviderEnumMigration = PostgresEnumMigration(
+    enum_name="provider",
+    enum_values=tuple(provider[0] for provider in Provider.ProviderChoices.choices),
+)
+
 
 class Migration(migrations.Migration):
     initial = True
+    # Required for our kind of `RunPython` operations
+    atomic = False
 
     dependencies = []
 
@@ -56,15 +71,21 @@ class Migration(migrations.Migration):
                 ("name", models.CharField(max_length=100)),
             ],
             options={
-                "db_table": "tenant",
+                "db_table": "tenants",
             },
         ),
         migrations.RunSQL(
             # Needed for now since we don't have users yet
             f"""
-            GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE tenant TO {DB_USER_NAME};
+            GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE tenants TO {DB_USER_NAME};
             """
         ),
+        # Create and register ProviderEnum type
+        migrations.RunPython(
+            ProviderEnumMigration.create_enum_type,
+            reverse_code=ProviderEnumMigration.drop_enum_type,
+        ),
+        migrations.RunPython(partial(register_enum, enum_class=ProviderEnum)),
         migrations.CreateModel(
             name="Provider",
             fields=[
@@ -81,15 +102,14 @@ class Migration(migrations.Migration):
                 ("updated_at", models.DateTimeField(auto_now=True)),
                 (
                     "provider",
-                    models.CharField(
+                    ProviderEnumField(
                         choices=[
-                            ("aws", "Aws"),
+                            ("aws", "AWS"),
                             ("azure", "Azure"),
-                            ("gcp", "Gcp"),
+                            ("gcp", "GCP"),
                             ("kubernetes", "Kubernetes"),
                         ],
                         default="aws",
-                        max_length=10,
                     ),
                 ),
                 (
@@ -113,8 +133,8 @@ class Migration(migrations.Migration):
                     "connection_last_checked_at",
                     models.DateTimeField(blank=True, null=True),
                 ),
-                ("metadata", models.JSONField(default=dict)),
-                ("scanner_args", models.JSONField(default=dict)),
+                ("metadata", models.JSONField(blank=True, default=dict)),
+                ("scanner_args", models.JSONField(blank=True, default=dict)),
                 (
                     "tenant",
                     models.ForeignKey(
@@ -124,6 +144,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 "abstract": False,
+                "db_table": "providers",
             },
         ),
         migrations.AddConstraint(

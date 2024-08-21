@@ -1,6 +1,7 @@
-from django_filters.rest_framework import FilterSet, BooleanFilter
+from django_filters.rest_framework import FilterSet, BooleanFilter, CharFilter
 from rest_framework_json_api.django_filters.backends import DjangoFilterBackend
 
+from api.db_utils import ProviderEnumField
 from api.models import Provider
 from api.rls import Tenant
 
@@ -35,4 +36,9 @@ class ProviderFilter(FilterSet):
             "alias": ["exact", "icontains"],
             "inserted_at": ["exact", "gte", "lte"],
             "updated_at": ["exact", "gte", "lte"],
+        }
+        filter_overrides = {
+            ProviderEnumField: {
+                "filter_class": CharFilter,
+            },
         }

@@ -4,7 +4,7 @@ from uuid import uuid4, UUID
 from django.core.validators import MinLengthValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-
+from api.db_utils import ProviderEnumField
 from api.exceptions import ModelValidationError
 from api.rls import RowLevelSecurityConstraint
 from api.rls import RowLevelSecurityProtectedModel
@@ -62,8 +62,8 @@ class Provider(RowLevelSecurityProtectedModel):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
-    provider = models.CharField(
-        max_length=10, choices=ProviderChoices.choices, default=ProviderChoices.AWS
+    provider = ProviderEnumField(
+        choices=ProviderChoices.choices, default=ProviderChoices.AWS
     )
     provider_id = models.CharField(max_length=63, validators=[MinLengthValidator(3)])
     alias = models.CharField(
@@ -83,6 +83,8 @@ class Provider(RowLevelSecurityProtectedModel):
         super().save(*args, **kwargs)
 
     class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "providers"
+
         constraints = [
             models.UniqueConstraint(
                 fields=("tenant_id", "provider", "provider_id"),

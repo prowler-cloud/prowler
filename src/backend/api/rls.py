@@ -20,7 +20,7 @@ class Tenant(models.Model):
     name = models.CharField(max_length=100)
 
     class Meta:
-        db_table = "tenant"
+        db_table = "tenants"
 
 
 # TODO Add abstract class for non-RLS models
