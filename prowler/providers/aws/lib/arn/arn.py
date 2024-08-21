@@ -58,5 +58,5 @@ def parse_iam_credentials_arn(arn: str) -> ARN:
 
 def is_valid_arn(arn: str) -> bool:
     """is_valid_arn returns True or False whether the given AWS ARN (Amazon Resource Name) is valid or not."""
-    regex = r"^arn:(?P<Partition>[^:\n]*):(?P<Service>[^:\n]*):(?P<Region>[^:\n]*):(?P<AccountID>[^:\n]*):(?P<Ignore>(?P<ResourceType>[^:\/\n]*)[:\/])?(?P<Resource>.*)$"
+    regex = r"^arn:aws(-cn|-us-gov|-iso|-iso-b)?:[a-zA-Z0-9\-]+:([a-z]{2}-[a-z]+-\d{1})?:(\d{12})?:[a-zA-Z0-9\-_\/:\.\*]+(:\d+)?$"
     return re.match(regex, arn) is not None
