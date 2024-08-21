@@ -265,3 +265,33 @@ class Test_ec2_instance_secrets_user_data:
             )
             assert result[0].resource_tags is None
             assert result[0].region == AWS_REGION_US_EAST_1
+
+    @mock_aws
+    def test_one_secrets_with_unicode_error(self):
+        invalid_utf8_bytes = b"\xc0\xaf"
+        ec2 = resource("ec2", region_name=AWS_REGION_US_EAST_1)
+        ec2.create_instances(
+            ImageId=EXAMPLE_AMI_ID, MinCount=1, MaxCount=1, UserData=invalid_utf8_bytes
+        )
+
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
+
+        current_audit_info = set_mocked_aws_audit_info(
+            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        )
+
+        with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=current_audit_info,
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_instance_secrets_user_data.ec2_instance_secrets_user_data.ec2_client",
+            new=EC2(current_audit_info),
+        ):
+            from prowler.providers.aws.services.ec2.ec2_instance_secrets_user_data.ec2_instance_secrets_user_data import (
+                ec2_instance_secrets_user_data,
+            )
+
+            check = ec2_instance_secrets_user_data()
+            result = check.execute()
+
+            assert len(result) == 0
