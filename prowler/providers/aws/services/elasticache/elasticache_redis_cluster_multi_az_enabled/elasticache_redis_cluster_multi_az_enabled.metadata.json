@@ -19,7 +19,7 @@
       "Terraform": "https://docs.prowler.com/checks/aws/general-policies/ensure-aws-elasticache-redis-cluster-with-multi-az-automatic-failover-feature-set-to-enabled/"
     },
     "Recommendation": {
-      "Text": "Ensure Elasticache Elasticache Redis cache cluster has Multi-AZ enabled.",
+      "Text": "Ensure Elasticache Redis cache cluster has Multi-AZ enabled.",
       "Url": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/ElastiCache/elasticache-multi-az.html#"
     }
   },
