@@ -149,6 +149,7 @@ class Test_awslambda_function_vpc_is_in_multiple_az:
                 "SecurityGroupIds": [security_group_id],
             },
         )
+        function_vpc_id = function["VpcConfig"]["VpcId"]
 
         from prowler.providers.aws.services.awslambda.awslambda_service import Lambda
         from prowler.providers.aws.services.vpc.vpc_service import VPC
@@ -177,7 +178,7 @@ class Test_awslambda_function_vpc_is_in_multiple_az:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Lambda function {function_name} is inside of VPC {function["VpcConfig"]["VpcId"]} that spans only in 1 AZs: {AWS_REGION_EU_WEST_1_AZA}. Must span in at least 2 AZs."
+                == f"Lambda function {function_name} is inside of VPC {function_vpc_id} that spans only in 1 AZs: {AWS_REGION_EU_WEST_1_AZA}. Must span in at least 2 AZs."
             )
             assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_id == function_name
