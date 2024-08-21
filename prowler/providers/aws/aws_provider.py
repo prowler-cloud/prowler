@@ -124,7 +124,7 @@ class AwsProvider(Provider):
         self._identity = self.set_identity(
             caller_identity=caller_identity,
             input_profile=input_profile,
-            input_regions=input_regions,
+            input_regions=set(input_regions),
             profile_region=profile_region,
         )
         ########
@@ -744,16 +744,22 @@ class AwsProvider(Provider):
 
     def get_default_region(self, service: str) -> str:
         """get_default_region returns the default region based on the profile and audited service regions"""
-        service_regions = self.get_available_aws_service_regions(service)
-        default_region = self.get_global_region()
-        # global region of the partition when all regions are audited and there is no profile region
-        if self._identity.profile_region in service_regions:
-            # return profile region only if it is audited
-            default_region = self._identity.profile_region
-        # return first audited region if specific regions are audited
-        elif self._identity.audited_regions:
-            default_region = self._identity.audited_regions[0]
-        return default_region
+        try:
+            service_regions = self.get_available_aws_service_regions(service)
+            default_region = self.get_global_region()
+            # global region of the partition when all regions are audited and there is no profile region
+            if self._identity.profile_region in service_regions:
+                # return profile region only if it is audited
+                default_region = self._identity.profile_region
+            # return first audited region if specific regions are audited
+            elif self._identity.audited_regions:
+                default_region = list(self._identity.audited_regions)[0]
+            return default_region
+        except Exception as error:
+            logger.critical(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            raise error
 
     def get_global_region(self) -> str:
         """get_global_region returns the global region based on the audited partition"""
