@@ -1022,7 +1022,6 @@ class AwsProvider(Provider):
                 )
 
             sts_client = AwsProvider.create_sts_session(session, aws_region)
-            print(sts_client.get_caller_identity())
             _ = sts_client.get_caller_identity()
             return Connection(
                 is_connected=True,
