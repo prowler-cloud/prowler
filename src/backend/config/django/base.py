@@ -34,7 +34,6 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "api.middleware.TenantMiddleware",
     "api.middleware.APILoggingMiddleware",
 ]
 

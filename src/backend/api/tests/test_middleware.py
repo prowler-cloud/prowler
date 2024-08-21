@@ -1,9 +1,8 @@
 from unittest.mock import patch, Mock, ANY
 
 import pytest
-from django.http import HttpResponse
 
-from api.middleware import extract_tenant_id, TenantMiddleware
+from api.middleware import extract_tenant_id
 
 
 @pytest.mark.django_db
@@ -34,33 +33,6 @@ def test_api_logger_middleware(mock_get_logger, client):
     )
 
     assert isinstance(mock_logger.info.call_args[1]["extra"]["duration"], float)
-
-
-@patch("api.middleware.TenantMiddleware.set_tenant_id_in_session")
-def test_tenant_middleware(mock_set_tenant, client):
-    tenant_id = "12646005-9067-4d2a-a098-8bb378604362"
-    tenant_header = {"X-Tenant-ID": tenant_id}
-
-    response = client.get("/testing", headers=tenant_header)
-
-    mock_set_tenant.assert_called_once_with(tenant_id)
-    assert isinstance(response, HttpResponse)
-
-
-@patch("api.middleware.connection.cursor")
-def test_tenant_middleware_set_tenant_id_in_session(cursor_mock):
-    cursor_mock.return_value.__enter__.return_value = cursor_mock
-    cursor_mock.execute.return_value = None
-
-    tenant_id_postgres_variable = "api.tenant_id"
-    tenant_id = "12646005-9067-4d2a-a098-8bb378604362"
-    tenant_middleware = TenantMiddleware(Mock())
-
-    tenant_middleware.set_tenant_id_in_session(tenant_id)
-
-    cursor_mock.execute.assert_called_once_with(
-        f"SET {tenant_id_postgres_variable} = %s", [tenant_id]
-    )
 
 
 def test_extract_tenant_id():
