@@ -593,19 +593,20 @@ msrest = ">=0.7.1"
 
 [[package]]
 name = "azure-mgmt-web"
-version = "7.3.0"
+version = "7.3.1"
 description = "Microsoft Azure Web Apps Management Client Library for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "azure-mgmt-web-7.3.0.tar.gz", hash = "sha256:2032bf4d50df0bbb822ea00cac3bfbe0e67487d2c9cc1182c0858f83149cdea9"},
-    {file = "azure_mgmt_web-7.3.0-py3-none-any.whl", hash = "sha256:0e53db3fea6eae0d68d9a94eef2e19301f80d3d8a8a20eab599b75384ac0296e"},
+    {file = "azure-mgmt-web-7.3.1.tar.gz", hash = "sha256:87b771436bc99a7a8df59d0ad185b96879a06dce14764a06b3fc3dafa8fcb56b"},
+    {file = "azure_mgmt_web-7.3.1-py3-none-any.whl", hash = "sha256:ccf881e3ab31c3fdbf9cbff32773d9c0006b5dcd621ea074d7ec89e51049fb72"},
 ]
 
 [package.dependencies]
 azure-common = ">=1.1"
 azure-mgmt-core = ">=1.3.2"
 isodate = ">=0.6.1"
+typing-extensions = ">=4.6.0"
 
 [[package]]
 name = "azure-storage-blob"
@@ -4961,4 +4962,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "c8adc3b25958c454866acd3280b76fc583e8de1d0997c49d090aaf7f66b11d06"
+content-hash = "86eb19f20a8eae76f07f975b262449bfcf731f74be93dc36991d19f42100307e"
