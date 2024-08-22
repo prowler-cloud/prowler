@@ -46,7 +46,8 @@ The following list includes all the AWS checks with configurable variables that 
 | `ec2_securitygroup_allow_ingress_from_internet_to_any_port`   | `ec2_allowed_instance_owners`                    | List of Strings |
 | `acm_certificates_expiration_check`                           | `days_to_expire_threshold`                       | Integer         |
 | `eks_control_plane_logging_all_types_enabled`                 | `eks_required_log_types`                         | List of Strings |
-| `eks_cluster_uses_a_supported_version`                        | `eks_cluster_oldest_version_supported`                 | String          |
+| `eks_cluster_uses_a_supported_version`                        | `eks_cluster_oldest_version_supported`           | String          |
+| `awslambda_function_vpc_is_in_multiple_az`                    | `lambda_min_azs`                                 | Integer         |
 
 ## Azure
 
