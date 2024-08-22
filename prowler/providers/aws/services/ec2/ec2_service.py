@@ -694,6 +694,8 @@ class LaunchTemplate(BaseModel):
 class VpnEndpoint(BaseModel):
     id: str
     connection_logging: bool
+    region: str
+    tags: Optional[list] = []
 
 
 class TransitGateway(BaseModel):
