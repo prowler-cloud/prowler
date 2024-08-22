@@ -6,20 +6,34 @@ class rds_instance_multi_az(Check):
     def execute(self):
         findings = []
         for db_instance in rds_client.db_instances:
+            report = Check_Report_AWS(self.metadata())
+            report.region = db_instance.region
+            report.resource_id = db_instance.id
+            report.resource_arn = db_instance.arn
+            report.resource_tags = db_instance.tags
             # Check if is member of a cluster
-            if not db_instance.cluster_id:
-                report = Check_Report_AWS(self.metadata())
-                report.region = db_instance.region
-                report.resource_id = db_instance.id
-                report.resource_arn = db_instance.arn
-                report.resource_tags = db_instance.tags
-                if db_instance.multi_az:
+            if db_instance.cluster_id:
+                if (
+                    db_instance.cluster_arn in rds_client.db_clusters
+                    and rds_client.db_clusters[db_instance.cluster_arn].multi_az
+                ):
                     report.status = "PASS"
-                    report.status_extended = f"RDS Instance {db_instance.id} which is not clustered has multi-AZ enabled."
+                    report.status_extended = f"RDS Instance {db_instance.id} has multi-AZ enabled at cluster {db_instance.cluster_id} level."
                 else:
                     report.status = "FAIL"
-                    report.status_extended = f"RDS Instance {db_instance.id} which is not clustered does not have multi-AZ enabled."
+                    report.status_extended = f"RDS Instance {db_instance.id} does not have multi-AZ enabled at cluster {db_instance.cluster_id} level."
+            else:
+                if db_instance.multi_az:
+                    report.status = "PASS"
+                    report.status_extended = (
+                        f"RDS Instance {db_instance.id} has multi-AZ enabled."
+                    )
+                else:
+                    report.status = "FAIL"
+                    report.status_extended = (
+                        f"RDS Instance {db_instance.id} does not have multi-AZ enabled."
+                    )
 
-                findings.append(report)
+            findings.append(report)
 
         return findings
