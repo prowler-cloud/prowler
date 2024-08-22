@@ -1,23 +1,47 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Icon } from "@iconify/react";
 import { Button, Checkbox, Divider, Input, Link } from "@nextui-org/react";
 import { useState } from "react";
 import { useFormState } from "react-dom";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
 import { authenticate } from "@/actions";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormMessage,
+} from "@/components/ui/form";
+import { authFormSchema } from "@/types";
 
 import { ProwlerExtended } from "../icons";
 import { ThemeSwitch } from "../ThemeSwitch";
+import { CustomInput } from "../ui/custom";
 import { AuthButton } from "./AuthButton";
 
 export const AuthForm = ({ type }: { type: string }) => {
-  const [isVisible, setIsVisible] = useState(false);
+  const [user, setUser] = useState(null);
 
   const [state, dispath] = useFormState(authenticate, undefined);
-  console.log(state);
 
-  const toggleVisibility = () => setIsVisible(!isVisible);
+  const form = useForm<z.infer<typeof authFormSchema>>({
+    resolver: zodResolver(authFormSchema),
+    defaultValues: {
+      username: "",
+      password: "",
+    },
+  });
+
+  const onSubmit = (values: z.infer<typeof authFormSchema>) => {
+    // Do something with the form values
+    // this will be type-safe and validated
+    console.log(values);
+  };
+
+  console.log(state);
 
   return (
     <div
@@ -39,61 +63,98 @@ export const AuthForm = ({ type }: { type: string }) => {
 
       {/* Testimonial */}
       <div className="absolute bottom-10 right-10 hidden md:block">
-        <p className="max-w-xl text-right text-white/60">
+        <p className="max-w-xl text-right text-white/60 text-md">
           <span className="font-medium">“</span>
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc eget
-          augue nec massa volutpat aliquet.
+          Open Cloud Security
           <span className="font-medium">”</span>
         </p>
       </div>
 
-      {/* Login Form */}
       <div className="flex w-full max-w-sm flex-col gap-4 rounded-large bg-content1 px-8 pb-10 pt-6 shadow-small">
         <p className="pb-2 text-xl font-medium">
           {type === "sign-in" ? "Sign In" : "Sign Up"}
         </p>
-        <form className="flex flex-col gap-3" action={dispath}>
-          <Input
-            label="Email Address"
-            name="email"
-            placeholder="Enter your email"
-            type="email"
-            variant="bordered"
-          />
-          <Input
-            endContent={
-              <button type="button" onClick={toggleVisibility}>
-                {isVisible ? (
-                  <Icon
-                    className="pointer-events-none text-2xl text-default-400"
-                    icon="solar:eye-closed-linear"
-                  />
-                ) : (
-                  <Icon
-                    className="pointer-events-none text-2xl text-default-400"
-                    icon="solar:eye-bold"
-                  />
-                )}
-              </button>
-            }
-            label="Password"
-            name="password"
-            placeholder="Enter your password"
-            type={isVisible ? "text" : "password"}
-            variant="bordered"
-          />
-          <div className="flex items-center justify-between px-1 py-2">
-            <Checkbox name="remember" size="sm">
-              Remember me
-            </Checkbox>
-            <Link className="text-default-500" href="#">
-              Forgot password?
-            </Link>
-          </div>
-          <AuthButton type={type} />
-        </form>
+        {/* Sign UP Form */}
+        {type === "sign-up" && (
+          <Form {...form}>
+            <form
+              className="flex flex-col gap-3"
+              onSubmit={form.handleSubmit(onSubmit)}
+            >
+              <CustomInput
+                control={form.control}
+                name="username"
+                type="text"
+                label="Username"
+                placeholder="Enter your username"
+              />
+              <CustomInput
+                control={form.control}
+                name="email"
+                type="email"
+                label="Email"
+                placeholder="Enter your email"
+              />
+              <CustomInput control={form.control} password />
+              {/* <Input
+                isRequired
+                endContent={
+                  <button type="button" onClick={toggleConfirmVisibility}>
+                    {isConfirmVisible ? (
+                      <Icon
+                        className="pointer-events-none text-2xl text-default-400"
+                        icon="solar:eye-closed-linear"
+                      />
+                    ) : (
+                      <Icon
+                        className="pointer-events-none text-2xl text-default-400"
+                        icon="solar:eye-bold"
+                      />
+                    )}
+                  </button>
+                }
+                label="Confirm Password"
+                name="confirmPassword"
+                placeholder="Confirm your password"
+                type={isConfirmVisible ? "text" : "password"}
+                variant="bordered"
+              /> */}
+              <Checkbox isRequired className="py-4" size="sm">
+                I agree with the&nbsp;
+                <Link href="#" size="sm">
+                  Terms
+                </Link>
+                &nbsp; and&nbsp;
+                <Link href="#" size="sm">
+                  Privacy Policy
+                </Link>
+              </Checkbox>
+              <AuthButton type={type} />
+            </form>
+          </Form>
+        )}
+        {/* Sign IN Form */}
         {type === "sign-in" && (
           <>
+            <form className="flex flex-col gap-3" action={dispath}>
+              <Input
+                label="Email Address"
+                name="email"
+                placeholder="Enter your email"
+                type="email"
+                variant="bordered"
+              />
+
+              <div className="flex items-center justify-between px-1 py-2">
+                <Checkbox name="remember" size="sm">
+                  Remember me
+                </Checkbox>
+                <Link className="text-default-500" href="#">
+                  Forgot password?
+                </Link>
+              </div>
+              <AuthButton type={type} />
+            </form>
             <div className="flex items-center gap-4 py-2">
               <Divider className="flex-1" />
               <p className="shrink-0 text-tiny text-default-500">OR</p>
@@ -123,6 +184,7 @@ export const AuthForm = ({ type }: { type: string }) => {
             </div>
           </>
         )}
+
         {type === "sign-in" ? (
           <p className="text-center text-small">
             Need to create an account?&nbsp;

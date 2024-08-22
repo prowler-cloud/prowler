@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import React, { useCallback } from "react";
 import { useMediaQuery } from "usehooks-ts";
 
+import { logOut } from "@/actions";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 
 import {
@@ -126,6 +127,7 @@ export const SidebarWrap = () => {
         <Tooltip content="Log Out" isDisabled={!isCompact} placement="right">
           <Button
             aria-label="Log Out"
+            onClick={() => logOut}
             className={clsx(
               "justify-start text-default-500 data-[hover=true]:text-foreground",
               {
