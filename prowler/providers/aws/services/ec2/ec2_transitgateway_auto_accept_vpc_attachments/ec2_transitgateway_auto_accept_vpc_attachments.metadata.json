@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "ec2_transport_gateways_autoaccept_shared_attachments_enabled",
+  "CheckID": "ec2_transitgateway_auto_accept_vpc_attachments",
   "CheckTitle": "Amazon EC2 Transit Gateways should not automatically accept VPC attachment requests",
   "CheckType": [
     "Infrastructure Security"
@@ -12,7 +12,7 @@
   "ResourceType": "AwsEc2TransitGateway",
   "Description": "Ensure EC2 transit gateways are not automatically accepting shared VPC attachments. We get a fail if a transit gateway is configured to automatically accept shared VPC attachment requests.",
   "Risk": "Turning on AutoAcceptSharedAttachments allows a transit gateway to automatically accept any cross-account VPC attachment requests without verification. This increases the risk of unauthorized VPC attachments, compromising network security.",
-  "RelatedUrl": "https://docs.aws.amazon.com/vpc/latest/tgw/tgw-transit-gateways.html",
+  "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/ec2-transit-gateway-auto-vpc-attach-disabled.html",
   "Remediation": {
     "Code": {
       "CLI": "",
@@ -21,8 +21,8 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Do not include sensitive information in user data within the launch templates, try to use Secrets Manager instead.",
-      "Url": "https://docs.aws.amazon.com/config/latest/developerguide/ec2-transit-gateway-auto-vpc-attach-disabled.html"
+      "Text": "Turn off AutoAcceptSharedAttachments to ensure that only authorized VPC attachment requests are accepted",
+      "Url": "https://docs.aws.amazon.com/vpc/latest/tgw/tgw-transit-gateways.html#tgw-modifying"
     }
   },
   "Categories": [],
