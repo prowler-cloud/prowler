@@ -79,7 +79,7 @@ class AwsProvider(Provider):
         # MFA Configuration (false by default)
         input_mfa = getattr(arguments, "mfa", None)
         input_profile = getattr(arguments, "profile", None)
-        input_regions = getattr(arguments, "region", set())
+        input_regions = set(getattr(arguments, "region", set()))
         organizations_role_arn = getattr(arguments, "organizations_role", None)
 
         # Set if unused services must be scanned
@@ -124,7 +124,7 @@ class AwsProvider(Provider):
         self._identity = self.set_identity(
             caller_identity=caller_identity,
             input_profile=input_profile,
-            input_regions=set(input_regions),
+            input_regions=input_regions,
             profile_region=profile_region,
         )
         ########
@@ -1114,7 +1114,7 @@ def get_aws_region_for_sts(session_region: str, input_regions: set[str]) -> str:
             aws_region = AWS_STS_GLOBAL_ENDPOINT_REGION
     else:
         # Get the first region passed to the -f/--region
-        aws_region = input_regions[0]
+        aws_region = list(input_regions)[0]
 
     return aws_region
 
