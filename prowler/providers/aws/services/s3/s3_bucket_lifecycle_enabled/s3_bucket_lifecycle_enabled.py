@@ -14,15 +14,12 @@ class s3_bucket_lifecycle_enabled(Check):
             report.status = "FAIL"
             report.status_extended = f"S3 Bucket {bucket.name} does not have a lifecycle configuration enabled."
 
-            if (
-                bucket.lifecycle
-                and len(bucket.lifecycle) == 1
-                and bucket.lifecycle[0].status == "Enabled"
-            ):
-                report.status = "PASS"
-                report.status_extended = (
-                    f"S3 Bucket {bucket.name} has a lifecycle configuration enabled."
-                )
+            if bucket.lifecycle:
+                for configuration in bucket.lifecycle:
+                    if configuration.status == "Enabled":
+                        report.status = "PASS"
+                        report.status_extended = f"S3 Bucket {bucket.name} has a lifecycle configuration enabled."
+                        break
 
             findings.append(report)
 

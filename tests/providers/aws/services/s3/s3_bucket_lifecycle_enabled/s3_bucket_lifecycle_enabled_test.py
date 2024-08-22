@@ -154,11 +154,11 @@ class Test_s3_bucket_lifecycle_enabled:
                     lifecycle=[
                         LifeCycleRule(
                             id="test-rule-1",
-                            status="Enabled",
+                            status="Disabled",
                         ),
                         LifeCycleRule(
                             id="test-rule-2",
-                            status="Disabled",
+                            status="Enabled",
                         ),
                     ],
                 )
@@ -172,10 +172,10 @@ class Test_s3_bucket_lifecycle_enabled:
                 result = check.execute()
 
                 assert len(result) == 1
-                assert result[0].status == "FAIL"
+                assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == f"S3 Bucket {bucket_name} does not have a lifecycle configuration enabled."
+                    == f"S3 Bucket {bucket_name} has a lifecycle configuration enabled."
                 )
                 assert result[0].resource_id == bucket_name
                 assert result[0].resource_arn == bucket_arn
