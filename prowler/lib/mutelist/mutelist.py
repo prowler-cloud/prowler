@@ -314,6 +314,7 @@ class Mutelist(ABC):
         Args:
             matched_items (list): List of items to be matched.
             finding_items (str): String to search for matched items.
+            tag (bool): If True the search will have a different logic due to the tags being ORed or ANDed.
 
         Returns:
             bool: True if any of the matched_items are present in finding_items, otherwise False.
