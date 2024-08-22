@@ -78,7 +78,7 @@ class Test_ec2_client_vpn_endpoint_connection_logging_enabled:
             assert result[0].resource_tags is None
             assert (
                 result[0].status_extended
-                == f"Vpn Endpoint cvpn-endpoint-1234567890abcdef0 in region {AWS_REGION_US_EAST_1} does not have client connection logging enabled."
+                == f"Client VPN endpoint cvpn-endpoint-1234567890abcdef0 in region {AWS_REGION_US_EAST_1} does not have client connection logging enabled."
             )
             assert (
                 result[0].resource_arn
@@ -127,7 +127,7 @@ class Test_ec2_client_vpn_endpoint_connection_logging_enabled:
             assert result[0].resource_tags is None
             assert (
                 result[0].status_extended
-                == f"Vpn Endpoint cvpn-endpoint-1234567890abcdef0 in region {AWS_REGION_US_EAST_1} has client connection logging enabled."
+                == f"Client VPN endpoint cvpn-endpoint-1234567890abcdef0 in region {AWS_REGION_US_EAST_1} has client connection logging enabled."
             )
             assert (
                 result[0].resource_arn
