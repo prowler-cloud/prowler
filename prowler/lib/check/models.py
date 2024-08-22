@@ -2,7 +2,6 @@ import os
 import re
 import sys
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
 
 from pydantic import BaseModel, ValidationError, validator
 
@@ -106,91 +105,6 @@ class Check(ABC, Check_Metadata_Model):
     @abstractmethod
     def execute(self) -> list:
         """Execute the check's logic"""
-
-
-@dataclass
-class Check_Report:
-    """Contains the Check's finding information."""
-
-    status: str
-    status_extended: str
-    check_metadata: Check_Metadata_Model
-    resource_details: str
-    resource_tags: list
-    muted: bool
-
-    def __init__(self, metadata):
-        self.status = ""
-        self.check_metadata = Check_Metadata_Model.parse_raw(metadata)
-        self.status_extended = ""
-        self.resource_details = ""
-        self.resource_tags = []
-        self.muted = False
-
-
-@dataclass
-class Check_Report_AWS(Check_Report):
-    """Contains the AWS Check's finding information."""
-
-    resource_id: str
-    resource_arn: str
-    region: str
-
-    def __init__(self, metadata):
-        super().__init__(metadata)
-        self.resource_id = ""
-        self.resource_arn = ""
-        self.region = ""
-
-
-@dataclass
-class Check_Report_Azure(Check_Report):
-    """Contains the Azure Check's finding information."""
-
-    resource_name: str
-    resource_id: str
-    subscription: str
-    location: str
-
-    def __init__(self, metadata):
-        super().__init__(metadata)
-        self.resource_name = ""
-        self.resource_id = ""
-        self.subscription = ""
-        self.location = "global"
-
-
-@dataclass
-class Check_Report_GCP(Check_Report):
-    """Contains the GCP Check's finding information."""
-
-    resource_name: str
-    resource_id: str
-    project_id: str
-    location: str
-
-    def __init__(self, metadata):
-        super().__init__(metadata)
-        self.resource_name = ""
-        self.resource_id = ""
-        self.project_id = ""
-        self.location = ""
-
-
-@dataclass
-class Check_Report_Kubernetes(Check_Report):
-    # TODO change class name to CheckReportKubernetes
-    """Contains the Kubernetes Check's finding information."""
-
-    resource_name: str
-    resource_id: str
-    namespace: str
-
-    def __init__(self, metadata):
-        super().__init__(metadata)
-        self.resource_name = ""
-        self.resource_id = ""
-        self.namespace = ""
 
 
 # Testing Pending

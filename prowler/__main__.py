@@ -60,7 +60,6 @@ from prowler.lib.outputs.compliance.mitre_attack.mitre_attack_azure import (
 )
 from prowler.lib.outputs.compliance.mitre_attack.mitre_attack_gcp import GCPMitreAttack
 from prowler.lib.outputs.csv.csv import CSV
-from prowler.lib.outputs.finding import Finding
 from prowler.lib.outputs.html.html import HTML
 from prowler.lib.outputs.ocsf.ocsf import OCSF
 from prowler.lib.outputs.outputs import extract_findings_statistics
@@ -300,11 +299,6 @@ def prowler():
             sys.exit(1)
 
     # Outputs
-    # TODO: this part is needed since the checks generates a Check_Report_XXX and the output uses Finding
-    # This will be refactored for the outputs generate directly the Finding
-    finding_outputs = [
-        Finding.generate_output(global_provider, finding) for finding in findings
-    ]
 
     generated_outputs = {"regular": [], "compliance": []}
 
@@ -316,7 +310,7 @@ def prowler():
             )
             if mode == "csv":
                 csv_output = CSV(
-                    findings=finding_outputs,
+                    findings=findings,
                     create_file_descriptor=True,
                     file_path=f"{filename}{csv_file_suffix}",
                 )
@@ -326,7 +320,7 @@ def prowler():
 
             if mode == "json-asff":
                 asff_output = ASFF(
-                    findings=finding_outputs,
+                    findings=findings,
                     create_file_descriptor=True,
                     file_path=f"{filename}{json_asff_file_suffix}",
                 )
@@ -336,7 +330,7 @@ def prowler():
 
             if mode == "json-ocsf":
                 json_output = OCSF(
-                    findings=finding_outputs,
+                    findings=findings,
                     create_file_descriptor=True,
                     file_path=f"{filename}{json_ocsf_file_suffix}",
                 )
@@ -344,7 +338,7 @@ def prowler():
                 json_output.batch_write_data_to_file()
             if mode == "html":
                 html_output = HTML(
-                    findings=finding_outputs,
+                    findings=findings,
                     create_file_descriptor=True,
                     file_path=f"{filename}{html_file_suffix}",
                 )
@@ -366,7 +360,7 @@ def prowler():
                     f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
                 )
                 cis = AWSCIS(
-                    findings=finding_outputs,
+                    findings=findings,
                     compliance=bulk_compliance_frameworks[compliance_name],
                     create_file_descriptor=True,
                     file_path=filename,
@@ -380,7 +374,7 @@ def prowler():
                     f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
                 )
                 mitre_attack = AWSMitreAttack(
-                    findings=finding_outputs,
+                    findings=findings,
                     compliance=bulk_compliance_frameworks[compliance_name],
                     create_file_descriptor=True,
                     file_path=filename,
@@ -394,7 +388,7 @@ def prowler():
                     f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
                 )
                 ens = AWSENS(
-                    findings=finding_outputs,
+                    findings=findings,
                     compliance=bulk_compliance_frameworks[compliance_name],
                     create_file_descriptor=True,
                     file_path=filename,
@@ -408,7 +402,7 @@ def prowler():
                     f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
                 )
                 aws_well_architected = AWSWellArchitected(
-                    findings=finding_outputs,
+                    findings=findings,
                     compliance=bulk_compliance_frameworks[compliance_name],
                     create_file_descriptor=True,
                     file_path=filename,
@@ -422,7 +416,7 @@ def prowler():
                     f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
                 )
                 iso27001 = AWSISO27001(
-                    findings=finding_outputs,
+                    findings=findings,
                     compliance=bulk_compliance_frameworks[compliance_name],
                     create_file_descriptor=True,
                     file_path=filename,
@@ -435,7 +429,7 @@ def prowler():
                     f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
                 )
                 generic_compliance = GenericCompliance(
-                    findings=finding_outputs,
+                    findings=findings,
                     compliance=bulk_compliance_frameworks[compliance_name],
                     create_file_descriptor=True,
                     file_path=filename,
@@ -452,7 +446,7 @@ def prowler():
                     f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
                 )
                 cis = AzureCIS(
-                    findings=finding_outputs,
+                    findings=findings,
                     compliance=bulk_compliance_frameworks[compliance_name],
                     create_file_descriptor=True,
                     file_path=filename,
@@ -466,7 +460,7 @@ def prowler():
                     f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
                 )
                 mitre_attack = AzureMitreAttack(
-                    findings=finding_outputs,
+                    findings=findings,
                     compliance=bulk_compliance_frameworks[compliance_name],
                     create_file_descriptor=True,
                     file_path=filename,
@@ -479,7 +473,7 @@ def prowler():
                     f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
                 )
                 generic_compliance = GenericCompliance(
-                    findings=finding_outputs,
+                    findings=findings,
                     compliance=bulk_compliance_frameworks[compliance_name],
                     create_file_descriptor=True,
                     file_path=filename,
@@ -496,7 +490,7 @@ def prowler():
                     f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
                 )
                 cis = GCPCIS(
-                    findings=finding_outputs,
+                    findings=findings,
                     compliance=bulk_compliance_frameworks[compliance_name],
                     create_file_descriptor=True,
                     file_path=filename,
@@ -510,7 +504,7 @@ def prowler():
                     f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
                 )
                 mitre_attack = GCPMitreAttack(
-                    findings=finding_outputs,
+                    findings=findings,
                     compliance=bulk_compliance_frameworks[compliance_name],
                     create_file_descriptor=True,
                     file_path=filename,
@@ -523,7 +517,7 @@ def prowler():
                     f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
                 )
                 generic_compliance = GenericCompliance(
-                    findings=finding_outputs,
+                    findings=findings,
                     compliance=bulk_compliance_frameworks[compliance_name],
                     create_file_descriptor=True,
                     file_path=filename,
@@ -540,7 +534,7 @@ def prowler():
                     f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
                 )
                 cis = KubernetesCIS(
-                    findings=finding_outputs,
+                    findings=findings,
                     compliance=bulk_compliance_frameworks[compliance_name],
                     create_file_descriptor=True,
                     file_path=filename,
@@ -553,7 +547,7 @@ def prowler():
                     f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
                 )
                 generic_compliance = GenericCompliance(
-                    findings=finding_outputs,
+                    findings=findings,
                     compliance=bulk_compliance_frameworks[compliance_name],
                     create_file_descriptor=True,
                     file_path=filename,

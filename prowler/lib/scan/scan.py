@@ -129,7 +129,6 @@ class Scan:
                         self.get_completed_services(),
                         self.get_completed_checks(),
                     )
-
                     findings = [
                         Finding.generate_output(self._provider, finding)
                         for finding in check_findings

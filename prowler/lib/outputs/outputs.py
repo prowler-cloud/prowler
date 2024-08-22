@@ -2,26 +2,29 @@ from colorama import Fore, Style
 
 from prowler.config.config import orange_color
 from prowler.lib.logger import logger
+from prowler.lib.outputs.finding import Finding
 
 
-def stdout_report(finding, color, verbose, status, fix):
-    if finding.check_metadata.Provider == "aws":
-        details = finding.region
-    if finding.check_metadata.Provider == "azure":
-        details = finding.location
-    if finding.check_metadata.Provider == "gcp":
-        details = finding.location.lower()
-    if finding.check_metadata.Provider == "kubernetes":
-        details = finding.namespace.lower()
-
+def stdout_report(finding: Finding, color, verbose, status, fix):
+    """
+    stdout_report prints the finding to stdout
+    Args:
+        finding (Finding): The finding object
+        color (str): The color to use for the finding
+        verbose (bool): The verbose flag
+        status (str): The status to filter by
+        fix (bool): The fix flag
+    Returns:
+        None
+    """
     if (verbose or fix) and (not status or finding.status in status):
         if finding.muted:
             print(
-                f"\t{color}MUTED ({finding.status}){Style.RESET_ALL} {details}: {finding.status_extended}"
+                f"\t{color}MUTED ({finding.status.value}){Style.RESET_ALL} {finding.region}: {finding.status_extended}"
             )
         else:
             print(
-                f"\t{color}{finding.status}{Style.RESET_ALL} {details}: {finding.status_extended}"
+                f"\t{color}{finding.status.value}{Style.RESET_ALL} {finding.region}: {finding.status_extended}"
             )
 
 
@@ -77,7 +80,7 @@ def set_report_color(status: str, muted: bool = False) -> str:
     return color
 
 
-def extract_findings_statistics(findings: list) -> dict:
+def extract_findings_statistics(findings: list[Finding]) -> dict:
     """
     extract_findings_statistics takes a list of findings and returns the following dict with the aggregated statistics
     {
@@ -97,7 +100,7 @@ def extract_findings_statistics(findings: list) -> dict:
 
     for finding in findings:
         # Save the resource_id
-        resources.add(finding.resource_id)
+        resources.add(finding.resource_uid)
         if finding.status == "PASS":
             total_pass += 1
             findings_count += 1

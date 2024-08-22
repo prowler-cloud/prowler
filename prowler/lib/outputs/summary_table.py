@@ -11,13 +11,23 @@ from prowler.config.config import (
     orange_color,
 )
 from prowler.lib.logger import logger
+from prowler.lib.outputs.finding import Finding
 
 
 def display_summary_table(
-    findings: list,
+    findings: list[Finding],
     provider,
     output_options,
 ):
+    """
+    display_summary_table generates the summary table for the given findings.
+    Args:
+        findings (list): The list of findings
+        provider: The provider object
+        output_options: The output options object
+    Returns:
+        None
+    """
     output_directory = output_options.output_directory
     output_filename = output_options.output_filename
     try:
@@ -67,18 +77,15 @@ def display_summary_table(
             pass_count = fail_count = muted_count = 0
             for finding in findings:
                 # If new service and not first, add previous row
-                if (
-                    current["Service"] != finding.check_metadata.ServiceName
-                    and current["Service"]
-                ):
+                if current["Service"] != finding.service_name and current["Service"]:
                     add_service_to_table(findings_table, current)
 
                     current["Total"] = current["Pass"] = current["Muted"] = current[
                         "Critical"
                     ] = current["High"] = current["Medium"] = current["Low"] = 0
 
-                current["Service"] = finding.check_metadata.ServiceName
-                current["Provider"] = finding.check_metadata.Provider
+                current["Service"] = finding.service_name
+                current["Provider"] = finding.provider
 
                 current["Total"] += 1
                 if finding.muted:
@@ -89,13 +96,13 @@ def display_summary_table(
                     current["Pass"] += 1
                 elif finding.status == "FAIL":
                     fail_count += 1
-                    if finding.check_metadata.Severity == "critical":
+                    if finding.severity == "critical":
                         current["Critical"] += 1
-                    elif finding.check_metadata.Severity == "high":
+                    elif finding.severity == "high":
                         current["High"] += 1
-                    elif finding.check_metadata.Severity == "medium":
+                    elif finding.severity == "medium":
                         current["Medium"] += 1
-                    elif finding.check_metadata.Severity == "low":
+                    elif finding.severity == "low":
                         current["Low"] += 1
 
             # Add final service

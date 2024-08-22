@@ -1,6 +1,6 @@
 import sys
 
-from prowler.lib.check.models import Check_Report
+from prowler.lib.check.models import Check
 from prowler.lib.logger import logger
 from prowler.lib.outputs.compliance.cis.cis import get_cis_table
 from prowler.lib.outputs.compliance.ens.ens import get_ens_table
@@ -80,7 +80,7 @@ def display_compliance_table(
 
 # TODO: this should be in the Check class
 def get_check_compliance(
-    finding: Check_Report, provider_type: str, bulk_checks_metadata: dict
+    provider_type: str, bulk_checks_metadata: dict, check: Check
 ) -> dict:
     """get_check_compliance returns a map with the compliance framework as key and the requirements where the finding's check is present.
 
@@ -92,9 +92,9 @@ def get_check_compliance(
     }
 
     Args:
-        finding (Any): The Check_Report finding
         provider_type (str): The provider type
         bulk_checks_metadata (dict): The bulk checks metadata
+        check (Check): The check object
 
     Returns:
         dict: The compliance framework as key and the requirements where the finding's check is present.
@@ -102,10 +102,8 @@ def get_check_compliance(
     try:
         check_compliance = {}
         # We have to retrieve all the check's compliance requirements
-        if finding.check_metadata.CheckID in bulk_checks_metadata:
-            for compliance in bulk_checks_metadata[
-                finding.check_metadata.CheckID
-            ].Compliance:
+        if check.CheckID in bulk_checks_metadata:
+            for compliance in bulk_checks_metadata[check.CheckID].Compliance:
                 compliance_fw = compliance.Framework
                 if compliance.Version:
                     compliance_fw = f"{compliance_fw}-{compliance.Version}"
