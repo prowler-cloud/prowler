@@ -12,7 +12,7 @@ from prowler.config.config import (
 )
 from prowler.lib.logger import logger
 from prowler.lib.utils.utils import print_boxes
-from prowler.providers.common.models import Audit_Metadata
+from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
 from prowler.providers.kubernetes.lib.mutelist.mutelist import KubernetesMutelist
 from prowler.providers.kubernetes.models import (
@@ -135,7 +135,8 @@ class KubernetesProvider(Provider):
             # "partition": "identity.partition",
         }
 
-    def setup_session(self, kubeconfig_file, input_context) -> KubernetesSession:
+    @staticmethod
+    def setup_session(kubeconfig_file, input_context) -> KubernetesSession:
         """
         Sets up the Kubernetes session.
 
@@ -146,42 +147,64 @@ class KubernetesProvider(Provider):
         Returns:
             Tuple: A tuple containing the API client and the context.
         """
+        logger.info(f"Using kubeconfig file: {kubeconfig_file}")
         try:
-            logger.info(f"Using kubeconfig file: {kubeconfig_file}")
-            try:
-                config.load_kube_config(
-                    config_file=(
-                        os.path.abspath(kubeconfig_file)
-                        if kubeconfig_file != "~/.kube/config"
-                        else os.path.expanduser(kubeconfig_file)
-                    ),
-                    context=input_context,
-                )
-            except ConfigException:
-                # If the kubeconfig file is not found, try to use the in-cluster config
-                logger.info("Using in-cluster config")
-                config.load_incluster_config()
-                context = {
-                    "name": "In-Cluster",
-                    "context": {
-                        "cluster": "in-cluster",  # Placeholder, as the real cluster name is not available
-                        "user": "service-account-name",  # Also a placeholder
-                    },
-                }
+            config.load_kube_config(
+                config_file=(
+                    os.path.abspath(kubeconfig_file)
+                    if kubeconfig_file != "~/.kube/config"
+                    else os.path.expanduser(kubeconfig_file)
+                ),
+                context=input_context,
+            )
+        except ConfigException:
+            # If the kubeconfig file is not found, try to use the in-cluster config
+            logger.info("Using in-cluster config")
+            config.load_incluster_config()
+            context = {
+                "name": "In-Cluster",
+                "context": {
+                    "cluster": "in-cluster",  # Placeholder, as the real cluster name is not available
+                    "user": "service-account-name",  # Also a placeholder
+                },
+            }
+        else:
+            if input_context:
+                contexts = config.list_kube_config_contexts()[0]
+                for context_item in contexts:
+                    if context_item["name"] == input_context:
+                        context = context_item
             else:
-                if input_context:
-                    contexts = config.list_kube_config_contexts()[0]
-                    for context_item in contexts:
-                        if context_item["name"] == input_context:
-                            context = context_item
-                else:
-                    context = config.list_kube_config_contexts()[1]
-            return KubernetesSession(api_client=client.ApiClient(), context=context)
+                context = config.list_kube_config_contexts()[1]
+        return KubernetesSession(api_client=client.ApiClient(), context=context)
+
+    @staticmethod
+    def test_connection(
+        kubeconfig_file: str = "~/.kube/config",
+        input_context: str = "",
+        raise_on_exception: bool = True,
+    ) -> Connection:
+        """
+        Tests the connection to the Kubernetes cluster.
+
+        Args:
+            kubeconfig_file (str): Path to the kubeconfig file.
+            input_context (str): Context name.
+
+        Returns:
+            Connection: A Connection object.
+        """
+        try:
+            KubernetesProvider.setup_session(kubeconfig_file, input_context)
+            client.CoreV1Api().list_namespace(timeout_seconds=2, _request_timeout=2)
+            return Connection(is_connected=True)
         except Exception as error:
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            sys.exit(1)
+            if raise_on_exception:
+                raise error
+            return Connection(error=error)
 
     def search_and_save_roles(
         self, roles: list, role_bindings, context_user: str, role_binding_type: str

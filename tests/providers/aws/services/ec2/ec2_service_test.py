@@ -741,3 +741,40 @@ class Test_EC2_Service:
         assert vpn_endpoint.id == "cvpn-endpoint-1234567890abcdef0"
         assert vpn_endpoint.connection_logging
         assert vpn_endpoint.region == AWS_REGION_US_EAST_1
+
+    # Test EC2 Describe Launch Templates
+    @mock_aws
+    def test_describe_transit_gateways(self):
+        # Generate EC2 Client
+        ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
+
+        # Create EC2 Transit Gateway API
+        response = ec2_client.create_transit_gateway(
+            Description="Test Transit Gateway",
+            Options={
+                "AmazonSideAsn": 64512,
+                "AutoAcceptSharedAttachments": "enable",
+            },
+            TagSpecifications=[
+                {
+                    "ResourceType": "transit-gateway",
+                    "Tags": [{"Key": "Name", "Value": "test-tgw"}],
+                }
+            ],
+        )
+
+        # EC2 client for this test class
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        )
+        ec2 = EC2(aws_provider)
+
+        transit_arn = response["TransitGateway"]["TransitGatewayArn"]
+
+        assert len(ec2.transit_gateways) == 1
+        assert (
+            ec2.transit_gateways[transit_arn].id
+            == response["TransitGateway"]["TransitGatewayId"]
+        )
+        assert ec2.transit_gateways[transit_arn].auto_accept_shared_attachments
+        assert ec2.transit_gateways[transit_arn].region == AWS_REGION_US_EAST_1
