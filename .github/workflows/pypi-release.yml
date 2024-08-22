@@ -45,7 +45,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-          cache: ${{ env.CACHE }}
 
       - name: Import GPG key
         uses: crazy-max/ghaction-import-gpg@v6
