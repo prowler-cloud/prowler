@@ -735,13 +735,12 @@ class Test_EC2_Service:
         )
         ec2 = EC2(aws_provider)
 
+        transit_arn = response["TransitGateway"]["TransitGatewayArn"]
+
         assert len(ec2.transit_gateways) == 1
         assert (
-            ec2.transit_gateways[0].id == response["TransitGateway"]["TransitGatewayId"]
+            ec2.transit_gateways[transit_arn].id
+            == response["TransitGateway"]["TransitGatewayId"]
         )
-        assert (
-            ec2.transit_gateways[0].arn
-            == response["TransitGateway"]["TransitGatewayArn"]
-        )
-        assert ec2.transit_gateways[0].auto_accept_shared_attachments
-        assert ec2.transit_gateways[0].region == AWS_REGION_US_EAST_1
+        assert ec2.transit_gateways[transit_arn].auto_accept_shared_attachments
+        assert ec2.transit_gateways[transit_arn].region == AWS_REGION_US_EAST_1

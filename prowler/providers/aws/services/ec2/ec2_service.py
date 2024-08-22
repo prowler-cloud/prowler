@@ -49,7 +49,7 @@ class EC2(AWSService):
         self.__threading_call__(
             self.__get_launch_template_versions__, self.launch_templates
         )
-        self.transit_gateways = []
+        self.transit_gateways = {}
         self.__threading_call__(self._describe_transit_gateways)
 
     def __get_volume_arn_template__(self, region):
@@ -520,10 +520,9 @@ class EC2(AWSService):
                             transit_gateway["TransitGatewayArn"], self.audit_resources
                         )
                     ):
-                        self.transit_gateways.append(
+                        self.transit_gateways[transit_gateway["TransitGatewayArn"]] = (
                             TransitGateway(
                                 id=transit_gateway["TransitGatewayId"],
-                                arn=transit_gateway["TransitGatewayArn"],
                                 auto_accept_shared_attachments=(
                                     transit_gateway["Options"][
                                         "AutoAcceptSharedAttachments"
@@ -665,7 +664,6 @@ class LaunchTemplate(BaseModel):
 
 class TransitGateway(BaseModel):
     id: str
-    arn: str
     auto_accept_shared_attachments: bool
     region: str
     tags: Optional[list] = []
