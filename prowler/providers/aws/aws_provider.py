@@ -79,7 +79,7 @@ class AwsProvider(Provider):
         # MFA Configuration (false by default)
         input_mfa = getattr(arguments, "mfa", None)
         input_profile = getattr(arguments, "profile", None)
-        input_regions = set(getattr(arguments, "region", set()))
+        input_regions = set(getattr(arguments, "region", []) or [])
         organizations_role_arn = getattr(arguments, "organizations_role", None)
 
         # Set if unused services must be scanned
