@@ -18,7 +18,7 @@
       "CLI": "",
       "NativeIaC": "",
       "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/s3-controls.html#s3-13",
-      "Terraform": ""
+      "Terraform": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/S3/lifecycle-configuration.html"
     },
     "Recommendation": {
       "Text": "Enable lifecycle policies on your S3 buckets to automatically manage the transition and expiration of data.",
