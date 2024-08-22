@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
   "CheckID": "s3_bucket_lifecycle_enabled",
-  "CheckTitle": "Check if S3 buckets have object lock enabled",
+  "CheckTitle": "Check if S3 buckets have a Lifecycle configuration enabled",
   "CheckType": [
     "AWS Foundational Security Best Practices"
   ],
@@ -10,7 +10,7 @@
   "ResourceIdTemplate": "arn:partition:s3:::bucket_name",
   "Severity": "low",
   "ResourceType": "AwsS3Bucket",
-  "Description": "Check if S3 buckets have object lock enabled",
+  "Description": "Check if S3 buckets have one unique Lifecycle configuration enabled.",
   "Risk": "The risks of not having lifecycle management enabled for S3 buckets include higher storage costs, unmanaged data retention, and potential non-compliance with data policies.",
   "RelatedUrl": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lifecycle-mgmt.html",
   "Remediation": {

@@ -12,28 +12,18 @@ class s3_bucket_lifecycle_enabled(Check):
             report.resource_arn = arn
             report.resource_tags = bucket.tags
             report.status = "FAIL"
-            report.status_extended = f"S3 Bucket {bucket.name} does not have a correct Lifecycle Configuration."
+            report.status_extended = f"S3 Bucket {bucket.name} does not have a lifecycle configuration enabled."
 
-            if bucket.lifecycle and len(bucket.lifecycle) == 1:
-                rule = bucket.lifecycle[0]
-                if (
-                    rule.status == "Enabled"
-                    and 1 <= rule.expiration_days <= 36500
-                    and 1 <= rule.transition_days <= 36500
-                    and rule.transition_storage_class
-                    in [
-                        "STANDARD_IA",
-                        "INTELLIGENT_TIERING",
-                        "ONEZONE_IA",
-                        "GLACIER",
-                        "GLACIER_IR",
-                        "DEEP_ARCHIVE",
-                    ]
-                ):
-                    report.status = "PASS"
-                    report.status_extended = f"At least one LifeCycle Configuration is correct for S3 Bucket {bucket.name}."
-                    break
+            if (
+                bucket.lifecycle
+                and len(bucket.lifecycle) == 1
+                and bucket.lifecycle[0].status == "Enabled"
+            ):
+                report.status = "PASS"
+                report.status_extended = (
+                    f"S3 Bucket {bucket.name} has a lifecycle configuration enabled."
+                )
 
-        findings.append(report)
+            findings.append(report)
 
         return findings

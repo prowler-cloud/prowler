@@ -392,11 +392,6 @@ class S3(AWSService):
                     LifeCycleRule(
                         id=rule["ID"],
                         status=rule["Status"],
-                        expiration_days=rule.get("Expiration", {}).get("Days", None),
-                        transition_days=rule.get("Transition", {}).get("Days", None),
-                        transition_storage_class=rule.get("Transition", {}).get(
-                            "StorageClass", None
-                        ),
                     )
                 )
         except ClientError as error:
@@ -561,9 +556,6 @@ class AccessPoint(BaseModel):
 class LifeCycleRule(BaseModel):
     id: str
     status: str
-    expiration_days: int
-    transition_days: int
-    transition_storage_class: str
 
 
 class ReplicationRule(BaseModel):

@@ -35,8 +35,6 @@ def mock_make_api_call(self, operation_name, kwarg):
                     "ID": "test",
                     "Status": "Enabled",
                     "Prefix": "test",
-                    "Expiration": {"Days": 1},
-                    "Transition": {"Days": 1, "StorageClass": "STANDARD_IA"},
                 }
             ]
         }
@@ -465,8 +463,6 @@ class Test_S3_Service:
                         "ID": "test",
                         "Status": "Enabled",
                         "Prefix": "test",
-                        "Expiration": {"Days": 1},
-                        "Transition": {"Days": 1, "StorageClass": "STANDARD_IA"},
                     }
                 ]
             },
@@ -481,12 +477,6 @@ class Test_S3_Service:
         assert len(s3.buckets[bucket_arn].lifecycle) == 1
         assert s3.buckets[bucket_arn].lifecycle[0].id == "test"
         assert s3.buckets[bucket_arn].lifecycle[0].status == "Enabled"
-        assert s3.buckets[bucket_arn].lifecycle[0].expiration_days == 1
-        assert s3.buckets[bucket_arn].lifecycle[0].transition_days == 1
-        assert (
-            s3.buckets[bucket_arn].lifecycle[0].transition_storage_class
-            == "STANDARD_IA"
-        )
 
     # Test S3 List Access Points
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
