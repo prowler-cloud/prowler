@@ -316,6 +316,11 @@ aws:
 
     ]
 
+  # AWS ELB Configuration
+  # aws.elb_is_in_multiple_az
+  # Minimum number of Availability Zones that an CLB must be in
+  min_elb_azs: 2
+
 # Azure Configuration
 azure:
   # Azure Network Configuration
