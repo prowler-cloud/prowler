@@ -729,7 +729,6 @@ class Test_EC2_Service:
 
     # Test EC2 Describe VPN Endpoints
     @mock.patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
-    @mock_aws
     def test_describe_vpn_endpoints(self):
         # EC2 client for this test class
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
