@@ -176,7 +176,7 @@ class Test_elasticache_redis_cluster_below_v6_auth_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Elasticache Redis cache cluster {ELASTICACHE_CLUSTER_NAME} (v{version}) does have AUTH enabled."
+                == f"Elasticache Redis cache cluster {ELASTICACHE_CLUSTER_NAME}(v{version}) does have AUTH enabled."
             )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == ELASTICACHE_CLUSTER_NAME
@@ -228,7 +228,7 @@ class Test_elasticache_redis_cluster_below_v6_auth_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Elasticache Redis cache cluster {ELASTICACHE_CLUSTER_NAME} does not have automated minor version upgrades enabled."
+                == f"Elasticache Redis cache cluster {ELASTICACHE_CLUSTER_NAME}(v{version}) does not have AUTH enabled."
             )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == ELASTICACHE_CLUSTER_NAME
