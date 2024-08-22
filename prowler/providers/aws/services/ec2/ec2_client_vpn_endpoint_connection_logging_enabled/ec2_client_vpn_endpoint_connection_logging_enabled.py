@@ -14,10 +14,10 @@ class ec2_client_vpn_endpoint_connection_logging_enabled(Check):
 
             if vpn_endpoint.connection_logging:
                 report.status = "PASS"
-                report.status_extended = f"Vpn Endpoint {vpn_endpoint.id} in region {vpn_endpoint.region} has client connection logging enabled."
+                report.status_extended = f"Client VPN endpoint {vpn_endpoint.id} in region {vpn_endpoint.region} has client connection logging enabled."
             else:
                 report.status = "FAIL"
-                report.status_extended = f"Vpn Endpoint {vpn_endpoint.id} in region {vpn_endpoint.region} does not have client connection logging enabled."
+                report.status_extended = f"Client VPN endpoint {vpn_endpoint.id} in region {vpn_endpoint.region} does not have client connection logging enabled."
 
             findings.append(report)
 
