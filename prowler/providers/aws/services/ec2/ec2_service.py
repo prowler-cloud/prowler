@@ -49,6 +49,8 @@ class EC2(AWSService):
         self.__threading_call__(
             self.__get_launch_template_versions__, self.launch_templates
         )
+        self.transit_gateways = {}
+        self.__threading_call__(self._describe_transit_gateways)
 
     def __get_volume_arn_template__(self, region):
         return (
@@ -505,6 +507,38 @@ class EC2(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _describe_transit_gateways(self, regional_client):
+        try:
+            describe_transit_gateways_paginator = regional_client.get_paginator(
+                "describe_transit_gateways"
+            )
+
+            for page in describe_transit_gateways_paginator.paginate():
+                for transit_gateway in page["TransitGateways"]:
+                    if not self.audit_resources or (
+                        is_resource_filtered(
+                            transit_gateway["TransitGatewayArn"], self.audit_resources
+                        )
+                    ):
+                        self.transit_gateways[transit_gateway["TransitGatewayArn"]] = (
+                            TransitGateway(
+                                id=transit_gateway["TransitGatewayId"],
+                                auto_accept_shared_attachments=(
+                                    transit_gateway["Options"][
+                                        "AutoAcceptSharedAttachments"
+                                    ]
+                                    == "enable"
+                                ),
+                                region=regional_client.region,
+                                tags=transit_gateway.get("Tags"),
+                            )
+                        )
+
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class Instance(BaseModel):
     id: str
@@ -626,3 +660,10 @@ class LaunchTemplate(BaseModel):
     arn: str
     region: str
     versions: list[LaunchTemplateVersion] = []
+
+
+class TransitGateway(BaseModel):
+    id: str
+    auto_accept_shared_attachments: bool
+    region: str
+    tags: Optional[list] = []
