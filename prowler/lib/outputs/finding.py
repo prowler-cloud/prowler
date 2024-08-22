@@ -192,7 +192,7 @@ class Finding(BaseModel):
                 finding_data["resource_name"] = check_finding["resource_name"]
                 finding_data["resource_uid"] = check_finding["resource_id"]
                 finding_data["account_name"] = f"context: {provider.identity.context}"
-                finding_data["region"] = f"namespace: {check_finding["namespace"]}"
+                finding_data["region"] = f"namespace: {check_finding['namespace']}"
 
             # check_output Unique ID
             # TODO: move this to a function
