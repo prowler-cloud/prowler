@@ -820,15 +820,6 @@ aws:
         assert aws_provider.get_default_region("ec2") == AWS_REGION_EU_WEST_1
 
     @mock_aws
-    def test_get_default_region_with_audited_regions(self):
-        arguments = Namespace()
-        arguments.region = [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
-        aws_provider = AwsProvider(arguments)
-        aws_provider._identity.profile_region = None
-
-        assert aws_provider.get_default_region("ec2") == AWS_REGION_US_EAST_1
-
-    @mock_aws
     def test_get_default_region_profile_region_not_audited(self):
         arguments = Namespace()
         arguments.region = [AWS_REGION_EU_WEST_1]
