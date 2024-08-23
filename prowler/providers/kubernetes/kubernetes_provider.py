@@ -1,6 +1,4 @@
 import os
-import sys
-from argparse import Namespace
 
 from colorama import Fore, Style
 from kubernetes.config.config_exception import ConfigException
@@ -12,7 +10,7 @@ from prowler.config.config import (
 )
 from prowler.lib.logger import logger
 from prowler.lib.utils.utils import print_boxes
-from prowler.providers.common.models import Audit_Metadata
+from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
 from prowler.providers.kubernetes.lib.mutelist.mutelist import KubernetesMutelist
 from prowler.providers.kubernetes.models import (
@@ -33,23 +31,36 @@ class KubernetesProvider(Provider):
     # TODO: this is not optional, enforce for all providers
     audit_metadata: Audit_Metadata
 
-    def __init__(self, arguments: Namespace):
+    def __init__(
+        self,
+        kubeconfig_file: str = None,
+        context: str = None,
+        namespace: list = None,
+        config_file: str = None,
+        fixer_config: str = None,
+    ):
         """
         Initializes the KubernetesProvider instance.
         Args:
-            arguments (dict): A dictionary containing configuration arguments.
+            kubeconfig_file (str): Path to the kubeconfig file.
+            context (str): Context name.
+            namespace (list): List of namespaces.
+            config_file (str): Path to the configuration file.
+            fixer_config (str): Path to the fixer configuration file
         """
+
         logger.info("Instantiating Kubernetes Provider ...")
-        self._session = self.setup_session(arguments.kubeconfig_file, arguments.context)
-        if not arguments.namespace:
+        self._session = self.setup_session(kubeconfig_file, context)
+        if not namespace:
             logger.info("Retrieving all namespaces ...")
             self._namespaces = self.get_all_namespaces()
         else:
-            self._namespaces = arguments.namespace
+            self._namespaces = namespace
 
         if not self._session.api_client:
             logger.critical("Failed to set up a Kubernetes session.")
-            sys.exit(1)
+            # TODO: add custom exception once we have the Kubernetes exceptions
+            raise SystemExit
 
         self._identity = KubernetesIdentityInfo(
             context=self._session.context["name"],
@@ -59,12 +70,8 @@ class KubernetesProvider(Provider):
 
         # TODO: move this to the providers, pending for AWS, GCP, AZURE and K8s
         # Audit Config
-        self._audit_config = load_and_validate_config_file(
-            self._type, arguments.config_file
-        )
-        self._fixer_config = load_and_validate_config_file(
-            self._type, arguments.fixer_config
-        )
+        self._audit_config = load_and_validate_config_file(self._type, config_file)
+        self._fixer_config = load_and_validate_config_file(self._type, fixer_config)
 
     @property
     def type(self):
@@ -135,7 +142,8 @@ class KubernetesProvider(Provider):
             # "partition": "identity.partition",
         }
 
-    def setup_session(self, kubeconfig_file, input_context) -> KubernetesSession:
+    @staticmethod
+    def setup_session(kubeconfig_file, input_context) -> KubernetesSession:
         """
         Sets up the Kubernetes session.
 
@@ -146,42 +154,65 @@ class KubernetesProvider(Provider):
         Returns:
             Tuple: A tuple containing the API client and the context.
         """
+        logger.info(f"Using kubeconfig file: {kubeconfig_file}")
         try:
-            logger.info(f"Using kubeconfig file: {kubeconfig_file}")
-            try:
-                config.load_kube_config(
-                    config_file=(
-                        os.path.abspath(kubeconfig_file)
-                        if kubeconfig_file != "~/.kube/config"
-                        else os.path.expanduser(kubeconfig_file)
-                    ),
-                    context=input_context,
-                )
-            except ConfigException:
-                # If the kubeconfig file is not found, try to use the in-cluster config
-                logger.info("Using in-cluster config")
-                config.load_incluster_config()
-                context = {
-                    "name": "In-Cluster",
-                    "context": {
-                        "cluster": "in-cluster",  # Placeholder, as the real cluster name is not available
-                        "user": "service-account-name",  # Also a placeholder
-                    },
-                }
+            config.load_kube_config(
+                config_file=(
+                    os.path.abspath(kubeconfig_file)
+                    if kubeconfig_file != "~/.kube/config"
+                    else os.path.expanduser(kubeconfig_file)
+                ),
+                context=input_context,
+            )
+        except ConfigException:
+            # If the kubeconfig file is not found, try to use the in-cluster config
+            logger.info("Using in-cluster config")
+            config.load_incluster_config()
+            context = {
+                "name": "In-Cluster",
+                "context": {
+                    "cluster": "in-cluster",  # Placeholder, as the real cluster name is not available
+                    "user": "service-account-name",  # Also a placeholder
+                },
+            }
+        else:
+            if input_context:
+                contexts = config.list_kube_config_contexts()[0]
+                for context_item in contexts:
+                    if context_item["name"] == input_context:
+                        context = context_item
             else:
-                if input_context:
-                    contexts = config.list_kube_config_contexts()[0]
-                    for context_item in contexts:
-                        if context_item["name"] == input_context:
-                            context = context_item
-                else:
-                    context = config.list_kube_config_contexts()[1]
-            return KubernetesSession(api_client=client.ApiClient(), context=context)
+                context = config.list_kube_config_contexts()[1]
+        return KubernetesSession(api_client=client.ApiClient(), context=context)
+
+    @staticmethod
+    def test_connection(
+        kubeconfig_file: str = "~/.kube/config",
+        input_context: str = "",
+        raise_on_exception: bool = True,
+    ) -> Connection:
+        """
+        Tests the connection to the Kubernetes cluster.
+
+        Args:
+            kubeconfig_file (str): Path to the kubeconfig file.
+            input_context (str): Context name.
+
+        Returns:
+            Connection: A Connection object.
+        """
+        try:
+            KubernetesProvider.setup_session(kubeconfig_file, input_context)
+            client.CoreV1Api().list_namespace(timeout_seconds=2, _request_timeout=2)
+            return Connection(is_connected=True)
         except Exception as error:
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            sys.exit(1)
+            if raise_on_exception:
+                # TODO: add custom exception once we have the Kubernetes exceptions
+                raise error
+            return Connection(error=error)
 
     def search_and_save_roles(
         self, roles: list, role_bindings, context_user: str, role_binding_type: str
@@ -214,7 +245,8 @@ class KubernetesProvider(Provider):
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            sys.exit(1)
+            # TODO: add custom exception once we have the Kubernetes exceptions
+            raise error
 
     def get_context_user_roles(self):
         """
@@ -248,7 +280,8 @@ class KubernetesProvider(Provider):
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            sys.exit(1)
+            # TODO: add custom exception once we have the Kubernetes exceptions
+            raise error
 
     def get_all_namespaces(self) -> list[str]:
         """
@@ -266,7 +299,8 @@ class KubernetesProvider(Provider):
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            sys.exit()
+            # TODO: add custom exception once we have the Kubernetes exceptions
+            raise error
 
     def get_pod_current_namespace(self):
         """

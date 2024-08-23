@@ -9,9 +9,12 @@ Mutelist option works along with other options and will modify the output in the
 
 ## How the Mutelist Works
 
-The Mutelist uses an "ANDed" and "ORed" logic to determine which resources, checks, regions, and tags should be muted. For each check, the Mutelist checks if the account, region, and resource match the specified criteria, using an "ANDed" logic. If tags are specified, the mutelist uses and "ORed" logic to see if at least one tag is present in the resource.
+The **Mutelist** uses both "AND" and "OR" logic to determine which resources, checks, regions, and tags should be muted. For each check, the Mutelist evaluates whether the account, region, and resource match the specified criteria using "AND" logic. If tags are specified, the Mutelist can apply either "AND" or "OR" logic.
 
 If any of the criteria do not match, the check is not muted.
+
+???+ note
+    Remember that mutelist can be used with regular expressions.
 
 ## Mutelist Specification
 
@@ -52,6 +55,29 @@ Mutelist:
           Tags:
             - "test=test"         # Will mute every resource containing the string "test" and the tags 'test=test' and
             - "project=test|project=stage" # either of ('project=test' OR project=stage) in account 123456789012 and every region
+        "*":
+            Regions:
+              - "*"
+            Resources:
+              - "test"
+            Tags:
+              - "test=test"
+              - "project=test"    # This will mute every resource containing the string "test" and BOTH tags at the same time.
+        "*":
+            Regions:
+              - "*"
+            Resources:
+              - "test"
+            Tags:                 # This will mute every resource containing the string "test" and the ones that contain EITHER the `test=test` OR `project=test` OR `project=dev`
+              - "test=test|project=(test|dev)"
+        "*":
+            Regions:
+              - "*"
+            Resources:
+              - "test"
+            Tags:
+              - "test=test"       # This will mute every resource containing the string "test" and the tags `test=test` and either `project=test` OR `project=stage` in every account and region.
+              - "project=test|project=stage"
 
     "*":
       Checks:
