@@ -1069,7 +1069,7 @@ class Test_Parser:
         max_retries = "10"
         command = [prowler_command, argument, max_retries]
         parsed = self.parser.parse(command)
-        assert parsed.retries_max_attempts == int(max_retries)
+        assert parsed.aws_retries_max_attempts == int(max_retries)
 
     def test_aws_parser_scan_unused_services(self):
         argument = "--scan-unused-services"

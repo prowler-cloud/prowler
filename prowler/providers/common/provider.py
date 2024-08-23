@@ -182,7 +182,7 @@ class Provider(ABC):
             if not isinstance(Provider._global, provider_class):
                 if "aws" in provider_class_name.lower():
                     global_provider = provider_class(
-                        arguments.retries_max_attempts,
+                        arguments.aws_retries_max_attempts,
                         arguments.role,
                         arguments.session_duration,
                         arguments.external_id,
