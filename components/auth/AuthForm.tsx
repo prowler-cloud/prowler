@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Icon } from "@iconify/react";
-import { Button, Checkbox, Divider, Input, Link } from "@nextui-org/react";
+import { Button, Checkbox, Divider, Link } from "@nextui-org/react";
 import { useState } from "react";
 import { useFormState } from "react-dom";
 import { useForm } from "react-hook-form";
@@ -25,23 +25,22 @@ import { AuthButton } from "./AuthButton";
 export const AuthForm = ({ type }: { type: string }) => {
   const [user, setUser] = useState(null);
 
-  const [state, dispath] = useFormState(authenticate, undefined);
+  const formSchema = authFormSchema(type);
+  // const [state, dispath] = useFormState(authenticate, undefined);
 
-  const form = useForm<z.infer<typeof authFormSchema>>({
-    resolver: zodResolver(authFormSchema),
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
-      username: "",
+      email: "",
       password: "",
     },
   });
 
-  const onSubmit = (values: z.infer<typeof authFormSchema>) => {
+  const onSubmit = (values: z.infer<typeof formSchema>) => {
     // Do something with the form values
     // this will be type-safe and validated
     console.log(values);
   };
-
-  console.log(state);
 
   return (
     <div
@@ -74,29 +73,50 @@ export const AuthForm = ({ type }: { type: string }) => {
         <p className="pb-2 text-xl font-medium">
           {type === "sign-in" ? "Sign In" : "Sign Up"}
         </p>
-        {/* Sign UP Form */}
-        {type === "sign-up" && (
-          <Form {...form}>
-            <form
-              className="flex flex-col gap-3"
-              onSubmit={form.handleSubmit(onSubmit)}
-            >
-              <CustomInput
-                control={form.control}
-                name="username"
-                type="text"
-                label="Username"
-                placeholder="Enter your username"
-              />
-              <CustomInput
-                control={form.control}
-                name="email"
-                type="email"
-                label="Email"
-                placeholder="Enter your email"
-              />
-              <CustomInput control={form.control} password />
-              {/* <Input
+
+        <Form {...form}>
+          <form
+            className="flex flex-col gap-3"
+            onSubmit={form.handleSubmit(onSubmit)}
+          >
+            {type === "sign-up" && (
+              <>
+                <CustomInput
+                  control={form.control}
+                  name="firstName"
+                  type="text"
+                  label="Name"
+                  placeholder="Enter your name"
+                />
+                <CustomInput
+                  control={form.control}
+                  name="companyName"
+                  type="text"
+                  label="Company Name"
+                  placeholder="Enter your company name"
+                />
+              </>
+            )}
+            <CustomInput
+              control={form.control}
+              name="email"
+              type="email"
+              label="Email"
+              placeholder="Enter your email"
+            />
+
+            <CustomInput control={form.control} password />
+            {type === "sign-in" && (
+              <div className="flex items-center justify-between px-1 py-2">
+                <Checkbox name="remember" size="sm">
+                  Remember me
+                </Checkbox>
+                <Link className="text-default-500" href="#">
+                  Forgot password?
+                </Link>
+              </div>
+            )}
+            {/* <Input
                 isRequired
                 endContent={
                   <button type="button" onClick={toggleConfirmVisibility}>
@@ -119,42 +139,40 @@ export const AuthForm = ({ type }: { type: string }) => {
                 type={isConfirmVisible ? "text" : "password"}
                 variant="bordered"
               /> */}
-              <Checkbox isRequired className="py-4" size="sm">
-                I agree with the&nbsp;
-                <Link href="#" size="sm">
-                  Terms
-                </Link>
-                &nbsp; and&nbsp;
-                <Link href="#" size="sm">
-                  Privacy Policy
-                </Link>
-              </Checkbox>
-              <AuthButton type={type} />
-            </form>
-          </Form>
-        )}
-        {/* Sign IN Form */}
+            {type === "sign-up" && (
+              <FormField
+                control={form.control}
+                name="termsAndConditions"
+                render={({ field }) => (
+                  <>
+                    <FormControl>
+                      <Checkbox
+                        isRequired
+                        className="py-4"
+                        size="sm"
+                        {...field}
+                      >
+                        I agree with the&nbsp;
+                        <Link href="#" size="sm">
+                          Terms
+                        </Link>
+                        &nbsp; and&nbsp;
+                        <Link href="#" size="sm">
+                          Privacy Policy
+                        </Link>
+                      </Checkbox>
+                    </FormControl>
+                    <FormMessage />
+                  </>
+                )}
+              />
+            )}
+
+            <AuthButton type={type} />
+          </form>
+        </Form>
         {type === "sign-in" && (
           <>
-            <form className="flex flex-col gap-3" action={dispath}>
-              <Input
-                label="Email Address"
-                name="email"
-                placeholder="Enter your email"
-                type="email"
-                variant="bordered"
-              />
-
-              <div className="flex items-center justify-between px-1 py-2">
-                <Checkbox name="remember" size="sm">
-                  Remember me
-                </Checkbox>
-                <Link className="text-default-500" href="#">
-                  Forgot password?
-                </Link>
-              </div>
-              <AuthButton type={type} />
-            </form>
             <div className="flex items-center gap-4 py-2">
               <Divider className="flex-1" />
               <p className="shrink-0 text-tiny text-default-500">OR</p>
@@ -184,7 +202,6 @@ export const AuthForm = ({ type }: { type: string }) => {
             </div>
           </>
         )}
-
         {type === "sign-in" ? (
           <p className="text-center text-small">
             Need to create an account?&nbsp;
