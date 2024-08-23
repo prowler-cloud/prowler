@@ -227,8 +227,6 @@ class Provider(ABC):
                         arguments.config_file,
                         arguments.fixer_config,
                     )
-                 else:
-                    global_provider = provider_class(arguments)
 
             Provider._global = global_provider
         except TypeError as error:
