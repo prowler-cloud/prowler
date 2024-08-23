@@ -40,14 +40,26 @@ class GcpProvider(Provider):
 
     def __init__(
         self,
-        input_project_ids,
-        excluded_project_ids,
-        credentials_file,
-        impersonate_service_account,
-        list_project_ids,
-        config_file,
-        fixer_config,
+        project_ids: list = None,
+        excluded_project_ids: list = None,
+        credentials_file: str = None,
+        impersonate_service_account: str = None,
+        list_project_ids: bool = False,
+        config_file: str = None,
+        fixer_config: str = None,
     ):
+        """
+        GCP Provider constructor
+
+        Args:
+            project_ids: list
+            excluded_project_ids: list
+            credentials_file: str
+            impersonate_service_account: str
+            list_project_ids: bool
+            config_file: str
+            fixer_config: str
+        """
         logger.info("Instantiating GCP Provider ...")
         self._impersonated_service_account = impersonate_service_account
 
@@ -61,10 +73,11 @@ class GcpProvider(Provider):
         accessible_projects = self.get_projects()
         if not accessible_projects:
             logger.critical("No Project IDs can be accessed via Google Credentials.")
+            # TODO: add custom exception once we have the GCP exceptions
             raise SystemExit
 
-        if input_project_ids:
-            for input_project in input_project_ids:
+        if project_ids:
+            for input_project in project_ids:
                 for accessible_project in accessible_projects:
                     if self.is_project_matching(input_project, accessible_project):
                         self._projects[accessible_project] = accessible_projects[
@@ -93,6 +106,7 @@ class GcpProvider(Provider):
             logger.critical(
                 "No Input Project IDs can be accessed via Google Credentials."
             )
+            # TODO: add custom exception once we have the GCP exceptions
             raise SystemExit
 
         if list_project_ids:
