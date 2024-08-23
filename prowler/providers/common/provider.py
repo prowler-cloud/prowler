@@ -197,7 +197,7 @@ class Provider(ABC):
                         arguments.config_file,
                         arguments.fixer_config,
                     )
-                if "Kubernetes" in provider_class_name:
+                elif "Kubernetes" in provider_class_name:
                     global_provider = provider_class(
                         arguments.kubeconfig_file,
                         arguments.context,
