@@ -2,7 +2,6 @@ import json
 import os
 import pathlib
 import traceback
-from argparse import Namespace
 from importlib.machinery import FileFinder
 from logging import DEBUG, ERROR
 from pkgutil import ModuleInfo
@@ -475,8 +474,7 @@ class TestCheck:
             },
         ]
 
-        arguments = Namespace()
-        aws_provider = AwsProvider(arguments)
+        aws_provider = AwsProvider()
         for test in test_cases:
             check_folder = test["input"]["path"]
             provider = test["input"]["provider"]
