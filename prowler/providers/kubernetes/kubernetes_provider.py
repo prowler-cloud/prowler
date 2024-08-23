@@ -1,6 +1,4 @@
 import os
-import sys
-from argparse import Namespace
 
 from colorama import Fore, Style
 from kubernetes.config.config_exception import ConfigException
@@ -33,23 +31,36 @@ class KubernetesProvider(Provider):
     # TODO: this is not optional, enforce for all providers
     audit_metadata: Audit_Metadata
 
-    def __init__(self, arguments: Namespace):
+    def __init__(
+        self,
+        kubeconfig_file: str = None,
+        context: str = None,
+        namespace: list = None,
+        config_file: str = None,
+        fixer_config: str = None,
+    ):
         """
         Initializes the KubernetesProvider instance.
         Args:
-            arguments (dict): A dictionary containing configuration arguments.
+            kubeconfig_file (str): Path to the kubeconfig file.
+            context (str): Context name.
+            namespace (list): List of namespaces.
+            config_file (str): Path to the configuration file.
+            fixer_config (str): Path to the fixer configuration file
         """
+
         logger.info("Instantiating Kubernetes Provider ...")
-        self._session = self.setup_session(arguments.kubeconfig_file, arguments.context)
-        if not arguments.namespace:
+        self._session = self.setup_session(kubeconfig_file, context)
+        if not namespace:
             logger.info("Retrieving all namespaces ...")
             self._namespaces = self.get_all_namespaces()
         else:
-            self._namespaces = arguments.namespace
+            self._namespaces = namespace
 
         if not self._session.api_client:
             logger.critical("Failed to set up a Kubernetes session.")
-            sys.exit(1)
+            # TODO: add custom exception once we have the Kubernetes exceptions
+            raise SystemExit
 
         self._identity = KubernetesIdentityInfo(
             context=self._session.context["name"],
@@ -59,12 +70,8 @@ class KubernetesProvider(Provider):
 
         # TODO: move this to the providers, pending for AWS, GCP, AZURE and K8s
         # Audit Config
-        self._audit_config = load_and_validate_config_file(
-            self._type, arguments.config_file
-        )
-        self._fixer_config = load_and_validate_config_file(
-            self._type, arguments.fixer_config
-        )
+        self._audit_config = load_and_validate_config_file(self._type, config_file)
+        self._fixer_config = load_and_validate_config_file(self._type, fixer_config)
 
     @property
     def type(self):
@@ -203,6 +210,7 @@ class KubernetesProvider(Provider):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             if raise_on_exception:
+                # TODO: add custom exception once we have the Kubernetes exceptions
                 raise error
             return Connection(error=error)
 
@@ -237,7 +245,8 @@ class KubernetesProvider(Provider):
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            sys.exit(1)
+            # TODO: add custom exception once we have the Kubernetes exceptions
+            raise error
 
     def get_context_user_roles(self):
         """
@@ -271,7 +280,8 @@ class KubernetesProvider(Provider):
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            sys.exit(1)
+            # TODO: add custom exception once we have the Kubernetes exceptions
+            raise error
 
     def get_all_namespaces(self) -> list[str]:
         """
@@ -289,7 +299,8 @@ class KubernetesProvider(Provider):
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            sys.exit()
+            # TODO: add custom exception once we have the Kubernetes exceptions
+            raise error
 
     def get_pod_current_namespace(self):
         """

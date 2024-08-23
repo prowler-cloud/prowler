@@ -197,6 +197,24 @@ class Provider(ABC):
                         arguments.config_file,
                         arguments.fixer_config,
                     )
+                if "Kubernetes" in provider_class_name:
+                    global_provider = provider_class(
+                        arguments.kubeconfig_file,
+                        arguments.context,
+                        arguments.namespace,
+                        arguments.config_file,
+                        arguments.fixer_config,
+                    )
+                elif "Gcp" in provider_class_name:
+                    global_provider = provider_class(
+                        arguments.project_id,
+                        arguments.excluded_project_id,
+                        arguments.credentials_file,
+                        arguments.impersonate_service_account,
+                        arguments.list_project_id,
+                        arguments.config_file,
+                        arguments.fixer_config,
+                    )
                 else:
                     global_provider = provider_class(arguments)
 
