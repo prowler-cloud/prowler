@@ -63,7 +63,7 @@ class Test_rds_instance_certificate_expiration:
         )
 
         rds_client = mock.MagicMock
-        rds_client.db_instances = []
+        rds_client.db_instances = {}
         rds_client.db_instances = [
             DBInstance(
                 id="db-master-1",
@@ -561,7 +561,7 @@ class Test_rds_instance_certificate_expiration:
         )
 
         rds_client = mock.MagicMock
-        rds_client.db_instances = []
+        rds_client.db_instances = {}
         rds_client.db_instances = [
             DBInstance(
                 id="db-master-1",
