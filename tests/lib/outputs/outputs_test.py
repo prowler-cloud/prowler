@@ -159,6 +159,11 @@ class TestOutputs:
             "tag3": "",
         }
 
+    def test_unroll_tags_with_key_only(self):
+        tags = [{"key": "name"}]
+
+        assert unroll_tags(tags) == {"name": ""}
+
     def test_unroll_dict(self):
         test_compliance_dict = {
             "CISA": ["your-systems-3", "your-data-1", "your-data-2"],

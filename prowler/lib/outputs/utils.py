@@ -52,6 +52,14 @@ def unroll_tags(tags: list) -> dict:
         >>> unroll_tags(tags)
         {'name': 'John', 'age': '30'}
 
+        >>> tags = [{"key": "name"}]
+        >>> unroll_tags(tags)
+        {'name': ''}
+
+        >>> tags = [{"Key": "name"}]
+        >>> unroll_tags(tags)
+        {'name': ''}
+
         >>> tags = [{"name": "John", "age": "30"}]
         >>> unroll_tags(tags)
         {'name': 'John', 'age': '30'}
@@ -74,9 +82,9 @@ def unroll_tags(tags: list) -> dict:
         if isinstance(tags[0], str) and len(tags) > 0:
             return {tag: "" for tag in tags}
         if "key" in tags[0]:
-            return {item["key"]: item["value"] for item in tags}
+            return {item["key"]: item.get("value", "") for item in tags}
         elif "Key" in tags[0]:
-            return {item["Key"]: item["Value"] for item in tags}
+            return {item["Key"]: item.get("Value", "") for item in tags}
         else:
             return {key: value for d in tags for key, value in d.items()}
     return {}
