@@ -1135,7 +1135,7 @@ def get_aws_region_for_sts(session_region: str, regions: set[str]) -> str:
             aws_region = AWS_STS_GLOBAL_ENDPOINT_REGION
     else:
         # Get the first region passed to the -f/--region
-        aws_region = list(input_regions)[0]
+        aws_region = list(regions)[0]
 
     return aws_region
 
