@@ -180,7 +180,15 @@ class Provider(ABC):
             )
 
             if not isinstance(Provider._global, provider_class):
-                if "Gcp" in provider_class_name:
+                if "Kubernetes" in provider_class_name:
+                    global_provider = provider_class(
+                        arguments.kubeconfig_file,
+                        arguments.context,
+                        arguments.namespace,
+                        arguments.config_file,
+                        arguments.fixer_config,
+                    )
+                elif "Gcp" in provider_class_name:
                     global_provider = provider_class(
                         arguments.project_id,
                         arguments.excluded_project_id,
