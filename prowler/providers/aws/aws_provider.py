@@ -29,6 +29,12 @@ from prowler.providers.aws.config import (
     BOTO3_USER_AGENT_EXTRA,
     ROLE_SESSION_NAME,
 )
+from prowler.providers.aws.exceptions.exceptions import (
+    AWSArgumentTypeValidationError,
+    AWSClientError,
+    AWSNoCredentialsError,
+    AWSProfileNotFoundError,
+)
 from prowler.providers.aws.lib.arn.arn import parse_iam_credentials_arn
 from prowler.providers.aws.lib.arn.models import ARN
 from prowler.providers.aws.lib.mutelist.mutelist import AWSMutelist
@@ -1009,21 +1015,38 @@ class AwsProvider(Provider):
                 is_connected=True,
             )
 
-        except (ClientError, ProfileNotFound, NoCredentialsError) as credentials_error:
-            logger.error(
-                f"{credentials_error.__class__.__name__}[{credentials_error.__traceback__.tb_lineno}]: {credentials_error}"
-            )
+        except ClientError as e:
+            logger.error(f"AWSClientError[{e.__traceback__.tb_lineno}]: {e}")
             if raise_on_exception:
-                raise credentials_error
+                raise AWSClientError(
+                    file=os.path.basename(__file__), original_exception=e
+                ) from e
+            return Connection(error=e)
 
-            return Connection(error=credentials_error)
+        except ProfileNotFound as e:
+            logger.error(f"AWSProfileNotFoundError[{e.__traceback__.tb_lineno}]: {e}")
+            if raise_on_exception:
+                raise AWSProfileNotFoundError(
+                    file=os.path.basename(__file__), original_exception=e
+                ) from e
+            return Connection(error=e)
+
+        except NoCredentialsError as e:
+            logger.error(f"AWSNoCredentialsError[{e.__traceback__.tb_lineno}]: {e}")
+            if raise_on_exception:
+                raise AWSNoCredentialsError(
+                    file=os.path.basename(__file__), original_exception=e
+                ) from e
+            return Connection(error=e)
 
         except ArgumentTypeError as validation_error:
             logger.error(
                 f"{validation_error.__class__.__name__}[{validation_error.__traceback__.tb_lineno}]: {validation_error}"
             )
             if raise_on_exception:
-                raise validation_error
+                raise AWSArgumentTypeValidationError(
+                    file=os.path.basename(__file__), original_exception=validation_error
+                ) from validation_error
 
             return Connection(error=validation_error)
 
