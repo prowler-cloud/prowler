@@ -234,7 +234,7 @@ class Test_rds_instance_multi_az:
             )
         }
         instance_arn = (
-            "arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:db:test-instance"
+            f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:db:test-instance"
         )
         rds_client.db_instances = {
             instance_arn: DBInstance(
