@@ -47,7 +47,7 @@ class EC2(AWSService):
         self.launch_templates = []
         self.__threading_call__(self.__describe_launch_templates)
         self.__threading_call__(
-            self.__get_launch_template_versions__, self.launch_templates
+            self.__describe_launch_template_versions__, self.launch_templates
         )
 
     def __get_volume_arn_template__(self, region):
@@ -482,7 +482,7 @@ class EC2(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_launch_template_versions__(self, launch_template):
+    def __describe_launch_template_versions__(self, launch_template):
         try:
             regional_client = self.regional_clients[launch_template.region]
             describe_launch_template_versions_paginator = regional_client.get_paginator(
@@ -496,7 +496,16 @@ class EC2(AWSService):
                     launch_template.versions.append(
                         LaunchTemplateVersion(
                             version_number=template_version["VersionNumber"],
-                            template_data=template_version["LaunchTemplateData"],
+                            template_data=TemplateData(
+                                user_data=template_version["LaunchTemplateData"].get(
+                                    "UserData", ""
+                                ),
+                                associate_public_ip_address=template_version[
+                                    "LaunchTemplateData"
+                                ]
+                                .get("NetworkInterfaces")[0]
+                                .get("AssociatePublicIpAddress", False),
+                            ),
                         )
                     )
 
@@ -615,9 +624,14 @@ class InstanceMetadataDefaults(BaseModel):
     region: str
 
 
+class TemplateData(BaseModel):
+    user_data: str
+    associate_public_ip_address: bool
+
+
 class LaunchTemplateVersion(BaseModel):
     version_number: int
-    template_data: dict
+    template_data: TemplateData
 
 
 class LaunchTemplate(BaseModel):

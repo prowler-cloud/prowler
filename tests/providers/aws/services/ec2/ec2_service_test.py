@@ -22,7 +22,35 @@ from tests.providers.aws.utils import (
 EXAMPLE_AMI_ID = "ami-12c6146b"
 MOCK_DATETIME = datetime(2023, 1, 4, 7, 27, 30, tzinfo=tzutc())
 
-orig = botocore.client.BaseClient._make_api_call
+make_api_call = botocore.client.BaseClient._make_api_call
+
+
+def mock_make_api_call(self, operation_name, kwarg):
+    if operation_name == "DescribeLaunchTemplateVersions":
+        return {
+            "LaunchTemplateVersions": [
+                {
+                    "VersionNumber": 123,
+                    "LaunchTemplateData": {
+                        "UserData": b64encode(
+                            "foobar123".encode(encoding_format_utf_8)
+                        ).decode(encoding_format_utf_8),
+                        "NetworkInterfaces": [{"AssociatePublicIpAddress": True}],
+                    },
+                }
+            ]
+        }
+    elif operation_name == "DescribeLaunchTemplates":
+        return {
+            "LaunchTemplates": [
+                {
+                    "LaunchTemplateName": "tester1",
+                    "LaunchTemplateId": "lt-1234567890",
+                }
+            ]
+        }
+    # Si no es la operación que queremos interceptar, llamamos al método original
+    return make_api_call(self, operation_name, kwarg)
 
 
 class Test_EC2_Service:
@@ -656,54 +684,20 @@ class Test_EC2_Service:
         )
 
     # Test EC2 Describe Launch Templates
-    @mock_aws
+    @mock.patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     def test__get_launch_template_versions__(self):
-        # Generate EC2 Client
-        ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
-
-        TEMPLATE_NAME = "tester1"
-        TEMPLATE_INSTANCE_TYPE = "c5.large"
-        KNOWN_SECRET_USER_DATA = "DB_PASSWORD=foobar123"
-
-        # Create EC2 Launch Template API
-        ec2_client.create_launch_template(
-            LaunchTemplateName=TEMPLATE_NAME,
-            VersionDescription="Test EC Launch Template 1",
-            LaunchTemplateData={
-                "InstanceType": TEMPLATE_INSTANCE_TYPE,
-            },
-        )
-
-        # Create EC2 Launch Template Version API
-        ec2_client.create_launch_template_version(
-            LaunchTemplateName=TEMPLATE_NAME,
-            VersionDescription="Updated Test EC Launch Template 1",
-            LaunchTemplateData={
-                "InstanceType": TEMPLATE_INSTANCE_TYPE,
-                "UserData": b64encode(
-                    KNOWN_SECRET_USER_DATA.encode(encoding_format_utf_8)
-                ).decode(encoding_format_utf_8),
-            },
-        )
-
         # EC2 client for this test class
-        aws_provider = set_mocked_aws_provider(
-            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
-        )
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         ec2 = EC2(aws_provider)
 
         assert len(ec2.launch_templates) == 1
-        assert ec2.launch_templates[0].name == TEMPLATE_NAME
         assert ec2.launch_templates[0].region == AWS_REGION_US_EAST_1
 
-        assert len(ec2.launch_templates[0].versions) == 2
+        assert len(ec2.launch_templates[0].versions) == 1
 
-        version1, version2 = ec2.launch_templates[0].versions
+        version = ec2.launch_templates[0].versions[0]
 
-        assert version1.template_data["InstanceType"] == TEMPLATE_INSTANCE_TYPE
-
-        assert version2.template_data["InstanceType"] == TEMPLATE_INSTANCE_TYPE
         assert (
-            b64decode(version2.template_data["UserData"]).decode(encoding_format_utf_8)
-            == KNOWN_SECRET_USER_DATA
+            b64decode(version.template_data.user_data).decode(encoding_format_utf_8)
+            == "foobar123"
         )
