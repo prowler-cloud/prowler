@@ -47,6 +47,10 @@ class ELBv2(AWSService):
                             type=elbv2["Type"],
                             dns=elbv2.get("DNSName", None),
                             scheme=elbv2.get("Scheme", None),
+                            availability_zones={
+                                az["ZoneName"]: az["SubnetId"]
+                                for az in elbv2.get("AvailabilityZones", [])
+                            },
                         )
         except Exception as error:
             logger.error(
@@ -200,4 +204,6 @@ class LoadBalancerv2(BaseModel):
     drop_invalid_header_fields: Optional[str]
     listeners: Dict[str, Listenerv2] = {}
     scheme: Optional[str]
+    # Key: ZoneName, Value: SubnetId
+    availability_zones: Dict[str, str] = {}
     tags: Optional[list] = []

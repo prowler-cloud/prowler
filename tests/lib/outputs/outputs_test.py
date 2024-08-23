@@ -150,6 +150,15 @@ class TestOutputs:
             "terraform": "true",
         }
 
+    def test_unroll_tags_only_list(self):
+        tags_list = ["tag1", "tag2", "tag3"]
+
+        assert unroll_tags(tags_list) == {
+            "tag1": "",
+            "tag2": "",
+            "tag3": "",
+        }
+
     def test_unroll_dict(self):
         test_compliance_dict = {
             "CISA": ["your-systems-3", "your-data-1", "your-data-2"],
