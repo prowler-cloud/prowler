@@ -18,9 +18,11 @@ from tests.providers.aws.utils import (
 project_name = "test"
 project_arn = f"arn:{AWS_COMMERCIAL_PARTITION}:codebuild:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:project/{project_name}"
 build_spec_project_arn = "arn:aws:s3:::my-codebuild-sample2/buildspec.yml"
-buildspec_type = "S3"
+source_type = "BITBUCKET"
 build_id = "test:93f838a7-cd20-48ae-90e5-c10fbbc78ca6"
 last_invoked_time = datetime.now() - timedelta(days=2)
+bitbucket_url = "https://bitbucket.org/example/repo.git"
+secondary_bitbucket_url = "https://bitbucket.org/example/secondary-repo.git"
 
 # Mocking batch_get_projects
 make_api_call = botocore.client.BaseClient._make_api_call
@@ -38,9 +40,17 @@ def mock_make_api_call(self, operation_name, kwarg):
             "projects": [
                 {
                     "source": {
-                        "type": buildspec_type,
+                        "type": source_type,
+                        "location": bitbucket_url,
                         "buildspec": build_spec_project_arn,
-                    }
+                    },
+                    "secondarySources": [
+                        {
+                            "type": source_type,
+                            "location": secondary_bitbucket_url,
+                            "buildspec": "",
+                        }
+                    ],
                 }
             ]
         }
@@ -78,3 +88,8 @@ class Test_Codebuild_Service:
         assert codebuild.projects[project_arn].last_invoked_time == last_invoked_time
         assert codebuild.projects[project_arn].last_build == Build(id=build_id)
         assert codebuild.projects[project_arn].buildspec == build_spec_project_arn
+        assert bitbucket_url == codebuild.projects[project_arn].source.location
+        assert (
+            secondary_bitbucket_url
+            in codebuild.projects[project_arn].secondary_sources[0].location
+        )

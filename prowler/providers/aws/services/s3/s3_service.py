@@ -15,20 +15,26 @@ class S3(AWSService):
         super().__init__(__class__.__name__, provider)
         self.account_arn_template = f"arn:{self.audited_partition}:s3:{self.region}:{self.audited_account}:account"
         self.regions_with_buckets = []
-        self.buckets = self._list_buckets(provider)
-        self.__threading_call__(self._get_bucket_versioning, self.buckets)
-        self.__threading_call__(self._get_bucket_logging, self.buckets)
-        self.__threading_call__(self._get_bucket_policy, self.buckets)
-        self.__threading_call__(self._get_bucket_acl, self.buckets)
-        self.__threading_call__(self._get_public_access_block, self.buckets)
-        self.__threading_call__(self._get_bucket_encryption, self.buckets)
-        self.__threading_call__(self._get_bucket_ownership_controls, self.buckets)
-        self.__threading_call__(self._get_object_lock_configuration, self.buckets)
-        self.__threading_call__(self._get_bucket_tagging, self.buckets)
+        self.buckets = {}
+        self._list_buckets(provider)
+        self.__threading_call__(self._get_bucket_versioning, self.buckets.values())
+        self.__threading_call__(self._get_bucket_logging, self.buckets.values())
+        self.__threading_call__(self._get_bucket_policy, self.buckets.values())
+        self.__threading_call__(self._get_bucket_acl, self.buckets.values())
+        self.__threading_call__(self._get_public_access_block, self.buckets.values())
+        self.__threading_call__(self._get_bucket_encryption, self.buckets.values())
+        self.__threading_call__(
+            self._get_bucket_ownership_controls, self.buckets.values()
+        )
+        self.__threading_call__(
+            self._get_object_lock_configuration, self.buckets.values()
+        )
+        self.__threading_call__(self._get_bucket_tagging, self.buckets.values())
+        self.__threading_call__(self._get_bucket_replication, self.buckets.values())
+        self.__threading_call__(self._get_bucket_lifecycle, self.buckets.values())
 
     def _list_buckets(self, provider):
         logger.info("S3 - Listing buckets...")
-        buckets = []
         try:
             list_buckets = self.client.list_buckets()
             for bucket in list_buckets["Buckets"]:
@@ -47,21 +53,17 @@ class S3(AWSService):
                     ):
                         self.regions_with_buckets.append(bucket_region)
                         # Check if there are filter regions
+                        # FIXME: what if the bucket comes from a CloudTrail bucket in another audited region
                         if provider.identity.audited_regions:
-                            # FIXME: what if the bucket comes from a CloudTrail bucket in another audited region
                             if bucket_region in provider.identity.audited_regions:
-                                buckets.append(
-                                    Bucket(
-                                        name=bucket["Name"],
-                                        arn=arn,
-                                        region=bucket_region,
-                                    )
+                                self.buckets[arn] = Bucket(
+                                    name=bucket["Name"],
+                                    region=bucket_region,
                                 )
                         else:
-                            buckets.append(
-                                Bucket(
-                                    name=bucket["Name"], arn=arn, region=bucket_region
-                                )
+                            self.buckets[arn] = Bucket(
+                                name=bucket["Name"],
+                                region=bucket_region,
                             )
                 except ClientError as error:
                     if error.response["Error"]["Code"] == "NoSuchBucket":
@@ -89,7 +91,6 @@ class S3(AWSService):
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-        return buckets
 
     def _get_bucket_versioning(self, bucket):
         logger.info("S3 - Get buckets versioning...")
@@ -379,6 +380,68 @@ class S3(AWSService):
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
+    def _get_bucket_lifecycle(self, bucket):
+        logger.info("S3 - Get buckets lifecycle...")
+        try:
+            regional_client = self.regional_clients[bucket.region]
+            lifecycle_configuration = (
+                regional_client.get_bucket_lifecycle_configuration(Bucket=bucket.name)
+            )
+            for rule in lifecycle_configuration["Rules"]:
+                bucket.lifecycle.append(
+                    LifeCycleRule(
+                        id=rule["ID"],
+                        status=rule["Status"],
+                    )
+                )
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "NoSuchLifecycleConfiguration":
+                bucket.lifecycle = []
+            elif error.response["Error"]["Code"] == "NoSuchBucket":
+                logger.warning(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
+    def _get_bucket_replication(self, bucket):
+        logger.info("S3 - Get buckets replication...")
+        try:
+            regional_client = self.regional_clients[bucket.region]
+            replication_config = regional_client.get_bucket_replication(
+                Bucket=bucket.name
+            )["ReplicationConfiguration"]["Rules"]
+            if replication_config:
+                for rule in replication_config:
+                    bucket.replication_rules.append(
+                        ReplicationRule(
+                            id=rule["ID"],
+                            status=rule["Status"],
+                            destination=rule["Destination"]["Bucket"],
+                        )
+                    )
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "NoSuchBucket":
+                logger.warning(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            elif (
+                error.response["Error"]["Code"]
+                == "ReplicationConfigurationNotFoundError"
+            ):
+                bucket.replication = None
+            else:
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+        except Exception as error:
+            if regional_client:
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
 
 class S3Control(AWSService):
     def __init__(self, provider):
@@ -490,9 +553,19 @@ class AccessPoint(BaseModel):
     region: str
 
 
+class LifeCycleRule(BaseModel):
+    id: str
+    status: str
+
+
+class ReplicationRule(BaseModel):
+    id: str
+    status: str
+    destination: str
+
+
 class Bucket(BaseModel):
     name: str
-    arn: str
     versioning: bool = False
     logging: bool = False
     public_access_block: Optional[PublicAccessBlock]
@@ -505,3 +578,5 @@ class Bucket(BaseModel):
     object_lock: bool = False
     mfa_delete: bool = False
     tags: Optional[list] = []
+    lifecycle: Optional[list[LifeCycleRule]] = []
+    replication_rules: Optional[list[ReplicationRule]] = []

@@ -18,6 +18,7 @@ The following list includes all the AWS checks with configurable variables that 
 | `ec2_elastic_ip_shodan`                                       | `shodan_api_key`                                 | String          |
 | `ec2_securitygroup_with_many_ingress_egress_rules`            | `max_security_group_rules`                       | Integer         |
 | `ec2_instance_older_than_specific_days`                       | `max_ec2_instance_age_in_days`                   | Integer         |
+| `ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports`| `ec2_sg_high_risk_ports`                 | List of Integer |
 | `vpc_endpoint_connections_trust_boundaries`                   | `trusted_account_ids`                            | List of Strings |
 | `vpc_endpoint_services_allowed_principals_trust_boundaries`   | `trusted_account_ids`                            | List of Strings |
 | `cloudwatch_log_group_retention_policy_specific_days_enabled` | `log_group_retention_days`                       | Integer         |
@@ -39,12 +40,14 @@ The following list includes all the AWS checks with configurable variables that 
 | `cloudtrail_threat_detection_enumeration`                     | `threat_detection_enumeration_entropy`           | Integer         |
 | `cloudtrail_threat_detection_enumeration`                     | `threat_detection_enumeration_minutes`           | Integer         |
 | `cloudtrail_threat_detection_enumeration`                     | `threat_detection_enumeration_actions`           | List of Strings |
+| `codebuild_project_no_secrets_in_variables`                   | `excluded_sensitive_environment_variables`       | List of Strings |
 | `rds_instance_backup_enabled`                                 | `check_rds_instance_replicas`                    | Boolean         |
 | `ec2_securitygroup_allow_ingress_from_internet_to_any_port`   | `ec2_allowed_interface_types`                    | List of Strings |
 | `ec2_securitygroup_allow_ingress_from_internet_to_any_port`   | `ec2_allowed_instance_owners`                    | List of Strings |
 | `acm_certificates_expiration_check`                           | `days_to_expire_threshold`                       | Integer         |
 | `eks_control_plane_logging_all_types_enabled`                 | `eks_required_log_types`                         | List of Strings |
-| `eks_cluster_uses_a_supported_version`                        | `eks_cluster_oldest_version_supported`                 | String          |
+| `eks_cluster_uses_a_supported_version`                        | `eks_cluster_oldest_version_supported`           | String          |
+| `elbv2_is_in_multiple_az`                                     | `elbv2_min_azs`                                  | Integer         |
 
 ## Azure
 
@@ -124,6 +127,21 @@ aws:
   ec2_allowed_instance_owners:
     [
         "amazon-elb"
+    ]
+  # aws.ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports
+  ec2_sg_high_risk_ports:
+    [
+        25,
+        110,
+        135,
+        143,
+        445,
+        3000,
+        4333,
+        5000,
+        5500,
+        8080,
+        8088,
     ]
 
   # AWS VPC Configuration (vpc_endpoint_connections_trust_boundaries, vpc_endpoint_services_allowed_principals_trust_boundaries)
@@ -371,6 +389,14 @@ aws:
   # aws.eks_cluster_uses_a_supported_version
   # EKS clusters must be version 1.28 or higher
   eks_cluster_oldest_version_supported: "1.28"
+
+  # AWS CodeBuild Configuration
+  # aws.codebuild_project_no_secrets_in_variables
+  # CodeBuild sensitive variables that are excluded from the check
+  excluded_sensitive_environment_variables:
+    [
+
+    ]
 
 # Azure Configuration
 azure:

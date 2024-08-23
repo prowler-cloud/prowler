@@ -46,6 +46,8 @@ def parse_iam_credentials_arn(arn: str) -> ARN:
             arn_parsed.resource_type != "role"
             and arn_parsed.resource_type != "user"
             and arn_parsed.resource_type != "assumed-role"
+            and arn_parsed.resource_type != "root"
+            and arn_parsed.resource_type != "federated-user"
         ):
             raise RoleArnParsingInvalidResourceType
         elif arn_parsed.resource == "":
@@ -56,5 +58,5 @@ def parse_iam_credentials_arn(arn: str) -> ARN:
 
 def is_valid_arn(arn: str) -> bool:
     """is_valid_arn returns True or False whether the given AWS ARN (Amazon Resource Name) is valid or not."""
-    regex = r"^arn:aws(-cn|-us-gov|-iso|-iso-b)?:[a-zA-Z0-9\-]+:([a-z]{2}-[a-z]+-\d{1})?:(\d{12})?:[a-zA-Z0-9\-_\/:\.]+(:\d+)?$"
+    regex = r"^arn:aws(-cn|-us-gov|-iso|-iso-b)?:[a-zA-Z0-9\-]+:([a-z]{2}-[a-z]+-\d{1})?:(\d{12})?:[a-zA-Z0-9\-_\/:\.\*]+(:\d+)?$"
     return re.match(regex, arn) is not None

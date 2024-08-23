@@ -18,7 +18,7 @@ class EC2(AWSService):
         self.instances = []
         self.__threading_call__(self.__describe_instances__)
         self.__threading_call__(self.__get_instance_user_data__, self.instances)
-        self.security_groups = []
+        self.security_groups = {}
         self.regions_with_sgs = []
         self.__threading_call__(self.__describe_security_groups__)
         self.network_acls = []
@@ -49,6 +49,10 @@ class EC2(AWSService):
         self.__threading_call__(
             self.__get_launch_template_versions__, self.launch_templates
         )
+        self.vpn_endpoints = {}
+        self.__threading_call__(self._describe_vpn_endpoints)
+        self.transit_gateways = {}
+        self.__threading_call__(self._describe_transit_gateways)
 
     def __get_volume_arn_template__(self, region):
         return (
@@ -120,18 +124,15 @@ class EC2(AWSService):
                             for sg_group in ingress_rule.get("UserIdGroupPairs", []):
                                 if sg_group.get("GroupId"):
                                     associated_sgs.append(sg_group["GroupId"])
-                        self.security_groups.append(
-                            SecurityGroup(
-                                name=sg["GroupName"],
-                                arn=arn,
-                                region=regional_client.region,
-                                id=sg["GroupId"],
-                                ingress_rules=sg["IpPermissions"],
-                                egress_rules=sg["IpPermissionsEgress"],
-                                associated_sgs=associated_sgs,
-                                vpc_id=sg["VpcId"],
-                                tags=sg.get("Tags"),
-                            )
+                        self.security_groups[arn] = SecurityGroup(
+                            name=sg["GroupName"],
+                            region=regional_client.region,
+                            id=sg["GroupId"],
+                            ingress_rules=sg["IpPermissions"],
+                            egress_rules=sg["IpPermissionsEgress"],
+                            associated_sgs=associated_sgs,
+                            vpc_id=sg["VpcId"],
+                            tags=sg.get("Tags"),
                         )
                         if sg["GroupName"] != "default":
                             self.regions_with_sgs.append(regional_client.region)
@@ -267,7 +268,7 @@ class EC2(AWSService):
     ):
         try:
             for sg in interface_security_groups:
-                for security_group in self.security_groups:
+                for security_group in self.security_groups.values():
                     if security_group.id == sg["GroupId"]:
                         security_group.network_interfaces.append(interface)
         except Exception as error:
@@ -508,6 +509,65 @@ class EC2(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _describe_vpn_endpoints(self, regional_client):
+        try:
+            describe_client_vpn_endpoints_paginator = regional_client.get_paginator(
+                "describe_client_vpn_endpoints"
+            )
+
+            for page in describe_client_vpn_endpoints_paginator.paginate():
+                for vpn_endpoint in page["ClientVpnEndpoints"]:
+                    vpn_endpoint_arn = f"arn:aws:ec2:{regional_client.region}:{self.audited_account}:client-vpn-endpoint/{vpn_endpoint['ClientVpnEndpointId']}"
+                    if not self.audit_resources or (
+                        is_resource_filtered(vpn_endpoint_arn, self.audit_resources)
+                    ):
+                        self.vpn_endpoints[vpn_endpoint_arn] = VpnEndpoint(
+                            id=vpn_endpoint["ClientVpnEndpointId"],
+                            arn=vpn_endpoint_arn,
+                            connection_logging=vpn_endpoint["ConnectionLogOptions"][
+                                "Enabled"
+                            ],
+                            region=regional_client.region,
+                            tags=vpn_endpoint.get("Tags"),
+                        )
+
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _describe_transit_gateways(self, regional_client):
+        try:
+            describe_transit_gateways_paginator = regional_client.get_paginator(
+                "describe_transit_gateways"
+            )
+
+            for page in describe_transit_gateways_paginator.paginate():
+                for transit_gateway in page["TransitGateways"]:
+                    if not self.audit_resources or (
+                        is_resource_filtered(
+                            transit_gateway["TransitGatewayArn"], self.audit_resources
+                        )
+                    ):
+                        self.transit_gateways[transit_gateway["TransitGatewayArn"]] = (
+                            TransitGateway(
+                                id=transit_gateway["TransitGatewayId"],
+                                auto_accept_shared_attachments=(
+                                    transit_gateway["Options"][
+                                        "AutoAcceptSharedAttachments"
+                                    ]
+                                    == "enable"
+                                ),
+                                region=regional_client.region,
+                                tags=transit_gateway.get("Tags"),
+                            )
+                        )
+
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class Instance(BaseModel):
     id: str
@@ -563,7 +623,6 @@ class NetworkInterface(BaseModel):
 
 class SecurityGroup(BaseModel):
     name: str
-    arn: str
     region: str
     id: str
     vpc_id: str
@@ -630,3 +689,17 @@ class LaunchTemplate(BaseModel):
     arn: str
     region: str
     versions: list[LaunchTemplateVersion] = []
+
+
+class VpnEndpoint(BaseModel):
+    id: str
+    connection_logging: bool
+    region: str
+    tags: Optional[list] = []
+
+
+class TransitGateway(BaseModel):
+    id: str
+    auto_accept_shared_attachments: bool
+    region: str
+    tags: Optional[list] = []

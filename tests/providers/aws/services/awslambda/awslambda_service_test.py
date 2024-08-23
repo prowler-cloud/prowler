@@ -220,6 +220,7 @@ class Test_Lambda_Service:
             assert awslambda.functions[
                 lambda_arn_1
             ].url_config.cors_config.allow_origins == ["*"]
+            assert awslambda.functions[lambda_arn_1].vpc_id == "vpc-123abc"
 
             assert awslambda.functions[lambda_arn_1].tags == [{"test": "test"}]
 

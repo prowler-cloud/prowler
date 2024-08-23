@@ -258,7 +258,7 @@ class Test_cloudtrail_logs_s3_bucket_is_not_publicly_accessible:
             )
 
             # Empty s3 buckets to simulate the bucket is in another account
-            s3_client.buckets = []
+            s3_client.buckets = {}
 
             check = cloudtrail_logs_s3_bucket_is_not_publicly_accessible()
             result = check.execute()
@@ -300,7 +300,7 @@ class Test_cloudtrail_logs_s3_bucket_is_not_publicly_accessible:
             )
 
             cloudtrail_client.trails = None
-            s3_client.buckets = []
+            s3_client.buckets = {}
 
             check = cloudtrail_logs_s3_bucket_is_not_publicly_accessible()
             result = check.execute()
