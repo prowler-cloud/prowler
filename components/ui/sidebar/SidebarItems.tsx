@@ -213,9 +213,9 @@ export const sectionItemsWithTeams: SidebarItem[] = [
     items: [
       {
         key: "users",
-        href: "#",
+        href: "/users",
         title: "Users",
-        startContent: <TeamAvatar name="Users page" />,
+        icon: "ci:users",
       },
       {
         key: "roles",
