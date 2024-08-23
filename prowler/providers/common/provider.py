@@ -197,15 +197,19 @@ class Provider(ABC):
                         arguments.config_file,
                         arguments.fixer_config,
                     )
-                elif "Kubernetes" in provider_class_name:
+                elif "azure" in provider_class_name.lower():
                     global_provider = provider_class(
-                        arguments.kubeconfig_file,
-                        arguments.context,
-                        arguments.namespace,
+                        arguments.az_cli_auth,
+                        arguments.sp_env_auth,
+                        arguments.browser_auth,
+                        arguments.managed_identity_auth,
+                        arguments.tenant_id,
+                        arguments.azure_region,
+                        arguments.subscription_id,
                         arguments.config_file,
                         arguments.fixer_config,
                     )
-                elif "Gcp" in provider_class_name:
+                elif "gcp" in provider_class_name.lower():
                     global_provider = provider_class(
                         arguments.project_id,
                         arguments.excluded_project_id,
@@ -215,8 +219,14 @@ class Provider(ABC):
                         arguments.config_file,
                         arguments.fixer_config,
                     )
-                else:
-                    global_provider = provider_class(arguments)
+                elif "kubernetes" in provider_class_name.lower():
+                    global_provider = provider_class(
+                        arguments.kubeconfig_file,
+                        arguments.context,
+                        arguments.namespace,
+                        arguments.config_file,
+                        arguments.fixer_config,
+                    )
 
             Provider._global = global_provider
         except TypeError as error:
