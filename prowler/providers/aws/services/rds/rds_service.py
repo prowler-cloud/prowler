@@ -14,7 +14,7 @@ class RDS(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
-        self.db_instances = []
+        self.db_instances = {}
         self.db_clusters = {}
         self.db_snapshots = []
         self.db_engines = {}
@@ -53,55 +53,53 @@ class RDS(AWSService):
                         is_resource_filtered(arn, self.audit_resources)
                     ):
                         if instance["Engine"] != "docdb":
-                            self.db_instances.append(
-                                DBInstance(
-                                    id=instance["DBInstanceIdentifier"],
-                                    arn=arn,
-                                    endpoint=instance.get("Endpoint", {}),
-                                    engine=instance["Engine"],
-                                    engine_version=instance["EngineVersion"],
-                                    status=instance["DBInstanceStatus"],
-                                    public=instance["PubliclyAccessible"],
-                                    encrypted=instance["StorageEncrypted"],
-                                    auto_minor_version_upgrade=instance[
-                                        "AutoMinorVersionUpgrade"
-                                    ],
-                                    backup_retention_period=instance.get(
-                                        "BackupRetentionPeriod"
-                                    ),
-                                    cloudwatch_logs=instance.get(
-                                        "EnabledCloudwatchLogsExports"
-                                    ),
-                                    deletion_protection=instance["DeletionProtection"],
-                                    enhanced_monitoring_arn=instance.get(
-                                        "EnhancedMonitoringResourceArn"
-                                    ),
-                                    parameter_groups=[
-                                        item["DBParameterGroupName"]
-                                        for item in instance["DBParameterGroups"]
-                                    ],
-                                    multi_az=instance["MultiAZ"],
-                                    username=instance["MasterUsername"],
-                                    iam_auth=instance.get(
-                                        "IAMDatabaseAuthenticationEnabled", False
-                                    ),
-                                    security_groups=[
-                                        sg["VpcSecurityGroupId"]
-                                        for sg in instance["VpcSecurityGroups"]
-                                        if sg["Status"] == "active"
-                                    ],
-                                    cluster_id=instance.get("DBClusterIdentifier"),
-                                    cluster_arn=f"arn:{self.audited_partition}:rds:{regional_client.region}:{self.audited_account}:cluster:{instance.get('DBClusterIdentifier')}",
-                                    region=regional_client.region,
-                                    tags=instance.get("TagList", []),
-                                    replica_source=instance.get(
-                                        "ReadReplicaSourceDBInstanceIdentifier"
-                                    ),
-                                    ca_cert=instance.get("CACertificateIdentifier"),
-                                    copy_tags_to_snapshot=instance.get(
-                                        "CopyTagsToSnapshot"
-                                    ),
-                                )
+                            self.db_instances[arn] = DBInstance(
+                                id=instance["DBInstanceIdentifier"],
+                                arn=arn,
+                                endpoint=instance.get("Endpoint", {}),
+                                engine=instance["Engine"],
+                                engine_version=instance["EngineVersion"],
+                                status=instance["DBInstanceStatus"],
+                                public=instance["PubliclyAccessible"],
+                                encrypted=instance["StorageEncrypted"],
+                                auto_minor_version_upgrade=instance[
+                                    "AutoMinorVersionUpgrade"
+                                ],
+                                backup_retention_period=instance.get(
+                                    "BackupRetentionPeriod"
+                                ),
+                                cloudwatch_logs=instance.get(
+                                    "EnabledCloudwatchLogsExports"
+                                ),
+                                deletion_protection=instance["DeletionProtection"],
+                                enhanced_monitoring_arn=instance.get(
+                                    "EnhancedMonitoringResourceArn"
+                                ),
+                                parameter_groups=[
+                                    item["DBParameterGroupName"]
+                                    for item in instance["DBParameterGroups"]
+                                ],
+                                multi_az=instance["MultiAZ"],
+                                username=instance["MasterUsername"],
+                                iam_auth=instance.get(
+                                    "IAMDatabaseAuthenticationEnabled", False
+                                ),
+                                security_groups=[
+                                    sg["VpcSecurityGroupId"]
+                                    for sg in instance["VpcSecurityGroups"]
+                                    if sg["Status"] == "active"
+                                ],
+                                cluster_id=instance.get("DBClusterIdentifier"),
+                                cluster_arn=f"arn:{self.audited_partition}:rds:{regional_client.region}:{self.audited_account}:cluster:{instance.get('DBClusterIdentifier')}",
+                                region=regional_client.region,
+                                tags=instance.get("TagList", []),
+                                replica_source=instance.get(
+                                    "ReadReplicaSourceDBInstanceIdentifier"
+                                ),
+                                ca_cert=instance.get("CACertificateIdentifier"),
+                                copy_tags_to_snapshot=instance.get(
+                                    "CopyTagsToSnapshot"
+                                ),
                             )
         except Exception as error:
             logger.error(
@@ -111,7 +109,10 @@ class RDS(AWSService):
     def __describe_db_parameters__(self, regional_client):
         logger.info("RDS - Describe DB Parameters...")
         try:
-            for instance in self.db_instances:
+            for (
+                instance_arn,
+                instance,
+            ) in self.db_instances.items():
                 if instance.region == regional_client.region:
                     for parameter_group in instance.parameter_groups:
                         describe_db_parameters_paginator = (

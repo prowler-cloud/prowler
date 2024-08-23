@@ -13,12 +13,12 @@ class rds_instance_iam_authentication_enabled(Check):
             "aurora",
         ]
         findings = []
-        for db_instance in rds_client.db_instances:
+        for db_instance_arn, db_instance in rds_client.db_instances.items():
             if any(engine in db_instance.engine for engine in supported_engines):
                 report = Check_Report_AWS(self.metadata())
                 report.region = db_instance.region
                 report.resource_id = db_instance.id
-                report.resource_arn = db_instance.arn
+                report.resource_arn = db_instance_arn
                 report.resource_tags = db_instance.tags
                 # Check if is member of a cluster
                 if db_instance.cluster_id:
