@@ -66,8 +66,8 @@ class AwsProvider(Provider):
 
     def __init__(
         self,
-        aws_retries_max_attempts=3,
-        role=None,
+        retries_max_attempts=3,
+        role_arn=None,
         session_duration=None,
         external_id=None,
         role_session_name=None,
@@ -85,8 +85,8 @@ class AwsProvider(Provider):
         Initializes the AWS provider.
 
         Arguments:
-            - aws_retries_max_attempts: The maximum number of retries for the AWS client.
-            - role: The ARN of the IAM role to assume.
+            - retries_max_attempts: The maximum number of retries for the AWS client.
+            - role_arn: The ARN of the IAM role to assume.
             - session_duration: The duration of the session in seconds.
             - external_id: The external ID to use when assuming the IAM role.
             - role_session_name: The name of the session when assuming the IAM role.
@@ -114,7 +114,7 @@ class AwsProvider(Provider):
 
         # Configure the initial AWS Session using the local credentials: profile or environment variables
         aws_session = self.setup_session(mfa, profile)
-        session_config = self.set_session_config(aws_retries_max_attempts)
+        session_config = self.set_session_config(retries_max_attempts)
         # Current session and the original session points to the same session object until we get a new one, if needed
         self._session = AWSSession(
             current_session=aws_session,
@@ -153,9 +153,9 @@ class AwsProvider(Provider):
         ########
 
         ######## AWS Session with Assume Role (if needed)
-        if role:
+        if role_arn:
             # Validate the input role
-            valid_role_arn = parse_iam_credentials_arn(role)
+            valid_role_arn = parse_iam_credentials_arn(role_arn)
             # Set assume IAM Role information
             assumed_role_information = AWSAssumeRoleInfo(
                 role_arn=valid_role_arn,
@@ -800,7 +800,7 @@ class AwsProvider(Provider):
         mfa_TOTP = input("Enter MFA code: ")
         return AWSMFAInfo(arn=mfa_ARN, totp=mfa_TOTP)
 
-    def set_session_config(self, aws_retries_max_attempts: int) -> Config:
+    def set_session_config(self, retries_max_attempts: int) -> Config:
         """
         set_session_config returns a botocore Config object with the Prowler user agent and the default retrier configuration if nothing is passed as argument
         """
@@ -809,11 +809,11 @@ class AwsProvider(Provider):
             retries={"max_attempts": 3, "mode": "standard"},
             user_agent_extra=BOTO3_USER_AGENT_EXTRA,
         )
-        if aws_retries_max_attempts:
+        if retries_max_attempts:
             # Create the new config
             config = Config(
                 retries={
-                    "max_attempts": aws_retries_max_attempts,
+                    "max_attempts": retries_max_attempts,
                     "mode": "standard",
                 },
             )

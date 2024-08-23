@@ -413,7 +413,7 @@ class TestAWSProvider:
         # Variables
         mfa = True
         role_name = "test-role"
-        role = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:role/{role_name}"
+        role_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:role/{role_name}"
         session_duration = 900
         role_session_name = "ProwlerAssessmentSession"
         external_id = "test-external-id"
@@ -427,7 +427,7 @@ class TestAWSProvider:
         ):
             aws_provider = AwsProvider(
                 mfa=mfa,
-                role=role,
+                role_arn=role_arn,
                 session_duration=session_duration,
                 role_session_name=role_session_name,
                 external_id=external_id,
@@ -442,7 +442,7 @@ class TestAWSProvider:
                 aws_provider._assumed_role_configuration.info, AWSAssumeRoleInfo
             )
             assert aws_provider._assumed_role_configuration.info == AWSAssumeRoleInfo(
-                role_arn=ARN(arn=role),
+                role_arn=ARN(arn=role_arn),
                 session_duration=session_duration,
                 external_id=external_id,
                 mfa_enabled=True,  # <- MFA configuration
@@ -472,7 +472,7 @@ class TestAWSProvider:
         # Variables
         mfa = False
         role_name = "test-role"
-        role = (
+        role_arn = (
             f"arn:{AWS_COMMERCIAL_PARTITION}:iam::{AWS_ACCOUNT_NUMBER}:role/{role_name}"
         )
         session_duration = 900
@@ -480,7 +480,7 @@ class TestAWSProvider:
 
         aws_provider = AwsProvider(
             mfa=mfa,
-            role=role,
+            role_arn=role_arn,
             session_duration=session_duration,
             role_session_name=role_session_name,
         )
@@ -492,7 +492,7 @@ class TestAWSProvider:
             aws_provider._assumed_role_configuration.info, AWSAssumeRoleInfo
         )
         assert aws_provider._assumed_role_configuration.info == AWSAssumeRoleInfo(
-            role_arn=ARN(arn=role),
+            role_arn=ARN(arn=role_arn),
             session_duration=session_duration,
             external_id=None,
             mfa_enabled=False,  # <- MFA configuration
@@ -525,7 +525,7 @@ class TestAWSProvider:
         # Variables
         mfa = False
         role_name = "test-role"
-        role = (
+        role_arn = (
             f"arn:{AWS_GOV_CLOUD_PARTITION}:iam::{AWS_ACCOUNT_NUMBER}:role/{role_name}"
         )
         session_duration = 900
@@ -533,7 +533,7 @@ class TestAWSProvider:
 
         aws_provider = AwsProvider(
             mfa=mfa,
-            role=role,
+            role_arn=role_arn,
             session_duration=session_duration,
             role_session_name=role_session_name,
         )
@@ -548,7 +548,7 @@ class TestAWSProvider:
             aws_provider._assumed_role_configuration.info, AWSAssumeRoleInfo
         )
         assert aws_provider._assumed_role_configuration.info == AWSAssumeRoleInfo(
-            role_arn=ARN(arn=role),
+            role_arn=ARN(arn=role_arn),
             session_duration=session_duration,
             external_id=None,
             mfa_enabled=False,  # <- MFA configuration
@@ -770,9 +770,7 @@ aws:
 
     @mock_aws
     def test_empty_input_regions_in_arguments(self):
-        arguments = Namespace()
-        arguments.region = None
-        aws_provider = AwsProvider(arguments)
+        aws_provider = AwsProvider(regions=None)
 
         assert isinstance(aws_provider, AwsProvider)
 
@@ -1778,9 +1776,8 @@ aws:
     @mock_aws
     def test_refresh_credentials_before_expiration(self):
         role_arn = create_role(AWS_REGION_EU_WEST_1)
-        role = role_arn
         session_duration = 900
-        aws_provider = AwsProvider(role=role, session_duration=session_duration)
+        aws_provider = AwsProvider(role_arn=role_arn, session_duration=session_duration)
 
         current_credentials = (
             aws_provider._assumed_role_configuration.credentials.__dict__
@@ -1800,9 +1797,8 @@ aws:
     def test_refresh_credentials_after_expiration(self):
         role_arn = create_role(AWS_REGION_EU_WEST_1)
         session_duration_in_seconds = 900
-        role = role_arn
         session_duration = session_duration_in_seconds
-        aws_provider = AwsProvider(role=role, session_duration=session_duration)
+        aws_provider = AwsProvider(role_arn=role_arn, session_duration=session_duration)
 
         # Manually expire credentials
         aws_provider._assumed_role_configuration.credentials.expiration = datetime.now(
