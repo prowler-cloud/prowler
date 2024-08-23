@@ -593,19 +593,20 @@ msrest = ">=0.7.1"
 
 [[package]]
 name = "azure-mgmt-web"
-version = "7.3.0"
+version = "7.3.1"
 description = "Microsoft Azure Web Apps Management Client Library for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "azure-mgmt-web-7.3.0.tar.gz", hash = "sha256:2032bf4d50df0bbb822ea00cac3bfbe0e67487d2c9cc1182c0858f83149cdea9"},
-    {file = "azure_mgmt_web-7.3.0-py3-none-any.whl", hash = "sha256:0e53db3fea6eae0d68d9a94eef2e19301f80d3d8a8a20eab599b75384ac0296e"},
+    {file = "azure-mgmt-web-7.3.1.tar.gz", hash = "sha256:87b771436bc99a7a8df59d0ad185b96879a06dce14764a06b3fc3dafa8fcb56b"},
+    {file = "azure_mgmt_web-7.3.1-py3-none-any.whl", hash = "sha256:ccf881e3ab31c3fdbf9cbff32773d9c0006b5dcd621ea074d7ec89e51049fb72"},
 ]
 
 [package.dependencies]
 azure-common = ">=1.1"
 azure-mgmt-core = ">=1.3.2"
 isodate = ">=0.6.1"
+typing-extensions = ">=4.6.0"
 
 [[package]]
 name = "azure-storage-blob"
@@ -4290,13 +4291,13 @@ crt = ["botocore[crt] (>=1.33.2,<2.0a.0)"]
 
 [[package]]
 name = "safety"
-version = "3.2.5"
+version = "3.2.6"
 description = "Checks installed dependencies for known vulnerabilities and licenses."
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "safety-3.2.5-py3-none-any.whl", hash = "sha256:eb30e0dff10214f9c119f31927bb16799fab27678c8ccb6d8c78f3bcc4f3da29"},
-    {file = "safety-3.2.5.tar.gz", hash = "sha256:656df7b01eb400ddd003190947224183981216bf24ddf4142b819545b9ae5521"},
+    {file = "safety-3.2.6-py3-none-any.whl", hash = "sha256:fcd87f8c1882a72c26aef77b1e2b0f373800fb76df1b5f44ebeba9bff4e37b5e"},
+    {file = "safety-3.2.6.tar.gz", hash = "sha256:6a361e362d582f1ac52a179f1ae0fd1b5acbe05d37b1144fdeae792573201f9f"},
 ]
 
 [package.dependencies]
@@ -4312,7 +4313,7 @@ pydantic = ">=1.10.12"
 requests = "*"
 rich = "*"
 "ruamel.yaml" = ">=0.17.21"
-safety-schemas = ">=0.0.3"
+safety-schemas = ">=0.0.4"
 setuptools = ">=65.5.1"
 typer = "*"
 typing-extensions = ">=4.7.1"
@@ -4325,13 +4326,13 @@ spdx = ["spdx-tools (>=0.8.2)"]
 
 [[package]]
 name = "safety-schemas"
-version = "0.0.3"
+version = "0.0.4"
 description = "Schemas for Safety tools"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "safety_schemas-0.0.3-py3-none-any.whl", hash = "sha256:05b59d3973765911c64541ac6b5aca16418d56c1f043d983a5450ea265916061"},
-    {file = "safety_schemas-0.0.3.tar.gz", hash = "sha256:b39554f9c010e4f11f7c9e5773eb31d2c96c164f7a595c273a98b074d0fb98f4"},
+    {file = "safety_schemas-0.0.4-py3-none-any.whl", hash = "sha256:b8b93e447bbffe62e4bd4364877f8ac0dc9688056911b2618d6f48773f9c9011"},
+    {file = "safety_schemas-0.0.4.tar.gz", hash = "sha256:5ec6a8e2a80620a829a9d236165cce9d9e864b0345345d1fc983397eb5d2ac65"},
 ]
 
 [package.dependencies]
@@ -4961,4 +4962,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "c8adc3b25958c454866acd3280b76fc583e8de1d0997c49d090aaf7f66b11d06"
+content-hash = "932b69b250c64852bd150bee5ddfd11ca947e58eaff4b73c3f4582152697430b"
