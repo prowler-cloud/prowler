@@ -189,7 +189,7 @@ class Provider(ABC):
                         arguments.role_session_name,
                         arguments.mfa,
                         arguments.profile,
-                        arguments.region,
+                        set(arguments.region) if arguments.region else None,
                         arguments.organizations_role,
                         arguments.scan_unused_services,
                         arguments.resource_tag,
