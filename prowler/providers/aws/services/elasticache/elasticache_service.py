@@ -41,9 +41,6 @@ class ElastiCache(AWSService):
                             auto_minor_version_upgrade=cache_cluster.get(
                                 "AutoMinorVersionUpgrade", False
                             ),
-                            automatic_failover=cache_cluster.get(
-                                "AutomaticFailover", False
-                            ),
                         )
                 except Exception as error:
                     logger.error(
@@ -108,6 +105,9 @@ class ElastiCache(AWSService):
                             multi_az=repl_group.get("MultiAZ", "disabled"),
                             auto_minor_version_upgrade=repl_group.get(
                                 "AutoMinorVersionUpgrade", False
+                            ),
+                            automatic_failover=repl_group.get(
+                                "AutomaticFailover", None
                             ),
                         )
                 except Exception as error:
@@ -180,4 +180,4 @@ class ReplicationGroup(BaseModel):
     multi_az: str
     tags: Optional[list]
     auto_minor_version_upgrade: bool = False
-    automatic_failover: bool = False
+    automatic_failover: Optional[str]

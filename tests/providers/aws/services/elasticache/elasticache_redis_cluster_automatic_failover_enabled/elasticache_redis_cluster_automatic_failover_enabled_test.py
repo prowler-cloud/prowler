@@ -7,7 +7,6 @@ from prowler.providers.aws.services.elasticache.elasticache_service import (
 )
 from tests.providers.aws.services.elasticache.elasticache_service_test import (
     AUTO_MINOR_VERSION_UPGRADE,
-    AUTOMATIC_FAILOVER,
     REPLICATION_GROUP_ARN,
     REPLICATION_GROUP_ENCRYPTION,
     REPLICATION_GROUP_ID,
@@ -114,7 +113,7 @@ class Test_elasticache_redis_cluster_automatic_failover_enabled:
                 multi_az=REPLICATION_GROUP_MULTI_AZ,
                 tags=REPLICATION_GROUP_TAGS,
                 auto_minor_version_upgrade=not AUTO_MINOR_VERSION_UPGRADE,
-                automatic_failover=not AUTOMATIC_FAILOVER,
+                automatic_failover="disabled",
             )
         )
 
@@ -159,7 +158,7 @@ class Test_elasticache_redis_cluster_automatic_failover_enabled:
                 multi_az=REPLICATION_GROUP_MULTI_AZ,
                 tags=REPLICATION_GROUP_TAGS,
                 auto_minor_version_upgrade=AUTO_MINOR_VERSION_UPGRADE,
-                automatic_failover=AUTOMATIC_FAILOVER,
+                automatic_failover="enabled",
             )
         )
 

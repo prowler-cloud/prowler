@@ -38,7 +38,6 @@ REPLICATION_GROUP_TAGS = [
     {"Key": "environment", "Value": "test"},
 ]
 AUTO_MINOR_VERSION_UPGRADE = True
-AUTOMATIC_FAILOVER = True
 
 
 # Mocking Access Analyzer Calls
@@ -193,5 +192,5 @@ class Test_ElastiCache_Service:
             multi_az=REPLICATION_GROUP_MULTI_AZ,
             tags=REPLICATION_GROUP_TAGS,
             auto_minor_version_upgrade=AUTO_MINOR_VERSION_UPGRADE,
-            automatic_failover=not AUTOMATIC_FAILOVER,
+            automatic_failover=None,
         )
