@@ -24,11 +24,10 @@ class ec2_launch_template_no_secrets(Check):
             versions_with_secrets = []
 
             for version in template.versions:
-                if "UserData" not in version.template_data:
+                if not version.template_data.user_data:
                     continue
-
                 temp_user_data_file = tempfile.NamedTemporaryFile(delete=False)
-                user_data = b64decode(version.template_data["UserData"])
+                user_data = b64decode(version.template_data.user_data)
 
                 try:
                     if user_data[0:2] == b"\x1f\x8b":  # GZIP magic number
