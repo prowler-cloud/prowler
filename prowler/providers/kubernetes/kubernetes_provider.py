@@ -31,7 +31,14 @@ class KubernetesProvider(Provider):
     # TODO: this is not optional, enforce for all providers
     audit_metadata: Audit_Metadata
 
-    def __init__(self, kubeconfig_file, context, namespace, config_file, fixer_config):
+    def __init__(
+        self,
+        kubeconfig_file: str = None,
+        context: str = None,
+        namespace: list = None,
+        config_file: str = None,
+        fixer_config: str = None,
+    ):
         """
         Initializes the KubernetesProvider instance.
         Args:
@@ -52,6 +59,7 @@ class KubernetesProvider(Provider):
 
         if not self._session.api_client:
             logger.critical("Failed to set up a Kubernetes session.")
+            # TODO: add custom exception once we have the Kubernetes exceptions
             raise SystemExit
 
         self._identity = KubernetesIdentityInfo(
@@ -202,6 +210,7 @@ class KubernetesProvider(Provider):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             if raise_on_exception:
+                # TODO: add custom exception once we have the Kubernetes exceptions
                 raise error
             return Connection(error=error)
 
@@ -236,6 +245,7 @@ class KubernetesProvider(Provider):
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+            # TODO: add custom exception once we have the Kubernetes exceptions
             raise error
 
     def get_context_user_roles(self):
@@ -270,6 +280,7 @@ class KubernetesProvider(Provider):
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+            # TODO: add custom exception once we have the Kubernetes exceptions
             raise error
 
     def get_all_namespaces(self) -> list[str]:
@@ -288,6 +299,7 @@ class KubernetesProvider(Provider):
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+            # TODO: add custom exception once we have the Kubernetes exceptions
             raise error
 
     def get_pod_current_namespace(self):
