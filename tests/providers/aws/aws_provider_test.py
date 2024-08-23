@@ -759,6 +759,14 @@ aws:
         assert aws_provider.mutelist.mutelist_file_path == dynamodb_mutelist_path
 
     @mock_aws
+    def test_empty_input_regions_in_arguments(self):
+        arguments = Namespace()
+        arguments.region = None
+        aws_provider = AwsProvider(arguments)
+
+        assert isinstance(aws_provider, AwsProvider)
+
+    @mock_aws
     def test_generate_regional_clients_all_enabled_regions(self):
         arguments = Namespace()
         aws_provider = AwsProvider(arguments)
