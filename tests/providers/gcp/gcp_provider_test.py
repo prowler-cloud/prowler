@@ -16,14 +16,13 @@ from tests.providers.gcp.gcp_fixtures import mock_api_client
 
 class TestGCPProvider:
     def test_gcp_provider(self):
-        arguments = Namespace()
-        arguments.project_id = []
-        arguments.excluded_project_id = []
-        arguments.list_project_id = False
-        arguments.credentials_file = ""
-        arguments.impersonate_service_account = ""
-        arguments.config_file = default_config_file_path
-        arguments.fixer_config = default_fixer_config_file_path
+        project_id = []
+        excluded_project_id = []
+        list_project_id = False
+        credentials_file = ""
+        impersonate_service_account = ""
+        config_file = default_config_file_path
+        fixer_config = default_fixer_config_file_path
 
         projects = {
             "test-project": GCPProject(
@@ -54,7 +53,15 @@ class TestGCPProvider:
             "prowler.providers.gcp.gcp_provider.discovery.build",
             return_value=mocked_service,
         ):
-            gcp_provider = GcpProvider(arguments)
+            gcp_provider = GcpProvider(
+                project_id,
+                excluded_project_id,
+                credentials_file,
+                impersonate_service_account,
+                list_project_id,
+                config_file,
+                fixer_config,
+            )
             assert gcp_provider.session is None
             assert gcp_provider.project_ids == ["test-project"]
             assert gcp_provider.projects == projects
@@ -112,7 +119,15 @@ class TestGCPProvider:
             "prowler.providers.gcp.gcp_provider.discovery.build",
             return_value=mocked_service,
         ):
-            gcp_provider = GcpProvider(arguments)
+            gcp_provider = GcpProvider(
+                arguments.project_id,
+                arguments.excluded_project_id,
+                arguments.credentials_file,
+                arguments.impersonate_service_account,
+                arguments.list_project_id,
+                arguments.config_file,
+                arguments.fixer_config,
+            )
             # This is needed since the output_options requires to get the global provider to get the audit config
             with patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
@@ -194,7 +209,15 @@ class TestGCPProvider:
             "prowler.providers.gcp.gcp_provider.discovery.build",
             return_value=mocked_service,
         ):
-            gcp_provider = GcpProvider(arguments)
+            gcp_provider = GcpProvider(
+                arguments.project_id,
+                arguments.excluded_project_id,
+                arguments.credentials_file,
+                arguments.impersonate_service_account,
+                arguments.list_project_id,
+                arguments.config_file,
+                arguments.fixer_config,
+            )
 
             input_project = "sys-*"
             project_to_match = "sys-12345678"
@@ -258,7 +281,15 @@ class TestGCPProvider:
             "prowler.providers.gcp.gcp_provider.discovery.build",
             return_value=mocked_service,
         ):
-            gcp_provider = GcpProvider(arguments)
+            gcp_provider = GcpProvider(
+                arguments.project_id,
+                arguments.excluded_project_id,
+                arguments.credentials_file,
+                arguments.impersonate_service_account,
+                arguments.list_project_id,
+                arguments.config_file,
+                arguments.fixer_config,
+            )
             assert environ["GOOGLE_APPLICATION_CREDENTIALS"] == "test_credentials_file"
             assert gcp_provider.session is not None
             assert gcp_provider.identity.profile == "test-service-account-email"
@@ -309,7 +340,15 @@ class TestGCPProvider:
             "prowler.providers.gcp.gcp_provider.discovery.build",
             return_value=mocked_service,
         ):
-            gcp_provider = GcpProvider(arguments)
+            gcp_provider = GcpProvider(
+                arguments.project_id,
+                arguments.excluded_project_id,
+                arguments.credentials_file,
+                arguments.impersonate_service_account,
+                arguments.list_project_id,
+                arguments.config_file,
+                arguments.fixer_config,
+            )
             assert environ["GOOGLE_APPLICATION_CREDENTIALS"] == "test_credentials_file"
             assert gcp_provider.session is not None
             assert (
@@ -368,7 +407,15 @@ class TestGCPProvider:
             "prowler.providers.gcp.gcp_provider.discovery.build",
             return_value=mocked_service,
         ):
-            gcp_provider = GcpProvider(arguments)
+            gcp_provider = GcpProvider(
+                arguments.project_id,
+                arguments.excluded_project_id,
+                arguments.credentials_file,
+                arguments.impersonate_service_account,
+                arguments.list_project_id,
+                arguments.config_file,
+                arguments.fixer_config,
+            )
             gcp_provider.print_credentials()
             captured = capsys.readouterr()
             assert "Using the GCP credentials below:" in captured.out
@@ -426,7 +473,15 @@ class TestGCPProvider:
             "prowler.providers.gcp.gcp_provider.discovery.build",
             return_value=mocked_service,
         ):
-            gcp_provider = GcpProvider(arguments)
+            gcp_provider = GcpProvider(
+                arguments.project_id,
+                arguments.excluded_project_id,
+                arguments.credentials_file,
+                arguments.impersonate_service_account,
+                arguments.list_project_id,
+                arguments.config_file,
+                arguments.fixer_config,
+            )
             gcp_provider.print_credentials()
             captured = capsys.readouterr()
             assert "Using the GCP credentials below:" in captured.out
@@ -492,7 +547,15 @@ class TestGCPProvider:
             "prowler.providers.gcp.gcp_provider.discovery.build",
             return_value=mocked_service,
         ):
-            gcp_provider = GcpProvider(arguments)
+            gcp_provider = GcpProvider(
+                arguments.project_id,
+                arguments.excluded_project_id,
+                arguments.credentials_file,
+                arguments.impersonate_service_account,
+                arguments.list_project_id,
+                arguments.config_file,
+                arguments.fixer_config,
+            )
             gcp_provider.print_credentials()
             captured = capsys.readouterr()
             assert "Using the GCP credentials below:" in captured.out

@@ -180,7 +180,18 @@ class Provider(ABC):
             )
 
             if not isinstance(Provider._global, provider_class):
-                global_provider = provider_class(arguments)
+                if "Gcp" in provider_class_name:
+                    global_provider = provider_class(
+                        arguments.project_id,
+                        arguments.excluded_project_id,
+                        arguments.credentials_file,
+                        arguments.impersonate_service_account,
+                        arguments.list_project_id,
+                        arguments.config_file,
+                        arguments.fixer_config,
+                    )
+                else:
+                    global_provider = provider_class(arguments)
 
             Provider._global = global_provider
         except TypeError as error:
