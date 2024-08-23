@@ -77,15 +77,15 @@ class AzureProvider(Provider):
 
     def __init__(
         self,
-        az_cli_auth: bool,
-        sp_env_auth: bool,
-        browser_auth: bool,
-        managed_identity_auth: bool,
-        tenant_id: str,
-        region: str,
-        subscription_ids: list,
-        config_file: str,
-        fixer_config: str,
+        az_cli_auth: bool = False,
+        sp_env_auth: bool = False,
+        browser_auth: bool = False,
+        managed_identity_auth: bool = False,
+        tenant_id: str = None,
+        region: str = "AzureCloud",
+        subscription_ids: list = [],
+        config_file: str = None,
+        fixer_config: str = None,
     ):
         logger.info("Setting Azure provider ...")
 
@@ -378,6 +378,7 @@ class AzureProvider(Provider):
                 logger.critical(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
                 )
+                # TODO: add custom exception once we have the AzureException
                 raise error
         else:
             try:
@@ -389,6 +390,7 @@ class AzureProvider(Provider):
                 logger.critical(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
                 )
+                # TODO: add custom exception once we have the AzureException
                 raise error
 
         return credentials
@@ -501,6 +503,7 @@ class AzureProvider(Provider):
                 logger.critical(
                     f"Azure provider: Missing environment variable {env_var} needed to authenticate against Azure"
                 )
+                # TODO: add custom exception once we have the AzureException
                 raise SystemExit
 
     def setup_identity(
@@ -616,6 +619,7 @@ class AzureProvider(Provider):
                 logger.critical(
                     "It was not possible to retrieve any subscriptions, please check your permission assignments"
                 )
+                # TODO: add custom exception once we have the AzureException
                 raise SystemExit
 
             tenants = subscriptions_client.tenants.list()
@@ -629,6 +633,7 @@ class AzureProvider(Provider):
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
             )
+            # TODO: add custom exception once we have the AzureException
             raise error
 
         return identity
