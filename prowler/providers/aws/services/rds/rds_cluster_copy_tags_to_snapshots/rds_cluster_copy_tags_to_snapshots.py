@@ -2,7 +2,7 @@ from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.rds.rds_client import rds_client
 
 
-class rds_cluster_copy_tags(Check):
+class rds_cluster_copy_tags_to_snapshots(Check):
     def execute(self):
         findings = []
         for db_cluster_arn, db_cluster in rds_client.db_clusters.items():

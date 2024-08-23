@@ -10,7 +10,7 @@ from tests.providers.aws.utils import (
 )
 
 
-class Test_rds_cluster_copy_tags:
+class Test_rds_cluster_copy_tags_to_snapshots:
     @mock_aws
     def test_rds_no_clusters(self):
         from prowler.providers.aws.services.rds.rds_service import RDS
@@ -21,14 +21,14 @@ class Test_rds_cluster_copy_tags:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.rds.rds_cluster_copy_tags.rds_cluster_copy_tags.rds_client",
+                "prowler.providers.aws.services.rds.rds_cluster_copy_tags_to_snapshots.rds_cluster_copy_tags_to_snapshots.rds_client",
                 new=RDS(aws_provider),
             ):
-                from prowler.providers.aws.services.rds.rds_cluster_copy_tags.rds_cluster_copy_tags import (
-                    rds_cluster_copy_tags,
+                from prowler.providers.aws.services.rds.rds_cluster_copy_tags_to_snapshots.rds_cluster_copy_tags_to_snapshots import (
+                    rds_cluster_copy_tags_to_snapshots,
                 )
 
-                check = rds_cluster_copy_tags()
+                check = rds_cluster_copy_tags_to_snapshots()
                 result = check.execute()
                 assert len(result) == 0
 
@@ -56,14 +56,14 @@ class Test_rds_cluster_copy_tags:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.rds.rds_cluster_copy_tags.rds_cluster_copy_tags.rds_client",
+                "prowler.providers.aws.services.rds.rds_cluster_copy_tags_to_snapshots.rds_cluster_copy_tags_to_snapshots.rds_client",
                 new=RDS(aws_provider),
             ):
-                from prowler.providers.aws.services.rds.rds_cluster_copy_tags.rds_cluster_copy_tags import (
-                    rds_cluster_copy_tags,
+                from prowler.providers.aws.services.rds.rds_cluster_copy_tags_to_snapshots.rds_cluster_copy_tags_to_snapshots import (
+                    rds_cluster_copy_tags_to_snapshots,
                 )
 
-                check = rds_cluster_copy_tags()
+                check = rds_cluster_copy_tags_to_snapshots()
                 result = check.execute()
                 assert len(result) == 1
                 assert result[0].status == "FAIL"
@@ -103,14 +103,14 @@ class Test_rds_cluster_copy_tags:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.rds.rds_cluster_copy_tags.rds_cluster_copy_tags.rds_client",
+                "prowler.providers.aws.services.rds.rds_cluster_copy_tags_to_snapshots.rds_cluster_copy_tags_to_snapshots.rds_client",
                 new=RDS(aws_provider),
             ):
-                from prowler.providers.aws.services.rds.rds_cluster_copy_tags.rds_cluster_copy_tags import (
-                    rds_cluster_copy_tags,
+                from prowler.providers.aws.services.rds.rds_cluster_copy_tags_to_snapshots.rds_cluster_copy_tags_to_snapshots import (
+                    rds_cluster_copy_tags_to_snapshots,
                 )
 
-                check = rds_cluster_copy_tags()
+                check = rds_cluster_copy_tags_to_snapshots()
                 result = check.execute()
                 assert len(result) == 1
                 assert result[0].status == "PASS"

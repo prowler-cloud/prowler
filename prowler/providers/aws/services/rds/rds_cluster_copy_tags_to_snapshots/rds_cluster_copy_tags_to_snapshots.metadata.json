@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "rds_cluster_copy_tags",
+  "CheckID": "rds_cluster_copy_tags_to_snapshots",
   "CheckTitle": "Check if RDS DB clusters have copy tags to snapshots enabled",
   "CheckType": [],
   "ServiceName": "rds",
