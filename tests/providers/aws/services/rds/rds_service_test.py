@@ -93,6 +93,7 @@ class Test_RDS_Service:
             Tags=[
                 {"Key": "test", "Value": "test"},
             ],
+            CopyTagsToSnapshot=True,
         )
         # RDS client for this test class
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
@@ -117,6 +118,7 @@ class Test_RDS_Service:
             {"Key": "test", "Value": "test"},
         ]
         assert "test" in rds.db_instances[0].parameter_groups
+        assert rds.db_instances[0].copy_tags_to_snapshot
 
     @mock_aws
     def test__describe_db_parameters__(self):
@@ -233,6 +235,7 @@ class Test_RDS_Service:
             Tags=[
                 {"Key": "test", "Value": "test"},
             ],
+            CopyTagsToSnapshot=True,
         )
         # RDS client for this test class
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
@@ -262,6 +265,7 @@ class Test_RDS_Service:
         assert rds.db_clusters[db_cluster_arn].parameter_group == "test"
         assert rds.db_clusters[db_cluster_arn].force_ssl == "0"
         assert rds.db_clusters[db_cluster_arn].require_secure_transport == "OFF"
+        assert rds.db_clusters[db_cluster_arn].copy_tags_to_snapshot
 
     # Test RDS Describe DB Cluster Snapshots
     @mock_aws
