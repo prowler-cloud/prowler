@@ -1284,7 +1284,7 @@ aws:
             },
             clear=True,
         ):
-          
+
             with raises(AWSNoCredentialsError) as exception:
                 AwsProvider.test_connection(
                     profile=None
