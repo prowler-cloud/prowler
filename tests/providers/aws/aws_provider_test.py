@@ -30,9 +30,9 @@ from prowler.providers.aws.config import (
 )
 from prowler.providers.aws.exceptions.exceptions import (
     AWSArgumentTypeValidationError,
+    AWSIAMRoleARNInvalidResourceType,
     AWSNoCredentialsError,
 )
-from prowler.providers.aws.lib.arn.error import RoleArnParsingInvalidResourceType
 from prowler.providers.aws.lib.arn.models import ARN
 from prowler.providers.aws.lib.mutelist.mutelist import AWSMutelist
 from prowler.providers.aws.models import (
@@ -1374,10 +1374,10 @@ aws:
         role_name = "test-role"
         role_arn = f"arn:{AWS_COMMERCIAL_PARTITION}:iam::{AWS_ACCOUNT_NUMBER}:not-role/{role_name}"
 
-        with raises(RoleArnParsingInvalidResourceType) as exception:
+        with raises(AWSIAMRoleARNInvalidResourceType) as exception:
             AwsProvider.test_connection(role_arn=role_arn)
 
-        assert exception.type == RoleArnParsingInvalidResourceType
+        assert exception.type == AWSIAMRoleARNInvalidResourceType
         assert (
             exception.value.args[0]
             == "The assumed role ARN contains a value for resource type different than role, please input a valid ARN"

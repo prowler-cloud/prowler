@@ -56,6 +56,48 @@ class ProwlerException(Exception):
             "file": "{file}",
             "provider": "AWS",
         },
+        (1911, "AWSIAMRoleARNRegionNotEmtpy"): {
+            "message": "AWS IAM Role ARN region is not empty",
+            "remediation": "Check the AWS IAM Role ARN region and ensure it is empty.",
+            "file": "{file}",
+            "provider": "AWS",
+        },
+        (1912, "AWSIAMRoleARNPartitionEmpty"): {
+            "message": "AWS IAM Role ARN partition is empty",
+            "remediation": "Check the AWS IAM Role ARN partition and ensure it is not empty.",
+            "file": "{file}",
+            "provider": "AWS",
+        },
+        (1913, "AWSIAMRoleARNMissingFields"): {
+            "message": "AWS IAM Role ARN missing fields",
+            "remediation": "Check the AWS IAM Role ARN and ensure all required fields are present.",
+            "file": "{file}",
+            "provider": "AWS",
+        },
+        (1914, "AWSIAMRoleARNServiceNotIAMnorSTS"): {
+            "message": "AWS IAM Role ARN service is not IAM nor STS",
+            "remediation": "Check the AWS IAM Role ARN service and ensure it is either IAM or STS.",
+            "file": "{file}",
+            "provider": "AWS",
+        },
+        (1915, "AWSIAMRoleARNInvalidAccountID"): {
+            "message": "AWS IAM Role ARN account ID is invalid",
+            "remediation": "Check the AWS IAM Role ARN account ID and ensure it is a valid 12-digit number.",
+            "file": "{file}",
+            "provider": "AWS",
+        },
+        (1916, "AWSIAMRoleARNInvalidResourceType"): {
+            "message": "AWS IAM Role ARN resource type is invalid",
+            "remediation": "Check the AWS IAM Role ARN resource type and ensure it is valid.",
+            "file": "{file}",
+            "provider": "AWS",
+        },
+        (1917, "AWSIAMRoleARNEmptyResource"): {
+            "message": "AWS IAM Role ARN resource is empty",
+            "remediation": "Check the AWS IAM Role ARN resource and ensure it is not empty.",
+            "file": "{file}",
+            "provider": "AWS",
+        },
     }
 
     def __init__(self, code, provider=None, file=None, original_exception=None):
