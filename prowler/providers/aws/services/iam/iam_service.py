@@ -89,7 +89,7 @@ class IAM(AWSService):
         self.__list_inline_role_policies__()
         self.saml_providers = self.__list_saml_providers__()
         self.server_certificates = self.__list_server_certificates__()
-        self.__list_tags_for_resource__()
+        self._list_tags_for_resource()
         self.access_keys_metadata = {}
         self.__get_access_keys_metadata__()
         self.last_accessed_services = {}
@@ -768,7 +768,7 @@ class IAM(AWSService):
         finally:
             return server_certificates
 
-    def __list_tags_for_resource__(self):
+    def _list_tags_for_resource(self):
         logger.info("IAM - List Tags...")
         try:
             if self.roles:

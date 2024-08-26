@@ -18,7 +18,7 @@ class CodeArtifact(AWSService):
         self.repositories = {}
         self.__threading_call__(self.__list_repositories__)
         self.__threading_call__(self.__list_packages__)
-        self.__list_tags_for_resource__()
+        self._list_tags_for_resource()
 
     def __list_repositories__(self, regional_client):
         logger.info("CodeArtifact - Listing Repositories...")
@@ -169,7 +169,7 @@ class CodeArtifact(AWSService):
                     f" {error}"
                 )
 
-    def __list_tags_for_resource__(self):
+    def _list_tags_for_resource(self):
         logger.info("CodeArtifact - List Tags...")
         try:
             for repository in self.repositories.values():
