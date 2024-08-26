@@ -118,7 +118,10 @@ def set_mocked_aws_provider(
     arguments = set_default_provider_arguments(arguments, status)
 
     # AWS Provider
-    provider = AwsProvider(arguments)
+    provider = AwsProvider()
+
+    # Set output options
+    provider.output_options = arguments, {}
 
     # Output options
 

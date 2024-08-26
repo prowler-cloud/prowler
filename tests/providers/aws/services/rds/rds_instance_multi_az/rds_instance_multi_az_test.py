@@ -151,10 +151,13 @@ class Test_rds_instance_multi_az:
                 tags=[],
             )
         }
-        rds_client.db_instances = [
-            DBInstance(
+        instance_arn = (
+            f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:db:test-instance"
+        )
+        rds_client.db_instances = {
+            instance_arn: DBInstance(
                 id="test-instance",
-                arn=f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:db:test-instance",
+                arn=instance_arn,
                 endpoint="",
                 engine="aurora",
                 engine_version="1.0.0",
@@ -174,7 +177,7 @@ class Test_rds_instance_multi_az:
                 region=AWS_REGION_US_EAST_1,
                 tags=[],
             )
-        ]
+        }
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
@@ -230,10 +233,13 @@ class Test_rds_instance_multi_az:
                 tags=[],
             )
         }
-        rds_client.db_instances = [
-            DBInstance(
+        instance_arn = (
+            f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:db:test-instance"
+        )
+        rds_client.db_instances = {
+            instance_arn: DBInstance(
                 id="test-instance",
-                arn=f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:db:test-instance",
+                arn=instance_arn,
                 endpoint="",
                 engine="aurora",
                 engine_version="1.0.0",
@@ -253,7 +259,7 @@ class Test_rds_instance_multi_az:
                 region=AWS_REGION_US_EAST_1,
                 tags=[],
             )
-        ]
+        }
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
