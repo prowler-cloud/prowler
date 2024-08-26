@@ -289,6 +289,7 @@ config_aws = {
     "eks_cluster_oldest_version_supported": "1.28",
     "excluded_sensitive_environment_variables": [],
     "elb_min_azs": 2,
+    "elbv2_min_azs": 2,
 }
 
 config_azure = {
@@ -324,7 +325,7 @@ config_kubernetes = {
 
 class Test_Config:
     def test_get_aws_available_regions(self):
-        assert len(get_aws_available_regions()) == 33
+        assert len(get_aws_available_regions()) == 34
 
     @mock.patch(
         "prowler.config.config.requests.get", new=mock_prowler_get_latest_release

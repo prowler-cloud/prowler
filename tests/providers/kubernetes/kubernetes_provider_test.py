@@ -54,7 +54,13 @@ class TestKubernetesProvider:
             arguments.fixer_config = default_fixer_config_file_path
 
             # Instantiate the KubernetesProvider with mocked arguments
-            kubernetes_provider = KubernetesProvider(arguments)
+            kubernetes_provider = KubernetesProvider(
+                arguments.kubeconfig_file,
+                arguments.context,
+                arguments.namespace,
+                arguments.config_file,
+                arguments.fixer_config,
+            )
             assert isinstance(kubernetes_provider.session, KubernetesSession)
             assert kubernetes_provider.session.api_client is not None
             assert kubernetes_provider.session.context == {
@@ -104,7 +110,13 @@ class TestKubernetesProvider:
             return_value=["namespace-1"],
         ):
 
-            kubernetes_provider = KubernetesProvider(arguments)
+            kubernetes_provider = KubernetesProvider(
+                arguments.kubeconfig_file,
+                arguments.context,
+                arguments.namespace,
+                arguments.config_file,
+                arguments.fixer_config,
+            )
             # This is needed since the output_options requires to get the global provider to get the audit config
             with patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",

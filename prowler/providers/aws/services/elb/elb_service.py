@@ -60,9 +60,10 @@ class ELB(AWSService):
                 LoadBalancerName=load_balancer.name
             )["LoadBalancerAttributes"]
 
-            load_balancer.access_logs = attributes.get("AccessLog", {}).get(
-                "Enabled", False
-            )
+            load_balancer.access_logs = attributes.get("AccessLog", {}).get("Enabled")
+            load_balancer.cross_zone_load_balancing = attributes.get(
+                "CrossZoneLoadBalancing", {}
+            ).get("Enabled")
 
         except Exception as error:
             logger.error(

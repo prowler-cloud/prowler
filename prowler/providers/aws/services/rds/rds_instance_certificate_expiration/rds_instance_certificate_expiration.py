@@ -14,11 +14,11 @@ class rds_instance_certificate_expiration(Check):
     # RDS Certificates that are expired the check will FAIL with a severity of critical.
     def execute(self):
         findings = []
-        for db_instance in rds_client.db_instances:
+        for db_instance_arn, db_instance in rds_client.db_instances.items():
             report = Check_Report_AWS(self.metadata())
             report.region = db_instance.region
             report.resource_id = db_instance.id
-            report.resource_arn = db_instance.arn
+            report.resource_arn = db_instance_arn
             report.resource_tags = db_instance.tags
             report.status = "FAIL"
             report.check_metadata.Severity = "critical"

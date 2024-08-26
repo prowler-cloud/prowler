@@ -93,30 +93,33 @@ class Test_RDS_Service:
             Tags=[
                 {"Key": "test", "Value": "test"},
             ],
+            CopyTagsToSnapshot=True,
         )
         # RDS client for this test class
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         rds = RDS(aws_provider)
         assert len(rds.db_instances) == 1
-        assert rds.db_instances[0].id == "db-master-1"
-        assert rds.db_instances[0].region == AWS_REGION_US_EAST_1
+        db_instance_arn, db_instance = next(iter(rds.db_instances.items()))
+        assert db_instance.id == "db-master-1"
+        assert db_instance.region == AWS_REGION_US_EAST_1
         assert (
-            rds.db_instances[0].endpoint["Address"]
+            db_instance.endpoint["Address"]
             == "db-master-1.aaaaaaaaaa.us-east-1.rds.amazonaws.com"
         )
-        assert rds.db_instances[0].status == "available"
-        assert rds.db_instances[0].public
-        assert rds.db_instances[0].encrypted
-        assert rds.db_instances[0].backup_retention_period == 10
-        assert rds.db_instances[0].cloudwatch_logs == ["audit", "error"]
-        assert rds.db_instances[0].deletion_protection
-        assert rds.db_instances[0].auto_minor_version_upgrade
-        assert rds.db_instances[0].multi_az
-        assert rds.db_instances[0].cluster_id
-        assert rds.db_instances[0].tags == [
+        assert db_instance.status == "available"
+        assert db_instance.public
+        assert db_instance.encrypted
+        assert db_instance.backup_retention_period == 10
+        assert db_instance.cloudwatch_logs == ["audit", "error"]
+        assert db_instance.deletion_protection
+        assert db_instance.auto_minor_version_upgrade
+        assert db_instance.multi_az
+        assert db_instance.cluster_id
+        assert db_instance.tags == [
             {"Key": "test", "Value": "test"},
         ]
-        assert "test" in rds.db_instances[0].parameter_groups
+        assert "test" in db_instance.parameter_groups
+        assert db_instance.copy_tags_to_snapshot
 
     @mock_aws
     def test__describe_db_parameters__(self):
@@ -149,9 +152,10 @@ class Test_RDS_Service:
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         rds = RDS(aws_provider)
         assert len(rds.db_instances) == 1
-        assert rds.db_instances[0].id == "db-master-1"
-        assert rds.db_instances[0].region == AWS_REGION_US_EAST_1
-        for parameter in rds.db_instances[0].parameters:
+        db_instance_arn, db_instance = next(iter(rds.db_instances.items()))
+        assert db_instance.id == "db-master-1"
+        assert db_instance.region == AWS_REGION_US_EAST_1
+        for parameter in db_instance.parameters:
             if parameter["ParameterName"] == "rds.force_ssl":
                 assert parameter["ParameterValue"] == "1"
 
@@ -177,9 +181,10 @@ class Test_RDS_Service:
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         rds = RDS(aws_provider)
         assert len(rds.db_instances) == 1
-        assert rds.db_instances[0].id == "db-master-1"
-        assert rds.db_instances[0].region == AWS_REGION_US_EAST_1
-        for cert in rds.db_instances[0].cert:
+        db_instance_arn, db_instance = next(iter(rds.db_instances.items()))
+        assert db_instance.id == "db-master-1"
+        assert db_instance.region == AWS_REGION_US_EAST_1
+        for cert in db_instance.cert:
             assert cert["ValidTill"] < datetime.now()
 
     # Test RDS Describe DB Snapshots
@@ -233,6 +238,7 @@ class Test_RDS_Service:
             Tags=[
                 {"Key": "test", "Value": "test"},
             ],
+            CopyTagsToSnapshot=True,
         )
         # RDS client for this test class
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
@@ -262,6 +268,7 @@ class Test_RDS_Service:
         assert rds.db_clusters[db_cluster_arn].parameter_group == "test"
         assert rds.db_clusters[db_cluster_arn].force_ssl == "0"
         assert rds.db_clusters[db_cluster_arn].require_secure_transport == "OFF"
+        assert rds.db_clusters[db_cluster_arn].copy_tags_to_snapshot
 
     # Test RDS Describe DB Cluster Snapshots
     @mock_aws

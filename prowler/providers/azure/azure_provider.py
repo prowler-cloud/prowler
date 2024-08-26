@@ -1,5 +1,4 @@
 import asyncio
-import sys
 from argparse import ArgumentTypeError
 from os import getenv
 
@@ -48,7 +47,7 @@ class AzureProvider(Provider):
         audit_metadata (Audit_Metadata): The audit metadata for the Azure provider.
 
     Methods:
-        __init__(self, arguments): Initializes the AzureProvider object.
+        __init__ -> Initializes the Azure provider.
         identity(self): Returns the identity of the Azure provider.
         type(self): Returns the type of the Azure provider.
         session(self): Returns the session object associated with the Azure provider.
@@ -76,16 +75,21 @@ class AzureProvider(Provider):
     # TODO: this is not optional, enforce for all providers
     audit_metadata: Audit_Metadata
 
-    def __init__(self, arguments):
+    def __init__(
+        self,
+        az_cli_auth: bool = False,
+        sp_env_auth: bool = False,
+        browser_auth: bool = False,
+        managed_identity_auth: bool = False,
+        tenant_id: str = None,
+        region: str = "AzureCloud",
+        subscription_ids: list = [],
+        config_file: str = None,
+        fixer_config: str = None,
+    ):
         logger.info("Setting Azure provider ...")
-        subscription_ids = arguments.subscription_id
 
         logger.info("Checking if any credentials mode is set ...")
-        az_cli_auth = arguments.az_cli_auth
-        sp_env_auth = arguments.sp_env_auth
-        browser_auth = arguments.browser_auth
-        managed_identity_auth = arguments.managed_identity_auth
-        tenant_id = arguments.tenant_id
 
         # Validate the authentication arguments
         self.validate_arguments(
@@ -93,7 +97,6 @@ class AzureProvider(Provider):
         )
 
         logger.info("Checking if region is different than default one")
-        region = arguments.azure_region
         self._region_config = self.setup_region_config(region)
 
         # Set up the Azure session
@@ -120,12 +123,8 @@ class AzureProvider(Provider):
 
         # TODO: move this to the providers, pending for AWS, GCP, AZURE and K8s
         # Audit Config
-        self._audit_config = load_and_validate_config_file(
-            self._type, arguments.config_file
-        )
-        self._fixer_config = load_and_validate_config_file(
-            self._type, arguments.fixer_config
-        )
+        self._audit_config = load_and_validate_config_file(self._type, config_file)
+        self._fixer_config = load_and_validate_config_file(self._type, fixer_config)
 
     @property
     def identity(self):
@@ -379,16 +378,20 @@ class AzureProvider(Provider):
                 logger.critical(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
                 )
-                sys.exit(1)
+                # TODO: add custom exception once we have the AzureException
+                raise error
         else:
             try:
                 credentials = InteractiveBrowserCredential(tenant_id=tenant_id)
             except Exception as error:
-                logger.critical("Failed to retrieve azure credentials")
+                logger.critical(
+                    "Failed to retrieve azure credentials using browser authentication"
+                )
                 logger.critical(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
                 )
-                sys.exit(1)
+                # TODO: add custom exception once we have the AzureException
+                raise error
 
         return credentials
 
@@ -446,6 +449,7 @@ class AzureProvider(Provider):
             subscription = next(subscription_client.subscriptions.list())
 
             logger.info(f"Connected to Azure subscription: {subscription.display_name}")
+
             return Connection(is_connected=True)
 
         except HttpResponseError as credentials_error:
@@ -471,7 +475,6 @@ class AzureProvider(Provider):
             if raise_on_exception:
                 raise exit_error
             return Connection(error=exit_error)
-
         except Exception as error:
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -500,7 +503,8 @@ class AzureProvider(Provider):
                 logger.critical(
                     f"Azure provider: Missing environment variable {env_var} needed to authenticate against Azure"
                 )
-                sys.exit(1)
+                # TODO: add custom exception once we have the AzureException
+                raise SystemExit
 
     def setup_identity(
         self,
@@ -615,7 +619,8 @@ class AzureProvider(Provider):
                 logger.critical(
                     "It was not possible to retrieve any subscriptions, please check your permission assignments"
                 )
-                sys.exit(1)
+                # TODO: add custom exception once we have the AzureException
+                raise SystemExit
 
             tenants = subscriptions_client.tenants.list()
             for tenant in tenants:
@@ -628,7 +633,8 @@ class AzureProvider(Provider):
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
             )
-            sys.exit(1)
+            # TODO: add custom exception once we have the AzureException
+            raise error
 
         return identity
 
