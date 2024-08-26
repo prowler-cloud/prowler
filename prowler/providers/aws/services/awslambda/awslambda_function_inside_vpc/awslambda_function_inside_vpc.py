@@ -13,14 +13,20 @@ class awslambda_function_inside_vpc(Check):
             report.resource_id = function.name
             report.resource_arn = function_arn
             report.resource_tags = function.tags
-            report.status = "FAIL"
+            report.status = "PASS"
             report.status_extended = (
-                f"Lambda function {function.name} is not inside a VPC"
+                f"Lambda function {function.name} is inside of VPC {function.vpc_id}"
             )
 
-            if function.vpc_id:
-                report.status = "PASS"
-                report.status_extended = f"Lambda function {function.name} is inside of VPC {function.vpc_id}"
+            if not function.vpc_id:
+                awslambda_client.set_failed_check(
+                    self.__class__.__name__,
+                    function_arn,
+                )
+                report.status = "FAIL"
+                report.status_extended = (
+                    f"Lambda function {function.name} is not inside a VPC"
+                )
 
             findings.append(report)
 
