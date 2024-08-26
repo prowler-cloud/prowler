@@ -503,7 +503,7 @@ class EC2(AWSService):
                                 associate_public_ip_address=template_version[
                                     "LaunchTemplateData"
                                 ]
-                                .get("NetworkInterfaces")[0]
+                                .get("NetworkInterfaces", [])[0]
                                 .get("AssociatePublicIpAddress", False),
                             ),
                         )

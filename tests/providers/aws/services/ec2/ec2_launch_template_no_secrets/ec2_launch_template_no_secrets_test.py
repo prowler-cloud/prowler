@@ -45,7 +45,6 @@ def mock_make_api_call(self, operation_name, kwarg):
                 }
             ]
         }
-    # Si no es la operación que queremos interceptar, llamamos al método original
     return make_api_call(self, operation_name, kwarg)
 
 
