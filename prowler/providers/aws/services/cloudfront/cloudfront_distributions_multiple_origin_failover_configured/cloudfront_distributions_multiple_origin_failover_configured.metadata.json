@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "cloudfront_distributions_origin_failover_enabled",
+  "CheckID": "cloudfront_distributions_multiple_origin_failover_configured",
   "CheckTitle": "Check if CloudFront distributions have origin failover enabled.",
   "CheckType": [
     "NIST 800-53 Controls"
