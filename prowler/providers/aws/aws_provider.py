@@ -34,6 +34,7 @@ from prowler.providers.aws.exceptions.exceptions import (
     AWSClientError,
     AWSNoCredentialsError,
     AWSProfileNotFoundError,
+    AWSSetUpSessionError,
 )
 from prowler.providers.aws.lib.arn.arn import parse_iam_credentials_arn
 from prowler.providers.aws.lib.arn.models import ARN
@@ -468,9 +469,12 @@ class AwsProvider(Provider):
                 )
         except Exception as error:
             logger.critical(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"AWSSetUpSessionError[{error.__traceback__.tb_lineno}]: {error}"
             )
-            raise error
+            raise AWSSetUpSessionError(
+                original_exception=error,
+                file=pathlib.Path(__file__).name,
+            )
 
     def setup_assumed_session(
         self,

@@ -50,6 +50,12 @@ class ProwlerException(Exception):
             "file": "{file}",
             "provider": "AWS",
         },
+        (1910, "AWSSetUpSessionError"): {
+            "message": "AWS session setup error",
+            "remediation": "Check the AWS session setup and ensure it is properly configured.",
+            "file": "{file}",
+            "provider": "AWS",
+        },
     }
 
     def __init__(self, code, provider=None, file=None, original_exception=None):

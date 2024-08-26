@@ -34,3 +34,10 @@ class AWSArgumentTypeValidationError(ProwlerException):
         super().__init__(
             1909, provider="AWS", file=file, original_exception=original_exception
         )
+
+
+class AWSSetUpSessionError(ProwlerException):
+    def __init__(self, file=None, original_exception=None):
+        super().__init__(
+            1910, provider="AWS", file=file, original_exception=original_exception
+        )
