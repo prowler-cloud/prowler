@@ -1,4 +1,4 @@
-from typing import Optional, Set
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -100,5 +100,5 @@ class LoadBalancer(BaseModel):
     access_logs: Optional[bool]
     listeners: list[Listener]
     cross_zone_load_balancing: Optional[bool]
-    availability_zones: Set[str]
+    availability_zones: set[str]
     tags: Optional[list] = []
