@@ -722,23 +722,6 @@ def execute(
                 if finding.status in global_provider.output_options.status
             ]
 
-        # Mutelist findings
-        if hasattr(global_provider, "mutelist") and global_provider.mutelist.mutelist:
-            # TODO: make this prettier
-            is_finding_muted_args = {}
-            if global_provider.type == "aws":
-                is_finding_muted_args["aws_account_id"] = (
-                    global_provider.identity.account
-                )
-            elif global_provider.type == "kubernetes":
-                is_finding_muted_args["cluster"] = global_provider.identity.cluster
-
-            for finding in check_findings:
-                is_finding_muted_args["finding"] = finding
-                finding.muted = global_provider.mutelist.is_finding_muted(
-                    **is_finding_muted_args
-                )
-
         # Refactor(Outputs)
         # Report the check's findings
         report(check_findings, global_provider)
