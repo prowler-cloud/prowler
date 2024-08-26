@@ -17,7 +17,7 @@ import prowler
 from prowler.config.config import orange_color
 from prowler.lib.check.compliance_models import load_compliance_framework
 from prowler.lib.check.custom_checks_metadata import update_check_metadata
-from prowler.lib.check.models import Check, load_check_metadata
+from prowler.lib.check.models import Check, CheckMetadata, load_check_metadata
 from prowler.lib.logger import logger
 from prowler.lib.outputs.outputs import report
 from prowler.lib.utils.utils import open_file, parse_json_file, print_boxes
@@ -25,7 +25,15 @@ from prowler.providers.common.models import Audit_Metadata
 
 
 # Load all checks metadata
-def bulk_load_checks_metadata(provider: str) -> dict:
+def bulk_load_checks_metadata(provider: str) -> dict[str, CheckMetadata]:
+    """
+    Load the metadata of all checks for a given provider reading the check's metadata files.
+    Args:
+        provider (str): The name of the provider.
+    Returns:
+        dict[str, CheckMetadata]: A dictionary containing the metadata of all checks, with the CheckID as the key.
+    """
+
     bulk_check_metadata = {}
     checks = recover_checks_from_provider(provider)
     # Build list of check's metadata files
