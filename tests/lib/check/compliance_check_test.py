@@ -6,7 +6,7 @@ from prowler.lib.check.compliance_models import (
     Compliance_Requirement,
     ComplianceBaseModel,
 )
-from prowler.lib.check.models import Check_Metadata_Model
+from prowler.lib.check.models import CheckMetadata
 
 
 class TestCompliance:
@@ -69,7 +69,7 @@ class TestCompliance:
 
     def get_custom_check_metadata(self):
         return {
-            "check1": Check_Metadata_Model(
+            "check1": CheckMetadata(
                 Provider="aws",
                 CheckID="check1",
                 CheckTitle="Check 1",
@@ -97,7 +97,7 @@ class TestCompliance:
                 Notes="notes1",
                 Compliance=[],
             ),
-            "check2": Check_Metadata_Model(
+            "check2": CheckMetadata(
                 Provider="aws",
                 CheckID="check2",
                 CheckTitle="Check 2",

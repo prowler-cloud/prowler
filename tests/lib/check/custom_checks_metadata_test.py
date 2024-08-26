@@ -8,12 +8,7 @@ from prowler.lib.check.custom_checks_metadata import (
     update_check_metadata,
     update_checks_metadata,
 )
-from prowler.lib.check.models import (
-    Check_Metadata_Model,
-    Code,
-    Recommendation,
-    Remediation,
-)
+from prowler.lib.check.models import CheckMetadata, Code, Recommendation, Remediation
 
 CUSTOM_CHECKS_METADATA_FIXTURE_FILE = f"{os.path.dirname(os.path.realpath(__file__))}/fixtures/custom_checks_metadata_example.yaml"
 CUSTOM_CHECKS_METADATA_FIXTURE_FILE_NOT_VALID = f"{os.path.dirname(os.path.realpath(__file__))}/fixtures/custom_checks_metadata_example_not_valid.yaml"
@@ -37,7 +32,7 @@ S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_REMEDIATION_URL = "https://docs.aws.amazon.c
 
 class TestCustomChecksMetadata:
     def get_custom_check_metadata(self):
-        return Check_Metadata_Model(
+        return CheckMetadata(
             Provider="aws",
             CheckID=S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME,
             CheckTitle="Check S3 Bucket Level Public Access Block.",
