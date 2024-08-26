@@ -31,10 +31,16 @@ class awslambda_function_vpc_is_in_multiple_az(Check):
                 if function.vpc_id:
                     function_availability_zones = set(
                         [
-                            vpc_client.vpc_subnets[subnet_id].availability_zone
-                            for subnet_id in function.subnet_ids  # BUG: if prowler executes this check with -f option, it will not have the subnets in the vpc_client.vpc_subnets dict
+                            getattr(
+                                vpc_client.vpc_subnets.get(subnet_id, None),
+                                "availability_zone",
+                                None,
+                            )  # BUG: if prowler executes this check with --resource-arn option, it will not have the subnets in the vpc_client.vpc_subnets dict (Exception managed in the getattr function)
+                            for subnet_id in function.subnet_ids
                         ]
                     )
+                    # Remove None values from the set
+                    function_availability_zones.discard(None)
 
                     if len(function_availability_zones) >= LAMBDA_MINIMAL_AZ:
                         report.status = "PASS"
