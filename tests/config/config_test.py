@@ -288,6 +288,7 @@ config_aws = {
     ],
     "eks_cluster_oldest_version_supported": "1.28",
     "excluded_sensitive_environment_variables": [],
+    "elb_min_azs": 2,
     "elbv2_min_azs": 2,
 }
 
