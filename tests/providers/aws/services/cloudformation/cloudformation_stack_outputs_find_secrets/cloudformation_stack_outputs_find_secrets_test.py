@@ -51,7 +51,7 @@ class Test_cloudformation_stack_outputs_find_secrets:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Potential secret found in Stack {stack_name} Outputs."
+                == f"Potential secret found in Stack {stack_name} Outputs -> Secret Keyword in Output 1."
             )
             assert result[0].resource_id == "Test-Stack"
             assert (
