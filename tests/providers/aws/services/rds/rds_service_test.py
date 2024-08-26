@@ -213,9 +213,7 @@ class Test_RDS_Service:
 
             rds = RDS(rds_client)
             assert len(rds.db_instances) == 1
-            print(rds.db_instances)
             db_instance_arn, db_instance = next(iter(rds.db_instances.items()))
-            print(db_instance.ca_cert)
             assert db_instance.id == "db-master-1"
             assert db_instance.region == AWS_REGION_US_EAST_1
             assert len(db_instance.cert) == 1
