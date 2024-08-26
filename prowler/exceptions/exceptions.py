@@ -1,7 +1,6 @@
 class ProwlerException(Exception):
     """Base exception for all Prowler SDK errors."""
 
-    # Updated ERROR_CODES dictionary
     ERROR_CODES = {
         (1901, "ProviderConnectionError"): {
             "message": "Provider connection error",
