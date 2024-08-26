@@ -372,13 +372,13 @@ isodate = ">=0.6.1,<1.0.0"
 
 [[package]]
 name = "azure-mgmt-compute"
-version = "32.0.0"
+version = "33.0.0"
 description = "Microsoft Azure Compute Management Client Library for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "azure-mgmt-compute-32.0.0.tar.gz", hash = "sha256:8d5a86e0116c71a07bcedd8e69d2e09270db3880932656521f3143c6f9475072"},
-    {file = "azure_mgmt_compute-32.0.0-py3-none-any.whl", hash = "sha256:8578dbeee034a58c41331a71ddd2503e1e5c65a2cc233ebfe9adc5e16ca3d037"},
+    {file = "azure-mgmt-compute-33.0.0.tar.gz", hash = "sha256:a3cc0fe4f09c8e1d3523c1bfb92620dfe263a0a893b0ac13a33d7057e9ddddd2"},
+    {file = "azure_mgmt_compute-33.0.0-py3-none-any.whl", hash = "sha256:155f8d78a1fdedcea1725fd12b85b2d87fbcb6b53f8e77451c644f45701e3bcf"},
 ]
 
 [package.dependencies]
@@ -4564,4 +4564,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "07d2ae3beaa4d2fc48d5b7bb1fb7b4310cc3d3e81258fdf9233ffde348554ab0"
+content-hash = "974ec65213ab136c17bd08dca43501a885efcf86c1414455a0fe8ce72b6ccbf1"
