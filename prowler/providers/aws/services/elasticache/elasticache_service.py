@@ -107,7 +107,7 @@ class ElastiCache(AWSService):
                                 "AutoMinorVersionUpgrade", False
                             ),
                             automatic_failover=repl_group.get(
-                                "AutomaticFailover", None
+                                "AutomaticFailover", "disabled"
                             ),
                         )
                 except Exception as error:
@@ -179,5 +179,5 @@ class ReplicationGroup(BaseModel):
     transit_encryption: bool
     multi_az: str
     tags: Optional[list]
-    auto_minor_version_upgrade: bool = False
-    automatic_failover: Optional[str] = None
+    auto_minor_version_upgrade: bool
+    automatic_failover: str

@@ -3,7 +3,7 @@
   "CheckID": "elasticache_redis_cluster_automatic_failover_enabled",
   "CheckTitle": "Ensure Elasticache Redis clusters have automatic failover enabled.",
   "CheckType": [
-    "AWS Foundational Security Best Practices"
+    "NIST 800-53 Controls"
   ],
   "ServiceName": "elasticache",
   "SubServiceName": "",
