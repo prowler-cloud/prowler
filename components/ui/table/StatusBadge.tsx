@@ -7,7 +7,9 @@ type Status =
   | "cancelled"
   | "fail"
   | "success"
-  | "muted";
+  | "muted"
+  | "active"
+  | "inactive";
 
 const statusColorMap: Record<
   Status,
@@ -19,6 +21,8 @@ const statusColorMap: Record<
   fail: "danger",
   success: "success",
   muted: "default",
+  active: "success",
+  inactive: "default",
 };
 
 export const StatusBadge = ({ status }: { status: Status }) => {

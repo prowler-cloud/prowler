@@ -127,12 +127,6 @@ export const sectionItems: SidebarItem[] = [
       //   ),
       // },
       {
-        key: "services",
-        href: "/services",
-        icon: "material-symbols:linked-services-outline",
-        title: "Services",
-      },
-      {
         key: "compliance",
         href: "/compliance",
         icon: "fluent-mdl2:compliance-audit",
@@ -142,6 +136,24 @@ export const sectionItems: SidebarItem[] = [
             New
           </Chip>
         ),
+      },
+      {
+        key: "services",
+        href: "/services",
+        icon: "material-symbols:linked-services-outline",
+        title: "Services",
+      },
+      {
+        key: "categories",
+        href: "/categories",
+        icon: "material-symbols:folder-open-outline",
+        title: "Categories",
+      },
+      {
+        key: "workloads",
+        href: "/workloads",
+        icon: "lucide:tags",
+        title: "Workloads",
       },
     ],
   },
@@ -190,10 +202,10 @@ export const sectionItems: SidebarItem[] = [
         ),
       },
       {
-        key: "integration",
-        href: "/integration",
+        key: "integrations",
+        href: "/integrations",
         icon: "tabler:puzzle",
-        title: "Integration",
+        title: "Integrations",
       },
       {
         key: "settings",
@@ -213,9 +225,9 @@ export const sectionItemsWithTeams: SidebarItem[] = [
     items: [
       {
         key: "users",
-        href: "#",
+        href: "/users",
         title: "Users",
-        startContent: <TeamAvatar name="Users page" />,
+        icon: "ci:users",
       },
       {
         key: "roles",

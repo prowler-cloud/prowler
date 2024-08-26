@@ -5,20 +5,20 @@ import { redirect } from "next/navigation";
 
 import { parseStringify } from "@/lib";
 
-export const getCompliance = async ({ page = 1 }) => {
-  if (isNaN(Number(page)) || page < 1) redirect("/compliance");
+export const getUsers = async ({ page = 1 }) => {
+  if (isNaN(Number(page)) || page < 1) redirect("/users");
   const keyServer = process.env.LOCAL_SITE_URL;
 
   try {
-    const compliance = await fetch(
-      `${keyServer}/api/compliance?page%5Bnumber%5D=${page}`,
+    const users = await fetch(
+      `${keyServer}/api/users?page%5Bnumber%5D=${page}`,
     );
-    const data = await compliance.json();
+    const data = await users.json();
     const parsedData = parseStringify(data);
-    revalidatePath("/compliance");
+    revalidatePath("/users");
     return parsedData;
   } catch (error) {
-    console.error("Error fetching Compliance:", error);
+    console.error("Error fetching Users:", error);
     return undefined;
   }
 };

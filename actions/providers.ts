@@ -119,7 +119,7 @@ export const getErrorMessage = (error: unknown): string => {
   } else if (typeof error === "string") {
     message = error;
   } else {
-    message = "Wops! Something when wrong.";
+    message = "Oops! Something went wrong.";
   }
   return message;
 };

@@ -80,3 +80,12 @@ export interface MetaDataProps {
   };
   version: string;
 }
+
+export interface UserProps {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+  dateAdded: string;
+  status: "active" | "inactive";
+}
