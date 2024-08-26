@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 from json import dumps
 from os import rmdir
 from re import search
+from unittest import mock
 
 import botocore
 import botocore.exceptions
@@ -26,6 +27,10 @@ from prowler.providers.aws.config import (
     AWS_STS_GLOBAL_ENDPOINT_REGION,
     BOTO3_USER_AGENT_EXTRA,
     ROLE_SESSION_NAME,
+)
+from prowler.providers.aws.exceptions.exceptions import (
+    AWSArgumentTypeValidationError,
+    AWSNoCredentialsError,
 )
 from prowler.providers.aws.lib.arn.error import RoleArnParsingInvalidResourceType
 from prowler.providers.aws.lib.arn.models import ARN
@@ -1247,16 +1252,33 @@ aws:
         assert connection.is_connected
         assert connection.error is None
 
-    @mock_aws
-    def test_test_connection_without_credentials(self, monkeypatch):
-        monkeypatch.delenv("AWS_ACCESS_KEY_ID")
-        monkeypatch.delenv("AWS_SECRET_ACCESS_KEY")
+    def test_test_connection_without_credentials(self):
+        with mock.patch("boto3.Session.get_credentials", return_value=None), mock.patch(
+            "botocore.session.Session.get_scoped_config", return_value={}
+        ), mock.patch(
+            "botocore.credentials.EnvProvider.load", return_value=None
+        ), mock.patch(
+            "botocore.credentials.SharedCredentialProvider.load", return_value=None
+        ), mock.patch(
+            "botocore.credentials.InstanceMetadataProvider.load", return_value=None
+        ), mock.patch.dict(
+            "os.environ",
+            {
+                "AWS_ACCESS_KEY_ID": "",
+                "AWS_SECRET_ACCESS_KEY": "",
+                "AWS_SESSION_TOKEN": "",
+                "AWS_PROFILE": "",
+            },
+            clear=True,
+        ):
 
-        with raises(botocore.exceptions.NoCredentialsError) as exception:
-            AwsProvider.test_connection()
+            with raises(AWSNoCredentialsError) as exception:
+                AwsProvider.test_connection(
+                    profile=None
+                )  # No profile to avoid ProfileNotFound error
 
-        assert exception.type == botocore.exceptions.NoCredentialsError
-        assert exception.value.args[0] == "Unable to locate credentials"
+            assert exception.type == AWSNoCredentialsError
+            assert "[1908] No AWS credentials found" in str(exception.value)
 
     @mock_aws
     def test_test_connection_with_role_from_env(self, monkeypatch):
@@ -1290,12 +1312,13 @@ aws:
         role_arn = (
             f"arn:{AWS_COMMERCIAL_PARTITION}:iam::{AWS_ACCOUNT_NUMBER}:role/{role_name}"
         )
-        with raises(ArgumentTypeError) as exception:
+        with raises(AWSArgumentTypeValidationError) as exception:
             AwsProvider.test_connection(role_arn=role_arn, session_duration=899)
 
-        assert exception.type == ArgumentTypeError
+        assert exception.type == AWSArgumentTypeValidationError
         assert (
-            exception.value.args[0] == "Session duration must be between 900 and 43200"
+            exception.value.args[0]
+            == "[1909] AWS argument type validation error - Check the provided argument types specific to AWS and ensure they meet the required format. - aws_provider.py - Session duration must be between 900 and 43200 - AWS"
         )
 
     @mock_aws
@@ -1324,13 +1347,13 @@ aws:
             f"arn:{AWS_COMMERCIAL_PARTITION}:iam::{AWS_ACCOUNT_NUMBER}:role/{role_name}"
         )
 
-        with raises(ArgumentTypeError) as exception:
+        with raises(AWSArgumentTypeValidationError) as exception:
             AwsProvider.test_connection(role_arn=role_arn, role_session_name="???")
 
-        assert exception.type == ArgumentTypeError
+        assert exception.type == AWSArgumentTypeValidationError
         assert (
             exception.value.args[0]
-            == "Role Session Name must be 2-64 characters long and consist only of upper- and lower-case alphanumeric characters with no spaces. You can also include underscores or any of the following characters: =,.@-"
+            == "[1909] AWS argument type validation error - Check the provided argument types specific to AWS and ensure they meet the required format. - aws_provider.py - Role Session Name must be 2-64 characters long and consist only of upper- and lower-case alphanumeric characters with no spaces. You can also include underscores or any of the following characters: =,.@- - AWS"
         )
 
     @mock_aws

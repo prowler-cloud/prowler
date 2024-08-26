@@ -64,7 +64,9 @@ class ProwlerException(Exception):
         self.message = error_info["message"]
         self.remediation = error_info["remediation"]
         self.original_exception = original_exception
-        super().__init__(f"[{self.code}] {self.message}")
+        super().__init__(
+            f"[{self.code}] {self.message} - {self.remediation} - {self.file} - {self.original_exception} - {self.provider}"
+        )
 
 
 # Specific exception classes remain the same
