@@ -3,9 +3,6 @@ from typing import List
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.elb.elb_client import elb_client
 
-# https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ELB/ec2-instances-distribution-across-availability-zones.html
-# https://docs.aws.amazon.com/securityhub/latest/userguide/elb-controls.html#elb-10
-
 
 class elb_is_in_multiple_az(Check):
     def execute(self) -> List[Check_Report_AWS]:
@@ -18,11 +15,11 @@ class elb_is_in_multiple_az(Check):
             report.resource_arn = loadbalancer_arn
             report.resource_tags = load_balancer.tags
             report.status = "FAIL"
-            report.status_extended = f"Classic Load Balancer {load_balancer.name} is not in at least {ELB_MIN_AZS} availability zones. Is only in {', '.join(load_balancer.availability_zones)}."
+            report.status_extended = f"Classic Load Balancer {load_balancer.name} is not in at least {ELB_MIN_AZS} availability zones, it is only in {', '.join(load_balancer.availability_zones)}."
 
             if len(load_balancer.availability_zones) >= ELB_MIN_AZS:
                 report.status = "PASS"
-                report.status_extended = f"Classic Load Balancer {load_balancer.name} is in {len(load_balancer.availability_zones)} availability zones. Currently in {', '.join(load_balancer.availability_zones)}."
+                report.status_extended = f"Classic Load Balancer {load_balancer.name} is in {len(load_balancer.availability_zones)} availability zones: {', '.join(load_balancer.availability_zones)}."
 
             findings.append(report)
 

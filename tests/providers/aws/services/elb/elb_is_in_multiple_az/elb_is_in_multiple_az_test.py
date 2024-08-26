@@ -70,7 +70,7 @@ class Test_elb_is_in_multiple_az:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Classic Load Balancer my-lb is not in at least 2 availability zones. Is only in eu-west-1a."
+                == f"Classic Load Balancer my-lb is not in at least 2 availability zones, it is only in {AWS_REGION_EU_WEST_1_AZA}."
             )
             assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_id == "my-lb"
@@ -117,10 +117,10 @@ class Test_elb_is_in_multiple_az:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Classic Load Balancer my-lb is in 2 availability zones. Currently in {AWS_REGION_EU_WEST_1_AZA}, {AWS_REGION_EU_WEST_1_AZB}."
+                == f"Classic Load Balancer my-lb is in 2 availability zones: {AWS_REGION_EU_WEST_1_AZA}, {AWS_REGION_EU_WEST_1_AZB}."
             ) or (
                 result[0].status_extended
-                == f"Classic Load Balancer my-lb is in 2 availability zones. Currently in {AWS_REGION_EU_WEST_1_AZB}, {AWS_REGION_EU_WEST_1_AZA}."
+                == f"Classic Load Balancer my-lb is in 2 availability zones: {AWS_REGION_EU_WEST_1_AZB}, {AWS_REGION_EU_WEST_1_AZA}."
             )
             assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_id == "my-lb"
