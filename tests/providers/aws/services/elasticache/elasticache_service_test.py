@@ -161,7 +161,6 @@ class Test_ElastiCache_Service:
         assert elasticache.clusters[ELASTICACHE_CLUSTER_ARN]
         assert elasticache.clusters[ELASTICACHE_CLUSTER_ARN] == Cluster(
             arn=ELASTICACHE_CLUSTER_ARN,
-            name=ELASTICACHE_CLUSTER_NAME,
             id=ELASTICACHE_CLUSTER_NAME,
             engine=ELASTICACHE_ENGINE,
             region=AWS_REGION_US_EAST_1,
@@ -170,7 +169,7 @@ class Test_ElastiCache_Service:
             subnets=[SUBNET_1, SUBNET_2],
             tags=ELASTICACHE_CLUSTER_TAGS,
             auto_minor_version_upgrade=AUTO_MINOR_VERSION_UPGRADE,
-            engine_version=None,
+            engine_version="None",
             auth_token_enabled=False,
         )
 
@@ -194,4 +193,5 @@ class Test_ElastiCache_Service:
             multi_az=REPLICATION_GROUP_MULTI_AZ,
             tags=REPLICATION_GROUP_TAGS,
             auto_minor_version_upgrade=AUTO_MINOR_VERSION_UPGRADE,
+            member_clusters=[],
         )

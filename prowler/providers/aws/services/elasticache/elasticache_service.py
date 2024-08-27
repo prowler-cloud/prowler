@@ -194,4 +194,4 @@ class ReplicationGroup(BaseModel):
     multi_az: str
     tags: Optional[list]
     auto_minor_version_upgrade: bool = False
-    # member_clusters: Optional[dict[Cluster]]
+    member_clusters: Optional[list[Cluster]]

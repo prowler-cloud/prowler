@@ -3,13 +3,23 @@ from unittest import mock
 from mock import MagicMock, patch
 from moto import mock_aws
 
-from prowler.providers.aws.services.elasticache.elasticache_service import Cluster
+from prowler.providers.aws.services.elasticache.elasticache_service import (
+    Cluster,
+    ReplicationGroup,
+)
 from tests.providers.aws.services.elasticache.elasticache_service_test import (
     ELASTICACHE_CLUSTER_ARN,
     ELASTICACHE_CLUSTER_NAME,
     ELASTICACHE_CLUSTER_TAGS,
-    ELASTICACHE_ENGINE,
     ELASTICACHE_ENGINE_MEMCACHED,
+    REPLICATION_GROUP_ARN,
+    REPLICATION_GROUP_ENCRYPTION,
+    REPLICATION_GROUP_ID,
+    REPLICATION_GROUP_MULTI_AZ,
+    REPLICATION_GROUP_SNAPSHOT_RETENTION,
+    REPLICATION_GROUP_STATUS,
+    REPLICATION_GROUP_TAGS,
+    REPLICATION_GROUP_TRANSIT_ENCRYPTION,
     mock_make_api_call,
 )
 from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provider
@@ -51,60 +61,34 @@ class Test_elasticache_redis_cluster_auth_enabled:
             result = check.execute()
             assert len(result) == 0
 
-    def test_elasticache_no_redis_replication_groups(self):
-        # Mock ElastiCache Service
-        elasticache_service = MagicMock
-        elasticache_service.replication_groups = {}
-
-        elasticache_service.replication_groups[ELASTICACHE_CLUSTER_ARN] = Cluster(
-            arn=ELASTICACHE_CLUSTER_ARN,
-            name=ELASTICACHE_CLUSTER_NAME,
-            id=ELASTICACHE_CLUSTER_NAME,
-            engine=ELASTICACHE_ENGINE_MEMCACHED,
-            region=AWS_REGION_US_EAST_1,
-            tags=ELASTICACHE_CLUSTER_TAGS,
-        )
-
-        # Mock VPC Service
-        vpc_client = MagicMock
-        vpc_client.vpc_subnets = {}
-
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
-        ), mock.patch(
-            "prowler.providers.aws.services.elasticache.elasticache_service.ElastiCache",
-            new=elasticache_service,
-        ), mock.patch(
-            "prowler.providers.aws.services.vpc.vpc_service.VPC",
-            new=vpc_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.vpc.vpc_client.vpc_client",
-            new=vpc_client,
-        ):
-            from prowler.providers.aws.services.elasticache.elasticache_redis_cluster_auth_enabled.elasticache_redis_cluster_auth_enabled import (
-                elasticache_redis_cluster_auth_enabled,
-            )
-
-            check = elasticache_redis_cluster_auth_enabled()
-            result = check.execute()
-            assert len(result) == 0
-
     def test_elasticache_no_old_redis_replication_groups(self):
         # Mock ElastiCache Service
         elasticache_service = MagicMock
-        elasticache_service.replication_groups = {}
-
         version = "6.0.0"
-        elasticache_service.replication_groups[ELASTICACHE_CLUSTER_ARN] = Cluster(
-            arn=ELASTICACHE_CLUSTER_ARN,
-            name=ELASTICACHE_CLUSTER_NAME,
-            id=ELASTICACHE_CLUSTER_NAME,
-            engine=ELASTICACHE_ENGINE_MEMCACHED,
-            region=AWS_REGION_US_EAST_1,
-            tags=ELASTICACHE_CLUSTER_TAGS,
-            engine_version=version,
-        )
+        elasticache_service.replication_groups = {
+            REPLICATION_GROUP_ARN: ReplicationGroup(
+                arn=REPLICATION_GROUP_ARN,
+                id=REPLICATION_GROUP_ID,
+                region=AWS_REGION_US_EAST_1,
+                status=REPLICATION_GROUP_STATUS,
+                snapshot_retention=REPLICATION_GROUP_SNAPSHOT_RETENTION,
+                encrypted=REPLICATION_GROUP_ENCRYPTION,
+                transit_encryption=REPLICATION_GROUP_TRANSIT_ENCRYPTION,
+                multi_az=REPLICATION_GROUP_MULTI_AZ,
+                tags=REPLICATION_GROUP_TAGS,
+                member_clusters=[
+                    Cluster(
+                        arn=ELASTICACHE_CLUSTER_ARN,
+                        name=ELASTICACHE_CLUSTER_NAME,
+                        id=ELASTICACHE_CLUSTER_NAME,
+                        engine=ELASTICACHE_ENGINE_MEMCACHED,
+                        region=AWS_REGION_US_EAST_1,
+                        tags=ELASTICACHE_CLUSTER_TAGS,
+                        engine_version=version,
+                    ),
+                ],
+            )
+        }
 
         # Mock VPC Service
         vpc_client = MagicMock
@@ -129,24 +113,46 @@ class Test_elasticache_redis_cluster_auth_enabled:
 
             check = elasticache_redis_cluster_auth_enabled()
             result = check.execute()
-            assert len(result) == 0
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == f"Elasticache Redis replication group {REPLICATION_GROUP_ID}(v{version}) does not have to use AUTH, but it should have Redis ACL configured."
+            )
+            assert result[0].region == AWS_REGION_US_EAST_1
+            assert result[0].resource_id == REPLICATION_GROUP_ID
+            assert result[0].resource_arn == REPLICATION_GROUP_ARN
+            assert result[0].resource_tags == REPLICATION_GROUP_TAGS
 
     def test_elasticache_redis_cluster_auth_enabled(self):
         # Mock ElastiCache Service
         elasticache_service = MagicMock
-        elasticache_service.replication_groups = {}
-
-        version = "5.0.0"
-        elasticache_service.replication_groups[ELASTICACHE_CLUSTER_ARN] = Cluster(
-            arn=ELASTICACHE_CLUSTER_ARN,
-            name=ELASTICACHE_CLUSTER_NAME,
-            id=ELASTICACHE_CLUSTER_NAME,
-            engine=ELASTICACHE_ENGINE,
-            region=AWS_REGION_US_EAST_1,
-            tags=ELASTICACHE_CLUSTER_TAGS,
-            auth_token_enabled=True,
-            engine_version=version,
-        )
+        version = "4.0.0"
+        elasticache_service.replication_groups = {
+            REPLICATION_GROUP_ARN: ReplicationGroup(
+                arn=REPLICATION_GROUP_ARN,
+                id=REPLICATION_GROUP_ID,
+                region=AWS_REGION_US_EAST_1,
+                status=REPLICATION_GROUP_STATUS,
+                snapshot_retention=REPLICATION_GROUP_SNAPSHOT_RETENTION,
+                encrypted=REPLICATION_GROUP_ENCRYPTION,
+                transit_encryption=REPLICATION_GROUP_TRANSIT_ENCRYPTION,
+                multi_az=REPLICATION_GROUP_MULTI_AZ,
+                tags=REPLICATION_GROUP_TAGS,
+                member_clusters=[
+                    Cluster(
+                        arn=ELASTICACHE_CLUSTER_ARN,
+                        name=ELASTICACHE_CLUSTER_NAME,
+                        id=ELASTICACHE_CLUSTER_NAME,
+                        engine=ELASTICACHE_ENGINE_MEMCACHED,
+                        region=AWS_REGION_US_EAST_1,
+                        tags=ELASTICACHE_CLUSTER_TAGS,
+                        engine_version=version,
+                        auth_token_enabled=True,
+                    ),
+                ],
+            )
+        }
 
         # Mock VPC Service
         vpc_client = MagicMock
@@ -176,29 +182,42 @@ class Test_elasticache_redis_cluster_auth_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Elasticache Redis cache cluster {ELASTICACHE_CLUSTER_NAME}(v{version}) does have AUTH enabled."
+                == f"Elasticache Redis replication group {REPLICATION_GROUP_ID}(v{version}) does have AUTH enabled."
             )
             assert result[0].region == AWS_REGION_US_EAST_1
-            assert result[0].resource_id == ELASTICACHE_CLUSTER_NAME
-            assert result[0].resource_arn == ELASTICACHE_CLUSTER_ARN
-            assert result[0].resource_tags == ELASTICACHE_CLUSTER_TAGS
+            assert result[0].resource_id == REPLICATION_GROUP_ID
+            assert result[0].resource_arn == REPLICATION_GROUP_ARN
+            assert result[0].resource_tags == REPLICATION_GROUP_TAGS
 
     def test_elasticache_redis_cluster_auth_disabled(self):
         # Mock ElastiCache Service
         elasticache_service = MagicMock
-        elasticache_service.replication_groups = {}
-
-        version = "5.0.0"
-        elasticache_service.replication_groups[ELASTICACHE_CLUSTER_ARN] = Cluster(
-            arn=ELASTICACHE_CLUSTER_ARN,
-            name=ELASTICACHE_CLUSTER_NAME,
-            id=ELASTICACHE_CLUSTER_NAME,
-            engine=ELASTICACHE_ENGINE,
-            region=AWS_REGION_US_EAST_1,
-            tags=ELASTICACHE_CLUSTER_TAGS,
-            auth_token_enabled=False,
-            engine_version=version,
-        )
+        version = "4.0.0"
+        elasticache_service.replication_groups = {
+            REPLICATION_GROUP_ARN: ReplicationGroup(
+                arn=REPLICATION_GROUP_ARN,
+                id=REPLICATION_GROUP_ID,
+                region=AWS_REGION_US_EAST_1,
+                status=REPLICATION_GROUP_STATUS,
+                snapshot_retention=REPLICATION_GROUP_SNAPSHOT_RETENTION,
+                encrypted=REPLICATION_GROUP_ENCRYPTION,
+                transit_encryption=REPLICATION_GROUP_TRANSIT_ENCRYPTION,
+                multi_az=REPLICATION_GROUP_MULTI_AZ,
+                tags=REPLICATION_GROUP_TAGS,
+                member_clusters=[
+                    Cluster(
+                        arn=ELASTICACHE_CLUSTER_ARN,
+                        name=ELASTICACHE_CLUSTER_NAME,
+                        id=ELASTICACHE_CLUSTER_NAME,
+                        engine=ELASTICACHE_ENGINE_MEMCACHED,
+                        region=AWS_REGION_US_EAST_1,
+                        tags=ELASTICACHE_CLUSTER_TAGS,
+                        engine_version=version,
+                        auth_token_enabled=False,
+                    ),
+                ],
+            )
+        }
 
         # Mock VPC Service
         vpc_client = MagicMock
@@ -228,9 +247,9 @@ class Test_elasticache_redis_cluster_auth_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Elasticache Redis cache cluster {ELASTICACHE_CLUSTER_NAME}(v{version}) does not have AUTH enabled."
+                == f"Elasticache Redis replication group {REPLICATION_GROUP_ID}(v{version}) does not have AUTH enabled."
             )
             assert result[0].region == AWS_REGION_US_EAST_1
-            assert result[0].resource_id == ELASTICACHE_CLUSTER_NAME
-            assert result[0].resource_arn == ELASTICACHE_CLUSTER_ARN
-            assert result[0].resource_tags == ELASTICACHE_CLUSTER_TAGS
+            assert result[0].resource_id == REPLICATION_GROUP_ID
+            assert result[0].resource_arn == REPLICATION_GROUP_ARN
+            assert result[0].resource_tags == REPLICATION_GROUP_TAGS
