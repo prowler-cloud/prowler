@@ -316,7 +316,7 @@ class Test_Cloudtrail_Service:
         assert len(cloudtrail.trails) == len(aws_provider.identity.audited_regions)
 
     @mock_aws
-    def test__list_tags_for_resource__(self):
+    def test_list_tags_for_resource(self):
         tag = "test-tag"
         cloudtrail_client_us_east_1 = client(
             "cloudtrail", region_name=AWS_REGION_US_EAST_1

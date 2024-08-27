@@ -16,7 +16,7 @@ class Route53(AWSService):
         self.record_sets = []
         self.__list_hosted_zones__()
         self.__list_query_logging_configs__()
-        self.__list_tags_for_resource__()
+        self._list_tags_for_resource()
         self.__list_resource_record_sets__()
 
     def __list_hosted_zones__(self):
@@ -100,7 +100,7 @@ class Route53(AWSService):
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __list_tags_for_resource__(self):
+    def _list_tags_for_resource(self):
         logger.info("Route53Domains - List Tags...")
         for hosted_zone in self.hosted_zones.values():
             try:

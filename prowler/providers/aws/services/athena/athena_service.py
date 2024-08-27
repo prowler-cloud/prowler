@@ -16,7 +16,7 @@ class Athena(AWSService):
         self.__threading_call__(self.__list_workgroups__)
         self.__get_workgroups__()
         self.__list_query_executions__()
-        self.__list_tags_for_resource__()
+        self._list_tags_for_resource()
 
     def __list_workgroups__(self, regional_client):
         logger.info("Athena - Listing WorkGroups...")
@@ -109,7 +109,7 @@ class Athena(AWSService):
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __list_tags_for_resource__(self):
+    def _list_tags_for_resource(self):
         logger.info("Athena - Listing Tags...")
         try:
             for workgroup in self.workgroups.values():

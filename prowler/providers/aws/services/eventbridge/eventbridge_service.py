@@ -17,7 +17,7 @@ class EventBridge(AWSService):
         self.buses = {}
         self.__threading_call__(self.__list_event_buses__)
         self.__threading_call__(self.__describe_event_bus__)
-        self.__list_tags_for_resource__()
+        self._list_tags_for_resource()
 
     def __list_event_buses__(self, regional_client):
         logger.info("EventBridge - Listing Event Buses...")
@@ -55,7 +55,7 @@ class EventBridge(AWSService):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __list_tags_for_resource__(self):
+    def _list_tags_for_resource(self):
         logger.info("EventBridge - Listing Tags...")
         try:
             for bus in self.buses.values():
