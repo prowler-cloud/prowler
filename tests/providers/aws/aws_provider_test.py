@@ -1291,7 +1291,7 @@ aws:
                 )  # No profile to avoid ProfileNotFound error
 
             assert exception.type == AWSNoCredentialsError
-            assert "[1908] No AWS credentials found" in str(exception.value)
+            assert "[1904] No AWS credentials found" in str(exception.value)
 
     @mock_aws
     def test_test_connection_with_role_from_env(self, monkeypatch):
@@ -1331,7 +1331,7 @@ aws:
         assert exception.type == AWSArgumentTypeValidationError
         assert (
             exception.value.args[0]
-            == "[1909] AWS argument type validation error - Check the provided argument types specific to AWS and ensure they meet the required format. - aws_provider.py - Session Duration must be between 900 and 43200 seconds. - AWS"
+            == "[1905] AWS argument type validation error - Session Duration must be between 900 and 43200 seconds."
         )
 
     @mock_aws
@@ -1351,7 +1351,7 @@ aws:
         assert isinstance(connection.error, AWSArgumentTypeValidationError)
         assert (
             connection.error.args[0]
-            == "[1909] AWS argument type validation error - Check the provided argument types specific to AWS and ensure they meet the required format. - aws_provider.py - Session Duration must be between 900 and 43200 seconds. - AWS"
+            == "[1905] AWS argument type validation error - Session Duration must be between 900 and 43200 seconds."
         )
 
     @mock_aws
@@ -1367,7 +1367,7 @@ aws:
         assert exception.type == AWSArgumentTypeValidationError
         assert (
             exception.value.args[0]
-            == "[1909] AWS argument type validation error - Check the provided argument types specific to AWS and ensure they meet the required format. - aws_provider.py - Role Session Name must be between 2 and 64 characters and may contain alphanumeric characters, periods, hyphens, and underscores. - AWS"
+            == "[1905] AWS argument type validation error - Role Session Name must be between 2 and 64 characters and may contain alphanumeric characters, periods, hyphens, and underscores."
         )
 
     @mock_aws
@@ -1381,7 +1381,7 @@ aws:
         assert exception.type == AWSIAMRoleARNInvalidResourceType
         assert (
             exception.value.args[0]
-            == "[1916] AWS IAM Role ARN resource type is invalid - Check the AWS IAM Role ARN resource type and ensure it is valid. - arn.py - None - AWS"
+            == "[1912] AWS IAM Role ARN resource type is invalid"
         )
 
     @mock_aws

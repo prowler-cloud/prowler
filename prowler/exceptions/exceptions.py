@@ -25,9 +25,9 @@ class ProwlerException(Exception):
 
         Example:
             A ProwlerException is raised with the following parameters and format:
-            >>> original_exception = Exception("Unexpected error occurred.")
+            >>> original_exception = Exception("Error occurred.")
             ProwlerException(1901, "AWS", "file.txt", original_exception)
-            >>> [1901] Unexpected error occurred. - Please review the error message and try again. - file.txt - Unexpected error occurred. - AWS
+            >>> [1901] Unexpected error occurred. - Exception: Error occurred.
         """
         self.code = code
         self.provider = provider
@@ -37,10 +37,13 @@ class ProwlerException(Exception):
         self.message = error_info.get("message")
         self.remediation = error_info.get("remediation")
         self.original_exception = original_exception
-        # Format -> [code] message - remediation - file - original_exception - provider
-        super().__init__(
-            f"[{self.code}] {self.message} - {self.remediation} - {self.file} - {self.original_exception} - {self.provider}"
-        )
+        # Format -> [code] message - original_exception
+        if original_exception is None:
+            super().__init__(f"[{self.code}] {self.message}")
+        else:
+            super().__init__(
+                f"[{self.code}] {self.message} - {self.original_exception}"
+            )
 
 
 class UnexpectedError(ProwlerException):
