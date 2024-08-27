@@ -8,8 +8,6 @@ env:
   RELEASE_TAG: ${{ github.event.release.tag_name }}
   PYTHON_VERSION: 3.11
   CACHE: "poetry"
-  # TODO: create a bot user for this kind of tasks, like prowler-bot
-  GIT_COMMITTER_EMAIL: "sergio@prowler.com"
 
 jobs:
   release-prowler-job:
