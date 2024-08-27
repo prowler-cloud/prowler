@@ -2,7 +2,7 @@ import json
 import os
 import re
 import tempfile
-from argparse import ArgumentTypeError, Namespace
+from argparse import Namespace
 from datetime import datetime, timedelta
 from json import dumps
 from os import rmdir
@@ -1331,7 +1331,7 @@ aws:
         assert exception.type == AWSArgumentTypeValidationError
         assert (
             exception.value.args[0]
-            == "[1909] AWS argument type validation error - Check the provided argument types specific to AWS and ensure they meet the required format. - aws_provider.py - Session duration must be between 900 and 43200 - AWS"
+            == "[1909] AWS argument type validation error - Check the provided argument types specific to AWS and ensure they meet the required format. - aws_provider.py - Session Duration must be between 900 and 43200 seconds. - AWS"
         )
 
     @mock_aws
@@ -1348,9 +1348,10 @@ aws:
 
         assert isinstance(connection, Connection)
         assert not connection.is_connected
-        assert isinstance(connection.error, ArgumentTypeError)
+        assert isinstance(connection.error, AWSArgumentTypeValidationError)
         assert (
-            connection.error.args[0] == "Session duration must be between 900 and 43200"
+            connection.error.args[0]
+            == "[1909] AWS argument type validation error - Check the provided argument types specific to AWS and ensure they meet the required format. - aws_provider.py - Session Duration must be between 900 and 43200 seconds. - AWS"
         )
 
     @mock_aws
@@ -1366,7 +1367,7 @@ aws:
         assert exception.type == AWSArgumentTypeValidationError
         assert (
             exception.value.args[0]
-            == "[1909] AWS argument type validation error - Check the provided argument types specific to AWS and ensure they meet the required format. - aws_provider.py - Role Session Name must be 2-64 characters long and consist only of upper- and lower-case alphanumeric characters with no spaces. You can also include underscores or any of the following characters: =,.@- - AWS"
+            == "[1909] AWS argument type validation error - Check the provided argument types specific to AWS and ensure they meet the required format. - aws_provider.py - Role Session Name must be between 2 and 64 characters and may contain alphanumeric characters, periods, hyphens, and underscores. - AWS"
         )
 
     @mock_aws
