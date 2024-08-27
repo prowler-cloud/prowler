@@ -19,16 +19,16 @@ VPC_ID = "vpc-12345678901234567"
 
 # Patch every AWS call using Boto3
 @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
-class Test_elasticache_redis_cluster_below_v6_auth_enabled:
+class Test_elasticache_redis_cluster_auth_enabled:
     @mock_aws
-    def test_elasticache_no_clusters(self):
+    def test_elasticache_no_replication_groups(self):
         # Mock VPC Service
         vpc_client = MagicMock
         vpc_client.vpc_subnets = {}
 
         # Mock ElastiCache Service
         elasticache_service = MagicMock
-        elasticache_service.clusters = {}
+        elasticache_service.replication_groups = {}
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
@@ -43,20 +43,20 @@ class Test_elasticache_redis_cluster_below_v6_auth_enabled:
             "prowler.providers.aws.services.vpc.vpc_client.vpc_client",
             new=vpc_client,
         ):
-            from prowler.providers.aws.services.elasticache.elasticache_redis_cluster_below_v6_auth_enabled.elasticache_redis_cluster_below_v6_auth_enabled import (
-                elasticache_redis_cluster_below_v6_auth_enabled,
+            from prowler.providers.aws.services.elasticache.elasticache_redis_cluster_auth_enabled.elasticache_redis_cluster_auth_enabled import (
+                elasticache_redis_cluster_auth_enabled,
             )
 
-            check = elasticache_redis_cluster_below_v6_auth_enabled()
+            check = elasticache_redis_cluster_auth_enabled()
             result = check.execute()
             assert len(result) == 0
 
-    def test_elasticache_no_redis_clusters(self):
+    def test_elasticache_no_redis_replication_groups(self):
         # Mock ElastiCache Service
         elasticache_service = MagicMock
-        elasticache_service.clusters = {}
+        elasticache_service.replication_groups = {}
 
-        elasticache_service.clusters[ELASTICACHE_CLUSTER_ARN] = Cluster(
+        elasticache_service.replication_groups[ELASTICACHE_CLUSTER_ARN] = Cluster(
             arn=ELASTICACHE_CLUSTER_ARN,
             name=ELASTICACHE_CLUSTER_NAME,
             id=ELASTICACHE_CLUSTER_NAME,
@@ -82,21 +82,21 @@ class Test_elasticache_redis_cluster_below_v6_auth_enabled:
             "prowler.providers.aws.services.vpc.vpc_client.vpc_client",
             new=vpc_client,
         ):
-            from prowler.providers.aws.services.elasticache.elasticache_redis_cluster_below_v6_auth_enabled.elasticache_redis_cluster_below_v6_auth_enabled import (
-                elasticache_redis_cluster_below_v6_auth_enabled,
+            from prowler.providers.aws.services.elasticache.elasticache_redis_cluster_auth_enabled.elasticache_redis_cluster_auth_enabled import (
+                elasticache_redis_cluster_auth_enabled,
             )
 
-            check = elasticache_redis_cluster_below_v6_auth_enabled()
+            check = elasticache_redis_cluster_auth_enabled()
             result = check.execute()
             assert len(result) == 0
 
-    def test_elasticache_no_redis_clusters_below_v6(self):
+    def test_elasticache_no_old_redis_replication_groups(self):
         # Mock ElastiCache Service
         elasticache_service = MagicMock
-        elasticache_service.clusters = {}
+        elasticache_service.replication_groups = {}
 
         version = "6.0.0"
-        elasticache_service.clusters[ELASTICACHE_CLUSTER_ARN] = Cluster(
+        elasticache_service.replication_groups[ELASTICACHE_CLUSTER_ARN] = Cluster(
             arn=ELASTICACHE_CLUSTER_ARN,
             name=ELASTICACHE_CLUSTER_NAME,
             id=ELASTICACHE_CLUSTER_NAME,
@@ -123,21 +123,21 @@ class Test_elasticache_redis_cluster_below_v6_auth_enabled:
             "prowler.providers.aws.services.vpc.vpc_client.vpc_client",
             new=vpc_client,
         ):
-            from prowler.providers.aws.services.elasticache.elasticache_redis_cluster_below_v6_auth_enabled.elasticache_redis_cluster_below_v6_auth_enabled import (
-                elasticache_redis_cluster_below_v6_auth_enabled,
+            from prowler.providers.aws.services.elasticache.elasticache_redis_cluster_auth_enabled.elasticache_redis_cluster_auth_enabled import (
+                elasticache_redis_cluster_auth_enabled,
             )
 
-            check = elasticache_redis_cluster_below_v6_auth_enabled()
+            check = elasticache_redis_cluster_auth_enabled()
             result = check.execute()
             assert len(result) == 0
 
-    def test_elasticache_redis_cluster_below_v6_auth_enabled(self):
+    def test_elasticache_redis_cluster_auth_enabled(self):
         # Mock ElastiCache Service
         elasticache_service = MagicMock
-        elasticache_service.clusters = {}
+        elasticache_service.replication_groups = {}
 
         version = "5.0.0"
-        elasticache_service.clusters[ELASTICACHE_CLUSTER_ARN] = Cluster(
+        elasticache_service.replication_groups[ELASTICACHE_CLUSTER_ARN] = Cluster(
             arn=ELASTICACHE_CLUSTER_ARN,
             name=ELASTICACHE_CLUSTER_NAME,
             id=ELASTICACHE_CLUSTER_NAME,
@@ -165,11 +165,11 @@ class Test_elasticache_redis_cluster_below_v6_auth_enabled:
             "prowler.providers.aws.services.vpc.vpc_client.vpc_client",
             new=vpc_client,
         ):
-            from prowler.providers.aws.services.elasticache.elasticache_redis_cluster_below_v6_auth_enabled.elasticache_redis_cluster_below_v6_auth_enabled import (
-                elasticache_redis_cluster_below_v6_auth_enabled,
+            from prowler.providers.aws.services.elasticache.elasticache_redis_cluster_auth_enabled.elasticache_redis_cluster_auth_enabled import (
+                elasticache_redis_cluster_auth_enabled,
             )
 
-            check = elasticache_redis_cluster_below_v6_auth_enabled()
+            check = elasticache_redis_cluster_auth_enabled()
             result = check.execute()
 
             assert len(result) == 1
@@ -183,13 +183,13 @@ class Test_elasticache_redis_cluster_below_v6_auth_enabled:
             assert result[0].resource_arn == ELASTICACHE_CLUSTER_ARN
             assert result[0].resource_tags == ELASTICACHE_CLUSTER_TAGS
 
-    def test_elasticache_redis_cluster_below_v6_auth_disabled(self):
+    def test_elasticache_redis_cluster_auth_disabled(self):
         # Mock ElastiCache Service
         elasticache_service = MagicMock
-        elasticache_service.clusters = {}
+        elasticache_service.replication_groups = {}
 
         version = "5.0.0"
-        elasticache_service.clusters[ELASTICACHE_CLUSTER_ARN] = Cluster(
+        elasticache_service.replication_groups[ELASTICACHE_CLUSTER_ARN] = Cluster(
             arn=ELASTICACHE_CLUSTER_ARN,
             name=ELASTICACHE_CLUSTER_NAME,
             id=ELASTICACHE_CLUSTER_NAME,
@@ -217,11 +217,11 @@ class Test_elasticache_redis_cluster_below_v6_auth_enabled:
             "prowler.providers.aws.services.vpc.vpc_client.vpc_client",
             new=vpc_client,
         ):
-            from prowler.providers.aws.services.elasticache.elasticache_redis_cluster_below_v6_auth_enabled.elasticache_redis_cluster_below_v6_auth_enabled import (
-                elasticache_redis_cluster_below_v6_auth_enabled,
+            from prowler.providers.aws.services.elasticache.elasticache_redis_cluster_auth_enabled.elasticache_redis_cluster_auth_enabled import (
+                elasticache_redis_cluster_auth_enabled,
             )
 
-            check = elasticache_redis_cluster_below_v6_auth_enabled()
+            check = elasticache_redis_cluster_auth_enabled()
             result = check.execute()
 
             assert len(result) == 1

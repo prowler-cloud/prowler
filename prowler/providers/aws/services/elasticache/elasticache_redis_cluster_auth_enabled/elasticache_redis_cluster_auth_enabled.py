@@ -4,7 +4,7 @@ from prowler.providers.aws.services.elasticache.elasticache_client import (
 )
 
 
-class elasticache_redis_cluster_below_v6_auth_enabled(Check):
+class elasticache_redis_cluster_auth_enabled(Check):
     def execute(self):
         findings = []
         for repl_group in elasticache_client.replication_groups.values():

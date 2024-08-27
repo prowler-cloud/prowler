@@ -94,6 +94,16 @@ class ElastiCache(AWSService):
                     if not self.audit_resources or (
                         is_resource_filtered(replication_arn, self.audit_resources)
                     ):
+                        member_clusters = repl_group.get("MemberClusters", [])
+                        cluster_list = []
+                        if member_clusters:
+                            for cluster in member_clusters:
+                                cluster_list.append(
+                                    self.clusters[
+                                        f"arn:aws:elasticache:{regional_client.region}:{self.audited_account}:cluster:{cluster}"
+                                    ]
+                                )
+
                         self.replication_groups[replication_arn] = ReplicationGroup(
                             id=repl_group["ReplicationGroupId"],
                             arn=replication_arn,
@@ -110,6 +120,7 @@ class ElastiCache(AWSService):
                             auto_minor_version_upgrade=repl_group.get(
                                 "AutoMinorVersionUpgrade", False
                             ),
+                            member_clusters=cluster_list,
                         )
                 except Exception as error:
                     logger.error(
@@ -183,3 +194,4 @@ class ReplicationGroup(BaseModel):
     multi_az: str
     tags: Optional[list]
     auto_minor_version_upgrade: bool = False
+    # member_clusters: Optional[dict[Cluster]]
