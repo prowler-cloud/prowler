@@ -1380,7 +1380,7 @@ aws:
         assert exception.type == AWSIAMRoleARNInvalidResourceType
         assert (
             exception.value.args[0]
-            == "The assumed role ARN contains a value for resource type different than role, please input a valid ARN"
+            == "[1916] AWS IAM Role ARN resource type is invalid - Check the AWS IAM Role ARN resource type and ensure it is valid. - arn.py - None - AWS"
         )
 
     @mock_aws
