@@ -30,7 +30,9 @@ from prowler.providers.aws.config import (
 )
 from prowler.providers.aws.exceptions.exceptions import (
     AWSArgumentTypeValidationError,
+    AWSAssumeRoleError,
     AWSClientError,
+    AWSIAMRoleARNRegionNotEmtpy,
     AWSNoCredentialsError,
     AWSProfileNotFoundError,
     AWSSetUpSessionError,
@@ -44,11 +46,9 @@ from prowler.providers.aws.lib.organizations.organizations import (
 )
 from prowler.providers.aws.models import (
     AWSAssumeRoleConfiguration,
-    AWSAssumeRoleError,
     AWSAssumeRoleInfo,
     AWSCallerIdentity,
     AWSCredentials,
-    AWSIAMRoleARNRegionNotEmtpy,
     AWSIdentityInfo,
     AWSMFAInfo,
     AWSOrganizationsInfo,
