@@ -208,9 +208,6 @@ class Test_RDS_Service:
             "prowler.providers.aws.services.rds.rds_service.RDS",
             new=rds_client,
         ):
-            # Test Check
-            from prowler.providers.aws.services.rds.rds_service import RDS
-
             rds = RDS(rds_client)
             assert len(rds.db_instances) == 1
             db_instance_arn, db_instance = next(iter(rds.db_instances.items()))
