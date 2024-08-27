@@ -158,6 +158,12 @@ class ProwlerException(Exception):
             "file": "{file}",
             "provider": "Azure",
         },
+        (1928, "AzureHTTPResponseError"): {
+            "message": "Error in HTTP response from Azure",
+            "remediation": "",
+            "file": "{file}",
+            "provider": "Azure",
+        },
     }
 
     def __init__(self, code, provider=None, file=None, original_exception=None):
