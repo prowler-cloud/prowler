@@ -3,7 +3,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Icon } from "@iconify/react";
 import { Button, Checkbox, Divider, Link } from "@nextui-org/react";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { useFormState } from "react-dom";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -17,17 +18,14 @@ import {
 } from "@/components/ui/form";
 import { authFormSchema } from "@/types";
 
-import { ProwlerExtended } from "../icons";
+import { NotificationIcon, ProwlerExtended } from "../icons";
 import { ThemeSwitch } from "../ThemeSwitch";
 import { CustomInput } from "../ui/custom";
 import { AuthButton } from "./AuthButton";
 
 export const AuthForm = ({ type }: { type: string }) => {
-  const [user, setUser] = useState(null);
-
   const formSchema = authFormSchema(type);
-  // const [state, dispath] = useFormState(authenticate, undefined);
-
+  const router = useRouter();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -36,10 +34,33 @@ export const AuthForm = ({ type }: { type: string }) => {
     },
   });
 
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
+  const [state, dispatch] = useFormState(authenticate, undefined);
+
+  useEffect(() => {
+    if (state?.message === "Success") {
+      router.push("/");
+    }
+  }, [state]);
+
+  console.log(state, "el state desde el AuthForm");
+
+  const onSubmit = async (data: z.infer<typeof formSchema>) => {
     // Do something with the form values
     // this will be type-safe and validated
-    console.log(values);
+    try {
+      // Sign-up logic will be here.
+      if (type === "sign-in") {
+        dispatch({
+          email: data.email.toLowerCase(),
+          password: data.password,
+        });
+      }
+      // if (type === "sign-up") {
+      //   const newUser = await signUpNew(data);
+      // }
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   return (
@@ -106,6 +127,7 @@ export const AuthForm = ({ type }: { type: string }) => {
             />
 
             <CustomInput control={form.control} password />
+
             {type === "sign-in" && (
               <div className="flex items-center justify-between px-1 py-2">
                 <Checkbox name="remember" size="sm">
@@ -150,7 +172,10 @@ export const AuthForm = ({ type }: { type: string }) => {
                         isRequired
                         className="py-4"
                         size="sm"
-                        {...field}
+                        checked={field.value === "true"}
+                        onChange={(e) =>
+                          field.onChange(e.target.checked ? "true" : "false")
+                        }
                       >
                         I agree with the&nbsp;
                         <Link href="#" size="sm">
@@ -162,15 +187,23 @@ export const AuthForm = ({ type }: { type: string }) => {
                         </Link>
                       </Checkbox>
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-system-error dark:text-system-error" />
                   </>
                 )}
               />
             )}
 
+            {state?.message === "Credentials error" && (
+              <div className="flex flex-row items-center gap-2 text-system-error">
+                <NotificationIcon size={16} />
+                <p className="text-s">Incorrect email or password</p>
+              </div>
+            )}
+
             <AuthButton type={type} />
           </form>
         </Form>
+
         {type === "sign-in" && (
           <>
             <div className="flex items-center gap-4 py-2">

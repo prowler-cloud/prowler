@@ -3,25 +3,47 @@
 import { AuthError } from "next-auth";
 
 import { signIn, signOut } from "@/auth.config";
+// import { authFormSchema } from "@/types";
 
-export async function authenticate(
-  prevState: string | undefined,
-  formData: FormData,
-) {
+// const formSchema = authFormSchema("sign-in");
+
+const defaultValues = {
+  email: "",
+  password: "",
+};
+
+// Fix TS types.
+export async function authenticate(prevState: any, formData: any) {
   try {
-    // await new Promise((resolve) => setTimeout(resolve, 2000));
-    console.log(formData);
-    await signIn("credentials", formData);
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+    await signIn("credentials", {
+      ...formData,
+      redirect: false,
+    });
+    return {
+      message: "Success",
+    };
   } catch (error) {
     if (error instanceof AuthError) {
       switch (error.type) {
         case "CredentialsSignin":
-          return "Invalid credentials.";
+          return {
+            message: "Credentials error",
+            errors: {
+              ...defaultValues,
+              credentials: "Incorrect email or password",
+            },
+          };
         default:
-          return "Something went wrong.";
+          return {
+            message: "Unknown error",
+            errors: {
+              ...defaultValues,
+              unknown: "Unknown error",
+            },
+          };
       }
     }
-    throw error;
   }
 }
 

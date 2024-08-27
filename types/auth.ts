@@ -15,8 +15,8 @@ export const authFormSchema = (type: string) =>
             .max(20),
     termsAndConditions:
       type === "sign-in"
-        ? z.literal(true).optional()
-        : z.literal(true, {
+        ? z.enum(["true"]).optional()
+        : z.enum(["true"], {
             errorMap: () => ({
               message: "You must accept the terms and conditions.",
             }),

@@ -11,25 +11,25 @@ import { authFormSchema } from "@/types";
 
 const formSchema = authFormSchema("sign-up");
 
-type CustomInputProps =
+type CustomInputProps = {
+  control: Control<z.infer<typeof formSchema>>;
+  isRequired?: boolean;
+} & (
   | {
-      control: Control<z.infer<typeof formSchema>>;
+      password?: false;
       name: FieldPath<z.infer<typeof formSchema>>;
       label: string;
       type: "text" | "email";
       placeholder: string;
-      isRequired?: boolean;
-      password?: false;
     }
   | {
-      control: Control<z.infer<typeof formSchema>>;
       password: true;
       name?: never;
       label?: never;
       type?: never;
       placeholder?: never;
-      isRequired?: never;
-    };
+    }
+);
 
 export const CustomInput = ({
   control,
@@ -50,6 +50,15 @@ export const CustomInput = ({
   const inputPlaceholder = password ? "Enter your password" : placeholder;
   const inputIsRequired = password ? true : isRequired;
 
+  const endContent = password && (
+    <button type="button" onClick={toggleVisibility}>
+      <Icon
+        className="pointer-events-none text-2xl text-default-400"
+        icon={isVisible ? "solar:eye-closed-linear" : "solar:eye-bold"}
+      />
+    </button>
+  );
+
   return (
     <FormField
       control={control}
@@ -63,22 +72,11 @@ export const CustomInput = ({
               placeholder={inputPlaceholder}
               type={inputType}
               variant="bordered"
+              endContent={endContent}
               {...field}
-              endContent={
-                password ? (
-                  <button type="button" onClick={toggleVisibility}>
-                    <Icon
-                      className="pointer-events-none text-2xl text-default-400"
-                      icon={
-                        isVisible ? "solar:eye-closed-linear" : "solar:eye-bold"
-                      }
-                    />
-                  </button>
-                ) : null
-              }
             />
           </FormControl>
-          <FormMessage />
+          <FormMessage className="text-system-error dark:text-system-error" />
         </>
       )}
     />
