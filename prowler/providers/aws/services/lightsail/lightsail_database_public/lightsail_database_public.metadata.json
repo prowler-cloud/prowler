@@ -9,7 +9,7 @@
   "SubServiceName": "database",
   "ResourceIdTemplate": "arn:partition:lightsail:region:account:RelationalDatabase/database-id",
   "Severity": "high",
-  "ResourceType": "",
+  "ResourceType": "Other",
   "Description": "The database is in public mode, which means it is exposed to the internet.",
   "Risk": "This can lead to unauthorized access to the database.",
   "RelatedUrl": "https://docs.aws.amazon.com/lightsail/latest/userguide/amazon-lightsail-databases.html",
