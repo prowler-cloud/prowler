@@ -1,16 +1,16 @@
 {
   "Provider": "aws",
-  "CheckID": "elasticache_redis_cluster_below_v6_auth_enabled",
-  "CheckTitle": "Ensure Elasticache Elasticache Redis replication groups under version 6.0 have Redis OSS AUTH Enabled.",
+  "CheckID": "elasticache_redis_cluster_auth_enabled",
+  "CheckTitle": "Ensure Elasticache Elasticache Redis replication groups of earlier versions should have Redis OSS AUTH enabled.",
   "CheckType": [
-    "AWS Foundational Security Best Practices v1.0.0"
+    "NIST 800-53 Controls "
   ],
   "ServiceName": "elasticache",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
   "ResourceType": "AWSElastiCacheClusters",
-  "Description": "Ensure Elasticache Redis cache clusters under version 6.0 use Redis OSS AUTH.",
+  "Description": "Ensure Elasticache Redis cache clusters of earlier versions use Redis OSS AUTH.",
   "Risk": "Without Redis AUTH enabled, your ElastiCache (Redis) instance is vulnerable to unauthorized access and potential data breaches.",
   "RelatedUrl": "https://docs.aws.amazon.com/AmazonElastiCache/latest/red-ug/auth.html",
   "Remediation": {
