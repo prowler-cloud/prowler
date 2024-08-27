@@ -48,6 +48,7 @@ The following list includes all the AWS checks with configurable variables that 
 | `eks_control_plane_logging_all_types_enabled`                 | `eks_required_log_types`                         | List of Strings |
 | `eks_cluster_uses_a_supported_version`                        | `eks_cluster_oldest_version_supported`           | String          |
 | `elbv2_is_in_multiple_az`                                     | `elbv2_min_azs`                                  | Integer         |
+| `elb_is_in_multiple_az`                                       | `elb_min_azs`                                    | Integer         |
 
 ## Azure
 

@@ -4,12 +4,7 @@ from prowler.lib.check.checks_loader import (
     load_checks_to_execute,
     update_checks_to_execute_with_aliases,
 )
-from prowler.lib.check.models import (
-    Check_Metadata_Model,
-    Code,
-    Recommendation,
-    Remediation,
-)
+from prowler.lib.check.models import CheckMetadata, Code, Recommendation, Remediation
 
 S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME = "s3_bucket_level_public_access_block"
 S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME_CUSTOM_ALIAS = (
@@ -23,7 +18,7 @@ class TestCheckLoader:
     provider = "aws"
 
     def get_custom_check_metadata(self):
-        return Check_Metadata_Model(
+        return CheckMetadata(
             Provider="aws",
             CheckID=S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME,
             CheckTitle="Check S3 Bucket Level Public Access Block.",
