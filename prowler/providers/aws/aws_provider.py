@@ -1,6 +1,5 @@
 import os
 import pathlib
-from argparse import ArgumentTypeError
 from datetime import datetime
 from re import fullmatch
 
@@ -45,9 +44,11 @@ from prowler.providers.aws.lib.organizations.organizations import (
 )
 from prowler.providers.aws.models import (
     AWSAssumeRoleConfiguration,
+    AWSAssumeRoleError,
     AWSAssumeRoleInfo,
     AWSCallerIdentity,
     AWSCredentials,
+    AWSIAMRoleARNRegionNotEmtpy,
     AWSIdentityInfo,
     AWSMFAInfo,
     AWSOrganizationsInfo,
@@ -884,7 +885,10 @@ class AwsProvider(Provider):
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
             )
-            raise error
+            raise AWSAssumeRoleError(
+                original_exception=error,
+                file=pathlib.Path(__file__).name,
+            )
 
     def get_aws_enabled_regions(self, current_session: Session) -> set:
         """get_aws_enabled_regions returns a set of enabled AWS regions"""
@@ -1040,6 +1044,38 @@ class AwsProvider(Provider):
                 is_connected=True,
             )
 
+        except AWSSetUpSessionError as setup_session_error:
+            logger.error(
+                f"AWSSetUpSessionError[{setup_session_error.__traceback__.tb_lineno}]: {setup_session_error}"
+            )
+            if raise_on_exception:
+                raise setup_session_error
+            return Connection(error=setup_session_error)
+
+        except AWSArgumentTypeValidationError as validation_error:
+            logger.error(
+                f"AWSArgumentTypeValidationError[{validation_error.__traceback__.tb_lineno}]: {validation_error}"
+            )
+            if raise_on_exception:
+                raise validation_error
+            return Connection(error=validation_error)
+
+        except AWSIAMRoleARNRegionNotEmtpy as error:
+            logger.error(
+                f"AWSIAMRoleARNRegionNotEmtpy[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            if raise_on_exception:
+                raise error
+            return Connection(error=error)
+
+        except AWSAssumeRoleError as error:
+            logger.error(
+                f"AWSAssumeRoleError[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            if raise_on_exception:
+                raise error
+            return Connection(error=error)
+
         except ClientError as e:
             logger.error(f"AWSClientError[{e.__traceback__.tb_lineno}]: {e}")
             if raise_on_exception:
@@ -1063,17 +1099,6 @@ class AwsProvider(Provider):
                     file=os.path.basename(__file__), original_exception=e
                 ) from e
             return Connection(error=e)
-
-        except ArgumentTypeError as validation_error:
-            logger.error(
-                f"{validation_error.__class__.__name__}[{validation_error.__traceback__.tb_lineno}]: {validation_error}"
-            )
-            if raise_on_exception:
-                raise AWSArgumentTypeValidationError(
-                    file=os.path.basename(__file__), original_exception=validation_error
-                ) from validation_error
-
-            return Connection(error=validation_error)
 
         except Exception as error:
             logger.critical(
@@ -1184,8 +1209,12 @@ def validate_session_duration(duration: int) -> int:
     duration = int(duration)
     # Since the range(i,j) goes from i to j-1 we have to j+1
     if duration not in range(900, 43201):
-        raise ArgumentTypeError("Session duration must be between 900 and 43200")
-    return duration
+        raise AWSArgumentTypeValidationError(
+            original_exception="Session Duration must be between 900 and 43200 seconds.",
+            file=os.path.basename(__file__),
+        )
+    else:
+        return duration
 
 
 # TODO: this duplicates the provider arguments validation library
@@ -1208,6 +1237,7 @@ def validate_role_session_name(session_name) -> str:
     if fullmatch(r"[\w+=,.@-]{2,64}", session_name):
         return session_name
     else:
-        raise ArgumentTypeError(
-            "Role Session Name must be 2-64 characters long and consist only of upper- and lower-case alphanumeric characters with no spaces. You can also include underscores or any of the following characters: =,.@-"
+        raise AWSArgumentTypeValidationError(
+            file=os.path.basename(__file__),
+            original_exception="Role Session Name must be between 2 and 64 characters and may contain alphanumeric characters, periods, hyphens, and underscores.",
         )

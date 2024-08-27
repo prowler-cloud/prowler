@@ -98,6 +98,12 @@ class ProwlerException(Exception):
             "file": "{file}",
             "provider": "AWS",
         },
+        (1918, "AWSAssumeRoleError"): {
+            "message": "AWS assume role error",
+            "remediation": "",
+            "file": "{file}",
+            "provider": "AWS",
+        },
     }
 
     def __init__(self, code, provider=None, file=None, original_exception=None):

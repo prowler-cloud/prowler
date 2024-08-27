@@ -97,3 +97,10 @@ class AWSIAMRoleARNEmptyResource(AWSRoleArnError):
         super().__init__(
             1917, provider="AWS", file=file, original_exception=original_exception
         )
+
+
+class AWSAssumeRoleError(ProwlerException):
+    def __init__(self, file=None, original_exception=None):
+        super().__init__(
+            1918, provider="AWS", file=file, original_exception=original_exception
+        )
