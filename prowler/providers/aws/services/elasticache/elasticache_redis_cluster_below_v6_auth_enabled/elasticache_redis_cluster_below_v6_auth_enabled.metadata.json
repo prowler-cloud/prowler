@@ -10,7 +10,7 @@
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
   "ResourceType": "AWSElastiCacheClusters",
-  "Description": "Ensure Elasticache Redis cache clusters of earlier versions use Redis OSS AUTH.",
+  "Description": "Ensure Elasticache Redis replication groups of earlier versions use Redis OSS AUTH.",
   "Risk": "Without Redis AUTH enabled, your ElastiCache (Redis) instance is vulnerable to unauthorized access and potential data breaches.",
   "RelatedUrl": "https://docs.aws.amazon.com/AmazonElastiCache/latest/red-ug/auth.html",
   "Remediation": {

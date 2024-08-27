@@ -41,7 +41,7 @@ class ElastiCache(AWSService):
                             auto_minor_version_upgrade=cache_cluster.get(
                                 "AutoMinorVersionUpgrade", False
                             ),
-                            engine_version=cache_cluster.get("EngineVersion", None),
+                            engine_version=cache_cluster.get("EngineVersion", "None"),
                             auth_token_enabled=cache_cluster.get(
                                 "AuthTokenEnabled", False
                             ),
