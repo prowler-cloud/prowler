@@ -108,7 +108,7 @@ class Test_AppStream_Service:
         assert appstream.fleets[1].enable_default_internet_access is True
         assert appstream.fleets[1].region == AWS_REGION
 
-    def test_list_tags_for_resource(self):
+    def test__list_tags_for_resource__(self):
         # Set partition for the service
         appstream = AppStream(set_mocked_aws_provider([AWS_REGION_US_EAST_1]))
         assert len(appstream.fleets) == 2

@@ -20,7 +20,7 @@ class Lambda(AWSService):
         super().__init__(__class__.__name__, provider)
         self.functions = {}
         self.__threading_call__(self.__list_functions__)
-        self._list_tags_for_resource()
+        self.__list_tags_for_resource__()
         self.__threading_call__(self.__get_policy__)
         self.__threading_call__(self.__get_function_url_config__)
 
@@ -153,7 +153,7 @@ class Lambda(AWSService):
                 f" {error}"
             )
 
-    def _list_tags_for_resource(self):
+    def __list_tags_for_resource__(self):
         logger.info("Lambda - List Tags...")
         try:
             for function in self.functions.values():

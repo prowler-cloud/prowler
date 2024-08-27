@@ -16,7 +16,7 @@ class SNS(AWSService):
         self.topics = []
         self.__threading_call__(self.__list_topics__)
         self.__get_topic_attributes__(self.regional_clients)
-        self._list_tags_for_resource()
+        self.__list_tags_for_resource__()
         self.__list_subscriptions_by_topic__()
 
     def __list_topics__(self, regional_client):
@@ -61,7 +61,7 @@ class SNS(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def _list_tags_for_resource(self):
+    def __list_tags_for_resource__(self):
         logger.info("SNS - List Tags...")
         try:
             for topic in self.topics:

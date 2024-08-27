@@ -23,7 +23,7 @@ class SSMIncidents(AWSService):
         self.__get_replication_set__()
         self.response_plans = []
         self.__threading_call__(self.__list_response_plans__)
-        self._list_tags_for_resource()
+        self.__list_tags_for_resource__()
 
     def __list_replication_sets__(self):
         logger.info("SSMIncidents - Listing Replication Sets...")
@@ -120,7 +120,7 @@ class SSMIncidents(AWSService):
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 
-    def _list_tags_for_resource(self):
+    def __list_tags_for_resource__(self):
         logger.info("SSMIncidents - List Tags...")
         try:
             for response_plan in self.response_plans:

@@ -19,7 +19,7 @@ class DynamoDB(AWSService):
         self.__describe_table__()
         self.__describe_continuous_backups__()
         self.__get_resource_policy__()
-        self._list_tags_for_resource()
+        self.__list_tags_for_resource__()
 
     def __list_tables__(self, regional_client):
         logger.info("DynamoDB - Listing tables...")
@@ -124,7 +124,7 @@ class DynamoDB(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def _list_tags_for_resource(self):
+    def __list_tags_for_resource__(self):
         logger.info("DynamoDB - List Tags...")
         try:
             for table in self.tables:
@@ -157,7 +157,7 @@ class DAX(AWSService):
         super().__init__(__class__.__name__, provider)
         self.clusters = []
         self.__threading_call__(self.__describe_clusters__)
-        self._list_tags_for_resource()
+        self.__list_tags_for_resource__()
 
     def __describe_clusters__(self, regional_client):
         logger.info("DynamoDB DAX - Describing clusters...")
@@ -189,7 +189,7 @@ class DAX(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def _list_tags_for_resource(self):
+    def __list_tags_for_resource__(self):
         logger.info("DAX - List Tags...")
         for cluster in self.clusters:
             try:

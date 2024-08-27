@@ -20,7 +20,7 @@ class Neptune(AWSService):
         self.__threading_call__(self._describe_db_subnet_groups)
         self.__threading_call__(self._describe_db_cluster_snapshots)
         self.__threading_call__(self._describe_db_cluster_snapshot_attributes)
-        self._list_tags_for_resource()
+        self.__list_tags_for_resource__()
 
     def _describe_clusters(self, regional_client):
         logger.info("Neptune - Describing DB Clusters...")
@@ -83,7 +83,7 @@ class Neptune(AWSService):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def _list_tags_for_resource(self):
+    def __list_tags_for_resource__(self):
         logger.info("Neptune - Listing Tags...")
         try:
             for cluster in self.clusters.values():

@@ -16,7 +16,7 @@ class ElastiCache(AWSService):
         self.__threading_call__(self._describe_cache_clusters)
         self.__threading_call__(self._describe_cache_subnet_groups)
         self.__threading_call__(self._describe_replication_groups)
-        self._list_tags_for_resource()
+        self.__list_tags_for_resource__()
 
     def _describe_cache_clusters(self, regional_client):
         # Memcached Clusters and Redis Nodes
@@ -116,7 +116,7 @@ class ElastiCache(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def _list_tags_for_resource(self):
+    def __list_tags_for_resource__(self):
         logger.info("Elasticache - Listing Tags...")
         try:
             for cluster in self.clusters.values():

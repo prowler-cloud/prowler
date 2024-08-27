@@ -14,7 +14,7 @@ class AppStream(AWSService):
         super().__init__(__class__.__name__, provider)
         self.fleets = []
         self.__threading_call__(self.__describe_fleets__)
-        self._list_tags_for_resource()
+        self.__list_tags_for_resource__()
 
     def __describe_fleets__(self, regional_client):
         logger.info("AppStream - Describing Fleets...")
@@ -50,7 +50,7 @@ class AppStream(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def _list_tags_for_resource(self):
+    def __list_tags_for_resource__(self):
         logger.info("AppStream - List Tags...")
         try:
             for fleet in self.fleets:

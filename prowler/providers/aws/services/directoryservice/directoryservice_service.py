@@ -21,7 +21,7 @@ class DirectoryService(AWSService):
         self.__threading_call__(self.__describe_event_topics__)
         self.__threading_call__(self.__list_certificates__)
         self.__threading_call__(self.__get_snapshot_limits__)
-        self._list_tags_for_resource()
+        self.__list_tags_for_resource__()
 
     def __describe_directories__(self, regional_client):
         logger.info("DirectoryService - Describing Directories...")
@@ -213,7 +213,7 @@ class DirectoryService(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def _list_tags_for_resource(self):
+    def __list_tags_for_resource__(self):
         logger.info("Directory Service - List Tags...")
         try:
             for directory in self.directories.values():

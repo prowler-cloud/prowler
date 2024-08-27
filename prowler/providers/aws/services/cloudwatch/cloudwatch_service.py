@@ -17,7 +17,7 @@ class CloudWatch(AWSService):
         self.metric_alarms = []
         self.__threading_call__(self.__describe_alarms__)
         if self.metric_alarms:
-            self._list_tags_for_resource()
+            self.__list_tags_for_resource__()
 
     def __describe_alarms__(self, regional_client):
         logger.info("CloudWatch - Describing alarms...")
@@ -61,7 +61,7 @@ class CloudWatch(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def _list_tags_for_resource(self):
+    def __list_tags_for_resource__(self):
         logger.info("CloudWatch - List Tags...")
         try:
             for metric_alarm in self.metric_alarms:
@@ -95,7 +95,7 @@ class Logs(AWSService):
                     1000  # The threshold for number of events to return per log group.
                 )
                 self.__threading_call__(self.__get_log_events__)
-            self.__threading_call__(self._list_tags_for_resource, self.log_groups)
+            self.__threading_call__(self.__list_tags_for_resource__, self.log_groups)
 
     def __describe_metric_filters__(self, regional_client):
         logger.info("CloudWatch Logs - Describing metric filters...")
@@ -214,7 +214,7 @@ class Logs(AWSService):
             f"CloudWatch Logs - Finished retrieving log events in {regional_client.region}..."
         )
 
-    def _list_tags_for_resource(self, log_group):
+    def __list_tags_for_resource__(self, log_group):
         logger.info(f"CloudWatch Logs - List Tags for Log Group {log_group.name}...")
         try:
             regional_client = self.regional_clients[log_group.region]

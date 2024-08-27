@@ -21,7 +21,7 @@ class Cloudtrail(AWSService):
             self.__get_trail_status__()
             self.__get_insight_selectors__()
             self.__get_event_selectors__()
-            self._list_tags_for_resource()
+            self.__list_tags_for_resource__()
 
     def __get_trail_arn_template__(self, region):
         return (
@@ -208,7 +208,7 @@ class Cloudtrail(AWSService):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def _list_tags_for_resource(self):
+    def __list_tags_for_resource__(self):
         logger.info("CloudTrail - List Tags...")
         try:
             for trail in self.trails.values():

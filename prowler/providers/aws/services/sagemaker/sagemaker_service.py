@@ -22,7 +22,7 @@ class SageMaker(AWSService):
         self.__describe_model__(self.regional_clients)
         self.__describe_notebook_instance__(self.regional_clients)
         self.__describe_training_job__(self.regional_clients)
-        self._list_tags_for_resource()
+        self.__list_tags_for_resource__()
 
     def __list_notebook_instances__(self, regional_client):
         logger.info("SageMaker - listing notebook instances...")
@@ -188,7 +188,7 @@ class SageMaker(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def _list_tags_for_resource(self):
+    def __list_tags_for_resource__(self):
         logger.info("SageMaker - List Tags...")
         try:
             for model in self.sagemaker_models:

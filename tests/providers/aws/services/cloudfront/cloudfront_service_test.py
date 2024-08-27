@@ -166,13 +166,13 @@ class Test_CloudFront_Service:
         assert cloudfront.service == "cloudfront"
 
     @mock_aws
-    def test_list_distributionszero(self):
+    def test__list_distributions__zero(self):
         cloudfront = CloudFront(set_mocked_aws_provider())
 
         assert len(cloudfront.distributions) == 0
 
     @mock_aws
-    def test_list_distributionscomplete(self):
+    def test__list_distributions__complete(self):
         cloudfront_client = client("cloudfront")
         config = example_distribution_config("ref")
         response = cloudfront_client.create_distribution(DistributionConfig=config)

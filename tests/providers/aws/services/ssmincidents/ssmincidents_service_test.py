@@ -103,7 +103,7 @@ class Test_SSMIncidents_Service:
         assert ssmincidents.response_plans[0].region == AWS_REGION_US_EAST_1
         assert ssmincidents.response_plans[0].tags == {"tag_test": "tag_value"}
 
-    def test_list_tags_for_resource(self):
+    def test__list_tags_for_resource__(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         ssmincidents = SSMIncidents(aws_provider)
         assert len(ssmincidents.response_plans) == 1
