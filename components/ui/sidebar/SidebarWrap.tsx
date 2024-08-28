@@ -134,7 +134,7 @@ export const SidebarWrap = () => {
         <Tooltip content="Log Out" isDisabled={!isCompact} placement="right">
           <Button
             aria-label="Log Out"
-            onClick={() => logOut}
+            onClick={() => logOut()}
             className={clsx(
               "justify-start text-default-500 data-[hover=true]:text-foreground",
               {

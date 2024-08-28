@@ -98,6 +98,7 @@ export const AuthForm = ({ type }: { type: string }) => {
         <Form {...form}>
           <form
             className="flex flex-col gap-3"
+            // Fix TS types.
             onSubmit={form.handleSubmit(onSubmit)}
           >
             {type === "sign-up" && (
