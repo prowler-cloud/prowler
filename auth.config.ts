@@ -33,7 +33,6 @@ export const authConfig = {
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
-      // console.log({ auth }, "llegas o no");
       const isOnDashboard = nextUrl.pathname.startsWith("/");
       if (isOnDashboard) {
         if (isLoggedIn) return true;
@@ -78,7 +77,6 @@ export const authConfig = {
 
         const user = await getUser(email, password);
         if (!user) return null;
-        // console.log({ user });
         return user;
       },
     }),

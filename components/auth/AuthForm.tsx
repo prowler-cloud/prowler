@@ -42,8 +42,6 @@ export const AuthForm = ({ type }: { type: string }) => {
     }
   }, [state]);
 
-  console.log(state, "el state desde el AuthForm");
-
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     // Do something with the form values
     // this will be type-safe and validated
@@ -56,10 +54,10 @@ export const AuthForm = ({ type }: { type: string }) => {
         });
       }
       // if (type === "sign-up") {
-      //   const newUser = await signUpNew(data);
+      //   const newUser = await signUp(data);
       // }
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
   };
 
