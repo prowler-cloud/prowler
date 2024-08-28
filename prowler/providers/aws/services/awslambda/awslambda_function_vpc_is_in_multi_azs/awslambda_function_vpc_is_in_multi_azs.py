@@ -1,5 +1,3 @@
-from typing import List
-
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.awslambda.awslambda_client import awslambda_client
 from prowler.providers.aws.services.awslambda.awslambda_function_inside_vpc.awslambda_function_inside_vpc import (
@@ -9,9 +7,9 @@ from prowler.providers.aws.services.vpc.vpc_client import vpc_client
 
 
 class awslambda_function_vpc_is_in_multi_azs(Check):
-    def execute(self) -> List[Check_Report_AWS]:
+    def execute(self) -> list[Check_Report_AWS]:
         findings = []
-        LAMBDA_MINIMAL_AZ = awslambda_client.audit_config.get("lambda_minimal_az", 2)
+        LAMBDA_MIN_AZS = awslambda_client.audit_config.get("lambda_min_azs", 2)
         for function_arn, function in awslambda_client.functions.items():
             # only proceed if check "awslambda_function_inside_vpc" did not run or did not FAIL to avoid to report that the function is not inside a VPC twice
             if not awslambda_client.is_failed_check(
@@ -42,11 +40,11 @@ class awslambda_function_vpc_is_in_multi_azs(Check):
                     # Remove None values from the set
                     function_availability_zones.discard(None)
 
-                    if len(function_availability_zones) >= LAMBDA_MINIMAL_AZ:
+                    if len(function_availability_zones) >= LAMBDA_MIN_AZS:
                         report.status = "PASS"
-                        report.status_extended = f"Lambda function {function.name} is inside of VPC {function.vpc_id} that spans in at least {LAMBDA_MINIMAL_AZ} AZs: {', '.join(function_availability_zones)}."
+                        report.status_extended = f"Lambda function {function.name} is inside of VPC {function.vpc_id} that spans in at least {LAMBDA_MIN_AZS} AZs: {', '.join(function_availability_zones)}."
                     else:
-                        report.status_extended = f"Lambda function {function.name} is inside of VPC {function.vpc_id} that spans only in {len(function_availability_zones)} AZs: {', '.join(function_availability_zones)}. Must span in at least {LAMBDA_MINIMAL_AZ} AZs."
+                        report.status_extended = f"Lambda function {function.name} is inside of VPC {function.vpc_id} that spans only in {len(function_availability_zones)} AZs: {', '.join(function_availability_zones)}. Must span in at least {LAMBDA_MIN_AZS} AZs."
 
                 findings.append(report)
 
