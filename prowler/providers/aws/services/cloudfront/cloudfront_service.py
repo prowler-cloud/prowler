@@ -31,11 +31,21 @@ class CloudFront(AWSService):
                             distribution_id = item["Id"]
                             distribution_arn = item["ARN"]
                             origins = item["Origins"]["Items"]
+                            ssl_support_method = SSLSupportMethod(
+                                item["ViewerCertificate"].get(
+                                    "SSLSupportMethod", "static-ip"
+                                )
+                            )
+                            certificate = item["ViewerCertificate"].get(
+                                "Certificate", ""
+                            )
                             distribution = Distribution(
                                 arn=distribution_arn,
                                 id=distribution_id,
                                 origins=origins,
                                 region=region,
+                                ssl_support_method=ssl_support_method,
+                                certificate=certificate,
                             )
                             self.distributions[distribution_id] = distribution
 
@@ -81,12 +91,6 @@ class CloudFront(AWSService):
                 distributions[distribution_id].default_cache_config = (
                     default_cache_config
                 )
-                distributions[distribution_id].ssl_support_method = distribution_config[
-                    "ViewerCertificate"
-                ].get("SSLSupportMethod", "static-ip")
-                distributions[distribution_id].certificate = distribution_config[
-                    "ViewerCertificate"
-                ].get("Certificate", None)
 
         except Exception as error:
             logger.error(
@@ -130,6 +134,14 @@ class GeoRestrictionType(Enum):
     whitelist = "whitelist"
 
 
+class SSLSupportMethod(Enum):
+    """Method types that viewer want to accept HTTPS requests from"""
+
+    static_ip = "static-ip"
+    sni_only = "sni-only"
+    vip = "vip"
+
+
 class DefaultCacheConfigBehaviour(BaseModel):
     realtime_log_config_arn: Optional[str]
     viewer_protocol_policy: ViewerProtocolPolicy
@@ -148,5 +160,5 @@ class Distribution(BaseModel):
     origins: list
     web_acl_id: str = ""
     tags: Optional[list] = []
-    ssl_support_method: str
-    certificate: str
+    ssl_support_method: Optional[SSLSupportMethod]
+    certificate: Optional[str]

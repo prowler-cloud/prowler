@@ -2,6 +2,9 @@ from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.cloudfront.cloudfront_client import (
     cloudfront_client,
 )
+from prowler.providers.aws.services.cloudfront.cloudfront_service import (
+    SSLSupportMethod,
+)
 
 
 class cloudfront_distributions_using_sni_https_requests(Check):
@@ -17,12 +20,13 @@ class cloudfront_distributions_using_sni_https_requests(Check):
             report.status_extended = f"CloudFront Distribution {distribution.id} does not have a certificate."
 
             if distribution.certificate:
-                if distribution.ssl_support_method == "sni-only":
+                if distribution.ssl_support_method == SSLSupportMethod.sni_only:
                     report.status = "PASS"
-                    report.status_extended = f"CloudFront Distribution {distribution.id} has configured certificate to serve HTTPS requests with SNI."
+                    report.status_extended = f"CloudFront Distribution {distribution.id} has a configured certificate to serve HTTPS requests with SNI."
                 else:
                     report.status = "FAIL"
                     report.status_extended = f"CloudFront Distribution {distribution.id} does have a certificate but is not set up to use SNI."
+
             findings.append(report)
 
         return findings
