@@ -45,6 +45,7 @@ class ELB(AWSService):
                             region=regional_client.region,
                             scheme=elb["Scheme"],
                             listeners=listeners,
+                            availability_zones=set(elb.get("AvailabilityZones", [])),
                         )
         except Exception as error:
             logger.error(
@@ -59,9 +60,10 @@ class ELB(AWSService):
                 LoadBalancerName=load_balancer.name
             )["LoadBalancerAttributes"]
 
-            load_balancer.access_logs = attributes.get("AccessLog", {}).get(
-                "Enabled", False
-            )
+            load_balancer.access_logs = attributes.get("AccessLog", {}).get("Enabled")
+            load_balancer.cross_zone_load_balancing = attributes.get(
+                "CrossZoneLoadBalancing", {}
+            ).get("Enabled")
 
         except Exception as error:
             logger.error(
@@ -97,4 +99,6 @@ class LoadBalancer(BaseModel):
     scheme: str
     access_logs: Optional[bool]
     listeners: list[Listener]
+    cross_zone_load_balancing: Optional[bool]
+    availability_zones: set[str]
     tags: Optional[list] = []

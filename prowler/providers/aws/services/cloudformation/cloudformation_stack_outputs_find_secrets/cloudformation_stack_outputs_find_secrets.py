@@ -29,7 +29,12 @@ class cloudformation_stack_outputs_find_secrets(Check):
 
                 # Store the CloudFormation Stack Outputs into a file
                 for output in stack.outputs:
-                    temp_output_file.write(f"{output}".encode())
+                    temp_output_file.write(
+                        bytes(
+                            f"{output}\n",
+                            encoding="raw_unicode_escape",
+                        )
+                    )
                 temp_output_file.close()
 
                 # Init detect_secrets
@@ -38,11 +43,17 @@ class cloudformation_stack_outputs_find_secrets(Check):
                 with default_settings():
                     secrets.scan_file(temp_output_file.name)
 
-                if secrets.json():
-                    report.status = "FAIL"
-                    report.status_extended = (
-                        f"Potential secret found in Stack {stack.name} Outputs."
+                detect_secrets_output = secrets.json()
+                # If secrets are found, update the report status
+                if detect_secrets_output:
+                    secrets_string = ", ".join(
+                        [
+                            f"{secret['type']} in Output {int(secret['line_number'])}"
+                            for secret in detect_secrets_output[temp_output_file.name]
+                        ]
                     )
+                    report.status = "FAIL"
+                    report.status_extended = f"Potential secret found in Stack {stack.name} Outputs -> {secrets_string}."
 
                 os.remove(temp_output_file.name)
             else:

@@ -1064,7 +1064,7 @@ class Test_Parser:
             self.parser.parse(command)
         assert ex.type == SystemExit
 
-    def test_aws_parser_aws_retries_max_attempts(self):
+    def test_aws_parser_retries_max_attempts(self):
         argument = "--aws-retries-max-attempts"
         max_retries = "10"
         command = [prowler_command, argument, max_retries]
