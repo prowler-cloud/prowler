@@ -143,8 +143,8 @@ class Test_rds_instance_protected_by_backup_plan:
             }
         )
 
-        from prowler.providers.aws.services.rds.rds_service import RDS
         from prowler.providers.aws.services.backup.backup_service import Backup
+        from prowler.providers.aws.services.rds.rds_service import RDS
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
@@ -156,9 +156,9 @@ class Test_rds_instance_protected_by_backup_plan:
                 "prowler.providers.aws.services.rds.rds_instance_protected_by_backup_plan.rds_instance_protected_by_backup_plan.rds_client",
                 new=RDS(aws_provider),
             ), mock.patch(
-                    "prowler.providers.aws.services.rds.rds_instance_protected_by_backup_plan.rds_instance_protected_by_backup_plan.backup_client",
-                    new=Backup(aws_provider),
-                ):
+                "prowler.providers.aws.services.rds.rds_instance_protected_by_backup_plan.rds_instance_protected_by_backup_plan.backup_client",
+                new=Backup(aws_provider),
+            ):
                 # Test Check
                 from prowler.providers.aws.services.rds.rds_instance_protected_by_backup_plan.rds_instance_protected_by_backup_plan import (
                     rds_instance_protected_by_backup_plan,
