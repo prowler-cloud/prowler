@@ -188,8 +188,8 @@ class Compliance_Requirement(BaseModel):
     Checks: list[str]
 
 
-class ComplianceBaseModel(BaseModel):
-    """ComplianceBaseModel holds the base model for every compliance framework"""
+class Compliance(BaseModel):
+    """Compliance holds the base model for every compliance framework"""
 
     Framework: str
     Provider: str
@@ -217,12 +217,10 @@ class ComplianceBaseModel(BaseModel):
 # Testing Pending
 def load_compliance_framework(
     compliance_specification_file: str,
-) -> ComplianceBaseModel:
+) -> Compliance:
     """load_compliance_framework loads and parse a Compliance Framework Specification"""
     try:
-        compliance_framework = ComplianceBaseModel.parse_file(
-            compliance_specification_file
-        )
+        compliance_framework = Compliance.parse_file(compliance_specification_file)
     except ValidationError as error:
         logger.critical(
             f"Compliance Framework Specification from {compliance_specification_file} is not valid: {error}"
