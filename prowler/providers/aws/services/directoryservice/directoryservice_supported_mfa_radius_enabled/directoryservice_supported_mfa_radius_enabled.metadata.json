@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:codeartifact:region:account-id:directory/directory-id",
   "Severity": "medium",
-  "ResourceType": "AwsDirectoryService",
+  "ResourceType": "Other",
   "Description": "Ensure Multi-Factor Authentication (MFA) using Radius Server is enabled in DS.",
   "Risk": "Multi-Factor Authentication (MFA) adds an extra layer of authentication assurance beyond traditional username and password.",
   "RelatedUrl": "https://docs.aws.amazon.com/directoryservice/latest/admin-guide/ms_ad_mfa.html",

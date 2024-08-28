@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "AwsRoute53Domain",
+  "ResourceType": "Other",
   "Description": "Enable Privacy Protection for for a Route53 Domain.",
   "Risk": "Without privacy protection enabled, ones personal information is published to the public WHOIS database.",
   "RelatedUrl": "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/domain-privacy-protection.html",

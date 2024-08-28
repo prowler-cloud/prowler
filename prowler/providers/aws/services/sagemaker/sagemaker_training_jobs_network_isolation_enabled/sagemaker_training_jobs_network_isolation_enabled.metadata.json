@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:sagemaker:region:account-id:training-job",
   "Severity": "medium",
-  "ResourceType": "AwsSageMakerTrainingJob",
+  "ResourceType": "Other",
   "Description": "Check if Amazon SageMaker Training jobs have network isolation enabled",
   "Risk": "This could provide an avenue for unauthorized access to your data.",
   "RelatedUrl": "https://docs.aws.amazon.com/sagemaker/latest/dg/interface-vpc-endpoint.html",

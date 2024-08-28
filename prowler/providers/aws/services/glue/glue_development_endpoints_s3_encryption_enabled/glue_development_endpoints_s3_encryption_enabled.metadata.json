@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:glue:region:account-id:certificate/resource-id",
   "Severity": "medium",
-  "ResourceType": "AwsGlue",
+  "ResourceType": "Other",
   "Description": "Check if Glue development endpoints have S3 encryption enabled.",
   "Risk": "Data exfiltration could happen if information is not protected. KMS keys provide additional security level to IAM policies.",
   "RelatedUrl": "https://docs.aws.amazon.com/glue/latest/dg/encryption-security-configuration.html",

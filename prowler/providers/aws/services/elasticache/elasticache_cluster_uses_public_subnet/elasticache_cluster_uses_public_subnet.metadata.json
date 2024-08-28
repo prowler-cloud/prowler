@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
-  "ResourceType": "AWSElastiCacheCacheCluster",
+  "ResourceType": "Other",
   "Description": "Ensure Elasticache Cluster is not using a public subnet",
   "Risk": "There is a risk of exposing sensitive data if Elasticache Cluster uses a public subnet.",
   "RelatedUrl": "https://docs.aws.amazon.com/AmazonElastiCache/latest/red-ug/VPCs.html",

@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:codeartifact:region:account-id:directory/directory-id",
   "Severity": "medium",
-  "ResourceType": "AwsDirectoryService",
+  "ResourceType": "Other",
   "Description": "Directory Service has SNS Notifications enabled.",
   "Risk": "As a best practice, monitor status of Directory Service. This helps to avoid late actions to fix Directory Service issues.",
   "RelatedUrl": "https://docs.aws.amazon.com/directoryservice/latest/admin-guide/ms_ad_enable_notifications.html",

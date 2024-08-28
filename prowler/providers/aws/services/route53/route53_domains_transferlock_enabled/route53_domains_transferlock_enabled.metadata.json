@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "AwsRoute53Domain",
+  "ResourceType": "Other",
   "Description": "Enable Transfer Lock for a Route53 Domain.",
   "Risk": "Without transfer lock enabled, a domain name could be incorrectly moved to a new registrar.",
   "RelatedUrl": "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/domain-lock.html",

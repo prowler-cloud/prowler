@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:lightsail:region:account:Instance/instance-id",
   "Severity": "medium",
-  "ResourceType": "Instance",
+  "ResourceType": "Other",
   "Description": "Amazon Lightsail automatically creates daily snapshots of your instances. These snapshots are used for automatic backups and are stored at no additional cost. It is recommended to enable automatic snapshots for your Lightsail instances.",
   "Risk": "If automatic snapshots are not enabled, you may lose data in case of accidental deletion or corruption.",
   "RelatedUrl": "https://docs.aws.amazon.com/lightsail/latest/userguide/amazon-lightsail-configuring-automatic-snapshots.html",

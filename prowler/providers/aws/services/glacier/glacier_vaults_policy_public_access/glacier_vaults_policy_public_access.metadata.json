@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:glacier:region:account-id:vaults/vault-name",
   "Severity": "critical",
-  "ResourceType": "AwsGlacierVault",
+  "ResourceType": "Other",
   "Description": "Ensure CodeArtifact internal packages do not allow external public source publishing.",
   "Risk": "Vaults accessible to everyone could expose sensitive data to bad actors.",
   "RelatedUrl": "https://docs.aws.amazon.com/amazonglacier/latest/dev/access-control-overview.html",

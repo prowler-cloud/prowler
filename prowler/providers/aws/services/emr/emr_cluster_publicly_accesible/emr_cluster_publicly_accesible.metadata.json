@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:emr:region:account-id",
   "Severity": "medium",
-  "ResourceType": "AwsEMR",
+  "ResourceType": "Other",
   "Description": "Publicly accessible EMR Cluster.",
   "Risk": "EMR Clusters should not be publicly accessible.",
   "RelatedUrl": "https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-block-public-access.html",

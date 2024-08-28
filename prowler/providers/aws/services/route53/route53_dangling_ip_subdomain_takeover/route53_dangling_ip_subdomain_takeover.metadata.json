@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "AWSRoute53RecordSet",
+  "ResourceType": "Other",
   "Description": "Check if Route53 Records contains dangling IPs.",
   "Risk": "When an ephemeral AWS resource such as an Elastic IP (EIP) is released into the Amazon's Elastic IP pool, an attacker may acquire the EIP resource and effectively control the domain/subdomain associated with that EIP in your Route 53 DNS records.",
   "RelatedUrl": "",

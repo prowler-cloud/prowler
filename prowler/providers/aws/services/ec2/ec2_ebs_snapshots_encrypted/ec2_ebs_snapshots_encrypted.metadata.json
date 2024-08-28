@@ -9,7 +9,7 @@
   "SubServiceName": "snapshot",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
-  "ResourceType": "AwsEc2Snapshot",
+  "ResourceType": "Other",
   "Description": "Check if EBS snapshots are encrypted.",
   "Risk": "Data encryption at rest prevents data visibility in the event of its unauthorized access or theft.",
   "RelatedUrl": "",
