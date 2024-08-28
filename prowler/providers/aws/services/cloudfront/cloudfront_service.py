@@ -81,6 +81,12 @@ class CloudFront(AWSService):
                 distributions[distribution_id].default_cache_config = (
                     default_cache_config
                 )
+                distributions[distribution_id].ssl_support_method = distribution_config[
+                    "ViewerCertificate"
+                ].get("SSLSupportMethod", "static-ip")
+                distributions[distribution_id].certificate = distribution_config[
+                    "ViewerCertificate"
+                ].get("Certificate", None)
 
         except Exception as error:
             logger.error(
@@ -142,3 +148,5 @@ class Distribution(BaseModel):
     origins: list
     web_acl_id: str = ""
     tags: Optional[list] = []
+    ssl_support_method: str
+    certificate: str
