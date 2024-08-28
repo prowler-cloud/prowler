@@ -13,6 +13,9 @@ class Test_backup_vaults_encrypted:
         with mock.patch(
             "prowler.providers.aws.services.backup.backup_service.Backup",
             new=backup_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.backup.backup_vaults_encrypted.backup_vaults_encrypted.backup_client",
+            new=backup_client,
         ):
             # Test Check
             from prowler.providers.aws.services.backup.backup_vaults_encrypted.backup_vaults_encrypted import (
@@ -42,6 +45,9 @@ class Test_backup_vaults_encrypted:
 
         with mock.patch(
             "prowler.providers.aws.services.backup.backup_service.Backup",
+            new=backup_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.backup.backup_vaults_encrypted.backup_vaults_encrypted.backup_client",
             new=backup_client,
         ):
             # Test Check
@@ -80,6 +86,9 @@ class Test_backup_vaults_encrypted:
 
         with mock.patch(
             "prowler.providers.aws.services.backup.backup_service.Backup",
+            new=backup_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.backup.backup_vaults_encrypted.backup_vaults_encrypted.backup_client",
             new=backup_client,
         ):
             # Test Check

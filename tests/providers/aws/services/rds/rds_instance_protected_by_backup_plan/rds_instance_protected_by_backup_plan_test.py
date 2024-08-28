@@ -48,6 +48,7 @@ def mock_make_api_call(self, operation_name, kwarg):
 class Test_rds_instance_protected_by_backup_plan:
     @mock_aws
     def test_rds_no_instances(self):
+        from prowler.providers.aws.services.backup.backup_service import Backup
         from prowler.providers.aws.services.rds.rds_service import RDS
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
@@ -59,6 +60,9 @@ class Test_rds_instance_protected_by_backup_plan:
             with mock.patch(
                 "prowler.providers.aws.services.rds.rds_instance_protected_by_backup_plan.rds_instance_protected_by_backup_plan.rds_client",
                 new=RDS(aws_provider),
+            ), mock.patch(
+                "prowler.providers.aws.services.rds.rds_instance_protected_by_backup_plan.rds_instance_protected_by_backup_plan.backup_client",
+                new=Backup(aws_provider),
             ):
                 # Test Check
                 from prowler.providers.aws.services.rds.rds_instance_protected_by_backup_plan.rds_instance_protected_by_backup_plan import (
@@ -81,6 +85,7 @@ class Test_rds_instance_protected_by_backup_plan:
             DBInstanceClass="db.m1.small",
         )
 
+        from prowler.providers.aws.services.backup.backup_service import Backup
         from prowler.providers.aws.services.rds.rds_service import RDS
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
@@ -92,6 +97,9 @@ class Test_rds_instance_protected_by_backup_plan:
             with mock.patch(
                 "prowler.providers.aws.services.rds.rds_instance_protected_by_backup_plan.rds_instance_protected_by_backup_plan.rds_client",
                 new=RDS(aws_provider),
+            ), mock.patch(
+                "prowler.providers.aws.services.rds.rds_instance_protected_by_backup_plan.rds_instance_protected_by_backup_plan.backup_client",
+                new=Backup(aws_provider),
             ):
                 # Test Check
                 from prowler.providers.aws.services.rds.rds_instance_protected_by_backup_plan.rds_instance_protected_by_backup_plan import (
