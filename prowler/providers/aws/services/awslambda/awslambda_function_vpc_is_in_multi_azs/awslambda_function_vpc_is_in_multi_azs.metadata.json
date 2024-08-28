@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "awslambda_function_vpc_is_in_multiple_az",
+  "CheckID": "awslambda_function_vpc_is_in_multi_azs",
   "CheckTitle": "Check if AWS Lambda Function VPC is Distributed Across Multiple Availability Zones",
   "CheckType": [],
   "ServiceName": "lambda",

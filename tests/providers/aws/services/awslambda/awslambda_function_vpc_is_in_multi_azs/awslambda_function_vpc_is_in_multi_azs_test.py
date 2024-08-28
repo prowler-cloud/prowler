@@ -12,7 +12,7 @@ from tests.providers.aws.utils import (
 )
 
 
-class Test_awslambda_function_vpc_is_in_multiple_az:
+class Test_awslambda_function_vpc_is_in_multi_azs:
     @mock_aws
     def test_no_functions(self):
         from prowler.providers.aws.services.awslambda.awslambda_service import Lambda
@@ -23,15 +23,15 @@ class Test_awslambda_function_vpc_is_in_multiple_az:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.awslambda.awslambda_function_vpc_is_in_multiple_az.awslambda_function_vpc_is_in_multiple_az.awslambda_client",
+            "prowler.providers.aws.services.awslambda.awslambda_function_vpc_is_in_multi_azs.awslambda_function_vpc_is_in_multi_azs.awslambda_client",
             new=Lambda(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.awslambda.awslambda_function_vpc_is_in_multiple_az.awslambda_function_vpc_is_in_multiple_az import (
-                awslambda_function_vpc_is_in_multiple_az,
+            from prowler.providers.aws.services.awslambda.awslambda_function_vpc_is_in_multi_azs.awslambda_function_vpc_is_in_multi_azs import (
+                awslambda_function_vpc_is_in_multi_azs,
             )
 
-            check = awslambda_function_vpc_is_in_multiple_az()
+            check = awslambda_function_vpc_is_in_multi_azs()
             result = check.execute()
 
             assert len(result) == 0
@@ -75,15 +75,15 @@ class Test_awslambda_function_vpc_is_in_multiple_az:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.awslambda.awslambda_function_vpc_is_in_multiple_az.awslambda_function_vpc_is_in_multiple_az.awslambda_client",
+            "prowler.providers.aws.services.awslambda.awslambda_function_vpc_is_in_multi_azs.awslambda_function_vpc_is_in_multi_azs.awslambda_client",
             new=Lambda(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.awslambda.awslambda_function_vpc_is_in_multiple_az.awslambda_function_vpc_is_in_multiple_az import (
-                awslambda_function_vpc_is_in_multiple_az,
+            from prowler.providers.aws.services.awslambda.awslambda_function_vpc_is_in_multi_azs.awslambda_function_vpc_is_in_multi_azs import (
+                awslambda_function_vpc_is_in_multi_azs,
             )
 
-            check = awslambda_function_vpc_is_in_multiple_az()
+            check = awslambda_function_vpc_is_in_multi_azs()
             result = check.execute()
 
             assert len(result) == 1
@@ -160,18 +160,18 @@ class Test_awslambda_function_vpc_is_in_multiple_az:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.awslambda.awslambda_function_vpc_is_in_multiple_az.awslambda_function_vpc_is_in_multiple_az.awslambda_client",
+            "prowler.providers.aws.services.awslambda.awslambda_function_vpc_is_in_multi_azs.awslambda_function_vpc_is_in_multi_azs.awslambda_client",
             new=Lambda(aws_provider),
         ), mock.patch(
-            "prowler.providers.aws.services.awslambda.awslambda_function_vpc_is_in_multiple_az.awslambda_function_vpc_is_in_multiple_az.vpc_client",
+            "prowler.providers.aws.services.awslambda.awslambda_function_vpc_is_in_multi_azs.awslambda_function_vpc_is_in_multi_azs.vpc_client",
             new=VPC(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.awslambda.awslambda_function_vpc_is_in_multiple_az.awslambda_function_vpc_is_in_multiple_az import (
-                awslambda_function_vpc_is_in_multiple_az,
+            from prowler.providers.aws.services.awslambda.awslambda_function_vpc_is_in_multi_azs.awslambda_function_vpc_is_in_multi_azs import (
+                awslambda_function_vpc_is_in_multi_azs,
             )
 
-            check = awslambda_function_vpc_is_in_multiple_az()
+            check = awslambda_function_vpc_is_in_multi_azs()
             result = check.execute()
 
             assert len(result) == 1
@@ -253,18 +253,18 @@ class Test_awslambda_function_vpc_is_in_multiple_az:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.awslambda.awslambda_function_vpc_is_in_multiple_az.awslambda_function_vpc_is_in_multiple_az.awslambda_client",
+            "prowler.providers.aws.services.awslambda.awslambda_function_vpc_is_in_multi_azs.awslambda_function_vpc_is_in_multi_azs.awslambda_client",
             new=Lambda(aws_provider),
         ), mock.patch(
-            "prowler.providers.aws.services.awslambda.awslambda_function_vpc_is_in_multiple_az.awslambda_function_vpc_is_in_multiple_az.vpc_client",
+            "prowler.providers.aws.services.awslambda.awslambda_function_vpc_is_in_multi_azs.awslambda_function_vpc_is_in_multi_azs.vpc_client",
             new=VPC(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.awslambda.awslambda_function_vpc_is_in_multiple_az.awslambda_function_vpc_is_in_multiple_az import (
-                awslambda_function_vpc_is_in_multiple_az,
+            from prowler.providers.aws.services.awslambda.awslambda_function_vpc_is_in_multi_azs.awslambda_function_vpc_is_in_multi_azs import (
+                awslambda_function_vpc_is_in_multi_azs,
             )
 
-            check = awslambda_function_vpc_is_in_multiple_az()
+            check = awslambda_function_vpc_is_in_multi_azs()
             result = check.execute()
 
             assert len(result) == 1
@@ -349,18 +349,18 @@ class Test_awslambda_function_vpc_is_in_multiple_az:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.awslambda.awslambda_function_vpc_is_in_multiple_az.awslambda_function_vpc_is_in_multiple_az.awslambda_client",
+            "prowler.providers.aws.services.awslambda.awslambda_function_vpc_is_in_multi_azs.awslambda_function_vpc_is_in_multi_azs.awslambda_client",
             new=Lambda(aws_provider),
         ), mock.patch(
-            "prowler.providers.aws.services.awslambda.awslambda_function_vpc_is_in_multiple_az.awslambda_function_vpc_is_in_multiple_az.vpc_client",
+            "prowler.providers.aws.services.awslambda.awslambda_function_vpc_is_in_multi_azs.awslambda_function_vpc_is_in_multi_azs.vpc_client",
             new=VPC(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.awslambda.awslambda_function_vpc_is_in_multiple_az.awslambda_function_vpc_is_in_multiple_az import (
-                awslambda_function_vpc_is_in_multiple_az,
+            from prowler.providers.aws.services.awslambda.awslambda_function_vpc_is_in_multi_azs.awslambda_function_vpc_is_in_multi_azs import (
+                awslambda_function_vpc_is_in_multi_azs,
             )
 
-            check = awslambda_function_vpc_is_in_multiple_az()
+            check = awslambda_function_vpc_is_in_multi_azs()
             result = check.execute()
 
             assert len(result) == 1
@@ -414,10 +414,10 @@ class Test_awslambda_function_vpc_is_in_multiple_az:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.awslambda.awslambda_function_vpc_is_in_multiple_az.awslambda_function_vpc_is_in_multiple_az.awslambda_client",
+            "prowler.providers.aws.services.awslambda.awslambda_function_vpc_is_in_multi_azs.awslambda_function_vpc_is_in_multi_azs.awslambda_client",
             new=Lambda(aws_provider),
         ), mock.patch(
-            "prowler.providers.aws.services.awslambda.awslambda_function_vpc_is_in_multiple_az.awslambda_function_vpc_is_in_multiple_az.vpc_client",
+            "prowler.providers.aws.services.awslambda.awslambda_function_vpc_is_in_multi_azs.awslambda_function_vpc_is_in_multi_azs.vpc_client",
             new=VPC(aws_provider),
         ):
             # Test check inside_vpc first
@@ -435,11 +435,11 @@ class Test_awslambda_function_vpc_is_in_multiple_az:
 
             # Now test if function is in multiple AZs to ensure it does not fail twice
 
-            from prowler.providers.aws.services.awslambda.awslambda_function_vpc_is_in_multiple_az.awslambda_function_vpc_is_in_multiple_az import (
-                awslambda_function_vpc_is_in_multiple_az,
+            from prowler.providers.aws.services.awslambda.awslambda_function_vpc_is_in_multi_azs.awslambda_function_vpc_is_in_multi_azs import (
+                awslambda_function_vpc_is_in_multi_azs,
             )
 
-            check = awslambda_function_vpc_is_in_multiple_az()
+            check = awslambda_function_vpc_is_in_multi_azs()
             result = check.execute()
 
             assert len(result) == 0

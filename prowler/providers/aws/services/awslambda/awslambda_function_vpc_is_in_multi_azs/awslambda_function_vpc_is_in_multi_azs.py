@@ -8,7 +8,7 @@ from prowler.providers.aws.services.awslambda.awslambda_function_inside_vpc.awsl
 from prowler.providers.aws.services.vpc.vpc_client import vpc_client
 
 
-class awslambda_function_vpc_is_in_multiple_az(Check):
+class awslambda_function_vpc_is_in_multi_azs(Check):
     def execute(self) -> List[Check_Report_AWS]:
         findings = []
         LAMBDA_MINIMAL_AZ = awslambda_client.audit_config.get("lambda_minimal_az", 2)
