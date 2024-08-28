@@ -1076,29 +1076,37 @@ class AwsProvider(Provider):
                 raise error
             return Connection(error=error)
 
-        except ClientError as e:
-            logger.error(f"AWSClientError[{e.__traceback__.tb_lineno}]: {e}")
+        except ClientError as client_error:
+            logger.error(
+                f"AWSClientError[{client_error.__traceback__.tb_lineno}]: {client_error}"
+            )
             if raise_on_exception:
                 raise AWSClientError(
-                    file=os.path.basename(__file__), original_exception=e
-                ) from e
-            return Connection(error=e)
+                    file=os.path.basename(__file__), original_exception=client_error
+                ) from client_error
+            return Connection(error=client_error)
 
-        except ProfileNotFound as e:
-            logger.error(f"AWSProfileNotFoundError[{e.__traceback__.tb_lineno}]: {e}")
+        except ProfileNotFound as profile_not_found_error:
+            logger.error(
+                f"AWSProfileNotFoundError[{profile_not_found_error.__traceback__.tb_lineno}]: {profile_not_found_error}"
+            )
             if raise_on_exception:
                 raise AWSProfileNotFoundError(
-                    file=os.path.basename(__file__), original_exception=e
-                ) from e
-            return Connection(error=e)
+                    file=os.path.basename(__file__),
+                    original_exception=profile_not_found_error,
+                ) from profile_not_found_error
+            return Connection(error=profile_not_found_error)
 
-        except NoCredentialsError as e:
-            logger.error(f"AWSNoCredentialsError[{e.__traceback__.tb_lineno}]: {e}")
+        except NoCredentialsError as no_credentials_error:
+            logger.error(
+                f"AWSNoCredentialsError[{no_credentials_error.__traceback__.tb_lineno}]: {no_credentials_error}"
+            )
             if raise_on_exception:
                 raise AWSNoCredentialsError(
-                    file=os.path.basename(__file__), original_exception=e
-                ) from e
-            return Connection(error=e)
+                    file=os.path.basename(__file__),
+                    original_exception=no_credentials_error,
+                ) from no_credentials_error
+            return Connection(error=no_credentials_error)
 
         except Exception as error:
             logger.critical(
