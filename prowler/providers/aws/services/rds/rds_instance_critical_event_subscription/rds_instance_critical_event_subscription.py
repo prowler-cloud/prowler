@@ -15,6 +15,7 @@ class rds_instance_critical_event_subscription(Check):
                     db_event.region
                 )
                 report.region = db_event.region
+                report.resource_tags = db_event.tags
                 if db_event.source_type == "db-instance" and db_event.enabled:
                     if db_event.event_list == [] or set(db_event.event_list) == {
                         "maintenance",
