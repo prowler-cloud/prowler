@@ -215,7 +215,7 @@ class Compliance(BaseModel):
 
     def list_compliance_frameworks(
         bulk_compliance_frameworks: dict, provider: str = None
-    ):
+    ) -> list[str]:
         """
         Returns a list of compliance frameworks from bulk compliance frameworks
 
@@ -229,16 +229,37 @@ class Compliance(BaseModel):
         if provider:
             compliance_frameworks = [
                 compliance_framework
-                for compliance_framework in bulk_compliance_frameworks.values()
-                if compliance_framework.Provider == provider
+                for compliance_framework in bulk_compliance_frameworks.keys()
+                if provider in compliance_framework
             ]
         else:
             compliance_frameworks = [
                 compliance_framework
-                for compliance_framework in bulk_compliance_frameworks.values()
+                for compliance_framework in bulk_compliance_frameworks.keys()
             ]
 
         return compliance_frameworks
+
+    def get_compliance_framework(
+        bulk_compliance_frameworks: dict, compliance_framework: str
+    ):
+        """
+        Returns a compliance framework from bulk compliance frameworks
+
+        Args:
+            bulk_compliance_frameworks (dict): The bulk compliance frameworks
+            compliance_framework (str): The compliance framework name
+
+        Returns:
+            Compliance: The compliance framework
+        """
+
+        if compliance_framework in bulk_compliance_frameworks:
+            return bulk_compliance_frameworks.get(compliance_framework)
+        else:
+            return Compliance(
+                Framework="", Provider="", Version="", Description="", Requirements=[]
+            )
 
     def list_compliance_requirements(
         bulk_compliance_frameworks: dict, compliance_framework: str = None
@@ -257,13 +278,37 @@ class Compliance(BaseModel):
 
         if bulk_compliance_frameworks and compliance_framework:
             compliance_requirements = [
-                compliance_requirement
-                for compliance_requirement in bulk_compliance_frameworks[
+                compliance_requirement.Id
+                for compliance_requirement in bulk_compliance_frameworks.get(
                     compliance_framework
-                ].Requirements
+                ).Requirements
             ]
 
         return compliance_requirements
+
+    def get_compliance_requirement(
+        bulk_compliance_frameworks: dict, compliance_framework: str, requirement_id: str
+    ):
+        """
+        Returns a compliance requirement from a compliance framework
+
+        Args:
+            bulk_compliance_frameworks (dict): The bulk compliance frameworks
+            compliance_framework (str): The compliance framework name
+            requirement_id (str): The compliance requirement ID
+
+        Returns:
+            Compliance_Requirement: The compliance requirement
+        """
+        for compliance_requirement in bulk_compliance_frameworks.get(
+            compliance_framework
+        ).Requirements:
+            if compliance_requirement.Id == requirement_id:
+                return compliance_requirement
+
+        return Compliance_Requirement(
+            Id="", Description="", Name="", Attributes=[], Checks=[]
+        )
 
 
 # Testing Pending
