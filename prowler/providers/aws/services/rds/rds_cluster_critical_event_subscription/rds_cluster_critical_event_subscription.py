@@ -16,10 +16,10 @@ class rds_cluster_critical_event_subscription(Check):
                 )
                 report.region = db_event.region
                 if db_event.source_type == "db-cluster" and db_event.enabled:
-                    if db_event.event_list == [] or db_event.event_list == [
+                    if db_event.event_list == [] or set(db_event.event_list) == {
                         "maintenance",
                         "failure",
-                    ]:
+                    }:
                         report.resource_id = db_event.id
                         report.resource_arn = db_event.arn
                         report.status = "PASS"
