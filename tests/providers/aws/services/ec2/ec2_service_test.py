@@ -539,21 +539,21 @@ class Test_EC2_Service:
         )
         ec2 = EC2(aws_provider)
         assert len(ec2.network_interfaces) == 1
-        assert ec2.network_interfaces[0].association
-        assert ec2.network_interfaces[0].attachment
-        assert ec2.network_interfaces[0].id == eni.id
-        assert ec2.network_interfaces[0].private_ip == eni.private_ip_address
-        assert ec2.network_interfaces[0].subnet_id == subnet.id
-        assert ec2.network_interfaces[0].type == eni.interface_type
-        assert ec2.network_interfaces[0].vpc_id == vpc.id
-        assert ec2.network_interfaces[0].region == AWS_REGION_US_EAST_1
-        assert ec2.network_interfaces[0].tags == [
+        assert ec2.network_interfaces[eni.id].association
+        assert ec2.network_interfaces[eni.id].attachment
+        assert ec2.network_interfaces[eni.id].id == eni.id
+        assert ec2.network_interfaces[eni.id].private_ip == eni.private_ip_address
+        assert ec2.network_interfaces[eni.id].subnet_id == subnet.id
+        assert ec2.network_interfaces[eni.id].type == eni.interface_type
+        assert ec2.network_interfaces[eni.id].vpc_id == vpc.id
+        assert ec2.network_interfaces[eni.id].region == AWS_REGION_US_EAST_1
+        assert ec2.network_interfaces[eni.id].tags == [
             {"Key": "string", "Value": "string"},
         ]
         # Check if ENI was added to security group
         for sg in ec2.security_groups.values():
             if sg.id == eni.groups[0]["GroupId"]:
-                assert sg.network_interfaces == ec2.network_interfaces
+                assert sg.network_interfaces[0] == ec2.network_interfaces[eni.id]
 
     # Test EC2 Describe Images
     @mock_aws
@@ -700,3 +700,5 @@ class Test_EC2_Service:
             b64decode(version.template_data.user_data).decode(encoding_format_utf_8)
             == "foobar123"
         )
+
+        assert version.template_data.associate_public_ip_address
