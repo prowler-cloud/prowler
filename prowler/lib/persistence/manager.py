@@ -1,0 +1,52 @@
+import os
+
+from .sqlite import SQLiteList, SQLiteDict
+
+default_list = SQLiteList
+
+
+def mklist() -> list:
+    """
+    Create a new list with the given name and data.
+    """
+    prowler_db_connection = os.environ.get('PROWLER_DB_CONNECTION')
+    prowler_db_cache_size = os.environ.get('PROWLER_DB_CACHE_SIZE')
+
+    if not prowler_db_connection:
+        return list()
+
+    # In-memory. Default.
+    if prowler_db_connection.startswith('memory://'):
+        return list()
+
+    # SQLite 3
+    elif prowler_db_connection.startswith('sqlite://'):
+        return SQLiteList(cache_size=prowler_db_cache_size)
+
+    else:
+        raise ValueError(f"Unsupported database connection: {prowler_db_connection}")
+
+
+def mkdict() -> dict:
+    """
+    Create a new dictionary with the given name and data.
+    """
+    prowler_db_connection = os.environ.get('PROWLER_DB_CONNECTION')
+    prowler_db_cache_size = os.environ.get('PROWLER_DB_CACHE_SIZE')
+
+    if not prowler_db_connection:
+        return dict()
+
+    # In-memory. Default.
+    if prowler_db_connection.startswith('memory://'):
+        return dict()
+
+    # SQLite 3
+    elif prowler_db_connection.startswith('sqlite://'):
+        return SQLiteDict(cache_size=prowler_db_cache_size)
+
+    else:
+        raise ValueError(f"Unsupported database connection: {prowler_db_connection}")
+
+
+__all__ = ('mklist', 'mkdict')
