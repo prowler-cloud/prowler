@@ -337,7 +337,7 @@ class TestOutputs:
         assert stats["resources_count"] == 1
         assert stats["findings_count"] == 2
         assert not stats["all_fails_are_muted"]
-    
+
     def test_extract_findings_statistics_all_passes_are_not_muted(self):
         finding_1 = mock.MagicMock()
         finding_1.status = "PASS"
@@ -357,8 +357,8 @@ class TestOutputs:
         assert stats["resources_count"] == 1
         assert stats["findings_count"] == 2
         assert not stats["all_fails_are_muted"]
-    
-    def test_extract_findings_statistics_all_fail_are_muted(self):
+
+    def test_extract_findings_statistics_all_passes_are_muted(self):
         finding_1 = mock.MagicMock()
         finding_1.status = "PASS"
         finding_1.muted = True
