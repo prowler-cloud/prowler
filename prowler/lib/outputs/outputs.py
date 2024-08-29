@@ -1,7 +1,38 @@
 from colorama import Fore, Style
 
+from prowler.lib.persistence import mklist
 from prowler.config.config import orange_color
 from prowler.lib.logger import logger
+
+
+class GeneratedOutputs:
+
+    def __init__(self, output_bucket=None, output_bucket_no_assume: None = None):
+        self._store = True if output_bucket or output_bucket_no_assume else False
+        self.regular = mklist() if self._store else None
+        self.compliance = mklist() if self._store else None
+
+    def add_compliance(self, cmp):
+
+        if not self._store:
+            return
+
+        if cmp:
+            self.compliance.append(cmp)
+
+    def add_regular(self, rg):
+
+        if not self._store:
+            return
+
+        if rg:
+            self.regular.append(rg)
+
+    def make_output(self) -> dict:
+        return {
+            "regular": self.regular,
+            "compliance": self.compliance
+        }
 
 
 def stdout_report(finding, color, verbose, status, fix):
