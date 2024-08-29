@@ -13,7 +13,7 @@ prowler <provider> -c <check_to_fix_1> <check_to_fix_2> ... --fixer
     ```sh
     prowler <provider> --list-fixers
     ```
-
+It's important to note that using the fixers for `Access Analyzer`, `GuardDuty`, and `SecurityHub` may incur additional costs. These AWS services might trigger actions or deploy resources that can lead to charges on your AWS account.
 ## Writing a Fixer
 To write a fixer, you need to create a file called `<check_id>_fixer.py` inside the check folder, with a function called `fixer` that receives either the region or the resource to be fixed as a parameter, and returns a boolean value indicating if the fix was successful or not.
 
