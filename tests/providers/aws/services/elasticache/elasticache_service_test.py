@@ -38,6 +38,7 @@ REPLICATION_GROUP_TAGS = [
     {"Key": "environment", "Value": "test"},
 ]
 AUTO_MINOR_VERSION_UPGRADE = True
+AUTOMATIC_FAILOVER = "enabled"
 
 
 # Mocking Access Analyzer Calls
@@ -62,6 +63,8 @@ def mock_make_api_call(self, operation_name, kwargs):
                     "Engine": ELASTICACHE_ENGINE,
                     "SecurityGroups": [],
                     "AutoMinorVersionUpgrade": AUTO_MINOR_VERSION_UPGRADE,
+                    "EngineVersion": "6.0",
+                    "AuthTokenEnabled": False,
                 },
             ]
         }
@@ -169,7 +172,7 @@ class Test_ElastiCache_Service:
             subnets=[SUBNET_1, SUBNET_2],
             tags=ELASTICACHE_CLUSTER_TAGS,
             auto_minor_version_upgrade=AUTO_MINOR_VERSION_UPGRADE,
-            engine_version="None",
+            engine_version=6.0,
             auth_token_enabled=False,
         )
 

@@ -30,6 +30,8 @@ class ElastiCache(AWSService):
                     if not self.audit_resources or (
                         is_resource_filtered(cluster_arn, self.audit_resources)
                     ):
+                        version = cache_cluster.get("EngineVersion", "0.0")
+                        version = float(version[:3])
                         self.clusters[cluster_arn] = Cluster(
                             id=cache_cluster["CacheClusterId"],
                             arn=cluster_arn,
@@ -41,7 +43,7 @@ class ElastiCache(AWSService):
                             auto_minor_version_upgrade=cache_cluster.get(
                                 "AutoMinorVersionUpgrade", False
                             ),
-                            engine_version=cache_cluster.get("EngineVersion", "None"),
+                            engine_version=version,
                             auth_token_enabled=cache_cluster.get(
                                 "AuthTokenEnabled", False
                             ),
@@ -96,13 +98,12 @@ class ElastiCache(AWSService):
                     ):
                         member_clusters = repl_group.get("MemberClusters", [])
                         cluster_list = []
-                        if member_clusters:
-                            for cluster in member_clusters:
-                                cluster_list.append(
-                                    self.clusters[
-                                        f"arn:aws:elasticache:{regional_client.region}:{self.audited_account}:cluster:{cluster}"
-                                    ]
-                                )
+                        for cluster in member_clusters:
+                            cluster_list.append(
+                                self.clusters[
+                                    f"arn:aws:elasticache:{regional_client.region}:{self.audited_account}:cluster:{cluster}"
+                                ]
+                            )
 
                         self.replication_groups[replication_arn] = ReplicationGroup(
                             id=repl_group["ReplicationGroupId"],
@@ -179,7 +180,7 @@ class Cluster(BaseModel):
     subnets: list = []
     tags: Optional[list]
     auto_minor_version_upgrade: bool = False
-    engine_version: Optional[str]
+    engine_version: Optional[float]
     auth_token_enabled: Optional[bool]
 
 

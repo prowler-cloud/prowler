@@ -29,7 +29,7 @@ VPC_ID = "vpc-12345678901234567"
 
 # Patch every AWS call using Boto3
 @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
-class Test_elasticache_redis_cluster_auth_enabled:
+class Test_elasticache_redis_replication_group_auth_enabled:
     @mock_aws
     def test_elasticache_no_replication_groups(self):
         # Mock VPC Service
@@ -53,18 +53,18 @@ class Test_elasticache_redis_cluster_auth_enabled:
             "prowler.providers.aws.services.vpc.vpc_client.vpc_client",
             new=vpc_client,
         ):
-            from prowler.providers.aws.services.elasticache.elasticache_redis_cluster_auth_enabled.elasticache_redis_cluster_auth_enabled import (
-                elasticache_redis_cluster_auth_enabled,
+            from prowler.providers.aws.services.elasticache.elasticache_redis_replication_group_auth_enabled.elasticache_redis_replication_group_auth_enabled import (
+                elasticache_redis_replication_group_auth_enabled,
             )
 
-            check = elasticache_redis_cluster_auth_enabled()
+            check = elasticache_redis_replication_group_auth_enabled()
             result = check.execute()
             assert len(result) == 0
 
     def test_elasticache_no_old_redis_replication_groups(self):
         # Mock ElastiCache Service
         elasticache_service = MagicMock
-        version = "6.0.0"
+        version = 6.0
         elasticache_service.replication_groups = {
             REPLICATION_GROUP_ARN: ReplicationGroup(
                 arn=REPLICATION_GROUP_ARN,
@@ -107,14 +107,14 @@ class Test_elasticache_redis_cluster_auth_enabled:
             "prowler.providers.aws.services.vpc.vpc_client.vpc_client",
             new=vpc_client,
         ):
-            from prowler.providers.aws.services.elasticache.elasticache_redis_cluster_auth_enabled.elasticache_redis_cluster_auth_enabled import (
-                elasticache_redis_cluster_auth_enabled,
+            from prowler.providers.aws.services.elasticache.elasticache_redis_replication_group_auth_enabled.elasticache_redis_replication_group_auth_enabled import (
+                elasticache_redis_replication_group_auth_enabled,
             )
 
-            check = elasticache_redis_cluster_auth_enabled()
+            check = elasticache_redis_replication_group_auth_enabled()
             result = check.execute()
             assert len(result) == 1
-            assert result[0].status == "PASS"
+            assert result[0].status == "MANUAL"
             assert (
                 result[0].status_extended
                 == f"Elasticache Redis replication group {REPLICATION_GROUP_ID}(v{version}) does not have to use AUTH, but it should have Redis ACL configured."
@@ -124,10 +124,10 @@ class Test_elasticache_redis_cluster_auth_enabled:
             assert result[0].resource_arn == REPLICATION_GROUP_ARN
             assert result[0].resource_tags == REPLICATION_GROUP_TAGS
 
-    def test_elasticache_redis_cluster_auth_enabled(self):
+    def test_elasticache_redis_replication_group_auth_enabled(self):
         # Mock ElastiCache Service
         elasticache_service = MagicMock
-        version = "4.0.0"
+        version = 4.0
         elasticache_service.replication_groups = {
             REPLICATION_GROUP_ARN: ReplicationGroup(
                 arn=REPLICATION_GROUP_ARN,
@@ -171,11 +171,11 @@ class Test_elasticache_redis_cluster_auth_enabled:
             "prowler.providers.aws.services.vpc.vpc_client.vpc_client",
             new=vpc_client,
         ):
-            from prowler.providers.aws.services.elasticache.elasticache_redis_cluster_auth_enabled.elasticache_redis_cluster_auth_enabled import (
-                elasticache_redis_cluster_auth_enabled,
+            from prowler.providers.aws.services.elasticache.elasticache_redis_replication_group_auth_enabled.elasticache_redis_replication_group_auth_enabled import (
+                elasticache_redis_replication_group_auth_enabled,
             )
 
-            check = elasticache_redis_cluster_auth_enabled()
+            check = elasticache_redis_replication_group_auth_enabled()
             result = check.execute()
 
             assert len(result) == 1
@@ -192,7 +192,7 @@ class Test_elasticache_redis_cluster_auth_enabled:
     def test_elasticache_redis_cluster_auth_disabled(self):
         # Mock ElastiCache Service
         elasticache_service = MagicMock
-        version = "4.0.0"
+        version = 5.0
         elasticache_service.replication_groups = {
             REPLICATION_GROUP_ARN: ReplicationGroup(
                 arn=REPLICATION_GROUP_ARN,
@@ -236,11 +236,11 @@ class Test_elasticache_redis_cluster_auth_enabled:
             "prowler.providers.aws.services.vpc.vpc_client.vpc_client",
             new=vpc_client,
         ):
-            from prowler.providers.aws.services.elasticache.elasticache_redis_cluster_auth_enabled.elasticache_redis_cluster_auth_enabled import (
-                elasticache_redis_cluster_auth_enabled,
+            from prowler.providers.aws.services.elasticache.elasticache_redis_replication_group_auth_enabled.elasticache_redis_replication_group_auth_enabled import (
+                elasticache_redis_replication_group_auth_enabled,
             )
 
-            check = elasticache_redis_cluster_auth_enabled()
+            check = elasticache_redis_replication_group_auth_enabled()
             result = check.execute()
 
             assert len(result) == 1
