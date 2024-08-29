@@ -501,6 +501,7 @@ class EC2(AWSService):
                                 arn=template_arn,
                                 region=regional_client.region,
                                 versions=[],
+                                tags=template.get("Tags"),
                             )
                         )
 
