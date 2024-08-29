@@ -1291,7 +1291,10 @@ aws:
                 )  # No profile to avoid ProfileNotFound error
 
             assert exception.type == AWSNoCredentialsError
-            assert "[1904] No AWS credentials found" in str(exception.value)
+            assert (
+                "AWSNoCredentialsError[1904]: No AWS credentials found - Unable to locate credentials"
+                in str(exception.value)
+            )
 
     @mock_aws
     def test_test_connection_with_role_from_env(self, monkeypatch):
