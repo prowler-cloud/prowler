@@ -2,7 +2,7 @@ import json
 import os
 import re
 import tempfile
-from argparse import ArgumentTypeError, Namespace
+from argparse import Namespace
 from datetime import datetime, timedelta
 from json import dumps
 from os import rmdir
@@ -28,7 +28,11 @@ from prowler.providers.aws.config import (
     BOTO3_USER_AGENT_EXTRA,
     ROLE_SESSION_NAME,
 )
-from prowler.providers.aws.lib.arn.error import RoleArnParsingInvalidResourceType
+from prowler.providers.aws.exceptions.exceptions import (
+    AWSArgumentTypeValidationError,
+    AWSIAMRoleARNInvalidResourceType,
+    AWSNoCredentialsError,
+)
 from prowler.providers.aws.lib.arn.models import ARN
 from prowler.providers.aws.lib.mutelist.mutelist import AWSMutelist
 from prowler.providers.aws.models import (
@@ -1281,13 +1285,16 @@ aws:
             clear=True,
         ):
 
-            with raises(botocore.exceptions.NoCredentialsError) as exception:
+            with raises(AWSNoCredentialsError) as exception:
                 AwsProvider.test_connection(
                     profile=None
                 )  # No profile to avoid ProfileNotFound error
 
-            assert exception.type == botocore.exceptions.NoCredentialsError
-            assert "Unable to locate credentials" in str(exception.value)
+            assert exception.type == AWSNoCredentialsError
+            assert (
+                "AWSNoCredentialsError[1904]: No AWS credentials found - Unable to locate credentials"
+                in str(exception.value)
+            )
 
     @mock_aws
     def test_test_connection_with_role_from_env(self, monkeypatch):
@@ -1321,12 +1328,13 @@ aws:
         role_arn = (
             f"arn:{AWS_COMMERCIAL_PARTITION}:iam::{AWS_ACCOUNT_NUMBER}:role/{role_name}"
         )
-        with raises(ArgumentTypeError) as exception:
+        with raises(AWSArgumentTypeValidationError) as exception:
             AwsProvider.test_connection(role_arn=role_arn, session_duration=899)
 
-        assert exception.type == ArgumentTypeError
+        assert exception.type == AWSArgumentTypeValidationError
         assert (
-            exception.value.args[0] == "Session duration must be between 900 and 43200"
+            exception.value.args[0]
+            == "[1905] AWS argument type validation error - Session Duration must be between 900 and 43200 seconds."
         )
 
     @mock_aws
@@ -1343,9 +1351,10 @@ aws:
 
         assert isinstance(connection, Connection)
         assert not connection.is_connected
-        assert isinstance(connection.error, ArgumentTypeError)
+        assert isinstance(connection.error, AWSArgumentTypeValidationError)
         assert (
-            connection.error.args[0] == "Session duration must be between 900 and 43200"
+            connection.error.args[0]
+            == "[1905] AWS argument type validation error - Session Duration must be between 900 and 43200 seconds."
         )
 
     @mock_aws
@@ -1355,13 +1364,13 @@ aws:
             f"arn:{AWS_COMMERCIAL_PARTITION}:iam::{AWS_ACCOUNT_NUMBER}:role/{role_name}"
         )
 
-        with raises(ArgumentTypeError) as exception:
+        with raises(AWSArgumentTypeValidationError) as exception:
             AwsProvider.test_connection(role_arn=role_arn, role_session_name="???")
 
-        assert exception.type == ArgumentTypeError
+        assert exception.type == AWSArgumentTypeValidationError
         assert (
             exception.value.args[0]
-            == "Role Session Name must be 2-64 characters long and consist only of upper- and lower-case alphanumeric characters with no spaces. You can also include underscores or any of the following characters: =,.@-"
+            == "[1905] AWS argument type validation error - Role Session Name must be between 2 and 64 characters and may contain alphanumeric characters, periods, hyphens, and underscores."
         )
 
     @mock_aws
@@ -1369,13 +1378,13 @@ aws:
         role_name = "test-role"
         role_arn = f"arn:{AWS_COMMERCIAL_PARTITION}:iam::{AWS_ACCOUNT_NUMBER}:not-role/{role_name}"
 
-        with raises(RoleArnParsingInvalidResourceType) as exception:
+        with raises(AWSIAMRoleARNInvalidResourceType) as exception:
             AwsProvider.test_connection(role_arn=role_arn)
 
-        assert exception.type == RoleArnParsingInvalidResourceType
+        assert exception.type == AWSIAMRoleARNInvalidResourceType
         assert (
             exception.value.args[0]
-            == "The assumed role ARN contains a value for resource type different than role, please input a valid ARN"
+            == "[1912] AWS IAM Role ARN resource type is invalid"
         )
 
     @mock_aws
