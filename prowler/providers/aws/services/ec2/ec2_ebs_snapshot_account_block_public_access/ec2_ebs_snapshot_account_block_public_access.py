@@ -1,10 +1,11 @@
+from prowler.lib.persistence import mklist
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 
 
 class ec2_ebs_snapshot_account_block_public_access(Check):
     def execute(self):
-        findings = []
+        findings = mklist()
         for (
             ebs_snapshot_block_status
         ) in ec2_client.ebs_block_public_access_snapshots_states:

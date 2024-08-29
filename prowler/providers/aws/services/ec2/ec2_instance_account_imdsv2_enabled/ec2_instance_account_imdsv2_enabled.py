@@ -1,10 +1,11 @@
+from prowler.lib.persistence import mklist
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 
 
 class ec2_instance_account_imdsv2_enabled(Check):
     def execute(self):
-        findings = []
+        findings = mklist()
         for instance_metadata_default in ec2_client.instance_metadata_defaults:
             if (
                 instance_metadata_default.instances

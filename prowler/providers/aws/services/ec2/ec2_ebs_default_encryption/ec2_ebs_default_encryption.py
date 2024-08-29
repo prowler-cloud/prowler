@@ -1,10 +1,11 @@
+from prowler.lib.persistence import mklist
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 
 
 class ec2_ebs_default_encryption(Check):
     def execute(self):
-        findings = []
+        findings = mklist()
         for ebs_encryption in ec2_client.ebs_encryption_by_default:
             if ebs_encryption.volumes or ec2_client.provider.scan_unused_services:
                 report = Check_Report_AWS(self.metadata())

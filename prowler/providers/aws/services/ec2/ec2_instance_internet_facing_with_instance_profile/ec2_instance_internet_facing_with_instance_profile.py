@@ -1,10 +1,11 @@
+from prowler.lib.persistence import mklist
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 
 
 class ec2_instance_internet_facing_with_instance_profile(Check):
     def execute(self):
-        findings = []
+        findings = mklist()
         for instance in ec2_client.instances:
             if instance.state != "terminated":
                 report = Check_Report_AWS(self.metadata())

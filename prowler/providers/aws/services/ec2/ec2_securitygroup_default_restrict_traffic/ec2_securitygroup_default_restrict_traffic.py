@@ -1,3 +1,4 @@
+from prowler.lib.persistence import mklist
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 from prowler.providers.aws.services.vpc.vpc_client import vpc_client
@@ -5,7 +6,7 @@ from prowler.providers.aws.services.vpc.vpc_client import vpc_client
 
 class ec2_securitygroup_default_restrict_traffic(Check):
     def execute(self):
-        findings = []
+        findings = mklist()
         for security_group in ec2_client.security_groups:
             # Check if ignoring flag is set and if the VPC and the default SG are in used
             if security_group.name == "default" and (

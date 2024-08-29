@@ -1,3 +1,4 @@
+from prowler.lib.persistence import mklist
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.awslambda.awslambda_client import awslambda_client
 from prowler.providers.aws.services.ec2.ec2_client import ec2_client
@@ -5,7 +6,7 @@ from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 
 class ec2_securitygroup_not_used(Check):
     def execute(self):
-        findings = []
+        findings = mklist()
         for security_group in ec2_client.security_groups:
             # Default security groups can not be deleted, so ignore them
             if security_group.name != "default":

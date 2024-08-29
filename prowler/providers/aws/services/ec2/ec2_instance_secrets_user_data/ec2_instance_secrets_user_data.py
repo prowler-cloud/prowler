@@ -6,6 +6,7 @@ from base64 import b64decode
 from detect_secrets import SecretsCollection
 from detect_secrets.settings import default_settings
 
+from prowler.lib.persistence import mklist
 from prowler.config.config import enconding_format_utf_8
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.ec2.ec2_client import ec2_client
@@ -13,7 +14,7 @@ from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 
 class ec2_instance_secrets_user_data(Check):
     def execute(self):
-        findings = []
+        findings = mklist()
         for instance in ec2_client.instances:
             if instance.state != "terminated":
                 report = Check_Report_AWS(self.metadata())

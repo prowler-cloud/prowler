@@ -1,3 +1,4 @@
+from prowler.lib.persistence import mklist
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 from prowler.providers.aws.services.ec2.lib.network_acls import check_network_acl
@@ -5,7 +6,7 @@ from prowler.providers.aws.services.ec2.lib.network_acls import check_network_ac
 
 class ec2_networkacl_allow_ingress_any_port(Check):
     def execute(self):
-        findings = []
+        findings = mklist()
         tcp_protocol = "-1"
         check_port = 0
         for network_acl in ec2_client.network_acls:

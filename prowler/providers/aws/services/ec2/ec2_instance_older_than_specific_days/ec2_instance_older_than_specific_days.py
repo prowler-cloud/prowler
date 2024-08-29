@@ -1,12 +1,13 @@
 from datetime import datetime, timezone
 
+from prowler.lib.persistence import mklist
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 
 
 class ec2_instance_older_than_specific_days(Check):
     def execute(self):
-        findings = []
+        findings = mklist()
 
         # max_ec2_instance_age_in_days, default: 180 days
         max_ec2_instance_age_in_days = ec2_client.audit_config.get(

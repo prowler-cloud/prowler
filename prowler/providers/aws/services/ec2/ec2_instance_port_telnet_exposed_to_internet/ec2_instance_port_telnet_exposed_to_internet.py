@@ -1,3 +1,4 @@
+from prowler.lib.persistence import mklist
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 from prowler.providers.aws.services.ec2.lib.instance import get_instance_public_status
@@ -8,7 +9,7 @@ from prowler.providers.aws.services.vpc.vpc_client import vpc_client
 class ec2_instance_port_telnet_exposed_to_internet(Check):
     # EC2 Instances with Telnet port 23 open to the Internet will be flagged as FAIL with a severity of medium if the instance has no public IP, high if the instance has a public IP but is in a private subnet, and critical if the instance has a public IP and is in a public subnet.
     def execute(self):
-        findings = []
+        findings = mklist()
         check_ports = [23]
         for instance in ec2_client.instances:
             report = Check_Report_AWS(self.metadata())

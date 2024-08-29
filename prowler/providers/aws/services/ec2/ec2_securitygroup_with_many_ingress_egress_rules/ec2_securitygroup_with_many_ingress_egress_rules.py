@@ -1,10 +1,11 @@
+from prowler.lib.persistence import mklist
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 
 
 class ec2_securitygroup_with_many_ingress_egress_rules(Check):
     def execute(self):
-        findings = []
+        findings = mklist()
 
         # max_security_group_rules, default: 50
         max_security_group_rules = ec2_client.audit_config.get(

@@ -1,3 +1,4 @@
+from prowler.lib.persistence import mklist
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 from prowler.providers.aws.services.ec2.lib.security_groups import check_security_group
@@ -11,7 +12,7 @@ class ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9
     Check
 ):
     def execute(self):
-        findings = []
+        findings = mklist()
         check_ports = [7199, 9160, 8888]
         for security_group in ec2_client.security_groups:
             # Check if ignoring flag is set and if the VPC and the SG is in use
