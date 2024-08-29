@@ -4,13 +4,14 @@ import tempfile
 from detect_secrets import SecretsCollection
 from detect_secrets.settings import default_settings
 
+from prowler.lib.persistence import mklist
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.awslambda.awslambda_client import awslambda_client
 
 
 class awslambda_function_no_secrets_in_code(Check):
     def execute(self):
-        findings = []
+        findings = mklist()
         if awslambda_client.functions:
             for function, function_code in awslambda_client.__get_function_code__():
                 if function_code:

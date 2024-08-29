@@ -1,10 +1,11 @@
+from prowler.lib.persistence import mklist
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.awslambda.awslambda_client import awslambda_client
 
 
 class awslambda_function_using_supported_runtimes(Check):
     def execute(self):
-        findings = []
+        findings = mklist()
         for function in awslambda_client.functions.values():
             if function.runtime:
                 report = Check_Report_AWS(self.metadata())

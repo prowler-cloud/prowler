@@ -1,3 +1,4 @@
+from prowler.lib.persistence import mklist
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.awslambda.awslambda_client import awslambda_client
 from prowler.providers.aws.services.cloudtrail.cloudtrail_client import (
@@ -7,7 +8,7 @@ from prowler.providers.aws.services.cloudtrail.cloudtrail_client import (
 
 class awslambda_function_invoke_api_operations_cloudtrail_logging_enabled(Check):
     def execute(self):
-        findings = []
+        findings = mklist()
         for function in awslambda_client.functions.values():
             report = Check_Report_AWS(self.metadata())
             report.region = function.region

@@ -1,10 +1,11 @@
+from prowler.lib.persistence import mklist
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.awslambda.awslambda_client import awslambda_client
 
 
 class awslambda_function_url_cors_policy(Check):
     def execute(self):
-        findings = []
+        findings = mklist()
         for function in awslambda_client.functions.values():
             report = Check_Report_AWS(self.metadata())
             report.region = function.region
