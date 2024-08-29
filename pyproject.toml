@@ -23,9 +23,11 @@ djangorestframework-jsonapi = "7.0.2"
 drf-spectacular = "0.27.2"
 drf-spectacular-jsonapi = "0.4.1"
 gunicorn = "23.0.0"
+prowler = {git = "https://github.com/prowler-cloud/prowler.git", branch = "master"}
 psycopg2-binary = "2.9.9"
 pytest-celery = {extras = ["redis"], version = "^1.0.1"}
-python = "^3.12"
+# Needed for prowler compatibility
+python = ">=3.11,<3.13"
 
 [tool.poetry.group.dev.dependencies]
 bandit = "1.7.9"

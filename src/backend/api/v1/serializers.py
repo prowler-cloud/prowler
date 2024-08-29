@@ -31,6 +31,20 @@ class RLSSerializer(BaseSerializerV1):
         return super().create(validated_data)
 
 
+# Tasks
+
+
+class DelayedTaskSerializer(serializers.Serializer):
+    id = serializers.CharField()
+    status = serializers.CharField()
+
+    class JSONAPIMeta:
+        resource_name = "Task"
+
+    def to_representation(self, obj):
+        return {"id": obj.id, "status": obj.status}
+
+
 # Tenants
 
 

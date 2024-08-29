@@ -1,4 +1,4 @@
-from datetime import datetime
+from unittest.mock import Mock, patch
 
 import pytest
 from django.urls import reverse
@@ -433,7 +433,15 @@ class TestProviderViewSet:
         )
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_providers_connection(self, client, providers, tenant_header):
+    @patch("tasks.tasks.check_provider_connection_task.delay")
+    def test_providers_connection(
+        self, mock_provider_connection, client, providers, tenant_header
+    ):
+        task_mock = Mock()
+        task_mock.id = "12345"
+        task_mock.status = "PENDING"
+        mock_provider_connection.return_value = task_mock
+
         provider1, *_ = providers
         assert provider1.connected is None
         assert provider1.connection_last_checked_at is None
@@ -443,12 +451,11 @@ class TestProviderViewSet:
             headers=tenant_header,
         )
         assert response.status_code == status.HTTP_202_ACCEPTED
+        mock_provider_connection.assert_called_once_with(
+            provider_id=str(provider1.id), tenant_id=tenant_header["X-Tenant-ID"]
+        )
         assert "Content-Location" in response.headers
-        # TODO Assert a task is returned when they are implemented
-
-        provider1.refresh_from_db()
-        assert provider1.connected is True
-        assert isinstance(provider1.connection_last_checked_at, datetime)
+        assert response.headers["Content-Location"] == f"api/v1/tasks/{task_mock.id}"
 
     def test_providers_connection_invalid_provider(
         self, client, providers, tenant_header

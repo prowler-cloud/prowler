@@ -29,6 +29,10 @@ class BaseViewSet(ModelViewSet):
 
 
 class BaseRLSViewSet(BaseViewSet):
+    def dispatch(self, request, *args, **kwargs):
+        with transaction.atomic():
+            return super().dispatch(request, *args, **kwargs)
+
     def initial(self, request, *args, **kwargs):
         # Ideally, this logic would be in the `.setup()` method but DRF view sets don't call it
         # https://docs.djangoproject.com/en/5.1/ref/class-based-views/base/#django.views.generic.base.View.setup
@@ -44,9 +48,8 @@ class BaseRLSViewSet(BaseViewSet):
         except ValueError:
             raise ValidationError("X-Tenant-ID header must be a valid UUID")
 
-        with transaction.atomic():
-            with connection.cursor() as cursor:
-                cursor.execute("SET api.tenant_id = %s", [tenant_id])
+        with connection.cursor() as cursor:
+            cursor.execute(f"SELECT set_config('api.tenant_id', '{tenant_id}', TRUE);")
             return super().initial(request, *args, **kwargs)
 
     def get_serializer_context(self):

@@ -1,6 +1,4 @@
 from django.conf import settings as django_settings
-from django.urls import reverse
-from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_control
 from drf_spectacular.settings import spectacular_settings
@@ -19,7 +17,9 @@ from api.v1.serializers import (
     ProviderSerializer,
     ProviderUpdateSerializer,
     TenantSerializer,
+    DelayedTaskSerializer,
 )
+from tasks.tasks import check_provider_connection_task
 
 CACHE_DECORATOR = cache_control(
     max_age=django_settings.CACHE_MAX_AGE,
@@ -99,15 +99,13 @@ class TenantViewSet(BaseViewSet):
     destroy=extend_schema(
         summary="Delete a provider",
         description="Remove a provider from the system by their ID.",
-        # TODO Update with task response when implemented
-        responses={202: ProviderSerializer},
+        responses={202: DelayedTaskSerializer},
     ),
 )
 @method_decorator(CACHE_DECORATOR, name="list")
 @method_decorator(CACHE_DECORATOR, name="retrieve")
 class ProviderViewSet(BaseRLSViewSet):
     queryset = Provider.objects.all()
-    serializer_class = ProviderSerializer
     http_method_names = ["get", "post", "patch", "delete"]
     filterset_class = ProviderFilter
     search_fields = ["provider", "provider_id", "alias"]
@@ -124,6 +122,12 @@ class ProviderViewSet(BaseRLSViewSet):
     def get_queryset(self):
         return Provider.objects.all()
 
+    def get_serializer_class(self):
+        # TODO Add `destroy` when refactored
+        if self.action in {"connection"}:
+            return DelayedTaskSerializer
+        return ProviderSerializer
+
     def partial_update(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer = ProviderUpdateSerializer(instance, data=request.data, partial=True)
@@ -133,25 +137,25 @@ class ProviderViewSet(BaseRLSViewSet):
         return Response(data=read_serializer.data, status=status.HTTP_200_OK)
 
     @extend_schema(
+        tags=["Provider"],
         summary="Check connection",
         description="Try to verify connection. For instance, Role & Credentials are set correctly",
         request=None,
-        # TODO Update with task response when implemented
-        responses={202: ProviderSerializer},
+        responses={202: DelayedTaskSerializer},
     )
     @action(detail=True, methods=["post"], url_name="connection")
     def connection(self, request, pk=None):
-        # TODO Connection check to third parties
-        # TODO Returning provider data as a placeholder for tasks. We will do something similar for the created task
-        provider = get_object_or_404(Provider, pk=pk)
-        provider.connected = True
-        provider.connection_last_checked_at = timezone.now()
-        provider.save()
-        serializer = ProviderSerializer(provider)
+        get_object_or_404(Provider, pk=pk)
+        task = check_provider_connection_task.delay(
+            provider_id=pk, tenant_id=request.headers.get("X-Tenant-ID")
+        )
+        serializer = DelayedTaskSerializer(task)
         return Response(
             data=serializer.data,
             status=status.HTTP_202_ACCEPTED,
-            headers={"Content-Location": reverse("provider-detail", kwargs={"pk": pk})},
+            # TODO Use /tasks view name when implemented
+            # headers={"Content-Location": reverse("task-detail", kwargs={"pk": task.id})},
+            headers={"Content-Location": f"api/v1/tasks/{task.id}"},
         )
 
     def destroy(self, request, *args, **kwargs):
