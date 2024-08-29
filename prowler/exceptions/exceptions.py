@@ -45,6 +45,10 @@ class ProwlerException(Exception):
                 f"[{self.code}] {self.message} - {self.original_exception}"
             )
 
+    def log_error(self):
+        """Method to log the error details."""
+        return f"{self.__class__.__name__}[{self.__traceback__.tb_lineno}]: {self}"
+
 
 class UnexpectedError(ProwlerException):
     def __init__(self, provider, file, original_exception=None):

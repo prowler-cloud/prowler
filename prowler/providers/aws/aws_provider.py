@@ -32,7 +32,12 @@ from prowler.providers.aws.exceptions.exceptions import (
     AWSArgumentTypeValidationError,
     AWSAssumeRoleError,
     AWSClientError,
+    AWSIAMRoleARNEmptyResource,
+    AWSIAMRoleARNInvalidAccountID,
+    AWSIAMRoleARNInvalidResourceType,
+    AWSIAMRoleARNPartitionEmpty,
     AWSIAMRoleARNRegionNotEmtpy,
+    AWSIAMRoleARNServiceNotIAMnorSTS,
     AWSNoCredentialsError,
     AWSProfileNotFoundError,
     AWSSetUpSessionError,
@@ -1045,36 +1050,58 @@ class AwsProvider(Provider):
             )
 
         except AWSSetUpSessionError as setup_session_error:
-            logger.error(
-                f"AWSSetUpSessionError[{setup_session_error.__traceback__.tb_lineno}]: {setup_session_error}"
-            )
+            logger.error(setup_session_error.log_error())
             if raise_on_exception:
                 raise setup_session_error
             return Connection(error=setup_session_error)
 
         except AWSArgumentTypeValidationError as validation_error:
-            logger.error(
-                f"AWSArgumentTypeValidationError[{validation_error.__traceback__.tb_lineno}]: {validation_error}"
-            )
+            logger.error(validation_error.log_error())
             if raise_on_exception:
                 raise validation_error
             return Connection(error=validation_error)
 
-        except AWSIAMRoleARNRegionNotEmtpy as error:
-            logger.error(
-                f"AWSIAMRoleARNRegionNotEmtpy[{error.__traceback__.tb_lineno}]: {error}"
-            )
+        except AWSIAMRoleARNRegionNotEmtpy as arn_region_not_empty_error:
+            logger.error(arn_region_not_empty_error.log_error())
             if raise_on_exception:
-                raise error
-            return Connection(error=error)
+                raise arn_region_not_empty_error
+            return Connection(error=arn_region_not_empty_error)
 
-        except AWSAssumeRoleError as error:
-            logger.error(
-                f"AWSAssumeRoleError[{error.__traceback__.tb_lineno}]: {error}"
-            )
+        except AWSIAMRoleARNPartitionEmpty as arn_partition_empty_error:
+            logger.error(arn_partition_empty_error.log_error())
             if raise_on_exception:
-                raise error
-            return Connection(error=error)
+                raise arn_partition_empty_error
+            return Connection(error=arn_partition_empty_error)
+
+        except AWSIAMRoleARNServiceNotIAMnorSTS as arn_service_not_iam_sts_error:
+            logger.error(arn_service_not_iam_sts_error.log_error())
+            if raise_on_exception:
+                raise arn_service_not_iam_sts_error
+            return Connection(error=arn_service_not_iam_sts_error)
+
+        except AWSIAMRoleARNInvalidAccountID as arn_invalid_account_id_error:
+            logger.error(arn_invalid_account_id_error.log_error())
+            if raise_on_exception:
+                raise arn_invalid_account_id_error
+            return Connection(error=arn_invalid_account_id_error)
+
+        except AWSIAMRoleARNInvalidResourceType as arn_invalid_resource_type_error:
+            logger.error(arn_invalid_resource_type_error.log_error())
+            if raise_on_exception:
+                raise arn_invalid_resource_type_error
+            return Connection(error=arn_invalid_resource_type_error)
+
+        except AWSIAMRoleARNEmptyResource as arn_empty_resource_error:
+            logger.error(arn_empty_resource_error.log_error())
+            if raise_on_exception:
+                raise arn_empty_resource_error
+            return Connection(error=arn_empty_resource_error)
+
+        except AWSAssumeRoleError as assume_role_error:
+            logger.error(assume_role_error.log_error())
+            if raise_on_exception:
+                raise assume_role_error
+            return Connection(error=assume_role_error)
 
         except ClientError as client_error:
             logger.error(
