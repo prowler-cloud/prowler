@@ -5,13 +5,14 @@ from json import dumps
 from detect_secrets import SecretsCollection
 from detect_secrets.settings import default_settings
 
+from prowler.lib.persistence import mklist
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.ecs.ecs_client import ecs_client
 
 
 class ecs_task_definitions_no_environment_secrets(Check):
     def execute(self):
-        findings = []
+        findings = mklist()
         for task_definition in ecs_client.task_definitions:
             report = Check_Report_AWS(self.metadata())
             report.region = task_definition.region
