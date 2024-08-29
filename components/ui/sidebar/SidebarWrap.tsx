@@ -3,10 +3,13 @@
 import { Icon } from "@iconify/react";
 import { Button, ScrollShadow, Spacer, Tooltip } from "@nextui-org/react";
 import clsx from "clsx";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
 import React, { useCallback } from "react";
 import { useMediaQuery } from "usehooks-ts";
 
+import { logOut } from "@/actions";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 
 import {
@@ -20,6 +23,8 @@ import { UserAvatar } from "./UserAvatar";
 
 export const SidebarWrap = () => {
   const pathname = usePathname();
+  const { data: session } = useSession();
+
   const [isCollapsed, setIsCollapsed] = useLocalStorage("isCollapsed", false);
 
   const isMobile = useMediaQuery("(max-width: 768px)");
@@ -64,11 +69,13 @@ export const SidebarWrap = () => {
       </div>
       <Spacer y={8} />
 
-      <UserAvatar
-        userName={"User name"}
-        position={"Software Engineer"}
-        isCompact={isCompact}
-      />
+      <Link href={"/profile"}>
+        <UserAvatar
+          userName={session?.user?.name ?? "Guest"}
+          position={session?.user?.companyName ?? "Company Name"}
+          isCompact={isCompact}
+        />{" "}
+      </Link>
 
       <ScrollShadow className="-mr-6 h-full max-h-full py-6 pr-6">
         <Sidebar
@@ -123,9 +130,11 @@ export const SidebarWrap = () => {
             )}
           </Button>
         </Tooltip>
+
         <Tooltip content="Log Out" isDisabled={!isCompact} placement="right">
           <Button
             aria-label="Log Out"
+            onClick={() => logOut()}
             className={clsx(
               "justify-start text-default-500 data-[hover=true]:text-foreground",
               {
