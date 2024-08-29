@@ -1,10 +1,11 @@
+from prowler.lib.persistence import mklist
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.ssm.ssm_client import ssm_client
 
 
 class ssm_documents_set_as_public(Check):
     def execute(self):
-        findings = []
+        findings = mklist()
         for document in ssm_client.documents.values():
             report = Check_Report_AWS(self.metadata())
             report.region = document.region

@@ -5,13 +5,14 @@ import tempfile
 from detect_secrets import SecretsCollection
 from detect_secrets.settings import default_settings
 
+from prowler.lib.persistence import mklist
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.ssm.ssm_client import ssm_client
 
 
 class ssm_document_secrets(Check):
     def execute(self):
-        findings = []
+        findings = mklist()
         for document in ssm_client.documents.values():
             report = Check_Report_AWS(self.metadata())
             report.region = document.region
