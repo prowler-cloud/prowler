@@ -6,6 +6,7 @@ from botocore.client import ClientError
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
+from prowler.lib.persistence import mklist
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
@@ -45,7 +46,7 @@ class S3(AWSService):
 
     def __list_buckets__(self, provider):
         logger.info("S3 - Listing buckets...")
-        buckets = []
+        buckets = mklist()
         try:
             list_buckets = self.client.list_buckets()
             for bucket in list_buckets["Buckets"]:

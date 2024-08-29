@@ -14,6 +14,7 @@ from alive_progress import alive_bar
 from colorama import Fore, Style
 
 import prowler
+from prowler.lib.persistence import mklist
 from prowler.config.config import orange_color
 from prowler.lib.check.compliance_models import load_compliance_framework
 from prowler.lib.check.custom_checks_metadata import update_check_metadata
@@ -382,7 +383,7 @@ def recover_checks_from_provider(
     Returns a list of tuples with the following format (check_name, check_path)
     """
     try:
-        checks = []
+        checks = mklist()
         modules = list_modules(provider, service)
         for module_name in modules:
             # Format: "prowler.providers.{provider}.services.{service}.{check_name}.{check_name}"
@@ -447,7 +448,7 @@ def run_check(check: Check, verbose: bool = False, only_logs: bool = False) -> l
     Returns:
         list: list of findings
     """
-    findings = []
+    findings = mklist()
     if verbose:
         print(
             f"\nCheck ID: {check.CheckID} - {Fore.MAGENTA}{check.ServiceName}{Fore.YELLOW} [{check.Severity}]{Style.RESET_ALL}"
@@ -550,7 +551,7 @@ def execute_checks(
     config_file: str,
 ) -> list:
     # List to store all the check's findings
-    all_findings = []
+    all_findings = mklist()
     # Services and checks executed for the Audit Status
     services_executed = set()
     checks_executed = set()

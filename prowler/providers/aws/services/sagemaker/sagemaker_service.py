@@ -4,6 +4,7 @@ from botocore.client import ClientError
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
+from prowler.lib.persistence import mklist
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
@@ -13,9 +14,9 @@ class SageMaker(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
-        self.sagemaker_notebook_instances = []
-        self.sagemaker_models = []
-        self.sagemaker_training_jobs = []
+        self.sagemaker_notebook_instances = mklist()
+        self.sagemaker_models = mklist()
+        self.sagemaker_training_jobs = mklist()
         self.__threading_call__(self.__list_notebook_instances__)
         self.__threading_call__(self.__list_models__)
         self.__threading_call__(self.__list_training_jobs__)

@@ -1,6 +1,7 @@
 from botocore.client import ClientError
 from pydantic import BaseModel
 
+from lib.persistence import mklist
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
@@ -18,10 +19,10 @@ class SSMIncidents(AWSService):
         # Call AWSService's __init__
         super().__init__("ssm-incidents", provider)
         self.replication_set_arn_template = f"arn:{self.audited_partition}:ssm-incidents:{self.region}:{self.audited_account}:replication-set"
-        self.replication_set = []
+        self.replication_set = mklist()
         self.__list_replication_sets__()
         self.__get_replication_set__()
-        self.response_plans = []
+        self.response_plans = mklist()
         self.__threading_call__(self.__list_response_plans__)
         self.__list_tags_for_resource__()
 

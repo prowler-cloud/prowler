@@ -4,6 +4,7 @@ from typing import Optional
 from botocore.exceptions import ClientError
 from pydantic import BaseModel
 
+from lib.persistence import mklist
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
@@ -14,7 +15,7 @@ class CloudWatch(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
-        self.metric_alarms = []
+        self.metric_alarms = mklist()
         self.__threading_call__(self.__describe_alarms__)
         if self.metric_alarms:
             self.__list_tags_for_resource__()
@@ -82,8 +83,8 @@ class Logs(AWSService):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.log_group_arn_template = f"arn:{self.audited_partition}:logs:{self.region}:{self.audited_account}:log-group"
-        self.metric_filters = []
-        self.log_groups = []
+        self.metric_filters = mklist()
+        self.log_groups = mklist()
         self.__threading_call__(self.__describe_metric_filters__)
         self.__threading_call__(self.__describe_log_groups__)
         if self.log_groups:

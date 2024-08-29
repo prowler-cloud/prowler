@@ -9,6 +9,7 @@ import requests
 from botocore.client import ClientError
 from pydantic import BaseModel
 
+from lib.persistence import mkdict
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
@@ -19,7 +20,7 @@ class Lambda(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
-        self.functions = {}
+        self.functions = mkdict()
         self.__threading_call__(self.__list_functions__)
         self.__list_tags_for_resource__()
         self.__threading_call__(self.__get_policy__)

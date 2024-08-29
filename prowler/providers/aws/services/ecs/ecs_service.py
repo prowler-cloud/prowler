@@ -3,6 +3,7 @@ from typing import Optional
 
 from pydantic import BaseModel
 
+from lib.persistence import mklist
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
@@ -13,7 +14,7 @@ class ECS(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
-        self.task_definitions = []
+        self.task_definitions = mklist()
         self.__threading_call__(self.__list_task_definitions__)
         self.__describe_task_definition__()
 
