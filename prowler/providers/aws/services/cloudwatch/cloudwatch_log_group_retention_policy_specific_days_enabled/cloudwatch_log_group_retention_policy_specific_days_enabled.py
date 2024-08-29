@@ -1,10 +1,11 @@
+from prowler.lib.persistence import mklist
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.cloudwatch.logs_client import logs_client
 
 
 class cloudwatch_log_group_retention_policy_specific_days_enabled(Check):
     def execute(self):
-        findings = []
+        findings = mklist()
 
         # log_group_retention_days, default: 365 days
         specific_retention_days = logs_client.audit_config.get(

@@ -1,3 +1,4 @@
+from prowler.lib.persistence import mklist
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.cloudtrail.cloudtrail_client import (
     cloudtrail_client,
@@ -14,7 +15,7 @@ from prowler.providers.aws.services.cloudwatch.logs_client import logs_client
 class cloudwatch_log_metric_filter_root_usage(Check):
     def execute(self):
         pattern = r"\$\.userIdentity\.type\s*=\s*.?Root.+\$\.userIdentity\.invokedBy NOT EXISTS.+\$\.eventType\s*!=\s*.?AwsServiceEvent.?"
-        findings = []
+        findings = mklist()
         if (
             cloudtrail_client.trails is not None
             and logs_client.metric_filters is not None
