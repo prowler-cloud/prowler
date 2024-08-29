@@ -213,168 +213,32 @@ class Compliance(BaseModel):
             raise ValueError("Framework or Provider must not be empty")
         return values
 
-    def list_compliance_frameworks(bulk_checks_metadata: dict):
-        """Returns a list of compliance frameworks from bulk checks metadata."""
-        compliance_frameworks = []
-        for check_metadata in bulk_checks_metadata.values():
-            for compliance in check_metadata.Compliance:
-                current_framework = compliance.Framework.lower()
-                current_provider = compliance.Provider.lower()
-                new_compliance = Compliance(
-                    Framework=compliance.Framework,
-                    Provider=compliance.Provider,
-                    Version=compliance.Version,
-                    Description=compliance.Description,
-                    Requirements=[],
-                )
-                compliance_frameworks.append(new_compliance)
+    def list_compliance_frameworks(
+        bulk_compliance_frameworks: dict, provider: str = None
+    ):
+        """
+        Returns a list of compliance frameworks from bulk compliance frameworks
 
-                for requirement in compliance.Requirements:
-                    attributes = []
-                    if "mitre" in current_framework:
-                        attributes = handle_mitre_attributes(
-                            requirement.Attributes, current_provider
-                        )
-                    elif "cis" in current_framework:
-                        attributes = handle_cis_attributes(requirement.Attributes)
-                    elif "ens" in current_framework:
-                        attributes = handle_ens_attributes(requirement.Attributes)
-                    elif "iso27001" in current_framework:
-                        attributes = handle_iso27001_attributes(requirement.Attributes)
-                    elif "aws_well_architected" in current_framework:
-                        attributes = handle_aws_well_architected_attributes(
-                            requirement.Attributes
-                        )
-                    else:
-                        attributes = handle_generic_attributes(requirement.Attributes)
+        Args:
+            bulk_compliance_frameworks (dict): The bulk compliance frameworks
+            provider (str): The provider name
 
-                    new_compliance.Requirements.append(
-                        Compliance_Requirement(
-                            Id=requirement.Id,
-                            Description=requirement.Description,
-                            Name=requirement.Name,
-                            Attributes=attributes,
-                            Checks=requirement.Checks,
-                        )
-                    )
+        Returns:
+            list: The list of compliance frameworks
+        """
+        if provider:
+            compliance_frameworks = [
+                compliance_framework
+                for compliance_framework in bulk_compliance_frameworks.values()
+                if compliance_framework.Provider == provider
+            ]
+        else:
+            compliance_frameworks = [
+                compliance_framework
+                for compliance_framework in bulk_compliance_frameworks.values()
+            ]
+
         return compliance_frameworks
-
-
-def handle_mitre_attributes(attributes, provider):
-    mitre_attributes = []
-    for attribute in attributes:
-        if "aws" in provider:
-            mitre_attributes.append(
-                Mitre_Requirement_Attribute_AWS(
-                    AWSService=attribute.AWSService,
-                    Category=attribute.Category,
-                    Value=attribute.Value,
-                    Comment=attribute.Comment,
-                )
-            )
-        elif "azure" in provider:
-            mitre_attributes.append(
-                Mitre_Requirement_Attribute_Azure(
-                    AzureService=attribute.AzureService,
-                    Category=attribute.Category,
-                    Value=attribute.Value,
-                    Comment=attribute.Comment,
-                )
-            )
-        elif "gcp" in provider:
-            mitre_attributes.append(
-                Mitre_Requirement_Attribute_GCP(
-                    GCPService=attribute.GCPService,
-                    Category=attribute.Category,
-                    Value=attribute.Value,
-                    Comment=attribute.Comment,
-                )
-            )
-    return mitre_attributes
-
-
-def handle_cis_attributes(attributes):
-    return [
-        CIS_Requirement_Attribute(
-            Section=attribute.Section,
-            Profile=CIS_Requirement_Attribute_Profile(attribute.Profile),
-            AssessmentStatus=CIS_Requirement_Attribute_AssessmentStatus(
-                attribute.AssessmentStatus
-            ),
-            Description=attribute.Description,
-            RationaleStatement=attribute.RationaleStatement,
-            ImpactStatement=attribute.ImpactStatement,
-            RemediationProcedure=attribute.RemediationProcedure,
-            AuditProcedure=attribute.AuditProcedure,
-            AdditionalInformation=attribute.AdditionalInformation,
-            DefaultValue=attribute.DefaultValue,
-            References=attribute.References,
-        )
-        for attribute in attributes
-    ]
-
-
-def handle_ens_attributes(attributes):
-    return [
-        ENS_Requirement_Attribute(
-            IdGrupoControl=attribute.IdGrupoControl,
-            Marco=attribute.Marco,
-            Categoria=attribute.Categoria,
-            DescripcionControl=attribute.DescripcionControl,
-            Tipo=ENS_Requirement_Attribute_Tipos(attribute.Tipo),
-            Nivel=ENS_Requirement_Attribute_Nivel(attribute.Nivel),
-            Dimensiones=[
-                ENS_Requirement_Attribute_Dimensiones(dimension)
-                for dimension in attribute.Dimensiones
-            ],
-            ModoEjecucion=attribute.ModoEjecucion,
-            Dependencias=attribute.Dependencias,
-        )
-        for attribute in attributes
-    ]
-
-
-def handle_iso27001_attributes(attributes):
-    return [
-        ISO27001_2013_Requirement_Attribute(
-            Category=attribute.Category,
-            Objetive_ID=attribute.Objetive_ID,
-            Objetive_Name=attribute.Objetive_Name,
-            Check_Summary=attribute.Check_Summary,
-        )
-        for attribute in attributes
-    ]
-
-
-def handle_aws_well_architected_attributes(attributes):
-    return [
-        AWS_Well_Architected_Requirement_Attribute(
-            Name=attribute.Name,
-            WellArchitectedQuestionId=attribute.WellArchitectedQuestionId,
-            WellArchitectedPracticeId=attribute.WellArchitectedPracticeId,
-            Section=attribute.Section,
-            SubSection=attribute.SubSection,
-            LevelOfRisk=attribute.LevelOfRisk,
-            AssessmentMethod=attribute.AssessmentMethod,
-            Description=attribute.Description,
-            ImplementationGuidanceUrl=attribute.ImplementationGuidanceUrl,
-        )
-        for attribute in attributes
-    ]
-
-
-def handle_generic_attributes(attributes):
-    return [
-        Generic_Compliance_Requirement_Attribute(
-            ItemId=attribute.ItemId,
-            Section=attribute.Section,
-            SubSection=attribute.SubSection,
-            SubGroup=attribute.SubGroup,
-            Service=attribute.Service,
-            Type=attribute.Type,
-        )
-        for attribute in attributes
-    ]
 
 
 # Testing Pending
