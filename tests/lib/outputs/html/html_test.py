@@ -15,7 +15,9 @@ from tests.providers.kubernetes.kubernetes_fixtures import (
 
 html_stats = {
     "total_pass": 0,
+    "total_muted_pass": 0,
     "total_fail": 1,
+    "total_muted_fail": 0,
     "resources_count": 1,
     "findings_count": 1,
 }
@@ -306,7 +308,13 @@ def get_aws_html_header(args: list) -> str:
                         <b>Passed:</b> 0
                     </li>
                     <li class="list-group-item">
+                        <b>Passed (Muted):</b> 0
+                    </li>
+                    <li class="list-group-item">
                         <b>Failed:</b> 1
+                    </li>
+                    <li class="list-group-item">
+                        <b>Failed (Muted):</b> 0
                     </li>
                     <li class="list-group-item">
                         <b>Total Resources:</b> 1
