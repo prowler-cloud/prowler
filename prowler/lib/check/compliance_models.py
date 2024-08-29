@@ -240,6 +240,31 @@ class Compliance(BaseModel):
 
         return compliance_frameworks
 
+    def list_compliance_requirements(
+        bulk_compliance_frameworks: dict, compliance_framework: str = None
+    ):
+        """
+        Returns a list of compliance requirements from a compliance framework
+
+        Args:
+            bulk_compliance_frameworks (dict): The bulk compliance frameworks
+            compliance_framework (str): The compliance framework name
+
+        Returns:
+            list: The list of compliance requirements for the provided compliance framework
+        """
+        compliance_requirements = []
+
+        if bulk_compliance_frameworks and compliance_framework:
+            compliance_requirements = [
+                compliance_requirement
+                for compliance_requirement in bulk_compliance_frameworks[
+                    compliance_framework
+                ].Requirements
+            ]
+
+        return compliance_requirements
+
 
 # Testing Pending
 def load_compliance_framework(

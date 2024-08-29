@@ -238,3 +238,46 @@ class TestCompliance:
         assert list_compliance[0].Version == "1.0"
         assert list_compliance[0].Description == "Framework 2 Description"
         assert len(list_compliance[0].Requirements) == 1
+
+    def test_list_compliance_requirements_no_compliance(self):
+        bulk_compliance_frameworks = self.get_custom_framework()
+
+        list_requirements = Compliance.list_compliance_requirements(
+            bulk_compliance_frameworks
+        )
+
+        assert len(list_requirements) == 0
+
+    def test_list_compliance_requirements_with_compliance(self):
+        bulk_compliance_frameworks = self.get_custom_framework()
+
+        list_requirements = Compliance.list_compliance_requirements(
+            bulk_compliance_frameworks, compliance_framework="framework1"
+        )
+
+        assert len(list_requirements) == 2
+        assert list_requirements[0].Id == "1.1.1"
+        assert list_requirements[0].Description == "description"
+        assert len(list_requirements[0].Attributes) == 1
+        assert list_requirements[1].Id == "1.1.2"
+        assert list_requirements[1].Description == "description"
+        assert len(list_requirements[1].Attributes) == 1
+
+        list_requirements = Compliance.list_compliance_requirements(
+            bulk_compliance_frameworks, compliance_framework="framework2"
+        )
+
+        assert len(list_requirements) == 1
+        assert list_requirements[0].Id == "1.1.1"
+        assert list_requirements[0].Description == "description"
+        assert len(list_requirements[0].Attributes) == 1
+        assert list_requirements[0].Attributes[0].Section == "1. Identity"
+        assert list_requirements[0].Attributes[0].Profile == "Level 1"
+        assert list_requirements[0].Attributes[0].AssessmentStatus == "Manual"
+        assert list_requirements[0].Attributes[0].Description == "Description"
+        assert list_requirements[0].Attributes[0].RationaleStatement == "Rationale"
+        assert list_requirements[0].Attributes[0].ImpactStatement == "Impact"
+        assert list_requirements[0].Attributes[0].RemediationProcedure == "Remediation"
+        assert list_requirements[0].Attributes[0].AuditProcedure == "Audit"
+        assert list_requirements[0].Attributes[0].AdditionalInformation == "Additional"
+        assert list_requirements[0].Attributes[0].References == "References"
