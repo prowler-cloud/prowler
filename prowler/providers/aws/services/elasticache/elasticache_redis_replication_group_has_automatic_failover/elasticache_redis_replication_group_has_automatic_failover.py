@@ -14,11 +14,11 @@ class elasticache_redis_replication_group_has_automatic_failover(Check):
             report.resource_arn = repl_group.arn
             report.resource_tags = repl_group.tags
             report.status = "FAIL"
-            report.status_extended = f"Elasticache Redis replication group {repl_group.id} does not have automatic failover enabled."
+            report.status_extended = f"ElastiCache Redis replication group {repl_group.id} does not have automatic failover enabled."
 
             if repl_group.automatic_failover == "enabled":
                 report.status = "PASS"
-                report.status_extended = f"Elasticache Redis replication group {repl_group.id} does have automatic failover enabled."
+                report.status_extended = f"ElastiCache Redis replication group {repl_group.id} does have automatic failover enabled."
 
             findings.append(report)
 

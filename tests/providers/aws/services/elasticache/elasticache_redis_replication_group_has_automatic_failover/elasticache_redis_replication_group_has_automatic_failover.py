@@ -90,7 +90,7 @@ class Test_elasticache_redis_replication_group_has_automatic_failover:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Elasticache Redis replication group {REPLICATION_GROUP_ID} does not have automatic failover enabled."
+                == f"ElastiCache Redis replication group {REPLICATION_GROUP_ID} does not have automatic failover enabled."
             )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == REPLICATION_GROUP_ID
@@ -135,7 +135,7 @@ class Test_elasticache_redis_replication_group_has_automatic_failover:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Elasticache Redis replication group {REPLICATION_GROUP_ID} does have automatic failover enabled."
+                == f"ElastiCache Redis replication group {REPLICATION_GROUP_ID} does have automatic failover enabled."
             )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == REPLICATION_GROUP_ID
