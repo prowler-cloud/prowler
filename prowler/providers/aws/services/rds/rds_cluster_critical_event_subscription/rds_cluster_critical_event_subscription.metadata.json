@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "rds_cluster_event_subscription_critical_events",
+  "CheckID": "rds_cluster_critical_event_subscription",
   "CheckTitle": "Check if RDS Cluster critical events are subscribed.",
   "CheckType": [
     "Software and Configuration Checks, AWS Security Best Practices"
