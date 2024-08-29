@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "elasticache_redis_cluster_automatic_failover_enabled",
+  "CheckID": "elasticache_redis_replication_group_has_automatic_failover",
   "CheckTitle": "Ensure Elasticache Redis clusters have automatic failover enabled.",
   "CheckType": [
     "NIST 800-53 Controls"
@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
-  "ResourceType": "AWSElastiCacheClusters",
+  "ResourceType": "AWSElastiCacheReplicationGroup",
   "Description": "Ensure Elasticache Redis OSS cache clusters use automatic failover.",
   "Risk": "If automatic failover is not enabled, a failure in the primary node could result in significant downtime, impacting the availability and resilience of your application.",
   "RelatedUrl": "https://redis.io/docs/latest/commands/failover/",
