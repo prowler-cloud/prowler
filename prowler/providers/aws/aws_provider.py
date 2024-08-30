@@ -125,8 +125,7 @@ class AWS_Provider:
                 token=response["Credentials"]["SessionToken"],
                 expiry_time=response["Credentials"]["Expiration"].isoformat(),
             )
-            logger.info("Refreshed Credentials:")
-            logger.info(refreshed_credentials)
+            logger.info("Refreshed Credentials")
         return refreshed_credentials
 
 
