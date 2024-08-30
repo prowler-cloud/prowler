@@ -1,5 +1,6 @@
 import io
 from json import dumps
+from os import path
 
 import botocore
 import yaml
@@ -840,6 +841,134 @@ class TestAWSMutelist:
             "check_test_1",
             AWS_REGION_EU_WEST_1,
             "resource_3",
+            "",
+        )
+
+    def test_is_muted_aws_default_mutelist(
+        self,
+    ):
+
+        mutelist = AWSMutelist(
+            mutelist_path=f"{path.dirname(path.realpath(__file__))}/../../../../../prowler/config/aws_mutelist.yaml"
+        )
+
+        assert mutelist.is_muted(
+            AWS_ACCOUNT_NUMBER,
+            "cloudformation_stacks_termination_protection_enabled",
+            AWS_REGION_EU_WEST_1,
+            "StackSet-AWSControlTowerBP-BASELINE-CONFIG-AAAAA",
+            "",
+        )
+
+        assert mutelist.is_muted(
+            AWS_ACCOUNT_NUMBER,
+            "cloudformation_stacks_termination_protection_enabled",
+            AWS_REGION_EU_WEST_1,
+            "StackSet-AWSControlTowerBP-BASELINE-CLOUDWATCH-AAA",
+            "",
+        )
+
+        assert mutelist.is_muted(
+            AWS_ACCOUNT_NUMBER,
+            "cloudformation_stacks_termination_protection_enabled",
+            AWS_REGION_EU_WEST_1,
+            "StackSet-AWSControlTowerGuardrailAWS-GR-AUDIT-BUCKET-PUBLIC-READ-PROHIBITED-AAA",
+            "",
+        )
+
+        assert mutelist.is_muted(
+            AWS_ACCOUNT_NUMBER,
+            "cloudformation_stacks_termination_protection_enabled",
+            AWS_REGION_EU_WEST_1,
+            "StackSet-AWSControlTowerGuardrailAWS-GR-DETECT",
+            "",
+        )
+
+        assert mutelist.is_muted(
+            AWS_ACCOUNT_NUMBER,
+            "cloudformation_stacks_termination_protection_enabled",
+            AWS_REGION_EU_WEST_1,
+            "CLOUDTRAIL-ENABLED-ON-SHARED-ACCOUNTS-AAA",
+            "",
+        )
+
+        assert mutelist.is_muted(
+            AWS_ACCOUNT_NUMBER,
+            "cloudformation_stacks_termination_protection_enabled",
+            AWS_REGION_EU_WEST_1,
+            "StackSet-AWSControlTowerBP-BASELINE-SERVICE-LINKED-ROLE-AAA",
+            "",
+        )
+
+        assert mutelist.is_muted(
+            AWS_ACCOUNT_NUMBER,
+            "cloudformation_stacks_termination_protection_enabled",
+            AWS_REGION_EU_WEST_1,
+            "StackSet-AWSControlTowerBP-BASELINE-ROLES-AAA",
+            "",
+        )
+
+        assert mutelist.is_muted(
+            AWS_ACCOUNT_NUMBER,
+            "cloudformation_stacks_termination_protection_enabled",
+            AWS_REGION_EU_WEST_1,
+            "StackSet-AWSControlTowerBP-SECURITY-TOPICS-AAAA",
+            "",
+        )
+
+        assert mutelist.is_muted(
+            AWS_ACCOUNT_NUMBER,
+            "cloudformation_stacks_termination_protection_enabled",
+            AWS_REGION_EU_WEST_1,
+            "StackSet-AWSControlTowerBP-BASELINE-SERVICE-ROLES-AAA",
+            "",
+        )
+
+        assert mutelist.is_muted(
+            AWS_ACCOUNT_NUMBER,
+            "cloudformation_stacks_termination_protection_enabled",
+            AWS_REGION_EU_WEST_1,
+            "StackSet-AWSControlTowerSecurityResources-AAAA",
+            "",
+        )
+
+        assert mutelist.is_muted(
+            AWS_ACCOUNT_NUMBER,
+            "cloudformation_stacks_termination_protection_enabled",
+            AWS_REGION_EU_WEST_1,
+            "StackSet-AWSControlTowerGuardrailAWS-GR-AUDIT-BUCKET-PUBLIC-WRITE-PROHIBITED-AAAA",
+            "",
+        )
+
+        assert mutelist.is_muted(
+            AWS_ACCOUNT_NUMBER,
+            "cloudformation_stacks_termination_protection_enabled",
+            AWS_REGION_EU_WEST_1,
+            "AFT-Backend/AAA",
+            "",
+        )
+
+        assert mutelist.is_muted(
+            AWS_ACCOUNT_NUMBER,
+            "cloudformation_stacks_termination_protection_enabled",
+            AWS_REGION_EU_WEST_1,
+            "AWSControlTowerBP-BASELINE-CONFIG-MASTER/AAA",
+            "",
+        )
+
+        assert mutelist.is_muted(
+            AWS_ACCOUNT_NUMBER,
+            "cloudformation_stacks_termination_protection_enabled",
+            AWS_REGION_EU_WEST_1,
+            "AWSControlTowerBP-BASELINE-CLOUDTRAIL-MASTER/AAA",
+            "",
+        )
+
+        assert mutelist.is_muted(
+            AWS_ACCOUNT_NUMBER,
+            "cloudformation_stacks_termination_protection_enabled",
+            AWS_REGION_EU_WEST_1,
+            "StackSet-AWSControlTowerBP-VPC-ACCOUNT-FACTORY-V1-AAA",
             "",
         )
 
