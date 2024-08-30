@@ -3,20 +3,19 @@ from prowler.lib.check.compliance_models import (
     CIS_Requirement_Attribute,
     CIS_Requirement_Attribute_AssessmentStatus,
     CIS_Requirement_Attribute_Profile,
+    Compliance,
     Compliance_Requirement,
-    ComplianceBaseModel,
 )
-from prowler.lib.check.models import Check_Metadata_Model
+from prowler.lib.check.models import CheckMetadata
 
 
 class TestCompliance:
-    provider = "aws"
 
     def get_custom_framework(self):
         return {
-            "framework1": ComplianceBaseModel(
+            "framework1": Compliance(
                 Framework="Framework1",
-                Provider="Provider1",
+                Provider="aws",
                 Version="1.0",
                 Description="Framework 1 Description",
                 Requirements=[
@@ -64,12 +63,41 @@ class TestCompliance:
                         Checks=[],
                     ),
                 ],
-            )
+            ),
+            "framework2": Compliance(
+                Framework="Framework2",
+                Provider="azure",
+                Version="1.0",
+                Description="Framework 2 Description",
+                Requirements=[
+                    Compliance_Requirement(
+                        Id="1.1.1",
+                        Description="description",
+                        Attributes=[
+                            CIS_Requirement_Attribute(
+                                Section="1. Identity",
+                                Profile=CIS_Requirement_Attribute_Profile("Level 1"),
+                                AssessmentStatus=CIS_Requirement_Attribute_AssessmentStatus(
+                                    "Manual"
+                                ),
+                                Description="Description",
+                                RationaleStatement="Rationale",
+                                ImpactStatement="Impact",
+                                RemediationProcedure="Remediation",
+                                AuditProcedure="Audit",
+                                AdditionalInformation="Additional",
+                                References="References",
+                            )
+                        ],
+                        Checks=[],
+                    )
+                ],
+            ),
         }
 
     def get_custom_check_metadata(self):
         return {
-            "check1": Check_Metadata_Model(
+            "check1": CheckMetadata(
                 Provider="aws",
                 CheckID="check1",
                 CheckTitle="Check 1",
@@ -97,7 +125,7 @@ class TestCompliance:
                 Notes="notes1",
                 Compliance=[],
             ),
-            "check2": Check_Metadata_Model(
+            "check2": CheckMetadata(
                 Provider="aws",
                 CheckID="check2",
                 CheckTitle="Check 2",
@@ -142,7 +170,7 @@ class TestCompliance:
 
         assert len(updated_metadata["check1"].Compliance) == 1
         assert check1_compliance.Framework == "Framework1"
-        assert check1_compliance.Provider == "Provider1"
+        assert check1_compliance.Provider == "aws"
         assert check1_compliance.Version == "1.0"
         assert check1_compliance.Description == "Framework 1 Description"
         assert len(check1_compliance.Requirements) == 1
@@ -163,3 +191,50 @@ class TestCompliance:
         assert check1_attribute.AuditProcedure == "Audit"
         assert check1_attribute.AdditionalInformation == "Additional"
         assert check1_attribute.References == "References"
+
+    def test_list_compliance_frameworks_no_provider(self):
+        bulk_compliance_frameworks = self.get_custom_framework()
+
+        list_compliance = Compliance.list_compliance_frameworks(
+            bulk_compliance_frameworks
+        )
+
+        assert len(list_compliance) == 2
+        assert list_compliance[0].Framework == "Framework1"
+        assert list_compliance[0].Provider == "aws"
+        assert list_compliance[0].Version == "1.0"
+        assert list_compliance[0].Description == "Framework 1 Description"
+        assert len(list_compliance[0].Requirements) == 2
+        assert list_compliance[1].Framework == "Framework2"
+        assert list_compliance[1].Provider == "azure"
+        assert list_compliance[1].Version == "1.0"
+        assert list_compliance[1].Description == "Framework 2 Description"
+        assert len(list_compliance[1].Requirements) == 1
+
+    def test_list_compliance_frameworks_with_provider_aws(self):
+        bulk_compliance_frameworks = self.get_custom_framework()
+
+        list_compliance = Compliance.list_compliance_frameworks(
+            bulk_compliance_frameworks, provider="aws"
+        )
+
+        assert len(list_compliance) == 1
+        assert list_compliance[0].Framework == "Framework1"
+        assert list_compliance[0].Provider == "aws"
+        assert list_compliance[0].Version == "1.0"
+        assert list_compliance[0].Description == "Framework 1 Description"
+        assert len(list_compliance[0].Requirements) == 2
+
+    def test_list_compliance_frameworks_with_provider_azure(self):
+        bulk_compliance_frameworks = self.get_custom_framework()
+
+        list_compliance = Compliance.list_compliance_frameworks(
+            bulk_compliance_frameworks, provider="azure"
+        )
+
+        assert len(list_compliance) == 1
+        assert list_compliance[0].Framework == "Framework2"
+        assert list_compliance[0].Provider == "azure"
+        assert list_compliance[0].Version == "1.0"
+        assert list_compliance[0].Description == "Framework 2 Description"
+        assert len(list_compliance[0].Requirements) == 1

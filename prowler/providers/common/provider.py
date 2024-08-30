@@ -180,7 +180,53 @@ class Provider(ABC):
             )
 
             if not isinstance(Provider._global, provider_class):
-                global_provider = provider_class(arguments)
+                if "aws" in provider_class_name.lower():
+                    global_provider = provider_class(
+                        arguments.aws_retries_max_attempts,
+                        arguments.role,
+                        arguments.session_duration,
+                        arguments.external_id,
+                        arguments.role_session_name,
+                        arguments.mfa,
+                        arguments.profile,
+                        set(arguments.region) if arguments.region else None,
+                        arguments.organizations_role,
+                        arguments.scan_unused_services,
+                        arguments.resource_tag,
+                        arguments.resource_arn,
+                        arguments.config_file,
+                        arguments.fixer_config,
+                    )
+                elif "azure" in provider_class_name.lower():
+                    global_provider = provider_class(
+                        arguments.az_cli_auth,
+                        arguments.sp_env_auth,
+                        arguments.browser_auth,
+                        arguments.managed_identity_auth,
+                        arguments.tenant_id,
+                        arguments.azure_region,
+                        arguments.subscription_id,
+                        arguments.config_file,
+                        arguments.fixer_config,
+                    )
+                elif "gcp" in provider_class_name.lower():
+                    global_provider = provider_class(
+                        arguments.project_id,
+                        arguments.excluded_project_id,
+                        arguments.credentials_file,
+                        arguments.impersonate_service_account,
+                        arguments.list_project_id,
+                        arguments.config_file,
+                        arguments.fixer_config,
+                    )
+                elif "kubernetes" in provider_class_name.lower():
+                    global_provider = provider_class(
+                        arguments.kubeconfig_file,
+                        arguments.context,
+                        arguments.namespace,
+                        arguments.config_file,
+                        arguments.fixer_config,
+                    )
 
             Provider._global = global_provider
         except TypeError as error:

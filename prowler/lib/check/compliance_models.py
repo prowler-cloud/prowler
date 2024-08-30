@@ -188,8 +188,8 @@ class Compliance_Requirement(BaseModel):
     Checks: list[str]
 
 
-class ComplianceBaseModel(BaseModel):
-    """ComplianceBaseModel holds the base model for every compliance framework"""
+class Compliance(BaseModel):
+    """Compliance holds the base model for every compliance framework"""
 
     Framework: str
     Provider: str
@@ -213,16 +213,41 @@ class ComplianceBaseModel(BaseModel):
             raise ValueError("Framework or Provider must not be empty")
         return values
 
+    def list_compliance_frameworks(
+        bulk_compliance_frameworks: dict, provider: str = None
+    ):
+        """
+        Returns a list of compliance frameworks from bulk compliance frameworks
+
+        Args:
+            bulk_compliance_frameworks (dict): The bulk compliance frameworks
+            provider (str): The provider name
+
+        Returns:
+            list: The list of compliance frameworks
+        """
+        if provider:
+            compliance_frameworks = [
+                compliance_framework
+                for compliance_framework in bulk_compliance_frameworks.values()
+                if compliance_framework.Provider == provider
+            ]
+        else:
+            compliance_frameworks = [
+                compliance_framework
+                for compliance_framework in bulk_compliance_frameworks.values()
+            ]
+
+        return compliance_frameworks
+
 
 # Testing Pending
 def load_compliance_framework(
     compliance_specification_file: str,
-) -> ComplianceBaseModel:
+) -> Compliance:
     """load_compliance_framework loads and parse a Compliance Framework Specification"""
     try:
-        compliance_framework = ComplianceBaseModel.parse_file(
-            compliance_specification_file
-        )
+        compliance_framework = Compliance.parse_file(compliance_specification_file)
     except ValidationError as error:
         logger.critical(
             f"Compliance Framework Specification from {compliance_specification_file} is not valid: {error}"

@@ -6,6 +6,7 @@ from mock import patch
 
 from prowler.lib.cli.parser import ProwlerArgumentParser
 from prowler.providers.aws.config import ROLE_SESSION_NAME
+from prowler.providers.aws.exceptions.exceptions import AWSArgumentTypeValidationError
 from prowler.providers.aws.lib.arguments.arguments import (
     validate_bucket,
     validate_role_session_name,
@@ -1064,7 +1065,7 @@ class Test_Parser:
             self.parser.parse(command)
         assert ex.type == SystemExit
 
-    def test_aws_parser_aws_retries_max_attempts(self):
+    def test_aws_parser_retries_max_attempts(self):
         argument = "--aws-retries-max-attempts"
         max_retries = "10"
         command = [prowler_command, argument, max_retries]
@@ -1325,13 +1326,13 @@ class Test_Parser:
             "role-name?",
         ]
         for role_name in bad_role_names:
-            with pytest.raises(ArgumentTypeError) as argument_error:
+            with pytest.raises(AWSArgumentTypeValidationError) as argument_error:
                 validate_role_session_name(role_name)
 
-            assert argument_error.type == ArgumentTypeError
+            assert argument_error.type == AWSArgumentTypeValidationError
             assert (
                 argument_error.value.args[0]
-                == "Role Session Name must be 2-64 characters long and consist only of upper- and lower-case alphanumeric characters with no spaces. You can also include underscores or any of the following characters: =,.@-"
+                == "[1905] AWS argument type validation error - Role Session Name must be between 2 and 64 characters and may contain alphanumeric characters, periods, hyphens, and underscores."
             )
 
     def test_validate_role_session_name_valid_role_names(self):
