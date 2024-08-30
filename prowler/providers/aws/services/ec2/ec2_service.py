@@ -1,6 +1,6 @@
 from datetime import datetime
 from ipaddress import IPv4Address, IPv6Address, ip_address
-from typing import Optional
+from typing import Optional, Union
 
 from botocore.client import ClientError
 from pydantic import BaseModel
@@ -664,7 +664,7 @@ class NetworkInterface(BaseModel):
     association: dict
     attachment: dict
     private_ip: Optional[str]
-    public_ip_addresses: list[IPv4Address | IPv6Address]
+    public_ip_addresses: list[Union[IPv4Address, IPv6Address]]
     type: str
     subnet_id: str
     vpc_id: str
