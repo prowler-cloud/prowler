@@ -18,7 +18,7 @@ import {
 } from "../../icons/prowler/ProwlerIcons";
 import { ThemeSwitch } from "../../ThemeSwitch";
 import Sidebar from "./Sidebar";
-import { sectionItemsWithTeams } from "./SidebarItems";
+import { sectionItems, sectionItemsWithTeams } from "./SidebarItems";
 import { UserAvatar } from "./UserAvatar";
 
 export const SidebarWrap = () => {
@@ -81,7 +81,11 @@ export const SidebarWrap = () => {
         <Sidebar
           defaultSelectedKey="overview"
           isCompact={isCompact}
-          items={sectionItemsWithTeams}
+          items={
+            session?.user?.role === "admin"
+              ? sectionItemsWithTeams
+              : sectionItems
+          }
           selectedKeys={[currentPath]}
         />
       </ScrollShadow>
