@@ -45,7 +45,7 @@ class EC2(AWSService):
         self.instance_metadata_defaults = []
         self.__threading_call__(self._get_instance_metadata_defaults)
         self.launch_templates = []
-        self.__threading_call__(self.__describe_launch_templates)
+        self.__threading_call__(self._describe_launch_templates)
         self.__threading_call__(
             self._get_launch_template_versions, self.launch_templates
         )
@@ -459,7 +459,7 @@ class EC2(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_launch_templates(self, regional_client):
+    def _describe_launch_templates(self, regional_client):
         try:
             describe_launch_templates_paginator = regional_client.get_paginator(
                 "describe_launch_templates"
