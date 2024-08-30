@@ -132,7 +132,7 @@ class RDS(AWSService):
     def __describe_db_certificate__(self, regional_client):
         logger.info("RDS - Describe DB Certificate...")
         try:
-            for instance in self.db_instances:
+            for instance in self.db_instances.values():
                 if instance.region == regional_client.region:
                     describe_db_certificates_paginator = regional_client.get_paginator(
                         "describe_certificates"
