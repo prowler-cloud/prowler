@@ -19,11 +19,11 @@ def mock_policy_assigments(_):
 
 
 @patch(
-    "prowler.providers.azure.services.policy.policy_service.Policy.__get_policy_assigments__",
+    "prowler.providers.azure.services.policy.policy_service.Policy._get_policy_assigments",
     new=mock_policy_assigments,
 )
 class Test_Policy_Service:
-    def test__get_client__(self):
+    def test_get_client(self):
         policy = Policy(set_mocked_azure_provider())
         assert (
             policy.clients[AZURE_SUBSCRIPTION_ID].__class__.__name__ == "PolicyClient"
@@ -33,7 +33,7 @@ class Test_Policy_Service:
         policy = Policy(set_mocked_azure_provider())
         assert policy.subscriptions.__class__.__name__ == "dict"
 
-    def test__get_policy_assigments__(self):
+    def test_get_policy_assigments(self):
         policy = Policy(set_mocked_azure_provider())
         assert policy.policy_assigments.__class__.__name__ == "dict"
         assert (

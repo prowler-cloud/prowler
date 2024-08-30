@@ -15,11 +15,11 @@ class CloudWatch(AWSService):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.metric_alarms = []
-        self.__threading_call__(self.__describe_alarms__)
+        self.__threading_call__(self._describe_alarms)
         if self.metric_alarms:
-            self.__list_tags_for_resource__()
+            self._list_tags_for_resource()
 
-    def __describe_alarms__(self, regional_client):
+    def _describe_alarms(self, regional_client):
         logger.info("CloudWatch - Describing alarms...")
         try:
             describe_alarms_paginator = regional_client.get_paginator("describe_alarms")
@@ -61,7 +61,7 @@ class CloudWatch(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __list_tags_for_resource__(self):
+    def _list_tags_for_resource(self):
         logger.info("CloudWatch - List Tags...")
         try:
             for metric_alarm in self.metric_alarms:
@@ -84,8 +84,8 @@ class Logs(AWSService):
         self.log_group_arn_template = f"arn:{self.audited_partition}:logs:{self.region}:{self.audited_account}:log-group"
         self.metric_filters = []
         self.log_groups = []
-        self.__threading_call__(self.__describe_metric_filters__)
-        self.__threading_call__(self.__describe_log_groups__)
+        self.__threading_call__(self._describe_metric_filters)
+        self.__threading_call__(self._describe_log_groups)
         if self.log_groups:
             if (
                 "cloudwatch_log_group_no_secrets_in_logs"
@@ -94,10 +94,10 @@ class Logs(AWSService):
                 self.events_per_log_group_threshold = (
                     1000  # The threshold for number of events to return per log group.
                 )
-                self.__threading_call__(self.__get_log_events__)
-            self.__threading_call__(self.__list_tags_for_resource__, self.log_groups)
+                self.__threading_call__(self._get_log_events)
+            self.__threading_call__(self._list_tags_for_resource, self.log_groups)
 
-    def __describe_metric_filters__(self, regional_client):
+    def _describe_metric_filters(self, regional_client):
         logger.info("CloudWatch Logs - Describing metric filters...")
         try:
             describe_metric_filters_paginator = regional_client.get_paginator(
@@ -137,7 +137,7 @@ class Logs(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_log_groups__(self, regional_client):
+    def _describe_log_groups(self, regional_client):
         logger.info("CloudWatch Logs - Describing log groups...")
         try:
             describe_log_groups_paginator = regional_client.get_paginator(
@@ -182,7 +182,7 @@ class Logs(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_log_events__(self, regional_client):
+    def _get_log_events(self, regional_client):
         regional_log_groups = [
             log_group
             for log_group in self.log_groups
@@ -214,7 +214,7 @@ class Logs(AWSService):
             f"CloudWatch Logs - Finished retrieving log events in {regional_client.region}..."
         )
 
-    def __list_tags_for_resource__(self, log_group):
+    def _list_tags_for_resource(self, log_group):
         logger.info(f"CloudWatch Logs - List Tags for Log Group {log_group.name}...")
         try:
             regional_client = self.regional_clients[log_group.region]

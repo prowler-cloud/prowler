@@ -13,10 +13,10 @@ class Monitor(AzureService):
     def __init__(self, provider: AzureProvider):
         super().__init__(MonitorManagementClient, provider)
 
-        self.diagnostics_settings = self.__get_diagnostics_settings__()
+        self.diagnostics_settings = self._get_diagnostics_settings()
         self.alert_rules = self.get_alert_rules()
 
-    def __get_diagnostics_settings__(self):
+    def _get_diagnostics_settings(self):
         logger.info("Monitor - Getting diagnostics settings...")
         diagnostics_settings_list = []
         diagnostics_settings = {}

@@ -12,10 +12,10 @@ from prowler.providers.azure.lib.service.service import AzureService
 class VirtualMachines(AzureService):
     def __init__(self, provider: AzureProvider):
         super().__init__(ComputeManagementClient, provider)
-        self.virtual_machines = self.__get_virtual_machines__()
-        self.disks = self.__get_disks__()
+        self.virtual_machines = self._get_virtual_machines()
+        self.disks = self._get_disks()
 
-    def __get_virtual_machines__(self):
+    def _get_virtual_machines(self):
         logger.info("VirtualMachines - Getting virtual machines...")
         virtual_machines = {}
 
@@ -43,7 +43,7 @@ class VirtualMachines(AzureService):
 
         return virtual_machines
 
-    def __get_disks__(self):
+    def _get_disks(self):
         logger.info("VirtualMachines - Getting disks...")
         disks = {}
 

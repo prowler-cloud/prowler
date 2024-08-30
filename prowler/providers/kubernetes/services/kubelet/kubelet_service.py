@@ -12,9 +12,9 @@ class Kubelet(KubernetesService):
         super().__init__(provider)
         self.client = core_client
 
-        self.kubelet_config_maps = self.__get_kubelet_config_maps__()
+        self.kubelet_config_maps = self._get_kubelet_config_maps()
 
-    def __get_kubelet_config_maps__(self):
+    def _get_kubelet_config_maps(self):
         try:
             kubelet_config_maps = []
             for cm in self.client.config_maps.values():

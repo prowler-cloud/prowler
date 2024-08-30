@@ -31,7 +31,7 @@ class Test_drs_job_exist:
             )
         ]
         drs_client.recovery_job_arn_template = f"arn:{drs_client.audited_partition}:drs:{drs_client.region}:{drs_client.audited_account}:recovery-job"
-        drs_client.__get_recovery_job_arn_template__ = mock.MagicMock(
+        drs_client._get_recovery_job_arn_template = mock.MagicMock(
             return_value=drs_client.recovery_job_arn_template
         )
         with mock.patch(
@@ -74,7 +74,7 @@ class Test_drs_job_exist:
             )
         ]
         drs_client.recovery_job_arn_template = f"arn:{drs_client.audited_partition}:drs:{drs_client.region}:{drs_client.audited_account}:recovery-job"
-        drs_client.__get_recovery_job_arn_template__ = mock.MagicMock(
+        drs_client._get_recovery_job_arn_template = mock.MagicMock(
             return_value=drs_client.recovery_job_arn_template
         )
         with mock.patch(
@@ -118,7 +118,7 @@ class Test_drs_job_exist:
             )
         ]
         drs_client.recovery_job_arn_template = f"arn:{drs_client.audited_partition}:drs:{drs_client.region}:{drs_client.audited_account}:recovery-job"
-        drs_client.__get_recovery_job_arn_template__ = mock.MagicMock(
+        drs_client._get_recovery_job_arn_template = mock.MagicMock(
             return_value=drs_client.recovery_job_arn_template
         )
         with mock.patch(
@@ -160,7 +160,7 @@ class Test_drs_job_exist:
             )
         ]
         drs_client.recovery_job_arn_template = f"arn:{drs_client.audited_partition}:drs:{drs_client.region}:{drs_client.audited_account}:recovery-job"
-        drs_client.__get_recovery_job_arn_template__ = mock.MagicMock(
+        drs_client._get_recovery_job_arn_template = mock.MagicMock(
             return_value=drs_client.recovery_job_arn_template
         )
         with mock.patch(

@@ -10,9 +10,9 @@ class CloudSQL(GCPService):
     def __init__(self, provider: GcpProvider):
         super().__init__("sqladmin", provider)
         self.instances = []
-        self.__get_instances__()
+        self._get_instances()
 
-    def __get_instances__(self):
+    def _get_instances(self):
         for project_id in self.project_ids:
             try:
                 request = self.client.instances().list(project=project_id)

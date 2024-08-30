@@ -66,7 +66,7 @@ class Test_WorkSpaces_Service:
         assert workspaces.session.__class__.__name__ == "Session"
 
     # Test WorkSpaces describe workspaces
-    def test__describe_workspaces__(self):
+    def test_describe_workspaces(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         workspaces = WorkSpaces(aws_provider)
         assert len(workspaces.workspaces) == 1

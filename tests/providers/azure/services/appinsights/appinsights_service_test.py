@@ -24,11 +24,11 @@ def mock_appinsights_get_components(_):
 
 
 @patch(
-    "prowler.providers.azure.services.appinsights.appinsights_service.AppInsights.__get_components__",
+    "prowler.providers.azure.services.appinsights.appinsights_service.AppInsights._get_components",
     new=mock_appinsights_get_components,
 )
 class Test_AppInsights_Service:
-    def test__get_client__(self):
+    def test_get_client(self):
         app_insights = AppInsights(set_mocked_azure_provider())
         assert (
             app_insights.clients[AZURE_SUBSCRIPTION_ID].__class__.__name__
@@ -39,7 +39,7 @@ class Test_AppInsights_Service:
         app_insights = AppInsights(set_mocked_azure_provider())
         assert app_insights.subscriptions.__class__.__name__ == "dict"
 
-    def test__get_components__(self):
+    def test_get_components(self):
         appinsights = AppInsights(set_mocked_azure_provider())
         assert len(appinsights.components) == 1
         assert (

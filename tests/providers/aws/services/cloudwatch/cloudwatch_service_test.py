@@ -97,7 +97,7 @@ class Test_CloudWatch_Service:
 
     # Test CloudWatch Alarms
     @mock_aws
-    def test__describe_alarms__(self):
+    def test_describe_alarms(self):
         # CloudWatch client for this test class
         cw_client = client("cloudwatch", region_name=AWS_REGION_US_EAST_1)
         cw_client.put_metric_alarm(
@@ -136,7 +136,7 @@ class Test_CloudWatch_Service:
 
     # Test Logs Filters
     @mock_aws
-    def test__describe_metric_filters__(self):
+    def test_describe_metric_filters(self):
         # Logs client for this test class
         logs_client = client("logs", region_name=AWS_REGION_US_EAST_1)
         logs_client.put_metric_filter(
@@ -164,7 +164,7 @@ class Test_CloudWatch_Service:
 
     # Test Logs Filters
     @mock_aws
-    def test__describe_log_groups__(self):
+    def test_describe_log_groups(self):
         # Logs client for this test class
         logs_client = client("logs", region_name=AWS_REGION_US_EAST_1)
         logs_client.create_log_group(
@@ -194,7 +194,7 @@ class Test_CloudWatch_Service:
         ]
 
     @mock_aws
-    def test__describe_log_groups__never_expire(self):
+    def test_describe_log_groupsnever_expire(self):
         # Logs client for this test class
         logs_client = client("logs", region_name=AWS_REGION_US_EAST_1)
         logs_client.create_log_group(

@@ -11,9 +11,9 @@ class DMS(AWSService):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.instances = []
-        self.__threading_call__(self.__describe_replication_instances__)
+        self.__threading_call__(self._describe_replication_instances)
 
-    def __describe_replication_instances__(self, regional_client):
+    def _describe_replication_instances(self, regional_client):
         logger.info("DMS - Describing DMS Replication Instances...")
         try:
             describe_replication_instances_paginator = regional_client.get_paginator(

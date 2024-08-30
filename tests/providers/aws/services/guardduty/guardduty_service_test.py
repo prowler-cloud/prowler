@@ -85,7 +85,7 @@ class Test_GuardDuty_Service:
 
     @mock_aws
     # Test GuardDuty session
-    def test__list_detectors__(self):
+    def test_list_detectors(self):
         guardduty_client = client("guardduty", region_name=AWS_REGION_EU_WEST_1)
         response = guardduty_client.create_detector(Enable=True, Tags={"test": "test"})
 
@@ -107,7 +107,7 @@ class Test_GuardDuty_Service:
 
     @mock_aws
     # Test GuardDuty session
-    def test__get_detector__(self):
+    def test_get_detector(self):
         guardduty_client = client("guardduty", region_name=AWS_REGION_EU_WEST_1)
         response = guardduty_client.create_detector(Enable=True)
 
@@ -129,7 +129,7 @@ class Test_GuardDuty_Service:
 
     @mock_aws
     # Test GuardDuty session
-    def test__list_findings__(self):
+    def test_list_findings(self):
         guardduty_client = client("guardduty", region_name=AWS_REGION_EU_WEST_1)
         response = guardduty_client.create_detector(Enable=True)
 
@@ -150,7 +150,7 @@ class Test_GuardDuty_Service:
         assert guardduty.detectors[0].tags == [{"test": "test"}]
 
     @mock_aws
-    def test__list_members__(self):
+    def test_list_members(self):
         guardduty_client = client("guardduty", region_name=AWS_REGION_EU_WEST_1)
         response = guardduty_client.create_detector(Enable=True)
 
@@ -172,7 +172,7 @@ class Test_GuardDuty_Service:
 
     @mock_aws
     # Test GuardDuty session
-    def test__get_administrator_account__(self):
+    def test_get_administrator_account(self):
         guardduty_client = client("guardduty", region_name=AWS_REGION_EU_WEST_1)
         response = guardduty_client.create_detector(Enable=True)
 

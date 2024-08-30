@@ -74,7 +74,7 @@ class Test_WellArchitected_Service:
         assert wellarchitected.session.__class__.__name__ == "Session"
 
     # Test WellArchitected list workloads
-    def test__list_workloads__(self):
+    def test_list_workloads(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         wellarchitected = WellArchitected(aws_provider)
         assert len(wellarchitected.workloads) == 1

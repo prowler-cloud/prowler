@@ -9,7 +9,7 @@ from tests.providers.aws.utils import (
 )
 
 
-def mock__get_trail_arn_template__(region=None, *_) -> str:
+def mock_get_trail_arn_template(region=None, *_) -> str:
     if region:
         return f"arn:aws:cloudtrail:{region}:{AWS_ACCOUNT_NUMBER}:trail"
     else:
@@ -32,8 +32,8 @@ class Test_cloudtrail_threat_detection_enumeration:
     def test_no_trails(self):
         cloudtrail_client = mock.MagicMock()
         cloudtrail_client.trails = {}
-        cloudtrail_client.__lookup_events__ = mock__get_lookup_events__
-        cloudtrail_client.__get_trail_arn_template__ = mock__get_trail_arn_template__
+        cloudtrail_client._lookup_events = mock__get_lookup_events__
+        cloudtrail_client._get_trail_arn_template = mock_get_trail_arn_template
         cloudtrail_client.audited_account = AWS_ACCOUNT_NUMBER
         cloudtrail_client.region = AWS_REGION_US_EAST_1
 
@@ -83,8 +83,8 @@ class Test_cloudtrail_threat_detection_enumeration:
             "threat_detection_enumeration_minutes": THREAT_DETECTION_MINUTES,
         }
 
-        cloudtrail_client.__lookup_events__ = mock__get_lookup_events__
-        cloudtrail_client.__get_trail_arn_template__ = mock__get_trail_arn_template__
+        cloudtrail_client._lookup_events = mock__get_lookup_events__
+        cloudtrail_client._get_trail_arn_template = mock_get_trail_arn_template
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
@@ -132,8 +132,8 @@ class Test_cloudtrail_threat_detection_enumeration:
             "threat_detection_enumeration_minutes": THREAT_DETECTION_MINUTES,
         }
 
-        cloudtrail_client.__lookup_events__ = mock__get_lookup_events__
-        cloudtrail_client.__get_trail_arn_template__ = mock__get_trail_arn_template__
+        cloudtrail_client._lookup_events = mock__get_lookup_events__
+        cloudtrail_client._get_trail_arn_template = mock_get_trail_arn_template
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
@@ -182,8 +182,8 @@ class Test_cloudtrail_threat_detection_enumeration:
             "threat_detection_enumeration_minutes": THREAT_DETECTION_MINUTES,
         }
 
-        cloudtrail_client.__lookup_events__ = mock__get_lookup_events__
-        cloudtrail_client.__get_trail_arn_template__ = mock__get_trail_arn_template__
+        cloudtrail_client._lookup_events = mock__get_lookup_events__
+        cloudtrail_client._get_trail_arn_template = mock_get_trail_arn_template
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",

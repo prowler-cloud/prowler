@@ -16,21 +16,21 @@ class Cloudtrail(AWSService):
         super().__init__(__class__.__name__, provider)
         self.trail_arn_template = f"arn:{self.audited_partition}:cloudtrail:{self.region}:{self.audited_account}:trail"
         self.trails = {}
-        self.__threading_call__(self.__get_trails__)
+        self.__threading_call__(self._get_trails)
         if self.trails:
-            self.__get_trail_status__()
-            self.__get_insight_selectors__()
-            self.__get_event_selectors__()
-            self.__list_tags_for_resource__()
+            self._get_trail_status()
+            self._get_insight_selectors()
+            self._get_event_selectors()
+            self._list_tags_for_resource()
 
-    def __get_trail_arn_template__(self, region):
+    def _get_trail_arn_template(self, region):
         return (
             f"arn:{self.audited_partition}:cloudtrail:{region}:{self.audited_account}:trail"
             if region
             else f"arn:{self.audited_partition}:cloudtrail:{self.region}:{self.audited_account}:trail"
         )
 
-    def __get_trails__(self, regional_client):
+    def _get_trails(self, regional_client):
         logger.info("Cloudtrail - Getting trails...")
         try:
             describe_trails = regional_client.describe_trails()["trailList"]
@@ -70,7 +70,7 @@ class Cloudtrail(AWSService):
             if trails_count == 0:
                 if self.trails is None:
                     self.trails = {}
-                self.trails[self.__get_trail_arn_template__(regional_client.region)] = (
+                self.trails[self._get_trail_arn_template(regional_client.region)] = (
                     Trail(
                         region=regional_client.region,
                     )
@@ -91,7 +91,7 @@ class Cloudtrail(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_trail_status__(self):
+    def _get_trail_status(self):
         logger.info("Cloudtrail - Getting trail status")
         try:
             for trail in self.trails.values():
@@ -109,7 +109,7 @@ class Cloudtrail(AWSService):
                 f"{client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_event_selectors__(self):
+    def _get_event_selectors(self):
         logger.info("Cloudtrail - Getting event selector")
         try:
             for trail in self.trails.values():
@@ -142,7 +142,7 @@ class Cloudtrail(AWSService):
                 f"{client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_insight_selectors__(self):
+    def _get_insight_selectors(self):
         logger.info("Cloudtrail - Getting trail insight selectors...")
 
         try:
@@ -192,7 +192,7 @@ class Cloudtrail(AWSService):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __lookup_events__(self, trail, event_name, minutes):
+    def _lookup_events(self, trail, event_name, minutes):
         logger.info("CloudTrail - Lookup Events...")
         try:
             regional_client = self.regional_clients[trail.region]
@@ -208,7 +208,7 @@ class Cloudtrail(AWSService):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __list_tags_for_resource__(self):
+    def _list_tags_for_resource(self):
         logger.info("CloudTrail - List Tags...")
         try:
             for trail in self.trails.values():

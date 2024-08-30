@@ -17,9 +17,9 @@ class GlobalAccelerator(AWSService):
             # That is, for example, specify --region us-west-2 on AWS CLI commands.
             self.region = "us-west-2"
             self.client = self.session.client(self.service, self.region)
-            self.__list_accelerators__()
+            self._list_accelerators()
 
-    def __list_accelerators__(self):
+    def _list_accelerators(self):
         logger.info("GlobalAccelerator - Listing Accelerators...")
         try:
             list_accelerators_paginator = self.client.get_paginator("list_accelerators")

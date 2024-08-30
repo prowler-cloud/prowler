@@ -73,7 +73,7 @@ def mock_generate_regional_clients(provider, service):
 )
 class Test_Backup_Service:
     # Test Backup Client
-    def test__get_client__(self):
+    def test_get_client(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         backup = Backup(aws_provider)
         assert (
@@ -93,7 +93,7 @@ class Test_Backup_Service:
         assert access_analyzer.service == "backup"
 
     # Test Backup List Backup Vaults
-    def test__list_backup_vaults__(self):
+    def test_list_backup_vaults(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         backup = Backup(aws_provider)
         assert len(backup.backup_vaults) == 1
@@ -107,7 +107,7 @@ class Test_Backup_Service:
         assert backup.backup_vaults[0].max_retention_days == 2
 
     # Test Backup List Backup Plans
-    def test__list_backup_plans__(self):
+    def test_list_backup_plans(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         backup = Backup(aws_provider)
         assert len(backup.backup_plans) == 1
@@ -120,7 +120,7 @@ class Test_Backup_Service:
         assert backup.backup_plans[0].advanced_settings == []
 
     # Test Backup List Report Plans
-    def test__list_backup_report_plans__(self):
+    def test_list_backup_report_plans(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         backup = Backup(aws_provider)
         assert len(backup.backup_report_plans) == 1

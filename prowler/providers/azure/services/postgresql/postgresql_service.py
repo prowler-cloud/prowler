@@ -10,9 +10,9 @@ from prowler.providers.azure.lib.service.service import AzureService
 class PostgreSQL(AzureService):
     def __init__(self, provider: AzureProvider):
         super().__init__(PostgreSQLManagementClient, provider)
-        self.flexible_servers = self.__get_flexible_servers__()
+        self.flexible_servers = self._get_flexible_servers()
 
-    def __get_flexible_servers__(self):
+    def _get_flexible_servers(self):
         logger.info("PostgreSQL - Getting PostgreSQL servers...")
         flexible_servers = {}
         for subscription, client in self.clients.items():
@@ -20,29 +20,29 @@ class PostgreSQL(AzureService):
                 flexible_servers.update({subscription: []})
                 flexible_servers_list = client.servers.list()
                 for postgresql_server in flexible_servers_list:
-                    resource_group = self.__get_resource_group__(postgresql_server.id)
-                    require_secure_transport = self.__get_require_secure_transport__(
+                    resource_group = self._get_resource_group(postgresql_server.id)
+                    require_secure_transport = self._get_require_secure_transport(
                         subscription, resource_group, postgresql_server.name
                     )
-                    log_checkpoints = self.__get_log_checkpoints__(
+                    log_checkpoints = self._get_log_checkpoints(
                         subscription, resource_group, postgresql_server.name
                     )
-                    log_disconnections = self.__get_log_disconnections__(
+                    log_disconnections = self._get_log_disconnections(
                         subscription, resource_group, postgresql_server.name
                     )
-                    log_connections = self.__get_log_connections__(
+                    log_connections = self._get_log_connections(
                         subscription, resource_group, postgresql_server.name
                     )
-                    connection_throttling = self.__get_connection_throttling__(
+                    connection_throttling = self._get_connection_throttling(
                         subscription, resource_group, postgresql_server.name
                     )
-                    log_retention_days = self.__get_log_retention_days__(
+                    log_retention_days = self._get_log_retention_days(
                         subscription, resource_group, postgresql_server.name
                     )
-                    firewall = self.__get_firewall__(
+                    firewall = self._get_firewall(
                         subscription, resource_group, postgresql_server.name
                     )
-                    location = self.__get_location__(
+                    location = self._get_location(
                         subscription, resource_group, postgresql_server.name
                     )
                     flexible_servers[subscription].append(
@@ -66,11 +66,11 @@ class PostgreSQL(AzureService):
                 )
         return flexible_servers
 
-    def __get_resource_group__(self, id):
+    def _get_resource_group(self, id):
         resource_group = id.split("/")[4]
         return resource_group
 
-    def __get_require_secure_transport__(
+    def _get_require_secure_transport(
         self, subscription, resouce_group_name, server_name
     ):
         client = self.clients[subscription]
@@ -79,42 +79,40 @@ class PostgreSQL(AzureService):
         )
         return require_secure_transport.value.upper()
 
-    def __get_log_checkpoints__(self, subscription, resouce_group_name, server_name):
+    def _get_log_checkpoints(self, subscription, resouce_group_name, server_name):
         client = self.clients[subscription]
         log_checkpoints = client.configurations.get(
             resouce_group_name, server_name, "log_checkpoints"
         )
         return log_checkpoints.value.upper()
 
-    def __get_log_connections__(self, subscription, resouce_group_name, server_name):
+    def _get_log_connections(self, subscription, resouce_group_name, server_name):
         client = self.clients[subscription]
         log_connections = client.configurations.get(
             resouce_group_name, server_name, "log_connections"
         )
         return log_connections.value.upper()
 
-    def __get_log_disconnections__(self, subscription, resouce_group_name, server_name):
+    def _get_log_disconnections(self, subscription, resouce_group_name, server_name):
         client = self.clients[subscription]
         log_disconnections = client.configurations.get(
             resouce_group_name, server_name, "log_disconnections"
         )
         return log_disconnections.value.upper()
 
-    def __get_location__(self, subscription, resouce_group_name, server_name):
+    def _get_location(self, subscription, resouce_group_name, server_name):
         client = self.clients[subscription]
         location = client.servers.get(resouce_group_name, server_name).location
         return location
 
-    def __get_connection_throttling__(
-        self, subscription, resouce_group_name, server_name
-    ):
+    def _get_connection_throttling(self, subscription, resouce_group_name, server_name):
         client = self.clients[subscription]
         connection_throttling = client.configurations.get(
             resouce_group_name, server_name, "connection_throttle.enable"
         )
         return connection_throttling.value.upper()
 
-    def __get_log_retention_days__(self, subscription, resouce_group_name, server_name):
+    def _get_log_retention_days(self, subscription, resouce_group_name, server_name):
         client = self.clients[subscription]
         try:
             log_retention_days = client.configurations.get(
@@ -125,7 +123,7 @@ class PostgreSQL(AzureService):
             log_retention_days = None
         return log_retention_days
 
-    def __get_firewall__(self, subscription, resource_group, server_name):
+    def _get_firewall(self, subscription, resource_group, server_name):
         client = self.clients[subscription]
         firewall = client.firewall_rules.list_by_server(resource_group, server_name)
         firewall_list = []

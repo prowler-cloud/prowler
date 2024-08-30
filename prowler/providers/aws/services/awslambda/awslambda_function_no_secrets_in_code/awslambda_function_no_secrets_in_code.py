@@ -12,7 +12,7 @@ class awslambda_function_no_secrets_in_code(Check):
     def execute(self):
         findings = []
         if awslambda_client.functions:
-            for function, function_code in awslambda_client.__get_function_code__():
+            for function, function_code in awslambda_client._get_function_code():
                 if function_code:
                     report = Check_Report_AWS(self.metadata())
                     report.region = function.region
