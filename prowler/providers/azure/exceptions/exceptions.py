@@ -1,7 +1,7 @@
 from prowler.exceptions.exceptions import ProwlerException
 
 
-class AzureCredentialsError(ProwlerException):
+class AzureBaseException(ProwlerException):
     """Base class for Azure credentials errors."""
 
     AZURE_ERROR_CODES = {
@@ -78,6 +78,13 @@ class AzureCredentialsError(ProwlerException):
         super().__init__(code, provider, file, original_exception, error_info)
 
 
+class AzureCredentialsError(AzureBaseException):
+    """Base class for Azure credentials errors."""
+
+    def __init__(self, code, provider="Azure", file=None, original_exception=None):
+        super().__init__(code, provider, file, original_exception)
+
+
 class AzureEnvironmentVariableError(AzureCredentialsError):
     def __init__(self, file=None, original_exception=None):
         super().__init__(
@@ -120,35 +127,35 @@ class AzureTenantIDNoBrowserAuthError(AzureCredentialsError):
         )
 
 
-class AzureArgumentTypeValidationError(ProwlerException):
+class AzureArgumentTypeValidationError(AzureBaseException):
     def __init__(self, file=None, original_exception=None):
         super().__init__(
             1920, provider="Azure", file=file, original_exception=original_exception
         )
 
 
-class AzureSetUpRegionConfigError(ProwlerException):
+class AzureSetUpRegionConfigError(AzureBaseException):
     def __init__(self, file=None, original_exception=None):
         super().__init__(
             1921, provider="Azure", file=file, original_exception=original_exception
         )
 
 
-class AzureDefaultAzureCredentialError(ProwlerException):
+class AzureDefaultAzureCredentialError(AzureCredentialsError):
     def __init__(self, file=None, original_exception=None):
         super().__init__(
             1922, provider="Azure", file=file, original_exception=original_exception
         )
 
 
-class AzureInteractiveBrowserCredentialError(ProwlerException):
+class AzureInteractiveBrowserCredentialError(AzureCredentialsError):
     def __init__(self, file=None, original_exception=None):
         super().__init__(
             1923, provider="Azure", file=file, original_exception=original_exception
         )
 
 
-class AzureHTTPResponseError(ProwlerException):
+class AzureHTTPResponseError(AzureBaseException):
     def __init__(self, file=None, original_exception=None):
         super().__init__(
             1924, provider="Azure", file=file, original_exception=original_exception

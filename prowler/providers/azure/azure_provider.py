@@ -258,7 +258,12 @@ class AzureProvider(Provider):
             SystemExit: If browser authentication is enabled but the tenant ID is not provided.
             SystemExit: If tenant ID is provided but browser authentication is not enabled.
         """
-        if (
+        if not browser_auth and tenant_id:
+            raise AzureTenantIDNoBrowserAuthError(
+                file=os.path.basename(__file__),
+                original_exception="Azure Tenant ID (--tenant-id) is required only for browser authentication mode",
+            )
+        elif (
             not az_cli_auth
             and not sp_env_auth
             and not browser_auth
@@ -272,12 +277,6 @@ class AzureProvider(Provider):
             raise AzureBrowserAuthNoTenantIDError(
                 file=os.path.basename(__file__),
                 original_exception="Azure Tenant ID (--tenant-id) is required for browser authentication mode",
-            )
-        # There is no need to handle that since it won't get here
-        elif not browser_auth and tenant_id:
-            raise AzureTenantIDNoBrowserAuthError(
-                file=os.path.basename(__file__),
-                original_exception="Azure Tenant ID (--tenant-id) is required only for browser authentication mode",
             )
 
     @staticmethod
@@ -381,11 +380,11 @@ class AzureProvider(Provider):
             if sp_env_auth:
                 try:
                     AzureProvider.check_service_principal_creds_env_vars()
-                except AzureEnvironmentVariableError as error:
+                except AzureEnvironmentVariableError as environment_credentials_error:
                     logger.critical(
-                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+                        f"{environment_credentials_error.__class__.__name__}[{environment_credentials_error.__traceback__.tb_lineno}] -- {environment_credentials_error}"
                     )
-                    raise error
+                    raise environment_credentials_error
             try:
                 # Since the input vars come as True when it is wanted to be used, we need to inverse it since
                 # DefaultAzureCredential sets the auth method excluding the others
@@ -495,61 +494,59 @@ class AzureProvider(Provider):
 
             return Connection(is_connected=True)
         # Exeptions from validate_arguments
-        except AzureNoAuthenticationMethodError as auth_error:
-            logger.error(f"Authentication Error: {auth_error}")
+        except AzureNoAuthenticationMethodError as no_auth_method_error:
+            logger.error(str(no_auth_method_error))
             if raise_on_exception:
-                raise auth_error
-            return Connection(error=auth_error)
-        except AzureBrowserAuthNoTenantIDError as tenant_error:
-            logger.error(f"Tenant ID Error: {tenant_error}")
+                raise no_auth_method_error
+            return Connection(error=no_auth_method_error)
+        except AzureBrowserAuthNoTenantIDError as browser_no_tenant_error:
+            logger.error(str(browser_no_tenant_error))
             if raise_on_exception:
-                raise tenant_error
-            return Connection(error=tenant_error)
-        except AzureTenantIDNoBrowserAuthError as tenant_auth_error:
-            logger.error(f"Tenant ID Without Browser Auth Error: {tenant_auth_error}")
+                raise browser_no_tenant_error
+            return Connection(error=browser_no_tenant_error)
+        except AzureTenantIDNoBrowserAuthError as tenant_no_browser_error:
+            logger.error(str(tenant_no_browser_error))
             if raise_on_exception:
-                raise tenant_auth_error
-            return Connection(error=tenant_auth_error)
+                raise tenant_no_browser_error
+            return Connection(error=tenant_no_browser_error)
         # Exceptions from setup_region_config
-        except AzureArgumentTypeValidationError as region_error:
-            logger.error(f"Region Error: {region_error}")
+        except AzureArgumentTypeValidationError as type_validation_error:
+            logger.error(str(type_validation_error))
             if raise_on_exception:
-                raise region_error
-            return Connection(error=region_error)
+                raise type_validation_error
+            return Connection(error=type_validation_error)
         except AzureSetUpRegionConfigError as region_config_error:
-            logger.error(f"Region Config Error: {region_config_error}")
+            logger.error(str(region_config_error))
             if raise_on_exception:
                 raise region_config_error
             return Connection(error=region_config_error)
         # Exceptions from setup_session
         except AzureEnvironmentVariableError as environment_credentials_error:
-            logger.error(
-                f"Environment Credentials Error: {environment_credentials_error}"
-            )
+            logger.error(str(environment_credentials_error))
             if raise_on_exception:
                 raise environment_credentials_error
             return Connection(error=environment_credentials_error)
-        except AzureDefaultAzureCredentialError as credentials_error:
-            logger.error(f"Azure Default Credentials Error: {credentials_error}")
+        except AzureDefaultAzureCredentialError as default_credentials_error:
+            logger.error(str(default_credentials_error))
             if raise_on_exception:
-                raise credentials_error
-            return Connection(error=credentials_error)
-        except AzureInteractiveBrowserCredentialError as browser_error:
-            logger.error(f"Browser Auth Error: {browser_error}")
+                raise default_credentials_error
+            return Connection(error=default_credentials_error)
+        except AzureInteractiveBrowserCredentialError as interactive_browser_error:
+            logger.error(str(interactive_browser_error))
             if raise_on_exception:
-                raise browser_error
-            return Connection(error=browser_error)
+                raise interactive_browser_error
+            return Connection(error=interactive_browser_error)
         # Exceptions from SubscriptionClient
-        except HttpResponseError as credentials_error:
+        except HttpResponseError as http_response_error:
             logger.error(
-                f"{credentials_error.__class__.__name__}[{credentials_error.__traceback__.tb_lineno}]: {credentials_error}"
+                f"{http_response_error.__class__.__name__}[{http_response_error.__traceback__.tb_lineno}]: {http_response_error}"
             )
             if raise_on_exception:
                 raise AzureHTTPResponseError(
                     file=os.path.basename(__file__),
-                    original_exception=credentials_error,
+                    original_exception=http_response_error,
                 )
-            return Connection(error=credentials_error)
+            return Connection(error=http_response_error)
         except SystemExit as exit_error:
             logger.error(
                 f"{exit_error.__class__.__name__}[{exit_error.__traceback__.tb_lineno}]: {exit_error}"
