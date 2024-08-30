@@ -2,7 +2,7 @@ from prowler.exceptions.exceptions import ProwlerException
 
 
 class AzureBaseException(ProwlerException):
-    """Base class for Azure credentials errors."""
+    """Base class for Azure Errors."""
 
     AZURE_ERROR_CODES = {
         (1914, "AzureEnvironmentVariableError"): {
