@@ -1,5 +1,6 @@
 from prowler.exceptions.exceptions import ProwlerException
 
+
 class AWSBaseException(ProwlerException):
     """Base class for AWS errors."""
 
@@ -107,7 +108,6 @@ class AWSProfileNotFoundError(AWSCredentialsError):
     def __init__(self, file=None, original_exception=None):
         super().__init__(
             1903, provider="AWS", file=file, original_exception=original_exception
-
         )
 
 
