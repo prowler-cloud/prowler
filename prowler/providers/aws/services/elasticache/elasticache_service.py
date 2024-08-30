@@ -32,6 +32,7 @@ class ElastiCache(AWSService):
                     ):
                         version = cache_cluster.get("EngineVersion", "0.0")
                         version = float(version[:3])
+
                         self.clusters[cluster_arn] = Cluster(
                             id=cache_cluster["CacheClusterId"],
                             arn=cluster_arn,
@@ -96,14 +97,23 @@ class ElastiCache(AWSService):
                     if not self.audit_resources or (
                         is_resource_filtered(replication_arn, self.audit_resources)
                     ):
-                        member_clusters = repl_group.get("MemberClusters", [])
-                        cluster_list = []
-                        for cluster in member_clusters:
-                            cluster_list.append(
-                                self.clusters[
-                                    f"arn:aws:elasticache:{regional_client.region}:{self.audited_account}:cluster:{cluster}"
-                                ]
+                        # Get primary cluster
+                        for node_group in repl_group["NodeGroups"]:
+                            primary_node = next(
+                                (
+                                    node
+                                    for node in node_group["NodeGroupMembers"]
+                                    if node["CurrentRole"] == "primary"
+                                ),
+                                None,
                             )
+                            primary_id = primary_node["CacheClusterId"]
+
+                        if primary_id:
+                            primary_arn = f"arn:aws:elasticache:{regional_client.meta.region_name}:{self.audited_account}:cluster:{primary_id}"
+                            version = self.clusters[primary_arn].engine_version
+                        else:
+                            version = 0.0
 
                         self.replication_groups[replication_arn] = ReplicationGroup(
                             id=repl_group["ReplicationGroupId"],
@@ -121,7 +131,10 @@ class ElastiCache(AWSService):
                             auto_minor_version_upgrade=repl_group.get(
                                 "AutoMinorVersionUpgrade", False
                             ),
-                            member_clusters=cluster_list,
+                            engine_version=version,
+                            auth_token_enabled=repl_group.get(
+                                "AuthTokenEnabled", False
+                            ),
                         )
                 except Exception as error:
                     logger.error(
@@ -195,4 +208,5 @@ class ReplicationGroup(BaseModel):
     multi_az: str
     tags: Optional[list]
     auto_minor_version_upgrade: bool = False
-    member_clusters: Optional[list[Cluster]]
+    engine_version: Optional[float]
+    auth_token_enabled: Optional[bool]

@@ -4,14 +4,9 @@ from mock import MagicMock, patch
 from moto import mock_aws
 
 from prowler.providers.aws.services.elasticache.elasticache_service import (
-    Cluster,
     ReplicationGroup,
 )
 from tests.providers.aws.services.elasticache.elasticache_service_test import (
-    ELASTICACHE_CLUSTER_ARN,
-    ELASTICACHE_CLUSTER_NAME,
-    ELASTICACHE_CLUSTER_TAGS,
-    ELASTICACHE_ENGINE_MEMCACHED,
     REPLICATION_GROUP_ARN,
     REPLICATION_GROUP_ENCRYPTION,
     REPLICATION_GROUP_ID,
@@ -76,17 +71,8 @@ class Test_elasticache_redis_replication_group_auth_enabled:
                 transit_encryption=REPLICATION_GROUP_TRANSIT_ENCRYPTION,
                 multi_az=REPLICATION_GROUP_MULTI_AZ,
                 tags=REPLICATION_GROUP_TAGS,
-                member_clusters=[
-                    Cluster(
-                        arn=ELASTICACHE_CLUSTER_ARN,
-                        name=ELASTICACHE_CLUSTER_NAME,
-                        id=ELASTICACHE_CLUSTER_NAME,
-                        engine=ELASTICACHE_ENGINE_MEMCACHED,
-                        region=AWS_REGION_US_EAST_1,
-                        tags=ELASTICACHE_CLUSTER_TAGS,
-                        engine_version=version,
-                    ),
-                ],
+                engine_version=version,
+                auth_token_enabled=False,
             )
         }
 
@@ -139,18 +125,8 @@ class Test_elasticache_redis_replication_group_auth_enabled:
                 transit_encryption=REPLICATION_GROUP_TRANSIT_ENCRYPTION,
                 multi_az=REPLICATION_GROUP_MULTI_AZ,
                 tags=REPLICATION_GROUP_TAGS,
-                member_clusters=[
-                    Cluster(
-                        arn=ELASTICACHE_CLUSTER_ARN,
-                        name=ELASTICACHE_CLUSTER_NAME,
-                        id=ELASTICACHE_CLUSTER_NAME,
-                        engine=ELASTICACHE_ENGINE_MEMCACHED,
-                        region=AWS_REGION_US_EAST_1,
-                        tags=ELASTICACHE_CLUSTER_TAGS,
-                        engine_version=version,
-                        auth_token_enabled=True,
-                    ),
-                ],
+                auth_token_enabled=True,
+                engine_version=version,
             )
         }
 
@@ -204,18 +180,8 @@ class Test_elasticache_redis_replication_group_auth_enabled:
                 transit_encryption=REPLICATION_GROUP_TRANSIT_ENCRYPTION,
                 multi_az=REPLICATION_GROUP_MULTI_AZ,
                 tags=REPLICATION_GROUP_TAGS,
-                member_clusters=[
-                    Cluster(
-                        arn=ELASTICACHE_CLUSTER_ARN,
-                        name=ELASTICACHE_CLUSTER_NAME,
-                        id=ELASTICACHE_CLUSTER_NAME,
-                        engine=ELASTICACHE_ENGINE_MEMCACHED,
-                        region=AWS_REGION_US_EAST_1,
-                        tags=ELASTICACHE_CLUSTER_TAGS,
-                        engine_version=version,
-                        auth_token_enabled=False,
-                    ),
-                ],
+                auth_token_enabled=False,
+                engine_version=version,
             )
         }
 

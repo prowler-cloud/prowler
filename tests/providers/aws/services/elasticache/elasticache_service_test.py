@@ -19,7 +19,7 @@ SUBNET_1 = "subnet-1"
 SUBNET_2 = "subnet-2"
 
 ELASTICACHE_CLUSTER_NAME = "test-cluster"
-ELASTICACHE_CLUSTER_ARN = f"arn:aws:elasticache:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:{ELASTICACHE_CLUSTER_NAME}"
+ELASTICACHE_CLUSTER_ARN = f"arn:aws:elasticache:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:cluster:{ELASTICACHE_CLUSTER_NAME}"
 ELASTICACHE_ENGINE = "redis"
 ELASTICACHE_ENGINE_MEMCACHED = "memcached"
 
@@ -110,6 +110,17 @@ def mock_make_api_call(self, operation_name, kwargs):
                     "AtRestEncryptionEnabled": REPLICATION_GROUP_ENCRYPTION,
                     "ARN": REPLICATION_GROUP_ARN,
                     "AutoMinorVersionUpgrade": AUTO_MINOR_VERSION_UPGRADE,
+                    "NodeGroups": [
+                        {
+                            "NodeGroupMembers": [
+                                {
+                                    "CacheClusterId": ELASTICACHE_CLUSTER_NAME,
+                                    "CurrentRole": "primary",
+                                }
+                            ]
+                        }
+                    ],
+                    "AuthTokenEnabled": True,
                 },
             ]
         }
@@ -196,5 +207,6 @@ class Test_ElastiCache_Service:
             multi_az=REPLICATION_GROUP_MULTI_AZ,
             tags=REPLICATION_GROUP_TAGS,
             auto_minor_version_upgrade=AUTO_MINOR_VERSION_UPGRADE,
-            member_clusters=[],
+            engine_version=6.0,
+            auth_token_enabled=True,
         )
