@@ -108,7 +108,9 @@ class ElastiCache(AWSService):
                                     ),
                                     None,
                                 )
-                                primary_id = primary_node["CacheClusterId"]
+                                if primary_node:
+                                    primary_id = primary_node["CacheClusterId"]
+                                    break
 
                         except Exception as error:
                             primary_node = repl_group["NodeGroups"][0][
