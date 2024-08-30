@@ -3,25 +3,45 @@ from functools import partial
 
 import django.core.validators
 import django.db.models.deletion
+import django.utils.timezone
 from django.conf import settings
 from django.db import migrations, models
+from uuid6 import uuid7
 
 import api.rls
 from api.db_utils import (
     PostgresEnumMigration,
-    register_enum,
-    ProviderEnumField,
     ProviderEnum,
+    ProviderEnumField,
+    ScanTypeEnum,
+    StateEnumField,
+    StateEnum,
+    ScanTypeEnumField,
+    register_enum,
 )
-from api.models import Provider
+from api.models import Provider, Scan, StateChoices
 
 DB_NAME = settings.DATABASES["default"]["NAME"]
-DB_USER_NAME = settings.DATABASES["default"]["USER"]
-DB_USER_PASSWORD = settings.DATABASES["default"]["PASSWORD"]
+DB_USER_NAME = (
+    settings.DATABASES["prowler_user"]["USER"] if not settings.TESTING else "test"
+)
+DB_USER_PASSWORD = (
+    settings.DATABASES["prowler_user"]["PASSWORD"] if not settings.TESTING else "test"
+)
 
 ProviderEnumMigration = PostgresEnumMigration(
     enum_name="provider",
     enum_values=tuple(provider[0] for provider in Provider.ProviderChoices.choices),
+)
+
+ScanTypeEnumMigration = PostgresEnumMigration(
+    enum_name="scan_type",
+    enum_values=tuple(scan_type[0] for scan_type in Scan.TypeChoices.choices),
+)
+
+StateEnumMigration = PostgresEnumMigration(
+    enum_name="state",
+    enum_values=tuple(state[0] for state in StateChoices.choices),
 )
 
 
@@ -54,6 +74,12 @@ class Migration(migrations.Migration):
             GRANT SELECT ON django_migrations TO {DB_USER_NAME};
             """
         ),
+        # Create and register State type
+        migrations.RunPython(
+            StateEnumMigration.create_enum_type,
+            reverse_code=StateEnumMigration.drop_enum_type,
+        ),
+        migrations.RunPython(partial(register_enum, enum_class=StateEnum)),
         migrations.CreateModel(
             name="Tenant",
             fields=[
@@ -160,6 +186,101 @@ class Migration(migrations.Migration):
             constraint=models.UniqueConstraint(
                 fields=("tenant_id", "provider", "provider_id"),
                 name="unique_provider_ids",
+            ),
+        ),
+        # Create and register ScanTypeEnum type
+        migrations.RunPython(
+            ScanTypeEnumMigration.create_enum_type,
+            reverse_code=ScanTypeEnumMigration.drop_enum_type,
+        ),
+        migrations.RunPython(partial(register_enum, enum_class=ScanTypeEnum)),
+        migrations.CreateModel(
+            name="Scan",
+            fields=[
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid7,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                (
+                    "name",
+                    models.CharField(
+                        blank=True,
+                        max_length=100,
+                        null=True,
+                        validators=[django.core.validators.MinLengthValidator(3)],
+                    ),
+                ),
+                (
+                    "type",
+                    ScanTypeEnumField(
+                        choices=[("scheduled", "Scheduled"), ("manual", "Manual")]
+                    ),
+                ),
+                (
+                    "state",
+                    StateEnumField(
+                        choices=[
+                            ("available", "Available"),
+                            ("scheduled", "Scheduled"),
+                            ("executing", "Executing"),
+                            ("completed", "Completed"),
+                            ("failed", "Failed"),
+                            ("cancelled", "Cancelled"),
+                        ],
+                        default="available",
+                    ),
+                ),
+                ("unique_resource_count", models.IntegerField(default=0)),
+                ("progress", models.IntegerField(default=0)),
+                ("scanner_args", models.JSONField(default=dict)),
+                ("duration", models.IntegerField(blank=True, null=True)),
+                (
+                    "scheduled_at",
+                    models.DateTimeField(null=True, blank=True),
+                ),
+                ("inserted_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("started_at", models.DateTimeField(null=True, blank=True)),
+                ("completed_at", models.DateTimeField(null=True, blank=True)),
+                (
+                    "provider",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="scans",
+                        related_query_name="scan",
+                        to="api.provider",
+                    ),
+                ),
+                (
+                    "tenant",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="api.tenant"
+                    ),
+                ),
+            ],
+            options={
+                "db_table": "scans",
+                "abstract": False,
+            },
+        ),
+        migrations.AddConstraint(
+            model_name="scan",
+            constraint=api.rls.RowLevelSecurityConstraint(
+                "tenant_id",
+                name="rls_on_scan",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ),
+        migrations.AddIndex(
+            model_name="scan",
+            index=models.Index(
+                fields=["provider", "state", "type", "scheduled_at"],
+                name="scans_prov_state_type_sche_idx",
             ),
         ),
     ]

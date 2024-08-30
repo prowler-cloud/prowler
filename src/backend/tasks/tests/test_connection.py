@@ -17,8 +17,8 @@ from tasks.jobs.connection import check_provider_connection
     ],
 )
 @pytest.mark.django_db
-def test_check_provider_connection(get_tenant, provider_data, provider_class):
-    provider = Provider.objects.create(**provider_data, tenant_id=get_tenant.id)
+def test_check_provider_connection(tenants_fixture, provider_data, provider_class):
+    provider = Provider.objects.create(**provider_data, tenant_id=tenants_fixture[0].id)
 
     mock_test_connection_result = MagicMock()
     mock_test_connection_result.is_connected = True

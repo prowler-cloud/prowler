@@ -151,3 +151,6 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # Cache settings
 CACHE_MAX_AGE = env.int("DJANGO_CACHE_MAX_AGE", 3600)
 CACHE_STALE_WHILE_REVALIDATE = env.int("DJANGO_STALE_WHILE_REVALIDATE", 60)
+
+
+TESTING = False

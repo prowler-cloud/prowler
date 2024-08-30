@@ -4,30 +4,13 @@ import pytest
 from django.urls import reverse
 from rest_framework import status
 
-from api.models import Provider
+from api.models import Provider, Scan
 from api.rls import Tenant
-
-API_JSON_CONTENT_TYPE = "application/vnd.api+json"
-# TODO Change to 401 when authentication/authorization is implemented
-NO_TENANT_HTTP_STATUS = status.HTTP_403_FORBIDDEN
+from conftest import API_JSON_CONTENT_TYPE, NO_TENANT_HTTP_STATUS
 
 
 @pytest.mark.django_db
 class TestTenantViewSet:
-    @pytest.fixture
-    def tenants(self):
-        tenant1 = Tenant.objects.create(
-            name="Tenant One",
-            inserted_at="2023-01-01T00:00:00Z",
-            updated_at="2023-01-02T00:00:00Z",
-        )
-        tenant2 = Tenant.objects.create(
-            name="Tenant Two",
-            inserted_at="2023-01-03T00:00:00Z",
-            updated_at="2023-01-04T00:00:00Z",
-        )
-        return tenant1, tenant2
-
     @pytest.fixture
     def valid_tenant_payload(self):
         return {
@@ -44,13 +27,13 @@ class TestTenantViewSet:
             "updated_at": "2023-01-06T00:00:00Z",
         }
 
-    def test_tenants_list(self, client, tenants):
+    def test_tenants_list(self, client, tenants_fixture):
         response = client.get(reverse("tenant-list"))
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.json()["data"]) == len(tenants)
+        assert len(response.json()["data"]) == len(tenants_fixture)
 
-    def test_tenants_retrieve(self, client, tenants):
-        tenant1, _ = tenants
+    def test_tenants_retrieve(self, client, tenants_fixture):
+        tenant1, _ = tenants_fixture
         response = client.get(reverse("tenant-detail", kwargs={"pk": tenant1.id}))
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["data"]["attributes"]["name"] == tenant1.name
@@ -76,8 +59,8 @@ class TestTenantViewSet:
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    def test_tenants_partial_update(self, client, tenants):
-        tenant1, _ = tenants
+    def test_tenants_partial_update(self, client, tenants_fixture):
+        tenant1, _ = tenants_fixture
         new_name = "This is the new name"
         payload = {
             "data": {
@@ -95,15 +78,15 @@ class TestTenantViewSet:
         tenant1.refresh_from_db()
         assert tenant1.name == new_name
 
-    def test_tenants_partial_update_invalid_content_type(self, client, tenants):
-        tenant1, _ = tenants
+    def test_tenants_partial_update_invalid_content_type(self, client, tenants_fixture):
+        tenant1, _ = tenants_fixture
         response = client.patch(
             reverse("tenant-detail", kwargs={"pk": tenant1.id}), data={}
         )
         assert response.status_code == status.HTTP_415_UNSUPPORTED_MEDIA_TYPE
 
-    def test_tenants_partial_update_invalid_content(self, client, tenants):
-        tenant1, _ = tenants
+    def test_tenants_partial_update_invalid_content(self, client, tenants_fixture):
+        tenant1, _ = tenants_fixture
         new_name = "This is the new name"
         payload = {"name": new_name}
         response = client.patch(
@@ -113,8 +96,8 @@ class TestTenantViewSet:
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    def test_tenants_delete(self, client, tenants):
-        tenant1, _ = tenants
+    def test_tenants_delete(self, client, tenants_fixture):
+        tenant1, _ = tenants_fixture
         response = client.delete(reverse("tenant-detail", kwargs={"pk": tenant1.id}))
         assert response.status_code == status.HTTP_204_NO_CONTENT
         assert Tenant.objects.count() == 1
@@ -125,16 +108,16 @@ class TestTenantViewSet:
         # (user might not have permissions to see if the tenant exists or not -> 200 empty)
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_tenants_list_filter_search(self, client, tenants):
-        """Search is applied to tenants name."""
-        tenant1, _ = tenants
+    def test_tenants_list_filter_search(self, client, tenants_fixture):
+        """Search is applied to tenants_fixture  name."""
+        tenant1, _ = tenants_fixture
         response = client.get(reverse("tenant-list"), {"filter[search]": tenant1.name})
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == 1
         assert response.json()["data"][0]["attributes"]["name"] == tenant1.name
 
-    def test_tenants_list_query_param_name(self, client, tenants):
-        tenant1, _ = tenants
+    def test_tenants_list_query_param_name(self, client, tenants_fixture):
+        tenant1, _ = tenants_fixture
         response = client.get(reverse("tenant-list"), {"name": tenant1.name})
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
@@ -142,8 +125,8 @@ class TestTenantViewSet:
         response = client.get(reverse("tenant-list"), {"random": "value"})
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    def test_tenants_list_filter_name(self, client, tenants):
-        tenant1, _ = tenants
+    def test_tenants_list_filter_name(self, client, tenants_fixture):
+        tenant1, _ = tenants_fixture
         response = client.get(reverse("tenant-list"), {"filter[name]": tenant1.name})
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == 1
@@ -153,16 +136,16 @@ class TestTenantViewSet:
         response = client.get(reverse("tenant-list"), {"filter[invalid]": "whatever"})
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    def test_tenants_list_page_size(self, client, tenants):
+    def test_tenants_list_page_size(self, client, tenants_fixture):
         page_size = 1
 
         response = client.get(reverse("tenant-list"), {"page[size]": page_size})
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == page_size
         assert response.json()["meta"]["pagination"]["page"] == 1
-        assert response.json()["meta"]["pagination"]["pages"] == len(tenants)
+        assert response.json()["meta"]["pagination"]["pages"] == len(tenants_fixture)
 
-    def test_tenants_list_page_number(self, client, tenants):
+    def test_tenants_list_page_number(self, client, tenants_fixture):
         page_size = 1
         page_number = 2
 
@@ -173,10 +156,10 @@ class TestTenantViewSet:
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == page_size
         assert response.json()["meta"]["pagination"]["page"] == page_number
-        assert response.json()["meta"]["pagination"]["pages"] == len(tenants)
+        assert response.json()["meta"]["pagination"]["pages"] == len(tenants_fixture)
 
-    def test_tenants_list_sort_name(self, client, tenants):
-        _, tenant2 = tenants
+    def test_tenants_list_sort_name(self, client, tenants_fixture):
+        _, tenant2 = tenants_fixture
         response = client.get(reverse("tenant-list"), {"sort": "-name"})
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == 2
@@ -185,53 +168,17 @@ class TestTenantViewSet:
 
 @pytest.mark.django_db
 class TestProviderViewSet:
-    @pytest.fixture
-    def providers(self, get_tenant):
-        tenant = get_tenant
-        provider1 = Provider.objects.create(
-            provider="aws",
-            provider_id="123456789012",
-            alias="aws_testing_1",
-            tenant_id=tenant.id,
-        )
-        provider2 = Provider.objects.create(
-            provider="aws",
-            provider_id="123456789013",
-            alias="aws_testing_2",
-            tenant_id=tenant.id,
-        )
-        provider3 = Provider.objects.create(
-            provider="gcp",
-            provider_id="a12322-test321",
-            alias="gcp_testing",
-            tenant_id=tenant.id,
-        )
-        provider4 = Provider.objects.create(
-            provider="kubernetes",
-            provider_id="kubernetes-test-12345",
-            alias="k8s_testing",
-            tenant_id=tenant.id,
-        )
-        provider5 = Provider.objects.create(
-            provider="azure",
-            provider_id="37b065f8-26b0-4218-a665-0b23d07b27d9",
-            alias="azure_testing",
-            tenant_id=tenant.id,
-        )
-
-        return provider1, provider2, provider3, provider4, provider5
-
     def test_providers_rls(self, client):
         response = client.get(reverse("provider-list"))
         assert response.status_code == NO_TENANT_HTTP_STATUS
 
-    def test_providers_list(self, client, providers, tenant_header):
+    def test_providers_list(self, client, providers_fixture, tenant_header):
         response = client.get(reverse("provider-list"), headers=tenant_header)
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.json()["data"]) == len(providers)
+        assert len(response.json()["data"]) == len(providers_fixture)
 
-    def test_providers_retrieve(self, client, providers, tenant_header):
-        provider1, *_ = providers
+    def test_providers_retrieve(self, client, providers_fixture, tenant_header):
+        provider1, *_ = providers_fixture
         response = client.get(
             reverse("provider-detail", kwargs={"pk": provider1.id}),
             headers=tenant_header,
@@ -286,12 +233,13 @@ class TestProviderViewSet:
         assert Provider.objects.get().alias == provider_json_payload["alias"]
 
     @pytest.mark.parametrize(
-        "provider_json_payload, error_code",
+        "provider_json_payload, error_code, error_pointer",
         (
             [
                 (
                     {"provider": "aws", "provider_id": "1", "alias": "test"},
                     "min_length",
+                    "provider_id",
                 ),
                 (
                     {
@@ -300,14 +248,17 @@ class TestProviderViewSet:
                         "alias": "test",
                     },
                     "aws-provider-id",
+                    "provider_id",
                 ),
                 (
                     {"provider": "aws", "provider_id": "aaaaaaaaaaaa", "alias": "test"},
                     "aws-provider-id",
+                    "provider_id",
                 ),
                 (
                     {"provider": "gcp", "provider_id": "1234asdf", "alias": "test"},
                     "gcp-provider-id",
+                    "provider_id",
                 ),
                 (
                     {
@@ -316,6 +267,7 @@ class TestProviderViewSet:
                         "alias": "test",
                     },
                     "kubernetes-provider-id",
+                    "provider_id",
                 ),
                 (
                     {
@@ -324,12 +276,22 @@ class TestProviderViewSet:
                         "alias": "test",
                     },
                     "azure-provider-id",
+                    "provider_id",
+                ),
+                (
+                    {
+                        "provider": "does-not-exist",
+                        "provider_id": "8851db6b-42e5-4533-aa9e-30a32d67e87",
+                        "alias": "test",
+                    },
+                    "invalid_choice",
+                    "provider",
                 ),
             ]
         ),
     )
     def test_providers_invalid_create(
-        self, client, tenant_header, provider_json_payload, error_code
+        self, client, tenant_header, provider_json_payload, error_code, error_pointer
     ):
         response = client.post(
             reverse("provider-list"),
@@ -341,11 +303,11 @@ class TestProviderViewSet:
         assert response.json()["errors"][0]["code"] == error_code
         assert (
             response.json()["errors"][0]["source"]["pointer"]
-            == "/data/attributes/provider_id"
+            == f"/data/attributes/{error_pointer}"
         )
 
-    def test_providers_partial_update(self, client, providers, tenant_header):
-        provider1, *_ = providers
+    def test_providers_partial_update(self, client, providers_fixture, tenant_header):
+        provider1, *_ = providers_fixture
         new_alias = "This is the new name"
         payload = {
             "data": {
@@ -365,9 +327,9 @@ class TestProviderViewSet:
         assert provider1.alias == new_alias
 
     def test_providers_partial_update_invalid_content_type(
-        self, client, providers, tenant_header
+        self, client, providers_fixture, tenant_header
     ):
-        provider1, *_ = providers
+        provider1, *_ = providers_fixture
         response = client.patch(
             reverse("provider-detail", kwargs={"pk": provider1.id}),
             data={},
@@ -376,9 +338,9 @@ class TestProviderViewSet:
         assert response.status_code == status.HTTP_415_UNSUPPORTED_MEDIA_TYPE
 
     def test_providers_partial_update_invalid_content(
-        self, client, providers, tenant_header
+        self, client, providers_fixture, tenant_header
     ):
-        provider1, *_ = providers
+        provider1, *_ = providers_fixture
         new_name = "This is the new name"
         payload = {"alias": new_name}
         response = client.patch(
@@ -397,9 +359,9 @@ class TestProviderViewSet:
         ],
     )
     def test_providers_partial_update_invalid_fields(
-        self, client, providers, tenant_header, attribute_key, attribute_value
+        self, client, providers_fixture, tenant_header, attribute_key, attribute_value
     ):
-        provider1, *_ = providers
+        provider1, *_ = providers_fixture
         payload = {
             "data": {
                 "type": "Provider",
@@ -415,15 +377,15 @@ class TestProviderViewSet:
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    def test_providers_delete(self, client, providers, tenant_header):
-        provider1, *_ = providers
+    def test_providers_delete(self, client, providers_fixture, tenant_header):
+        provider1, *_ = providers_fixture
         response = client.delete(
             reverse("provider-detail", kwargs={"pk": provider1.id}),
             headers=tenant_header,
         )
         assert response.status_code == status.HTTP_202_ACCEPTED
         assert "Content-Location" in response.headers
-        assert Provider.objects.count() == len(providers) - 1
+        assert Provider.objects.count() == len(providers_fixture) - 1
         # TODO Assert a task is returned when they are implemented
 
     def test_providers_delete_invalid(self, client, tenant_header):
@@ -435,14 +397,14 @@ class TestProviderViewSet:
 
     @patch("tasks.tasks.check_provider_connection_task.delay")
     def test_providers_connection(
-        self, mock_provider_connection, client, providers, tenant_header
+        self, mock_provider_connection, client, providers_fixture, tenant_header
     ):
         task_mock = Mock()
         task_mock.id = "12345"
         task_mock.status = "PENDING"
         mock_provider_connection.return_value = task_mock
 
-        provider1, *_ = providers
+        provider1, *_ = providers_fixture
         assert provider1.connected is None
         assert provider1.connection_last_checked_at is None
 
@@ -458,7 +420,7 @@ class TestProviderViewSet:
         assert response.headers["Content-Location"] == f"api/v1/tasks/{task_mock.id}"
 
     def test_providers_connection_invalid_provider(
-        self, client, providers, tenant_header
+        self, client, providers_fixture, tenant_header
     ):
         response = client.post(
             reverse("provider-connection", kwargs={"pk": "random_id"}),
@@ -526,5 +488,246 @@ class TestProviderViewSet:
     def test_providers_sort_invalid(self, client, tenant_header):
         response = client.get(
             reverse("provider-list"), {"sort": "invalid"}, headers=tenant_header
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+
+@pytest.mark.django_db
+class TestScanViewSet:
+    def test_scans_list(self, client, scans_fixture, tenant_header):
+        response = client.get(reverse("scan-list"), headers=tenant_header)
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == len(scans_fixture)
+
+    def test_scans_retrieve(self, client, scans_fixture, tenant_header):
+        scan1, *_ = scans_fixture
+        response = client.get(
+            reverse("scan-detail", kwargs={"pk": scan1.id}),
+            headers=tenant_header,
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["data"]["attributes"]["name"] == scan1.name
+        assert response.json()["data"]["relationships"]["provider"]["data"][
+            "id"
+        ] == str(scan1.provider.id)
+
+    def test_scans_invalid_retrieve(self, client, tenant_header):
+        response = client.get(
+            reverse("scan-detail", kwargs={"pk": "random_id"}),
+            headers=tenant_header,
+        )
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    @pytest.mark.parametrize(
+        "scan_json_payload, expected_scanner_args",
+        [
+            # Case 1: No scanner_args in payload (should use provider's scanner_args)
+            (
+                {
+                    "data": {
+                        "type": "Scan",
+                        "attributes": {
+                            "name": "New Scan",
+                        },
+                        "relationships": {
+                            "provider": {
+                                "data": {"type": "Provider", "id": "provider-id-1"}
+                            }
+                        },
+                    }
+                },
+                {"key1": "value1", "key2": {"key21": "value21"}},
+            ),
+            (
+                {
+                    "data": {
+                        "type": "Scan",
+                        "attributes": {
+                            "name": "New Scan",
+                            "scanner_args": {
+                                "key2": {"key21": "test21"},
+                                "key3": "test3",
+                            },
+                        },
+                        "relationships": {
+                            "provider": {
+                                "data": {"type": "Provider", "id": "provider-id-1"}
+                            }
+                        },
+                    }
+                },
+                {"key1": "value1", "key2": {"key21": "test21"}, "key3": "test3"},
+            ),
+        ],
+    )
+    def test_scans_create_valid(
+        self,
+        client,
+        tenant_header,
+        scan_json_payload,
+        expected_scanner_args,
+        providers_fixture,
+    ):
+        *_, provider5 = providers_fixture
+        # Provider5 has these scanner_args
+        # scanner_args={"key1": "value1", "key2": {"key21": "value21"}}
+
+        scan_json_payload["data"]["relationships"]["provider"]["data"]["id"] = str(
+            provider5.id
+        )
+
+        response = client.post(
+            reverse("scan-list"),
+            data=scan_json_payload,
+            content_type=API_JSON_CONTENT_TYPE,
+            headers=tenant_header,
+        )
+
+        assert response.status_code == status.HTTP_202_ACCEPTED
+        assert Scan.objects.count() == 1
+
+        scan = Scan.objects.get()
+        assert scan.name == scan_json_payload["data"]["attributes"]["name"]
+        assert scan.provider == provider5
+        assert scan.type == Scan.TypeChoices.MANUAL
+        assert scan.scanner_args == expected_scanner_args
+
+    @pytest.mark.parametrize(
+        "scan_json_payload, error_code",
+        [
+            (
+                {
+                    "data": {
+                        "type": "Scan",
+                        "attributes": {
+                            "name": "a",
+                            "type": Scan.TypeChoices.MANUAL,
+                        },
+                        "relationships": {
+                            "provider": {
+                                "data": {"type": "Provider", "id": "provider-id-1"}
+                            }
+                        },
+                    }
+                },
+                "min_length",
+            ),
+        ],
+    )
+    def test_scans_invalid_create(
+        self, client, tenant_header, scan_json_payload, providers_fixture, error_code
+    ):
+        provider1, *_ = providers_fixture
+        scan_json_payload["data"]["relationships"]["provider"]["data"]["id"] = str(
+            provider1.id
+        )
+        response = client.post(
+            reverse("scan-list"),
+            data=scan_json_payload,
+            content_type=API_JSON_CONTENT_TYPE,
+            headers=tenant_header,
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()["errors"][0]["code"] == error_code
+        assert (
+            response.json()["errors"][0]["source"]["pointer"] == "/data/attributes/name"
+        )
+
+    def test_scans_partial_update(self, client, scans_fixture, tenant_header):
+        scan1, *_ = scans_fixture
+        new_name = "Updated Scan Name"
+        payload = {
+            "data": {
+                "type": "Scan",
+                "id": scan1.id,
+                "attributes": {"name": new_name},
+            },
+        }
+        response = client.patch(
+            reverse("scan-detail", kwargs={"pk": scan1.id}),
+            data=payload,
+            content_type=API_JSON_CONTENT_TYPE,
+            headers=tenant_header,
+        )
+        assert response.status_code == status.HTTP_200_OK
+        scan1.refresh_from_db()
+        assert scan1.name == new_name
+
+    def test_scans_partial_update_invalid_content_type(
+        self, client, scans_fixture, tenant_header
+    ):
+        scan1, *_ = scans_fixture
+        response = client.patch(
+            reverse("scan-detail", kwargs={"pk": scan1.id}),
+            data={},
+            headers=tenant_header,
+        )
+        assert response.status_code == status.HTTP_415_UNSUPPORTED_MEDIA_TYPE
+
+    def test_scans_partial_update_invalid_content(
+        self, client, scans_fixture, tenant_header
+    ):
+        scan1, *_ = scans_fixture
+        new_name = "Updated Scan Name"
+        payload = {"name": new_name}
+        response = client.patch(
+            reverse("scan-detail", kwargs={"pk": scan1.id}),
+            data=payload,
+            content_type=API_JSON_CONTENT_TYPE,
+            headers=tenant_header,
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    @pytest.mark.parametrize(
+        "filter_name, filter_value",
+        [
+            ("provider", "aws"),
+            ("type", Scan.TypeChoices.MANUAL),
+            ("name", "Scan 1"),
+            ("started_at", "2024-01-01 00:00:00"),
+        ],
+    )
+    def test_scans_filters(self, client, tenant_header, filter_name, filter_value):
+        response = client.get(
+            reverse("scan-list"),
+            {f"filter[{filter_name}]": filter_value},
+            headers=tenant_header,
+        )
+        assert response.status_code == status.HTTP_200_OK
+
+    @pytest.mark.parametrize(
+        "filter_name",
+        [
+            "provider",  # Valid filter, invalid value
+            "invalid",
+        ],
+    )
+    def test_scans_filters_invalid(self, client, tenant_header, filter_name):
+        response = client.get(
+            reverse("scan-list"),
+            {f"filter[{filter_name}]": "invalid_value"},
+            headers=tenant_header,
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    @pytest.mark.parametrize(
+        "sort_field",
+        [
+            "provider_id",
+            "name",
+            "type",
+            "inserted_at",
+            "updated_at",
+        ],
+    )
+    def test_scans_sort(self, client, tenant_header, sort_field):
+        response = client.get(
+            reverse("scan-list"), {"sort": sort_field}, headers=tenant_header
+        )
+        assert response.status_code == status.HTTP_200_OK
+
+    def test_scans_sort_invalid(self, client, tenant_header):
+        response = client.get(
+            reverse("scan-list"), {"sort": "invalid"}, headers=tenant_header
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST

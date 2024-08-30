@@ -18,14 +18,12 @@ class TestMainDatabaseRouter:
 
     @pytest.mark.parametrize("api_model", [Tenant])
     def test_router_api_models(self, api_model, router):
-        assert router.db_for_read(api_model) == MainRouter.default_db
-        assert router.db_for_write(api_model) == MainRouter.default_db
+        assert router.db_for_read(api_model) == "default"
+        assert router.db_for_write(api_model) == "default"
 
         assert router.allow_migrate_model(MainRouter.admin_db, api_model)
-        assert not router.allow_migrate_model(MainRouter.default_db, api_model)
+        assert not router.allow_migrate_model("default", api_model)
 
     def test_router_django_models(self, router):
         assert router.db_for_read(MigrationRecorder.Migration) == MainRouter.admin_db
-        assert (
-            not router.db_for_read(MigrationRecorder.Migration) == MainRouter.default_db
-        )
+        assert not router.db_for_read(MigrationRecorder.Migration) == "default"

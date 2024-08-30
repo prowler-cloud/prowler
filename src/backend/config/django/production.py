@@ -8,7 +8,7 @@ ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=["localhost", "127.0.0.
 # Database
 # TODO Use Django database routers https://docs.djangoproject.com/en/5.0/topics/db/multi-db/#automatic-database-routing
 DATABASES = {
-    "default": {
+    "prowler_user": {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": env("POSTGRES_DB"),
         "USER": env("POSTGRES_USER"),
@@ -25,3 +25,4 @@ DATABASES = {
         "PORT": env("POSTGRES_PORT"),
     },
 }
+DATABASES["default"] = DATABASES["prowler_user"]

@@ -7,6 +7,10 @@ from django.db import DEFAULT_DB_ALIAS
 from django.db import models
 from django.db.backends.ddl_references import Statement, Table
 
+DB_PROWLER_USER = (
+    settings.DATABASES["default"]["USER"] if not settings.TESTING else "test"
+)
+
 
 class Tenant(models.Model):
     """
@@ -84,7 +88,7 @@ class RowLevelSecurityConstraint(models.BaseConstraint):
             full_create_sql_query,
             table_name=model._meta.db_table,
             field_column=field_column,
-            db_user=settings.DATABASES["default"]["USER"],
+            db_user=DB_PROWLER_USER,
             tenant_setting=self.TENANT_SETTING,
         )
 
@@ -98,7 +102,7 @@ class RowLevelSecurityConstraint(models.BaseConstraint):
             full_drop_sql_query,
             table_name=Table(model._meta.db_table, schema_editor.quote_name),
             field_column=field_column,
-            db_user=settings.DATABASES["default"]["USER"],
+            db_user=DB_PROWLER_USER,
         )
 
     def __eq__(self, other: object) -> bool:

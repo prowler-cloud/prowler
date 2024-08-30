@@ -2,8 +2,9 @@ from drf_spectacular.utils import extend_schema_field
 from rest_framework_json_api import serializers
 from rest_framework_json_api.serializers import ValidationError
 
-from api.models import Provider
+from api.models import StateChoices, Provider, Scan
 from api.rls import Tenant
+from api.utils import merge_dicts
 
 
 # Base
@@ -29,6 +30,12 @@ class RLSSerializer(BaseSerializerV1):
         tenant_id = self.context.get("tenant_id")
         validated_data["tenant_id"] = tenant_id
         return super().create(validated_data)
+
+
+class StateEnumSerializerField(serializers.ChoiceField):
+    def __init__(self, **kwargs):
+        kwargs["choices"] = StateChoices.choices
+        super().__init__(**kwargs)
 
 
 # Tasks
@@ -59,7 +66,7 @@ class TenantSerializer(BaseSerializerV1):
 
 
 # Providers
-class ProviderEnumField(serializers.ChoiceField):
+class ProviderEnumSerializerField(serializers.ChoiceField):
     def __init__(self, **kwargs):
         kwargs["choices"] = Provider.ProviderChoices.choices
         super().__init__(**kwargs)
@@ -70,7 +77,7 @@ class ProviderSerializer(RLSSerializer):
     Serializer for the Provider model.
     """
 
-    provider = ProviderEnumField(choices=Provider.ProviderChoices.choices)
+    provider = ProviderEnumSerializerField()
     connection = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
@@ -84,13 +91,8 @@ class ProviderSerializer(RLSSerializer):
             "alias",
             "connection",
             "scanner_args",
+            "url",
         ]
-        extra_kwargs = {
-            "id": {"read_only": True},
-            "inserted_at": {"read_only": True},
-            "updated_at": {"read_only": True},
-            "connection": {"read_only": True},
-        }
 
     @extend_schema_field(
         {
@@ -108,6 +110,12 @@ class ProviderSerializer(RLSSerializer):
         }
 
 
+class ProviderCreateSerializer(RLSSerializer, BaseWriteSerializer):
+    class Meta:
+        model = Provider
+        fields = ["alias", "provider", "provider_id", "scanner_args"]
+
+
 class ProviderUpdateSerializer(BaseWriteSerializer):
     """
     Serializer for updating the Provider model.
@@ -117,3 +125,79 @@ class ProviderUpdateSerializer(BaseWriteSerializer):
     class Meta:
         model = Provider
         fields = ["alias", "scanner_args"]
+
+
+# Scans
+
+
+class ScanTypeEnumSerializerField(serializers.ChoiceField):
+    def __init__(self, **kwargs):
+        kwargs["choices"] = Scan.TypeChoices.choices
+        super().__init__(**kwargs)
+
+
+class ScanSerializer(RLSSerializer):
+    type_ = serializers.ChoiceField(choices=Scan.TypeChoices.choices, read_only=True)
+    state = StateEnumSerializerField(read_only=True)
+
+    class Meta:
+        model = Scan
+        fields = [
+            "id",
+            "name",
+            "type_",
+            "state",
+            "unique_resource_count",
+            "progress",
+            "scanner_args",
+            "duration",
+            "provider",
+            "started_at",
+            "completed_at",
+            "scheduled_at",
+            "url",
+        ]
+
+    def get_fields(self):
+        """`type` is a Python reserved keyword."""
+        fields = super().get_fields()
+        type_ = fields.pop("type_")
+        fields["type"] = type_
+        return fields
+
+
+class ScanCreateSerializer(RLSSerializer, BaseWriteSerializer):
+    class Meta:
+        model = Scan
+        # TODO: add mutelist when implemented
+        fields = ["provider", "scanner_args", "name"]
+
+    def create(self, validated_data):
+        provider = validated_data.get("provider")
+
+        if not validated_data.get("scanner_args"):
+            validated_data["scanner_args"] = provider.scanner_args
+        else:
+            validated_data["scanner_args"] = merge_dicts(
+                provider.scanner_args, validated_data["scanner_args"]
+            )
+
+        if not validated_data.get("type"):
+            validated_data["type"] = Scan.TypeChoices.MANUAL.value
+
+        return RLSSerializer.create(self, validated_data)
+
+
+class ScanUpdateSerializer(BaseWriteSerializer):
+    """
+    Serializer for updating the Provider model.
+    Only allows "alias" and "scanner_args" fields to be updated.
+    """
+
+    class Meta:
+        model = Scan
+        # TODO: add mutelist when implemented
+        fields = ["id", "name"]
+        extra_kwargs = {
+            "id": {"read_only": True},
+        }

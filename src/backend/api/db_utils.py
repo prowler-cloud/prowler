@@ -109,3 +109,27 @@ class ProviderEnum(EnumType):
 class ProviderEnumField(PostgresEnumField):
     def __init__(self, *args, **kwargs):
         super().__init__("provider", *args, **kwargs)
+
+
+# Postgres enum definition for Scan.type
+
+
+class ScanTypeEnum(EnumType):
+    enum_type_name = "scan_type"
+
+
+class ScanTypeEnumField(PostgresEnumField):
+    def __init__(self, *args, **kwargs):
+        super().__init__("scan_type", *args, **kwargs)
+
+
+# Postgres enum definition for state
+
+
+class StateEnum(EnumType):
+    enum_type_name = "state"
+
+
+class StateEnumField(PostgresEnumField):
+    def __init__(self, *args, **kwargs):
+        super().__init__("state", *args, **kwargs)

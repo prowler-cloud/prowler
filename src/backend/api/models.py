@@ -4,10 +4,21 @@ from uuid import uuid4, UUID
 from django.core.validators import MinLengthValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from api.db_utils import ProviderEnumField
+from uuid6 import uuid7
+
+from api.db_utils import ProviderEnumField, StateEnumField, ScanTypeEnumField
 from api.exceptions import ModelValidationError
 from api.rls import RowLevelSecurityConstraint
 from api.rls import RowLevelSecurityProtectedModel
+
+
+class StateChoices(models.TextChoices):
+    AVAILABLE = "available", _("Available")
+    SCHEDULED = "scheduled", _("Scheduled")
+    EXECUTING = "executing", _("Executing")
+    COMPLETED = "completed", _("Completed")
+    FAILED = "failed", _("Failed")
+    CANCELLED = "cancelled", _("Cancelled")
 
 
 class Provider(RowLevelSecurityProtectedModel):
@@ -94,5 +105,55 @@ class Provider(RowLevelSecurityProtectedModel):
                 field="tenant_id",
                 name="rls_on_%(class)s",
                 statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]
+
+
+class Scan(RowLevelSecurityProtectedModel):
+    class TypeChoices(models.TextChoices):
+        SCHEDULED = "scheduled", _("Scheduled")
+        MANUAL = "manual", _("Manual")
+
+    id = models.UUIDField(primary_key=True, default=uuid7, editable=False)
+    name = models.CharField(
+        blank=True, null=True, max_length=100, validators=[MinLengthValidator(3)]
+    )
+    provider = models.ForeignKey(
+        Provider,
+        on_delete=models.CASCADE,
+        related_name="scans",
+        related_query_name="scan",
+    )
+    type = ScanTypeEnumField(
+        choices=TypeChoices.choices,
+    )
+    state = StateEnumField(choices=StateChoices.choices, default=StateChoices.AVAILABLE)
+    unique_resource_count = models.IntegerField(default=0)
+    progress = models.IntegerField(default=0)
+    scanner_args = models.JSONField(default=dict)
+    duration = models.IntegerField(null=True, blank=True)
+    scheduled_at = models.DateTimeField(null=True, blank=True)
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+    started_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    # TODO: task foreign key
+    # TODO: mutelist foreign key
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "scans"
+
+        constraints = [
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]
+
+        indexes = [
+            models.Index(
+                fields=["provider", "state", "type", "scheduled_at"],
+                name="scans_prov_state_type_sche_idx",
             ),
         ]

@@ -7,7 +7,7 @@ ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=["*"])
 
 # Database
 DATABASES = {
-    "default": {
+    "prowler_user": {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": env("POSTGRES_DB", default="prowler_db"),
         "USER": env("POSTGRES_USER", default="prowler_user"),
@@ -24,7 +24,7 @@ DATABASES = {
         "PORT": env("POSTGRES_PORT", default="5432"),
     },
 }
-
+DATABASES["default"] = DATABASES["prowler_user"]
 
 REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"] = tuple(  # noqa: F405
     render_class
