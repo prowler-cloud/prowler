@@ -98,16 +98,26 @@ class ElastiCache(AWSService):
                         is_resource_filtered(replication_arn, self.audit_resources)
                     ):
                         # Get primary cluster
-                        for node_group in repl_group["NodeGroups"]:
-                            primary_node = next(
-                                (
-                                    node
-                                    for node in node_group["NodeGroupMembers"]
-                                    if node["CurrentRole"] == "primary"
-                                ),
-                                None,
-                            )
+                        try:
+                            for node_group in repl_group["NodeGroups"]:
+                                primary_node = next(
+                                    (
+                                        node
+                                        for node in node_group["NodeGroupMembers"]
+                                        if node["CurrentRole"] == "primary"
+                                    ),
+                                    None,
+                                )
+                                primary_id = primary_node["CacheClusterId"]
+
+                        except Exception as error:
+                            primary_node = repl_group["NodeGroups"][0][
+                                "NodeGroupMembers"
+                            ][0]
                             primary_id = primary_node["CacheClusterId"]
+                            logger.error(
+                                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                            )
 
                         if primary_id:
                             primary_arn = f"arn:aws:elasticache:{regional_client.meta.region_name}:{self.audited_account}:cluster:{primary_id}"
