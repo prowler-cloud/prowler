@@ -539,7 +539,7 @@ class EC2(AWSService):
                                 enis.append(
                                     self.network_interfaces[network_interface_id]
                                 )
-                            elif eni.get("AssociatePublicIpAddress", True):
+                            if eni.get("AssociatePublicIpAddress", False):
                                 associate_public_ip = True
                     launch_template.versions.append(
                         LaunchTemplateVersion(

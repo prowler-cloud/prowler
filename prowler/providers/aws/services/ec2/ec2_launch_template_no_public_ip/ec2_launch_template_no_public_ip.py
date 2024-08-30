@@ -11,23 +11,44 @@ class ec2_launch_template_no_public_ip(Check):
             report.resource_id = template.id
             report.resource_arn = template.arn
 
-            versions_with_public_ip = []
+            versions_with_autoassign_public_ip = []
+            versions_with_network_interfaces_public_ip = []
 
             for version in template.versions:
                 # Check if the launch template version assigns a public IP address
                 if version.template_data.associate_public_ip_address:
-                    versions_with_public_ip.append(str(version.version_number))
+                    versions_with_autoassign_public_ip.append(
+                        str(version.version_number)
+                    )
+                if version.template_data.network_interfaces:
+                    for network_interface in version.template_data.network_interfaces:
+                        if network_interface.public_ip_addresses != []:
+                            versions_with_network_interfaces_public_ip.append(
+                                str(version.version_number)
+                            )
+                            break
 
-            if len(versions_with_public_ip) > 0:
+            if (
+                versions_with_autoassign_public_ip
+                or versions_with_network_interfaces_public_ip
+            ):
                 report.status = "FAIL"
-                report.status_extended = (
-                    f"EC2 Launch Template {template.name} in template versions: "
-                    f"{', '.join(versions_with_public_ip)} is configured to assign a public IP address."
-                )
+                extended_messages = []
+
+                if versions_with_autoassign_public_ip:
+                    extended_messages.append(
+                        f"EC2 Launch Template {template.name} is configured to assign a public IP address to network interfaces upon launch in template versions: {', '.join(versions_with_autoassign_public_ip)}."
+                    )
+
+                if versions_with_network_interfaces_public_ip:
+                    extended_messages.append(
+                        f"EC2 Launch Template {template.name} is using a network interface with public IP addresses in template versions: {', '.join(versions_with_network_interfaces_public_ip)}."
+                    )
+
+                report.status_extended = " ".join(extended_messages)
             else:
                 report.status = "PASS"
-                report.status_extended = f"No versions of EC2 Launch Template {template.name} are configured to assign a public IP address."
-
+                report.status_extended = f"EC2 Launch Template {template.name} is neither configured to assign a public IP address to network interfaces upon launch nor using a network interface with public IP addresses."
             findings.append(report)
 
         return findings
