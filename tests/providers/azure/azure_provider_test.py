@@ -26,18 +26,17 @@ from prowler.providers.common.models import Connection
 
 class TestAzureProvider:
     def test_azure_provider(self):
-        arguments = Namespace()
-        arguments.subscription_id = None
-        arguments.tenant_id = None
+        subscription_id = None
+        tenant_id = None
         # We need to set exactly one auth method
-        arguments.az_cli_auth = True
-        arguments.sp_env_auth = None
-        arguments.browser_auth = None
-        arguments.managed_identity_auth = None
+        az_cli_auth = True
+        sp_env_auth = None
+        browser_auth = None
+        managed_identity_auth = None
 
-        arguments.config_file = default_config_file_path
-        arguments.fixer_config = default_fixer_config_file_path
-        arguments.azure_region = "AzureCloud"
+        config_file = default_config_file_path
+        fixer_config = default_fixer_config_file_path
+        azure_region = "AzureCloud"
 
         with patch(
             "prowler.providers.azure.azure_provider.AzureProvider.setup_identity",
@@ -46,7 +45,17 @@ class TestAzureProvider:
             "prowler.providers.azure.azure_provider.AzureProvider.get_locations",
             return_value={},
         ):
-            azure_provider = AzureProvider(arguments)
+            azure_provider = AzureProvider(
+                az_cli_auth,
+                sp_env_auth,
+                browser_auth,
+                managed_identity_auth,
+                tenant_id,
+                azure_region,
+                subscription_id,
+                config_file,
+                fixer_config,
+            )
 
             assert azure_provider.region_config == AzureRegionConfig(
                 name="AzureCloud",
@@ -71,18 +80,17 @@ class TestAzureProvider:
             }
 
     def test_azure_provider_not_auth_methods(self):
-        arguments = Namespace()
-        arguments.subscription_id = None
-        arguments.tenant_id = None
+        subscription_id = None
+        tenant_id = None
         # We need to set exactly one auth method
-        arguments.az_cli_auth = None
-        arguments.sp_env_auth = None
-        arguments.browser_auth = None
-        arguments.managed_identity_auth = None
+        az_cli_auth = None
+        sp_env_auth = None
+        browser_auth = None
+        managed_identity_auth = None
 
-        arguments.config_file = default_config_file_path
-        arguments.fixer_config = default_fixer_config_file_path
-        arguments.azure_region = "AzureCloud"
+        config_file = default_config_file_path
+        fixer_config = default_fixer_config_file_path
+        azure_region = "AzureCloud"
 
         with patch(
             "prowler.providers.azure.azure_provider.AzureProvider.setup_identity",
@@ -93,7 +101,17 @@ class TestAzureProvider:
         ):
 
             with pytest.raises(SystemExit) as exception:
-                _ = AzureProvider(arguments)
+                _ = AzureProvider(
+                    az_cli_auth,
+                    sp_env_auth,
+                    browser_auth,
+                    managed_identity_auth,
+                    tenant_id,
+                    azure_region,
+                    subscription_id,
+                    config_file,
+                    fixer_config,
+                )
             assert exception.type == SystemExit
             assert (
                 exception.value.args[0]
@@ -101,18 +119,16 @@ class TestAzureProvider:
             )
 
     def test_azure_provider_browser_auth_but_not_tenant_id(self):
-        arguments = Namespace()
-        arguments.subscription_id = None
-        arguments.tenant_id = None
+        subscription_id = None
+        tenant_id = None
         # We need to set exactly one auth method
-        arguments.az_cli_auth = None
-        arguments.sp_env_auth = None
-        arguments.browser_auth = True
-        arguments.managed_identity_auth = None
-
-        arguments.config_file = default_config_file_path
-        arguments.fixer_config = default_fixer_config_file_path
-        arguments.azure_region = "AzureCloud"
+        az_cli_auth = None
+        sp_env_auth = None
+        browser_auth = True
+        managed_identity_auth = None
+        config_file = default_config_file_path
+        fixer_config = default_fixer_config_file_path
+        azure_region = "AzureCloud"
 
         with patch(
             "prowler.providers.azure.azure_provider.AzureProvider.setup_identity",
@@ -123,7 +139,17 @@ class TestAzureProvider:
         ):
 
             with pytest.raises(SystemExit) as exception:
-                _ = AzureProvider(arguments)
+                _ = AzureProvider(
+                    az_cli_auth,
+                    sp_env_auth,
+                    browser_auth,
+                    managed_identity_auth,
+                    tenant_id,
+                    azure_region,
+                    subscription_id,
+                    config_file,
+                    fixer_config,
+                )
             assert exception.type == SystemExit
             assert (
                 exception.value.args[0]
@@ -131,18 +157,17 @@ class TestAzureProvider:
             )
 
     def test_azure_provider_not_browser_auth_but_tenant_id(self):
-        arguments = Namespace()
-        arguments.subscription_id = None
-        arguments.tenant_id = "test-tenant-id"
-        # We need to set exactly one auth method
-        arguments.az_cli_auth = None
-        arguments.sp_env_auth = None
-        arguments.browser_auth = False
-        arguments.managed_identity_auth = None
+        subscription_id = None
 
-        arguments.config_file = default_config_file_path
-        arguments.fixer_config = default_fixer_config_file_path
-        arguments.azure_region = "AzureCloud"
+        tenant_id = "test-tenant-id"
+        # We need to set exactly one auth method
+        az_cli_auth = None
+        sp_env_auth = None
+        browser_auth = False
+        managed_identity_auth = None
+        config_file = default_config_file_path
+        fixer_config = default_fixer_config_file_path
+        azure_region = "AzureCloud"
 
         with patch(
             "prowler.providers.azure.azure_provider.AzureProvider.setup_identity",
@@ -153,7 +178,17 @@ class TestAzureProvider:
         ):
 
             with pytest.raises(SystemExit) as exception:
-                _ = AzureProvider(arguments)
+                _ = AzureProvider(
+                    az_cli_auth,
+                    sp_env_auth,
+                    browser_auth,
+                    managed_identity_auth,
+                    tenant_id,
+                    azure_region,
+                    subscription_id,
+                    config_file,
+                    fixer_config,
+                )
             assert exception.type == SystemExit
             assert (
                 exception.value.args[0]
@@ -163,22 +198,23 @@ class TestAzureProvider:
     @freeze_time(datetime.today())
     def test_azure_provider_output_options_with_domain(self):
         arguments = Namespace()
-        arguments.subscription_id = None
-        arguments.tenant_id = None
+        subscription_id = None
+        tenant_id = None
 
         # We need to set exactly one auth method
-        arguments.az_cli_auth = None
-        arguments.sp_env_auth = True
-        arguments.browser_auth = None
-        arguments.managed_identity_auth = None
+        az_cli_auth = None
+        sp_env_auth = True
+        browser_auth = None
+        managed_identity_auth = None
 
-        arguments.config_file = default_config_file_path
-        arguments.fixer_config = default_fixer_config_file_path
-        arguments.azure_region = "AzureCloud"
+        config_file = default_config_file_path
+        fixer_config = default_fixer_config_file_path
+        azure_region = "AzureCloud"
 
         # Output Options
         arguments.output_formats = ["csv"]
         arguments.output_directory = "output_test_directory"
+        output_directory = arguments.output_directory
         arguments.status = []
         arguments.verbose = True
         arguments.only_logs = False
@@ -196,7 +232,17 @@ class TestAzureProvider:
             "prowler.providers.azure.azure_provider.AzureProvider.setup_session",
             return_value=DefaultAzureCredential(),
         ):
-            azure_provider = AzureProvider(arguments)
+            azure_provider = AzureProvider(
+                az_cli_auth,
+                sp_env_auth,
+                browser_auth,
+                managed_identity_auth,
+                tenant_id,
+                azure_region,
+                subscription_id,
+                config_file,
+                fixer_config,
+            )
             # This is needed since the output_options requires to get the global provider to get the audit config
             with patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
@@ -211,8 +257,7 @@ class TestAzureProvider:
                     "csv",
                 ]
                 assert (
-                    azure_provider.output_options.output_directory
-                    == arguments.output_directory
+                    azure_provider.output_options.output_directory == output_directory
                 )
                 assert azure_provider.output_options.bulk_checks_metadata == {}
                 assert azure_provider.output_options.verbose

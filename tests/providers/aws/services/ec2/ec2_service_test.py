@@ -40,12 +40,17 @@ def mock_make_api_call(self, operation_name, kwarg):
                 }
             ]
         }
-    elif operation_name == "DescribeLaunchTemplates":
+    if operation_name == "DescribeClientVpnEndpoints":
         return {
-            "LaunchTemplates": [
+            "ClientVpnEndpoints": [
                 {
-                    "LaunchTemplateName": "tester1",
-                    "LaunchTemplateId": "lt-1234567890",
+                    "ClientVpnEndpointId": "cvpn-endpoint-1234567890abcdef0",
+                    "ConnectionLogOptions": {
+                        "Enabled": True,
+                        "CloudwatchLogGroup": "string",
+                        "CloudwatchLogStream": "string",
+                    },
+                    "Tags": [{"Key": "vpnendpoint", "Value": "test"}],
                 }
             ]
         }
@@ -683,15 +688,33 @@ class Test_EC2_Service:
         )
 
     # Test EC2 Describe Launch Templates
+    @mock_aws
     @mock.patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
-    def test__get_launch_template_versions__(self):
+    def test__describe_launch_template_versions__(self):
+        # Generate EC2 Client
+        ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
+
+        TEMPLATE_NAME = "tester1"
+        TEMPLATE_INSTANCE_TYPE = "c5.large"
+
+        # Create EC2 Launch Template API
+        ec2_client.create_launch_template(
+            LaunchTemplateName=TEMPLATE_NAME,
+            VersionDescription="Test EC Launch Template 1 (Secret in UserData)",
+            LaunchTemplateData={
+                "InstanceType": TEMPLATE_INSTANCE_TYPE,
+            },
+        )
+        launch_template_id = ec2_client.describe_launch_templates()["LaunchTemplates"][
+            0
+        ]["LaunchTemplateId"]
         # EC2 client for this test class
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         ec2 = EC2(aws_provider)
 
         assert len(ec2.launch_templates) == 1
         assert ec2.launch_templates[0].region == AWS_REGION_US_EAST_1
-
+        assert ec2.launch_templates[0].id == launch_template_id
         assert len(ec2.launch_templates[0].versions) == 1
 
         version = ec2.launch_templates[0].versions[0]
@@ -702,3 +725,55 @@ class Test_EC2_Service:
         )
 
         assert version.template_data.associate_public_ip_address
+
+    # Test EC2 Describe VPN Endpoints
+    @mock.patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
+    def test_describe_vpn_endpoints(self):
+        # EC2 client for this test class
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        ec2 = EC2(aws_provider)
+
+        assert len(ec2.vpn_endpoints) == 1
+        vpn_arn = f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:client-vpn-endpoint/cvpn-endpoint-1234567890abcdef0"
+        assert vpn_arn in ec2.vpn_endpoints
+        vpn_endpoint = ec2.vpn_endpoints[vpn_arn]
+        assert vpn_endpoint.id == "cvpn-endpoint-1234567890abcdef0"
+        assert vpn_endpoint.connection_logging
+        assert vpn_endpoint.region == AWS_REGION_US_EAST_1
+
+    # Test EC2 Describe Launch Templates
+    @mock_aws
+    def test_describe_transit_gateways(self):
+        # Generate EC2 Client
+        ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
+
+        # Create EC2 Transit Gateway API
+        response = ec2_client.create_transit_gateway(
+            Description="Test Transit Gateway",
+            Options={
+                "AmazonSideAsn": 64512,
+                "AutoAcceptSharedAttachments": "enable",
+            },
+            TagSpecifications=[
+                {
+                    "ResourceType": "transit-gateway",
+                    "Tags": [{"Key": "Name", "Value": "test-tgw"}],
+                }
+            ],
+        )
+
+        # EC2 client for this test class
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        )
+        ec2 = EC2(aws_provider)
+
+        transit_arn = response["TransitGateway"]["TransitGatewayArn"]
+
+        assert len(ec2.transit_gateways) == 1
+        assert (
+            ec2.transit_gateways[transit_arn].id
+            == response["TransitGateway"]["TransitGatewayId"]
+        )
+        assert ec2.transit_gateways[transit_arn].auto_accept_shared_attachments
+        assert ec2.transit_gateways[transit_arn].region == AWS_REGION_US_EAST_1

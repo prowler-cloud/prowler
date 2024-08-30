@@ -190,7 +190,7 @@ def validate_arguments(arguments: Namespace) -> tuple[bool, str]:
     return (True, "")
 
 
-def validate_bucket(bucket_name):
+def validate_bucket(bucket_name: str) -> str:
     """validate_bucket validates that the input bucket_name is valid"""
     if search("(?!(^xn--|.+-s3alias$))^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$", bucket_name):
         return bucket_name
