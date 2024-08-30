@@ -95,26 +95,25 @@ def extract_findings_statistics(findings: list) -> dict:
     muted_fail = 0
     resources = set()
     findings_count = 0
-    all_fails_are_muted = False
+    all_fails_are_muted = True
 
     for finding in findings:
         # Save the resource_id
         resources.add(finding.resource_id)
 
         if finding.status == "PASS":
-            if finding.muted is True:
-                muted_pass += 1
             total_pass += 1
             findings_count += 1
+            if finding.muted is True:
+                muted_pass += 1
 
         if finding.status == "FAIL":
-            if finding.muted is True:
-                muted_fail += 1
             total_fail += 1
             findings_count += 1
-
-    if total_fail == findings_count and muted_fail == total_fail:
-        all_fails_are_muted = True
+            if finding.muted is True:
+                muted_fail += 1
+            if not finding.muted and all_fails_are_muted:
+                all_fails_are_muted = False
 
     stats["total_pass"] = total_pass
     stats["total_muted_pass"] = muted_pass

@@ -180,7 +180,7 @@ class HTML(Output):
                         <b>Failed:</b> {str(stats.get("total_fail", 0))}
                     </li>
                     <li class="list-group-item">
-                        <b>Failed (Muted):</b> {str(stats.get("total_muted_pass", 0))}
+                        <b>Failed (Muted):</b> {str(stats.get("total_muted_fail", 0))}
                     </li>
                     <li class="list-group-item">
                         <b>Total Resources:</b> {str(stats.get("resources_count", 0))}

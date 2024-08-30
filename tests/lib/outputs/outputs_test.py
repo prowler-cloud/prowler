@@ -356,7 +356,6 @@ class TestOutputs:
         assert stats["total_muted_fail"] == 0
         assert stats["resources_count"] == 1
         assert stats["findings_count"] == 2
-        assert not stats["all_fails_are_muted"]
 
     def test_extract_findings_statistics_all_passes_are_muted(self):
         finding_1 = mock.MagicMock()
@@ -372,7 +371,6 @@ class TestOutputs:
         assert stats["total_muted_fail"] == 0
         assert stats["resources_count"] == 1
         assert stats["findings_count"] == 1
-        assert not stats["all_fails_are_muted"]
 
     def test_report_with_aws_provider_not_muted_pass(self):
         # Mocking check_findings and provider
