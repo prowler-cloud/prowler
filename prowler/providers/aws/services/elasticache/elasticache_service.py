@@ -99,7 +99,7 @@ class ElastiCache(AWSService):
                     ):
                         # Get primary cluster
                         try:
-                            for node_group in repl_group["NodeGroups"]:
+                            for node_group in repl_group["NodeGroups"][0]:
                                 primary_node = next(
                                     (
                                         node
@@ -108,9 +108,7 @@ class ElastiCache(AWSService):
                                     ),
                                     None,
                                 )
-                                if primary_node:
-                                    primary_id = primary_node["CacheClusterId"]
-                                    break
+                                primary_id = primary_node["CacheClusterId"]
 
                         except Exception as error:
                             primary_node = repl_group["NodeGroups"][0][
