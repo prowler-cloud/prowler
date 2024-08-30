@@ -4,82 +4,152 @@ from prowler.exceptions.exceptions import ProwlerException
 class AzureCredentialsError(ProwlerException):
     """Base class for Azure credentials errors."""
 
+    AZURE_ERROR_CODES = {
+        (1914, "AzureEnvironmentVariableError"): {
+            "message": "Azure environment variable error",
+            "remediation": "Check the Azure environment variables and ensure they are properly set.",
+            "file": "{file}",
+            "provider": "Azure",
+        },
+        (1915, "AzureNoSubscriptionsError"): {
+            "message": "No Azure subscriptions found",
+            "remediation": "Check the Azure subscriptions and ensure they are properly set up.",
+            "file": "{file}",
+            "provider": "Azure",
+        },
+        (1916, "AzureSetUpIdentityError"): {
+            "message": "Azure identity setup error related with credentials",
+            "remediation": "Check credentials and ensure they are properly set up for Azure and the identity provider.",
+            "file": "{file}",
+            "provider": "Azure",
+        },
+        (1917, "AzureNoAuthenticationMethodError"): {
+            "message": "No Azure authentication method found",
+            "remediation": "Check that any authentication method is properly set up for Azure.",
+            "file": "{file}",
+            "provider": "Azure",
+        },
+        (1918, "AzureBrowserAuthNoTenantIDError"): {
+            "message": "Azure browser authentication error: no tenant ID found",
+            "remediation": "To use browser authentication, ensure the tenant ID is properly set.",
+            "file": "{file}",
+            "provider": "Azure",
+        },
+        (1919, "AzureTenantIDNoBrowserAuthError"): {
+            "message": "Azure tenant ID error: browser authentication not found",
+            "remediation": "To use browser authentication, both the tenant ID and browser authentication must be properly set.",
+            "file": "{file}",
+            "provider": "Azure",
+        },
+        (1920, "AzureArgumentTypeValidationError"): {
+            "message": "Azure argument type validation error",
+            "remediation": "Check the provided argument types specific to Azure and ensure they meet the required format.",
+            "file": "{file}",
+            "provider": "Azure",
+        },
+        (1921, "AzureSetUpRegionConfigError"): {
+            "message": "Azure region configuration setup error",
+            "remediation": "Check the Azure region configuration and ensure it is properly set up.",
+            "file": "{file}",
+            "provider": "Azure",
+        },
+        (1922, "AzureDefaultAzureCredentialError"): {
+            "message": "Error in DefaultAzureCredential",
+            "remediation": "Check that all the attributes are properly set up for the DefaultAzureCredential.",
+            "file": "{file}",
+            "provider": "Azure",
+        },
+        (1923, "AzureInteractiveBrowserCredentialError"): {
+            "message": "Error retrieving InteractiveBrowserCredential",
+            "remediation": "Check your browser and ensure that the tenant ID and browser authentication are properly set.",
+            "file": "{file}",
+            "provider": "Azure",
+        },
+        (1924, "AzureHTTPResponseError"): {
+            "message": "Error in HTTP response from Azure",
+            "remediation": "",
+            "file": "{file}",
+            "provider": "Azure",
+        },
+    }
+
     def __init__(self, code, provider="Azure", file=None, original_exception=None):
-        super().__init__(code, provider, file, original_exception)
+        error_info = self.AZURE_ERROR_CODES.get((code, self.__class__.__name__))
+        super().__init__(code, provider, file, original_exception, error_info)
 
 
 class AzureEnvironmentVariableError(AzureCredentialsError):
     def __init__(self, file=None, original_exception=None):
         super().__init__(
-            1918, provider="Azure", file=file, original_exception=original_exception
+            1914, provider="Azure", file=file, original_exception=original_exception
         )
 
 
 class AzureNoSubscriptionsError(AzureCredentialsError):
     def __init__(self, file=None, original_exception=None):
         super().__init__(
-            1919, provider="Azure", file=file, original_exception=original_exception
+            1915, provider="Azure", file=file, original_exception=original_exception
         )
 
 
 class AzureSetUpIdentityError(AzureCredentialsError):
     def __init__(self, file=None, original_exception=None):
         super().__init__(
-            1920, provider="Azure", file=file, original_exception=original_exception
+            1916, provider="Azure", file=file, original_exception=original_exception
         )
 
 
 class AzureNoAuthenticationMethodError(AzureCredentialsError):
     def __init__(self, file=None, original_exception=None):
         super().__init__(
-            1921, provider="Azure", file=file, original_exception=original_exception
+            1917, provider="Azure", file=file, original_exception=original_exception
         )
 
 
 class AzureBrowserAuthNoTenantIDError(AzureCredentialsError):
     def __init__(self, file=None, original_exception=None):
         super().__init__(
-            1922, provider="Azure", file=file, original_exception=original_exception
+            1918, provider="Azure", file=file, original_exception=original_exception
         )
 
 
 class AzureTenantIDNoBrowserAuthError(AzureCredentialsError):
     def __init__(self, file=None, original_exception=None):
         super().__init__(
-            1923, provider="Azure", file=file, original_exception=original_exception
+            1919, provider="Azure", file=file, original_exception=original_exception
         )
 
 
 class AzureArgumentTypeValidationError(ProwlerException):
     def __init__(self, file=None, original_exception=None):
         super().__init__(
-            1924, provider="Azure", file=file, original_exception=original_exception
+            1920, provider="Azure", file=file, original_exception=original_exception
         )
 
 
 class AzureSetUpRegionConfigError(ProwlerException):
     def __init__(self, file=None, original_exception=None):
         super().__init__(
-            1925, provider="Azure", file=file, original_exception=original_exception
+            1921, provider="Azure", file=file, original_exception=original_exception
         )
 
 
 class AzureDefaultAzureCredentialError(ProwlerException):
     def __init__(self, file=None, original_exception=None):
         super().__init__(
-            1926, provider="Azure", file=file, original_exception=original_exception
+            1922, provider="Azure", file=file, original_exception=original_exception
         )
 
 
 class AzureInteractiveBrowserCredentialError(ProwlerException):
     def __init__(self, file=None, original_exception=None):
         super().__init__(
-            1927, provider="Azure", file=file, original_exception=original_exception
+            1923, provider="Azure", file=file, original_exception=original_exception
         )
 
 
 class AzureHTTPResponseError(ProwlerException):
     def __init__(self, file=None, original_exception=None):
         super().__init__(
-            1928, provider="Azure", file=file, original_exception=original_exception
+            1924, provider="Azure", file=file, original_exception=original_exception
         )
