@@ -705,10 +705,9 @@ class Test_EC2_Service:
                 "InstanceType": TEMPLATE_INSTANCE_TYPE,
             },
         )
-        
         launch_template_id = ec2_client.describe_launch_templates()["LaunchTemplates"][
             0
-        ]["LaunchTemplateId"] 
+        ]["LaunchTemplateId"]
         # EC2 client for this test class
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         ec2 = EC2(aws_provider)
