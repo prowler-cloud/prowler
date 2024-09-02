@@ -1,0 +1,21 @@
+{
+    "Provider": "aws",
+    "CheckID": "dms_endpoint_ssl_enabled",
+    "CheckTitle": "Checks whether a dms track has sll enabled or not.",
+    "CheckType": [],
+    "ServiceName": "dms",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "arn:aws:rdmsds:region:account-id:rep",
+    "Severity": "n/a",
+    "ResourceType": "AwsDmsReplicationInstance",
+    "Description": "Checks whether a dms track has sll enabled or not.",
+    "Risk":"n/a",
+    "RelatedUrl": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DMS/multi-az.html#",
+  
+    
+    "Categories": [],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": ""
+  }
+  

@@ -109,9 +109,7 @@ class Test_dms_endpoint_ssl_enabled:
         
 
     def test_dms_endpoint_ssl_enabled_ssl_verify_ca(self):
-    # Mock DMS client with an endpoint where ssl_mode is 'verify-ca'
-    # Run check
-    # Assert that a PASS finding is returned
+
         dms_client = mock.MagicMock
         dms_client.endpoints = {
             "arn:aws:dms:us-west-2:123456789012:endpoint:ABCDEFGHIJKLMNOP": mock.MagicMock(
