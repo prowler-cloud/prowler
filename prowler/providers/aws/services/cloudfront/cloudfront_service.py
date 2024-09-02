@@ -87,6 +87,19 @@ class CloudFront(AWSService):
                 f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _get_origin_access_control(self, client, distributions, region):
+        logger.info("CloudFront - Getting Origin Access Control...")
+        try:
+            for distribution in distributions.keys():
+                response = client.get_origin_access_control(Id=distribution.id)
+                distribution.origin_access_control = (
+                    True if response["OriginAccessControl"] else False
+                )
+        except Exception as error:
+            logger.error(
+                f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
     def _list_tags_for_resource(self, client, distributions, region):
         logger.info("CloudFront - List Tags...")
         try:
@@ -141,4 +154,5 @@ class Distribution(BaseModel):
     geo_restriction_type: Optional[GeoRestrictionType]
     origins: list
     web_acl_id: str = ""
+    origin_access_control: Optional[bool]
     tags: Optional[list] = []
