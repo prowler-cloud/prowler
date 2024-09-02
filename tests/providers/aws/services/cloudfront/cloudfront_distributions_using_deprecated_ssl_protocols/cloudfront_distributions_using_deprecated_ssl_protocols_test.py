@@ -72,6 +72,7 @@ class Test_cloudfront_distributions_using_deprecated_ssl_protocols:
                         "OriginAccessControlId": "string",
                     },
                 ],
+                origin_failover=False,
             )
         }
 
@@ -143,6 +144,7 @@ class Test_cloudfront_distributions_using_deprecated_ssl_protocols:
                         "OriginAccessControlId": "string",
                     },
                 ],
+                origin_failover=False,
             )
         }
 
@@ -214,6 +216,7 @@ class Test_cloudfront_distributions_using_deprecated_ssl_protocols:
                         "OriginAccessControlId": "string",
                     },
                 ],
+                origin_failover=False,
             )
         }
 
@@ -282,6 +285,7 @@ class Test_cloudfront_distributions_using_deprecated_ssl_protocols:
                         "OriginAccessControlId": "string",
                     },
                 ],
+                origin_failover=False,
             )
         }
 

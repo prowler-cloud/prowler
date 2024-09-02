@@ -41,6 +41,7 @@ class Test_cloudfront_distributions_logging_enabled:
                 region=REGION,
                 logging_enabled=True,
                 origins=[],
+                origin_failover=False,
             )
         }
 
@@ -80,6 +81,7 @@ class Test_cloudfront_distributions_logging_enabled:
                     field_level_encryption_id="",
                 ),
                 origins=[],
+                origin_failover=False,
             )
         }
 
@@ -120,6 +122,7 @@ class Test_cloudfront_distributions_logging_enabled:
                     field_level_encryption_id="",
                 ),
                 origins=[],
+                origin_failover=False,
             )
         }
 
@@ -160,6 +163,7 @@ class Test_cloudfront_distributions_logging_enabled:
                     field_level_encryption_id="",
                 ),
                 origins=[],
+                origin_failover=False,
             )
         }
 

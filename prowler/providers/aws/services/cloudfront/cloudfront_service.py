@@ -30,11 +30,16 @@ class CloudFront(AWSService):
                             distribution_id = item["Id"]
                             distribution_arn = item["ARN"]
                             origins = item["Origins"]["Items"]
+                            origin_groups = item.get("OriginGroups", {}).get(
+                                "Items", []
+                            )
+                            origin_failover = True if origin_groups else False
                             distribution = Distribution(
                                 arn=distribution_arn,
                                 id=distribution_id,
                                 origins=origins,
                                 region=region,
+                                origin_failover=origin_failover,
                             )
                             self.distributions[distribution_id] = distribution
 
@@ -141,3 +146,4 @@ class Distribution(BaseModel):
     origins: list
     web_acl_id: str = ""
     tags: Optional[list] = []
+    origin_failover: Optional[bool]
