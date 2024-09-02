@@ -10,7 +10,6 @@
     "ResourceType": "AwsDmsReplicationInstance",
     "Description": "Checks whether a dms track has sll enabled or not.",
     "Risk":"n/a",
-    "RelatedUrl": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DMS/multi-az.html#",
   
     
     "Categories": [],
