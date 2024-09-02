@@ -13,11 +13,11 @@ class Redshift(AWSService):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.clusters = []
-        self.__threading_call__(self.__describe_clusters__)
-        self.__describe_logging_status__(self.regional_clients)
-        self.__describe_cluster_snapshots__(self.regional_clients)
+        self.__threading_call__(self._describe_clusters)
+        self._describe_logging_status(self.regional_clients)
+        self._describe_cluster_snapshots(self.regional_clients)
 
-    def __describe_clusters__(self, regional_client):
+    def _describe_clusters(self, regional_client):
         logger.info("Redshift - describing clusters...")
         try:
             list_clusters_paginator = regional_client.get_paginator("describe_clusters")
@@ -53,7 +53,7 @@ class Redshift(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_logging_status__(self, regional_clients):
+    def _describe_logging_status(self, regional_clients):
         logger.info("Redshift - describing logging status...")
         try:
             for cluster in self.clusters:
@@ -74,7 +74,7 @@ class Redshift(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_cluster_snapshots__(self, regional_clients):
+    def _describe_cluster_snapshots(self, regional_clients):
         logger.info("Redshift - describing logging status...")
         try:
             for cluster in self.clusters:

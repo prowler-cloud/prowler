@@ -109,7 +109,7 @@ class Test_EventBridge_Service:
 
     # Test EventBridge Buses
     @mock_aws
-    def test__list_event_buses__(self):
+    def test_list_event_buses(self):
         # EventBridge client for this test class
         events_client = client("events", region_name=AWS_REGION_US_EAST_1)
         events_client.create_event_bus(Name="test")
@@ -149,7 +149,7 @@ class Test_EventBridge_Service:
                 assert bus.tags == [{"Key": "key-1", "Value": "value-1"}]
 
     # Test Schema Registries
-    def test__list_policies__(self):
+    def test_list_policies(self):
         aws_provider = set_mocked_aws_provider()
         schema = Schema(aws_provider)
         assert len(schema.registries) == 1

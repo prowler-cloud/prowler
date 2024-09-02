@@ -136,7 +136,7 @@ def mock_generate_regional_clients(provider, service):
 class Test_CloudFormation_Service:
     # Test CloudFormation Client
     @mock_aws
-    def test__get_client__(self):
+    def test_get_client(self):
         cloudformation = CloudFormation(set_mocked_aws_provider([AWS_REGION_EU_WEST_1]))
         assert (
             cloudformation.regional_clients[AWS_REGION_EU_WEST_1].__class__.__name__
@@ -159,7 +159,7 @@ class Test_CloudFormation_Service:
         assert cloudformation.session.__class__.__name__ == "Session"
 
     @mock_aws
-    def test__describe_stacks__(self):
+    def test_describe_stacks(self):
         cloudformation_client = boto3.client(
             "cloudformation", region_name=AWS_REGION_EU_WEST_1
         )

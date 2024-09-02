@@ -14,12 +14,12 @@ class Rbac(KubernetesService):
         super().__init__(provider)
         self.client = client.RbacAuthorizationV1Api()
 
-        self.cluster_role_bindings = self.__list_cluster_role_bindings__()
-        self.role_bindings = self.__list_role_bindings__()
-        self.cluster_roles = self.__list_cluster_roles__()
-        self.roles = self.__list_roles__()
+        self.cluster_role_bindings = self._list_cluster_role_bindings()
+        self.role_bindings = self._list_role_bindings()
+        self.cluster_roles = self._list_cluster_roles()
+        self.roles = self._list_roles()
 
-    def __list_cluster_role_bindings__(self):
+    def _list_cluster_role_bindings(self):
         try:
             bindings = {}
             for binding in self.client.list_cluster_role_binding().items:
@@ -53,7 +53,7 @@ class Rbac(KubernetesService):
             )
             return {}
 
-    def __list_role_bindings__(self):
+    def _list_role_bindings(self):
         try:
             role_bindings = {}
             for binding in self.client.list_role_binding_for_all_namespaces().items:
@@ -82,7 +82,7 @@ class Rbac(KubernetesService):
             )
             return {}
 
-    def __list_roles__(self):
+    def _list_roles(self):
         try:
             roles = {}
             for role in self.client.list_role_for_all_namespaces().items:
@@ -107,7 +107,7 @@ class Rbac(KubernetesService):
             )
             return {}
 
-    def __list_cluster_roles__(self):
+    def _list_cluster_roles(self):
         try:
             cluster_roles = {}
             for role in self.client.list_cluster_role().items:

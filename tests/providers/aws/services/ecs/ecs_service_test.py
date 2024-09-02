@@ -41,7 +41,7 @@ class Test_ECS_Service:
 
     # Test list ECS task definitions
     @mock_aws
-    def test__list_task_definitions__(self):
+    def test_list_task_definitions(self):
         ecs_client = client("ecs", region_name=AWS_REGION_EU_WEST_1)
 
         definition = dict(

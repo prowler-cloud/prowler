@@ -10,11 +10,11 @@ class DNS(GCPService):
     def __init__(self, provider: GcpProvider):
         super().__init__(__class__.__name__, provider)
         self.managed_zones = []
-        self.__get_managed_zones__()
+        self._get_managed_zones()
         self.policies = []
-        self.__get_policies__()
+        self._get_policies()
 
-    def __get_managed_zones__(self):
+    def _get_managed_zones(self):
         for project_id in self.project_ids:
             try:
                 request = self.client.managedZones().list(project=project_id)
@@ -41,7 +41,7 @@ class DNS(GCPService):
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
-    def __get_policies__(self):
+    def _get_policies(self):
         for project_id in self.project_ids:
             try:
                 request = self.client.policies().list(project=project_id)

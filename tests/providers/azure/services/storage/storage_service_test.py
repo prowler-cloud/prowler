@@ -41,18 +41,18 @@ def mock_storage_get_storage_accounts(_):
 
 
 @patch(
-    "prowler.providers.azure.services.storage.storage_service.Storage.__get_storage_accounts__",
+    "prowler.providers.azure.services.storage.storage_service.Storage._get_storage_accounts",
     new=mock_storage_get_storage_accounts,
 )
 class Test_Storage_Service:
-    def test__get_client__(self):
+    def test_get_client(self):
         storage = Storage(set_mocked_azure_provider())
         assert (
             storage.clients[AZURE_SUBSCRIPTION_ID].__class__.__name__
             == "StorageManagementClient"
         )
 
-    def test__get_storage_accounts__(self):
+    def test_get_storage_accounts(self):
         storage = Storage(set_mocked_azure_provider())
         assert (
             storage.storage_accounts[AZURE_SUBSCRIPTION_ID][0].__class__.__name__
@@ -111,7 +111,7 @@ class Test_Storage_Service:
             container_delete_retention_policy=None,
         )
 
-    def test__get_blob_properties__(self):
+    def test_get_blob_properties(self):
         storage = Storage(set_mocked_azure_provider())
         assert (
             storage.storage_accounts[AZURE_SUBSCRIPTION_ID][

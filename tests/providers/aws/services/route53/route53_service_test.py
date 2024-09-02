@@ -34,7 +34,7 @@ class Test_Route53_Service:
 
     # Test Route53 Client
     @mock_aws
-    def test__get_client__(self):
+    def test_get_client(self):
         route53 = Route53(set_mocked_aws_provider([AWS_REGION_US_EAST_1]))
         assert route53.client.__class__.__name__ == "Route53"
 
@@ -51,7 +51,7 @@ class Test_Route53_Service:
         assert route53.service == "route53"
 
     @mock_aws
-    def test__list_hosted_zones__private_with_logging(self):
+    def test_list_hosted_zonesprivate_with_logging(self):
         # Create Hosted Zone
         r53_client = client("route53", region_name=AWS_REGION_US_EAST_1)
         hosted_zone_name = "testdns.aws.com."
@@ -95,7 +95,7 @@ class Test_Route53_Service:
         ]
 
     @mock_aws
-    def test__list_hosted_zones__public_with_logging(self):
+    def test_list_hosted_zonespublic_with_logging(self):
         # Create Hosted Zone
         r53_client = client("route53", region_name=AWS_REGION_US_EAST_1)
         hosted_zone_name = "testdns.aws.com."
@@ -136,7 +136,7 @@ class Test_Route53_Service:
         assert route53.hosted_zones[hosted_zone_id].region == AWS_REGION_US_EAST_1
 
     @mock_aws
-    def test__list_hosted_zones__private_without_logging(self):
+    def test_list_hosted_zonesprivate_without_logging(self):
         # Create Hosted Zone
         r53_client = client("route53", region_name=AWS_REGION_US_EAST_1)
         hosted_zone_name = "testdns.aws.com."
@@ -163,7 +163,7 @@ class Test_Route53_Service:
         assert route53.hosted_zones[hosted_zone_id].region == AWS_REGION_US_EAST_1
 
     @mock_aws
-    def test__list_hosted_zones__public_without_logging(self):
+    def test_list_hosted_zonespublic_without_logging(self):
         # Create Hosted Zone
         r53_client = client("route53", region_name=AWS_REGION_US_EAST_1)
         hosted_zone_name = "testdns.aws.com."
@@ -191,7 +191,7 @@ class Test_Route53_Service:
         assert route53.hosted_zones[hosted_zone_id].region == AWS_REGION_US_EAST_1
 
     @mock_aws
-    def test__list_resource_record_sets__(self):
+    def test_list_resource_record_sets(self):
         # Create Hosted Zone
         r53_client = client("route53", region_name=AWS_REGION_US_EAST_1)
         zone = r53_client.create_hosted_zone(

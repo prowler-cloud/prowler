@@ -14,12 +14,12 @@ class Route53(AWSService):
         super().__init__(__class__.__name__, provider, global_service=True)
         self.hosted_zones = {}
         self.record_sets = []
-        self.__list_hosted_zones__()
-        self.__list_query_logging_configs__()
-        self.__list_tags_for_resource__()
-        self.__list_resource_record_sets__()
+        self._list_hosted_zones()
+        self._list_query_logging_configs()
+        self._list_tags_for_resource()
+        self._list_resource_record_sets()
 
-    def __list_hosted_zones__(self):
+    def _list_hosted_zones(self):
         logger.info("Route53 - Listing Hosting Zones...")
         try:
             list_hosted_zones_paginator = self.client.get_paginator("list_hosted_zones")
@@ -46,7 +46,7 @@ class Route53(AWSService):
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __list_resource_record_sets__(self):
+    def _list_resource_record_sets(self):
         logger.info("Route53 - Listing Hosting Zones...")
         try:
             list_resource_record_sets_paginator = self.client.get_paginator(
@@ -78,7 +78,7 @@ class Route53(AWSService):
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __list_query_logging_configs__(self):
+    def _list_query_logging_configs(self):
         logger.info("Route53 - Listing Query Logging Configs...")
         try:
             for hosted_zone in self.hosted_zones.values():
@@ -100,7 +100,7 @@ class Route53(AWSService):
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __list_tags_for_resource__(self):
+    def _list_tags_for_resource(self):
         logger.info("Route53Domains - List Tags...")
         for hosted_zone in self.hosted_zones.values():
             try:
@@ -148,11 +148,11 @@ class Route53Domains(AWSService):
             # but you must specify the US East (N. Virginia) Region to create, update, or otherwise work with domains.
             self.region = "us-east-1"
             self.client = self.session.client(self.service, self.region)
-            self.__list_domains__()
-            self.__get_domain_detail__()
-            self.__list_tags_for_domain__()
+            self._list_domains()
+            self._get_domain_detail()
+            self._list_tags_for_domain()
 
-    def __list_domains__(self):
+    def _list_domains(self):
         logger.info("Route53Domains - Listing Domains...")
         try:
             list_domains_zones_paginator = self.client.get_paginator("list_domains")
@@ -169,7 +169,7 @@ class Route53Domains(AWSService):
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_domain_detail__(self):
+    def _get_domain_detail(self):
         logger.info("Route53Domains - Getting Domain Detail...")
         try:
             for domain in self.domains.values():
@@ -182,7 +182,7 @@ class Route53Domains(AWSService):
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __list_tags_for_domain__(self):
+    def _list_tags_for_domain(self):
         logger.info("Route53Domains - List Tags...")
         for domain in self.domains.values():
             try:

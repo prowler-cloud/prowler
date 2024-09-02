@@ -33,7 +33,7 @@ class GCPService:
         self.audit_config = provider.audit_config
         self.fixer_config = provider.fixer_config
 
-    def __get_client__(self):
+    def _get_client(self):
         return self.client
 
     def __threading_call__(self, call, iterator):

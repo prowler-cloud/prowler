@@ -68,7 +68,7 @@ class Test_EFS:
 
     @mock_aws
     # Test EFS describe file systems
-    def test__describe_file_systems__(self):
+    def test_describe_file_systems(self):
         efs_client = client("efs", AWS_REGION_EU_WEST_1)
         efs = efs_client.create_file_system(
             CreationToken=creation_token,
@@ -87,7 +87,7 @@ class Test_EFS:
 
     @mock_aws
     # Test EFS describe file systems
-    def test__describe_file_system_policies__(self):
+    def test_describe_file_system_policies(self):
         efs_client = client("efs", AWS_REGION_EU_WEST_1)
         efs = efs_client.create_file_system(
             CreationToken=creation_token, Encrypted=True

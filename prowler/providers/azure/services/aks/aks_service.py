@@ -12,9 +12,9 @@ from prowler.providers.azure.lib.service.service import AzureService
 class AKS(AzureService):
     def __init__(self, provider: AzureProvider):
         super().__init__(ContainerServiceClient, provider)
-        self.clusters = self.__get_clusters__()
+        self.clusters = self._get_clusters()
 
-    def __get_clusters__(self):
+    def _get_clusters(self):
         logger.info("AKS - Getting clusters...")
         clusters = {}
 

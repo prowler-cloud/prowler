@@ -13,11 +13,11 @@ class StorageGateway(AWSService):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.fileshares = []
-        self.__threading_call__(self.__list_file_shares__)
-        self.__threading_call__(self.__describe_nfs_file_shares__)
-        self.__threading_call__(self.__describe_smb_file_shares__)
+        self.__threading_call__(self._list_file_shares)
+        self.__threading_call__(self._describe_nfs_file_shares)
+        self.__threading_call__(self._describe_smb_file_shares)
 
-    def __list_file_shares__(self, regional_client):
+    def _list_file_shares(self, regional_client):
         try:
             list_file_share_paginator = regional_client.get_paginator(
                 "list_file_shares"
@@ -45,7 +45,7 @@ class StorageGateway(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_nfs_file_shares__(self, regional_client):
+    def _describe_nfs_file_shares(self, regional_client):
         logger.info("StorageGateway - Describe NFS FileShares...")
         try:
             for fileshare in self.fileshares:
@@ -64,7 +64,7 @@ class StorageGateway(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_smb_file_shares__(self, regional_client):
+    def _describe_smb_file_shares(self, regional_client):
         logger.info("StorageGateway - Describe SMB FileShares...")
         try:
             for fileshare in self.fileshares:

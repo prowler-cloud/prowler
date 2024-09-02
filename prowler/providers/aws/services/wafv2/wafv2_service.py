@@ -12,11 +12,11 @@ class WAFv2(AWSService):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.web_acls = []
-        self.__threading_call__(self.__list_web_acls__)
-        self.__threading_call__(self.__list_resources_for_web_acl__)
-        self.__threading_call__(self.__get_logging_configuration__)
+        self.__threading_call__(self._list_web_acls)
+        self.__threading_call__(self._list_resources_for_web_acl)
+        self.__threading_call__(self._get_logging_configuration)
 
-    def __list_web_acls__(self, regional_client):
+    def _list_web_acls(self, regional_client):
         logger.info("WAFv2 - Listing Regional Web ACLs...")
         try:
             for wafv2 in regional_client.list_web_acls(Scope="REGIONAL")["WebACLs"]:
@@ -38,7 +38,7 @@ class WAFv2(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_logging_configuration__(self, regional_client):
+    def _get_logging_configuration(self, regional_client):
         logger.info("WAFv2 - Get Logging Configuration...")
         for acl in self.web_acls:
             if acl.region == regional_client.region:
@@ -64,7 +64,7 @@ class WAFv2(AWSService):
                         f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
 
-    def __list_resources_for_web_acl__(self, regional_client):
+    def _list_resources_for_web_acl(self, regional_client):
         logger.info("WAFv2 - Describing resources...")
         for acl in self.web_acls:
             if acl.region == regional_client.region:

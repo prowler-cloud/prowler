@@ -63,7 +63,7 @@ def mock_generate_regional_clients(provider, service):
     new=mock_generate_regional_clients,
 )
 class Test_NetworkFirewall_Service:
-    def test__get_client__(self):
+    def test_get_client(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         networkfirewall = NetworkFirewall(aws_provider)
         assert (
@@ -76,7 +76,7 @@ class Test_NetworkFirewall_Service:
         networkfirewall = NetworkFirewall(aws_provider)
         assert networkfirewall.service == "network-firewall"
 
-    def test__list_firewalls__(self):
+    def test_list_firewalls(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         networkfirewall = NetworkFirewall(aws_provider)
         assert len(networkfirewall.network_firewalls) == 1
@@ -84,7 +84,7 @@ class Test_NetworkFirewall_Service:
         assert networkfirewall.network_firewalls[0].region == AWS_REGION_US_EAST_1
         assert networkfirewall.network_firewalls[0].name == FIREWALL_NAME
 
-    def test__describe_firewall__(self):
+    def test_describe_firewall(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         networkfirewall = NetworkFirewall(aws_provider)
         assert len(networkfirewall.network_firewalls) == 1

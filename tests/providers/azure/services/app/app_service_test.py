@@ -59,7 +59,7 @@ from tests.providers.azure.azure_fixtures import (
 
 
 # @patch(
-#     "prowler.providers.azure.services.app.app_service.App.__get_apps__",
+#     "prowler.providers.azure.services.app.app_service.App._get_apps",
 #     new=mock_app_get_apps,
 # )
 class Test_App_Service:

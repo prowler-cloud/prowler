@@ -14,10 +14,10 @@ class WellArchitected(AWSService):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.workloads = []
-        self.__threading_call__(self.__list_workloads__)
-        self.__list_tags_for_resource__()
+        self.__threading_call__(self._list_workloads)
+        self._list_tags_for_resource()
 
-    def __list_workloads__(self, regional_client):
+    def _list_workloads(self, regional_client):
         logger.info("WellArchitected - Listing Workloads...")
         try:
             for workload in regional_client.list_workloads()["WorkloadSummaries"]:
@@ -41,7 +41,7 @@ class WellArchitected(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __list_tags_for_resource__(self):
+    def _list_tags_for_resource(self):
         logger.info("WellArchitected - Listing Tags...")
         try:
             for workload in self.workloads:

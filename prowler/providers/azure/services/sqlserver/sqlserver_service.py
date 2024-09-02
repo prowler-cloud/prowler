@@ -20,9 +20,9 @@ from prowler.providers.azure.lib.service.service import AzureService
 class SQLServer(AzureService):
     def __init__(self, provider: AzureProvider):
         super().__init__(SqlManagementClient, provider)
-        self.sql_servers = self.__get_sql_servers__()
+        self.sql_servers = self._get_sql_servers()
 
-    def __get_sql_servers__(self):
+    def _get_sql_servers(self):
         logger.info("SQL Server - Getting SQL servers...")
         sql_servers = {}
         for subscription, client in self.clients.items():
@@ -30,25 +30,23 @@ class SQLServer(AzureService):
                 sql_servers.update({subscription: []})
                 sql_servers_list = client.servers.list()
                 for sql_server in sql_servers_list:
-                    resource_group = self.__get_resource_group__(sql_server.id)
-                    auditing_policies = self.__get_server_blob_auditing_policies__(
+                    resource_group = self._get_resource_group(sql_server.id)
+                    auditing_policies = self._get_server_blob_auditing_policies(
                         subscription, resource_group, sql_server.name
                     )
-                    firewall_rules = self.__get_firewall_rules__(
+                    firewall_rules = self._get_firewall_rules(
                         subscription, resource_group, sql_server.name
                     )
-                    encryption_protector = self.__get_enctyption_protectors__(
+                    encryption_protector = self._get_enctyption_protectors(
                         subscription, resource_group, sql_server.name
                     )
-                    vulnerability_assessment = self.__get_vulnerability_assesments__(
+                    vulnerability_assessment = self._get_vulnerability_assesments(
                         subscription, resource_group, sql_server.name
                     )
-                    security_alert_policies = (
-                        self.__get_server_security_alert_policies__(
-                            subscription, resource_group, sql_server.name
-                        )
+                    security_alert_policies = self._get_server_security_alert_policies(
+                        subscription, resource_group, sql_server.name
                     )
-                    location = self.__get_location__(
+                    location = self._get_location(
                         subscription, resource_group, sql_server.name
                     )
 
@@ -62,7 +60,7 @@ class SQLServer(AzureService):
                             auditing_policies=auditing_policies,
                             firewall_rules=firewall_rules,
                             encryption_protector=encryption_protector,
-                            databases=self.__get_databases__(
+                            databases=self._get_databases(
                                 subscription, resource_group, sql_server.name
                             ),
                             vulnerability_assessment=vulnerability_assessment,
@@ -76,11 +74,11 @@ class SQLServer(AzureService):
                 )
         return sql_servers
 
-    def __get_resource_group__(self, id):
+    def _get_resource_group(self, id):
         resource_group = id.split("/")[4]
         return resource_group
 
-    def __get_transparent_data_encryption__(
+    def _get_transparent_data_encryption(
         self, subscription, resource_group, server_name, database_name
     ):
         client = self.clients[subscription]
@@ -92,7 +90,7 @@ class SQLServer(AzureService):
         )
         return tde_encrypted
 
-    def __get_enctyption_protectors__(self, subscription, resource_group, server_name):
+    def _get_enctyption_protectors(self, subscription, resource_group, server_name):
         client = self.clients[subscription]
         encryption_protectors = client.encryption_protectors.get(
             resource_group_name=resource_group,
@@ -101,7 +99,7 @@ class SQLServer(AzureService):
         )
         return encryption_protectors
 
-    def __get_databases__(self, subscription, resource_group, server_name):
+    def _get_databases(self, subscription, resource_group, server_name):
         logger.info("SQL Server - Getting server databases...")
         databases = []
         try:
@@ -111,7 +109,7 @@ class SQLServer(AzureService):
                 server_name=server_name,
             )
             for database in databases_server:
-                tde_encrypted = self.__get_transparent_data_encryption__(
+                tde_encrypted = self._get_transparent_data_encryption(
                     subscription, resource_group, server_name, database.name
                 )
                 databases.append(
@@ -130,9 +128,7 @@ class SQLServer(AzureService):
             )
         return databases
 
-    def __get_vulnerability_assesments__(
-        self, subscription, resource_group, server_name
-    ):
+    def _get_vulnerability_assesments(self, subscription, resource_group, server_name):
         client = self.clients[subscription]
         vulnerability_assessment = client.server_vulnerability_assessments.get(
             resource_group_name=resource_group,
@@ -141,7 +137,7 @@ class SQLServer(AzureService):
         )
         return vulnerability_assessment
 
-    def __get_server_blob_auditing_policies__(
+    def _get_server_blob_auditing_policies(
         self, subscription, resource_group, server_name
     ):
         client = self.clients[subscription]
@@ -151,14 +147,14 @@ class SQLServer(AzureService):
         )
         return auditing_policies
 
-    def __get_firewall_rules__(self, subscription, resource_group, server_name):
+    def _get_firewall_rules(self, subscription, resource_group, server_name):
         client = self.clients[subscription]
         firewall_rules = client.firewall_rules.list_by_server(
             resource_group_name=resource_group, server_name=server_name
         )
         return firewall_rules
 
-    def __get_server_security_alert_policies__(
+    def _get_server_security_alert_policies(
         self, subscription, resource_group, server_name
     ):
         client = self.clients[subscription]
@@ -169,7 +165,7 @@ class SQLServer(AzureService):
         )
         return security_alert_policies
 
-    def __get_location__(self, subscription, resouce_group_name, server_name):
+    def _get_location(self, subscription, resouce_group_name, server_name):
         client = self.clients[subscription]
         location = client.servers.get(resouce_group_name, server_name).location
 

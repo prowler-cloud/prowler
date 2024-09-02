@@ -41,15 +41,15 @@ def mock_mysql_get_configurations(_):
 
 
 @patch(
-    "prowler.providers.azure.services.mysql.mysql_service.MySQL.__get_flexible_servers__",
+    "prowler.providers.azure.services.mysql.mysql_service.MySQL._get_flexible_servers",
     new=mock_mysql_get_servers,
 )
 @patch(
-    "prowler.providers.azure.services.mysql.mysql_service.MySQL.__get_configurations__",
+    "prowler.providers.azure.services.mysql.mysql_service.MySQL._get_configurations",
     new=mock_mysql_get_configurations,
 )
 class Test_MySQL_Service:
-    def test__get_client__(self):
+    def test_get_client(self):
         mysql = MySQL(set_mocked_azure_provider())
         assert (
             mysql.clients[AZURE_SUBSCRIPTION_ID].__class__.__name__
@@ -60,7 +60,7 @@ class Test_MySQL_Service:
         mysql = MySQL(set_mocked_azure_provider())
         assert mysql.subscriptions.__class__.__name__ == "dict"
 
-    def test__get_flexible_servers__(self):
+    def test_get_flexible_servers(self):
         mysql = MySQL(set_mocked_azure_provider())
         assert len(mysql.flexible_servers) == 1
         assert (
@@ -96,9 +96,9 @@ class Test_MySQL_Service:
             == "value"
         )
 
-    def test__get_configurations__(self):
+    def test_get_configurations(self):
         mysql = MySQL(set_mocked_azure_provider())
-        configurations = mysql.__get_configurations__()
+        configurations = mysql._get_configurations()
 
         assert len(configurations) == 1
         assert configurations["test"].resource_id == "/subscriptions/resource_id"
