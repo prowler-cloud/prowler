@@ -20,7 +20,7 @@ from typing import Optional
 
 from colorama import Style
 from detect_secrets import SecretsCollection
-from detect_secrets.settings import default_settings
+from detect_secrets.settings import transient_settings
 
 from prowler.config.config import encoding_format_utf_8
 from prowler.lib.logger import logger
@@ -86,7 +86,19 @@ def detect_secrets_scan(data):
     temp_data_file.close()
 
     secrets = SecretsCollection()
-    with default_settings():
+    with transient_settings(
+        {
+            "plugins_used": [
+                {"name": "Base64HighEntropyString", "limit": 4.5},
+                {"name": "HexHighEntropyString", "limit": 3.0},
+                {"name": "AWSKeyDetector"},
+            ],
+            "filters_used": [
+                {"path": "detect_secrets.filters.common.is_invalid_file"},
+                {"path": "detect_secrets.filters.heuristic.is_likely_id_string"},
+            ],
+        }
+    ):
         secrets.scan_file(temp_data_file.name)
     os.remove(temp_data_file.name)
 

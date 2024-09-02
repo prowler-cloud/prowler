@@ -2,7 +2,7 @@ import os
 import tempfile
 
 from detect_secrets import SecretsCollection
-from detect_secrets.settings import default_settings
+from detect_secrets.settings import transient_settings
 
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.cloudformation.cloudformation_client import (
@@ -40,7 +40,21 @@ class cloudformation_stack_outputs_find_secrets(Check):
                 # Init detect_secrets
                 secrets = SecretsCollection()
                 # Scan file for secrets
-                with default_settings():
+                with transient_settings(
+                    {
+                        "plugins_used": [
+                            {"name": "Base64HighEntropyString", "limit": 4.5},
+                            {"name": "HexHighEntropyString", "limit": 3.0},
+                            {"name": "AWSKeyDetector"},
+                        ],
+                        "filters_used": [
+                            {"path": "detect_secrets.filters.common.is_invalid_file"},
+                            {
+                                "path": "detect_secrets.filters.heuristic.is_likely_id_string"
+                            },
+                        ],
+                    }
+                ):
                     secrets.scan_file(temp_output_file.name)
 
                 detect_secrets_output = secrets.json()
