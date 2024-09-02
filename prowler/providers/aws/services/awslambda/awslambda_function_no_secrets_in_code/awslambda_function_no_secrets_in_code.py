@@ -1,10 +1,8 @@
 import os
 import tempfile
 
-from detect_secrets import SecretsCollection
-from detect_secrets.settings import transient_settings
-
 from prowler.lib.check.models import Check, Check_Report_AWS
+from prowler.lib.utils.utils import detect_secrets_scan
 from prowler.providers.aws.services.awslambda.awslambda_client import awslambda_client
 
 
@@ -30,44 +28,22 @@ class awslambda_function_no_secrets_in_code(Check):
                         files_in_zip = next(os.walk(tmp_dir_name))[2]
                         secrets_findings = []
                         for file in files_in_zip:
-                            secrets = SecretsCollection()
-                            with transient_settings(
-                                {
-                                    "plugins_used": [
-                                        {
-                                            "name": "Base64HighEntropyString",
-                                            "limit": 4.5,
-                                        },
-                                        {"name": "HexHighEntropyString", "limit": 3.0},
-                                        {"name": "AWSKeyDetector"},
-                                    ],
-                                    "filters_used": [
-                                        {
-                                            "path": "detect_secrets.filters.common.is_invalid_file"
-                                        },
-                                        {
-                                            "path": "detect_secrets.filters.heuristic.is_likely_id_string"
-                                        },
-                                    ],
-                                }
-                            ):
-                                secrets.scan_file(f"{tmp_dir_name}/{file}")
-                            detect_secrets_output = secrets.json()
+                            detect_secrets_output = detect_secrets_scan(
+                                file=f"{tmp_dir_name}/{file}"
+                            )
                             if detect_secrets_output:
                                 for (
-                                    file_name
+                                    secret
                                 ) in (
-                                    detect_secrets_output.keys()
+                                    detect_secrets_output
                                 ):  # Appears that only 1 file is being scanned at a time, so could rework this
-                                    output_file_name = file_name.replace(
+                                    output_file_name = secret["filename"].replace(
                                         f"{tmp_dir_name}/", ""
                                     )
                                     secrets_string = ", ".join(
                                         [
                                             f"{secret['type']} on line {secret['line_number']}"
-                                            for secret in detect_secrets_output[
-                                                file_name
-                                            ]
+                                            for secret in detect_secrets_output
                                         ]
                                     )
                                     secrets_findings.append(

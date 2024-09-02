@@ -1,14 +1,10 @@
-import os
-import tempfile
 import zlib
 from base64 import b64decode
-
-from detect_secrets import SecretsCollection
-from detect_secrets.settings import transient_settings
 
 from prowler.config.config import encoding_format_utf_8
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.lib.logger import logger
+from prowler.lib.utils.utils import detect_secrets_scan
 from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 
 
@@ -27,7 +23,6 @@ class ec2_launch_template_no_secrets(Check):
                 if "UserData" not in version.template_data:
                     continue
 
-                temp_user_data_file = tempfile.NamedTemporaryFile(delete=False)
                 user_data = b64decode(version.template_data["UserData"])
 
                 try:
@@ -48,32 +43,10 @@ class ec2_launch_template_no_secrets(Check):
                     )
                     continue
 
-                temp_user_data_file.write(
-                    bytes(user_data, encoding="raw_unicode_escape")
-                )
-                temp_user_data_file.close()
-                secrets = SecretsCollection()
-                with transient_settings(
-                    {
-                        "plugins_used": [
-                            {"name": "Base64HighEntropyString", "limit": 4.5},
-                            {"name": "HexHighEntropyString", "limit": 3.0},
-                            {"name": "AWSKeyDetector"},
-                        ],
-                        "filters_used": [
-                            {"path": "detect_secrets.filters.common.is_invalid_file"},
-                            {
-                                "path": "detect_secrets.filters.heuristic.is_likely_id_string"
-                            },
-                        ],
-                    }
-                ):
-                    secrets.scan_file(temp_user_data_file.name)
+                version_secrets = detect_secrets_scan(data=user_data)
 
-                if secrets.json():
+                if version_secrets:
                     versions_with_secrets.append(str(version.version_number))
-
-                os.remove(temp_user_data_file.name)
 
             if len(versions_with_secrets) > 0:
                 report.status = "FAIL"

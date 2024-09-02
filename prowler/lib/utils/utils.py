@@ -20,6 +20,7 @@ from typing import Optional
 
 from colorama import Style
 from detect_secrets import SecretsCollection
+from detect_secrets.filters import common
 from detect_secrets.settings import transient_settings
 
 from prowler.config.config import encoding_format_utf_8
@@ -80,31 +81,57 @@ def hash_sha512(string: str) -> str:
     return sha512(string.encode(encoding_format_utf_8)).hexdigest()[0:9]
 
 
-def detect_secrets_scan(data):
-    temp_data_file = tempfile.NamedTemporaryFile(delete=False)
-    temp_data_file.write(bytes(data, encoding="raw_unicode_escape"))
-    temp_data_file.close()
+def is_known_non_secret(line):
+    known_non_secrets = [
+        "MYSQL_ALLOW_EMPTY_PASSWORD",
+        "GCP_SECRET_ARN",
+        "S3_BUCKET",
+        "AWS_STACK",
+    ]
+    for keyword in known_non_secrets:
+        if keyword in line:
+            return True
+    return False
+
+
+def detect_secrets_scan(data=None, file=None):
+    common.is_known_non_secret = is_known_non_secret
+    if not file:
+        temp_data_file = tempfile.NamedTemporaryFile(delete=False)
+        temp_data_file.write(bytes(data, encoding="raw_unicode_escape"))
+        temp_data_file.close()
 
     secrets = SecretsCollection()
     with transient_settings(
         {
             "plugins_used": [
-                {"name": "Base64HighEntropyString", "limit": 4.5},
-                {"name": "HexHighEntropyString", "limit": 3.0},
+                {"name": "KeywordDetector"},
+                {"name": "Base64HighEntropyString", "limit": 4.0},
+                {"name": "HexHighEntropyString", "limit": 1.5},
                 {"name": "AWSKeyDetector"},
             ],
             "filters_used": [
                 {"path": "detect_secrets.filters.common.is_invalid_file"},
-                {"path": "detect_secrets.filters.heuristic.is_likely_id_string"},
+                {"path": "detect_secrets.filters.common.is_known_non_secret"},
+                {"path": "detect_secrets.filters.common.is_known_false_positive"},
             ],
         }
     ):
-        secrets.scan_file(temp_data_file.name)
-    os.remove(temp_data_file.name)
+        if file:
+            secrets.scan_file(file)
+        else:
+            secrets.scan_file(temp_data_file.name)
+
+    if not file:
+        os.remove(temp_data_file.name)
 
     detect_secrets_output = secrets.json()
+
     if detect_secrets_output:
-        return detect_secrets_output[temp_data_file.name]
+        if file:
+            return detect_secrets_output[file]
+        else:
+            return detect_secrets_output[temp_data_file.name]
     else:
         return None
 

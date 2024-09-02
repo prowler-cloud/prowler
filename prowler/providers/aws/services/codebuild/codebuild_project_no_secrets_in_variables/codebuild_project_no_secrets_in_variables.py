@@ -1,11 +1,7 @@
 import json
-import os
-import tempfile
-
-from detect_secrets import SecretsCollection
-from detect_secrets.settings import transient_settings
 
 from prowler.lib.check.models import Check, Check_Report_AWS
+from prowler.lib.utils.utils import detect_secrets_scan
 from prowler.providers.aws.services.codebuild.codebuild_client import codebuild_client
 
 
@@ -30,44 +26,15 @@ class codebuild_project_no_secrets_in_variables(Check):
                         env_var.type == "PLAINTEXT"
                         and env_var.name not in sensitive_vars_excluded
                     ):
-                        temp_file = tempfile.NamedTemporaryFile(delete=False)
-                        temp_file.write(
-                            bytes(
-                                json.dumps({env_var.name: env_var.value}),
-                                encoding="utf-8",
-                            )
+                        detect_secrets_output = detect_secrets_scan(
+                            data=json.dumps({env_var.name: env_var.value})
                         )
-                        temp_file.close()
-
-                        secrets = SecretsCollection()
-                        with transient_settings(
-                            {
-                                "plugins_used": [
-                                    {"name": "Base64HighEntropyString", "limit": 4.5},
-                                    {"name": "HexHighEntropyString", "limit": 3.0},
-                                    {"name": "AWSKeyDetector"},
-                                ],
-                                "filters_used": [
-                                    {
-                                        "path": "detect_secrets.filters.common.is_invalid_file"
-                                    },
-                                    {
-                                        "path": "detect_secrets.filters.heuristic.is_likely_id_string"
-                                    },
-                                ],
-                            }
-                        ):
-                            secrets.scan_file(temp_file.name)
-
-                        detect_secrets_output = secrets.json()
                         if detect_secrets_output:
                             secrets_info = [
                                 f"{secret['type']} in variable {env_var.name}"
-                                for secret in detect_secrets_output[temp_file.name]
+                                for secret in detect_secrets_output
                             ]
                             secrets_found.extend(secrets_info)
-
-                        os.remove(temp_file.name)
 
             if secrets_found:
                 report.status = "FAIL"

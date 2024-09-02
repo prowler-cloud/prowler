@@ -1,11 +1,7 @@
-import os
-import tempfile
 from json import dumps
 
-from detect_secrets import SecretsCollection
-from detect_secrets.settings import transient_settings
-
 from prowler.lib.check.models import Check, Check_Report_AWS
+from prowler.lib.utils.utils import detect_secrets_scan
 from prowler.providers.aws.services.ecs.ecs_client import ecs_client
 
 
@@ -25,42 +21,17 @@ class ecs_task_definitions_no_environment_secrets(Check):
                 for env_var in task_definition.environment_variables:
                     dump_env_vars.update({env_var.name: env_var.value})
 
-                temp_env_data_file = tempfile.NamedTemporaryFile(delete=False)
-
                 env_data = dumps(dump_env_vars, indent=2)
-                temp_env_data_file.write(bytes(env_data, encoding="raw_unicode_escape"))
-                temp_env_data_file.close()
-
-                secrets = SecretsCollection()
-                with transient_settings(
-                    {
-                        "plugins_used": [
-                            {"name": "Base64HighEntropyString", "limit": 4.5},
-                            {"name": "HexHighEntropyString", "limit": 3.0},
-                            {"name": "AWSKeyDetector"},
-                        ],
-                        "filters_used": [
-                            {"path": "detect_secrets.filters.common.is_invalid_file"},
-                            {
-                                "path": "detect_secrets.filters.heuristic.is_likely_id_string"
-                            },
-                        ],
-                    }
-                ):
-                    secrets.scan_file(temp_env_data_file.name)
-
-                detect_secrets_output = secrets.json()
+                detect_secrets_output = detect_secrets_scan(data=env_data)
                 if detect_secrets_output:
                     secrets_string = ", ".join(
                         [
                             f"{secret['type']} on line {secret['line_number']}"
-                            for secret in detect_secrets_output[temp_env_data_file.name]
+                            for secret in detect_secrets_output
                         ]
                     )
                     report.status = "FAIL"
                     report.status_extended = f"Potential secret found in variables of ECS task definition {task_definition.name} with revision {task_definition.revision} -> {secrets_string}."
-
-                os.remove(temp_env_data_file.name)
 
             findings.append(report)
 

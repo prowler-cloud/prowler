@@ -1,11 +1,7 @@
 import json
-import os
-import tempfile
-
-from detect_secrets import SecretsCollection
-from detect_secrets.settings import transient_settings
 
 from prowler.lib.check.models import Check, Check_Report_AWS
+from prowler.lib.utils.utils import detect_secrets_scan
 from prowler.providers.aws.services.ssm.ssm_client import ssm_client
 
 
@@ -24,44 +20,18 @@ class ssm_document_secrets(Check):
             )
 
             if document.content:
-                temp_env_data_file = tempfile.NamedTemporaryFile(delete=False)
-                temp_env_data_file.write(
-                    bytes(
-                        json.dumps(document.content, indent=2),
-                        encoding="raw_unicode_escape",
-                    )
+                detect_secrets_output = detect_secrets_scan(
+                    data=json.dumps(document.content, indent=2)
                 )
-                temp_env_data_file.close()
-                secrets = SecretsCollection()
-                with transient_settings(
-                    {
-                        "plugins_used": [
-                            {"name": "Base64HighEntropyString", "limit": 4.5},
-                            {"name": "HexHighEntropyString", "limit": 3.0},
-                            {"name": "AWSKeyDetector"},
-                        ],
-                        "filters_used": [
-                            {"path": "detect_secrets.filters.common.is_invalid_file"},
-                            {
-                                "path": "detect_secrets.filters.heuristic.is_likely_id_string"
-                            },
-                        ],
-                    }
-                ):
-                    secrets.scan_file(temp_env_data_file.name)
-
-                detect_secrets_output = secrets.json()
                 if detect_secrets_output:
                     secrets_string = ", ".join(
                         [
                             f"{secret['type']} on line {secret['line_number']}"
-                            for secret in detect_secrets_output[temp_env_data_file.name]
+                            for secret in detect_secrets_output
                         ]
                     )
                     report.status = "FAIL"
                     report.status_extended = f"Potential secret found in SSM Document {document.name} -> {secrets_string}."
-
-                os.remove(temp_env_data_file.name)
 
             findings.append(report)
 

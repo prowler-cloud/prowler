@@ -1,14 +1,10 @@
-import os
-import tempfile
 import zlib
 from base64 import b64decode
-
-from detect_secrets import SecretsCollection
-from detect_secrets.settings import transient_settings
 
 from prowler.config.config import encoding_format_utf_8
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.lib.logger import logger
+from prowler.lib.utils.utils import detect_secrets_scan
 from prowler.providers.aws.services.autoscaling.autoscaling_client import (
     autoscaling_client,
 )
@@ -24,9 +20,7 @@ class autoscaling_find_secrets_ec2_launch_configuration(Check):
             report.resource_arn = configuration.arn
 
             if configuration.user_data:
-                temp_user_data_file = tempfile.NamedTemporaryFile(delete=False)
                 user_data = b64decode(configuration.user_data)
-
                 try:
                     if user_data[0:2] == b"\x1f\x8b":  # GZIP magic number
                         user_data = zlib.decompress(
@@ -45,36 +39,14 @@ class autoscaling_find_secrets_ec2_launch_configuration(Check):
                     )
                     continue
 
-                temp_user_data_file.write(
-                    bytes(user_data, encoding="raw_unicode_escape")
-                )
-                temp_user_data_file.close()
-                secrets = SecretsCollection()
-                with transient_settings(
-                    {
-                        "plugins_`used": [
-                            {"name": "Base64HighEntropyString", "limit": 4.5},
-                            {"name": "HexHighEntropyString", "limit": 3.0},
-                            {"name": "AWSKeyDetector"},
-                        ],
-                        "filters_used": [
-                            {"path": "detect_secrets.filters.common.is_invalid_file"},
-                            {
-                                "path": "detect_secrets.filters.heuristic.is_likely_id_string"
-                            },
-                        ],
-                    }
-                ):
-                    secrets.scan_file(temp_user_data_file.name)
+                has_secrets = detect_secrets_scan(data=user_data)
 
-                if secrets.json():
+                if has_secrets:
                     report.status = "FAIL"
                     report.status_extended = f"Potential secret found in autoscaling {configuration.name} User Data."
                 else:
                     report.status = "PASS"
                     report.status_extended = f"No secrets found in autoscaling {configuration.name} User Data."
-
-                os.remove(temp_user_data_file.name)
             else:
                 report.status = "PASS"
                 report.status_extended = f"No secrets found in autoscaling {configuration.name} since User Data is empty."
