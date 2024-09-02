@@ -1,19 +1,22 @@
 "use server";
 
 import { AuthError } from "next-auth";
+import { z } from "zod";
 
 import { signIn, signOut } from "@/auth.config";
-// import { authFormSchema } from "@/types";
+import { authFormSchema } from "@/types";
 
-// const formSchema = authFormSchema("sign-in");
+const formSchemaSignIn = authFormSchema("sign-in");
 
-const defaultValues = {
+const defaultValues: z.infer<typeof formSchemaSignIn> = {
   email: "",
   password: "",
 };
 
-// Fix TS types.
-export async function authenticate(prevState: any, formData: any) {
+export async function authenticate(
+  prevState: unknown,
+  formData: z.infer<typeof formSchemaSignIn>,
+) {
   try {
     await new Promise((resolve) => setTimeout(resolve, 2000));
     await signIn("credentials", {
