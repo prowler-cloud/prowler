@@ -10,7 +10,7 @@ import React, { useCallback } from "react";
 import { useMediaQuery } from "usehooks-ts";
 
 import { logOut } from "@/actions";
-import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useUIStore } from "@/store";
 
 import {
   ProwlerExtended,
@@ -25,14 +25,16 @@ export const SidebarWrap = () => {
   const pathname = usePathname();
   const { data: session } = useSession();
 
-  const [isCollapsed, setIsCollapsed] = useLocalStorage("isCollapsed", false);
+  const isCollapsed = useUIStore((state) => state.isSideMenuOpen);
+  const openSideMenu = useUIStore((state) => state.openSideMenu);
+  const closeSideMenu = useUIStore((state) => state.closeSideMenu);
 
   const isMobile = useMediaQuery("(max-width: 768px)");
-
-  const isCompact = Boolean(isCollapsed) || isMobile;
+  const isCompact = isCollapsed || isMobile;
 
   const onToggle = useCallback(() => {
-    setIsCollapsed(!isCollapsed);
+    if (!isCollapsed) openSideMenu();
+    if (isCollapsed) closeSideMenu();
   }, [isCollapsed]);
 
   const currentPath = pathname === "/" ? "overview" : pathname.split("/")?.[1];
