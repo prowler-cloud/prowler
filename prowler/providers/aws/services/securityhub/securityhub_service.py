@@ -12,9 +12,9 @@ class SecurityHub(AWSService):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.securityhubs = []
-        self.__threading_call__(self.__describe_hub__)
+        self.__threading_call__(self._describe_hub)
 
-    def __describe_hub__(self, regional_client):
+    def _describe_hub(self, regional_client):
         logger.info("SecurityHub - Describing Hub...")
         try:
             # Check if SecurityHub is active

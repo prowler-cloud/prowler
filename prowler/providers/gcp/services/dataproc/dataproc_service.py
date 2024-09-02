@@ -12,9 +12,9 @@ class Dataproc(GCPService):
         super().__init__(__class__.__name__, provider)
         self.regions = compute_client.regions
         self.clusters = []
-        self.__threading_call__(self.__get_clusters__, self.regions)
+        self.__threading_call__(self._get_clusters, self.regions)
 
-    def __get_clusters__(self, region):
+    def _get_clusters(self, region):
         for project_id in self.project_ids:
             try:
                 request = (

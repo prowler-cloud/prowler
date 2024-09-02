@@ -11,10 +11,10 @@ class WAF(AWSService):
         # Call AWSService's __init__
         super().__init__("waf-regional", provider)
         self.web_acls = []
-        self.__threading_call__(self.__list_web_acls__)
-        self.__threading_call__(self.__list_resources_for_web_acl__)
+        self.__threading_call__(self._list_web_acls)
+        self.__threading_call__(self._list_resources_for_web_acl)
 
-    def __list_web_acls__(self, regional_client):
+    def _list_web_acls(self, regional_client):
         logger.info("WAF - Listing Regional Web ACLs...")
         try:
             for waf in regional_client.list_web_acls()["WebACLs"]:
@@ -34,7 +34,7 @@ class WAF(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __list_resources_for_web_acl__(self, regional_client):
+    def _list_resources_for_web_acl(self, regional_client):
         logger.info("WAF - Describing resources...")
         try:
             for acl in self.web_acls:

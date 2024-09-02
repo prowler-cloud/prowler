@@ -13,9 +13,9 @@ class ResourceExplorer2(AWSService):
         super().__init__("resource-explorer-2", provider)
         self.index_arn_template = f"arn:{self.audited_partition}:resource-explorer:{self.region}:{self.audited_account}:index"
         self.indexes = []
-        self.__threading_call__(self.__list_indexes__)
+        self.__threading_call__(self._list_indexes)
 
-    def __list_indexes__(self, regional_client):
+    def _list_indexes(self, regional_client):
         logger.info("ResourceExplorer - list indexes...")
         try:
             list_indexes_paginator = regional_client.get_paginator("list_indexes")

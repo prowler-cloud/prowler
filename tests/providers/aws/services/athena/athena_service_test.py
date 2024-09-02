@@ -52,7 +52,7 @@ def mock_generate_regional_clients(provider, service):
 class Test_Athena_Service:
     # Test Athena Get Workgrups
     @mock_aws
-    def test__get_workgroups__not_encrypted(self):
+    def test_get_workgroupsnot_encrypted(self):
         default_workgroup_name = "primary"
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         workgroup_arn = f"arn:{aws_provider.identity.partition}:athena:{AWS_REGION_EU_WEST_1}:{aws_provider.identity.account}:workgroup/{default_workgroup_name}"
@@ -76,7 +76,7 @@ class Test_Athena_Service:
     # We mock the get_work_group to return an encrypted workgroup
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     @mock_aws
-    def test__get_workgroups__encrypted(self):
+    def test_get_workgroupsencrypted(self):
         default_workgroup_name = "primary"
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 

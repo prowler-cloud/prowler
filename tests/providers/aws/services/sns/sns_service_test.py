@@ -72,7 +72,7 @@ class Test_SNS_Service:
 
     @mock_aws
     # Test SNS session
-    def test__list_topics__(self):
+    def test_list_topics(self):
         sns_client = client("sns", region_name=AWS_REGION_EU_WEST_1)
         sns_client.create_topic(
             Name=topic_name,
@@ -97,7 +97,7 @@ class Test_SNS_Service:
 
     @mock_aws
     # Test SNS session
-    def test__get_topic_attributes__(self):
+    def test_get_topic_attributes(self):
         sns_client = client("sns", region_name=AWS_REGION_EU_WEST_1)
         sns_client.create_topic(Name=topic_name)
 
@@ -114,7 +114,7 @@ class Test_SNS_Service:
         assert sns.topics[0].kms_master_key_id == kms_key_id
 
     @mock_aws
-    def test__list_subscriptions_by_topic__(self):
+    def test_list_subscriptions_by_topic(self):
         sns_client = client("sns", region_name=AWS_REGION_EU_WEST_1)
         topic_response = sns_client.create_topic(Name=topic_name)
         topic_arn = topic_response["TopicArn"]

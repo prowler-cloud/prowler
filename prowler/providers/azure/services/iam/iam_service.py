@@ -12,10 +12,10 @@ from prowler.providers.azure.lib.service.service import AzureService
 class IAM(AzureService):
     def __init__(self, provider: AzureProvider):
         super().__init__(AuthorizationManagementClient, provider)
-        self.roles, self.custom_roles = self.__get_roles__()
-        self.role_assignments = self.__get_role_assignments__()
+        self.roles, self.custom_roles = self._get_roles()
+        self.role_assignments = self._get_role_assignments()
 
-    def __get_roles__(self):
+    def _get_roles(self):
         logger.info("IAM - Getting roles...")
         builtin_roles = {}
         custom_roles = {}
@@ -54,7 +54,7 @@ class IAM(AzureService):
                 )
         return builtin_roles, custom_roles
 
-    def __get_role_assignments__(self):
+    def _get_role_assignments(self):
         logger.info("IAM - Getting role assignments...")
         role_assignments = {}
         for subscription, client in self.clients.items():

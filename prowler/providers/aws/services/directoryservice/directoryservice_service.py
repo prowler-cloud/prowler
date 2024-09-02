@@ -16,14 +16,14 @@ class DirectoryService(AWSService):
         # Call AWSService's __init__
         super().__init__("ds", provider)
         self.directories = {}
-        self.__threading_call__(self.__describe_directories__)
-        self.__threading_call__(self.__list_log_subscriptions__)
-        self.__threading_call__(self.__describe_event_topics__)
-        self.__threading_call__(self.__list_certificates__)
-        self.__threading_call__(self.__get_snapshot_limits__)
-        self.__list_tags_for_resource__()
+        self.__threading_call__(self._describe_directories)
+        self.__threading_call__(self._list_log_subscriptions)
+        self.__threading_call__(self._describe_event_topics)
+        self.__threading_call__(self._list_certificates)
+        self.__threading_call__(self._get_snapshot_limits)
+        self._list_tags_for_resource()
 
-    def __describe_directories__(self, regional_client):
+    def _describe_directories(self, regional_client):
         logger.info("DirectoryService - Describing Directories...")
         try:
             describe_fleets_paginator = regional_client.get_paginator(
@@ -71,7 +71,7 @@ class DirectoryService(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __list_log_subscriptions__(self, regional_client):
+    def _list_log_subscriptions(self, regional_client):
         logger.info("DirectoryService - Listing Log Subscriptions...")
         try:
             for directory in self.directories.values():
@@ -101,7 +101,7 @@ class DirectoryService(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_event_topics__(self, regional_client):
+    def _describe_event_topics(self, regional_client):
         logger.info("DirectoryService - Describing Event Topics...")
         try:
             for directory in self.directories.values():
@@ -128,7 +128,7 @@ class DirectoryService(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __list_certificates__(self, regional_client):
+    def _list_certificates(self, regional_client):
         logger.info("DirectoryService - Listing Certificates...")
         try:
             for directory in self.directories.values():
@@ -178,7 +178,7 @@ class DirectoryService(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_snapshot_limits__(self, regional_client):
+    def _get_snapshot_limits(self, regional_client):
         logger.info("DirectoryService - Getting Snapshot Limits...")
         try:
             for directory in self.directories.values():
@@ -213,7 +213,7 @@ class DirectoryService(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __list_tags_for_resource__(self):
+    def _list_tags_for_resource(self):
         logger.info("Directory Service - List Tags...")
         try:
             for directory in self.directories.values():

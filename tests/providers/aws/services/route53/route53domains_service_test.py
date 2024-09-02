@@ -68,7 +68,7 @@ def mock_make_api_call(self, operation_name, kwarg):
 class Test_Route53_Service:
 
     # Test Route53Domains Client
-    def test__get_client__(self):
+    def test_get_client(self):
         route53domains = Route53Domains(set_mocked_aws_provider([AWS_REGION_US_EAST_1]))
         assert route53domains.client.__class__.__name__ == "Route53Domains"
 
@@ -82,7 +82,7 @@ class Test_Route53_Service:
         route53domains = Route53Domains(set_mocked_aws_provider([AWS_REGION_US_EAST_1]))
         assert route53domains.service == "route53domains"
 
-    def test__list_domains__(self):
+    def test_list_domains(self):
         route53domains = Route53Domains(set_mocked_aws_provider([AWS_REGION_US_EAST_1]))
         domain_name = "test.domain.com"
         assert len(route53domains.domains)

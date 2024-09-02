@@ -11,11 +11,11 @@ class Shield(AWSService):
         super().__init__(__class__.__name__, provider, global_service=True)
         self.protections = {}
         self.enabled = False
-        self.enabled = self.__get_subscription_state__()
+        self.enabled = self._get_subscription_state()
         if self.enabled:
-            self.__list_protections__()
+            self._list_protections()
 
-    def __get_subscription_state__(self):
+    def _get_subscription_state(self):
         logger.info("Shield - Getting Subscription State...")
         try:
             return (
@@ -28,7 +28,7 @@ class Shield(AWSService):
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __list_protections__(self):
+    def _list_protections(self):
         logger.info("Shield - Listing Protections...")
         try:
             list_protections_paginator = self.client.get_paginator("list_protections")

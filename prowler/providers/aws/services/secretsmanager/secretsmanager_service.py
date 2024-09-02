@@ -13,9 +13,9 @@ class SecretsManager(AWSService):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.secrets = {}
-        self.__threading_call__(self.__list_secrets__)
+        self.__threading_call__(self._list_secrets)
 
-    def __list_secrets__(self, regional_client):
+    def _list_secrets(self, regional_client):
         logger.info("SecretsManager - Listing Secrets...")
         try:
             list_secrets_paginator = regional_client.get_paginator("list_secrets")

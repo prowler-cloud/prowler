@@ -11,13 +11,13 @@ class Lightsail(AWSService):
     def __init__(self, provider):
         super().__init__(__class__.__name__, provider)
         self.instances = {}
-        self.__threading_call__(self.__get_instances__)
+        self.__threading_call__(self._get_instances)
         self.databases = {}
-        self.__threading_call__(self.__get_databases__)
+        self.__threading_call__(self._get_databases)
         self.static_ips = {}
-        self.__threading_call__(self.__get_static_ips__)
+        self.__threading_call__(self._get_static_ips)
 
-    def __get_instances__(self, regional_client):
+    def _get_instances(self, regional_client):
         logger.info("Lightsail - Getting instances...")
         try:
             instance_paginator = regional_client.get_paginator("get_instances")
@@ -87,7 +87,7 @@ class Lightsail(AWSService):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_databases__(self, regional_client):
+    def _get_databases(self, regional_client):
         logger.info("Lightsail - Getting databases...")
         try:
             databases_paginator = regional_client.get_paginator(
@@ -125,7 +125,7 @@ class Lightsail(AWSService):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_static_ips__(self, regional_client):
+    def _get_static_ips(self, regional_client):
         logger.info("Lightsail - Getting static IPs...")
         try:
             static_ips_paginator = regional_client.get_paginator("get_static_ips")

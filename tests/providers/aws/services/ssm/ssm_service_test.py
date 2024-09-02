@@ -135,7 +135,7 @@ mainSteps:
 class Test_SSM_Service:
     # Test SSM Client
     @mock_aws
-    def test__get_client__(self):
+    def test_get_client(self):
         ssm = SSM(set_mocked_aws_provider([AWS_REGION_US_EAST_1]))
         assert ssm.regional_clients[AWS_REGION_US_EAST_1].__class__.__name__ == "SSM"
 
@@ -152,7 +152,7 @@ class Test_SSM_Service:
         assert ssm.service == "ssm"
 
     @mock_aws
-    def test__list_documents__(self):
+    def test_list_documents(self):
         # Create SSM Document
         ssm_client = client("ssm", region_name=AWS_REGION_US_EAST_1)
         ssm_document_name = "test-document"
@@ -189,7 +189,7 @@ class Test_SSM_Service:
         assert ssm.documents[document_arn].account_owners == [AWS_ACCOUNT_NUMBER]
 
     @mock_aws
-    def test__list_resource_compliance_summaries__(self):
+    def test_list_resource_compliance_summaries(self):
         ssm = SSM(set_mocked_aws_provider([AWS_REGION_US_EAST_1]))
         instance_id = "i-1234567890abcdef0"
         assert len(ssm.compliance_resources) == 1

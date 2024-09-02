@@ -12,9 +12,9 @@ class MySQL(AzureService):
     def __init__(self, provider: AzureProvider):
         super().__init__(MySQLManagementClient, provider)
 
-        self.flexible_servers = self.__get_flexible_servers__()
+        self.flexible_servers = self._get_flexible_servers()
 
-    def __get_flexible_servers__(self):
+    def _get_flexible_servers(self):
         logger.info("MySQL - Getting servers...")
         servers = {}
         for subscription_name, client in self.clients.items():
@@ -28,7 +28,7 @@ class MySQL(AzureService):
                                 resource_id=server.id,
                                 location=server.location,
                                 version=server.version,
-                                configurations=self.__get_configurations__(
+                                configurations=self._get_configurations(
                                     client, server.id.split("/")[4], server.name
                                 ),
                             )
@@ -40,7 +40,7 @@ class MySQL(AzureService):
                 )
         return servers
 
-    def __get_configurations__(self, client, resource_group, server_name):
+    def _get_configurations(self, client, resource_group, server_name):
         logger.info(f"MySQL - Getting configurations from server {server_name} ...")
         configurations = {}
         try:

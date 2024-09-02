@@ -76,7 +76,7 @@ class Test_ApiGatewayV2_Service:
 
     # Test ApiGatewayV2 Get APIs
     @mock_aws
-    def test__get_apis__(self):
+    def test_get_apis(self):
         # Generate ApiGatewayV2 Client
         apigatewayv2_client = client("apigatewayv2", region_name=AWS_REGION_US_EAST_1)
         # Create ApiGatewayV2 API
@@ -91,7 +91,7 @@ class Test_ApiGatewayV2_Service:
 
     # Test ApiGatewayV2 Get Authorizers
     @mock_aws
-    def test__get_authorizers__(self):
+    def test_get_authorizers(self):
         # Generate ApiGatewayV2 Client
         apigatewayv2_client = client("apigatewayv2", region_name=AWS_REGION_US_EAST_1)
         # Create ApiGatewayV2 Rest API
@@ -111,7 +111,7 @@ class Test_ApiGatewayV2_Service:
 
     # Test ApiGatewayV2 Get Stages
     @mock_aws
-    def test__get_stages__(self):
+    def test_get_stages(self):
         # Generate ApiGatewayV2 Client
         apigatewayv2_client = client("apigatewayv2", region_name=AWS_REGION_US_EAST_1)
         # Create ApiGatewayV2 Rest API and a deployment stage

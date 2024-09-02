@@ -28,7 +28,7 @@ def mock_generate_regional_clients(provider, service):
 class Test_SecretsManager_Service:
     # Test SecretsManager Client
     @mock_aws
-    def test__get_client__(self):
+    def test_get_client(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         secretsmanager = SecretsManager(aws_provider)
         assert (
@@ -51,7 +51,7 @@ class Test_SecretsManager_Service:
         assert secretsmanager.service == "secretsmanager"
 
     @mock_aws
-    def test__list_secrets__(self):
+    def test_list_secrets(self):
         secretsmanager_client = client(
             "secretsmanager", region_name=AWS_REGION_EU_WEST_1
         )

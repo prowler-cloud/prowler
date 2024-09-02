@@ -13,10 +13,10 @@ class WorkSpaces(AWSService):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.workspaces = []
-        self.__threading_call__(self.__describe_workspaces__)
-        self.__describe_tags__()
+        self.__threading_call__(self._describe_workspaces)
+        self._describe_tags()
 
-    def __describe_workspaces__(self, regional_client):
+    def _describe_workspaces(self, regional_client):
         logger.info("WorkSpaces - describing workspaces...")
         try:
             describe_workspaces_paginator = regional_client.get_paginator(
@@ -51,7 +51,7 @@ class WorkSpaces(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_tags__(self):
+    def _describe_tags(self):
         logger.info("Workspaces - List Tags...")
         try:
             for workspace in self.workspaces:

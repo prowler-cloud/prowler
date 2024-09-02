@@ -1,8 +1,9 @@
+import os
 from typing import Optional
 
 from pydantic import BaseModel
 
-from prowler.providers.aws.lib.arn.error import RoleArnParsingFailedMissingFields
+from prowler.providers.aws.exceptions.exceptions import AWSIAMRoleARNMissingFields
 
 
 class ARN(BaseModel):
@@ -18,7 +19,7 @@ class ARN(BaseModel):
         # Validate the ARN
         ## Check that arn starts with arn
         if not arn.startswith("arn:"):
-            raise RoleArnParsingFailedMissingFields
+            raise AWSIAMRoleARNMissingFields(file=os.path.basename(__file__))
         ## Retrieve fields
         arn_elements = arn.split(":", 5)
         data = {

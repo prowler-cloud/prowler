@@ -54,7 +54,7 @@ class Test_Config_Service:
 
     # Test Config Get Rest APIs
     @mock_aws
-    def test__describe_configuration_recorder_status__(self):
+    def test_describe_configuration_recorder_status(self):
         # Generate Config Client
         config_client = client("config", region_name=AWS_REGION_US_EAST_1)
         # Create Config Recorder and start it

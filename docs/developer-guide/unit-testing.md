@@ -592,7 +592,7 @@ is following the actual format, add one function where the client is passed to b
 `mock_api_<endpoint>_calls` (*endpoint* refers to the first attribute pointed after *client*).
 
 In the example of BigQuery the function is called `mock_api_dataset_calls`. And inside of this function we found an assignation to
-be used in the `__get_datasets__` method in BigQuery class:
+be used in the `_get_datasets` method in BigQuery class:
 
 ```python
 # Mocking datasets
@@ -765,7 +765,7 @@ from tests.providers.azure.azure_fixtures import (
     set_mocked_azure_provider,
 )
 
-# Function to mock the service function __get_components__, this function task is to return a possible value that real function could returns
+# Function to mock the service function _get_components, this function task is to return a possible value that real function could returns
 def mock_appinsights_get_components(_):
     return {
         AZURE_SUBSCRIPTION_ID: {
@@ -779,12 +779,12 @@ def mock_appinsights_get_components(_):
 
 # Patch decorator to use the mocked function instead the function with the real API call
 @patch(
-    "prowler.providers.azure.services.appinsights.appinsights_service.AppInsights.__get_components__",
+    "prowler.providers.azure.services.appinsights.appinsights_service.AppInsights._get_components",
     new=mock_appinsights_get_components,
 )
 class Test_AppInsights_Service:
     # Mandatory test for every service, this method test the instance of the client is correct
-    def test__get_client__(self):
+    def test_get_client(self):
         app_insights = AppInsights(set_mocked_azure_provider())
         assert (
             app_insights.clients[AZURE_SUBSCRIPTION_ID].__class__.__name__
@@ -794,8 +794,8 @@ class Test_AppInsights_Service:
     def test__get_subscriptions__(self):
         app_insights = AppInsights(set_mocked_azure_provider())
         assert app_insights.subscriptions.__class__.__name__ == "dict"
-    # Test for the function __get_components__, inside this client is used the mocked function
-    def test__get_components__(self):
+    # Test for the function _get_components, inside this client is used the mocked function
+    def test_get_components(self):
         appinsights = AppInsights(set_mocked_azure_provider())
         assert len(appinsights.components) == 1
         assert (

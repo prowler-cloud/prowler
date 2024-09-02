@@ -10,12 +10,12 @@ class Macie(AWSService):
         # Call AWSService's __init__
         super().__init__("macie2", provider)
         self.sessions = []
-        self.__threading_call__(self.__get_macie_session__)
+        self.__threading_call__(self._get_macie_session)
 
-    def __get_session_arn_template__(self, region):
+    def _get_session_arn_template(self, region):
         return f"arn:{self.audited_partition}:macie:{region}:{self.audited_account}:session"
 
-    def __get_macie_session__(self, regional_client):
+    def _get_macie_session(self, regional_client):
         logger.info("Macie - Get Macie Session...")
         try:
             self.sessions.append(
