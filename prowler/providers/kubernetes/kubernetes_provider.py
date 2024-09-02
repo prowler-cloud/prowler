@@ -12,6 +12,13 @@ from prowler.lib.logger import logger
 from prowler.lib.utils.utils import print_boxes
 from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
+from prowler.providers.kubernetes.exceptions.exceptions import (
+    KubernetesCloudResourceManagerAPINotUsedError,
+    KubernetesGetAllNamespacesError,
+    KubernetesGetContextUserRolesError,
+    KubernetesSearchAndSaveRolesError,
+    KubernetesSetUpSessionError,
+)
 from prowler.providers.kubernetes.lib.mutelist.mutelist import KubernetesMutelist
 from prowler.providers.kubernetes.models import (
     KubernetesIdentityInfo,
@@ -59,8 +66,9 @@ class KubernetesProvider(Provider):
 
         if not self._session.api_client:
             logger.critical("Failed to set up a Kubernetes session.")
-            # TODO: add custom exception once we have the Kubernetes exceptions
-            raise SystemExit
+            raise KubernetesCloudResourceManagerAPINotUsedError(
+                original_exception="Failed to set up a Kubernetes session."
+            )
 
         self._identity = KubernetesIdentityInfo(
             context=self._session.context["name"],
@@ -210,8 +218,7 @@ class KubernetesProvider(Provider):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             if raise_on_exception:
-                # TODO: add custom exception once we have the Kubernetes exceptions
-                raise error
+                raise KubernetesSetUpSessionError(original_exception=error)
             return Connection(error=error)
 
     def search_and_save_roles(
@@ -245,8 +252,7 @@ class KubernetesProvider(Provider):
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            # TODO: add custom exception once we have the Kubernetes exceptions
-            raise error
+            raise KubernetesSearchAndSaveRolesError(original_exception=error)
 
     def get_context_user_roles(self):
         """
@@ -276,12 +282,14 @@ class KubernetesProvider(Provider):
             )
             logger.info("Context user roles retrieved successfully.")
             return roles
+        except KubernetesSearchAndSaveRolesError as error:
+            logger.critical(str(error))
+            raise error
         except Exception as error:
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            # TODO: add custom exception once we have the Kubernetes exceptions
-            raise error
+            raise KubernetesGetContextUserRolesError(original_exception=error)
 
     def get_all_namespaces(self) -> list[str]:
         """
@@ -299,8 +307,7 @@ class KubernetesProvider(Provider):
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            # TODO: add custom exception once we have the Kubernetes exceptions
-            raise error
+            raise KubernetesGetAllNamespacesError(original_exception=error)
 
     def get_pod_current_namespace(self):
         """
