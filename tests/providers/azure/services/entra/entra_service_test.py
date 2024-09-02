@@ -99,35 +99,35 @@ async def mock_entra_get_conditional_access_policy(_):
 
 
 @patch(
-    "prowler.providers.azure.services.entra.entra_service.Entra.__get_users__",
+    "prowler.providers.azure.services.entra.entra_service.Entra._get_users",
     new=mock_entra_get_users,
 )
 @patch(
-    "prowler.providers.azure.services.entra.entra_service.Entra.__get_authorization_policy__",
+    "prowler.providers.azure.services.entra.entra_service.Entra._get_authorization_policy",
     new=mock_entra_get_authorization_policy,
 )
 @patch(
-    "prowler.providers.azure.services.entra.entra_service.Entra.__get_group_settings__",
+    "prowler.providers.azure.services.entra.entra_service.Entra._get_group_settings",
     new=mock_entra_get_group_settings,
 )
 @patch(
-    "prowler.providers.azure.services.entra.entra_service.Entra.__get_security_default__",
+    "prowler.providers.azure.services.entra.entra_service.Entra._get_security_default",
     new=mock_entra_get_security_default,
 )
 @patch(
-    "prowler.providers.azure.services.entra.entra_service.Entra.__get_named_locations__",
+    "prowler.providers.azure.services.entra.entra_service.Entra._get_named_locations",
     new=mock_entra_get_named_locations,
 )
 @patch(
-    "prowler.providers.azure.services.entra.entra_service.Entra.__get_directory_roles__",
+    "prowler.providers.azure.services.entra.entra_service.Entra._get_directory_roles",
     new=mock_entra_get_directory_roles,
 )
 @patch(
-    "prowler.providers.azure.services.entra.entra_service.Entra.__get_conditional_access_policy__",
+    "prowler.providers.azure.services.entra.entra_service.Entra._get_conditional_access_policy",
     new=mock_entra_get_conditional_access_policy,
 )
 class Test_Entra_Service:
-    def test__get_client__(self):
+    def test_get_client(self):
         entra_client = Entra(
             set_mocked_azure_provider(identity=AzureIdentityInfo(tenant_domain=DOMAIN))
         )
@@ -137,7 +137,7 @@ class Test_Entra_Service:
         entra_client = Entra(set_mocked_azure_provider())
         assert entra_client.subscriptions.__class__.__name__ == "dict"
 
-    def test__get_users__(self):
+    def test_get_users(self):
         entra_client = Entra(set_mocked_azure_provider())
         assert len(entra_client.users) == 1
         assert entra_client.users[DOMAIN]["user-1@tenant1.es"].id == "id-1"
@@ -147,7 +147,7 @@ class Test_Entra_Service:
             == 0
         )
 
-    def test__get_authorization_policy__(self):
+    def test_get_authorization_policy(self):
         entra_client = Entra(set_mocked_azure_provider())
         assert entra_client.authorization_policy[DOMAIN].id == "id-1"
         assert entra_client.authorization_policy[DOMAIN].name == "Name 1"
@@ -156,7 +156,7 @@ class Test_Entra_Service:
             DOMAIN
         ].default_user_role_permissions
 
-    def test__get_group_settings__(self):
+    def test_get_group_settings(self):
         entra_client = Entra(set_mocked_azure_provider())
         assert entra_client.group_settings[DOMAIN]["id-1"].name == "Test"
         assert (
@@ -165,13 +165,13 @@ class Test_Entra_Service:
         )
         assert len(entra_client.group_settings[DOMAIN]["id-1"].settings) == 0
 
-    def test__get_security_default__(self):
+    def test_get_security_default(self):
         entra_client = Entra(set_mocked_azure_provider())
         assert entra_client.security_default[DOMAIN].id == "id-security-default"
         assert entra_client.security_default[DOMAIN].name == "Test"
         assert entra_client.security_default[DOMAIN].is_enabled
 
-    def test__get_named_locations__(self):
+    def test_get_named_locations(self):
         entra_client = Entra(set_mocked_azure_provider())
         assert entra_client.named_locations[DOMAIN]["id-1"].name == "Test"
         assert (
@@ -179,7 +179,7 @@ class Test_Entra_Service:
         )
         assert not entra_client.named_locations[DOMAIN]["id-1"].is_trusted
 
-    def test__get_directory_roles__(self):
+    def test_get_directory_roles(self):
         entra_client = Entra(set_mocked_azure_provider())
         assert (
             entra_client.directory_roles[DOMAIN]["GlobalAdministrator"].id
@@ -190,7 +190,7 @@ class Test_Entra_Service:
             == 0
         )
 
-    def test__get_conditional_access_policy__(self):
+    def test_get_conditional_access_policy(self):
         entra_client = Entra(set_mocked_azure_provider())
         assert len(entra_client.conditional_access_policy) == 1
         assert len(entra_client.conditional_access_policy[DOMAIN]) == 1

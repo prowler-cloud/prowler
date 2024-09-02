@@ -16,11 +16,11 @@ class CodeArtifact(AWSService):
         super().__init__(__class__.__name__, provider)
         # repositories is a dictionary containing all the codeartifact service information
         self.repositories = {}
-        self.__threading_call__(self.__list_repositories__)
-        self.__threading_call__(self.__list_packages__)
-        self.__list_tags_for_resource__()
+        self.__threading_call__(self._list_repositories)
+        self.__threading_call__(self._list_packages)
+        self._list_tags_for_resource()
 
-    def __list_repositories__(self, regional_client):
+    def _list_repositories(self, regional_client):
         logger.info("CodeArtifact - Listing Repositories...")
         try:
             list_repositories_paginator = regional_client.get_paginator(
@@ -52,7 +52,7 @@ class CodeArtifact(AWSService):
                 f" {error}"
             )
 
-    def __list_packages__(self, regional_client):
+    def _list_packages(self, regional_client):
         logger.info("CodeArtifact - Listing Packages and retrieving information...")
         for repository in self.repositories:
             try:
@@ -169,7 +169,7 @@ class CodeArtifact(AWSService):
                     f" {error}"
                 )
 
-    def __list_tags_for_resource__(self):
+    def _list_tags_for_resource(self):
         logger.info("CodeArtifact - List Tags...")
         try:
             for repository in self.repositories.values():

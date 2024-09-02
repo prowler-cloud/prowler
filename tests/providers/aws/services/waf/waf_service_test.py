@@ -66,7 +66,7 @@ class Test_WAF_Service:
         assert waf.session.__class__.__name__ == "Session"
 
     # Test WAF Describe Web ACLs
-    def test__list_web_acls__(self):
+    def test_list_web_acls(self):
         # WAF client for this test class
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         waf = WAF(aws_provider)
@@ -76,7 +76,7 @@ class Test_WAF_Service:
         assert waf.web_acls[0].id == "my-web-acl-id"
 
     # Test WAF Describe Web ACLs Resources
-    def test__list_resources_for_web_acl__(self):
+    def test_list_resources_for_web_acl(self):
         # WAF client for this test class
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         waf = WAF(aws_provider)

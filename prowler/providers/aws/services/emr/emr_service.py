@@ -16,14 +16,14 @@ class EMR(AWSService):
         super().__init__(__class__.__name__, provider)
         self.clusters = {}
         self.block_public_access_configuration = {}
-        self.__threading_call__(self.__list_clusters__)
-        self.__threading_call__(self.__describe_cluster__)
-        self.__threading_call__(self.__get_block_public_access_configuration__)
+        self.__threading_call__(self._list_clusters)
+        self.__threading_call__(self._describe_cluster)
+        self.__threading_call__(self._get_block_public_access_configuration)
 
-    def __get_cluster_arn_template__(self, region):
+    def _get_cluster_arn_template(self, region):
         return f"arn:{self.audited_partition}:elasticmapreduce:{region}:{self.audited_account}:cluster"
 
-    def __list_clusters__(self, regional_client):
+    def _list_clusters(self, regional_client):
         logger.info("EMR - Listing Clusters...")
         try:
             list_clusters_paginator = regional_client.get_paginator("list_clusters")
@@ -54,7 +54,7 @@ class EMR(AWSService):
                 f" {error}"
             )
 
-    def __describe_cluster__(self, regional_client):
+    def _describe_cluster(self, regional_client):
         logger.info("EMR - Describing Clusters...")
         try:
             for cluster in self.clusters.values():
@@ -131,7 +131,7 @@ class EMR(AWSService):
                 f" {error}"
             )
 
-    def __get_block_public_access_configuration__(self, regional_client):
+    def _get_block_public_access_configuration(self, regional_client):
         """Returns the Amazon EMR block public access configuration for your Amazon Web Services account in the current Region."""
         logger.info("EMR - Getting Block Public Access Configuration...")
         try:

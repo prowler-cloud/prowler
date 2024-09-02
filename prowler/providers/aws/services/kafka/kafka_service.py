@@ -10,11 +10,11 @@ class Kafka(AWSService):
         super().__init__(__class__.__name__, provider)
         self.account_arn_template = f"arn:{self.audited_partition}:kafka:{self.region}:{self.audited_account}:cluster"
         self.clusters = {}
-        self.__threading_call__(self.__list_clusters__)
+        self.__threading_call__(self._list_clusters)
         self.kafka_versions = []
-        self.__threading_call__(self.__list_kafka_versions__)
+        self.__threading_call__(self._list_kafka_versions)
 
-    def __list_clusters__(self, regional_client):
+    def _list_clusters(self, regional_client):
         try:
             cluster_paginator = regional_client.get_paginator("list_clusters")
 
@@ -70,7 +70,7 @@ class Kafka(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __list_kafka_versions__(self, regional_client):
+    def _list_kafka_versions(self, regional_client):
         try:
             kafka_versions_paginator = regional_client.get_paginator(
                 "list_kafka_versions"

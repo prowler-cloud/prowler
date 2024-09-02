@@ -55,15 +55,15 @@ def mock_vm_get_disks(_):
 
 
 @patch(
-    "prowler.providers.azure.services.vm.vm_service.VirtualMachines.__get_virtual_machines__",
+    "prowler.providers.azure.services.vm.vm_service.VirtualMachines._get_virtual_machines",
     new=mock_vm_get_virtual_machines,
 )
 @patch(
-    "prowler.providers.azure.services.vm.vm_service.VirtualMachines.__get_disks__",
+    "prowler.providers.azure.services.vm.vm_service.VirtualMachines._get_disks",
     new=mock_vm_get_disks,
 )
 class Test_AppInsights_Service:
-    def test__get_client__(self):
+    def test_get_client(self):
         app_insights = VirtualMachines(set_mocked_azure_provider())
         assert (
             app_insights.clients[AZURE_SUBSCRIPTION_ID].__class__.__name__

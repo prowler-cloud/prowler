@@ -16,10 +16,10 @@ from prowler.providers.azure.lib.service.service import AzureService
 class Storage(AzureService):
     def __init__(self, provider: AzureProvider):
         super().__init__(StorageManagementClient, provider)
-        self.storage_accounts = self.__get_storage_accounts__()
-        self.__get_blob_properties__()
+        self.storage_accounts = self._get_storage_accounts()
+        self._get_blob_properties()
 
-    def __get_storage_accounts__(self):
+    def _get_storage_accounts(self):
         logger.info("Storage - Getting storage accounts...")
         storage_accounts = {}
         for subscription, client in self.clients.items():
@@ -60,7 +60,7 @@ class Storage(AzureService):
                 )
         return storage_accounts
 
-    def __get_blob_properties__(self):
+    def _get_blob_properties(self):
         logger.info("Storage - Getting blob properties...")
         try:
             for subscription, accounts in self.storage_accounts.items():

@@ -14,11 +14,11 @@ class AccessAnalyzer(AWSService):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.analyzers = []
-        self.__threading_call__(self.__list_analyzers__)
-        self.__list_findings__()
-        self.__get_finding_status__()
+        self.__threading_call__(self._list_analyzers)
+        self._list_findings()
+        self._get_finding_status()
 
-    def __list_analyzers__(self, regional_client):
+    def _list_analyzers(self, regional_client):
         logger.info("AccessAnalyzer - Listing Analyzers...")
         try:
             list_analyzers_paginator = regional_client.get_paginator("list_analyzers")
@@ -57,7 +57,7 @@ class AccessAnalyzer(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_finding_status__(self):
+    def _get_finding_status(self):
         logger.info("AccessAnalyzer - Get Finding status...")
         try:
             for analyzer in self.analyzers:
@@ -87,7 +87,7 @@ class AccessAnalyzer(AWSService):
 
     # TODO: We need to include ListFindingsV2
     # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/accessanalyzer/client/list_findings_v2.html
-    def __list_findings__(self):
+    def _list_findings(self):
         logger.info("AccessAnalyzer - Listing Findings per Analyzer...")
         try:
             for analyzer in self.analyzers:

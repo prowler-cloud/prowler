@@ -18,14 +18,14 @@ class Core(KubernetesService):
         self.client = client.CoreV1Api(self.api_client)
         self.namespaces = provider.namespaces
         self.pods = {}
-        self.__get_pods__()
+        self._get_pods()
         self.config_maps = {}
-        self.__list_config_maps__()
+        self._list_config_maps()
         self.nodes = {}
-        self.__list_nodes__()
-        self.__in_worker_node__()
+        self._list_nodes()
+        self._in_worker_node()
 
-    def __get_pods__(self):
+    def _get_pods(self):
         try:
             for namespace in self.namespaces:
                 pods = self.client.list_namespaced_pod(namespace)
@@ -87,7 +87,7 @@ class Core(KubernetesService):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __list_config_maps__(self):
+    def _list_config_maps(self):
         try:
             response = self.client.list_config_map_for_all_namespaces()
             for cm in response.items:
@@ -104,7 +104,7 @@ class Core(KubernetesService):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __list_nodes__(self):
+    def _list_nodes(self):
         try:
             response = self.client.list_node()
             for node in response.items:
@@ -131,7 +131,7 @@ class Core(KubernetesService):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __in_worker_node__(self):
+    def _in_worker_node(self):
         try:
             hostname = socket.gethostname()
             for node in self.nodes.values():

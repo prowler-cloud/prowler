@@ -13,14 +13,14 @@ class GuardDuty(AWSService):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.detectors = []
-        self.__threading_call__(self.__list_detectors__)
-        self.__get_detector__()
-        self.__list_findings__()
-        self.__list_members__()
-        self.__get_administrator_account__()
-        self.__list_tags_for_resource__()
+        self.__threading_call__(self._list_detectors)
+        self._get_detector()
+        self._list_findings()
+        self._list_members()
+        self._get_administrator_account()
+        self._list_tags_for_resource()
 
-    def __list_detectors__(self, regional_client):
+    def _list_detectors(self, regional_client):
         logger.info("GuardDuty - listing detectors...")
         try:
             detectors = False
@@ -51,7 +51,7 @@ class GuardDuty(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_detector__(self):
+    def _get_detector(self):
         logger.info("GuardDuty - getting detector info...")
         try:
             for detector in self.detectors:
@@ -75,7 +75,7 @@ class GuardDuty(AWSService):
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 
-    def __get_administrator_account__(self):
+    def _get_administrator_account(self):
         logger.info("GuardDuty - getting administrator account...")
         try:
             for detector in self.detectors:
@@ -105,7 +105,7 @@ class GuardDuty(AWSService):
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 
-    def __list_members__(self):
+    def _list_members(self):
         logger.info("GuardDuty - listing members...")
         try:
             for detector in self.detectors:
@@ -130,7 +130,7 @@ class GuardDuty(AWSService):
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 
-    def __list_findings__(self):
+    def _list_findings(self):
         logger.info("GuardDuty - listing findings...")
         try:
             for detector in self.detectors:
@@ -164,7 +164,7 @@ class GuardDuty(AWSService):
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 
-    def __list_tags_for_resource__(self):
+    def _list_tags_for_resource(self):
         logger.info("Guardduty - List Tags...")
         try:
             for detector in self.detectors:

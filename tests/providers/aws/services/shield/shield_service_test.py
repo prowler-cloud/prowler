@@ -54,13 +54,13 @@ class Test_Shield_Service:
         shield = Shield(aws_provider)
         assert shield.session.__class__.__name__ == "Session"
 
-    def test__get_subscription_state__(self):
+    def test_get_subscription_state(self):
         # Shield client for this test class
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         shield = Shield(aws_provider)
         assert shield.enabled
 
-    def test__list_protections__(self):
+    def test_list_protections(self):
         # Shield client for this test class
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         shield = Shield(aws_provider)

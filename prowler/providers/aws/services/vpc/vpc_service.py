@@ -21,18 +21,18 @@ class VPC(AWSService):
         self.vpc_peering_connections = []
         self.vpc_endpoints = []
         self.vpc_endpoint_services = []
-        self.__threading_call__(self.__describe_vpcs__)
-        self.__threading_call__(self.__describe_vpc_peering_connections__)
-        self.__threading_call__(self.__describe_vpc_endpoints__)
-        self.__threading_call__(self.__describe_vpc_endpoint_services__)
-        self.__describe_flow_logs__()
-        self.__describe_peering_route_tables__()
-        self.__describe_vpc_endpoint_service_permissions__()
+        self.__threading_call__(self._describe_vpcs)
+        self.__threading_call__(self._describe_vpc_peering_connections)
+        self.__threading_call__(self._describe_vpc_endpoints)
+        self.__threading_call__(self._describe_vpc_endpoint_services)
+        self._describe_flow_logs()
+        self._describe_peering_route_tables()
+        self._describe_vpc_endpoint_service_permissions()
         self.vpc_subnets = {}
-        self.__threading_call__(self.__describe_vpc_subnets__)
-        self.__describe_network_interfaces__()
+        self.__threading_call__(self._describe_vpc_subnets)
+        self._describe_network_interfaces()
 
-    def __describe_vpcs__(self, regional_client):
+    def _describe_vpcs(self, regional_client):
         logger.info("VPC - Describing VPCs...")
         try:
             describe_vpcs_paginator = regional_client.get_paginator("describe_vpcs")
@@ -65,7 +65,7 @@ class VPC(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_vpc_peering_connections__(self, regional_client):
+    def _describe_vpc_peering_connections(self, regional_client):
         logger.info("VPC - Describing VPC Peering Connections...")
         try:
             describe_vpc_peering_connections_paginator = regional_client.get_paginator(
@@ -104,7 +104,7 @@ class VPC(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_peering_route_tables__(self):
+    def _describe_peering_route_tables(self):
         logger.info("VPC - Describing Peering Route Tables...")
         try:
             for conn in self.vpc_peering_connections:
@@ -147,7 +147,7 @@ class VPC(AWSService):
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 
-    def __describe_flow_logs__(self):
+    def _describe_flow_logs(self):
         logger.info("VPC - Describing flow logs...")
         try:
             for vpc in self.vpcs.values():
@@ -174,7 +174,7 @@ class VPC(AWSService):
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 
-    def __describe_network_interfaces__(self):
+    def _describe_network_interfaces(self):
         logger.info("VPC - Describing flow logs...")
         try:
             for vpc in self.vpcs.values():
@@ -214,7 +214,7 @@ class VPC(AWSService):
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 
-    def __describe_vpc_endpoints__(self, regional_client):
+    def _describe_vpc_endpoints(self, regional_client):
         logger.info("VPC - Describing VPC Endpoints...")
         try:
             describe_vpc_endpoints_paginator = regional_client.get_paginator(
@@ -252,7 +252,7 @@ class VPC(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_vpc_endpoint_services__(self, regional_client):
+    def _describe_vpc_endpoint_services(self, regional_client):
         logger.info("VPC - Describing VPC Endpoint Services...")
         try:
             describe_vpc_endpoint_services_paginator = regional_client.get_paginator(
@@ -285,7 +285,7 @@ class VPC(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_vpc_endpoint_service_permissions__(self):
+    def _describe_vpc_endpoint_service_permissions(self):
         logger.info("VPC - Describing VPC Endpoint service permissions...")
         try:
             for service in self.vpc_endpoint_services:
@@ -312,7 +312,7 @@ class VPC(AWSService):
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 
-    def __describe_vpc_subnets__(self, regional_client):
+    def _describe_vpc_subnets(self, regional_client):
         logger.info("VPC - Describing VPC subnets...")
         try:
             describe_subnets_paginator = regional_client.get_paginator(

@@ -41,7 +41,7 @@ def mock_generate_regional_clients(provider, service):
     new=mock_generate_regional_clients,
 )
 class Test_ResourceExplorer2_Service:
-    def test__get_client__(self):
+    def test_get_client(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         resourceeplorer2 = ResourceExplorer2(aws_provider)
         assert (
@@ -54,7 +54,7 @@ class Test_ResourceExplorer2_Service:
         resourceeplorer2 = ResourceExplorer2(aws_provider)
         assert resourceeplorer2.service == "resource-explorer-2"
 
-    def test__list_indexes__(self):
+    def test_list_indexes(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         resourceeplorer2 = ResourceExplorer2(aws_provider)
         assert len(resourceeplorer2.indexes) == 1

@@ -10,9 +10,9 @@ class Scheduler(KubernetesService):
         super().__init__(provider)
         self.client = core_client
 
-        self.scheduler_pods = self.__get_scheduler_pods__()
+        self.scheduler_pods = self._get_scheduler_pods()
 
-    def __get_scheduler_pods__(self):
+    def _get_scheduler_pods(self):
         try:
             scheduler_pods = []
             for pod in self.client.pods.values():

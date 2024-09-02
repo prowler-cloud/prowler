@@ -52,7 +52,7 @@ def mock_generate_regional_clients(provider, service):
 class Test_EMR_Service:
     # Test EMR Client
     @mock_aws
-    def test__get_client__(self):
+    def test_get_client(self):
         emr = EMR(set_mocked_aws_provider())
         assert emr.regional_clients[AWS_REGION_EU_WEST_1].__class__.__name__ == "EMR"
 
@@ -68,9 +68,9 @@ class Test_EMR_Service:
         emr = EMR(set_mocked_aws_provider())
         assert emr.service == "emr"
 
-    # Test __list_clusters__ and __describe_cluster__
+    # Test _list_clusters and _describe_cluster
     @mock_aws
-    def test__list_clusters__(self):
+    def test_list_clusters(self):
         # Create EMR Cluster
         emr_client = client("emr", region_name=AWS_REGION_EU_WEST_1)
         cluster_name = "test-cluster"
@@ -114,7 +114,7 @@ class Test_EMR_Service:
         ]
 
     @mock_aws
-    def test__get_block_public_access_configuration__(self):
+    def test_get_block_public_access_configuration(self):
         emr = EMR(set_mocked_aws_provider())
 
         assert len(emr.block_public_access_configuration) == 1

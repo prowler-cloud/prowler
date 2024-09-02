@@ -10,9 +10,9 @@ class Monitoring(GCPService):
     def __init__(self, provider: GcpProvider):
         super().__init__(__class__.__name__, provider, api_version="v3")
         self.alert_policies = []
-        self.__get_alert_policies__()
+        self._get_alert_policies()
 
-    def __get_alert_policies__(self):
+    def _get_alert_policies(self):
         for project_id in self.project_ids:
             try:
                 request = (

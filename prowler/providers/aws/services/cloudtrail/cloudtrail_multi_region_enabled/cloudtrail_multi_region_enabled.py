@@ -32,7 +32,7 @@ class cloudtrail_multi_region_enabled(Check):
                                 "No CloudTrail trails enabled with logging were found."
                             )
                             report.resource_arn = (
-                                cloudtrail_client.__get_trail_arn_template__(region)
+                                cloudtrail_client._get_trail_arn_template(region)
                             )
                             report.resource_id = cloudtrail_client.audited_account
                 # If there are no trails logging it is needed to store the FAIL once all the trails have been checked

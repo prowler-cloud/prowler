@@ -25,18 +25,18 @@ def mock_cosmosdb_get_accounts(_):
 
 
 @patch(
-    "prowler.providers.azure.services.cosmosdb.cosmosdb_service.CosmosDB.__get_accounts__",
+    "prowler.providers.azure.services.cosmosdb.cosmosdb_service.CosmosDB._get_accounts",
     new=mock_cosmosdb_get_accounts,
 )
 class Test_CosmosDB_Service:
-    def test__get_client__(self):
+    def test_get_client(self):
         account = CosmosDB(set_mocked_azure_provider())
         assert (
             account.clients[AZURE_SUBSCRIPTION_ID].__class__.__name__
             == "CosmosDBManagementClient"
         )
 
-    def test__get_accounts__(self):
+    def test_get_accounts(self):
         account = CosmosDB(set_mocked_azure_provider())
         assert (
             account.accounts[AZURE_SUBSCRIPTION_ID][0].__class__.__name__ == "Account"
