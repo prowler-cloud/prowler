@@ -8,7 +8,7 @@ class ec2_networkacl_allow_ingress_tcp_port_3389(Check):
         findings = []
         tcp_protocol = "6"
         check_port = 3389
-        for network_acl in ec2_client.network_acls:
+        for arn, network_acl in ec2_client.network_acls.items():
             if (
                 ec2_client.provider.scan_unused_services
                 or network_acl.region in ec2_client.regions_with_sgs
@@ -18,7 +18,7 @@ class ec2_networkacl_allow_ingress_tcp_port_3389(Check):
                     report = Check_Report_AWS(self.metadata())
                     report.resource_id = network_acl.id
                     report.region = network_acl.region
-                    report.resource_arn = network_acl.arn
+                    report.resource_arn = arn
                     report.resource_tags = network_acl.tags
                     report.status = "FAIL"
                     report.status_extended = f"Network ACL {network_acl.name if network_acl.name else network_acl.id} has Microsoft RDP port 3389 open to the Internet."
