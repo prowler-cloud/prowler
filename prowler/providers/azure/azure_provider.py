@@ -18,16 +18,13 @@ from prowler.lib.logger import logger
 from prowler.lib.utils.utils import print_boxes
 from prowler.providers.azure.exceptions.exceptions import (
     AzureArgumentTypeValidationError,
-    AzureBrowserAuthNoTenantIDError,
     AzureDefaultAzureCredentialError,
     AzureEnvironmentVariableError,
     AzureHTTPResponseError,
     AzureInteractiveBrowserCredentialError,
-    AzureNoAuthenticationMethodError,
     AzureNoSubscriptionsError,
     AzureSetUpIdentityError,
     AzureSetUpRegionConfigError,
-    AzureTenantIDNoBrowserAuthError,
 )
 from prowler.providers.azure.lib.arguments.arguments import validate_azure_region
 from prowler.providers.azure.lib.mutelist.mutelist import AzureMutelist
@@ -254,15 +251,11 @@ class AzureProvider(Provider):
             tenant_id (str): The Azure Tenant ID.
 
         Raises:
-            AzureNoAuthenticationMethodError: If no authentication method is found.
             AzureBrowserAuthNoTenantIDError: If browser authentication is enabled but the tenant ID is not found.
-            AzureTenantIDNoBrowserAuthError: If tenant ID is provided but browser authentication is not enabled.
-            AzureArgumentTypeValidationError: If there is an error in the argument type validation.
         """
         if not browser_auth and tenant_id:
-            raise AzureTenantIDNoBrowserAuthError(
-                file=os.path.basename(__file__),
-                message="Azure Tenant ID (--tenant-id) is required for browser authentication mode",
+            raise ArgumentTypeError(
+                "Azure Tenant ID (--tenant-id) is required for browser authentication mode"
             )
         elif (
             not az_cli_auth
@@ -270,14 +263,12 @@ class AzureProvider(Provider):
             and not browser_auth
             and not managed_identity_auth
         ):
-            raise AzureNoAuthenticationMethodError(
-                file=os.path.basename(__file__),
-                message="Azure provider requires at least one authentication method set: [--az-cli-auth | --sp-env-auth | --browser-auth | --managed-identity-auth]",
+            raise ArgumentTypeError(
+                "Azure provider requires at least one authentication method set: [--az-cli-auth | --sp-env-auth | --browser-auth | --managed-identity-auth]"
             )
         elif browser_auth and not tenant_id:
-            raise AzureBrowserAuthNoTenantIDError(
-                file=os.path.basename(__file__),
-                message="Azure Tenant ID (--tenant-id) is required for browser authentication mode",
+            raise ArgumentTypeError(
+                "Azure Tenant ID (--tenant-id) is required for browser authentication mode"
             )
 
     @staticmethod
@@ -454,9 +445,6 @@ class AzureProvider(Provider):
 
         Raises:
             Exception: If failed to test the connection to Azure subscription.
-            AzureNoAuthenticationMethodError: If no authentication method is found.
-            AzureBrowserAuthNoTenantIDError: If browser authentication is enabled but the tenant ID is not found.
-            AzureTenantIDNoBrowserAuthError: If tenant ID is provided but browser authentication is not enabled.
             AzureArgumentTypeValidationError: If there is an error in the argument type validation.
             AzureSetUpRegionConfigError: If there is an error in setting up the region configuration.
             AzureDefaultAzureCredentialError: If there is an error in retrieving the Azure credentials.
@@ -468,7 +456,7 @@ class AzureProvider(Provider):
             >>> AzureProvider.test_connection(az_cli_auth=True)
             True
             >>> AzureProvider.test_connection(sp_env_auth=False, browser_auth=True, tenant_id=None)
-            False, AzureTenantIDNoBrowserAuthError: Azure Tenant ID is required only for browser authentication mode
+            False, ArgumentTypeError: Azure Tenant ID is required only for browser authentication mode
         """
         try:
             AzureProvider.validate_arguments(
@@ -493,22 +481,17 @@ class AzureProvider(Provider):
             logger.info(f"Connected to Azure subscription: {subscription.display_name}")
 
             return Connection(is_connected=True)
-        # Exeptions from validate_arguments
-        except AzureNoAuthenticationMethodError as no_auth_method_error:
-            logger.error(str(no_auth_method_error))
+        # Exceptions from validate_arguments
+        except ArgumentTypeError as validation_error:
+            logger.error(
+                f"{validation_error.__class__.__name__}[{validation_error.__traceback__.tb_lineno}]: {validation_error}"
+            )
             if raise_on_exception:
-                raise no_auth_method_error
-            return Connection(error=no_auth_method_error)
-        except AzureBrowserAuthNoTenantIDError as browser_no_tenant_error:
-            logger.error(str(browser_no_tenant_error))
-            if raise_on_exception:
-                raise browser_no_tenant_error
-            return Connection(error=browser_no_tenant_error)
-        except AzureTenantIDNoBrowserAuthError as tenant_no_browser_error:
-            logger.error(str(tenant_no_browser_error))
-            if raise_on_exception:
-                raise tenant_no_browser_error
-            return Connection(error=tenant_no_browser_error)
+                raise AzureArgumentTypeValidationError(
+                    file=os.path.basename(__file__),
+                    original_exception=validation_error,
+                )
+            return Connection(error=validation_error)
         # Exceptions from setup_region_config
         except AzureArgumentTypeValidationError as type_validation_error:
             logger.error(str(type_validation_error))
