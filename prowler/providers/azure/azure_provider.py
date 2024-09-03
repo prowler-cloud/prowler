@@ -262,7 +262,7 @@ class AzureProvider(Provider):
         if not browser_auth and tenant_id:
             raise AzureTenantIDNoBrowserAuthError(
                 file=os.path.basename(__file__),
-                original_exception="Azure Tenant ID (--tenant-id) is required only for browser authentication mode",
+                message="Azure Tenant ID (--tenant-id) is required only for browser authentication mode",
             )
         elif (
             not az_cli_auth
@@ -272,12 +272,12 @@ class AzureProvider(Provider):
         ):
             raise AzureNoAuthenticationMethodError(
                 file=os.path.basename(__file__),
-                original_exception="Azure provider requires at least one authentication method set: [--az-cli-auth | --sp-env-auth | --browser-auth | --managed-identity-auth]",
+                message="Azure provider requires at least one authentication method set: [--az-cli-auth | --sp-env-auth | --browser-auth | --managed-identity-auth]",
             )
         elif browser_auth and not tenant_id:
             raise AzureBrowserAuthNoTenantIDError(
                 file=os.path.basename(__file__),
-                original_exception="Azure Tenant ID (--tenant-id) is required for browser authentication mode",
+                message="Azure Tenant ID (--tenant-id) is required for browser authentication mode",
             )
 
     @staticmethod
@@ -578,7 +578,7 @@ class AzureProvider(Provider):
                 )
                 raise AzureEnvironmentVariableError(
                     file=os.path.basename(__file__),
-                    original_exception=f"Missing environment variable {env_var}",
+                    message=f"Missing environment variable {env_var}",
                 )
 
     def setup_identity(
@@ -696,7 +696,7 @@ class AzureProvider(Provider):
                 )
                 raise AzureNoSubscriptionsError(
                     file=os.path.basename(__file__),
-                    original_exception="No subscriptions were found",
+                    message="No subscriptions were found",
                 )
 
             tenants = subscriptions_client.tenants.list()

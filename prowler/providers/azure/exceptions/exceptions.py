@@ -73,68 +73,96 @@ class AzureBaseException(ProwlerException):
         },
     }
 
-    def __init__(self, code, provider="Azure", file=None, original_exception=None):
+    def __init__(
+        self, code, provider="Azure", file=None, original_exception=None, message=None
+    ):
         error_info = self.AZURE_ERROR_CODES.get((code, self.__class__.__name__))
+        if message:
+            error_info["message"] = message
         super().__init__(code, provider, file, original_exception, error_info)
 
 
 class AzureCredentialsError(AzureBaseException):
     """Base class for Azure credentials errors."""
 
-    def __init__(self, code, provider="Azure", file=None, original_exception=None):
-        super().__init__(code, provider, file, original_exception)
+    def __init__(
+        self, code, provider="Azure", file=None, original_exception=None, message=None
+    ):
+        super().__init__(code, provider, file, original_exception, message)
 
 
 class AzureEnvironmentVariableError(AzureCredentialsError):
-    def __init__(self, file=None, original_exception=None):
-        super().__init__(1914, file=file, original_exception=original_exception)
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            1914, file=file, original_exception=original_exception, message=message
+        )
 
 
 class AzureNoSubscriptionsError(AzureCredentialsError):
-    def __init__(self, file=None, original_exception=None):
-        super().__init__(1915, file=file, original_exception=original_exception)
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            1915, file=file, original_exception=original_exception, message=message
+        )
 
 
 class AzureSetUpIdentityError(AzureCredentialsError):
-    def __init__(self, file=None, original_exception=None):
-        super().__init__(1916, file=file, original_exception=original_exception)
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            1916, file=file, original_exception=original_exception, message=message
+        )
 
 
 class AzureNoAuthenticationMethodError(AzureCredentialsError):
-    def __init__(self, file=None, original_exception=None):
-        super().__init__(1917, file=file, original_exception=original_exception)
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            1917, file=file, original_exception=original_exception, message=message
+        )
 
 
 class AzureBrowserAuthNoTenantIDError(AzureCredentialsError):
-    def __init__(self, file=None, original_exception=None):
-        super().__init__(1918, file=file, original_exception=original_exception)
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            1918, file=file, original_exception=original_exception, message=message
+        )
 
 
 class AzureTenantIDNoBrowserAuthError(AzureCredentialsError):
-    def __init__(self, file=None, original_exception=None):
-        super().__init__(1919, file=file, original_exception=original_exception)
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            1919, file=file, original_exception=original_exception, message=message
+        )
 
 
 class AzureArgumentTypeValidationError(AzureBaseException):
-    def __init__(self, file=None, original_exception=None):
-        super().__init__(1920, file=file, original_exception=original_exception)
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            1920, file=file, original_exception=original_exception, message=message
+        )
 
 
 class AzureSetUpRegionConfigError(AzureBaseException):
-    def __init__(self, file=None, original_exception=None):
-        super().__init__(1921, file=file, original_exception=original_exception)
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            1921, file=file, original_exception=original_exception, message=message
+        )
 
 
 class AzureDefaultAzureCredentialError(AzureCredentialsError):
-    def __init__(self, file=None, original_exception=None):
-        super().__init__(1922, file=file, original_exception=original_exception)
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            1922, file=file, original_exception=original_exception, message=message
+        )
 
 
 class AzureInteractiveBrowserCredentialError(AzureCredentialsError):
-    def __init__(self, file=None, original_exception=None):
-        super().__init__(1923, file=file, original_exception=original_exception)
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            1923, file=file, original_exception=original_exception, message=message
+        )
 
 
 class AzureHTTPResponseError(AzureBaseException):
-    def __init__(self, file=None, original_exception=None):
-        super().__init__(1924, file=file, original_exception=original_exception)
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            1924, file=file, original_exception=original_exception, message=message
+        )
