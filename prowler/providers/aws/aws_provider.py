@@ -1245,7 +1245,7 @@ def validate_session_duration(duration: int) -> int:
     # Since the range(i,j) goes from i to j-1 we have to j+1
     if duration not in range(900, 43201):
         raise AWSArgumentTypeValidationError(
-            original_exception="Session Duration must be between 900 and 43200 seconds.",
+            message="Session Duration must be between 900 and 43200 seconds.",
             file=os.path.basename(__file__),
         )
     else:
@@ -1274,5 +1274,5 @@ def validate_role_session_name(session_name) -> str:
     else:
         raise AWSArgumentTypeValidationError(
             file=os.path.basename(__file__),
-            original_exception="Role Session Name must be between 2 and 64 characters and may contain alphanumeric characters, periods, hyphens, and underscores.",
+            message="Role Session Name must be between 2 and 64 characters and may contain alphanumeric characters, periods, hyphens, and underscores.",
         )
