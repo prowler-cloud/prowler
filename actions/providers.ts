@@ -3,22 +3,33 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+import { auth } from "@/auth.config";
 import { parseStringify } from "@/lib";
 
-export const getProvider = async ({ page = 1 }) => {
+export const getProvider = async ({
+  page = 1,
+  query = "",
+  sort = "",
+  filter = "",
+}) => {
+  const session = await auth();
+  const tenantId = session?.user.tenantId;
+
   if (isNaN(Number(page)) || page < 1) redirect("/providers");
 
   const keyServer = process.env.LOCAL_SERVER_URL;
+  const url = new URL(`${keyServer}/providers`);
+  if (page) url.searchParams.append("page[number]", page.toString());
+  if (query) url.searchParams.append("filter[query]", query);
+  if (sort) url.searchParams.append("sort", sort);
+  if (filter) url.searchParams.append("filter[provider]", filter);
 
   try {
-    const providers = await fetch(
-      `${keyServer}/providers?page%5Bnumber%5D=${page}`,
-      {
-        headers: {
-          "X-Tenant-ID": `${process.env.HEADER_TENANT_ID}`,
-        },
+    const providers = await fetch(`${url.toString()}`, {
+      headers: {
+        "X-Tenant-ID": `${tenantId}`,
       },
-    );
+    });
     const data = await providers.json();
     const parsedData = parseStringify(data);
     revalidatePath("/providers");
@@ -28,6 +39,7 @@ export const getProvider = async ({ page = 1 }) => {
     return undefined;
   }
 };
+
 export const addProvider = async (formData: FormData) => {
   const keyServer = process.env.LOCAL_SERVER_URL;
 

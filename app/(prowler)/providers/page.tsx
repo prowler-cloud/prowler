@@ -10,9 +10,15 @@ import {
   SkeletonTableProvider,
 } from "@/components/providers";
 import { Header } from "@/components/ui";
-import { searchParamsProps } from "@/types";
 
-export default async function Providers({ searchParams }: searchParamsProps) {
+export default async function Providers({
+  searchParams,
+}: {
+  searchParams?: {
+    query?: string;
+    page: string;
+  };
+}) {
   return (
     <>
       <Header title="Providers" icon="fluent:cloud-sync-24-regular" />
@@ -22,7 +28,7 @@ export default async function Providers({ searchParams }: searchParamsProps) {
           <AddProviderModal />
         </div>
         <Spacer y={6} />
-        <Suspense key={searchParams.page} fallback={<SkeletonTableProvider />}>
+        <Suspense key={searchParams?.page} fallback={<SkeletonTableProvider />}>
           <SSRDataTable searchParams={searchParams} />
         </Suspense>
       </div>
@@ -30,9 +36,22 @@ export default async function Providers({ searchParams }: searchParamsProps) {
   );
 }
 
-const SSRDataTable = async ({ searchParams }: searchParamsProps) => {
-  const page = searchParams.page ? parseInt(searchParams.page) : 1;
-  const providersData = await getProvider({ page });
+const SSRDataTable = async ({
+  searchParams,
+}: {
+  searchParams?: {
+    query?: string;
+    page?: string;
+    sort?: string;
+    filter?: string;
+  };
+}) => {
+  const query = searchParams?.query || "";
+  const page = searchParams?.page ? parseInt(searchParams.page) : 1;
+  const sort = searchParams?.sort || "";
+  const filter = searchParams?.filter || "";
+
+  const providersData = await getProvider({ query, page, sort, filter });
   const [providers] = await Promise.all([providersData]);
 
   if (providers?.errors) redirect("/providers");
