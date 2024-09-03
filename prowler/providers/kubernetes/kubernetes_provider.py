@@ -1,8 +1,9 @@
 import os
 
 from colorama import Fore, Style
-from kubernetes.client.exceptions import ApiException, TimeoutError
+from kubernetes.client.exceptions import ApiException
 from kubernetes.config.config_exception import ConfigException
+from requests.exceptions import Timeout
 
 from kubernetes import client, config
 from prowler.config.config import (
@@ -315,9 +316,9 @@ class KubernetesProvider(Provider):
             raise KubernetesApiError(
                 original_exception=api_error, file=os.path.abspath(__file__)
             )
-        except TimeoutError as timeout_error:
+        except Timeout as timeout_error:
             logger.critical(
-                f"TimeoutError[{timeout_error.__traceback__.tb_lineno}]: {timeout_error}"
+                f"Timeout[{timeout_error.__traceback__.tb_lineno}]: {timeout_error}"
             )
             raise KubernetesTimeoutError(
                 original_exception=timeout_error, file=os.path.abspath(__file__)
