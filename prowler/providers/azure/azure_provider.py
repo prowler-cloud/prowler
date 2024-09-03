@@ -254,9 +254,10 @@ class AzureProvider(Provider):
             tenant_id (str): The Azure Tenant ID.
 
         Raises:
-            SystemExit: If none of the authentication methods are set.
-            SystemExit: If browser authentication is enabled but the tenant ID is not provided.
-            SystemExit: If tenant ID is provided but browser authentication is not enabled.
+            AzureNoAuthenticationMethodError: If no authentication method is found.
+            AzureBrowserAuthNoTenantIDError: If browser authentication is enabled but the tenant ID is not found.
+            AzureTenantIDNoBrowserAuthError: If tenant ID is provided but browser authentication is not enabled.
+            AzureArgumentTypeValidationError: If there is an error in the argument type validation.
         """
         if not browser_auth and tenant_id:
             raise AzureTenantIDNoBrowserAuthError(
@@ -461,7 +462,6 @@ class AzureProvider(Provider):
             AzureDefaultAzureCredentialError: If there is an error in retrieving the Azure credentials.
             AzureInteractiveBrowserCredentialError: If there is an error in retrieving the Azure credentials using browser authentication.
             AzureHTTPResponseError: If there is an HTTP response error.
-            SystemExit: If there is an error in the system.
 
 
         Examples:
@@ -547,14 +547,6 @@ class AzureProvider(Provider):
                     original_exception=http_response_error,
                 )
             return Connection(error=http_response_error)
-        except SystemExit as exit_error:
-            logger.error(
-                f"{exit_error.__class__.__name__}[{exit_error.__traceback__.tb_lineno}]: {exit_error}"
-            )
-            if raise_on_exception:
-                # Raise directly the exception
-                raise exit_error
-            return Connection(error=exit_error)
         except Exception as error:
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
