@@ -43,36 +43,52 @@ class GCPBaseException(ProwlerException):
         },
     }
 
-    def __init__(self, code, provider="GCP", file=None, original_exception=None):
+    def __init__(
+        self, code, provider="GCP", file=None, original_exception=None, message=None
+    ):
         error_info = self.GCP_ERROR_CODES.get((code, self.__class__.__name__))
+        if message:
+            error_info["message"] = message
         super().__init__(code, provider, file, original_exception, error_info)
 
 
 class GCPCloudResourceManagerAPINotUsedError(GCPBaseException):
-    def __init__(self, file=None, original_exception=None):
-        super().__init__(1925, file=file, original_exception=original_exception)
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            1925, file=file, original_exception=original_exception, message=message
+        )
 
 
 class GCPHTTPError(GCPBaseException):
-    def __init__(self, file=None, original_exception=None):
-        super().__init__(1926, file=file, original_exception=original_exception)
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            1926, file=file, original_exception=original_exception, message=message
+        )
 
 
 class GCPNoAccesibleProjectsError(GCPBaseException):
-    def __init__(self, file=None, original_exception=None):
-        super().__init__(1927, file=file, original_exception=original_exception)
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            1927, file=file, original_exception=original_exception, message=message
+        )
 
 
 class GCPSetUpSessionError(GCPBaseException):
-    def __init__(self, file=None, original_exception=None):
-        super().__init__(1928, file=file, original_exception=original_exception)
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            1928, file=file, original_exception=original_exception, message=message
+        )
 
 
 class GCPGetProjectError(GCPBaseException):
-    def __init__(self, file=None, original_exception=None):
-        super().__init__(1929, file=file, original_exception=original_exception)
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            1929, file=file, original_exception=original_exception, message=message
+        )
 
 
 class GCPTestConnectionError(GCPBaseException):
-    def __init__(self, file=None, original_exception=None):
-        super().__init__(1930, file=file, original_exception=original_exception)
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            1930, file=file, original_exception=original_exception, message=message
+        )

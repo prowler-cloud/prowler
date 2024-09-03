@@ -83,7 +83,7 @@ class GcpProvider(Provider):
             logger.critical("No Project IDs can be accessed via Google Credentials.")
             raise GCPNoAccesibleProjectsError(
                 file=__file__,
-                original_exception="No Project IDs can be accessed via Google Credentials.",
+                message="No Project IDs can be accessed via Google Credentials.",
             )
 
         if project_ids:
@@ -118,7 +118,7 @@ class GcpProvider(Provider):
             )
             raise GCPNoAccesibleProjectsError(
                 file=__file__,
-                original_exception="No Input Project IDs can be accessed via Google Credentials.",
+                message="No Input Project IDs can be accessed via Google Credentials.",
             )
 
         if list_project_ids:
