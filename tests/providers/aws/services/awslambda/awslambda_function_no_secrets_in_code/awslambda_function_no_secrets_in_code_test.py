@@ -107,7 +107,7 @@ class Test_awslambda_function_no_secrets_in_code:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Potential secrets found in Lambda function {LAMBDA_FUNCTION_NAME} code -> lambda_function.py: Base64 High Entropy String on line 3, Secret Keyword on line 3; lambda_function.py: Base64 High Entropy String on line 3, Secret Keyword on line 3."
+                == f"Potential secret found in Lambda function {LAMBDA_FUNCTION_NAME} code -> lambda_function.py: Secret Keyword on line 3."
             )
             assert result[0].resource_tags == []
 
