@@ -262,7 +262,7 @@ class AzureProvider(Provider):
         if not browser_auth and tenant_id:
             raise AzureTenantIDNoBrowserAuthError(
                 file=os.path.basename(__file__),
-                message="Azure Tenant ID (--tenant-id) is required only for browser authentication mode",
+                message="Azure Tenant ID (--tenant-id) is required for browser authentication mode",
             )
         elif (
             not az_cli_auth
@@ -310,13 +310,13 @@ class AzureProvider(Provider):
                 file=os.path.basename(__file__),
                 original_exception=validation_error,
             )
-        except Exception as validation_error:
+        except Exception as error:
             logger.error(
-                f"{validation_error.__class__.__name__}[{validation_error.__traceback__.tb_lineno}]: {validation_error}"
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             raise AzureSetUpRegionConfigError(
                 file=os.path.basename(__file__),
-                original_exception=validation_error,
+                original_exception=error,
             )
 
     def print_credentials(self):
@@ -578,7 +578,7 @@ class AzureProvider(Provider):
                 )
                 raise AzureEnvironmentVariableError(
                     file=os.path.basename(__file__),
-                    message=f"Missing environment variable {env_var}",
+                    message=f"Missing environment variable {env_var} required to authenticate.",
                 )
 
     def setup_identity(
@@ -696,7 +696,7 @@ class AzureProvider(Provider):
                 )
                 raise AzureNoSubscriptionsError(
                     file=os.path.basename(__file__),
-                    message="No subscriptions were found",
+                    message="No subscriptions were found, please check your permission assignments.",
                 )
 
             tenants = subscriptions_client.tenants.list()
