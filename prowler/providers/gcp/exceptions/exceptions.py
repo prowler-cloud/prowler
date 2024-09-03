@@ -31,13 +31,18 @@ class GCPBaseException(ProwlerException):
         },
     }
 
-    def __init__(
-        self, code, provider="GCP", file=None, original_exception=None, message=None
-    ):
+    def __init__(self, code, file=None, original_exception=None, message=None):
+        provider = "GCP"
         error_info = self.GCP_ERROR_CODES.get((code, self.__class__.__name__))
         if message:
             error_info["message"] = message
-        super().__init__(code, provider, file, original_exception, error_info)
+        super().__init__(
+            code=code,
+            provider=provider,
+            file=file,
+            original_exception=original_exception,
+            error_info=error_info,
+        )
 
 
 class GCPCloudResourceManagerAPINotUsedError(GCPBaseException):
