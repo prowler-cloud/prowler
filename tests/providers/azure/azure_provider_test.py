@@ -120,7 +120,7 @@ class TestAzureProvider:
             assert exception.type == AzureNoAuthenticationMethodError
             assert (
                 exception.value.args[0]
-                == "[1917] No Azure authentication method found - Azure provider requires at least one authentication method set: [--az-cli-auth | --sp-env-auth | --browser-auth | --managed-identity-auth]"
+                == "[1917] Azure provider requires at least one authentication method set: [--az-cli-auth | --sp-env-auth | --browser-auth | --managed-identity-auth]"
             )
 
     def test_azure_provider_browser_auth_but_not_tenant_id(self):
@@ -158,7 +158,7 @@ class TestAzureProvider:
             assert exception.type == AzureBrowserAuthNoTenantIDError
             assert (
                 exception.value.args[0]
-                == "[1918] Azure browser authentication error: no tenant ID found - Azure Tenant ID (--tenant-id) is required for browser authentication mode"
+                == "[1918] Azure Tenant ID (--tenant-id) is required for browser authentication mode"
             )
 
     def test_azure_provider_not_browser_auth_but_tenant_id(self):
@@ -197,7 +197,7 @@ class TestAzureProvider:
             assert exception.type == AzureTenantIDNoBrowserAuthError
             assert (
                 exception.value.args[0]
-                == "[1919] Azure tenant ID error: browser authentication not found - Azure Tenant ID (--tenant-id) is required only for browser authentication mode"
+                == "[1919] Azure Tenant ID (--tenant-id) is required for browser authentication mode"
             )
 
     @freeze_time(datetime.today())
@@ -338,7 +338,7 @@ class TestAzureProvider:
         assert exception.type == AzureNoAuthenticationMethodError
         assert (
             exception.value.args[0]
-            == "[1917] No Azure authentication method found - Azure provider requires at least one authentication method set: [--az-cli-auth | --sp-env-auth | --browser-auth | --managed-identity-auth]"
+            == "[1917] Azure provider requires at least one authentication method set: [--az-cli-auth | --sp-env-auth | --browser-auth | --managed-identity-auth]"
         )
 
     def test_test_connection_with_httpresponseerror(self):
