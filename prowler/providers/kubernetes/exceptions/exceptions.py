@@ -30,15 +30,21 @@ class KubernetesBaseException(ProwlerException):
     def __init__(
         self,
         code,
-        provider="Kubernetes",
         file=None,
         original_exception=None,
         message=None,
     ):
+        provider = "Kubernetes"
         error_info = self.KUBERNETES_ERROR_CODES.get((code, self.__class__.__name__))
         if message:
             error_info["message"] = message
-        super().__init__(code, provider, file, original_exception, error_info)
+        super().__init__(
+            code=code,
+            provider=provider,
+            file=file,
+            original_exception=original_exception,
+            error_info=error_info,
+        )
 
 
 class KubernetesCloudResourceManagerAPINotUsedError(KubernetesBaseException):
