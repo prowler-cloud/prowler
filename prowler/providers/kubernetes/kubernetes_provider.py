@@ -67,7 +67,7 @@ class KubernetesProvider(Provider):
         if not self._session.api_client:
             logger.critical("Failed to set up a Kubernetes session.")
             raise KubernetesCloudResourceManagerAPINotUsedError(
-                original_exception="Failed to set up a Kubernetes session."
+                message="Failed to set up a Kubernetes session."
             )
 
         self._identity = KubernetesIdentityInfo(
