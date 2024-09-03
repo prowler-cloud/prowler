@@ -1369,7 +1369,7 @@ aws:
         assert exception.type == AWSArgumentTypeValidationError
         assert (
             exception.value.args[0]
-            == "[1905] Session Duration must be between 900 and 43200 seconds. - Role Session Name must be between 2 and 64 characters and may contain alphanumeric characters, periods, hyphens, and underscores."
+            == "[1905] Role Session Name must be between 2 and 64 characters and may contain alphanumeric characters, periods, hyphens, and underscores."
         )
 
     @mock_aws

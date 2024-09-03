@@ -1274,5 +1274,5 @@ def validate_role_session_name(session_name) -> str:
     else:
         raise AWSArgumentTypeValidationError(
             file=os.path.basename(__file__),
-            original_exception="Role Session Name must be between 2 and 64 characters and may contain alphanumeric characters, periods, hyphens, and underscores.",
+            message="Role Session Name must be between 2 and 64 characters and may contain alphanumeric characters, periods, hyphens, and underscores.",
         )
