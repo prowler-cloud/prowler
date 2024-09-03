@@ -17,6 +17,18 @@ class AzureBaseException(ProwlerException):
             "message": "Azure identity setup error related with credentials",
             "remediation": "Check credentials and ensure they are properly set up for Azure and the identity provider.",
         },
+        (1917, "AzureNoAuthenticationMethodError"): {
+            "message": "No Azure authentication method found",
+            "remediation": "Check that any authentication method is properly set up for Azure.",
+        },
+        (1918, "AzureBrowserAuthNoTenantIDError"): {
+            "message": "Azure browser authentication error: no tenant ID found",
+            "remediation": "To use browser authentication, ensure the tenant ID is properly set.",
+        },
+        (1919, "AzureTenantIDNoBrowserAuthError"): {
+            "message": "Azure tenant ID error: browser authentication not found",
+            "remediation": "To use browser authentication, both the tenant ID and browser authentication must be properly set.",
+        },
         (1920, "AzureArgumentTypeValidationError"): {
             "message": "Azure argument type validation error",
             "remediation": "Check the provided argument types specific to Azure and ensure they meet the required format.",
@@ -78,6 +90,27 @@ class AzureSetUpIdentityError(AzureCredentialsError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             1916, file=file, original_exception=original_exception, message=message
+        )
+
+
+class AzureNoAuthenticationMethodError(AzureCredentialsError):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            1917, file=file, original_exception=original_exception, message=message
+        )
+
+
+class AzureBrowserAuthNoTenantIDError(AzureCredentialsError):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            1918, file=file, original_exception=original_exception, message=message
+        )
+
+
+class AzureTenantIDNoBrowserAuthError(AzureCredentialsError):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            1919, file=file, original_exception=original_exception, message=message
         )
 
 
