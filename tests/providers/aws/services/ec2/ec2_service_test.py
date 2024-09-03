@@ -131,6 +131,7 @@ class Test_EC2_Service:
             ec2.instances[0].public_dns
             == f"ec2-{ec2.instances[0].public_ip.replace('.', '-')}.compute-1.amazonaws.com"
         )
+        assert ec2.instances[0].virtualization_type == "hvm"
 
     # Test EC2 Describe Security Groups
     @mock_aws
