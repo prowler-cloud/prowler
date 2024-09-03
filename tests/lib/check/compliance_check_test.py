@@ -192,33 +192,27 @@ class TestCompliance:
         assert check1_attribute.AdditionalInformation == "Additional"
         assert check1_attribute.References == "References"
 
-    def test_list_compliance_frameworks_no_provider(self):
+    def test_list_no_provider(self):
         bulk_compliance_frameworks = self.get_custom_framework()
 
-        list_compliance = Compliance.list_compliance_frameworks(
-            bulk_compliance_frameworks
-        )
+        list_compliance = Compliance.list(bulk_compliance_frameworks)
 
         assert len(list_compliance) == 2
         assert list_compliance[0] == "framework1_aws"
         assert list_compliance[1] == "framework1_azure"
 
-    def test_list_compliance_frameworks_with_provider_aws(self):
+    def test_list_with_provider_aws(self):
         bulk_compliance_frameworks = self.get_custom_framework()
 
-        list_compliance = Compliance.list_compliance_frameworks(
-            bulk_compliance_frameworks, provider="aws"
-        )
+        list_compliance = Compliance.list(bulk_compliance_frameworks, provider="aws")
 
         assert len(list_compliance) == 1
         assert list_compliance[0] == "framework1_aws"
 
-    def test_list_compliance_frameworks_with_provider_azure(self):
+    def test_list_with_provider_azure(self):
         bulk_compliance_frameworks = self.get_custom_framework()
 
-        list_compliance = Compliance.list_compliance_frameworks(
-            bulk_compliance_frameworks, provider="azure"
-        )
+        list_compliance = Compliance.list(bulk_compliance_frameworks, provider="azure")
 
         assert len(list_compliance) == 1
         assert list_compliance[0] == "framework1_azure"
@@ -226,8 +220,8 @@ class TestCompliance:
     def test_get_compliance_frameworks(self):
         bulk_compliance_frameworks = self.get_custom_framework()
 
-        compliance_framework = Compliance.get_compliance_framework(
-            bulk_compliance_frameworks, compliance_framework="framework1_aws"
+        compliance_framework = Compliance.get(
+            bulk_compliance_frameworks, compliance_framework_name="framework1_aws"
         )
 
         assert compliance_framework.Framework == "Framework1"
@@ -236,8 +230,8 @@ class TestCompliance:
         assert compliance_framework.Description == "Framework 1 Description"
         assert len(compliance_framework.Requirements) == 2
 
-        compliance_framework = Compliance.get_compliance_framework(
-            bulk_compliance_frameworks, compliance_framework="framework1_azure"
+        compliance_framework = Compliance.get(
+            bulk_compliance_frameworks, compliance_framework_name="framework1_azure"
         )
 
         assert compliance_framework.Framework == "Framework1"
@@ -246,19 +240,26 @@ class TestCompliance:
         assert compliance_framework.Description == "Framework 2 Description"
         assert len(compliance_framework.Requirements) == 1
 
+    def test_get_non_existent_framework(self):
+        bulk_compliance_frameworks = self.get_custom_framework()
+
+        compliance_framework = Compliance.get(
+            bulk_compliance_frameworks, compliance_framework_name="non_existent"
+        )
+
+        assert compliance_framework is None
+
     def test_list_compliance_requirements_no_compliance(self):
         bulk_compliance_frameworks = self.get_custom_framework()
 
-        list_requirements = Compliance.list_compliance_requirements(
-            bulk_compliance_frameworks
-        )
+        list_requirements = Compliance.list_requirements(bulk_compliance_frameworks)
 
         assert len(list_requirements) == 0
 
     def test_list_compliance_requirements_with_compliance(self):
         bulk_compliance_frameworks = self.get_custom_framework()
 
-        list_requirements = Compliance.list_compliance_requirements(
+        list_requirements = Compliance.list_requirements(
             bulk_compliance_frameworks, compliance_framework="framework1_aws"
         )
 
@@ -266,7 +267,7 @@ class TestCompliance:
         assert list_requirements[0] == "1.1.1"
         assert list_requirements[1] == "1.1.2"
 
-        list_requirements = Compliance.list_compliance_requirements(
+        list_requirements = Compliance.list_requirements(
             bulk_compliance_frameworks, compliance_framework="framework1_azure"
         )
 
@@ -276,7 +277,7 @@ class TestCompliance:
     def test_get_compliance_requirement(self):
         bulk_compliance_frameworks = self.get_custom_framework()
 
-        compliance_requirement = Compliance.get_compliance_requirement(
+        compliance_requirement = Compliance.get_requirement(
             bulk_compliance_frameworks,
             compliance_framework="framework1_aws",
             requirement_id="1.1.1",
@@ -286,7 +287,7 @@ class TestCompliance:
         assert compliance_requirement.Description == "description"
         assert len(compliance_requirement.Attributes) == 1
 
-        compliance_requirement = Compliance.get_compliance_requirement(
+        compliance_requirement = Compliance.get_requirement(
             bulk_compliance_frameworks,
             compliance_framework="framework1_aws",
             requirement_id="1.1.2",
@@ -296,7 +297,7 @@ class TestCompliance:
         assert compliance_requirement.Description == "description"
         assert len(compliance_requirement.Attributes) == 1
 
-        compliance_requirement = Compliance.get_compliance_requirement(
+        compliance_requirement = Compliance.get_requirement(
             bulk_compliance_frameworks,
             compliance_framework="framework1_azure",
             requirement_id="1.1.1",
@@ -309,22 +310,10 @@ class TestCompliance:
     def test_get_compliance_requirement_not_found(self):
         bulk_compliance_frameworks = self.get_custom_framework()
 
-        compliance_requirement = Compliance.get_compliance_requirement(
+        compliance_requirement = Compliance.get_requirement(
             bulk_compliance_frameworks,
             compliance_framework="framework1_aws",
             requirement_id="1.1.3",
         )
 
-        assert compliance_requirement.Id == ""
-        assert compliance_requirement.Description == ""
-        assert len(compliance_requirement.Attributes) == 0
-
-        compliance_requirement = Compliance.get_compliance_requirement(
-            bulk_compliance_frameworks,
-            compliance_framework="framework1_azure",
-            requirement_id="1.1.2",
-        )
-
-        assert compliance_requirement.Id == ""
-        assert compliance_requirement.Description == ""
-        assert len(compliance_requirement.Attributes) == 0
+        assert compliance_requirement is None

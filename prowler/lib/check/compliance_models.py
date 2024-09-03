@@ -213,9 +213,8 @@ class Compliance(BaseModel):
             raise ValueError("Framework or Provider must not be empty")
         return values
 
-    def list_compliance_frameworks(
-        bulk_compliance_frameworks: dict, provider: str = None
-    ) -> list[str]:
+    @staticmethod
+    def list(bulk_compliance_frameworks: dict, provider: str = None) -> list[str]:
         """
         Returns a list of compliance frameworks from bulk compliance frameworks
 
@@ -240,28 +239,24 @@ class Compliance(BaseModel):
 
         return compliance_frameworks
 
-    def get_compliance_framework(
-        bulk_compliance_frameworks: dict, compliance_framework: str
-    ):
+    @staticmethod
+    def get(
+        bulk_compliance_frameworks: dict, compliance_framework_name: str
+    ) -> "Compliance":
         """
         Returns a compliance framework from bulk compliance frameworks
 
         Args:
             bulk_compliance_frameworks (dict): The bulk compliance frameworks
-            compliance_framework (str): The compliance framework name
+            compliance_framework_name (str): The compliance framework name
 
         Returns:
             Compliance: The compliance framework
         """
+        return bulk_compliance_frameworks.get(compliance_framework_name, None)
 
-        if compliance_framework in bulk_compliance_frameworks:
-            return bulk_compliance_frameworks.get(compliance_framework)
-        else:
-            return Compliance(
-                Framework="", Provider="", Version="", Description="", Requirements=[]
-            )
-
-    def list_compliance_requirements(
+    @staticmethod
+    def list_requirements(
         bulk_compliance_frameworks: dict, compliance_framework: str = None
     ):
         """
@@ -286,9 +281,10 @@ class Compliance(BaseModel):
 
         return compliance_requirements
 
-    def get_compliance_requirement(
+    @staticmethod
+    def get_requirement(
         bulk_compliance_frameworks: dict, compliance_framework: str, requirement_id: str
-    ):
+    ) -> Mitre_Requirement | Compliance_Requirement:
         """
         Returns a compliance requirement from a compliance framework
 
@@ -298,17 +294,17 @@ class Compliance(BaseModel):
             requirement_id (str): The compliance requirement ID
 
         Returns:
-            Compliance_Requirement: The compliance requirement
+            Mitre_Requirement | Compliance_Requirement: The compliance requirement
         """
+        requirement = None
         for compliance_requirement in bulk_compliance_frameworks.get(
             compliance_framework
         ).Requirements:
             if compliance_requirement.Id == requirement_id:
-                return compliance_requirement
+                requirement = compliance_requirement
+                break
 
-        return Compliance_Requirement(
-            Id="", Description="", Name="", Attributes=[], Checks=[]
-        )
+        return requirement
 
 
 # Testing Pending
