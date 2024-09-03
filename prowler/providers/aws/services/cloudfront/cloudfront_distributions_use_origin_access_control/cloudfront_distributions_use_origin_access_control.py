@@ -17,7 +17,7 @@ class cloudfront_distributions_use_origin_access_control(Check):
             report.status_extended = f"CloudFront Distribution {distribution.id} is not using origin access control (OAC)."
 
             if distribution.origin_access_control:
-                report.status = "FAIL"
+                report.status = "PASS"
                 report.status_extended = f"CloudFront Distribution {distribution.id} is using origin access control (OAC)."
 
             findings.append(report)
