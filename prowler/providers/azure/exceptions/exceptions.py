@@ -51,22 +51,25 @@ class AzureBaseException(ProwlerException):
         },
     }
 
-    def __init__(
-        self, code, provider="Azure", file=None, original_exception=None, message=None
-    ):
+    def __init__(self, code, file=None, original_exception=None, message=None):
+        provider = "Azure"
         error_info = self.AZURE_ERROR_CODES.get((code, self.__class__.__name__))
         if message:
             error_info["message"] = message
-        super().__init__(code, provider, file, original_exception, error_info)
+        super().__init__(
+            code=code,
+            provider=provider,
+            file=file,
+            original_exception=original_exception,
+            error_info=error_info,
+        )
 
 
 class AzureCredentialsError(AzureBaseException):
     """Base class for Azure credentials errors."""
 
-    def __init__(
-        self, code, provider="Azure", file=None, original_exception=None, message=None
-    ):
-        super().__init__(code, provider, file, original_exception, message)
+    def __init__(self, code, file=None, original_exception=None, message=None):
+        super().__init__(code, file, original_exception, message)
 
 
 class AzureEnvironmentVariableError(AzureCredentialsError):
