@@ -1,6 +1,7 @@
 import os
 
 from colorama import Fore, Style
+from kubernetes.client.exceptions import ApiException, TimeoutError
 from kubernetes.config.config_exception import ConfigException
 
 from kubernetes import client, config
@@ -13,11 +14,15 @@ from prowler.lib.utils.utils import print_boxes
 from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
 from prowler.providers.kubernetes.exceptions.exceptions import (
+    KubernetesApiError,
     KubernetesCloudResourceManagerAPINotUsedError,
     KubernetesGetAllNamespacesError,
     KubernetesGetContextUserRolesError,
     KubernetesSearchAndSaveRolesError,
     KubernetesSetUpSessionError,
+    KubernetesTimeoutError,
+    KubernetesTypeError,
+    KubernetesValueError,
 )
 from prowler.providers.kubernetes.lib.mutelist.mutelist import KubernetesMutelist
 from prowler.providers.kubernetes.models import (
@@ -303,6 +308,34 @@ class KubernetesProvider(Provider):
             namespaces = [item.metadata.name for item in namespace_list.items]
             logger.info("All namespaces retrieved successfully.")
             return namespaces
+        except ApiException as api_error:
+            logger.critical(
+                f"ApiException[{api_error.__traceback__.tb_lineno}]: {api_error}"
+            )
+            raise KubernetesApiError(
+                original_exception=api_error, file=os.path.abspath(__file__)
+            )
+        except TimeoutError as timeout_error:
+            logger.critical(
+                f"TimeoutError[{timeout_error.__traceback__.tb_lineno}]: {timeout_error}"
+            )
+            raise KubernetesTimeoutError(
+                original_exception=timeout_error, file=os.path.abspath(__file__)
+            )
+        except ValueError as value_error:
+            logger.critical(
+                f"ValueError[{value_error.__traceback__.tb_lineno}]: {value_error}"
+            )
+            raise KubernetesValueError(
+                original_exception=value_error, file=os.path.abspath(__file__)
+            )
+        except TypeError as type_error:
+            logger.critical(
+                f"TypeError[{type_error.__traceback__.tb_lineno}]: {type_error}"
+            )
+            raise KubernetesTypeError(
+                original_exception=type_error, file=os.path.abspath(__file__)
+            )
         except Exception as error:
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

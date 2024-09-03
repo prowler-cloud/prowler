@@ -25,6 +25,22 @@ class KubernetesBaseException(ProwlerException):
             "message": "Error occurred while fetching all namespaces in the Kubernetes cluster.",
             "remediation": "Verify that namespaces are correctly configured and accessible. Follow this guide to troubleshoot namespace issues: https://kubernetes.io/docs/tasks/administer-cluster/namespaces-walkthrough/",
         },
+        (1930, "KubernetesApiError"): {
+            "message": "An error occurred while interacting with the Kubernetes API.",
+            "remediation": "Check the API request and ensure it is properly formatted. Refer to the Kubernetes API documentation for guidance: https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.22/",
+        },
+        (1931, "KubernetesTimeoutError"): {
+            "message": "The request to the Kubernetes API timed out.",
+            "remediation": "Check the network connection and the Kubernetes API server status. For information on troubleshooting timeouts, refer to the Kubernetes documentation: https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.22/#-strong-timeout-strong-",
+        },
+        (1932, "KubernetesValueError"): {
+            "message": "A value error occurred while processing Kubernetes data.",
+            "remediation": "Check the data format and ensure it meets the expected structure. For more information on Kubernetes data formats, refer to the Kubernetes documentation: https://kubernetes.io/docs/reference/",
+        },
+        (1933, "KubernetesTypeError"): {
+            "message": "A type error occurred while processing Kubernetes data.",
+            "remediation": "Check the data types and ensure they match the expected format. For information on Kubernetes data types, refer to the Kubernetes documentation: https://kubernetes.io/docs/reference/",
+        },
     }
 
     def __init__(
@@ -68,5 +84,25 @@ class KubernetesGetContextUserRolesError(KubernetesBaseException):
 
 
 class KubernetesGetAllNamespacesError(KubernetesBaseException):
+    def __init__(self, code, file=None, original_exception=None, message=None):
+        super().__init__(code, file, original_exception, message)
+
+
+class KubernetesApiError(KubernetesBaseException):
+    def __init__(self, code, file=None, original_exception=None, message=None):
+        super().__init__(code, file, original_exception, message)
+
+
+class KubernetesTimeoutError(KubernetesBaseException):
+    def __init__(self, code, file=None, original_exception=None, message=None):
+        super().__init__(code, file, original_exception, message)
+
+
+class KubernetesValueError(KubernetesBaseException):
+    def __init__(self, code, file=None, original_exception=None, message=None):
+        super().__init__(code, file, original_exception, message)
+
+
+class KubernetesTypeError(KubernetesBaseException):
     def __init__(self, code, file=None, original_exception=None, message=None):
         super().__init__(code, file, original_exception, message)
