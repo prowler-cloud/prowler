@@ -59,13 +59,17 @@ class AWSBaseException(ProwlerException):
         },
     }
 
-    def __init__(
-        self, code, provider="AWS", file=None, original_exception=None, message=None
-    ):
+    def __init__(self, code, file=None, original_exception=None, message=None):
         error_info = self.AWS_ERROR_CODES.get((code, self.__class__.__name__))
         if message:
             error_info["message"] = message
-        super().__init__(code, provider, file, original_exception, error_info)
+        super().__init__(
+            code,
+            provider="AWS",
+            file=file,
+            original_exception=original_exception,
+            error_info=error_info,
+        )
 
 
 class AWSCredentialsError(AWSBaseException):
