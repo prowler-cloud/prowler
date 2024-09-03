@@ -8,38 +8,26 @@ class GCPBaseException(ProwlerException):
         (1925, "GCPCloudResourceManagerAPINotUsedError"): {
             "message": "Cloud Resource Manager API not used",
             "remediation": "Enable the Cloud Resource Manager API for the project.",
-            "file": "{file}",
-            "provider": "{provider}",
         },
         (1926, "GCPHTTPError"): {
             "message": "HTTP error",
             "remediation": "Check the HTTP error and ensure the request is properly formatted.",
-            "file": "{file}",
-            "provider": "{provider}",
         },
         (1927, "GCPNoAccesibleProjectsError"): {
             "message": "No Project IDs can be accessed via Google Credentials",
             "remediation": "Ensure the project is accessible and properly set up.",
-            "file": "{file}",
-            "provider": "{provider}",
         },
         (1928, "GCPSetUpSessionError"): {
             "message": "Error setting up session",
             "remediation": "Check the session setup and ensure it is properly set up.",
-            "file": "{file}",
-            "provider": "{provider}",
         },
         (1929, "GCPGetProjectError"): {
             "message": "Error getting project",
             "remediation": "Check the project and ensure it is properly set up.",
-            "file": "{file}",
-            "provider": "{provider}",
         },
         (1930, "GCPTestConnectionError"): {
             "message": "Error testing connection to GCP",
             "remediation": "Check the connection and ensure it is properly set up.",
-            "file": "{file}",
-            "provider": "{provider}",
         },
     }
 
