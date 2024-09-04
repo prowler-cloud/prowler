@@ -82,7 +82,7 @@ def hash_sha512(string: str) -> str:
 
 def detect_secrets_scan(
     data: str = None, file=None, excluded_secrets: list[str] = None
-):
+) -> list[dict[str, str]]:
     """detect_secrets_scan scans the data or file for secrets using the detect-secrets library.
     Args:
         data (str): The data to scan for secrets.
@@ -92,6 +92,11 @@ def detect_secrets_scan(
         dict: The secrets found in the
     Raises:
         Exception: If an error occurs during the scan.
+    Examples:
+        >>> detect_secrets_scan(data="password=password")
+        [{'filename': 'data', 'hashed_secret': 'f7c3bc1d808e04732adf679965ccc34ca7ae3441', 'is_verified': False, 'line_number': 1, 'type': 'Secret Keyword'}]
+        >>> detect_secrets_scan(file="file.txt")
+        {'file.txt': [{'filename': 'file.txt', 'hashed_secret': 'f7c3bc1d808e04732adf679965ccc34ca7ae3441', 'is_verified': False, 'line_number': 1, 'type': 'Secret Keyword'}]}
     """
     try:
         if not file:
