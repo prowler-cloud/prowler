@@ -213,9 +213,8 @@ class Compliance(BaseModel):
             raise ValueError("Framework or Provider must not be empty")
         return values
 
-    def list_compliance_frameworks(
-        bulk_compliance_frameworks: dict, provider: str = None
-    ):
+    @staticmethod
+    def list(bulk_compliance_frameworks: dict, provider: str = None) -> list[str]:
         """
         Returns a list of compliance frameworks from bulk compliance frameworks
 
@@ -229,16 +228,83 @@ class Compliance(BaseModel):
         if provider:
             compliance_frameworks = [
                 compliance_framework
-                for compliance_framework in bulk_compliance_frameworks.values()
-                if compliance_framework.Provider == provider
+                for compliance_framework in bulk_compliance_frameworks.keys()
+                if provider in compliance_framework
             ]
         else:
             compliance_frameworks = [
                 compliance_framework
-                for compliance_framework in bulk_compliance_frameworks.values()
+                for compliance_framework in bulk_compliance_frameworks.keys()
             ]
 
         return compliance_frameworks
+
+    @staticmethod
+    def get(
+        bulk_compliance_frameworks: dict, compliance_framework_name: str
+    ) -> "Compliance":
+        """
+        Returns a compliance framework from bulk compliance frameworks
+
+        Args:
+            bulk_compliance_frameworks (dict): The bulk compliance frameworks
+            compliance_framework_name (str): The compliance framework name
+
+        Returns:
+            Compliance: The compliance framework
+        """
+        return bulk_compliance_frameworks.get(compliance_framework_name, None)
+
+    @staticmethod
+    def list_requirements(
+        bulk_compliance_frameworks: dict, compliance_framework: str = None
+    ) -> list:
+        """
+        Returns a list of compliance requirements from a compliance framework
+
+        Args:
+            bulk_compliance_frameworks (dict): The bulk compliance frameworks
+            compliance_framework (str): The compliance framework name
+
+        Returns:
+            list: The list of compliance requirements for the provided compliance framework
+        """
+        compliance_requirements = []
+
+        if bulk_compliance_frameworks and compliance_framework:
+            compliance_requirements = [
+                compliance_requirement.Id
+                for compliance_requirement in bulk_compliance_frameworks.get(
+                    compliance_framework
+                ).Requirements
+            ]
+
+        return compliance_requirements
+
+    @staticmethod
+    def get_requirement(
+        bulk_compliance_frameworks: dict, compliance_framework: str, requirement_id: str
+    ) -> Union[Mitre_Requirement, Compliance_Requirement]:
+        """
+        Returns a compliance requirement from a compliance framework
+
+        Args:
+            bulk_compliance_frameworks (dict): The bulk compliance frameworks
+            compliance_framework (str): The compliance framework name
+            requirement_id (str): The compliance requirement ID
+
+        Returns:
+            Mitre_Requirement | Compliance_Requirement: The compliance requirement
+        """
+        requirement = None
+        for compliance_requirement in bulk_compliance_frameworks.get(
+            compliance_framework
+        ).Requirements:
+            if compliance_requirement.Id == requirement_id:
+                requirement = compliance_requirement
+                break
+
+        return requirement
 
 
 # Testing Pending
