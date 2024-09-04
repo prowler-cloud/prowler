@@ -80,7 +80,9 @@ def hash_sha512(string: str) -> str:
     return sha512(string.encode(encoding_format_utf_8)).hexdigest()[0:9]
 
 
-def detect_secrets_scan(data=None, file=None, excluded_secrets: list[str] = None):
+def detect_secrets_scan(
+    data: str = None, file=None, excluded_secrets: list[str] = None
+):
     """detect_secrets_scan scans the data or file for secrets using the detect-secrets library.
     Args:
         data (str): The data to scan for secrets.
