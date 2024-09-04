@@ -1152,13 +1152,13 @@ test-randomorder = ["pytest-randomly"]
 
 [[package]]
 name = "dash"
-version = "2.17.1"
+version = "2.18.0"
 description = "A Python framework for building reactive web-apps. Developed by Plotly."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "dash-2.17.1-py3-none-any.whl", hash = "sha256:3eefc9ac67003f93a06bc3e500cae0a6787c48e6c81f6f61514239ae2da414e4"},
-    {file = "dash-2.17.1.tar.gz", hash = "sha256:ee2d9c319de5dcc1314085710b72cd5fa63ff994d913bf72979b7130daeea28e"},
+    {file = "dash-2.18.0-py3-none-any.whl", hash = "sha256:2d37b479be20bef1a184d35be4a654e4da131da6538d563fc813be3e28b90cbc"},
+    {file = "dash-2.18.0.tar.gz", hash = "sha256:9be6ea7562d40bb70211df8cbfb23611cc2ca9ae63cfca9af8f96679989adc40"},
 ]
 
 [package.dependencies]
@@ -4962,4 +4962,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "62d82a6d2b81429a749a20512c19836193bcf10aa9dddda5b3300535789d9e7d"
+content-hash = "711dc74a29dd38f10a7751295bc8e52ee64550290cf93a7cf549c1ce9df954f9"
