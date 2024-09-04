@@ -20,8 +20,6 @@ from prowler.providers.kubernetes.exceptions.exceptions import (
     KubernetesError,
     KubernetesSetUpSessionError,
     KubernetesTimeoutError,
-    KubernetesTypeError,
-    KubernetesValueError,
 )
 from prowler.providers.kubernetes.lib.mutelist.mutelist import KubernetesMutelist
 from prowler.providers.kubernetes.models import (
@@ -333,20 +331,6 @@ class KubernetesProvider(Provider):
             )
             raise KubernetesTimeoutError(
                 original_exception=timeout_error, file=os.path.abspath(__file__)
-            )
-        except ValueError as value_error:
-            logger.critical(
-                f"ValueError[{value_error.__traceback__.tb_lineno}]: {value_error}"
-            )
-            raise KubernetesValueError(
-                original_exception=value_error, file=os.path.abspath(__file__)
-            )
-        except TypeError as type_error:
-            logger.critical(
-                f"TypeError[{type_error.__traceback__.tb_lineno}]: {type_error}"
-            )
-            raise KubernetesTypeError(
-                original_exception=type_error, file=os.path.abspath(__file__)
             )
         except Exception as error:
             logger.critical(

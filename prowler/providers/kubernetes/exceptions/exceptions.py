@@ -21,14 +21,6 @@ class KubernetesBaseException(ProwlerException):
             "message": "The request to the Kubernetes API timed out.",
             "remediation": "Check the network connection and the Kubernetes API server status. For information on troubleshooting timeouts, refer to the Kubernetes documentation: https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.22/#-strong-timeout-strong-",
         },
-        (1932, "KubernetesValueError"): {
-            "message": "A value error occurred while processing Kubernetes data.",
-            "remediation": "Check the data format and ensure it meets the expected structure. For more information on Kubernetes data formats, refer to the Kubernetes documentation: https://kubernetes.io/docs/reference/",
-        },
-        (1933, "KubernetesTypeError"): {
-            "message": "A type error occurred while processing Kubernetes data.",
-            "remediation": "Check the data types and ensure they match the expected format. For information on Kubernetes data types, refer to the Kubernetes documentation: https://kubernetes.io/docs/reference/",
-        },
         (1934, "KubernetesError"): {
             "message": "An error occurred in the Kubernetes provider.",
             "remediation": "Check the provider code and configuration to identify the issue. For more information on troubleshooting Kubernetes providers, refer to the Kubernetes documentation: https://kubernetes.io/docs/reference/",
