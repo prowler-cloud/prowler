@@ -23,7 +23,7 @@ def example_distribution_config(ref):
                     "Id": "origin1",
                     "DomainName": "asdf.s3.us-east-1.amazonaws.com",
                     "S3OriginConfig": {"OriginAccessIdentity": ""},
-                }
+                },
             ],
         },
         "DefaultCacheBehavior": {
@@ -172,6 +172,28 @@ class Test_CloudFront_Service:
         assert len(cloudfront.distributions) == 0
 
     @mock_aws
+    def test_list_get_origin_access_control(self):
+        cloudfront_client = client("cloudfront")
+        cloudfront_client.create_origin_access_control(
+            OriginAccessControlConfig={
+                "Name": "oac",
+                "Description": "test oac",
+                "SigningProtocol": "sigv4",
+                "SigningBehavior": "always",
+                "OriginAccessControlOriginType": "s3",
+            }
+        )
+        config = example_distribution_config("ref")
+        response = cloudfront_client.create_distribution(DistributionConfig=config)
+        cloudfront_distribution_id = response["Distribution"]["Id"]
+        cloudfront = CloudFront(set_mocked_aws_provider())
+
+        assert (
+            cloudfront.distributions[cloudfront_distribution_id].origin_access_control
+            is False
+        )
+
+    @mock_aws
     def test_list_distributionscomplete(self):
         cloudfront_client = client("cloudfront")
         config = example_distribution_config("ref")
@@ -227,6 +249,10 @@ class Test_CloudFront_Service:
                 cloudfront_distribution_id
             ].default_cache_config.field_level_encryption_id
             == "enabled"
+        )
+        assert (
+            cloudfront.distributions[cloudfront_distribution_id].origin_access_control
+            is False
         )
 
         assert cloudfront.distributions[cloudfront_distribution_id].tags == [

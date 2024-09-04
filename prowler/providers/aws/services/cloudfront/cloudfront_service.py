@@ -82,19 +82,14 @@ class CloudFront(AWSService):
                     default_cache_config
                 )
 
-        except Exception as error:
-            logger.error(
-                f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+                distributions[distribution_id].origin_access_control = False
+                for item in distribution_config["DistributionConfig"]["Origins"][
+                    "Items"
+                ]:
+                    if item["OriginAccessControlId"] is not None:
+                        distributions[distribution_id].origin_access_control = True
+                        break
 
-    def _get_origin_access_control(self, client, distributions, region):
-        logger.info("CloudFront - Getting Origin Access Control...")
-        try:
-            for distribution in distributions.keys():
-                response = client.get_origin_access_control(Id=distribution.id)
-                distribution.origin_access_control = (
-                    True if response["OriginAccessControl"] else False
-                )
         except Exception as error:
             logger.error(
                 f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
