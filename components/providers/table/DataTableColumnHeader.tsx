@@ -30,19 +30,15 @@ export const DataTableColumnHeader = <TData, TValue>({
     const currentSortParam = searchParams.get("sort");
     let newSortParam = "";
 
-    if (
-      !currentSortParam ||
-      currentSortParam === "" ||
-      currentSortParam !== param
-    ) {
-      // Sort ascending for the first time or switch to a different column
-      newSortParam = `${param}`;
-    } else if (currentSortParam === param) {
+    if (currentSortParam === `${param}`) {
       // If already sorting ascending, switch to descending
       newSortParam = `-${param}`;
     } else if (currentSortParam === `-${param}`) {
       // If already sorting descending, remove sorting
       newSortParam = "";
+    } else {
+      // Sort ascending for the first time or switch to a different column
+      newSortParam = `${param}`;
     }
 
     // Construct the new URL with the sorting parameter
@@ -76,7 +72,7 @@ export const DataTableColumnHeader = <TData, TValue>({
     <Button
       variant="light"
       size="md"
-      className="h-8"
+      className="text-slate-500 dark:text-slate-400 h-8"
       onClick={getToggleSortingHandler}
     >
       <span>{title}</span>

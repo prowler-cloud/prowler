@@ -16,9 +16,13 @@ export default async function Providers({
 }: {
   searchParams?: {
     query?: string;
-    page: string;
+    page?: string;
+    sort?: string;
+    filter?: string;
   };
 }) {
+  const searchParamsKey = JSON.stringify(searchParams || {});
+
   return (
     <>
       <Header title="Providers" icon="fluent:cloud-sync-24-regular" />
@@ -28,7 +32,7 @@ export default async function Providers({
           <AddProviderModal />
         </div>
         <Spacer y={6} />
-        <Suspense key={searchParams?.page} fallback={<SkeletonTableProvider />}>
+        <Suspense key={searchParamsKey} fallback={<SkeletonTableProvider />}>
           <SSRDataTable searchParams={searchParams} />
         </Suspense>
       </div>
