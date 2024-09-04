@@ -10,7 +10,7 @@ export const getProvider = async ({
   page = 1,
   query = "",
   sort = "",
-  filter = "",
+  filters = {},
 }) => {
   const session = await auth();
   const tenantId = session?.user.tenantId;
@@ -19,11 +19,16 @@ export const getProvider = async ({
 
   const keyServer = process.env.LOCAL_SERVER_URL;
   const url = new URL(`${keyServer}/providers`);
-  if (page) url.searchParams.append("page[number]", page.toString());
-  if (query) url.searchParams.append("filter[query]", query);
-  if (sort) url.searchParams.append("sort", sort);
-  if (filter) url.searchParams.append("filter[provider]", filter);
 
+  if (page) url.searchParams.append("page[number]", page.toString());
+  if (query) url.searchParams.append("filter[search]", query);
+  if (sort) url.searchParams.append("sort", sort);
+
+  // Handle multiple filters
+  Object.entries(filters).forEach(([key, value]) => {
+    url.searchParams.append(key, String(value));
+  });
+  console.log({ query });
   try {
     const providers = await fetch(`${url.toString()}`, {
       headers: {

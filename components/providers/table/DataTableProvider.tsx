@@ -2,8 +2,10 @@
 
 import {
   ColumnDef,
+  ColumnFiltersState,
   flexRender,
   getCoreRowModel,
+  getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
   SortingState,
@@ -22,6 +24,7 @@ import {
 import { MetaDataProps } from "@/types";
 
 import { DataTablePagination } from "./DataTablePagination";
+import { FilterColumnTable } from "./FilterColumnTable";
 
 interface DataTableProviderProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -35,6 +38,7 @@ export function DataTableProvider<TData, TValue>({
   metadata,
 }: DataTableProviderProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const table = useReactTable({
     data,
     columns,
@@ -43,12 +47,23 @@ export function DataTableProvider<TData, TValue>({
     getPaginationRowModel: getPaginationRowModel(),
     onSortingChange: setSorting,
     getSortedRowModel: getSortedRowModel(),
+    onColumnFiltersChange: setColumnFilters,
+    getFilteredRowModel: getFilteredRowModel(),
     state: {
       sorting,
+      columnFilters,
     },
   });
+
+  const filters = [
+    { key: "provider", values: ["aws", "gcp", "azure"] },
+    { key: "connected", values: ["true", "null"] },
+    // Add more filter categories as needed
+  ];
+
   return (
     <>
+      <FilterColumnTable filters={filters} />
       <div className="rounded-md border w-full">
         <Table>
           <TableHeader>

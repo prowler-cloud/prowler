@@ -10,16 +10,12 @@ import {
   SkeletonTableProvider,
 } from "@/components/providers";
 import { Header } from "@/components/ui";
+import { SearchParamsProps } from "@/types";
 
 export default async function Providers({
   searchParams,
 }: {
-  searchParams?: {
-    query?: string;
-    page?: string;
-    sort?: string;
-    filter?: string;
-  };
+  searchParams: SearchParamsProps;
 }) {
   const searchParamsKey = JSON.stringify(searchParams || {});
 
@@ -43,19 +39,18 @@ export default async function Providers({
 const SSRDataTable = async ({
   searchParams,
 }: {
-  searchParams?: {
-    query?: string;
-    page?: string;
-    sort?: string;
-    filter?: string;
-  };
+  searchParams: SearchParamsProps;
 }) => {
   const query = searchParams?.query || "";
-  const page = searchParams?.page ? parseInt(searchParams.page) : 1;
+  const page = searchParams?.page || "1";
   const sort = searchParams?.sort || "";
-  const filter = searchParams?.filter || "";
 
-  const providersData = await getProvider({ query, page, sort, filter });
+  // Extract all filter parameters
+  const filters = Object.fromEntries(
+    Object.entries(searchParams).filter(([key]) => key.startsWith("filter[")),
+  );
+
+  const providersData = await getProvider({ query, page, sort, filters });
   const [providers] = await Promise.all([providersData]);
 
   if (providers?.errors) redirect("/providers");
