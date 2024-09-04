@@ -11,6 +11,9 @@ class cloudformation_stack_outputs_find_secrets(Check):
     def execute(self):
         """Execute the cloudformation_stack_outputs_find_secrets check"""
         findings = []
+        secrets_ignore_patterns = cloudformation_client.audit_config.get(
+            "secrets_ignore_patterns", []
+        )
         for stack in cloudformation_client.stacks:
             report = Check_Report_AWS(self.metadata())
             report.region = stack.region
@@ -25,7 +28,9 @@ class cloudformation_stack_outputs_find_secrets(Check):
                 for output in stack.outputs:
                     data += f"{output}\n"
 
-                detect_secrets_output = detect_secrets_scan(data=data)
+                detect_secrets_output = detect_secrets_scan(
+                    data=data, excluded_secrets=secrets_ignore_patterns
+                )
                 # If secrets are found, update the report status
                 if detect_secrets_output:
                     secrets_string = ", ".join(

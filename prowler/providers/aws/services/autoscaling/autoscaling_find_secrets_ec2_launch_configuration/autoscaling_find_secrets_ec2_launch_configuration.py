@@ -13,6 +13,9 @@ from prowler.providers.aws.services.autoscaling.autoscaling_client import (
 class autoscaling_find_secrets_ec2_launch_configuration(Check):
     def execute(self):
         findings = []
+        secrets_ignore_patterns = autoscaling_client.audit_config.get(
+            "secrets_ignore_patterns", []
+        )
         for configuration in autoscaling_client.launch_configurations:
             report = Check_Report_AWS(self.metadata())
             report.region = configuration.region
@@ -39,7 +42,9 @@ class autoscaling_find_secrets_ec2_launch_configuration(Check):
                     )
                     continue
 
-                has_secrets = detect_secrets_scan(data=user_data)
+                has_secrets = detect_secrets_scan(
+                    data=user_data, excluded_secrets=secrets_ignore_patterns
+                )
 
                 if has_secrets:
                     report.status = "FAIL"

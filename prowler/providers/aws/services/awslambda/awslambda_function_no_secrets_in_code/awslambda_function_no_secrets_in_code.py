@@ -10,6 +10,9 @@ class awslambda_function_no_secrets_in_code(Check):
     def execute(self):
         findings = []
         if awslambda_client.functions:
+            secrets_ignore_patterns = awslambda_client.audit_config.get(
+                "secrets_ignore_patterns", []
+            )
             for function, function_code in awslambda_client._get_function_code():
                 if function_code:
                     report = Check_Report_AWS(self.metadata())
@@ -29,7 +32,8 @@ class awslambda_function_no_secrets_in_code(Check):
                         secrets_findings = []
                         for file in files_in_zip:
                             detect_secrets_output = detect_secrets_scan(
-                                file=f"{tmp_dir_name}/{file}"
+                                file=f"{tmp_dir_name}/{file}",
+                                excluded_secrets=secrets_ignore_patterns,
                             )
                             if detect_secrets_output:
                                 for (

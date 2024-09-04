@@ -8,6 +8,9 @@ from prowler.providers.aws.services.ssm.ssm_client import ssm_client
 class ssm_document_secrets(Check):
     def execute(self):
         findings = []
+        secrets_ignore_patterns = ssm_client.audit_config.get(
+            "secrets_ignore_patterns", []
+        )
         for document in ssm_client.documents.values():
             report = Check_Report_AWS(self.metadata())
             report.region = document.region
@@ -21,7 +24,8 @@ class ssm_document_secrets(Check):
 
             if document.content:
                 detect_secrets_output = detect_secrets_scan(
-                    data=json.dumps(document.content, indent=2)
+                    data=json.dumps(document.content, indent=2),
+                    excluded_secrets=secrets_ignore_patterns,
                 )
                 if detect_secrets_output:
                     secrets_string = ", ".join(

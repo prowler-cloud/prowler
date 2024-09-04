@@ -8,6 +8,9 @@ from prowler.providers.aws.services.awslambda.awslambda_client import awslambda_
 class awslambda_function_no_secrets_in_variables(Check):
     def execute(self):
         findings = []
+        secrets_ignore_patterns = awslambda_client.audit_config.get(
+            "secrets_ignore_patterns", []
+        )
         for function in awslambda_client.functions.values():
             report = Check_Report_AWS(self.metadata())
             report.region = function.region
@@ -22,7 +25,8 @@ class awslambda_function_no_secrets_in_variables(Check):
 
             if function.environment:
                 detect_secrets_output = detect_secrets_scan(
-                    data=json.dumps(function.environment, indent=2)
+                    data=json.dumps(function.environment, indent=2),
+                    excluded_secrets=secrets_ignore_patterns,
                 )
                 if detect_secrets_output:
                     environment_variable_names = list(function.environment.keys())

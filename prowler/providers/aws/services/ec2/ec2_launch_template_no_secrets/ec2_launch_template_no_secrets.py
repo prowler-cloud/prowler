@@ -11,6 +11,9 @@ from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 class ec2_launch_template_no_secrets(Check):
     def execute(self):
         findings = []
+        secrets_ignore_patterns = ec2_client.audit_config.get(
+            "secrets_ignore_patterns", []
+        )
         for template in ec2_client.launch_templates:
             report = Check_Report_AWS(self.metadata())
             report.region = template.region
@@ -43,7 +46,9 @@ class ec2_launch_template_no_secrets(Check):
                     )
                     continue
 
-                version_secrets = detect_secrets_scan(data=user_data)
+                version_secrets = detect_secrets_scan(
+                    data=user_data, excluded_secrets=secrets_ignore_patterns
+                )
 
                 if version_secrets:
                     versions_with_secrets.append(str(version.version_number))

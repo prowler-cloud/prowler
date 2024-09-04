@@ -147,12 +147,18 @@ class Test_ec2_instance_secrets_user_data:
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
 
+        ec2_client = EC2(aws_provider)
+
+        ec2_client.audit_config = {
+            "secrets_ignore_patterns": [".*_ALLOW_EMPTY_PASSWORD.*"]
+        }
+
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_instance_secrets_user_data.ec2_instance_secrets_user_data.ec2_client",
-            new=EC2(aws_provider),
+            new=ec2_client,
         ):
             from prowler.providers.aws.services.ec2.ec2_instance_secrets_user_data.ec2_instance_secrets_user_data import (
                 ec2_instance_secrets_user_data,

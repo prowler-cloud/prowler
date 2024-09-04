@@ -11,6 +11,9 @@ from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 class ec2_instance_secrets_user_data(Check):
     def execute(self):
         findings = []
+        secrets_ignore_patterns = ec2_client.audit_config.get(
+            "secrets_ignore_patterns", []
+        )
         for instance in ec2_client.instances:
             if instance.state != "terminated":
                 report = Check_Report_AWS(self.metadata())
@@ -37,8 +40,9 @@ class ec2_instance_secrets_user_data(Check):
                             f"{instance.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
                         continue
-
-                    detect_secrets_output = detect_secrets_scan(data=user_data)
+                    detect_secrets_output = detect_secrets_scan(
+                        data=user_data, excluded_secrets=secrets_ignore_patterns
+                    )
                     if detect_secrets_output:
                         secrets_string = ", ".join(
                             [

@@ -8,6 +8,9 @@ from prowler.providers.aws.services.ecs.ecs_client import ecs_client
 class ecs_task_definitions_no_environment_secrets(Check):
     def execute(self):
         findings = []
+        secrets_ignore_patterns = ecs_client.audit_config.get(
+            "secrets_ignore_patterns", []
+        )
         for task_definition in ecs_client.task_definitions:
             report = Check_Report_AWS(self.metadata())
             report.region = task_definition.region
@@ -22,7 +25,9 @@ class ecs_task_definitions_no_environment_secrets(Check):
                     dump_env_vars.update({env_var.name: env_var.value})
 
                 env_data = dumps(dump_env_vars, indent=2)
-                detect_secrets_output = detect_secrets_scan(data=env_data)
+                detect_secrets_output = detect_secrets_scan(
+                    data=env_data, excluded_secrets=secrets_ignore_patterns
+                )
                 if detect_secrets_output:
                     secrets_string = ", ".join(
                         [

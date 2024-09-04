@@ -11,6 +11,9 @@ class codebuild_project_no_secrets_in_variables(Check):
         sensitive_vars_excluded = codebuild_client.audit_config.get(
             "excluded_sensitive_environment_variables", []
         )
+        secrets_ignore_patterns = codebuild_client.audit_config.get(
+            "secrets_ignore_patterns", []
+        )
         for project in codebuild_client.projects.values():
             report = Check_Report_AWS(self.metadata())
             report.region = project.region
@@ -27,7 +30,8 @@ class codebuild_project_no_secrets_in_variables(Check):
                         and env_var.name not in sensitive_vars_excluded
                     ):
                         detect_secrets_output = detect_secrets_scan(
-                            data=json.dumps({env_var.name: env_var.value})
+                            data=json.dumps({env_var.name: env_var.value}),
+                            excluded_secrets=secrets_ignore_patterns,
                         )
                         if detect_secrets_output:
                             secrets_info = [
