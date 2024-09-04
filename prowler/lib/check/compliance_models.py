@@ -284,7 +284,7 @@ class Compliance(BaseModel):
     @staticmethod
     def get_requirement(
         bulk_compliance_frameworks: dict, compliance_framework: str, requirement_id: str
-    ):
+    ) -> Union[Mitre_Requirement, Compliance_Requirement]:
         """
         Returns a compliance requirement from a compliance framework
 
