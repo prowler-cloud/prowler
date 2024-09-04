@@ -18,7 +18,6 @@ from prowler.providers.kubernetes.exceptions.exceptions import (
     KubernetesAPIError,
     KubernetesCloudResourceManagerAPINotUsedError,
     KubernetesError,
-    KubernetesGetContextUserRolesError,
     KubernetesSetUpSessionError,
     KubernetesTimeoutError,
     KubernetesTypeError,
@@ -218,6 +217,13 @@ class KubernetesProvider(Provider):
             KubernetesProvider.setup_session(kubeconfig_file, input_context)
             client.CoreV1Api().list_namespace(timeout_seconds=2, _request_timeout=2)
             return Connection(is_connected=True)
+        except ApiException as api_error:
+            logger.critical(
+                f"ApiException[{api_error.__traceback__.tb_lineno}]: {api_error}"
+            )
+            if raise_on_exception:
+                raise KubernetesAPIError(original_exception=api_error)
+            return Connection(error=api_error)
         except Exception as error:
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -295,7 +301,7 @@ class KubernetesProvider(Provider):
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            raise KubernetesGetContextUserRolesError(original_exception=error)
+            raise KubernetesError(original_exception=error)
 
     def get_all_namespaces(self) -> list[str]:
         """
