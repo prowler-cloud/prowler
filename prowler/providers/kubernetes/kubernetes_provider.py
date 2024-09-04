@@ -15,11 +15,10 @@ from prowler.lib.utils.utils import print_boxes
 from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
 from prowler.providers.kubernetes.exceptions.exceptions import (
-    KubernetesApiError,
+    KubernetesAPIError,
     KubernetesCloudResourceManagerAPINotUsedError,
-    KubernetesGetAllNamespacesError,
+    KubernetesError,
     KubernetesGetContextUserRolesError,
-    KubernetesSearchAndSaveRolesError,
     KubernetesSetUpSessionError,
     KubernetesTimeoutError,
     KubernetesTypeError,
@@ -258,7 +257,9 @@ class KubernetesProvider(Provider):
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            raise KubernetesSearchAndSaveRolesError(original_exception=error)
+            raise KubernetesError(
+                original_exception=error, file=os.path.abspath(__file__)
+            )
 
     def get_context_user_roles(self):
         """
@@ -288,8 +289,7 @@ class KubernetesProvider(Provider):
             )
             logger.info("Context user roles retrieved successfully.")
             return roles
-        except KubernetesSearchAndSaveRolesError as error:
-            logger.critical(str(error))
+        except KubernetesError as error:
             raise error
         except Exception as error:
             logger.critical(
@@ -313,7 +313,7 @@ class KubernetesProvider(Provider):
             logger.critical(
                 f"ApiException[{api_error.__traceback__.tb_lineno}]: {api_error}"
             )
-            raise KubernetesApiError(
+            raise KubernetesAPIError(
                 original_exception=api_error, file=os.path.abspath(__file__)
             )
         except Timeout as timeout_error:
@@ -341,7 +341,9 @@ class KubernetesProvider(Provider):
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            raise KubernetesGetAllNamespacesError(original_exception=error)
+            raise KubernetesError(
+                original_exception=error, file=os.path.abspath(__file__)
+            )
 
     def get_pod_current_namespace(self):
         """
