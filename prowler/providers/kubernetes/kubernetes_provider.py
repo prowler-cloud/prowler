@@ -295,6 +295,11 @@ class KubernetesProvider(Provider):
             )
             logger.info("Context user roles retrieved successfully.")
             return roles
+        except ApiException as api_error:
+            logger.critical(
+                f"ApiException[{api_error.__traceback__.tb_lineno}]: {api_error}"
+            )
+            raise KubernetesAPIError(original_exception=api_error)
         except KubernetesError as error:
             raise error
         except Exception as error:
