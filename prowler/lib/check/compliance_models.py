@@ -258,7 +258,7 @@ class Compliance(BaseModel):
     @staticmethod
     def list_requirements(
         bulk_compliance_frameworks: dict, compliance_framework: str = None
-    ):
+    ) -> list[str]:
         """
         Returns a list of compliance requirements from a compliance framework
 
