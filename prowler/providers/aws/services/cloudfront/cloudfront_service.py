@@ -49,6 +49,14 @@ class CloudFront(AWSService):
         try:
             for distribution_id in distributions.keys():
                 distribution_config = client.get_distribution_config(Id=distribution_id)
+                oac = False
+                for item in distribution_config["DistributionConfig"]["Origins"][
+                    "Items"
+                ]:
+                    if item["OriginAccessControlId"] != "":
+                        oac = True
+                        break
+
                 # Global Config
                 distributions[distribution_id].logging_enabled = distribution_config[
                     "DistributionConfig"
@@ -63,6 +71,7 @@ class CloudFront(AWSService):
                 distributions[distribution_id].web_acl_id = distribution_config[
                     "DistributionConfig"
                 ]["WebACLId"]
+                distributions[distribution_id].origin_access_control = oac
 
                 # Default Cache Config
                 default_cache_config = DefaultCacheConfigBehaviour(
@@ -81,14 +90,6 @@ class CloudFront(AWSService):
                 distributions[distribution_id].default_cache_config = (
                     default_cache_config
                 )
-
-                distributions[distribution_id].origin_access_control = False
-                for item in distribution_config["DistributionConfig"]["Origins"][
-                    "Items"
-                ]:
-                    if item["OriginAccessControlId"] is not None:
-                        distributions[distribution_id].origin_access_control = True
-                        break
 
         except Exception as error:
             logger.error(

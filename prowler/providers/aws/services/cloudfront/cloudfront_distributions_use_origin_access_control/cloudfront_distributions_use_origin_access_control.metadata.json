@@ -2,7 +2,9 @@
   "Provider": "aws",
   "CheckID": "cloudfront_distributions_use_origin_access_control",
   "CheckTitle": "Check if CloudFront distributions use OAC.",
-  "CheckType": [],
+  "CheckType": [
+    "Data Exposure"
+  ],
   "ServiceName": "cloudfront",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:cloudfront:region:account-id:distribution/resource-id",
