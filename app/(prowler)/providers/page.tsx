@@ -1,5 +1,4 @@
 import { Spacer } from "@nextui-org/react";
-import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
 import { getProvider } from "@/actions";
@@ -41,25 +40,24 @@ const SSRDataTable = async ({
 }: {
   searchParams: SearchParamsProps;
 }) => {
-  const query = searchParams?.query || "";
-  const page = searchParams?.page || "1";
-  const sort = searchParams?.sort || "";
+  const page = parseInt(searchParams.page?.toString() || "1", 10);
+  const sort = searchParams.sort?.toString() || "";
 
   // Extract all filter parameters
   const filters = Object.fromEntries(
     Object.entries(searchParams).filter(([key]) => key.startsWith("filter[")),
   );
 
-  const providersData = await getProvider({ query, page, sort, filters });
-  const [providers] = await Promise.all([providersData]);
+  // Extract query from filters
+  const query = (filters["filter[search]"] as string) || "";
 
-  if (providers?.errors) redirect("/providers");
+  const providersData = await getProvider({ query, page, sort, filters });
 
   return (
     <DataTableProvider
       columns={ColumnsProvider}
-      data={providers?.data ?? []}
-      metadata={providers?.meta}
+      data={providersData.data}
+      metadata={providersData.meta}
     />
   );
 };

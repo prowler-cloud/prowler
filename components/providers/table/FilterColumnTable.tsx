@@ -1,4 +1,5 @@
 import { Button, Input } from "@nextui-org/react";
+import { XCircle } from "lucide-react"; // Import the clear icon
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -11,7 +12,10 @@ interface FilterColumnTableProps {
 export function FilterColumnTable({ filters }: FilterColumnTableProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(() => {
+    // Initialize searchQuery with the current search filter value from URL
+    return searchParams.get("filter[search]") || "";
+  });
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
   const activeFilters = useMemo(() => {
@@ -54,11 +58,21 @@ export function FilterColumnTable({ filters }: FilterColumnTableProps) {
       } else {
         params.delete("filter[search]");
       }
-      console.log(params.toString(), "en el apply search");
-      router.push(`?${params.toString()}`, { scroll: false });
+      router.replace(`?${params.toString()}`, { scroll: false });
     },
     [router, searchParams],
   );
+
+  const clearAllFilters = useCallback(() => {
+    const params = new URLSearchParams();
+    router.push(`?${params.toString()}`, { scroll: false });
+    setSearchQuery(""); // Clear the search input
+  }, [router]);
+
+  const clearIconSearch = () => {
+    setSearchQuery("");
+    applySearch("");
+  };
 
   useEffect(() => {
     applySearch(debouncedSearchQuery);
@@ -66,7 +80,7 @@ export function FilterColumnTable({ filters }: FilterColumnTableProps) {
 
   return (
     <div className="flex flex-col md:flex-row justify-between space-y-4 w-full items-center">
-      <div className="w-full md:w-1/3">
+      <div className="w-full md:w-1/3 flex space-x-2">
         <Input
           placeholder="Search..."
           value={searchQuery}
@@ -76,9 +90,16 @@ export function FilterColumnTable({ filters }: FilterColumnTableProps) {
               applySearch(searchQuery);
             }
           }}
+          endContent={
+            searchQuery && (
+              <button onClick={clearIconSearch} className="focus:outline-none">
+                <XCircle className="h-4 w-4 text-default-400" />
+              </button>
+            )
+          }
         />
       </div>
-      <div className="flex items-center space-x-2">
+      <div className="flex items-center space-x-2 flex-wrap">
         {filters.flatMap(({ key, values }) =>
           values.map((value) => (
             <Button
@@ -86,11 +107,20 @@ export function FilterColumnTable({ filters }: FilterColumnTableProps) {
               onClick={() => applyFilter(key, value)}
               // eslint-disable-next-line security/detect-object-injection
               variant={activeFilters[key] === value ? "faded" : "light"}
+              size="sm"
             >
               {value || "All"}
             </Button>
           )),
         )}
+        <Button
+          onClick={clearAllFilters}
+          variant="flat"
+          color="default"
+          size="sm"
+        >
+          Clear Filters
+        </Button>
       </div>
     </div>
   );

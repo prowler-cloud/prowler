@@ -26,11 +26,13 @@ export const getProvider = async ({
 
   // Handle multiple filters
   Object.entries(filters).forEach(([key, value]) => {
-    url.searchParams.append(key, String(value));
+    if (key !== "filter[search]") {
+      url.searchParams.append(key, String(value));
+    }
   });
-  console.log({ query });
+
   try {
-    const providers = await fetch(`${url.toString()}`, {
+    const providers = await fetch(url.toString(), {
       headers: {
         "X-Tenant-ID": `${tenantId}`,
       },
