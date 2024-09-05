@@ -63,6 +63,9 @@ class CloudFront(AWSService):
                 distributions[distribution_id].web_acl_id = distribution_config[
                     "DistributionConfig"
                 ]["WebACLId"]
+                distributions[distribution_id].default_root_object = (
+                    distribution_config.get("DefaultRootObject", None)
+                )
 
                 # Default Cache Config
                 default_cache_config = DefaultCacheConfigBehaviour(
@@ -80,9 +83,6 @@ class CloudFront(AWSService):
                 )
                 distributions[distribution_id].default_cache_config = (
                     default_cache_config
-                )
-                distributions[distribution_id].default_root_object = (
-                    distribution_config.get("DefaultRootObject", None)
                 )
 
         except Exception as error:

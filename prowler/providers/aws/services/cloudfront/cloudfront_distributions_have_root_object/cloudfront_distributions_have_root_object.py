@@ -16,7 +16,7 @@ class cloudfront_distributions_have_root_object(Check):
 
             if distribution.default_root_object is not None:
                 report.status = "PASS"
-                report.status_extended = f"CloudFront Distribution {distribution.id} does have a default root object configured."
+                report.status_extended = f"CloudFront Distribution {distribution.id} does have a default root object ({distribution.default_root_object}) configured."
             else:
                 report.status = "FAIL"
                 report.status_extended = f"CloudFront Distribution {distribution.id} does not have a default root object configured."

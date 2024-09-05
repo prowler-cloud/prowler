@@ -73,6 +73,7 @@ class Test_cloudfront_distributions_have_root_object:
 
     def test_distribution_root_object(self):
         cloudfront_client = mock.MagicMock
+        dro = "index.html"
         cloudfront_client.distributions = {
             "DISTRIBUTION_ID": Distribution(
                 arn=DISTRIBUTION_ARN,
@@ -84,7 +85,7 @@ class Test_cloudfront_distributions_have_root_object:
                     viewer_protocol_policy=ViewerProtocolPolicy.allow_all,
                     field_level_encryption_id="",
                 ),
-                default_root_object="index.html",
+                default_root_object=dro,
             )
         }
 
@@ -107,6 +108,6 @@ class Test_cloudfront_distributions_have_root_object:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"CloudFront Distribution {DISTRIBUTION_ID} does have a default root object configured."
+                == f"CloudFront Distribution {DISTRIBUTION_ID} does have a default root object ({dro}) configured."
             )
             assert result[0].resource_tags == []
