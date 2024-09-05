@@ -64,7 +64,9 @@ class CloudFront(AWSService):
                     "DistributionConfig"
                 ]["WebACLId"]
                 distributions[distribution_id].default_root_object = (
-                    distribution_config.get("DefaultRootObject", None)
+                    distribution_config["DistributionConfig"].get(
+                        "DefaultRootObject", None
+                    )
                 )
 
                 # Default Cache Config
@@ -144,5 +146,5 @@ class Distribution(BaseModel):
     geo_restriction_type: Optional[GeoRestrictionType]
     origins: list
     web_acl_id: str = ""
-    default_root_object: Optional[str]
+    default_root_object: Optional[str] = None
     tags: Optional[list] = []
