@@ -1291,9 +1291,8 @@ aws:
                 )  # No profile to avoid ProfileNotFound error
 
             assert exception.type == AWSNoCredentialsError
-            assert (
-                "AWSNoCredentialsError[1904]: No AWS credentials found - Unable to locate credentials"
-                in str(exception.value)
+            assert "AWSNoCredentialsError[1904]: No AWS credentials found" in str(
+                exception.value
             )
 
     @mock_aws
@@ -1334,7 +1333,7 @@ aws:
         assert exception.type == AWSArgumentTypeValidationError
         assert (
             exception.value.args[0]
-            == "[1905] AWS argument type validation error - Session Duration must be between 900 and 43200 seconds."
+            == "[1905] Session Duration must be between 900 and 43200 seconds."
         )
 
     @mock_aws
@@ -1354,7 +1353,7 @@ aws:
         assert isinstance(connection.error, AWSArgumentTypeValidationError)
         assert (
             connection.error.args[0]
-            == "[1905] AWS argument type validation error - Session Duration must be between 900 and 43200 seconds."
+            == "[1905] Session Duration must be between 900 and 43200 seconds."
         )
 
     @mock_aws
@@ -1370,7 +1369,7 @@ aws:
         assert exception.type == AWSArgumentTypeValidationError
         assert (
             exception.value.args[0]
-            == "[1905] AWS argument type validation error - Role Session Name must be between 2 and 64 characters and may contain alphanumeric characters, periods, hyphens, and underscores."
+            == "[1905] Role Session Name must be between 2 and 64 characters and may contain alphanumeric characters, periods, hyphens, and underscores."
         )
 
     @mock_aws

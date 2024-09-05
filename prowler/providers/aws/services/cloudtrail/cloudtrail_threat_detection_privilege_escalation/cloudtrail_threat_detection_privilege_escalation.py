@@ -34,7 +34,7 @@ class cloudtrail_threat_detection_privilege_escalation(Check):
         )
         for trail in trails_to_scan:
             for event_name in privilege_escalation_actions:
-                for event_log in cloudtrail_client.__lookup_events__(
+                for event_log in cloudtrail_client._lookup_events(
                     trail=trail,
                     event_name=event_name,
                     minutes=threat_detection_minutes,
@@ -58,7 +58,7 @@ class cloudtrail_threat_detection_privilege_escalation(Check):
                 report = Check_Report_AWS(self.metadata())
                 report.region = cloudtrail_client.region
                 report.resource_id = cloudtrail_client.audited_account
-                report.resource_arn = cloudtrail_client.__get_trail_arn_template__(
+                report.resource_arn = cloudtrail_client._get_trail_arn_template(
                     cloudtrail_client.region
                 )
                 report.status = "FAIL"
@@ -68,7 +68,7 @@ class cloudtrail_threat_detection_privilege_escalation(Check):
             report = Check_Report_AWS(self.metadata())
             report.region = cloudtrail_client.region
             report.resource_id = cloudtrail_client.audited_account
-            report.resource_arn = cloudtrail_client.__get_trail_arn_template__(
+            report.resource_arn = cloudtrail_client._get_trail_arn_template(
                 cloudtrail_client.region
             )
             report.status = "PASS"

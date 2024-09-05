@@ -54,18 +54,18 @@ def mock_sqlserver_get_sql_servers(_):
 
 
 @patch(
-    "prowler.providers.azure.services.sqlserver.sqlserver_service.SQLServer.__get_sql_servers__",
+    "prowler.providers.azure.services.sqlserver.sqlserver_service.SQLServer._get_sql_servers",
     new=mock_sqlserver_get_sql_servers,
 )
 class Test_SqlServer_Service:
-    def test__get_client__(self):
+    def test_get_client(self):
         sql_server = SQLServer(set_mocked_azure_provider())
         assert (
             sql_server.clients[AZURE_SUBSCRIPTION_ID].__class__.__name__
             == "SqlManagementClient"
         )
 
-    def test__get_sql_servers__(self):
+    def test_get_sql_servers(self):
         database = Database(
             id="id",
             name="name",
@@ -117,7 +117,7 @@ class Test_SqlServer_Service:
             == "ServerVulnerabilityAssessment"
         )
 
-    def test__get_databases__(self):
+    def test_get_databases(self):
         sql_server = SQLServer(set_mocked_azure_provider())
         assert (
             sql_server.sql_servers[AZURE_SUBSCRIPTION_ID][0]
@@ -147,7 +147,7 @@ class Test_SqlServer_Service:
             == "TransparentDataEncryption"
         )
 
-    def test__get_transparent_data_encryption__(self):
+    def test_get_transparent_data_encryption(self):
         sql_server = SQLServer(set_mocked_azure_provider())
         assert (
             sql_server.sql_servers[AZURE_SUBSCRIPTION_ID][0]
@@ -177,10 +177,10 @@ class Test_SqlServer_Service:
             == "AzureKeyVault"
         )
 
-    def test__get_resource_group__(self):
+    def test_get_resource_group(self):
         id = "/subscriptions/subscription_id/resourceGroups/resource_group/providers/Microsoft.Sql/servers/sql_server"
         sql_server = SQLServer(set_mocked_azure_provider())
-        assert sql_server.__get_resource_group__(id) == "resource_group"
+        assert sql_server._get_resource_group(id) == "resource_group"
 
     def test__get_vulnerability_assessment__(self):
         sql_server = SQLServer(set_mocked_azure_provider())
@@ -198,7 +198,7 @@ class Test_SqlServer_Service:
             == storage_container_path
         )
 
-    def test__get_server_blob_auditing_policies__(self):
+    def test_get_server_blob_auditing_policies(self):
         sql_server = SQLServer(set_mocked_azure_provider())
         auditing_policies = ServerBlobAuditingPolicy(state="Disabled")
         assert (
@@ -212,7 +212,7 @@ class Test_SqlServer_Service:
             == auditing_policies
         )
 
-    def test__get_firewall_rules__(self):
+    def test_get_firewall_rules(self):
         sql_server = SQLServer(set_mocked_azure_provider())
         firewall_rules = FirewallRule(name="name")
         assert (
@@ -226,7 +226,7 @@ class Test_SqlServer_Service:
             == firewall_rules
         )
 
-    def test__get_server_security_alert_policies__(self):
+    def test_get_server_security_alert_policies(self):
         sql_server = SQLServer(set_mocked_azure_provider())
         security_alert_policies = ServerSecurityAlertPolicy(state="Disabled")
         assert (

@@ -11,9 +11,9 @@ from prowler.providers.azure.lib.service.service import AzureService
 class CosmosDB(AzureService):
     def __init__(self, provider: AzureProvider):
         super().__init__(CosmosDBManagementClient, provider)
-        self.accounts = self.__get_accounts__()
+        self.accounts = self._get_accounts()
 
-    def __get_accounts__(self):
+    def _get_accounts(self):
         logger.info("CosmosDB - Getting accounts...")
         accounts = {}
         for subscription, client in self.clients.items():

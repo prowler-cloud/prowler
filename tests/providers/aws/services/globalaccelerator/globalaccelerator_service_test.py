@@ -71,7 +71,7 @@ class Test_GlobalAccelerator_Service:
         globalaccelerator = GlobalAccelerator(aws_provider)
         assert globalaccelerator.session.__class__.__name__ == "Session"
 
-    def test__list_accelerators__(self):
+    def test_list_accelerators(self):
         # GlobalAccelerator client for this test class
         aws_provider = set_mocked_aws_provider()
         globalaccelerator = GlobalAccelerator(aws_provider)

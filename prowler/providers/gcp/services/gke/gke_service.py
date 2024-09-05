@@ -10,11 +10,11 @@ class GKE(GCPService):
     def __init__(self, provider: GcpProvider):
         super().__init__("container", provider, api_version="v1beta1")
         self.locations = []
-        self.__get_locations__()
+        self._get_locations()
         self.clusters = {}
-        self.__threading_call__(self.__get_clusters__, self.locations)
+        self.__threading_call__(self._get_clusters, self.locations)
 
-    def __get_locations__(self):
+    def _get_locations(self):
         for project_id in self.project_ids:
             try:
                 request = (
@@ -34,7 +34,7 @@ class GKE(GCPService):
                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
-    def __get_clusters__(self, location):
+    def _get_clusters(self, location):
         try:
             request = (
                 self.client.projects()

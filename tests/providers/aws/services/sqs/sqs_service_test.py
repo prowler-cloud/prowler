@@ -74,7 +74,7 @@ class Test_SQS_Service:
 
     @mock_aws
     # Test SQS list queues
-    def test__list_queues__(self):
+    def test_list_queues(self):
         sqs_client = client("sqs", region_name=AWS_REGION_EU_WEST_1)
         queue = sqs_client.create_queue(QueueName=test_queue, tags={"test": "test"})
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
@@ -92,7 +92,7 @@ class Test_SQS_Service:
     # so this test currently always fails
     # @mock_aws
     # # Test SQS list queues for over 1000 queues
-    # def test__list_queues__pagination_over_a_thousand(self):
+    # def test_list_queuespagination_over_a_thousand(self):
     #     sqs_client = client("sqs", region_name=AWS_REGION_EU_WEST_1)
     #     for i in range(0,1050):
     #         sqs_client.create_queue(QueueName=f"{test_queue}-{i}", tags={"test": "test"})
@@ -102,7 +102,7 @@ class Test_SQS_Service:
 
     @mock_aws
     # Test SQS list queues
-    def test__get_queue_attributes__(self):
+    def test_get_queue_attributes(self):
         sqs_client = client("sqs", region_name=AWS_REGION_EU_WEST_1)
         queue = sqs_client.create_queue(
             QueueName=test_queue,

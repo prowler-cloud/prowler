@@ -24,9 +24,9 @@ class Organizations(AWSService):
         self.organizations = []
         self.policies = []
         self.delegated_administrators = []
-        self.__describe_organization__()
+        self._describe_organization()
 
-    def __describe_organization__(self):
+    def _describe_organization(self):
         logger.info("Organizations - Describe Organization...")
 
         try:
@@ -37,10 +37,10 @@ class Organizations(AWSService):
                 organization_id = organization_desc.get("Id")
                 organization_master_id = organization_desc.get("MasterAccountId")
                 # Fetch policies for organization:
-                organization_policies = self.__list_policies__()
+                organization_policies = self._list_policies()
                 # Fetch delegated administrators for organization:
                 organization_delegated_administrator = (
-                    self.__list_delegated_administrators__()
+                    self._list_delegated_administrators()
                 )
             except ClientError as error:
                 if (
@@ -90,7 +90,7 @@ class Organizations(AWSService):
             )
 
     # I'm using list_policies instead of list_policies_for_target, because the last one only returns "Attached directly" policies but not "Inherited from..." policies.
-    def __list_policies__(self):
+    def _list_policies(self):
         logger.info("Organizations - List policies...")
 
         try:
@@ -103,8 +103,8 @@ class Organizations(AWSService):
                 for page in list_policies_paginator.paginate(Filter=policy_type):
                     for policy in page["Policies"]:
                         policy_id = policy.get("Id")
-                        policy_content = self.__describe_policy__(policy_id)
-                        policy_targets = self.__list_targets_for_policy__(policy_id)
+                        policy_content = self._describe_policy(policy_id)
+                        policy_targets = self._list_targets_for_policy(policy_id)
                         self.policies.append(
                             Policy(
                                 arn=policy.get("Arn"),
@@ -128,7 +128,7 @@ class Organizations(AWSService):
         finally:
             return self.policies
 
-    def __describe_policy__(self, policy_id) -> dict:
+    def _describe_policy(self, policy_id) -> dict:
         logger.info("Organizations - Describe policy: %s ...", policy_id)
 
         # This operation can be called only from the organization’s management account or by a member account that is a delegated administrator for an Amazon Web Services service.
@@ -151,7 +151,7 @@ class Organizations(AWSService):
             )
             return {}
 
-    def __list_targets_for_policy__(self, policy_id) -> list:
+    def _list_targets_for_policy(self, policy_id) -> list:
         logger.info("Organizations - List Targets for policy: %s ...", policy_id)
 
         try:
@@ -169,7 +169,7 @@ class Organizations(AWSService):
             )
             return []
 
-    def __list_delegated_administrators__(self):
+    def _list_delegated_administrators(self):
         logger.info("Organizations - List Delegated Administrators")
 
         try:

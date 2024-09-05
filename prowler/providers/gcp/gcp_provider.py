@@ -17,6 +17,14 @@ from prowler.lib.logger import logger
 from prowler.lib.utils.utils import print_boxes
 from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
+from prowler.providers.gcp.exceptions.exceptions import (
+    GCPCloudResourceManagerAPINotUsedError,
+    GCPGetProjectError,
+    GCPHTTPError,
+    GCPNoAccesibleProjectsError,
+    GCPSetUpSessionError,
+    GCPTestConnectionError,
+)
 from prowler.providers.gcp.lib.mutelist.mutelist import GCPMutelist
 from prowler.providers.gcp.models import (
     GCPIdentityInfo,
@@ -73,8 +81,10 @@ class GcpProvider(Provider):
         accessible_projects = self.get_projects()
         if not accessible_projects:
             logger.critical("No Project IDs can be accessed via Google Credentials.")
-            # TODO: add custom exception once we have the GCP exceptions
-            raise SystemExit
+            raise GCPNoAccesibleProjectsError(
+                file=__file__,
+                message="No Project IDs can be accessed via Google Credentials.",
+            )
 
         if project_ids:
             for input_project in project_ids:
@@ -106,8 +116,10 @@ class GcpProvider(Provider):
             logger.critical(
                 "No Input Project IDs can be accessed via Google Credentials."
             )
-            # TODO: add custom exception once we have the GCP exceptions
-            raise SystemExit
+            raise GCPNoAccesibleProjectsError(
+                file=__file__,
+                message="No Input Project IDs can be accessed via Google Credentials.",
+            )
 
         if list_project_ids:
             print(
@@ -256,7 +268,7 @@ class GcpProvider(Provider):
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            raise error
+            raise GCPSetUpSessionError(file=__file__, original_exception=error)
 
     @staticmethod
     def test_connection(
@@ -281,13 +293,22 @@ class GcpProvider(Provider):
             request = service.projects().list()
             request.execute()
             return Connection(is_connected=True)
+
+        # Errors from setup_session
+        except GCPSetUpSessionError as setup_session_error:
+            logger.critical(str(setup_session_error))
+            if raise_on_exception:
+                raise setup_session_error
+            return Connection(error=setup_session_error)
         except HttpError as http_error:
             if "Cloud Resource Manager API has not been used" in str(http_error):
                 logger.critical(
                     "Cloud Resource Manager API has not been used before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/cloudresourcemanager.googleapis.com/ then retry."
                 )
                 if raise_on_exception:
-                    raise http_error
+                    raise GCPCloudResourceManagerAPINotUsedError(
+                        file=__file__, original_exception=http_error
+                    )
             else:
                 logger.critical(
                     f"{http_error.__class__.__name__}[{http_error.__traceback__.tb_lineno}]: {http_error}"
@@ -300,7 +321,7 @@ class GcpProvider(Provider):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             if raise_on_exception:
-                raise error
+                raise GCPTestConnectionError(file=__file__, original_exception=error)
             return Connection(error=error)
 
     def print_credentials(self):
@@ -374,16 +395,19 @@ class GcpProvider(Provider):
                 logger.critical(
                     "Cloud Resource Manager API has not been used before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/cloudresourcemanager.googleapis.com/ then retry."
                 )
-                raise http_error
+                raise GCPCloudResourceManagerAPINotUsedError(
+                    file=__file__, original_exception=http_error
+                )
             else:
                 logger.error(
                     f"{http_error.__class__.__name__}[{http_error.__traceback__.tb_lineno}]: {http_error}"
                 )
+                raise GCPHTTPError(file=__file__, original_exception=http_error)
         except Exception as error:
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            raise error
+            raise GCPGetProjectError(file=__file__, original_exception=error)
         finally:
             return projects
 

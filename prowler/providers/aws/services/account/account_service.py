@@ -13,10 +13,10 @@ class Account(AWSService):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.number_of_contacts = 4
-        self.contact_base = self.__get_contact_information__()
-        self.contacts_billing = self.__get_alternate_contact__("BILLING")
-        self.contacts_security = self.__get_alternate_contact__("SECURITY")
-        self.contacts_operations = self.__get_alternate_contact__("OPERATIONS")
+        self.contact_base = self._get_contact_information()
+        self.contacts_billing = self._get_alternate_contact("BILLING")
+        self.contacts_security = self._get_alternate_contact("SECURITY")
+        self.contacts_operations = self._get_alternate_contact("OPERATIONS")
 
         if self.contact_base:
             # Set of contact phone numbers
@@ -42,7 +42,7 @@ class Account(AWSService):
                 self.contacts_operations.email,
             }
 
-    def __get_contact_information__(self):
+    def _get_contact_information(self):
         try:
             primary_account_contact = self.client.get_contact_information()[
                 "ContactInformation"
@@ -65,7 +65,7 @@ class Account(AWSService):
                 )
                 return Contact(type="PRIMARY")
 
-    def __get_alternate_contact__(self, contact_type: str):
+    def _get_alternate_contact(self, contact_type: str):
         try:
             account_contact = self.client.get_alternate_contact(
                 AlternateContactType=contact_type

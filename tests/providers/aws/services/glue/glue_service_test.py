@@ -154,7 +154,7 @@ class Test_Glue_Service:
 
     # Test Glue Search Tables
     @mock_aws
-    def test__search_tables__(self):
+    def test_search_tables(self):
         aws_provider = set_mocked_aws_provider()
         glue = Glue(aws_provider)
         assert len(glue.tables) == 1
@@ -165,7 +165,7 @@ class Test_Glue_Service:
 
     # Test Glue Get Connections
     @mock_aws
-    def test__get_connections__(self):
+    def test_get_connections(self):
         aws_provider = set_mocked_aws_provider()
         glue = Glue(aws_provider)
         assert len(glue.connections) == 1
@@ -182,7 +182,7 @@ class Test_Glue_Service:
 
     # Test Glue Get Catalog Encryption
     @mock_aws
-    def test__get_data_catalog_encryption_settings__(self):
+    def test_get_data_catalog_encryption_settings(self):
         aws_provider = set_mocked_aws_provider()
         glue = Glue(aws_provider)
         assert len(glue.catalog_encryption_settings) == 1
@@ -194,7 +194,7 @@ class Test_Glue_Service:
 
     # Test Glue Get Dev Endpoints
     @mock_aws
-    def test__get_dev_endpoints__(self):
+    def test_get_dev_endpoints(self):
         aws_provider = set_mocked_aws_provider()
         glue = Glue(aws_provider)
         assert len(glue.dev_endpoints) == 1
@@ -204,7 +204,7 @@ class Test_Glue_Service:
 
     # Test Glue Get Security Configs
     @mock_aws
-    def test__get_security_configurations__(self):
+    def test_get_security_configurations(self):
         aws_provider = set_mocked_aws_provider()
         glue = Glue(aws_provider)
         assert len(glue.security_configs) == 1
@@ -216,7 +216,7 @@ class Test_Glue_Service:
 
     # Test Glue Get Security Configs
     @mock_aws
-    def test__get_jobs__(self):
+    def test_get_jobs(self):
         aws_provider = set_mocked_aws_provider()
         glue = Glue(aws_provider)
         assert len(glue.jobs) == 1
