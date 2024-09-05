@@ -19,7 +19,7 @@ from prowler.config.config import (
     load_and_validate_config_file,
     load_and_validate_fixer_config_file,
 )
-from prowler.lib.check.check import list_modules, recover_checks_from_service
+from prowler.lib.check.utils import list_modules, recover_checks_from_service
 from prowler.lib.logger import logger
 from prowler.lib.utils.utils import open_file, parse_json_file, print_boxes
 from prowler.providers.aws.config import (
