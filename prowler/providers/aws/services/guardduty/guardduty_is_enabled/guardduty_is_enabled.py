@@ -12,20 +12,20 @@ class guardduty_is_enabled(Check):
             report.resource_arn = detector.arn
             report.resource_tags = detector.tags
             report.status = "PASS"
-            report.status_extended = f"GuardDuty detector {detector.id} enabled."
+            report.status_extended = f"GuardDuty detector {detector.id} in region {detector.region} enabled."
 
             if not detector.enabled_in_account:
                 report.status = "FAIL"
-                report.status_extended = "GuardDuty is not enabled."
+                report.status_extended = f"GuardDuty is not enabled in region {detector.region}."
             elif detector.status is None:
                 report.status = "FAIL"
                 report.status_extended = (
-                    f"GuardDuty detector {detector.id} not configured."
+                    f"GuardDuty detector {detector.id} in region {detector.region} not configured."
                 )
             elif not detector.status:
                 report.status = "FAIL"
                 report.status_extended = (
-                    f"GuardDuty detector {detector.id} configured but suspended."
+                    f"GuardDuty detector {detector.id} in region {detector.region} configured but suspended."
                 )
 
             if report.status == "FAIL" and (

@@ -53,7 +53,7 @@ class Test_guardduty_centrally_managed:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"GuardDuty detector {DETECTOR_ID} is not centrally managed."
+                == f"GuardDuty detector {DETECTOR_ID} in region {AWS_REGION_EU_WEST_1} is not centrally managed."
             )
             assert result[0].resource_id == DETECTOR_ID
             assert result[0].region == AWS_REGION_EU_WEST_1
@@ -113,7 +113,7 @@ class Test_guardduty_centrally_managed:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"GuardDuty detector {DETECTOR_ID} is centrally managed by account {AWS_ACCOUNT_NUMBER_ADMIN}."
+                == f"GuardDuty detector {DETECTOR_ID} in region {AWS_REGION_EU_WEST_1} is centrally managed by account {AWS_ACCOUNT_NUMBER_ADMIN}."
             )
             assert result[0].resource_id == DETECTOR_ID
             assert result[0].region == AWS_REGION_EU_WEST_1
@@ -148,7 +148,7 @@ class Test_guardduty_centrally_managed:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"GuardDuty detector {DETECTOR_ID} is administrator account with 1 member accounts."
+                == f"GuardDuty detector {DETECTOR_ID} in region {AWS_REGION_EU_WEST_1} is administrator account with 1 member accounts."
             )
             assert result[0].resource_id == DETECTOR_ID
             assert result[0].region == AWS_REGION_EU_WEST_1

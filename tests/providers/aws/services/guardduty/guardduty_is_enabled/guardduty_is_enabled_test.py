@@ -38,7 +38,7 @@ class Test_guardduty_is_enabled:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert result[0].status_extended == "GuardDuty is not enabled."
+            assert result[0].status_extended == f"GuardDuty is not enabled in region {AWS_REGION_EU_WEST_1}."
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
             assert result[0].resource_arn == AWS_ACCOUNT_ARN
             assert result[0].region == AWS_REGION_EU_WEST_1
@@ -68,7 +68,7 @@ class Test_guardduty_is_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"GuardDuty detector {DETECTOR_ID} enabled."
+                == f"GuardDuty detector {DETECTOR_ID} in region {AWS_REGION_EU_WEST_1} enabled."
             )
             assert result[0].resource_id == DETECTOR_ID
             assert result[0].resource_arn == DETECTOR_ARN
@@ -100,7 +100,7 @@ class Test_guardduty_is_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"GuardDuty detector {DETECTOR_ID} configured but suspended."
+                == f"GuardDuty detector {DETECTOR_ID} in region {AWS_REGION_EU_WEST_1} configured but suspended."
             )
             assert result[0].resource_id == DETECTOR_ID
             assert result[0].resource_arn == DETECTOR_ARN
@@ -131,7 +131,7 @@ class Test_guardduty_is_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"GuardDuty detector {DETECTOR_ID} not configured."
+                == f"GuardDuty detector {DETECTOR_ID} in region {AWS_REGION_EU_WEST_1} not configured."
             )
             assert result[0].resource_id == DETECTOR_ID
             assert result[0].resource_arn == DETECTOR_ARN
@@ -164,7 +164,7 @@ class Test_guardduty_is_enabled:
             assert result[0].muted
             assert (
                 result[0].status_extended
-                == f"GuardDuty detector {DETECTOR_ID} not configured."
+                == f"GuardDuty detector {DETECTOR_ID} in region {AWS_REGION_EU_WEST_1} not configured."
             )
             assert result[0].resource_id == DETECTOR_ID
             assert result[0].resource_arn == DETECTOR_ARN
