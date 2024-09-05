@@ -72,6 +72,11 @@ class EC2(AWSService):
                         if not self.audit_resources or (
                             is_resource_filtered(arn, self.audit_resources)
                         ):
+                            enis = []
+                            for eni in instance.get("NetworkInterfaces"):
+                                network_interface_id = eni.get("NetworkInterfaceId")
+                                if network_interface_id:
+                                    enis.append(network_interface_id)
                             self.instances.append(
                                 Instance(
                                     id=instance["InstanceId"],
@@ -100,6 +105,7 @@ class EC2(AWSService):
                                         for sg in instance.get("SecurityGroups", [])
                                     ],
                                     subnet_id=instance.get("SubnetId", ""),
+                                    network_interfaces=enis,
                                     tags=instance.get("Tags"),
                                 )
                             )
@@ -638,6 +644,7 @@ class Instance(BaseModel):
     security_groups: list[str]
     subnet_id: str
     instance_profile: Optional[dict]
+    network_interfaces: Optional[list]
     tags: Optional[list] = []
 
 
