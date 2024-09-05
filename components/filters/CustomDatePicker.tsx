@@ -9,7 +9,7 @@ import {
 import { Button, ButtonGroup, DatePicker } from "@nextui-org/react";
 import { useLocale } from "@react-aria/i18n";
 import { useRouter, useSearchParams } from "next/navigation";
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 
 export const CustomDatePicker = () => {
   const router = useRouter();
@@ -36,6 +36,20 @@ export const CustomDatePicker = () => {
     },
     [router, searchParams],
   );
+
+  const initialRender = useRef(true);
+
+  useEffect(() => {
+    if (initialRender.current) {
+      initialRender.current = false;
+      return;
+    }
+    const params = new URLSearchParams(searchParams.toString());
+    if (params.size === 0) {
+      // If all params are cleared, reset to default date
+      setValue(defaultDate);
+    }
+  }, [searchParams]);
 
   const handleDateChange = (newValue: any) => {
     setValue(newValue);
