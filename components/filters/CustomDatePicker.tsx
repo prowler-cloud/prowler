@@ -7,20 +7,40 @@ import {
   today,
 } from "@internationalized/date";
 import { Button, ButtonGroup, DatePicker } from "@nextui-org/react";
-import { useDateFormatter, useLocale } from "@react-aria/i18n";
-import React from "react";
+import { useLocale } from "@react-aria/i18n";
+import { useRouter, useSearchParams } from "next/navigation";
+import React, { useCallback } from "react";
 
 export const CustomDatePicker = () => {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const defaultDate = today(getLocalTimeZone());
 
   const [value, setValue] = React.useState(defaultDate);
 
   const { locale } = useLocale();
-  const formatter = useDateFormatter({ dateStyle: "full" });
 
   const now = today(getLocalTimeZone());
   const nextWeek = startOfWeek(now.add({ weeks: 1 }), locale);
   const nextMonth = startOfMonth(now.add({ months: 1 }));
+
+  const applyDateFilter = useCallback(
+    (date: any) => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (date) {
+        params.set("filter[updated_at__lte]", date.toString());
+      } else {
+        params.delete("filter[updated_at__lte]");
+      }
+      router.push(`?${params.toString()}`, { scroll: false });
+    },
+    [router, searchParams],
+  );
+
+  const handleDateChange = (newValue: any) => {
+    setValue(newValue);
+    applyDateFilter(newValue);
+  };
 
   return (
     <div className="flex flex-col md:gap-2 w-full">
@@ -34,9 +54,13 @@ export const CustomDatePicker = () => {
             size="sm"
             variant="bordered"
           >
-            <Button onPress={() => setValue(now)}>Today</Button>
-            <Button onPress={() => setValue(nextWeek)}>Next week</Button>
-            <Button onPress={() => setValue(nextMonth)}>Next month</Button>
+            <Button onPress={() => handleDateChange(now)}>Today</Button>
+            <Button onPress={() => handleDateChange(nextWeek)}>
+              Next week
+            </Button>
+            <Button onPress={() => handleDateChange(nextMonth)}>
+              Next month
+            </Button>
           </ButtonGroup>
         }
         calendarProps={{
@@ -50,15 +74,11 @@ export const CustomDatePicker = () => {
           },
         }}
         value={value}
-        onChange={setValue}
+        onChange={handleDateChange}
         label="Scan date"
         size="sm"
         variant="flat"
       />
-      <p className="hidden md:flex text-default-500 text-sm">
-        Selected date:{" "}
-        {value ? formatter.format(value.toDate(getLocalTimeZone())) : "--"}
-      </p>
     </div>
   );
 };

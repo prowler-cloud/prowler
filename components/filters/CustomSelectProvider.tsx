@@ -1,11 +1,14 @@
 "use client";
 
 import { Select, SelectItem } from "@nextui-org/react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
 
 import {
   CustomProviderInputAWS,
   CustomProviderInputAzure,
   CustomProviderInputGCP,
+  CustomProviderInputKubernetes,
 } from "./CustomProviderInputs";
 
 const dataInputsProvider = [
@@ -27,11 +30,33 @@ const dataInputsProvider = [
   {
     key: "kubernetes",
     label: "Kubernetes",
-    value: <CustomProviderInputGCP />,
+    value: <CustomProviderInputKubernetes />,
   },
 ];
 
 export const CustomSelectProvider = () => {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [selectedProvider, setSelectedProvider] = useState("");
+
+  const applyProviderFilter = useCallback(
+    (value: string) => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (value) {
+        params.set("filter[provider]", value);
+      } else {
+        params.delete("filter[provider]");
+      }
+      router.push(`?${params.toString()}`, { scroll: false });
+    },
+    [router, searchParams],
+  );
+
+  useEffect(() => {
+    const providerFromUrl = searchParams.get("filter[provider]") || "";
+    setSelectedProvider(providerFromUrl);
+  }, [searchParams]);
+
   return (
     <Select
       items={dataInputsProvider}
@@ -43,6 +68,12 @@ export const CustomSelectProvider = () => {
         base: "w-full",
         trigger: "h-12",
       }}
+      onChange={(e) => {
+        const value = e.target.value;
+        setSelectedProvider(value);
+        applyProviderFilter(value);
+      }}
+      selectedKeys={selectedProvider ? [selectedProvider] : []}
       renderValue={(items) => {
         return items.map((item) => {
           return (

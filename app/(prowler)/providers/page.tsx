@@ -2,6 +2,7 @@ import { Spacer } from "@nextui-org/react";
 import { Suspense } from "react";
 
 import { getProvider } from "@/actions";
+import { FilterControls } from "@/components/filters";
 import {
   AddProviderModal,
   ColumnsProvider,
@@ -21,6 +22,8 @@ export default async function Providers({
   return (
     <>
       <Header title="Providers" icon="fluent:cloud-sync-24-regular" />
+      <Spacer y={4} />
+      <FilterControls mutedFindings={false} />
       <Spacer y={4} />
       <div className="flex flex-col items-end w-full">
         <div className="flex space-x-6">
