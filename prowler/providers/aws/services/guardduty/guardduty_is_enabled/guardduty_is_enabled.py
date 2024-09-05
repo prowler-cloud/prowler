@@ -12,21 +12,21 @@ class guardduty_is_enabled(Check):
             report.resource_arn = detector.arn
             report.resource_tags = detector.tags
             report.status = "PASS"
-            report.status_extended = f"GuardDuty detector {detector.id} in region {detector.region} enabled."
+            report.status_extended = (
+                f"GuardDuty detector {detector.id} in region {detector.region} enabled."
+            )
 
             if not detector.enabled_in_account:
                 report.status = "FAIL"
-                report.status_extended = f"GuardDuty is not enabled in region {detector.region}."
+                report.status_extended = (
+                    f"GuardDuty is not enabled in region {detector.region}."
+                )
             elif detector.status is None:
                 report.status = "FAIL"
-                report.status_extended = (
-                    f"GuardDuty detector {detector.id} in region {detector.region} not configured."
-                )
+                report.status_extended = f"GuardDuty detector {detector.id} in region {detector.region} not configured."
             elif not detector.status:
                 report.status = "FAIL"
-                report.status_extended = (
-                    f"GuardDuty detector {detector.id} in region {detector.region} configured but suspended."
-                )
+                report.status_extended = f"GuardDuty detector {detector.id} in region {detector.region} configured but suspended."
 
             if report.status == "FAIL" and (
                 guardduty_client.audit_config.get("mute_non_default_regions", False)

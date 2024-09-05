@@ -13,9 +13,7 @@ class guardduty_centrally_managed(Check):
                 report.resource_arn = detector.arn
                 report.resource_tags = detector.tags
                 report.status = "FAIL"
-                report.status_extended = (
-                    f"GuardDuty detector {detector.id} in region {detector.region} is not centrally managed."
-                )
+                report.status_extended = f"GuardDuty detector {detector.id} in region {detector.region} is not centrally managed."
                 if detector.administrator_account:
                     report.status = "PASS"
                     report.status_extended = f"GuardDuty detector {detector.id} in region {detector.region} is centrally managed by account {detector.administrator_account}."

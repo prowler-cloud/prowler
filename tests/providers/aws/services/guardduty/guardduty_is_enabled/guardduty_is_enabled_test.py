@@ -38,7 +38,10 @@ class Test_guardduty_is_enabled:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert result[0].status_extended == f"GuardDuty is not enabled in region {AWS_REGION_EU_WEST_1}."
+            assert (
+                result[0].status_extended
+                == f"GuardDuty is not enabled in region {AWS_REGION_EU_WEST_1}."
+            )
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
             assert result[0].resource_arn == AWS_ACCOUNT_ARN
             assert result[0].region == AWS_REGION_EU_WEST_1
