@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from "uuid";
 export const userMockData = [
   {
     id: uuidv4(), // Generate a unique UUID.
+    tenantId: "12646005-9067-4d2a-a098-8bb378604362",
     email: "admin@prowler.com",
     name: "Admin Prowler",
     companyName: "Prowler",
@@ -13,6 +14,7 @@ export const userMockData = [
   },
   {
     id: uuidv4(), // Generate a unique UUID.
+    tenantId: "12646005-9067-4d2a-a098-8bb378604362",
     email: "user@prowler.com",
     name: "User Prowler",
     companyName: "Prowler",

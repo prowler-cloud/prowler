@@ -18,6 +18,7 @@ import { CheckConnectionProvider } from "../CheckConnectionProvider";
 import { DateWithTime } from "../DateWithTime";
 import { DeleteProvider } from "../DeleteProvider";
 import { ProviderInfo } from "../ProviderInfo";
+import { DataTableColumnHeader } from "./DataTableColumnHeader";
 
 const getProviderData = (row: { original: ProviderProps }) => {
   return row.original;
@@ -30,7 +31,9 @@ export const ColumnsProvider: ColumnDef<ProviderProps>[] = [
   },
   {
     accessorKey: "account",
-    header: "Account",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={"Account"} param="alias" />
+    ),
     cell: ({ row }) => {
       const {
         attributes: { connection, provider, alias, provider_id },
@@ -55,7 +58,13 @@ export const ColumnsProvider: ColumnDef<ProviderProps>[] = [
   },
   {
     accessorKey: "lastScan",
-    header: "Last Scan",
+    header: ({ column }) => (
+      <DataTableColumnHeader
+        column={column}
+        title={"Last Scan"}
+        param="updated_at"
+      />
+    ),
     cell: ({ row }) => {
       const {
         attributes: { updated_at },
@@ -86,7 +95,13 @@ export const ColumnsProvider: ColumnDef<ProviderProps>[] = [
   },
   {
     accessorKey: "added",
-    header: "Added",
+    header: ({ column }) => (
+      <DataTableColumnHeader
+        column={column}
+        title={"Added"}
+        param="inserted_at"
+      />
+    ),
     cell: ({ row }) => {
       const {
         attributes: { inserted_at },

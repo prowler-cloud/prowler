@@ -14,6 +14,7 @@ async function getUser(email: string, password: string): Promise<any | null> {
 
   return {
     id: user.id,
+    tenantId: user.tenantId,
     name: user.name,
     companyName: user.companyName,
     email: user.email,
