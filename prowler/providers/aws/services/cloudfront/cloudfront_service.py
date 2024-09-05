@@ -81,6 +81,9 @@ class CloudFront(AWSService):
                 distributions[distribution_id].default_cache_config = (
                     default_cache_config
                 )
+                distributions[distribution_id].default_root_object = (
+                    distribution_config.get("DefaultRootObject", None)
+                )
 
         except Exception as error:
             logger.error(
@@ -141,4 +144,5 @@ class Distribution(BaseModel):
     geo_restriction_type: Optional[GeoRestrictionType]
     origins: list
     web_acl_id: str = ""
+    default_root_object: Optional[str]
     tags: Optional[list] = []
