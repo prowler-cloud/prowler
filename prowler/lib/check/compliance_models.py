@@ -319,7 +319,6 @@ class Compliance(BaseModel):
                     compliance_specification_dir_path = (
                         f"{compliance_framework.module_finder.path}/{provider}"
                     )
-
                     # for compliance_framework in available_compliance_framework_modules:
                     for filename in os.listdir(compliance_specification_dir_path):
                         file_path = os.path.join(

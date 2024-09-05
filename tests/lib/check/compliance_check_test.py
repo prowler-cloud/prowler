@@ -1,3 +1,5 @@
+from unittest import mock
+
 from prowler.lib.check.compliance import update_checks_metadata_with_compliance
 from prowler.lib.check.compliance_models import (
     CIS_Requirement_Attribute,
@@ -317,3 +319,46 @@ class TestCompliance:
         )
 
         assert compliance_requirement is None
+
+    @mock.patch("prowler.lib.check.compliance_models.load_compliance_framework")
+    @mock.patch("os.stat")
+    @mock.patch("os.path.isfile")
+    @mock.patch("os.listdir")
+    @mock.patch("prowler.lib.check.compliance_models.list_compliance_modules")
+    def test_get_bulk(
+        self,
+        mock_list_modules,
+        mock_listdir,
+        mock_isfile,
+        mock_stat,
+        mock_load_compliance,
+    ):
+        # Mock the return value of list_compliance_modules
+        object = mock.Mock()
+        object.path = "/path/to/compliance"
+        object.name = "framework1_aws"
+        mock_list_modules.return_value = [object]
+
+        # Mock the return value of os.listdir
+        mock_listdir.return_value = ["framework1_aws.json"]
+
+        # Mock os.path.isfile to always return True
+        mock_isfile.return_value = True
+
+        # Mock os.stat to return a size greater than 0
+        mock_stat.return_value.st_size = 100
+
+        # Mock the return value of load_compliance_framework
+        mock_load_compliance.return_value = mock.Mock(
+            Framework="Framework1", Provider="aws"
+        )
+
+        # Call the method under test
+        from prowler.lib.check.compliance_models import Compliance
+
+        result = Compliance.get_bulk(provider="aws")
+
+        # Assertions
+        assert len(result) == 1
+        assert "framework1_aws" in result.keys()
+        mock_list_modules.assert_called_once()
