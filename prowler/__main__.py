@@ -15,7 +15,6 @@ from prowler.config.config import (
 )
 from prowler.lib.banner import print_banner
 from prowler.lib.check.check import (
-    bulk_load_compliance_frameworks,
     exclude_checks_to_run,
     exclude_services_to_run,
     execute_checks,
@@ -35,6 +34,7 @@ from prowler.lib.check.check import (
 )
 from prowler.lib.check.checks_loader import load_checks_to_execute
 from prowler.lib.check.compliance import update_checks_metadata_with_compliance
+from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.check.custom_checks_metadata import (
     parse_custom_checks_metadata_file,
     update_checks_metadata,
@@ -141,7 +141,7 @@ def prowler():
     # Load compliance frameworks
     logger.debug("Loading compliance frameworks from .json files")
 
-    bulk_compliance_frameworks = bulk_load_compliance_frameworks(provider)
+    bulk_compliance_frameworks = Compliance.get_bulk(provider)
     # Complete checks metadata with the compliance framework specification
     bulk_checks_metadata = update_checks_metadata_with_compliance(
         bulk_compliance_frameworks, bulk_checks_metadata

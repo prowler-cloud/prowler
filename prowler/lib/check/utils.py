@@ -81,3 +81,15 @@ def recover_checks_from_service(service_list: list, provider: str) -> set:
         logger.error(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
         )
+
+
+def list_compliance_modules():
+    """
+    list_compliance_modules returns the available compliance frameworks and returns their path
+    """
+    # This module path requires the full path including "prowler."
+    module_path = "prowler.compliance"
+    return walk_packages(
+        importlib.import_module(module_path).__path__,
+        importlib.import_module(module_path).__name__ + ".",
+    )

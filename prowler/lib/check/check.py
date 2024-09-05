@@ -6,7 +6,6 @@ import re
 import shutil
 import sys
 import traceback
-from pkgutil import walk_packages
 from types import ModuleType
 from typing import Any
 
@@ -15,7 +14,6 @@ from colorama import Fore, Style
 
 import prowler
 from prowler.config.config import orange_color
-from prowler.lib.check.compliance_models import load_compliance_framework
 from prowler.lib.check.custom_checks_metadata import update_check_metadata
 from prowler.lib.check.models import Check
 from prowler.lib.check.utils import recover_checks_from_provider
@@ -23,38 +21,6 @@ from prowler.lib.logger import logger
 from prowler.lib.outputs.outputs import report
 from prowler.lib.utils.utils import open_file, parse_json_file, print_boxes
 from prowler.providers.common.models import Audit_Metadata
-
-
-# Bulk load all compliance frameworks specification
-def bulk_load_compliance_frameworks(provider: str) -> dict:
-    """Bulk load all compliance frameworks specification into a dict"""
-    try:
-        bulk_compliance_frameworks = {}
-        available_compliance_framework_modules = list_compliance_modules()
-        for compliance_framework in available_compliance_framework_modules:
-            if provider in compliance_framework.name:
-                compliance_specification_dir_path = (
-                    f"{compliance_framework.module_finder.path}/{provider}"
-                )
-
-                # for compliance_framework in available_compliance_framework_modules:
-                for filename in os.listdir(compliance_specification_dir_path):
-                    file_path = os.path.join(
-                        compliance_specification_dir_path, filename
-                    )
-                    # Check if it is a file and ti size is greater than 0
-                    if os.path.isfile(file_path) and os.stat(file_path).st_size > 0:
-                        # Open Compliance file in JSON
-                        # cis_v1.4_aws.json --> cis_v1.4_aws
-                        compliance_framework_name = filename.split(".json")[0]
-                        # Store the compliance info
-                        bulk_compliance_frameworks[compliance_framework_name] = (
-                            load_compliance_framework(file_path)
-                        )
-    except Exception as e:
-        logger.error(f"{e.__class__.__name__}[{e.__traceback__.tb_lineno}] -- {e}")
-
-    return bulk_compliance_frameworks
 
 
 # Exclude checks to run
@@ -351,18 +317,6 @@ def parse_checks_from_compliance_framework(
         logger.error(f"{e.__class__.__name__}[{e.__traceback__.tb_lineno}] -- {e}")
 
     return checks_to_execute
-
-
-def list_compliance_modules():
-    """
-    list_compliance_modules returns the available compliance frameworks and returns their path
-    """
-    # This module path requires the full path including "prowler."
-    module_path = "prowler.compliance"
-    return walk_packages(
-        importlib.import_module(module_path).__path__,
-        importlib.import_module(module_path).__name__ + ".",
-    )
 
 
 # Import an input check using its path
