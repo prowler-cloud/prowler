@@ -70,13 +70,3 @@ class KubernetesAPIError(KubernetesBaseException):
 class KubernetesTimeoutError(KubernetesBaseException):
     def __init__(self, code, file=None, original_exception=None, message=None):
         super().__init__(code, file, original_exception, message)
-
-
-class KubernetesValueError(KubernetesBaseException):
-    def __init__(self, code, file=None, original_exception=None, message=None):
-        super().__init__(code, file, original_exception, message)
-
-
-class KubernetesTypeError(KubernetesBaseException):
-    def __init__(self, code, file=None, original_exception=None, message=None):
-        super().__init__(code, file, original_exception, message)
