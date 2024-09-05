@@ -72,6 +72,7 @@ class OCSF(Output):
                         title=finding.check_title,
                         uid=finding.finding_uid,
                         product_uid="prowler",
+                        types=[finding.check_type],
                     ),
                     event_time=finding.timestamp,
                     remediation=Remediation(
@@ -120,7 +121,6 @@ class OCSF(Output):
                     type_uid=DetectionFindingTypeID.Create,
                     type_name=DetectionFindingTypeID.Create.name,
                     unmapped={
-                        "check_type": finding.check_type,
                         "related_url": finding.related_url,
                         "categories": finding.categories,
                         "depends_on": finding.depends_on,
@@ -220,8 +220,12 @@ class OCSF(Output):
             StatusID: The StatusID based on the status and muted values
         """
         status_id = StatusID.Other
-        if status == "FAIL":
+
+        if status == "PASS":
+            status_id = StatusID.Resolved
+        elif status == "FAIL":
             status_id = StatusID.New
+
         if muted:
             status_id = StatusID.Suppressed
         return status_id

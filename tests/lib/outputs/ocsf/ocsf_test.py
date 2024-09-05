@@ -50,6 +50,7 @@ class TestOCSF:
         assert output_data.finding_info.title == findings[0].check_title
         assert output_data.finding_info.uid == findings[0].finding_uid
         assert output_data.finding_info.product_uid == "prowler"
+        assert output_data.finding_info.types == [findings[0].check_type]
         assert output_data.event_time == findings[0].timestamp
         assert (
             output_data.remediation.desc == findings[0].remediation_recommendation_text
@@ -78,7 +79,6 @@ class TestOCSF:
         assert output_data.type_uid == DetectionFindingTypeID.Create
         assert output_data.type_name == DetectionFindingTypeID.Create.name
         assert output_data.unmapped == {
-            "check_type": findings[0].check_type,
             "related_url": findings[0].related_url,
             "categories": findings[0].categories,
             "depends_on": findings[0].depends_on,
@@ -122,7 +122,6 @@ class TestOCSF:
                 "status_detail": "status extended",
                 "status_id": 1,
                 "unmapped": {
-                    "check_type": "test-type",
                     "related_url": "test-url",
                     "categories": "test-category",
                     "depends_on": "test-dependency",
@@ -138,6 +137,7 @@ class TestOCSF:
                     "product_uid": "prowler",
                     "title": "test-check-id",
                     "uid": "test-unique-finding",
+                    "types": ["test-type"],
                 },
                 "resources": [
                     {
@@ -381,7 +381,7 @@ class TestOCSF:
     def test_other_when_status_whatever_and_not_muted(self):
         status = "PASS"
         muted = False
-        assert OCSF.get_finding_status_id(status, muted) == StatusID.Other
+        assert OCSF.get_finding_status_id(status, muted) == StatusID.Resolved
 
     # Returns StatusID.Suppresed when status is PASS and muted is True
     def test_other_when_status_whatever_and_muted(self):
@@ -398,5 +398,11 @@ class TestOCSF:
     # Returns StatusID.Other when muted is False and status is not "FAIL"
     def test_other_when_status_pass_and_not_muted(self):
         status = "PASS"
+        muted = False
+        assert OCSF.get_finding_status_id(status, muted) == StatusID.Resolved
+
+    # Returns StatusID.Other anything else
+    def test_other_when_status_manual(self):
+        status = "MANUAL"
         muted = False
         assert OCSF.get_finding_status_id(status, muted) == StatusID.Other
