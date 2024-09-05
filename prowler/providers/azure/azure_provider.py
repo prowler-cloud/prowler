@@ -106,7 +106,7 @@ class AzureProvider(Provider):
         logger.info("Checking if any credentials mode is set ...")
 
         # Validate the authentication arguments
-        self.validate_arguments_cli(
+        self.validate_arguments(
             az_cli_auth, sp_env_auth, browser_auth, managed_identity_auth, tenant_id
         )
 
@@ -275,46 +275,6 @@ class AzureProvider(Provider):
             raise AzureBrowserAuthNoTenantIDError(
                 file=os.path.basename(__file__),
                 message="Azure Tenant ID (--tenant-id) is required for browser authentication mode",
-            )
-
-    @staticmethod
-    def validate_arguments_cli(
-        az_cli_auth: bool,
-        sp_env_auth: bool,
-        browser_auth: bool,
-        managed_identity_auth: bool,
-        tenant_id: str,
-    ):
-        """
-        Validates the authentication arguments for the Azure provider.
-
-        Args:
-            az_cli_auth (bool): Flag indicating whether AZ CLI authentication is enabled.
-            sp_env_auth (bool): Flag indicating whether Service Principal environment authentication is enabled.
-            browser_auth (bool): Flag indicating whether browser authentication is enabled.
-            managed_identity_auth (bool): Flag indicating whether managed identity authentication is enabled.
-            tenant_id (str): The Azure Tenant ID.
-
-        Raises:
-            ArgumentTypeError: If the Azure provider requires at least one authentication method set.
-            ArgumentTypeError: If the Azure Tenant ID is required for browser authentication mode
-        """
-        if not browser_auth and tenant_id:
-            raise ArgumentTypeError(
-                "Azure Tenant ID (--tenant-id) is required for browser authentication mode"
-            )
-        elif (
-            not az_cli_auth
-            and not sp_env_auth
-            and not browser_auth
-            and not managed_identity_auth
-        ):
-            raise ArgumentTypeError(
-                "Azure provider requires at least one authentication method set: [--az-cli-auth | --sp-env-auth | --browser-auth | --managed-identity-auth]"
-            )
-        elif browser_auth and not tenant_id:
-            raise ArgumentTypeError(
-                "Azure Tenant ID (--tenant-id) is required for browser authentication mode"
             )
 
     @staticmethod

@@ -1,4 +1,4 @@
-from argparse import ArgumentTypeError, Namespace
+from argparse import Namespace
 from datetime import datetime
 from os import rmdir
 from unittest.mock import patch
@@ -16,8 +16,10 @@ from prowler.config.config import (
 )
 from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.azure.exceptions.exceptions import (
+    AzureBrowserAuthNoTenantIDError,
     AzureHTTPResponseError,
     AzureNoAuthenticationMethodError,
+    AzureTenantIDNoBrowserAuthError,
 )
 from prowler.providers.azure.models import (
     AzureIdentityInfo,
@@ -103,7 +105,7 @@ class TestAzureProvider:
             return_value={},
         ):
 
-            with pytest.raises(ArgumentTypeError) as exception:
+            with pytest.raises(AzureNoAuthenticationMethodError) as exception:
                 _ = AzureProvider(
                     az_cli_auth,
                     sp_env_auth,
@@ -115,7 +117,7 @@ class TestAzureProvider:
                     config_file,
                     fixer_config,
                 )
-            assert exception.type == ArgumentTypeError
+            assert exception.type == AzureNoAuthenticationMethodError
             assert (
                 "Azure provider requires at least one authentication method set: [--az-cli-auth | --sp-env-auth | --browser-auth | --managed-identity-auth]"
                 in exception.value.args[0]
@@ -141,7 +143,7 @@ class TestAzureProvider:
             return_value={},
         ):
 
-            with pytest.raises(ArgumentTypeError) as exception:
+            with pytest.raises(AzureBrowserAuthNoTenantIDError) as exception:
                 _ = AzureProvider(
                     az_cli_auth,
                     sp_env_auth,
@@ -153,10 +155,10 @@ class TestAzureProvider:
                     config_file,
                     fixer_config,
                 )
-            assert exception.type == ArgumentTypeError
+            assert exception.type == AzureBrowserAuthNoTenantIDError
             assert (
                 exception.value.args[0]
-                == "Azure Tenant ID (--tenant-id) is required for browser authentication mode"
+                == "[1918] Azure Tenant ID (--tenant-id) is required for browser authentication mode"
             )
 
     def test_azure_provider_not_browser_auth_but_tenant_id(self):
@@ -180,7 +182,7 @@ class TestAzureProvider:
             return_value={},
         ):
 
-            with pytest.raises(ArgumentTypeError) as exception:
+            with pytest.raises(AzureTenantIDNoBrowserAuthError) as exception:
                 _ = AzureProvider(
                     az_cli_auth,
                     sp_env_auth,
@@ -192,10 +194,10 @@ class TestAzureProvider:
                     config_file,
                     fixer_config,
                 )
-            assert exception.type == ArgumentTypeError
+            assert exception.type == AzureTenantIDNoBrowserAuthError
             assert (
                 exception.value.args[0]
-                == "Azure Tenant ID (--tenant-id) is required for browser authentication mode"
+                == "[1919] Azure Tenant ID (--tenant-id) is required for browser authentication mode"
             )
 
     @freeze_time(datetime.today())
