@@ -2,7 +2,7 @@
 
 import { Button } from "@nextui-org/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 
 import { CustomAccountSelection } from "./CustomAccountSelection";
 import { CustomCheckboxMutedFindings } from "./CustomCheckboxMutedFindings";
@@ -30,6 +30,14 @@ export const FilterControls: React.FC<FilterControlsProps> = ({
 }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [showClearButton, setShowClearButton] = useState(false);
+
+  useEffect(() => {
+    const hasFilters = Array.from(searchParams.keys()).some(
+      (key) => key.startsWith("filter[") || key === "sort",
+    );
+    setShowClearButton(hasFilters);
+  }, [searchParams]);
 
   const clearAllFilters = useCallback(() => {
     const params = new URLSearchParams(searchParams.toString());
@@ -49,15 +57,18 @@ export const FilterControls: React.FC<FilterControlsProps> = ({
       {regions && <CustomRegionSelection />}
       {accounts && <CustomAccountSelection />}
       {mutedFindings && <CustomCheckboxMutedFindings />}
-      <Button
-        className="w-full md:w-fit"
-        onClick={clearAllFilters}
-        variant="flat"
-        color="default"
-        size="sm"
-      >
-        Clear all
-      </Button>
+
+      {showClearButton && (
+        <Button
+          className="w-full md:w-fit transition-all duration-300 ease-in-out"
+          onClick={clearAllFilters}
+          variant="flat"
+          color="default"
+          size="sm"
+        >
+          Clear all
+        </Button>
+      )}
     </div>
   );
 };
