@@ -100,6 +100,7 @@ class RDS(AWSService):
                                 copy_tags_to_snapshot=instance.get(
                                     "CopyTagsToSnapshot"
                                 ),
+                                port=instance.get("Endpoint", {}).get("Port"),
                             )
         except Exception as error:
             logger.error(
@@ -261,6 +262,7 @@ class RDS(AWSService):
                                         copy_tags_to_snapshot=cluster.get(
                                             "CopyTagsToSnapshot"
                                         ),
+                                        port=cluster.get("Port"),
                                     )
                                     # We must use a unique value as the dict key to have unique keys
                                     self.db_clusters[db_cluster_arn] = db_cluster
@@ -507,6 +509,7 @@ class DBInstance(BaseModel):
     ca_cert: Optional[str]
     cert: list[Certificate] = []
     copy_tags_to_snapshot: Optional[bool]
+    port: Optional[int]
 
 
 class DBCluster(BaseModel):
@@ -531,6 +534,7 @@ class DBCluster(BaseModel):
     region: str
     tags: Optional[list] = []
     copy_tags_to_snapshot: Optional[bool]
+    port: Optional[int]
 
 
 class DBSnapshot(BaseModel):
