@@ -23,7 +23,7 @@ export default async function Providers({
     <>
       <Header title="Providers" icon="fluent:cloud-sync-24-regular" />
       <Spacer y={4} />
-      <FilterControls mutedFindings={false} />
+      <FilterControls search providers />
       <Spacer y={4} />
       <div className="flex flex-col items-end w-full">
         <div className="flex space-x-6">
