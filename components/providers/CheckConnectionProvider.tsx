@@ -4,8 +4,8 @@ import { useRef } from "react";
 
 import { checkConnectionProvider } from "@/actions";
 
+import { CustomButtonClientAction } from "../ui/custom";
 import { useToast } from "../ui/toast";
-import { ButtonCheckConnectionProvider } from "./ButtonCheckConnectionProvider";
 
 export const CheckConnectionProvider = ({ id }: { id: string }) => {
   const ref = useRef<HTMLFormElement>(null);
@@ -35,7 +35,7 @@ export const CheckConnectionProvider = ({ id }: { id: string }) => {
   return (
     <form ref={ref} action={clientAction} className="flex gap-x-2">
       <input type="hidden" name="id" value={id} />
-      <ButtonCheckConnectionProvider />
+      <CustomButtonClientAction buttonLabel="Check Connection" />
     </form>
   );
 };

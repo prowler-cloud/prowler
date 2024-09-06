@@ -9,12 +9,9 @@ export type IconProps = {
   style?: React.CSSProperties;
 };
 
-export interface searchParamsProps {
-  searchParams: {
-    page?: string;
-  };
+export interface SearchParamsProps {
+  [key: string]: string | string[] | undefined;
 }
-
 export interface ProviderProps {
   id: string;
   type: "providers";

@@ -11,13 +11,19 @@ import {
   DataTableUser,
   SkeletonTableUser,
 } from "@/components/users";
-import { searchParamsProps } from "@/types";
+import { SearchParamsProps } from "@/types";
 
-export default async function Users({ searchParams }: searchParamsProps) {
+export default async function Users({
+  searchParams,
+}: {
+  searchParams: SearchParamsProps;
+}) {
   const session = await auth();
   if (session?.user?.role !== "admin") {
     redirect("/");
   }
+
+  const searchParamsKey = JSON.stringify(searchParams || {});
 
   return (
     <>
@@ -28,7 +34,7 @@ export default async function Users({ searchParams }: searchParamsProps) {
           <AddUserModal />
         </div>
         <Spacer y={6} />
-        <Suspense key={searchParams.page} fallback={<SkeletonTableUser />}>
+        <Suspense key={searchParamsKey} fallback={<SkeletonTableUser />}>
           <SSRDataTable searchParams={searchParams} />
         </Suspense>
       </div>
@@ -36,8 +42,12 @@ export default async function Users({ searchParams }: searchParamsProps) {
   );
 }
 
-const SSRDataTable = async ({ searchParams }: searchParamsProps) => {
-  const page = searchParams.page ? parseInt(searchParams.page) : 1;
+const SSRDataTable = async ({
+  searchParams,
+}: {
+  searchParams: SearchParamsProps;
+}) => {
+  const page = parseInt(searchParams.page?.toString() || "1", 10);
   const usersData = await getUsers({ page });
   const [users] = await Promise.all([usersData]);
 

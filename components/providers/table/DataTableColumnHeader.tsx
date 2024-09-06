@@ -27,7 +27,8 @@ export const DataTableColumnHeader = <TData, TValue>({
   const searchParams = useSearchParams();
 
   const getToggleSortingHandler = () => {
-    const currentSortParam = searchParams.get("sort");
+    const currentParams = new URLSearchParams(searchParams.toString());
+    const currentSortParam = currentParams.get("sort");
     let newSortParam = "";
 
     if (currentSortParam === `${param}`) {
@@ -41,13 +42,21 @@ export const DataTableColumnHeader = <TData, TValue>({
       newSortParam = `${param}`;
     }
 
-    // Construct the new URL with the sorting parameter
-    const newUrl = newSortParam ? `${pathname}?sort=${newSortParam}` : pathname;
+    // Update or remove the sort parameter
+    if (newSortParam) {
+      currentParams.set("sort", newSortParam);
+    } else {
+      currentParams.delete("sort");
+    }
+
+    // Construct the new URL with all parameters
+    const newUrl = `${pathname}?${currentParams.toString()}`;
 
     router.push(newUrl, {
       scroll: false,
     });
   };
+
   const renderSortIcon = () => {
     const currentSortParam = searchParams.get("sort");
     if (

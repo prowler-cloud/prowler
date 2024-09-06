@@ -1,8 +1,8 @@
 import { Spacer } from "@nextui-org/react";
-import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
 import { getProvider } from "@/actions";
+import { FilterControls } from "@/components/filters";
 import {
   AddProviderModal,
   ColumnsProvider,
@@ -10,22 +10,20 @@ import {
   SkeletonTableProvider,
 } from "@/components/providers";
 import { Header } from "@/components/ui";
+import { SearchParamsProps } from "@/types";
 
 export default async function Providers({
   searchParams,
 }: {
-  searchParams?: {
-    query?: string;
-    page?: string;
-    sort?: string;
-    filter?: string;
-  };
+  searchParams: SearchParamsProps;
 }) {
   const searchParamsKey = JSON.stringify(searchParams || {});
 
   return (
     <>
       <Header title="Providers" icon="fluent:cloud-sync-24-regular" />
+      <Spacer y={4} />
+      <FilterControls search providers />
       <Spacer y={4} />
       <div className="flex flex-col items-end w-full">
         <div className="flex space-x-6">
@@ -43,28 +41,26 @@ export default async function Providers({
 const SSRDataTable = async ({
   searchParams,
 }: {
-  searchParams?: {
-    query?: string;
-    page?: string;
-    sort?: string;
-    filter?: string;
-  };
+  searchParams: SearchParamsProps;
 }) => {
-  const query = searchParams?.query || "";
-  const page = searchParams?.page ? parseInt(searchParams.page) : 1;
-  const sort = searchParams?.sort || "";
-  const filter = searchParams?.filter || "";
+  const page = parseInt(searchParams.page?.toString() || "1", 10);
+  const sort = searchParams.sort?.toString() || "";
 
-  const providersData = await getProvider({ query, page, sort, filter });
-  const [providers] = await Promise.all([providersData]);
+  // Extract all filter parameters
+  const filters = Object.fromEntries(
+    Object.entries(searchParams).filter(([key]) => key.startsWith("filter[")),
+  );
 
-  if (providers?.errors) redirect("/providers");
+  // Extract query from filters
+  const query = (filters["filter[search]"] as string) || "";
+
+  const providersData = await getProvider({ query, page, sort, filters });
 
   return (
     <DataTableProvider
       columns={ColumnsProvider}
-      data={providers?.data ?? []}
-      metadata={providers?.meta}
+      data={providersData?.data || []}
+      metadata={providersData?.meta}
     />
   );
 };

@@ -11,7 +11,7 @@ export default function Home() {
     <>
       <Header title="Scan Overview" icon="solar:pie-chart-2-outline" />
       <Spacer y={4} />
-      <FilterControls />
+      <FilterControls providers date accounts regions mutedFindings />
       <Spacer y={10} />
       <div className="grid grid-cols-12 gap-4">
         <CustomBox

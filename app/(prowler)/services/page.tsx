@@ -6,9 +6,14 @@ import { getService } from "@/actions/services";
 import { FilterControls } from "@/components/filters";
 import { ServiceCard, ServiceSkeletonGrid } from "@/components/services";
 import { Header } from "@/components/ui";
-import { searchParamsProps } from "@/types";
+import { SearchParamsProps } from "@/types";
 
-export default async function Services({ searchParams }: searchParamsProps) {
+export default async function Services({
+  searchParams,
+}: {
+  searchParams: SearchParamsProps;
+}) {
+  const searchParamsKey = JSON.stringify(searchParams || {});
   return (
     <>
       <Header
@@ -18,15 +23,19 @@ export default async function Services({ searchParams }: searchParamsProps) {
       <Spacer y={4} />
       <FilterControls />
       <Spacer y={4} />
-      <Suspense key={searchParams.page} fallback={<ServiceSkeletonGrid />}>
+      <Suspense key={searchParamsKey} fallback={<ServiceSkeletonGrid />}>
         <SSRServiceGrid searchParams={searchParams} />
       </Suspense>
     </>
   );
 }
 
-const SSRServiceGrid = async ({ searchParams }: searchParamsProps) => {
-  const page = searchParams.page ? parseInt(searchParams.page) : 1;
+const SSRServiceGrid = async ({
+  searchParams,
+}: {
+  searchParams: SearchParamsProps;
+}) => {
+  const page = parseInt(searchParams.page?.toString() || "1", 10);
   const servicesData = await getService({ page });
   const [services] = await Promise.all([servicesData]);
 

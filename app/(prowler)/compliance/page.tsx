@@ -9,24 +9,34 @@ import {
 } from "@/components/compliance";
 import { FilterControls } from "@/components/filters";
 import { Header } from "@/components/ui";
-import { searchParamsProps } from "@/types";
+import { SearchParamsProps } from "@/types";
 
-export default async function Compliance({ searchParams }: searchParamsProps) {
+export default async function Compliance({
+  searchParams,
+}: {
+  searchParams: SearchParamsProps;
+}) {
+  const searchParamsKey = JSON.stringify(searchParams || {});
+
   return (
     <>
       <Header title="Compliance" icon="fluent-mdl2:compliance-audit" />
       <Spacer y={4} />
       <FilterControls mutedFindings={false} />
       <Spacer y={4} />
-      <Suspense key={searchParams.page} fallback={<ComplianceSkeletonGrid />}>
+      <Suspense key={searchParamsKey} fallback={<ComplianceSkeletonGrid />}>
         <SSRComplianceGrid searchParams={searchParams} />
       </Suspense>
     </>
   );
 }
 
-const SSRComplianceGrid = async ({ searchParams }: searchParamsProps) => {
-  const page = searchParams.page ? parseInt(searchParams.page) : 1;
+const SSRComplianceGrid = async ({
+  searchParams,
+}: {
+  searchParams: SearchParamsProps;
+}) => {
+  const page = parseInt(searchParams.page?.toString() || "1", 10);
   const compliancesData = await getCompliance({ page });
   const [compliances] = await Promise.all([compliancesData]);
 
