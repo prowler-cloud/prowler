@@ -55,9 +55,13 @@ export function DataTableProvider<TData, TValue>({
     },
   });
 
+  // This will be used to have "custom" filters in the table and will be
+  // passed to the FilterColumnTable component. This needs to be dynamic
+  // based on the columns that are available in the table.
+
   const filters = [
     { key: "provider", values: ["aws", "gcp", "azure"] },
-    { key: "connected", values: ["true", "null"] },
+    { key: "connected", values: ["false", "true"] },
     // Add more filter categories as needed
   ];
 
