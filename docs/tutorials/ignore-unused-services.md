@@ -36,10 +36,11 @@ If EBS default encyption is not enabled, sensitive information at rest is not pr
 
   - `ec2_ebs_default_encryption`
 
-If your Security groups are not properly configured the attack surface is increased, nonetheless, Prowler will detect those security groups that are being used (they are attached) to only notify those that are being used. This logic applies to the 15 checks related to open ports in security groups and the check for the default security group.
+If your Security groups are not properly configured the attack surface is increased, nonetheless, Prowler will detect those security groups that are being used (they are attached) to only notify those that are being used. This logic applies to the 15 checks related to open ports in security groups, the check for the default security group and for the security groups that allow ingress and egress traffic.
 
   - `ec2_securitygroup_allow_ingress_from_internet_to_port_X` (15 checks)
   - `ec2_securitygroup_default_restrict_traffic`
+  - `ec2_securitygroup_allow_wide_open_public_ipv4`
 
 Prowler will also check for used Network ACLs to only alerts those with open ports that are being used.
 
