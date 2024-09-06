@@ -44,6 +44,35 @@ def mock_make_api_call(self, operation_name, kwarg):
     return make_api_call(self, operation_name, kwarg)
 
 
+def mock_make_api_call_v2(self, operation_name, kwarg):
+    if operation_name == "DescribeVpnConnections":
+        return {
+            "VpnConnections": [
+                {
+                    "VpnConnectionId": "vpn-1234567890abcdef0",
+                    "CustomerGatewayId": "cgw-0123456789abcdef0",
+                    "VpnGatewayId": "vgw-0123456789abcdef0",
+                    "State": "available",
+                    "Type": "ipsec.1",
+                    "VgwTelemetry": [
+                        {
+                            "OutsideIpAddress": "192.168.1.1",
+                            "Status": "UP",
+                            "AcceptedRouteCount": 10,
+                        },
+                        {
+                            "OutsideIpAddress": "192.168.1.2",
+                            "Status": "UP",
+                            "AcceptedRouteCount": 5,
+                        },
+                    ],
+                    "Tags": [{"Key": "Name", "Value": "MyVPNConnection"}],
+                }
+            ]
+        }
+    return make_api_call(self, operation_name, kwarg)
+
+
 class Test_EC2_Service:
     # Test EC2 Service
     @mock_aws
@@ -778,3 +807,19 @@ class Test_EC2_Service:
         )
         assert ec2.transit_gateways[transit_arn].auto_accept_shared_attachments
         assert ec2.transit_gateways[transit_arn].region == AWS_REGION_US_EAST_1
+
+    # Test EC2 Describe Launch Templates
+    @mock.patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call_v2)
+    def test_describe_vpn_connections(self):
+        # Generate EC2 Client
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        ec2 = EC2(aws_provider)
+
+        vpn_arn = f"arn:{aws_provider.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{aws_provider.identity.account}:vpn-connection/vpn-1234567890abcdef0"
+        assert len(ec2.vpn_connections) == 1
+        assert vpn_arn in ec2.vpn_connections
+        vpn_conn = ec2.vpn_connections[vpn_arn]
+        assert vpn_conn.id == "vpn-1234567890abcdef0"
+        assert vpn_conn.region == AWS_REGION_US_EAST_1
+        assert len(vpn_conn.tunnels) == 2

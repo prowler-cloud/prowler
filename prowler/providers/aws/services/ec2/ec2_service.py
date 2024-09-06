@@ -53,6 +53,8 @@ class EC2(AWSService):
         self.__threading_call__(self._describe_vpn_endpoints)
         self.transit_gateways = {}
         self.__threading_call__(self._describe_transit_gateways)
+        self.vpn_connections = {}
+        self.__threading_call__(self._describe_vpn_connections)
 
     def _get_volume_arn_template(self, region):
         return (
@@ -568,6 +570,35 @@ class EC2(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _describe_vpn_connections(self, regional_client):
+        try:
+            describe_vpn_connections = regional_client.describe_vpn_connections()
+
+            for vpn_connection in describe_vpn_connections["VpnConnections"]:
+                arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:vpn-connection/{vpn_connection['VpnConnectionId']}"
+                if not self.audit_resources or (
+                    is_resource_filtered(arn, self.audit_resources)
+                ):
+                    tunnels = []
+                    for tunnel in vpn_connection["VgwTelemetry"]:
+                        tunnels.append(
+                            VpnTunnel(
+                                status=tunnel["Status"],
+                                outside_ip_address=tunnel["OutsideIpAddress"],
+                            )
+                        )
+                    self.vpn_connections[arn] = VpnConnection(
+                        id=vpn_connection["VpnConnectionId"],
+                        tunnels=tunnels,
+                        region=regional_client.region,
+                        tags=vpn_connection.get("Tags"),
+                    )
+
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class Instance(BaseModel):
     id: str
@@ -701,5 +732,17 @@ class VpnEndpoint(BaseModel):
 class TransitGateway(BaseModel):
     id: str
     auto_accept_shared_attachments: bool
+    region: str
+    tags: Optional[list] = []
+
+
+class VpnTunnel(BaseModel):
+    status: str
+    outside_ip_address: str
+
+
+class VpnConnection(BaseModel):
+    id: str
+    tunnels: list[VpnTunnel]
     region: str
     tags: Optional[list] = []
