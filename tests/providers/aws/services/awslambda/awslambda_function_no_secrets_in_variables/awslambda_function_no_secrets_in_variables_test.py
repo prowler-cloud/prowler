@@ -46,6 +46,8 @@ class Test_awslambda_function_no_secrets_in_variables:
             )
         }
 
+        lambda_client.audit_config = {"secrets_ignore_patterns": []}
+
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_aws_provider(),
@@ -77,6 +79,8 @@ class Test_awslambda_function_no_secrets_in_variables:
         function_name = "test-lambda"
         function_runtime = "nodejs4.3"
         function_arn = f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:function/{function_name}"
+
+        lambda_client.audit_config = {"secrets_ignore_patterns": []}
 
         lambda_client.functions = {
             "function_name": Function(
@@ -120,7 +124,7 @@ class Test_awslambda_function_no_secrets_in_variables:
         function_name = "test-lambda"
         function_runtime = "nodejs4.3"
         function_arn = f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:function/{function_name}"
-
+        lambda_client.audit_config = {"secrets_ignore_patterns": []}
         lambda_client.functions = {
             "function_name": Function(
                 name=function_name,
