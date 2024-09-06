@@ -6,7 +6,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from uuid6 import uuid7
 
-from api.db_utils import ProviderEnumField, StateEnumField, ScanTypeEnumField
+from api.db_utils import ProviderEnumField, StateEnumField, ScanTriggerEnumField
 from api.exceptions import ModelValidationError
 from api.rls import RowLevelSecurityConstraint
 from api.rls import RowLevelSecurityProtectedModel
@@ -110,7 +110,7 @@ class Provider(RowLevelSecurityProtectedModel):
 
 
 class Scan(RowLevelSecurityProtectedModel):
-    class TypeChoices(models.TextChoices):
+    class TriggerChoices(models.TextChoices):
         SCHEDULED = "scheduled", _("Scheduled")
         MANUAL = "manual", _("Manual")
 
@@ -124,8 +124,8 @@ class Scan(RowLevelSecurityProtectedModel):
         related_name="scans",
         related_query_name="scan",
     )
-    type = ScanTypeEnumField(
-        choices=TypeChoices.choices,
+    trigger = ScanTriggerEnumField(
+        choices=TriggerChoices.choices,
     )
     state = StateEnumField(choices=StateChoices.choices, default=StateChoices.AVAILABLE)
     unique_resource_count = models.IntegerField(default=0)
@@ -153,7 +153,7 @@ class Scan(RowLevelSecurityProtectedModel):
 
         indexes = [
             models.Index(
-                fields=["provider", "state", "type", "scheduled_at"],
+                fields=["provider", "state", "trigger", "scheduled_at"],
                 name="scans_prov_state_type_sche_idx",
             ),
         ]

@@ -221,7 +221,7 @@ class ScanViewSet(BaseRLSViewSet):
     ordering_fields = [
         "provider_id",
         "name",
-        "type",
+        "trigger",
         "attempted_at",
         "scheduled_at",
         "inserted_at",

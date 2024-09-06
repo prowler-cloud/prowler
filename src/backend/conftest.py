@@ -104,21 +104,21 @@ def scans_fixture(tenants_fixture, providers_fixture):
     scan1 = Scan.objects.create(
         name="Scan 1",
         provider=provider,
-        type=Scan.TypeChoices.MANUAL,
+        trigger=Scan.TriggerChoices.MANUAL,
         state=StateChoices.AVAILABLE,
         tenant_id=tenant.id,
     )
     scan2 = Scan.objects.create(
         name="Scan 2",
         provider=provider,
-        type=Scan.TypeChoices.SCHEDULED,
+        trigger=Scan.TriggerChoices.SCHEDULED,
         state=StateChoices.FAILED,
         tenant_id=tenant.id,
     )
     scan3 = Scan.objects.create(
         name="Scan 3",
         provider=provider,
-        type=Scan.TypeChoices.SCHEDULED,
+        trigger=Scan.TriggerChoices.SCHEDULED,
         state=StateChoices.AVAILABLE,
         tenant_id=tenant.id,
     )

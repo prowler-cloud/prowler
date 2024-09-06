@@ -13,10 +13,10 @@ from api.db_utils import (
     PostgresEnumMigration,
     ProviderEnum,
     ProviderEnumField,
-    ScanTypeEnum,
+    ScanTriggerEnum,
     StateEnumField,
     StateEnum,
-    ScanTypeEnumField,
+    ScanTriggerEnumField,
     register_enum,
 )
 from api.models import Provider, Scan, StateChoices
@@ -34,9 +34,9 @@ ProviderEnumMigration = PostgresEnumMigration(
     enum_values=tuple(provider[0] for provider in Provider.ProviderChoices.choices),
 )
 
-ScanTypeEnumMigration = PostgresEnumMigration(
-    enum_name="scan_type",
-    enum_values=tuple(scan_type[0] for scan_type in Scan.TypeChoices.choices),
+ScanTriggerEnumMigration = PostgresEnumMigration(
+    enum_name="scan_trigger",
+    enum_values=tuple(scan_trigger[0] for scan_trigger in Scan.TriggerChoices.choices),
 )
 
 StateEnumMigration = PostgresEnumMigration(
@@ -188,12 +188,12 @@ class Migration(migrations.Migration):
                 name="unique_provider_ids",
             ),
         ),
-        # Create and register ScanTypeEnum type
+        # Create and register ScanTriggerEnum type
         migrations.RunPython(
-            ScanTypeEnumMigration.create_enum_type,
-            reverse_code=ScanTypeEnumMigration.drop_enum_type,
+            ScanTriggerEnumMigration.create_enum_type,
+            reverse_code=ScanTriggerEnumMigration.drop_enum_type,
         ),
-        migrations.RunPython(partial(register_enum, enum_class=ScanTypeEnum)),
+        migrations.RunPython(partial(register_enum, enum_class=ScanTriggerEnum)),
         migrations.CreateModel(
             name="Scan",
             fields=[
@@ -216,8 +216,8 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 (
-                    "type",
-                    ScanTypeEnumField(
+                    "trigger",
+                    ScanTriggerEnumField(
                         choices=[("scheduled", "Scheduled"), ("manual", "Manual")]
                     ),
                 ),
@@ -279,8 +279,8 @@ class Migration(migrations.Migration):
         migrations.AddIndex(
             model_name="scan",
             index=models.Index(
-                fields=["provider", "state", "type", "scheduled_at"],
-                name="scans_prov_state_type_sche_idx",
+                fields=["provider", "state", "trigger", "scheduled_at"],
+                name="scans_prov_state_trig_sche_idx",
             ),
         ),
     ]

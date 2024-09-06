@@ -130,14 +130,16 @@ class ProviderUpdateSerializer(BaseWriteSerializer):
 # Scans
 
 
-class ScanTypeEnumSerializerField(serializers.ChoiceField):
+class ScanTriggerEnumSerializerField(serializers.ChoiceField):
     def __init__(self, **kwargs):
-        kwargs["choices"] = Scan.TypeChoices.choices
+        kwargs["choices"] = Scan.TriggerChoices.choices
         super().__init__(**kwargs)
 
 
 class ScanSerializer(RLSSerializer):
-    type_ = serializers.ChoiceField(choices=Scan.TypeChoices.choices, read_only=True)
+    trigger = serializers.ChoiceField(
+        choices=Scan.TriggerChoices.choices, read_only=True
+    )
     state = StateEnumSerializerField(read_only=True)
 
     class Meta:
@@ -145,7 +147,7 @@ class ScanSerializer(RLSSerializer):
         fields = [
             "id",
             "name",
-            "type_",
+            "trigger",
             "state",
             "unique_resource_count",
             "progress",
@@ -157,13 +159,6 @@ class ScanSerializer(RLSSerializer):
             "scheduled_at",
             "url",
         ]
-
-    def get_fields(self):
-        """`type` is a Python reserved keyword."""
-        fields = super().get_fields()
-        type_ = fields.pop("type_")
-        fields["type"] = type_
-        return fields
 
 
 class ScanCreateSerializer(RLSSerializer, BaseWriteSerializer):
@@ -182,8 +177,8 @@ class ScanCreateSerializer(RLSSerializer, BaseWriteSerializer):
                 provider.scanner_args, validated_data["scanner_args"]
             )
 
-        if not validated_data.get("type"):
-            validated_data["type"] = Scan.TypeChoices.MANUAL.value
+        if not validated_data.get("trigger"):
+            validated_data["trigger"] = Scan.TriggerChoices.MANUAL.value
 
         return RLSSerializer.create(self, validated_data)
 

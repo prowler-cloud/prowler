@@ -114,13 +114,13 @@ class ProviderEnumField(PostgresEnumField):
 # Postgres enum definition for Scan.type
 
 
-class ScanTypeEnum(EnumType):
-    enum_type_name = "scan_type"
+class ScanTriggerEnum(EnumType):
+    enum_type_name = "scan_trigger"
 
 
-class ScanTypeEnumField(PostgresEnumField):
+class ScanTriggerEnumField(PostgresEnumField):
     def __init__(self, *args, **kwargs):
-        super().__init__("scan_type", *args, **kwargs)
+        super().__init__("scan_trigger", *args, **kwargs)
 
 
 # Postgres enum definition for state

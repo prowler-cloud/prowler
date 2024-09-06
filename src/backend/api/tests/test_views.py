@@ -589,7 +589,7 @@ class TestScanViewSet:
         scan = Scan.objects.get()
         assert scan.name == scan_json_payload["data"]["attributes"]["name"]
         assert scan.provider == provider5
-        assert scan.type == Scan.TypeChoices.MANUAL
+        assert scan.trigger == Scan.TriggerChoices.MANUAL
         assert scan.scanner_args == expected_scanner_args
 
     @pytest.mark.parametrize(
@@ -601,7 +601,7 @@ class TestScanViewSet:
                         "type": "Scan",
                         "attributes": {
                             "name": "a",
-                            "type": Scan.TypeChoices.MANUAL,
+                            "trigger": Scan.TriggerChoices.MANUAL,
                         },
                         "relationships": {
                             "provider": {
@@ -682,7 +682,7 @@ class TestScanViewSet:
         "filter_name, filter_value",
         [
             ("provider", "aws"),
-            ("type", Scan.TypeChoices.MANUAL),
+            ("trigger", Scan.TriggerChoices.MANUAL),
             ("name", "Scan 1"),
             ("started_at", "2024-01-01 00:00:00"),
         ],
@@ -715,7 +715,7 @@ class TestScanViewSet:
         [
             "provider_id",
             "name",
-            "type",
+            "trigger",
             "inserted_at",
             "updated_at",
         ],

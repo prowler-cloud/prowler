@@ -83,19 +83,19 @@ class ProviderFilter(FilterSet):
 
 class ScanFilter(FilterSet):
     provider = CharFilter(method="filter_provider")
-    type = CharFilter(method="filter_type")
+    trigger = CharFilter(method="filter_trigger")
 
     def filter_provider(self, queryset, name, value):
         return provider_enum_filter(queryset, value, lookup_field="provider__provider")
 
-    def filter_type(self, queryset, name, value):
-        if value not in Scan.TypeChoices:
+    def filter_trigger(self, queryset, name, value):
+        if value not in Scan.TriggerChoices:
             raise ValidationError(
-                f"Invalid scan type value: '{value}'. Valid values are: "
-                f"{', '.join(Scan.TypeChoices)}"
+                f"Invalid scan trigger value: '{value}'. Valid values are: "
+                f"{', '.join(Scan.TriggerChoices)}"
             )
 
-        return queryset.filter(type=value)
+        return queryset.filter(trigger=value)
 
     class Meta:
         model = Scan
@@ -104,5 +104,5 @@ class ScanFilter(FilterSet):
             "provider_id": ["exact"],
             "name": ["exact", "icontains"],
             "started_at": ["exact", "gte", "lte"],
-            "type": ["exact"],
+            "trigger": ["exact"],
         }
