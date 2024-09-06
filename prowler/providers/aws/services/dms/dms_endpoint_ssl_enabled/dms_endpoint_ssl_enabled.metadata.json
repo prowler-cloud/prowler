@@ -1,20 +1,31 @@
 {
-    "Provider": "aws",
-    "CheckID": "dms_endpoint_ssl_enabled",
-    "CheckTitle": "Checks whether a dms track has sll enabled or not.",
-    "CheckType": [],
-    "ServiceName": "dms",
-    "SubServiceName": "",
-    "ResourceIdTemplate": "arn:aws:rdmsds:region:account-id:rep",
-    "Severity": "n/a",
-    "ResourceType": "AwsDmsReplicationInstance",
-    "Description": "Checks whether a dms track has sll enabled or not.",
-    "Risk":"n/a",
-  
-    
-    "Categories": [],
-    "DependsOn": [],
-    "RelatedTo": [],
-    "Notes": ""
-  }
-  
+  "CheckID": "dms_endpoint_ssl_enabled",
+  "CheckTitle": "Checks whether a DMS endpoint has SSL enabled or not",
+  "CheckType": [
+    "Data Protection"
+  ],
+  "ServiceName": "dms",
+  "SubServiceName": "endpoint",
+  "ResourceIdTemplate": "arn:aws:dms:region:account-id:endpoint:endpoint-id",
+  "Severity": "medium",
+  "ResourceType": "AwsDmsEndpoint",
+  "Description": "This check ensures that AWS Database Migration Service (DMS) endpoints have SSL enabled for secure data transmission.",
+  "Risk": "Without SSL, data transmitted between the DMS endpoint and the database is not encrypted, potentially exposing sensitive information.",
+  "RelatedUrl": "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Security.html#CHAP_Security.SSL",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws dms modify-endpoint --endpoint-arn <endpoint_arn> --ssl-mode require",
+      "Console": "1. Open the AWS DMS console. 2. Navigate to 'Endpoints'. 3. Select the endpoint. 4. Click 'Modify'. 5. Under 'SSL mode', select 'Require SSL'. 6. Click 'Modify'."
+    },
+    "Recommendation": {
+      "Text": "Enable SSL for all DMS endpoints to ensure secure data transmission.",
+      "Url": "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Security.html#CHAP_Security.SSL"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

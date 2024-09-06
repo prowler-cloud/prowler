@@ -71,6 +71,7 @@ shodan = "1.31.0"
 slack-sdk = "3.31.0"
 tabulate = "0.9.0"
 tzlocal = "5.2"
+mkdocs = "1.5.3"
 
 [tool.poetry.group.dev.dependencies]
 bandit = "1.7.9"

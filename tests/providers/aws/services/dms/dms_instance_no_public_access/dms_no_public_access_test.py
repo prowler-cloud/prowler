@@ -24,7 +24,7 @@ class Test_dms_instance_no_public_access:
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1]) 
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",

@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-
+from typing import List, Optional, Dict
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
@@ -11,7 +11,9 @@ class DMS(AWSService):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.instances = []
+        self.endpoints = {}
         self.__threading_call__(self.__describe_replication_instances__)
+        self.__threading_call__(self.__describe_endpoints__)
 
     def __describe_replication_instances__(self, regional_client):
         logger.info("DMS - Describing DMS Replication Instances...")
@@ -48,6 +50,31 @@ class DMS(AWSService):
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+
+    def __describe_endpoints__(self, regional_client):
+        logger.info("DMS - Describing DMS Endpoints...")
+        try:
+            describe_endpoints_paginator = regional_client.get_paginator(
+                "describe_endpoi4nts"
+            )
+            for page in describe_endpoints_paginator.paginate():
+                for endpoint in page["Endpoints"]:
+                    arn = endpoint["EndpointArn"]
+                    if not self.audit_resources or (
+                        is_resource_filtered(arn, self.audit_resources)
+                    ):
+                        self.endpoints[endpoint["EndpointIdentifier"]] = Endpoint(
+                            ssl_mode=endpoint.get("SslMode")
+                        )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+
+
+class Endpoint(BaseModel):
+    ssl_mode:str = None
 
 
 class RepInstance(BaseModel):
