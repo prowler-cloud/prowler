@@ -59,8 +59,8 @@ const SSRDataTable = async ({
   return (
     <DataTableProvider
       columns={ColumnsProvider}
-      data={providersData.data}
-      metadata={providersData.meta}
+      data={providersData?.data || []}
+      metadata={providersData?.meta}
     />
   );
 };
