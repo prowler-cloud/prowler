@@ -4,6 +4,8 @@ from prowler.config.config import valid_severities
 from prowler.lib.check.check import (
     parse_checks_from_compliance_framework,
     parse_checks_from_file,
+)
+from prowler.lib.check.utils import (
     recover_checks_from_provider,
     recover_checks_from_service,
 )

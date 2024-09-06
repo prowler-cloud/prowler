@@ -1423,7 +1423,7 @@ aws:
 
     @mock_aws
     @patch(
-        "prowler.lib.check.check.recover_checks_from_provider",
+        "prowler.lib.check.utils.recover_checks_from_provider",
         new=mock_recover_checks_from_aws_provider_elb_service,
     )
     def test_get_checks_from_input_arn_elb(self):
@@ -1444,7 +1444,7 @@ aws:
 
     @mock_aws
     @patch(
-        "prowler.lib.check.check.recover_checks_from_provider",
+        "prowler.lib.check.utils.recover_checks_from_provider",
         new=mock_recover_checks_from_aws_provider_efs_service,
     )
     def test_get_checks_from_input_arn_efs(self):
@@ -1465,7 +1465,7 @@ aws:
 
     @mock_aws
     @patch(
-        "prowler.lib.check.check.recover_checks_from_provider",
+        "prowler.lib.check.utils.recover_checks_from_provider",
         new=mock_recover_checks_from_aws_provider_lambda_service,
     )
     def test_get_checks_from_input_arn_lambda(self):
@@ -1485,7 +1485,7 @@ aws:
 
     @mock_aws
     @patch(
-        "prowler.lib.check.check.recover_checks_from_provider",
+        "prowler.lib.check.utils.recover_checks_from_provider",
         new=mock_recover_checks_from_aws_provider_iam_service,
     )
     def test_get_checks_from_input_arn_iam(self):
@@ -1507,7 +1507,7 @@ aws:
     @mock_aws
     @mock_aws
     @patch(
-        "prowler.lib.check.check.recover_checks_from_provider",
+        "prowler.lib.check.utils.recover_checks_from_provider",
         new=mock_recover_checks_from_aws_provider_s3_service,
     )
     def test_get_checks_from_input_arn_s3(self):
@@ -1526,7 +1526,7 @@ aws:
 
     @mock_aws
     @patch(
-        "prowler.lib.check.check.recover_checks_from_provider",
+        "prowler.lib.check.utils.recover_checks_from_provider",
         new=mock_recover_checks_from_aws_provider_cloudwatch_service,
     )
     def test_get_checks_from_input_arn_cloudwatch(self):
@@ -1546,7 +1546,7 @@ aws:
 
     @mock_aws
     @patch(
-        "prowler.lib.check.check.recover_checks_from_provider",
+        "prowler.lib.check.utils.recover_checks_from_provider",
         new=mock_recover_checks_from_aws_provider_cognito_service,
     )
     def test_get_checks_from_input_arn_cognito(self):
@@ -1562,7 +1562,7 @@ aws:
 
     @mock_aws
     @patch(
-        "prowler.lib.check.check.recover_checks_from_provider",
+        "prowler.lib.check.utils.recover_checks_from_provider",
         new=mock_recover_checks_from_aws_provider_ec2_service,
     )
     def test_get_checks_from_input_arn_ec2_security_group(self):
@@ -1578,7 +1578,7 @@ aws:
 
     @mock_aws
     @patch(
-        "prowler.lib.check.check.recover_checks_from_provider",
+        "prowler.lib.check.utils.recover_checks_from_provider",
         new=mock_recover_checks_from_aws_provider_ec2_service,
     )
     def test_get_checks_from_input_arn_ec2_acl(self):
@@ -1594,7 +1594,7 @@ aws:
 
     @mock_aws
     @patch(
-        "prowler.lib.check.check.recover_checks_from_provider",
+        "prowler.lib.check.utils.recover_checks_from_provider",
         new=mock_recover_checks_from_aws_provider_rds_service,
     )
     def test_get_checks_from_input_arn_rds_snapshots(self):
@@ -1610,7 +1610,7 @@ aws:
 
     @mock_aws
     @patch(
-        "prowler.lib.check.check.recover_checks_from_provider",
+        "prowler.lib.check.utils.recover_checks_from_provider",
         new=mock_recover_checks_from_aws_provider_ec2_service,
     )
     def test_get_checks_from_input_arn_ec2_ami(self):
@@ -1738,7 +1738,7 @@ aws:
 
     @mock_aws
     @patch(
-        "prowler.lib.check.check.recover_checks_from_provider",
+        "prowler.lib.check.utils.recover_checks_from_provider",
         new=mock_recover_checks_from_aws_provider_ec2_service,
     )
     def test_get_checks_to_execute_by_audit_resources(self):
