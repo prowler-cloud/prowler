@@ -23,7 +23,7 @@ export const FilterControls: React.FC<FilterControlsProps> = ({
   const clearAllFilters = useCallback(() => {
     const params = new URLSearchParams(searchParams.toString());
     Array.from(params.keys()).forEach((key) => {
-      if (key.startsWith("filter[")) {
+      if (key.startsWith("filter[") || key === "sort") {
         params.delete(key);
       }
     });
