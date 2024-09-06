@@ -5,9 +5,11 @@ import {
   Dropdown,
   DropdownItem,
   DropdownMenu,
+  DropdownSection,
   DropdownTrigger,
 } from "@nextui-org/react";
 import { ColumnDef } from "@tanstack/react-table";
+import clsx from "clsx";
 import { add } from "date-fns";
 
 import { VerticalDotsIcon } from "@/components/icons";
@@ -19,10 +21,18 @@ import { DateWithTime } from "../DateWithTime";
 import { DeleteProvider } from "../DeleteProvider";
 import { ProviderInfo } from "../ProviderInfo";
 import { DataTableColumnHeader } from "./DataTableColumnHeader";
-
 const getProviderData = (row: { original: ProviderProps }) => {
   return row.original;
 };
+
+import {
+  AddNoteBulkIcon,
+  DeleteDocumentBulkIcon,
+  EditDocumentBulkIcon,
+} from "@nextui-org/shared-icons";
+
+const iconClasses =
+  "text-2xl text-default-500 pointer-events-none flex-shrink-0";
 
 export const ColumnsProvider: ColumnDef<ProviderProps>[] = [
   {
@@ -117,19 +127,55 @@ export const ColumnsProvider: ColumnDef<ProviderProps>[] = [
       const { id } = getProviderData(row);
       return (
         <div className="relative flex justify-end items-center gap-2">
-          <Dropdown className="bg-background border-1 border-default-200">
+          <Dropdown className="shadow-xl" placement="bottom">
             <DropdownTrigger>
               <Button isIconOnly radius="full" size="sm" variant="light">
                 <VerticalDotsIcon className="text-default-400" />
               </Button>
             </DropdownTrigger>
-            <DropdownMenu>
-              <DropdownItem textValue="Check Connection">
-                <CheckConnectionProvider id={id} />
-              </DropdownItem>
-              <DropdownItem textValue="Delete Provider">
-                <DeleteProvider id={id} />
-              </DropdownItem>
+            <DropdownMenu
+              closeOnSelect
+              aria-label="Actions"
+              color="default"
+              variant="flat"
+            >
+              <DropdownSection title="Actions">
+                <DropdownItem
+                  key="new"
+                  description="Check the connection to the provider"
+                  shortcut="⌘N"
+                  startContent={<AddNoteBulkIcon className={iconClasses} />}
+                >
+                  <CheckConnectionProvider id={id} />
+                </DropdownItem>
+                <DropdownItem
+                  key="edit"
+                  description="Allows you to edit the provider"
+                  shortcut="⌘⇧E"
+                  startContent={
+                    <EditDocumentBulkIcon className={iconClasses} />
+                  }
+                >
+                  Edit provider
+                </DropdownItem>
+              </DropdownSection>
+              <DropdownSection title="Danger zone">
+                <DropdownItem
+                  key="delete"
+                  className="text-danger"
+                  color="danger"
+                  description="Delete the provider permanently"
+                  textValue="Delete Provider"
+                  shortcut="⌘⇧D"
+                  startContent={
+                    <DeleteDocumentBulkIcon
+                      className={clsx(iconClasses, "!text-danger")}
+                    />
+                  }
+                >
+                  <DeleteProvider id={id} />
+                </DropdownItem>
+              </DropdownSection>
             </DropdownMenu>
           </Dropdown>
         </div>
