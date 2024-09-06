@@ -28,7 +28,7 @@ class ec2_securitygroup_allow_wide_open_public_ipv4(Check):
                 for ingress_rule in security_group.ingress_rules:
                     for ipv4 in ingress_rule["IpRanges"]:
                         ip = ipaddress.ip_network(ipv4["CidrIp"])
-                        # Check if IP is public according to RFC1918 and if 0 < prefixlen < 24
+                        # Check if IP is public if 0 < prefixlen < 24
                         if (
                             ip.is_global
                             and ip.prefixlen < cidr_treshold
@@ -42,7 +42,7 @@ class ec2_securitygroup_allow_wide_open_public_ipv4(Check):
                 for egress_rule in security_group.egress_rules:
                     for ipv4 in egress_rule["IpRanges"]:
                         ip = ipaddress.ip_network(ipv4["CidrIp"])
-                        # Check if IP is public according to RFC1918 and if 0 < prefixlen < 24
+                        # Check if IP is public if 0 < prefixlen < 24
                         if (
                             ip.is_global
                             and ip.prefixlen < cidr_treshold
