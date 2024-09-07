@@ -74,7 +74,7 @@ class DMS(AWSService):
 
 
 class Endpoint(BaseModel):
-    ssl_mode:str = None
+    ssl_mode:str
 
 
 class RepInstance(BaseModel):
