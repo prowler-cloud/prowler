@@ -1,8 +1,10 @@
+import json
+
 from drf_spectacular.utils import extend_schema_field
 from rest_framework_json_api import serializers
 from rest_framework_json_api.serializers import ValidationError
 
-from api.models import StateChoices, Provider, Scan
+from api.models import StateChoices, Provider, Scan, Task
 from api.rls import Tenant
 from api.utils import merge_dicts
 
@@ -39,17 +41,95 @@ class StateEnumSerializerField(serializers.ChoiceField):
 
 
 # Tasks
-
-
-class DelayedTaskSerializer(serializers.Serializer):
-    id = serializers.CharField()
-    status = serializers.CharField()
+class TaskBase(serializers.Serializer):
+    state_mapping = {
+        "PENDING": StateChoices.SCHEDULED,
+        "STARTED": StateChoices.EXECUTING,
+        "PROGRESS": StateChoices.EXECUTING,
+        "SUCCESS": StateChoices.COMPLETED,
+        "FAILURE": StateChoices.FAILED,
+        "REVOKED": StateChoices.CANCELLED,
+    }
 
     class JSONAPIMeta:
         resource_name = "Task"
 
-    def to_representation(self, obj):
-        return {"id": obj.id, "status": obj.status}
+    def map_state(self, task_result_state):
+        return self.state_mapping.get(task_result_state, StateChoices.AVAILABLE)
+
+    @extend_schema_field(
+        {
+            "type": "string",
+            "enum": StateChoices.values,
+        }
+    )
+    def get_state(self, obj):
+        task_result_state = (
+            obj.task_runner_task.status if obj.task_runner_task else None
+        )
+        return self.map_state(task_result_state)
+
+
+class DelayedTaskSerializer(TaskBase):
+    id = serializers.CharField()
+    state = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        fields = [
+            "id",
+            "state",
+        ]
+
+    @extend_schema_field(
+        {
+            "type": "string",
+            "enum": StateChoices.values,
+        }
+    )
+    def get_state(self, obj):
+        task_result_state = obj.status if obj else None
+        return self.map_state(task_result_state)
+
+
+class TaskSerializer(RLSSerializer, TaskBase):
+    state = serializers.SerializerMethodField(read_only=True)
+    metadata = serializers.SerializerMethodField(read_only=True)
+    result = serializers.SerializerMethodField(read_only=True)
+
+    completed_at = serializers.DateTimeField(
+        source="task_runner_task.date_done", read_only=True
+    )
+    name = serializers.CharField(source="task_runner_task.task_name", read_only=True)
+
+    class Meta:
+        model = Task
+        fields = [
+            "id",
+            "inserted_at",
+            "completed_at",
+            "name",
+            "state",
+            "result",
+            "metadata",
+        ]
+
+    @extend_schema_field(serializers.JSONField())
+    def get_metadata(self, obj):
+        return self.get_json_field(obj, "metadata")
+
+    @extend_schema_field(serializers.JSONField())
+    def get_result(self, obj):
+        return self.get_json_field(obj, "result")
+
+    @staticmethod
+    def get_json_field(obj, field_name):
+        """Helper method to DRY the logic for loading JSON fields from task_runner_task."""
+        task_result_field = (
+            getattr(obj.task_runner_task, field_name, None)
+            if obj.task_runner_task
+            else None
+        )
+        return json.loads(task_result_field) if task_result_field else {}
 
 
 # Tenants

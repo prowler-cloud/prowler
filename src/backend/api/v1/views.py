@@ -1,4 +1,5 @@
 from django.conf import settings as django_settings
+from django.db.models import F
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_control
@@ -9,22 +10,24 @@ from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
 from rest_framework_json_api.views import Response
+from celery.result import AsyncResult
 
 from api.base_views import BaseRLSViewSet, BaseViewSet
-from api.filters import ProviderFilter, TenantFilter, ScanFilter
-from api.models import Provider, Scan
+from api.filters import ProviderFilter, TenantFilter, ScanFilter, TaskFilter
+from api.models import Provider, Scan, Task
 from api.rls import Tenant
 from api.v1.serializers import (
     ProviderSerializer,
     ProviderCreateSerializer,
     ProviderUpdateSerializer,
     TenantSerializer,
+    TaskSerializer,
     DelayedTaskSerializer,
     ScanSerializer,
     ScanCreateSerializer,
     ScanUpdateSerializer,
 )
-from tasks.tasks import check_provider_connection_task
+from tasks.tasks import check_provider_connection_task, delete_provider_task
 
 CACHE_DECORATOR = cache_control(
     max_age=django_settings.CACHE_MAX_AGE,
@@ -102,6 +105,7 @@ class TenantViewSet(BaseViewSet):
         responses={200: ProviderSerializer},
     ),
     destroy=extend_schema(
+        tags=["Provider"],
         summary="Delete a provider",
         description="Remove a provider from the system by their ID.",
         responses={202: DelayedTaskSerializer},
@@ -133,6 +137,8 @@ class ProviderViewSet(BaseRLSViewSet):
             return ProviderCreateSerializer
         elif self.action == "partial_update":
             return ProviderUpdateSerializer
+        elif self.action in ["connection", "destroy"]:
+            return DelayedTaskSerializer
         return super().get_serializer_class()
 
     def partial_update(self, request, *args, **kwargs):
@@ -167,21 +173,24 @@ class ProviderViewSet(BaseRLSViewSet):
         return Response(
             data=serializer.data,
             status=status.HTTP_202_ACCEPTED,
-            # TODO Use /tasks view name when implemented
-            # headers={"Content-Location": reverse("task-detail", kwargs={"pk": task.id})},
-            headers={"Content-Location": f"api/v1/tasks/{task.id}"},
+            headers={
+                "Content-Location": reverse("task-detail", kwargs={"pk": task.id})
+            },
         )
 
-    def destroy(self, request, *args, **kwargs):
-        response = super().destroy(request, *args, **kwargs)
-        # TODO Background task to delete provider. For now, it will delete the provider from the system
-        # Same as /connection endpoint
-        response.status_code = status.HTTP_202_ACCEPTED
-        response.headers = {
-            "Content-Location": "/api/v1/tasks/5234",
-            **response.headers,
-        }
-        return response
+    def destroy(self, request, *args, pk=None, **kwargs):
+        get_object_or_404(Provider, pk=pk)
+        task = delete_provider_task.delay(
+            provider_id=pk, tenant_id=request.headers.get("X-Tenant-ID")
+        )
+        serializer = DelayedTaskSerializer(task)
+        return Response(
+            data=serializer.data,
+            status=status.HTTP_202_ACCEPTED,
+            headers={
+                "Content-Location": reverse("task-detail", kwargs={"pk": task.id})
+            },
+        )
 
 
 @extend_schema_view(
@@ -266,3 +275,59 @@ class ScanViewSet(BaseRLSViewSet):
             instance, context=self.get_serializer_context()
         )
         return Response(data=read_serializer.data, status=status.HTTP_200_OK)
+
+
+@extend_schema_view(
+    list=extend_schema(
+        summary="List all tasks",
+        description="Retrieve a list of all tasks with options for filtering by name, state, and other criteria.",
+    ),
+    retrieve=extend_schema(
+        summary="Retrieve data from a specific task",
+        description="Fetch detailed information about a specific task by its ID.",
+    ),
+    destroy=extend_schema(
+        tags=["Task"],
+        summary="Revoke a task",
+        description="Try to revoke a task using its ID. Only tasks that are not yet in progress can be revoked.",
+        responses={202: DelayedTaskSerializer},
+    ),
+)
+class TaskViewSet(BaseRLSViewSet):
+    queryset = Task.objects.all()
+    serializer_class = TaskSerializer
+    http_method_names = ["get", "delete"]
+    filterset_class = TaskFilter
+    search_fields = ["name"]
+    ordering = ["inserted_at"]
+    ordering_fields = ["inserted_at", "completed_at", "name", "state"]
+
+    def get_queryset(self):
+        return Task.objects.annotate(
+            name=F("task_runner_task__task_name"), state=F("task_runner_task__status")
+        )
+
+    def destroy(self, request, *args, pk=None, **kwargs):
+        task = get_object_or_404(Task, pk=pk)
+        if task.task_runner_task.status not in ["PENDING", "RECEIVED"]:
+            serializer = TaskSerializer(task)
+            return Response(
+                data={
+                    "detail": f"Task cannot be revoked. Status: '{serializer.data.get('state')}'"
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+                headers={
+                    "Content-Location": reverse("task-detail", kwargs={"pk": task.id})
+                },
+            )
+
+        task_instance = AsyncResult(pk)
+        task_instance.revoke()
+        serializer = DelayedTaskSerializer(task_instance)
+        return Response(
+            data=serializer.data,
+            status=status.HTTP_202_ACCEPTED,
+            headers={
+                "Content-Location": reverse("task-detail", kwargs={"pk": task.id})
+            },
+        )

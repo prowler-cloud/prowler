@@ -4,8 +4,8 @@ import pytest
 from django.conf import settings
 from django.db import connections as django_connections
 from rest_framework import status
-
-from api.models import Provider, Scan, StateChoices
+from django_celery_results.models import TaskResult
+from api.models import Provider, Scan, StateChoices, Task
 from api.rls import Tenant
 
 API_JSON_CONTENT_TYPE = "application/vnd.api+json"
@@ -123,6 +123,34 @@ def scans_fixture(tenants_fixture, providers_fixture):
         tenant_id=tenant.id,
     )
     return scan1, scan2, scan3
+
+
+@pytest.fixture
+def tasks_fixture(tenants_fixture):
+    tenant, _ = tenants_fixture
+
+    task_runner_task1 = TaskResult.objects.create(
+        task_id="81a1b34b-ff6e-498e-979c-d6a83260167f",
+        task_name="task_runner_task1",
+        status="SUCCESS",
+    )
+    task_runner_task2 = TaskResult.objects.create(
+        task_id="4d0260a5-2e1f-4a34-a976-8c5acb9f5499",
+        task_name="task_runner_task1",
+        status="PENDING",
+    )
+    task1 = Task.objects.create(
+        id=task_runner_task1.task_id,
+        task_runner_task=task_runner_task1,
+        tenant_id=tenant.id,
+    )
+    task2 = Task.objects.create(
+        id=task_runner_task2.task_id,
+        task_runner_task=task_runner_task2,
+        tenant_id=tenant.id,
+    )
+
+    return task1, task2
 
 
 @pytest.fixture

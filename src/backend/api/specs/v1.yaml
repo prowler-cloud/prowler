@@ -27,7 +27,8 @@ paths:
             - provider_id
             - alias
             - connection
-            - metadata
+            - scanner_args
+            - url
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
@@ -62,18 +63,12 @@ paths:
         name: filter[provider]
         schema:
           type: string
-          enum:
-          - aws
-          - azure
-          - gcp
-          - kubernetes
-        description: |-
-          * `aws` - Aws
-          * `azure` - Azure
-          * `gcp` - Gcp
-          * `kubernetes` - Kubernetes
       - in: query
         name: filter[provider_id]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_id__icontains]
         schema:
           type: string
       - name: filter[search]
@@ -155,13 +150,13 @@ paths:
         content:
           application/vnd.api+json:
             schema:
-              $ref: '#/components/schemas/ProviderRequest'
+              $ref: '#/components/schemas/ProviderCreateRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/ProviderRequest'
+              $ref: '#/components/schemas/ProviderCreateRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/ProviderRequest'
+              $ref: '#/components/schemas/ProviderCreateRequest'
         required: true
       security:
       - cookieAuth: []
@@ -172,7 +167,7 @@ paths:
           content:
             application/vnd.api+json:
               schema:
-                $ref: '#/components/schemas/ProviderResponse'
+                $ref: '#/components/schemas/ProviderCreateResponse'
           description: ''
   /api/v1/providers/{id}:
     get:
@@ -193,7 +188,8 @@ paths:
             - provider_id
             - alias
             - connection
-            - metadata
+            - scanner_args
+            - url
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
@@ -236,13 +232,13 @@ paths:
         content:
           application/vnd.api+json:
             schema:
-              $ref: '#/components/schemas/PatchedProviderRequest'
+              $ref: '#/components/schemas/PatchedProviderUpdateRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/PatchedProviderRequest'
+              $ref: '#/components/schemas/PatchedProviderUpdateRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/PatchedProviderRequest'
+              $ref: '#/components/schemas/PatchedProviderUpdateRequest'
         required: true
       security:
       - cookieAuth: []
@@ -253,7 +249,7 @@ paths:
           content:
             application/vnd.api+json:
               schema:
-                $ref: '#/components/schemas/ProviderResponse'
+                $ref: '#/components/schemas/SerializerMetaclassResponse'
           description: ''
     delete:
       operationId: providers_destroy
@@ -296,6 +292,399 @@ paths:
         required: true
       tags:
       - Provider
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '202':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/SerializerMetaclassResponse'
+          description: ''
+  /api/v1/scans:
+    get:
+      operationId: scans_list
+      description: Retrieve a list of all scans with options for filtering by various
+        criteria.
+      summary: List all scans
+      parameters:
+      - in: query
+        name: fields[Scan]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - name
+            - state
+            - unique_resource_count
+            - progress
+            - scanner_args
+            - duration
+            - provider
+            - started_at
+            - completed_at
+            - scheduled_at
+            - url
+            - type
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[name]
+        schema:
+          type: string
+      - in: query
+        name: filter[name__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_id]
+        schema:
+          type: string
+          format: uuid
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: filter[started_at]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[started_at__gte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[started_at__lte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[type]
+        schema:
+          type: string
+      - name: page[number]
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page[size]
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - provider_id
+            - -provider_id
+            - name
+            - -name
+            - type
+            - -type
+            - attempted_at
+            - -attempted_at
+            - scheduled_at
+            - -scheduled_at
+            - inserted_at
+            - -inserted_at
+            - updated_at
+            - -updated_at
+        explode: false
+      tags:
+      - Scan
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/PaginatedScanList'
+          description: ''
+    post:
+      operationId: scans_create
+      description: Trigger a manual scan by providing the required scan details. If
+        `scanner_args` are not provided, the system will automatically use the default
+        settings from the associated provider. If you do provide `scanner_args`, these
+        settings will be merged with the provider's defaults. This means that your
+        provided settings will override the defaults only where they conflict, while
+        the rest of the default settings will remain intact.
+      summary: Trigger a manual scan
+      tags:
+      - Scan
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/ScanCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ScanCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ScanCreateRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ScanCreateResponse'
+          description: ''
+  /api/v1/scans/{id}:
+    get:
+      operationId: scans_retrieve
+      description: Fetch detailed information about a specific scan by its ID.
+      summary: Retrieve data from a specific scan
+      parameters:
+      - in: query
+        name: fields[Scan]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - name
+            - state
+            - unique_resource_count
+            - progress
+            - scanner_args
+            - duration
+            - provider
+            - started_at
+            - completed_at
+            - scheduled_at
+            - url
+            - type
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scan.
+        required: true
+      tags:
+      - Scan
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ScanResponse'
+          description: ''
+    patch:
+      operationId: scans_partial_update
+      description: Update certain fields of an existing scan without affecting other
+        fields.
+      summary: Partially update a scan
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scan.
+        required: true
+      tags:
+      - Scan
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/PatchedScanUpdateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedScanUpdateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedScanUpdateRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/SerializerMetaclassResponse'
+          description: ''
+  /api/v1/tasks:
+    get:
+      operationId: tasks_list
+      description: Retrieve a list of all tasks with options for filtering by name,
+        state, and other criteria.
+      summary: List all tasks
+      parameters:
+      - in: query
+        name: fields[Task]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - inserted_at
+            - completed_at
+            - name
+            - state
+            - result
+            - metadata
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[name]
+        schema:
+          type: string
+      - in: query
+        name: filter[name__icontains]
+        schema:
+          type: string
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: filter[state]
+        schema:
+          type: string
+      - name: page[number]
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page[size]
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - inserted_at
+            - -inserted_at
+            - completed_at
+            - -completed_at
+            - name
+            - -name
+            - state
+            - -state
+        explode: false
+      tags:
+      - Task
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/PaginatedTaskList'
+          description: ''
+  /api/v1/tasks/{id}:
+    get:
+      operationId: tasks_retrieve
+      description: Fetch detailed information about a specific task by its ID.
+      summary: Retrieve data from a specific task
+      parameters:
+      - in: query
+        name: fields[Task]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - inserted_at
+            - completed_at
+            - name
+            - state
+            - result
+            - metadata
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this task.
+        required: true
+      tags:
+      - Task
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+          description: ''
+    delete:
+      operationId: tasks_destroy
+      description: Try to revoke a task using its ID. If the task is being already
+        executed, its result will be ignored but it will finish. To prevent this,
+        use the `force` query parameter under your own risk.
+      summary: Revoke a task
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this task.
+        required: true
+      tags:
+      - Task
       security:
       - cookieAuth: []
       - basicAuth: []
@@ -542,6 +931,35 @@ paths:
           description: No response body
 components:
   schemas:
+    DelayedTask:
+      type: object
+      required:
+      - type
+      additionalProperties: false
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/TypeB52Enum'
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+        attributes:
+          type: object
+          properties:
+            id:
+              type: string
+            state:
+              type: string
+              enum:
+              - available
+              - scheduled
+              - executing
+              - completed
+              - failed
+              - cancelled
+              readOnly: true
+          required:
+          - id
     PaginatedProviderList:
       type: object
       properties:
@@ -549,6 +967,24 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Provider'
+      required:
+      - data
+    PaginatedScanList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Scan'
+      required:
+      - data
+    PaginatedTaskList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Task'
       required:
       - data
     PaginatedTenantList:
@@ -560,7 +996,7 @@ components:
             $ref: '#/components/schemas/Tenant'
       required:
       - data
-    PatchedProviderRequest:
+    PatchedProviderUpdateRequest:
       type: object
       properties:
         data:
@@ -577,53 +1013,46 @@ components:
                 and relationships.
               enum:
               - Provider
+            id: {}
+            attributes:
+              type: object
+              properties:
+                alias:
+                  type: string
+                  nullable: true
+                  maxLength: 100
+                  minLength: 3
+                scanner_args: {}
+      required:
+      - data
+    PatchedScanUpdateRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          - id
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - Scan
             id:
               type: string
               format: uuid
             attributes:
               type: object
               properties:
-                inserted_at:
+                name:
                   type: string
-                  format: date-time
-                  readOnly: true
-                updated_at:
-                  type: string
-                  format: date-time
-                  readOnly: true
-                provider:
-                  enum:
-                  - aws
-                  - azure
-                  - gcp
-                  - kubernetes
-                  type: string
-                  description: |-
-                    * `aws` - Aws
-                    * `azure` - Azure
-                    * `gcp` - Gcp
-                    * `kubernetes` - Kubernetes
-                provider_id:
-                  type: string
-                  minLength: 3
-                  maxLength: 63
-                alias:
-                  type: string
-                  minLength: 3
+                  nullable: true
                   maxLength: 100
-                connection:
-                  type: object
-                  properties:
-                    connected:
-                      type: boolean
-                    last_checked_at:
-                      type: string
-                      format: date-time
-                  readOnly: true
-                metadata: {}
-              required:
-              - provider_id
-              - alias
+                  minLength: 3
       required:
       - data
     PatchedTenantRequest:
@@ -674,7 +1103,7 @@ components:
       properties:
         type:
           allOf:
-          - $ref: '#/components/schemas/ProviderTypeEnum'
+          - $ref: '#/components/schemas/Type4e8Enum'
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
@@ -700,9 +1129,9 @@ components:
               - kubernetes
               type: string
               description: |-
-                * `aws` - Aws
+                * `aws` - AWS
                 * `azure` - Azure
-                * `gcp` - Gcp
+                * `gcp` - GCP
                 * `kubernetes` - Kubernetes
             provider_id:
               type: string
@@ -710,6 +1139,7 @@ components:
               minLength: 3
             alias:
               type: string
+              nullable: true
               maxLength: 100
               minLength: 3
             connection:
@@ -721,11 +1151,50 @@ components:
                   type: string
                   format: date-time
               readOnly: true
-            metadata: {}
+            scanner_args: {}
+          required:
+          - provider
+          - provider_id
+    ProviderCreate:
+      type: object
+      required:
+      - type
+      additionalProperties: false
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/Type4e8Enum'
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+        attributes:
+          type: object
+          properties:
+            alias:
+              type: string
+              nullable: true
+              maxLength: 100
+              minLength: 3
+            provider:
+              enum:
+              - aws
+              - azure
+              - gcp
+              - kubernetes
+              type: string
+              description: |-
+                * `aws` - AWS
+                * `azure` - Azure
+                * `gcp` - GCP
+                * `kubernetes` - Kubernetes
+            provider_id:
+              type: string
+              maxLength: 63
+              minLength: 3
+            scanner_args: {}
           required:
           - provider_id
-          - alias
-    ProviderRequest:
+    ProviderCreateRequest:
       type: object
       properties:
         data:
@@ -744,14 +1213,11 @@ components:
             attributes:
               type: object
               properties:
-                inserted_at:
+                alias:
                   type: string
-                  format: date-time
-                  readOnly: true
-                updated_at:
-                  type: string
-                  format: date-time
-                  readOnly: true
+                  nullable: true
+                  maxLength: 100
+                  minLength: 3
                 provider:
                   enum:
                   - aws
@@ -760,31 +1226,24 @@ components:
                   - kubernetes
                   type: string
                   description: |-
-                    * `aws` - Aws
+                    * `aws` - AWS
                     * `azure` - Azure
-                    * `gcp` - Gcp
+                    * `gcp` - GCP
                     * `kubernetes` - Kubernetes
                 provider_id:
                   type: string
                   minLength: 3
                   maxLength: 63
-                alias:
-                  type: string
-                  minLength: 3
-                  maxLength: 100
-                connection:
-                  type: object
-                  properties:
-                    connected:
-                      type: boolean
-                    last_checked_at:
-                      type: string
-                      format: date-time
-                  readOnly: true
-                metadata: {}
+                scanner_args: {}
               required:
               - provider_id
-              - alias
+      required:
+      - data
+    ProviderCreateResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/ProviderCreate'
       required:
       - data
     ProviderResponse:
@@ -794,15 +1253,287 @@ components:
           $ref: '#/components/schemas/Provider'
       required:
       - data
-    ProviderTypeEnum:
-      type: string
-      enum:
-      - Provider
+    Scan:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/Type2bbEnum'
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+        id:
+          type: string
+          format: uuid
+        attributes:
+          type: object
+          properties:
+            name:
+              type: string
+              nullable: true
+              maxLength: 100
+              minLength: 3
+            state:
+              enum:
+              - available
+              - scheduled
+              - executing
+              - completed
+              - failed
+              - cancelled
+              type: string
+              description: |-
+                * `available` - Available
+                * `scheduled` - Scheduled
+                * `executing` - Executing
+                * `completed` - Completed
+                * `failed` - Failed
+                * `cancelled` - Cancelled
+              readOnly: true
+            unique_resource_count:
+              type: integer
+              maximum: 2147483647
+              minimum: -2147483648
+            progress:
+              type: integer
+              maximum: 2147483647
+              minimum: -2147483648
+            scanner_args: {}
+            duration:
+              type: integer
+              maximum: 2147483647
+              minimum: -2147483648
+              nullable: true
+            started_at:
+              type: string
+              format: date-time
+              nullable: true
+            completed_at:
+              type: string
+              format: date-time
+              nullable: true
+            scheduled_at:
+              type: string
+              format: date-time
+              nullable: true
+            type:
+              enum:
+              - scheduled
+              - manual
+              type: string
+              description: |-
+                * `scheduled` - Scheduled
+                * `manual` - Manual
+              readOnly: true
+        relationships:
+          type: object
+          properties:
+            provider:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    type:
+                      type: string
+                      enum:
+                      - Provider
+                      title: Resource Type Name
+                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                        member is used to describe resource objects that share common
+                        attributes and relationships.
+                  required:
+                  - id
+                  - type
+              required:
+              - data
+              description: The identifier of the related object.
+              title: Resource Identifier
+          required:
+          - provider
+    ScanCreate:
+      type: object
+      required:
+      - type
+      additionalProperties: false
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/Type2bbEnum'
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+        attributes:
+          type: object
+          properties:
+            scanner_args: {}
+            name:
+              type: string
+              nullable: true
+              maxLength: 100
+              minLength: 3
+        relationships:
+          type: object
+          properties:
+            provider:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    type:
+                      type: string
+                      enum:
+                      - Provider
+                      title: Resource Type Name
+                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                        member is used to describe resource objects that share common
+                        attributes and relationships.
+                  required:
+                  - id
+                  - type
+              required:
+              - data
+              description: The identifier of the related object.
+              title: Resource Identifier
+          required:
+          - provider
+    ScanCreateRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - Scan
+            attributes:
+              type: object
+              properties:
+                scanner_args: {}
+                name:
+                  type: string
+                  nullable: true
+                  maxLength: 100
+                  minLength: 3
+            relationships:
+              type: object
+              properties:
+                provider:
+                  type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        type:
+                          type: string
+                          enum:
+                          - Provider
+                          title: Resource Type Name
+                          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                            member is used to describe resource objects that share
+                            common attributes and relationships.
+                      required:
+                      - id
+                      - type
+                  required:
+                  - data
+                  description: The identifier of the related object.
+                  title: Resource Identifier
+              required:
+              - provider
+      required:
+      - data
+    ScanCreateResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/ScanCreate'
+      required:
+      - data
+    ScanResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Scan'
+      required:
+      - data
     SerializerMetaclassResponse:
       type: object
       properties:
         data:
           $ref: '#/components/schemas/Provider'
+      required:
+      - data
+    Task:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/TypeB52Enum'
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+        id:
+          type: string
+          format: uuid
+        attributes:
+          type: object
+          properties:
+            inserted_at:
+              type: string
+              format: date-time
+              readOnly: true
+            completed_at:
+              type: string
+              format: date-time
+              readOnly: true
+            name:
+              type: string
+              readOnly: true
+            state:
+              type: string
+              enum:
+              - available
+              - scheduled
+              - executing
+              - completed
+              - failed
+              - cancelled
+              readOnly: true
+            result:
+              readOnly: true
+            metadata:
+              readOnly: true
+    TaskResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Task'
       required:
       - data
     Tenant:
@@ -883,6 +1614,18 @@ components:
       type: string
       enum:
       - Tenant
+    Type2bbEnum:
+      type: string
+      enum:
+      - Scan
+    Type4e8Enum:
+      type: string
+      enum:
+      - Provider
+    TypeB52Enum:
+      type: string
+      enum:
+      - Task
   securitySchemes:
     basicAuth:
       type: http

@@ -18,16 +18,15 @@ from api.db_utils import (
     StateEnum,
     ScanTriggerEnumField,
     register_enum,
+    DB_PROWLER_USER,
+    DB_PROWLER_PASSWORD,
+    TASK_RUNNER_DB_TABLE,
+    POSTGRES_TENANT_VAR,
 )
 from api.models import Provider, Scan, StateChoices
 
 DB_NAME = settings.DATABASES["default"]["NAME"]
-DB_USER_NAME = (
-    settings.DATABASES["prowler_user"]["USER"] if not settings.TESTING else "test"
-)
-DB_USER_PASSWORD = (
-    settings.DATABASES["prowler_user"]["PASSWORD"] if not settings.TESTING else "test"
-)
+
 
 ProviderEnumMigration = PostgresEnumMigration(
     enum_name="provider",
@@ -50,7 +49,7 @@ class Migration(migrations.Migration):
     # Required for our kind of `RunPython` operations
     atomic = False
 
-    dependencies = []
+    dependencies = [("django_celery_results", "0011_taskresult_periodic_task_name")]
 
     operations = [
         migrations.RunSQL(
@@ -60,8 +59,8 @@ class Migration(migrations.Migration):
                 IF NOT EXISTS (
                     SELECT
                     FROM   pg_catalog.pg_roles
-                    WHERE  rolname = '{DB_USER_NAME}') THEN
-                    CREATE ROLE {DB_USER_NAME} LOGIN PASSWORD '{DB_USER_PASSWORD}';
+                    WHERE  rolname = '{DB_PROWLER_USER}') THEN
+                    CREATE ROLE {DB_PROWLER_USER} LOGIN PASSWORD '{DB_PROWLER_PASSWORD}';
                 END IF;
             END
             $$;
@@ -70,8 +69,8 @@ class Migration(migrations.Migration):
         migrations.RunSQL(
             # `runserver` command for dev tools requires read access to migrations
             f"""
-            GRANT CONNECT ON DATABASE "{DB_NAME}" TO {DB_USER_NAME};
-            GRANT SELECT ON django_migrations TO {DB_USER_NAME};
+            GRANT CONNECT ON DATABASE "{DB_NAME}" TO {DB_PROWLER_USER};
+            GRANT SELECT ON django_migrations TO {DB_PROWLER_USER};
             """
         ),
         # Create and register State type
@@ -103,7 +102,7 @@ class Migration(migrations.Migration):
         migrations.RunSQL(
             # Needed for now since we don't have users yet
             f"""
-            GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE tenants TO {DB_USER_NAME};
+            GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE tenants TO {DB_PROWLER_USER};
             """
         ),
         # Create and register ProviderEnum type
@@ -282,5 +281,69 @@ class Migration(migrations.Migration):
                 fields=["provider", "state", "trigger", "scheduled_at"],
                 name="scans_prov_state_trig_sche_idx",
             ),
+        ),
+        migrations.CreateModel(
+            name="Task",
+            fields=[
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("inserted_at", models.DateTimeField(auto_now_add=True)),
+                (
+                    "task_runner_task",
+                    models.OneToOneField(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="task",
+                        related_query_name="task",
+                        to="django_celery_results.taskresult",
+                    ),
+                ),
+                (
+                    "tenant",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="api.tenant"
+                    ),
+                ),
+            ],
+            options={
+                "db_table": "tasks",
+                "abstract": False,
+            },
+        ),
+        migrations.AddConstraint(
+            model_name="task",
+            constraint=api.rls.RowLevelSecurityConstraint(
+                "tenant_id",
+                name="rls_on_task",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ),
+        migrations.AddIndex(
+            model_name="task",
+            index=models.Index(
+                fields=["id", "task_runner_task"],
+                name="tasks_id_trt_id_idx",
+            ),
+        ),
+        migrations.RunSQL(
+            f"""
+        ALTER TABLE {TASK_RUNNER_DB_TABLE} ENABLE ROW LEVEL SECURITY;
+        CREATE POLICY "{DB_PROWLER_USER}_{TASK_RUNNER_DB_TABLE}_select"
+        ON {TASK_RUNNER_DB_TABLE}
+        FOR SELECT
+        TO {DB_PROWLER_USER}
+        USING (
+            task_id::uuid in (SELECT id FROM tasks WHERE tenant_id = (NULLIF(current_setting('{POSTGRES_TENANT_VAR}', true), ''))::uuid)
+        );
+        GRANT SELECT ON TABLE {TASK_RUNNER_DB_TABLE} TO {DB_PROWLER_USER};
+        """
         ),
     ]

@@ -377,16 +377,25 @@ class TestProviderViewSet:
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    def test_providers_delete(self, client, providers_fixture, tenant_header):
+    @patch("api.v1.views.delete_provider_task.delay")
+    def test_providers_delete(
+        self, mock_delete_task, client, providers_fixture, tenant_header
+    ):
+        task_mock = Mock()
+        task_mock.id = "12345"
+        mock_delete_task.return_value = task_mock
+
         provider1, *_ = providers_fixture
         response = client.delete(
             reverse("provider-detail", kwargs={"pk": provider1.id}),
             headers=tenant_header,
         )
         assert response.status_code == status.HTTP_202_ACCEPTED
+        mock_delete_task.assert_called_once_with(
+            provider_id=str(provider1.id), tenant_id=tenant_header["X-Tenant-ID"]
+        )
         assert "Content-Location" in response.headers
-        assert Provider.objects.count() == len(providers_fixture) - 1
-        # TODO Assert a task is returned when they are implemented
+        assert response.headers["Content-Location"] == f"/api/v1/tasks/{task_mock.id}"
 
     def test_providers_delete_invalid(self, client, tenant_header):
         response = client.delete(
@@ -395,7 +404,7 @@ class TestProviderViewSet:
         )
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    @patch("tasks.tasks.check_provider_connection_task.delay")
+    @patch("api.v1.views.check_provider_connection_task.delay")
     def test_providers_connection(
         self, mock_provider_connection, client, providers_fixture, tenant_header
     ):
@@ -417,7 +426,7 @@ class TestProviderViewSet:
             provider_id=str(provider1.id), tenant_id=tenant_header["X-Tenant-ID"]
         )
         assert "Content-Location" in response.headers
-        assert response.headers["Content-Location"] == f"api/v1/tasks/{task_mock.id}"
+        assert response.headers["Content-Location"] == f"/api/v1/tasks/{task_mock.id}"
 
     def test_providers_connection_invalid_provider(
         self, client, providers_fixture, tenant_header
@@ -730,4 +739,56 @@ class TestScanViewSet:
         response = client.get(
             reverse("scan-list"), {"sort": "invalid"}, headers=tenant_header
         )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+
+@pytest.mark.django_db
+class TestTaskViewSet:
+    def test_tasks_list(self, client, tasks_fixture, tenant_header):
+        response = client.get(reverse("task-list"), headers=tenant_header)
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == len(tasks_fixture)
+
+    def test_tasks_retrieve(self, client, tasks_fixture, tenant_header):
+        task1, *_ = tasks_fixture
+        response = client.get(
+            reverse("task-detail", kwargs={"pk": task1.id}),
+            headers=tenant_header,
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert (
+            response.json()["data"]["attributes"]["name"]
+            == task1.task_runner_task.task_name
+        )
+
+    def test_tasks_invalid_retrieve(self, client, tenant_header):
+        response = client.get(
+            reverse("task-detail", kwargs={"pk": "invalid_id"}), headers=tenant_header
+        )
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    @patch("api.v1.views.AsyncResult", return_value=Mock())
+    def test_tasks_revoke(
+        self, mock_async_result, client, tasks_fixture, tenant_header
+    ):
+        _, task2 = tasks_fixture
+        response = client.delete(
+            reverse("task-detail", kwargs={"pk": task2.id}), headers=tenant_header
+        )
+        assert response.status_code == status.HTTP_202_ACCEPTED
+        assert response.headers["Content-Location"] == f"/api/v1/tasks/{task2.id}"
+        mock_async_result.return_value.revoke.assert_called_once()
+
+    def test_tasks_invalid_revoke(self, client, tenant_header):
+        response = client.delete(
+            reverse("task-detail", kwargs={"pk": "invalid_id"}), headers=tenant_header
+        )
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_tasks_revoke_invalid_status(self, client, tasks_fixture, tenant_header):
+        task1, _ = tasks_fixture
+        response = client.delete(
+            reverse("task-detail", kwargs={"pk": task1.id}), headers=tenant_header
+        )
+        # Task status is SUCCESS
         assert response.status_code == status.HTTP_400_BAD_REQUEST

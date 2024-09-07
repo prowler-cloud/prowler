@@ -4,6 +4,7 @@ from uuid import uuid4, UUID
 from django.core.validators import MinLengthValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from django_celery_results.models import TaskResult
 from uuid6 import uuid7
 
 from api.db_utils import ProviderEnumField, StateEnumField, ScanTriggerEnumField
@@ -155,5 +156,36 @@ class Scan(RowLevelSecurityProtectedModel):
             models.Index(
                 fields=["provider", "state", "trigger", "scheduled_at"],
                 name="scans_prov_state_type_sche_idx",
+            ),
+        ]
+
+
+class Task(RowLevelSecurityProtectedModel):
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+    task_runner_task = models.OneToOneField(
+        TaskResult,
+        on_delete=models.CASCADE,
+        related_name="task",
+        related_query_name="task",
+        null=True,
+        blank=True,
+    )
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "tasks"
+
+        constraints = [
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]
+
+        indexes = [
+            models.Index(
+                fields=["id", "task_runner_task"],
+                name="tasks_id_trt_id_idx",
             ),
         ]

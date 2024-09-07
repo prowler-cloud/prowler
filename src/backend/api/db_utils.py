@@ -5,6 +5,19 @@ from django.db import models
 from psycopg2 import connect as psycopg2_connect
 from psycopg2.extensions import new_type, register_type, register_adapter, AsIs
 
+DB_USER = settings.DATABASES["default"]["USER"] if not settings.TESTING else "test"
+DB_PASSWORD = (
+    settings.DATABASES["default"]["PASSWORD"] if not settings.TESTING else "test"
+)
+DB_PROWLER_USER = (
+    settings.DATABASES["prowler_user"]["USER"] if not settings.TESTING else "test"
+)
+DB_PROWLER_PASSWORD = (
+    settings.DATABASES["prowler_user"]["PASSWORD"] if not settings.TESTING else "test"
+)
+TASK_RUNNER_DB_TABLE = "django_celery_results_taskresult"
+POSTGRES_TENANT_VAR = "api.tenant_id"
+
 
 @contextmanager
 def psycopg_connection(database_alias: str):
