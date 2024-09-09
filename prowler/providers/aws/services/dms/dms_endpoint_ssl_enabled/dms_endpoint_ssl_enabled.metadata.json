@@ -1,57 +1,38 @@
 {
-
   "Provider": "aws",
-
-  "CheckID": "ec2_ami_public",
-
-  "CheckTitle": "Ensure there are no EC2 AMIs set as Public.",
-
+  "CheckID": "dms_endpoint_ssl_enabled",
+  "CheckTitle": "Ensure SSL mode is enabled when creating a DMS endpoint",
   "CheckType": [
-    "Infrastructure Security"
+      "Data Protection",
+      "Encryption in Transit"
   ],
-
-  "ServiceName": "ec2",
-
-  "SubServiceName": "ami",
-
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
-
-  "Severity": "critical",
-
-  "ResourceType": "Other",
-
-  "Description": "Ensure there are no EC2 AMIs set as Public.",
-
-  "Risk": "When your AMIs are publicly accessible, they are available in the Community AMIs where everyone with an AWS account can use them to launch EC2 instances. Your AMIs could contain snapshots of your applications (including their data), therefore exposing your snapshots in this manner is not advised.",
-
-  "RelatedUrl": "",
-
+  "ServiceName": "dms",
+  "SubServiceName": "endpoint",
+  "ResourceIdTemplate": "arn:partition:dms:region:account-id:endpoint:resource-id",
+  "Severity": "high",
+  "ResourceType": "AwsDmsEndpoint",
+  "Description": "This check ensures that SSL mode is enabled for all AWS Database Migration Service (DMS) endpoints. Enabling SSL provides encryption in transit for data transferred through these endpoints.",
+  "Risk": "Without SSL enabled, data transferred through DMS endpoints is not encrypted, potentially exposing sensitive information to unauthorized access or interception during transit.",
+  "RelatedUrl": "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Security.html#CHAP_Security.SSL",
   "Remediation": {
-
-    "Code": {
-
-      "CLI": "https://docs.prowler.com/checks/public_8#cli-command",
-
-      "NativeIaC": "",
-
-      "Other": "https://docs.prowler.com/checks/public_8#aws-console",
-
-      "Terraform": ""
-    },
-
-    "Recommendation": {
-      "Text": "We recommend your EC2 AMIs are not publicly accessible, or generally available in the Community AMIs.",
-      "Url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/cancel-sharing-an-AMI.html"
-    }
+      "Code": {
+          "CLI": "aws dms modify-endpoint --endpoint-arn <endpoint_arn> --ssl-mode require",
+          "NativeIaC": "",
+          "Other": "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Security.html#CHAP_Security.SSL.Configuring",
+          "Terraform": "resource \"aws_dms_endpoint\" \"example\" {\n  # ... other configurations ...\n  ssl_mode = \"require\"\n}"
+      },
+      "Recommendation": {
+          "Text": "Enable SSL mode for all DMS endpoints. Use 'require' as the minimum SSL mode, and consider using 'verify-ca' or 'verify-full' for higher security.",
+          "Url": "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Security.html#CHAP_Security.SSL"
+      }
   },
-
   "Categories": [
-    "internet-exposed"
+      "encryption",
+      "security-best-practices"
   ],
-
   "DependsOn": [],
-
-  "RelatedTo": [],
-
-  "Notes": ""
+  "RelatedTo": [
+      "dms_replication_instance_not_public"
+  ],
+  "Notes": "Ensure that the SSL certificates are properly configured and managed for the source and target endpoints."
 }
