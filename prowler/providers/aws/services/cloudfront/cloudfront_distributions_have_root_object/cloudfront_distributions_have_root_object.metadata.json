@@ -15,7 +15,7 @@
   "RelatedUrl": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/DefaultRootObject.html#DefaultRootObjectHow",
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "aws cloudfront update-distribution --id <distribution-id> --default-root-object <new-root-object>",
       "NativeIaC": "",
       "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/cloudfront-controls.html#cloudfront-1",
       "Terraform": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudFront/cloudfront-default-object.html"
