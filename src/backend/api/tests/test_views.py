@@ -3,10 +3,13 @@ from unittest.mock import Mock, patch
 import pytest
 from django.urls import reverse
 from rest_framework import status
-
+from datetime import datetime
 from api.models import Provider, Scan
 from api.rls import Tenant
 from conftest import API_JSON_CONTENT_TYPE, NO_TENANT_HTTP_STATUS
+
+
+TODAY = str(datetime.today().date())
 
 
 @pytest.mark.django_db
@@ -15,16 +18,16 @@ class TestTenantViewSet:
     def valid_tenant_payload(self):
         return {
             "name": "Tenant Three",
-            "inserted_at": "2023-01-05T00:00:00Z",
-            "updated_at": "2023-01-06T00:00:00Z",
+            "inserted_at": "2023-01-05",
+            "updated_at": "2023-01-06",
         }
 
     @pytest.fixture
     def invalid_tenant_payload(self):
         return {
             "name": "",
-            "inserted_at": "2023-01-05T00:00:00Z",
-            "updated_at": "2023-01-06T00:00:00Z",
+            "inserted_at": "2023-01-05",
+            "updated_at": "2023-01-06",
         }
 
     def test_tenants_list(self, client, tenants_fixture):
@@ -125,12 +128,37 @@ class TestTenantViewSet:
         response = client.get(reverse("tenant-list"), {"random": "value"})
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    def test_tenants_list_filter_name(self, client, tenants_fixture):
-        tenant1, _ = tenants_fixture
-        response = client.get(reverse("tenant-list"), {"filter[name]": tenant1.name})
+    @pytest.mark.parametrize(
+        "filter_name, filter_value, expected_count",
+        (
+            [
+                ("name", "Tenant One", 1),
+                ("name.icontains", "Tenant", 2),
+                ("inserted_at", TODAY, 2),
+                ("inserted_at.gte", "2024-01-01", 2),
+                ("inserted_at.lte", "2024-01-01", 0),
+                ("updated_at.gte", "2024-01-01", 2),
+                ("updated_at.lte", "2024-01-01", 0),
+            ]
+        ),
+    )
+    def test_tenants_filters(
+        self,
+        client,
+        tenants_fixture,
+        tenant_header,
+        filter_name,
+        filter_value,
+        expected_count,
+    ):
+        response = client.get(
+            reverse("tenant-list"),
+            {f"filter[{filter_name}]": filter_value},
+            headers=tenant_header,
+        )
+
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.json()["data"]) == 1
-        assert response.json()["data"][0]["attributes"]["name"] == tenant1.name
+        assert len(response.json()["data"]) == expected_count
 
     def test_tenants_list_filter_invalid(self, client):
         response = client.get(reverse("tenant-list"), {"filter[invalid]": "whatever"})
@@ -438,25 +466,39 @@ class TestProviderViewSet:
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     @pytest.mark.parametrize(
-        "filter_name, filter_value",
+        "filter_name, filter_value, expected_count",
         (
             [
-                ("provider", "aws"),
-                ("provider_id", "12345"),
-                ("alias", "test"),
-                ("search", "test"),
-                ("inserted_at", "2024-01-01 00:00:00"),
-                ("updated_at", "2024-01-01 00:00:00"),
+                ("provider", "aws", 2),
+                ("provider_id", "123456789012", 1),
+                ("provider_id.icontains", "1", 5),
+                ("alias", "aws_testing_1", 1),
+                ("alias.icontains", "aws", 2),
+                ("inserted_at", TODAY, 5),
+                ("inserted_at.gte", "2024-01-01", 5),
+                ("inserted_at.lte", "2024-01-01", 0),
+                ("updated_at.gte", "2024-01-01", 5),
+                ("updated_at.lte", "2024-01-01", 0),
             ]
         ),
     )
-    def test_providers_filters(self, client, tenant_header, filter_name, filter_value):
+    def test_providers_filters(
+        self,
+        client,
+        providers_fixture,
+        tenant_header,
+        filter_name,
+        filter_value,
+        expected_count,
+    ):
         response = client.get(
             reverse("provider-list"),
             {f"filter[{filter_name}]": filter_value},
             headers=tenant_header,
         )
+
         assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == expected_count
 
     @pytest.mark.parametrize(
         "filter_name",
@@ -688,21 +730,36 @@ class TestScanViewSet:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     @pytest.mark.parametrize(
-        "filter_name, filter_value",
-        [
-            ("provider", "aws"),
-            ("trigger", Scan.TriggerChoices.MANUAL),
-            ("name", "Scan 1"),
-            ("started_at", "2024-01-01 00:00:00"),
-        ],
+        "filter_name, filter_value, expected_count",
+        (
+            [
+                ("provider", "aws", 3),
+                ("name", "Scan 1", 1),
+                ("name.icontains", "Scan", 3),
+                ("started_at", "2024-01-02", 3),
+                ("started_at.gte", "2024-01-01", 3),
+                ("started_at.lte", "2024-01-01", 0),
+                ("trigger", Scan.TriggerChoices.MANUAL, 1),
+            ]
+        ),
     )
-    def test_scans_filters(self, client, tenant_header, filter_name, filter_value):
+    def test_scans_filters(
+        self,
+        client,
+        scans_fixture,
+        tenant_header,
+        filter_name,
+        filter_value,
+        expected_count,
+    ):
         response = client.get(
             reverse("scan-list"),
             {f"filter[{filter_name}]": filter_value},
             headers=tenant_header,
         )
+
         assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == expected_count
 
     @pytest.mark.parametrize(
         "filter_name",

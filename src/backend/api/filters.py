@@ -1,4 +1,9 @@
-from django_filters.rest_framework import FilterSet, BooleanFilter, CharFilter
+from django_filters.rest_framework import (
+    FilterSet,
+    BooleanFilter,
+    CharFilter,
+    DateFilter,
+)
 from rest_framework_json_api.django_filters.backends import DjangoFilterBackend
 from rest_framework_json_api.serializers import ValidationError
 
@@ -53,16 +58,21 @@ class CustomDjangoFilterBackend(DjangoFilterBackend):
 
 
 class TenantFilter(FilterSet):
+    inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
+    updated_at = DateFilter(field_name="updated_at", lookup_expr="date")
+
     class Meta:
         model = Tenant
         fields = {
             "name": ["exact", "icontains"],
-            "inserted_at": ["exact", "gte", "lte"],
-            "updated_at": ["exact", "gte", "lte"],
+            "inserted_at": ["date", "gte", "lte"],
+            "updated_at": ["gte", "lte"],
         }
 
 
 class ProviderFilter(FilterSet):
+    inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
+    updated_at = DateFilter(field_name="updated_at", lookup_expr="date")
     connected = BooleanFilter()
     provider = CharFilter(method="filter_provider")
 
@@ -80,8 +90,8 @@ class ProviderFilter(FilterSet):
             "provider": ["exact"],
             "provider_id": ["exact", "icontains"],
             "alias": ["exact", "icontains"],
-            "inserted_at": ["exact", "gte", "lte"],
-            "updated_at": ["exact", "gte", "lte"],
+            "inserted_at": ["gte", "lte"],
+            "updated_at": ["gte", "lte"],
         }
         filter_overrides = {
             ProviderEnumField: {
@@ -91,6 +101,9 @@ class ProviderFilter(FilterSet):
 
 
 class ScanFilter(FilterSet):
+    inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
+    completed_at = DateFilter(field_name="completed_at", lookup_expr="date")
+    started_at = DateFilter(field_name="started_at", lookup_expr="date")
     provider = CharFilter(method="filter_provider")
     trigger = CharFilter(method="filter_trigger")
 
@@ -117,7 +130,7 @@ class ScanFilter(FilterSet):
             "provider": ["exact"],
             "provider_id": ["exact"],
             "name": ["exact", "icontains"],
-            "started_at": ["exact", "gte", "lte"],
+            "started_at": ["gte", "lte"],
             "trigger": ["exact"],
         }
 

@@ -47,13 +47,9 @@ def disable_logging():
 def tenants_fixture():
     tenant1 = Tenant.objects.create(
         name="Tenant One",
-        inserted_at="2023-01-01T00:00:00Z",
-        updated_at="2023-01-02T00:00:00Z",
     )
     tenant2 = Tenant.objects.create(
         name="Tenant Two",
-        inserted_at="2023-01-03T00:00:00Z",
-        updated_at="2023-01-04T00:00:00Z",
     )
     return tenant1, tenant2
 
@@ -107,6 +103,7 @@ def scans_fixture(tenants_fixture, providers_fixture):
         trigger=Scan.TriggerChoices.MANUAL,
         state=StateChoices.AVAILABLE,
         tenant_id=tenant.id,
+        started_at="2024-01-02T00:00:00Z",
     )
     scan2 = Scan.objects.create(
         name="Scan 2",
@@ -114,6 +111,7 @@ def scans_fixture(tenants_fixture, providers_fixture):
         trigger=Scan.TriggerChoices.SCHEDULED,
         state=StateChoices.FAILED,
         tenant_id=tenant.id,
+        started_at="2024-01-02T00:00:00Z",
     )
     scan3 = Scan.objects.create(
         name="Scan 3",
@@ -121,6 +119,7 @@ def scans_fixture(tenants_fixture, providers_fixture):
         trigger=Scan.TriggerChoices.SCHEDULED,
         state=StateChoices.AVAILABLE,
         tenant_id=tenant.id,
+        started_at="2024-01-02T00:00:00Z",
     )
     return scan1, scan2, scan3
 
