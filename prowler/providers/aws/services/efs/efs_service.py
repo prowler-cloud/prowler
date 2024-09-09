@@ -15,10 +15,10 @@ class EFS(AWSService):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.filesystems = []
-        self.__threading_call__(self.__describe_file_systems__)
-        self.__describe_file_system_policies__()
+        self.__threading_call__(self._describe_file_systems)
+        self._describe_file_system_policies()
 
-    def __describe_file_systems__(self, regional_client):
+    def _describe_file_systems(self, regional_client):
         logger.info("EFS - Describing file systems...")
         try:
             describe_efs_paginator = regional_client.get_paginator(
@@ -47,7 +47,7 @@ class EFS(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_file_system_policies__(self):
+    def _describe_file_system_policies(self):
         logger.info("EFS - Describing file system policies...")
         try:
             for filesystem in self.filesystems:

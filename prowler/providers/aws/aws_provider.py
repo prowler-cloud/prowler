@@ -19,7 +19,7 @@ from prowler.config.config import (
     load_and_validate_config_file,
     load_and_validate_fixer_config_file,
 )
-from prowler.lib.check.check import list_modules, recover_checks_from_service
+from prowler.lib.check.utils import list_modules, recover_checks_from_service
 from prowler.lib.logger import logger
 from prowler.lib.utils.utils import open_file, parse_json_file, print_boxes
 from prowler.providers.aws.config import (
@@ -572,7 +572,7 @@ class AwsProvider(Provider):
                 token=assume_role_response.aws_session_token,
                 expiry_time=assume_role_response.expiration.isoformat(),
             )
-            logger.info(f"Refreshed Credentials: {refreshed_credentials}")
+            logger.info("Refreshed Credentials")
 
         return refreshed_credentials
 
@@ -1245,7 +1245,7 @@ def validate_session_duration(duration: int) -> int:
     # Since the range(i,j) goes from i to j-1 we have to j+1
     if duration not in range(900, 43201):
         raise AWSArgumentTypeValidationError(
-            original_exception="Session Duration must be between 900 and 43200 seconds.",
+            message="Session Duration must be between 900 and 43200 seconds.",
             file=os.path.basename(__file__),
         )
     else:
@@ -1274,5 +1274,5 @@ def validate_role_session_name(session_name) -> str:
     else:
         raise AWSArgumentTypeValidationError(
             file=os.path.basename(__file__),
-            original_exception="Role Session Name must be between 2 and 64 characters and may contain alphanumeric characters, periods, hyphens, and underscores.",
+            message="Role Session Name must be between 2 and 64 characters and may contain alphanumeric characters, periods, hyphens, and underscores.",
         )

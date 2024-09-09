@@ -6,7 +6,6 @@ from uuid import uuid4
 
 import pytest
 from azure.core.credentials import AccessToken
-from azure.core.exceptions import ClientAuthenticationError, HttpResponseError
 from azure.identity import DefaultAzureCredential
 from freezegun import freeze_time
 from mock import MagicMock
@@ -16,6 +15,12 @@ from prowler.config.config import (
     default_fixer_config_file_path,
 )
 from prowler.providers.azure.azure_provider import AzureProvider
+from prowler.providers.azure.exceptions.exceptions import (
+    AzureBrowserAuthNoTenantIDError,
+    AzureHTTPResponseError,
+    AzureNoAuthenticationMethodError,
+    AzureTenantIDNoBrowserAuthError,
+)
 from prowler.providers.azure.models import (
     AzureIdentityInfo,
     AzureOutputOptions,
@@ -100,7 +105,7 @@ class TestAzureProvider:
             return_value={},
         ):
 
-            with pytest.raises(SystemExit) as exception:
+            with pytest.raises(AzureNoAuthenticationMethodError) as exception:
                 _ = AzureProvider(
                     az_cli_auth,
                     sp_env_auth,
@@ -112,10 +117,10 @@ class TestAzureProvider:
                     config_file,
                     fixer_config,
                 )
-            assert exception.type == SystemExit
+            assert exception.type == AzureNoAuthenticationMethodError
             assert (
-                exception.value.args[0]
-                == "Azure provider requires at least one authentication method set: [--az-cli-auth | --sp-env-auth | --browser-auth | --managed-identity-auth]"
+                "Azure provider requires at least one authentication method set: [--az-cli-auth | --sp-env-auth | --browser-auth | --managed-identity-auth]"
+                in exception.value.args[0]
             )
 
     def test_azure_provider_browser_auth_but_not_tenant_id(self):
@@ -138,7 +143,7 @@ class TestAzureProvider:
             return_value={},
         ):
 
-            with pytest.raises(SystemExit) as exception:
+            with pytest.raises(AzureBrowserAuthNoTenantIDError) as exception:
                 _ = AzureProvider(
                     az_cli_auth,
                     sp_env_auth,
@@ -150,10 +155,10 @@ class TestAzureProvider:
                     config_file,
                     fixer_config,
                 )
-            assert exception.type == SystemExit
+            assert exception.type == AzureBrowserAuthNoTenantIDError
             assert (
                 exception.value.args[0]
-                == "Azure Tenant ID (--tenant-id) is required for browser authentication mode"
+                == "[1918] Azure Tenant ID (--tenant-id) is required for browser authentication mode"
             )
 
     def test_azure_provider_not_browser_auth_but_tenant_id(self):
@@ -177,7 +182,7 @@ class TestAzureProvider:
             return_value={},
         ):
 
-            with pytest.raises(SystemExit) as exception:
+            with pytest.raises(AzureTenantIDNoBrowserAuthError) as exception:
                 _ = AzureProvider(
                     az_cli_auth,
                     sp_env_auth,
@@ -189,10 +194,10 @@ class TestAzureProvider:
                     config_file,
                     fixer_config,
                 )
-            assert exception.type == SystemExit
+            assert exception.type == AzureTenantIDNoBrowserAuthError
             assert (
                 exception.value.args[0]
-                == "Azure provider requires at least one authentication method set: [--az-cli-auth | --sp-env-auth | --browser-auth | --managed-identity-auth]"
+                == "[1919] Azure Tenant ID (--tenant-id) is required for browser authentication mode"
             )
 
     @freeze_time(datetime.today())
@@ -312,7 +317,7 @@ class TestAzureProvider:
             assert test_connection.error is None
 
     def test_test_connection_with_ClientAuthenticationError(self):
-        with pytest.raises(ClientAuthenticationError) as exception:
+        with pytest.raises(AzureHTTPResponseError) as exception:
             tenant_id = str(uuid4())
             AzureProvider.test_connection(
                 browser_auth=True,
@@ -320,20 +325,20 @@ class TestAzureProvider:
                 region="AzureCloud",
             )
 
-        assert exception.type == ClientAuthenticationError
+        assert exception.type == AzureHTTPResponseError
         assert (
             exception.value.args[0]
-            == f"Authentication failed: Unable to get authority configuration for https://login.microsoftonline.com/{tenant_id}. Authority would typically be in a format of https://login.microsoftonline.com/your_tenant or https://tenant_name.ciamlogin.com or https://tenant_name.b2clogin.com/tenant.onmicrosoft.com/policy.  Also please double check your tenant name or GUID is correct."
+            == f"[1924] Error in HTTP response from Azure - Authentication failed: Unable to get authority configuration for https://login.microsoftonline.com/{tenant_id}. Authority would typically be in a format of https://login.microsoftonline.com/your_tenant or https://tenant_name.ciamlogin.com or https://tenant_name.b2clogin.com/tenant.onmicrosoft.com/policy.  Also please double check your tenant name or GUID is correct."
         )
 
     def test_test_connection_without_any_method(self):
-        with pytest.raises(SystemExit) as exception:
+        with pytest.raises(AzureNoAuthenticationMethodError) as exception:
             AzureProvider.test_connection()
 
-        assert exception.type == SystemExit
+        assert exception.type == AzureNoAuthenticationMethodError
         assert (
-            exception.value.args[0]
-            == "Azure provider requires at least one authentication method set: [--az-cli-auth | --sp-env-auth | --browser-auth | --managed-identity-auth]"
+            "[1917] Azure provider requires at least one authentication method set: [--az-cli-auth | --sp-env-auth | --browser-auth | --managed-identity-auth]"
+            in exception.value.args[0]
         )
 
     def test_test_connection_with_httpresponseerror(self):
@@ -344,18 +349,21 @@ class TestAzureProvider:
             "prowler.providers.azure.azure_provider.AzureProvider.setup_session"
         ) as mock_setup_session:
 
-            mock_setup_session.side_effect = HttpResponseError(
-                "Simulated HttpResponseError"
+            mock_setup_session.side_effect = AzureHTTPResponseError(
+                file="test_file", original_exception="Simulated HttpResponseError"
             )
 
-            with pytest.raises(HttpResponseError) as exception:
+            with pytest.raises(AzureHTTPResponseError) as exception:
                 AzureProvider.test_connection(
                     az_cli_auth=True,
                     raise_on_exception=True,
                 )
 
-            assert exception.type == HttpResponseError
-            assert exception.value.args[0] == "Simulated HttpResponseError"
+            assert exception.type == AzureHTTPResponseError
+            assert (
+                exception.value.args[0]
+                == "[1924] Error in HTTP response from Azure - Simulated HttpResponseError"
+            )
 
     def test_test_connection_with_exception(self):
         with patch(

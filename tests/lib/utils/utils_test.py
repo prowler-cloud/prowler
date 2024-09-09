@@ -109,9 +109,9 @@ class Test_utils_validate_ip_address:
 
 
 class Test_detect_secrets_scan:
-    def test_detect_secrets_scan(self):
+    def test_detect_secrets_scan_data(self):
         data = "password=password"
-        secrets_detected = detect_secrets_scan(data)
+        secrets_detected = detect_secrets_scan(data=data)
         assert type(secrets_detected) is list
         assert len(secrets_detected) == 1
         assert "filename" in secrets_detected[0]
@@ -120,9 +120,61 @@ class Test_detect_secrets_scan:
         assert secrets_detected[0]["line_number"] == 1
         assert secrets_detected[0]["type"] == "Secret Keyword"
 
-    def test_detect_secrets_scan_no_secrets(self):
+    def test_detect_secrets_scan_no_secrets_data(self):
         data = ""
-        assert detect_secrets_scan(data) is None
+        assert detect_secrets_scan(data=data) is None
+
+    def test_detect_secrets_scan_file_with_secrets(self):
+        temp_data_file = tempfile.NamedTemporaryFile(delete=False)
+        temp_data_file.write(b"password=password")
+        temp_data_file.seek(0)
+        secrets_detected = detect_secrets_scan(file=temp_data_file.name)
+        assert type(secrets_detected) is list
+        assert len(secrets_detected) == 1
+        assert "filename" in secrets_detected[0]
+        assert "hashed_secret" in secrets_detected[0]
+        assert "is_verified" in secrets_detected[0]
+        assert secrets_detected[0]["line_number"] == 1
+        assert secrets_detected[0]["type"] == "Secret Keyword"
+        os.remove(temp_data_file.name)
+
+    def test_detect_secrets_scan_file_no_secrets(self):
+        temp_data_file = tempfile.NamedTemporaryFile(delete=False)
+        temp_data_file.write(b"no secrets")
+        temp_data_file.seek(0)
+        assert detect_secrets_scan(file=temp_data_file.name) is None
+        os.remove(temp_data_file.name)
+
+    def test_detect_secrets_using_regex(self):
+        data = "MYSQL_ALLOW_EMPTY_PASSWORD=password"
+        secrets_detected = detect_secrets_scan(
+            data=data, excluded_secrets=[".*password"]
+        )
+        assert secrets_detected is None
+
+    def test_detect_secrets_using_regex_file(self):
+        temp_data_file = tempfile.NamedTemporaryFile(delete=False)
+        temp_data_file.write(b"MYSQL_ALLOW_EMPTY_PASSWORD=password")
+        temp_data_file.seek(0)
+        secrets_detected = detect_secrets_scan(
+            file=temp_data_file.name, excluded_secrets=[".*password"]
+        )
+        assert secrets_detected is None
+        os.remove(temp_data_file.name)
+
+    def test_detect_secrets_secrets_using_regex(self):
+        data = "MYSQL_ALLOW_EMPTY_PASSWORD=password, MYSQL_PASSWORD=password"
+        # Update the regex to exclude only the exact key "MYSQL_ALLOW_EMPTY_PASSWORD"
+        secrets_detected = detect_secrets_scan(
+            data=data, excluded_secrets=["^MYSQL_ALLOW_EMPTY_PASSWORD$"]
+        )
+        assert type(secrets_detected) is list
+        assert len(secrets_detected) == 1
+        assert "filename" in secrets_detected[0]
+        assert "hashed_secret" in secrets_detected[0]
+        assert "is_verified" in secrets_detected[0]
+        assert secrets_detected[0]["line_number"] == 1
+        assert secrets_detected[0]["type"] == "Secret Keyword"
 
 
 class Test_hash_sha512:

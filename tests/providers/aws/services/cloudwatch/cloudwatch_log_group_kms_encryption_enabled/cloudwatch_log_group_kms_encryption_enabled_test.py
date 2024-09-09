@@ -22,7 +22,7 @@ class Test_cloudwatch_log_group_kms_encryption_enabled:
 
         aws_provider.audit_metadata = Audit_Metadata(
             services_scanned=0,
-            # We need to set this check to call __describe_log_groups__
+            # We need to set this check to call _describe_log_groups
             expected_checks=["cloudwatch_log_group_no_secrets_in_logs"],
             completed_checks=0,
             audit_progress=0,
@@ -64,7 +64,7 @@ class Test_cloudwatch_log_group_kms_encryption_enabled:
 
         aws_provider.audit_metadata = Audit_Metadata(
             services_scanned=0,
-            # We need to set this check to call __describe_log_groups__
+            # We need to set this check to call _describe_log_groups
             expected_checks=["cloudwatch_log_group_no_secrets_in_logs"],
             completed_checks=0,
             audit_progress=0,
@@ -110,7 +110,7 @@ class Test_cloudwatch_log_group_kms_encryption_enabled:
 
         aws_provider.audit_metadata = Audit_Metadata(
             services_scanned=0,
-            # We need to set this check to call __describe_log_groups__
+            # We need to set this check to call _describe_log_groups
             expected_checks=["cloudwatch_log_group_no_secrets_in_logs"],
             completed_checks=0,
             audit_progress=0,
@@ -151,7 +151,7 @@ class Test_cloudwatch_log_group_kms_encryption_enabled:
 
         aws_provider.audit_metadata = Audit_Metadata(
             services_scanned=0,
-            # We need to set this check to call __describe_log_groups__
+            # We need to set this check to call _describe_log_groups
             expected_checks=["cloudwatch_log_group_no_secrets_in_logs"],
             completed_checks=0,
             audit_progress=0,

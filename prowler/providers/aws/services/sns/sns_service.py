@@ -14,12 +14,12 @@ class SNS(AWSService):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.topics = []
-        self.__threading_call__(self.__list_topics__)
-        self.__get_topic_attributes__(self.regional_clients)
-        self.__list_tags_for_resource__()
-        self.__list_subscriptions_by_topic__()
+        self.__threading_call__(self._list_topics)
+        self._get_topic_attributes(self.regional_clients)
+        self._list_tags_for_resource()
+        self._list_subscriptions_by_topic()
 
-    def __list_topics__(self, regional_client):
+    def _list_topics(self, regional_client):
         logger.info("SNS - listing topics...")
         try:
             list_topics_paginator = regional_client.get_paginator("list_topics")
@@ -42,7 +42,7 @@ class SNS(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_topic_attributes__(self, regional_clients):
+    def _get_topic_attributes(self, regional_clients):
         logger.info("SNS - getting topic attributes...")
         try:
             for topic in self.topics:
@@ -61,7 +61,7 @@ class SNS(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __list_tags_for_resource__(self):
+    def _list_tags_for_resource(self):
         logger.info("SNS - List Tags...")
         try:
             for topic in self.topics:
@@ -75,7 +75,7 @@ class SNS(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __list_subscriptions_by_topic__(self):
+    def _list_subscriptions_by_topic(self):
         logger.info("SNS - Listing subscriptions by topic...")
         try:
             for topic in self.topics:
