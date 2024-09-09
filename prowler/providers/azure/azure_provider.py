@@ -10,10 +10,7 @@ from azure.mgmt.subscription import SubscriptionClient
 from colorama import Fore, Style
 from msgraph import GraphServiceClient
 
-from prowler.config.config import (
-    get_default_mute_file_path,
-    load_and_validate_config_file,
-)
+from prowler.config.config import get_default_mute_file_path
 from prowler.lib.logger import logger
 from prowler.lib.utils.utils import print_boxes
 from prowler.providers.azure.exceptions.exceptions import (
@@ -98,9 +95,32 @@ class AzureProvider(Provider):
         tenant_id: str = None,
         region: str = "AzureCloud",
         subscription_ids: list = [],
-        config_file: str = None,
-        fixer_config: str = None,
+        audit_config: dict = {},
+        fixer_config: dict = {},
     ):
+        """
+        Initializes the Azure provider.
+
+        Args:
+            az_cli_auth (bool): Flag indicating whether to use Azure CLI authentication.
+            sp_env_auth (bool): Flag indicating whether to use Service Principal environment authentication.
+            browser_auth (bool): Flag indicating whether to use interactive browser authentication.
+            managed_identity_auth (bool): Flag indicating whether to use managed identity authentication.
+            tenant_id (str): The Azure Active Directory tenant ID.
+            region (str): The Azure region.
+            subscription_ids (list): List of subscription IDs.
+            audit_config (dict): The audit configuration for the Azure provider.
+            fixer_config (dict): The fixer configuration.
+
+        Returns:
+            None
+
+        Raises:
+            AzureArgumentTypeValidationError: If there is an error in the argument type validation.
+            AzureSetUpRegionConfigError: If there is an error in setting up the region configuration.
+            AzureDefaultAzureCredentialError: If there is an error in retrieving the Azure credentials.
+            AzureInteractiveBrowserCredentialError: If there is an error in retrieving the Azure credentials using browser authentication.
+        """
         logger.info("Setting Azure provider ...")
 
         logger.info("Checking if any credentials mode is set ...")
@@ -135,10 +155,10 @@ class AzureProvider(Provider):
         # TODO: should we keep this here or within the identity?
         self._locations = self.get_locations(self.session)
 
-        # TODO: move this to the providers, pending for AWS, GCP, AZURE and K8s
         # Audit Config
-        self._audit_config = load_and_validate_config_file(self._type, config_file)
-        self._fixer_config = load_and_validate_config_file(self._type, fixer_config)
+        self._audit_config = audit_config
+        # Fixer Config
+        self._fixer_config = fixer_config
 
     @property
     def identity(self):
