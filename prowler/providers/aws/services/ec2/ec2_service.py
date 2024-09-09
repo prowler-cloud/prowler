@@ -527,20 +527,14 @@ class EC2(AWSService):
                 for template_version in page["LaunchTemplateVersions"]:
                     enis = []
                     associate_public_ip = False
-                    if "NetworkInterfaces" in template_version["LaunchTemplateData"]:
-                        for eni in template_version["LaunchTemplateData"].get(
-                            "NetworkInterfaces"
-                        ):
-                            network_interface_id = eni.get("NetworkInterfaceId")
-                            if (
-                                network_interface_id
-                                and network_interface_id in self.network_interfaces
-                            ):
-                                enis.append(
-                                    self.network_interfaces[network_interface_id]
-                                )
-                            elif eni.get("AssociatePublicIpAddress", True):
-                                associate_public_ip = True
+                    for eni in template_version["LaunchTemplateData"].get(
+                        "NetworkInterfaces", []
+                    ):
+                        network_interface_id = eni.get("NetworkInterfaceId")
+                        if network_interface_id in self.network_interfaces:
+                            enis.append(self.network_interfaces[network_interface_id])
+                        if eni.get("AssociatePublicIpAddress", False):
+                            associate_public_ip = True
                     launch_template.versions.append(
                         LaunchTemplateVersion(
                             version_number=template_version["VersionNumber"],
