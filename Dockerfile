@@ -2,7 +2,8 @@ FROM python:3.12-alpine AS build
 
 LABEL maintainer="https://github.com/prowler-cloud/api"
 
-RUN apk --no-cache add gcc=13.2.1_git20240309-r0 python3-dev=3.12.3-r1 musl-dev=1.2.5-r0 linux-headers=6.6-r0 curl-dev=8.9.0-r0
+# hadolint ignore=DL3018
+RUN apk --no-cache add gcc python3-dev musl-dev linux-headers curl-dev
 
 RUN apk --no-cache upgrade && \
     addgroup -g 1000 prowler && \
@@ -32,7 +33,8 @@ WORKDIR /home/prowler/backend
 FROM build AS dev
 
 USER 0
-RUN apk --no-cache add curl=8.9.0-r0 vim=9.1.0414-r0
+# hadolint ignore=DL3018
+RUN apk --no-cache add curl vim
 
 USER prowler
 

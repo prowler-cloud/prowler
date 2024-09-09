@@ -86,6 +86,8 @@ services:
     build:
       dockerfile: Dockerfile
     image: prowler-worker
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.django.production
     env_file:
       - path: ./.env
         required: false
