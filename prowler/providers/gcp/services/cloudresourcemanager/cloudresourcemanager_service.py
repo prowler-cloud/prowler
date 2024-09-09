@@ -13,10 +13,10 @@ class CloudResourceManager(GCPService):
         self.bindings = []
         self.projects = []
         self.organizations = []
-        self.__get_iam_policy__()
-        self.__get_organizations__()
+        self._get_iam_policy()
+        self._get_organizations()
 
-    def __get_iam_policy__(self):
+    def _get_iam_policy(self):
         for project_id in self.project_ids:
             try:
                 policy = (
@@ -41,7 +41,7 @@ class CloudResourceManager(GCPService):
                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
-    def __get_organizations__(self):
+    def _get_organizations(self):
         try:
             response = self.client.organizations().search().execute()
             for org in response.get("organizations", []):

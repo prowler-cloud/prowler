@@ -19,8 +19,11 @@ Mutelist:
             - "StackSet-AWSControlTowerSecurityResources-*"
             - "StackSet-AWSControlTowerLoggingResources-*"
             - "StackSet-AWSControlTowerExecutionRole-*"
-            - "AWSControlTowerBP-BASELINE-CLOUDTRAIL-MASTER"
-            - "AWSControlTowerBP-BASELINE-CONFIG-MASTER"
+            - "AWSControlTowerBP-BASELINE-CLOUDTRAIL-MASTER*"
+            - "AWSControlTowerBP-BASELINE-CONFIG-MASTER*"
+            - "StackSet-AWSControlTower*"
+            - "CLOUDTRAIL-ENABLED-ON-SHARED-ACCOUNTS-*"
+            - "AFT-Backend*"
         "cloudtrail_*":
           Regions:
             - "*"

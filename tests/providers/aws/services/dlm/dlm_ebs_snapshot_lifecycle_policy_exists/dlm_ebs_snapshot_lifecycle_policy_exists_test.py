@@ -88,7 +88,7 @@ class Test_dlm_ebs_snapshot_lifecycle_policy_exists:
             }
         }
         dlm_client.lifecycle_policy_arn_template = f"arn:{dlm_client.audited_partition}:dlm:{dlm_client.region}:{dlm_client.audited_account}:policy"
-        dlm_client.__get_lifecycle_policy_arn_template__ = mock.MagicMock(
+        dlm_client._get_lifecycle_policy_arn_template = mock.MagicMock(
             return_value=dlm_client.lifecycle_policy_arn_template
         )
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])

@@ -14,10 +14,10 @@ class FMS(AWSService):
         self.policy_arn_template = f"arn:{self.audited_partition}:fms:{self.region}:{self.audited_account}:policy"
         self.fms_admin_account = True
         self.fms_policies = []
-        self.__list_policies__()
-        self.__list_compliance_status__()
+        self._list_policies()
+        self._list_compliance_status()
 
-    def __list_policies__(self):
+    def _list_policies(self):
         logger.info("FMS - Listing Policies...")
         try:
             list_policies_paginator = self.client.get_paginator("list_policies")
@@ -64,7 +64,7 @@ class FMS(AWSService):
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 
-    def __list_compliance_status__(self):
+    def _list_compliance_status(self):
         logger.info("FMS - Listing Policies...")
         try:
             for fms_policy in self.fms_policies:

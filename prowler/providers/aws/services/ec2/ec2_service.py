@@ -16,50 +16,50 @@ class EC2(AWSService):
         super().__init__(__class__.__name__, provider)
         self.account_arn_template = f"arn:{self.audited_partition}:ec2:{self.region}:{self.audited_account}:account"
         self.instances = []
-        self.__threading_call__(self.__describe_instances__)
-        self.__threading_call__(self.__get_instance_user_data__, self.instances)
+        self.__threading_call__(self._describe_instances)
+        self.__threading_call__(self._get_instance_user_data, self.instances)
         self.security_groups = {}
         self.regions_with_sgs = []
-        self.__threading_call__(self.__describe_security_groups__)
+        self.__threading_call__(self._describe_security_groups)
         self.network_acls = []
-        self.__threading_call__(self.__describe_network_acls__)
+        self.__threading_call__(self._describe_network_acls)
         self.snapshots = []
         self.volumes_with_snapshots = {}
         self.regions_with_snapshots = {}
-        self.__threading_call__(self.__describe_snapshots__)
-        self.__threading_call__(self.__determine_public_snapshots__, self.snapshots)
+        self.__threading_call__(self._describe_snapshots)
+        self.__threading_call__(self._determine_public_snapshots, self.snapshots)
         self.network_interfaces = []
-        self.__threading_call__(self.__describe_network_interfaces__)
+        self.__threading_call__(self._describe_network_interfaces)
         self.images = []
-        self.__threading_call__(self.__describe_images__)
+        self.__threading_call__(self._describe_images)
         self.volumes = []
-        self.__threading_call__(self.__describe_volumes__)
+        self.__threading_call__(self._describe_volumes)
         self.attributes_for_regions = {}
-        self.__threading_call__(self.__get_resources_for_regions__)
+        self.__threading_call__(self._get_resources_for_regions)
         self.ebs_encryption_by_default = []
-        self.__threading_call__(self.__get_ebs_encryption_settings__)
+        self.__threading_call__(self._get_ebs_encryption_settings)
         self.elastic_ips = []
-        self.__threading_call__(self.__describe_ec2_addresses__)
+        self.__threading_call__(self._describe_ec2_addresses)
         self.ebs_block_public_access_snapshots_states = []
-        self.__threading_call__(self.__get_snapshot_block_public_access_state__)
+        self.__threading_call__(self._get_snapshot_block_public_access_state)
         self.instance_metadata_defaults = []
-        self.__threading_call__(self.__get_instance_metadata_defaults__)
+        self.__threading_call__(self._get_instance_metadata_defaults)
         self.launch_templates = []
-        self.__threading_call__(self.__describe_launch_templates)
+        self.__threading_call__(self._describe_launch_templates)
         self.__threading_call__(
-            self.__get_launch_template_versions__, self.launch_templates
+            self._get_launch_template_versions, self.launch_templates
         )
         self.vpn_endpoints = {}
         self.__threading_call__(self._describe_vpn_endpoints)
         self.transit_gateways = {}
         self.__threading_call__(self._describe_transit_gateways)
 
-    def __get_volume_arn_template__(self, region):
+    def _get_volume_arn_template(self, region):
         return (
             f"arn:{self.audited_partition}:ec2:{region}:{self.audited_account}:volume"
         )
 
-    def __describe_instances__(self, regional_client):
+    def _describe_instances(self, regional_client):
         try:
             describe_instances_paginator = regional_client.get_paginator(
                 "describe_instances"
@@ -107,7 +107,7 @@ class EC2(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_security_groups__(self, regional_client):
+    def _describe_security_groups(self, regional_client):
         try:
             describe_security_groups_paginator = regional_client.get_paginator(
                 "describe_security_groups"
@@ -141,7 +141,7 @@ class EC2(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_network_acls__(self, regional_client):
+    def _describe_network_acls(self, regional_client):
         try:
             describe_network_acls_paginator = regional_client.get_paginator(
                 "describe_network_acls"
@@ -171,7 +171,7 @@ class EC2(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_snapshots__(self, regional_client):
+    def _describe_snapshots(self, regional_client):
         try:
             snapshots_in_region = False
             describe_snapshots_paginator = regional_client.get_paginator(
@@ -204,7 +204,7 @@ class EC2(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __determine_public_snapshots__(self, snapshot):
+    def _determine_public_snapshots(self, snapshot):
         try:
             regional_client = self.regional_clients[snapshot.region]
             snapshot_public = regional_client.describe_snapshot_attribute(
@@ -227,7 +227,7 @@ class EC2(AWSService):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_network_interfaces__(self, regional_client):
+    def _describe_network_interfaces(self, regional_client):
         try:
             # Get Network Interfaces with Public IPs
             describe_network_interfaces_paginator = regional_client.get_paginator(
@@ -254,7 +254,7 @@ class EC2(AWSService):
                     #         'GroupName': 'default',
                     #     },
                     # ],
-                    self.__add_network_interfaces_to_security_groups__(
+                    self._add_network_interfaces_to_security_groups(
                         eni, interface.get("Groups", [])
                     )
 
@@ -263,7 +263,7 @@ class EC2(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __add_network_interfaces_to_security_groups__(
+    def _add_network_interfaces_to_security_groups(
         self, interface, interface_security_groups
     ):
         try:
@@ -276,7 +276,7 @@ class EC2(AWSService):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_instance_user_data__(self, instance):
+    def _get_instance_user_data(self, instance):
         try:
             regional_client = self.regional_clients[instance.region]
             user_data = regional_client.describe_instance_attribute(
@@ -294,7 +294,7 @@ class EC2(AWSService):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_images__(self, regional_client):
+    def _describe_images(self, regional_client):
         try:
             for image in regional_client.describe_images(Owners=["self"])["Images"]:
                 arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:image/{image['ImageId']}"
@@ -316,7 +316,7 @@ class EC2(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_volumes__(self, regional_client):
+    def _describe_volumes(self, regional_client):
         try:
             describe_volumes_paginator = regional_client.get_paginator(
                 "describe_volumes"
@@ -341,7 +341,7 @@ class EC2(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_ec2_addresses__(self, regional_client):
+    def _describe_ec2_addresses(self, regional_client):
         try:
             for address in regional_client.describe_addresses()["Addresses"]:
                 public_ip = None
@@ -372,7 +372,7 @@ class EC2(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_ebs_encryption_settings__(self, regional_client):
+    def _get_ebs_encryption_settings(self, regional_client):
         try:
             volumes_in_region = self.attributes_for_regions.get(
                 regional_client.region, []
@@ -392,7 +392,7 @@ class EC2(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_snapshot_block_public_access_state__(self, regional_client):
+    def _get_snapshot_block_public_access_state(self, regional_client):
         try:
             snapshots_in_region = self.attributes_for_regions.get(
                 regional_client.region, []
@@ -412,7 +412,7 @@ class EC2(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_instance_metadata_defaults__(self, regional_client):
+    def _get_instance_metadata_defaults(self, regional_client):
         try:
             instances_in_region = self.attributes_for_regions.get(
                 regional_client.region, []
@@ -432,7 +432,7 @@ class EC2(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_resources_for_regions__(self, regional_client):
+    def _get_resources_for_regions(self, regional_client):
         try:
             has_instances = False
             for instance in self.instances:
@@ -459,7 +459,7 @@ class EC2(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_launch_templates(self, regional_client):
+    def _describe_launch_templates(self, regional_client):
         try:
             describe_launch_templates_paginator = regional_client.get_paginator(
                 "describe_launch_templates"
@@ -486,7 +486,7 @@ class EC2(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_launch_template_versions__(self, launch_template):
+    def _get_launch_template_versions(self, launch_template):
         try:
             regional_client = self.regional_clients[launch_template.region]
             describe_launch_template_versions_paginator = regional_client.get_paginator(

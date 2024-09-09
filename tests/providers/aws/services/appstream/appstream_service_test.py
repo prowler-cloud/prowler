@@ -67,7 +67,7 @@ def mock_generate_regional_clients(provider, service):
 )
 class Test_AppStream_Service:
     # Test AppStream Client
-    def test__get_client__(self):
+    def test_get_client(self):
         appstream = AppStream(set_mocked_aws_provider([AWS_REGION_US_EAST_1]))
         assert appstream.regional_clients[AWS_REGION].__class__.__name__ == "AppStream"
 
@@ -81,7 +81,7 @@ class Test_AppStream_Service:
         appstream = AppStream(set_mocked_aws_provider([AWS_REGION_US_EAST_1]))
         assert appstream.service == "appstream"
 
-    def test__describe_fleets__(self):
+    def test_describe_fleets(self):
         # Set partition for the service
         appstream = AppStream(set_mocked_aws_provider([AWS_REGION_US_EAST_1]))
         assert len(appstream.fleets) == 2
@@ -108,7 +108,7 @@ class Test_AppStream_Service:
         assert appstream.fleets[1].enable_default_internet_access is True
         assert appstream.fleets[1].region == AWS_REGION
 
-    def test__list_tags_for_resource__(self):
+    def test_list_tags_for_resource(self):
         # Set partition for the service
         appstream = AppStream(set_mocked_aws_provider([AWS_REGION_US_EAST_1]))
         assert len(appstream.fleets) == 2
