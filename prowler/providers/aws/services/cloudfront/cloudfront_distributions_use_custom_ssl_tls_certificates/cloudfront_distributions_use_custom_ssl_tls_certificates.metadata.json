@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "cloudfront_distributions_use_custom_ssl_tls_certificates",
+  "CheckTitle": "CloudFront distributions should use custom SSL/TLS certificates.",
+  "CheckType": [
+    "NIST 800-53 Controls "
+  ],
+  "ServiceName": "cloudfront",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "medium",
+  "ResourceType": "AWSCloudFrontDistribution",
+  "Description": "This control checks whether CloudFront distributions are using the default SSL/TLS certificate CloudFront provides. The control passes if the CloudFront distribution uses a custom SSL/TLS certificate. The control fails if the CloudFront distribution uses the default SSL/TLS certificate.",
+  "Risk": "Using the default SSL/TLS certificate provided by CloudFront may expose your distribution to potential security risks, as it lacks customization options and the enhanced security provided by custom certificates.",
+  "RelatedUrl": "https://aws.amazon.com/what-is/ssl-certificate/",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "https://docs.prowler.com/checks/aws/networking-policies/ensure-aws-cloudfront-distribution-uses-custom-ssl-certificate/",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-cloudfront-controls.html#cloudfront-7",
+      "Terraform": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudFront/cloudfront-distro-custom-tls.html"
+    },
+    "Recommendation": {
+      "Text": "To use a custom SSL/TLS certificate, add an alternate domain name for a CloudFront distribution.",
+      "Url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/CNAMEs.html#CreatingCNAME"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

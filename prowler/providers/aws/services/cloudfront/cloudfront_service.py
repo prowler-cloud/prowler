@@ -31,11 +31,15 @@ class CloudFront(AWSService):
                             distribution_id = item["Id"]
                             distribution_arn = item["ARN"]
                             origins = item["Origins"]["Items"]
+                            default_certificate = item["ViewerCertificate"][
+                                "CertificateSource"
+                            ]
                             distribution = Distribution(
                                 arn=distribution_arn,
                                 id=distribution_id,
                                 origins=origins,
                                 region=region,
+                                default_certificate=default_certificate,
                             )
                             self.distributions[distribution_id] = distribution
 
@@ -141,4 +145,5 @@ class Distribution(BaseModel):
     geo_restriction_type: Optional[GeoRestrictionType]
     origins: list
     web_acl_id: str = ""
+    default_certificate = Optional[bool]
     tags: Optional[list] = []
