@@ -4,7 +4,7 @@ from prowler.providers.aws.services.cloudfront.cloudfront_client import (
 )
 
 
-class cloudfront_distributions_using_deprecated_ssl_protocols(Check):
+class cloudfront_distributions_use_custom_ssl_tls_certificates(Check):
     def execute(self):
         findings = []
         for distribution in cloudfront_client.distributions.values():
@@ -14,11 +14,11 @@ class cloudfront_distributions_using_deprecated_ssl_protocols(Check):
             report.resource_id = distribution.id
             report.resource_tags = distribution.tags
             report.status = "PASS"
-            report.status_extended = f"CloudFront Distribution {distribution.id} is using custom SSL/TLS certificates."
+            report.status_extended = f"CloudFront Distribution {distribution.id} is using a custom SSL/TLS certificate."
 
             if distribution.default_certificate:
                 report.status = "FAIL"
-                report.status_extended = f"CloudFront Distribution {distribution.id} is using default SSL/TLS certificates."
+                report.status_extended = f"CloudFront Distribution {distribution.id} is using a default SSL/TLS certificate."
 
             findings.append(report)
 
