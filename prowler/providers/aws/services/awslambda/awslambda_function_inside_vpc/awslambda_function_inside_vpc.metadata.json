@@ -1,0 +1,30 @@
+{
+  "Provider": "aws",
+  "CheckID": "awslambda_function_inside_vpc",
+  "CheckTitle": "Ensure AWS Lambda Functions Are Deployed Inside a VPC",
+  "CheckType": [],
+  "ServiceName": "lambda",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:lambda:region:account-id:function/function-name",
+  "Severity": "low",
+  "ResourceType": "AwsLambdaFunction",
+  "Description": "This check verifies whether an AWS Lambda function is deployed within a Virtual Private Cloud (VPC). Deploying Lambda functions inside a VPC improves security by allowing control over the network environment, reducing the exposure to public internet threats.",
+  "Risk": "Lambda functions not deployed in a VPC may expose your application to increased security risks, including unauthorized access and data breaches. Without the network isolation provided by a VPC, your Lambda functions are more vulnerable to attacks.",
+  "RelatedUrl": "https://docs.aws.amazon.com/lambda/latest/dg/configuration-vpc.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws lambda update-function-configuration --region <region-name> --function-name <function-name> --vpc-config SubnetIds=<subnet-id-1>,<subnet-id-2>,SecurityGroupIds=<security-group-id>",
+      "NativeIaC": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Lambda/function-in-vpc.html",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/lambda-controls.html#lambda-3",
+      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/ensure-that-aws-lambda-function-is-configured-inside-a-vpc-1/"
+    },
+    "Recommendation": {
+      "Text": "Configure your AWS Lambda functions to operate within a Virtual Private Cloud (VPC) to enhance security and control network access.",
+      "Url": ""
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

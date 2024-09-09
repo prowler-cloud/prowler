@@ -16,7 +16,7 @@ class Test_macie_is_enabled:
     def test_macie_disabled(self):
         s3_client = mock.MagicMock
         s3_client.provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
-        s3_client.buckets = []
+        s3_client.buckets = {}
         s3_client.regions_with_buckets = []
 
         macie_client = mock.MagicMock
@@ -32,7 +32,7 @@ class Test_macie_is_enabled:
             )
         ]
         macie_client.session_arn_template = f"arn:{macie_client.audited_partition}:macie:{macie_client.region}:{macie_client.audited_account}:session"
-        macie_client.__get_session_arn_template__ = mock.MagicMock(
+        macie_client._get_session_arn_template = mock.MagicMock(
             return_value=macie_client.session_arn_template
         )
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
@@ -68,7 +68,7 @@ class Test_macie_is_enabled:
     def test_macie_enabled(self):
         s3_client = mock.MagicMock
         s3_client.provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
-        s3_client.buckets = []
+        s3_client.buckets = {}
         s3_client.regions_with_buckets = []
 
         macie_client = mock.MagicMock
@@ -84,7 +84,7 @@ class Test_macie_is_enabled:
             )
         ]
         macie_client.session_arn_template = f"arn:{macie_client.audited_partition}:macie:{macie_client.region}:{macie_client.audited_account}:session"
-        macie_client.__get_session_arn_template__ = mock.MagicMock(
+        macie_client._get_session_arn_template = mock.MagicMock(
             return_value=macie_client.session_arn_template
         )
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
@@ -120,7 +120,7 @@ class Test_macie_is_enabled:
     def test_macie_suspended_ignored(self):
         s3_client = mock.MagicMock
         s3_client.provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
-        s3_client.buckets = []
+        s3_client.buckets = {}
         s3_client.regions_with_buckets = []
 
         macie_client = mock.MagicMock
@@ -130,7 +130,7 @@ class Test_macie_is_enabled:
         macie_client.audited_partition = "aws"
         macie_client.region = AWS_REGION_EU_WEST_1
         macie_client.session_arn_template = f"arn:{macie_client.audited_partition}:macie:{macie_client.region}:{macie_client.audited_account}:session"
-        macie_client.__get_session_arn_template__ = mock.MagicMock(
+        macie_client._get_session_arn_template = mock.MagicMock(
             return_value=macie_client.session_arn_template
         )
         macie_client.sessions = [
@@ -189,7 +189,7 @@ class Test_macie_is_enabled:
             )
         ]
         macie_client.session_arn_template = f"arn:{macie_client.audited_partition}:macie:{macie_client.region}:{macie_client.audited_account}:session"
-        macie_client.__get_session_arn_template__ = mock.MagicMock(
+        macie_client._get_session_arn_template = mock.MagicMock(
             return_value=macie_client.session_arn_template
         )
         macie_client.provider._scan_unused_services = False
@@ -243,7 +243,7 @@ class Test_macie_is_enabled:
         ]
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         macie_client.session_arn_template = f"arn:{macie_client.audited_partition}:macie:{macie_client.region}:{macie_client.audited_account}:session"
-        macie_client.__get_session_arn_template__ = mock.MagicMock(
+        macie_client._get_session_arn_template = mock.MagicMock(
             return_value=macie_client.session_arn_template
         )
         with mock.patch(

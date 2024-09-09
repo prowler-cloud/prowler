@@ -30,7 +30,11 @@ class TestOCSF:
     def test_transform(self):
         findings = [
             generate_finding_output(
-                status="FAIL", severity="low", muted=False, region=AWS_REGION_EU_WEST_1
+                status="FAIL",
+                severity="low",
+                muted=False,
+                region=AWS_REGION_EU_WEST_1,
+                resource_tags={"Name": "test", "Environment": "dev"},
             )
         ]
 
@@ -58,7 +62,7 @@ class TestOCSF:
         assert output_data.status_code == findings[0].status
         assert output_data.status_detail == findings[0].status_extended
         assert output_data.risk_details == findings[0].risk
-        assert output_data.resources[0].labels == []
+        assert output_data.resources[0].labels == ["Name:test", "Environment:dev"]
         assert output_data.resources[0].name == findings[0].resource_name
         assert output_data.resources[0].uid == findings[0].resource_uid
         assert output_data.resources[0].type == findings[0].resource_type
@@ -107,7 +111,7 @@ class TestOCSF:
                     "product": {
                         "name": "Prowler",
                         "vendor_name": "Prowler",
-                        "version": "4.2.4",
+                        "version": prowler_version,
                     },
                     "version": "1.2.0",
                 },
@@ -190,7 +194,11 @@ class TestOCSF:
 
     def test_finding_output_cloud_pass_low_muted(self):
         finding_output = generate_finding_output(
-            status="PASS", severity="low", muted=True, region=AWS_REGION_EU_WEST_1
+            status="PASS",
+            severity="low",
+            muted=True,
+            region=AWS_REGION_EU_WEST_1,
+            resource_tags={"Name": "test", "Environment": "dev"},
         )
 
         finding_ocsf = OCSF([finding_output])
@@ -248,7 +256,7 @@ class TestOCSF:
         assert len(resource_details) == 1
         assert isinstance(resource_details, list)
         assert isinstance(resource_details[0], ResourceDetails)
-        assert resource_details[0].labels == []
+        assert resource_details[0].labels == ["Name:test", "Environment:dev"]
         assert resource_details[0].name == finding_output.resource_name
         assert resource_details[0].uid == finding_output.resource_uid
         assert resource_details[0].type == finding_output.resource_type
@@ -287,7 +295,7 @@ class TestOCSF:
         assert cloud_account.type_id == TypeID.AWS_Account
         assert cloud_account.type == TypeID.AWS_Account.name
         assert cloud_account.uid == finding_output.account_uid
-        assert cloud_account.labels == finding_output.account_tags
+        assert cloud_account.labels == ["test-tag:test-value"]
 
         cloud_organization = cloud.org
         assert isinstance(cloud_organization, Organization)

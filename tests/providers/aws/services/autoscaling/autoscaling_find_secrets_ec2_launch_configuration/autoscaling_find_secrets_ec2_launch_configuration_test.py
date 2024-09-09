@@ -284,3 +284,77 @@ class Test_autoscaling_find_secrets_ec2_launch_configuration:
             assert result[0].resource_id == launch_configuration_name
             assert result[0].resource_arn == launch_configuration_arn
             assert result[0].region == AWS_REGION_US_EAST_1
+
+    @mock_aws
+    def test_one_autoscaling_file_with_unicode_error(self):
+        # Include launch_configurations to check
+        invalid_utf8_bytes = b"\xc0\xaf"
+        launch_configuration_name = "tester"
+        autoscaling_client = client("autoscaling", region_name=AWS_REGION_US_EAST_1)
+        autoscaling_client.create_launch_configuration(
+            LaunchConfigurationName=launch_configuration_name,
+            ImageId="ami-12c6146b",
+            InstanceType="t1.micro",
+            KeyName="the_keys",
+            SecurityGroups=["default", "default2"],
+            UserData=invalid_utf8_bytes,
+        )
+
+        from prowler.providers.aws.services.autoscaling.autoscaling_service import (
+            AutoScaling,
+        )
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.autoscaling.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_client",
+            new=AutoScaling(aws_provider),
+        ):
+            from prowler.providers.aws.services.autoscaling.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_find_secrets_ec2_launch_configuration import (
+                autoscaling_find_secrets_ec2_launch_configuration,
+            )
+
+            check = autoscaling_find_secrets_ec2_launch_configuration()
+            result = check.execute()
+
+            assert len(result) == 0
+
+    @mock_aws
+    def test_one_autoscaling_file_invalid_gzip_error(self):
+        # Include launch_configurations to check
+        invalid_gzip_bytes = b"\x1f\x8b\xc0\xaf"
+        launch_configuration_name = "tester"
+        autoscaling_client = client("autoscaling", region_name=AWS_REGION_US_EAST_1)
+        autoscaling_client.create_launch_configuration(
+            LaunchConfigurationName=launch_configuration_name,
+            ImageId="ami-12c6146b",
+            InstanceType="t1.micro",
+            KeyName="the_keys",
+            SecurityGroups=["default", "default2"],
+            UserData=invalid_gzip_bytes,
+        )
+
+        from prowler.providers.aws.services.autoscaling.autoscaling_service import (
+            AutoScaling,
+        )
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.autoscaling.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_client",
+            new=AutoScaling(aws_provider),
+        ):
+            from prowler.providers.aws.services.autoscaling.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_find_secrets_ec2_launch_configuration import (
+                autoscaling_find_secrets_ec2_launch_configuration,
+            )
+
+            check = autoscaling_find_secrets_ec2_launch_configuration()
+            result = check.execute()
+
+            assert len(result) == 0

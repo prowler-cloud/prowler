@@ -132,6 +132,56 @@ class Test_ec2_instance_secrets_user_data:
             assert result[0].region == AWS_REGION_US_EAST_1
 
     @mock_aws
+    def test_one_ec2_with_secrets_other_case(self):
+        ec2 = resource("ec2", region_name=AWS_REGION_US_EAST_1)
+        instance = ec2.create_instances(
+            ImageId=EXAMPLE_AMI_ID,
+            MinCount=1,
+            MaxCount=1,
+            UserData="MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'",
+        )[0]
+
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
+
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        )
+
+        ec2_client = EC2(aws_provider)
+
+        ec2_client.audit_config = {
+            "secrets_ignore_patterns": [".*_ALLOW_EMPTY_PASSWORD.*"]
+        }
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_instance_secrets_user_data.ec2_instance_secrets_user_data.ec2_client",
+            new=ec2_client,
+        ):
+            from prowler.providers.aws.services.ec2.ec2_instance_secrets_user_data.ec2_instance_secrets_user_data import (
+                ec2_instance_secrets_user_data,
+            )
+
+            check = ec2_instance_secrets_user_data()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == f"No secrets found in EC2 instance {instance.id} User Data."
+            )
+            assert result[0].resource_id == instance.id
+            assert (
+                result[0].resource_arn
+                == f"arn:{aws_provider.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{aws_provider.identity.account}:instance/{instance.id}"
+            )
+            assert result[0].resource_tags is None
+            assert result[0].region == AWS_REGION_US_EAST_1
+
+    @mock_aws
     def test_one_ec2_file_with_secrets(self):
         # Include launch_configurations to check
         f = open(
@@ -265,3 +315,33 @@ class Test_ec2_instance_secrets_user_data:
             )
             assert result[0].resource_tags is None
             assert result[0].region == AWS_REGION_US_EAST_1
+
+    @mock_aws
+    def test_one_secrets_with_unicode_error(self):
+        invalid_utf8_bytes = b"\xc0\xaf"
+        ec2 = resource("ec2", region_name=AWS_REGION_US_EAST_1)
+        ec2.create_instances(
+            ImageId=EXAMPLE_AMI_ID, MinCount=1, MaxCount=1, UserData=invalid_utf8_bytes
+        )
+
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
+
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        )
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_instance_secrets_user_data.ec2_instance_secrets_user_data.ec2_client",
+            new=EC2(aws_provider),
+        ):
+            from prowler.providers.aws.services.ec2.ec2_instance_secrets_user_data.ec2_instance_secrets_user_data import (
+                ec2_instance_secrets_user_data,
+            )
+
+            check = ec2_instance_secrets_user_data()
+            result = check.execute()
+
+            assert len(result) == 0

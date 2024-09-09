@@ -240,7 +240,7 @@ class TestSecurityHub:
             findings=asff.data,
         )
 
-        assert security_hub._findings_per_region is None
+        assert security_hub._findings_per_region == {}
 
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     def test_filter_security_hub_findings_per_region_disabled_region(self):
@@ -260,24 +260,6 @@ class TestSecurityHub:
         assert security_hub._findings_per_region == {AWS_REGION_EU_WEST_1: []}
 
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
-    def test_filter_security_hub_findings_per_region_PASS_and_FAIL_statuses(self):
-        findings = [generate_finding_output(status="PASS", region=AWS_REGION_EU_WEST_1)]
-        asff = ASFF(findings=findings)
-
-        security_hub = SecurityHub(
-            aws_session=session.Session(
-                region_name=AWS_REGION_EU_WEST_1,
-            ),
-            aws_account_id=AWS_ACCOUNT_NUMBER,
-            aws_partition=AWS_COMMERCIAL_PARTITION,
-            aws_security_hub_available_regions=[AWS_REGION_EU_WEST_1],
-            findings=asff.data,
-            status=["FAIL"],
-        )
-
-        assert security_hub._findings_per_region == {AWS_REGION_EU_WEST_1: []}
-
-    @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     def test_filter_security_hub_findings_per_region_FAIL_and_FAIL_statuses(self):
         findings = [generate_finding_output(status="FAIL", region=AWS_REGION_EU_WEST_1)]
         asff = ASFF(findings=findings)
@@ -290,7 +272,6 @@ class TestSecurityHub:
             aws_partition=AWS_COMMERCIAL_PARTITION,
             aws_security_hub_available_regions=[AWS_REGION_EU_WEST_1],
             findings=asff.data,
-            status=["FAIL"],
         )
 
         assert security_hub._findings_per_region == {
@@ -310,7 +291,6 @@ class TestSecurityHub:
             aws_partition=AWS_COMMERCIAL_PARTITION,
             aws_security_hub_available_regions=[AWS_REGION_EU_WEST_1],
             findings=asff.data,
-            status=[],
             send_only_fails=True,
         )
 
@@ -329,7 +309,6 @@ class TestSecurityHub:
             aws_partition=AWS_COMMERCIAL_PARTITION,
             aws_security_hub_available_regions=[AWS_REGION_EU_WEST_1],
             findings=asff.data,
-            status=[],
             send_only_fails=True,
         )
 
@@ -350,11 +329,10 @@ class TestSecurityHub:
             aws_partition=AWS_COMMERCIAL_PARTITION,
             aws_security_hub_available_regions=[],
             findings=asff.data,
-            status=[],
             send_only_fails=True,
         )
 
-        assert security_hub._findings_per_region is None
+        assert security_hub._findings_per_region == {}
 
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     def test_filter_security_hub_findings_per_region_muted_fail_with_send_sh_only_fails(
@@ -375,7 +353,6 @@ class TestSecurityHub:
             aws_partition=AWS_COMMERCIAL_PARTITION,
             aws_security_hub_available_regions=[AWS_REGION_EU_WEST_1],
             findings=asff.data,
-            status=[],
             send_only_fails=True,
         )
 
@@ -400,7 +377,6 @@ class TestSecurityHub:
             aws_partition=AWS_COMMERCIAL_PARTITION,
             aws_security_hub_available_regions=[AWS_REGION_EU_WEST_1],
             findings=asff.data,
-            status=["FAIL"],
             send_only_fails=True,
         )
 

@@ -1,5 +1,5 @@
-from prowler.lib.persistence import mklist
 from prowler.lib.check.models import Check, Check_Report_AWS
+from prowler.lib.persistence import mklist
 from prowler.providers.aws.services.s3.s3_client import s3_client
 from prowler.providers.aws.services.s3.s3control_client import s3control_client
 
@@ -22,12 +22,12 @@ class s3_bucket_public_list_acl(Check):
             findings.append(report)
         else:
             # 2. If public access is not blocked at account level, check it at each bucket level
-            for bucket in s3_client.buckets:
+            for arn, bucket in s3_client.buckets.items():
                 if bucket.public_access_block:
                     report = Check_Report_AWS(self.metadata())
                     report.region = bucket.region
                     report.resource_id = bucket.name
-                    report.resource_arn = bucket.arn
+                    report.resource_arn = arn
                     report.resource_tags = bucket.tags
                     report.status = "PASS"
                     report.status_extended = (

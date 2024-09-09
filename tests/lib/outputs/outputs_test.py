@@ -98,6 +98,30 @@ class TestOutputs:
             {"Key": "environment", "Value": "dev"},
             {"Key": "terraform", "Value": "true"},
         ]
+
+        assert unroll_tags(dict_list) == {
+            "environment": "dev",
+            "name": "test",
+            "project": "prowler",
+            "terraform": "true",
+        }
+
+    def test_unroll_dict_tags(self):
+        tags_dict = {
+            "environment": "dev",
+            "name": "test",
+            "project": "prowler",
+            "terraform": "true",
+        }
+
+        assert unroll_tags(tags_dict) == {
+            "environment": "dev",
+            "name": "test",
+            "project": "prowler",
+            "terraform": "true",
+        }
+
+    def test_unroll_tags_unique(self):
         unique_dict_list = [
             {
                 "test1": "value1",
@@ -105,14 +129,40 @@ class TestOutputs:
                 "test3": "value3",
             }
         ]
-        assert (
-            unroll_tags(dict_list)
-            == "name=test | project=prowler | environment=dev | terraform=true"
-        )
-        assert (
-            unroll_tags(unique_dict_list)
-            == "test1=value1 | test2=value2 | test3=value3"
-        )
+        assert unroll_tags(unique_dict_list) == {
+            "test1": "value1",
+            "test2": "value2",
+            "test3": "value3",
+        }
+
+    def test_unroll_tags_lowercase(self):
+        dict_list = [
+            {"key": "name", "value": "test"},
+            {"key": "project", "value": "prowler"},
+            {"key": "environment", "value": "dev"},
+            {"key": "terraform", "value": "true"},
+        ]
+
+        assert unroll_tags(dict_list) == {
+            "environment": "dev",
+            "name": "test",
+            "project": "prowler",
+            "terraform": "true",
+        }
+
+    def test_unroll_tags_only_list(self):
+        tags_list = ["tag1", "tag2", "tag3"]
+
+        assert unroll_tags(tags_list) == {
+            "tag1": "",
+            "tag2": "",
+            "tag3": "",
+        }
+
+    def test_unroll_tags_with_key_only(self):
+        tags = [{"key": "name"}]
+
+        assert unroll_tags(tags) == {"name": ""}
 
     def test_unroll_dict(self):
         test_compliance_dict = {
@@ -156,18 +206,18 @@ class TestOutputs:
             "FedRAMP-Low-Revision-4": ["sc-13"],
         }
         assert (
-            unroll_dict(test_compliance_dict)
+            unroll_dict(test_compliance_dict, separator=": ")
             == "CISA: your-systems-3, your-data-1, your-data-2 | CIS-1.4: 2.1.1 | CIS-1.5: 2.1.1 | GDPR: article_32 | AWS-Foundational-Security-Best-Practices: s3 | HIPAA: 164_308_a_1_ii_b, 164_308_a_4_ii_a, 164_312_a_2_iv, 164_312_c_1, 164_312_c_2, 164_312_e_2_ii | GxP-21-CFR-Part-11: 11.10-c, 11.30 | GxP-EU-Annex-11: 7.1-data-storage-damage-protection | NIST-800-171-Revision-2: 3_3_8, 3_5_10, 3_13_11, 3_13_16 | NIST-800-53-Revision-4: sc_28 | NIST-800-53-Revision-5: au_9_3, cm_6_a, cm_9_b, cp_9_d, cp_9_8, pm_11_b, sc_8_3, sc_8_4, sc_13_a, sc_16_1, sc_28_1, si_19_4 | ENS-RD2022: mp.si.2.aws.s3.1 | NIST-CSF-1.1: ds_1 | RBI-Cyber-Security-Framework: annex_i_1_3 | FFIEC: d3-pc-am-b-12 | PCI-3.2.1: s3 | FedRamp-Moderate-Revision-4: sc-13, sc-28 | FedRAMP-Low-Revision-4: sc-13"
         )
 
     def test_unroll_dict_to_list(self):
         dict_A = {"A": "B"}
-        list_A = ["A: B"]
+        list_A = ["A:B"]
 
         assert unroll_dict_to_list(dict_A) == list_A
 
         dict_B = {"A": ["B", "C"]}
-        list_B = ["A: B, C"]
+        list_B = ["A:B, C"]
 
         assert unroll_dict_to_list(dict_B) == list_B
 
@@ -202,6 +252,8 @@ class TestOutputs:
         stats = extract_findings_statistics(findings)
         assert stats["total_pass"] == 1
         assert stats["total_fail"] == 1
+        assert stats["total_muted_pass"] == 0
+        assert stats["total_muted_fail"] == 0
         assert stats["resources_count"] == 2
         assert stats["findings_count"] == 2
 
@@ -217,6 +269,8 @@ class TestOutputs:
         stats = extract_findings_statistics(findings)
         assert stats["total_pass"] == 2
         assert stats["total_fail"] == 0
+        assert stats["total_muted_pass"] == 0
+        assert stats["total_muted_fail"] == 0
         assert stats["resources_count"] == 1
         assert stats["findings_count"] == 2
 
@@ -232,6 +286,8 @@ class TestOutputs:
         stats = extract_findings_statistics(findings)
         assert stats["total_pass"] == 1
         assert stats["total_fail"] == 0
+        assert stats["total_muted_pass"] == 0
+        assert stats["total_muted_fail"] == 0
         assert stats["resources_count"] == 1
         assert stats["findings_count"] == 1
 
@@ -241,6 +297,8 @@ class TestOutputs:
         stats = extract_findings_statistics(findings)
         assert stats["total_pass"] == 0
         assert stats["total_fail"] == 0
+        assert stats["total_muted_pass"] == 0
+        assert stats["total_muted_fail"] == 0
         assert stats["resources_count"] == 0
         assert stats["findings_count"] == 0
 
@@ -254,6 +312,8 @@ class TestOutputs:
         stats = extract_findings_statistics(findings)
         assert stats["total_pass"] == 0
         assert stats["total_fail"] == 1
+        assert stats["total_muted_pass"] == 0
+        assert stats["total_muted_fail"] == 1
         assert stats["resources_count"] == 1
         assert stats["findings_count"] == 1
         assert stats["all_fails_are_muted"]
@@ -272,9 +332,45 @@ class TestOutputs:
         stats = extract_findings_statistics(findings)
         assert stats["total_pass"] == 0
         assert stats["total_fail"] == 2
+        assert stats["total_muted_pass"] == 0
+        assert stats["total_muted_fail"] == 1
         assert stats["resources_count"] == 1
         assert stats["findings_count"] == 2
         assert not stats["all_fails_are_muted"]
+
+    def test_extract_findings_statistics_all_passes_are_not_muted(self):
+        finding_1 = mock.MagicMock()
+        finding_1.status = "PASS"
+        finding_1.muted = True
+        finding_1.resource_id = "test_resource_1"
+        finding_2 = mock.MagicMock()
+        finding_2.status = "PASS"
+        finding_2.muted = False
+        finding_2.resource_id = "test_resource_1"
+        findings = [finding_1, finding_2]
+
+        stats = extract_findings_statistics(findings)
+        assert stats["total_pass"] == 2
+        assert stats["total_fail"] == 0
+        assert stats["total_muted_pass"] == 1
+        assert stats["total_muted_fail"] == 0
+        assert stats["resources_count"] == 1
+        assert stats["findings_count"] == 2
+
+    def test_extract_findings_statistics_all_passes_are_muted(self):
+        finding_1 = mock.MagicMock()
+        finding_1.status = "PASS"
+        finding_1.muted = True
+        finding_1.resource_id = "test_resource_1"
+        findings = [finding_1]
+
+        stats = extract_findings_statistics(findings)
+        assert stats["total_pass"] == 1
+        assert stats["total_fail"] == 0
+        assert stats["total_muted_pass"] == 1
+        assert stats["total_muted_fail"] == 0
+        assert stats["resources_count"] == 1
+        assert stats["findings_count"] == 1
 
     def test_report_with_aws_provider_not_muted_pass(self):
         # Mocking check_findings and provider

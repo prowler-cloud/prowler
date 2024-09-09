@@ -1,8 +1,8 @@
 from botocore.client import ClientError
 from pydantic import BaseModel
 
-from lib.persistence import mklist
 from prowler.lib.logger import logger
+from prowler.lib.persistence import mklist
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
@@ -20,13 +20,13 @@ class SSMIncidents(AWSService):
         super().__init__("ssm-incidents", provider)
         self.replication_set_arn_template = f"arn:{self.audited_partition}:ssm-incidents:{self.region}:{self.audited_account}:replication-set"
         self.replication_set = mklist()
-        self.__list_replication_sets__()
-        self.__get_replication_set__()
+        self._list_replication_sets()
+        self._get_replication_set()
         self.response_plans = mklist()
-        self.__threading_call__(self.__list_response_plans__)
-        self.__list_tags_for_resource__()
+        self.__threading_call__(self._list_response_plans)
+        self._list_tags_for_resource()
 
-    def __list_replication_sets__(self):
+    def _list_replication_sets(self):
         logger.info("SSMIncidents - Listing Replication Sets...")
         try:
             if self.regional_clients:
@@ -62,7 +62,7 @@ class SSMIncidents(AWSService):
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 
-    def __get_replication_set__(self):
+    def _get_replication_set(self):
         logger.info("SSMIncidents - Getting Replication Sets...")
         try:
             if not self.replication_set:
@@ -101,7 +101,7 @@ class SSMIncidents(AWSService):
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 
-    def __list_response_plans__(self, regional_client):
+    def _list_response_plans(self, regional_client):
         logger.info("SSMIncidents - Listing Response Plans...")
         try:
             list_response_plans_paginator = regional_client.get_paginator(
@@ -121,7 +121,7 @@ class SSMIncidents(AWSService):
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 
-    def __list_tags_for_resource__(self):
+    def _list_tags_for_resource(self):
         logger.info("SSMIncidents - List Tags...")
         try:
             for response_plan in self.response_plans:

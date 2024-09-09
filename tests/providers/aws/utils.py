@@ -107,6 +107,7 @@ def set_mocked_aws_provider(
     original_session: session.Session = None,
     enabled_regions: set = None,
     arguments: Namespace = Namespace(),
+    status: list[str] = [],
     create_default_organization: bool = True,
 ) -> AwsProvider:
     if create_default_organization:
@@ -114,12 +115,16 @@ def set_mocked_aws_provider(
         create_default_aws_organization()
 
     # Default arguments
-    arguments = set_default_provider_arguments(arguments)
+    arguments = set_default_provider_arguments(arguments, status)
 
     # AWS Provider
-    provider = AwsProvider(arguments)
+    provider = AwsProvider()
+
+    # Set output options
+    provider.output_options = arguments, {}
 
     # Output options
+
     provider.output_options = arguments, {}
 
     # Mock Session
@@ -156,8 +161,10 @@ def set_mocked_aws_provider(
     return provider
 
 
-def set_default_provider_arguments(arguments: Namespace) -> Namespace:
-    arguments.status = []
+def set_default_provider_arguments(
+    arguments: Namespace, status: list = []
+) -> Namespace:
+    arguments.status = status
     arguments.output_formats = []
     arguments.output_directory = ""
     arguments.verbose = False

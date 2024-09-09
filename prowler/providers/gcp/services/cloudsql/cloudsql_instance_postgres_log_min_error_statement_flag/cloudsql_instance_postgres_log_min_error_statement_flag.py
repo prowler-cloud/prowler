@@ -13,15 +13,17 @@ class cloudsql_instance_postgres_log_min_error_statement_flag(Check):
                 report.resource_id = instance.name
                 report.resource_name = instance.name
                 report.location = instance.region
-                report.status = "FAIL"
-                report.status_extended = f"PostgreSQL Instance {instance.name} does not have 'log_min_error_statement' flag set minimum to '{desired_log_min_error_statement}'."
+                report.status = "PASS"
+                report.status_extended = f"PostgreSQL Instance {instance.name} has 'log_min_error_statement' flag set minimum to '{desired_log_min_error_statement}'."
+
                 for flag in instance.flags:
                     if (
-                        flag["name"] == "log_min_error_statement"
-                        and flag["value"] == desired_log_min_error_statement
+                        flag.get("name", "") == "log_min_error_statement"
+                        and flag.get("value", "error")
+                        != desired_log_min_error_statement
                     ):
-                        report.status = "PASS"
-                        report.status_extended = f"PostgreSQL Instance {instance.name} has 'log_min_error_statement' flag set minimum to '{desired_log_min_error_statement}'."
+                        report.status = "FAIL"
+                        report.status_extended = f"PostgreSQL Instance {instance.name} does not have 'log_min_error_statement' flag set minimum to '{desired_log_min_error_statement}'."
                         break
                 findings.append(report)
 

@@ -1,8 +1,8 @@
 from colorama import Fore, Style
 
-from prowler.lib.persistence import mklist
 from prowler.config.config import orange_color
 from prowler.lib.logger import logger
+from prowler.lib.persistence import mklist
 
 
 class GeneratedOutputs:
@@ -29,10 +29,7 @@ class GeneratedOutputs:
             self.regular.append(rg)
 
     def make_output(self) -> dict:
-        return {
-            "regular": self.regular,
-            "compliance": self.compliance
-        }
+        return {"regular": self.regular, "compliance": self.compliance}
 
 
 def stdout_report(finding, color, verbose, status, fix):
@@ -56,6 +53,7 @@ def stdout_report(finding, color, verbose, status, fix):
             )
 
 
+# TODO: Only pass check_findings, provider.output_options and provider.type
 def report(check_findings, provider):
     try:
         output_options = provider.output_options
@@ -121,6 +119,8 @@ def extract_findings_statistics(findings: list) -> dict:
     stats = {}
     total_pass = 0
     total_fail = 0
+    muted_pass = 0
+    muted_fail = 0
     resources = set()
     findings_count = 0
     all_fails_are_muted = True
@@ -128,17 +128,25 @@ def extract_findings_statistics(findings: list) -> dict:
     for finding in findings:
         # Save the resource_id
         resources.add(finding.resource_id)
+
         if finding.status == "PASS":
             total_pass += 1
             findings_count += 1
+            if finding.muted is True:
+                muted_pass += 1
+
         if finding.status == "FAIL":
             total_fail += 1
             findings_count += 1
+            if finding.muted is True:
+                muted_fail += 1
             if not finding.muted and all_fails_are_muted:
                 all_fails_are_muted = False
 
     stats["total_pass"] = total_pass
+    stats["total_muted_pass"] = muted_pass
     stats["total_fail"] = total_fail
+    stats["total_muted_fail"] = muted_fail
     stats["resources_count"] = len(resources)
     stats["findings_count"] = findings_count
     stats["all_fails_are_muted"] = all_fails_are_muted

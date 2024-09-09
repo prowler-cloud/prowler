@@ -1,5 +1,5 @@
-from prowler.lib.persistence import mklist
 from prowler.lib.check.models import Check, Check_Report_AWS
+from prowler.lib.persistence import mklist
 from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 
 
@@ -10,7 +10,7 @@ class ec2_ebs_default_encryption(Check):
             if ebs_encryption.volumes or ec2_client.provider.scan_unused_services:
                 report = Check_Report_AWS(self.metadata())
                 report.region = ebs_encryption.region
-                report.resource_arn = ec2_client.__get_volume_arn_template__(
+                report.resource_arn = ec2_client._get_volume_arn_template(
                     ebs_encryption.region
                 )
                 report.resource_id = ec2_client.audited_account

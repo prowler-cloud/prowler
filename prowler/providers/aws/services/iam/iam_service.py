@@ -5,7 +5,7 @@ from typing import Optional
 from botocore.client import ClientError
 from pydantic import BaseModel
 
-from prowler.config.config import enconding_format_utf_8
+from prowler.config.config import encoding_format_utf_8
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
@@ -57,50 +57,50 @@ class IAM(AWSService):
         self.mfa_arn_template = (
             f"arn:{self.audited_partition}:iam:{self.region}:{self.audited_account}:mfa"
         )
-        self.users = self.__get_users__()
-        self.roles = self.__get_roles__()
-        self.account_summary = self.__get_account_summary__()
-        self.virtual_mfa_devices = self.__list_virtual_mfa_devices__()
-        self.credential_report = self.__get_credential_report__()
-        self.groups = self.__get_groups__()
-        self.__get_group_users__()
-        self.__list_attached_group_policies__()
-        self.__list_attached_user_policies__()
-        self.__list_attached_role_policies__()
-        self.__list_mfa_devices__()
-        self.password_policy = self.__get_password_policy__()
+        self.users = self._get_users()
+        self.roles = self._get_roles()
+        self.account_summary = self._get_account_summary()
+        self.virtual_mfa_devices = self._list_virtual_mfa_devices()
+        self.credential_report = self._get_credential_report()
+        self.groups = self._get_groups()
+        self._get_group_users()
+        self._list_attached_group_policies()
+        self._list_attached_user_policies()
+        self._list_attached_role_policies()
+        self._list_mfa_devices()
+        self.password_policy = self._get_password_policy()
         support_policy_arn = (
             "arn:aws:iam::aws:policy/aws-service-role/AWSSupportServiceRolePolicy"
         )
         self.entities_role_attached_to_support_policy = (
-            self.__list_entities_role_for_policy__(support_policy_arn)
+            self._list_entities_role_for_policy(support_policy_arn)
         )
         securityaudit_policy_arn = "arn:aws:iam::aws:policy/SecurityAudit"
         self.entities_role_attached_to_securityaudit_policy = (
-            self.__list_entities_role_for_policy__(securityaudit_policy_arn)
+            self._list_entities_role_for_policy(securityaudit_policy_arn)
         )
         # List both Customer (attached and unattached) and AWS Managed (only attached) policies
         self.policies = []
-        self.policies.extend(self.__list_policies__("AWS"))
-        self.policies.extend(self.__list_policies__("Local"))
-        self.__list_policies_version__(self.policies)
-        self.__list_inline_user_policies__()
-        self.__list_inline_group_policies__()
-        self.__list_inline_role_policies__()
-        self.saml_providers = self.__list_saml_providers__()
-        self.server_certificates = self.__list_server_certificates__()
-        self.__list_tags_for_resource__()
+        self.policies.extend(self._list_policies("AWS"))
+        self.policies.extend(self._list_policies("Local"))
+        self._list_policies_version(self.policies)
+        self._list_inline_user_policies()
+        self._list_inline_group_policies()
+        self._list_inline_role_policies()
+        self.saml_providers = self._list_saml_providers()
+        self.server_certificates = self._list_server_certificates()
+        self._list_tags_for_resource()
         self.access_keys_metadata = {}
-        self.__get_access_keys_metadata__()
+        self._get_access_keys_metadata()
         self.last_accessed_services = {}
-        self.__get_last_accessed_services__()
+        self._get_last_accessed_services()
         self.user_temporary_credentials_usage = {}
-        self.__get_user_temporary_credentials_usage__()
+        self._get_user_temporary_credentials_usage()
 
-    def __get_client__(self):
+    def _get_client(self):
         return self.client
 
-    def __get_roles__(self):
+    def _get_roles(self):
         logger.info("IAM - List Roles...")
         try:
             roles = []
@@ -135,7 +135,7 @@ class IAM(AWSService):
         finally:
             return roles
 
-    def __get_credential_report__(self):
+    def _get_credential_report(self):
         logger.info("IAM - Get Credential Report...")
         report_is_completed = False
         credential_list = []
@@ -146,7 +146,7 @@ class IAM(AWSService):
                     report_is_completed = True
             # Convert credential report to list of dictionaries
             credential = self.client.get_credential_report()["Content"].decode(
-                enconding_format_utf_8
+                encoding_format_utf_8
             )
             credential_lines = credential.split("\n")
             csv_reader = csv.DictReader(credential_lines, delimiter=",")
@@ -168,7 +168,7 @@ class IAM(AWSService):
         finally:
             return credential_list
 
-    def __get_groups__(self):
+    def _get_groups(self):
         logger.info("IAM - Get Groups...")
         try:
             groups = []
@@ -187,7 +187,7 @@ class IAM(AWSService):
         finally:
             return groups
 
-    def __get_account_summary__(self):
+    def _get_account_summary(self):
         logger.info("IAM - Get Account Summary...")
         try:
             account_summary = self.client.get_account_summary()
@@ -199,7 +199,7 @@ class IAM(AWSService):
         finally:
             return account_summary
 
-    def __get_password_policy__(self):
+    def _get_password_policy(self):
         logger.info("IAM - Get Password Policy...")
         try:
             stored_password_policy = None
@@ -267,7 +267,7 @@ class IAM(AWSService):
         finally:
             return stored_password_policy
 
-    def __get_users__(self):
+    def _get_users(self):
         logger.info("IAM - List Users...")
         try:
             get_users_paginator = self.client.get_paginator("list_users")
@@ -304,7 +304,7 @@ class IAM(AWSService):
         finally:
             return users
 
-    def __list_virtual_mfa_devices__(self):
+    def _list_virtual_mfa_devices(self):
         logger.info("IAM - List Virtual MFA Devices...")
         try:
             mfa_devices = []
@@ -322,7 +322,7 @@ class IAM(AWSService):
         finally:
             return mfa_devices
 
-    def __list_attached_group_policies__(self):
+    def _list_attached_group_policies(self):
         logger.info("IAM - List Attached Group Policies...")
         try:
             for group in self.groups:
@@ -347,7 +347,7 @@ class IAM(AWSService):
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_group_users__(self):
+    def _get_group_users(self):
         logger.info("IAM - Get Group Users...")
         try:
             for group in self.groups:
@@ -373,7 +373,7 @@ class IAM(AWSService):
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __list_mfa_devices__(self):
+    def _list_mfa_devices(self):
         logger.info("IAM - List MFA Devices...")
         try:
             for user in self.users:
@@ -384,9 +384,10 @@ class IAM(AWSService):
                 for page in list_mfa_devices_paginator.paginate(UserName=user.name):
                     for mfa_device in page["MFADevices"]:
                         mfa_serial_number = mfa_device["SerialNumber"]
-                        mfa_type = (
-                            mfa_device["SerialNumber"].split(":")[5].split("/")[0]
-                        )
+                        try:
+                            mfa_type = mfa_serial_number.split(":")[5].split("/")[0]
+                        except IndexError:
+                            mfa_type = "hardware"
                         mfa_devices.append(
                             MFADevice(serial_number=mfa_serial_number, type=mfa_type)
                         )
@@ -396,7 +397,7 @@ class IAM(AWSService):
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __list_attached_user_policies__(self):
+    def _list_attached_user_policies(self):
         logger.info("IAM - List Attached User Policies...")
         try:
             for user in self.users:
@@ -432,7 +433,7 @@ class IAM(AWSService):
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __list_attached_role_policies__(self):
+    def _list_attached_role_policies(self):
         logger.info("IAM - List Attached User Policies...")
         try:
             if self.roles:
@@ -469,7 +470,7 @@ class IAM(AWSService):
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __list_inline_user_policies__(self):
+    def _list_inline_user_policies(self):
         logger.info("IAM - List Inline User Policies...")
         for user in self.users:
             try:
@@ -527,7 +528,7 @@ class IAM(AWSService):
                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
-    def __list_inline_group_policies__(self):
+    def _list_inline_group_policies(self):
         logger.info("IAM - List Inline Group Policies...")
         for group in self.groups:
             try:
@@ -587,7 +588,7 @@ class IAM(AWSService):
                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
-    def __list_inline_role_policies__(self):
+    def _list_inline_role_policies(self):
         logger.info("IAM - List Inline Role Policies...")
         if self.roles:
             for role in self.roles:
@@ -650,7 +651,7 @@ class IAM(AWSService):
                         f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
 
-    def __list_entities_role_for_policy__(self, policy_arn):
+    def _list_entities_role_for_policy(self, policy_arn):
         logger.info("IAM - List Entities Role For Policy...")
         try:
             roles = []
@@ -675,7 +676,7 @@ class IAM(AWSService):
         finally:
             return roles
 
-    def __list_policies__(self, scope):
+    def _list_policies(self, scope):
         logger.info("IAM - List Policies...")
         try:
             policies = []
@@ -706,7 +707,7 @@ class IAM(AWSService):
         finally:
             return policies
 
-    def __list_policies_version__(self, policies):
+    def _list_policies_version(self, policies):
         logger.info("IAM - List Policies Version...")
         try:
             for policy in policies:
@@ -730,7 +731,7 @@ class IAM(AWSService):
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __list_saml_providers__(self):
+    def _list_saml_providers(self):
         logger.info("IAM - List SAML Providers...")
         try:
             saml_providers = self.client.list_saml_providers()["SAMLProviderList"]
@@ -742,7 +743,7 @@ class IAM(AWSService):
         finally:
             return saml_providers
 
-    def __list_server_certificates__(self):
+    def _list_server_certificates(self):
         logger.info("IAM - List Server Certificates...")
         try:
             server_certificates = []
@@ -767,7 +768,7 @@ class IAM(AWSService):
         finally:
             return server_certificates
 
-    def __list_tags_for_resource__(self):
+    def _list_tags_for_resource(self):
         logger.info("IAM - List Tags...")
         try:
             if self.roles:
@@ -837,7 +838,7 @@ class IAM(AWSService):
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_last_accessed_services__(self):
+    def _get_last_accessed_services(self):
         logger.info("IAM - Getting Last Accessed Services ...")
         try:
             for user in self.users:
@@ -875,7 +876,7 @@ class IAM(AWSService):
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_access_keys_metadata__(self):
+    def _get_access_keys_metadata(self):
         logger.info("IAM - Getting Access Keys Metadata ...")
         try:
             for user in self.users:
@@ -904,7 +905,7 @@ class IAM(AWSService):
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_user_temporary_credentials_usage__(self):
+    def _get_user_temporary_credentials_usage(self):
         logger.info("IAM - Getting User Temporary Credentials Usage ...")
         try:
             temporary_credentials_usage = False

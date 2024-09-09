@@ -40,7 +40,7 @@ class TestASFF:
             resource_details="Test resource details",
             resource_name="test-resource",
             resource_uid="test-arn",
-            resource_tags="key1=value1",
+            resource_tags={"key1": "value1"},
         )
 
         timestamp = timestamp_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -70,7 +70,7 @@ class TestASFF:
                     Type=finding.resource_type,
                     Partition=AWS_COMMERCIAL_PARTITION,
                     Region=AWS_REGION_EU_WEST_1,
-                    Tags=ASFF.format_resource_tags(finding.resource_tags),
+                    Tags={"key1": "value1"},
                 )
             ],
             Compliance=Compliance(
@@ -103,7 +103,7 @@ class TestASFF:
             resource_details="Test resource details",
             resource_name="test-resource",
             resource_uid="test-arn",
-            resource_tags="key1=value1",
+            resource_tags={"key1": "value1"},
         )
         finding.remediation_recommendation_url = ""
 
@@ -136,7 +136,72 @@ class TestASFF:
                     Type=finding.resource_type,
                     Partition=AWS_COMMERCIAL_PARTITION,
                     Region=AWS_REGION_EU_WEST_1,
-                    Tags=ASFF.format_resource_tags(finding.resource_tags),
+                    Tags={"key1": "value1"},
+                )
+            ],
+            Compliance=Compliance(
+                Status=ASFF.generate_status(status),
+                RelatedRequirements=compliance_summary,
+                AssociatedStandards=associated_standards,
+            ),
+            Remediation=Remediation(
+                Recommendation=Recommendation(
+                    Text=finding.remediation_recommendation_text,
+                    Url="https://docs.aws.amazon.com/securityhub/latest/userguide/what-is-securityhub.html",
+                )
+            ),
+            Description=finding.description,
+        )
+
+        asff = ASFF(findings=[finding])
+
+        assert len(asff.data) == 1
+        asff_finding = asff.data[0]
+
+        assert asff_finding == expected
+
+    def test_asff_without_resource_tags(self):
+        status = "PASS"
+        finding = generate_finding_output(
+            status=status,
+            status_extended="This is a test",
+            region=AWS_REGION_EU_WEST_1,
+            resource_details="Test resource details",
+            resource_name="test-resource",
+            resource_uid="test-arn",
+        )
+        finding.remediation_recommendation_url = ""
+
+        timestamp = timestamp_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+        associated_standards, compliance_summary = ASFF.format_compliance(
+            finding.compliance
+        )
+
+        timestamp = timestamp_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+        expected = AWSSecurityFindingFormat(
+            Id=f"prowler-{finding.check_id}-{AWS_ACCOUNT_NUMBER}-{AWS_REGION_EU_WEST_1}-{hash_sha512(finding.resource_uid)}",
+            ProductArn=f"arn:{AWS_COMMERCIAL_PARTITION}:securityhub:{AWS_REGION_EU_WEST_1}::product/prowler/prowler",
+            ProductFields=ProductFields(
+                ProviderVersion=prowler_version,
+                ProwlerResourceName=finding.resource_uid,
+            ),
+            GeneratorId="prowler-" + finding.check_id,
+            AwsAccountId=AWS_ACCOUNT_NUMBER,
+            Types=finding.check_type.split(","),
+            FirstObservedAt=timestamp,
+            UpdatedAt=timestamp,
+            CreatedAt=timestamp,
+            Severity=Severity(Label=finding.severity),
+            Title=finding.check_title,
+            Resources=[
+                Resource(
+                    Id=finding.resource_uid,
+                    Type=finding.resource_type,
+                    Partition=AWS_COMMERCIAL_PARTITION,
+                    Region=AWS_REGION_EU_WEST_1,
+                    Tags=None,
                 )
             ],
             Compliance=Compliance(
@@ -171,7 +236,7 @@ class TestASFF:
             resource_details="Test resource details",
             resource_name="test-resource",
             resource_uid="test-arn",
-            resource_tags="key1=value1",
+            resource_tags={"key1": "value1"},
         )
         finding.remediation_recommendation_url = ""
         finding.remediation_recommendation_text = "x" * 513
@@ -205,7 +270,7 @@ class TestASFF:
                     Type=finding.resource_type,
                     Partition=AWS_COMMERCIAL_PARTITION,
                     Region=AWS_REGION_EU_WEST_1,
-                    Tags=ASFF.format_resource_tags(finding.resource_tags),
+                    Tags={"key1": "value1"},
                 )
             ],
             Compliance=Compliance(
@@ -239,7 +304,7 @@ class TestASFF:
             resource_details="Test resource details",
             resource_name="test-resource",
             resource_uid="test-arn",
-            resource_tags="key1=value1",
+            resource_tags={"key1": "value1"},
             compliance={
                 "CISA": ["your-systems-3", "your-data-2"],
                 "SOC2": ["cc_2_1", "cc_7_2", "cc_a_1_2"],
@@ -412,7 +477,7 @@ class TestASFF:
                     Type=finding.resource_type,
                     Partition=AWS_COMMERCIAL_PARTITION,
                     Region=AWS_REGION_EU_WEST_1,
-                    Tags=ASFF.format_resource_tags(finding.resource_tags),
+                    Tags={"key1": "value1"},
                 )
             ],
             Compliance=Compliance(
@@ -448,7 +513,7 @@ class TestASFF:
             resource_details="Test resource details",
             resource_name="test-resource",
             resource_uid="test-arn",
-            resource_tags="key1=value1",
+            resource_tags={"key1": "value1"},
         )
         finding.remediation_recommendation_url = ""
 
@@ -462,7 +527,7 @@ class TestASFF:
                 "RecordState": "ACTIVE",
                 "ProductFields": {
                     "ProviderName": "Prowler",
-                    "ProviderVersion": "4.2.4",
+                    "ProviderVersion": prowler_version,
                     "ProwlerResourceName": "test-arn",
                 },
                 "GeneratorId": "prowler-test-check-id",
@@ -517,14 +582,3 @@ class TestASFF:
         assert ASFF.generate_status("FAIL") == "FAILED"
         assert ASFF.generate_status("FAIL", True) == "WARNING"
         assert ASFF.generate_status("SOMETHING ELSE") == "NOT_AVAILABLE"
-
-    def test_asff_format_resource_tags(self):
-        assert ASFF.format_resource_tags(None) is None
-        assert ASFF.format_resource_tags("") is None
-        assert ASFF.format_resource_tags([]) is None
-        assert ASFF.format_resource_tags([{}]) is None
-        assert ASFF.format_resource_tags("key1=value1") == {"key1": "value1"}
-        assert ASFF.format_resource_tags("key1=value1 | key2=value2") == {
-            "key1": "value1",
-            "key2": "value2",
-        }

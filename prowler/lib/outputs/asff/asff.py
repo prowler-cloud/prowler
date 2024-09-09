@@ -25,7 +25,6 @@ class ASFF(Output):
         - transform(findings: list[Finding]) -> None: Transforms a list of findings into ASFF format.
         - batch_write_data_to_file() -> None: Writes the findings data to a file in JSON ASFF format.
         - generate_status(status: str, muted: bool = False) -> str: Generates the ASFF status based on the provided status and muted flag.
-        - format_resource_tags(tags: str) -> dict: Transforms a string of tags into a dictionary format.
 
     References:
         - AWS Security Hub API Reference: https://docs.aws.amazon.com/securityhub/1.0/APIReference/API_Compliance.html
@@ -62,7 +61,6 @@ class ASFF(Output):
                 if finding.status == "MANUAL":
                     continue
                 timestamp = timestamp_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
-                resource_tags = ASFF.format_resource_tags(finding.resource_tags)
 
                 associated_standards, compliance_summary = ASFF.format_compliance(
                     finding.compliance
@@ -70,7 +68,6 @@ class ASFF(Output):
 
                 # Ensures finding_status matches allowed values in ASFF
                 finding_status = ASFF.generate_status(finding.status, finding.muted)
-
                 self._data.append(
                     AWSSecurityFindingFormat(
                         # The following line cannot be changed because it is the format we use to generate unique findings for AWS Security Hub
@@ -99,7 +96,7 @@ class ASFF(Output):
                                 Type=finding.resource_type,
                                 Partition=finding.partition,
                                 Region=finding.region,
-                                Tags=resource_tags,
+                                Tags=finding.resource_tags,
                             )
                         ],
                         Compliance=Compliance(
@@ -196,42 +193,6 @@ class ASFF(Output):
         return json_asff_status
 
     @staticmethod
-    def format_resource_tags(tags: str) -> dict:
-        """
-        Transforms a string of tags into a dictionary format.
-
-        Parameters:
-            - tags (str): A string containing tags separated by ' | ' and key-value pairs separated by '='.
-
-        Returns:
-            - dict: A dictionary where keys are tag names and values are tag values.
-
-        Notes:
-            - If the input string is empty or None, it returns None.
-            - Each tag in the input string should be in the format 'key=value'.
-            - If the input string is not formatted correctly, it logs an error and returns None.
-        """
-        try:
-            tags_dict = None
-            if tags:
-                tags = tags.split(" | ")
-                tags_dict = {}
-                for tag in tags:
-                    value = tag.split("=")
-                    tags_dict[value[0]] = value[1]
-            return tags_dict
-        except IndexError as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-            return None
-        except AttributeError as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-            return None
-
-    @staticmethod
     def format_compliance(compliance: dict) -> tuple[list[dict], list[str]]:
         """
         Transforms a dictionary of compliance data into a tuple of associated standards and compliance summaries.
@@ -315,6 +276,12 @@ class Resource(BaseModel):
     Partition: str
     Region: str
     Tags: Optional[dict]
+
+    @validator("Tags", pre=True, always=True)
+    def tags_cannot_be_empty_dict(tags):
+        if not tags:
+            return None
+        return tags
 
 
 class Compliance(BaseModel):

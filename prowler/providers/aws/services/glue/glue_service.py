@@ -14,22 +14,22 @@ class Glue(AWSService):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.connections = []
-        self.__threading_call__(self.__get_connections__)
+        self.__threading_call__(self._get_connections)
         self.tables = []
-        self.__threading_call__(self.__search_tables__)
+        self.__threading_call__(self._search_tables)
         self.catalog_encryption_settings = []
-        self.__threading_call__(self.__get_data_catalog_encryption_settings__)
+        self.__threading_call__(self._get_data_catalog_encryption_settings)
         self.dev_endpoints = []
-        self.__threading_call__(self.__get_dev_endpoints__)
+        self.__threading_call__(self._get_dev_endpoints)
         self.security_configs = []
-        self.__threading_call__(self.__get_security_configurations__)
+        self.__threading_call__(self._get_security_configurations)
         self.jobs = []
-        self.__threading_call__(self.__get_jobs__)
+        self.__threading_call__(self._get_jobs)
 
-    def __get_data_catalog_arn_template__(self, region):
+    def _get_data_catalog_arn_template(self, region):
         return f"arn:{self.audited_partition}:glue:{region}:{self.audited_account}:data-catalog"
 
-    def __get_connections__(self, regional_client):
+    def _get_connections(self, regional_client):
         logger.info("Glue - Getting connections...")
         try:
             get_connections_paginator = regional_client.get_paginator("get_connections")
@@ -53,7 +53,7 @@ class Glue(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_dev_endpoints__(self, regional_client):
+    def _get_dev_endpoints(self, regional_client):
         logger.info("Glue - Getting dev endpoints...")
         try:
             get_dev_endpoints_paginator = regional_client.get_paginator(
@@ -90,7 +90,7 @@ class Glue(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_jobs__(self, regional_client):
+    def _get_jobs(self, regional_client):
         logger.info("Glue - Getting jobs...")
         try:
             get_jobs_paginator = regional_client.get_paginator("get_jobs")
@@ -114,7 +114,7 @@ class Glue(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_security_configurations__(self, regional_client):
+    def _get_security_configurations(self, regional_client):
         logger.info("Glue - Getting security configs...")
         try:
             get_security_configurations_paginator = regional_client.get_paginator(
@@ -154,7 +154,7 @@ class Glue(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __search_tables__(self, regional_client):
+    def _search_tables(self, regional_client):
         logger.info("Glue - Search Tables...")
         try:
             for table in regional_client.search_tables()["TableList"]:
@@ -176,7 +176,7 @@ class Glue(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_data_catalog_encryption_settings__(self, regional_client):
+    def _get_data_catalog_encryption_settings(self, regional_client):
         logger.info("Glue - Catalog Encryption Settings...")
         try:
             settings = regional_client.get_data_catalog_encryption_settings()[

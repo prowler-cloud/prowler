@@ -45,7 +45,7 @@ class Test_ELBv2_Service:
 
     # Test ELBv2 Describe Load Balancers
     @mock_aws
-    def test__describe_load_balancers__(self):
+    def test_describe_load_balancers(self):
         conn = client("elbv2", region_name=AWS_REGION_EU_WEST_1)
         ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
 
@@ -76,14 +76,35 @@ class Test_ELBv2_Service:
         )
         elbv2 = ELBv2(aws_provider)
         assert len(elbv2.loadbalancersv2) == 1
-        assert elbv2.loadbalancersv2[0].name == "my-lb"
-        assert elbv2.loadbalancersv2[0].region == AWS_REGION_EU_WEST_1
-        assert elbv2.loadbalancersv2[0].scheme == "internal"
-        assert elbv2.loadbalancersv2[0].arn == lb["LoadBalancerArn"]
+        assert lb["LoadBalancerArn"] in elbv2.loadbalancersv2.keys()
+        assert elbv2.loadbalancersv2[lb["LoadBalancerArn"]].name == "my-lb"
+        assert (
+            elbv2.loadbalancersv2[lb["LoadBalancerArn"]].region == AWS_REGION_EU_WEST_1
+        )
+        assert elbv2.loadbalancersv2[lb["LoadBalancerArn"]].scheme == "internal"
+        assert elbv2.loadbalancersv2[lb["LoadBalancerArn"]].type == "application"
+        assert elbv2.loadbalancersv2[lb["LoadBalancerArn"]].listeners == {}
+        assert (
+            elbv2.loadbalancersv2[lb["LoadBalancerArn"]].dns
+            == "my-lb-1.eu-west-1.elb.amazonaws.com"
+        )
+        assert len(elbv2.loadbalancersv2[lb["LoadBalancerArn"]].availability_zones) == 2
+        assert (
+            elbv2.loadbalancersv2[lb["LoadBalancerArn"]].availability_zones[
+                AWS_REGION_EU_WEST_1_AZA
+            ]
+            == subnet1.id
+        )
+        assert (
+            elbv2.loadbalancersv2[lb["LoadBalancerArn"]].availability_zones[
+                AWS_REGION_EU_WEST_1_AZB
+            ]
+            == subnet2.id
+        )
 
     # Test ELBv2 Describe Listeners
     @mock_aws
-    def test__describe_listeners__(self):
+    def test_describe_listeners(self):
         conn = client("elbv2", region_name=AWS_REGION_EU_WEST_1)
         ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
 
@@ -109,7 +130,7 @@ class Test_ELBv2_Service:
             Scheme="internal",
         )["LoadBalancers"][0]
 
-        conn.create_listener(
+        listener_arn = conn.create_listener(
             LoadBalancerArn=lb["LoadBalancerArn"],
             Protocol="HTTP",
             Port=443,
@@ -123,19 +144,38 @@ class Test_ELBv2_Service:
                     },
                 }
             ],
-        )
+        )["Listeners"][0]["ListenerArn"]
         # ELBv2 client for this test class
         aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
         elbv2 = ELBv2(aws_provider)
-        assert len(elbv2.loadbalancersv2[0].listeners) == 1
-        assert elbv2.loadbalancersv2[0].listeners[0].protocol == "HTTP"
-        assert elbv2.loadbalancersv2[0].listeners[0].port == 443
+        assert len(elbv2.loadbalancersv2[lb["LoadBalancerArn"]].listeners) == 1
+        assert listener_arn in elbv2.loadbalancersv2[lb["LoadBalancerArn"]].listeners
+        assert (
+            elbv2.loadbalancersv2[lb["LoadBalancerArn"]].listeners[listener_arn].region
+            == AWS_REGION_EU_WEST_1
+        )
+        assert (
+            elbv2.loadbalancersv2[lb["LoadBalancerArn"]]
+            .listeners[listener_arn]
+            .protocol
+            == "HTTP"
+        )
+        assert (
+            elbv2.loadbalancersv2[lb["LoadBalancerArn"]].listeners[listener_arn].port
+            == 443
+        )
+        assert (
+            elbv2.loadbalancersv2[lb["LoadBalancerArn"]]
+            .listeners[listener_arn]
+            .ssl_policy
+            == "ELBSecurityPolicy-2016-08"
+        )
 
     # Test ELBv2 Describe Load Balancers Attributes
     @mock_aws
-    def test__describe_load_balancer_attributes__(self):
+    def test_describe_load_balancer_attributes(self):
         conn = client("elbv2", region_name=AWS_REGION_EU_WEST_1)
         ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
 
@@ -179,14 +219,22 @@ class Test_ELBv2_Service:
         )
         elbv2 = ELBv2(aws_provider)
         assert len(elbv2.loadbalancersv2) == 1
-        assert elbv2.loadbalancersv2[0].desync_mitigation_mode == "defensive"
-        assert elbv2.loadbalancersv2[0].access_logs == "true"
-        assert elbv2.loadbalancersv2[0].deletion_protection == "true"
-        assert elbv2.loadbalancersv2[0].drop_invalid_header_fields == "false"
+        assert (
+            elbv2.loadbalancersv2[lb["LoadBalancerArn"]].desync_mitigation_mode
+            == "defensive"
+        )
+        assert elbv2.loadbalancersv2[lb["LoadBalancerArn"]].access_logs == "true"
+        assert (
+            elbv2.loadbalancersv2[lb["LoadBalancerArn"]].deletion_protection == "true"
+        )
+        assert (
+            elbv2.loadbalancersv2[lb["LoadBalancerArn"]].drop_invalid_header_fields
+            == "false"
+        )
 
     # Test ELBv2 Describe Load Balancers Attributes
     @mock_aws
-    def test__describe_rules__(self):
+    def test_describe_rules(self):
         conn = client("elbv2", region_name=AWS_REGION_EU_WEST_1)
         ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
 
@@ -222,15 +270,73 @@ class Test_ELBv2_Service:
                 },
             }
         ]
-        conn.create_listener(
+        listener_arn = conn.create_listener(
             LoadBalancerArn=lb["LoadBalancerArn"],
             Protocol="HTTP",
             DefaultActions=actions,
-        )
+        )["Listeners"][0]["ListenerArn"]
         # ELBv2 client for this test class
         aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
         elbv2 = ELBv2(aws_provider)
         assert len(elbv2.loadbalancersv2) == 1
-        assert elbv2.loadbalancersv2[0].listeners[0].rules[0].actions == actions
+        assert (
+            elbv2.loadbalancersv2[lb["LoadBalancerArn"]]
+            .listeners[listener_arn]
+            .rules[0]
+            .actions
+            == actions
+        )
+
+    # Test ELBv2 Describe Tags
+    @mock_aws
+    def test_describe_tags(self):
+        conn = client("elbv2", region_name=AWS_REGION_EU_WEST_1)
+        ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
+
+        security_group = ec2.create_security_group(
+            GroupName="a-security-group", Description="First One"
+        )
+        vpc = ec2.create_vpc(CidrBlock="172.28.7.0/24", InstanceTenancy="default")
+        subnet1 = ec2.create_subnet(
+            VpcId=vpc.id,
+            CidrBlock="172.28.7.192/26",
+            AvailabilityZone=AWS_REGION_EU_WEST_1_AZA,
+        )
+        subnet2 = ec2.create_subnet(
+            VpcId=vpc.id,
+            CidrBlock="172.28.7.0/26",
+            AvailabilityZone=AWS_REGION_EU_WEST_1_AZB,
+        )
+
+        lb = conn.create_load_balancer(
+            Name="my-lb",
+            Subnets=[subnet1.id, subnet2.id],
+            SecurityGroups=[security_group.id],
+            Scheme="internal",
+        )["LoadBalancers"][0]
+
+        conn.add_tags(
+            ResourceArns=[lb["LoadBalancerArn"]],
+            Tags=[
+                {"Key": "Name", "Value": "my-lb"},
+                {"Key": "Environment", "Value": "dev"},
+            ],
+        )
+
+        # ELBv2 client for this test class
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        )
+
+        elbv2 = ELBv2(aws_provider)
+
+        assert len(elbv2.loadbalancersv2) == 1
+        assert len(elbv2.loadbalancersv2[lb["LoadBalancerArn"]].tags) == 2
+        assert elbv2.loadbalancersv2[lb["LoadBalancerArn"]].tags[0]["Key"] == "Name"
+        assert elbv2.loadbalancersv2[lb["LoadBalancerArn"]].tags[0]["Value"] == "my-lb"
+        assert (
+            elbv2.loadbalancersv2[lb["LoadBalancerArn"]].tags[1]["Key"] == "Environment"
+        )
+        assert elbv2.loadbalancersv2[lb["LoadBalancerArn"]].tags[1]["Value"] == "dev"

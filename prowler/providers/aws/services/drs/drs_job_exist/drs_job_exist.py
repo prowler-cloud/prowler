@@ -11,9 +11,7 @@ class drs_job_exist(Check):
             report.status_extended = "DRS is not enabled for this region."
             report.region = drs.region
             report.resource_tags = []
-            report.resource_arn = drs_client.__get_recovery_job_arn_template__(
-                drs.region
-            )
+            report.resource_arn = drs_client._get_recovery_job_arn_template(drs.region)
             report.resource_id = drs_client.audited_account
             if drs.status == "ENABLED":
                 report.status_extended = "DRS is enabled for this region without jobs."

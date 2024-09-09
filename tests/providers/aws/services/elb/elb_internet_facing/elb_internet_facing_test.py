@@ -89,6 +89,7 @@ class Test_elb_request_smugling:
             assert result[0].resource_id == "my-lb"
             assert result[0].resource_arn == elb_arn
             assert result[0].region == AWS_REGION_EU_WEST_1
+            assert result[0].resource_tags == []
 
     @mock_aws
     def test_elb_with_deletion_protection(self):
@@ -139,3 +140,4 @@ class Test_elb_request_smugling:
             assert result[0].resource_id == "my-lb"
             assert result[0].resource_arn == elb_arn
             assert result[0].region == AWS_REGION_EU_WEST_1
+            assert result[0].resource_tags == []

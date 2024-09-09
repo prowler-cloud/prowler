@@ -7,97 +7,155 @@ Mutelist option works along with other options and will modify the output in the
 - CSV: `muted` is `True`. The field `status` will keep the original status, `MANUAL`, `PASS` or `FAIL`, of the finding.
 
 
-You can use `-w`/`--mutelist-file` with the path of your mutelist yaml file:
+## How the Mutelist Works
+
+The **Mutelist** uses both "AND" and "OR" logic to determine which resources, checks, regions, and tags should be muted. For each check, the Mutelist evaluates whether the account, region, and resource match the specified criteria using "AND" logic. If tags are specified, the Mutelist can apply either "AND" or "OR" logic.
+
+If any of the criteria do not match, the check is not muted.
+
+???+ note
+    Remember that mutelist can be used with regular expressions.
+
+## Mutelist Specification
+
+???+ note
+    - For Azure provider, the Account ID is the Subscription Name and the Region is the Location.
+    - For GCP provider, the Account ID is the Project ID and the Region is the Zone.
+    - For Kubernetes provider, the Account ID is the Cluster Name and the Region is the Namespace.
+
+The Mutelist file uses the [YAML](https://en.wikipedia.org/wiki/YAML) format with the following syntax:
+
+```yaml
+### Account, Check and/or Region can be * to apply for all the cases.
+### Resources and tags are lists that can have either Regex or Keywords.
+### Tags is an optional list that matches on tuples of 'key=value' and are "ANDed" together.
+### Use an alternation Regex to match one of multiple tags with "ORed" logic.
+### For each check you can except Accounts, Regions, Resources and/or Tags.
+###########################  MUTELIST EXAMPLE  ###########################
+Mutelist:
+  Accounts:
+    "123456789012":
+      Checks:
+        "iam_user_hardware_mfa_enabled":
+          Regions:
+            - "us-east-1"
+          Resources:
+            - "user-1"           # Will mute user-1 in check iam_user_hardware_mfa_enabled
+            - "user-2"           # Will mute user-2 in check iam_user_hardware_mfa_enabled
+        "ec2_*":
+          Regions:
+            - "*"
+          Resources:
+            - "*"                 # Will mute every EC2 check in every account and region
+        "*":
+          Regions:
+            - "*"
+          Resources:
+            - "test"
+          Tags:
+            - "test=test"         # Will mute every resource containing the string "test" and the tags 'test=test' and
+            - "project=test|project=stage" # either of ('project=test' OR project=stage) in account 123456789012 and every region
+        "*":
+            Regions:
+              - "*"
+            Resources:
+              - "test"
+            Tags:
+              - "test=test"
+              - "project=test"    # This will mute every resource containing the string "test" and BOTH tags at the same time.
+        "*":
+            Regions:
+              - "*"
+            Resources:
+              - "test"
+            Tags:                 # This will mute every resource containing the string "test" and the ones that contain EITHER the `test=test` OR `project=test` OR `project=dev`
+              - "test=test|project=(test|dev)"
+        "*":
+            Regions:
+              - "*"
+            Resources:
+              - "test"
+            Tags:
+              - "test=test"       # This will mute every resource containing the string "test" and the tags `test=test` and either `project=test` OR `project=stage` in every account and region.
+              - "project=test|project=stage"
+
+    "*":
+      Checks:
+        "s3_bucket_object_versioning":
+          Regions:
+            - "eu-west-1"
+            - "us-east-1"
+          Resources:
+            - "ci-logs"           # Will mute bucket "ci-logs" AND ALSO bucket "ci-logs-replica" in specified check and regions
+            - "logs"              # Will mute EVERY BUCKET containing the string "logs" in specified check and regions
+            - ".+-logs"           # Will mute all buckets containing the terms ci-logs, qa-logs, etc. in specified check and regions
+        "ecs_task_definitions_no_environment_secrets":
+          Regions:
+            - "*"
+          Resources:
+            - "*"
+          Exceptions:
+            Accounts:
+              - "0123456789012"
+            Regions:
+              - "eu-west-1"
+              - "eu-south-2"        # Will mute every resource in check ecs_task_definitions_no_environment_secrets except the ones in account 0123456789012 located in eu-south-2 or eu-west-1
+        "*":
+          Regions:
+            - "*"
+          Resources:
+            - "*"
+          Tags:
+            - "environment=dev"    # Will mute every resource containing the tag 'environment=dev' in every account and region
+
+    "123456789012":
+      Checks:
+        "*":
+          Regions:
+            - "*"
+          Resources:
+            - "*"
+          Exceptions:
+            Resources:
+              - "test"
+            Tags:
+              - "environment=prod"   # Will mute every resource except in account 123456789012 except the ones containing the string "test" and tag environment=prod
+
+    "*":
+      Checks:
+        "ec2_*":
+          Regions:
+            - "*"
+          Resources:
+            - "test-resource" # Will mute the resource "test-resource" in all accounts and regions for whatever check from the EC2 service
+```
+
+### Account, Check, Region, Resource, and Tag
+
+| Field | Description | Logic |
+|----------|----------|----------|
+| `account_id`    | Use `*` to apply the mutelist to all accounts.    | `ANDed`    |
+| `check_name`    | The name of the Prowler check. Use `*` to apply the mutelist to all checks, or `service_*` to apply it to all service's checks.    | `ANDed`    |
+| `region`    | The region identifier. Use `*` to apply the mutelist to all regions.    | `ANDed`    |
+| `resource`    | The resource identifier. Use `*` to apply the mutelist to all resources.    | `ANDed`    |
+| `tag`    | The tag value.    | `ORed`    |
+
+
+## How to Use the Mutelist
+
+To use the Mutelist, you need to specify the path to the Mutelist YAML file using the `-w` or `--mutelist-file` option when running Prowler:
+
 ```
 prowler <provider> -w mutelist.yaml
 ```
 
-## Mutelist YAML File Syntax
+Replace `<provider>` with the appropriate provider name.
 
-???+ note
-    For Azure provider, the Account ID is the Subscription Name and the Region is the Location.
+## Considerations
 
-???+ note
-    For GCP provider, the Account ID is the Project ID and the Region is the Zone.
+- The Mutelist can be used in combination with other Prowler options, such as the `--service` or `--checks` option, to further customize the scanning process.
+- Make sure to review and update the Mutelist regularly to ensure it reflects the desired exclusions and remains up to date with your infrastructure.
 
-???+ note
-    For Kubernetes provider, the Account ID is the Cluster Name and the Region is the Namespace.
-
-The Mutelist file is a YAML file with the following syntax:
-
-```yaml
-    ### Account, Check and/or Region can be * to apply for all the cases.
-    ### Resources and tags are lists that can have either Regex or Keywords.
-    ### Tags is an optional list that matches on tuples of 'key=value' and are "ANDed" together.
-    ### Use an alternation Regex to match one of multiple tags with "ORed" logic.
-    ### For each check you can except Accounts, Regions, Resources and/or Tags.
-    ###########################  MUTELIST EXAMPLE  ###########################
-    Mutelist:
-      Accounts:
-        "123456789012":
-          Checks:
-            "iam_user_hardware_mfa_enabled":
-              Regions:
-                - "us-east-1"
-              Resources:
-                - "user-1"           # Will ignore user-1 in check iam_user_hardware_mfa_enabled
-                - "user-2"           # Will ignore user-2 in check iam_user_hardware_mfa_enabled
-            "ec2_*":
-              Regions:
-                - "*"
-              Resources:
-                - "*"                 # Will ignore every EC2 check in every account and region
-            "*":
-              Regions:
-                - "*"
-              Resources:
-                - "test"
-              Tags:
-                - "test=test"         # Will ignore every resource containing the string "test" and the tags 'test=test' and
-                - "project=test|project=stage" # either of ('project=test' OR project=stage) in account 123456789012 and every region
-
-        "*":
-          Checks:
-            "s3_bucket_object_versioning":
-              Regions:
-                - "eu-west-1"
-                - "us-east-1"
-              Resources:
-                - "ci-logs"           # Will ignore bucket "ci-logs" AND ALSO bucket "ci-logs-replica" in specified check and regions
-                - "logs"              # Will ignore EVERY BUCKET containing the string "logs" in specified check and regions
-                - ".+-logs"           # Will ignore all buckets containing the terms ci-logs, qa-logs, etc. in specified check and regions
-            "ecs_task_definitions_no_environment_secrets":
-              Regions:
-                - "*"
-              Resources:
-                - "*"
-              Exceptions:
-                Accounts:
-                  - "0123456789012"
-                Regions:
-                  - "eu-west-1"
-                  - "eu-south-2"        # Will ignore every resource in check ecs_task_definitions_no_environment_secrets except the ones in account 0123456789012 located in eu-south-2 or eu-west-1
-            "*":
-              Regions:
-                - "*"
-              Resources:
-                - "*"
-              Tags:
-                - "environment=dev"    # Will ignore every resource containing the tag 'environment=dev' in every account and region
-
-        "123456789012":
-          Checks:
-            "*":
-              Regions:
-                - "*"
-              Resources:
-                - "*"
-              Exceptions:
-                Resources:
-                  - "test"
-                Tags:
-                  - "environment=prod"   # Will ignore every resource except in account 123456789012 except the ones containing the string "test" and tag environment=prod
-```
 
 ## AWS Mutelist
 ### Mute specific AWS regions

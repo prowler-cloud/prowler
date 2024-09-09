@@ -14,11 +14,11 @@ class CloudFront(AWSService):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider, global_service=True)
         self.distributions = {}
-        self.__list_distributions__(self.client, self.region)
-        self.__get_distribution_config__(self.client, self.distributions, self.region)
-        self.__list_tags_for_resource__(self.client, self.distributions, self.region)
+        self._list_distributions(self.client, self.region)
+        self._get_distribution_config(self.client, self.distributions, self.region)
+        self._list_tags_for_resource(self.client, self.distributions, self.region)
 
-    def __list_distributions__(self, client, region) -> dict:
+    def _list_distributions(self, client, region) -> dict:
         logger.info("CloudFront - Listing Distributions...")
         try:
             list_ditributions_paginator = client.get_paginator("list_distributions")
@@ -44,7 +44,7 @@ class CloudFront(AWSService):
                 f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_distribution_config__(self, client, distributions, region) -> dict:
+    def _get_distribution_config(self, client, distributions, region) -> dict:
         logger.info("CloudFront - Getting Distributions...")
         try:
             for distribution_id in distributions.keys():
@@ -87,7 +87,7 @@ class CloudFront(AWSService):
                 f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __list_tags_for_resource__(self, client, distributions, region):
+    def _list_tags_for_resource(self, client, distributions, region):
         logger.info("CloudFront - List Tags...")
         try:
             for distribution in distributions.values():

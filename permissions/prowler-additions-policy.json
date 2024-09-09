@@ -18,6 +18,7 @@
         "ds:List*",
         "dynamodb:GetResourcePolicy",
         "ec2:GetEbsEncryptionByDefault",
+        "ec2:GetSnapshotBlockPublicAccessState",
         "ec2:GetInstanceMetadataDefaults",
         "ecr:Describe*",
         "ecr:GetRegistryScanningConfiguration",

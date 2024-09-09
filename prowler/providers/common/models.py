@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from os import makedirs
 from os.path import isdir
 
@@ -55,3 +56,16 @@ class ProviderOutputOptions:
             if not isdir(arguments.output_directory + "/compliance"):
                 if arguments.output_formats:
                     makedirs(arguments.output_directory + "/compliance", exist_ok=True)
+
+
+@dataclass
+class Connection:
+    """
+    Represents a test connection object.
+    Attributes:
+        is_connected (bool): Indicates whether the connection is established or not.
+        error (Exception): The exception object if an error occurred during the connection test.
+    """
+
+    is_connected: bool = False
+    error: Exception = None

@@ -17,7 +17,7 @@
     "Code": {
       "CLI": "aws elbv2 modify-load-balancer-attributes --load-balancer-arn <alb arn> --attributes Key=routing.http.desync_mitigation_mode,Value=<defensive/strictest>",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/elb-controls.html#elb-12",
       "Terraform": ""
     },
     "Recommendation": {

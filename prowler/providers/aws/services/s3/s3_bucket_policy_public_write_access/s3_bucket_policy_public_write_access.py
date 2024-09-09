@@ -1,5 +1,5 @@
-from prowler.lib.persistence import mklist
 from prowler.lib.check.models import Check, Check_Report_AWS
+from prowler.lib.persistence import mklist
 from prowler.providers.aws.services.s3.s3_client import s3_client
 from prowler.providers.aws.services.s3.s3control_client import s3control_client
 
@@ -7,11 +7,11 @@ from prowler.providers.aws.services.s3.s3control_client import s3control_client
 class s3_bucket_policy_public_write_access(Check):
     def execute(self):
         findings = mklist()
-        for bucket in s3_client.buckets:
+        for arn, bucket in s3_client.buckets.items():
             report = Check_Report_AWS(self.metadata())
             report.region = bucket.region
             report.resource_id = bucket.name
-            report.resource_arn = bucket.arn
+            report.resource_arn = arn
             report.resource_tags = bucket.tags
             # Check if bucket policy allow public write access
             if not bucket.policy:

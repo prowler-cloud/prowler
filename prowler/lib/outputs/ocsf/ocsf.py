@@ -20,6 +20,7 @@ from py_ocsf_models.objects.resource_details import ResourceDetails
 from prowler.lib.logger import logger
 from prowler.lib.outputs.finding import Finding
 from prowler.lib.outputs.output import Output
+from prowler.lib.outputs.utils import unroll_dict_to_list
 
 
 class OCSF(Output):
@@ -97,12 +98,7 @@ class OCSF(Output):
                     risk_details=finding.risk,
                     resources=[
                         ResourceDetails(
-                            # TODO: Check labels for other providers
-                            labels=(
-                                finding.resource_tags.split(",")
-                                if finding.resource_tags
-                                else []
-                            ),
+                            labels=unroll_dict_to_list(finding.resource_tags),
                             name=finding.resource_name,
                             uid=finding.resource_uid,
                             group=Group(name=finding.service_name),
@@ -148,7 +144,7 @@ class OCSF(Output):
                             type_id=cloud_account_type.value,
                             type=cloud_account_type.name,
                             uid=finding.account_uid,
-                            labels=finding.account_tags,
+                            labels=unroll_dict_to_list(finding.account_tags),
                         ),
                         org=Organization(
                             uid=finding.account_organization_uid,

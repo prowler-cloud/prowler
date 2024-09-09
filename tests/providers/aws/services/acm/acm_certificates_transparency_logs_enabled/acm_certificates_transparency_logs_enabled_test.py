@@ -26,11 +26,12 @@ class Test_acm_certificates_transparency_logs_enabled:
 
             assert len(result) == 0
 
-    def test_acm_certificate_with_logging(self):
+    def test_unused_acm_certificate(self):
         certificate_id = str(uuid.uuid4())
         certificate_arn = f"arn:aws:acm:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:certificate/{certificate_id}"
         certificate_name = "test-certificate.com"
         certificate_type = "AMAZON_ISSUED"
+        certificate_key_algorithm = "RSA-2048"
 
         acm_client = mock.MagicMock
         acm_client.certificates = [
@@ -39,6 +40,48 @@ class Test_acm_certificates_transparency_logs_enabled:
                 id=certificate_id,
                 name=certificate_name,
                 type=certificate_type,
+                key_algorithm=certificate_key_algorithm,
+                expiration_days=365,
+                transparency_logging=True,
+                in_use=False,
+                region=AWS_REGION,
+            )
+        ]
+
+        acm_client.provider = mock.MagicMock(scan_unused_services=False)
+
+        with mock.patch(
+            "prowler.providers.aws.services.acm.acm_service.ACM",
+            new=acm_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.acm.acm_client.acm_client",
+            new=acm_client,
+        ):
+            # Test Check
+            from prowler.providers.aws.services.acm.acm_certificates_transparency_logs_enabled.acm_certificates_transparency_logs_enabled import (
+                acm_certificates_transparency_logs_enabled,
+            )
+
+            check = acm_certificates_transparency_logs_enabled()
+            result = check.execute()
+
+            assert len(result) == 0
+
+    def test_acm_certificate_with_logging(self):
+        certificate_id = str(uuid.uuid4())
+        certificate_arn = f"arn:aws:acm:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:certificate/{certificate_id}"
+        certificate_name = "test-certificate.com"
+        certificate_type = "AMAZON_ISSUED"
+        certificate_key_algorithm = "RSA-2048"
+
+        acm_client = mock.MagicMock
+        acm_client.certificates = [
+            Certificate(
+                arn=certificate_arn,
+                id=certificate_id,
+                name=certificate_name,
+                type=certificate_type,
+                key_algorithm=certificate_key_algorithm,
                 expiration_days=365,
                 transparency_logging=True,
                 in_use=True,
@@ -74,6 +117,7 @@ class Test_acm_certificates_transparency_logs_enabled:
         certificate_arn = f"arn:aws:acm:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:certificate/{certificate_id}"
         certificate_name = "test-certificate.com"
         certificate_type = "AMAZON_ISSUED"
+        certificate_key_algorithm = "RSA-2048"
 
         acm_client = mock.MagicMock
         acm_client.certificates = [
@@ -82,6 +126,7 @@ class Test_acm_certificates_transparency_logs_enabled:
                 id=certificate_id,
                 name=certificate_name,
                 type=certificate_type,
+                key_algorithm=certificate_key_algorithm,
                 expiration_days=365,
                 transparency_logging=False,
                 in_use=True,
@@ -116,6 +161,7 @@ class Test_acm_certificates_transparency_logs_enabled:
         certificate_id = str(uuid.uuid4())
         certificate_arn = f"arn:aws:acm:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:certificate/{certificate_id}"
         certificate_name = "test-certificate.com"
+        certificate_key_algorithm = "RSA-2048"
         certificate_type = "IMPORTED"
 
         acm_client = mock.MagicMock
@@ -125,6 +171,7 @@ class Test_acm_certificates_transparency_logs_enabled:
                 id=certificate_id,
                 name=certificate_name,
                 type=certificate_type,
+                key_algorithm=certificate_key_algorithm,
                 expiration_days=365,
                 transparency_logging=True,
                 in_use=True,

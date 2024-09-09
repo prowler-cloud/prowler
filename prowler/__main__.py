@@ -6,7 +6,6 @@ from os import environ
 
 from colorama import Fore, Style
 
-from prowler.lib.utils.gc import force_gc
 from prowler.config.config import (
     csv_file_suffix,
     get_available_compliance_frameworks,
@@ -14,11 +13,8 @@ from prowler.config.config import (
     json_asff_file_suffix,
     json_ocsf_file_suffix,
 )
-from prowler.lib.persistence import mklist
 from prowler.lib.banner import print_banner
 from prowler.lib.check.check import (
-    bulk_load_checks_metadata,
-    bulk_load_compliance_frameworks,
     exclude_checks_to_run,
     exclude_services_to_run,
     execute_checks,
@@ -38,10 +34,12 @@ from prowler.lib.check.check import (
 )
 from prowler.lib.check.checks_loader import load_checks_to_execute
 from prowler.lib.check.compliance import update_checks_metadata_with_compliance
+from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.check.custom_checks_metadata import (
     parse_custom_checks_metadata_file,
     update_checks_metadata,
 )
+from prowler.lib.check.models import CheckMetadata
 from prowler.lib.cli.parser import ProwlerArgumentParser
 from prowler.lib.logger import logger, set_logging_config
 from prowler.lib.outputs.asff.asff import ASFF
@@ -65,9 +63,11 @@ from prowler.lib.outputs.csv.csv import CSV
 from prowler.lib.outputs.finding import Finding
 from prowler.lib.outputs.html.html import HTML
 from prowler.lib.outputs.ocsf.ocsf import OCSF
-from prowler.lib.outputs.outputs import extract_findings_statistics, GeneratedOutputs
+from prowler.lib.outputs.outputs import GeneratedOutputs, extract_findings_statistics
 from prowler.lib.outputs.slack.slack import Slack
 from prowler.lib.outputs.summary_table import display_summary_table
+from prowler.lib.persistence import mklist
+from prowler.lib.utils.gc import force_gc
 from prowler.providers.aws.lib.s3.s3 import S3
 from prowler.providers.aws.lib.security_hub.security_hub import SecurityHub
 from prowler.providers.common.provider import Provider
@@ -133,7 +133,7 @@ def prowler():
 
     # Load checks metadata
     logger.debug("Loading checks metadata from .metadata.json files")
-    bulk_checks_metadata = bulk_load_checks_metadata(provider)
+    bulk_checks_metadata = CheckMetadata.get_bulk(provider)
 
     if args.list_categories:
         print_categories(list_categories(bulk_checks_metadata))
@@ -143,7 +143,7 @@ def prowler():
     # Load compliance frameworks
     logger.debug("Loading compliance frameworks from .json files")
 
-    bulk_compliance_frameworks = bulk_load_compliance_frameworks(provider)
+    bulk_compliance_frameworks = Compliance.get_bulk(provider)
     # Complete checks metadata with the compliance framework specification
     bulk_checks_metadata = update_checks_metadata_with_compliance(
         bulk_compliance_frameworks, bulk_checks_metadata
@@ -309,7 +309,9 @@ def prowler():
     for finding in findings:
         finding_outputs.append(Finding.generate_output(global_provider, finding))
 
-    generated_outputs = GeneratedOutputs(args.output_bucket, args.output_bucket_no_assume)
+    generated_outputs = GeneratedOutputs(
+        args.output_bucket, args.output_bucket_no_assume
+    )
 
     if args.output_formats:
         for mode in args.output_formats:
@@ -611,7 +613,6 @@ def prowler():
                 aws_partition=global_provider.identity.partition,
                 aws_session=global_provider.session.current_session,
                 findings=asff_output.data,
-                status=global_provider.output_options.status,
                 send_only_fails=global_provider.output_options.send_sh_only_fails,
                 aws_security_hub_available_regions=security_hub_regions,
             )

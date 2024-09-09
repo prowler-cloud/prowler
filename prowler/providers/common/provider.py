@@ -136,6 +136,16 @@ class Provider(ABC):
         """
         raise NotImplementedError()
 
+    # TODO: uncomment this once all the providers have implemented the test_connection method
+    # @abstractmethod
+    def test_connection(self) -> Any:
+        """
+        test_connection tests the connection to the provider.
+
+        This method needs to be created in each provider.
+        """
+        raise NotImplementedError()
+
     # TODO: probably this won't be here since we want to do the arguments validation during the parse()
     def validate_arguments(self) -> None:
         """
@@ -145,6 +155,7 @@ class Provider(ABC):
         """
         raise NotImplementedError()
 
+    # TODO: review this since it is only used for AWS
     def get_checks_to_execute_by_audit_resources(self) -> set:
         """
         get_checks_to_execute_by_audit_resources returns a set of checks based on the input resources to scan.
@@ -167,8 +178,55 @@ class Provider(ABC):
             provider_class = getattr(
                 import_module(provider_class_path), provider_class_name
             )
+
             if not isinstance(Provider._global, provider_class):
-                global_provider = provider_class(arguments)
+                if "aws" in provider_class_name.lower():
+                    global_provider = provider_class(
+                        arguments.aws_retries_max_attempts,
+                        arguments.role,
+                        arguments.session_duration,
+                        arguments.external_id,
+                        arguments.role_session_name,
+                        arguments.mfa,
+                        arguments.profile,
+                        set(arguments.region) if arguments.region else None,
+                        arguments.organizations_role,
+                        arguments.scan_unused_services,
+                        arguments.resource_tag,
+                        arguments.resource_arn,
+                        arguments.config_file,
+                        arguments.fixer_config,
+                    )
+                elif "azure" in provider_class_name.lower():
+                    global_provider = provider_class(
+                        arguments.az_cli_auth,
+                        arguments.sp_env_auth,
+                        arguments.browser_auth,
+                        arguments.managed_identity_auth,
+                        arguments.tenant_id,
+                        arguments.azure_region,
+                        arguments.subscription_id,
+                        arguments.config_file,
+                        arguments.fixer_config,
+                    )
+                elif "gcp" in provider_class_name.lower():
+                    global_provider = provider_class(
+                        arguments.project_id,
+                        arguments.excluded_project_id,
+                        arguments.credentials_file,
+                        arguments.impersonate_service_account,
+                        arguments.list_project_id,
+                        arguments.config_file,
+                        arguments.fixer_config,
+                    )
+                elif "kubernetes" in provider_class_name.lower():
+                    global_provider = provider_class(
+                        arguments.kubeconfig_file,
+                        arguments.context,
+                        arguments.namespace,
+                        arguments.config_file,
+                        arguments.fixer_config,
+                    )
 
             Provider._global = global_provider
         except TypeError as error:

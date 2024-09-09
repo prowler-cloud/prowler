@@ -41,6 +41,21 @@ aws:
     [
         "amazon-elb"
     ]
+  # aws.ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports
+  ec2_sg_high_risk_ports:
+    [
+        25,
+        110,
+        135,
+        143,
+        445,
+        3000,
+        4333,
+        5000,
+        5500,
+        8080,
+        8088,
+    ]
 
   # AWS VPC Configuration (vpc_endpoint_connections_trust_boundaries, vpc_endpoint_services_allowed_principals_trust_boundaries)
   # Single account environment: No action required. The AWS account number will be automatically added by the checks.
@@ -271,6 +286,48 @@ aws:
   # AWS ACM Configuration
   # aws.acm_certificates_expiration_check
   days_to_expire_threshold: 7
+  # aws.acm_certificates_rsa_key_length
+  insecure_key_algorithms:
+    [
+      "RSA-1024",
+    ]
+
+  # AWS EKS Configuration
+  # aws.eks_control_plane_logging_all_types_enabled
+  # EKS control plane logging types that must be enabled
+  eks_required_log_types:
+    [
+        "api",
+        "audit",
+        "authenticator",
+        "controllerManager",
+        "scheduler",
+    ]
+  # aws.eks_cluster_uses_a_supported_version
+  # EKS clusters must be version 1.28 or higher
+  eks_cluster_oldest_version_supported: "1.28"
+
+  # AWS CodeBuild Configuration
+  # aws.codebuild_project_no_secrets_in_variables
+  # CodeBuild sensitive variables that are excluded from the check
+  excluded_sensitive_environment_variables:
+    [
+
+    ]
+
+  # AWS ELB Configuration
+  # aws.elb_is_in_multiple_az
+  # Minimum number of Availability Zones that an CLB must be in
+  elb_min_azs: 2
+
+  # AWS ELBv2 Configuration
+  # aws.elbv2_is_in_multiple_az
+  # Minimum number of Availability Zones that an ELBv2 must be in
+  elbv2_min_azs: 2
+
+  # Known secrets to ignore on detection
+  # this will include a list of regex patterns to ignore on detection
+  secrets_ignore_patterns: []
 
 # Azure Configuration
 azure:

@@ -68,7 +68,7 @@ def mock_generate_regional_clients(provider, service):
 )
 class Test_Lambda_Service:
     # Test Lambda Client
-    def test__get_client__(self):
+    def test_get_client(self):
         awslambda = Lambda(set_mocked_aws_provider([AWS_REGION_US_EAST_1]))
         assert (
             awslambda.regional_clients[AWS_REGION_EU_WEST_1].__class__.__name__
@@ -86,7 +86,7 @@ class Test_Lambda_Service:
         assert awslambda.service == "lambda"
 
     @mock_aws
-    def test__list_functions__(self):
+    def test_list_functions(self):
         # Create IAM Lambda Role
         iam_client = client("iam", region_name=AWS_REGION_EU_WEST_1)
         iam_role = iam_client.create_role(
@@ -220,6 +220,7 @@ class Test_Lambda_Service:
             assert awslambda.functions[
                 lambda_arn_1
             ].url_config.cors_config.allow_origins == ["*"]
+            assert awslambda.functions[lambda_arn_1].vpc_id == "vpc-123abc"
 
             assert awslambda.functions[lambda_arn_1].tags == [{"test": "test"}]
 
@@ -236,7 +237,7 @@ class Test_Lambda_Service:
 
             # Lambda Code
             with tempfile.TemporaryDirectory() as tmp_dir_name:
-                for function, function_code in awslambda.__get_function_code__():
+                for function, function_code in awslambda._get_function_code():
                     if function.arn == lambda_arn_1 or function.arn == lambda_arn_2:
                         assert search(
                             f"s3://awslambda-{function.region}-tasks.s3-{function.region}.amazonaws.com",

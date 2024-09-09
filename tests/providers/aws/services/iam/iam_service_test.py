@@ -82,7 +82,7 @@ class Test_IAM_Service:
 
     # Test IAM Client
     @mock_aws
-    def test__get_client__(self):
+    def test_get_client(self):
         # IAM client for this test class
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         iam = IAM(aws_provider)
@@ -99,7 +99,7 @@ class Test_IAM_Service:
     # Test IAM Get Credential Report
     @freeze_time(TEST_DATETIME)
     @mock_aws
-    def test__get_credential_report__(self):
+    def test_get_credential_report(self):
         # Generate IAM Client
         iam_client = client("iam")
         # Create IAM User
@@ -265,7 +265,7 @@ class Test_IAM_Service:
 
     # Test IAM Get Roles
     @mock_aws
-    def test__get_roles__(self):
+    def test_get_roles(self):
         # Generate IAM Client
         iam_client = client("iam")
         # Create 2 IAM Roles
@@ -320,7 +320,7 @@ class Test_IAM_Service:
 
     # Test IAM Get Groups
     @mock_aws
-    def test__get_groups__(self):
+    def test_get_groups(self):
         # Generate IAM Client
         iam_client = client("iam")
         # Create 2 IAM Groups
@@ -338,7 +338,7 @@ class Test_IAM_Service:
 
     # Test IAM Get Users
     @mock_aws
-    def test__get_users__(self):
+    def test_get_users(self):
         # Generate IAM Client
         iam_client = client("iam")
         # Create 2 IAM Users
@@ -368,7 +368,7 @@ class Test_IAM_Service:
 
     # Test IAM Get Account Summary
     @mock_aws
-    def test__get_account_summary__(self):
+    def test_get_account_summary(self):
         # Generate IAM Client
         iam_client = client("iam")
         account_summary = iam_client.get_account_summary()["SummaryMap"]
@@ -381,7 +381,7 @@ class Test_IAM_Service:
 
     # Test IAM Get Password Policy
     @mock_aws
-    def test__get_password_policy__(self):
+    def test_get_password_policy(self):
         # Generate IAM Client
         iam_client = client("iam")
         # Update Password Policy
@@ -424,7 +424,7 @@ class Test_IAM_Service:
 
     # Test IAM List MFA Device
     @mock_aws
-    def test__list_mfa_devices__(self):
+    def test__list_mfa_devices_arn__(self):
         # Generate IAM Client
         iam_client = client("iam")
         # Generate IAM user
@@ -455,9 +455,36 @@ class Test_IAM_Service:
         )
         assert iam.users[0].mfa_devices[0].type == "mfa"
 
+    # Test IAM List MFA Device
+    @mock_aws
+    def test__list_mfa_devices_number__(self):
+        # Generate IAM Client
+        iam_client = client("iam")
+        # Generate IAM user
+        iam_client.create_user(
+            UserName="user1",
+        )
+        # Create Unknown MFA device
+        hardware_mfa_devide = "XXXXXXXXX"
+        iam_client.enable_mfa_device(
+            UserName="user1",
+            SerialNumber=hardware_mfa_devide,
+            AuthenticationCode1="123456",
+            AuthenticationCode2="123456",
+        )
+
+        # IAM client for this test class
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        iam = IAM(aws_provider)
+
+        assert len(iam.users) == 1
+        assert len(iam.users[0].mfa_devices) == 1
+        assert iam.users[0].mfa_devices[0].serial_number == hardware_mfa_devide
+        assert iam.users[0].mfa_devices[0].type == "hardware"
+
     # Test IAM List Virtual MFA Device
     @mock_aws
-    def test__list_virtual_mfa_devices__(self):
+    def test_list_virtual_mfa_devices(self):
         # Generate IAM Client
         iam_client = client("iam")
         # Generate IAM user
@@ -490,7 +517,7 @@ class Test_IAM_Service:
 
     # Test IAM Get Group Users
     @mock_aws
-    def test__get_group_users__(self):
+    def test_get_group_users(self):
         # Generate IAM Client
         iam_client = client("iam")
         # Generate IAM user
@@ -516,7 +543,7 @@ class Test_IAM_Service:
 
     # Test IAM List Attached Group Policies
     @mock_aws
-    def test__list_attached_group_policies__(self):
+    def test_list_attached_group_policies(self):
         # Generate IAM Client
         iam_client = client("iam")
         # Generate IAM user
@@ -565,7 +592,7 @@ class Test_IAM_Service:
 
     # Test IAM List Attached Role Policies
     @mock_aws(config={"iam": {"load_aws_managed_policies": True}})
-    def test__list_attached_role_policies__(self):
+    def test_list_attached_role_policies(self):
         iam = client("iam")
         role_name = "test"
         assume_role_policy_document = {
@@ -692,7 +719,7 @@ class Test_IAM_Service:
         )
 
     @mock_aws
-    def test___list_policies__(self):
+    def test__list_policies(self):
         iam_client = client("iam")
         policy_name = "policy1"
         policy_document = {
@@ -721,7 +748,7 @@ class Test_IAM_Service:
         assert custom_policies == 1
 
     @mock_aws
-    def test__list_policies_version__(self):
+    def test_list_policies_version(self):
         iam_client = client("iam")
         policy_name = "policy2"
         policy_document = {
@@ -748,7 +775,7 @@ class Test_IAM_Service:
 
     # Test IAM List SAML Providers
     @mock_aws
-    def test__list_saml_providers__(self):
+    def test_list_saml_providers(self):
         iam_client = client("iam")
         xml_template = r"""<EntityDescriptor
     xmlns="urn:oasis:names:tc:SAML:2.0:metadata"
@@ -792,7 +819,7 @@ nTTxU4a7x1naFxzYXK1iQ1vMARKMjDb19QEJIEJKZlDK4uS7yMlf1nFS
 
     # Test IAM User Inline Policy
     @mock_aws
-    def test__list_inline_user_policies__(self):
+    def test_list_inline_user_policies(self):
         # IAM Client
         iam_client = client("iam")
         # Create IAM User
@@ -835,7 +862,7 @@ nTTxU4a7x1naFxzYXK1iQ1vMARKMjDb19QEJIEJKZlDK4uS7yMlf1nFS
 
     # Test IAM Group Inline Policy
     @mock_aws
-    def test__list_inline_group_policies__(self):
+    def test_list_inline_group_policies(self):
         # IAM Client
         iam_client = client("iam")
         # Create IAM Group
@@ -877,7 +904,7 @@ nTTxU4a7x1naFxzYXK1iQ1vMARKMjDb19QEJIEJKZlDK4uS7yMlf1nFS
 
     # Test IAM Role Inline Policy
     @mock_aws
-    def test__list_inline_role_policies__(self):
+    def test_list_inline_role_policies(self):
         # IAM Client
         iam_client = client("iam")
         # Create IAM Role
@@ -923,7 +950,7 @@ nTTxU4a7x1naFxzYXK1iQ1vMARKMjDb19QEJIEJKZlDK4uS7yMlf1nFS
 
     # Test IAM List Attached Group Policies
     @mock_aws
-    def test__get_user_temporary_credentials_usage__(self):
+    def test_get_user_temporary_credentials_usage(self):
         # Generate IAM Client
         iam_client = client("iam")
         # Generate IAM user

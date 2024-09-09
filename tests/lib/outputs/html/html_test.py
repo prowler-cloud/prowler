@@ -3,7 +3,7 @@ from io import StringIO
 
 from mock import patch
 
-from prowler.config.config import timestamp
+from prowler.config.config import prowler_version, timestamp
 from prowler.lib.outputs.html.html import HTML
 from tests.lib.outputs.fixtures.fixtures import generate_finding_output
 from tests.providers.aws.utils import AWS_REGION_EU_WEST_1, set_mocked_aws_provider
@@ -14,10 +14,12 @@ from tests.providers.kubernetes.kubernetes_fixtures import (
 )
 
 html_stats = {
-    "total_pass": 0,
-    "total_fail": 1,
+    "total_pass": 25,
+    "total_muted_pass": 20,
+    "total_fail": 5,
+    "total_muted_fail": 5,
     "resources_count": 1,
-    "findings_count": 1,
+    "findings_count": 30,
 }
 pass_html_finding = """
                         <tr class="p-3 mb-2 bg-success-custom">
@@ -45,11 +47,15 @@ fail_html_finding = """
                             <td>eu-west-1</td>
                             <td>test-check-id</td>
                             <td>test-check-id</td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
+                            <td>test-resource-uid</td>
+                            <td>
+&#x2022;key1=value1
+
+&#x2022;key2=value2
+</td>
+                            <td>test-status-extended</td>
                             <td><p class="show-read-more">test-risk</p></td>
-                            <td><p class="show-read-more"></p> <a class="read-more" href=""><i class="fas fa-external-link-alt"></i></a></td>
+                            <td><p class="show-read-more">test-remediation-recommendation-text</p> <a class="read-more" href=""><i class="fas fa-external-link-alt"></i></a></td>
                             <td><p class="show-read-more">
 &#x2022;test-compliance: test-compliance
 </p></td>
@@ -276,7 +282,7 @@ def get_aws_html_header(args: list) -> str:
                 <li class="list-group-item">
                 <div class="row">
                     <div class="col-md-auto">
-                    <b>Version:</b> 4.2.4
+                    <b>Version:</b> {prowler_version}
                     </div>
                 </div>
                 </li>
@@ -296,13 +302,19 @@ def get_aws_html_header(args: list) -> str:
                 </div>
                 <ul class="list-group list-group-flush">
                     <li class="list-group-item">
-                        <b>Total Findings:</b> 1
+                        <b>Total Findings:</b> 30
                     </li>
                     <li class="list-group-item">
-                        <b>Passed:</b> 0
+                        <b>Passed:</b> 25
                     </li>
                     <li class="list-group-item">
-                        <b>Failed:</b> 1
+                        <b>Passed (Muted):</b> 20
+                    </li>
+                    <li class="list-group-item">
+                        <b>Failed:</b> 5
+                    </li>
+                    <li class="list-group-item">
+                        <b>Failed (Muted):</b> 5
                     </li>
                     <li class="list-group-item">
                         <b>Total Resources:</b> 1
@@ -421,7 +433,23 @@ html_footer = """
 
 class TestHTML:
     def test_transform_fail_finding(self):
-        findings = [generate_finding_output(status="FAIL")]
+        findings = [
+            generate_finding_output(
+                status="FAIL",
+                resource_tags={"key1": "value1", "key2": "value2"},
+                severity="high",
+                service_name="test-service",
+                region=AWS_REGION_EU_WEST_1,
+                check_id="test-check-id",
+                check_title="test-check-id",
+                resource_uid="test-resource-uid",
+                status_extended="test-status-extended",
+                risk="test-risk",
+                remediation_recommendation_text="test-remediation-recommendation-text",
+                compliance={"test-compliance": "test-compliance"},
+            )
+        ]
+
         html = HTML(findings)
         output_data = html.data[0]
         assert isinstance(output_data, str)

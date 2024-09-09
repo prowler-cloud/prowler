@@ -18,18 +18,18 @@ class Compute(GCPService):
         self.firewalls = []
         self.projects = []
         self.load_balancers = []
-        self.__get_url_maps__()
-        self.__describe_backend_service__()
-        self.__get_regions__()
-        self.__get_projects__()
-        self.__get_zones__()
-        self.__threading_call__(self.__get_instances__, self.zones)
-        self.__get_networks__()
-        self.__threading_call__(self.__get_subnetworks__, self.regions)
-        self.__get_firewalls__()
-        self.__threading_call__(self.__get_addresses__, self.regions)
+        self._get_url_maps()
+        self._describe_backend_service()
+        self._get_regions()
+        self._get_projects()
+        self._get_zones()
+        self.__threading_call__(self._get_instances, self.zones)
+        self._get_networks()
+        self.__threading_call__(self._get_subnetworks, self.regions)
+        self._get_firewalls()
+        self.__threading_call__(self._get_addresses, self.regions)
 
-    def __get_regions__(self):
+    def _get_regions(self):
         for project_id in self.project_ids:
             try:
                 request = self.client.regions().list(project=project_id)
@@ -47,7 +47,7 @@ class Compute(GCPService):
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
-    def __get_zones__(self):
+    def _get_zones(self):
         for project_id in self.project_ids:
             try:
                 request = self.client.zones().list(project=project_id)
@@ -65,7 +65,7 @@ class Compute(GCPService):
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
-    def __get_projects__(self):
+    def _get_projects(self):
         for project_id in self.project_ids:
             try:
                 enable_oslogin = False
@@ -81,7 +81,7 @@ class Compute(GCPService):
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
-    def __get_instances__(self, zone):
+    def _get_instances(self, zone):
         for project_id in self.project_ids:
             try:
                 request = self.client.instances().list(project=project_id, zone=zone)
@@ -139,7 +139,7 @@ class Compute(GCPService):
                     f"{zone} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
-    def __get_networks__(self):
+    def _get_networks(self):
         for project_id in self.project_ids:
             try:
                 request = self.client.networks().list(project=project_id)
@@ -170,7 +170,7 @@ class Compute(GCPService):
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
-    def __get_subnetworks__(self, region):
+    def _get_subnetworks(self, region):
         for project_id in self.project_ids:
             try:
                 request = self.client.subnetworks().list(
@@ -200,7 +200,7 @@ class Compute(GCPService):
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
-    def __get_addresses__(self, region):
+    def _get_addresses(self, region):
         for project_id in self.project_ids:
             try:
                 request = self.client.addresses().list(
@@ -230,7 +230,7 @@ class Compute(GCPService):
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
-    def __get_firewalls__(self):
+    def _get_firewalls(self):
         for project_id in self.project_ids:
             try:
                 request = self.client.firewalls().list(project=project_id)
@@ -257,7 +257,7 @@ class Compute(GCPService):
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
-    def __get_url_maps__(self):
+    def _get_url_maps(self):
         for project_id in self.project_ids:
             try:
                 request = self.client.urlMaps().list(project=project_id)
@@ -281,7 +281,7 @@ class Compute(GCPService):
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
-    def __describe_backend_service__(self):
+    def _describe_backend_service(self):
         for balancer in self.load_balancers:
             try:
                 response = (

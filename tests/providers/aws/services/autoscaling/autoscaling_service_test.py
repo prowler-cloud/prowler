@@ -3,7 +3,7 @@ from base64 import b64decode
 from boto3 import client
 from moto import mock_aws
 
-from prowler.config.config import enconding_format_utf_8
+from prowler.config.config import encoding_format_utf_8
 from prowler.providers.aws.services.autoscaling.autoscaling_service import AutoScaling
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
@@ -48,7 +48,7 @@ class Test_AutoScaling_Service:
 
     # Test AutoScaling Get APIs
     @mock_aws
-    def test__describe_launch_configurations__(self):
+    def test_describe_launch_configurations(self):
         # Generate AutoScaling Client
         autoscaling_client = client("autoscaling", region_name=AWS_REGION_US_EAST_1)
         # Create AutoScaling API
@@ -74,7 +74,7 @@ class Test_AutoScaling_Service:
         assert autoscaling.launch_configurations[0].name == "tester1"
         assert (
             b64decode(autoscaling.launch_configurations[0].user_data).decode(
-                enconding_format_utf_8
+                encoding_format_utf_8
             )
             == "DB_PASSWORD=foobar123"
         )
@@ -84,7 +84,7 @@ class Test_AutoScaling_Service:
 
     # Test Describe Auto Scaling Groups
     @mock_aws
-    def test__describe_auto_scaling_groups__(self):
+    def test_describe_auto_scaling_groups(self):
         # Generate AutoScaling Client
         autoscaling_client = client("autoscaling", region_name=AWS_REGION_US_EAST_1)
         autoscaling_client.create_launch_configuration(

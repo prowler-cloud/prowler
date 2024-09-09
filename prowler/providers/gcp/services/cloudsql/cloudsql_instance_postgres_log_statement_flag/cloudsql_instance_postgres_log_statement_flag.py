@@ -17,8 +17,8 @@ class cloudsql_instance_postgres_log_statement_flag(Check):
                 report.status_extended = f"PostgreSQL Instance {instance.name} does not have 'log_statement' flag set to '{desired_log_statement}'."
                 for flag in instance.flags:
                     if (
-                        flag["name"] == "log_statement"
-                        and flag["value"] == desired_log_statement
+                        flag.get("name", "") == "log_statement"
+                        and flag.get("value", "none") == desired_log_statement
                     ):
                         report.status = "PASS"
                         report.status_extended = f"PostgreSQL Instance {instance.name} has 'log_statement' flag set to '{desired_log_statement}'."

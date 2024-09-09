@@ -80,3 +80,15 @@ check_rds_instance_replicas: False
 # AWS ACM Configuration
 # aws.acm_certificates_expiration_check
 days_to_expire_threshold: 7
+
+# AWS EKS Configuration
+# aws.eks_control_plane_logging_all_types_enabled
+# EKS control plane logging types that must be enabled
+eks_required_log_types:
+  [
+      "api",
+      "audit",
+      "authenticator",
+      "controllerManager",
+      "scheduler",
+  ]

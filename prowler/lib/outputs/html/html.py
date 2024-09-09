@@ -45,11 +45,11 @@ class HTML(Output):
                             <td>{finding.check_id.replace("_", "<wbr />_")}</td>
                             <td>{finding.check_title}</td>
                             <td>{finding.resource_uid.replace("<", "&lt;").replace(">", "&gt;").replace("_", "<wbr />_")}</td>
-                            <td>{parse_html_string(finding.resource_tags)}</td>
+                            <td>{parse_html_string(unroll_dict(finding.resource_tags))}</td>
                             <td>{finding.status_extended.replace("<", "&lt;").replace(">", "&gt;").replace("_", "<wbr />_")}</td>
                             <td><p class="show-read-more">{html.escape(finding.risk)}</p></td>
                             <td><p class="show-read-more">{html.escape(finding.remediation_recommendation_text)}</p> <a class="read-more" href="{finding.remediation_recommendation_url}"><i class="fas fa-external-link-alt"></i></a></td>
-                            <td><p class="show-read-more">{parse_html_string(unroll_dict(finding.compliance))}</p></td>
+                            <td><p class="show-read-more">{parse_html_string(unroll_dict(finding.compliance, separator=": "))}</p></td>
                         </tr>
                         """
                 )
@@ -174,7 +174,13 @@ class HTML(Output):
                         <b>Passed:</b> {str(stats.get("total_pass", 0))}
                     </li>
                     <li class="list-group-item">
+                        <b>Passed (Muted):</b> {str(stats.get("total_muted_pass", 0))}
+                    </li>
+                    <li class="list-group-item">
                         <b>Failed:</b> {str(stats.get("total_fail", 0))}
+                    </li>
+                    <li class="list-group-item">
+                        <b>Failed (Muted):</b> {str(stats.get("total_muted_fail", 0))}
                     </li>
                     <li class="list-group-item">
                         <b>Total Resources:</b> {str(stats.get("resources_count", 0))}

@@ -10,7 +10,7 @@ from dateutil.tz import tzutc
 from freezegun import freeze_time
 from moto import mock_aws
 
-from prowler.config.config import enconding_format_utf_8
+from prowler.config.config import encoding_format_utf_8
 from prowler.providers.aws.services.ec2.ec2_service import EC2
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
@@ -22,7 +22,26 @@ from tests.providers.aws.utils import (
 EXAMPLE_AMI_ID = "ami-12c6146b"
 MOCK_DATETIME = datetime(2023, 1, 4, 7, 27, 30, tzinfo=tzutc())
 
-orig = botocore.client.BaseClient._make_api_call
+make_api_call = botocore.client.BaseClient._make_api_call
+
+
+def mock_make_api_call(self, operation_name, kwarg):
+    if operation_name == "DescribeClientVpnEndpoints":
+        return {
+            "ClientVpnEndpoints": [
+                {
+                    "ClientVpnEndpointId": "cvpn-endpoint-1234567890abcdef0",
+                    "ConnectionLogOptions": {
+                        "Enabled": True,
+                        "CloudwatchLogGroup": "string",
+                        "CloudwatchLogStream": "string",
+                    },
+                    "Tags": [{"Key": "vpnendpoint", "Value": "test"}],
+                }
+            ]
+        }
+    # Si no es la operación que queremos interceptar, llamamos al método original
+    return make_api_call(self, operation_name, kwarg)
 
 
 class Test_EC2_Service:
@@ -70,7 +89,7 @@ class Test_EC2_Service:
     # Test EC2 Describe Instances
     @mock_aws
     @freeze_time(MOCK_DATETIME)
-    def test__describe_instances__(self):
+    def test_describe_instances(self):
         # Generate EC2 Client
         ec2_resource = resource("ec2", region_name=AWS_REGION_US_EAST_1)
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
@@ -115,7 +134,7 @@ class Test_EC2_Service:
 
     # Test EC2 Describe Security Groups
     @mock_aws
-    def test__describe_security_groups__(self):
+    def test_describe_security_groups(self):
         # Generate EC2 Client
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
         # Create EC2 Security Group
@@ -150,11 +169,11 @@ class Test_EC2_Service:
         ec2 = EC2(aws_provider)
 
         assert sg_id in str(ec2.security_groups)
-        for security_group in ec2.security_groups:
+        for sg_arn, security_group in ec2.security_groups.items():
             if security_group.id == sg_id:
                 assert security_group.name == "test-security-group"
                 assert (
-                    security_group.arn
+                    sg_arn
                     == f"arn:{aws_provider.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:security-group/{security_group.id}"
                 )
                 assert re.match(r"sg-[0-9a-z]{17}", security_group.id)
@@ -184,7 +203,7 @@ class Test_EC2_Service:
 
     # Test EC2 Describe Nacls
     @mock_aws
-    def test__describe_network_acls__(self):
+    def test_describe_network_acls(self):
         # Generate EC2 Client
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
         ec2_resource = resource("ec2", region_name=AWS_REGION_US_EAST_1)
@@ -222,7 +241,7 @@ class Test_EC2_Service:
 
     # Test EC2 Describe Snapshots
     @mock_aws
-    def test__describe_snapshots__(self):
+    def test_describe_snapshots(self):
         # Generate EC2 Client
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
         ec2_resource = resource("ec2", region_name=AWS_REGION_US_EAST_1)
@@ -307,7 +326,7 @@ class Test_EC2_Service:
 
     # Test EC2 Instance User Data
     @mock_aws
-    def test__get_instance_user_data__(self):
+    def test_get_instance_user_data(self):
         user_data = "This is some user_data"
         ec2 = resource("ec2", region_name=AWS_REGION_US_EAST_1)
         ec2.create_instances(
@@ -322,7 +341,7 @@ class Test_EC2_Service:
         )
         ec2 = EC2(aws_provider)
         assert user_data == b64decode(ec2.instances[0].user_data).decode(
-            enconding_format_utf_8
+            encoding_format_utf_8
         )
 
     # Test EC2 Get EBS Encryption by default
@@ -343,7 +362,7 @@ class Test_EC2_Service:
                 assert result.status
 
     # Test EC2 get_snapshot_block_public_access_state
-    def test__get_snapshot_block_public_access_state__(self):
+    def test_get_snapshot_block_public_access_state(self):
         from prowler.providers.aws.services.ec2.ec2_service import (
             EbsSnapshotBlockPublicAccess,
         )
@@ -369,9 +388,9 @@ class Test_EC2_Service:
                 == "block-all-sharing"
             )
 
-    # Test EC2 __get_resources_for_regions__
+    # Test EC2 _get_resources_for_regions
     @mock_aws
-    def test__get_resources_for_regions__(self):
+    def test_get_resources_for_regions(self):
         # Generate EC2 Client
         ec2_resource = resource("ec2", region_name=AWS_REGION_US_EAST_1)
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
@@ -417,9 +436,9 @@ class Test_EC2_Service:
         assert ec2.attributes_for_regions[AWS_REGION_US_EAST_1]["has_instances"]
         assert ec2.attributes_for_regions[AWS_REGION_US_EAST_1]["has_volumes"]
 
-    # Test __get_instance_metadata_defaults__
+    # Test _get_instance_metadata_defaults
     @mock_aws
-    def test__get_instance_metadata_defaults__(self):
+    def test_get_instance_metadata_defaults(self):
         from prowler.providers.aws.services.ec2.ec2_service import (
             InstanceMetadataDefaults,
         )
@@ -475,7 +494,7 @@ class Test_EC2_Service:
 
     # Test EC2 Describe Network Interfaces
     @mock_aws
-    def test__describe_network_interfaces__(self):
+    def test_describe_network_interfaces(self):
         # Generate EC2 Client
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
         ec2_resource = resource("ec2", region_name=AWS_REGION_US_EAST_1)
@@ -524,13 +543,13 @@ class Test_EC2_Service:
             {"Key": "string", "Value": "string"},
         ]
         # Check if ENI was added to security group
-        for sg in ec2.security_groups:
+        for sg in ec2.security_groups.values():
             if sg.id == eni.groups[0]["GroupId"]:
                 assert sg.network_interfaces == ec2.network_interfaces
 
     # Test EC2 Describe Images
     @mock_aws
-    def test__describe_images__(self):
+    def test_describe_images(self):
         # Generate EC2 Client
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
         ec2_resource = resource("ec2", region_name=AWS_REGION_US_EAST_1)
@@ -582,7 +601,7 @@ class Test_EC2_Service:
 
     # Test EC2 Describe Volumes
     @mock_aws
-    def test__describe_volumes__(self):
+    def test_describe_volumes(self):
         # Generate EC2 Client
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
         # Create Volume
@@ -636,8 +655,8 @@ class Test_EC2_Service:
             LaunchTemplateData={
                 "InstanceType": TEMPLATE_INSTANCE_TYPE,
                 "UserData": b64encode(
-                    KNOWN_SECRET_USER_DATA.encode(enconding_format_utf_8)
-                ).decode(enconding_format_utf_8),
+                    KNOWN_SECRET_USER_DATA.encode(encoding_format_utf_8)
+                ).decode(encoding_format_utf_8),
             },
         )
 
@@ -657,7 +676,7 @@ class Test_EC2_Service:
 
     # Test EC2 Describe Launch Templates
     @mock_aws
-    def test__get_launch_template_versions__(self):
+    def test_get_launch_template_versions(self):
         # Generate EC2 Client
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
 
@@ -681,8 +700,8 @@ class Test_EC2_Service:
             LaunchTemplateData={
                 "InstanceType": TEMPLATE_INSTANCE_TYPE,
                 "UserData": b64encode(
-                    KNOWN_SECRET_USER_DATA.encode(enconding_format_utf_8)
-                ).decode(enconding_format_utf_8),
+                    KNOWN_SECRET_USER_DATA.encode(encoding_format_utf_8)
+                ).decode(encoding_format_utf_8),
             },
         )
 
@@ -704,6 +723,58 @@ class Test_EC2_Service:
 
         assert version2.template_data["InstanceType"] == TEMPLATE_INSTANCE_TYPE
         assert (
-            b64decode(version2.template_data["UserData"]).decode(enconding_format_utf_8)
+            b64decode(version2.template_data["UserData"]).decode(encoding_format_utf_8)
             == KNOWN_SECRET_USER_DATA
         )
+
+    # Test EC2 Describe VPN Endpoints
+    @mock.patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
+    def test_describe_vpn_endpoints(self):
+        # EC2 client for this test class
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        ec2 = EC2(aws_provider)
+
+        assert len(ec2.vpn_endpoints) == 1
+        vpn_arn = f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:client-vpn-endpoint/cvpn-endpoint-1234567890abcdef0"
+        assert vpn_arn in ec2.vpn_endpoints
+        vpn_endpoint = ec2.vpn_endpoints[vpn_arn]
+        assert vpn_endpoint.id == "cvpn-endpoint-1234567890abcdef0"
+        assert vpn_endpoint.connection_logging
+        assert vpn_endpoint.region == AWS_REGION_US_EAST_1
+
+    # Test EC2 Describe Launch Templates
+    @mock_aws
+    def test_describe_transit_gateways(self):
+        # Generate EC2 Client
+        ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
+
+        # Create EC2 Transit Gateway API
+        response = ec2_client.create_transit_gateway(
+            Description="Test Transit Gateway",
+            Options={
+                "AmazonSideAsn": 64512,
+                "AutoAcceptSharedAttachments": "enable",
+            },
+            TagSpecifications=[
+                {
+                    "ResourceType": "transit-gateway",
+                    "Tags": [{"Key": "Name", "Value": "test-tgw"}],
+                }
+            ],
+        )
+
+        # EC2 client for this test class
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        )
+        ec2 = EC2(aws_provider)
+
+        transit_arn = response["TransitGateway"]["TransitGatewayArn"]
+
+        assert len(ec2.transit_gateways) == 1
+        assert (
+            ec2.transit_gateways[transit_arn].id
+            == response["TransitGateway"]["TransitGatewayId"]
+        )
+        assert ec2.transit_gateways[transit_arn].auto_accept_shared_attachments
+        assert ec2.transit_gateways[transit_arn].region == AWS_REGION_US_EAST_1

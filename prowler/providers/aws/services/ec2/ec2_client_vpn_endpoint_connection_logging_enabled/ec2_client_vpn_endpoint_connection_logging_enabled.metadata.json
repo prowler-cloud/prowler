@@ -1,0 +1,30 @@
+{
+  "Provider": "aws",
+  "CheckID": "ec2_client_vpn_endpoint_connection_logging_enabled",
+  "CheckTitle": "EC2 Client VPN endpoints should have client connection logging enabled.",
+  "CheckType": [],
+  "ServiceName": "ec2",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "low",
+  "ResourceType": "AwsEc2ClientVpnEndpoint",
+  "Description": "This control checks whether an AWS Client VPN endpoint has client connection logging enabled. The control fails if the endpoint doesn't have client connection logging enabled.",
+  "Risk": "Client VPN endpoints allow remote clients to securely connect to resources in a Virtual Private Cloud (VPC) in AWS. Connection logs allow you to track user activity on the VPN endpoint and provides visibility.",
+  "RelatedUrl": "https://docs.aws.amazon.com/vpn/latest/clientvpn-admin/what-is.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/ec2-controls.html#ec2-51",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "To enable connection logging, see Enable connection logging for an existing Client VPN endpoint in the AWS Client VPN Administrator Guide.",
+      "Url": "https://docs.aws.amazon.com/config/latest/developerguide/ec2-client-vpn-connection-log-enabled.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

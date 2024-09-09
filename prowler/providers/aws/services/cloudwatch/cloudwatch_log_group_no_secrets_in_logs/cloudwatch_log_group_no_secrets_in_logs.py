@@ -1,7 +1,7 @@
-from prowler.lib.persistence import mklist
 from json import dumps, loads
 
 from prowler.lib.check.models import Check, Check_Report_AWS
+from prowler.lib.persistence import mklist
 from prowler.lib.utils.utils import detect_secrets_scan
 from prowler.providers.aws.services.cloudwatch.cloudwatch_service import (
     convert_to_cloudwatch_timestamp_format,
@@ -13,6 +13,9 @@ class cloudwatch_log_group_no_secrets_in_logs(Check):
     def execute(self):
         findings = mklist()
         if logs_client.log_groups:
+            secrets_ignore_patterns = logs_client.audit_config.get(
+                "secrets_ignore_patterns", []
+            )
             for log_group in logs_client.log_groups:
                 report = Check_Report_AWS(self.metadata())
                 report.status = "PASS"
@@ -32,7 +35,10 @@ class cloudwatch_log_group_no_secrets_in_logs(Check):
                                 for event in log_group.log_streams[log_stream_name]
                             ]
                         )
-                        log_stream_secrets_output = detect_secrets_scan(log_stream_data)
+                        log_stream_secrets_output = detect_secrets_scan(
+                            data=log_stream_data,
+                            excluded_secrets=secrets_ignore_patterns,
+                        )
 
                         if log_stream_secrets_output:
                             for secret in log_stream_secrets_output:
@@ -64,7 +70,7 @@ class cloudwatch_log_group_no_secrets_in_logs(Check):
                                     # Can get more informative output if there is more than 1 line.
                                     # Will rescan just this event to get the type of secret and the line number
                                     event_detect_secrets_output = detect_secrets_scan(
-                                        log_event_data
+                                        data=log_event_data
                                     )
                                     if event_detect_secrets_output:
                                         for secret in event_detect_secrets_output:

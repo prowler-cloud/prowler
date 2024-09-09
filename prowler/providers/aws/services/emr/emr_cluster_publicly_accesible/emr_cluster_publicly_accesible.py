@@ -40,7 +40,7 @@ class emr_cluster_publicly_accesible(Check):
                     master_public_security_groups = []
                     for master_sg in master_node_sg_groups:
                         master_sg_public = False
-                        for sg in ec2_client.security_groups:
+                        for sg in ec2_client.security_groups.values():
                             if sg.id == master_sg:
                                 for ingress_rule in sg.ingress_rules:
                                     if check_security_group(ingress_rule, -1):
@@ -62,7 +62,7 @@ class emr_cluster_publicly_accesible(Check):
                     slave_public_security_groups = []
                     for slave_sg in slave_node_sg_groups:
                         slave_sg_public = False
-                        for sg in ec2_client.security_groups:
+                        for sg in ec2_client.security_groups.values():
                             if sg.id == slave_sg:
                                 for ingress_rule in sg.ingress_rules:
                                     if check_security_group(ingress_rule, -1):

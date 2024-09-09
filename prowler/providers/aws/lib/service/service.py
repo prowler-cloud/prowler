@@ -40,6 +40,7 @@ class AWSService:
         self.audited_account_arn = provider.identity.account_arn
         self.audited_partition = provider.identity.partition
         self.audit_resources = provider.audit_resources
+        # TODO: remove this
         self.audited_checks = provider.audit_metadata.expected_checks
         self.audit_config = provider.audit_config
         self.fixer_config = provider.fixer_config

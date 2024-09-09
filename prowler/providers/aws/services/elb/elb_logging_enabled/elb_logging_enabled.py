@@ -5,11 +5,11 @@ from prowler.providers.aws.services.elb.elb_client import elb_client
 class elb_logging_enabled(Check):
     def execute(self):
         findings = []
-        for lb in elb_client.loadbalancers:
+        for lb_arn, lb in elb_client.loadbalancers.items():
             report = Check_Report_AWS(self.metadata())
             report.region = lb.region
             report.resource_id = lb.name
-            report.resource_arn = lb.arn
+            report.resource_arn = lb_arn
             report.resource_tags = lb.tags
             report.status = "FAIL"
             report.status_extended = (

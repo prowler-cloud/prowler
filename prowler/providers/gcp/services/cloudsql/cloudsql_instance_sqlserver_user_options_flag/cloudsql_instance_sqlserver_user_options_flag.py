@@ -15,7 +15,10 @@ class cloudsql_instance_sqlserver_user_options_flag(Check):
                 report.status = "PASS"
                 report.status_extended = f"SQL Server Instance {instance.name} does not have 'user options' flag set."
                 for flag in instance.flags:
-                    if flag["name"] == "user options" and flag["value"] != "":
+                    if (
+                        flag.get("name", "") == "user options"
+                        and flag.get("value", "") != ""
+                    ):
                         report.status = "FAIL"
                         report.status_extended = f"SQL Server Instance {instance.name} has 'user options' flag set."
                         break

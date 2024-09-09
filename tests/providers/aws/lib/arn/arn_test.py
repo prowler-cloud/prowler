@@ -1,15 +1,15 @@
 from pytest import raises
 
-from prowler.providers.aws.lib.arn.arn import is_valid_arn, parse_iam_credentials_arn
-from prowler.providers.aws.lib.arn.error import (
-    RoleArnParsingEmptyResource,
-    RoleArnParsingFailedMissingFields,
-    RoleArnParsingIAMRegionNotEmpty,
-    RoleArnParsingInvalidAccountID,
-    RoleArnParsingInvalidResourceType,
-    RoleArnParsingPartitionEmpty,
-    RoleArnParsingServiceNotIAMnorSTS,
+from prowler.providers.aws.exceptions.exceptions import (
+    AWSIAMRoleARNEmptyResource,
+    AWSIAMRoleARNInvalidAccountID,
+    AWSIAMRoleARNInvalidResourceType,
+    AWSIAMRoleARNMissingFields,
+    AWSIAMRoleARNPartitionEmpty,
+    AWSIAMRoleARNRegionNotEmtpy,
+    AWSIAMRoleARNServiceNotIAMnorSTS,
 )
+from prowler.providers.aws.lib.arn.arn import is_valid_arn, parse_iam_credentials_arn
 from prowler.providers.aws.lib.arn.models import ARN
 
 ACCOUNT_ID = "123456789012"
@@ -245,6 +245,73 @@ class Test_ARN_Parsing:
                     "resource": IAM_ROLE,
                 },
             },
+            # Root user
+            {
+                "input_arn": f"arn:aws:{IAM_SERVICE}::{ACCOUNT_ID}:root",
+                "expected": {
+                    "partition": COMMERCIAL_PARTITION,
+                    "service": IAM_SERVICE,
+                    "region": None,
+                    "account_id": ACCOUNT_ID,
+                    "resource_type": "root",
+                    "resource": "root",
+                },
+            },
+            {
+                "input_arn": f"arn:{CHINA_PARTITION}:{IAM_SERVICE}::{ACCOUNT_ID}:root",
+                "expected": {
+                    "partition": CHINA_PARTITION,
+                    "service": IAM_SERVICE,
+                    "region": None,
+                    "account_id": ACCOUNT_ID,
+                    "resource_type": "root",
+                    "resource": "root",
+                },
+            },
+            {
+                "input_arn": f"arn:{GOVCLOUD_PARTITION}:{IAM_SERVICE}::{ACCOUNT_ID}:root",
+                "expected": {
+                    "partition": GOVCLOUD_PARTITION,
+                    "service": IAM_SERVICE,
+                    "region": None,
+                    "account_id": ACCOUNT_ID,
+                    "resource_type": "root",
+                    "resource": "root",
+                },
+            },
+            {
+                "input_arn": f"arn:aws:sts::{ACCOUNT_ID}:federated-user/Bob",
+                "expected": {
+                    "partition": COMMERCIAL_PARTITION,
+                    "service": "sts",
+                    "region": None,
+                    "account_id": ACCOUNT_ID,
+                    "resource_type": "federated-user",
+                    "resource": "Bob",
+                },
+            },
+            {
+                "input_arn": f"arn:{CHINA_PARTITION}:sts::{ACCOUNT_ID}:federated-user/Bob",
+                "expected": {
+                    "partition": CHINA_PARTITION,
+                    "service": "sts",
+                    "region": None,
+                    "account_id": ACCOUNT_ID,
+                    "resource_type": "federated-user",
+                    "resource": "Bob",
+                },
+            },
+            {
+                "input_arn": f"arn:{GOVCLOUD_PARTITION}:sts::{ACCOUNT_ID}:federated-user/Bob",
+                "expected": {
+                    "partition": GOVCLOUD_PARTITION,
+                    "service": "sts",
+                    "region": None,
+                    "account_id": ACCOUNT_ID,
+                    "resource_type": "federated-user",
+                    "resource": "Bob",
+                },
+            },
         ]
         for test in test_cases:
             input_arn = test["input_arn"]
@@ -256,58 +323,58 @@ class Test_ARN_Parsing:
             assert parsed_arn.resource_type == test["expected"]["resource_type"]
             assert parsed_arn.resource == test["expected"]["resource"]
 
-    def test_iam_credentials_arn_parsing_raising_RoleArnParsingFailedMissingFields(
+    def test_iam_credentials_arn_parsing_raising_AWSIAMRoleARNMissingFields(
         self,
     ):
         input_arn = ""
-        with raises(RoleArnParsingFailedMissingFields) as error:
+        with raises(AWSIAMRoleARNMissingFields) as error:
             parse_iam_credentials_arn(input_arn)
 
-        assert error._excinfo[0] == RoleArnParsingFailedMissingFields
+        assert error._excinfo[0] == AWSIAMRoleARNMissingFields
 
-    def test_iam_credentials_arn_parsing_raising_RoleArnParsingIAMRegionNotEmpty(self):
+    def test_iam_credentials_arn_parsing_raising_AWSIAMRoleARNRegionNotEmtpy(self):
         input_arn = "arn:aws:iam:eu-west-1:111111111111:user/prowler"
-        with raises(RoleArnParsingIAMRegionNotEmpty) as error:
+        with raises(AWSIAMRoleARNRegionNotEmtpy) as error:
             parse_iam_credentials_arn(input_arn)
 
-        assert error._excinfo[0] == RoleArnParsingIAMRegionNotEmpty
+        assert error._excinfo[0] == AWSIAMRoleARNRegionNotEmtpy
 
-    def test_iam_credentials_arn_parsing_raising_RoleArnParsingPartitionEmpty(self):
+    def test_iam_credentials_arn_parsing_raising_AWSIAMRoleARNPartitionEmpty(self):
         input_arn = "arn::iam::111111111111:user/prowler"
-        with raises(RoleArnParsingPartitionEmpty) as error:
+        with raises(AWSIAMRoleARNPartitionEmpty) as error:
             parse_iam_credentials_arn(input_arn)
 
-        assert error._excinfo[0] == RoleArnParsingPartitionEmpty
+        assert error._excinfo[0] == AWSIAMRoleARNPartitionEmpty
 
-    def test_iam_credentials_arn_parsing_raising_RoleArnParsingServiceNotIAM(self):
+    def test_iam_credentials_arn_parsing_raising_AWSIAMRoleARNServiceNotIAMnorSTS(self):
         input_arn = "arn:aws:s3::111111111111:user/prowler"
-        with raises(RoleArnParsingServiceNotIAMnorSTS) as error:
+        with raises(AWSIAMRoleARNServiceNotIAMnorSTS) as error:
             parse_iam_credentials_arn(input_arn)
 
-        assert error._excinfo[0] == RoleArnParsingServiceNotIAMnorSTS
+        assert error._excinfo[0] == AWSIAMRoleARNServiceNotIAMnorSTS
 
-    def test_iam_credentials_arn_parsing_raising_RoleArnParsingInvalidAccountID(self):
+    def test_iam_credentials_arn_parsing_raising_AWSIAMRoleARNInvalidAccountID(self):
         input_arn = "arn:aws:iam::AWS_ACCOUNT_ID:user/prowler"
-        with raises(RoleArnParsingInvalidAccountID) as error:
+        with raises(AWSIAMRoleARNInvalidAccountID) as error:
             parse_iam_credentials_arn(input_arn)
 
-        assert error._excinfo[0] == RoleArnParsingInvalidAccountID
+        assert error._excinfo[0] == AWSIAMRoleARNInvalidAccountID
 
-    def test_iam_credentials_arn_parsing_raising_RoleArnParsingInvalidResourceType(
+    def test_iam_credentials_arn_parsing_raising_AWSIAMRoleARNInvalidResourceType(
         self,
     ):
         input_arn = "arn:aws:iam::111111111111:account/prowler"
-        with raises(RoleArnParsingInvalidResourceType) as error:
+        with raises(AWSIAMRoleARNInvalidResourceType) as error:
             parse_iam_credentials_arn(input_arn)
 
-        assert error._excinfo[0] == RoleArnParsingInvalidResourceType
+        assert error._excinfo[0] == AWSIAMRoleARNInvalidResourceType
 
-    def test_iam_credentials_arn_parsing_raising_RoleArnParsingEmptyResource(self):
+    def test_iam_credentials_arn_parsing_raising_AWSIAMRoleARNEmptyResource(self):
         input_arn = "arn:aws:iam::111111111111:role/"
-        with raises(RoleArnParsingEmptyResource) as error:
+        with raises(AWSIAMRoleARNEmptyResource) as error:
             parse_iam_credentials_arn(input_arn)
 
-        assert error._excinfo[0] == RoleArnParsingEmptyResource
+        assert error._excinfo[0] == AWSIAMRoleARNEmptyResource
 
     def test_is_valid_arn(self):
         assert is_valid_arn("arn:aws:iam::012345678910:user/test")
@@ -319,6 +386,7 @@ class Test_ARN_Parsing:
             "arn:aws:lambda:eu-west-1:123456789012:function:lambda-function"
         )
         assert is_valid_arn("arn:aws:sns:eu-west-1:123456789012:test.fifo")
+        assert is_valid_arn("arn:aws:logs:eu-west-1:123456789012:log-group:/ecs/test:")
         assert not is_valid_arn("arn:azure:::012345678910:user/test")
         assert not is_valid_arn("arn:aws:iam::account:user/test")
         assert not is_valid_arn("arn:aws:::012345678910:resource")

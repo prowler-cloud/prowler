@@ -52,7 +52,8 @@ class Test_cloudsql_instance_postgres_log_error_verbosity_flag:
                     ip_addresses=[],
                     region=GCP_EU1_LOCATION,
                     public_ip=False,
-                    ssl=False,
+                    require_ssl=False,
+                    ssl_mode="ENCRYPTED_ONLY",
                     automated_backups=True,
                     authorized_networks=[],
                     flags=[],
@@ -88,7 +89,8 @@ class Test_cloudsql_instance_postgres_log_error_verbosity_flag:
                     ip_addresses=[],
                     region=GCP_EU1_LOCATION,
                     public_ip=False,
-                    ssl=False,
+                    require_ssl=False,
+                    ssl_mode="ENCRYPTED_ONLY",
                     automated_backups=True,
                     authorized_networks=[],
                     flags=[],
@@ -99,10 +101,10 @@ class Test_cloudsql_instance_postgres_log_error_verbosity_flag:
             check = cloudsql_instance_postgres_log_error_verbosity_flag()
             result = check.execute()
             assert len(result) == 1
-            assert result[0].status == "FAIL"
+            assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "PostgreSQL Instance instance1 does not have 'log_error_verbosity' flag set to 'default'."
+                == "PostgreSQL Instance instance1 has 'log_error_verbosity' flag set to 'default'."
             )
             assert result[0].resource_id == "instance1"
             assert result[0].resource_name == "instance1"
@@ -133,7 +135,8 @@ class Test_cloudsql_instance_postgres_log_error_verbosity_flag:
                     ip_addresses=[],
                     region=GCP_EU1_LOCATION,
                     public_ip=False,
-                    ssl=False,
+                    require_ssl=False,
+                    ssl_mode="ENCRYPTED_ONLY",
                     automated_backups=True,
                     authorized_networks=[],
                     flags=[{"name": "log_error_verbosity", "value": "off"}],
@@ -178,7 +181,8 @@ class Test_cloudsql_instance_postgres_log_error_verbosity_flag:
                     ip_addresses=[],
                     region=GCP_EU1_LOCATION,
                     public_ip=False,
-                    ssl=False,
+                    require_ssl=False,
+                    ssl_mode="ENCRYPTED_ONLY",
                     automated_backups=True,
                     authorized_networks=[],
                     flags=[{"name": "log_error_verbosity", "value": "default"}],

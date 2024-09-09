@@ -5,12 +5,13 @@ from os import getcwd
 
 import requests
 import yaml
+from packaging import version
 
 from prowler.lib.logger import logger
 
 timestamp = datetime.today()
 timestamp_utc = datetime.now(timezone.utc).replace(tzinfo=timezone.utc)
-prowler_version = "4.2.4"
+prowler_version = "4.4.0"
 html_logo_url = "https://github.com/prowler-cloud/prowler/"
 square_logo_img = "https://prowler.com/wp-content/uploads/logo-html.png"
 aws_logo = "https://user-images.githubusercontent.com/38561120/235953920-3e3fba08-0795-41dc-b480-9bea57db9f2e.png"
@@ -64,7 +65,7 @@ default_config_file_path = (
 default_fixer_config_file_path = (
     f"{pathlib.Path(os.path.dirname(os.path.realpath(__file__)))}/fixer_config.yaml"
 )
-enconding_format_utf_8 = "utf-8"
+encoding_format_utf_8 = "utf-8"
 available_output_formats = ["csv", "json-asff", "json-ocsf", "html"]
 
 
@@ -86,7 +87,7 @@ def check_current_version():
             "https://api.github.com/repos/prowler-cloud/prowler/tags", timeout=1
         )
         latest_version = release_response.json()[0]["name"]
-        if latest_version != prowler_version:
+        if version.parse(latest_version) > version.parse(prowler_version):
             return f"{prowler_version_string} (latest is {latest_version}, upgrade for the latest features)"
         else:
             return (
@@ -110,7 +111,7 @@ def load_and_validate_config_file(provider: str, config_file_path: str) -> dict:
         dict: The configuration dictionary for the specified provider.
     """
     try:
-        with open(config_file_path, "r", encoding=enconding_format_utf_8) as f:
+        with open(config_file_path, "r", encoding=encoding_format_utf_8) as f:
             config_file = yaml.safe_load(f)
 
             # Not to introduce a breaking change, allow the old format config file without any provider keys
@@ -159,7 +160,7 @@ def load_and_validate_fixer_config_file(
         dict: The fixer configuration dictionary for the specified provider.
     """
     try:
-        with open(fixer_config_file_path, "r", encoding=enconding_format_utf_8) as f:
+        with open(fixer_config_file_path, "r", encoding=encoding_format_utf_8) as f:
             fixer_config_file = yaml.safe_load(f)
             return fixer_config_file.get(provider, {})
 

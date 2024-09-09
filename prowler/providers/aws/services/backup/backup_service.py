@@ -18,13 +18,13 @@ class Backup(AWSService):
         self.report_plan_arn_template = f"arn:{self.audited_partition}:backup:{self.region}:{self.audited_account}:report-plan"
         self.backup_vault_arn_template = f"arn:{self.audited_partition}:backup:{self.region}:{self.audited_account}:backup-vault"
         self.backup_vaults = []
-        self.__threading_call__(self.__list_backup_vaults__)
+        self.__threading_call__(self._list_backup_vaults)
         self.backup_plans = []
-        self.__threading_call__(self.__list_backup_plans__)
+        self.__threading_call__(self._list_backup_plans)
         self.backup_report_plans = []
-        self.__threading_call__(self.__list_backup_report_plans__)
+        self.__threading_call__(self._list_backup_report_plans)
 
-    def __list_backup_vaults__(self, regional_client):
+    def _list_backup_vaults(self, regional_client):
         logger.info("Backup - Listing Backup Vaults...")
         try:
             list_backup_vaults_paginator = regional_client.get_paginator(
@@ -70,7 +70,7 @@ class Backup(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __list_backup_plans__(self, regional_client):
+    def _list_backup_plans(self, regional_client):
         logger.info("Backup - Listing Backup Plans...")
         try:
             list_backup_plans_paginator = regional_client.get_paginator(
@@ -105,7 +105,7 @@ class Backup(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __list_backup_report_plans__(self, regional_client):
+    def _list_backup_report_plans(self, regional_client):
         logger.info("Backup - Listing Backup Report Plans...")
 
         try:

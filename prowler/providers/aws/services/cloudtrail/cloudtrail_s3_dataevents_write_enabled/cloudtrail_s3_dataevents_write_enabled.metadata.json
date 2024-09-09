@@ -17,7 +17,7 @@
     "Code": {
       "CLI": "aws cloudtrail put-event-selectors --trail-name <YOUR_TRAIL_NAME_HERE> --event-selectors '[{ 'ReadWriteType': 'WriteOnly', 'IncludeManagementEvents':true, 'DataResources': [{ 'Type': 'AWS::S3::Object', 'Values': ['arn:aws:s3'] }] }]'",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/s3-controls.html#s3-22",
       "Terraform": ""
     },
     "Recommendation": {

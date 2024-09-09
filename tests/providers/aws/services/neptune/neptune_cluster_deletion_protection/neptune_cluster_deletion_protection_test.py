@@ -126,7 +126,6 @@ class Test_neptune_cluster_deletion_protection:
             DBClusterParameterGroupName="test",
             MasterUsername="test",
             MasterUserPassword="password",
-            EnableIAMDatabaseAuthentication=True,
             BackupRetentionPeriod=0,
             StorageEncrypted=True,
             Tags=[],

@@ -15,7 +15,7 @@ class neptune_cluster_backup_enabled(Check):
             report.status_extended = (
                 f"Neptune Cluster {cluster.name} does not have backup enabled."
             )
-            if cluster.backup_retention_period > neptune_client.audit_config.get(
+            if cluster.backup_retention_period >= neptune_client.audit_config.get(
                 "minimum_backup_retention_period", 7
             ):
                 report.status = "PASS"

@@ -3,7 +3,6 @@ from unittest import mock
 from boto3 import client, resource
 from moto import mock_aws
 
-from prowler.providers.aws.services.vpc.vpc_service import VPC
 from tests.providers.aws.utils import (
     AWS_REGION_EU_WEST_1,
     AWS_REGION_US_EAST_1,
@@ -19,6 +18,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389:
         ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
+        from prowler.providers.aws.services.vpc.vpc_service import VPC
 
         aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
@@ -56,6 +56,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389:
         ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
+        from prowler.providers.aws.services.vpc.vpc_service import VPC
 
         aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1],
@@ -96,6 +97,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389:
         default_sg["GroupId"]
         default_sg["GroupName"]
         from prowler.providers.aws.services.ec2.ec2_service import EC2
+        from prowler.providers.aws.services.vpc.vpc_service import VPC
 
         aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1],
@@ -147,6 +149,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389:
         )
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
+        from prowler.providers.aws.services.vpc.vpc_service import VPC
 
         aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
@@ -211,6 +214,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389:
         )
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
+        from prowler.providers.aws.services.vpc.vpc_service import VPC
 
         aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
@@ -281,6 +285,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389:
         )
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
+        from prowler.providers.aws.services.vpc.vpc_service import VPC
 
         aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]

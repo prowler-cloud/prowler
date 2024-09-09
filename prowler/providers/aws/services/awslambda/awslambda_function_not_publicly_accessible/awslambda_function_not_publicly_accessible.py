@@ -1,5 +1,5 @@
-from prowler.lib.persistence import mklist
 from prowler.lib.check.models import Check, Check_Report_AWS
+from prowler.lib.persistence import mklist
 from prowler.providers.aws.services.awslambda.awslambda_client import awslambda_client
 
 
@@ -20,20 +20,30 @@ class awslambda_function_not_publicly_accessible(Check):
             if function.policy:
                 for statement in function.policy["Statement"]:
                     # Only check allow statements
-                    if statement["Effect"] == "Allow":
-                        if (
-                            "*" in statement["Principal"]
-                            or (
-                                "AWS" in statement["Principal"]
-                                and "*" in statement["Principal"]["AWS"]
+                    if statement["Effect"] == "Allow" and (
+                        "*" in statement["Principal"]
+                        or (
+                            isinstance(statement["Principal"], dict)
+                            and (
+                                "*" in statement["Principal"].get("AWS", "")
+                                or "*"
+                                in statement["Principal"].get("CanonicalUser", "")
+                                or (  # Check if function can be invoked by other AWS services
+                                    (
+                                        ".amazonaws.com"
+                                        in statement["Principal"].get("Service", "")
+                                    )
+                                    and (
+                                        "*" in statement.get("Action", "")
+                                        or "InvokeFunction"
+                                        in statement.get("Action", "")
+                                    )
+                                )
                             )
-                            or (
-                                "CanonicalUser" in statement["Principal"]
-                                and "*" in statement["Principal"]["CanonicalUser"]
-                            )
-                        ):
-                            public_access = True
-                            break
+                        )
+                    ):
+                        public_access = True
+                        break
 
             if public_access:
                 report.status = "FAIL"

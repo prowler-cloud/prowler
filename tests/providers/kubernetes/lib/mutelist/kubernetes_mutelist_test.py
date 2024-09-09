@@ -67,17 +67,17 @@ class TestKubernetesMutelist:
 
         assert mutelist.is_finding_muted(finding, "cluster_1")
 
-    def test_is_finding_muted_etcd_star_within_check_name(self):
+    def test_is_finding_muted_apiserver_star_within_check_name_with_exception(self):
         # Mutelist
         mutelist_content = {
             "Accounts": {
                 "*": {
                     "Checks": {
-                        "etcd_*": {
+                        "apiserver_*": {
                             "Regions": ["*"],
                             "Resources": ["*"],
                             "Exceptions": {
-                                "Accounts": ["k8s-cluster-2"],
+                                "Accounts": ["cluster_1"],
                                 "Regions": ["namespace1", "namespace2"],
                             },
                         }
@@ -97,3 +97,34 @@ class TestKubernetesMutelist:
         finding.resource_tags = []
 
         assert not mutelist.is_finding_muted(finding, "cluster_1")
+
+    def test_is_finding_muted_apiserver_star_within_check_name(self):
+        # Mutelist
+        mutelist_content = {
+            "Accounts": {
+                "*": {
+                    "Checks": {
+                        "apiserver_*": {
+                            "Regions": ["*"],
+                            "Resources": ["*"],
+                            "Exceptions": {
+                                "Accounts": ["k8s-cluster-1"],
+                                "Regions": ["namespace1", "namespace2"],
+                            },
+                        }
+                    }
+                }
+            }
+        }
+
+        mutelist = KubernetesMutelist(mutelist_content=mutelist_content)
+
+        finding = MagicMock
+        finding.check_metadata = MagicMock
+        finding.check_metadata.CheckID = "apiserver_etcd_cafile_set"
+        finding.status = "FAIL"
+        finding.resource_name = "test_resource"
+        finding.namespace = "namespace1"
+        finding.resource_tags = []
+
+        assert mutelist.is_finding_muted(finding, "cluster_1")

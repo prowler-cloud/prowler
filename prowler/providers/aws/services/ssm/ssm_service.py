@@ -6,8 +6,8 @@ from typing import Optional
 from botocore.client import ClientError
 from pydantic import BaseModel
 
-from lib.persistence import mkdict
 from prowler.lib.logger import logger
+from prowler.lib.persistence import mkdict
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
@@ -20,13 +20,13 @@ class SSM(AWSService):
         self.documents = mkdict()
         self.compliance_resources = mkdict()
         self.managed_instances = mkdict()
-        self.__threading_call__(self.__list_documents__)
-        self.__threading_call__(self.__get_document__)
-        self.__threading_call__(self.__describe_document_permission__)
-        self.__threading_call__(self.__list_resource_compliance_summaries__)
-        self.__threading_call__(self.__describe_instance_information__)
+        self.__threading_call__(self._list_documents)
+        self.__threading_call__(self._get_document)
+        self.__threading_call__(self._describe_document_permission)
+        self.__threading_call__(self._list_resource_compliance_summaries)
+        self.__threading_call__(self._describe_instance_information)
 
-    def __list_documents__(self, regional_client):
+    def _list_documents(self, regional_client):
         logger.info("SSM - Listing Documents...")
         try:
             # To retrieve only the documents owned by the account
@@ -63,7 +63,7 @@ class SSM(AWSService):
                 f" {error}"
             )
 
-    def __get_document__(self, regional_client):
+    def _get_document(self, regional_client):
         logger.info("SSM - Getting Document...")
         for document in self.documents.values():
             try:
@@ -89,7 +89,7 @@ class SSM(AWSService):
                     f" {error}"
                 )
 
-    def __describe_document_permission__(self, regional_client):
+    def _describe_document_permission(self, regional_client):
         logger.info("SSM - Describing Document Permission...")
         try:
             for document in self.documents.values():
@@ -108,7 +108,7 @@ class SSM(AWSService):
                 f" {error}"
             )
 
-    def __list_resource_compliance_summaries__(self, regional_client):
+    def _list_resource_compliance_summaries(self, regional_client):
         logger.info("SSM - List Resources Compliance Summaries...")
         try:
             list_resource_compliance_summaries_paginator = (
@@ -137,7 +137,7 @@ class SSM(AWSService):
                 f" {error}"
             )
 
-    def __describe_instance_information__(self, regional_client):
+    def _describe_instance_information(self, regional_client):
         logger.info("SSM - Describing Instance Information...")
         try:
             describe_instance_information_paginator = regional_client.get_paginator(

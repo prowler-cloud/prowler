@@ -10,7 +10,7 @@ Execute Prowler in verbose mode (like in Version 2):
 prowler <provider> --verbose
 ```
 ## Filter findings by status
-Prowler can filter the findings by their status:
+Prowler can filter the findings by their status, so you can see only in the CLI and in the reports the findings with a specific status:
 ```console
 prowler <provider> --status [PASS, FAIL, MANUAL]
 ```

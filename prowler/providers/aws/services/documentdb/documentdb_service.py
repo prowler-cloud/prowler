@@ -1,5 +1,6 @@
 from typing import Optional
 
+from botocore.client import ClientError
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
@@ -15,11 +16,14 @@ class DocumentDB(AWSService):
         super().__init__(self.service_name, provider)
         self.db_instances = {}
         self.db_clusters = {}
-        self.__threading_call__(self.__describe_db_instances__)
-        self.__threading_call__(self.__describe_db_clusters__)
-        self.__list_tags_for_resource__()
+        self.db_cluster_snapshots = []
+        self.__threading_call__(self._describe_db_instances)
+        self.__threading_call__(self._describe_db_clusters)
+        self.__threading_call__(self._describe_db_cluster_snapshots)
+        self.__threading_call__(self._describe_db_cluster_snapshot_attributes)
+        self._list_tags_for_resource()
 
-    def __describe_db_instances__(self, regional_client):
+    def _describe_db_instances(self, regional_client):
         logger.info("DocumentDB - Describe Instances...")
         try:
             describe_db_instances_paginator = regional_client.get_paginator(
@@ -58,7 +62,7 @@ class DocumentDB(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __list_tags_for_resource__(self):
+    def _list_tags_for_resource(self):
         logger.info("DocumentDB - List Tags...")
         try:
             for instance_arn, instance in self.db_instances.items():
@@ -77,7 +81,7 @@ class DocumentDB(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_db_clusters__(self, regional_client):
+    def _describe_db_clusters(self, regional_client):
         logger.info("DocumentDB - Describe Clusters...")
         try:
             describe_db_clusters_paginator = regional_client.get_paginator(
@@ -123,6 +127,62 @@ class DocumentDB(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _describe_db_cluster_snapshots(self, regional_client):
+        logger.info("DocumentDB - Describe Cluster Snapshots...")
+        try:
+            describe_db_snapshots_paginator = regional_client.get_paginator(
+                "describe_db_cluster_snapshots"
+            )
+            for page in describe_db_snapshots_paginator.paginate():
+                for snapshot in page["DBClusterSnapshots"]:
+                    arn = f"arn:{self.audited_partition}:rds:{regional_client.region}:{self.audited_account}:cluster-snapshot:{snapshot['DBClusterSnapshotIdentifier']}"
+                    if not self.audit_resources or (
+                        is_resource_filtered(
+                            arn,
+                            self.audit_resources,
+                        )
+                    ):
+                        if snapshot["Engine"] == "docdb":
+                            self.db_cluster_snapshots.append(
+                                ClusterSnapshot(
+                                    id=snapshot["DBClusterSnapshotIdentifier"],
+                                    arn=arn,
+                                    cluster_id=snapshot["DBClusterIdentifier"],
+                                    encrypted=snapshot.get("StorageEncrypted", False),
+                                    region=regional_client.region,
+                                    tags=snapshot.get("TagList", []),
+                                )
+                            )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _describe_db_cluster_snapshot_attributes(self, regional_client):
+        logger.info("DocumentDB - Describe Cluster Snapshot Attributes...")
+        try:
+            for snapshot in self.db_cluster_snapshots:
+                if snapshot.region == regional_client.region:
+                    response = regional_client.describe_db_cluster_snapshot_attributes(
+                        DBClusterSnapshotIdentifier=snapshot.id
+                    )["DBClusterSnapshotAttributesResult"]
+                    for att in response["DBClusterSnapshotAttributes"]:
+                        if "all" in att["AttributeValues"]:
+                            snapshot.public = True
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "DBClusterSnapshotNotFoundFault":
+                logger.warning(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class Instance(BaseModel):
     id: str
@@ -149,5 +209,16 @@ class DBCluster(BaseModel):
     deletion_protection: bool
     multi_az: bool
     parameter_group: str
+    region: str
+    tags: Optional[list] = []
+
+
+class ClusterSnapshot(BaseModel):
+    id: str
+    cluster_id: str
+    # arn:{partition}:rds:{region}:{account}:cluster-snapshot:{resource_id}
+    arn: str
+    public: bool = False
+    encrypted: bool
     region: str
     tags: Optional[list] = []

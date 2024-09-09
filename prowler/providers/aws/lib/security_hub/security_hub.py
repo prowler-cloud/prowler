@@ -22,7 +22,7 @@ class SecurityHub:
 
     Methods:
         __init__: Initializes the SecurityHub object with necessary attributes.
-        filter: Filters findings based on region and status, returning a dictionary with findings per region.
+        filter: Filters findings based on region, returning a dictionary with findings per region.
         verify_enabled_per_region: Verifies and stores enabled regions with SecurityHub clients.
         batch_send_to_security_hub: Sends findings to Security Hub and returns the count of successfully sent findings.
         archive_previous_findings: Archives findings that are not present in the current execution.
@@ -41,7 +41,6 @@ class SecurityHub:
         aws_account_id: str,
         aws_partition: str,
         findings: list[AWSSecurityFindingFormat] = [],
-        status: list[str] = [],
         aws_security_hub_available_regions: list[str] = [],
         send_only_fails: bool = False,
     ) -> "SecurityHub":
@@ -50,20 +49,19 @@ class SecurityHub:
         self._aws_partition = aws_partition
 
         self._enabled_regions = None
-        self._findings_per_region = None
+        self._findings_per_region = {}
 
         if aws_security_hub_available_regions:
             self._enabled_regions = self.verify_enabled_per_region(
                 aws_security_hub_available_regions
             )
         if findings and self._enabled_regions:
-            self._findings_per_region = self.filter(findings, send_only_fails, status)
+            self._findings_per_region = self.filter(findings, send_only_fails)
 
     def filter(
         self,
         findings: list[AWSSecurityFindingFormat],
         send_only_fails: bool,
-        status: list[str],
     ) -> dict:
         """
         Filters the given list of findings based on the provided criteria and returns a dictionary containing findings per region.
@@ -71,46 +69,38 @@ class SecurityHub:
         Args:
             findings (list[AWSSecurityFindingFormat]): List of findings to filter.
             send_only_fails (bool): Flag indicating whether to send only findings with status 'FAILED'.
-            status (list[str]): List of valid statuses to filter the findings.
 
         Returns:
             dict: A dictionary containing findings per region after applying the filtering criteria.
         """
 
         findings_per_region = {}
+        try:
+            # Create a key per audited region
+            for region in self._enabled_regions.keys():
+                findings_per_region[region] = []
 
-        # Create a key per audited region
-        for region in self._enabled_regions.keys():
-            findings_per_region[region] = []
-
-        for finding in findings:
-            # We don't send findings to not enabled regions
-            if finding.Resources[0].Region not in findings_per_region:
-                continue
-
-            if (
-                finding.Compliance.Status != "FAILED"
-                or finding.Compliance.Status == "WARNING"
-            ) and send_only_fails:
-                continue
-
-            # SecurityHub valid statuses are: PASSED, FAILED, WARNING
-            if status:
-                if finding.Compliance.Status == "PASSED" and "PASS" not in status:
-                    continue
-                if finding.Compliance.Status == "FAILED" and "FAIL" not in status:
-                    continue
-                # Check muted finding
-                if finding.Compliance.Status == "WARNING":
+            for finding in findings:
+                # We don't send findings to not enabled regions
+                if finding.Resources[0].Region not in findings_per_region:
                     continue
 
-            # Get the finding region
-            # We can do that since the finding always stores just one finding
-            region = finding.Resources[0].Region
+                if (
+                    finding.Compliance.Status != "FAILED"
+                    or finding.Compliance.Status == "WARNING"
+                ) and send_only_fails:
+                    continue
 
-            # Include that finding within their region
-            findings_per_region[region].append(finding)
+                # Get the finding region
+                # We can do that since the finding always stores just one finding
+                region = finding.Resources[0].Region
 
+                # Include that finding within their region
+                findings_per_region[region].append(finding)
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__} -- [{error.__traceback__.tb_lineno}]: {error}"
+            )
         return findings_per_region
 
     def verify_enabled_per_region(

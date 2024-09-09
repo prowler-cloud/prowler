@@ -14,10 +14,10 @@ class CloudFormation(AWSService):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.stacks = []
-        self.__threading_call__(self.__describe_stacks__)
-        self.__describe_stack__()
+        self.__threading_call__(self._describe_stacks)
+        self._describe_stack()
 
-    def __describe_stacks__(self, regional_client):
+    def _describe_stacks(self, regional_client):
         """Get ALL CloudFormation Stacks"""
         logger.info("CloudFormation - Describing Stacks...")
         try:
@@ -47,7 +47,7 @@ class CloudFormation(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_stack__(self):
+    def _describe_stack(self):
         """Get Details for a CloudFormation Stack"""
         logger.info("CloudFormation - Describing Stack to get specific details...")
         for stack in self.stacks:

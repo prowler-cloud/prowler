@@ -14,9 +14,13 @@ class Test_opensearch_service_domains_updated_to_the_latest_service_software_ver
     def test_no_domains(self):
         opensearch_client = mock.MagicMock
         opensearch_client.opensearch_domains = []
+
         with mock.patch(
             "prowler.providers.aws.services.opensearch.opensearch_service.OpenSearchService",
-            opensearch_client,
+            new=opensearch_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.opensearch.opensearch_service_domains_updated_to_the_latest_service_software_version.opensearch_service_domains_updated_to_the_latest_service_software_version.opensearch_client",
+            new=opensearch_client,
         ):
             from prowler.providers.aws.services.opensearch.opensearch_service_domains_updated_to_the_latest_service_software_version.opensearch_service_domains_updated_to_the_latest_service_software_version import (
                 opensearch_service_domains_updated_to_the_latest_service_software_version,
@@ -43,7 +47,10 @@ class Test_opensearch_service_domains_updated_to_the_latest_service_software_ver
 
         with mock.patch(
             "prowler.providers.aws.services.opensearch.opensearch_service.OpenSearchService",
-            opensearch_client,
+            new=opensearch_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.opensearch.opensearch_service_domains_updated_to_the_latest_service_software_version.opensearch_service_domains_updated_to_the_latest_service_software_version.opensearch_client",
+            new=opensearch_client,
         ):
             from prowler.providers.aws.services.opensearch.opensearch_service_domains_updated_to_the_latest_service_software_version.opensearch_service_domains_updated_to_the_latest_service_software_version import (
                 opensearch_service_domains_updated_to_the_latest_service_software_version,
@@ -76,7 +83,10 @@ class Test_opensearch_service_domains_updated_to_the_latest_service_software_ver
 
         with mock.patch(
             "prowler.providers.aws.services.opensearch.opensearch_service.OpenSearchService",
-            opensearch_client,
+            new=opensearch_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.opensearch.opensearch_service_domains_updated_to_the_latest_service_software_version.opensearch_service_domains_updated_to_the_latest_service_software_version.opensearch_client",
+            new=opensearch_client,
         ):
             from prowler.providers.aws.services.opensearch.opensearch_service_domains_updated_to_the_latest_service_software_version.opensearch_service_domains_updated_to_the_latest_service_software_version import (
                 opensearch_service_domains_updated_to_the_latest_service_software_version,

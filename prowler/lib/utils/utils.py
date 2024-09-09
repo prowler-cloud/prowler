@@ -20,16 +20,16 @@ from typing import Optional
 
 from colorama import Style
 from detect_secrets import SecretsCollection
-from detect_secrets.settings import default_settings
+from detect_secrets.settings import transient_settings
 
-from prowler.config.config import enconding_format_utf_8
+from prowler.config.config import encoding_format_utf_8
 from prowler.lib.logger import logger
 
 
 def open_file(input_file: str, mode: str = "r") -> TextIOWrapper:
     """open_file returns a handler to the file using the specified mode."""
     try:
-        f = open(input_file, mode, encoding=enconding_format_utf_8)
+        f = open(input_file, mode, encoding=encoding_format_utf_8)
     except OSError as os_error:
         if os_error.strerror == "Too many open files":
             logger.critical(
@@ -77,23 +77,99 @@ def file_exists(filename: str):
 
 def hash_sha512(string: str) -> str:
     """hash_sha512 returns the first 9 bytes of the SHA512 representation for the given string."""
-    return sha512(string.encode(enconding_format_utf_8)).hexdigest()[0:9]
+    return sha512(string.encode(encoding_format_utf_8)).hexdigest()[0:9]
 
 
-def detect_secrets_scan(data):
-    temp_data_file = tempfile.NamedTemporaryFile(delete=False)
-    temp_data_file.write(bytes(data, encoding="raw_unicode_escape"))
-    temp_data_file.close()
+def detect_secrets_scan(
+    data: str = None, file=None, excluded_secrets: list[str] = None
+) -> list[dict[str, str]]:
+    """detect_secrets_scan scans the data or file for secrets using the detect-secrets library.
+    Args:
+        data (str): The data to scan for secrets.
+        file (str): The file to scan for secrets.
+        excluded_secrets (list): A list of regex patterns to exclude from the scan.
+    Returns:
+        dict: The secrets found in the
+    Raises:
+        Exception: If an error occurs during the scan.
+    Examples:
+        >>> detect_secrets_scan(data="password=password")
+        [{'filename': 'data', 'hashed_secret': 'f7c3bc1d808e04732adf679965ccc34ca7ae3441', 'is_verified': False, 'line_number': 1, 'type': 'Secret Keyword'}]
+        >>> detect_secrets_scan(file="file.txt")
+        {'file.txt': [{'filename': 'file.txt', 'hashed_secret': 'f7c3bc1d808e04732adf679965ccc34ca7ae3441', 'is_verified': False, 'line_number': 1, 'type': 'Secret Keyword'}]}
+    """
+    try:
+        if not file:
+            temp_data_file = tempfile.NamedTemporaryFile(delete=False)
+            temp_data_file.write(bytes(data, encoding="raw_unicode_escape"))
+            temp_data_file.close()
 
-    secrets = SecretsCollection()
-    with default_settings():
-        secrets.scan_file(temp_data_file.name)
-    os.remove(temp_data_file.name)
+        secrets = SecretsCollection()
 
-    detect_secrets_output = secrets.json()
-    if detect_secrets_output:
-        return detect_secrets_output[temp_data_file.name]
-    else:
+        settings = {
+            "plugins_used": [
+                {"name": "ArtifactoryDetector"},
+                {"name": "AWSKeyDetector"},
+                {"name": "AzureStorageKeyDetector"},
+                {"name": "BasicAuthDetector"},
+                {"name": "CloudantDetector"},
+                {"name": "DiscordBotTokenDetector"},
+                {"name": "GitHubTokenDetector"},
+                {"name": "GitLabTokenDetector"},
+                {"name": "Base64HighEntropyString", "limit": 6.0},
+                {"name": "HexHighEntropyString", "limit": 3.0},
+                {"name": "IbmCloudIamDetector"},
+                {"name": "IbmCosHmacDetector"},
+                {"name": "IPPublicDetector"},
+                {"name": "JwtTokenDetector"},
+                {"name": "KeywordDetector"},
+                {"name": "MailchimpDetector"},
+                {"name": "NpmDetector"},
+                {"name": "OpenAIDetector"},
+                {"name": "PrivateKeyDetector"},
+                {"name": "PypiTokenDetector"},
+                {"name": "SendGridDetector"},
+                {"name": "SlackDetector"},
+                {"name": "SoftlayerDetector"},
+                {"name": "SquareOAuthDetector"},
+                {"name": "StripeDetector"},
+                # {"name": "TelegramBotTokenDetector"}, https://github.com/Yelp/detect-secrets/pull/878
+                {"name": "TwilioKeyDetector"},
+            ],
+            "filters_used": [
+                {"path": "detect_secrets.filters.common.is_invalid_file"},
+                {"path": "detect_secrets.filters.common.is_known_false_positive"},
+                {"path": "detect_secrets.filters.heuristic.is_likely_id_string"},
+                {"path": "detect_secrets.filters.heuristic.is_potential_secret"},
+            ],
+        }
+        if excluded_secrets and len(excluded_secrets) > 0:
+            settings["filters_used"].append(
+                {
+                    "path": "detect_secrets.filters.regex.should_exclude_line",
+                    "pattern": excluded_secrets,
+                }
+            )
+        with transient_settings(settings):
+            if file:
+                secrets.scan_file(file)
+            else:
+                secrets.scan_file(temp_data_file.name)
+
+        if not file:
+            os.remove(temp_data_file.name)
+
+        detect_secrets_output = secrets.json()
+
+        if detect_secrets_output:
+            if file:
+                return detect_secrets_output[file]
+            else:
+                return detect_secrets_output[temp_data_file.name]
+        else:
+            return None
+    except Exception as e:
+        logger.error(f"Error scanning for secrets: {e}")
         return None
 
 

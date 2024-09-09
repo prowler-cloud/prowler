@@ -15,6 +15,7 @@ from prowler.providers.aws.aws_provider import get_aws_available_regions
 
 MOCK_PROWLER_VERSION = "3.3.0"
 MOCK_OLD_PROWLER_VERSION = "0.0.0"
+MOCK_PROWLER_MASTER_VERSION = "3.4.0"
 
 
 def mock_prowler_get_latest_release(_, **kwargs):
@@ -62,6 +63,13 @@ old_config_aws = {
     "organizations_trusted_delegated_administrators": [],
     "check_rds_instance_replicas": False,
     "days_to_expire_threshold": 7,
+    "eks_required_log_types": [
+        "api",
+        "audit",
+        "authenticator",
+        "controllerManager",
+        "scheduler",
+    ],
 }
 config_aws = {
     "mute_non_default_regions": False,
@@ -72,6 +80,19 @@ config_aws = {
     "max_ec2_instance_age_in_days": 180,
     "ec2_allowed_interface_types": ["api_gateway_managed", "vpc_endpoint"],
     "ec2_allowed_instance_owners": ["amazon-elb"],
+    "ec2_sg_high_risk_ports": [
+        25,
+        110,
+        135,
+        143,
+        445,
+        3000,
+        4333,
+        5000,
+        5500,
+        8080,
+        8088,
+    ],
     "trusted_account_ids": [],
     "log_group_retention_days": 365,
     "max_idle_disconnect_timeout_in_seconds": 600,
@@ -255,6 +276,21 @@ config_aws = {
     ],
     "check_rds_instance_replicas": False,
     "days_to_expire_threshold": 7,
+    "insecure_key_algorithms": [
+        "RSA-1024",
+    ],
+    "eks_required_log_types": [
+        "api",
+        "audit",
+        "authenticator",
+        "controllerManager",
+        "scheduler",
+    ],
+    "eks_cluster_oldest_version_supported": "1.28",
+    "excluded_sensitive_environment_variables": [],
+    "elb_min_azs": 2,
+    "elbv2_min_azs": 2,
+    "secrets_ignore_patterns": [],
 }
 
 config_azure = {
@@ -290,7 +326,7 @@ config_kubernetes = {
 
 class Test_Config:
     def test_get_aws_available_regions(self):
-        assert len(get_aws_available_regions()) == 33
+        assert len(get_aws_available_regions()) == 34
 
     @mock.patch(
         "prowler.config.config.requests.get", new=mock_prowler_get_latest_release
@@ -310,6 +346,18 @@ class Test_Config:
         assert (
             check_current_version()
             == f"Prowler {MOCK_OLD_PROWLER_VERSION} (latest is {MOCK_PROWLER_VERSION}, upgrade for the latest features)"
+        )
+
+    @mock.patch(
+        "prowler.config.config.requests.get", new=mock_prowler_get_latest_release
+    )
+    @mock.patch(
+        "prowler.config.config.prowler_version", new=MOCK_PROWLER_MASTER_VERSION
+    )
+    def test_check_current_version_with_master_version(self):
+        assert (
+            check_current_version()
+            == f"Prowler {MOCK_PROWLER_MASTER_VERSION} (You are running the latest version, yay!)"
         )
 
     def test_get_available_compliance_frameworks(self):

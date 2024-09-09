@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
   "CheckID": "eks_control_plane_logging_all_types_enabled",
-  "CheckTitle": "Ensure EKS Control Plane Audit Logging is enabled for all log types",
+  "CheckTitle": "Ensure EKS Control Plane Logging is enabled for all required log types",
   "CheckType": [
     "Logging and Monitoring"
   ],
@@ -10,8 +10,8 @@
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
   "ResourceType": "AwsEksCluster",
-  "Description": "Ensure EKS Control Plane Audit Logging is enabled for all log types",
-  "Risk": "If logs are not enabled, monitoring of service use and threat analysis is not possible.",
+  "Description": "Ensure EKS Control Plane Logging is enabled for all required log types",
+  "Risk": "If logs are not enabled, monitoring of service use or threat analysis is not possible.",
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
@@ -21,7 +21,7 @@
       "Terraform": "https://docs.prowler.com/checks/aws/kubernetes-policies-1/bc_aws_kubernetes_4#fix---buildtime"
     },
     "Recommendation": {
-      "Text": "Make sure you logging for EKS control plane is enabled.",
+      "Text": "Make sure logging for EKS control plane is enabled for all required log types.",
       "Url": "https://docs.aws.amazon.com/eks/latest/userguide/logging-monitoring.html"
     }
   },

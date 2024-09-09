@@ -108,6 +108,44 @@ class Test_documentdb_cluster_backup_enabled:
             assert result[0].resource_id == DOC_DB_CLUSTER_NAME
             assert result[0].resource_arn == DOC_DB_CLUSTER_ARN
 
+    def test_documentdb_cluster_with_backup_equal_to_recommended(self):
+        documentdb_client = mock.MagicMock
+        documentdb_client.db_clusters = {
+            DOC_DB_CLUSTER_ARN: DBCluster(
+                id=DOC_DB_CLUSTER_NAME,
+                arn=DOC_DB_CLUSTER_ARN,
+                engine="docdb",
+                status="available",
+                backup_retention_period=7,
+                encrypted=True,
+                cloudwatch_logs=[],
+                multi_az=True,
+                parameter_group="default.docdb3.6",
+                deletion_protection=True,
+                region=AWS_REGION,
+                tags=[],
+            )
+        }
+        documentdb_client.audit_config = {"minimum_backup_retention_period": 7}
+        with mock.patch(
+            "prowler.providers.aws.services.documentdb.documentdb_service.DocumentDB",
+            new=documentdb_client,
+        ):
+            from prowler.providers.aws.services.documentdb.documentdb_cluster_backup_enabled.documentdb_cluster_backup_enabled import (
+                documentdb_cluster_backup_enabled,
+            )
+
+            check = documentdb_cluster_backup_enabled()
+            result = check.execute()
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == f"DocumentDB Cluster {DOC_DB_CLUSTER_NAME} has backup enabled with retention period 7 days."
+            )
+            assert result[0].region == AWS_REGION
+            assert result[0].resource_id == DOC_DB_CLUSTER_NAME
+            assert result[0].resource_arn == DOC_DB_CLUSTER_ARN
+
     def test_documentdb_cluster_with_backup(self):
         documentdb_client = mock.MagicMock
         documentdb_client.db_clusters = {

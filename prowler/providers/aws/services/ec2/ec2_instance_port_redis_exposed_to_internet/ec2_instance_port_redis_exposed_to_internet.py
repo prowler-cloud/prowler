@@ -1,5 +1,5 @@
-from prowler.lib.persistence import mklist
 from prowler.lib.check.models import Check, Check_Report_AWS
+from prowler.lib.persistence import mklist
 from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 from prowler.providers.aws.services.ec2.lib.instance import get_instance_public_status
 from prowler.providers.aws.services.ec2.lib.security_groups import check_security_group
@@ -21,7 +21,7 @@ class ec2_instance_port_redis_exposed_to_internet(Check):
             report.resource_tags = instance.tags
             is_open_port = False
             if instance.security_groups:
-                for sg in ec2_client.security_groups:
+                for sg in ec2_client.security_groups.values():
                     if sg.id in instance.security_groups:
                         for ingress_rule in sg.ingress_rules:
                             if check_security_group(

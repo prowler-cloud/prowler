@@ -3,8 +3,8 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-from lib.persistence import mklist
 from prowler.lib.logger import logger
+from prowler.lib.persistence import mklist
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
@@ -15,10 +15,10 @@ class ECS(AWSService):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.task_definitions = mklist()
-        self.__threading_call__(self.__list_task_definitions__)
-        self.__describe_task_definition__()
+        self.__threading_call__(self._list_task_definitions)
+        self._describe_task_definition()
 
-    def __list_task_definitions__(self, regional_client):
+    def _list_task_definitions(self, regional_client):
         logger.info("ECS - Listing Task Definitions...")
         try:
             list_ecs_paginator = regional_client.get_paginator("list_task_definitions")
@@ -42,7 +42,7 @@ class ECS(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_task_definition__(self):
+    def _describe_task_definition(self):
         logger.info("ECS - Describing Task Definitions...")
         try:
             for task_definition in self.task_definitions:

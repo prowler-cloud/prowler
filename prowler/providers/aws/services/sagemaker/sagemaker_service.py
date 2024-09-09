@@ -17,15 +17,15 @@ class SageMaker(AWSService):
         self.sagemaker_notebook_instances = mklist()
         self.sagemaker_models = mklist()
         self.sagemaker_training_jobs = mklist()
-        self.__threading_call__(self.__list_notebook_instances__)
-        self.__threading_call__(self.__list_models__)
-        self.__threading_call__(self.__list_training_jobs__)
-        self.__describe_model__(self.regional_clients)
-        self.__describe_notebook_instance__(self.regional_clients)
-        self.__describe_training_job__(self.regional_clients)
-        self.__list_tags_for_resource__()
+        self.__threading_call__(self._list_notebook_instances)
+        self.__threading_call__(self._list_models)
+        self.__threading_call__(self._list_training_jobs)
+        self._describe_model(self.regional_clients)
+        self._describe_notebook_instance(self.regional_clients)
+        self._describe_training_job(self.regional_clients)
+        self._list_tags_for_resource()
 
-    def __list_notebook_instances__(self, regional_client):
+    def _list_notebook_instances(self, regional_client):
         logger.info("SageMaker - listing notebook instances...")
         try:
             list_notebook_instances_paginator = regional_client.get_paginator(
@@ -51,7 +51,7 @@ class SageMaker(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __list_models__(self, regional_client):
+    def _list_models(self, regional_client):
         logger.info("SageMaker - listing models...")
         try:
             list_models_paginator = regional_client.get_paginator("list_models")
@@ -72,7 +72,7 @@ class SageMaker(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __list_training_jobs__(self, regional_client):
+    def _list_training_jobs(self, regional_client):
         logger.info("SageMaker - listing training jobs...")
         try:
             list_training_jobs_paginator = regional_client.get_paginator(
@@ -97,7 +97,7 @@ class SageMaker(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_notebook_instance__(self, regional_clients):
+    def _describe_notebook_instance(self, regional_clients):
         logger.info("SageMaker - describing notebook instances...")
         try:
             for notebook_instance in self.sagemaker_notebook_instances:
@@ -136,7 +136,7 @@ class SageMaker(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_model__(self, regional_clients):
+    def _describe_model(self, regional_clients):
         logger.info("SageMaker - describing models...")
         try:
             for model in self.sagemaker_models:
@@ -154,7 +154,7 @@ class SageMaker(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_training_job__(self, regional_clients):
+    def _describe_training_job(self, regional_clients):
         logger.info("SageMaker - describing training jobs...")
         try:
             for training_job in self.sagemaker_training_jobs:
@@ -189,7 +189,7 @@ class SageMaker(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __list_tags_for_resource__(self):
+    def _list_tags_for_resource(self):
         logger.info("SageMaker - List Tags...")
         try:
             for model in self.sagemaker_models:

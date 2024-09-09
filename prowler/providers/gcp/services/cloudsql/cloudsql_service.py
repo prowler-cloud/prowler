@@ -10,9 +10,9 @@ class CloudSQL(GCPService):
     def __init__(self, provider: GcpProvider):
         super().__init__("sqladmin", provider)
         self.instances = []
-        self.__get_instances__()
+        self._get_instances()
 
-    def __get_instances__(self):
+    def _get_instances(self):
         for project_id in self.project_ids:
             try:
                 request = self.client.instances().list(project=project_id)
@@ -31,8 +31,11 @@ class CloudSQL(GCPService):
                                 region=instance["region"],
                                 ip_addresses=instance.get("ipAddresses", []),
                                 public_ip=public_ip,
-                                ssl=instance["settings"]["ipConfiguration"].get(
+                                require_ssl=instance["settings"]["ipConfiguration"].get(
                                     "requireSsl", False
+                                ),
+                                ssl_mode=instance["settings"]["ipConfiguration"].get(
+                                    "sslMode", "ALLOW_UNENCRYPTED_AND_ENCRYPTED"
                                 ),
                                 automated_backups=instance["settings"][
                                     "backupConfiguration"
@@ -61,7 +64,8 @@ class Instance(BaseModel):
     region: str
     public_ip: bool
     authorized_networks: list
-    ssl: bool
+    require_ssl: bool
+    ssl_mode: str
     automated_backups: bool
     flags: list
     project_id: str
