@@ -2,6 +2,7 @@ import importlib
 import pkgutil
 import sys
 from abc import ABC, abstractmethod
+from argparse import Namespace
 from importlib import import_module
 from typing import Any, Optional
 
@@ -169,7 +170,11 @@ class Provider(ABC):
         return Provider._global
 
     @staticmethod
-    def set_global_provider(arguments):
+    def set_global_provider(global_provider: "Provider") -> None:
+        Provider._global = global_provider
+
+    @staticmethod
+    def init_global_provider(arguments: Namespace) -> None:
         try:
             provider_class_path = (
                 f"{providers_path}.{arguments.provider}.{arguments.provider}_provider"
@@ -181,7 +186,7 @@ class Provider(ABC):
 
             if not isinstance(Provider._global, provider_class):
                 if "aws" in provider_class_name.lower():
-                    global_provider = provider_class(
+                    provider_class(
                         arguments.aws_retries_max_attempts,
                         arguments.role,
                         arguments.session_duration,
@@ -198,7 +203,7 @@ class Provider(ABC):
                         arguments.fixer_config,
                     )
                 elif "azure" in provider_class_name.lower():
-                    global_provider = provider_class(
+                    provider_class(
                         arguments.az_cli_auth,
                         arguments.sp_env_auth,
                         arguments.browser_auth,
@@ -210,7 +215,7 @@ class Provider(ABC):
                         arguments.fixer_config,
                     )
                 elif "gcp" in provider_class_name.lower():
-                    global_provider = provider_class(
+                    provider_class(
                         arguments.project_id,
                         arguments.excluded_project_id,
                         arguments.credentials_file,
@@ -220,7 +225,7 @@ class Provider(ABC):
                         arguments.fixer_config,
                     )
                 elif "kubernetes" in provider_class_name.lower():
-                    global_provider = provider_class(
+                    provider_class(
                         arguments.kubeconfig_file,
                         arguments.context,
                         arguments.namespace,
@@ -228,7 +233,6 @@ class Provider(ABC):
                         arguments.fixer_config,
                     )
 
-            Provider._global = global_provider
         except TypeError as error:
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

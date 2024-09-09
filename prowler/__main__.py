@@ -71,6 +71,8 @@ from prowler.providers.aws.lib.security_hub.security_hub import SecurityHub
 from prowler.providers.common.provider import Provider
 from prowler.providers.common.quick_inventory import run_provider_quick_inventory
 
+providers_path = "prowler.providers"
+
 
 def prowler():
     # Parse Arguments
@@ -190,7 +192,7 @@ def prowler():
         sys.exit()
 
     # Provider to scan
-    Provider.set_global_provider(args)
+    Provider.init_global_provider(args)
     global_provider = Provider.get_global_provider()
 
     # Print Provider Credentials

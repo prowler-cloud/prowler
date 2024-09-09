@@ -139,6 +139,8 @@ class GcpProvider(Provider):
         self._audit_config = load_and_validate_config_file(self._type, config_file)
         self._fixer_config = load_and_validate_config_file(self._type, fixer_config)
 
+        Provider.set_global_provider(self)
+
     @property
     def identity(self):
         return self._identity
