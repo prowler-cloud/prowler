@@ -24,12 +24,12 @@ class TrustedAdvisor(AWSService):
                 support_region = "us-gov-west-1"
             self.client = self.session.client(self.service, region_name=support_region)
             self.client.region = support_region
-            self.__describe_services__()
+            self._describe_services()
             if getattr(self.premium_support, "enabled", False):
-                self.__describe_trusted_advisor_checks__()
-                self.__describe_trusted_advisor_check_result__()
+                self._describe_trusted_advisor_checks()
+                self._describe_trusted_advisor_check_result()
 
-    def __describe_trusted_advisor_checks__(self):
+    def _describe_trusted_advisor_checks(self):
         logger.info("TrustedAdvisor - Describing Checks...")
         try:
             for check in self.client.describe_trusted_advisor_checks(language="en").get(
@@ -62,7 +62,7 @@ class TrustedAdvisor(AWSService):
                 f"{self.client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_trusted_advisor_check_result__(self):
+    def _describe_trusted_advisor_check_result(self):
         logger.info("TrustedAdvisor - Describing Check Result...")
         try:
             for check in self.checks:
@@ -86,7 +86,7 @@ class TrustedAdvisor(AWSService):
                 f"{self.client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_services__(self):
+    def _describe_services(self):
         logger.info("Support - Describing Services...")
         try:
             self.client.describe_services()

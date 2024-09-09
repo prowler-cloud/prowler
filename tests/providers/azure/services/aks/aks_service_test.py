@@ -24,11 +24,11 @@ def mock_aks_get_clusters(_):
 
 
 @patch(
-    "prowler.providers.azure.services.aks.aks_service.AKS.__get_clusters__",
+    "prowler.providers.azure.services.aks.aks_service.AKS._get_clusters",
     new=mock_aks_get_clusters,
 )
 class Test_AppInsights_Service:
-    def test__get_client__(self):
+    def test_get_client(self):
         aks = AKS(set_mocked_azure_provider())
         assert (
             aks.clients[AZURE_SUBSCRIPTION_ID].__class__.__name__
@@ -39,7 +39,7 @@ class Test_AppInsights_Service:
         aks = AKS(set_mocked_azure_provider())
         assert aks.subscriptions.__class__.__name__ == "dict"
 
-    def test__get_components__(self):
+    def test_get_components(self):
         aks = AKS(set_mocked_azure_provider())
         assert len(aks.clusters) == 1
         assert (

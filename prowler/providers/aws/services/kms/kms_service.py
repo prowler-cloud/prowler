@@ -14,14 +14,14 @@ class KMS(AWSService):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.keys = []
-        self.__threading_call__(self.__list_keys__)
+        self.__threading_call__(self._list_keys)
         if self.keys:
-            self.__describe_key__()
-            self.__get_key_rotation_status__()
-            self.__get_key_policy__()
-            self.__list_resource_tags__()
+            self._describe_key()
+            self._get_key_rotation_status()
+            self._get_key_policy()
+            self._list_resource_tags()
 
-    def __list_keys__(self, regional_client):
+    def _list_keys(self, regional_client):
         logger.info("KMS - Listing Keys...")
         try:
             list_keys_paginator = regional_client.get_paginator("list_keys")
@@ -42,7 +42,7 @@ class KMS(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 
-    def __describe_key__(self):
+    def _describe_key(self):
         logger.info("KMS - Describing Key...")
         try:
             for key in self.keys:
@@ -57,7 +57,7 @@ class KMS(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 
-    def __get_key_rotation_status__(self):
+    def _get_key_rotation_status(self):
         logger.info("KMS - Get Key Rotation Status...")
         try:
             for key in self.keys:
@@ -76,7 +76,7 @@ class KMS(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 
-    def __get_key_policy__(self):
+    def _get_key_policy(self):
         logger.info("KMS - Get Key Policy...")
         try:
             for key in self.keys:
@@ -94,7 +94,7 @@ class KMS(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 
-    def __list_resource_tags__(self):
+    def _list_resource_tags(self):
         logger.info("KMS - List Tags...")
         for key in self.keys:
             if (

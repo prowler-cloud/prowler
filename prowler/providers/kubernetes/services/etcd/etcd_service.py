@@ -10,9 +10,9 @@ class Etcd(KubernetesService):
         super().__init__(provider)
         self.client = core_client
 
-        self.etcd_pods = self.__get_etcd_pods__()
+        self.etcd_pods = self._get_etcd_pods()
 
-    def __get_etcd_pods__(self):
+    def _get_etcd_pods(self):
         try:
             etcd_pods = []
             for pod in self.client.pods.values():

@@ -15,10 +15,10 @@ class IAM(GCPService):
     def __init__(self, provider: GcpProvider):
         super().__init__(__class__.__name__, provider)
         self.service_accounts = []
-        self.__get_service_accounts__()
-        self.__get_service_accounts_keys__()
+        self._get_service_accounts()
+        self._get_service_accounts_keys()
 
-    def __get_service_accounts__(self):
+    def _get_service_accounts(self):
         for project_id in self.project_ids:
             try:
                 request = (
@@ -49,7 +49,7 @@ class IAM(GCPService):
                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
-    def __get_service_accounts_keys__(self):
+    def _get_service_accounts_keys(self):
         try:
             for sa in self.service_accounts:
                 request = (
@@ -107,9 +107,9 @@ class AccessApproval(GCPService):
     def __init__(self, provider: GcpProvider):
         super().__init__(__class__.__name__, provider)
         self.settings = {}
-        self.__get_settings__()
+        self._get_settings()
 
-    def __get_settings__(self):
+    def _get_settings(self):
         for project_id in self.project_ids:
             try:
                 response = (
@@ -138,9 +138,9 @@ class EssentialContacts(GCPService):
     def __init__(self, provider: GcpProvider):
         super().__init__(__class__.__name__, provider)
         self.organizations = []
-        self.__get_contacts__()
+        self._get_contacts()
 
-    def __get_contacts__(self):
+    def _get_contacts(self):
         for org in cloudresourcemanager_client.organizations:
             try:
                 contacts = False

@@ -19,14 +19,14 @@ class Defender(AzureService):
     def __init__(self, provider: AzureProvider):
         super().__init__(SecurityCenter, provider)
 
-        self.pricings = self.__get_pricings__()
-        self.auto_provisioning_settings = self.__get_auto_provisioning_settings__()
-        self.assessments = self.__get_assessments__()
-        self.settings = self.__get_settings__()
-        self.security_contacts = self.__get_security_contacts__()
-        self.iot_security_solutions = self.__get_iot_security_solutions__()
+        self.pricings = self._get_pricings()
+        self.auto_provisioning_settings = self._get_auto_provisioning_settings()
+        self.assessments = self._get_assessments()
+        self.settings = self._get_settings()
+        self.security_contacts = self._get_security_contacts()
+        self.iot_security_solutions = self._get_iot_security_solutions()
 
-    def __get_pricings__(self):
+    def _get_pricings(self):
         logger.info("Defender - Getting pricings...")
         pricings = {}
         for subscription_name, client in self.clients.items():
@@ -66,7 +66,7 @@ class Defender(AzureService):
                 )
         return pricings
 
-    def __get_auto_provisioning_settings__(self):
+    def _get_auto_provisioning_settings(self):
         logger.info("Defender - Getting auto provisioning settings...")
         auto_provisioning = {}
         for subscription_name, client in self.clients.items():
@@ -95,7 +95,7 @@ class Defender(AzureService):
                 )
         return auto_provisioning
 
-    def __get_assessments__(self):
+    def _get_assessments(self):
         logger.info("Defender - Getting assessments...")
         assessments = {}
         for subscription_name, client in self.clients.items():
@@ -120,7 +120,7 @@ class Defender(AzureService):
                 )
         return assessments
 
-    def __get_settings__(self):
+    def _get_settings(self):
         logger.info("Defender - Getting settings...")
         settings = {}
         for subscription_name, client in self.clients.items():
@@ -149,7 +149,7 @@ class Defender(AzureService):
                 )
         return settings
 
-    def __get_security_contacts__(self):
+    def _get_security_contacts(self):
         logger.info("Defender - Getting security contacts...")
         security_contacts = {}
         for subscription_name, client in self.clients.items():
@@ -195,7 +195,7 @@ class Defender(AzureService):
                 )
         return security_contacts
 
-    def __get_iot_security_solutions__(self):
+    def _get_iot_security_solutions(self):
         logger.info("Defender - Getting IoT Security Solutions...")
         iot_security_solutions = {}
         for subscription_name, client in self.clients.items():

@@ -65,7 +65,7 @@ class Test_VPC_Service:
 
     # Test VPC Describe VPCs
     @mock_aws
-    def test__describe_vpcs__(self):
+    def test_describe_vpcs(self):
         # Generate VPC Client
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
         # Create VPC
@@ -98,7 +98,7 @@ class Test_VPC_Service:
 
     # Test VPC Describe Flow Logs
     @mock_aws
-    def test__describe_flow_logs__(self):
+    def test_describe_flow_logs(self):
         # Generate VPC Client
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
         new_vpc = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]
@@ -127,7 +127,7 @@ class Test_VPC_Service:
 
     # Test VPC Describe VPC Peering connections
     @mock_aws
-    def test__describe_vpc_peering_connections__(self):
+    def test_describe_vpc_peering_connections(self):
         # Generate VPC Client
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
         # Create VPCs peers
@@ -211,7 +211,7 @@ class Test_VPC_Service:
 
     # Test VPC Describe VPC Endpoints
     @mock_aws
-    def test__describe_vpc_endpoints__(self):
+    def test_describe_vpc_endpoints(self):
         # Generate VPC Client
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
         # Create VPC endpoint
@@ -259,7 +259,7 @@ class Test_VPC_Service:
 
     # Test VPC Describe VPC Endpoint Services
     @mock_aws
-    def test__describe_vpc_endpoint_services__(self):
+    def test_describe_vpc_endpoint_services(self):
         # Generate VPC Client
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
         elbv2_client = client("elbv2", region_name=AWS_REGION_US_EAST_1)
@@ -314,7 +314,7 @@ class Test_VPC_Service:
 
     # Test VPC Describe VPC Subnets
     @mock_aws
-    def test__describe_vpc_subnets__(self):
+    def test_describe_vpc_subnets(self):
         # Generate VPC Client
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
         # Create VPC
