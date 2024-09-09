@@ -23,7 +23,7 @@
     "framer-motion": "~11.1.1",
     "intl-messageformat": "^10.5.0",
     "lucide-react": "^0.417.0",
-    "next": "^14.2.7",
+    "next": "^14.2.8",
     "next-auth": "^5.0.0-beta.20",
     "next-themes": "^0.2.1",
     "react": "^18.3.1",
