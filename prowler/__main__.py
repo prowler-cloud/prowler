@@ -71,8 +71,6 @@ from prowler.providers.aws.lib.security_hub.security_hub import SecurityHub
 from prowler.providers.common.provider import Provider
 from prowler.providers.common.quick_inventory import run_provider_quick_inventory
 
-providers_path = "prowler.providers"
-
 
 def prowler():
     # Parse Arguments
