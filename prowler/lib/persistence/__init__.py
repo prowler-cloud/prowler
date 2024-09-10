@@ -1,1 +1,1 @@
-from .manager import *
+from .manager import *  # noqa
