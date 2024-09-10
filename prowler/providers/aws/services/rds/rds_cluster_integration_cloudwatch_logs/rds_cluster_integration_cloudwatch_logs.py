@@ -14,7 +14,7 @@ class rds_cluster_integration_cloudwatch_logs(Check):
                 report.resource_tags = db_cluster.tags
                 if db_cluster.cloudwatch_logs:
                     report.status = "PASS"
-                    report.status_extended = f"Aurora MySQL Cluster {db_cluster.id} is shipping {' '.join(db_cluster.cloudwatch_logs)} to CloudWatch Logs."
+                    report.status_extended = f"Aurora MySQL Cluster {db_cluster.id} is shipping {', '.join(db_cluster.cloudwatch_logs)} logs to CloudWatch Logs."
                 else:
                     report.status = "FAIL"
                     report.status_extended = f"Aurora MySQL Cluster {db_cluster.id} does not have CloudWatch Logs enabled."
