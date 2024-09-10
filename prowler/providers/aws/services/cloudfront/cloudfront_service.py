@@ -31,14 +31,7 @@ class CloudFront(AWSService):
                             distribution_id = item["Id"]
                             distribution_arn = item["ARN"]
                             origins = []
-                            ssl_protocols = []
                             for origin in item.get("Origins", {}).get("Items", []):
-                                for protocol in (
-                                    origin.get("CustomOriginConfig", {})
-                                    .get("OriginSslProtocols", {})
-                                    .get("Items", [])
-                                ):
-                                    ssl_protocols.append(protocol)
                                 origins.append(
                                     Origin(
                                         id=origin["Id"],
@@ -46,7 +39,11 @@ class CloudFront(AWSService):
                                         origin_protocol_policy=origin.get(
                                             "CustomOriginConfig", {}
                                         ).get("OriginProtocolPolicy", ""),
-                                        origin_ssl_protocols=ssl_protocols,
+                                        origin_ssl_protocols=origin.get(
+                                            "CustomOriginConfig", {}
+                                        )
+                                        .get("OriginSslProtocols", {})
+                                        .get("Items", []),
                                     )
                                 )
                             distribution = Distribution(
