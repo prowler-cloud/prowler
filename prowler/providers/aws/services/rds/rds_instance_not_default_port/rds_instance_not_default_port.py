@@ -11,6 +11,7 @@ class rds_instance_not_default_port(Check):
             "mysql": 3306,
             "mariadb": 3306,
             "aurora": 3306,
+            "aurora-postgresql": 5432,
             "postgres": 5432,
             "oracle-se1": 1521,
             "oracle-se2": 1521,
