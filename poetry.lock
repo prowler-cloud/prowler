@@ -4562,8 +4562,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-<<<<<<< HEAD
-content-hash = "71f9d7f2db9911fe87c4d83f1c2b593a0bb74e2968bad037684d079f04d697ce"
-=======
-content-hash = "a6b17a58cadad72aedb179ae1794dd5c68df4f5d11eb721fab3b1bccef8176ee"
->>>>>>> cc9e1c5af (chore(dependencies): update boto3 and botocore packages (#4976))
+content-hash = "8ef5116d2afd944898e5a4f4c268b7e8fd925696f6b5c8304b1ade944f11aa27"
