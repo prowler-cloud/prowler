@@ -53,6 +53,16 @@ def mock_make_api_call(self, operation_name, kwarg):
                 }
             ]
         }
+    if operation_name == "ListProtectedResources":
+        return {
+            "Results": [
+                {
+                    "ResourceArn": "arn:aws:rds:eu-west-1:123456789012:db:my-db-instance",
+                    "ResourceType": "RDS",
+                    "LastBackupTime": datetime(2015, 1, 1),
+                }
+            ]
+        }
     return make_api_call(self, operation_name, kwarg)
 
 
@@ -133,3 +143,15 @@ class Test_Backup_Service:
         assert backup.backup_report_plans[0].last_successful_execution_date == datetime(
             2015, 1, 1
         )
+
+    def test_list_protected_resources(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        backup = Backup(aws_provider)
+        assert len(backup.protected_resources) == 1
+        arn = "arn:aws:rds:eu-west-1:123456789012:db:my-db-instance"
+        protected_resource = backup.protected_resources.get(arn)
+        assert protected_resource is not None
+        assert protected_resource.arn == arn
+        assert protected_resource.resource_type == "RDS"
+        assert protected_resource.region == AWS_REGION_EU_WEST_1
+        assert protected_resource.last_backup_time == datetime(2015, 1, 1)
