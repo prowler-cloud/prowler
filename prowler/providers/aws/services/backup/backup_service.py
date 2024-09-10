@@ -149,13 +149,13 @@ class Backup(AWSService):
             )
             for page in list_protected_resources_paginator.paginate():
                 for resource in page.get("Results", []):
+                    arn = resource.get("ResourceArn", "")
                     if not self.audit_resources or (
                         is_resource_filtered(
-                            resource.get("ResourceArn"),
+                            arn,
                             self.audit_resources,
                         )
                     ):
-                        arn = resource.get("ResourceArn")
                         self.protected_resources[arn] = ProtectedResource(
                             arn=arn,
                             resource_type=resource.get("ResourceType"),
