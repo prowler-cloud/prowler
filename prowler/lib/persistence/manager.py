@@ -9,7 +9,7 @@ def mklist() -> list:
     """
     Create a new list with the given name and data.
     """
-    prowler_db_connection = os.environ.get('PROWLER_DB_CONNECTION')
+    prowler_db_connection = os.environ.get('PROWLER_DB_CONNECTION', "memory://")
     prowler_db_cache_size = os.environ.get('PROWLER_DB_CACHE_SIZE')
 
     if not prowler_db_connection:
