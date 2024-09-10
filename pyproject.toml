@@ -44,17 +44,10 @@ azure-mgmt-security = "7.0.0"
 azure-mgmt-sql = "3.0.1"
 azure-mgmt-storage = "21.2.1"
 azure-mgmt-subscription = "3.1.1"
-<<<<<<< HEAD
-azure-mgmt-web = "7.3.0"
-azure-storage-blob = "12.21.0"
-boto3 = "1.34.151"
-botocore = "1.34.151"
-=======
 azure-mgmt-web = "7.3.1"
 azure-storage-blob = "12.22.0"
 boto3 = "1.35.15"
 botocore = "1.35.15"
->>>>>>> cc9e1c5af (chore(dependencies): update boto3 and botocore packages (#4976))
 colorama = "0.4.6"
 cryptography = "43.0.0"
 dash = "2.17.1"
