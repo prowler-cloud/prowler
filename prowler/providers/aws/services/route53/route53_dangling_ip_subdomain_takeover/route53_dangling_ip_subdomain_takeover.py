@@ -19,7 +19,7 @@ class route53_dangling_ip_subdomain_takeover(Check):
                 public_ips = []
                 public_ips.extend([eip.public_ip for eip in ec2_client.elastic_ips])
                 # Add public IPs from Network Interfaces
-                for network_interface in ec2_client.network_interfaces:
+                for network_interface in ec2_client.network_interfaces.values():
                     if (
                         network_interface.association
                         and network_interface.association.get("PublicIp")
