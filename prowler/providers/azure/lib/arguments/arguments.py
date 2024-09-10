@@ -1,4 +1,4 @@
-from argparse import ArgumentTypeError
+from argparse import ArgumentTypeError, Namespace
 
 
 def init_parser(self):
@@ -68,3 +68,37 @@ def validate_azure_region(region):
             f"Region {region} not allowed, allowed regions are {' '.join(regions_allowed)}"
         )
     return region
+
+
+def validate_arguments(args: Namespace) -> tuple[bool, str]:
+    """
+    Validates the authentication arguments for the Azure provider.
+
+    Args:
+        args (Namespace): The parsed arguments from the Azure provider.
+
+    Returns:
+        tuple[bool, str]: A tuple containing a boolean indicating if the arguments are valid and a string with an error message if the arguments are invalid
+    """
+    if not args.browser_auth and args.tenant_id:
+        return (
+            False,
+            "Azure Tenant ID (--tenant-id) is required for browser authentication mode",
+        )
+    elif (
+        not args.az_cli_auth
+        and not args.sp_env_auth
+        and not args.browser_auth
+        and not args.managed_identity_auth
+    ):
+        return (
+            False,
+            "Azure provider requires at least one authentication method set: [--az-cli-auth | --sp-env-auth | --browser-auth | --managed-identity-auth]",
+        )
+    elif args.browser_auth and not args.tenant_id:
+        return (
+            False,
+            "Azure Tenant ID (--tenant-id) is required for browser authentication mode",
+        )
+
+    return (True, "")
