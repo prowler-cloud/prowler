@@ -11,9 +11,7 @@ class rds_instance_event_subscription_parameter_groups(Check):
                 report.status = "FAIL"
                 report.status_extended = "RDS parameter group event categories of configuration change is not subscribed."
                 report.resource_id = rds_client.audited_account
-                report.resource_arn = rds_client.__get_rds_arn_template__(
-                    db_event.region
-                )
+                report.resource_arn = rds_client._get_rds_arn_template(db_event.region)
                 report.region = db_event.region
                 if db_event.source_type == "db-parameter-group" and db_event.enabled:
                     if db_event.event_list == [] or db_event.event_list == [
