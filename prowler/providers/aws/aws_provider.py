@@ -13,12 +13,7 @@ from colorama import Fore, Style
 from pytz import utc
 from tzlocal import get_localzone
 
-from prowler.config.config import (
-    aws_services_json_file,
-    get_default_mute_file_path,
-    load_and_validate_config_file,
-    load_and_validate_fixer_config_file,
-)
+from prowler.config.config import aws_services_json_file, get_default_mute_file_path
 from prowler.lib.check.utils import list_modules, recover_checks_from_service
 from prowler.lib.logger import logger
 from prowler.lib.utils.utils import open_file, parse_json_file, print_boxes
@@ -91,8 +86,8 @@ class AwsProvider(Provider):
         scan_unused_services: bool = None,
         resource_tags: list[str] = [],
         resource_arn: list[str] = [],
-        config_file: str = None,
-        fixer_config: str = None,
+        audit_config: dict = {},
+        fixer_config: dict = {},
     ):
         """
         Initializes the AWS provider.
@@ -110,8 +105,8 @@ class AwsProvider(Provider):
             - scan_unused_services: A boolean indicating whether to scan unused services.
             - resource_tags: A list of tags to filter the resources to audit.
             - resource_arn: A list of ARNs of the resources to audit.
-            - config_file: The path to the configuration file.
-            - fixer_config: The path to the fixer configuration
+            - audit_config: The audit configuration.
+            - fixer_config: The fixer configuration.
 
         Raises:
             - ArgumentTypeError: If the input MFA ARN is invalid.
@@ -270,16 +265,10 @@ class AwsProvider(Provider):
         # Set ignore unused services
         self._scan_unused_services = scan_unused_services
 
-        # TODO: move this to the providers, pending for AWS, GCP, AZURE and K8s
         # Audit Config
-        self._audit_config = {}
-        if config_file:
-            self._audit_config = load_and_validate_config_file(self._type, config_file)
-        self._fixer_config = {}
-        if fixer_config:
-            self._fixer_config = load_and_validate_fixer_config_file(
-                self._type, fixer_config
-            )
+        self._audit_config = audit_config
+        # Fixer Config
+        self._fixer_config = fixer_config
 
     @property
     def identity(self):
