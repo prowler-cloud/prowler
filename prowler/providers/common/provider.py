@@ -5,6 +5,7 @@ from abc import ABC, abstractmethod
 from importlib import import_module
 from typing import Any, Optional
 
+from prowler.config.config import load_and_validate_config_file
 from prowler.lib.logger import logger
 from prowler.lib.mutelist.mutelist import Mutelist
 
@@ -178,6 +179,12 @@ class Provider(ABC):
             provider_class = getattr(
                 import_module(provider_class_path), provider_class_name
             )
+            audit_config = load_and_validate_config_file(
+                arguments.provider, arguments.config_file
+            )
+            fixer_config = load_and_validate_config_file(
+                arguments.provider, arguments.fixer_config
+            )
 
             if not isinstance(Provider._global, provider_class):
                 if "aws" in provider_class_name.lower():
@@ -194,8 +201,8 @@ class Provider(ABC):
                         arguments.scan_unused_services,
                         arguments.resource_tag,
                         arguments.resource_arn,
-                        arguments.config_file,
-                        arguments.fixer_config,
+                        audit_config,
+                        fixer_config,
                     )
                 elif "azure" in provider_class_name.lower():
                     global_provider = provider_class(
@@ -206,8 +213,8 @@ class Provider(ABC):
                         arguments.tenant_id,
                         arguments.azure_region,
                         arguments.subscription_id,
-                        arguments.config_file,
-                        arguments.fixer_config,
+                        audit_config,
+                        fixer_config,
                     )
                 elif "gcp" in provider_class_name.lower():
                     global_provider = provider_class(
@@ -216,16 +223,16 @@ class Provider(ABC):
                         arguments.credentials_file,
                         arguments.impersonate_service_account,
                         arguments.list_project_id,
-                        arguments.config_file,
-                        arguments.fixer_config,
+                        audit_config,
+                        fixer_config,
                     )
                 elif "kubernetes" in provider_class_name.lower():
                     global_provider = provider_class(
                         arguments.kubeconfig_file,
                         arguments.context,
                         arguments.namespace,
-                        arguments.config_file,
-                        arguments.fixer_config,
+                        audit_config,
+                        fixer_config,
                     )
 
             Provider._global = global_provider
