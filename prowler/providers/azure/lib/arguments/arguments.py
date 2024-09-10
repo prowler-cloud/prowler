@@ -80,6 +80,11 @@ def validate_arguments(args: Namespace) -> tuple[bool, str]:
     Returns:
         tuple[bool, str]: A tuple containing a boolean indicating if the arguments are valid and a string with an error message if the arguments are invalid
     """
+    # If has any listing argument set, it's valid
+    if any(
+        attr for attr in dir(args) if attr.startswith("list") and getattr(args, attr)
+    ):
+        return (True, "")
     if not args.browser_auth and args.tenant_id:
         return (
             False,
