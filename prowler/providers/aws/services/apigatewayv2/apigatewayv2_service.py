@@ -13,11 +13,11 @@ class ApiGatewayV2(AWSService):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.apis = []
-        self.__threading_call__(self.__get_apis__)
-        self.__get_authorizers__()
-        self.__get_stages__()
+        self.__threading_call__(self._get_apis)
+        self._get_authorizers()
+        self._get_stages()
 
-    def __get_apis__(self, regional_client):
+    def _get_apis(self, regional_client):
         logger.info("APIGatewayv2 - Getting APIs...")
         try:
             get_apis_paginator = regional_client.get_paginator("get_apis")
@@ -41,7 +41,7 @@ class ApiGatewayV2(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_authorizers__(self):
+    def _get_authorizers(self):
         logger.info("APIGatewayv2 - Getting APIs authorizer...")
         try:
             for api in self.apis:
@@ -54,7 +54,7 @@ class ApiGatewayV2(AWSService):
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 
-    def __get_stages__(self):
+    def _get_stages(self):
         logger.info("APIGatewayv2 - Getting stages for APIs...")
         try:
             for api in self.apis:

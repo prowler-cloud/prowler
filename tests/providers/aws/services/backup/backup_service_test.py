@@ -53,6 +53,16 @@ def mock_make_api_call(self, operation_name, kwarg):
                 }
             ]
         }
+    if operation_name == "ListProtectedResources":
+        return {
+            "Results": [
+                {
+                    "ResourceArn": "arn:aws:rds:eu-west-1:123456789012:db:my-db-instance",
+                    "ResourceType": "RDS",
+                    "LastBackupTime": datetime(2015, 1, 1),
+                }
+            ]
+        }
     return make_api_call(self, operation_name, kwarg)
 
 
@@ -73,7 +83,7 @@ def mock_generate_regional_clients(provider, service):
 )
 class Test_Backup_Service:
     # Test Backup Client
-    def test__get_client__(self):
+    def test_get_client(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         backup = Backup(aws_provider)
         assert (
@@ -93,7 +103,7 @@ class Test_Backup_Service:
         assert access_analyzer.service == "backup"
 
     # Test Backup List Backup Vaults
-    def test__list_backup_vaults__(self):
+    def test_list_backup_vaults(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         backup = Backup(aws_provider)
         assert len(backup.backup_vaults) == 1
@@ -107,7 +117,7 @@ class Test_Backup_Service:
         assert backup.backup_vaults[0].max_retention_days == 2
 
     # Test Backup List Backup Plans
-    def test__list_backup_plans__(self):
+    def test_list_backup_plans(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         backup = Backup(aws_provider)
         assert len(backup.backup_plans) == 1
@@ -120,7 +130,7 @@ class Test_Backup_Service:
         assert backup.backup_plans[0].advanced_settings == []
 
     # Test Backup List Report Plans
-    def test__list_backup_report_plans__(self):
+    def test_list_backup_report_plans(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         backup = Backup(aws_provider)
         assert len(backup.backup_report_plans) == 1
@@ -133,3 +143,15 @@ class Test_Backup_Service:
         assert backup.backup_report_plans[0].last_successful_execution_date == datetime(
             2015, 1, 1
         )
+
+    def test_list_protected_resources(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        backup = Backup(aws_provider)
+        assert len(backup.protected_resources) == 1
+        arn = "arn:aws:rds:eu-west-1:123456789012:db:my-db-instance"
+        protected_resource = backup.protected_resources.get(arn)
+        assert protected_resource is not None
+        assert protected_resource.arn == arn
+        assert protected_resource.resource_type == "RDS"
+        assert protected_resource.region == AWS_REGION_EU_WEST_1
+        assert protected_resource.last_backup_time == datetime(2015, 1, 1)

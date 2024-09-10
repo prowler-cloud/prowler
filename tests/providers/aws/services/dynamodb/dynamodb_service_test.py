@@ -45,7 +45,7 @@ class Test_DynamoDB_Service:
 
     # Test DynamoDB List Tables
     @mock_aws
-    def test__list_tables__(self):
+    def test_list_tables(self):
         # Generate DynamoDB Client
         dynamodb_client = client("dynamodb", region_name=AWS_REGION_US_EAST_1)
         # Create DynamoDB Tables
@@ -84,7 +84,7 @@ class Test_DynamoDB_Service:
 
     # Test DynamoDB Describe Table
     @mock_aws
-    def test__describe_table__(self):
+    def test_describe_table(self):
         # Generate DynamoDB Client
         dynamodb_client = client("dynamodb", region_name=AWS_REGION_US_EAST_1)
         # Create DynamoDB Table
@@ -116,7 +116,7 @@ class Test_DynamoDB_Service:
 
     # Test DynamoDB Describe Continuous Backups
     @mock_aws
-    def test__describe_continuous_backups__(self):
+    def test_describe_continuous_backups(self):
         # Generate DynamoDB Client
         dynamodb_client = client("dynamodb", region_name=AWS_REGION_US_EAST_1)
         # Create DynamoDB Table
@@ -147,7 +147,7 @@ class Test_DynamoDB_Service:
 
     # Test DAX Describe Clusters
     @mock_aws
-    def test__describe_clusters__(self):
+    def test_describe_clusters(self):
         # Generate DAX Client
         dax_client = client("dax", region_name=AWS_REGION_US_EAST_1)
         # Create DAX Clusters

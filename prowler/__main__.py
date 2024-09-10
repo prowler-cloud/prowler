@@ -15,8 +15,6 @@ from prowler.config.config import (
 )
 from prowler.lib.banner import print_banner
 from prowler.lib.check.check import (
-    bulk_load_checks_metadata,
-    bulk_load_compliance_frameworks,
     exclude_checks_to_run,
     exclude_services_to_run,
     execute_checks,
@@ -36,10 +34,12 @@ from prowler.lib.check.check import (
 )
 from prowler.lib.check.checks_loader import load_checks_to_execute
 from prowler.lib.check.compliance import update_checks_metadata_with_compliance
+from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.check.custom_checks_metadata import (
     parse_custom_checks_metadata_file,
     update_checks_metadata,
 )
+from prowler.lib.check.models import CheckMetadata
 from prowler.lib.cli.parser import ProwlerArgumentParser
 from prowler.lib.logger import logger, set_logging_config
 from prowler.lib.outputs.asff.asff import ASFF
@@ -131,7 +131,7 @@ def prowler():
 
     # Load checks metadata
     logger.debug("Loading checks metadata from .metadata.json files")
-    bulk_checks_metadata = bulk_load_checks_metadata(provider)
+    bulk_checks_metadata = CheckMetadata.get_bulk(provider)
 
     if args.list_categories:
         print_categories(list_categories(bulk_checks_metadata))
@@ -141,7 +141,7 @@ def prowler():
     # Load compliance frameworks
     logger.debug("Loading compliance frameworks from .json files")
 
-    bulk_compliance_frameworks = bulk_load_compliance_frameworks(provider)
+    bulk_compliance_frameworks = Compliance.get_bulk(provider)
     # Complete checks metadata with the compliance framework specification
     bulk_checks_metadata = update_checks_metadata_with_compliance(
         bulk_compliance_frameworks, bulk_checks_metadata
@@ -224,7 +224,8 @@ def prowler():
     # Once the provider is set and we have the eventual checks based on the resource identifier,
     # it is time to check what Prowler's checks are going to be executed
     checks_from_resources = global_provider.get_checks_to_execute_by_audit_resources()
-    if checks_from_resources:
+    # Intersect checks from resources with checks to execute so we only run the checks that apply to the resources with the specified ARNs or tags
+    if args.resource_arn or args.resource_tag:
         checks_to_execute = checks_to_execute.intersection(checks_from_resources)
 
     # Sort final check list

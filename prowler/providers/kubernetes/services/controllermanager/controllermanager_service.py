@@ -10,9 +10,9 @@ class ControllerManager(KubernetesService):
         super().__init__(provider)
         self.client = core_client
 
-        self.controllermanager_pods = self.__get_controllermanager_pods__()
+        self.controllermanager_pods = self._get_controllermanager_pods()
 
-    def __get_controllermanager_pods__(self):
+    def _get_controllermanager_pods(self):
         try:
             controllermanager_pods = []
             for pod in self.client.pods.values():

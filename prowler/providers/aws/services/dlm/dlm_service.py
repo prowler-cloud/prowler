@@ -10,14 +10,14 @@ class DLM(AWSService):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.lifecycle_policies = {}
-        self.__threading_call__(self.__get_lifecycle_policies__)
+        self.__threading_call__(self._get_lifecycle_policies)
 
-    def __get_lifecycle_policy_arn_template__(self, region):
+    def _get_lifecycle_policy_arn_template(self, region):
         return (
             f"arn:{self.audited_partition}:dlm:{region}:{self.audited_account}:policy"
         )
 
-    def __get_lifecycle_policies__(self, regional_client):
+    def _get_lifecycle_policies(self, regional_client):
         logger.info("DLM - Getting EBS Snapshots Lifecycle Policies...")
         try:
             lifecycle_policies = regional_client.get_lifecycle_policies()

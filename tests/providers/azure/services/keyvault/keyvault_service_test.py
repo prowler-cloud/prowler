@@ -61,7 +61,7 @@ from tests.providers.azure.azure_fixtures import (
 
 
 # @patch(
-#     "prowler.providers.azure.services.keyvault.keyvault_service.KeyVault.__get_key_vaults__",
+#     "prowler.providers.azure.services.keyvault.keyvault_service.KeyVault._get_key_vaults",
 #     new=mock_keyvault_get_key_vaults,
 # )
 class Test_keyvault_service:

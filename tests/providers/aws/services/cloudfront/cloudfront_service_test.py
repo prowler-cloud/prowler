@@ -149,7 +149,7 @@ def mock_make_api_call(self, operation_name, kwarg):
 class Test_CloudFront_Service:
     # Test CloudFront Client
     @mock_aws
-    def test__get_client__(self):
+    def test_get_client(self):
         cloudfront = CloudFront(set_mocked_aws_provider())
         assert cloudfront.client.__class__.__name__ == "CloudFront"
 
@@ -166,13 +166,13 @@ class Test_CloudFront_Service:
         assert cloudfront.service == "cloudfront"
 
     @mock_aws
-    def test__list_distributions__zero(self):
+    def test_list_distributionszero(self):
         cloudfront = CloudFront(set_mocked_aws_provider())
 
         assert len(cloudfront.distributions) == 0
 
     @mock_aws
-    def test__list_distributions__complete(self):
+    def test_list_distributionscomplete(self):
         cloudfront_client = client("cloudfront")
         config = example_distribution_config("ref")
         response = cloudfront_client.create_distribution(DistributionConfig=config)

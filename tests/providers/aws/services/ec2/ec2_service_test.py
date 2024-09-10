@@ -102,7 +102,7 @@ class Test_EC2_Service:
     # Test EC2 Describe Instances
     @mock_aws
     @freeze_time(MOCK_DATETIME)
-    def test__describe_instances__(self):
+    def test_describe_instances(self):
         # Generate EC2 Client
         ec2_resource = resource("ec2", region_name=AWS_REGION_US_EAST_1)
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
@@ -148,7 +148,7 @@ class Test_EC2_Service:
 
     # Test EC2 Describe Security Groups
     @mock_aws
-    def test__describe_security_groups__(self):
+    def test_describe_security_groups(self):
         # Generate EC2 Client
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
         # Create EC2 Security Group
@@ -217,7 +217,7 @@ class Test_EC2_Service:
 
     # Test EC2 Describe Nacls
     @mock_aws
-    def test__describe_network_acls__(self):
+    def test_describe_network_acls(self):
         # Generate EC2 Client
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
         ec2_resource = resource("ec2", region_name=AWS_REGION_US_EAST_1)
@@ -255,7 +255,7 @@ class Test_EC2_Service:
 
     # Test EC2 Describe Snapshots
     @mock_aws
-    def test__describe_snapshots__(self):
+    def test_describe_snapshots(self):
         # Generate EC2 Client
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
         ec2_resource = resource("ec2", region_name=AWS_REGION_US_EAST_1)
@@ -340,7 +340,7 @@ class Test_EC2_Service:
 
     # Test EC2 Instance User Data
     @mock_aws
-    def test__get_instance_user_data__(self):
+    def test_get_instance_user_data(self):
         user_data = "This is some user_data"
         ec2 = resource("ec2", region_name=AWS_REGION_US_EAST_1)
         ec2.create_instances(
@@ -376,7 +376,7 @@ class Test_EC2_Service:
                 assert result.status
 
     # Test EC2 get_snapshot_block_public_access_state
-    def test__get_snapshot_block_public_access_state__(self):
+    def test_get_snapshot_block_public_access_state(self):
         from prowler.providers.aws.services.ec2.ec2_service import (
             EbsSnapshotBlockPublicAccess,
         )
@@ -402,9 +402,9 @@ class Test_EC2_Service:
                 == "block-all-sharing"
             )
 
-    # Test EC2 __get_resources_for_regions__
+    # Test EC2 _get_resources_for_regions
     @mock_aws
-    def test__get_resources_for_regions__(self):
+    def test_get_resources_for_regions(self):
         # Generate EC2 Client
         ec2_resource = resource("ec2", region_name=AWS_REGION_US_EAST_1)
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
@@ -450,9 +450,9 @@ class Test_EC2_Service:
         assert ec2.attributes_for_regions[AWS_REGION_US_EAST_1]["has_instances"]
         assert ec2.attributes_for_regions[AWS_REGION_US_EAST_1]["has_volumes"]
 
-    # Test __get_instance_metadata_defaults__
+    # Test _get_instance_metadata_defaults
     @mock_aws
-    def test__get_instance_metadata_defaults__(self):
+    def test_get_instance_metadata_defaults(self):
         from prowler.providers.aws.services.ec2.ec2_service import (
             InstanceMetadataDefaults,
         )
@@ -508,7 +508,7 @@ class Test_EC2_Service:
 
     # Test EC2 Describe Network Interfaces
     @mock_aws
-    def test__describe_network_interfaces__(self):
+    def test_describe_network_interfaces(self):
         # Generate EC2 Client
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
         ec2_resource = resource("ec2", region_name=AWS_REGION_US_EAST_1)
@@ -563,7 +563,7 @@ class Test_EC2_Service:
 
     # Test EC2 Describe Images
     @mock_aws
-    def test__describe_images__(self):
+    def test_describe_images(self):
         # Generate EC2 Client
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
         ec2_resource = resource("ec2", region_name=AWS_REGION_US_EAST_1)
@@ -615,7 +615,7 @@ class Test_EC2_Service:
 
     # Test EC2 Describe Volumes
     @mock_aws
-    def test__describe_volumes__(self):
+    def test_describe_volumes(self):
         # Generate EC2 Client
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
         # Create Volume
@@ -691,7 +691,7 @@ class Test_EC2_Service:
     # Test EC2 Describe Launch Templates
     @mock_aws
     @mock.patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
-    def test__describe_launch_template_versions__(self):
+    def test_describe_launch_template_versions(self):
         # Generate EC2 Client
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
 
