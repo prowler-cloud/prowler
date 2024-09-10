@@ -1,11 +1,11 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
-from prowler.providers.aws.services.ec2.ec2_client import ec2_client
+from prowler.providers.aws.services.vpc.vpc_client import vpc_client
 
 
-class ec2_vpn_connection_tunnels_up(Check):
+class vpc_vpn_connection_tunnels_up(Check):
     def execute(self):
         findings = []
-        for vpn_arn, vpn_connection in ec2_client.vpn_connections.items():
+        for vpn_arn, vpn_connection in vpc_client.vpn_connections.items():
             report = Check_Report_AWS(self.metadata())
             report.region = vpn_connection.region
             report.resource_id = vpn_connection.id

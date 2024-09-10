@@ -66,11 +66,11 @@ def mock_make_api_call_v2(self, operation_name, kwarg):
     return make_api_call(self, operation_name, kwarg)
 
 
-class Test_ec2_vpn_connection_tunnels_up:
+class Test_vpc_vpn_connection_tunnels_up:
     @mock_aws
     def test_no_vpn_connections(self):
 
-        from prowler.providers.aws.services.ec2.ec2_service import EC2
+        from prowler.providers.aws.services.vpc.vpc_service import VPC
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
@@ -78,22 +78,22 @@ class Test_ec2_vpn_connection_tunnels_up:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_vpn_connection_tunnels_up.ec2_vpn_connection_tunnels_up.ec2_client",
-            new=EC2(aws_provider),
+            "prowler.providers.aws.services.vpc.vpc_vpn_connection_tunnels_up.vpc_vpn_connection_tunnels_up.vpc_client",
+            new=VPC(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.ec2.ec2_vpn_connection_tunnels_up.ec2_vpn_connection_tunnels_up import (
-                ec2_vpn_connection_tunnels_up,
+            from prowler.providers.aws.services.vpc.vpc_vpn_connection_tunnels_up.vpc_vpn_connection_tunnels_up import (
+                vpc_vpn_connection_tunnels_up,
             )
 
-            check = ec2_vpn_connection_tunnels_up()
+            check = vpc_vpn_connection_tunnels_up()
             result = check.execute()
 
             assert len(result) == 0
 
     @mock.patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     def test_vpn_both_tunnels_up(self):
-        from prowler.providers.aws.services.ec2.ec2_service import EC2
+        from prowler.providers.aws.services.vpc.vpc_service import VPC
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
@@ -101,14 +101,14 @@ class Test_ec2_vpn_connection_tunnels_up:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_vpn_connection_tunnels_up.ec2_vpn_connection_tunnels_up.ec2_client",
-            new=EC2(aws_provider),
+            "prowler.providers.aws.services.vpc.vpc_vpn_connection_tunnels_up.vpc_vpn_connection_tunnels_up.vpc_client",
+            new=VPC(aws_provider),
         ):
-            from prowler.providers.aws.services.ec2.ec2_vpn_connection_tunnels_up.ec2_vpn_connection_tunnels_up import (
-                ec2_vpn_connection_tunnels_up,
+            from prowler.providers.aws.services.vpc.vpc_vpn_connection_tunnels_up.vpc_vpn_connection_tunnels_up import (
+                vpc_vpn_connection_tunnels_up,
             )
 
-            check = ec2_vpn_connection_tunnels_up()
+            check = vpc_vpn_connection_tunnels_up()
             result = check.execute()
 
             # Se espera que el resultado sea PASS ya que ambos túneles están "UP"
@@ -128,7 +128,7 @@ class Test_ec2_vpn_connection_tunnels_up:
     @mock.patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call_v2)
     def test_vpn_one_tunnel_down(self):
 
-        from prowler.providers.aws.services.ec2.ec2_service import EC2
+        from prowler.providers.aws.services.vpc.vpc_service import VPC
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
@@ -136,14 +136,14 @@ class Test_ec2_vpn_connection_tunnels_up:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_vpn_connection_tunnels_up.ec2_vpn_connection_tunnels_up.ec2_client",
-            new=EC2(aws_provider),
+            "prowler.providers.aws.services.vpc.vpc_vpn_connection_tunnels_up.vpc_vpn_connection_tunnels_up.vpc_client",
+            new=VPC(aws_provider),
         ):
-            from prowler.providers.aws.services.ec2.ec2_vpn_connection_tunnels_up.ec2_vpn_connection_tunnels_up import (
-                ec2_vpn_connection_tunnels_up,
+            from prowler.providers.aws.services.vpc.vpc_vpn_connection_tunnels_up.vpc_vpn_connection_tunnels_up import (
+                vpc_vpn_connection_tunnels_up,
             )
 
-            check = ec2_vpn_connection_tunnels_up()
+            check = vpc_vpn_connection_tunnels_up()
             result = check.execute()
 
             assert len(result) == 1

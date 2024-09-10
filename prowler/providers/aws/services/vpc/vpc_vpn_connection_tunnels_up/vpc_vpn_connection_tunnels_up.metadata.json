@@ -1,11 +1,11 @@
 {
   "Provider": "aws",
-  "CheckID": "ec2_vpn_connection_tunnels_up",
+  "CheckID": "vpc_vpn_connection_tunnels_up",
   "CheckTitle": "Both VPN tunnels for an AWS Site-to-Site VPN connection should be up",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices"
   ],
-  "ServiceName": "ec2",
+  "ServiceName": "vpc",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:vpn-connection/resource-id",
   "Severity": "medium",
