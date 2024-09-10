@@ -4898,8 +4898,4 @@ test = ["big-O", "jaraco.functools", "jaraco.itertools", "jaraco.test", "more-it
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-<<<<<<< HEAD
 content-hash = "324ea427d651cea1513f4a7be9b86f420eb75efcd4e54e7021835e517cd81525"
-=======
-content-hash = "0d8ba9bf9bd4c84caf31c83f1b279499555be550f77c1a0bcaac071f98ce9568"
->>>>>>> f5b0583df (chore(deps-dev): bump pytest-env from 1.1.3 to 1.1.4 (#4966))
