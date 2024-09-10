@@ -144,15 +144,14 @@ class Test_Backup_Service:
             2015, 1, 1
         )
 
-    # Test Backup List Protected Resources
-    def test__list_protected_resources__(self):
+    def test_list_protected_resources(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         backup = Backup(aws_provider)
         assert len(backup.protected_resources) == 1
-        assert (
-            backup.protected_resources[0].arn
-            == "arn:aws:rds:eu-west-1:123456789012:db:my-db-instance"
-        )
-        assert backup.protected_resources[0].resource_type == "RDS"
-        assert backup.protected_resources[0].region == AWS_REGION_EU_WEST_1
-        assert backup.protected_resources[0].last_backup_time == datetime(2015, 1, 1)
+        arn = "arn:aws:rds:eu-west-1:123456789012:db:my-db-instance"
+        protected_resource = backup.protected_resources.get(arn)
+        assert protected_resource is not None
+        assert protected_resource.arn == arn
+        assert protected_resource.resource_type == "RDS"
+        assert protected_resource.region == AWS_REGION_EU_WEST_1
+        assert protected_resource.last_backup_time == datetime(2015, 1, 1)

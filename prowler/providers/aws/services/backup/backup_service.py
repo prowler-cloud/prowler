@@ -23,8 +23,8 @@ class Backup(AWSService):
         self.__threading_call__(self._list_backup_plans)
         self.backup_report_plans = []
         self.__threading_call__(self._list_backup_report_plans)
-        self.protected_resources = []
-        self.__threading_call__(self.__list_protected_resources__)
+        self.protected_resources = {}
+        self.__threading_call__(self._list_protected_resources)
 
     def _list_backup_vaults(self, regional_client):
         logger.info("Backup - Listing Backup Vaults...")
@@ -140,7 +140,7 @@ class Backup(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __list_protected_resources__(self, regional_client):
+    def _list_protected_resources(self, regional_client):
         logger.info("Backup - Listing Protected Resources...")
 
         try:
@@ -155,13 +155,12 @@ class Backup(AWSService):
                             self.audit_resources,
                         )
                     ):
-                        self.protected_resources.append(
-                            ProtectedResource(
-                                arn=resource.get("ResourceArn"),
-                                resource_type=resource.get("ResourceType"),
-                                region=regional_client.region,
-                                last_backup_time=resource.get("LastBackupTime"),
-                            )
+                        arn = resource.get("ResourceArn")
+                        self.protected_resources[arn] = ProtectedResource(
+                            arn=arn,
+                            resource_type=resource.get("ResourceType"),
+                            region=regional_client.region,
+                            last_backup_time=resource.get("LastBackupTime"),
                         )
         except Exception as error:
             logger.error(
