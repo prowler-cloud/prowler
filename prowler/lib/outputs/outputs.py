@@ -12,7 +12,7 @@ class GeneratedOutputs:
         self.regular = mklist() if self._store else None
         self.compliance = mklist() if self._store else None
 
-    def add_compliance(self, cmp):
+    def add_compliance(self, compliance):
 
         if not self._store:
             return
