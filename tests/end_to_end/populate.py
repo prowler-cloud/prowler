@@ -1,5 +1,4 @@
 import io
-import os
 import uuid
 import random
 import argparse
@@ -173,7 +172,7 @@ def lambda_handler(event, context):
                 lambda_client.create_function,
                 FunctionName=name,
                 Runtime="python3.11",
-                Role=f"arn:aws:iam::000000000000:role/demo",
+                Role="arn:aws:iam::000000000000:role/demo",
                 Handler="lambda_function.lambda_handler",
                 Code={"ZipFile": create_zip_file()},
                 Description="test lambda function",
