@@ -4,7 +4,7 @@ import tempfile
 
 import dill
 
-DEFAULT_CACHE_SIZE = int(os.environ.get('PROWLER_CACHE_SIZE', 2000))
+DEFAULT_CACHE_SIZE = 2000
 
 
 class SQLiteDict:
