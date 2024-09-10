@@ -11,7 +11,7 @@ export const CustomSearchInput: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState(() => {
     return searchParams.get("filter[search]") || "";
   });
-  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
   const applySearch = useCallback(
     (query: string) => {
