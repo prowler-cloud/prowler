@@ -70,7 +70,7 @@ def mock_generate_regional_clients(provider, service):
 )
 class Test_AccessAnalyzer_Service:
     # Test AccessAnalyzer Client
-    def test__get_client__(self):
+    def test_get_client(self):
         access_analyzer = AccessAnalyzer(
             set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
         )
@@ -93,7 +93,7 @@ class Test_AccessAnalyzer_Service:
         )
         assert access_analyzer.service == "accessanalyzer"
 
-    def test__list_analyzers__(self):
+    def test_list_analyzers(self):
         access_analyzer = AccessAnalyzer(
             set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
         )
@@ -105,7 +105,7 @@ class Test_AccessAnalyzer_Service:
         assert access_analyzer.analyzers[0].type == "ACCOUNT"
         assert access_analyzer.analyzers[0].region == AWS_REGION_EU_WEST_1
 
-    def test__list_findings__(self):
+    def test_list_findings(self):
         access_analyzer = AccessAnalyzer(
             set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
         )

@@ -10,12 +10,12 @@ from prowler.providers.azure.lib.service.service import AzureService
 class Network(AzureService):
     def __init__(self, provider: AzureProvider):
         super().__init__(NetworkManagementClient, provider)
-        self.security_groups = self.__get_security_groups__()
-        self.bastion_hosts = self.__get_bastion_hosts__()
-        self.network_watchers = self.__get_network_watchers__()
-        self.public_ip_addresses = self.__get_public_ip_addresses__()
+        self.security_groups = self._get_security_groups()
+        self.bastion_hosts = self._get_bastion_hosts()
+        self.network_watchers = self._get_network_watchers()
+        self.public_ip_addresses = self._get_public_ip_addresses()
 
-    def __get_security_groups__(self):
+    def _get_security_groups(self):
         logger.info("Network - Getting Network Security Groups...")
         security_groups = {}
         for subscription, client in self.clients.items():
@@ -38,7 +38,7 @@ class Network(AzureService):
                 )
         return security_groups
 
-    def __get_network_watchers__(self):
+    def _get_network_watchers(self):
         logger.info("Network - Getting Network Watchers...")
         network_watchers = {}
         for subscription, client in self.clients.items():
@@ -46,9 +46,7 @@ class Network(AzureService):
                 network_watchers.update({subscription: []})
                 network_watchers_list = client.network_watchers.list_all()
                 for network_watcher in network_watchers_list:
-                    flow_logs = self.__get_flow_logs__(
-                        subscription, network_watcher.name
-                    )
+                    flow_logs = self._get_flow_logs(subscription, network_watcher.name)
                     network_watchers[subscription].append(
                         NetworkWatcher(
                             id=network_watcher.id,
@@ -64,14 +62,14 @@ class Network(AzureService):
                 )
         return network_watchers
 
-    def __get_flow_logs__(self, subscription, network_watcher_name):
+    def _get_flow_logs(self, subscription, network_watcher_name):
         logger.info("Network - Getting Flow Logs...")
         client = self.clients[subscription]
         resource_group = "NetworkWatcherRG"
         flow_logs = client.flow_logs.list(resource_group, network_watcher_name)
         return flow_logs
 
-    def __get_bastion_hosts__(self):
+    def _get_bastion_hosts(self):
         logger.info("Network - Getting Bastion Hosts...")
         bastion_hosts = {}
         for subscription, client in self.clients.items():
@@ -93,7 +91,7 @@ class Network(AzureService):
                 )
         return bastion_hosts
 
-    def __get_public_ip_addresses__(self):
+    def _get_public_ip_addresses(self):
         logger.info("Network - Getting Public IP Addresses...")
         public_ip_addresses = {}
         for subscription, client in self.clients.items():

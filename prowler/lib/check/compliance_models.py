@@ -1,9 +1,11 @@
+import os
 import sys
 from enum import Enum
 from typing import Optional, Union
 
 from pydantic import BaseModel, ValidationError, root_validator
 
+from prowler.lib.check.utils import list_compliance_modules
 from prowler.lib.logger import logger
 
 
@@ -213,9 +215,8 @@ class Compliance(BaseModel):
             raise ValueError("Framework or Provider must not be empty")
         return values
 
-    def list_compliance_frameworks(
-        bulk_compliance_frameworks: dict, provider: str = None
-    ):
+    @staticmethod
+    def list(bulk_compliance_frameworks: dict, provider: str = None) -> list[str]:
         """
         Returns a list of compliance frameworks from bulk compliance frameworks
 
@@ -229,16 +230,113 @@ class Compliance(BaseModel):
         if provider:
             compliance_frameworks = [
                 compliance_framework
-                for compliance_framework in bulk_compliance_frameworks.values()
-                if compliance_framework.Provider == provider
+                for compliance_framework in bulk_compliance_frameworks.keys()
+                if provider in compliance_framework
             ]
         else:
             compliance_frameworks = [
                 compliance_framework
-                for compliance_framework in bulk_compliance_frameworks.values()
+                for compliance_framework in bulk_compliance_frameworks.keys()
             ]
 
         return compliance_frameworks
+
+    @staticmethod
+    def get(
+        bulk_compliance_frameworks: dict, compliance_framework_name: str
+    ) -> "Compliance":
+        """
+        Returns a compliance framework from bulk compliance frameworks
+
+        Args:
+            bulk_compliance_frameworks (dict): The bulk compliance frameworks
+            compliance_framework_name (str): The compliance framework name
+
+        Returns:
+            Compliance: The compliance framework
+        """
+        return bulk_compliance_frameworks.get(compliance_framework_name, None)
+
+    @staticmethod
+    def list_requirements(
+        bulk_compliance_frameworks: dict, compliance_framework: str = None
+    ) -> list:
+        """
+        Returns a list of compliance requirements from a compliance framework
+
+        Args:
+            bulk_compliance_frameworks (dict): The bulk compliance frameworks
+            compliance_framework (str): The compliance framework name
+
+        Returns:
+            list: The list of compliance requirements for the provided compliance framework
+        """
+        compliance_requirements = []
+
+        if bulk_compliance_frameworks and compliance_framework:
+            compliance_requirements = [
+                compliance_requirement.Id
+                for compliance_requirement in bulk_compliance_frameworks.get(
+                    compliance_framework
+                ).Requirements
+            ]
+
+        return compliance_requirements
+
+    @staticmethod
+    def get_requirement(
+        bulk_compliance_frameworks: dict, compliance_framework: str, requirement_id: str
+    ) -> Union[Mitre_Requirement, Compliance_Requirement]:
+        """
+        Returns a compliance requirement from a compliance framework
+
+        Args:
+            bulk_compliance_frameworks (dict): The bulk compliance frameworks
+            compliance_framework (str): The compliance framework name
+            requirement_id (str): The compliance requirement ID
+
+        Returns:
+            Mitre_Requirement | Compliance_Requirement: The compliance requirement
+        """
+        requirement = None
+        for compliance_requirement in bulk_compliance_frameworks.get(
+            compliance_framework
+        ).Requirements:
+            if compliance_requirement.Id == requirement_id:
+                requirement = compliance_requirement
+                break
+
+        return requirement
+
+    @staticmethod
+    def get_bulk(provider: str) -> dict:
+        """Bulk load all compliance frameworks specification into a dict"""
+        try:
+            bulk_compliance_frameworks = {}
+            available_compliance_framework_modules = list_compliance_modules()
+            for compliance_framework in available_compliance_framework_modules:
+                if provider in compliance_framework.name:
+                    compliance_specification_dir_path = (
+                        f"{compliance_framework.module_finder.path}/{provider}"
+                    )
+                    # for compliance_framework in available_compliance_framework_modules:
+                    for filename in os.listdir(compliance_specification_dir_path):
+                        file_path = os.path.join(
+                            compliance_specification_dir_path, filename
+                        )
+                        # Check if it is a file and ti size is greater than 0
+                        if os.path.isfile(file_path) and os.stat(file_path).st_size > 0:
+                            # Open Compliance file in JSON
+                            # cis_v1.4_aws.json --> cis_v1.4_aws
+                            compliance_framework_name = filename.split(".json")[0]
+                            # Store the compliance info
+                            bulk_compliance_frameworks[compliance_framework_name] = (
+                                load_compliance_framework(file_path)
+                            )
+        except Exception as e:
+            logger.error(f"{e.__class__.__name__}[{e.__traceback__.tb_lineno}] -- {e}")
+
+        return bulk_compliance_frameworks
 
 
 # Testing Pending

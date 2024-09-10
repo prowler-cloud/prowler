@@ -78,7 +78,7 @@ def mock_generate_regional_clients(provider, service):
 )
 class Test_Glacier_Service:
     # Test Glacier Client
-    def test__get_client__(self):
+    def test_get_client(self):
         glacier = Glacier(
             set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
         )
@@ -101,7 +101,7 @@ class Test_Glacier_Service:
         )
         assert glacier.service == "glacier"
 
-    def test__list_vaults__(self):
+    def test_list_vaults(self):
         # Set partition for the service
         glacier = Glacier(
             set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
@@ -117,7 +117,7 @@ class Test_Glacier_Service:
         assert glacier.vaults[TEST_VAULT_ARN].region == AWS_REGION_EU_WEST_1
         assert glacier.vaults[TEST_VAULT_ARN].tags == [{"test": "test"}]
 
-    def test__get_vault_access_policy__(self):
+    def test_get_vault_access_policy(self):
         # Set partition for the service
         glacier = Glacier(
             set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
