@@ -224,8 +224,8 @@ def prowler():
     # Once the provider is set and we have the eventual checks based on the resource identifier,
     # it is time to check what Prowler's checks are going to be executed
     checks_from_resources = global_provider.get_checks_to_execute_by_audit_resources()
-    if checks_from_resources:
-        checks_to_execute = checks_to_execute.intersection(checks_from_resources)
+    # Intersect checks from resources with checks to execute
+    checks_to_execute = checks_to_execute.intersection(checks_from_resources)
 
     # Sort final check list
     checks_to_execute = sorted(checks_to_execute)
