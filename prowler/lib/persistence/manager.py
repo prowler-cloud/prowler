@@ -10,7 +10,11 @@ def mklist() -> list:
     Create a new list with the given name and data.
     """
     prowler_db_connection = os.environ.get('PROWLER_DB_CONNECTION', "memory://")
-    prowler_db_cache_size = os.environ.get('PROWLER_DB_CACHE_SIZE')
+
+    try:
+        prowler_db_cache_size = int(os.environ.get('PROWLER_DB_CACHE_SIZE', 2000))
+    except ValueError:
+        prowler_db_cache_size = 2000
 
     if not prowler_db_connection:
         return list()
