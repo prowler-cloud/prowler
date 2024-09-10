@@ -225,7 +225,7 @@ def prowler():
     # it is time to check what Prowler's checks are going to be executed
     checks_from_resources = global_provider.get_checks_to_execute_by_audit_resources()
     # Intersect checks from resources with checks to execute so we only run the checks that apply to the resources with the specified ARNs or tags
-    if args.resource_arn or args.resource_tag:
+    if getattr(args, "resource_arn", None) or getattr(args, "resource_tag", None):
         checks_to_execute = checks_to_execute.intersection(checks_from_resources)
 
     # Sort final check list
