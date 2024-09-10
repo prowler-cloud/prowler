@@ -22,7 +22,7 @@ class ec2_launch_template_no_public_ip(Check):
                     )
                 if version.template_data.network_interfaces:
                     for network_interface in version.template_data.network_interfaces:
-                        if network_interface.public_ip_addresses != []:
+                        if network_interface.public_ip_addresses:
                             versions_with_network_interfaces_public_ip.append(
                                 str(version.version_number)
                             )
@@ -33,19 +33,16 @@ class ec2_launch_template_no_public_ip(Check):
                 or versions_with_network_interfaces_public_ip
             ):
                 report.status = "FAIL"
-                extended_messages = []
 
-                if versions_with_autoassign_public_ip:
-                    extended_messages.append(
-                        f"EC2 Launch Template {template.name} is configured to assign a public IP address to network interfaces upon launch in template versions: {', '.join(versions_with_autoassign_public_ip)}."
-                    )
-
-                if versions_with_network_interfaces_public_ip:
-                    extended_messages.append(
-                        f"EC2 Launch Template {template.name} is using a network interface with public IP addresses in template versions: {', '.join(versions_with_network_interfaces_public_ip)}."
-                    )
-
-                report.status_extended = " ".join(extended_messages)
+                if (
+                    versions_with_autoassign_public_ip
+                    and versions_with_network_interfaces_public_ip
+                ):
+                    report.status_extended = f"EC2 Launch Template {template.name} is configured to assign a public IP address to network interfaces upon launch in template versions: {', '.join(versions_with_autoassign_public_ip)} and is using a network interface with public IP addresses in template versions: {', '.join(versions_with_network_interfaces_public_ip)}."
+                elif versions_with_autoassign_public_ip:
+                    report.status_extended = f"EC2 Launch Template {template.name} is configured to assign a public IP address to network interfaces upon launch in template versions: {', '.join(versions_with_autoassign_public_ip)}."
+                elif versions_with_network_interfaces_public_ip:
+                    report.status_extended = f"EC2 Launch Template {template.name} is using a network interface with public IP addresses in template versions: {', '.join(versions_with_network_interfaces_public_ip)}."
             else:
                 report.status = "PASS"
                 report.status_extended = f"EC2 Launch Template {template.name} is neither configured to assign a public IP address to network interfaces upon launch nor using a network interface with public IP addresses."

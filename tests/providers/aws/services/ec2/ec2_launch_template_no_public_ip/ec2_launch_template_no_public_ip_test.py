@@ -322,7 +322,7 @@ class Test_ec2_launch_template_no_secrets:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"EC2 Launch Template {launch_template_name} is configured to assign a public IP address to network interfaces upon launch in template versions: 3, 4. EC2 Launch Template {launch_template_name} is using a network interface with public IP addresses in template versions: 3, 4."
+                == f"EC2 Launch Template {launch_template_name} is configured to assign a public IP address to network interfaces upon launch in template versions: 3, 4 and is using a network interface with public IP addresses in template versions: 3, 4."
             )
             assert result[0].resource_id == launch_template_id
             assert result[0].region == AWS_REGION_US_EAST_1
@@ -373,7 +373,7 @@ class Test_ec2_launch_template_no_secrets:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"EC2 Launch Template {launch_template_name} is configured to assign a public IP address to network interfaces upon launch in template versions: 6. EC2 Launch Template {launch_template_name} is using a network interface with public IP addresses in template versions: 6, 7."
+                == f"EC2 Launch Template {launch_template_name} is configured to assign a public IP address to network interfaces upon launch in template versions: 6 and is using a network interface with public IP addresses in template versions: 6, 7."
             )
             assert result[0].resource_id == launch_template_id
             assert result[0].region == AWS_REGION_US_EAST_1
