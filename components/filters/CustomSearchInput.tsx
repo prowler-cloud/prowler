@@ -3,7 +3,7 @@ import { XCircle } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useCallback, useEffect, useState } from "react";
 
-import { useDebounce } from "../../hooks/useDebounce";
+// import { useDebounce } from "../../hooks/useDebounce";
 
 export const CustomSearchInput: React.FC = () => {
   const router = useRouter();
@@ -13,8 +13,8 @@ export const CustomSearchInput: React.FC = () => {
   // });
   const [searchQuery, setSearchQuery] = useState("");
 
-  const debouncedSearchQuery = useDebounce(searchQuery, 500);
-  console.log("debouncedSearchQuery", debouncedSearchQuery);
+  // const debouncedSearchQuery = useDebounce(searchQuery, 500);
+  // console.log("debouncedSearchQuery", debouncedSearchQuery);
 
   const applySearch = useCallback(
     (query: string) => {
