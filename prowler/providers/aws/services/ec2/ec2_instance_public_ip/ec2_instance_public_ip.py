@@ -1,3 +1,4 @@
+from prowler.lib.persistence import mklist
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 
