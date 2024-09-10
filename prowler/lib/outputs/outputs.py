@@ -20,7 +20,7 @@ class GeneratedOutputs:
         if cmp:
             self.compliance.append(cmp)
 
-    def add_regular(self, rg):
+    def add_regular(self, regular):
 
         if not self._store:
             return
