@@ -8,20 +8,24 @@ import { useDebounce } from "../../hooks/useDebounce";
 export const CustomSearchInput: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [searchQuery, setSearchQuery] = useState(() => {
-    return searchParams.get("filter[search]") || "";
-  });
+  // const [searchQuery, setSearchQuery] = useState(() => {
+  //   return searchParams.get("filter[search]") || "";
+  // });
+  const [searchQuery, setSearchQuery] = useState("");
+
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
+  console.log("debouncedSearchQuery", debouncedSearchQuery);
 
   const applySearch = useCallback(
     (query: string) => {
       const params = new URLSearchParams(searchParams.toString());
       if (query) {
         params.set("filter[search]", query);
+        setSearchQuery(query);
       } else {
         params.delete("filter[search]");
       }
-      router.replace(`?${params.toString()}`, { scroll: false });
+      router.push(`?${params.toString()}`, { scroll: false });
     },
     [router, searchParams],
   );
@@ -32,8 +36,18 @@ export const CustomSearchInput: React.FC = () => {
   };
 
   useEffect(() => {
-    applySearch(debouncedSearchQuery);
-  }, [debouncedSearchQuery, applySearch]);
+    const searchFromUrl = searchParams.get("filter[search]") || "";
+    setSearchQuery(searchFromUrl);
+  }, [searchParams]);
+
+  // useEffect(() => {
+  //   const timer = setTimeout(() => {
+  //     applySearch(debouncedSearchQuery);
+  //     console.log("hi from useEffect");
+  //   }, 2000);
+
+  //   return () => clearTimeout(timer);
+  // }, [debouncedSearchQuery, applySearch, searchParams]);
 
   return (
     <Input
@@ -42,11 +56,10 @@ export const CustomSearchInput: React.FC = () => {
       label="Search"
       labelPlacement="inside"
       value={searchQuery}
-      onChange={(e) => setSearchQuery(e.target.value)}
-      onKeyDown={(e) => {
-        if (e.key === "Enter") {
-          applySearch(searchQuery);
-        }
+      onChange={(e) => {
+        const value = e.target.value;
+        setSearchQuery(value);
+        applySearch(value);
       }}
       endContent={
         searchQuery && (
