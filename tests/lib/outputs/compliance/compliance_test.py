@@ -3,8 +3,8 @@ from unittest import mock
 
 from prowler.lib.check.compliance_models import (
     CIS_Requirement_Attribute,
+    Compliance,
     Compliance_Requirement,
-    ComplianceBaseModel,
 )
 from prowler.lib.check.models import Check_Report, load_check_metadata
 from prowler.lib.outputs.compliance.compliance import get_check_compliance
@@ -13,7 +13,7 @@ from prowler.lib.outputs.compliance.compliance import get_check_compliance
 class TestCompliance:
     def test_get_check_compliance_aws(self):
         check_compliance = [
-            ComplianceBaseModel(
+            Compliance(
                 Framework="CIS",
                 Provider="AWS",
                 Version="1.4",
@@ -40,7 +40,7 @@ class TestCompliance:
                     )
                 ],
             ),
-            ComplianceBaseModel(
+            Compliance(
                 Framework="CIS",
                 Provider="AWS",
                 Version="1.5",
@@ -92,7 +92,7 @@ class TestCompliance:
 
     def test_get_check_compliance_gcp(self):
         check_compliance = [
-            ComplianceBaseModel(
+            Compliance(
                 Framework="CIS",
                 Provider="GCP",
                 Version="2.0",
@@ -119,7 +119,7 @@ class TestCompliance:
                     )
                 ],
             ),
-            ComplianceBaseModel(
+            Compliance(
                 Framework="CIS",
                 Provider="GCP",
                 Version="2.1",
@@ -171,7 +171,7 @@ class TestCompliance:
 
     def test_get_check_compliance_azure(self):
         check_compliance = [
-            ComplianceBaseModel(
+            Compliance(
                 Framework="CIS",
                 Provider="Azure",
                 Version="2.0",
@@ -198,7 +198,7 @@ class TestCompliance:
                     )
                 ],
             ),
-            ComplianceBaseModel(
+            Compliance(
                 Framework="CIS",
                 Provider="Azure",
                 Version="2.1",
@@ -250,7 +250,7 @@ class TestCompliance:
 
     def test_get_check_compliance_kubernetes(self):
         check_compliance = [
-            ComplianceBaseModel(
+            Compliance(
                 Framework="CIS",
                 Provider="Kubernetes",
                 Version="2.0",
@@ -277,7 +277,7 @@ class TestCompliance:
                     )
                 ],
             ),
-            ComplianceBaseModel(
+            Compliance(
                 Framework="CIS",
                 Provider="Kubernetes",
                 Version="2.1",

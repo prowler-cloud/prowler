@@ -291,6 +291,7 @@ config_aws = {
     "excluded_sensitive_environment_variables": [],
     "elb_min_azs": 2,
     "elbv2_min_azs": 2,
+    "secrets_ignore_patterns": [],
 }
 
 config_azure = {

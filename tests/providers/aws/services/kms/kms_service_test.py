@@ -48,7 +48,7 @@ class Test_ACM_Service:
 
     # Test KMS List Keys
     @mock_aws
-    def test__list_keys__(self):
+    def test_list_keys(self):
         # Generate KMS Client
         kms_client = client("kms", region_name=AWS_REGION_US_EAST_1)
         # Create KMS keys
@@ -63,7 +63,7 @@ class Test_ACM_Service:
 
     # Test KMS Describe Keys
     @mock_aws
-    def test__describe_key__(self):
+    def test_describe_key(self):
         # Generate KMS Client
         kms_client = client("kms", region_name=AWS_REGION_US_EAST_1)
         # Create KMS keys
@@ -86,7 +86,7 @@ class Test_ACM_Service:
 
     # Test KMS Get rotation status
     @mock_aws
-    def test__get_key_rotation_status__(self):
+    def test_get_key_rotation_status(self):
         # Generate KMS Client
         kms_client = client("kms", region_name=AWS_REGION_US_EAST_1)
         # Create KMS keys
@@ -104,7 +104,7 @@ class Test_ACM_Service:
 
     # Test KMS Key policy
     @mock_aws
-    def test__get_key_policy__(self):
+    def test_get_key_policy(self):
         public_policy = json.dumps(
             {
                 "Version": "2012-10-17",

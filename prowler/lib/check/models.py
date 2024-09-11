@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from pydantic import BaseModel, ValidationError, validator
 
 from prowler.config.config import valid_severities
+from prowler.lib.check.utils import recover_checks_from_provider
 from prowler.lib.logger import logger
 
 
@@ -128,6 +129,34 @@ class CheckMetadata(BaseModel):
                 f"Invalid severity: {severity}. Severity must be one of {', '.join(valid_severities)}"
             )
         return severity
+
+    @staticmethod
+    def get_bulk(provider: str) -> dict[str, "CheckMetadata"]:
+        """
+        Load the metadata of all checks for a given provider reading the check's metadata files.
+        Args:
+            provider (str): The name of the provider.
+        Returns:
+            dict[str, CheckMetadata]: A dictionary containing the metadata of all checks, with the CheckID as the key.
+        """
+
+        bulk_check_metadata = {}
+        checks = recover_checks_from_provider(provider)
+        # Build list of check's metadata files
+        for check_info in checks:
+            # Build check path name
+            check_name = check_info[0]
+            check_path = check_info[1]
+            # Ignore fixer files
+            if check_name.endswith("_fixer"):
+                continue
+            # Append metadata file extension
+            metadata_file = f"{check_path}/{check_name}.metadata.json"
+            # Load metadata
+            check_metadata = load_check_metadata(metadata_file)
+            bulk_check_metadata[check_metadata.CheckID] = check_metadata
+
+        return bulk_check_metadata
 
 
 class Check(ABC, CheckMetadata):

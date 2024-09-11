@@ -18,17 +18,19 @@ from prowler.lib.check.check import (
     execute,
     list_categories,
     list_checks_json,
-    list_modules,
     list_services,
     parse_checks_from_file,
     parse_checks_from_folder,
-    recover_checks_from_provider,
-    recover_checks_from_service,
     remove_custom_checks_module,
     run_check,
     update_audit_metadata,
 )
 from prowler.lib.check.models import load_check_metadata
+from prowler.lib.check.utils import (
+    list_modules,
+    recover_checks_from_provider,
+    recover_checks_from_service,
+)
 from prowler.providers.aws.aws_provider import AwsProvider
 from prowler.providers.aws.services.accessanalyzer.accessanalyzer_service import (
     Analyzer,
@@ -575,7 +577,7 @@ class TestCheck:
         listed_categories = list_categories(test_bulk_checks_metadata)
         assert listed_categories == expected_categories
 
-    @patch("prowler.lib.check.check.list_modules", new=mock_list_modules)
+    @patch("prowler.lib.check.utils.list_modules", new=mock_list_modules)
     def test_recover_checks_from_provider(self):
         provider = "azure"
         service = "storage"
@@ -636,7 +638,7 @@ class TestCheck:
         returned_checks = recover_checks_from_provider(provider, service)
         assert returned_checks == expected_checks
 
-    @patch("prowler.lib.check.check.walk_packages", new=mock_walk_packages)
+    @patch("prowler.lib.check.utils.walk_packages", new=mock_walk_packages)
     def test_list_modules(self):
         provider = "azure"
         service = "storage"
@@ -644,7 +646,7 @@ class TestCheck:
         assert expected_modules == expected_packages
 
     @patch(
-        "prowler.lib.check.check.recover_checks_from_provider",
+        "prowler.lib.check.utils.recover_checks_from_provider",
         new=mock_recover_checks_from_aws_provider,
     )
     def test_recover_checks_from_service(self):

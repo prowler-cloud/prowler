@@ -1,0 +1,30 @@
+{
+  "Provider": "aws",
+  "CheckID": "rds_cluster_storage_encrypted",
+  "CheckTitle": "Check if RDS clusters storage is encrypted.",
+  "CheckType": [],
+  "ServiceName": "rds",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-cluster",
+  "Severity": "medium",
+  "ResourceType": "AwsRdsDbCluster",
+  "Description": "Check if RDS clusters storage is encrypted.",
+  "Risk": "If not enabled sensitive information at rest is not protected.",
+  "RelatedUrl": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Overview.Encryption.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws rds create-db-cluster --db-cluster-identifier <db_cluster_id> --db-cluster-class <cluster_class> --engine <engine> --storage-encrypted true",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-27",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable Encryption. Use a CMK where possible. It will provide additional management and privacy benefits.",
+      "Url": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/Overview.Encryption.html#Overview.Encryption.Enabling"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

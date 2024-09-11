@@ -69,7 +69,7 @@ class Test_RDS_Service:
 
     # Test RDS Describe DB Instances
     @mock_aws
-    def test__describe_db_instances__(self):
+    def test_describe_db_instances(self):
         conn = client("rds", region_name=AWS_REGION_US_EAST_1)
         conn.create_db_parameter_group(
             DBParameterGroupName="test",
@@ -123,7 +123,7 @@ class Test_RDS_Service:
         assert db_instance.copy_tags_to_snapshot
 
     @mock_aws
-    def test__describe_db_parameters__(self):
+    def test_describe_db_parameters(self):
         conn = client("rds", region_name=AWS_REGION_US_EAST_1)
         conn.create_db_parameter_group(
             DBParameterGroupName="test",
@@ -161,7 +161,7 @@ class Test_RDS_Service:
                 assert parameter["ParameterValue"] == "1"
 
     @mock_aws
-    def test__describe_db_certificate__(self):
+    def test_describe_db_certificate(self):
         rds_client = mock.MagicMock
         rds_client.db_instances = {
             "arn:aws:rds:us-east-1:123456789012:db:db-master-1": DBInstance(
@@ -226,7 +226,7 @@ class Test_RDS_Service:
 
     # Test RDS Describe DB Snapshots
     @mock_aws
-    def test__describe_db_snapshots__(self):
+    def test_describe_db_snapshots(self):
         conn = client("rds", region_name=AWS_REGION_US_EAST_1)
         conn.create_db_instance(
             DBInstanceIdentifier="db-primary-1",
@@ -250,7 +250,7 @@ class Test_RDS_Service:
 
     # Test RDS Describe DB Clusters
     @mock_aws
-    def test__describe_db_clusters__(self):
+    def test_describe_db_clusters(self):
         conn = client("rds", region_name=AWS_REGION_US_EAST_1)
         cluster_id = "db-master-1"
         conn.create_db_cluster_parameter_group(
@@ -309,7 +309,7 @@ class Test_RDS_Service:
 
     # Test RDS Describe DB Cluster Snapshots
     @mock_aws
-    def test__describe_db_cluster_snapshots__(self):
+    def test_describe_db_cluster_snapshots(self):
         conn = client("rds", region_name=AWS_REGION_US_EAST_1)
         conn.create_db_cluster(
             DBClusterIdentifier="db-primary-1",
@@ -366,7 +366,7 @@ class Test_RDS_Service:
 
     # Test RDS engine version
     @mock_aws
-    def test__describe_db_engine_versions__(self):
+    def test_describe_db_engine_versions(self):
         # RDS client for this test class
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         rds = RDS(aws_provider)

@@ -11,12 +11,13 @@ class rds_instance_event_subscription_security_groups(Check):
                 report.status = "FAIL"
                 report.status_extended = "RDS security group event categories of configuration change and failure are not subscribed."
                 report.resource_id = rds_client.audited_account
-                report.resource_arn = rds_client.__get_rds_arn_template__(
-                    db_event.region
-                )
+                report.resource_arn = rds_client._get_rds_arn_template(db_event.region)
                 report.region = db_event.region
                 if db_event.source_type == "db-security-group" and db_event.enabled:
-                    if db_event.event_list == []:
+                    if db_event.event_list == [] or set(db_event.event_list) == {
+                        "failure",
+                        "configuration change",
+                    }:
                         report.resource_id = db_event.id
                         report.resource_arn = db_event.arn
                         report.status = "PASS"

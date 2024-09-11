@@ -8,6 +8,7 @@ from mock import MagicMock, patch
 from prowler.config.config import (
     default_config_file_path,
     default_fixer_config_file_path,
+    load_and_validate_config_file,
 )
 from prowler.providers.gcp.gcp_provider import GcpProvider
 from prowler.providers.gcp.models import GCPIdentityInfo, GCPOutputOptions, GCPProject
@@ -21,8 +22,10 @@ class TestGCPProvider:
         list_project_id = False
         credentials_file = ""
         impersonate_service_account = ""
-        config_file = default_config_file_path
-        fixer_config = default_fixer_config_file_path
+        audit_config = load_and_validate_config_file("gcp", default_config_file_path)
+        fixer_config = load_and_validate_config_file(
+            "gcp", default_fixer_config_file_path
+        )
 
         projects = {
             "test-project": GCPProject(
@@ -59,8 +62,8 @@ class TestGCPProvider:
                 credentials_file,
                 impersonate_service_account,
                 list_project_id,
-                config_file,
-                fixer_config,
+                audit_config=audit_config,
+                fixer_config=fixer_config,
             )
             assert gcp_provider.session is None
             assert gcp_provider.project_ids == ["test-project"]
