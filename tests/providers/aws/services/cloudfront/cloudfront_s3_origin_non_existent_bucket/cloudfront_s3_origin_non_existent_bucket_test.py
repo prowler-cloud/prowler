@@ -14,7 +14,7 @@ DISTRIBUTION_ARN = (
 REGION = "eu-west-1"
 
 
-class Test_cloudfront_distributions_s3_origin_non_existing_bucket:
+class Test_cloudfront_s3_origin_non_existent_bucket:
     def test_no_distributions(self):
         # Distributions
         cloudfront_client = mock.MagicMock
@@ -31,11 +31,11 @@ class Test_cloudfront_distributions_s3_origin_non_existing_bucket:
                 "prowler.providers.aws.services.s3.s3_service.S3", new=s3_client
             ):
                 # Test Check
-                from prowler.providers.aws.services.cloudfront.cloudfront_distributions_s3_origin_non_existing_bucket.cloudfront_distributions_s3_origin_non_existing_bucket import (
-                    cloudfront_distributions_s3_origin_non_existing_bucket,
+                from prowler.providers.aws.services.cloudfront.cloudfront_s3_origin_non_existent_bucket.cloudfront_s3_origin_non_existent_bucket import (
+                    cloudfront_s3_origin_non_existent_bucket,
                 )
 
-                check = cloudfront_distributions_s3_origin_non_existing_bucket()
+                check = cloudfront_s3_origin_non_existent_bucket()
                 result = check.execute()
 
                 assert len(result) == 0
@@ -72,11 +72,11 @@ class Test_cloudfront_distributions_s3_origin_non_existing_bucket:
                 "prowler.providers.aws.services.s3.s3_service.S3", new=s3_client
             ):
                 # Test Check
-                from prowler.providers.aws.services.cloudfront.cloudfront_distributions_s3_origin_non_existing_bucket.cloudfront_distributions_s3_origin_non_existing_bucket import (
-                    cloudfront_distributions_s3_origin_non_existing_bucket,
+                from prowler.providers.aws.services.cloudfront.cloudfront_s3_origin_non_existent_bucket.cloudfront_s3_origin_non_existent_bucket import (
+                    cloudfront_s3_origin_non_existent_bucket,
                 )
 
-                check = cloudfront_distributions_s3_origin_non_existing_bucket()
+                check = cloudfront_s3_origin_non_existent_bucket()
                 result = check.execute()
 
                 assert len(result) == 1
@@ -125,11 +125,11 @@ class Test_cloudfront_distributions_s3_origin_non_existing_bucket:
                 "prowler.providers.aws.services.s3.s3_service.S3", new=s3_client
             ):
                 # Test Check
-                from prowler.providers.aws.services.cloudfront.cloudfront_distributions_s3_origin_non_existing_bucket.cloudfront_distributions_s3_origin_non_existing_bucket import (
-                    cloudfront_distributions_s3_origin_non_existing_bucket,
+                from prowler.providers.aws.services.cloudfront.cloudfront_s3_origin_non_existent_bucket.cloudfront_s3_origin_non_existent_bucket import (
+                    cloudfront_s3_origin_non_existent_bucket,
                 )
 
-                check = cloudfront_distributions_s3_origin_non_existing_bucket()
+                check = cloudfront_s3_origin_non_existent_bucket()
                 result = check.execute()
 
                 assert len(result) == 1

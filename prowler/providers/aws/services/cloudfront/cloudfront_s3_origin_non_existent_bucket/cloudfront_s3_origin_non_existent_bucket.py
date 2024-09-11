@@ -5,7 +5,7 @@ from prowler.providers.aws.services.cloudfront.cloudfront_client import (
 from prowler.providers.aws.services.s3.s3_client import s3_client
 
 
-class cloudfront_distributions_s3_origin_non_existing_bucket(Check):
+class cloudfront_s3_origin_non_existent_bucket(Check):
     def execute(self):
         findings = []
         for distribution in cloudfront_client.distributions.values():
