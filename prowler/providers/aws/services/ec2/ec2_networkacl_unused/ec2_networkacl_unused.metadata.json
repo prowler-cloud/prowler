@@ -13,7 +13,7 @@
   "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/vpc-network-acl-unused-check.html",
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "aws ec2 delete-network-acl --network-acl-id <nacl_id>",
       "NativeIaC": "",
       "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/ec2-controls.html#ec2-16",
       "Terraform": ""
