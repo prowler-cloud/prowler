@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
-  "CheckID": "cloudfront_distributions_use_origin_access_control",
-  "CheckTitle": "Check if CloudFront distributions use OAC.",
+  "CheckID": "cloudfront_distributions_s3_origin_access_control",
+  "CheckTitle": "Check if CloudFront distributions with S3 origin use OAC.",
   "CheckType": [
     "Data Exposure"
   ],
