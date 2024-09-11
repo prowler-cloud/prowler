@@ -161,7 +161,7 @@ def mock_make_api_call_v3(self, operation_name, kwarg):
     return make_api_call(self, operation_name, kwarg)
 
 
-class Test_ec2_instance_multiple_eni:
+class Test_ec2_instance_uses_single_eni:
     @mock_aws
     def test_ec2_no_instances(self):
         from prowler.providers.aws.services.ec2.ec2_service import EC2
@@ -174,14 +174,14 @@ class Test_ec2_instance_multiple_eni:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_instance_multiple_eni.ec2_instance_multiple_eni.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_instance_uses_single_eni.ec2_instance_uses_single_eni.ec2_client",
             new=EC2(aws_provider),
         ):
-            from prowler.providers.aws.services.ec2.ec2_instance_multiple_eni.ec2_instance_multiple_eni import (
-                ec2_instance_multiple_eni,
+            from prowler.providers.aws.services.ec2.ec2_instance_uses_single_eni.ec2_instance_uses_single_eni import (
+                ec2_instance_uses_single_eni,
             )
 
-            check = ec2_instance_multiple_eni()
+            check = ec2_instance_uses_single_eni()
             result = check.execute()
 
             assert len(result) == 0
@@ -197,14 +197,14 @@ class Test_ec2_instance_multiple_eni:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_instance_multiple_eni.ec2_instance_multiple_eni.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_instance_uses_single_eni.ec2_instance_uses_single_eni.ec2_client",
             new=EC2(aws_provider),
         ):
-            from prowler.providers.aws.services.ec2.ec2_instance_multiple_eni.ec2_instance_multiple_eni import (
-                ec2_instance_multiple_eni,
+            from prowler.providers.aws.services.ec2.ec2_instance_uses_single_eni.ec2_instance_uses_single_eni import (
+                ec2_instance_uses_single_eni,
             )
 
-            check = ec2_instance_multiple_eni()
+            check = ec2_instance_uses_single_eni()
             result = check.execute()
 
             assert len(result) == 1
@@ -227,14 +227,14 @@ class Test_ec2_instance_multiple_eni:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_instance_multiple_eni.ec2_instance_multiple_eni.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_instance_uses_single_eni.ec2_instance_uses_single_eni.ec2_client",
             new=EC2(aws_provider),
         ):
-            from prowler.providers.aws.services.ec2.ec2_instance_multiple_eni.ec2_instance_multiple_eni import (
-                ec2_instance_multiple_eni,
+            from prowler.providers.aws.services.ec2.ec2_instance_uses_single_eni.ec2_instance_uses_single_eni import (
+                ec2_instance_uses_single_eni,
             )
 
-            check = ec2_instance_multiple_eni()
+            check = ec2_instance_uses_single_eni()
             result = check.execute()
 
             assert len(result) == 1
@@ -265,14 +265,14 @@ class Test_ec2_instance_multiple_eni:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_instance_multiple_eni.ec2_instance_multiple_eni.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_instance_uses_single_eni.ec2_instance_uses_single_eni.ec2_client",
             new=EC2(aws_provider),
         ):
-            from prowler.providers.aws.services.ec2.ec2_instance_multiple_eni.ec2_instance_multiple_eni import (
-                ec2_instance_multiple_eni,
+            from prowler.providers.aws.services.ec2.ec2_instance_uses_single_eni.ec2_instance_uses_single_eni import (
+                ec2_instance_uses_single_eni,
             )
 
-            check = ec2_instance_multiple_eni()
+            check = ec2_instance_uses_single_eni()
             result = check.execute()
 
             assert len(result) == 1
@@ -296,14 +296,14 @@ class Test_ec2_instance_multiple_eni:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_instance_multiple_eni.ec2_instance_multiple_eni.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_instance_uses_single_eni.ec2_instance_uses_single_eni.ec2_client",
             new=EC2(aws_provider),
         ):
-            from prowler.providers.aws.services.ec2.ec2_instance_multiple_eni.ec2_instance_multiple_eni import (
-                ec2_instance_multiple_eni,
+            from prowler.providers.aws.services.ec2.ec2_instance_uses_single_eni.ec2_instance_uses_single_eni import (
+                ec2_instance_uses_single_eni,
             )
 
-            check = ec2_instance_multiple_eni()
+            check = ec2_instance_uses_single_eni()
             result = check.execute()
 
             assert len(result) == 1

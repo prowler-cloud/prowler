@@ -73,7 +73,7 @@ class EC2(AWSService):
                             is_resource_filtered(arn, self.audit_resources)
                         ):
                             enis = []
-                            for eni in instance.get("NetworkInterfaces"):
+                            for eni in instance.get("NetworkInterfaces", []):
                                 network_interface_id = eni.get("NetworkInterfaceId")
                                 if network_interface_id:
                                     enis.append(network_interface_id)

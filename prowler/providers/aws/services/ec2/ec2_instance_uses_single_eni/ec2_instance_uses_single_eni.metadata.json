@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "ec2_instance_multiple_eni",
+  "CheckID": "ec2_instance_uses_single_eni",
   "CheckTitle": "Amazon EC2 instances should not use multiple ENIs",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices"
