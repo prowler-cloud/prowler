@@ -61,7 +61,7 @@ def mock_make_api_call(self, operation_name, kwargs):
 # Patch every AWS call using Boto3
 @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
 class Test_FMS_Service:
-    def test__get_client__(self):
+    def test_get_client(self):
         aws_provider = set_mocked_aws_provider()
         fms = FMS(aws_provider)
         assert fms.client.__class__.__name__ == "FMS"
@@ -71,7 +71,7 @@ class Test_FMS_Service:
         fms = FMS(aws_provider)
         assert fms.service == "fms"
 
-    def test__list_policies__(self):
+    def test_list_policies(self):
         aws_provider = set_mocked_aws_provider()
         fms = FMS(aws_provider)
         assert len(fms.fms_policies) == 1
@@ -87,7 +87,7 @@ class Test_FMS_Service:
             == DELETE_UNUSED_MANAGED_RESOURCES
         )
 
-    def test__list_compliance_status__(self):
+    def test_list_compliance_status(self):
         aws_provider = set_mocked_aws_provider()
         fms = FMS(aws_provider)
         assert len(fms.fms_policies) == 1

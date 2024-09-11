@@ -11,9 +11,9 @@ class APIKeys(GCPService):
         super().__init__(__class__.__name__, provider, api_version="v2")
 
         self.keys = []
-        self.__get_keys__()
+        self._get_keys()
 
-    def __get_keys__(self):
+    def _get_keys(self):
         for project_id in self.project_ids:
             try:
                 request = (

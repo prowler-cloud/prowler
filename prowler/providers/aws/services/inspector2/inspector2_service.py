@@ -10,10 +10,10 @@ class Inspector2(AWSService):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.inspectors = []
-        self.__threading_call__(self.__batch_get_account_status__)
-        self.__threading_call__(self.__list_active_findings__, self.inspectors)
+        self.__threading_call__(self._batch_get_account_status)
+        self.__threading_call__(self._list_active_findings, self.inspectors)
 
-    def __batch_get_account_status__(self, regional_client):
+    def _batch_get_account_status(self, regional_client):
         # We use this function to check if inspector2 is enabled
         logger.info("Inspector2 - Getting account status...")
         try:
@@ -33,7 +33,7 @@ class Inspector2(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __list_active_findings__(self, inspector):
+    def _list_active_findings(self, inspector):
         logger.info("Inspector2 - Listing active findings...")
         try:
             regional_client = self.regional_clients[inspector.region]

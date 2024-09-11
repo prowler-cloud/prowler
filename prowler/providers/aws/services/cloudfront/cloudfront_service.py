@@ -13,11 +13,11 @@ class CloudFront(AWSService):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider, global_service=True)
         self.distributions = {}
-        self.__list_distributions__(self.client, self.region)
-        self.__get_distribution_config__(self.client, self.distributions, self.region)
-        self.__list_tags_for_resource__(self.client, self.distributions, self.region)
+        self._list_distributions(self.client, self.region)
+        self._get_distribution_config(self.client, self.distributions, self.region)
+        self._list_tags_for_resource(self.client, self.distributions, self.region)
 
-    def __list_distributions__(self, client, region) -> dict:
+    def _list_distributions(self, client, region) -> dict:
         logger.info("CloudFront - Listing Distributions...")
         try:
             list_ditributions_paginator = client.get_paginator("list_distributions")
@@ -29,11 +29,26 @@ class CloudFront(AWSService):
                         ):
                             distribution_id = item["Id"]
                             distribution_arn = item["ARN"]
-                            origins = item["Origins"]["Items"]
                             origin_groups = item.get("OriginGroups", {}).get(
                                 "Items", []
                             )
                             origin_failover = True if origin_groups else False
+                            origins = []
+                            for origin in item.get("Origins", {}).get("Items", []):
+                                origins.append(
+                                    Origin(
+                                        id=origin["Id"],
+                                        domain_name=origin["DomainName"],
+                                        origin_protocol_policy=origin.get(
+                                            "CustomOriginConfig", {}
+                                        ).get("OriginProtocolPolicy", ""),
+                                        origin_ssl_protocols=origin.get(
+                                            "CustomOriginConfig", {}
+                                        )
+                                        .get("OriginSslProtocols", {})
+                                        .get("Items", []),
+                                    )
+                                )
                             distribution = Distribution(
                                 arn=distribution_arn,
                                 id=distribution_id,
@@ -48,7 +63,7 @@ class CloudFront(AWSService):
                 f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_distribution_config__(self, client, distributions, region) -> dict:
+    def _get_distribution_config(self, client, distributions, region) -> dict:
         logger.info("CloudFront - Getting Distributions...")
         try:
             for distribution_id in distributions.keys():
@@ -91,7 +106,7 @@ class CloudFront(AWSService):
                 f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __list_tags_for_resource__(self, client, distributions, region):
+    def _list_tags_for_resource(self, client, distributions, region):
         logger.info("CloudFront - List Tags...")
         try:
             for distribution in distributions.values():
@@ -134,6 +149,13 @@ class DefaultCacheConfigBehaviour(BaseModel):
     field_level_encryption_id: str
 
 
+class Origin(BaseModel):
+    id: str
+    domain_name: str
+    origin_protocol_policy: str
+    origin_ssl_protocols: list[str]
+
+
 class Distribution(BaseModel):
     """Distribution holds a CloudFront Distribution resource"""
 
@@ -143,7 +165,7 @@ class Distribution(BaseModel):
     logging_enabled: bool = False
     default_cache_config: Optional[DefaultCacheConfigBehaviour]
     geo_restriction_type: Optional[GeoRestrictionType]
-    origins: list
+    origins: list[Origin]
     web_acl_id: str = ""
     tags: Optional[list] = []
     origin_failover: Optional[bool]

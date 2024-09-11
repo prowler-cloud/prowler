@@ -120,7 +120,7 @@ def mock_generate_regional_clients(provider, service):
 class Test_DirectoryService_Service:
     # Test DirectoryService Client
     @mock_aws
-    def test__get_client__(self):
+    def test_get_client(self):
         directoryservice = DirectoryService(
             set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
         )
@@ -146,13 +146,13 @@ class Test_DirectoryService_Service:
         assert directoryservice.service == "ds"
 
     @mock_aws
-    def test__describe_directories__(self):
+    def test_describe_directories(self):
         # Set partition for the service
         directoryservice = DirectoryService(
             set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
         )
 
-        # __describe_directories__
+        # _describe_directories
         assert directoryservice.directories["d-12345a1b2"].id == "d-12345a1b2"
         assert (
             directoryservice.directories["d-12345a1b2"].arn
@@ -180,7 +180,7 @@ class Test_DirectoryService_Service:
             == RadiusStatus.Creating
         )
 
-        # __list_log_subscriptions__
+        # _list_log_subscriptions
         assert len(directoryservice.directories["d-12345a1b2"].log_subscriptions) == 1
         assert (
             directoryservice.directories["d-12345a1b2"]
@@ -192,7 +192,7 @@ class Test_DirectoryService_Service:
             0
         ].created_date_time == datetime(2022, 1, 1)
 
-        # __describe_event_topics__
+        # _describe_event_topics
         assert len(directoryservice.directories["d-12345a1b2"].event_topics) == 1
         assert (
             directoryservice.directories["d-12345a1b2"].event_topics[0].topic_name
@@ -210,7 +210,7 @@ class Test_DirectoryService_Service:
             0
         ].created_date_time == datetime(2022, 1, 1)
 
-        # __list_certificates__
+        # _list_certificates
         assert len(directoryservice.directories["d-12345a1b2"].certificates) == 1
         assert (
             directoryservice.directories["d-12345a1b2"].certificates[0].id
@@ -232,7 +232,7 @@ class Test_DirectoryService_Service:
             == CertificateType.ClientLDAPS
         )
 
-        # __get_snapshot_limits__
+        # _get_snapshot_limits
         assert directoryservice.directories["d-12345a1b2"].snapshots_limits
         assert (
             directoryservice.directories[
