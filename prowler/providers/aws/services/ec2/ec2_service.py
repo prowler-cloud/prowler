@@ -22,7 +22,7 @@ class EC2(AWSService):
         self.security_groups = {}
         self.regions_with_sgs = []
         self.__threading_call__(self._describe_security_groups)
-        self.network_acls = []
+        self.network_acls = {}
         self.__threading_call__(self._describe_network_acls)
         self.snapshots = []
         self.volumes_with_snapshots = {}
@@ -157,15 +157,20 @@ class EC2(AWSService):
                         for tag in nacl.get("Tags", []):
                             if tag["Key"] == "Name":
                                 nacl_name = tag["Value"]
-                        self.network_acls.append(
-                            NetworkACL(
-                                id=nacl["NetworkAclId"],
-                                arn=arn,
-                                name=nacl_name,
-                                region=regional_client.region,
-                                entries=nacl["Entries"],
-                                tags=nacl.get("Tags"),
-                            )
+                        in_use = False
+                        for subnet in nacl["Associations"]:
+                            if subnet["SubnetId"]:
+                                in_use = True
+                                break
+                        self.network_acls[arn] = NetworkACL(
+                            id=nacl["NetworkAclId"],
+                            arn=arn,
+                            name=nacl_name,
+                            region=regional_client.region,
+                            entries=nacl["Entries"],
+                            tags=nacl.get("Tags"),
+                            in_use=in_use,
+                            default=nacl["IsDefault"],
                         )
         except Exception as error:
             logger.error(
@@ -684,6 +689,8 @@ class NetworkACL(BaseModel):
     name: str
     region: str
     entries: list[dict]
+    default: bool
+    in_use: bool
     tags: Optional[list] = []
 
 

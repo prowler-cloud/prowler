@@ -240,14 +240,16 @@ class Test_EC2_Service:
         ec2 = EC2(aws_provider)
 
         assert nacl_id in str(ec2.network_acls)
-        for acl in ec2.network_acls:
+        for arn, acl in ec2.network_acls.items():
             if acl.id == nacl_id:
                 assert re.match(r"acl-[0-9a-z]{8}", acl.id)
                 assert (
-                    acl.arn
+                    arn
                     == f"arn:{aws_provider.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:network-acl/{acl.id}"
                 )
                 assert acl.entries == []
+                assert not acl.in_use
+                assert not acl.default
                 assert acl.tags == [
                     {"Key": "test", "Value": "test"},
                 ]
