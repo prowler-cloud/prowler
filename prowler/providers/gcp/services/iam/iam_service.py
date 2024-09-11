@@ -32,8 +32,8 @@ class IAM(GCPService):
                     for account in response.get("accounts", []):
                         self.service_accounts.append(
                             ServiceAccount(
-                                name=account["name"],
-                                email=account["email"],
+                                name=account.get("name", ""),
+                                email=account.get("email", ""),
                                 display_name=account.get("displayName", ""),
                                 project_id=project_id,
                             )
@@ -68,14 +68,14 @@ class IAM(GCPService):
                 for key in response.get("keys", []):
                     sa.keys.append(
                         Key(
-                            name=key["name"].split("/")[-1],
-                            origin=key["keyOrigin"],
-                            type=key["keyType"],
+                            name=key.get("name", "").split("/")[-1],
+                            origin=key.get("keyOrigin", ""),
+                            type=key.get("keyType", ""),
                             valid_after=datetime.strptime(
-                                key["validAfterTime"], "%Y-%m-%dT%H:%M:%SZ"
+                                key.get("validAfterTime", ""), "%Y-%m-%dT%H:%M:%SZ"
                             ),
                             valid_before=datetime.strptime(
-                                key["validBeforeTime"], "%Y-%m-%dT%H:%M:%SZ"
+                                key.get("validBeforeTime", ""), "%Y-%m-%dT%H:%M:%SZ"
                             ),
                         )
                     )
@@ -118,7 +118,7 @@ class AccessApproval(GCPService):
                     )
                 ).execute()
                 self.settings[project_id] = Setting(
-                    name=response["name"],
+                    name=response.get("name", ""),
                     project_id=project_id,
                 )
 
@@ -149,7 +149,7 @@ class EssentialContacts(GCPService):
                     .contacts()
                     .list(parent="organizations/" + org.id)
                 ).execute()
-                if len(response["contacts"]) > 0:
+                if len(response.get("contacts", [])) > 0:
                     contacts = True
 
                 self.organizations.append(
