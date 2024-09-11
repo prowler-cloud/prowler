@@ -11,7 +11,6 @@ class SQLiteDict:
     def __init__(self, cache_size=2000):
         self._tmp_path = tempfile.NamedTemporaryFile(prefix="prowler-dict-")
         self.db_name = self._tmp_path.name
-        print(self.db_name)
         self.conn = sqlite3.connect(self.db_name)
         self.cache_size = cache_size or DEFAULT_CACHE_SIZE
         self._configure_cache()
@@ -174,7 +173,6 @@ class SQLiteDict:
 # TODO: document class and methods
 class SQLiteList:
     def __init__(self, cache_size=2000):
-
         self._tmp_path = tempfile.NamedTemporaryFile(prefix="prowler-list-")
         self.db_name = self._tmp_path.name
         self.conn = sqlite3.connect(self.db_name)

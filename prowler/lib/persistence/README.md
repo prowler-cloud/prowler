@@ -71,7 +71,7 @@ print("key1" in b)
 
 ### Using the non-memory based data structures
 
-When you want to use a non-memory, this is SQLite, you need to set the `PROWLER_DB_CONNECTION` environment variable to `sqlite://`.
+When you want to use a non-memory, this is SQLite, you need to set the `PROWLER_DB_CONNECTION` environment variable to `sqlite://`. This is the default behaviour.
 
 For example:
 
