@@ -32,9 +32,9 @@ class IAM(GCPService):
                     for account in response.get("accounts", []):
                         self.service_accounts.append(
                             ServiceAccount(
-                                name=account.get("name", ""),
-                                email=account.get("email", ""),
-                                display_name=account.get("displayName", ""),
+                                name=account["name"],
+                                email=account["email"],
+                                display_name=account["displayName"],
                                 project_id=project_id,
                             )
                         )
@@ -68,14 +68,14 @@ class IAM(GCPService):
                 for key in response.get("keys", []):
                     sa.keys.append(
                         Key(
-                            name=key.get("name", "").split("/")[-1],
-                            origin=key.get("keyOrigin", ""),
-                            type=key.get("keyType", ""),
+                            name=key["name"].split("/")[-1],
+                            origin=key["keyOrigin"],
+                            type=key["keyType"],
                             valid_after=datetime.strptime(
-                                key.get("validAfterTime", ""), "%Y-%m-%dT%H:%M:%SZ"
+                                key["validAfterTime"], "%Y-%m-%dT%H:%M:%SZ"
                             ),
                             valid_before=datetime.strptime(
-                                key.get("validBeforeTime", ""), "%Y-%m-%dT%H:%M:%SZ"
+                                key["validBeforeTime"], "%Y-%m-%dT%H:%M:%SZ"
                             ),
                         )
                     )
@@ -118,7 +118,7 @@ class AccessApproval(GCPService):
                     )
                 ).execute()
                 self.settings[project_id] = Setting(
-                    name=response.get("name", ""),
+                    name=response["name"],
                     project_id=project_id,
                 )
 
