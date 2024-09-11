@@ -4,13 +4,14 @@ from base64 import b64decode
 from prowler.config.config import encoding_format_utf_8
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.lib.logger import logger
+from prowler.lib.persistence import mklist
 from prowler.lib.utils.utils import detect_secrets_scan
 from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 
 
 class ec2_launch_template_no_secrets(Check):
     def execute(self):
-        findings = []
+        findings = mklist()
         secrets_ignore_patterns = ec2_client.audit_config.get(
             "secrets_ignore_patterns", []
         )

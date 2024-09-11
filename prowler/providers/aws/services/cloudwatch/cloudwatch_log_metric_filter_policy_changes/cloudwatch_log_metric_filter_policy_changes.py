@@ -1,3 +1,4 @@
+from prowler.lib.persistence import mklist
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.cloudtrail.cloudtrail_client import (
     cloudtrail_client,
@@ -14,7 +15,7 @@ from prowler.providers.aws.services.cloudwatch.logs_client import logs_client
 class cloudwatch_log_metric_filter_policy_changes(Check):
     def execute(self):
         pattern = r"\$\.eventName\s*=\s*.?DeleteGroupPolicy.+\$\.eventName\s*=\s*.?DeleteRolePolicy.+\$\.eventName\s*=\s*.?DeleteUserPolicy.+\$\.eventName\s*=\s*.?PutGroupPolicy.+\$\.eventName\s*=\s*.?PutRolePolicy.+\$\.eventName\s*=\s*.?PutUserPolicy.+\$\.eventName\s*=\s*.?CreatePolicy.+\$\.eventName\s*=\s*.?DeletePolicy.+\$\.eventName\s*=\s*.?CreatePolicyVersion.+\$\.eventName\s*=\s*.?DeletePolicyVersion.+\$\.eventName\s*=\s*.?AttachRolePolicy.+\$\.eventName\s*=\s*.?DetachRolePolicy.+\$\.eventName\s*=\s*.?AttachUserPolicy.+\$\.eventName\s*=\s*.?DetachUserPolicy.+\$\.eventName\s*=\s*.?AttachGroupPolicy.+\$\.eventName\s*=\s*.?DetachGroupPolicy.?"
-        findings = []
+        findings = mklist()
         if (
             cloudtrail_client.trails is not None
             and logs_client.metric_filters is not None

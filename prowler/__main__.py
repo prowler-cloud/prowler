@@ -63,9 +63,11 @@ from prowler.lib.outputs.csv.csv import CSV
 from prowler.lib.outputs.finding import Finding
 from prowler.lib.outputs.html.html import HTML
 from prowler.lib.outputs.ocsf.ocsf import OCSF
-from prowler.lib.outputs.outputs import extract_findings_statistics
+from prowler.lib.outputs.outputs import GeneratedOutputs, extract_findings_statistics
 from prowler.lib.outputs.slack.slack import Slack
 from prowler.lib.outputs.summary_table import display_summary_table
+from prowler.lib.persistence import mklist
+from prowler.lib.utils.gc import force_gc
 from prowler.providers.aws.lib.s3.s3 import S3
 from prowler.providers.aws.lib.security_hub.security_hub import SecurityHub
 from prowler.providers.common.provider import Provider
@@ -243,7 +245,7 @@ def prowler():
         sys.exit()
 
     # Execute checks
-    findings = []
+    findings = mklist()
 
     if len(checks_to_execute):
         findings = execute_checks(
@@ -303,11 +305,16 @@ def prowler():
     # Outputs
     # TODO: this part is needed since the checks generates a Check_Report_XXX and the output uses Finding
     # This will be refactored for the outputs generate directly the Finding
-    finding_outputs = [
-        Finding.generate_output(global_provider, finding) for finding in findings
-    ]
+    finding_outputs = mklist()
 
-    generated_outputs = {"regular": [], "compliance": []}
+    for finding in findings:
+        finding_outputs.append(Finding.generate_output(global_provider, finding))
+
+    # TODO: this is a workaround that we'll need to review soon
+    # Probably this could be added to the S3 class
+    generated_outputs = GeneratedOutputs(
+        args.output_bucket, args.output_bucket_no_assume
+    )
 
     if args.output_formats:
         for mode in args.output_formats:
@@ -315,44 +322,59 @@ def prowler():
                 f"{global_provider.output_options.output_directory}/"
                 f"{global_provider.output_options.output_filename}"
             )
+            #
+            # Output generation for each format could be a heavy memory consumer when dealing with a large number of findings
+            # To avoid memory issues, we force the garbage collector to run after each output generation
+            #
             if mode == "csv":
-                csv_output = CSV(
-                    findings=finding_outputs,
-                    create_file_descriptor=True,
-                    file_path=f"{filename}{csv_file_suffix}",
-                )
-                generated_outputs["regular"].append(csv_output)
-                # Write CSV Finding Object to file
-                csv_output.batch_write_data_to_file()
+                with force_gc():
+                    csv_output = CSV(
+                        findings=finding_outputs,
+                        create_file_descriptor=True,
+                        file_path=f"{filename}{csv_file_suffix}",
+                    )
+                    generated_outputs.add_regular(csv_output)
+                    # Write CSV Finding Object to file
+                    csv_output.batch_write_data_to_file()
+
+                    del csv_output
 
             if mode == "json-asff":
-                asff_output = ASFF(
-                    findings=finding_outputs,
-                    create_file_descriptor=True,
-                    file_path=f"{filename}{json_asff_file_suffix}",
-                )
-                generated_outputs["regular"].append(asff_output)
-                # Write ASFF Finding Object to file
-                asff_output.batch_write_data_to_file()
+                with force_gc():
+                    asff_output = ASFF(
+                        findings=finding_outputs,
+                        create_file_descriptor=True,
+                        file_path=f"{filename}{json_asff_file_suffix}",
+                    )
+                    generated_outputs.add_regular(asff_output)
+                    # Write ASFF Finding Object to file
+                    asff_output.batch_write_data_to_file()
+
+                    del asff_output
 
             if mode == "json-ocsf":
-                json_output = OCSF(
-                    findings=finding_outputs,
-                    create_file_descriptor=True,
-                    file_path=f"{filename}{json_ocsf_file_suffix}",
-                )
-                generated_outputs["regular"].append(json_output)
-                json_output.batch_write_data_to_file()
+                with force_gc():
+                    json_output = OCSF(
+                        findings=finding_outputs,
+                        create_file_descriptor=True,
+                        file_path=f"{filename}{json_ocsf_file_suffix}",
+                    )
+                    generated_outputs.add_regular(json_output)
+                    json_output.batch_write_data_to_file()
+                    del json_output
+
             if mode == "html":
-                html_output = HTML(
-                    findings=finding_outputs,
-                    create_file_descriptor=True,
-                    file_path=f"{filename}{html_file_suffix}",
-                )
-                generated_outputs["regular"].append(html_output)
-                html_output.batch_write_data_to_file(
-                    provider=global_provider, stats=stats
-                )
+                with force_gc():
+                    html_output = HTML(
+                        findings=finding_outputs,
+                        create_file_descriptor=True,
+                        file_path=f"{filename}{html_file_suffix}",
+                    )
+                    generated_outputs.add_regular(html_output)
+                    html_output.batch_write_data_to_file(
+                        provider=global_provider, stats=stats
+                    )
+                    del html_output
 
     # Compliance Frameworks
     input_compliance_frameworks = set(
@@ -372,7 +394,7 @@ def prowler():
                     create_file_descriptor=True,
                     file_path=filename,
                 )
-                generated_outputs["compliance"].append(cis)
+                generated_outputs.add_compliance(cis)
                 cis.batch_write_data_to_file()
             elif compliance_name == "mitre_attack_aws":
                 # Generate MITRE ATT&CK Finding Object
@@ -386,7 +408,7 @@ def prowler():
                     create_file_descriptor=True,
                     file_path=filename,
                 )
-                generated_outputs["compliance"].append(mitre_attack)
+                generated_outputs.add_compliance(mitre_attack)
                 mitre_attack.batch_write_data_to_file()
             elif compliance_name.startswith("ens_"):
                 # Generate ENS Finding Object
@@ -400,7 +422,7 @@ def prowler():
                     create_file_descriptor=True,
                     file_path=filename,
                 )
-                generated_outputs["compliance"].append(ens)
+                generated_outputs.add_compliance(ens)
                 ens.batch_write_data_to_file()
             elif compliance_name.startswith("aws_well_architected_framework"):
                 # Generate AWS Well-Architected Finding Object
@@ -414,7 +436,7 @@ def prowler():
                     create_file_descriptor=True,
                     file_path=filename,
                 )
-                generated_outputs["compliance"].append(aws_well_architected)
+                generated_outputs.add_compliance(aws_well_architected)
                 aws_well_architected.batch_write_data_to_file()
             elif compliance_name.startswith("iso27001_"):
                 # Generate ISO27001 Finding Object
@@ -428,7 +450,7 @@ def prowler():
                     create_file_descriptor=True,
                     file_path=filename,
                 )
-                generated_outputs["compliance"].append(iso27001)
+                generated_outputs.add_compliance(iso27001)
                 iso27001.batch_write_data_to_file()
             else:
                 filename = (
@@ -441,7 +463,7 @@ def prowler():
                     create_file_descriptor=True,
                     file_path=filename,
                 )
-                generated_outputs["compliance"].append(generic_compliance)
+                generated_outputs.add_compliance(generic_compliance)
                 generic_compliance.batch_write_data_to_file()
 
     elif provider == "azure":
@@ -458,7 +480,7 @@ def prowler():
                     create_file_descriptor=True,
                     file_path=filename,
                 )
-                generated_outputs["compliance"].append(cis)
+                generated_outputs.add_compliance(cis)
                 cis.batch_write_data_to_file()
             elif compliance_name == "mitre_attack_azure":
                 # Generate MITRE ATT&CK Finding Object
@@ -472,7 +494,7 @@ def prowler():
                     create_file_descriptor=True,
                     file_path=filename,
                 )
-                generated_outputs["compliance"].append(mitre_attack)
+                generated_outputs.add_compliance(mitre_attack)
                 mitre_attack.batch_write_data_to_file()
             else:
                 filename = (
@@ -485,7 +507,7 @@ def prowler():
                     create_file_descriptor=True,
                     file_path=filename,
                 )
-                generated_outputs["compliance"].append(generic_compliance)
+                generated_outputs.add_compliance(generic_compliance)
                 generic_compliance.batch_write_data_to_file()
 
     elif provider == "gcp":
@@ -502,7 +524,7 @@ def prowler():
                     create_file_descriptor=True,
                     file_path=filename,
                 )
-                generated_outputs["compliance"].append(cis)
+                generated_outputs.add_compliance(cis)
                 cis.batch_write_data_to_file()
             elif compliance_name == "mitre_attack_gcp":
                 # Generate MITRE ATT&CK Finding Object
@@ -516,7 +538,7 @@ def prowler():
                     create_file_descriptor=True,
                     file_path=filename,
                 )
-                generated_outputs["compliance"].append(mitre_attack)
+                generated_outputs.add_compliance(mitre_attack)
                 mitre_attack.batch_write_data_to_file()
             else:
                 filename = (
@@ -529,7 +551,7 @@ def prowler():
                     create_file_descriptor=True,
                     file_path=filename,
                 )
-                generated_outputs["compliance"].append(generic_compliance)
+                generated_outputs.add_compliance(generic_compliance)
                 generic_compliance.batch_write_data_to_file()
 
     elif provider == "kubernetes":
@@ -546,7 +568,7 @@ def prowler():
                     create_file_descriptor=True,
                     file_path=filename,
                 )
-                generated_outputs["compliance"].append(cis)
+                generated_outputs.add_compliance(cis)
                 cis.batch_write_data_to_file()
             else:
                 filename = (
@@ -559,7 +581,7 @@ def prowler():
                     create_file_descriptor=True,
                     file_path=filename,
                 )
-                generated_outputs["compliance"].append(generic_compliance)
+                generated_outputs.add_compliance(generic_compliance)
                 generic_compliance.batch_write_data_to_file()
 
     # AWS Security Hub Integration
@@ -577,7 +599,7 @@ def prowler():
                 bucket_name=output_bucket,
                 output_directory=args.output_directory,
             )
-            s3.send_to_bucket(generated_outputs)
+            s3.send_to_bucket(generated_outputs.make_output())
         if args.security_hub:
             print(
                 f"{Style.BRIGHT}\nSending findings to AWS Security Hub, please wait...{Style.RESET_ALL}"

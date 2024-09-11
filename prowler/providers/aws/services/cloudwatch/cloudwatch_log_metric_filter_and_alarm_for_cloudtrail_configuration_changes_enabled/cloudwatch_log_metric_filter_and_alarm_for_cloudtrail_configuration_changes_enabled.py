@@ -1,3 +1,4 @@
+from prowler.lib.persistence import mklist
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.cloudtrail.cloudtrail_client import (
     cloudtrail_client,
@@ -16,7 +17,7 @@ class cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_change
 ):
     def execute(self):
         pattern = r"\$\.eventName\s*=\s*.?CreateTrail.+\$\.eventName\s*=\s*.?UpdateTrail.+\$\.eventName\s*=\s*.?DeleteTrail.+\$\.eventName\s*=\s*.?StartLogging.+\$\.eventName\s*=\s*.?StopLogging.?"
-        findings = []
+        findings = mklist()
         if (
             cloudtrail_client.trails is not None
             and logs_client.metric_filters is not None

@@ -1,10 +1,11 @@
+from prowler.lib.persistence import mklist
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.iam.iam_client import iam_client
 
 
 class cloudwatch_cross_account_sharing_disabled(Check):
     def execute(self):
-        findings = []
+        findings = mklist()
         if iam_client.roles is not None:
             report = Check_Report_AWS(self.metadata())
             report.status = "PASS"

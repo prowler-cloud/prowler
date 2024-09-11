@@ -1,13 +1,14 @@
 from json import dumps
 
 from prowler.lib.check.models import Check, Check_Report_AWS
+from prowler.lib.persistence import mklist
 from prowler.lib.utils.utils import detect_secrets_scan
 from prowler.providers.aws.services.ecs.ecs_client import ecs_client
 
 
 class ecs_task_definitions_no_environment_secrets(Check):
     def execute(self):
-        findings = []
+        findings = mklist()
         secrets_ignore_patterns = ecs_client.audit_config.get(
             "secrets_ignore_patterns", []
         )

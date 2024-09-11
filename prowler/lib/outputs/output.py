@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import List
 
 from prowler.lib.logger import logger
+from prowler.lib.persistence import mklist
 from prowler.lib.outputs.finding import Finding
 from prowler.lib.utils.utils import open_file
 
@@ -37,7 +38,7 @@ class Output(ABC):
         file_path: str = None,
         file_extension: str = "",
     ) -> None:
-        self._data = []
+        self._data = mklist()
 
         if not file_extension and file_path:
             self._file_extension = "".join(Path(file_path).suffixes)

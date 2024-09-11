@@ -1,10 +1,11 @@
+from prowler.lib.persistence import mklist
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 
 
 class ec2_ebs_public_snapshot(Check):
     def execute(self):
-        findings = []
+        findings = mklist()
         for snapshot in ec2_client.snapshots:
             report = Check_Report_AWS(self.metadata())
             report.region = snapshot.region

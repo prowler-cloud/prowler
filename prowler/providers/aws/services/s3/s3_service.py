@@ -5,6 +5,7 @@ from botocore.client import ClientError
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
+from prowler.lib.persistence import mkdict
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
@@ -15,7 +16,7 @@ class S3(AWSService):
         super().__init__(__class__.__name__, provider)
         self.account_arn_template = f"arn:{self.audited_partition}:s3:{self.region}:{self.audited_account}:account"
         self.regions_with_buckets = []
-        self.buckets = {}
+        self.buckets = mkdict()
         self._list_buckets(provider)
         self.__threading_call__(self._get_bucket_versioning, self.buckets.values())
         self.__threading_call__(self._get_bucket_logging, self.buckets.values())

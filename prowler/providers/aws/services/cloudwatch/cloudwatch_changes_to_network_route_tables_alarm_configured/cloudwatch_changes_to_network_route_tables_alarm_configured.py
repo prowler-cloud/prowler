@@ -1,3 +1,4 @@
+from prowler.lib.persistence import mklist
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.cloudtrail.cloudtrail_client import (
     cloudtrail_client,
@@ -14,7 +15,7 @@ from prowler.providers.aws.services.cloudwatch.logs_client import logs_client
 class cloudwatch_changes_to_network_route_tables_alarm_configured(Check):
     def execute(self):
         pattern = r"\$\.eventSource\s*=\s*.?ec2.amazonaws.com.+\$\.eventName\s*=\s*.?CreateRoute.+\$\.eventName\s*=\s*.?CreateRouteTable.+\$\.eventName\s*=\s*.?ReplaceRoute.+\$\.eventName\s*=\s*.?ReplaceRouteTableAssociation.+\$\.eventName\s*=\s*.?DeleteRouteTable.+\$\.eventName\s*=\s*.?DeleteRoute.+\$\.eventName\s*=\s*.?DisassociateRouteTable.?"
-        findings = []
+        findings = mklist()
         if (
             cloudtrail_client.trails is not None
             and logs_client.metric_filters is not None

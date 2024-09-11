@@ -1,11 +1,12 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
+from prowler.lib.persistence import mklist
 from prowler.providers.aws.services.s3.s3_client import s3_client
 from prowler.providers.aws.services.s3.s3control_client import s3control_client
 
 
 class s3_bucket_public_write_acl(Check):
     def execute(self):
-        findings = []
+        findings = mklist()
         # 1. Check if public buckets are restricted at account level
         if (
             s3control_client.account_public_access_block

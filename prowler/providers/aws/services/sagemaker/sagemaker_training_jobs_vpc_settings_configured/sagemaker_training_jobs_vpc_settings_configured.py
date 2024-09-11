@@ -1,10 +1,11 @@
+from prowler.lib.persistence import mklist
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.sagemaker.sagemaker_client import sagemaker_client
 
 
 class sagemaker_training_jobs_vpc_settings_configured(Check):
     def execute(self):
-        findings = []
+        findings = mklist()
         for training_job in sagemaker_client.sagemaker_training_jobs:
             report = Check_Report_AWS(self.metadata())
             report.region = training_job.region

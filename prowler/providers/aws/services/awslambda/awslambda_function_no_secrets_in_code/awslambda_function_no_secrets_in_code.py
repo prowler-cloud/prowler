@@ -2,13 +2,14 @@ import os
 import tempfile
 
 from prowler.lib.check.models import Check, Check_Report_AWS
+from prowler.lib.persistence import mklist
 from prowler.lib.utils.utils import detect_secrets_scan
 from prowler.providers.aws.services.awslambda.awslambda_client import awslambda_client
 
 
 class awslambda_function_no_secrets_in_code(Check):
     def execute(self):
-        findings = []
+        findings = mklist()
         if awslambda_client.functions:
             secrets_ignore_patterns = awslambda_client.audit_config.get(
                 "secrets_ignore_patterns", []

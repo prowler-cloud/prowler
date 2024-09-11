@@ -1,13 +1,14 @@
 import json
 
 from prowler.lib.check.models import Check, Check_Report_AWS
+from prowler.lib.persistence import mklist
 from prowler.lib.utils.utils import detect_secrets_scan
 from prowler.providers.aws.services.ssm.ssm_client import ssm_client
 
 
 class ssm_document_secrets(Check):
     def execute(self):
-        findings = []
+        findings = mklist()
         secrets_ignore_patterns = ssm_client.audit_config.get(
             "secrets_ignore_patterns", []
         )

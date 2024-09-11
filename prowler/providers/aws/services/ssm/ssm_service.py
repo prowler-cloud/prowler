@@ -7,6 +7,7 @@ from botocore.client import ClientError
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
+from prowler.lib.persistence import mkdict
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
@@ -16,9 +17,9 @@ class SSM(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
-        self.documents = {}
-        self.compliance_resources = {}
-        self.managed_instances = {}
+        self.documents = mkdict()
+        self.compliance_resources = mkdict()
+        self.managed_instances = mkdict()
         self.__threading_call__(self._list_documents)
         self.__threading_call__(self._get_document)
         self.__threading_call__(self._describe_document_permission)

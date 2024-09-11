@@ -19,6 +19,7 @@ from prowler.lib.check.models import Check
 from prowler.lib.check.utils import recover_checks_from_provider
 from prowler.lib.logger import logger
 from prowler.lib.outputs.outputs import report
+from prowler.lib.persistence import mklist
 from prowler.lib.utils.utils import open_file, parse_json_file, print_boxes
 from prowler.providers.common.models import Audit_Metadata
 
@@ -334,7 +335,7 @@ def run_check(check: Check, verbose: bool = False, only_logs: bool = False) -> l
     Returns:
         list: list of findings
     """
-    findings = []
+    findings = mklist()
     if verbose:
         print(
             f"\nCheck ID: {check.CheckID} - {Fore.MAGENTA}{check.ServiceName}{Fore.YELLOW} [{check.Severity}]{Style.RESET_ALL}"
@@ -437,7 +438,7 @@ def execute_checks(
     config_file: str,
 ) -> list:
     # List to store all the check's findings
-    all_findings = []
+    all_findings = mklist()
     # Services and checks executed for the Audit Status
     services_executed = set()
     checks_executed = set()

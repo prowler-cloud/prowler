@@ -1,6 +1,7 @@
 from json import dumps, loads
 
 from prowler.lib.check.models import Check, Check_Report_AWS
+from prowler.lib.persistence import mklist
 from prowler.lib.utils.utils import detect_secrets_scan
 from prowler.providers.aws.services.cloudwatch.cloudwatch_service import (
     convert_to_cloudwatch_timestamp_format,
@@ -10,7 +11,7 @@ from prowler.providers.aws.services.cloudwatch.logs_client import logs_client
 
 class cloudwatch_log_group_no_secrets_in_logs(Check):
     def execute(self):
-        findings = []
+        findings = mklist()
         if logs_client.log_groups:
             secrets_ignore_patterns = logs_client.audit_config.get(
                 "secrets_ignore_patterns", []

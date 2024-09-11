@@ -1,10 +1,11 @@
+from prowler.lib.persistence import mklist
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.cloudwatch.logs_client import logs_client
 
 
 class cloudwatch_log_group_kms_encryption_enabled(Check):
     def execute(self):
-        findings = []
+        findings = mklist()
         if logs_client.log_groups:
             for log_group in logs_client.log_groups:
                 report = Check_Report_AWS(self.metadata())

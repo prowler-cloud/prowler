@@ -1,10 +1,11 @@
+from prowler.lib.persistence import mklist
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 
 
 class ec2_ebs_volume_encryption(Check):
     def execute(self):
-        findings = []
+        findings = mklist()
         for volume in ec2_client.volumes:
             report = Check_Report_AWS(self.metadata())
             report.region = volume.region

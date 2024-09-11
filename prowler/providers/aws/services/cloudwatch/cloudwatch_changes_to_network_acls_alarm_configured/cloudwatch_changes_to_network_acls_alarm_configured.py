@@ -1,3 +1,4 @@
+from prowler.lib.persistence import mklist
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.cloudtrail.cloudtrail_client import (
     cloudtrail_client,
@@ -14,7 +15,7 @@ from prowler.providers.aws.services.cloudwatch.logs_client import logs_client
 class cloudwatch_changes_to_network_acls_alarm_configured(Check):
     def execute(self):
         pattern = r"\$\.eventName\s*=\s*.?CreateNetworkAcl.+\$\.eventName\s*=\s*.?CreateNetworkAclEntry.+\$\.eventName\s*=\s*.?DeleteNetworkAcl.+\$\.eventName\s*=\s*.?DeleteNetworkAclEntry.+\$\.eventName\s*=\s*.?ReplaceNetworkAclEntry.+\$\.eventName\s*=\s*.?ReplaceNetworkAclAssociation.?"
-        findings = []
+        findings = mklist()
         if (
             cloudtrail_client.trails is not None
             and logs_client.metric_filters is not None

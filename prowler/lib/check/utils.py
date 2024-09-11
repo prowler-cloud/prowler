@@ -3,6 +3,7 @@ import sys
 from pkgutil import walk_packages
 
 from prowler.lib.logger import logger
+from prowler.lib.persistence.manager import mklist
 
 
 def recover_checks_from_provider(
@@ -14,7 +15,7 @@ def recover_checks_from_provider(
     Returns a list of tuples with the following format (check_name, check_path)
     """
     try:
-        checks = []
+        checks = mklist()
         modules = list_modules(provider, service)
         for module_name in modules:
             # Format: "prowler.providers.{provider}.services.{service}.{check_name}.{check_name}"

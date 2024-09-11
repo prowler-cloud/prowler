@@ -1,11 +1,12 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
+from prowler.lib.persistence import mklist
 from prowler.providers.aws.services.s3.s3_client import s3_client
 from prowler.providers.aws.services.s3.s3control_client import s3control_client
 
 
 class s3_bucket_policy_public_write_access(Check):
     def execute(self):
-        findings = []
+        findings = mklist()
         for arn, bucket in s3_client.buckets.items():
             report = Check_Report_AWS(self.metadata())
             report.region = bucket.region
