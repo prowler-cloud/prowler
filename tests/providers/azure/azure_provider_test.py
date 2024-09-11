@@ -13,6 +13,7 @@ from mock import MagicMock
 from prowler.config.config import (
     default_config_file_path,
     default_fixer_config_file_path,
+    load_and_validate_config_file,
 )
 from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.azure.exceptions.exceptions import (
@@ -39,8 +40,10 @@ class TestAzureProvider:
         browser_auth = None
         managed_identity_auth = None
 
-        config_file = default_config_file_path
-        fixer_config = default_fixer_config_file_path
+        audit_config = load_and_validate_config_file("azure", default_config_file_path)
+        fixer_config = load_and_validate_config_file(
+            "azure", default_fixer_config_file_path
+        )
         azure_region = "AzureCloud"
 
         with patch(
@@ -58,8 +61,8 @@ class TestAzureProvider:
                 tenant_id,
                 azure_region,
                 subscription_id,
-                config_file,
-                fixer_config,
+                audit_config=audit_config,
+                fixer_config=fixer_config,
             )
 
             assert azure_provider.region_config == AzureRegionConfig(
