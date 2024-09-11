@@ -21,7 +21,7 @@ class DocumentDB(AWSService):
         self.__threading_call__(self._describe_db_clusters)
         self.__threading_call__(self._describe_db_cluster_snapshots)
         self.__threading_call__(self._describe_db_cluster_snapshot_attributes)
-        self.__list_tags_for_resource__()
+        self._list_tags_for_resource()
 
     def _describe_db_instances(self, regional_client):
         logger.info("DocumentDB - Describe Instances...")
@@ -62,7 +62,7 @@ class DocumentDB(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __list_tags_for_resource__(self):
+    def _list_tags_for_resource(self):
         logger.info("DocumentDB - List Tags...")
         try:
             for instance_arn, instance in self.db_instances.items():

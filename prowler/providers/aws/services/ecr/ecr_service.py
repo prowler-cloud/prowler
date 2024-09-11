@@ -22,7 +22,7 @@ class ECR(AWSService):
         self.__threading_call__(self._get_image_details)
         self.__threading_call__(self._get_repository_lifecycle_policy)
         self.__threading_call__(self._get_registry_scanning_configuration)
-        self.__threading_call__(self.__list_tags_for_resource__)
+        self.__threading_call__(self._list_tags_for_resource)
 
     def _describe_registries_and_repositories(self, regional_client):
         logger.info("ECR - Describing registries and repositories...")
@@ -247,7 +247,7 @@ class ECR(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __list_tags_for_resource__(self, regional_client):
+    def _list_tags_for_resource(self, regional_client):
         logger.info("ECR - List Tags...")
         try:
             if regional_client.region in self.registries:
