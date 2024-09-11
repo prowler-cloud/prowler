@@ -325,35 +325,6 @@ def import_check(check_path: str) -> ModuleType:
     return lib
 
 
-def run_check(check: Check, verbose: bool = False, only_logs: bool = False) -> list:
-    """
-    Run the check and return the findings
-    Args:
-        check (Check): check class
-        output_options (Any): output options
-    Returns:
-        list: list of findings
-    """
-    findings = []
-    if verbose:
-        print(
-            f"\nCheck ID: {check.CheckID} - {Fore.MAGENTA}{check.ServiceName}{Fore.YELLOW} [{check.Severity}]{Style.RESET_ALL}"
-        )
-    logger.debug(f"Executing check: {check.CheckID}")
-    try:
-        findings = check.execute()
-    except Exception as error:
-        if not only_logs:
-            print(
-                f"Something went wrong in {check.CheckID}, please use --log-level ERROR"
-            )
-        logger.error(
-            f"{check.CheckID} -- {error.__class__.__name__}[{traceback.extract_tb(error.__traceback__)[-1].lineno}]: {error}"
-        )
-    finally:
-        return findings
-
-
 def run_fixer(check_findings: list) -> int:
     """
     Run the fixer for the check if it exists and there are any FAIL findings
@@ -601,6 +572,7 @@ def execute(
             check_class, verbose, global_provider.output_options.only_logs
         )
 
+        print(check_findings)
         # Exclude findings per status
         if global_provider.output_options.status:
             check_findings = [

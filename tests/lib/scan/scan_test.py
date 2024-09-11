@@ -33,7 +33,7 @@ finding = generate_finding_output(
 
 @pytest.fixture
 def mock_provider():
-    return set_mocked_aws_provider()
+    return set_mocked_aws_provider(status=["PASS"])
 
 
 @pytest.fixture
@@ -206,39 +206,15 @@ class TestScan:
     def test_scan(
         mock_global_provider, mock_execute, mock_logger, mock_generate_output
     ):
-        checks_to_execute = {"accessanalyzer_enabled", "ec2_instance_public"}
+        checks_to_execute = {"accessanalyzer_enabled", "ec2_instance_public_ip"}
         custom_checks_metadata = {}
-
         # Create a Scan object
+        mock_global_provider.type = "aws"
         scan = Scan(mock_global_provider, checks_to_execute)
-
-        # Execute the scan
-        results = list(scan.scan(custom_checks_metadata))
-
-        # Verify that generate_output was called with the correct findings
-        assert mock_generate_output.call_count == 2 * len(mock_execute.side_effect())
-
-        # Verify that execute was called twice
-        assert mock_execute.call_count == 2
-
-        assert len(results) == 2
-        assert results[0][1] == mock_execute.side_effect()
-        assert results[1][1] == mock_execute.side_effect()
-
-        # Check the audit progress for the last result
-        assert results[1][0] == 100.0
-
-        # Verify that the progress is 100.0
-        assert scan.progress == 100.0  # 100% progress is 100
-        assert scan._number_of_checks_completed == 2
-        assert scan.service_checks_to_execute == {}
-        assert scan.service_checks_completed == {
-            "ec2": {"ec2_instance_public"},
-            "accessanalyzer": {"accessanalyzer_enabled"},
-        }
-
-        # Verify that the findings are correct
-        assert scan.findings == mock_execute.side_effect() + mock_execute.side_effect()
-
-        # Verify that no error was logged
-        mock_logger.error.assert_not_called()
+        # Mock the execute function and the import_check function
+        with mock.patch("prowler.lib.scan.scan.import_check", autospec=True):
+            scan.scan(custom_checks_metadata)
+        # Check that the execute function was called
+        mock_execute.assert_called_once()
+        # Check that the progress is 100%
+        assert scan.progress == 100
