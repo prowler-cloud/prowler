@@ -1,35 +1,47 @@
 import React from "react";
 
-import { WifiIcon, WifiOffIcon, WifiPendingIcon } from "../icons";
+import { ConnectionIcon } from "../icons";
 import {
   AWSProviderBadge,
   AzureProviderBadge,
   GCPProviderBadge,
   KS8ProviderBadge,
 } from "../icons/providers-badge";
+import { CustomLoader } from "../ui/custom";
 
 interface ProviderInfoProps {
   connected: boolean | null;
   provider: "aws" | "azure" | "gcp" | "kubernetes";
   providerAlias: string;
-  providerId: string;
 }
 
 export const ProviderInfo: React.FC<ProviderInfoProps> = ({
   connected,
   provider,
   providerAlias,
-  providerId,
 }) => {
   const getIcon = () => {
     switch (connected) {
       case true:
-        return <WifiIcon size={22} />;
+        return (
+          <div className="flex items-center justify-center rounded-medium border p-1 bg-system-success-lighter border-system-success">
+            <ConnectionIcon className="text-system-success" size={24} />
+          </div>
+        );
       case false:
-        return <WifiOffIcon size={22} />;
+        return (
+          <div className="flex items-center justify-center rounded-medium border p-1 bg-system-error-lighter border-danger">
+            <ConnectionIcon className="text-danger" size={24} />
+          </div>
+        );
       case null:
+        return (
+          <div className="flex items-center justify-center rounded-medium border p-1 bg-info-lighter border-info-lighter">
+            <ConnectionIcon className="text-info" size={24} />
+          </div>
+        );
       default:
-        return <WifiPendingIcon size={22} />;
+        return <ConnectionIcon size={24} />;
     }
   };
 
@@ -49,13 +61,15 @@ export const ProviderInfo: React.FC<ProviderInfoProps> = ({
   };
 
   return (
-    <div className="max-w-fit">
-      <div className="flex items-center space-x-4">
-        <div className="flex-shrink-0">{getIcon()}</div>
-        <div className="flex-shrink-0 mx-2">{getProviderLogo()}</div>
-        <div className="flex flex-col">
-          <span className="text-md font-semibold">{providerAlias}</span>
-          <span className="text-sm text-gray-500">{providerId}</span>
+    <div className="max-w-96">
+      <div className="flex items-center justify-between space-x-4">
+        <div className="flex items-center space-x-4">
+          <div className="flex-shrink-0">{getProviderLogo()}</div>
+          <div className="flex-shrink-0">{getIcon()}</div>
+          <div className="flex flex-col">
+            <span className="text-md font-semibold">{providerAlias}</span>
+            {/* <CustomLoader size="small" /> */}
+          </div>
         </div>
       </div>
     </div>

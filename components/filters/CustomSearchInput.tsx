@@ -1,17 +1,14 @@
 import { Input } from "@nextui-org/react";
+import debounce from "lodash.debounce";
 import { XCircle } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useCallback, useEffect, useState } from "react";
 
-import { useDebounce } from "../../hooks/useDebounce";
-
 export const CustomSearchInput: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [searchQuery, setSearchQuery] = useState(() => {
-    return searchParams.get("filter[search]") || "";
-  });
-  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+
+  const [searchQuery, setSearchQuery] = useState("");
 
   const applySearch = useCallback(
     (query: string) => {
@@ -21,10 +18,12 @@ export const CustomSearchInput: React.FC = () => {
       } else {
         params.delete("filter[search]");
       }
-      router.replace(`?${params.toString()}`, { scroll: false });
+      router.push(`?${params.toString()}`, { scroll: false });
     },
     [router, searchParams],
   );
+
+  const debouncedChangeHandler = useCallback(debounce(applySearch, 300), []);
 
   const clearIconSearch = () => {
     setSearchQuery("");
@@ -32,8 +31,9 @@ export const CustomSearchInput: React.FC = () => {
   };
 
   useEffect(() => {
-    applySearch(debouncedSearchQuery);
-  }, [debouncedSearchQuery, applySearch]);
+    const searchFromUrl = searchParams.get("filter[search]") || "";
+    setSearchQuery(searchFromUrl);
+  }, [searchParams]);
 
   return (
     <Input
@@ -42,11 +42,10 @@ export const CustomSearchInput: React.FC = () => {
       label="Search"
       labelPlacement="inside"
       value={searchQuery}
-      onChange={(e) => setSearchQuery(e.target.value)}
-      onKeyDown={(e) => {
-        if (e.key === "Enter") {
-          applySearch(searchQuery);
-        }
+      onChange={(e) => {
+        const value = e.target.value;
+        setSearchQuery(value);
+        debouncedChangeHandler(value);
       }}
       endContent={
         searchQuery && (

@@ -464,6 +464,117 @@ export const NotificationIcon: React.FC<IconSvgProps> = ({
   </svg>
 );
 
+export const IdIcon: React.FC<IconSvgProps> = ({
+  size = 24,
+  width,
+  height,
+  ...props
+}) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    height={size || height || 24}
+    viewBox="0 0 16 16"
+    width={size || width || 24}
+    {...props}
+  >
+    <path
+      fill="currentColor"
+      d="M11.854 2.146a.5.5 0 0 0-.708.708L13.293 5H9.5a2 2 0 0 0-2 2v2a1 1 0 0 1-1 1h-.55a2.5 2.5 0 1 0 0 1h.55a2 2 0 0 0 2-2V7a1 1 0 0 1 1-1h3.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3a.5.5 0 0 0 0-.708zM5 10.5a1.5 1.5 0 1 1-3 0a1.5 1.5 0 0 1 3 0"
+    />
+  </svg>
+);
+
+export const DoneIcon: React.FC<IconSvgProps> = ({
+  size,
+  height,
+  width,
+  ...props
+}) => {
+  return (
+    <svg
+      width={size || width || 24}
+      height={size || height || 24}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      xmlns="http://www.w3.org/2000/svg"
+      {...props}
+    >
+      <path d="m2.394 13.742 4.743 3.62 7.616-8.704-1.506-1.316-6.384 7.296-3.257-2.486zm19.359-5.084-1.506-1.316-6.369 7.279-.753-.602-1.25 1.562 2.247 1.798z" />
+    </svg>
+  );
+};
+
+export const CopyIcon: React.FC<IconSvgProps> = ({
+  size,
+  height,
+  width,
+  ...props
+}) => {
+  return (
+    <svg
+      fill="none"
+      height={size || height || 20}
+      shapeRendering="geometricPrecision"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="1.5"
+      viewBox="0 0 24 24"
+      width={size || width || 20}
+      {...props}
+    >
+      <path d="M6 17C4.89543 17 4 16.1046 4 15V5C4 3.89543 4.89543 3 6 3H13C13.7403 3 14.3866 3.4022 14.7324 4M11 21H18C19.1046 21 20 20.1046 20 19V9C20 7.89543 19.1046 7 18 7H11C9.89543 7 9 7.89543 9 9V19C9 20.1046 9.89543 21 11 21Z" />
+    </svg>
+  );
+};
+
+export const FlowIcon: React.FC<IconSvgProps> = ({
+  size,
+  height,
+  width,
+  ...props
+}) => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      height={size || height || 20}
+      viewBox="0 0 20 20"
+      width={size || width || 20}
+      {...props}
+    >
+      <path
+        fill="currentColor"
+        d="M16.4 4a2.4 2.4 0 1 0-4.8 0c0 .961.568 1.784 1.384 2.167c-.082 1.584-1.27 2.122-3.335 2.896c-.87.327-1.829.689-2.649 1.234V6.176A2.396 2.396 0 0 0 6 1.6a2.397 2.397 0 0 0-1 4.576v7.649A2.39 2.39 0 0 0 3.6 16a2.4 2.4 0 1 0 4.8 0c0-.961-.568-1.784-1.384-2.167c.082-1.583 1.271-2.122 3.335-2.896c2.03-.762 4.541-1.711 4.64-4.756A2.4 2.4 0 0 0 16.4 4M6 2.615a1.384 1.384 0 1 1 0 2.768a1.384 1.384 0 0 1 0-2.768m0 14.77a1.385 1.385 0 1 1 0-2.77a1.385 1.385 0 0 1 0 2.77m8-12a1.385 1.385 0 1 1 0-2.77a1.385 1.385 0 0 1 0 2.77"
+      />
+    </svg>
+  );
+};
+
+export const ConnectionIcon: React.FC<IconSvgProps> = ({
+  size,
+  height,
+  width,
+  ...props
+}) => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      height={size || height || 20}
+      viewBox="0 0 20 20"
+      width={size || width || 20}
+      {...props}
+    >
+      <path
+        fill="currentColor"
+        d="M18 14.824V12.5A3.5 3.5 0 0 0 14.5 9h-2A1.5 1.5 0 0 1 11 7.5V5.176A2.4 2.4 0 0 0 12.4 3a2.4 2.4 0 1 0-4.8 0c0 .967.576 1.796 1.4 2.176V7.5A1.5 1.5 0 0 1 7.5 9h-2A3.5 3.5 0 0 0 2 12.5v2.324A2.396 2.396 0 0 0 3 19.4a2.397 2.397 0 0 0 1-4.576V12.5A1.5 1.5 0 0 1 5.5 11h2c.539 0 1.044-.132 1.5-.35v4.174a2.396 2.396 0 0 0 1 4.576a2.397 2.397 0 0 0 1-4.576V10.65c.456.218.961.35 1.5.35h2a1.5 1.5 0 0 1 1.5 1.5v2.324A2.4 2.4 0 0 0 14.6 17a2.4 2.4 0 1 0 4.8 0c0-.967-.575-1.796-1.4-2.176M10 1.615a1.384 1.384 0 1 1 0 2.768a1.384 1.384 0 0 1 0-2.768m-7 16.77a1.385 1.385 0 1 1 0-2.77a1.385 1.385 0 0 1 0 2.77m7 0a1.385 1.385 0 1 1 0-2.77a1.385 1.385 0 0 1 0 2.77m7 0a1.385 1.385 0 1 1 0-2.77a1.385 1.385 0 0 1 0 2.77"
+      />
+    </svg>
+  );
+};
+
 export const SuccessIcon: React.FC<IconSvgProps> = ({
   size = 24,
   width,

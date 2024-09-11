@@ -31,12 +31,14 @@ import {
   EditDocumentBulkIcon,
 } from "@nextui-org/shared-icons";
 
+import { SnippetIdProvider } from "../SnippetIdProvider";
+
 const iconClasses =
   "text-2xl text-default-500 pointer-events-none flex-shrink-0";
 
 export const ColumnsProvider: ColumnDef<ProviderProps>[] = [
   {
-    header: "ID",
+    header: "n",
     cell: ({ row }) => <p className="text-medium">{row.index + 1}</p>,
   },
   {
@@ -46,16 +48,27 @@ export const ColumnsProvider: ColumnDef<ProviderProps>[] = [
     ),
     cell: ({ row }) => {
       const {
-        attributes: { connection, provider, alias, provider_id },
+        attributes: { connection, provider, alias },
       } = getProviderData(row);
       return (
         <ProviderInfo
           connected={connection.connected}
           provider={provider}
           providerAlias={alias}
-          providerId={provider_id}
         />
       );
+    },
+  },
+  {
+    accessorKey: "id",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={"Id"} param="provider_id" />
+    ),
+    cell: ({ row }) => {
+      const {
+        attributes: { provider_id },
+      } = getProviderData(row);
+      return <SnippetIdProvider providerId={provider_id} />;
     },
   },
   {
@@ -144,6 +157,7 @@ export const ColumnsProvider: ColumnDef<ProviderProps>[] = [
                   key="new"
                   description="Check the connection to the provider"
                   shortcut="⌘N"
+                  textValue="Check Connection"
                   startContent={<AddNoteBulkIcon className={iconClasses} />}
                 >
                   <CheckConnectionProvider id={id} />
@@ -152,6 +166,7 @@ export const ColumnsProvider: ColumnDef<ProviderProps>[] = [
                   key="edit"
                   description="Allows you to edit the provider"
                   shortcut="⌘⇧E"
+                  textValue="Edit Provider"
                   startContent={
                     <EditDocumentBulkIcon className={iconClasses} />
                   }

@@ -7,6 +7,7 @@ export * from "./DateWithTime";
 export * from "./DeleteProvider";
 export * from "./ProviderInfo";
 export * from "./ScanStatus";
+export * from "./SnippetIdProvider";
 export * from "./table/ColumnsProvider";
 export * from "./table/DataTableColumnHeader";
 export * from "./table/DataTablePagination";
