@@ -17,14 +17,14 @@ class cloudfront_distributions_s3_origin_non_existing_bucket(Check):
 
             for origin in distribution.origins:
                 report.status = "FAIL"
-                report.status_extended = f"CloudFront Distribution {distribution.id} does not have non-existent buckets as S3 origins."
+                report.status_extended = f"CloudFront Distribution {distribution.id} has a non-existent bucket as S3 origin: {origin.domain_name} or it is out of Prowler's scope."
                 for bucket in s3_client.buckets.values():
                     if (
-                        origin["DomainName"]
+                        origin.domain_name
                         == f"{bucket.name}.s3.{bucket.region}.amazonaws.com"
                     ):
                         report.status = "PASS"
-                        report.status_extended = f"CloudFront Distribution {distribution.id} has a non-existent bucket as S3 origin: {origin['DomainName']} or it is out of Prowler's scope."
+                        report.status_extended = f"CloudFront Distribution {distribution.id} does not have non-existent buckets as S3 origins."
                         break
                 if report.status == "FAIL":
                     break
