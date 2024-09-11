@@ -29,7 +29,7 @@ class IAM(GCPService):
                 while request is not None:
                     response = request.execute()
 
-                    for account in response["accounts"]:
+                    for account in response.get("accounts", []):
                         self.service_accounts.append(
                             ServiceAccount(
                                 name=account["name"],
@@ -65,7 +65,7 @@ class IAM(GCPService):
                 )
                 response = request.execute()
 
-                for key in response["keys"]:
+                for key in response.get("keys", []):
                     sa.keys.append(
                         Key(
                             name=key["name"].split("/")[-1],
