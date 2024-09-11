@@ -101,7 +101,7 @@ aws:
       "ruby2.5",
       "ruby2.7",
     ]
-  # aws.awslambda_function_vpc_is_in_multiple_az
+  # aws.awslambda_function_vpc_is_in_multi_azs
   lambda_min_azs: 2
 
   # AWS Organizations
