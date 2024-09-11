@@ -30,7 +30,22 @@ class CloudFront(AWSService):
                         ):
                             distribution_id = item["Id"]
                             distribution_arn = item["ARN"]
-                            origins = item["Origins"]["Items"]
+                            origins = []
+                            for origin in item.get("Origins", {}).get("Items", []):
+                                origins.append(
+                                    Origin(
+                                        id=origin["Id"],
+                                        domain_name=origin["DomainName"],
+                                        origin_protocol_policy=origin.get(
+                                            "CustomOriginConfig", {}
+                                        ).get("OriginProtocolPolicy", ""),
+                                        origin_ssl_protocols=origin.get(
+                                            "CustomOriginConfig", {}
+                                        )
+                                        .get("OriginSslProtocols", {})
+                                        .get("Items", []),
+                                    )
+                                )
                             distribution = Distribution(
                                 arn=distribution_arn,
                                 id=distribution_id,
@@ -139,6 +154,13 @@ class DefaultCacheConfigBehaviour(BaseModel):
     field_level_encryption_id: str
 
 
+class Origin(BaseModel):
+    id: str
+    domain_name: str
+    origin_protocol_policy: str
+    origin_ssl_protocols: list[str]
+
+
 class Distribution(BaseModel):
     """Distribution holds a CloudFront Distribution resource"""
 
@@ -148,7 +170,7 @@ class Distribution(BaseModel):
     logging_enabled: bool = False
     default_cache_config: Optional[DefaultCacheConfigBehaviour]
     geo_restriction_type: Optional[GeoRestrictionType]
-    origins: list
+    origins: list[Origin]
     web_acl_id: str = ""
     origin_access_control: Optional[bool]
     tags: Optional[list] = []

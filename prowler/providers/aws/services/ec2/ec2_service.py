@@ -1,5 +1,6 @@
 from datetime import datetime
-from typing import Optional
+from ipaddress import IPv4Address, IPv6Address, ip_address
+from typing import Optional, Union
 
 from botocore.client import ClientError
 from pydantic import BaseModel
@@ -28,7 +29,7 @@ class EC2(AWSService):
         self.regions_with_snapshots = {}
         self.__threading_call__(self._describe_snapshots)
         self.__threading_call__(self._determine_public_snapshots, self.snapshots)
-        self.network_interfaces = []
+        self.network_interfaces = {}
         self.__threading_call__(self._describe_network_interfaces)
         self.images = []
         self.__threading_call__(self._describe_images)
@@ -47,7 +48,7 @@ class EC2(AWSService):
         self.launch_templates = []
         self.__threading_call__(self._describe_launch_templates)
         self.__threading_call__(
-            self._get_launch_template_versions, self.launch_templates
+            self._describe_launch_template_versions, self.launch_templates
         )
         self.vpn_endpoints = {}
         self.__threading_call__(self._describe_vpn_endpoints)
@@ -235,8 +236,34 @@ class EC2(AWSService):
             )
             for page in describe_network_interfaces_paginator.paginate():
                 for interface in page["NetworkInterfaces"]:
-                    eni = NetworkInterface(
-                        id=interface["NetworkInterfaceId"],
+                    id = interface["NetworkInterfaceId"]
+                    public_ip_addresses = []
+
+                    # Check for public IPs in the 'PrivateIpAddresses' block
+                    for private_ip_info in interface.get("PrivateIpAddresses", []):
+                        private_association = private_ip_info.get("Association", {})
+                        public_ip_str = private_association.get("PublicIp")
+                        if public_ip_str:
+                            public_ip = ip_address(public_ip_str)
+                            if public_ip.is_global:
+                                public_ip_addresses.append(public_ip)
+
+                        private_ip_str = private_ip_info.get("PrivateIpAddress")
+                        if private_ip_str:
+                            private_ip = ip_address(private_ip_str)
+                            if private_ip.is_global:
+                                public_ip_addresses.append(private_ip)
+
+                    # Check for public IPs in the 'IPv6Addresses' block
+                    for ipv6_info in interface.get("Ipv6Addresses", []):
+                        ipv6_address_str = ipv6_info.get("Ipv6Address")
+                        if ipv6_address_str:
+                            ipv6_address = ip_address(ipv6_address_str)
+                            if ipv6_address.is_global:
+                                public_ip_addresses.append(ipv6_address)
+
+                    self.network_interfaces[id] = NetworkInterface(
+                        id=id,
                         association=interface.get("Association", {}),
                         attachment=interface.get("Attachment", {}),
                         private_ip=interface.get("PrivateIpAddress"),
@@ -245,8 +272,8 @@ class EC2(AWSService):
                         vpc_id=interface["VpcId"],
                         region=regional_client.region,
                         tags=interface.get("TagSet"),
+                        public_ip_addresses=public_ip_addresses,
                     )
-                    self.network_interfaces.append(eni)
                     # Add Network Interface to Security Group
                     # 'Groups': [
                     #     {
@@ -255,7 +282,7 @@ class EC2(AWSService):
                     #     },
                     # ],
                     self._add_network_interfaces_to_security_groups(
-                        eni, interface.get("Groups", [])
+                        self.network_interfaces[id], interface.get("Groups", [])
                     )
 
         except Exception as error:
@@ -478,6 +505,7 @@ class EC2(AWSService):
                                 arn=template_arn,
                                 region=regional_client.region,
                                 versions=[],
+                                tags=template.get("Tags"),
                             )
                         )
 
@@ -486,7 +514,7 @@ class EC2(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def _get_launch_template_versions(self, launch_template):
+    def _describe_launch_template_versions(self, launch_template):
         try:
             regional_client = self.regional_clients[launch_template.region]
             describe_launch_template_versions_paginator = regional_client.get_paginator(
@@ -497,10 +525,26 @@ class EC2(AWSService):
                 LaunchTemplateId=launch_template.id
             ):
                 for template_version in page["LaunchTemplateVersions"]:
+                    enis = []
+                    associate_public_ip = False
+                    for eni in template_version["LaunchTemplateData"].get(
+                        "NetworkInterfaces", []
+                    ):
+                        network_interface_id = eni.get("NetworkInterfaceId")
+                        if network_interface_id in self.network_interfaces:
+                            enis.append(self.network_interfaces[network_interface_id])
+                        if eni.get("AssociatePublicIpAddress", False):
+                            associate_public_ip = True
                     launch_template.versions.append(
                         LaunchTemplateVersion(
                             version_number=template_version["VersionNumber"],
-                            template_data=template_version["LaunchTemplateData"],
+                            template_data=TemplateData(
+                                user_data=template_version["LaunchTemplateData"].get(
+                                    "UserData", ""
+                                ),
+                                network_interfaces=enis,
+                                associate_public_ip_address=associate_public_ip,
+                            ),
                         )
                     )
 
@@ -614,6 +658,7 @@ class NetworkInterface(BaseModel):
     association: dict
     attachment: dict
     private_ip: Optional[str]
+    public_ip_addresses: list[Union[IPv4Address, IPv6Address]]
     type: str
     subnet_id: str
     vpc_id: str
@@ -678,9 +723,15 @@ class InstanceMetadataDefaults(BaseModel):
     region: str
 
 
+class TemplateData(BaseModel):
+    user_data: str
+    network_interfaces: Optional[list[NetworkInterface]]
+    associate_public_ip_address: Optional[bool]
+
+
 class LaunchTemplateVersion(BaseModel):
     version_number: int
-    template_data: dict
+    template_data: TemplateData
 
 
 class LaunchTemplate(BaseModel):
@@ -689,6 +740,7 @@ class LaunchTemplate(BaseModel):
     arn: str
     region: str
     versions: list[LaunchTemplateVersion] = []
+    tags: Optional[list] = []
 
 
 class VpnEndpoint(BaseModel):

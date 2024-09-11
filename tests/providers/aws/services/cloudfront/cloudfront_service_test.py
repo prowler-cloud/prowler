@@ -218,12 +218,11 @@ class Test_CloudFront_Service:
         assert (
             cloudfront.distributions[cloudfront_distribution_id].logging_enabled is True
         )
-        assert (
-            cloudfront.distributions[cloudfront_distribution_id].origins
-            == cloudfront_client.get_distribution(Id=cloudfront_distribution_id)[
-                "Distribution"
-            ]["DistributionConfig"]["Origins"]["Items"]
-        )
+        for origin in cloudfront.distributions[cloudfront_distribution_id].origins:
+            assert origin.id == "origin1"
+            assert origin.domain_name == "asdf.s3.us-east-1.amazonaws.com"
+            assert origin.origin_protocol_policy == ""
+            assert origin.origin_ssl_protocols == []
         assert (
             cloudfront.distributions[cloudfront_distribution_id].geo_restriction_type
             == GeoRestrictionType.blacklist

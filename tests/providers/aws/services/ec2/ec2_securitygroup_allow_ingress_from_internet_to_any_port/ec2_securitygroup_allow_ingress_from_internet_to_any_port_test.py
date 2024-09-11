@@ -204,6 +204,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
                     association={},
                     attachment={"InstanceOwnerId": test["eni_instance_owner"]},
                     private_ip="1",
+                    public_ip_addresses=[],
                     type=test["eni_interface_type"],
                     subnet_id="1",
                     vpc_id="1",

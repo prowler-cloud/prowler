@@ -5,8 +5,6 @@ class ProwlerException(Exception):
         (1901, "UnexpectedError"): {
             "message": "Unexpected error occurred.",
             "remediation": "Please review the error message and try again.",
-            "file": "{file}",
-            "provider": "{provider}",
         }
     }
 
