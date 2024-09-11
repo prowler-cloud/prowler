@@ -7,6 +7,7 @@ import {
   GCPProviderBadge,
   KS8ProviderBadge,
 } from "../icons/providers-badge";
+import { CustomLoader } from "../ui/custom";
 
 interface ProviderInfoProps {
   connected: boolean | null;
@@ -24,23 +25,23 @@ export const ProviderInfo: React.FC<ProviderInfoProps> = ({
       case true:
         return (
           <div className="flex items-center justify-center rounded-medium border p-1 bg-system-success-lighter border-system-success">
-            <ConnectionIcon className="text-system-success" size={28} />
+            <ConnectionIcon className="text-system-success" size={24} />
           </div>
         );
       case false:
         return (
-          <div className="flex items-center justify-center rounded-medium border p-1 bg-danger-lighter border-danger">
-            <ConnectionIcon className="text-danger" size={28} />
+          <div className="flex items-center justify-center rounded-medium border p-1 bg-system-error-lighter border-danger">
+            <ConnectionIcon className="text-danger" size={24} />
           </div>
         );
       case null:
         return (
           <div className="flex items-center justify-center rounded-medium border p-1 bg-info-lighter border-info-lighter">
-            <ConnectionIcon className="text-info" size={28} />
+            <ConnectionIcon className="text-info" size={24} />
           </div>
         );
       default:
-        return <ConnectionIcon size={28} />;
+        return <ConnectionIcon size={24} />;
     }
   };
 
@@ -67,7 +68,7 @@ export const ProviderInfo: React.FC<ProviderInfoProps> = ({
           <div className="flex-shrink-0">{getIcon()}</div>
           <div className="flex flex-col">
             <span className="text-md font-semibold">{providerAlias}</span>
-            <span className="text-sm text-gray-500">{providerAlias}</span>
+            {/* <CustomLoader size="small" /> */}
           </div>
         </div>
       </div>

@@ -27,15 +27,16 @@ export const CheckConnectionProvider = ({ id }: { id: string }) => {
       });
     } else {
       toast({
-        title: "Success!",
-        description: "The connection was updated successfully.",
+        title: "Checking",
+        description: "The task was launched successfully",
       });
     }
   }
+
   return (
     <form ref={ref} action={clientAction} className="flex gap-x-2">
       <input type="hidden" name="id" value={id} />
-      <CustomButtonClientAction buttonLabel="Check Connection" />
+      <CustomButtonClientAction buttonLabel="Check connection" />
     </form>
   );
 };

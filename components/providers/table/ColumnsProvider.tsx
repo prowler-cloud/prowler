@@ -38,7 +38,7 @@ const iconClasses =
 
 export const ColumnsProvider: ColumnDef<ProviderProps>[] = [
   {
-    header: "ID",
+    header: "n",
     cell: ({ row }) => <p className="text-medium">{row.index + 1}</p>,
   },
   {
@@ -60,7 +60,7 @@ export const ColumnsProvider: ColumnDef<ProviderProps>[] = [
     },
   },
   {
-    accessorKey: "account",
+    accessorKey: "id",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title={"Id"} param="provider_id" />
     ),
