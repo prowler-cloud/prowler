@@ -17,7 +17,7 @@ export const getProvider = async ({
 
   if (isNaN(Number(page)) || page < 1) redirect("/providers");
 
-  const keyServer = process.env.LOCAL_SERVER_URL;
+  const keyServer = process.env.API_BASE_URL;
   const url = new URL(`${keyServer}/providers`);
 
   if (page) url.searchParams.append("page[number]", page.toString());
@@ -48,7 +48,7 @@ export const getProvider = async ({
 };
 
 export const addProvider = async (formData: FormData) => {
-  const keyServer = process.env.LOCAL_SERVER_URL;
+  const keyServer = process.env.API_BASE_URL;
 
   const provider = formData.get("provider");
   const providerId = formData.get("id");
@@ -84,7 +84,7 @@ export const addProvider = async (formData: FormData) => {
   revalidatePath("/providers");
 };
 export const checkConnectionProvider = async (formData: FormData) => {
-  const keyServer = process.env.LOCAL_SERVER_URL;
+  const keyServer = process.env.API_BASE_URL;
 
   const providerId = formData.get("id");
 
@@ -108,7 +108,7 @@ export const checkConnectionProvider = async (formData: FormData) => {
   }
 };
 export const deleteProvider = async (formData: FormData) => {
-  const keyServer = process.env.LOCAL_SERVER_URL;
+  const keyServer = process.env.API_BASE_URL;
 
   const providerId = formData.get("id");
 

@@ -7,7 +7,7 @@ import { parseStringify } from "@/lib";
 
 export const getService = async ({ page = 1 }) => {
   if (isNaN(Number(page)) || page < 1) redirect("/services");
-  const keyServer = process.env.LOCAL_SITE_URL;
+  const keyServer = process.env.SITE_URL;
 
   try {
     const services = await fetch(
