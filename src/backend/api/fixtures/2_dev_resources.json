@@ -1,0 +1,45 @@
+[
+  {
+    "model": "api.resource",
+    "pk": "a3ba9470-a240-49a6-8196-9230a267a220",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "provider": "37b065f8-26b0-4218-a665-0b23d07b27d9",
+      "uid": "unique-1",
+      "name": "testing 1",
+      "inserted_at": "2024-08-01T17:20:27.050Z",
+      "updated_at": "2024-08-01T17:20:27.050Z"
+    }
+  },
+  {
+    "model": "api.resource",
+    "pk": "85f18c25-4deb-460e-87e2-12548f2508ed",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "provider": "37b065f8-26b0-4218-a665-0b23d07b27d9",
+      "uid": "unique-2",
+      "name": "testing 2",
+      "inserted_at": "2024-08-01T17:20:27.050Z",
+      "updated_at": "2024-08-01T17:20:27.050Z"
+    }
+  },
+  {
+    "model": "api.resourcetag",
+    "pk": "057c38c5-94aa-46ee-98bb-9ec5b0886bbf",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "key": "key",
+      "value": "tag value",
+      "inserted_at": "2024-08-01T17:20:27.050Z",
+      "updated_at": "2024-08-01T17:20:27.050Z"
+    }
+  },
+  {
+    "model": "api.resourcetagmapping",
+    "fields": {
+      "tag": "057c38c5-94aa-46ee-98bb-9ec5b0886bbf",
+      "resource": "85f18c25-4deb-460e-87e2-12548f2508ed",
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362"
+    }
+  }
+]

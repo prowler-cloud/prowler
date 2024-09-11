@@ -1,6 +1,8 @@
 import re
 from uuid import uuid4, UUID
 
+from django.contrib.postgres.indexes import GinIndex
+from django.contrib.postgres.search import SearchVector, SearchVectorField
 from django.core.validators import MinLengthValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
@@ -155,7 +157,7 @@ class Scan(RowLevelSecurityProtectedModel):
         indexes = [
             models.Index(
                 fields=["provider", "state", "trigger", "scheduled_at"],
-                name="scans_prov_state_type_sche_idx",
+                name="scans_prov_state_trig_sche_idx",
             ),
         ]
 
@@ -187,5 +189,157 @@ class Task(RowLevelSecurityProtectedModel):
             models.Index(
                 fields=["id", "task_runner_task"],
                 name="tasks_id_trt_id_idx",
+            ),
+        ]
+
+
+class ResourceTag(RowLevelSecurityProtectedModel):
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+
+    key = models.TextField(blank=False)
+    value = models.TextField(blank=False)
+
+    text_search = models.GeneratedField(
+        expression=SearchVector("key", weight="A", config="simple")
+        + SearchVector("value", weight="B", config="simple"),
+        output_field=SearchVectorField(),
+        db_persist=True,
+        null=True,
+        editable=False,
+    )
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "resource_tags"
+
+        indexes = [
+            GinIndex(fields=["text_search"], name="gin_resource_tags_search_idx"),
+        ]
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=("tenant_id", "key", "value"),
+                name="unique_resource_tags_by_tenant_key_value",
+            ),
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT"],
+            ),
+        ]
+
+
+class Resource(RowLevelSecurityProtectedModel):
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+
+    provider = models.ForeignKey(
+        Provider,
+        on_delete=models.CASCADE,
+        related_name="resources",
+        related_query_name="resource",
+    )
+
+    uid = models.TextField(
+        "Unique identifier for the resource, set by the provider", blank=False
+    )
+    name = models.TextField("Name of the resource, as set in the provider", blank=False)
+    region = models.TextField(
+        "Location of the resource, as set by the provider", blank=False
+    )
+    service = models.TextField(
+        "Service of the resource, as set by the provider", blank=False
+    )
+    type = models.TextField("Type of the resource, as set by the provider", blank=False)
+
+    text_search = models.GeneratedField(
+        expression=SearchVector("uid", weight="A", config="simple")
+        + SearchVector("name", weight="B", config="simple")
+        + SearchVector("region", weight="C", config="simple")
+        + SearchVector("service", "type", weight="D", config="simple"),
+        output_field=SearchVectorField(),
+        db_persist=True,
+        null=True,
+        editable=False,
+    )
+
+    tags = models.ManyToManyField(
+        ResourceTag,
+        verbose_name="Tags associated with the resource, by provider",
+        through="ResourceTagMapping",
+    )
+
+    def get_tags(self) -> dict:
+        return {tag.key: tag.value for tag in self.tags.all()}
+
+    def clear_tags(self):
+        self.tags.clear()
+        self.save()
+
+    def upsert_or_delete_tags(self, tags: list[ResourceTag] | None):
+        if tags is None:
+            self.clear_tags()
+            return
+
+        # Add new relationships with the tenant_id field
+        for tag in tags:
+            ResourceTagMapping.objects.update_or_create(
+                tag=tag, resource=self, tenant_id=self.tenant_id
+            )
+
+        # Save the instance
+        self.save()
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "resources"
+
+        indexes = [
+            models.Index(
+                fields=["uid", "region", "service", "name"],
+                name="idx_resource_uid_reg_serv_name",
+            ),
+            GinIndex(fields=["text_search"], name="gin_resources_search_idx"),
+        ]
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=("tenant_id", "provider_id", "uid"),
+                name="unique_resources_by_provider",
+            ),
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT"],
+            ),
+        ]
+
+
+class ResourceTagMapping(RowLevelSecurityProtectedModel):
+    # NOTE that we don't really need a primary key here,
+    #      but everything is easier with django if we do
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    resource = models.ForeignKey(Resource, on_delete=models.DO_NOTHING)
+    tag = models.ForeignKey(ResourceTag, on_delete=models.CASCADE)
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "resource_tag_mappings"
+
+        # django will automatically create indexes for:
+        #   - resource_id
+        #   - tag_id
+        #   - tenant_id
+        #   - id
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=("tenant_id", "resource_id", "tag_id"),
+                name="unique_resource_tag_mappings_by_tenant_resource_tag",
+            ),
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT"],
             ),
         ]

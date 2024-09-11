@@ -346,4 +346,270 @@ class Migration(migrations.Migration):
         GRANT SELECT ON TABLE {TASK_RUNNER_DB_TABLE} TO {DB_PROWLER_USER};
         """
         ),
+        # Resources
+        migrations.RunSQL(
+            sql="""
+          CREATE EXTENSION IF NOT EXISTS pg_trgm;
+          """,
+            reverse_sql="""
+          DROP EXTENSION IF EXISTS pg_trgm;
+          """,
+        ),
+        migrations.CreateModel(
+            name="Resource",
+            fields=[
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("inserted_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "uid",
+                    models.TextField(
+                        verbose_name="Unique identifier for the resource, set by the provider"
+                    ),
+                ),
+                (
+                    "name",
+                    models.TextField(
+                        verbose_name="Name of the resource, as set in the provider"
+                    ),
+                ),
+                (
+                    "region",
+                    models.TextField(
+                        verbose_name="Location of the resource, as set by the provider"
+                    ),
+                ),
+                (
+                    "service",
+                    models.TextField(
+                        verbose_name="Service of the resource, as set by the provider"
+                    ),
+                ),
+                (
+                    "type",
+                    models.TextField(
+                        verbose_name="Type of the resource, as set by the provider"
+                    ),
+                ),
+                (
+                    "text_search",
+                    models.GeneratedField(
+                        db_persist=True,
+                        expression=django.contrib.postgres.search.CombinedSearchVector(
+                            django.contrib.postgres.search.CombinedSearchVector(
+                                django.contrib.postgres.search.CombinedSearchVector(
+                                    django.contrib.postgres.search.SearchVector(
+                                        "uid", config="simple", weight="A"
+                                    ),
+                                    "||",
+                                    django.contrib.postgres.search.SearchVector(
+                                        "name", config="simple", weight="B"
+                                    ),
+                                    django.contrib.postgres.search.SearchConfig(
+                                        "simple"
+                                    ),
+                                ),
+                                "||",
+                                django.contrib.postgres.search.SearchVector(
+                                    "region", config="simple", weight="C"
+                                ),
+                                django.contrib.postgres.search.SearchConfig("simple"),
+                            ),
+                            "||",
+                            django.contrib.postgres.search.SearchVector(
+                                "service", "type", config="simple", weight="D"
+                            ),
+                            django.contrib.postgres.search.SearchConfig("simple"),
+                        ),
+                        null=True,
+                        output_field=django.contrib.postgres.search.SearchVectorField(),
+                    ),
+                ),
+                (
+                    "provider",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="resources",
+                        related_query_name="resource",
+                        to="api.provider",
+                    ),
+                ),
+                (
+                    "tenant",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="api.tenant"
+                    ),
+                ),
+            ],
+            options={
+                "db_table": "resources",
+                "abstract": False,
+            },
+        ),
+        migrations.CreateModel(
+            name="ResourceTag",
+            fields=[
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("inserted_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("key", models.TextField()),
+                ("value", models.TextField()),
+                (
+                    "text_search",
+                    models.GeneratedField(
+                        db_persist=True,
+                        expression=django.contrib.postgres.search.CombinedSearchVector(
+                            django.contrib.postgres.search.SearchVector(
+                                "key", config="simple", weight="A"
+                            ),
+                            "||",
+                            django.contrib.postgres.search.SearchVector(
+                                "value", config="simple", weight="B"
+                            ),
+                            django.contrib.postgres.search.SearchConfig("simple"),
+                        ),
+                        null=True,
+                        output_field=django.contrib.postgres.search.SearchVectorField(),
+                    ),
+                ),
+                (
+                    "tenant",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="api.tenant"
+                    ),
+                ),
+            ],
+            options={
+                "db_table": "resource_tags",
+                "abstract": False,
+            },
+        ),
+        migrations.CreateModel(
+            name="ResourceTagMapping",
+            fields=[
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                (
+                    "resource",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.DO_NOTHING,
+                        to="api.resource",
+                    ),
+                ),
+                (
+                    "tag",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="api.resourcetag",
+                    ),
+                ),
+                (
+                    "tenant",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="api.tenant",
+                    ),
+                ),
+            ],
+            options={
+                "db_table": "resource_tag_mappings",
+                "abstract": False,
+            },
+        ),
+        migrations.AddField(
+            model_name="resource",
+            name="tags",
+            field=models.ManyToManyField(
+                through="api.ResourceTagMapping",
+                to="api.resourcetag",
+                verbose_name="Tags associated with the resource, by provider",
+            ),
+        ),
+        migrations.AddIndex(
+            model_name="resourcetag",
+            index=django.contrib.postgres.indexes.GinIndex(
+                fields=["text_search"], name="gin_resource_tags_search_idx"
+            ),
+        ),
+        migrations.AddIndex(
+            model_name="resource",
+            index=django.contrib.postgres.indexes.GinIndex(
+                fields=["text_search"], name="gin_resources_search_idx"
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="resourcetag",
+            constraint=models.UniqueConstraint(
+                fields=("tenant_id", "key", "value"),
+                name="unique_resource_tags_by_tenant_key_value",
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="resourcetag",
+            constraint=api.rls.RowLevelSecurityConstraint(
+                "tenant_id",
+                name="rls_on_resourcetag",
+                statements=["SELECT"],
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="resourcetagmapping",
+            constraint=models.UniqueConstraint(
+                fields=("tenant_id", "resource_id", "tag_id"),
+                name="unique_resource_tag_mappings_by_tenant_resource_tag",
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="resourcetagmapping",
+            constraint=api.rls.RowLevelSecurityConstraint(
+                "tenant_id",
+                name="rls_on_resourcetagmapping",
+                statements=["SELECT"],
+            ),
+        ),
+        migrations.AddIndex(
+            model_name="resource",
+            index=models.Index(
+                fields=["uid", "region", "service", "name"],
+                name="idx_resource_uid_reg_serv_name",
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="resource",
+            constraint=models.UniqueConstraint(
+                fields=("tenant_id", "provider_id", "uid"),
+                name="unique_resources_by_provider",
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="resource",
+            constraint=api.rls.RowLevelSecurityConstraint(
+                "tenant_id",
+                name="rls_on_resource",
+                statements=["SELECT"],
+            ),
+        ),
     ]

@@ -1,3 +1,4 @@
+from django.db.models import Q
 from django_filters.rest_framework import (
     FilterSet,
     BooleanFilter,
@@ -8,7 +9,7 @@ from rest_framework_json_api.django_filters.backends import DjangoFilterBackend
 from rest_framework_json_api.serializers import ValidationError
 
 from api.db_utils import ProviderEnumField
-from api.models import Provider, Scan, Task, StateChoices
+from api.models import Provider, Resource, ResourceTag, Scan, Task, StateChoices
 from api.rls import Tenant
 from api.v1.serializers import TaskBase
 
@@ -128,7 +129,7 @@ class ScanFilter(FilterSet):
         model = Scan
         fields = {
             "provider": ["exact"],
-            "provider_id": ["exact"],
+            "provider_id": ["exact", "in"],
             "name": ["exact", "icontains"],
             "started_at": ["gte", "lte"],
             "trigger": ["exact"],
@@ -160,3 +161,56 @@ class TaskFilter(FilterSet):
     class Meta:
         model = Task
         fields = []
+
+
+class ResourceTagFilter(FilterSet):
+    class Meta:
+        model = ResourceTag
+        fields = {
+            "key": ["exact", "icontains"],
+            "value": ["exact", "icontains"],
+        }
+        search = ["text_search"]
+
+
+class ResourceFilter(FilterSet):
+    provider = CharFilter(method="filter_provider")
+    tag_key = CharFilter(method="filter_tag_key")
+    tag_value = CharFilter(method="filter_tag_value")
+    tag = CharFilter(method="filter_tag")
+    tags = CharFilter(method="filter_tag")
+    inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
+    updated_at = DateFilter(field_name="updated_at", lookup_expr="date")
+
+    def filter_provider(self, queryset, name, value):
+        return enum_filter(
+            queryset,
+            value,
+            enum_choices=Provider.ProviderChoices,
+            lookup_field="provider__provider",
+        )
+
+    class Meta:
+        model = Resource
+        fields = {
+            "provider_id": ["exact", "in"],
+            "uid": ["exact", "icontains"],
+            "name": ["exact", "icontains"],
+            "region": ["exact", "icontains", "in"],
+            "service": ["exact", "icontains", "in"],
+            "type": ["exact", "icontains", "in"],
+            "inserted_at": ["gte", "lte"],
+            "updated_at": ["gte", "lte"],
+        }
+
+    def filter_tag_key(self, queryset, name, value):
+        return queryset.filter(Q(tags__key=value) | Q(tags__key__icontains=value))
+
+    def filter_tag_value(self, queryset, name, value):
+        return queryset.filter(Q(tags__value=value) | Q(tags__value__icontains=value))
+
+    def filter_tag(self, queryset, name, value):
+        # we won't know what the user wants to filter on just based on the value
+        # and we don't want to build special filtering logic for every possible
+        # provider tag spec, so we'll just do a full text search
+        return queryset.filter(tags__text_search=value)

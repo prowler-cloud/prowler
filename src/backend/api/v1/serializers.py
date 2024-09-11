@@ -4,7 +4,7 @@ from drf_spectacular.utils import extend_schema_field
 from rest_framework_json_api import serializers
 from rest_framework_json_api.serializers import ValidationError
 
-from api.models import StateChoices, Provider, Scan, Task
+from api.models import StateChoices, Provider, Scan, Task, Resource, ResourceTag
 from api.rls import Tenant
 from api.utils import merge_dicts
 
@@ -276,3 +276,59 @@ class ScanUpdateSerializer(BaseWriteSerializer):
         extra_kwargs = {
             "id": {"read_only": True},
         }
+
+
+class ResourceTagSerializer(RLSSerializer):
+    """
+    Serializer fore the ResourceTag model
+    """
+
+    class Meta:
+        model = ResourceTag
+        fields = ["key", "value"]
+
+
+class ResourceSerializer(RLSSerializer):
+    """
+    Serializer for the Resource model.
+    """
+
+    tags = serializers.SerializerMethodField()
+    type_ = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = Resource
+        fields = [
+            "id",
+            "inserted_at",
+            "updated_at",
+            "uid",
+            "name",
+            "region",
+            "service",
+            "type_",
+            "tags",
+            "provider",
+        ]
+        extra_kwargs = {
+            "id": {"read_only": True},
+            "inserted_at": {"read_only": True},
+            "updated_at": {"read_only": True},
+        }
+
+    @extend_schema_field(
+        {
+            "type": "object",
+            "description": "Tags associated with the resource",
+            "example": {"env": "prod", "owner": "johndoe"},
+        }
+    )
+    def get_tags(self, obj):
+        return obj.get_tags()
+
+    def get_fields(self):
+        """`type` is a Python reserved keyword."""
+        fields = super().get_fields()
+        type_ = fields.pop("type_")
+        fields["type"] = type_
+        return fields

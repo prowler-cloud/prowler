@@ -5,7 +5,7 @@ from django.conf import settings
 from django.db import connections as django_connections
 from rest_framework import status
 from django_celery_results.models import TaskResult
-from api.models import Provider, Scan, StateChoices, Task
+from api.models import Provider, Resource, ResourceTag, Scan, StateChoices, Task
 from api.rls import Tenant
 
 API_JSON_CONTENT_TYPE = "application/vnd.api+json"
@@ -95,7 +95,7 @@ def providers_fixture(tenants_fixture):
 @pytest.fixture
 def scans_fixture(tenants_fixture, providers_fixture):
     tenant, _ = tenants_fixture
-    provider, *_ = providers_fixture
+    provider, provider2, *_ = providers_fixture
 
     scan1 = Scan.objects.create(
         name="Scan 1",
@@ -115,7 +115,7 @@ def scans_fixture(tenants_fixture, providers_fixture):
     )
     scan3 = Scan.objects.create(
         name="Scan 3",
-        provider=provider,
+        provider=provider2,
         trigger=Scan.TriggerChoices.SCHEDULED,
         state=StateChoices.AVAILABLE,
         tenant_id=tenant.id,
@@ -150,6 +150,68 @@ def tasks_fixture(tenants_fixture):
     )
 
     return task1, task2
+
+
+@pytest.fixture
+def resources_fixture(providers_fixture):
+    provider, *_ = providers_fixture
+
+    tags = [
+        ResourceTag.objects.create(
+            tenant_id=provider.tenant_id,
+            key="key",
+            value="value",
+        ),
+        ResourceTag.objects.create(
+            tenant_id=provider.tenant_id,
+            key="key2",
+            value="value2",
+        ),
+    ]
+
+    resource1 = Resource.objects.create(
+        tenant_id=provider.tenant_id,
+        provider=provider,
+        uid="arn:aws:ec2:us-east-1:123456789012:instance/i-1234567890abcdef0",
+        name="My Instance 1",
+        region="us-east-1",
+        service="ec2",
+        type="prowler-test",
+    )
+
+    resource1.upsert_or_delete_tags(tags)
+
+    resource2 = Resource.objects.create(
+        tenant_id=provider.tenant_id,
+        provider=provider,
+        uid="arn:aws:ec2:us-east-1:123456789012:instance/i-1234567890abcdef1",
+        name="My Instance 2",
+        region="eu-west-1",
+        service="ec2",
+        type="prowler-test",
+    )
+    resource2.upsert_or_delete_tags(tags)
+
+    resource3 = Resource.objects.create(
+        tenant_id=providers_fixture[1].tenant_id,
+        provider=providers_fixture[1],
+        uid="arn:aws:ec2:us-east-1:123456789012:bucket/i-1234567890abcdef2",
+        name="My Bucket 3",
+        region="us-east-1",
+        service="s3",
+        type="test",
+    )
+
+    tags = [
+        ResourceTag.objects.create(
+            tenant_id=provider.tenant_id,
+            key="key3",
+            value="multi word value3",
+        ),
+    ]
+    resource3.upsert_or_delete_tags(tags)
+
+    return resource1, resource2, resource3
 
 
 @pytest.fixture

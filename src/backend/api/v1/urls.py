@@ -8,6 +8,7 @@ from api.v1.views import (
     ProviderViewSet,
     ScanViewSet,
     TaskViewSet,
+    ResourceViewSet,
 )
 
 router = routers.DefaultRouter(trailing_slash=False)
@@ -16,6 +17,7 @@ router.register(r"tenants", TenantViewSet, basename="tenant")
 router.register(r"providers", ProviderViewSet, basename="provider")
 router.register(r"scans", ScanViewSet, basename="scan")
 router.register(r"tasks", TaskViewSet, basename="task")
+router.register(r"resources", ResourceViewSet, basename="resource")
 
 urlpatterns = [
     path("", include(router.urls)),

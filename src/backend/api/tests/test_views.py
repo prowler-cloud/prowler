@@ -776,6 +776,31 @@ class TestScanViewSet:
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
+    def test_scan_filter_by_provider_id_exact(
+        self, client, scans_fixture, tenant_header
+    ):
+        response = client.get(
+            reverse("scan-list"),
+            {"filter[provider_id]": scans_fixture[0].provider.id},
+            headers=tenant_header,
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 2
+
+    def test_scan_filter_by_provider_id_in(self, client, scans_fixture, tenant_header):
+        response = client.get(
+            reverse("scan-list"),
+            {
+                "filter[provider_id.in]": [
+                    scans_fixture[0].provider.id,
+                    scans_fixture[1].provider.id,
+                ]
+            },
+            headers=tenant_header,
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 2
+
     @pytest.mark.parametrize(
         "sort_field",
         [
@@ -849,3 +874,156 @@ class TestTaskViewSet:
         )
         # Task status is SUCCESS
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+
+@pytest.mark.django_db
+class TestResourceViewSet:
+    def test_resources_list_none(self, client, tenant_header):
+        response = client.get(reverse("resource-list"), headers=tenant_header)
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 0
+
+    def test_resources_list(self, client, resources_fixture, tenant_header):
+        response = client.get(reverse("resource-list"), headers=tenant_header)
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == len(resources_fixture)
+        assert (
+            response.json()["data"][0]["attributes"]["uid"] == resources_fixture[0].uid
+        )
+
+    @pytest.mark.parametrize(
+        "filter_name, filter_value, expected_count",
+        (
+            [
+                (
+                    "uid",
+                    "arn:aws:ec2:us-east-1:123456789012:instance/i-1234567890abcdef0",
+                    1,
+                ),
+                ("uid.icontains", "i-1234567890abcdef", 3),
+                ("name", "My Instance 2", 1),
+                ("name.icontains", "ce 2", 1),
+                ("region", "eu-west-1", 1),
+                ("region.icontains", "west", 1),
+                ("service", "ec2", 2),
+                ("service.icontains", "ec", 2),
+                ("inserted_at.gte", "2024-01-01 00:00:00", 3),
+                ("updated_at.lte", "2024-01-01 00:00:00", 0),
+                ("type.icontains", "prowler", 2),
+                # tags searching
+                ("tag", "key3:value:value", 0),
+                ("tag_key", "key3", 1),
+                ("tag_value", "value2", 2),
+                ("tag", "key3:multi word value3", 1),
+                ("tags", "key3:multi word value3", 1),
+                ("tags", "multi word", 1),
+                # full text search on resource
+                ("search", "arn", 3),
+                ("search", "def1", 1),
+                # full text search on resource tags
+                ("search", "multi word", 1),
+                ("search", "key2", 2),
+            ]
+        ),
+    )
+    def test_resource_filters(
+        self,
+        client,
+        resources_fixture,
+        tenant_header,
+        filter_name,
+        filter_value,
+        expected_count,
+    ):
+        response = client.get(
+            reverse("resource-list"),
+            {f"filter[{filter_name}]": filter_value},
+            headers=tenant_header,
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == expected_count
+
+    def test_resource_filter_by_provider_id_in(
+        self, client, resources_fixture, tenant_header
+    ):
+        response = client.get(
+            reverse("resource-list"),
+            {
+                "filter[provider_id.in]": [
+                    resources_fixture[0].provider.id,
+                    resources_fixture[1].provider.id,
+                ]
+            },
+            headers=tenant_header,
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 2
+
+    @pytest.mark.parametrize(
+        "filter_name",
+        (
+            [
+                "resource",  # Invalid filter name
+                "invalid",
+            ]
+        ),
+    )
+    def test_resources_filters_invalid(self, client, tenant_header, filter_name):
+        response = client.get(
+            reverse("resource-list"),
+            {f"filter[{filter_name}]": "whatever"},
+            headers=tenant_header,
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    @pytest.mark.parametrize(
+        "sort_field",
+        [
+            "provider_id",
+            "uid",
+            "name",
+            "region",
+            "service",
+            "type",
+            "inserted_at",
+            "updated_at",
+        ],
+    )
+    def test_resources_sort(self, client, tenant_header, sort_field):
+        response = client.get(
+            reverse("resource-list"), {"sort": sort_field}, headers=tenant_header
+        )
+        assert response.status_code == status.HTTP_200_OK
+
+    def test_resources_sort_invalid(self, client, tenant_header):
+        response = client.get(
+            reverse("resource-list"), {"sort": "invalid"}, headers=tenant_header
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()["errors"][0]["code"] == "invalid"
+        assert response.json()["errors"][0]["source"]["pointer"] == "/data"
+        assert (
+            response.json()["errors"][0]["detail"] == "invalid sort parameter: invalid"
+        )
+
+    def test_resources_retrieve(self, client, resources_fixture, tenant_header):
+        resource_1, *_ = resources_fixture
+        response = client.get(
+            reverse("resource-detail", kwargs={"pk": resource_1.id}),
+            headers=tenant_header,
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["data"]["attributes"]["uid"] == resource_1.uid
+        assert response.json()["data"]["attributes"]["name"] == resource_1.name
+        assert response.json()["data"]["attributes"]["region"] == resource_1.region
+        assert response.json()["data"]["attributes"]["service"] == resource_1.service
+        assert response.json()["data"]["attributes"]["type"] == resource_1.type
+        assert response.json()["data"]["attributes"]["tags"] == resource_1.get_tags()
+
+    def test_resources_invalid_retrieve(self, client, tenant_header):
+        response = client.get(
+            reverse("resource-detail", kwargs={"pk": "random_id"}),
+            headers=tenant_header,
+        )
+        assert response.status_code == status.HTTP_404_NOT_FOUND

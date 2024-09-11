@@ -3,6 +3,9 @@ from django.db.models import F
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_control
+from django.contrib.postgres.search import SearchQuery
+from django.db.models import Q
+
 from drf_spectacular.settings import spectacular_settings
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from drf_spectacular.views import SpectacularAPIView
@@ -13,8 +16,14 @@ from rest_framework_json_api.views import Response
 from celery.result import AsyncResult
 
 from api.base_views import BaseRLSViewSet, BaseViewSet
-from api.filters import ProviderFilter, TenantFilter, ScanFilter, TaskFilter
-from api.models import Provider, Scan, Task
+from api.filters import (
+    ProviderFilter,
+    TenantFilter,
+    ScanFilter,
+    TaskFilter,
+    ResourceFilter,
+)
+from api.models import Provider, Scan, Task, Resource
 from api.rls import Tenant
 from api.v1.serializers import (
     ProviderSerializer,
@@ -26,6 +35,7 @@ from api.v1.serializers import (
     ScanSerializer,
     ScanCreateSerializer,
     ScanUpdateSerializer,
+    ResourceSerializer,
 )
 from tasks.tasks import check_provider_connection_task, delete_provider_task
 
@@ -331,3 +341,62 @@ class TaskViewSet(BaseRLSViewSet):
                 "Content-Location": reverse("task-detail", kwargs={"pk": task.id})
             },
         )
+
+
+@extend_schema_view(
+    list=extend_schema(
+        summary="List all resources",
+        description="Retrieve a list of all resources with options for filtering by various criteria. Resources are objects that are discovered by Prowler. They can be anything from a single host to a whole VPC.",
+    ),
+    retrieve=extend_schema(
+        summary="Retrieve data for a resource",
+        description="Fetch detailed information about a specific resource by their ID. A Resource is an object that is discovered by Prowler. It can be anything from a single host to a whole VPC.",
+    ),
+)
+@method_decorator(CACHE_DECORATOR, name="list")
+@method_decorator(CACHE_DECORATOR, name="retrieve")
+class ResourceViewSet(BaseRLSViewSet):
+    queryset = Resource.objects.all()
+    serializer_class = ResourceSerializer
+    http_method_names = ["get"]
+    filterset_class = ResourceFilter
+    ordering = ["inserted_at"]
+    ordering_fields = [
+        "provider_id",
+        "uid",
+        "name",
+        "region",
+        "service",
+        "type",
+        "inserted_at",
+        "updated_at",
+    ]
+
+    def get_queryset(self):
+        queryset = Resource.objects.all()
+        search_value = self.request.query_params.get("filter[search]", None)
+
+        if search_value:
+            # Django's ORM will build a LEFT JOIN and OUTER JOIN on the "through" table, resulting in duplicates
+            # The duplicates then require a `distinct` query
+            search_query = SearchQuery(
+                search_value, config="simple", search_type="plain"
+            )
+            queryset = queryset.filter(
+                Q(tags__key=search_value)
+                | Q(tags__value=search_value)
+                | Q(tags__text_search=search_query)
+                | Q(tags__key__contains=search_value)
+                | Q(tags__value__contains=search_value)
+                | Q(uid=search_value)
+                | Q(name=search_value)
+                | Q(region=search_value)
+                | Q(service=search_value)
+                | Q(text_search=search_query)
+                | Q(uid__contains=search_value)
+                | Q(name__contains=search_value)
+                | Q(region__contains=search_value)
+                | Q(service__contains=search_value)
+            ).distinct()
+
+        return queryset
