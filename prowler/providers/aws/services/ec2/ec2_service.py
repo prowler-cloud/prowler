@@ -158,7 +158,7 @@ class EC2(AWSService):
                                 nacl_name = tag["Value"]
                         in_use = False
                         for subnet in nacl["Associations"]:
-                            if subnet["SubnetId"] != "None":
+                            if subnet["SubnetId"]:
                                 in_use = True
                                 break
                         self.network_acls[arn] = NetworkACL(
