@@ -2,7 +2,7 @@ from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 
 
-class ec2_networkacl_unused_not_default(Check):
+class ec2_networkacl_unused(Check):
     def execute(self):
         findings = []
         for arn, network_acl in ec2_client.network_acls.items():

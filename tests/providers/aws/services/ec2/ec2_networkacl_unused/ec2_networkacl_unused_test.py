@@ -10,7 +10,7 @@ from tests.providers.aws.utils import (
 )
 
 
-class Test_ec2_networkacl_unused_not_default:
+class Test_ec2_networkacl_unused:
     @mock_aws
     def test_ec2_default_nacls(self):
         from prowler.providers.aws.services.ec2.ec2_service import EC2
@@ -23,15 +23,15 @@ class Test_ec2_networkacl_unused_not_default:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_networkacl_unused_not_default.ec2_networkacl_unused_not_default.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_networkacl_unused.ec2_networkacl_unused.ec2_client",
             new=EC2(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.ec2.ec2_networkacl_unused_not_default.ec2_networkacl_unused_not_default import (
-                ec2_networkacl_unused_not_default,
+            from prowler.providers.aws.services.ec2.ec2_networkacl_unused.ec2_networkacl_unused import (
+                ec2_networkacl_unused,
             )
 
-            check = ec2_networkacl_unused_not_default()
+            check = ec2_networkacl_unused()
             result = check.execute()
 
             # One default nacl per region
@@ -55,15 +55,15 @@ class Test_ec2_networkacl_unused_not_default:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_networkacl_unused_not_default.ec2_networkacl_unused_not_default.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_networkacl_unused.ec2_networkacl_unused.ec2_client",
             new=EC2(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.ec2.ec2_networkacl_unused_not_default.ec2_networkacl_unused_not_default import (
-                ec2_networkacl_unused_not_default,
+            from prowler.providers.aws.services.ec2.ec2_networkacl_unused.ec2_networkacl_unused import (
+                ec2_networkacl_unused,
             )
 
-            check = ec2_networkacl_unused_not_default()
+            check = ec2_networkacl_unused()
             result = check.execute()
 
             assert len(result) == 1
@@ -103,15 +103,15 @@ class Test_ec2_networkacl_unused_not_default:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_networkacl_unused_not_default.ec2_networkacl_unused_not_default.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_networkacl_unused.ec2_networkacl_unused.ec2_client",
             new=EC2(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.ec2.ec2_networkacl_unused_not_default.ec2_networkacl_unused_not_default import (
-                ec2_networkacl_unused_not_default,
+            from prowler.providers.aws.services.ec2.ec2_networkacl_unused.ec2_networkacl_unused import (
+                ec2_networkacl_unused,
             )
 
-            check = ec2_networkacl_unused_not_default()
+            check = ec2_networkacl_unused()
             result = check.execute()
 
             assert len(result) == 1

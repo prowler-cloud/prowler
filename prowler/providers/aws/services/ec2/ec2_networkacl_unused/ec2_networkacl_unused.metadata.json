@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "ec2_networkacl_unused_not_default",
+  "CheckID": "ec2_networkacl_unused",
   "CheckTitle": "Unused Network Access Control Lists should be removed.",
   "CheckType": [],
   "ServiceName": "ec2",
