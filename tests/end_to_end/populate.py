@@ -1,10 +1,9 @@
-import io
-import uuid
-import random
 import argparse
 import concurrent.futures
+import io
+import random
+import uuid
 import zipfile
-
 from dataclasses import dataclass
 
 import boto3
@@ -54,8 +53,8 @@ def create_security_groups(number: int = 5, concurrency: int = 10) -> list:
         for sg in security_groups:
             executor.submit(
                 ec2.create_security_group,
-                Description='test security group',
-                GroupName=sg
+                Description="test security group",
+                GroupName=sg,
             )
 
     print(f"[INFO] Created {number} security groups")
@@ -63,7 +62,9 @@ def create_security_groups(number: int = 5, concurrency: int = 10) -> list:
     return security_groups
 
 
-def create_ec2_instances(number: int = 5, security_groups: list = None, concurrency: int = 5) -> None:
+def create_ec2_instances(
+    number: int = 5, security_groups: list = None, concurrency: int = 5
+) -> None:
     ec2 = boto3.client("ec2")
 
     print(f"[INFO] Creating {number} EC2 instances")
@@ -79,7 +80,7 @@ def create_ec2_instances(number: int = 5, security_groups: list = None, concurre
                 MinCount=1,
                 MaxCount=1,
                 KeyName=f"test-key-{uuid.uuid4()}-{i}",
-                SecurityGroups=[sg]
+                SecurityGroups=[sg],
             )
 
     print(f"[INFO] Created {number} EC2 instances")
@@ -110,21 +111,24 @@ def create_ecs_clusters(number: int = 10, concurrency: int = 5) -> None:
 
 
 # Cloudwatch
-def create_cloudwatch_log_groups(number_of_log_groups: int = 10, number_of_log_streams_per_log_group: int = 10,
-                                 concurrency: int = 5) -> None:
+def create_cloudwatch_log_groups(
+    number_of_log_groups: int = 10,
+    number_of_log_streams_per_log_group: int = 10,
+    concurrency: int = 5,
+) -> None:
     cw = boto3.client("logs")
 
     print(f"[INFO] Creating {number_of_log_groups} CloudWatch log groups")
 
-    cloudwatch_log_groups = [
-        f"{uuid.uuid4()}-{i}" for i in range(number_of_log_groups)
-    ]
+    cloudwatch_log_groups = [f"{uuid.uuid4()}-{i}" for i in range(number_of_log_groups)]
     with concurrent.futures.ThreadPoolExecutor(concurrency) as executor:
         for name in cloudwatch_log_groups:
             executor.submit(cw.create_log_group, logGroupName=name)
 
     # add a log stream to each log group
-    print(f"[INFO] Creating {number_of_log_streams_per_log_group} CloudWatch log streams")
+    print(
+        f"[INFO] Creating {number_of_log_streams_per_log_group} CloudWatch log streams"
+    )
     for log_group_name in cloudwatch_log_groups:
         log_streams = [
             f"{uuid.uuid4()}-{i}" for i in range(number_of_log_streams_per_log_group)
@@ -137,10 +141,14 @@ def create_cloudwatch_log_groups(number_of_log_groups: int = 10, number_of_log_s
                     logStreamName=name,
                 )
 
-    print(f"[INFO] Created {number_of_log_groups} CloudWatch log groups and {number_of_log_streams_per_log_group} CloudWatch log streams")
+    print(
+        f"[INFO] Created {number_of_log_groups} CloudWatch log groups and {number_of_log_streams_per_log_group} CloudWatch log streams"
+    )
 
 
-def create_lambda_functions(number_of_lambda_functions: int = 10, concurrency: int = 5) -> None:
+def create_lambda_functions(
+    number_of_lambda_functions: int = 10, concurrency: int = 5
+) -> None:
     def create_zip_file() -> bytes:
         """
         Create a zip file from the given code.
@@ -198,11 +206,17 @@ def create_ssm(number_of_parameters: int = 10, concurrency: int = 5) -> None:
     print(f"[INFO] Created {number_of_parameters} SSM parameters")
 
 
-def create_sagemaker(number_of_notebook_instances: int = 10, number_of_models: int = 10, number_of_training_jobs: int = 10,
-                     concurrency: int = 5) -> None:
+def create_sagemaker(
+    number_of_notebook_instances: int = 10,
+    number_of_models: int = 10,
+    number_of_training_jobs: int = 10,
+    concurrency: int = 5,
+) -> None:
     sagemaker = boto3.client("sagemaker")
 
-    print(f"[INFO] Creating {number_of_notebook_instances} SageMaker notebook instances")
+    print(
+        f"[INFO] Creating {number_of_notebook_instances} SageMaker notebook instances"
+    )
     with concurrent.futures.ThreadPoolExecutor(concurrency) as executor:
         for i in range(number_of_notebook_instances):
             executor.submit(
@@ -247,7 +261,7 @@ def create_sagemaker(number_of_notebook_instances: int = 10, number_of_models: i
                 RoleArn="arn:aws:iam::000000000000:role/demo",
                 AlgorithmSpecification={
                     "TrainingImage": "abc123",
-                    "TrainingInputMode": "File"
+                    "TrainingInputMode": "File",
                 },
                 InputDataConfig=[
                     {
@@ -256,9 +270,9 @@ def create_sagemaker(number_of_notebook_instances: int = 10, number_of_models: i
                             "S3DataSource": {
                                 "S3DataType": "S3Prefix",
                                 "S3Uri": "s3://my-bucket/train",
-                                "S3DataDistributionType": "FullyReplicated"
+                                "S3DataDistributionType": "FullyReplicated",
                             }
-                        }
+                        },
                     },
                     {
                         "ChannelName": "validation",
@@ -266,30 +280,22 @@ def create_sagemaker(number_of_notebook_instances: int = 10, number_of_models: i
                             "S3DataSource": {
                                 "S3DataType": "S3Prefix",
                                 "S3Uri": "s3://my-bucket/validation",
-                                "S3DataDistributionType": "FullyReplicated"
+                                "S3DataDistributionType": "FullyReplicated",
                             }
-                        }
-                    }
+                        },
+                    },
                 ],
-                OutputDataConfig={
-                    "S3OutputPath": "s3://my-bucket/output"
-                },
+                OutputDataConfig={"S3OutputPath": "s3://my-bucket/output"},
                 ResourceConfig={
                     "InstanceCount": 1,
                     "InstanceType": "ml.t2.medium",
-                    "VolumeSizeInGB": 10
+                    "VolumeSizeInGB": 10,
                 },
-                StoppingCondition={
-                    "MaxRuntimeInSeconds": 86400
-                },
+                StoppingCondition={"MaxRuntimeInSeconds": 86400},
                 VpcConfig={
-                    "SecurityGroupIds": [
-                        "sg-12345678"
-                    ],
-                    "Subnets": [
-                        "subnet-12345678"
-                    ]
-                }
+                    "SecurityGroupIds": ["sg-12345678"],
+                    "Subnets": ["subnet-12345678"],
+                },
             )
 
     print(f"[INFO] Created {number_of_training_jobs} SageMaker training jobs")
@@ -304,52 +310,101 @@ def main(config: RunningConfig):
     create_cloudwatch_log_groups(config.cloudwatch_log_groups, concurrency)
     create_lambda_functions(config.lambda_functions, concurrency)
     create_ssm(config.ssm_parameters, concurrency)
-    create_sagemaker(config.sagemaker_notebook_instances, config.sagemaker_models, config.sagemaker_training_jobs, concurrency)
+    create_sagemaker(
+        config.sagemaker_notebook_instances,
+        config.sagemaker_models,
+        config.sagemaker_training_jobs,
+        concurrency,
+    )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     cli = argparse.ArgumentParser(prog="populate", description="Populate AWS resources")
 
     # Add concurrency
     cli.add_argument(
-        "-c", "--concurrency", type=int, help="Number of concurrent threads to use", default=20
+        "-c",
+        "--concurrency",
+        type=int,
+        help="Number of concurrent threads to use",
+        default=20,
     )
 
     cli.add_argument(
-        "-e", "--ec2-instances", type=int, help="Number of EC2 instances to create", default=5
+        "-e",
+        "--ec2-instances",
+        type=int,
+        help="Number of EC2 instances to create",
+        default=5,
     )
     cli.add_argument(
         "-s", "--s3-buckets", type=int, help="Number of S3 buckets to create", default=5
     )
     cli.add_argument(
-        "-g", "--security-groups", type=int, help="Number of security groups to create", default=5
+        "-g",
+        "--security-groups",
+        type=int,
+        help="Number of security groups to create",
+        default=5,
     )
     cli.add_argument(
-        "-r", "--ecs-clusters", type=int, help="Number of ECS clusters to create", default=5
+        "-r",
+        "--ecs-clusters",
+        type=int,
+        help="Number of ECS clusters to create",
+        default=5,
     )
     cli.add_argument(
-        "-l", "--cloudwatch-log-groups", type=int, help="Number of CloudWatch log groups to create", default=5
+        "-l",
+        "--cloudwatch-log-groups",
+        type=int,
+        help="Number of CloudWatch log groups to create",
+        default=5,
     )
     cli.add_argument(
-        "-m", "--cloudwatch-log-streams", type=int, help="Number of CloudWatch log streams to create", default=10
+        "-m",
+        "--cloudwatch-log-streams",
+        type=int,
+        help="Number of CloudWatch log streams to create",
+        default=10,
     )
     # lambda
     cli.add_argument(
-        "-f", "--lambda-functions", type=int, help="Number of Lambda functions to create", default=5
+        "-f",
+        "--lambda-functions",
+        type=int,
+        help="Number of Lambda functions to create",
+        default=5,
     )
     # ssm
     cli.add_argument(
-        "-p", "--ssm-parameters", type=int, help="Number of SSM parameters to create", default=5
+        "-p",
+        "--ssm-parameters",
+        type=int,
+        help="Number of SSM parameters to create",
+        default=5,
     )
     # sagemaker
     cli.add_argument(
-        "-n", "--sagemaker-notebook-instances", type=int, help="Number of SageMaker notebook instances to create", default=5
+        "-n",
+        "--sagemaker-notebook-instances",
+        type=int,
+        help="Number of SageMaker notebook instances to create",
+        default=5,
     )
     cli.add_argument(
-        "-M", "--sagemaker-models", type=int, help="Number of SageMaker models to create", default=5
+        "-M",
+        "--sagemaker-models",
+        type=int,
+        help="Number of SageMaker models to create",
+        default=5,
     )
     cli.add_argument(
-        "-t", "--sagemaker-training-jobs", type=int, help="Number of SageMaker training jobs to create", default=5
+        "-t",
+        "--sagemaker-training-jobs",
+        type=int,
+        help="Number of SageMaker training jobs to create",
+        default=5,
     )
 
     args = cli.parse_args()
