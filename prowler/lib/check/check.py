@@ -470,37 +470,18 @@ def execute_checks(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    verbose = (
-        global_provider.output_options.verbose or global_provider.output_options.fixer
-    )
     # Execution with the --only-logs flag
     if global_provider.output_options.only_logs:
         for check_name in checks_to_execute:
             # Recover service from check name
             service = check_name.split("_")[0]
             try:
-                try:
-                    # Import check module
-                    check_module_path = f"prowler.providers.{global_provider.type}.services.{service}.{check_name}.{check_name}"
-                    lib = import_check(check_module_path)
-                    # Recover functions from check
-                    check_to_execute = getattr(lib, check_name)
-                    check = check_to_execute()
-                except ModuleNotFoundError:
-                    logger.error(
-                        f"Check '{check_name}' was not found for the {global_provider.type.upper()} provider"
-                    )
-                    continue
-                if verbose:
-                    print(
-                        f"\nCheck ID: {check.CheckID} - {Fore.MAGENTA}{check.ServiceName}{Fore.YELLOW} [{check.Severity}]{Style.RESET_ALL}"
-                    )
                 check_findings = execute(
-                    check,
+                    service,
+                    check_name,
                     global_provider,
                     custom_checks_metadata,
                 )
-                report(check_findings, global_provider)
                 all_findings.extend(check_findings)
 
                 # Update Audit Status
@@ -558,28 +539,12 @@ def execute_checks(
                     f"-> Scanning {orange_color}{service}{Style.RESET_ALL} service"
                 )
                 try:
-                    try:
-                        # Import check module
-                        check_module_path = f"prowler.providers.{global_provider.type}.services.{service}.{check_name}.{check_name}"
-                        lib = import_check(check_module_path)
-                        # Recover functions from check
-                        check_to_execute = getattr(lib, check_name)
-                        check = check_to_execute()
-                    except ModuleNotFoundError:
-                        logger.error(
-                            f"Check '{check_name}' was not found for the {global_provider.type.upper()} provider"
-                        )
-                        continue
-                    if verbose:
-                        print(
-                            f"\nCheck ID: {check.CheckID} - {Fore.MAGENTA}{check.ServiceName}{Fore.YELLOW} [{check.Severity}]{Style.RESET_ALL}"
-                        )
                     check_findings = execute(
-                        check,
+                        service,
+                        check_name,
                         global_provider,
                         custom_checks_metadata,
                     )
-                    report(check_findings, global_provider)
                     all_findings.extend(check_findings)
                     services_executed.add(service)
                     checks_executed.add(check_name)
@@ -602,52 +567,39 @@ def execute_checks(
                     )
                 bar()
             bar.title = f"-> {Fore.GREEN}Scan completed!{Style.RESET_ALL}"
-
-    # Custom report interface
-    if os.environ.get("PROWLER_REPORT_LIB_PATH"):
-        try:
-            logger.info("Using custom report interface ...")
-            lib = os.environ["PROWLER_REPORT_LIB_PATH"]
-            outputs_module = importlib.import_module(lib)
-            custom_report_interface = getattr(outputs_module, "report")
-
-            # TODO: review this call and see if we can remove the global_provider.output_options since it is contained in the global_provider
-            custom_report_interface(
-                check_findings, global_provider.output_options, global_provider
-            )
-        except Exception:
-            sys.exit(1)
-
     return all_findings
 
 
 def execute(
-    check: Check,
+    service: str,
+    check_name: str,
     global_provider: Any,
     custom_checks_metadata: Any,
 ):
     try:
+        # Import check module
+        check_module_path = f"prowler.providers.{global_provider.type}.services.{service}.{check_name}.{check_name}"
+        lib = import_check(check_module_path)
+        # Recover functions from check
+        check_to_execute = getattr(lib, check_name)
+        check_class = check_to_execute()
+
         # Update check metadata to reflect that in the outputs
         if custom_checks_metadata and custom_checks_metadata["Checks"].get(
-            check.CheckID
+            check_class.CheckID
         ):
-            check = update_check_metadata(
-                check, custom_checks_metadata["Checks"][check.CheckID]
+            check_class = update_check_metadata(
+                check_class, custom_checks_metadata["Checks"][check_class.CheckID]
             )
 
-        # Execute the check
-        check_findings = []
-        logger.debug(f"Executing check: {check.CheckID}")
-        try:
-            check_findings = check.execute()
-        except Exception as error:
-            if not global_provider.output_options.only_logs:
-                print(
-                    f"Something went wrong in {check.CheckID}, please use --log-level ERROR"
-                )
-            logger.error(
-                f"{check.CheckID} -- {error.__class__.__name__}[{traceback.extract_tb(error.__traceback__)[-1].lineno}]: {error}"
-            )
+        # Run check
+        verbose = (
+            global_provider.output_options.verbose
+            or global_provider.output_options.fixer
+        )
+        check_findings = run_check(
+            check_class, verbose, global_provider.output_options.only_logs
+        )
 
         # Exclude findings per status
         if global_provider.output_options.status:
@@ -657,8 +609,9 @@ def execute(
                 if finding.status in global_provider.output_options.status
             ]
 
-        # Before returning the findings, we need to apply the mute list logic
+        # Mutelist findings
         if hasattr(global_provider, "mutelist") and global_provider.mutelist.mutelist:
+            # TODO: make this prettier
             is_finding_muted_args = {}
             if global_provider.type == "aws":
                 is_finding_muted_args["aws_account_id"] = (
@@ -672,9 +625,28 @@ def execute(
                 finding.muted = global_provider.mutelist.is_finding_muted(
                     **is_finding_muted_args
                 )
+
+        # Refactor(Outputs)
+        # Report the check's findings
+        report(check_findings, global_provider)
+
+        # Refactor(Outputs)
+        if os.environ.get("PROWLER_REPORT_LIB_PATH"):
+            try:
+                logger.info("Using custom report interface ...")
+                lib = os.environ["PROWLER_REPORT_LIB_PATH"]
+                outputs_module = importlib.import_module(lib)
+                custom_report_interface = getattr(outputs_module, "report")
+
+                # TODO: review this call and see if we can remove the global_provider.output_options since it is contained in the global_provider
+                custom_report_interface(
+                    check_findings, global_provider.output_options, global_provider
+                )
+            except Exception:
+                sys.exit(1)
     except ModuleNotFoundError:
         logger.error(
-            f"Check '{check.CheckID}' was not found for the {global_provider.type.upper()} provider"
+            f"Check '{check_name}' was not found for the {global_provider.type.upper()} provider"
         )
         check_findings = []
     except Exception as error:
