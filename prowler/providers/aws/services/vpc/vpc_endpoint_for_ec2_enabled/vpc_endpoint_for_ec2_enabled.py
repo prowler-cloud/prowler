@@ -17,7 +17,9 @@ class vpc_endpoint_for_ec2_enabled(Check):
                 for endpoint in vpc_client.vpc_endpoints:
                     if endpoint.vpc_id == vpc_id and "ec2" in endpoint.service_name:
                         report.status = "PASS"
-                        report.status_extended = f"VPC {vpc.id} has an EC2 endpoint."
+                        report.status_extended = (
+                            f"VPC {vpc.id} has an EC2 {endpoint.type} endpoint."
+                        )
                         break
 
                 findings.append(report)

@@ -256,6 +256,7 @@ class Test_VPC_Service:
         assert vpc.vpc_endpoints[0].tags == [
             {"Key": "test", "Value": "test"},
         ]
+        assert vpc.vpc_endpoints[0].type == "Gateway"
 
     # Test VPC Describe VPC Endpoint Services
     @mock_aws

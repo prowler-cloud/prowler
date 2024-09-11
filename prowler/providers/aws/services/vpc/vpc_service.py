@@ -239,6 +239,7 @@ class VPC(AWSService):
                                     state=endpoint["State"],
                                     policy_document=endpoint_policy,
                                     owner_id=endpoint["OwnerId"],
+                                    type=endpoint["VpcEndpointType"],
                                     region=regional_client.region,
                                     tags=endpoint.get("Tags"),
                                 )
@@ -453,6 +454,7 @@ class VpcEndpoint(BaseModel):
     state: str
     policy_document: Optional[dict]
     owner_id: str
+    type: str
     region: str
     tags: Optional[list] = []
 
