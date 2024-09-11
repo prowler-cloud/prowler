@@ -1,27 +1,20 @@
 import { Input } from "@nextui-org/react";
+import debounce from "lodash.debounce";
 import { XCircle } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useCallback, useEffect, useState } from "react";
 
-import { useDebounce } from "../../hooks/useDebounce";
-
 export const CustomSearchInput: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  // const [searchQuery, setSearchQuery] = useState(() => {
-  //   return searchParams.get("filter[search]") || "";
-  // });
-  const [searchQuery, setSearchQuery] = useState("");
 
-  const debouncedSearchQuery = useDebounce(searchQuery, 500);
-  // console.log("debouncedSearchQuery", debouncedSearchQuery);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const applySearch = useCallback(
     (query: string) => {
       const params = new URLSearchParams(searchParams.toString());
       if (query) {
         params.set("filter[search]", query);
-        setSearchQuery(query);
       } else {
         params.delete("filter[search]");
       }
@@ -29,6 +22,8 @@ export const CustomSearchInput: React.FC = () => {
     },
     [router, searchParams],
   );
+
+  const debouncedChangeHandler = useCallback(debounce(applySearch, 300), []);
 
   const clearIconSearch = () => {
     setSearchQuery("");
@@ -40,15 +35,6 @@ export const CustomSearchInput: React.FC = () => {
     setSearchQuery(searchFromUrl);
   }, [searchParams]);
 
-  // useEffect(() => {
-  //   const timer = setTimeout(() => {
-  //     applySearch(debouncedSearchQuery);
-  //     console.log("hi from useEffect");
-  //   }, 2000);
-
-  //   return () => clearTimeout(timer);
-  // }, [debouncedSearchQuery, applySearch, searchParams]);
-
   return (
     <Input
       variant="bordered"
@@ -59,7 +45,7 @@ export const CustomSearchInput: React.FC = () => {
       onChange={(e) => {
         const value = e.target.value;
         setSearchQuery(value);
-        applySearch(value);
+        debouncedChangeHandler(value);
       }}
       endContent={
         searchQuery && (
