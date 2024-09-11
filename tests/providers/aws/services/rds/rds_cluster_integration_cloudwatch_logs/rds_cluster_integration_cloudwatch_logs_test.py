@@ -1,5 +1,6 @@
 from unittest import mock
 
+import botocore
 from boto3 import client
 from moto import mock_aws
 
@@ -8,6 +9,20 @@ from tests.providers.aws.utils import (
     AWS_REGION_US_EAST_1,
     set_mocked_aws_provider,
 )
+
+make_api_call = botocore.client.BaseClient._make_api_call
+
+
+def mock_make_api_call(self, operation_name, kwarg):
+    if operation_name == "CreateDBCluster":
+        return {
+            "DBClusterIdentifier": "cluster-1",
+            "Engine": "aurora",
+            "MasterUsername": "admin",
+            "MasterUserPassword": "password",
+        }
+
+    return make_api_call(self, operation_name, kwarg)
 
 
 class Test_rds_cluster_integration_cloudwatch_logs:
@@ -36,36 +51,39 @@ class Test_rds_cluster_integration_cloudwatch_logs:
                 assert len(result) == 0
 
     @mock_aws
-    def test_rds_no_aurora_cluster(self):
-        conn = client("rds", region_name=AWS_REGION_US_EAST_1)
-        conn.create_db_cluster(
-            DBClusterIdentifier="cluster-1",
-            Engine="mysql",
-            MasterUsername="admin",
-            MasterUserPassword="password",
-        )
-
-        from prowler.providers.aws.services.rds.rds_service import RDS
-
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
-
+    def test_rds_no_valid_cluster(self):
         with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
+            "botocore.client.BaseClient._make_api_call", new=mock_make_api_call
         ):
+            conn = client("rds", region_name=AWS_REGION_US_EAST_1)
+            conn.create_db_cluster(
+                DBClusterIdentifier="cluster-1",
+                Engine="aurora",
+                MasterUsername="admin",
+                MasterUserPassword="password",
+            )
+
+            from prowler.providers.aws.services.rds.rds_service import RDS
+
+            aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
             with mock.patch(
-                "prowler.providers.aws.services.rds.rds_cluster_integration_cloudwatch_logs.rds_cluster_integration_cloudwatch_logs.rds_client",
-                new=RDS(aws_provider),
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
             ):
-                # Test Check
-                from prowler.providers.aws.services.rds.rds_cluster_integration_cloudwatch_logs.rds_cluster_integration_cloudwatch_logs import (
-                    rds_cluster_integration_cloudwatch_logs,
-                )
+                with mock.patch(
+                    "prowler.providers.aws.services.rds.rds_cluster_integration_cloudwatch_logs.rds_cluster_integration_cloudwatch_logs.rds_client",
+                    new=RDS(aws_provider),
+                ):
+                    # Test Check
+                    from prowler.providers.aws.services.rds.rds_cluster_integration_cloudwatch_logs.rds_cluster_integration_cloudwatch_logs import (
+                        rds_cluster_integration_cloudwatch_logs,
+                    )
 
-                check = rds_cluster_integration_cloudwatch_logs()
-                result = check.execute()
+                    check = rds_cluster_integration_cloudwatch_logs()
+                    result = check.execute()
 
-                assert len(result) == 0
+                    assert len(result) == 0
 
     @mock_aws
     def test_rds_cluster_no_logs(self):

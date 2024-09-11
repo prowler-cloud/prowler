@@ -1,14 +1,14 @@
 {
   "Provider": "aws",
   "CheckID": "rds_cluster_integration_cloudwatch_logs",
-  "CheckTitle": "Check if RDS Aurora MySQL cluster is integrated with CloudWatch Logs.",
+  "CheckTitle": "Check if RDS cluster is integrated with CloudWatch Logs.",
   "CheckType": [],
   "ServiceName": "rds",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-cluster",
   "Severity": "medium",
   "ResourceType": "AwsRdsDbCluster",
-  "Description": "Check if RDS Aurora MySQL cluster is integrated with CloudWatch Logs.",
+  "Description": "Check if RDS cluster is integrated with CloudWatch Logs. The types valid are Aurora MySQL, Aurora PostgreSQL, MySQL, PostgreSQL.",
   "Risk": "If logs are not enabled, monitoring of service use and threat analysis is not possible.",
   "RelatedUrl": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/USER_LogAccess.html",
   "Remediation": {
