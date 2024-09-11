@@ -24,12 +24,12 @@ class ssm_documents_set_as_public(Check):
                 report.status_extended = f"SSM Document {document.name} is public."
             elif all(owner in trusted_account_ids for owner in document.account_owners):
                 report.status = "PASS"
-                report.status_extended = f"SSM Document {document.name} is shared to trusted AWS accounts: {", ".join(document.account_owners)}."
+                report.status_extended = f"SSM Document {document.name} is shared to trusted AWS accounts: {', '.join(document.account_owners)}."
             elif not all(
                 owner in trusted_account_ids for owner in document.account_owners
             ):
                 report.status = "FAIL"
-                report.status_extended = f"SSM Document {document.name} is shared to non-trusted AWS accounts: {", ".join(document.account_owners)}."
+                report.status_extended = f"SSM Document {document.name} is shared to non-trusted AWS accounts: {', '.join(document.account_owners)}."
 
             findings.append(report)
 
