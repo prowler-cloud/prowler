@@ -100,6 +100,9 @@ class EC2(AWSService):
                                         for sg in instance.get("SecurityGroups", [])
                                     ],
                                     subnet_id=instance.get("SubnetId", ""),
+                                    virtualization_type=instance.get(
+                                        "VirtualizationType"
+                                    ),
                                     tags=instance.get("Tags"),
                                 )
                             )
@@ -637,6 +640,7 @@ class Instance(BaseModel):
     security_groups: list[str]
     subnet_id: str
     instance_profile: Optional[dict]
+    virtualization_type: Optional[str]
     tags: Optional[list] = []
 
 
