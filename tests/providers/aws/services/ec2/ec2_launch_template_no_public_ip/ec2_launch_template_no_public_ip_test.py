@@ -157,7 +157,7 @@ def mock_make_api_call_v4(self, operation_name, kwarg):
     return make_api_call(self, operation_name, kwarg)
 
 
-class Test_ec2_launch_template_no_secrets:
+class Test_ec2_launch_template_no_public_ip:
     @mock_aws
     def test_no_launch_templates(self):
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
@@ -171,7 +171,7 @@ class Test_ec2_launch_template_no_secrets:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_launch_template_no_secrets.ec2_launch_template_no_secrets.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_launch_template_no_public_ip.ec2_launch_template_no_public_ip.ec2_client",
             new=EC2(aws_provider),
         ):
             # Test Check
@@ -210,7 +210,7 @@ class Test_ec2_launch_template_no_secrets:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_launch_template_no_secrets.ec2_launch_template_no_secrets.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_launch_template_no_public_ip.ec2_launch_template_no_public_ip.ec2_client",
             new=EC2(aws_provider),
         ):
             # Test Check
@@ -256,7 +256,7 @@ class Test_ec2_launch_template_no_secrets:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_launch_template_no_secrets.ec2_launch_template_no_secrets.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_launch_template_no_public_ip.ec2_launch_template_no_public_ip.ec2_client",
             new=EC2(aws_provider),
         ):
             # Test Check
@@ -307,7 +307,7 @@ class Test_ec2_launch_template_no_secrets:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_launch_template_no_secrets.ec2_launch_template_no_secrets.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_launch_template_no_public_ip.ec2_launch_template_no_public_ip.ec2_client",
             new=EC2(aws_provider),
         ):
             # Test Check
@@ -358,7 +358,7 @@ class Test_ec2_launch_template_no_secrets:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_launch_template_no_secrets.ec2_launch_template_no_secrets.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_launch_template_no_public_ip.ec2_launch_template_no_public_ip.ec2_client",
             new=EC2(aws_provider),
         ):
             # Test Check
