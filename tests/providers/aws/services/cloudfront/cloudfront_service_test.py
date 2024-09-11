@@ -9,6 +9,7 @@ from prowler.providers.aws.services.cloudfront.cloudfront_service import (
     DefaultCacheConfigBehaviour,
     Distribution,
     GeoRestrictionType,
+    Origin,
     SSLSupportMethod,
     ViewerProtocolPolicy,
 )
@@ -188,11 +189,12 @@ class Test_CloudFront_Service:
         REGION = "us-east-1"
         LOGGING_ENABLED = True
         ORIGINS = [
-            {
-                "Id": "origin1",
-                "DomainName": "asdf.s3.us-east-1.amazonaws.com",
-                "S3OriginConfig": {"OriginAccessIdentity": ""},
-            }
+            Origin(
+                id="origin1",
+                domain_name="asdf.s3.us-east-1.amazonaws.com",
+                origin_protocol_policy="",
+                origin_ssl_protocols=[],
+            ),
         ]
         DEFAULT_CACHE_CONFIG = DefaultCacheConfigBehaviour(
             realtime_log_config_arn="test-log-arn",
@@ -231,7 +233,11 @@ class Test_CloudFront_Service:
         assert (
             cloudfront.distributions[DISTRIBUTION_ID].logging_enabled is LOGGING_ENABLED
         )
-        assert cloudfront.distributions[DISTRIBUTION_ID].origins == ORIGINS
+        for origin in cloudfront.distributions[DISTRIBUTION_ID].origins:
+            assert origin.id == "origin1"
+            assert origin.domain_name == "asdf.s3.us-east-1.amazonaws.com"
+            assert origin.origin_protocol_policy == ""
+            assert origin.origin_ssl_protocols == []
         assert (
             cloudfront.distributions[DISTRIBUTION_ID].geo_restriction_type
             == GEO_RESTRICTION_TYPE

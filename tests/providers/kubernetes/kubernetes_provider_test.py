@@ -6,6 +6,7 @@ from kubernetes import client
 from prowler.config.config import (
     default_config_file_path,
     default_fixer_config_file_path,
+    load_and_validate_config_file,
 )
 from prowler.providers.kubernetes.kubernetes_provider import KubernetesProvider
 from prowler.providers.kubernetes.models import (
@@ -50,16 +51,20 @@ class TestKubernetesProvider:
             arguments.context = None
             arguments.only_logs = False
             arguments.namespace = None
-            arguments.config_file = default_config_file_path
-            arguments.fixer_config = default_fixer_config_file_path
+            audit_config = load_and_validate_config_file(
+                "kubernetes", default_config_file_path
+            )
+            fixer_config = load_and_validate_config_file(
+                "kubernetes", default_fixer_config_file_path
+            )
 
             # Instantiate the KubernetesProvider with mocked arguments
             kubernetes_provider = KubernetesProvider(
                 arguments.kubeconfig_file,
                 arguments.context,
                 arguments.namespace,
-                arguments.config_file,
-                arguments.fixer_config,
+                audit_config=audit_config,
+                fixer_config=fixer_config,
             )
             assert isinstance(kubernetes_provider.session, KubernetesSession)
             assert kubernetes_provider.session.api_client is not None
