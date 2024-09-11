@@ -29,12 +29,12 @@ class IAM(GCPService):
                 while request is not None:
                     response = request.execute()
 
-                    for account in response["accounts"]:
+                    for account in response.get("accounts", []):
                         self.service_accounts.append(
                             ServiceAccount(
                                 name=account["name"],
                                 email=account["email"],
-                                display_name=account.get("displayName", ""),
+                                display_name=account["displayName"],
                                 project_id=project_id,
                             )
                         )
@@ -65,7 +65,7 @@ class IAM(GCPService):
                 )
                 response = request.execute()
 
-                for key in response["keys"]:
+                for key in response.get("keys", []):
                     sa.keys.append(
                         Key(
                             name=key["name"].split("/")[-1],
@@ -149,7 +149,7 @@ class EssentialContacts(GCPService):
                     .contacts()
                     .list(parent="organizations/" + org.id)
                 ).execute()
-                if len(response["contacts"]) > 0:
+                if len(response.get("contacts", [])) > 0:
                     contacts = True
 
                 self.organizations.append(
