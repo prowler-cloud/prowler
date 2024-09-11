@@ -17,16 +17,16 @@ class GeneratedOutputs:
         if not self._store:
             return
 
-        if cmp:
-            self.compliance.append(cmp)
+        if compliance:
+            self.compliance.append(compliance)
 
     def add_regular(self, regular):
 
         if not self._store:
             return
 
-        if rg:
-            self.regular.append(rg)
+        if regular:
+            self.regular.append(regular)
 
     def make_output(self) -> dict:
         return {"regular": self.regular, "compliance": self.compliance}

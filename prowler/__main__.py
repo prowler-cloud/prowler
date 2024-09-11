@@ -309,6 +309,8 @@ def prowler():
     for finding in findings:
         finding_outputs.append(Finding.generate_output(global_provider, finding))
 
+    # TODO: this is a workaround that we'll need to review soon
+    # Probably this could be added to the S3 class
     generated_outputs = GeneratedOutputs(
         args.output_bucket, args.output_bucket_no_assume
     )

@@ -1155,8 +1155,9 @@ class AwsProvider(Provider):
                 else f"https://sts.{aws_region}.amazonaws.com.cn"
             )
 
-            if os.environ.get("PROWLER_LOCAL_DEBUG") == "1":
-                sts_endpoint_url = os.environ["AWS_ENDPOINT_URL"]
+            # This is just intended for testing the memory workaround using SQLite
+            # if os.environ.get("PROWLER_LOCAL_DEBUG") == "1":
+            #     sts_endpoint_url = os.environ["AWS_ENDPOINT_URL"]
 
             return session.client("sts", aws_region, endpoint_url=sts_endpoint_url)
         except Exception as error:

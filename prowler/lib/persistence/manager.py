@@ -1,6 +1,6 @@
 import os
 
-from .sqlite import SQLiteList, SQLiteDict
+from .sqlite import SQLiteDict, SQLiteList
 
 default_list = SQLiteList
 
@@ -9,10 +9,10 @@ def mklist() -> list:
     """
     Create a new list with the given name and data.
     """
-    prowler_db_connection = os.environ.get('PROWLER_DB_CONNECTION', "memory://")
+    prowler_db_connection = os.environ.get("PROWLER_DB_CONNECTION", "memory://")
 
     try:
-        prowler_db_cache_size = int(os.environ.get('PROWLER_DB_CACHE_SIZE', 2000))
+        prowler_db_cache_size = int(os.environ.get("PROWLER_DB_CACHE_SIZE", 2000))
     except ValueError:
         prowler_db_cache_size = 2000
 
@@ -20,11 +20,12 @@ def mklist() -> list:
         return list()
 
     # In-memory. Default.
-    if prowler_db_connection.startswith('memory://'):
+    # TODO: review if we allow having a DB connection in the environment variable
+    if prowler_db_connection.startswith("memory://"):
         return list()
 
     # SQLite 3
-    elif prowler_db_connection.startswith('sqlite://'):
+    elif prowler_db_connection.startswith("sqlite://"):
         return SQLiteList(cache_size=prowler_db_cache_size)
 
     else:
@@ -35,22 +36,25 @@ def mkdict() -> dict:
     """
     Create a new dictionary with the given name and data.
     """
-    prowler_db_connection = os.environ.get('PROWLER_DB_CONNECTION')
-    prowler_db_cache_size = os.environ.get('PROWLER_DB_CACHE_SIZE')
+    prowler_db_connection = os.environ.get("PROWLER_DB_CONNECTION", "memory://")
+    try:
+        prowler_db_cache_size = int(os.environ.get("PROWLER_DB_CACHE_SIZE", 2000))
+    except ValueError:
+        prowler_db_cache_size = 2000
 
     if not prowler_db_connection:
         return dict()
 
     # In-memory. Default.
-    if prowler_db_connection.startswith('memory://'):
+    if prowler_db_connection.startswith("memory://"):
         return dict()
 
     # SQLite 3
-    elif prowler_db_connection.startswith('sqlite://'):
+    elif prowler_db_connection.startswith("sqlite://"):
         return SQLiteDict(cache_size=prowler_db_cache_size)
 
     else:
         raise ValueError(f"Unsupported database connection: {prowler_db_connection}")
 
 
-__all__ = ('mklist', 'mkdict')
+__all__ = ("mklist", "mkdict")

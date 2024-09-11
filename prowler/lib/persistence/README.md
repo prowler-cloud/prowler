@@ -23,7 +23,7 @@ The purpose of this package is to provide a way to persist memory data structure
 
 ## How it works
 
-This package provides a builder pattern to create a new instance of a persistence data structure. 
+This package provides a builder pattern to create a new instance of a persistence data structure.
 
 Instead of storing the data in memory, it stores it in a file on disk. To be more specific, it stores in a database, but the behavior is the same that the original Python data structure.
 
@@ -62,7 +62,7 @@ b["key2"] = "value2"
 print(b)
 print(b["key1"])
 
-del b["key1"]   
+del b["key1"]
 
 print("key1" in b)
 ```
@@ -80,7 +80,7 @@ For example:
 ```
 
 
-### Advanced usage for SQLite 
+### Advanced usage for SQLite
 
 When you want to set the SQLite cache size, you need to set the `PROWLER_DB_CACHE_SIZE` environment variable.
 
@@ -90,15 +90,14 @@ For example:
 > export PROWLER_DB_CACHE_SIZE=1000
 ```
 
-The cache size is the number of items that will be stored in memory. The default value is 2000.
+The cache size is amount of memory in KiB that will be used. The default value is 2000 KiB.
 
-> What's the SQLite cache size? It's the number of items that will be stored in memory.
+> What's the SQLite cache size? The cache size refers to the amount of memory allocated for storing database pages in memory, which is used to reduce the need to read from the disk. The cache size can be configured using the PRAGMA cache_size command.
 
 ## Performance
 
-Although the performance is not the same that the original Python data structure, it is fast enough to be used. 
+Although the performance is not the same that the original Python data structure, it is fast enough to be used.
 
 Have in count that Prowler is not a real-time application, so the performance is not the most important thing.
 
 After some tests, the performance is similar to the original Python data structure.
-

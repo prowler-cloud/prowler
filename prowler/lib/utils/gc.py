@@ -1,8 +1,8 @@
 import gc
-
 from contextlib import contextmanager
 
 
+# TODO: we'll need to do a further review of this once we address the outputs generation with S3
 @contextmanager
 def force_gc(disable_gc=False):
     """
@@ -32,4 +32,4 @@ def force_gc(disable_gc=False):
         gc.enable()
 
 
-__all__ = ('force_gc',)
+__all__ = ("force_gc",)
