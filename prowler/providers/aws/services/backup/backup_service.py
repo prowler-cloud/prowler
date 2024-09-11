@@ -23,6 +23,8 @@ class Backup(AWSService):
         self.__threading_call__(self._list_backup_plans)
         self.backup_report_plans = []
         self.__threading_call__(self._list_backup_report_plans)
+        self.protected_resources = {}
+        self.__threading_call__(self._list_protected_resources)
 
     def _list_backup_vaults(self, regional_client):
         logger.info("Backup - Listing Backup Vaults...")
@@ -138,6 +140,33 @@ class Backup(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _list_protected_resources(self, regional_client):
+        logger.info("Backup - Listing Protected Resources...")
+
+        try:
+            list_protected_resources_paginator = regional_client.get_paginator(
+                "list_protected_resources"
+            )
+            for page in list_protected_resources_paginator.paginate():
+                for resource in page.get("Results", []):
+                    arn = resource.get("ResourceArn", "")
+                    if not self.audit_resources or (
+                        is_resource_filtered(
+                            arn,
+                            self.audit_resources,
+                        )
+                    ):
+                        self.protected_resources[arn] = ProtectedResource(
+                            arn=arn,
+                            resource_type=resource.get("ResourceType"),
+                            region=regional_client.region,
+                            last_backup_time=resource.get("LastBackupTime"),
+                        )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class BackupVault(BaseModel):
     arn: str
@@ -166,3 +195,10 @@ class BackupReportPlan(BaseModel):
     name: str
     last_attempted_execution_date: Optional[datetime]
     last_successful_execution_date: Optional[datetime]
+
+
+class ProtectedResource(BaseModel):
+    arn: str
+    resource_type: str
+    region: str
+    last_backup_time: Optional[datetime]
