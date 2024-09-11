@@ -12,7 +12,7 @@
   "ResourceType": "AWSElastiCacheReplicationGroup",
   "Description": "Ensure Elasticache Redis OSS cache clusters use automatic failover.",
   "Risk": "If automatic failover is not enabled, a failure in the primary node could result in significant downtime, impacting the availability and resilience of your application.",
-  "RelatedUrl": "https://redis.io/docs/latest/commands/failover/",
+  "RelatedUrl": "https://docs.aws.amazon.com/AmazonElastiCache/latest/red-ug/AutoFailover.html",
   "Remediation": {
     "Code": {
       "CLI": "",
@@ -22,7 +22,7 @@
     },
     "Recommendation": {
       "Text": "Enable automatic failover for ElastiCache (Redis OSS) clusters to ensure high availability and minimize downtime during failures.",
-      "Url": "https://docs.aws.amazon.com/AmazonElastiCache/latest/red-ug/Clusters.Modify.html#Clusters.Modify.CON"
+      "Url": "https://redis.io/blog/highly-available-in-memory-cloud-datastores/"
     }
   },
   "Categories": [],
