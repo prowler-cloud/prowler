@@ -316,17 +316,21 @@ class Test_s3_access_point_public_access_block:
                     == f"arn:aws:s3:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:accesspoint/{ap_name_eu}"
                 )
                 assert result[1].region == AWS_REGION_EU_WEST_1
-                
+
     def test_access_points_mixed_regions(self):
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1, "ap-southeast-2"])
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1, "ap-southeast-2"]
+        )
 
         ap_name_us = "test-access-point-us-east-1"
         ap_name_eu = "test-access-point-eu-west-1"
         ap_name_ap = "test-access-point-ap-southeast-2"
-        
+
         arn_us = f"arn:aws:s3:us-east-1:{AWS_ACCOUNT_NUMBER}:accesspoint/{ap_name_us}"
         arn_eu = f"arn:aws:s3:eu-west-1:{AWS_ACCOUNT_NUMBER}:accesspoint/{ap_name_eu}"
-        arn_ap = f"arn:aws:s3:ap-southeast-2:{AWS_ACCOUNT_NUMBER}:accesspoint/{ap_name_ap}"
+        arn_ap = (
+            f"arn:aws:s3:ap-southeast-2:{AWS_ACCOUNT_NUMBER}:accesspoint/{ap_name_ap}"
+        )
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
@@ -384,10 +388,40 @@ class Test_s3_access_point_public_access_block:
                 s3control_client,
             ):
                 check = s3_access_point_public_access_block()
-                result = check.execute()
+                results = check.execute()
 
-                assert len(result) == 3
-                assert result[0].status == "PASS"
-                assert result[1].status == "FAIL"
-                assert result[2].status == "FAIL"
-                assert result[2].region == "ap-southeast-2"
+                assert len(results) == 3
+                for result in results:
+                    if result.resource_id == ap_name_us:
+                        assert result.region == AWS_REGION_US_EAST_1
+                        assert result.status == "PASS"
+                        assert (
+                            result.status_extended
+                            == f"Access Point {ap_name_us} of bucket bucket-us does have Public Access Block enabled."
+                        )
+                        assert (
+                            result.resource_arn
+                            == f"arn:aws:s3:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:accesspoint/{ap_name_us}"
+                        )
+                    elif result.resource_id == ap_name_eu:
+                        assert result.region == AWS_REGION_EU_WEST_1
+                        assert result.status == "FAIL"
+                        assert (
+                            result.status_extended
+                            == f"Access Point {ap_name_eu} of bucket bucket-eu does not have Public Access Block enabled."
+                        )
+                        assert (
+                            result.resource_arn
+                            == f"arn:aws:s3:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:accesspoint/{ap_name_eu}"
+                        )
+                    elif result.resource_id == ap_name_ap:
+                        assert result.region == "ap-southeast-2"
+                        assert result.status == "FAIL"
+                        assert (
+                            result.status_extended
+                            == f"Access Point {ap_name_ap} of bucket bucket-ap does not have Public Access Block enabled."
+                        )
+                        assert (
+                            result.resource_arn
+                            == f"arn:aws:s3:ap-southeast-2:{AWS_ACCOUNT_NUMBER}:accesspoint/{ap_name_ap}"
+                        )
