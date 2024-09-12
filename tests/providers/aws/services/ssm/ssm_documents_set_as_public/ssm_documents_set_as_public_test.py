@@ -53,7 +53,6 @@ class Test_ssm_documents_set_as_public:
             assert result[0].resource_id == document_name
             assert result[0].resource_arn == document_arn
             assert result[0].status == "FAIL"
-            print(result[0].status_extended)
             assert (
                 result[0].status_extended
                 == f"SSM Document {document_name} is shared to non-trusted AWS accounts: 111111111111, 111111222222."
