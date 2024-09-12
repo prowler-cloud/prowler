@@ -4,7 +4,7 @@ from prowler.providers.aws.services.cloudfront.cloudfront_client import (
 )
 
 
-class cloudfront_distributions_use_custom_ssl_tls_certificates(Check):
+class cloudfront_distributions_custom_ssl_certificate(Check):
     def execute(self):
         findings = []
         for distribution in cloudfront_client.distributions.values():

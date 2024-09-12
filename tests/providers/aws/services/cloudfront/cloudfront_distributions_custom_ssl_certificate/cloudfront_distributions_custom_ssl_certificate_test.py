@@ -10,7 +10,7 @@ DISTRIBUTION_ARN = (
 REGION = "eu-west-1"
 
 
-class Test_cloudfront_distributions_use_custom_ssl_tls_certificates:
+class Test_cloudfront_distributions_custom_ssl_certificate:
     def test_no_distributions(self):
         cloudfront_client = mock.MagicMock
         cloudfront_client.distributions = {}
@@ -19,11 +19,11 @@ class Test_cloudfront_distributions_use_custom_ssl_tls_certificates:
             new=cloudfront_client,
         ):
             # Test Check
-            from prowler.providers.aws.services.cloudfront.cloudfront_distributions_use_custom_ssl_tls_certificates.cloudfront_distributions_use_custom_ssl_tls_certificates import (
-                cloudfront_distributions_use_custom_ssl_tls_certificates,
+            from prowler.providers.aws.services.cloudfront.cloudfront_distributions_custom_ssl_certificate.cloudfront_distributions_custom_ssl_certificate import (
+                cloudfront_distributions_custom_ssl_certificate,
             )
 
-            check = cloudfront_distributions_use_custom_ssl_tls_certificates()
+            check = cloudfront_distributions_custom_ssl_certificate()
             result = check.execute()
 
             assert len(result) == 0
@@ -46,11 +46,11 @@ class Test_cloudfront_distributions_use_custom_ssl_tls_certificates:
             new=cloudfront_client,
         ):
             # Test Check
-            from prowler.providers.aws.services.cloudfront.cloudfront_distributions_use_custom_ssl_tls_certificates.cloudfront_distributions_use_custom_ssl_tls_certificates import (
-                cloudfront_distributions_use_custom_ssl_tls_certificates,
+            from prowler.providers.aws.services.cloudfront.cloudfront_distributions_custom_ssl_certificate.cloudfront_distributions_custom_ssl_certificate import (
+                cloudfront_distributions_custom_ssl_certificate,
             )
 
-            check = cloudfront_distributions_use_custom_ssl_tls_certificates()
+            check = cloudfront_distributions_custom_ssl_certificate()
             result = check.execute()
 
             assert len(result) == 1
@@ -81,11 +81,11 @@ class Test_cloudfront_distributions_use_custom_ssl_tls_certificates:
             new=cloudfront_client,
         ):
             # Test Check
-            from prowler.providers.aws.services.cloudfront.cloudfront_distributions_use_custom_ssl_tls_certificates.cloudfront_distributions_use_custom_ssl_tls_certificates import (
-                cloudfront_distributions_use_custom_ssl_tls_certificates,
+            from prowler.providers.aws.services.cloudfront.cloudfront_distributions_custom_ssl_certificate.cloudfront_distributions_custom_ssl_certificate import (
+                cloudfront_distributions_custom_ssl_certificate,
             )
 
-            check = cloudfront_distributions_use_custom_ssl_tls_certificates()
+            check = cloudfront_distributions_custom_ssl_certificate()
             result = check.execute()
 
             assert len(result) == 1

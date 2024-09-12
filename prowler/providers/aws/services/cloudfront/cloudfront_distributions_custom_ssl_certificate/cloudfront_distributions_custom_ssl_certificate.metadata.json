@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "cloudfront_distributions_use_custom_ssl_tls_certificates",
+  "CheckID": "cloudfront_distributions_custom_ssl_certificate",
   "CheckTitle": "CloudFront distributions should use custom SSL/TLS certificates.",
   "CheckType": [],
   "ServiceName": "cloudfront",
