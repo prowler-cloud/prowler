@@ -190,7 +190,7 @@ def prowler():
         sys.exit()
 
     # Provider to scan
-    Provider.set_global_provider(args)
+    Provider.init_global_provider(args)
     global_provider = Provider.get_global_provider()
 
     # Print Provider Credentials

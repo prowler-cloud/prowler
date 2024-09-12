@@ -92,6 +92,9 @@ class CloudFront(AWSService):
                 distributions[distribution_id].web_acl_id = distribution_config[
                     "DistributionConfig"
                 ]["WebACLId"]
+                distributions[distribution_id].default_root_object = (
+                    distribution_config["DistributionConfig"].get("DefaultRootObject")
+                )
 
                 # Default Cache Config
                 default_cache_config = DefaultCacheConfigBehaviour(
@@ -186,6 +189,7 @@ class Distribution(BaseModel):
     origins: list[Origin]
     web_acl_id: str = ""
     default_certificate: Optional[bool]
+    default_root_object: Optional[str]
     tags: Optional[list] = []
     ssl_support_method: Optional[SSLSupportMethod]
     certificate: Optional[str]
