@@ -1,8 +1,6 @@
 from unittest import mock
 from uuid import uuid4
 
-from moto import mock_aws
-
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_ARN,
     AWS_ACCOUNT_NUMBER,
@@ -14,21 +12,18 @@ DETECTOR_ARN = f"arn:aws:guardduty:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:d
 
 
 class Test_guardduty_is_enabled_fixer:
-    @mock_aws
-    def test_guardduty_is_enabled_fixer(self):
-        guardduty_client = mock.MagicMock
-        guardduty_client.region = AWS_REGION_EU_WEST_1
-        guardduty_client.detectors = []
-        guardduty_client.audited_account_arn = AWS_ACCOUNT_ARN
-        guardduty_client.regional_clients = {AWS_REGION_EU_WEST_1: guardduty_client}
-        guardduty_client.create_detector = mock.MagicMock
-        guardduty_client.create_detector.return_value = None
-        with mock.patch(
-            "prowler.providers.aws.services.guardduty.guardduty_service.GuardDuty",
-            guardduty_client,
-        ):
-            from prowler.providers.aws.services.guardduty.guardduty_is_enabled.guardduty_is_enabled_fixer import (
-                fixer,
-            )
+    @mock.patch("prowler.providers.aws.services.guardduty.guardduty_service.GuardDuty")
+    def test_guardduty_is_enabled_fixer(self, mock_guardduty_client):
+        mock_client = mock.MagicMock()
+        mock_guardduty_client.region = AWS_REGION_EU_WEST_1
+        mock_guardduty_client.detectors = []
+        mock_guardduty_client.audited_account_arn = AWS_ACCOUNT_ARN
+        mock_guardduty_client.regional_clients = {AWS_REGION_EU_WEST_1: mock_client}
+        mock_client.create_detector.return_value = None
 
-            assert fixer(AWS_REGION_EU_WEST_1)
+        from prowler.providers.aws.services.guardduty.guardduty_is_enabled.guardduty_is_enabled_fixer import (
+            fixer,
+        )
+
+        result = fixer(AWS_REGION_EU_WEST_1)
+        assert result
