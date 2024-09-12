@@ -25,24 +25,29 @@ class ec2_instance_uses_single_eni(Check):
                         )
 
                 message_status_extended = ""
-                if len(eni_types["efa"]) + len(eni_types["interface"]) > 1:
+                if (
+                    len(eni_types["efa"])
+                    + len(eni_types["interface"])
+                    + len(eni_types["trunk"])
+                    > 1
+                ):
                     report.status = "FAIL"
                     message_status_extended = (
-                        f"EC2 Instance {instance.id} uses multiple ENIs: "
+                        f"EC2 Instance {instance.id} uses multiple ENIs: ("
                     )
                 else:
                     report.status = "PASS"
                     message_status_extended = (
-                        f"EC2 Instance {instance.id} uses only one ENI: "
+                        f"EC2 Instance {instance.id} uses only one ENI: ("
                     )
 
-                if len(eni_types["efa"]):
-                    message_status_extended += f"EFAs: {eni_types['efa']}, "
-                if len(eni_types["interface"]):
-                    message_status_extended += f"Interfaces: {eni_types['interface']}, "
-                if len(eni_types["trunk"]):
-                    message_status_extended += f"Trunks: {eni_types['trunk']}."
-                report.status_extended = message_status_extended
+                if eni_types["efa"]:
+                    message_status_extended += f" EFAs: {eni_types['efa']}"
+                if eni_types["interface"]:
+                    message_status_extended += f" Interfaces: {eni_types['interface']}"
+                if eni_types["trunk"]:
+                    message_status_extended += f" Trunks: {eni_types['trunk']}"
+                report.status_extended = message_status_extended + " )."
 
             findings.append(report)
 

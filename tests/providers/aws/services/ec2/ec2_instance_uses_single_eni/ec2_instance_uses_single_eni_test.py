@@ -243,8 +243,7 @@ class Test_ec2_instance_uses_single_eni:
             assert result[0].resource_id == "i-0123456789abcdef0"
             assert (
                 result[0].status_extended
-                == "EC2 Instance i-0123456789abcdef0 uses multiple ENIs: "
-                "EFAs: ['eni-2'], Interfaces: ['eni-1'], "
+                == "EC2 Instance i-0123456789abcdef0 uses multiple ENIs: ( EFAs: ['eni-2'] Interfaces: ['eni-1'] )."
             )
 
     @mock_aws
@@ -281,8 +280,7 @@ class Test_ec2_instance_uses_single_eni:
             assert result[0].resource_id == instance.id
             assert (
                 result[0].status_extended
-                == f"EC2 Instance {instance.id} uses only one ENI: "
-                f"Interfaces: ['{network_interface.id}'], "
+                == f"EC2 Instance {instance.id} uses only one ENI: ( Interfaces: ['{network_interface.id}'] )."
             )
 
     @mock.patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call_v3)
@@ -307,11 +305,10 @@ class Test_ec2_instance_uses_single_eni:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].status == "PASS"
+            assert result[0].status == "FAIL"
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == "i-0123456789abcdef0"
             assert (
                 result[0].status_extended
-                == "EC2 Instance i-0123456789abcdef0 uses only one ENI: "
-                "EFAs: ['eni-2'], Trunks: ['eni-1', 'eni-3']."
+                == "EC2 Instance i-0123456789abcdef0 uses multiple ENIs: ( EFAs: ['eni-2'] Trunks: ['eni-1', 'eni-3'] )."
             )
