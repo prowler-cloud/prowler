@@ -1,3 +1,5 @@
+from base64 import b64encode
+from ipaddress import IPv4Address, IPv6Address
 from os import path
 from pathlib import Path
 from unittest import mock
@@ -6,6 +8,13 @@ import botocore
 from boto3 import client
 from moto import mock_aws
 
+from prowler.config.config import encoding_format_utf_8
+from prowler.providers.aws.services.ec2.ec2_service import (
+    LaunchTemplate,
+    LaunchTemplateVersion,
+    NetworkInterface,
+    TemplateData,
+)
 from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provider
 
 ACTUAL_DIRECTORY = Path(path.dirname(path.realpath(__file__)))
@@ -23,134 +32,6 @@ def mock_make_api_call(self, operation_name, kwarg):
                     "LaunchTemplateData": {
                         "NetworkInterfaces": [{"AssociatePublicIpAddress": False}],
                     },
-                }
-            ]
-        }
-    return make_api_call(self, operation_name, kwarg)
-
-
-def mock_make_api_call_v2(self, operation_name, kwarg):
-    if operation_name == "DescribeLaunchTemplateVersions":
-        return {
-            "LaunchTemplateVersions": [
-                {
-                    "VersionNumber": 2,
-                    "LaunchTemplateData": {
-                        "NetworkInterfaces": [{"AssociatePublicIpAddress": True}],
-                    },
-                }
-            ]
-        }
-    return make_api_call(self, operation_name, kwarg)
-
-
-def mock_make_api_call_v3(self, operation_name, kwarg):
-    if operation_name == "DescribeLaunchTemplateVersions":
-        return {
-            "LaunchTemplateVersions": [
-                {
-                    "VersionNumber": 3,
-                    "LaunchTemplateData": {
-                        "NetworkInterfaces": [
-                            {
-                                "AssociatePublicIpAddress": True,
-                                "NetworkInterfaceId": "eni-1234567890",
-                            }
-                        ],
-                    },
-                },
-                {
-                    "VersionNumber": 4,
-                    "LaunchTemplateData": {
-                        "NetworkInterfaces": [
-                            {"NetworkInterfaceId": "eni-1234567890"},
-                            {"AssociatePublicIpAddress": True},
-                        ],
-                    },
-                },
-                {
-                    "VersionNumber": 5,
-                    "LaunchTemplateData": {
-                        "NetworkInterfaces": [{"AssociatePublicIpAddress": False}],
-                    },
-                },
-            ]
-        }
-    elif operation_name == "DescribeNetworkInterfaces":
-        return {
-            "NetworkInterfaces": [
-                {
-                    "NetworkInterfaceId": "eni-1234567890",
-                    "SubnetId": "subnet-6789abcd",
-                    "VpcId": "vpc-1234abcd",
-                    "PrivateIpAddress": "192.175.48.10",
-                    "InterfaceType": "interface",
-                    "PrivateDnsName": "ip-192-175-48-10.ec2.internal",
-                    "PrivateIpAddresses": [
-                        {
-                            "PrivateIpAddress": "192.175.48.10",
-                            "Primary": True,
-                        }
-                    ],
-                    "Ipv6Addresses": [{"Ipv6Address": "2001:db8:abcd:0012::10"}],
-                    "Association": {
-                        "PublicIp": "203.0.113.5",
-                        "PublicDnsName": "ec2-203-0-113-5.compute-1.amazonaws.com",
-                        "IpOwnerId": "amazon",
-                    },
-                    "TagSet": [{"Key": "string", "Value": "string"}],
-                }
-            ]
-        }
-    return make_api_call(self, operation_name, kwarg)
-
-
-def mock_make_api_call_v4(self, operation_name, kwarg):
-    if operation_name == "DescribeLaunchTemplateVersions":
-        return {
-            "LaunchTemplateVersions": [
-                {
-                    "VersionNumber": 6,
-                    "LaunchTemplateData": {
-                        "NetworkInterfaces": [
-                            {
-                                "AssociatePublicIpAddress": True,
-                                "NetworkInterfaceId": "eni-1234567890",
-                            }
-                        ],
-                    },
-                },
-                {
-                    "VersionNumber": 7,
-                    "LaunchTemplateData": {
-                        "NetworkInterfaces": [{"NetworkInterfaceId": "eni-1234567890"}],
-                    },
-                },
-            ]
-        }
-    elif operation_name == "DescribeNetworkInterfaces":
-        return {
-            "NetworkInterfaces": [
-                {
-                    "NetworkInterfaceId": "eni-1234567890",
-                    "SubnetId": "subnet-6789abcd",
-                    "VpcId": "vpc-1234abcd",
-                    "PrivateIpAddress": "::1234:5678",
-                    "InterfaceType": "interface",
-                    "PrivateDnsName": "::1234:5678.ec2.internal",
-                    "PrivateIpAddresses": [
-                        {
-                            "PrivateIpAddress": "::1234:5678",
-                            "Primary": True,
-                        }
-                    ],
-                    "Ipv6Addresses": [{"Ipv6Address": "::1234:5678"}],
-                    "Association": {
-                        "PublicIp": "::1234:5678",
-                        "PublicDnsName": "ec2-203-0-113-5.compute-1.amazonaws.com",
-                        "IpOwnerId": "amazon",
-                    },
-                    "TagSet": [{"Key": "string", "Value": "string"}],
                 }
             ]
         }
@@ -230,34 +111,44 @@ class Test_ec2_launch_template_no_public_ip:
             assert result[0].resource_id == launch_template_id
             assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_aws
-    @mock.patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call_v2)
     def test_launch_template_public_ip_auto_assign(self):
-        # Include launch_template to check
-        launch_template_name = "test-public-ip-auto-assign"
-        ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
-        ec2_client.create_launch_template(
-            LaunchTemplateName=launch_template_name,
-            VersionDescription="Launch Template with public IP auto-assign",
-            LaunchTemplateData={
-                "InstanceType": "t1.micro",
-            },
+        ec2_client = mock.MagicMock()
+        launch_template_name = "tester"
+        launch_template_id = "lt-1234567890"
+        launch_template_arn = (
+            f"arn:aws:ec2:us-east-1:123456789012:launch-template/{launch_template_id}"
         )
 
-        launch_template_id = ec2_client.describe_launch_templates(
-            LaunchTemplateNames=[launch_template_name]
-        )["LaunchTemplates"][0]["LaunchTemplateId"]
+        launch_template_data = TemplateData(
+            user_data=b64encode("sinsecretos".encode(encoding_format_utf_8)).decode(
+                encoding_format_utf_8
+            ),
+            associate_public_ip_address=True,
+        )
 
-        from prowler.providers.aws.services.ec2.ec2_service import EC2
+        launch_template_versions = [
+            LaunchTemplateVersion(
+                version_number=2,
+                template_data=launch_template_data,
+            ),
+        ]
 
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        launch_template = LaunchTemplate(
+            name=launch_template_name,
+            id=launch_template_id,
+            arn=launch_template_arn,
+            region=AWS_REGION_US_EAST_1,
+            versions=launch_template_versions,
+        )
+
+        ec2_client.launch_templates = [launch_template]
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
+            return_value=ec2_client,
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_launch_template_no_secrets.ec2_launch_template_no_secrets.ec2_client",
-            new=EC2(aws_provider),
+            "prowler.providers.aws.services.ec2.ec2_launch_template_no_public_ip.ec2_launch_template_no_public_ip.ec2_client",
+            new=ec2_client,
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_launch_template_no_public_ip.ec2_launch_template_no_public_ip import (
@@ -271,44 +162,85 @@ class Test_ec2_launch_template_no_public_ip:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "EC2 Launch Template test-public-ip-auto-assign is configured to assign a public IP address to network interfaces upon launch in template versions: 2."
+                == f"EC2 Launch Template {launch_template_name} is configured to assign a public IP address to network interfaces upon launch in template versions: 2."
             )
             assert result[0].resource_id == launch_template_id
             assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_aws
-    @mock.patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call_v3)
     def test_network_interface_with_public_ipv4_network_interface_autoassign_true_and_false(
         self,
     ):
-        # Generate EC2 Client
-        ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
-
-        # Include launch_template to check
-        launch_template_name = "test-eni-public-ip4-and-auto-assign"
-        ec2_client.create_launch_template(
-            LaunchTemplateName=launch_template_name,
-            VersionDescription="Launch Template with public IP auto-assign",
-            LaunchTemplateData={
-                "InstanceType": "t1.micro",
-            },
+        ec2_client = mock.MagicMock()
+        launch_template_name = "tester"
+        launch_template_id = "lt-1234567890"
+        launch_template_arn = (
+            f"arn:aws:ec2:us-east-1:123456789012:launch-template/{launch_template_id}"
         )
 
-        # Retrieve the Launch Template ID
-        launch_template_id = ec2_client.describe_launch_templates(
-            LaunchTemplateNames=[launch_template_name]
-        )["LaunchTemplates"][0]["LaunchTemplateId"]
+        network_interface = NetworkInterface(
+            id="eni-1234567890",
+            association={},
+            attachment={},
+            private_ip="",
+            public_ip_addresses=[IPv4Address("192.175.48.10")],
+            type="interface",
+            subnet_id="subnet-1234567890",
+            vpc_id="vpc-1234567890",
+            region=AWS_REGION_US_EAST_1,
+        )
 
-        from prowler.providers.aws.services.ec2.ec2_service import EC2
+        launch_template_data = TemplateData(
+            user_data=b64encode("sinsecretos".encode(encoding_format_utf_8)).decode(
+                encoding_format_utf_8
+            ),
+            associate_public_ip_address=False,
+            network_interfaces=[network_interface],
+        )
+        launch_template_data2 = TemplateData(
+            user_data=b64encode("sinsecretos".encode(encoding_format_utf_8)).decode(
+                encoding_format_utf_8
+            ),
+            associate_public_ip_address=True,
+            network_interfaces=[network_interface],
+        )
+        launch_template_data3 = TemplateData(
+            user_data=b64encode("sinsecretos".encode(encoding_format_utf_8)).decode(
+                encoding_format_utf_8
+            ),
+            associate_public_ip_address=False,
+        )
 
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        launch_template_versions = [
+            LaunchTemplateVersion(
+                version_number=3,
+                template_data=launch_template_data,
+            ),
+            LaunchTemplateVersion(
+                version_number=4,
+                template_data=launch_template_data2,
+            ),
+            LaunchTemplateVersion(
+                version_number=5,
+                template_data=launch_template_data3,
+            ),
+        ]
+
+        launch_template = LaunchTemplate(
+            name=launch_template_name,
+            id=launch_template_id,
+            arn=launch_template_arn,
+            region=AWS_REGION_US_EAST_1,
+            versions=launch_template_versions,
+        )
+
+        ec2_client.launch_templates = [launch_template]
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
+            return_value=ec2_client,
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_launch_template_no_secrets.ec2_launch_template_no_secrets.ec2_client",
-            new=EC2(aws_provider),
+            "prowler.providers.aws.services.ec2.ec2_launch_template_no_public_ip.ec2_launch_template_no_public_ip.ec2_client",
+            new=ec2_client,
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_launch_template_no_public_ip.ec2_launch_template_no_public_ip import (
@@ -322,44 +254,75 @@ class Test_ec2_launch_template_no_public_ip:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"EC2 Launch Template {launch_template_name} is configured to assign a public IP address to network interfaces upon launch in template versions: 3, 4 and is using a network interface with public IP addresses in template versions: 3, 4."
+                == f"EC2 Launch Template {launch_template_name} is configured to assign a public IP address to network interfaces upon launch in template versions: 4 and is using a network interface with public IP addresses in template versions: 3, 4."
             )
             assert result[0].resource_id == launch_template_id
             assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_aws
-    @mock.patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call_v4)
     def test_network_interface_with_public_ipv6_network_interface_autoassign_true_and_false(
         self,
     ):
-        # Generate EC2 Client
-        ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
-
-        # Include launch_template to check
-        launch_template_name = "test-eni-public-ip6-and-auto-assign"
-        ec2_client.create_launch_template(
-            LaunchTemplateName=launch_template_name,
-            VersionDescription="Launch Template with public IP auto-assign",
-            LaunchTemplateData={
-                "InstanceType": "t1.micro",
-            },
+        ec2_client = mock.MagicMock()
+        launch_template_name = "tester"
+        launch_template_id = "lt-1234567890"
+        launch_template_arn = (
+            f"arn:aws:ec2:us-east-1:123456789012:launch-template/{launch_template_id}"
         )
 
-        # Retrieve the Launch Template ID
-        launch_template_id = ec2_client.describe_launch_templates(
-            LaunchTemplateNames=[launch_template_name]
-        )["LaunchTemplates"][0]["LaunchTemplateId"]
+        network_interface = NetworkInterface(
+            id="eni-1234567890",
+            association={},
+            attachment={},
+            private_ip="",
+            public_ip_addresses=[IPv6Address("::1234:5678")],
+            type="interface",
+            subnet_id="subnet-1234567890",
+            vpc_id="vpc-1234567890",
+            region=AWS_REGION_US_EAST_1,
+        )
 
-        from prowler.providers.aws.services.ec2.ec2_service import EC2
+        launch_template_data = TemplateData(
+            user_data=b64encode("sinsecretos".encode(encoding_format_utf_8)).decode(
+                encoding_format_utf_8
+            ),
+            associate_public_ip_address=True,
+            network_interfaces=[network_interface],
+        )
+        launch_template_data2 = TemplateData(
+            user_data=b64encode("sinsecretos".encode(encoding_format_utf_8)).decode(
+                encoding_format_utf_8
+            ),
+            associate_public_ip_address=False,
+            network_interfaces=[network_interface],
+        )
 
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        launch_template_versions = [
+            LaunchTemplateVersion(
+                version_number=6,
+                template_data=launch_template_data,
+            ),
+            LaunchTemplateVersion(
+                version_number=7,
+                template_data=launch_template_data2,
+            ),
+        ]
+
+        launch_template = LaunchTemplate(
+            name=launch_template_name,
+            id=launch_template_id,
+            arn=launch_template_arn,
+            region=AWS_REGION_US_EAST_1,
+            versions=launch_template_versions,
+        )
+
+        ec2_client.launch_templates = [launch_template]
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
+            return_value=ec2_client,
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_launch_template_no_secrets.ec2_launch_template_no_secrets.ec2_client",
-            new=EC2(aws_provider),
+            "prowler.providers.aws.services.ec2.ec2_launch_template_no_public_ip.ec2_launch_template_no_public_ip.ec2_client",
+            new=ec2_client,
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_launch_template_no_public_ip.ec2_launch_template_no_public_ip import (
