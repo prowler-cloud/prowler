@@ -10,6 +10,7 @@ from prowler.providers.aws.services.cloudfront.cloudfront_service import (
     Distribution,
     GeoRestrictionType,
     Origin,
+    SSLSupportMethod,
     ViewerProtocolPolicy,
 )
 from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provider
@@ -37,6 +38,10 @@ def example_distribution_config(ref):
                 "QueryString": False,
                 "Cookies": {"Forward": "none"},
             },
+        },
+        "ViewerCertificate": {
+            "SSLSupportMethod": "static-ip",
+            "Certificate": "arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012",
         },
         "Comment": "an optional comment that's not actually optional",
         "Enabled": False,
@@ -201,6 +206,8 @@ class Test_CloudFront_Service:
         TAGS = [
             {"Key": "test", "Value": "test"},
         ]
+        SSL_SUPPORT_METHOD = SSLSupportMethod.sni_only
+        CERTIFICATE = "arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012"
 
         cloudfront = mock.MagicMock
         cloudfront.distributions = {
@@ -214,6 +221,8 @@ class Test_CloudFront_Service:
                 geo_restriction_type=GEO_RESTRICTION_TYPE,
                 web_acl_id=WEB_ACL_ID,
                 tags=TAGS,
+                ssl_support_method=SSL_SUPPORT_METHOD,
+                certificate=CERTIFICATE,
             )
         }
 
