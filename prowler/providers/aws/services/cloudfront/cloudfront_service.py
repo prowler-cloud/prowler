@@ -103,6 +103,9 @@ class CloudFront(AWSService):
                     "DistributionConfig"
                 ]["WebACLId"]
                 distributions[distribution_id].origin_access_control = oac
+                distributions[distribution_id].default_root_object = (
+                    distribution_config["DistributionConfig"].get("DefaultRootObject")
+                )
 
                 # Default Cache Config
                 default_cache_config = DefaultCacheConfigBehaviour(
@@ -198,6 +201,7 @@ class Distribution(BaseModel):
     geo_restriction_type: Optional[GeoRestrictionType]
     origins: list[Origin]
     web_acl_id: str = ""
+    default_root_object: Optional[str]
     tags: Optional[list] = []
     ssl_support_method: Optional[SSLSupportMethod]
     certificate: Optional[str]
