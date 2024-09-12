@@ -93,7 +93,7 @@ config_aws = {
         8080,
         8088,
     ],
-    "trusted_account_ids": ["580944000508"],
+    "trusted_account_ids": [],
     "log_group_retention_days": 365,
     "max_idle_disconnect_timeout_in_seconds": 600,
     "max_disconnect_timeout_in_seconds": 300,

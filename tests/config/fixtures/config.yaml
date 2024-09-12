@@ -62,7 +62,7 @@ aws:
   # Single account environment: No action required. The AWS account number will be automatically added by the checks.
   # Multi account environment: Any additional trusted account number should be added as a space separated list, e.g.
   # trusted_account_ids : ["123456789012", "098765432109", "678901234567"]
-  trusted_account_ids: ["580944000508"]
+  trusted_account_ids: []
 
   # AWS Cloudwatch Configuration
   # aws.cloudwatch_log_group_retention_policy_specific_days_enabled --> by default is 365 days
