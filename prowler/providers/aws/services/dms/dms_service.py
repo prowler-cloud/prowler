@@ -55,7 +55,7 @@ class DMS(AWSService):
         logger.info("DMS - Describing DMS Endpoints...")
         try:
             describe_endpoints_paginator = regional_client.get_paginator(
-                "describe_endpoi4nts"
+                "describe_endpoints"
             )
             for page in describe_endpoints_paginator.paginate():
                 for endpoint in page["Endpoints"]:
@@ -64,7 +64,8 @@ class DMS(AWSService):
                         is_resource_filtered(arn, self.audit_resources)
                     ):
                         self.endpoints[endpoint["EndpointIdentifier"]] = Endpoint(
-                            ssl_mode=endpoint.get("SslMode")
+                            id=endpoint["EndpointIdentifier"],
+                            ssl_mode=endpoint.get("SslMode", False)
                         )
         except Exception as error:
             logger.error(
@@ -74,7 +75,8 @@ class DMS(AWSService):
 
 
 class Endpoint(BaseModel):
-    ssl_mode:str
+    id: str
+    ssl_mode: str
 
 
 class RepInstance(BaseModel):
