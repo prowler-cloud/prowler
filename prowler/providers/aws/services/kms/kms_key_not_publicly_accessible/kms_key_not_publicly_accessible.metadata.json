@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:kms:region:account-id:certificate/resource-id",
   "Severity": "medium",
-  "ResourceType": "Other",
+  "ResourceType": "AwsKmsKeyDetails",
   "Description": "Check exposed KMS keys",
   "Risk": "Exposed KMS Keys or wide policy permissions my leave data unprotected.",
   "RelatedUrl": "https://docs.aws.amazon.com/kms/latest/developerguide/determining-access.html",

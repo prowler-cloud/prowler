@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:cloudfront:region:account-id:distribution/resource-id",
   "Severity": "medium",
-  "ResourceType": "Other",
+  "ResourceType": "AwsCloudFrontDistributionDetails",
   "Description": "Check if CloudFront distributions are set to HTTPS.",
   "Risk": "If not enabled sensitive information in transit is not protected. Surveillance and other threats are risks may exists.",
   "RelatedUrl": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",

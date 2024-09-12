@@ -9,7 +9,7 @@
   "SubServiceName": "inline_policy",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
-  "ResourceType": "Other",
+  "ResourceType": "AwsIamRoleDetails",
   "Description": "Ensure IAM inline policies that allow full \"kms:*\" privileges are not created",
   "Risk": "KMS is a critical service and IAM policies should follow least privilege model for this service in particular",
   "RelatedUrl": "",

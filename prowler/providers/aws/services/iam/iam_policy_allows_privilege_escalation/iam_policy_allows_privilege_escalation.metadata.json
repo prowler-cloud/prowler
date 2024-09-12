@@ -11,7 +11,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "high",
-  "ResourceType": "Other",
+  "ResourceType": "AwsIamPolicyDetails",
   "Description": "Ensure no Customer Managed IAM policies allow actions that may lead into Privilege Escalation",
   "Risk": "Users with some IAM permissions are allowed to elevate their privileges up to administrator rights.",
   "RelatedUrl": "",

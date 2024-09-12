@@ -9,7 +9,7 @@
   "SubServiceName": "instance",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "critical",
-  "ResourceType": "Other",
+  "ResourceType": "AwsEc2SecurityGroupDetails",
   "Description": "Ensure no EC2 instances allow ingress from the internet to TCP port 6379 (Redis).",
   "Risk": "Redis is an open-source, in-memory data structure store, used as a database, cache, and message broker. Redis is often used to store sensitive data, such as session tokens, user credentials, and other sensitive information. Allowing ingress from the internet to TCP port 6379 (Redis) can expose sensitive data to unauthorized users.",
   "RelatedUrl": "",

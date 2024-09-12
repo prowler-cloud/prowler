@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:s3:::bucket_name",
   "Severity": "medium",
-  "ResourceType": "Other",
+  "ResourceType": "AwsS3BucketDetails",
   "Description": "Check S3 Bucket Level Public Access Block.",
   "Risk": "Public access policies may be applied to sensitive data buckets.",
   "RelatedUrl": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html",

@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:s3:::bucket_name",
   "Severity": "critical",
-  "ResourceType": "Other",
+  "ResourceType": "AwsS3BucketDetails",
   "Description": "Check if S3 buckets have policies which allow WRITE access.",
   "Risk": "Non intended users can put objects in a given bucket.",
   "RelatedUrl": "",

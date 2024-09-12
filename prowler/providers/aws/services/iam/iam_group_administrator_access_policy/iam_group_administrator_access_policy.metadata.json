@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "high",
-  "ResourceType": "Other",
+  "ResourceType": "AwsIamGroupDetails",
   "Description": "This check ensures that no IAM groups in your AWS account have the 'AdministratorAccess' policy attached. IAM users with this policy have unrestricted access to all AWS services and resources, which poses a significant security risk if misused.",
   "Risk": "IAM groups with administrator-level permissions can perform any action on any resource in your AWS environment. If these permissions are granted to users unnecessarily or to individuals without sufficient knowledge, it can lead to security vulnerabilities, data leaks, data loss, or unexpected charges.",
   "RelatedUrl": "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_groups_manage.html",

@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:lambda:region:account-id:function/function-name",
   "Severity": "critical",
-  "ResourceType": "Other",
+  "ResourceType": "AwsLambdaFunctionDetails",
   "Description": "Check if Lambda functions have resource-based policy set as Public.",
   "Risk": "Publicly accessible services could expose sensitive data to bad actors.",
   "RelatedUrl": "https://docs.aws.amazon.com/lambda/latest/dg/access-control-resource-based.html",

@@ -9,7 +9,7 @@
   "SubServiceName": "networkacl",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
-  "ResourceType": "Other",
+  "ResourceType": "AwsEc2NetworkAclEntry",
   "Description": "Ensure no Network ACLs allow ingress from 0.0.0.0/0 to Microsoft RDP port 3389",
   "Risk": "Even having a perimeter firewall, having network acls open allows any user or malware with vpc access to scan for well known and sensitive ports and gain access to instance.",
   "RelatedUrl": "",

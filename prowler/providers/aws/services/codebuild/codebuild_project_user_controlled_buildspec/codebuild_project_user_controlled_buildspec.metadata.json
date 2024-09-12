@@ -10,7 +10,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
-  "ResourceType": "Other",
+  "ResourceType": "AwsCodeBuildProjectDetails",
   "Description": "Ensure CodeBuild Project uses a controlled buildspec",
   "Risk": "The CodeBuild projects with user controlled buildspec",
   "RelatedUrl": "",

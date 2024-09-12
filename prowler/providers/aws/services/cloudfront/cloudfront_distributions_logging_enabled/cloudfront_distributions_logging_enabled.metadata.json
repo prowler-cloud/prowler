@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:cloudfront:region:account-id:distribution/resource-id",
   "Severity": "medium",
-  "ResourceType": "Other",
+  "ResourceType": "AwsCloudFrontDistributionDetails",
   "Description": "Check if CloudFront distributions have logging enabled.",
   "Risk": "If not enabled monitoring of service use is not possible.",
   "RelatedUrl": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/AccessLogs.html",

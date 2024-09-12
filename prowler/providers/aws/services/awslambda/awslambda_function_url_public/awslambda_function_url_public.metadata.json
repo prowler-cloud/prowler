@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:lambda:region:account-id:function/function-name",
   "Severity": "high",
-  "ResourceType": "Other",
+  "ResourceType": "AwsLambdaFunctionDetails",
   "Description": "Check Public Lambda Function URL.",
   "Risk": "Publicly accessible services could expose sensitive data to bad actors.",
   "RelatedUrl": "https://docs.aws.amazon.com/secretsmanager/latest/userguide/lambda-functions.html",
