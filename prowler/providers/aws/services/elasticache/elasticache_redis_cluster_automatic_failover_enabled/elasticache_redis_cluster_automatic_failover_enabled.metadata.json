@@ -1,10 +1,8 @@
 {
   "Provider": "aws",
-  "CheckID": "elasticache_redis_replication_group_has_automatic_failover",
+  "CheckID": "elasticache_redis_cluster_automatic_failover_enabled",
   "CheckTitle": "Ensure Elasticache Redis clusters have automatic failover enabled.",
-  "CheckType": [
-    "NIST 800-53 Controls"
-  ],
+  "CheckType": [],
   "ServiceName": "elasticache",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",

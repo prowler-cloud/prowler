@@ -21,7 +21,7 @@ from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provi
 VPC_ID = "vpc-12345678901234567"
 
 
-class Test_elasticache_redis_replication_group_has_automatic_failover:
+class Test_elasticache_redis_cluster_automatic_failover_enabled:
     def test_elasticache_no_clusters(self):
         # Mock VPC Service
         vpc_client = MagicMock
@@ -44,11 +44,11 @@ class Test_elasticache_redis_replication_group_has_automatic_failover:
             "prowler.providers.aws.services.vpc.vpc_client.vpc_client",
             new=vpc_client,
         ):
-            from prowler.providers.aws.services.elasticache.elasticache_redis_replication_group_has_automatic_failover.elasticache_redis_replication_group_has_automatic_failover import (
-                elasticache_redis_replication_group_has_automatic_failover,
+            from prowler.providers.aws.services.elasticache.elasticache_redis_cluster_automatic_failover_enabled.elasticache_redis_cluster_automatic_failover_enabled import (
+                elasticache_redis_cluster_automatic_failover_enabled,
             )
 
-            check = elasticache_redis_replication_group_has_automatic_failover()
+            check = elasticache_redis_cluster_automatic_failover_enabled()
             result = check.execute()
             assert len(result) == 0
 
@@ -80,17 +80,17 @@ class Test_elasticache_redis_replication_group_has_automatic_failover:
             "prowler.providers.aws.services.elasticache.elasticache_service.ElastiCache",
             new=elasticache_service,
         ):
-            from prowler.providers.aws.services.elasticache.elasticache_redis_replication_group_has_automatic_failover.elasticache_redis_replication_group_has_automatic_failover import (
-                elasticache_redis_replication_group_has_automatic_failover,
+            from prowler.providers.aws.services.elasticache.elasticache_redis_cluster_automatic_failover_enabled.elasticache_redis_cluster_automatic_failover_enabled import (
+                elasticache_redis_cluster_automatic_failover_enabled,
             )
 
-            check = elasticache_redis_replication_group_has_automatic_failover()
+            check = elasticache_redis_cluster_automatic_failover_enabled()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"ElastiCache Redis replication group {REPLICATION_GROUP_ID} does not have automatic failover enabled."
+                == f"Elasticache Redis cache cluster {REPLICATION_GROUP_ID} does not have automatic failover enabled."
             )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == REPLICATION_GROUP_ID
@@ -125,17 +125,17 @@ class Test_elasticache_redis_replication_group_has_automatic_failover:
             "prowler.providers.aws.services.elasticache.elasticache_service.ElastiCache",
             new=elasticache_service,
         ):
-            from prowler.providers.aws.services.elasticache.elasticache_redis_replication_group_has_automatic_failover.elasticache_redis_replication_group_has_automatic_failover import (
-                elasticache_redis_replication_group_has_automatic_failover,
+            from prowler.providers.aws.services.elasticache.elasticache_redis_cluster_automatic_failover_enabled.elasticache_redis_cluster_automatic_failover_enabled import (
+                elasticache_redis_cluster_automatic_failover_enabled,
             )
 
-            check = elasticache_redis_replication_group_has_automatic_failover()
+            check = elasticache_redis_cluster_automatic_failover_enabled()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"ElastiCache Redis replication group {REPLICATION_GROUP_ID} does have automatic failover enabled."
+                == f"Elasticache Redis cache cluster {REPLICATION_GROUP_ID} does have automatic failover enabled."
             )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == REPLICATION_GROUP_ID
