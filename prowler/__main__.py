@@ -119,7 +119,7 @@ def prowler():
         args.output_formats.extend(get_available_compliance_frameworks(provider))
 
     # Set Logger configuration
-    set_logging_config(args.log_level, args.log_file, args.only_logs)
+    set_logging_config(args.log_level, args.log_file)
 
     if args.list_services:
         print_services(list_services(provider))
@@ -194,8 +194,7 @@ def prowler():
     global_provider = Provider.get_global_provider()
 
     # Print Provider Credentials
-    if not args.only_logs:
-        global_provider.print_credentials()
+    global_provider.print_credentials()
 
     # Import custom checks from folder
     if checks_folder:
@@ -616,37 +615,36 @@ def prowler():
                 )
 
     # Display summary table
-    if not args.only_logs:
-        display_summary_table(
-            findings,
-            global_provider,
-            global_provider.output_options,
-        )
-        # Only display compliance table if there are findings (not all MANUAL) and it is a default execution
-        if (
-            findings and not all(finding.status == "MANUAL" for finding in findings)
-        ) and default_execution:
-            compliance_overview = False
-            if not compliance_framework:
-                compliance_framework = get_available_compliance_frameworks(provider)
-                if (
-                    compliance_framework
-                ):  # If there are compliance frameworks, print compliance overview
-                    compliance_overview = True
-            for compliance in sorted(compliance_framework):
-                # Display compliance table
-                display_compliance_table(
-                    findings,
-                    bulk_checks_metadata,
-                    compliance,
-                    global_provider.output_options.output_filename,
-                    global_provider.output_options.output_directory,
-                    compliance_overview,
-                )
-            if compliance_overview:
-                print(
-                    f"\nDetailed compliance results are in {Fore.YELLOW}{global_provider.output_options.output_directory}/compliance/{Style.RESET_ALL}\n"
-                )
+    display_summary_table(
+        findings,
+        global_provider,
+        global_provider.output_options,
+    )
+    # Only display compliance table if there are findings (not all MANUAL) and it is a default execution
+    if (
+        findings and not all(finding.status == "MANUAL" for finding in findings)
+    ) and default_execution:
+        compliance_overview = False
+        if not compliance_framework:
+            compliance_framework = get_available_compliance_frameworks(provider)
+            if (
+                compliance_framework
+            ):  # If there are compliance frameworks, print compliance overview
+                compliance_overview = True
+        for compliance in sorted(compliance_framework):
+            # Display compliance table
+            display_compliance_table(
+                findings,
+                bulk_checks_metadata,
+                compliance,
+                global_provider.output_options.output_filename,
+                global_provider.output_options.output_directory,
+                compliance_overview,
+            )
+        if compliance_overview:
+            print(
+                f"\nDetailed compliance results are in {Fore.YELLOW}{global_provider.output_options.output_directory}/compliance/{Style.RESET_ALL}\n"
+            )
 
     # If custom checks were passed, remove the modules
     if checks_folder:

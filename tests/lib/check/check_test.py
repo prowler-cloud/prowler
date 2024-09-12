@@ -891,27 +891,6 @@ class TestCheck:
                 == f"\nCheck ID: {check.CheckID} - {Fore.MAGENTA}{check.ServiceName}{Fore.YELLOW} [{check.Severity}]{Style.RESET_ALL}\n"
             )
 
-    def test_run_check_exception_only_logs(self, caplog):
-        caplog.set_level(ERROR)
-
-        findings = []
-        check = Mock()
-        check.CheckID = "test-check"
-        check.ServiceName = "test-service"
-        check.Severity = "test-severity"
-        error = Exception()
-        check.execute = Mock(side_effect=error)
-
-        with patch("prowler.lib.check.check.execute", return_value=findings):
-            assert run_check(check, only_logs=True) == findings
-            assert caplog.record_tuples == [
-                (
-                    "root",
-                    ERROR,
-                    f"{check.CheckID} -- {error.__class__.__name__}[{traceback.extract_tb(error.__traceback__)[-1].lineno}]: {error}",
-                )
-            ]
-
     def test_run_check_exception(self, caplog, capsys):
         caplog.set_level(ERROR)
 

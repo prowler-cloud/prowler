@@ -11,7 +11,13 @@ logging_levels = {
 }
 
 
-def set_logging_config(log_level: str, log_file: str = None, only_logs: bool = False):
+def set_logging_config(log_level: str, log_file: str = None):
+    """
+    Set the logging configuration for the application
+    Args:
+        log_level (str): Log level
+        log_file (str): Log file path
+    """
     # Logs formatter
     stream_formatter = logging.Formatter(
         "\n%(asctime)s [File: %(filename)s:%(lineno)d] \t[Module: %(module)s]\t %(levelname)s: %(message)s"
@@ -23,12 +29,9 @@ def set_logging_config(log_level: str, log_file: str = None, only_logs: bool = F
     # Where to put logs
     logging_handlers = []
 
-    # Include stdout by default, if only_logs is set the log format is JSON
+    # Include stdout by default for local development
     stream_handler = logging.StreamHandler()
-    if only_logs:
-        stream_handler.setFormatter(log_file_formatter)
-    else:
-        stream_handler.setFormatter(stream_formatter)
+    stream_handler.setFormatter(stream_formatter)
     logging_handlers.append(stream_handler)
 
     # Log to file configuration

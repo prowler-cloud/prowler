@@ -49,7 +49,6 @@ class TestKubernetesProvider:
             arguments = Namespace()
             arguments.kubeconfig_file = "dummy_path"
             arguments.context = None
-            arguments.only_logs = False
             arguments.namespace = None
             audit_config = load_and_validate_config_file(
                 "kubernetes", default_config_file_path
@@ -84,7 +83,6 @@ class TestKubernetesProvider:
         arguments = Namespace()
         arguments.kubeconfig_file = "dummy_path"
         arguments.context = None
-        arguments.only_logs = False
         arguments.namespace = None
         arguments.config_file = default_config_file_path
         arguments.fixer_config = default_fixer_config_file_path
@@ -93,7 +91,6 @@ class TestKubernetesProvider:
         arguments.output_directory = "output_test_directory"
         arguments.verbose = True
         arguments.output_filename = "output_test_filename"
-        arguments.only_logs = False
         arguments.unix_timestamp = False
         arguments.shodan = "test-api-key"
 

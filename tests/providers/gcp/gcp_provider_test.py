@@ -87,7 +87,6 @@ class TestGCPProvider:
         arguments.output_formats = ["csv"]
         arguments.output_directory = "output_test_directory"
         arguments.verbose = True
-        arguments.only_logs = False
         arguments.unix_timestamp = False
         arguments.shodan = "test-api-key"
 
@@ -180,7 +179,6 @@ class TestGCPProvider:
         arguments.output_formats = ["csv"]
         arguments.output_directory = "output_test_directory"
         arguments.verbose = True
-        arguments.only_logs = False
         arguments.unix_timestamp = False
         arguments.shodan = "test-api-key"
 
