@@ -21,7 +21,7 @@ from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provi
 VPC_ID = "vpc-12345678901234567"
 
 
-class Test_elasticache_redis_cluster_auto_minor_version_upgrades:
+class Test_elasticache_redis_cluster_automatic_failover_enabled:
     def test_elasticache_no_clusters(self):
         # Mock VPC Service
         vpc_client = MagicMock
@@ -44,15 +44,15 @@ class Test_elasticache_redis_cluster_auto_minor_version_upgrades:
             "prowler.providers.aws.services.vpc.vpc_client.vpc_client",
             new=vpc_client,
         ):
-            from prowler.providers.aws.services.elasticache.elasticache_redis_cluster_auto_minor_version_upgrades.elasticache_redis_cluster_auto_minor_version_upgrades import (
-                elasticache_redis_cluster_auto_minor_version_upgrades,
+            from prowler.providers.aws.services.elasticache.elasticache_redis_cluster_automatic_failover_enabled.elasticache_redis_cluster_automatic_failover_enabled import (
+                elasticache_redis_cluster_automatic_failover_enabled,
             )
 
-            check = elasticache_redis_cluster_auto_minor_version_upgrades()
+            check = elasticache_redis_cluster_automatic_failover_enabled()
             result = check.execute()
             assert len(result) == 0
 
-    def test_elasticache_clusters_auto_minor_version_upgrades_disabled(self):
+    def test_elasticache_clusters_automatic_failover_disabled(self):
         # Mock ElastiCache Service
         elasticache_service = MagicMock
         elasticache_service.replication_groups = {}
@@ -69,7 +69,7 @@ class Test_elasticache_redis_cluster_auto_minor_version_upgrades:
                 multi_az=REPLICATION_GROUP_MULTI_AZ,
                 tags=REPLICATION_GROUP_TAGS,
                 auto_minor_version_upgrade=not AUTO_MINOR_VERSION_UPGRADE,
-                automatic_failover=AUTOMATIC_FAILOVER,
+                automatic_failover="disabled",
             )
         )
 
@@ -80,24 +80,24 @@ class Test_elasticache_redis_cluster_auto_minor_version_upgrades:
             "prowler.providers.aws.services.elasticache.elasticache_service.ElastiCache",
             new=elasticache_service,
         ):
-            from prowler.providers.aws.services.elasticache.elasticache_redis_cluster_auto_minor_version_upgrades.elasticache_redis_cluster_auto_minor_version_upgrades import (
-                elasticache_redis_cluster_auto_minor_version_upgrades,
+            from prowler.providers.aws.services.elasticache.elasticache_redis_cluster_automatic_failover_enabled.elasticache_redis_cluster_automatic_failover_enabled import (
+                elasticache_redis_cluster_automatic_failover_enabled,
             )
 
-            check = elasticache_redis_cluster_auto_minor_version_upgrades()
+            check = elasticache_redis_cluster_automatic_failover_enabled()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Elasticache Redis cache cluster {REPLICATION_GROUP_ID} does not have automated minor version upgrades enabled."
+                == f"Elasticache Redis cache cluster {REPLICATION_GROUP_ID} does not have automatic failover enabled."
             )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == REPLICATION_GROUP_ID
             assert result[0].resource_arn == REPLICATION_GROUP_ARN
             assert result[0].resource_tags == REPLICATION_GROUP_TAGS
 
-    def test_elasticache_clusters_auto_minor_version_upgrades_enabled(self):
+    def test_elasticache_clusters_automatic_failover_enabled(self):
         # Mock ElastiCache Service
         elasticache_service = MagicMock
         elasticache_service.replication_groups = {}
@@ -125,17 +125,17 @@ class Test_elasticache_redis_cluster_auto_minor_version_upgrades:
             "prowler.providers.aws.services.elasticache.elasticache_service.ElastiCache",
             new=elasticache_service,
         ):
-            from prowler.providers.aws.services.elasticache.elasticache_redis_cluster_auto_minor_version_upgrades.elasticache_redis_cluster_auto_minor_version_upgrades import (
-                elasticache_redis_cluster_auto_minor_version_upgrades,
+            from prowler.providers.aws.services.elasticache.elasticache_redis_cluster_automatic_failover_enabled.elasticache_redis_cluster_automatic_failover_enabled import (
+                elasticache_redis_cluster_automatic_failover_enabled,
             )
 
-            check = elasticache_redis_cluster_auto_minor_version_upgrades()
+            check = elasticache_redis_cluster_automatic_failover_enabled()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Elasticache Redis cache cluster {REPLICATION_GROUP_ID} does have automated minor version upgrades enabled."
+                == f"Elasticache Redis cache cluster {REPLICATION_GROUP_ID} does have automatic failover enabled."
             )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == REPLICATION_GROUP_ID
