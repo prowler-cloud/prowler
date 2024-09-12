@@ -69,11 +69,11 @@ class Test_ssm_documents_set_as_public:
                 name=document_name,
                 region=AWS_REGION_US_EAST_1,
                 content="",
-                account_owners=["111111111111", "111111222222"],
+                account_owners=["111111111333", "111111222444"],
             )
         }
         ssm_client.audit_config = {
-            "trusted_account_ids": ["111111111111", "111111222222"]
+            "trusted_account_ids": ["111111111333", "111111222444"]
         }
         with mock.patch(
             "prowler.providers.aws.services.ssm.ssm_service.SSM",
@@ -94,7 +94,7 @@ class Test_ssm_documents_set_as_public:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"SSM Document {document_name} is shared to trusted AWS accounts: 111111111111, 111111222222."
+                == f"SSM Document {document_name} is shared to trusted AWS accounts: 111111111333, 111111222444."
             )
 
     def test_document_public_to_self_account(self):
