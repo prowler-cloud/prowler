@@ -62,7 +62,6 @@ class CloudFront(AWSService):
                                 id=distribution_id,
                                 origins=origins,
                                 region=region,
-
                                 default_certificate=default_certificate,
                                 ssl_support_method=ssl_support_method,
                                 certificate=certificate,
