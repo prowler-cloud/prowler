@@ -95,6 +95,7 @@ class TaskSerializer(RLSSerializer, TaskBase):
     state = serializers.SerializerMethodField(read_only=True)
     metadata = serializers.SerializerMethodField(read_only=True)
     result = serializers.SerializerMethodField(read_only=True)
+    task_args = serializers.SerializerMethodField(read_only=True)
 
     completed_at = serializers.DateTimeField(
         source="task_runner_task.date_done", read_only=True
@@ -110,6 +111,7 @@ class TaskSerializer(RLSSerializer, TaskBase):
             "name",
             "state",
             "result",
+            "task_args",
             "metadata",
         ]
 
@@ -120,6 +122,17 @@ class TaskSerializer(RLSSerializer, TaskBase):
     @extend_schema_field(serializers.JSONField())
     def get_result(self, obj):
         return self.get_json_field(obj, "result")
+
+    @extend_schema_field(serializers.JSONField())
+    def get_task_args(self, obj):
+        task_args = self.get_json_field(obj, "task_kwargs")
+        # Celery task_kwargs are stored as a double string JSON in the database when not empty
+        if isinstance(task_args, str):
+            task_args = json.loads(task_args.replace("'", '"'))
+        # Remove tenant_id from task_kwargs if present
+        task_args.pop("tenant_id", None)
+
+        return task_args
 
     @staticmethod
     def get_json_field(obj, field_name):

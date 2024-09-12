@@ -131,6 +131,7 @@ def tasks_fixture(tenants_fixture):
     task_runner_task1 = TaskResult.objects.create(
         task_id="81a1b34b-ff6e-498e-979c-d6a83260167f",
         task_name="task_runner_task1",
+        task_kwargs='{"kwarg1": "value1"}',
         status="SUCCESS",
     )
     task_runner_task2 = TaskResult.objects.create(
