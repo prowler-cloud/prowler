@@ -13,7 +13,7 @@ DISTRIBUTION_ARN = (
 REGION = "us-east-1"
 
 
-class Test_cloudfront_distributions_using_sni_https_requests:
+class Test_cloudfront_distributions_https_sni_enabled:
     def test_no_distributions(self):
         cloudfront_client = mock.MagicMock
         cloudfront_client.distributions = {}
@@ -22,11 +22,11 @@ class Test_cloudfront_distributions_using_sni_https_requests:
             new=cloudfront_client,
         ):
             # Test Check
-            from prowler.providers.aws.services.cloudfront.cloudfront_distributions_using_sni_https_requests.cloudfront_distributions_using_sni_https_requests import (
-                cloudfront_distributions_using_sni_https_requests,
+            from prowler.providers.aws.services.cloudfront.cloudfront_distributions_https_sni_enabled.cloudfront_distributions_https_sni_enabled import (
+                cloudfront_distributions_https_sni_enabled,
             )
 
-            check = cloudfront_distributions_using_sni_https_requests()
+            check = cloudfront_distributions_https_sni_enabled()
             result = check.execute()
 
             assert len(result) == 0
@@ -48,22 +48,14 @@ class Test_cloudfront_distributions_using_sni_https_requests:
             new=cloudfront_client,
         ):
             # Test Check
-            from prowler.providers.aws.services.cloudfront.cloudfront_distributions_using_sni_https_requests.cloudfront_distributions_using_sni_https_requests import (
-                cloudfront_distributions_using_sni_https_requests,
+            from prowler.providers.aws.services.cloudfront.cloudfront_distributions_https_sni_enabled.cloudfront_distributions_https_sni_enabled import (
+                cloudfront_distributions_https_sni_enabled,
             )
 
-            check = cloudfront_distributions_using_sni_https_requests()
+            check = cloudfront_distributions_https_sni_enabled()
             result = check.execute()
 
-            assert len(result) == 1
-            assert result[0].region == REGION
-            assert result[0].resource_arn == DISTRIBUTION_ARN
-            assert result[0].resource_id == DISTRIBUTION_ID
-            assert result[0].status == "FAIL"
-            assert (
-                result[0].status_extended
-                == f"CloudFront Distribution {DISTRIBUTION_ID} does not have a certificate."
-            )
+            assert len(result) == 0
 
     def test_distribution_certificate_not_set_up(self):
         cloudfront_client = mock.MagicMock
@@ -84,11 +76,11 @@ class Test_cloudfront_distributions_using_sni_https_requests:
             new=cloudfront_client,
         ):
             # Test Check
-            from prowler.providers.aws.services.cloudfront.cloudfront_distributions_using_sni_https_requests.cloudfront_distributions_using_sni_https_requests import (
-                cloudfront_distributions_using_sni_https_requests,
+            from prowler.providers.aws.services.cloudfront.cloudfront_distributions_https_sni_enabled.cloudfront_distributions_https_sni_enabled import (
+                cloudfront_distributions_https_sni_enabled,
             )
 
-            check = cloudfront_distributions_using_sni_https_requests()
+            check = cloudfront_distributions_https_sni_enabled()
             result = check.execute()
 
             assert len(result) == 1
@@ -98,7 +90,7 @@ class Test_cloudfront_distributions_using_sni_https_requests:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"CloudFront Distribution {DISTRIBUTION_ID} does have a certificate but is not set up to use SNI."
+                == f"CloudFront Distribution {DISTRIBUTION_ID} is not serving HTTPS requests using SNI."
             )
 
     def test_distribution_valid_configuration(self):
@@ -120,11 +112,11 @@ class Test_cloudfront_distributions_using_sni_https_requests:
             new=cloudfront_client,
         ):
             # Test Check
-            from prowler.providers.aws.services.cloudfront.cloudfront_distributions_using_sni_https_requests.cloudfront_distributions_using_sni_https_requests import (
-                cloudfront_distributions_using_sni_https_requests,
+            from prowler.providers.aws.services.cloudfront.cloudfront_distributions_https_sni_enabled.cloudfront_distributions_https_sni_enabled import (
+                cloudfront_distributions_https_sni_enabled,
             )
 
-            check = cloudfront_distributions_using_sni_https_requests()
+            check = cloudfront_distributions_https_sni_enabled()
             result = check.execute()
 
             assert len(result) == 1
@@ -134,5 +126,5 @@ class Test_cloudfront_distributions_using_sni_https_requests:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"CloudFront Distribution {DISTRIBUTION_ID} has a configured certificate to serve HTTPS requests with SNI."
+                == f"CloudFront Distribution {DISTRIBUTION_ID} is serving HTTPS requests using SNI."
             )

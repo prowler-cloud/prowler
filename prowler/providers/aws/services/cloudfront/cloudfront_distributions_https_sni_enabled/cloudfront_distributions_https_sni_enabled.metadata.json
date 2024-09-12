@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "cloudfront_distributions_using_sni_https_requests",
+  "CheckID": "cloudfront_distributions_https_sni_enabled",
   "CheckTitle": "Check if CloudFront distributions are using SNI to serve HTTPS requests.",
   "CheckType": [
     "NIST 800-53 Controls"
