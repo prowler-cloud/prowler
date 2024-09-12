@@ -136,6 +136,8 @@ class GcpProvider(Provider):
         self._audit_config = audit_config
         self._fixer_config = fixer_config
 
+        Provider.set_global_provider(self)
+
     @property
     def identity(self):
         return self._identity
