@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:s3:::bucket_name",
   "Severity": "medium",
-  "ResourceType": "AWSS3Bucket",
+  "ResourceType": "Other",
   "Description": "Check if S3 buckets have object versioning enabled",
   "Risk": "With versioning, you can easily recover from both unintended user actions and application failures.",
   "RelatedUrl": "",

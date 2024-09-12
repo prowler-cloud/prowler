@@ -11,7 +11,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "high",
-  "ResourceType": "AWSIAMUser",
+  "ResourceType": "AwsIamUserDetails",
   "Description": "Ensure multi-factor authentication (MFA) is enabled for all IAM users that have a console password.",
   "Risk": "Unauthorized access to this critical account if password is not secure or it is disclosed in any way.",
   "RelatedUrl": "",

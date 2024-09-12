@@ -9,7 +9,7 @@
   "SubServiceName": "instance",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "critical",
-  "ResourceType": "AWSEC2Instance",
+  "ResourceType": "AwsEc2InstanceDetails",
   "Description": "Ensure no EC2 instances allow ingress from the internet to TCP port 23 (Telnet).",
   "Risk": "Telnet is an insecure protocol that transmits data in plain text. Exposure of Telnet services to the internet can lead to unauthorized access to the EC2 instance.",
   "RelatedUrl": "",

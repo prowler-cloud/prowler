@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:rds:region:account-id:snapshot",
   "Severity": "medium",
-  "ResourceType": "AWSRDSDBSnapshot",
+  "ResourceType": "Other",
   "Description": "Check if RDS Snapshots and Cluster Snapshots are encrypted.",
   "Risk": "Ensure that your manual Amazon RDS database snapshots are encrypted in order to achieve compliance for data-at-rest encryption within your organization.",
   "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-4",

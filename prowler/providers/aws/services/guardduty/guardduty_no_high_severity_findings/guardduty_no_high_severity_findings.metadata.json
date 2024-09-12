@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:guardduty:region:account-id/detector-id",
   "Severity": "high",
-  "ResourceType": "AWSGuardDutyDetector",
+  "ResourceType": "Other",
   "Description": "There are High severity GuardDuty findings ",
   "Risk": "If critical findings are not addressed threats can spread in the environment.",
   "RelatedUrl": "https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_findings.html",

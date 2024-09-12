@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
-  "ResourceType": "AWSEC2Instance",
+  "ResourceType": "Other",
   "Description": "Check if EC2 Instance Metadata Service Version 2 (IMDSv2) is Enabled and Required.",
   "Risk": "Using IMDSv2 will protect from misconfiguration and SSRF vulnerabilities. IMDSv1 will not.",
   "RelatedUrl": "",

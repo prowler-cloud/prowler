@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:kms:region:account-id:certificate/resource-id",
   "Severity": "medium",
-  "ResourceType": "AWSKMSKey",
+  "ResourceType": "Other",
   "Description": "Check if there are CMK KMS keys not used.",
   "Risk": "Unused keys may increase service cost.",
   "RelatedUrl": "",

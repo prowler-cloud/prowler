@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:lambda:region:account-id:function/function-name",
   "Severity": "medium",
-  "ResourceType": "AWSLambdaFunction",
+  "ResourceType": "Other",
   "Description": "Check Lambda Function URL CORS configuration.",
   "Risk": "Publicly accessible services could expose sensitive data to bad actors.",
   "RelatedUrl": "https://docs.aws.amazon.com/secretsmanager/latest/userguide/lambda-functions.html",

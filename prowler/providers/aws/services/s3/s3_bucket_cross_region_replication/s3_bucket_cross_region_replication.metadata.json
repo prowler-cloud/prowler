@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:s3:::bucket_name",
   "Severity": "low",
-  "ResourceType": "AWSS3Bucket",
+  "ResourceType": "Other",
   "Description": "Verifying whether S3 buckets have cross-region replication enabled, ensuring data redundancy and availability across multiple AWS regions",
   "Risk": "Without cross-region replication in S3 buckets, data is at risk of being lost or inaccessible if an entire region goes down, leading to potential service disruptions and data unavailability.",
   "RelatedUrl": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/replication.html",

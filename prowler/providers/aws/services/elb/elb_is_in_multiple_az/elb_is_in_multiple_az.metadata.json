@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:<partition>:elasticloadbalancing:<region>:<account-id>:loadbalancer/<load-balancer-name>",
   "Severity": "medium",
-  "ResourceType": "AWSElasticLoadBalancingLoadBalancer",
+  "ResourceType": "AwsElbLoadBalancerDetails",
   "Description": "This check ensures that a Classic Load Balancer is configured to span at least the specified number of Availability Zones (AZs). The control fails if the Load Balancer does not span multiple AZs, which can lead to decreased availability and reliability in case of an AZ failure.",
   "Risk": "A Classic Load Balancer configured in a single Availability Zone risks becoming a single point of failure. If the AZ fails, the load balancer will not be able to redirect traffic to other healthy targets, leading to potential service outages.",
   "RelatedUrl": "https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/introduction.html#classic-load-balancer-overview",

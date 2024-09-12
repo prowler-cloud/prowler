@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-instance",
   "Severity": "medium",
-  "ResourceType": "AWSRDSDBInstance",
+  "ResourceType": "Other",
   "Description": "Check if RDS instances have backup enabled.",
   "Risk": "If backup is not enabled, data is vulnerable. Human error or bad actors could erase or modify data.",
   "RelatedUrl": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_WorkingWithAutomatedBackups.html",

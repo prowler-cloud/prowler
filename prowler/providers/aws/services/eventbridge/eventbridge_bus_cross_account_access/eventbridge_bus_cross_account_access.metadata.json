@@ -7,7 +7,7 @@
   "SubServiceName": "eventbus",
   "ResourceIdTemplate": "arn:partition:events:region:account-id:event-bus/resource-id",
   "Severity": "high",
-  "ResourceType": "AWSEventsEventBus",
+  "ResourceType": "Other",
   "Description": "Ensure that AWS EventBridge event buses do not allow unknown cross-account access for delivery of events.",
   "Risk": "If an AWS EventBridge event bus allows unknown cross-account access for delivery of events, it can lead to unauthorized access to the event bus and its events.",
   "RelatedUrl": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/CWE_GettingStarted.html",

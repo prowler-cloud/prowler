@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:cognito-idp:region:account:userpool/userpool-id",
   "Severity": "medium",
-  "ResourceType": "AWSCognitoUserPool",
+  "ResourceType": "Other",
   "Description": "Amazon Cognito provides adaptive authentication, which helps protect your applications from malicious actors and compromised credentials by evaluating the risk associated with each user login and providing the appropriate level of security to mitigate that risk. Adaptive authentication is a feature of advanced security that you can enable for your user pool. When adaptive authentication is enabled, Amazon Cognito evaluates the risk associated with each user login and provides the appropriate level of security to mitigate that risk. You can configure adaptive authentication to block sign-in attempts that are likely to be malicious.",
   "Risk": "If adaptive authentication with automatic risk response as block sign-in is not enabled, your user pool may not be able to block sign-in attempts that are likely to be malicious.",
   "RelatedUrl": "https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pool-settings-advanced-security.html",

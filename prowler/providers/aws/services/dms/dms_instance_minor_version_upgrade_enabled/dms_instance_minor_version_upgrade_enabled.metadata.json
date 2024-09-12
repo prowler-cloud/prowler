@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:rdmsds:region:account-id:rep",
   "Severity": "medium",
-  "ResourceType": "AWSDMSReplicationInstance",
+  "ResourceType": "Other",
   "Description": "Ensure DMS instances have auto minor version upgrade enabled.",
   "Risk": "Ensure that your Amazon Database Migration Service (DMS) replication instances have the Auto Minor Version Upgrade feature enabled in order to receive automatically minor engine upgrades.",
   "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/dms-controls.html#dms-6",

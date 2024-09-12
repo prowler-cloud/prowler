@@ -9,7 +9,7 @@
   "SubServiceName": "instance",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "critical",
-  "ResourceType": "AWSEC2Instance",
+  "ResourceType": "AwsEc2InstanceDetails",
   "Description": "Ensure no EC2 instances allow ingress from the internet to TCP port 27017 or 27018 (MongoDB).",
   "Risk": "MongoDB is a popular NoSQL database that is often used in web applications. If an EC2 instance allows ingress from the internet to TCP port 27017 or 27018, it may be vulnerable to unauthorized access and data exfiltration.",
   "RelatedUrl": "",

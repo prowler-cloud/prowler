@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:s3:::bucket_name",
   "Severity": "critical",
-  "ResourceType": "AWSS3AccessPoint",
+  "ResourceType": "AwsS3AccessPointDetails",
   "Description": "Ensures that public access is blocked on S3 Access Points.",
   "Risk": "Leaving S3 access points open to the public in AWS can lead to data exposure, breaches, compliance violations, unauthorized access, and data integrity issues.",
   "RelatedUrl": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-points.html#access-points-policies",

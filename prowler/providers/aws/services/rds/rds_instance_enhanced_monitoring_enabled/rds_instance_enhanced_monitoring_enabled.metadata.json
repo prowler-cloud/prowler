@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-instance",
   "Severity": "low",
-  "ResourceType": "AWSRDSDBInstance",
+  "ResourceType": "Other",
   "Description": "Check if RDS instances has enhanced monitoring enabled.",
   "Risk": "A smaller monitoring interval results in more frequent reporting of OS metrics.",
   "RelatedUrl": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_Monitoring.OS.html",

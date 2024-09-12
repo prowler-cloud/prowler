@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:acm:region:account-id:certificate/resource-id",
   "Severity": "high",
-  "ResourceType": "AWSACMCertificate",
+  "ResourceType": "Other",
   "Description": "Check if ACM Certificates are about to expire in specific days or less",
   "Risk": "Expired certificates can impact service availability.",
   "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/acm-certificate-expiration-check.html",

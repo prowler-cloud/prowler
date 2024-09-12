@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:cloudfront:region:account-id:distribution/resource-id",
   "Severity": "low",
-  "ResourceType": "AWSCloudFrontDistribution",
+  "ResourceType": "Other",
   "Description": "Check if CloudFront distributions are using deprecated SSL protocols.",
   "Risk": "Using insecure ciphers could affect privacy of in transit information.",
   "RelatedUrl": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/secure-connections-supported-viewer-protocols-ciphers.html",

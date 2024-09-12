@@ -9,7 +9,7 @@
   "SubServiceName": "endpoint",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
-  "ResourceType": "AWSEC2VPC",
+  "ResourceType": "Other",
   "Description": "Find trust boundaries in VPC endpoint connections.",
   "Risk": "Account VPC could be linked to other accounts.",
   "RelatedUrl": "",

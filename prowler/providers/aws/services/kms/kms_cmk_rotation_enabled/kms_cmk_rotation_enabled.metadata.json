@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:kms:region:account-id:certificate/resource-id",
   "Severity": "medium",
-  "ResourceType": "AWSKMSKey",
+  "ResourceType": "Other",
   "Description": "Ensure rotation for customer created KMS CMKs is enabled.",
   "Risk": "Cryptographic best practices discourage extensive reuse of encryption keys. Consequently, Customer Master Keys (CMKs) should be rotated to prevent usage of compromised keys.",
   "RelatedUrl": "https://aws.amazon.com/blogs/security/how-to-get-ready-for-certificate-transparency/",

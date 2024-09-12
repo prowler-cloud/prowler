@@ -9,7 +9,7 @@
   "SubServiceName": "subnet",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
-  "ResourceType": "AWSEC2VPC",
+  "ResourceType": "AwsEc2VpcDetails",
   "Description": "Ensure there are VPCs in more than one region",
   "Risk": "",
   "RelatedUrl": "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario2.html",

@@ -11,7 +11,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
-  "ResourceType": "AWSIAMUser",
+  "ResourceType": "AwsIamUserDetails",
   "Description": "Check if IAM users have two active access keys",
   "Risk": "Access Keys could be lost or stolen. It creates a critical risk.",
   "RelatedUrl": "",

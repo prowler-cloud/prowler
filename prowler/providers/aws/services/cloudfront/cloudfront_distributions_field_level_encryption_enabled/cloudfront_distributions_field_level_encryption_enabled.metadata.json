@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:cloudfront:region:account-id:distribution/resource-id",
   "Severity": "low",
-  "ResourceType": "AWSCloudFrontDistribution",
+  "ResourceType": "Other",
   "Description": "Check if CloudFront distributions have Field Level Encryption enabled.",
   "Risk": "Allows you protect specific data throughout system processing so that only certain applications can see it.",
   "RelatedUrl": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/field-level-encryption.html",

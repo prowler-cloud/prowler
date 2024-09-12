@@ -11,7 +11,7 @@
   "SubServiceName": "inline_policies",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
-  "ResourceType": "AWSIAMPolicy",
+  "ResourceType": "Other",
   "Description": "Ensure IAM inline policies that allow full \"cloudtrail:*\" privileges are not created",
   "Risk": "CloudTrail is a critical service and IAM policies should follow least privilege model for this service in particular",
   "RelatedUrl": "",

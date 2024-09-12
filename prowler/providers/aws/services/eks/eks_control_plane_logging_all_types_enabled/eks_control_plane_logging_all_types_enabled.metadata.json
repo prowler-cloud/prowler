@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
-  "ResourceType": "AWSEKSCluster",
+  "ResourceType": "AwsEksClusterDetails",
   "Description": "Ensure EKS Control Plane Logging is enabled for all required log types",
   "Risk": "If logs are not enabled, monitoring of service use or threat analysis is not possible.",
   "RelatedUrl": "",

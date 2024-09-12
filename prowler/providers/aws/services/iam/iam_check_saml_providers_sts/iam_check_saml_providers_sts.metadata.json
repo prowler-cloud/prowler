@@ -11,7 +11,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "low",
-  "ResourceType": "AWSIAMSAMLProvider",
+  "ResourceType": "Other",
   "Description": "Check if there are SAML Providers then STS can be used",
   "Risk": "Without SAML provider users with AWS CLI or AWS API access can use IAM static credentials. SAML helps users to assume role by default each time they authenticate.",
   "RelatedUrl": "",

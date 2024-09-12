@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:lambda:region:account-id:function/function-name",
   "Severity": "low",
-  "ResourceType": "AWSLambdaFunction",
+  "ResourceType": "Other",
   "Description": "This check verifies whether an AWS Lambda function is deployed within a Virtual Private Cloud (VPC). Deploying Lambda functions inside a VPC improves security by allowing control over the network environment, reducing the exposure to public internet threats.",
   "Risk": "Lambda functions not deployed in a VPC may expose your application to increased security risks, including unauthorized access and data breaches. Without the network isolation provided by a VPC, your Lambda functions are more vulnerable to attacks.",
   "RelatedUrl": "https://docs.aws.amazon.com/lambda/latest/dg/configuration-vpc.html",

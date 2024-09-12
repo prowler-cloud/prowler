@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-instance",
   "Severity": "low",
-  "ResourceType": "AWSRDSDBInstance",
+  "ResourceType": "AwsRdsDbInstanceDetails",
   "Description": "Check if RDS DB instances have copy tags to snapshots enabled, Aurora instances can not have this feature enabled at this level, they will have it at cluster level",
   "Risk": "If RDS instances are not configured to copy tags to snapshots, it could lead to compliance issues as the snapshots will not inherit necessary metadata such as environment, owner, or purpose tags. This could result in inefficient tracking and management of RDS resources and their snapshots.",
   "RelatedUrl": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_Tagging.html#USER_Tagging.CopyTags",

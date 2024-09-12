@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:cognito-idp:region:account:userpool/userpool-id",
   "Severity": "medium",
-  "ResourceType": "AWSCognitoUserPool",
+  "ResourceType": "Other",
   "Description": "Checks whether self registration is disabled for the Amazon Cognito User Pool. Self registration allows users to sign up for an account in the user pool. If self registration is enabled, users can sign up for an account in the user pool without any intervention from the administrator. This can lead to unauthorized access to the application.",
   "Risk": "If self registration is enabled, users can sign up for an account in the user pool without any intervention from the administrator. This can lead to unauthorized access to the application.",
   "RelatedUrl": "https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_SignUp.html",

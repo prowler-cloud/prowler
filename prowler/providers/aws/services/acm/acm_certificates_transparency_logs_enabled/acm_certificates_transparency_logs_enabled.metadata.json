@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:acm:region:account-id:certificate/resource-id",
   "Severity": "medium",
-  "ResourceType": "AWSACMCertificate",
+  "ResourceType": "AwsCertificateManagerCertificateDetails",
   "Description": "Check if ACM certificates have Certificate Transparency logging enabled",
   "Risk": "Domain owners can search the log to identify unexpected certificates, whether issued by mistake or malice. Domain owners can also identify Certificate Authorities (CAs) that are improperly issuing certificates.",
   "RelatedUrl": "https://aws.amazon.com/blogs/security/how-to-get-ready-for-certificate-transparency/",

@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:cognito-idp:region:account:userpool/userpool-id",
   "Severity": "medium",
-  "ResourceType": "AWSCognitoUserPool",
+  "ResourceType": "Other",
   "Description": "Checks whether Multi-Factor Authentication (MFA) is enabled for Amazon Cognito User Pools.",
   "Risk": "If MFA is not enabled, unauthorized users could gain access to the user pool and potentially compromise the security of the application.",
   "RelatedUrl": "https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-settings-mfa.html",

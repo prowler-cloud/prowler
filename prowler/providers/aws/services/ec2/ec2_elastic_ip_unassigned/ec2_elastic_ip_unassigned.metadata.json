@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "low",
-  "ResourceType": "AWSEC2EIP",
+  "ResourceType": "AwsEc2EipDetails",
   "Description": "Check if there is any unassigned Elastic IP.",
   "Risk": "Unassigned Elastic IPs may result in extra cost.",
   "RelatedUrl": "",

@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:cloudformation:region:account-id:stack/resource-id",
   "Severity": "medium",
-  "ResourceType": "AWSCloudFormationStack",
+  "ResourceType": "Other",
   "Description": "Enable termination protection for Cloudformation Stacks",
   "Risk": "Without termination protection enabled, a critical cloudformation stack can be accidently deleted.",
   "RelatedUrl": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-protect-stacks.html",

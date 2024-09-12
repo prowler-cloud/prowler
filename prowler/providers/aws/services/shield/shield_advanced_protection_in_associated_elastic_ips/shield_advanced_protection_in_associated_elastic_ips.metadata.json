@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "AWSEC2EIP",
+  "ResourceType": "Other",
   "Description": "Check if Elastic IP addresses with associations are protected by AWS Shield Advanced.",
   "Risk": "AWS Shield Advanced provides expanded DDoS attack protection for your resources.",
   "RelatedUrl": "https://docs.aws.amazon.com/waf/latest/developerguide/configure-new-protection.html",

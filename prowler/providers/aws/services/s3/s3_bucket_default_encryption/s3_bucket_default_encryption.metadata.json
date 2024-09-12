@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:s3:::bucket_name",
   "Severity": "medium",
-  "ResourceType": "AWSS3Bucket",
+  "ResourceType": "AwsS3BucketServerSideEncryptionConfiguration",
   "Description": "Check if S3 buckets have default encryption (SSE) enabled or use a bucket policy to enforce it.",
   "Risk": "Amazon S3 default encryption provides a way to set the default encryption behavior for an S3 bucket. This will ensure data-at-rest is encrypted.",
   "RelatedUrl": "",

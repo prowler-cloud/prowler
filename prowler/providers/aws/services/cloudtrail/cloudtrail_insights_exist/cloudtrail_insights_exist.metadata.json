@@ -11,7 +11,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "low",
-  "ResourceType": "AWSCloudTrailTrail",
+  "ResourceType": "AwsCloudTrailTrailDetails",
   "Description": "Ensure CloudTrail Insight is enabled",
   "Risk": "CloudTrail Insights provides a powerful way to search and analyze CloudTrail log data using pre-built queries and machine learning algorithms. This can help you to identify potential security threats and suspicious activity in near real-time, such as unauthorized access attempts, policy changes, or resource modifications.",
   "RelatedUrl": "",

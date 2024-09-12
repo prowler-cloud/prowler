@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "low",
-  "ResourceType": "AWSCloudTrailTrail",
+  "ResourceType": "AwsCloudTrailTrailDetails",
   "Description": "Ensure CloudTrail logging management events in All Regions",
   "Risk": "AWS CloudTrail enables governance, compliance, operational auditing, and risk auditing of your AWS account. To meet FTR requirements, you must have management events enabled for all AWS accounts and in all regions and aggregate these logs into an Amazon Simple Storage Service (Amazon S3) bucket owned by a separate AWS account.",
   "RelatedUrl": "https://docs.prowler.com/checks/aws/logging-policies/logging_14",

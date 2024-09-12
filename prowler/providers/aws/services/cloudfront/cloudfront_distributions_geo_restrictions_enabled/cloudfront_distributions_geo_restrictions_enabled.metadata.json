@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:cloudfront:region:account-id:distribution/resource-id",
   "Severity": "low",
-  "ResourceType": "AWSCloudFrontDistribution",
+  "ResourceType": "Other",
   "Description": "Check if Geo restrictions are enabled in CloudFront distributions.",
   "Risk": "Consider countries where service should not be accessed, by legal or compliance requirements. Additionally if not restricted the attack vector is increased.",
   "RelatedUrl": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/georestrictions.html",

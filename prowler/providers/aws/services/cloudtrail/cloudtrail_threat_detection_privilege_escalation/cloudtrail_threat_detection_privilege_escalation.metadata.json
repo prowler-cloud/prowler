@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "critical",
-  "ResourceType": "AWSCloudTrailTrail",
+  "ResourceType": "Other",
   "Description": "This check ensures that there are no potential privilege escalation threats in CloudTrail.",
   "Risk": "Potential privilege escalation threats in CloudTrail can lead to unauthorized access to resources.",
   "RelatedUrl": "",

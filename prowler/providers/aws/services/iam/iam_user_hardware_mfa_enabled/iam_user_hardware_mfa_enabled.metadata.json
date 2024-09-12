@@ -11,7 +11,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
-  "ResourceType": "AWSIAMUser",
+  "ResourceType": "AwsIamUserDetails",
   "Description": "Check if IAM users have Hardware MFA enabled.",
   "Risk": "Hardware MFA is preferred over virtual MFA.",
   "RelatedUrl": "",

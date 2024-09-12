@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:cognito-idp:region:account:userpool/userpool-id",
   "Severity": "medium",
-  "ResourceType": "AWSCognitoUserPool",
+  "ResourceType": "Other",
   "Description": "Advanced security features for Amazon Cognito User Pools provide additional security for your user pool. These features include compromised credentials protection, phone number verification, and account takeover protection.",
   "Risk": "If advanced security features are not enabled, your user pool is more vulnerable to unauthorized access.",
   "RelatedUrl": "https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pool-settings-advanced-security.html",

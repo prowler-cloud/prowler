@@ -9,7 +9,7 @@
   "SubServiceName": "flow_log",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
-  "ResourceType": "AWSEC2VPC",
+  "ResourceType": "Other",
   "Description": "Ensure VPC Flow Logging is Enabled in all VPCs.",
   "Risk": "VPC Flow Logs provide visibility into network traffic that traverses the VPC and can be used to detect anomalous traffic or insight during security workflows.",
   "RelatedUrl": "",

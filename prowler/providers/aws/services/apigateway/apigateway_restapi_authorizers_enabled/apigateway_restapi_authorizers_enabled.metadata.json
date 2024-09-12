@@ -12,7 +12,7 @@
   "SubServiceName": "rest_api",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
-  "ResourceType": "AWSApiGatewayRestApi",
+  "ResourceType": "AwsApiGatewayRestApiDetails",
   "Description": "Check if API Gateway has configured authorizers at api or method level.",
   "Risk": "If no authorizer is enabled anyone can use the service.",
   "RelatedUrl": "",

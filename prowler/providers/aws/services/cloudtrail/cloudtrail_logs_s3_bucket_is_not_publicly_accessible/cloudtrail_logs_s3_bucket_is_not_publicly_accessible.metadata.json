@@ -11,7 +11,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "critical",
-  "ResourceType": "AWSCloudTrailTrail",
+  "ResourceType": "AwsS3BucketDetails",
   "Description": "Ensure the S3 bucket CloudTrail logs to is not publicly accessible",
   "Risk": "Allowing public access to CloudTrail log content may aid an adversary in identifying weaknesses in the affected accounts use or configuration.",
   "RelatedUrl": "",

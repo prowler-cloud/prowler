@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:kms:region:account-id:certificate/resource-id",
   "Severity": "critical",
-  "ResourceType": "AWSKMSKey",
+  "ResourceType": "Other",
   "Description": "Ensure there is no customer keys scheduled for deletion.",
   "Risk": "KMS keys cannot be recovered once deleted, also, all the data under a KMS key is also permanently unrecoverable if the KMS key is deleted.",
   "RelatedUrl": "https://docs.aws.amazon.com/kms/latest/developerguide/deleting-keys-scheduling-key-deletion.html",

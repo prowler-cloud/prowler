@@ -9,7 +9,7 @@
   "SubServiceName": "securitygroups",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "high",
-  "ResourceType": "AWSEC2SecurityGroup",
+  "ResourceType": "AwsEc2SecurityGroupDetails",
   "Description": "Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to MySQL port 3306.",
   "Risk": "If Security groups are not properly configured the attack surface is increased.",
   "RelatedUrl": "",

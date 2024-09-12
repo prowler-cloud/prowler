@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:access-recorder:region:account-id:recorder/resource-id",
   "Severity": "medium",
-  "ResourceType": "AWSConfigConfigurationRecorder",
+  "ResourceType": "Other",
   "Description": "Ensure AWS Config is enabled in all regions.",
   "Risk": "The AWS configuration item history captured by AWS Config enables security analysis, resource change tracking and compliance auditing.",
   "RelatedUrl": "https://aws.amazon.com/blogs/mt/aws-config-best-practices/",

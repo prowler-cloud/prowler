@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-instance",
   "Severity": "medium",
-  "ResourceType": "AWSRDSDBInstance",
+  "ResourceType": "AwsRdsDbInstanceDetails",
   "Description": "Check if RDS instances storage is encrypted.",
   "Risk": "If not enabled sensitive information at rest is not protected.",
   "RelatedUrl": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Overview.Encryption.html",

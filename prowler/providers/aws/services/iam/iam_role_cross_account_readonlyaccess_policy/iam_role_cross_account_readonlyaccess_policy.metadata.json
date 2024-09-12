@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "high",
-  "ResourceType": "AWSIAMRole",
+  "ResourceType": "AwsIamRoleDetails",
   "Description": "Ensure IAM Roles do not have ReadOnlyAccess access for external AWS accounts",
   "Risk": "The AWS-managed ReadOnlyAccess policy is highly potent and exposes the customer to a significant data leakage threat. It should be granted very conservatively. For granting access to 3rd party vendors, consider using alternative managed policies, such as ViewOnlyAccess or SecurityAudit.",
   "RelatedUrl": "https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_job-functions.html#awsmp_readonlyaccess",

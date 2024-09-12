@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:sqs:region:account-id:queue",
   "Severity": "medium",
-  "ResourceType": "AWSSQSQueue",
+  "ResourceType": "Other",
   "Description": "Check if SQS queues have Server Side Encryption enabled",
   "Risk": "If not enabled sensitive information in transit is not protected.",
   "RelatedUrl": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-configure-sse-existing-queue.html",
