@@ -68,7 +68,7 @@ class Test_cloudfront_distributions_multiple_origin_failover_configured:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"CloudFront Distribution {DISTRIBUTION_ID} does not have an origin group configured with 2 origins."
+                == f"CloudFront Distribution {DISTRIBUTION_ID} does not have an origin group configured with at least 2 origins."
             )
             assert result[0].resource_tags == []
 
@@ -108,6 +108,6 @@ class Test_cloudfront_distributions_multiple_origin_failover_configured:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"CloudFront Distribution {DISTRIBUTION_ID} has an origin group with 2 origins configured."
+                == f"CloudFront Distribution {DISTRIBUTION_ID} has an origin group with at least 2 origins configured."
             )
             assert result[0].resource_tags == []

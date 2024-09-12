@@ -3,6 +3,8 @@
   "CheckID": "cloudfront_distributions_multiple_origin_failover_configured",
   "CheckTitle": "Check if CloudFront distributions have origin failover enabled.",
   "CheckType": [
+    "Software and Configuration Checks",
+    "Industry and Regulatory Standards",
     "NIST 800-53 Controls"
   ],
   "ServiceName": "cloudfront",
