@@ -18,6 +18,7 @@ from moto import mock_aws
 from pytest import raises
 from tzlocal import get_localzone
 
+from prowler.config.config import load_and_validate_config_file
 from prowler.providers.aws.aws_provider import (
     AwsProvider,
     get_aws_available_regions,
@@ -587,8 +588,9 @@ aws:
         config_file_input.write(bytes(config, encoding="raw_unicode_escape"))
         config_file_input.close()
         config_file_input = config_file_input.name
+        audit_config = load_and_validate_config_file("aws", config_file_input)
         aws_provider = AwsProvider(
-            config_file=config_file_input,
+            audit_config=audit_config,
         )
 
         os.remove(config_file_input)
@@ -783,7 +785,7 @@ aws:
         aws_provider = AwsProvider()
         response = aws_provider.generate_regional_clients("ec2")
 
-        assert len(response.keys()) == 29
+        assert len(response.keys()) == 30
 
     @mock_aws
     def test_generate_regional_clients_with_enabled_regions(self):

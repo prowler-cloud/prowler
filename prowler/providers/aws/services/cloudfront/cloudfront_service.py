@@ -30,12 +30,37 @@ class CloudFront(AWSService):
                         ):
                             distribution_id = item["Id"]
                             distribution_arn = item["ARN"]
-                            origins = item["Origins"]["Items"]
+                            certificate = item["ViewerCertificate"].get(
+                                "Certificate", ""
+                            )
+                            ssl_support_method = SSLSupportMethod(
+                                item["ViewerCertificate"].get(
+                                    "SSLSupportMethod", "static-ip"
+                                )
+                            )
+                            origins = []
+                            for origin in item.get("Origins", {}).get("Items", []):
+                                origins.append(
+                                    Origin(
+                                        id=origin["Id"],
+                                        domain_name=origin["DomainName"],
+                                        origin_protocol_policy=origin.get(
+                                            "CustomOriginConfig", {}
+                                        ).get("OriginProtocolPolicy", ""),
+                                        origin_ssl_protocols=origin.get(
+                                            "CustomOriginConfig", {}
+                                        )
+                                        .get("OriginSslProtocols", {})
+                                        .get("Items", []),
+                                    )
+                                )
                             distribution = Distribution(
                                 arn=distribution_arn,
                                 id=distribution_id,
                                 origins=origins,
                                 region=region,
+                                ssl_support_method=ssl_support_method,
+                                certificate=certificate,
                             )
                             self.distributions[distribution_id] = distribution
 
@@ -154,10 +179,25 @@ class GeoRestrictionType(Enum):
     whitelist = "whitelist"
 
 
+class SSLSupportMethod(Enum):
+    """Method types that viewer want to accept HTTPS requests from"""
+
+    static_ip = "static-ip"
+    sni_only = "sni-only"
+    vip = "vip"
+
+
 class DefaultCacheConfigBehaviour(BaseModel):
     realtime_log_config_arn: Optional[str]
     viewer_protocol_policy: ViewerProtocolPolicy
     field_level_encryption_id: str
+
+
+class Origin(BaseModel):
+    id: str
+    domain_name: str
+    origin_protocol_policy: str
+    origin_ssl_protocols: list[str]
 
 
 class Distribution(BaseModel):
@@ -169,9 +209,10 @@ class Distribution(BaseModel):
     logging_enabled: bool = False
     default_cache_config: Optional[DefaultCacheConfigBehaviour]
     geo_restriction_type: Optional[GeoRestrictionType]
-    origins: list
+    origins: list[Origin]
     web_acl_id: str = ""
     default_root_object: Optional[str]
-    origin_protocol_policy: Optional[str]
     viewer_protocol_policy: Optional[str]
     tags: Optional[list] = []
+    ssl_support_method: Optional[SSLSupportMethod]
+    certificate: Optional[str]

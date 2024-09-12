@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "ec2_networkacl_unused",
+  "CheckTitle": "Unused Network Access Control Lists should be removed.",
+  "CheckType": [],
+  "ServiceName": "ec2",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "low",
+  "ResourceType": "AwsEc2NetworkAcl",
+  "Description": "Ensure that there are no unused network access control lists (network ACLs) in your virtual private cloud (VPC). The control fails if the network ACL isn't associated with a subnet. The control doesn't generate findings for an unused default network ACL.",
+  "Risk": "Unused network ACLs may represent a potential security risk if left in place without purpose, as they could be mistakenly associated with subnets later.",
+  "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/vpc-network-acl-unused-check.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws ec2 delete-network-acl --network-acl-id <nacl_id>",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/ec2-controls.html#ec2-16",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "For instructions on deleting an unused network ACL, see Deleting a network ACL in the Amazon VPC User Guide.",
+      "Url": "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-network-acls.html#vpc-network-acl-delete"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Infrastructure Security"
+}

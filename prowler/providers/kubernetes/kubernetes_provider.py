@@ -6,10 +6,7 @@ from kubernetes.config.config_exception import ConfigException
 from requests.exceptions import Timeout
 
 from kubernetes import client, config
-from prowler.config.config import (
-    get_default_mute_file_path,
-    load_and_validate_config_file,
-)
+from prowler.config.config import get_default_mute_file_path
 from prowler.lib.logger import logger
 from prowler.lib.utils.utils import print_boxes
 from prowler.providers.common.models import Audit_Metadata, Connection
@@ -45,8 +42,8 @@ class KubernetesProvider(Provider):
         kubeconfig_file: str = None,
         context: str = None,
         namespace: list = None,
-        config_file: str = None,
-        fixer_config: str = None,
+        audit_config: dict = {},
+        fixer_config: dict = {},
     ):
         """
         Initializes the KubernetesProvider instance.
@@ -54,8 +51,8 @@ class KubernetesProvider(Provider):
             kubeconfig_file (str): Path to the kubeconfig file.
             context (str): Context name.
             namespace (list): List of namespaces.
-            config_file (str): Path to the configuration file.
-            fixer_config (str): Path to the fixer configuration file
+            audit_config (dict): Audit configuration.
+            fixer_config (dict): Fixer configuration.
         """
 
         logger.info("Instantiating Kubernetes Provider ...")
@@ -78,10 +75,12 @@ class KubernetesProvider(Provider):
             cluster=self._session.context["context"]["cluster"],
         )
 
-        # TODO: move this to the providers, pending for AWS, GCP, AZURE and K8s
         # Audit Config
-        self._audit_config = load_and_validate_config_file(self._type, config_file)
-        self._fixer_config = load_and_validate_config_file(self._type, fixer_config)
+        self._audit_config = audit_config
+        # Fixer Config
+        self._fixer_config = fixer_config
+
+        Provider.set_global_provider(self)
 
     @property
     def type(self):
