@@ -100,6 +100,14 @@ class RDS(AWSService):
                                 copy_tags_to_snapshot=instance.get(
                                     "CopyTagsToSnapshot"
                                 ),
+                                db_subnet_group={
+                                    "name": instance.get("DBSubnetGroup", {}).get(
+                                        "DBSubnetGroupName", ""
+                                    ),
+                                    "vpc_id": instance.get("DBSubnetGroup", {}).get(
+                                        "VpcId", ""
+                                    ),
+                                },
                             )
         except Exception as error:
             logger.error(
@@ -507,6 +515,7 @@ class DBInstance(BaseModel):
     ca_cert: Optional[str]
     cert: list[Certificate] = []
     copy_tags_to_snapshot: Optional[bool]
+    db_subnet_group: dict = {}
 
 
 class DBCluster(BaseModel):
