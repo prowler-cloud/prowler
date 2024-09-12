@@ -60,7 +60,7 @@ class Test_cloudfront_distributions_custom_ssl_certificate:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"CloudFront Distribution {DISTRIBUTION_ID} is using a default SSL/TLS certificate."
+                == f"CloudFront Distribution {DISTRIBUTION_ID} is using the default SSL/TLS certificate."
             )
 
     def test_distribution_custom_certificate(self):
