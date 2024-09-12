@@ -21,6 +21,7 @@ class Test_guardduty_is_enabled_fixer:
         mock_guardduty_client_class.return_value.regional_clients = {
             AWS_REGION_EU_WEST_1: mock_client
         }
+
         mock_client.create_detector.return_value = None
 
         from prowler.providers.aws.services.guardduty.guardduty_is_enabled.guardduty_is_enabled_fixer import (
