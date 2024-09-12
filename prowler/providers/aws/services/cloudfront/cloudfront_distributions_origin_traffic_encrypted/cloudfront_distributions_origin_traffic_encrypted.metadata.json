@@ -1,10 +1,8 @@
 {
   "Provider": "aws",
-  "CheckID": "cloudfront_distributions_custom_origin_traffic_encrypted",
+  "CheckID": "cloudfront_distributions_origin_traffic_encrypted",
   "CheckTitle": "Check if CloudFront distributions encrypt traffic to custom origins.",
-  "CheckType": [
-    "NIST 800-53 Controls"
-  ],
+  "CheckType": [],
   "ServiceName": "cloudfront",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:cloudfront:region:account-id:distribution/resource-id",

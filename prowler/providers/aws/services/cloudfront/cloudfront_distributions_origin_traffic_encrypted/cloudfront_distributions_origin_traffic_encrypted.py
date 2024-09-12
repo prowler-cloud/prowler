@@ -4,7 +4,7 @@ from prowler.providers.aws.services.cloudfront.cloudfront_client import (
 )
 
 
-class cloudfront_distributions_custom_origin_traffic_encrypted(Check):
+class cloudfront_distributions_origin_traffic_encrypted(Check):
     def execute(self):
         findings = []
         for distribution in cloudfront_client.distributions.values():
@@ -14,7 +14,7 @@ class cloudfront_distributions_custom_origin_traffic_encrypted(Check):
             report.resource_id = distribution.id
             report.resource_tags = distribution.tags
             report.status = "PASS"
-            report.status_extended = f"CloudFront Distribution {distribution.id} does encrypt traﬃc to custom origins."
+            report.status_extended = f"CloudFront Distribution {distribution.id} does encrypt traffic to custom origins."
 
             for origin in distribution.origins:
                 if (
@@ -25,7 +25,7 @@ class cloudfront_distributions_custom_origin_traffic_encrypted(Check):
                     and distribution.viewer_protocol_policy == "allow-all"
                 ):
                     report.status = "FAIL"
-                    report.status_extended = f"CloudFront Distribution {distribution.id} does not encrypt traﬃc to custom origins."
+                    report.status_extended = f"CloudFront Distribution {distribution.id} does not encrypt traffic to custom origins."
 
             findings.append(report)
 

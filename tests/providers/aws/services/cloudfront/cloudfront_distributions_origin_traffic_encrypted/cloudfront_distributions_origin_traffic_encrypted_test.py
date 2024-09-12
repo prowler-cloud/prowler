@@ -15,7 +15,7 @@ DISTRIBUTION_ARN = (
 REGION = "eu-west-1"
 
 
-class Test_cloudfront_distributions_custom_origin_traffic_encrypted:
+class Test_cloudfront_distributions_origin_traffic_encrypted:
     def test_no_distributions(self):
         cloudfront_client = mock.MagicMock
         cloudfront_client.distributions = {}
@@ -24,11 +24,11 @@ class Test_cloudfront_distributions_custom_origin_traffic_encrypted:
             new=cloudfront_client,
         ):
             # Test Check
-            from prowler.providers.aws.services.cloudfront.cloudfront_distributions_custom_origin_traffic_encrypted.cloudfront_distributions_custom_origin_traffic_encrypted import (
-                cloudfront_distributions_custom_origin_traffic_encrypted,
+            from prowler.providers.aws.services.cloudfront.cloudfront_distributions_origin_traffic_encrypted.cloudfront_distributions_origin_traffic_encrypted import (
+                cloudfront_distributions_origin_traffic_encrypted,
             )
 
-            check = cloudfront_distributions_custom_origin_traffic_encrypted()
+            check = cloudfront_distributions_origin_traffic_encrypted()
             result = check.execute()
 
             assert len(result) == 0
@@ -63,11 +63,11 @@ class Test_cloudfront_distributions_custom_origin_traffic_encrypted:
             new=cloudfront_client,
         ):
             # Test Check
-            from prowler.providers.aws.services.cloudfront.cloudfront_distributions_custom_origin_traffic_encrypted.cloudfront_distributions_custom_origin_traffic_encrypted import (
-                cloudfront_distributions_custom_origin_traffic_encrypted,
+            from prowler.providers.aws.services.cloudfront.cloudfront_distributions_origin_traffic_encrypted.cloudfront_distributions_origin_traffic_encrypted import (
+                cloudfront_distributions_origin_traffic_encrypted,
             )
 
-            check = cloudfront_distributions_custom_origin_traffic_encrypted()
+            check = cloudfront_distributions_origin_traffic_encrypted()
             result = check.execute()
 
             assert len(result) == 1
@@ -110,11 +110,11 @@ class Test_cloudfront_distributions_custom_origin_traffic_encrypted:
             new=cloudfront_client,
         ):
             # Test Check
-            from prowler.providers.aws.services.cloudfront.cloudfront_distributions_custom_origin_traffic_encrypted.cloudfront_distributions_custom_origin_traffic_encrypted import (
-                cloudfront_distributions_custom_origin_traffic_encrypted,
+            from prowler.providers.aws.services.cloudfront.cloudfront_distributions_origin_traffic_encrypted.cloudfront_distributions_origin_traffic_encrypted import (
+                cloudfront_distributions_origin_traffic_encrypted,
             )
 
-            check = cloudfront_distributions_custom_origin_traffic_encrypted()
+            check = cloudfront_distributions_origin_traffic_encrypted()
             result = check.execute()
 
             assert len(result) == 1
@@ -158,11 +158,11 @@ class Test_cloudfront_distributions_custom_origin_traffic_encrypted:
             new=cloudfront_client,
         ):
             # Test Check
-            from prowler.providers.aws.services.cloudfront.cloudfront_distributions_custom_origin_traffic_encrypted.cloudfront_distributions_custom_origin_traffic_encrypted import (
-                cloudfront_distributions_custom_origin_traffic_encrypted,
+            from prowler.providers.aws.services.cloudfront.cloudfront_distributions_origin_traffic_encrypted.cloudfront_distributions_origin_traffic_encrypted import (
+                cloudfront_distributions_origin_traffic_encrypted,
             )
 
-            check = cloudfront_distributions_custom_origin_traffic_encrypted()
+            check = cloudfront_distributions_origin_traffic_encrypted()
             result = check.execute()
 
             assert len(result) == 1
@@ -205,11 +205,11 @@ class Test_cloudfront_distributions_custom_origin_traffic_encrypted:
             new=cloudfront_client,
         ):
             # Test Check
-            from prowler.providers.aws.services.cloudfront.cloudfront_distributions_custom_origin_traffic_encrypted.cloudfront_distributions_custom_origin_traffic_encrypted import (
-                cloudfront_distributions_custom_origin_traffic_encrypted,
+            from prowler.providers.aws.services.cloudfront.cloudfront_distributions_origin_traffic_encrypted.cloudfront_distributions_origin_traffic_encrypted import (
+                cloudfront_distributions_origin_traffic_encrypted,
             )
 
-            check = cloudfront_distributions_custom_origin_traffic_encrypted()
+            check = cloudfront_distributions_origin_traffic_encrypted()
             result = check.execute()
 
             assert len(result) == 1
