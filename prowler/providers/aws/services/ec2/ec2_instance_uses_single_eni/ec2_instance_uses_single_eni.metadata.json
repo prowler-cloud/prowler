@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "ec2_instance_uses_single_eni",
+  "CheckTitle": "Amazon EC2 instances should not use multiple ENIs",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "ec2",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:instance/resource-id",
+  "Severity": "low",
+  "ResourceType": "AwsEc2Instance",
+  "Description": "This control checks whether an EC2 instance uses multiple Elastic Network Interfaces (ENIs) or Elastic Fabric Adapters (EFAs). This control passes if a single network adapter is used. The control includes an optional parameter list to identify the allowed ENIs. This control also fails if an EC2 instance that belongs to an Amazon EKS cluster uses more than one ENI. If your EC2 instances need to have multiple ENIs as part of an Amazon EKS cluster, you can suppress those control findings.",
+  "Risk": "Multiple ENIs can cause dual-homed instances, meaning instances that have multiple subnets. This can add network security complexity and introduce unintended network paths and access.",
+  "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/ec2-instance-multiple-eni-check.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/ec2-controls.html#ec2-17",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "To detach a network interface from an EC2 instance, follow the instructions in the Amazon EC2 User Guide.",
+      "Url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-eni.html#detach_eni"
+    }
+  },
+  "Categories": [
+    "trustboundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
