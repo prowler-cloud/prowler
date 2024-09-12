@@ -16,15 +16,16 @@ class cloudfront_distributions_custom_origin_traffic_encrypted(Check):
             report.status = "PASS"
             report.status_extended = f"CloudFront Distribution {distribution.id} does encrypt traﬃc to custom origins."
 
-            if (
-                distribution.origin_protocol_policy == ""
-                or distribution.origin_protocol_policy == "http-only"
-            ) or (
-                distribution.origin_protocol_policy == "match-viewer"
-                and distribution.viewer_protocol_policy == "allow-all"
-            ):
-                report.status = "FAIL"
-                report.status_extended = f"CloudFront Distribution {distribution.id} does not encrypt traﬃc to custom origins."
+            for origin in distribution.origins:
+                if (
+                    origin.origin_protocol_policy == ""
+                    or origin.origin_protocol_policy == "http-only"
+                ) or (
+                    origin.origin_protocol_policy == "match-viewer"
+                    and distribution.viewer_protocol_policy == "allow-all"
+                ):
+                    report.status = "FAIL"
+                    report.status_extended = f"CloudFront Distribution {distribution.id} does not encrypt traﬃc to custom origins."
 
             findings.append(report)
 

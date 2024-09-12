@@ -3,6 +3,7 @@ from unittest import mock
 from prowler.providers.aws.services.cloudfront.cloudfront_service import (
     DefaultCacheConfigBehaviour,
     Distribution,
+    Origin,
     ViewerProtocolPolicy,
 )
 from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER
@@ -39,14 +40,20 @@ class Test_cloudfront_distributions_custom_origin_traffic_encrypted:
                 arn=DISTRIBUTION_ARN,
                 id=DISTRIBUTION_ID,
                 region=REGION,
-                origins=[],
+                origins=[
+                    Origin(
+                        id="origin1",
+                        domain_name="asdf.s3.us-east-1.amazonaws.com",
+                        origin_protocol_policy="",
+                        origin_ssl_protocols=[],
+                    )
+                ],
                 default_cache_config=DefaultCacheConfigBehaviour(
                     realtime_log_config_arn="",
                     viewer_protocol_policy=ViewerProtocolPolicy.allow_all,
                     field_level_encryption_id="",
                 ),
                 default_root_object="",
-                origin_protocol_policy="",
                 viewer_protocol_policy="",
             )
         }
@@ -81,14 +88,20 @@ class Test_cloudfront_distributions_custom_origin_traffic_encrypted:
                 arn=DISTRIBUTION_ARN,
                 id=DISTRIBUTION_ID,
                 region=REGION,
-                origins=[],
+                origins=[
+                    Origin(
+                        id="origin1",
+                        domain_name="asdf.s3.us-east-1.amazonaws.com",
+                        origin_protocol_policy="http-only",
+                        origin_ssl_protocols=[],
+                    )
+                ],
                 default_cache_config=DefaultCacheConfigBehaviour(
                     realtime_log_config_arn="",
                     viewer_protocol_policy=ViewerProtocolPolicy.allow_all,
                     field_level_encryption_id="",
                 ),
                 default_root_object="index.html",
-                origin_protocol_policy="http-only",
             )
         }
 
@@ -122,14 +135,20 @@ class Test_cloudfront_distributions_custom_origin_traffic_encrypted:
                 arn=DISTRIBUTION_ARN,
                 id=DISTRIBUTION_ID,
                 region=REGION,
-                origins=[],
+                origins=[
+                    Origin(
+                        id="origin1",
+                        domain_name="asdf.s3.us-east-1.amazonaws.com",
+                        origin_protocol_policy="match-viewer",
+                        origin_ssl_protocols=[],
+                    )
+                ],
                 default_cache_config=DefaultCacheConfigBehaviour(
                     realtime_log_config_arn="",
                     viewer_protocol_policy=ViewerProtocolPolicy.allow_all,
                     field_level_encryption_id="",
                 ),
                 default_root_object="index.html",
-                origin_protocol_policy="match-viewer",
                 viewer_protocol_policy="allow-all",
             )
         }
@@ -164,14 +183,20 @@ class Test_cloudfront_distributions_custom_origin_traffic_encrypted:
                 arn=DISTRIBUTION_ARN,
                 id=DISTRIBUTION_ID,
                 region=REGION,
-                origins=[],
+                origins=[
+                    Origin(
+                        id="origin1",
+                        domain_name="asdf.s3.us-east-1.amazonaws.com",
+                        origin_protocol_policy="https-only",
+                        origin_ssl_protocols=[],
+                    )
+                ],
                 default_cache_config=DefaultCacheConfigBehaviour(
                     realtime_log_config_arn="",
                     viewer_protocol_policy=ViewerProtocolPolicy.allow_all,
                     field_level_encryption_id="",
                 ),
                 default_root_object="index.html",
-                origin_protocol_policy="https-only",
             )
         }
 
