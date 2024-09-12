@@ -18,7 +18,7 @@ class cloudfront_distributions_use_custom_ssl_tls_certificates(Check):
 
             if distribution.default_certificate:
                 report.status = "FAIL"
-                report.status_extended = f"CloudFront Distribution {distribution.id} is using a default SSL/TLS certificate."
+                report.status_extended = f"CloudFront Distribution {distribution.id} is using the default SSL/TLS certificate."
 
             findings.append(report)
 
