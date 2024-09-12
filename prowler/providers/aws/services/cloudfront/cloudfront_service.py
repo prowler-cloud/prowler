@@ -30,6 +30,9 @@ class CloudFront(AWSService):
                         ):
                             distribution_id = item["Id"]
                             distribution_arn = item["ARN"]
+                            default_certificate = item["ViewerCertificate"][
+                                "CloudFrontDefaultCertificate"
+                            ]
                             certificate = item["ViewerCertificate"].get(
                                 "Certificate", ""
                             )
@@ -59,6 +62,7 @@ class CloudFront(AWSService):
                                 id=distribution_id,
                                 origins=origins,
                                 region=region,
+                                default_certificate=default_certificate,
                                 ssl_support_method=ssl_support_method,
                                 certificate=certificate,
                             )
@@ -184,6 +188,7 @@ class Distribution(BaseModel):
     geo_restriction_type: Optional[GeoRestrictionType]
     origins: list[Origin]
     web_acl_id: str = ""
+    default_certificate: Optional[bool]
     default_root_object: Optional[str]
     tags: Optional[list] = []
     ssl_support_method: Optional[SSLSupportMethod]
