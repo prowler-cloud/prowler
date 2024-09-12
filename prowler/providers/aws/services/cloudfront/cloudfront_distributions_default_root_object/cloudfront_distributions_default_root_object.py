@@ -4,7 +4,7 @@ from prowler.providers.aws.services.cloudfront.cloudfront_client import (
 )
 
 
-class cloudfront_distributions_have_root_object(Check):
+class cloudfront_distributions_default_root_object(Check):
     def execute(self):
         findings = []
         for distribution in cloudfront_client.distributions.values():
@@ -14,7 +14,7 @@ class cloudfront_distributions_have_root_object(Check):
             report.resource_id = distribution.id
             report.resource_tags = distribution.tags
 
-            if distribution.default_root_object is not None:
+            if distribution.default_root_object:
                 report.status = "PASS"
                 report.status_extended = f"CloudFront Distribution {distribution.id} does have a default root object ({distribution.default_root_object}) configured."
             else:

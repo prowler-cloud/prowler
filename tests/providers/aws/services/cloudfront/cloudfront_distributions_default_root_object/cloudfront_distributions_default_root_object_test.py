@@ -14,7 +14,7 @@ DISTRIBUTION_ARN = (
 REGION = "eu-west-1"
 
 
-class Test_cloudfront_distributions_have_root_object:
+class Test_cloudfront_distributions_default_root_object:
     def test_no_distributions(self):
         cloudfront_client = mock.MagicMock
         cloudfront_client.distributions = {}
@@ -23,11 +23,11 @@ class Test_cloudfront_distributions_have_root_object:
             new=cloudfront_client,
         ):
             # Test Check
-            from prowler.providers.aws.services.cloudfront.cloudfront_distributions_have_root_object.cloudfront_distributions_have_root_object import (
-                cloudfront_distributions_have_root_object,
+            from prowler.providers.aws.services.cloudfront.cloudfront_distributions_default_root_object.cloudfront_distributions_default_root_object import (
+                cloudfront_distributions_default_root_object,
             )
 
-            check = cloudfront_distributions_have_root_object()
+            check = cloudfront_distributions_default_root_object()
             result = check.execute()
 
             assert len(result) == 0
@@ -53,11 +53,11 @@ class Test_cloudfront_distributions_have_root_object:
             new=cloudfront_client,
         ):
             # Test Check
-            from prowler.providers.aws.services.cloudfront.cloudfront_distributions_have_root_object.cloudfront_distributions_have_root_object import (
-                cloudfront_distributions_have_root_object,
+            from prowler.providers.aws.services.cloudfront.cloudfront_distributions_default_root_object.cloudfront_distributions_default_root_object import (
+                cloudfront_distributions_default_root_object,
             )
 
-            check = cloudfront_distributions_have_root_object()
+            check = cloudfront_distributions_default_root_object()
             result = check.execute()
 
             assert len(result) == 1
@@ -94,11 +94,11 @@ class Test_cloudfront_distributions_have_root_object:
             new=cloudfront_client,
         ):
             # Test Check
-            from prowler.providers.aws.services.cloudfront.cloudfront_distributions_have_root_object.cloudfront_distributions_have_root_object import (
-                cloudfront_distributions_have_root_object,
+            from prowler.providers.aws.services.cloudfront.cloudfront_distributions_default_root_object.cloudfront_distributions_default_root_object import (
+                cloudfront_distributions_default_root_object,
             )
 
-            check = cloudfront_distributions_have_root_object()
+            check = cloudfront_distributions_default_root_object()
             result = check.execute()
 
             assert len(result) == 1
