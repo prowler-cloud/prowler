@@ -13,14 +13,11 @@ class cloudfront_distributions_s3_origin_access_control(Check):
             report.resource_arn = distribution.arn
             report.resource_id = distribution.id
             report.resource_tags = distribution.tags
-            distribution_has_s3_origin = any(
-                origin.s3_origin_config != {} for origin in distribution.origins
-            )
 
-            s3_buckets_with_no_oac = []
-            if distribution_has_s3_origin:
+            if any(origin.s3_origin_config for origin in distribution.origins):
+                s3_buckets_with_no_oac = []
                 report.status = "PASS"
-                report.status_extended = f"CloudFront Distribution {distribution.id} is using origin access control (OAC)."
+                report.status_extended = f"CloudFront Distribution {distribution.id} is using origin access control (OAC) for S3 origins."
 
                 for origin in distribution.origins:
                     if (
@@ -31,7 +28,7 @@ class cloudfront_distributions_s3_origin_access_control(Check):
 
                 if s3_buckets_with_no_oac:
                     report.status = "FAIL"
-                    report.status_extended = f"CloudFront Distribution {distribution.id} is not using origin access control (OAC) in static web hosting s3 buckets {', '.join(s3_buckets_with_no_oac)}."
+                    report.status_extended = f"CloudFront Distribution {distribution.id} is not using origin access control (OAC) in S3 origins {', '.join(s3_buckets_with_no_oac)}."
 
                 findings.append(report)
 
