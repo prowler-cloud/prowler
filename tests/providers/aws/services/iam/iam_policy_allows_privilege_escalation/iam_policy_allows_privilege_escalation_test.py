@@ -999,7 +999,7 @@ class Test_iam_policy_allows_privilege_escalation:
             "Statement": [
                 {
                     "Effect": "Allow",
-                    "NotAction": "prowler:io",
+                    "NotAction": "prowler:action",
                     "Resource": "*",
                 },
             ],
