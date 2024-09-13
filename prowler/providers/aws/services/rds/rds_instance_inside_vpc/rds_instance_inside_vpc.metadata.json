@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "rds_instance_in_vpc",
+  "CheckID": "rds_instance_inside_vpc",
   "CheckTitle": "Check if RDS instances are deployed within a VPC.",
   "CheckType": [
     "Software and Configuration Checks, AWS Security Best Practices"

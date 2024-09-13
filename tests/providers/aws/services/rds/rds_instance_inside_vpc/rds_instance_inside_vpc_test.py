@@ -11,7 +11,7 @@ from tests.providers.aws.utils import (
 )
 
 
-class Test_rds_instance_in_vpc:
+class Test_rds_instance_inside_vpc:
     @mock_aws
     def test_rds_no_instances(self):
         from prowler.providers.aws.services.rds.rds_service import RDS
@@ -23,23 +23,42 @@ class Test_rds_instance_in_vpc:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.rds.rds_instance_in_vpc.rds_instance_in_vpc.rds_client",
+                "prowler.providers.aws.services.rds.rds_instance_inside_vpc.rds_instance_inside_vpc.rds_client",
                 new=RDS(aws_provider),
             ):
                 # Test Check
-                from prowler.providers.aws.services.rds.rds_instance_in_vpc.rds_instance_in_vpc import (
-                    rds_instance_in_vpc,
+                from prowler.providers.aws.services.rds.rds_instance_inside_vpc.rds_instance_inside_vpc import (
+                    rds_instance_inside_vpc,
                 )
 
-                check = rds_instance_in_vpc()
+                check = rds_instance_inside_vpc()
                 result = check.execute()
 
                 assert len(result) == 0
 
     @mock_aws
-    def test_rds_instance_in_vpc(self):
-        conn = client("rds", region_name=AWS_REGION_US_EAST_1)
-        conn.create_db_instance(
+    def test_rds_instance_inside_vpc(self):
+        rds_conn = client("rds", region_name=AWS_REGION_US_EAST_1)
+        ec2_conn = client("ec2")
+
+        # Step 1: Create the VPC
+        vpc_id = ec2_conn.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]["VpcId"]
+        subnet_1_id = ec2_conn.create_subnet(CidrBlock="10.0.1.0/24", VpcId=vpc_id)[
+            "Subnet"
+        ]["SubnetId"]
+        subnet_2_id = ec2_conn.create_subnet(CidrBlock="10.0.2.0/24", VpcId=vpc_id)[
+            "Subnet"
+        ]["SubnetId"]
+        subnet_group_name = "my-rds-subnet-group"
+        rds_conn.create_db_subnet_group(
+            DBSubnetGroupName=subnet_group_name,
+            DBSubnetGroupDescription="Subnet group for RDS instance in VPC",
+            SubnetIds=[
+                subnet_1_id,
+                subnet_2_id,
+            ],
+        )
+        rds_conn.create_db_instance(
             DBInstanceIdentifier="db-master-1",
             AllocatedStorage=10,
             Engine="postgres",
@@ -51,6 +70,7 @@ class Test_rds_instance_in_vpc:
             AutoMinorVersionUpgrade=True,
             BackupRetentionPeriod=10,
             Port=5432,
+            DBSubnetGroupName=subnet_group_name,
             Tags=[{"Key": "test", "Value": "test"}],
         )
 
@@ -63,22 +83,22 @@ class Test_rds_instance_in_vpc:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.rds.rds_instance_in_vpc.rds_instance_in_vpc.rds_client",
+                "prowler.providers.aws.services.rds.rds_instance_inside_vpc.rds_instance_inside_vpc.rds_client",
                 new=RDS(aws_provider),
             ):
                 # Test Check
-                from prowler.providers.aws.services.rds.rds_instance_in_vpc.rds_instance_in_vpc import (
-                    rds_instance_in_vpc,
+                from prowler.providers.aws.services.rds.rds_instance_inside_vpc.rds_instance_inside_vpc import (
+                    rds_instance_inside_vpc,
                 )
 
-                check = rds_instance_in_vpc()
+                check = rds_instance_inside_vpc()
                 result = check.execute()
 
                 assert len(result) == 1
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == "RDS Instance db-master-1 is deployed in a VPC."
+                    == f"RDS Instance db-master-1 is deployed in a VPC {vpc_id}."
                 )
                 assert result[0].resource_id == "db-master-1"
                 assert result[0].region == AWS_REGION_US_EAST_1
@@ -123,15 +143,15 @@ class Test_rds_instance_in_vpc:
             "prowler.providers.aws.services.rds.rds_service.RDS",
             new=rds_client,
         ), mock.patch(
-            "prowler.providers.aws.services.rds.rds_instance_in_vpc.rds_instance_in_vpc.rds_client",
+            "prowler.providers.aws.services.rds.rds_instance_inside_vpc.rds_instance_inside_vpc.rds_client",
             new=rds_client,
         ):
             # Test Check
-            from prowler.providers.aws.services.rds.rds_instance_in_vpc.rds_instance_in_vpc import (
-                rds_instance_in_vpc,
+            from prowler.providers.aws.services.rds.rds_instance_inside_vpc.rds_instance_inside_vpc import (
+                rds_instance_inside_vpc,
             )
 
-            check = rds_instance_in_vpc()
+            check = rds_instance_inside_vpc()
             result = check.execute()
 
             assert len(result) == 1
