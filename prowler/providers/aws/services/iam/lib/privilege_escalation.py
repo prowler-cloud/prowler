@@ -108,6 +108,7 @@ def find_privilege_escalation_combinations(
 
     # Store all the action's combinations
     policies_combination = set()
+    hard_allowed_not_actions = set()
 
     try:
         # First, we need to perform a difference with allowed_actions and denied_actions
@@ -121,6 +122,9 @@ def find_privilege_escalation_combinations(
                 hard_allowed_not_actions = allowed_not_actions
             else:
                 allowed_actions = allowed_actions - allowed_not_actions
+        # If there are denied_not_actions, means that every other action is denied
+        if denied_not_actions:
+            allowed_actions = allowed_actions.intersection(denied_not_actions)
         for values in privilege_escalation_policies_combination.values():
             for val in values:
                 val_set = set()
@@ -146,7 +150,10 @@ def find_privilege_escalation_combinations(
                         # len() == 1, so *
                         elif len(api_action) == 1:
                             # Unless the action is *, we have to check if the action to evaluate is in the hard_allowed_not_actions
-                            if val not in hard_allowed_not_actions:
+                            if (
+                                not hard_allowed_not_actions
+                                or val not in hard_allowed_not_actions
+                            ):
                                 api = api_action[0]
                                 # Add permissions if the API is present
                                 if api == "*":
@@ -234,10 +241,11 @@ def check_privilege_escalation(policy: dict) -> str:
         if not allowed_actions and allowed_not_actions:
             allowed_actions.add("*")
         # Check for invalid services in allowed NotAction
-        invalid_not_actions = check_invalid_not_actions(allowed_not_actions)
-        if invalid_not_actions:
-            # Since it is an invalid NotAction, it allows all AWS actions
-            allowed_actions.add("*")
+        if allowed_not_actions:
+            invalid_not_actions = check_invalid_not_actions(allowed_not_actions)
+            if invalid_not_actions:
+                # Since it is an invalid NotAction, it allows all AWS actions
+                allowed_actions.add("*")
 
         policies_combination = find_privilege_escalation_combinations(
             allowed_actions, denied_actions, allowed_not_actions, denied_not_actions
