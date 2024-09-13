@@ -4963,15 +4963,6 @@
         ]
       }
     },
-    "honeycode": {
-      "regions": {
-        "aws": [
-          "us-west-2"
-        ],
-        "aws-cn": [],
-        "aws-us-gov": []
-      }
-    },
     "iam": {
       "regions": {
         "aws": [
@@ -8454,12 +8445,14 @@
     "redshift-serverless": {
       "regions": {
         "aws": [
+          "ap-east-1",
           "ap-south-1",
           "ap-southeast-3",
           "ca-central-1",
           "eu-central-2",
           "eu-south-2",
           "eu-west-3",
+          "il-central-1",
           "me-central-1",
           "sa-east-1",
           "us-east-1",
