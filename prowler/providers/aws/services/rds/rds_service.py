@@ -53,7 +53,6 @@ class RDS(AWSService):
                         is_resource_filtered(arn, self.audit_resources)
                     ):
                         if instance["Engine"] != "docdb":
-                            print(instance.get("DBSubnetGroup", {}))
                             self.db_instances[arn] = DBInstance(
                                 id=instance["DBInstanceIdentifier"],
                                 arn=arn,
