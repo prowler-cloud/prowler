@@ -14,10 +14,10 @@ from prowler.providers.azure.services.monitor.monitor_service import DiagnosticS
 class App(AzureService):
     def __init__(self, provider: AzureProvider):
         super().__init__(WebSiteManagementClient, provider)
-        self.apps = self.__get_apps__()
-        self.functions = self.__get_functions__()
+        self.apps = self._get_apps()
+        self.functions = self._get_functions()
 
-    def __get_apps__(self):
+    def _get_apps(self):
         logger.info("App - Getting apps...")
         apps = {}
 
@@ -50,11 +50,11 @@ class App(AzureService):
                                         resource_group_name=app.resource_group,
                                         name=app.name,
                                     ),
-                                    client_cert_mode=self.__get_client_cert_mode__(
+                                    client_cert_mode=self._get_client_cert_mode(
                                         getattr(app, "client_cert_enabled", False),
                                         getattr(app, "client_cert_mode", "Ignore"),
                                     ),
-                                    monitor_diagnostic_settings=self.__get_app_monitor_settings__(
+                                    monitor_diagnostic_settings=self._get_app_monitor_settings(
                                         app.name, app.resource_group, subscription_name
                                     ),
                                     https_only=getattr(app, "https_only", False),
@@ -71,7 +71,7 @@ class App(AzureService):
 
         return apps
 
-    def __get_functions__(self):
+    def _get_functions(self):
         logger.info("Function - Getting functions...")
         functions = {}
 
@@ -138,9 +138,7 @@ class App(AzureService):
 
         return functions
 
-    def __get_client_cert_mode__(
-        self, client_cert_enabled: bool, client_cert_mode: str
-    ):
+    def _get_client_cert_mode(self, client_cert_enabled: bool, client_cert_mode: str):
         cert_mode = "Ignore"
         if not client_cert_enabled and client_cert_mode == "OptionalInteractiveUser":
             cert_mode = "Ignore"
@@ -155,7 +153,7 @@ class App(AzureService):
 
         return cert_mode
 
-    def __get_app_monitor_settings__(self, app_name, resource_group, subscription):
+    def _get_app_monitor_settings(self, app_name, resource_group, subscription):
         logger.info(f"App - Getting monitor diagnostics settings for {app_name}...")
         monitor_diagnostics_settings = []
         try:

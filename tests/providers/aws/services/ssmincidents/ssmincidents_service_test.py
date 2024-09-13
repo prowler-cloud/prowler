@@ -66,7 +66,7 @@ def mock_generate_regional_clients(provider, service):
     new=mock_generate_regional_clients,
 )
 class Test_SSMIncidents_Service:
-    def test__get_client__(self):
+    def test_get_client(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         ssmincidents = SSMIncidents(aws_provider)
         assert (
@@ -79,12 +79,12 @@ class Test_SSMIncidents_Service:
         ssmincidents = SSMIncidents(aws_provider)
         assert ssmincidents.service == "ssm-incidents"
 
-    def test__list_replication_sets__(self):
+    def test_list_replication_sets(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         ssmincidents = SSMIncidents(aws_provider)
         assert len(ssmincidents.replication_set) == 1
 
-    def test__get_replication_set__(self):
+    def test_get_replication_set(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         ssmincidents = SSMIncidents(aws_provider)
         assert ssmincidents.replication_set[0].arn == REPLICATION_SET_ARN
@@ -94,7 +94,7 @@ class Test_SSMIncidents_Service:
             assert region.status == "ACTIVE"
             assert region.sse_kms_id == "DefaultKey"
 
-    def test__list_response_plans__(self):
+    def test_list_response_plans(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         ssmincidents = SSMIncidents(aws_provider)
         assert len(ssmincidents.response_plans) == 1
@@ -103,7 +103,7 @@ class Test_SSMIncidents_Service:
         assert ssmincidents.response_plans[0].region == AWS_REGION_US_EAST_1
         assert ssmincidents.response_plans[0].tags == {"tag_test": "tag_value"}
 
-    def test__list_tags_for_resource__(self):
+    def test_list_tags_for_resource(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         ssmincidents = SSMIncidents(aws_provider)
         assert len(ssmincidents.response_plans) == 1

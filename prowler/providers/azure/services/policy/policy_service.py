@@ -11,9 +11,9 @@ from prowler.providers.azure.lib.service.service import AzureService
 class Policy(AzureService):
     def __init__(self, provider: AzureProvider):
         super().__init__(PolicyClient, provider)
-        self.policy_assigments = self.__get_policy_assigments__()
+        self.policy_assigments = self._get_policy_assigments()
 
-    def __get_policy_assigments__(self):
+    def _get_policy_assigments(self):
         logger.info("Policy - Getting policy assigments...")
         policy_assigments = {}
 

@@ -10,9 +10,9 @@ from prowler.providers.azure.lib.service.service import AzureService
 class AppInsights(AzureService):
     def __init__(self, provider: AzureProvider):
         super().__init__(ApplicationInsightsManagementClient, provider)
-        self.components = self.__get_components__()
+        self.components = self._get_components()
 
-    def __get_components__(self):
+    def _get_components(self):
         logger.info("AppInsights - Getting components...")
         components = {}
 

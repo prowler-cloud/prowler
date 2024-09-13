@@ -1,11 +1,12 @@
 from datetime import datetime
+from unittest import mock
 from unittest.mock import patch
 
 import botocore
 from boto3 import client
 from moto import mock_aws
 
-from prowler.providers.aws.services.rds.rds_service import RDS
+from prowler.providers.aws.services.rds.rds_service import RDS, Certificate, DBInstance
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
@@ -68,7 +69,7 @@ class Test_RDS_Service:
 
     # Test RDS Describe DB Instances
     @mock_aws
-    def test__describe_db_instances__(self):
+    def test_describe_db_instances(self):
         conn = client("rds", region_name=AWS_REGION_US_EAST_1)
         conn.create_db_parameter_group(
             DBParameterGroupName="test",
@@ -122,7 +123,7 @@ class Test_RDS_Service:
         assert db_instance.copy_tags_to_snapshot
 
     @mock_aws
-    def test__describe_db_parameters__(self):
+    def test_describe_db_parameters(self):
         conn = client("rds", region_name=AWS_REGION_US_EAST_1)
         conn.create_db_parameter_group(
             DBParameterGroupName="test",
@@ -160,36 +161,72 @@ class Test_RDS_Service:
                 assert parameter["ParameterValue"] == "1"
 
     @mock_aws
-    def test__describe_db_certificate__(self):
-        conn = client("rds", region_name=AWS_REGION_US_EAST_1)
-        conn.create_db_parameter_group(
-            DBParameterGroupName="test",
-            DBParameterGroupFamily="default.postgres9.3",
-            Description="test parameter group",
-        )
-        conn.create_db_instance(
-            DBInstanceIdentifier="db-master-1",
-            AllocatedStorage=10,
-            Engine="postgres",
-            DBName="staging-postgres",
-            DBInstanceClass="db.m1.small",
-            DBParameterGroupName="test",
-            CACertificateIdentifier="rds-cert-2015",
-        )
+    def test_describe_db_certificate(self):
+        rds_client = mock.MagicMock
+        rds_client.db_instances = {
+            "arn:aws:rds:us-east-1:123456789012:db:db-master-1": DBInstance(
+                id="db-master-1",
+                region=AWS_REGION_US_EAST_1,
+                endpoint={
+                    "Address": "db-master-1.aaaaaaaaaa.us-east-1.rds.amazonaws.com",
+                    "Port": 5432,
+                },
+                status="available",
+                public=True,
+                encrypted=True,
+                backup_retention_period=10,
+                cloudwatch_logs=["audit", "error"],
+                deletion_protection=True,
+                auto_minor_version_upgrade=True,
+                multi_az=True,
+                cluster_id="cluster-postgres",
+                tags=[{"Key": "test", "Value": "test"}],
+                parameter_groups=["test"],
+                copy_tags_to_snapshot=True,
+                ca_cert="rds-cert-2015",
+                arn="arn:aws:rds:us-east-1:123456789012:db:db-master-1",
+                engine="postgres",
+                engine_version="9.6.9",
+                username="test",
+                iam_auth=False,
+                cert=[
+                    Certificate(
+                        id="rds-cert-2015",
+                        arn="arn:aws:rds:us-east-1:123456789012:cert:rds-cert-2015",
+                        region=AWS_REGION_US_EAST_1,
+                        type="CA",
+                        valid_from=datetime(2015, 1, 1),
+                        valid_till=datetime(2025, 1, 1),
+                        customer_override=False,
+                        customer_override_valid_till=datetime(2025, 1, 1),
+                    )
+                ],
+            )
+        }
 
-        # RDS client for this test class
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
-        rds = RDS(aws_provider)
-        assert len(rds.db_instances) == 1
-        db_instance_arn, db_instance = next(iter(rds.db_instances.items()))
-        assert db_instance.id == "db-master-1"
-        assert db_instance.region == AWS_REGION_US_EAST_1
-        for cert in db_instance.cert:
-            assert cert["ValidTill"] < datetime.now()
+        with mock.patch(
+            "prowler.providers.aws.services.rds.rds_service.RDS",
+            new=rds_client,
+        ):
+            from prowler.providers.aws.services.rds.rds_service import RDS
+
+            rds = RDS(rds_client)
+            assert len(rds.db_instances) == 1
+            db_instance_arn, db_instance = next(iter(rds.db_instances.items()))
+            assert db_instance.id == "db-master-1"
+            assert db_instance.region == AWS_REGION_US_EAST_1
+            assert len(db_instance.cert) == 1
+            for cert in db_instance.cert:
+                assert cert.id == "rds-cert-2015"
+                assert cert.type == "CA"
+                assert cert.valid_from == datetime(2015, 1, 1)
+                assert cert.valid_till == datetime(2025, 1, 1)
+                assert not cert.customer_override
+                assert cert.customer_override_valid_till == datetime(2025, 1, 1)
 
     # Test RDS Describe DB Snapshots
     @mock_aws
-    def test__describe_db_snapshots__(self):
+    def test_describe_db_snapshots(self):
         conn = client("rds", region_name=AWS_REGION_US_EAST_1)
         conn.create_db_instance(
             DBInstanceIdentifier="db-primary-1",
@@ -213,7 +250,7 @@ class Test_RDS_Service:
 
     # Test RDS Describe DB Clusters
     @mock_aws
-    def test__describe_db_clusters__(self):
+    def test_describe_db_clusters(self):
         conn = client("rds", region_name=AWS_REGION_US_EAST_1)
         cluster_id = "db-master-1"
         conn.create_db_cluster_parameter_group(
@@ -272,7 +309,7 @@ class Test_RDS_Service:
 
     # Test RDS Describe DB Cluster Snapshots
     @mock_aws
-    def test__describe_db_cluster_snapshots__(self):
+    def test_describe_db_cluster_snapshots(self):
         conn = client("rds", region_name=AWS_REGION_US_EAST_1)
         conn.create_db_cluster(
             DBClusterIdentifier="db-primary-1",
@@ -329,7 +366,7 @@ class Test_RDS_Service:
 
     # Test RDS engine version
     @mock_aws
-    def test__describe_db_engine_versions__(self):
+    def test_describe_db_engine_versions(self):
         # RDS client for this test class
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         rds = RDS(aws_provider)

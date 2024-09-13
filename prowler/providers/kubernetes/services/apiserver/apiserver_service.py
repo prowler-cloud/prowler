@@ -10,9 +10,9 @@ class APIServer(KubernetesService):
         super().__init__(provider)
         self.client = core_client
 
-        self.apiserver_pods = self.__get_apiserver_pods__()
+        self.apiserver_pods = self._get_apiserver_pods()
 
-    def __get_apiserver_pods__(self):
+    def _get_apiserver_pods(self):
         try:
             apiserver_pods = []
             for pod in self.client.pods.values():
