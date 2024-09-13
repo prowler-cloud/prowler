@@ -80,6 +80,8 @@ class KubernetesProvider(Provider):
         # Fixer Config
         self._fixer_config = fixer_config
 
+        Provider.set_global_provider(self)
+
     @property
     def type(self):
         return self._type

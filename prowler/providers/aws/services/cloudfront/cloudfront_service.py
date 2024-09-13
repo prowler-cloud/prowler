@@ -33,6 +33,9 @@ class CloudFront(AWSService):
                                 "Items", []
                             )
                             origin_failover = True if origin_groups else False
+                            default_certificate = item["ViewerCertificate"][
+                                "CloudFrontDefaultCertificate"
+                            ]
                             certificate = item["ViewerCertificate"].get(
                                 "Certificate", ""
                             )
@@ -64,6 +67,7 @@ class CloudFront(AWSService):
                                 region=region,
                                 origin_failover=origin_failover,
                                 ssl_support_method=ssl_support_method,
+                                default_certificate=default_certificate,
                                 certificate=certificate,
                             )
                             self.distributions[distribution_id] = distribution
@@ -92,6 +96,9 @@ class CloudFront(AWSService):
                 distributions[distribution_id].web_acl_id = distribution_config[
                     "DistributionConfig"
                 ]["WebACLId"]
+                distributions[distribution_id].default_root_object = (
+                    distribution_config["DistributionConfig"].get("DefaultRootObject")
+                )
 
                 # Default Cache Config
                 default_cache_config = DefaultCacheConfigBehaviour(
@@ -185,6 +192,8 @@ class Distribution(BaseModel):
     geo_restriction_type: Optional[GeoRestrictionType]
     origins: list[Origin]
     web_acl_id: str = ""
+    default_certificate: Optional[bool]
+    default_root_object: Optional[str]
     tags: Optional[list] = []
     origin_failover: Optional[bool]
     ssl_support_method: Optional[SSLSupportMethod]

@@ -160,6 +160,8 @@ class AzureProvider(Provider):
         # Fixer Config
         self._fixer_config = fixer_config
 
+        Provider.set_global_provider(self)
+
     @property
     def identity(self):
         """Returns the identity of the Azure provider."""

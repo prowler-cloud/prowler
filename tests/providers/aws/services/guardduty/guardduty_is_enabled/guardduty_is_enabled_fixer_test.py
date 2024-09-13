@@ -16,10 +16,14 @@ DETECTOR_ARN = f"arn:aws:guardduty:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:d
 class Test_guardduty_is_enabled_fixer:
     @mock_aws
     def test_guardduty_is_enabled_fixer(self):
+        regional_client = mock.MagicMock()
         guardduty_client = mock.MagicMock
         guardduty_client.region = AWS_REGION_EU_WEST_1
         guardduty_client.detectors = []
         guardduty_client.audited_account_arn = AWS_ACCOUNT_ARN
+        regional_client.create_detector.return_value = None
+        guardduty_client.regional_clients = {AWS_REGION_EU_WEST_1: regional_client}
+
         with mock.patch(
             "prowler.providers.aws.services.guardduty.guardduty_service.GuardDuty",
             guardduty_client,
