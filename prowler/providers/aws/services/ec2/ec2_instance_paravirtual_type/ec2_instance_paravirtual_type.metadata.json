@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
-  "ResourceType": "AwsEc2Instance",
+  "ResourceType": "AwsEc2InstanceDetails",
   "Description": "Ensure that the virtualization type of an EC2 instance is not paravirtual. The control fails if the virtualizationType of the EC2 instance is set to paravirtual.",
   "Risk": "Using paravirtual instances can limit performance and security benefits offered by hardware virtual machine (HVM) instances, such as improved CPU, network, and storage efficiency.",
   "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/ec2-paravirtual-instance-check.html",
