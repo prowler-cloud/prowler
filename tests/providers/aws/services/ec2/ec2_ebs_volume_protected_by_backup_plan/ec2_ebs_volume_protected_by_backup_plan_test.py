@@ -117,13 +117,13 @@ class Test_ec2_ebs_volume_protected_by_backup_plan:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == f"EBS Volume {volume["VolumeId"]} is not protected by a backup plan."
+                    == f"EBS Volume {volume['VolumeId']} is not protected by a backup plan."
                 )
                 assert result[0].resource_id == volume["VolumeId"]
                 assert result[0].region == AWS_REGION_US_EAST_1
                 assert (
                     result[0].resource_arn
-                    == f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:volume/{volume["VolumeId"]}"
+                    == f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:volume/{volume['VolumeId']}"
                 )
                 assert result[0].resource_tags is None
 
@@ -179,13 +179,13 @@ class Test_ec2_ebs_volume_protected_by_backup_plan:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == f"EBS Volume {volume["VolumeId"]} is not protected by a backup plan."
+                    == f"EBS Volume {volume['VolumeId']} is not protected by a backup plan."
                 )
                 assert result[0].resource_id == volume["VolumeId"]
                 assert result[0].region == AWS_REGION_US_EAST_1
                 assert (
                     result[0].resource_arn
-                    == f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:volume/{volume["VolumeId"]}"
+                    == f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:volume/{volume['VolumeId']}"
                 )
                 assert result[0].resource_tags is None
 
