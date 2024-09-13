@@ -11,7 +11,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
-  "ResourceType": "AwsS3BucketDetails",
+  "ResourceType": "AwsCloudTrailTrailDetails",
   "Description": "Ensure the S3 bucket CloudTrail bucket requires MFA",
   "Risk": "If the S3 bucket CloudTrail bucket does not require MFA, it can be deleted by an attacker.",
   "RelatedUrl": "",
