@@ -58,7 +58,7 @@ class Test_awslambda_function_vpc_is_in_multi_azs:
 
         # Create Lambda Function outside VPC
         lambda_client = client("lambda", region_name=AWS_REGION_EU_WEST_1)
-        function_name = "test_function"
+        function_name = "test_function_outside_vpc"
         function_arn = lambda_client.create_function(
             FunctionName=function_name,
             Runtime="python3.8",
@@ -90,7 +90,7 @@ class Test_awslambda_function_vpc_is_in_multi_azs:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Lambda function test_function is not inside a VPC."
+                == f"Lambda function {function_name} is not inside a VPC."
             )
             assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_id == function_name
@@ -136,7 +136,7 @@ class Test_awslambda_function_vpc_is_in_multi_azs:
         # Create Lambda Function inside VPC
         lambda_client = client("lambda", region_name=AWS_REGION_EU_WEST_1)
 
-        function_name = "test_function"
+        function_name = "test_function_in_vpc_single_az"
 
         function = lambda_client.create_function(
             FunctionName=function_name,
@@ -230,7 +230,7 @@ class Test_awslambda_function_vpc_is_in_multi_azs:
         # Create Lambda Function inside VPC
         lambda_client = client("lambda", region_name=AWS_REGION_EU_WEST_1)
 
-        function_name = "test_function"
+        function_name = "test_function_in_vpc_multiple_az"
 
         function = lambda_client.create_function(
             FunctionName=function_name,
@@ -326,7 +326,7 @@ class Test_awslambda_function_vpc_is_in_multi_azs:
         # Create Lambda Function inside VPC
         lambda_client = client("lambda", region_name=AWS_REGION_EU_WEST_1)
 
-        function_name = "test_function"
+        function_name = "test_function_in_vpc_multiple_subnets_same_az"
 
         function = lambda_client.create_function(
             FunctionName=function_name,
@@ -396,7 +396,7 @@ class Test_awslambda_function_vpc_is_in_multi_azs:
 
         # Create Lambda Function outside VPC
         lambda_client = client("lambda", region_name=AWS_REGION_EU_WEST_1)
-        function_name = "test_function"
+        function_name = "test_function_no_vpc_pass_to_avoid_fail_twice"
         lambda_client.create_function(
             FunctionName=function_name,
             Runtime="python3.8",
@@ -419,6 +419,9 @@ class Test_awslambda_function_vpc_is_in_multi_azs:
         ), mock.patch(
             "prowler.providers.aws.services.awslambda.awslambda_function_vpc_is_in_multi_azs.awslambda_function_vpc_is_in_multi_azs.vpc_client",
             new=VPC(aws_provider),
+        ), mock.patch(
+            "prowler.providers.aws.services.awslambda.awslambda_function_inside_vpc.awslambda_function_inside_vpc.awslambda_client",
+            new=Lambda(aws_provider),
         ):
             # Test check inside_vpc first
 
@@ -491,7 +494,7 @@ class Test_awslambda_function_vpc_is_in_multi_azs:
         # Create Lambda Function inside VPC
         lambda_client = client("lambda", region_name=AWS_REGION_EU_WEST_1)
 
-        function_name = "test_function"
+        function_name = "test_function_resource_filtered"
 
         function = lambda_client.create_function(
             FunctionName=function_name,
