@@ -1,4 +1,5 @@
 from prowler.lib.logger import logger
+from prowler.providers.aws.aws_provider import read_aws_regions_file
 
 # Does the tool analyze both users and roles, or just one or the other? --> Everything using AttachementCount.
 # Does the tool take a principal-centric or policy-centric approach? --> Policy-centric approach.
@@ -89,13 +90,17 @@ privilege_escalation_policies_combination = {
 
 
 def find_privilege_escalation_combinations(
-    allowed_actions: set, denied_actions: set, denied_not_actions: set
+    allowed_actions: set,
+    denied_actions: set,
+    allowed_not_actions: set,
+    denied_not_actions: set,
 ) -> set:
     """
     find_privilege_escalation_combinations finds the privilege escalation combinations.
     Args:
         allowed_actions (set): The allowed actions.
         denied_actions (set): The denied actions.
+        allowed_not_actions (set): The allowed not actions.
         denied_not_actions (set): The denied not actions.
     Returns:
         set: The privilege escalation combinations.
@@ -105,25 +110,27 @@ def find_privilege_escalation_combinations(
     policies_combination = set()
 
     try:
-        # First, we need to perform a left join with ALLOWED_ACTIONS and DENIED_ACTIONS
-        left_actions = allowed_actions.difference(denied_actions)
-        # Then, we need to find the DENIED_NOT_ACTIONS in LEFT_ACTIONS
-        if denied_not_actions:
-            privileged_actions = left_actions.intersection(denied_not_actions)
-        # If there is no Denied Not Actions
-        else:
-            privileged_actions = left_actions
-
+        # First, we need to perform a difference with allowed_actions and denied_actions
+        allowed_actions = allowed_actions.difference(denied_actions)
+        # Then, we need to do perform a difference with allowed_not_actions and denied_not_actions
+        allowed_not_actions = allowed_not_actions.difference(denied_not_actions)
+        # If there are allowed_not_actions, we have to check if there are allowed_actions that are not allowed by allowed_not_actions
+        if allowed_not_actions:
+            # If allowed_actions is *, we need to save allowed_not_actions since we cannot subtract them
+            if "*" in allowed_actions:
+                hard_allowed_not_actions = allowed_not_actions
+            else:
+                allowed_actions = allowed_actions - allowed_not_actions
         for values in privilege_escalation_policies_combination.values():
             for val in values:
                 val_set = set()
                 val_set.add(val)
                 # Look for specific api:action
-                if privileged_actions.intersection(val_set) == val_set:
+                if allowed_actions.intersection(val_set) == val_set:
                     policies_combination.add(val)
                 # Look for api:*
                 else:
-                    for permission in privileged_actions:
+                    for permission in allowed_actions:
                         # Here we have to handle if the api-action is admin, so "*"
                         api_action = permission.split(":")
                         # len() == 2, so api:action
@@ -138,10 +145,12 @@ def find_privilege_escalation_combinations(
 
                         # len() == 1, so *
                         elif len(api_action) == 1:
-                            api = api_action[0]
-                            # Add permissions if the API is present
-                            if api == "*":
-                                policies_combination.add(val)
+                            # Unless the action is *, we have to check if the action to evaluate is in the hard_allowed_not_actions
+                            if val not in hard_allowed_not_actions:
+                                api = api_action[0]
+                                # Add permissions if the API is present
+                                if api == "*":
+                                    policies_combination.add(val)
     except Exception as error:
         logger.error(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -165,6 +174,29 @@ def process_actions(effect, actions, target_set):
             target_set.update(actions)
 
 
+def check_invalid_not_actions(not_actions):
+    """
+    Checks if the actions in NotAction have services that are not part of AWS.
+    Args:
+        not_actions (str or list): The NotAction to check.
+    Returns:
+        dict: A dictionary with invalid services and their actions.
+    """
+    invalid_services = {}
+
+    if isinstance(not_actions, str):
+        not_actions = [not_actions]
+
+    for action in not_actions:
+        service = action.split(":")[0]
+        if not is_valid_aws_service(service):
+            if service not in invalid_services:
+                invalid_services[service] = []
+            invalid_services[service].append(action)
+
+    return invalid_services
+
+
 def check_privilege_escalation(policy: dict) -> str:
     """
     check_privilege_escalation checks if the policy allows privilege escalation.
@@ -178,6 +210,7 @@ def check_privilege_escalation(policy: dict) -> str:
 
     if policy:
         allowed_actions = set()
+        allowed_not_actions = set()
         denied_actions = set()
         denied_not_actions = set()
 
@@ -192,16 +225,25 @@ def check_privilege_escalation(policy: dict) -> str:
 
             if effect == "Allow":
                 process_actions(effect, actions, allowed_actions)
-                process_actions(effect, not_actions, denied_not_actions)
+                process_actions(effect, not_actions, allowed_not_actions)
             elif effect == "Deny":
                 process_actions(effect, actions, denied_actions)
                 process_actions(effect, not_actions, denied_not_actions)
 
+        # If there is only NotAction, it allows the rest of the actions
+        if not allowed_actions and allowed_not_actions:
+            allowed_actions.add("*")
+        # Check for invalid services in allowed NotAction
+        invalid_not_actions = check_invalid_not_actions(allowed_not_actions)
+        if invalid_not_actions:
+            # Since it is an invalid NotAction, it allows all AWS actions
+            allowed_actions.add("*")
+
         policies_combination = find_privilege_escalation_combinations(
-            allowed_actions, denied_actions, denied_not_actions
+            allowed_actions, denied_actions, allowed_not_actions, denied_not_actions
         )
 
-        # Check all policies combinations and see if matchs with some combo key
+        # Check all policies combinations and see if matches with some combo key
         combos = set()
         for (
             key,
@@ -222,3 +264,16 @@ def check_privilege_escalation(policy: dict) -> str:
             )
 
     return policies_affected
+
+
+def is_valid_aws_service(service):
+    """
+    Checks if a service is a valid AWS service using aws_regions_by_service.json.
+    Args:
+        service (str): The service to check.
+    Returns:
+        bool: True if the service is valid, False otherwise.
+    """
+    if service in read_aws_regions_file()["services"]:
+        return True
+    return False
