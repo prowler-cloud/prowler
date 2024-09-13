@@ -128,11 +128,11 @@ class ProviderViewSet(BaseRLSViewSet):
     serializer_class = ProviderSerializer
     http_method_names = ["get", "post", "patch", "delete"]
     filterset_class = ProviderFilter
-    search_fields = ["provider", "provider_id", "alias"]
+    search_fields = ["provider", "uid", "alias"]
     ordering = ["inserted_at"]
     ordering_fields = [
         "provider",
-        "provider_id",
+        "uid",
         "alias",
         "connected",
         "inserted_at",
@@ -238,7 +238,6 @@ class ScanViewSet(BaseRLSViewSet):
     filterset_class = ScanFilter
     ordering = ["inserted_at"]
     ordering_fields = [
-        "provider_id",
         "name",
         "trigger",
         "attempted_at",
@@ -362,7 +361,7 @@ class ResourceViewSet(BaseRLSViewSet):
     filterset_class = ResourceFilter
     ordering = ["inserted_at"]
     ordering_fields = [
-        "provider_id",
+        "provider_uid",
         "uid",
         "name",
         "region",

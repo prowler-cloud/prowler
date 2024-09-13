@@ -32,16 +32,16 @@ class Provider(RowLevelSecurityProtectedModel):
         KUBERNETES = "kubernetes", _("Kubernetes")
 
     @staticmethod
-    def validate_aws_provider_id(value):
+    def validate_aws_uid(value):
         if not re.match(r"^\d{12}$", value):
             raise ModelValidationError(
                 detail="AWS provider ID must be exactly 12 digits.",
-                code="aws-provider-id",
-                pointer="/data/attributes/provider_id",
+                code="aws-uid",
+                pointer="/data/attributes/uid",
             )
 
     @staticmethod
-    def validate_azure_provider_id(value):
+    def validate_azure_uid(value):
         try:
             val = UUID(value, version=4)
             if str(val) != value:
@@ -49,28 +49,28 @@ class Provider(RowLevelSecurityProtectedModel):
         except ValueError:
             raise ModelValidationError(
                 detail="Azure provider ID must be a valid UUID.",
-                code="azure-provider-id",
-                pointer="/data/attributes/provider_id",
+                code="azure-uid",
+                pointer="/data/attributes/uid",
             )
 
     @staticmethod
-    def validate_gcp_provider_id(value):
+    def validate_gcp_uid(value):
         if not re.match(r"^[a-z][a-z0-9-]{5,29}$", value):
             raise ModelValidationError(
                 detail="GCP provider ID must be 6 to 30 characters, start with a letter, and contain only lowercase "
                 "letters, numbers, and hyphens.",
-                code="gcp-provider-id",
-                pointer="/data/attributes/provider_id",
+                code="gcp-uid",
+                pointer="/data/attributes/uid",
             )
 
     @staticmethod
-    def validate_kubernetes_provider_id(value):
+    def validate_kubernetes_uid(value):
         if not re.match(r"^[a-z0-9]([-a-z0-9]{1,61}[a-z0-9])?$", value):
             raise ModelValidationError(
                 detail="K8s provider ID must be up to 63 characters, start and end with a lowercase letter or number, "
                 "and contain only lowercase alphanumeric characters and hyphens.",
-                code="kubernetes-provider-id",
-                pointer="/data/attributes/provider_id",
+                code="kubernetes-uid",
+                pointer="/data/attributes/uid",
             )
 
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
@@ -79,7 +79,12 @@ class Provider(RowLevelSecurityProtectedModel):
     provider = ProviderEnumField(
         choices=ProviderChoices.choices, default=ProviderChoices.AWS
     )
-    provider_id = models.CharField(max_length=63, validators=[MinLengthValidator(3)])
+    uid = models.CharField(
+        "Unique identifier for the provider, set by the provider",
+        max_length=63,
+        blank=False,
+        validators=[MinLengthValidator(3)],
+    )
     alias = models.CharField(
         blank=True, null=True, max_length=100, validators=[MinLengthValidator(3)]
     )
@@ -90,7 +95,7 @@ class Provider(RowLevelSecurityProtectedModel):
 
     def clean(self):
         super().clean()
-        getattr(self, f"validate_{self.provider}_provider_id")(self.provider_id)
+        getattr(self, f"validate_{self.provider}_uid")(self.uid)
 
     def save(self, *args, **kwargs):
         self.full_clean()
@@ -101,8 +106,8 @@ class Provider(RowLevelSecurityProtectedModel):
 
         constraints = [
             models.UniqueConstraint(
-                fields=("tenant_id", "provider", "provider_id"),
-                name="unique_provider_ids",
+                fields=("tenant_id", "provider", "uid"),
+                name="unique_provider_uids",
             ),
             RowLevelSecurityConstraint(
                 field="tenant_id",

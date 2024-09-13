@@ -180,7 +180,7 @@ class ProviderSerializer(RLSSerializer):
             "inserted_at",
             "updated_at",
             "provider",
-            "provider_id",
+            "uid",
             "alias",
             "connection",
             "scanner_args",
@@ -206,7 +206,7 @@ class ProviderSerializer(RLSSerializer):
 class ProviderCreateSerializer(RLSSerializer, BaseWriteSerializer):
     class Meta:
         model = Provider
-        fields = ["alias", "provider", "provider_id", "scanner_args"]
+        fields = ["alias", "provider", "uid", "scanner_args"]
 
 
 class ProviderUpdateSerializer(BaseWriteSerializer):

@@ -213,10 +213,7 @@ class TestProviderViewSet:
         )
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["data"]["attributes"]["provider"] == provider1.provider
-        assert (
-            response.json()["data"]["attributes"]["provider_id"]
-            == provider1.provider_id
-        )
+        assert response.json()["data"]["attributes"]["uid"] == provider1.uid
         assert response.json()["data"]["attributes"]["alias"] == provider1.alias
 
     def test_providers_invalid_retrieve(self, client, tenant_header):
@@ -230,16 +227,16 @@ class TestProviderViewSet:
         "provider_json_payload",
         (
             [
-                {"provider": "aws", "provider_id": "111111111111", "alias": "test"},
-                {"provider": "gcp", "provider_id": "a12322-test54321", "alias": "test"},
+                {"provider": "aws", "uid": "111111111111", "alias": "test"},
+                {"provider": "gcp", "uid": "a12322-test54321", "alias": "test"},
                 {
                     "provider": "kubernetes",
-                    "provider_id": "kubernetes-test-123456789",
+                    "uid": "kubernetes-test-123456789",
                     "alias": "test",
                 },
                 {
                     "provider": "azure",
-                    "provider_id": "8851db6b-42e5-4533-aa9e-30a32d67e875",
+                    "uid": "8851db6b-42e5-4533-aa9e-30a32d67e875",
                     "alias": "test",
                 },
             ]
@@ -255,9 +252,7 @@ class TestProviderViewSet:
         assert response.status_code == status.HTTP_201_CREATED
         assert Provider.objects.count() == 1
         assert Provider.objects.get().provider == provider_json_payload["provider"]
-        assert (
-            Provider.objects.get().provider_id == provider_json_payload["provider_id"]
-        )
+        assert Provider.objects.get().uid == provider_json_payload["uid"]
         assert Provider.objects.get().alias == provider_json_payload["alias"]
 
     @pytest.mark.parametrize(
@@ -265,51 +260,51 @@ class TestProviderViewSet:
         (
             [
                 (
-                    {"provider": "aws", "provider_id": "1", "alias": "test"},
+                    {"provider": "aws", "uid": "1", "alias": "test"},
                     "min_length",
-                    "provider_id",
+                    "uid",
                 ),
                 (
                     {
                         "provider": "aws",
-                        "provider_id": "1111111111111",
+                        "uid": "1111111111111",
                         "alias": "test",
                     },
-                    "aws-provider-id",
-                    "provider_id",
+                    "aws-uid",
+                    "uid",
                 ),
                 (
-                    {"provider": "aws", "provider_id": "aaaaaaaaaaaa", "alias": "test"},
-                    "aws-provider-id",
-                    "provider_id",
+                    {"provider": "aws", "uid": "aaaaaaaaaaaa", "alias": "test"},
+                    "aws-uid",
+                    "uid",
                 ),
                 (
-                    {"provider": "gcp", "provider_id": "1234asdf", "alias": "test"},
-                    "gcp-provider-id",
-                    "provider_id",
+                    {"provider": "gcp", "uid": "1234asdf", "alias": "test"},
+                    "gcp-uid",
+                    "uid",
                 ),
                 (
                     {
                         "provider": "kubernetes",
-                        "provider_id": "-1234asdf",
+                        "uid": "-1234asdf",
                         "alias": "test",
                     },
-                    "kubernetes-provider-id",
-                    "provider_id",
+                    "kubernetes-uid",
+                    "uid",
                 ),
                 (
                     {
                         "provider": "azure",
-                        "provider_id": "8851db6b-42e5-4533-aa9e-30a32d67e87",
+                        "uid": "8851db6b-42e5-4533-aa9e-30a32d67e87",
                         "alias": "test",
                     },
-                    "azure-provider-id",
-                    "provider_id",
+                    "azure-uid",
+                    "uid",
                 ),
                 (
                     {
                         "provider": "does-not-exist",
-                        "provider_id": "8851db6b-42e5-4533-aa9e-30a32d67e87",
+                        "uid": "8851db6b-42e5-4533-aa9e-30a32d67e87",
                         "alias": "test",
                     },
                     "invalid_choice",
@@ -383,7 +378,7 @@ class TestProviderViewSet:
         "attribute_key, attribute_value",
         [
             ("provider", "aws"),
-            ("provider_id", "123456789012"),
+            ("uid", "123456789012"),
         ],
     )
     def test_providers_partial_update_invalid_fields(
@@ -470,8 +465,9 @@ class TestProviderViewSet:
         (
             [
                 ("provider", "aws", 2),
-                ("provider_id", "123456789012", 1),
-                ("provider_id.icontains", "1", 5),
+                ("provider.in", "azure,gcp", 2),
+                ("uid", "123456789012", 1),
+                ("uid.icontains", "1", 5),
                 ("alias", "aws_testing_1", 1),
                 ("alias.icontains", "aws", 2),
                 ("inserted_at", TODAY, 5),
@@ -522,7 +518,7 @@ class TestProviderViewSet:
         (
             [
                 "provider",
-                "provider_id",
+                "uid",
                 "alias",
                 "connected",
                 "inserted_at",
@@ -733,7 +729,14 @@ class TestScanViewSet:
         "filter_name, filter_value, expected_count",
         (
             [
-                ("provider", "aws", 3),
+                ("provider_type", "aws", 3),
+                ("provider_type.in", "gcp,azure", 0),
+                ("provider_uid", "123456789012", 2),
+                ("provider_uid.icontains", "1", 3),
+                ("provider_uid.in", "123456789012,123456789013", 3),
+                ("provider_alias", "aws_testing_1", 2),
+                ("provider_alias.icontains", "aws", 3),
+                ("provider_alias.in", "aws_testing_1,aws_testing_2", 3),
                 ("name", "Scan 1", 1),
                 ("name.icontains", "Scan", 3),
                 ("started_at", "2024-01-02", 3),
@@ -781,7 +784,7 @@ class TestScanViewSet:
     ):
         response = client.get(
             reverse("scan-list"),
-            {"filter[provider_id]": scans_fixture[0].provider.id},
+            {"filter[provider]": scans_fixture[0].provider.id},
             headers=tenant_header,
         )
         assert response.status_code == status.HTTP_200_OK
@@ -791,7 +794,7 @@ class TestScanViewSet:
         response = client.get(
             reverse("scan-list"),
             {
-                "filter[provider_id.in]": [
+                "filter[provider.in]": [
                     scans_fixture[0].provider.id,
                     scans_fixture[1].provider.id,
                 ]
@@ -804,7 +807,6 @@ class TestScanViewSet:
     @pytest.mark.parametrize(
         "sort_field",
         [
-            "provider_id",
             "name",
             "trigger",
             "inserted_at",
@@ -910,6 +912,15 @@ class TestResourceViewSet:
                 ("inserted_at.gte", "2024-01-01 00:00:00", 3),
                 ("updated_at.lte", "2024-01-01 00:00:00", 0),
                 ("type.icontains", "prowler", 2),
+                # provider filters
+                ("provider_type", "aws", 3),
+                ("provider_type.in", "azure,gcp", 0),
+                ("provider_uid", "123456789012", 2),
+                ("provider_uid.in", "123456789012", 2),
+                ("provider_uid.in", "123456789012,123456789012", 2),
+                ("provider_uid.icontains", "1", 3),
+                ("provider_alias", "aws_testing_1", 2),
+                ("provider_alias.icontains", "aws", 3),
                 # tags searching
                 ("tag", "key3:value:value", 0),
                 ("tag_key", "key3", 1),
@@ -950,7 +961,7 @@ class TestResourceViewSet:
         response = client.get(
             reverse("resource-list"),
             {
-                "filter[provider_id.in]": [
+                "filter[provider.in]": [
                     resources_fixture[0].provider.id,
                     resources_fixture[1].provider.id,
                 ]
@@ -980,7 +991,7 @@ class TestResourceViewSet:
     @pytest.mark.parametrize(
         "sort_field",
         [
-            "provider_id",
+            "uid",
             "uid",
             "name",
             "region",

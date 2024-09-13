@@ -19,7 +19,7 @@ def test_check_resources_between_different_tenants(
             "attributes": {
                 "alias": "test_provider_tenant_1",
                 "provider": "aws",
-                "provider_id": "123456789012",
+                "uid": "123456789012",
             },
         }
     }
@@ -39,7 +39,7 @@ def test_check_resources_between_different_tenants(
             "attributes": {
                 "alias": "test_provider_tenant_2",
                 "provider": "aws",
-                "provider_id": "123456789013",
+                "uid": "123456789013",
             },
         }
     }

@@ -11,7 +11,7 @@ from tasks.jobs.connection import check_provider_connection
     "provider_data, provider_class",
     [
         (
-            {"provider": "aws", "provider_id": "123456789012", "alias": "aws"},
+            {"provider": "aws", "uid": "123456789012", "alias": "aws"},
             "AwsProvider",
         ),
     ],

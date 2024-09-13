@@ -59,31 +59,31 @@ def providers_fixture(tenants_fixture):
     tenant, _ = tenants_fixture
     provider1 = Provider.objects.create(
         provider="aws",
-        provider_id="123456789012",
+        uid="123456789012",
         alias="aws_testing_1",
         tenant_id=tenant.id,
     )
     provider2 = Provider.objects.create(
         provider="aws",
-        provider_id="123456789013",
+        uid="123456789013",
         alias="aws_testing_2",
         tenant_id=tenant.id,
     )
     provider3 = Provider.objects.create(
         provider="gcp",
-        provider_id="a12322-test321",
+        uid="a12322-test321",
         alias="gcp_testing",
         tenant_id=tenant.id,
     )
     provider4 = Provider.objects.create(
         provider="kubernetes",
-        provider_id="kubernetes-test-12345",
+        uid="kubernetes-test-12345",
         alias="k8s_testing",
         tenant_id=tenant.id,
     )
     provider5 = Provider.objects.create(
         provider="azure",
-        provider_id="37b065f8-26b0-4218-a665-0b23d07b27d9",
+        uid="37b065f8-26b0-4218-a665-0b23d07b27d9",
         alias="azure_testing",
         tenant_id=tenant.id,
         scanner_args={"key1": "value1", "key2": {"key21": "value21"}},

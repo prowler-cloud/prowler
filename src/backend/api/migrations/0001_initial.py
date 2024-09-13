@@ -138,10 +138,11 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 (
-                    "provider_id",
+                    "uid",
                     models.CharField(
                         max_length=63,
                         validators=[django.core.validators.MinLengthValidator(3)],
+                        verbose_name="Unique identifier for the provider, set by the provider",
                     ),
                 ),
                 (
@@ -183,8 +184,8 @@ class Migration(migrations.Migration):
         migrations.AddConstraint(
             model_name="provider",
             constraint=models.UniqueConstraint(
-                fields=("tenant_id", "provider", "provider_id"),
-                name="unique_provider_ids",
+                fields=("tenant_id", "provider", "uid"),
+                name="unique_provider_uids",
             ),
         ),
         # Create and register ScanTriggerEnum type

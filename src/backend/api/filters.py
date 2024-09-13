@@ -40,6 +40,14 @@ def enum_filter(queryset, value, enum_choices, lookup_field: str):
         ValidationError: If the provided `value` is not a valid choice in
                          the specified `enum_choices`.
     """
+    if "__in" in lookup_field:
+        values = value
+        if isinstance(values, str):
+            values = value.split(",")
+
+        values = [v for v in values if v in enum_choices]
+        return queryset.filter(**{lookup_field: values})
+
     if value not in enum_choices:
         raise ValidationError(
             f"Invalid provider value: '{value}'. Valid values are: "
@@ -47,6 +55,12 @@ def enum_filter(queryset, value, enum_choices, lookup_field: str):
         )
 
     return queryset.filter(**{lookup_field: value})
+
+
+def extract_lookup_expr(name):
+    """Extract the lookup expression from the filter name."""
+    parts = name.split("__")
+    return parts[-1] if len(parts) > 1 else "exact"
 
 
 class CustomDjangoFilterBackend(DjangoFilterBackend):
@@ -75,9 +89,10 @@ class ProviderFilter(FilterSet):
     inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
     updated_at = DateFilter(field_name="updated_at", lookup_expr="date")
     connected = BooleanFilter()
-    provider = CharFilter(method="filter_provider")
+    provider = CharFilter(method="filter_provider_type")
+    provider__in = CharFilter(method="filter_provider_type_in")
 
-    def filter_provider(self, queryset, name, value):
+    def filter_provider_type(self, queryset, name, value):
         return enum_filter(
             queryset,
             value,
@@ -85,12 +100,21 @@ class ProviderFilter(FilterSet):
             lookup_field="provider",
         )
 
+    def filter_provider_type_in(self, queryset, name, value):
+        return enum_filter(
+            queryset,
+            value,
+            enum_choices=Provider.ProviderChoices,
+            lookup_field="provider__in",
+        )
+
     class Meta:
         model = Provider
         fields = {
-            "provider": ["exact"],
-            "provider_id": ["exact", "icontains"],
-            "alias": ["exact", "icontains"],
+            "provider": ["exact", "in"],
+            "id": ["exact", "in"],
+            "uid": ["exact", "icontains", "in"],
+            "alias": ["exact", "icontains", "in"],
             "inserted_at": ["gte", "lte"],
             "updated_at": ["gte", "lte"],
         }
@@ -101,20 +125,63 @@ class ProviderFilter(FilterSet):
         }
 
 
-class ScanFilter(FilterSet):
-    inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
-    completed_at = DateFilter(field_name="completed_at", lookup_expr="date")
-    started_at = DateFilter(field_name="started_at", lookup_expr="date")
-    provider = CharFilter(method="filter_provider")
-    trigger = CharFilter(method="filter_trigger")
+class ProviderRelationshipFilterSet(FilterSet):
+    provider_type = CharFilter(method="filter_provider_type")
+    provider_type__in = CharFilter(method="filter_provider_type_in")
+    provider_uid = CharFilter(method="filter_provider_uid")
+    provider_uid__in = CharFilter(method="filter_provider_uid_in")
+    provider_uid__icontains = CharFilter(method="filter_provider_uid_icontains")
+    provider_alias = CharFilter(method="filter_provider_alias")
+    provider_alias__in = CharFilter(method="filter_provider_alias_in")
+    provider_alias__icontains = CharFilter(method="filter_provider_alias_icontains")
 
-    def filter_provider(self, queryset, name, value):
+    def filter_provider_type(self, queryset, name, value):
         return enum_filter(
             queryset,
             value,
             enum_choices=Provider.ProviderChoices,
-            lookup_field="provider__provider",
+            lookup_field="provider__provider__exact",
         )
+
+    def filter_provider_type_in(self, queryset, name, value):
+        if not isinstance(value, list):
+            value = value.split(",")
+
+        return enum_filter(
+            queryset,
+            value,
+            enum_choices=Provider.ProviderChoices,
+            lookup_field="provider__provider__in",
+        )
+
+    def filter_provider_uid(self, queryset, name, value):
+        return queryset.filter(provider__uid=value)
+
+    def filter_provider_uid_in(self, queryset, name, value):
+        if isinstance(value, str):
+            value = value.split(",")
+        return queryset.filter(provider__uid__in=value)
+
+    def filter_provider_uid_icontains(self, queryset, name, value):
+        return queryset.filter(provider__uid__icontains=value)
+
+    def filter_provider_alias(self, queryset, name, value):
+        return queryset.filter(provider__alias=value)
+
+    def filter_provider_alias_in(self, queryset, name, value):
+        if isinstance(value, str):
+            value = value.split(",")
+        return queryset.filter(provider__alias__in=value)
+
+    def filter_provider_alias_icontains(self, queryset, name, value):
+        return queryset.filter(provider__alias__icontains=value)
+
+
+class ScanFilter(ProviderRelationshipFilterSet):
+    inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
+    completed_at = DateFilter(field_name="completed_at", lookup_expr="date")
+    started_at = DateFilter(field_name="started_at", lookup_expr="date")
+    trigger = CharFilter(method="filter_trigger")
 
     def filter_trigger(self, queryset, name, value):
         if value not in Scan.TriggerChoices:
@@ -128,8 +195,7 @@ class ScanFilter(FilterSet):
     class Meta:
         model = Scan
         fields = {
-            "provider": ["exact"],
-            "provider_id": ["exact", "in"],
+            "provider": ["exact", "in"],
             "name": ["exact", "icontains"],
             "started_at": ["gte", "lte"],
             "trigger": ["exact"],
@@ -173,8 +239,7 @@ class ResourceTagFilter(FilterSet):
         search = ["text_search"]
 
 
-class ResourceFilter(FilterSet):
-    provider = CharFilter(method="filter_provider")
+class ResourceFilter(ProviderRelationshipFilterSet):
     tag_key = CharFilter(method="filter_tag_key")
     tag_value = CharFilter(method="filter_tag_value")
     tag = CharFilter(method="filter_tag")
@@ -182,18 +247,10 @@ class ResourceFilter(FilterSet):
     inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
     updated_at = DateFilter(field_name="updated_at", lookup_expr="date")
 
-    def filter_provider(self, queryset, name, value):
-        return enum_filter(
-            queryset,
-            value,
-            enum_choices=Provider.ProviderChoices,
-            lookup_field="provider__provider",
-        )
-
     class Meta:
         model = Resource
         fields = {
-            "provider_id": ["exact", "in"],
+            "provider": ["exact", "in"],
             "uid": ["exact", "icontains"],
             "name": ["exact", "icontains"],
             "region": ["exact", "icontains", "in"],
