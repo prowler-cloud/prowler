@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
   "CheckID": "iam_inline_policy_allows_privilege_escalation",
-  "CheckTitle": "Ensure no Inline IAM policies allow actions that may lead into Privilege Escalation",
+  "CheckTitle": "Ensure no IAM Inline policies allow actions that may lead into Privilege Escalation",
   "CheckType": [
     "Software and Configuration Checks",
     "Industry and Regulatory Standards"
@@ -10,7 +10,7 @@
   "SubServiceName": "inline_policy",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "high",
-  "ResourceType": "AwsIamRoleDetails",
+  "ResourceType": "AwsIamPolicyDetails",
   "Description": "Ensure no Inline IAM policies allow actions that may lead into Privilege Escalation",
   "Risk": "Users with some IAM permissions are allowed to elevate their privileges up to administrator rights.",
   "RelatedUrl": "",

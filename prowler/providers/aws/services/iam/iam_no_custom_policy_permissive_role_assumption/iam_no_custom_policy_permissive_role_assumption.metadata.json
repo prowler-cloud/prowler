@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "high",
-  "ResourceType": "AwsIamPermissionsBoundary",
+  "ResourceType": "AwsIamPolicyDetails",
   "Description": "Ensure that no custom IAM policies exist which allow permissive role assumption (e.g. sts:AssumeRole on *)",
   "Risk": "If not restricted unintended access could happen.",
   "RelatedUrl": "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_permissions-to-switch.html#roles-usingrole-createpolicy",
