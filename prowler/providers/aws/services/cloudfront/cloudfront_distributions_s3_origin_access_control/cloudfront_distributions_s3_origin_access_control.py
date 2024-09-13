@@ -31,7 +31,7 @@ class cloudfront_distributions_s3_origin_access_control(Check):
 
                 if s3_buckets_with_no_oac:
                     report.status = "FAIL"
-                    report.status_extended = f"CloudFront Distribution {distribution.id} is not using origin access control (OAC) in static web hosting s3 buckets  {', '.join(s3_buckets_with_no_oac)}."
+                    report.status_extended = f"CloudFront Distribution {distribution.id} is not using origin access control (OAC) in static web hosting s3 buckets {', '.join(s3_buckets_with_no_oac)}."
 
                 findings.append(report)
 
