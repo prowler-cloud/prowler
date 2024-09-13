@@ -80,14 +80,6 @@ class CloudFront(AWSService):
         try:
             for distribution_id in distributions.keys():
                 distribution_config = client.get_distribution_config(Id=distribution_id)
-                oac = False
-                for item in distribution_config["DistributionConfig"]["Origins"][
-                    "Items"
-                ]:
-                    if item["OriginAccessControlId"] != "":
-                        oac = True
-                        break
-
                 # Global Config
                 distributions[distribution_id].logging_enabled = distribution_config[
                     "DistributionConfig"
@@ -102,7 +94,6 @@ class CloudFront(AWSService):
                 distributions[distribution_id].web_acl_id = distribution_config[
                     "DistributionConfig"
                 ]["WebACLId"]
-                distributions[distribution_id].origin_access_control = oac
                 distributions[distribution_id].default_root_object = (
                     distribution_config["DistributionConfig"].get("DefaultRootObject")
                 )

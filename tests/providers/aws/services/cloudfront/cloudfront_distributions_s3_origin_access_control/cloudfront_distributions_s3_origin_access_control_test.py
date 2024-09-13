@@ -150,6 +150,6 @@ class Test_cloudfront_distributions_s3_origin_access_control:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"CloudFront Distribution {DISTRIBUTION_ID} is not using origin access control (OAC) in static web hosting s3 bucket {id}."
+                == f"CloudFront Distribution {DISTRIBUTION_ID} is not using origin access control (OAC) in static web hosting s3 buckets {id}."
             )
             assert result[0].resource_tags == []
