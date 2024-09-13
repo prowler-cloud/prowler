@@ -55,6 +55,12 @@ class CloudFront(AWSService):
                                         )
                                         .get("OriginSslProtocols", {})
                                         .get("Items", []),
+                                        origin_access_control=origin.get(
+                                            "OriginAccessControlId", ""
+                                        ),
+                                        s3_origin_config=origin.get(
+                                            "S3OriginConfig", {}
+                                        ),
                                     )
                                 )
                             distribution = Distribution(
@@ -175,6 +181,8 @@ class Origin(BaseModel):
     domain_name: str
     origin_protocol_policy: str
     origin_ssl_protocols: list[str]
+    origin_access_control: Optional[str]
+    s3_origin_config: Optional[dict]
 
 
 class Distribution(BaseModel):
