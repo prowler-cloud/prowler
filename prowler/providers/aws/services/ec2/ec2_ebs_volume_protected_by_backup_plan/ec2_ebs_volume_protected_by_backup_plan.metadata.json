@@ -3,7 +3,7 @@
   "CheckID": "ec2_ebs_volume_protected_by_backup_plan",
   "CheckTitle": "Amazon EBS volumes should be protected by a backup plan.",
   "CheckType": [
-    "Software and Configuration Checks/AWS Security Best Practices"
+    "Software and Configuration Checks, AWS Security Best Practices"
   ],
   "ServiceName": "ec2",
   "SubServiceName": "",
