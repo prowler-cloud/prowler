@@ -13,7 +13,7 @@ class rds_instance_integration_cloudwatch_logs(Check):
             report.resource_tags = db_instance.tags
             if db_instance.cloudwatch_logs:
                 report.status = "PASS"
-                report.status_extended = f"RDS Instance {db_instance.id} is shipping {' '.join(db_instance.cloudwatch_logs)} to CloudWatch Logs."
+                report.status_extended = f"RDS Instance {db_instance.id} is shipping {', '.join(db_instance.cloudwatch_logs)} logs to CloudWatch Logs."
             else:
                 report.status = "FAIL"
                 report.status_extended = f"RDS Instance {db_instance.id} does not have CloudWatch Logs enabled."
