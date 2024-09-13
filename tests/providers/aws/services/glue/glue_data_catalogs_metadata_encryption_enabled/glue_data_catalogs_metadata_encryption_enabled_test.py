@@ -47,7 +47,7 @@ class Test_glue_data_catalogs_metadata_encryption_enabled:
         glue_client.audited_account = AWS_ACCOUNT_NUMBER
         glue_client.audited_partition = AWS_COMMERCIAL_PARTITION
         glue_client.data_catalog_arn_template = f"arn:{glue_client.audited_partition}:glue:{glue_client.region}:{glue_client.audited_account}:data-catalog"
-        glue_client.__get_data_catalog_arn_template__ = mock.MagicMock(
+        glue_client._get_data_catalog_arn_template = mock.MagicMock(
             return_value=glue_client.data_catalog_arn_template
         )
         with mock.patch(
@@ -90,7 +90,7 @@ class Test_glue_data_catalogs_metadata_encryption_enabled:
         glue_client.audited_account = AWS_ACCOUNT_NUMBER
         glue_client.audited_partition = AWS_COMMERCIAL_PARTITION
         glue_client.data_catalog_arn_template = f"arn:{glue_client.audited_partition}:glue:{glue_client.region}:{glue_client.audited_account}:data-catalog"
-        glue_client.__get_data_catalog_arn_template__ = mock.MagicMock(
+        glue_client._get_data_catalog_arn_template = mock.MagicMock(
             return_value=glue_client.data_catalog_arn_template
         )
         with mock.patch(
@@ -125,7 +125,7 @@ class Test_glue_data_catalogs_metadata_encryption_enabled:
         glue_client.audited_account = AWS_ACCOUNT_NUMBER
         glue_client.audited_partition = AWS_COMMERCIAL_PARTITION
         glue_client.data_catalog_arn_template = f"arn:{glue_client.audited_partition}:glue:{glue_client.region}:{glue_client.audited_account}:data-catalog"
-        glue_client.__get_data_catalog_arn_template__ = mock.MagicMock(
+        glue_client._get_data_catalog_arn_template = mock.MagicMock(
             return_value=glue_client.data_catalog_arn_template
         )
         with mock.patch(
@@ -167,7 +167,7 @@ class Test_glue_data_catalogs_metadata_encryption_enabled:
         glue_client.audited_account = AWS_ACCOUNT_NUMBER
         glue_client.audited_partition = AWS_COMMERCIAL_PARTITION
         glue_client.data_catalog_arn_template = f"arn:{glue_client.audited_partition}:glue:{glue_client.region}:{glue_client.audited_account}:data-catalog"
-        glue_client.__get_data_catalog_arn_template__ = mock.MagicMock(
+        glue_client._get_data_catalog_arn_template = mock.MagicMock(
             return_value=glue_client.data_catalog_arn_template
         )
         with mock.patch(

@@ -14,9 +14,7 @@ class cloudtrail_multi_region_enabled_logging_management_events(Check):
                 report.status_extended = "No CloudTrail trails enabled and logging management events were found."
                 report.region = region
                 report.resource_id = cloudtrail_client.audited_account
-                report.resource_arn = cloudtrail_client.__get_trail_arn_template__(
-                    region
-                )
+                report.resource_arn = cloudtrail_client._get_trail_arn_template(region)
                 trail_is_logging_management_events = False
                 for trail in cloudtrail_client.trails.values():
                     if trail.region == region or trail.is_multiregion:

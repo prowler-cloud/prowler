@@ -23,16 +23,16 @@ class Entra(AzureService):
         loop = get_event_loop()
 
         # Get users first alone because it is a dependency for other attributes
-        self.users = loop.run_until_complete(self.__get_users__())
+        self.users = loop.run_until_complete(self._get_users())
 
         attributes = loop.run_until_complete(
             gather(
-                self.__get_authorization_policy__(),
-                self.__get_group_settings__(),
-                self.__get_security_default__(),
-                self.__get_named_locations__(),
-                self.__get_directory_roles__(),
-                self.__get_conditional_access_policy__(),
+                self._get_authorization_policy(),
+                self._get_group_settings(),
+                self._get_security_default(),
+                self._get_named_locations(),
+                self._get_directory_roles(),
+                self._get_conditional_access_policy(),
             )
         )
 
@@ -43,7 +43,7 @@ class Entra(AzureService):
         self.directory_roles = attributes[4]
         self.conditional_access_policy = attributes[5]
 
-    async def __get_users__(self):
+    async def _get_users(self):
         logger.info("Entra - Getting users...")
         users = {}
         try:
@@ -79,7 +79,7 @@ class Entra(AzureService):
 
         return users
 
-    async def __get_authorization_policy__(self):
+    async def _get_authorization_policy(self):
         logger.info("Entra - Getting authorization policy...")
 
         authorization_policy = {}
@@ -115,7 +115,7 @@ class Entra(AzureService):
 
         return authorization_policy
 
-    async def __get_group_settings__(self):
+    async def _get_group_settings(self):
         logger.info("Entra - Getting group settings...")
         group_settings = {}
         try:
@@ -139,7 +139,7 @@ class Entra(AzureService):
 
         return group_settings
 
-    async def __get_security_default__(self):
+    async def _get_security_default(self):
         logger.info("Entra - Getting security default...")
         try:
             security_defaults = {}
@@ -163,7 +163,7 @@ class Entra(AzureService):
 
         return security_defaults
 
-    async def __get_named_locations__(self):
+    async def _get_named_locations(self):
         logger.info("Entra - Getting named locations...")
         named_locations = {}
         try:
@@ -194,7 +194,7 @@ class Entra(AzureService):
 
         return named_locations
 
-    async def __get_directory_roles__(self):
+    async def _get_directory_roles(self):
         logger.info("Entra - Getting directory roles...")
         directory_roles_with_members = {}
         try:
@@ -228,7 +228,7 @@ class Entra(AzureService):
             )
         return directory_roles_with_members
 
-    async def __get_conditional_access_policy__(self):
+    async def _get_conditional_access_policy(self):
         logger.info("Entra - Getting conditional access policy...")
         conditional_access_policy = {}
         try:

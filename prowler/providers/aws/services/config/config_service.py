@@ -13,12 +13,12 @@ class Config(AWSService):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.recorders = []
-        self.__threading_call__(self.__describe_configuration_recorder_status__)
+        self.__threading_call__(self._describe_configuration_recorder_status)
 
-    def __get_recorder_arn_template__(self, region):
+    def _get_recorder_arn_template(self, region):
         return f"arn:{self.audited_partition}:config:{region}:{self.audited_account}:recorder"
 
-    def __describe_configuration_recorder_status__(self, regional_client):
+    def _describe_configuration_recorder_status(self, regional_client):
         logger.info("Config - Listing Recorders...")
         try:
             recorders = regional_client.describe_configuration_recorder_status()[

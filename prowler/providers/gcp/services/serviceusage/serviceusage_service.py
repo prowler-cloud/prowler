@@ -10,9 +10,9 @@ class ServiceUsage(GCPService):
     def __init__(self, provider: GcpProvider):
         super().__init__(__class__.__name__, provider)
         self.active_services = {}
-        self.__get_active_services__()
+        self._get_active_services()
 
-    def __get_active_services__(self):
+    def _get_active_services(self):
         for project_id in self.project_ids:
             self.active_services[project_id] = []
             try:

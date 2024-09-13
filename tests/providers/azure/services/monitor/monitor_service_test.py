@@ -40,11 +40,11 @@ def mock_monitor_get_diagnostics_settings(_):
 
 
 @patch(
-    "prowler.providers.azure.services.monitor.monitor_service.Monitor.__get_diagnostics_settings__",
+    "prowler.providers.azure.services.monitor.monitor_service.Monitor._get_diagnostics_settings",
     new=mock_monitor_get_diagnostics_settings,
 )
 class Test_Monitor_Service:
-    def test__get_client__(self):
+    def test_get_client(self):
         monitor = Monitor(set_mocked_azure_provider())
         assert (
             monitor.clients[AZURE_SUBSCRIPTION_ID].__class__.__name__

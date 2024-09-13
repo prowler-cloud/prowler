@@ -33,7 +33,7 @@ class Test_WAFv2_Service:
 
     # Test WAFv2 Describe Web ACLs
     @mock_aws
-    def test__list_web_acls__(self):
+    def test_list_web_acls(self):
         wafv2 = client("wafv2", region_name=AWS_REGION_EU_WEST_1)
         waf = wafv2.create_web_acl(
             Scope="REGIONAL",
@@ -56,7 +56,7 @@ class Test_WAFv2_Service:
 
     # Test WAFv2 Describe Web ACLs Resources
     @mock_aws
-    def test__list_resources_for_web_acl__(self):
+    def test_list_resources_for_web_acl(self):
         wafv2 = client("wafv2", region_name=AWS_REGION_EU_WEST_1)
         conn = client("elbv2", region_name=AWS_REGION_EU_WEST_1)
         ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)

@@ -57,7 +57,7 @@ def mock_generate_regional_clients(provider, service):
 )
 class Test_SecurityHub_Service:
     # Test SecurityHub Client
-    def test__get_client__(self):
+    def test_get_client(self):
         security_hub = SecurityHub(set_mocked_aws_provider([AWS_REGION_EU_WEST_1]))
         assert (
             security_hub.regional_clients[AWS_REGION_EU_WEST_1].__class__.__name__
@@ -69,7 +69,7 @@ class Test_SecurityHub_Service:
         security_hub = SecurityHub(set_mocked_aws_provider([AWS_REGION_EU_WEST_1]))
         assert security_hub.session.__class__.__name__ == "Session"
 
-    def test__describe_hub__(self):
+    def test_describe_hub(self):
         # Set partition for the service
         securityhub = SecurityHub(set_mocked_aws_provider([AWS_REGION_EU_WEST_1]))
         assert len(securityhub.securityhubs) == 1

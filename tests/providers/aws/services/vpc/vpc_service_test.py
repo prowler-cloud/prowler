@@ -1,15 +1,48 @@
 import json
 
+import botocore
+import mock
 from boto3 import client, resource
 from moto import mock_aws
 
-from prowler.providers.aws.services.vpc.vpc_service import Route
+from prowler.providers.aws.services.vpc.vpc_service import VPC, Route
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
     AWS_REGION_US_EAST_1,
     set_mocked_aws_provider,
 )
+
+make_api_call = botocore.client.BaseClient._make_api_call
+
+
+def mock_make_api_call(self, operation_name, kwarg):
+    if operation_name == "DescribeVpnConnections":
+        return {
+            "VpnConnections": [
+                {
+                    "VpnConnectionId": "vpn-1234567890abcdef0",
+                    "CustomerGatewayId": "cgw-0123456789abcdef0",
+                    "VpnGatewayId": "vgw-0123456789abcdef0",
+                    "State": "available",
+                    "Type": "ipsec.1",
+                    "VgwTelemetry": [
+                        {
+                            "OutsideIpAddress": "192.168.1.1",
+                            "Status": "UP",
+                            "AcceptedRouteCount": 10,
+                        },
+                        {
+                            "OutsideIpAddress": "192.168.1.2",
+                            "Status": "UP",
+                            "AcceptedRouteCount": 5,
+                        },
+                    ],
+                    "Tags": [{"Key": "Name", "Value": "MyVPNConnection"}],
+                }
+            ]
+        }
+    return make_api_call(self, operation_name, kwarg)
 
 
 class Test_VPC_Service:
@@ -65,7 +98,7 @@ class Test_VPC_Service:
 
     # Test VPC Describe VPCs
     @mock_aws
-    def test__describe_vpcs__(self):
+    def test_describe_vpcs(self):
         # Generate VPC Client
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
         # Create VPC
@@ -98,7 +131,7 @@ class Test_VPC_Service:
 
     # Test VPC Describe Flow Logs
     @mock_aws
-    def test__describe_flow_logs__(self):
+    def test_describe_flow_logs(self):
         # Generate VPC Client
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
         new_vpc = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]
@@ -127,7 +160,7 @@ class Test_VPC_Service:
 
     # Test VPC Describe VPC Peering connections
     @mock_aws
-    def test__describe_vpc_peering_connections__(self):
+    def test_describe_vpc_peering_connections(self):
         # Generate VPC Client
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
         # Create VPCs peers
@@ -211,7 +244,7 @@ class Test_VPC_Service:
 
     # Test VPC Describe VPC Endpoints
     @mock_aws
-    def test__describe_vpc_endpoints__(self):
+    def test_describe_vpc_endpoints(self):
         # Generate VPC Client
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
         # Create VPC endpoint
@@ -256,10 +289,11 @@ class Test_VPC_Service:
         assert vpc.vpc_endpoints[0].tags == [
             {"Key": "test", "Value": "test"},
         ]
+        assert vpc.vpc_endpoints[0].type == "Gateway"
 
     # Test VPC Describe VPC Endpoint Services
     @mock_aws
-    def test__describe_vpc_endpoint_services__(self):
+    def test_describe_vpc_endpoint_services(self):
         # Generate VPC Client
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
         elbv2_client = client("elbv2", region_name=AWS_REGION_US_EAST_1)
@@ -314,7 +348,7 @@ class Test_VPC_Service:
 
     # Test VPC Describe VPC Subnets
     @mock_aws
-    def test__describe_vpc_subnets__(self):
+    def test_describe_vpc_subnets(self):
         # Generate VPC Client
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
         # Create VPC
@@ -347,3 +381,19 @@ class Test_VPC_Service:
                 assert vpc.subnets[0].nat_gateway is False
                 assert vpc.subnets[0].region == AWS_REGION_US_EAST_1
                 assert vpc.subnets[0].tags is None
+
+    # Test VPC Describe VPN Connections
+    @mock.patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
+    def test_describe_vpn_connections(self):
+        # Generate VPC Client
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        vpc = VPC(aws_provider)
+
+        vpn_arn = f"arn:{aws_provider.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{aws_provider.identity.account}:vpn-connection/vpn-1234567890abcdef0"
+        assert len(vpc.vpn_connections) == 1
+        assert vpn_arn in vpc.vpn_connections
+        vpn_conn = vpc.vpn_connections[vpn_arn]
+        assert vpn_conn.id == "vpn-1234567890abcdef0"
+        assert vpn_conn.region == AWS_REGION_US_EAST_1
+        assert len(vpn_conn.tunnels) == 2

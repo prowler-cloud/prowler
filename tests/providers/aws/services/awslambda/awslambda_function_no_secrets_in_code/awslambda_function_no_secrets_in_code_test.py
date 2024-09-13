@@ -47,13 +47,13 @@ def get_lambda_code_with_secrets(code):
     )
 
 
-def mock__get_function_code__with_secrets():
+def mock_get_function_codewith_secrets():
     yield create_lambda_function(), get_lambda_code_with_secrets(
         LAMBDA_FUNCTION_CODE_WITH_SECRETS
     )
 
 
-def mock__get_function_code__without_secrets():
+def mock_get_function_codewithout_secrets():
     yield create_lambda_function(), get_lambda_code_with_secrets(
         LAMBDA_FUNCTION_CODE_WITHOUT_SECRETS
     )
@@ -84,7 +84,8 @@ class Test_awslambda_function_no_secrets_in_code:
     def test_function_code_with_secrets(self):
         lambda_client = mock.MagicMock
         lambda_client.functions = {LAMBDA_FUNCTION_ARN: create_lambda_function()}
-        lambda_client.__get_function_code__ = mock__get_function_code__with_secrets
+        lambda_client._get_function_code = mock_get_function_codewith_secrets
+        lambda_client.audit_config = {"secrets_ignore_patterns": []}
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_aws_provider(),
@@ -115,7 +116,8 @@ class Test_awslambda_function_no_secrets_in_code:
         lambda_client = mock.MagicMock
         lambda_client.functions = {LAMBDA_FUNCTION_ARN: create_lambda_function()}
 
-        lambda_client.__get_function_code__ = mock__get_function_code__without_secrets
+        lambda_client._get_function_code = mock_get_function_codewithout_secrets
+        lambda_client.audit_config = {"secrets_ignore_patterns": []}
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",

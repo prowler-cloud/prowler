@@ -11,10 +11,10 @@ class NetworkFirewall(AWSService):
         # Call AWSService's __init__
         super().__init__("network-firewall", provider)
         self.network_firewalls = []
-        self.__threading_call__(self.__list_firewalls__)
-        self.__describe_firewall__()
+        self.__threading_call__(self._list_firewalls)
+        self._describe_firewall()
 
-    def __list_firewalls__(self, regional_client):
+    def _list_firewalls(self, regional_client):
         logger.info("Network Firewall - Listing Network Firewalls...")
         try:
             list_network_firewalls_paginator = regional_client.get_paginator(
@@ -39,7 +39,7 @@ class NetworkFirewall(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_firewall__(self):
+    def _describe_firewall(self):
         logger.info("Network Firewall - Describe Network Firewalls...")
         try:
             for network_firewall in self.network_firewalls:

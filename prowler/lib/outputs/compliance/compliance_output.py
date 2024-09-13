@@ -2,7 +2,7 @@ from csv import DictWriter
 from pathlib import Path
 from typing import List
 
-from prowler.lib.check.compliance_models import ComplianceBaseModel
+from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.logger import logger
 from prowler.lib.outputs.finding import Finding
 from prowler.lib.outputs.output import Output
@@ -28,7 +28,7 @@ class ComplianceOutput(Output):
     def __init__(
         self,
         findings: List[Finding],
-        compliance: ComplianceBaseModel,
+        compliance: Compliance,
         create_file_descriptor: bool = False,
         file_path: str = None,
         file_extension: str = "",
