@@ -1125,7 +1125,7 @@ class Test_iam_inline_policy_allows_privilege_escalation:
             "Statement": [
                 {
                     "Effect": "Allow",
-                    "NotAction": "prowler:io",
+                    "NotAction": "prowler:action",
                     "Resource": "*",
                 },
             ],
@@ -1142,14 +1142,14 @@ class Test_iam_inline_policy_allows_privilege_escalation:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation.iam_client",
+            "prowler.providers.aws.services.iam.iam_inline_policy_allows_privilege_escalation.iam_inline_policy_allows_privilege_escalation.iam_client",
             new=IAM(aws_provider),
         ):
-            from prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation import (
-                iam_policy_allows_privilege_escalation,
+            from prowler.providers.aws.services.iam.iam_inline_policy_allows_privilege_escalation.iam_inline_policy_allows_privilege_escalation import (
+                iam_inline_policy_allows_privilege_escalation,
             )
 
-            check = iam_policy_allows_privilege_escalation()
+            check = iam_inline_policy_allows_privilege_escalation()
             result = check.execute()
             assert len(result) == 1
             for finding in result:
