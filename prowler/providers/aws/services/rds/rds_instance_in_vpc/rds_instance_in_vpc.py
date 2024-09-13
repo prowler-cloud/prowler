@@ -5,7 +5,6 @@ from prowler.providers.aws.services.rds.rds_client import rds_client
 class rds_instance_in_vpc(Check):
     def execute(self):
         findings = []
-
         for db_instance_arn, db_instance in rds_client.db_instances.items():
             report = Check_Report_AWS(self.metadata())
             report.region = db_instance.region
