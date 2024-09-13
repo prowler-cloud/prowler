@@ -1,6 +1,7 @@
 from ipaddress import ip_address, ip_network
 
 from prowler.lib.logger import logger
+from prowler.providers.aws.aws_provider import read_aws_regions_file
 
 
 def is_policy_cross_account(policy: dict, audited_account: str) -> bool:
@@ -174,3 +175,100 @@ def is_condition_restricting_from_private_ip(condition_statement: dict) -> bool:
         )
 
     return is_from_private_ip
+
+
+def process_actions(effect, actions, target_set):
+    """
+    process_actions processes the actions in the policy.
+    Args:
+        effect (str): The effect of the policy.
+        actions (str or list): The actions to process.
+        target_set (set): The set to store the actions.
+    """
+    if effect in ["Allow", "Deny"] and actions:
+        if isinstance(actions, str):
+            target_set.add(actions)
+        elif isinstance(actions, list):
+            target_set.update(actions)
+
+
+def check_admin_access(policy: dict) -> bool:
+    """
+    check_admin_access checks if the policy allows admin access.
+    Args:
+        policy (dict): The policy to check.
+    Returns:
+        bool: True if the policy allows admin access, False otherwise.
+    """
+
+    if policy:
+        allowed_actions = set()
+        allowed_not_actions = set()
+        denied_actions = set()
+        denied_not_actions = set()
+
+        statements = policy.get("Statement", [])
+        if not isinstance(statements, list):
+            statements = [statements]
+
+        for statement in statements:
+            if statement["Resource"] == "*" or statement["Resource"] == ["*"]:
+                effect = statement.get("Effect")
+                actions = statement.get("Action")
+                not_actions = statement.get("NotAction")
+                if effect == "Allow":
+                    process_actions(effect, actions, allowed_actions)
+                    process_actions(effect, not_actions, allowed_not_actions)
+                elif effect == "Deny":
+                    process_actions(effect, actions, denied_actions)
+                    process_actions(effect, not_actions, denied_not_actions)
+
+        # If there is only NotAction, it allows the rest of the actions
+        if not allowed_actions and allowed_not_actions:
+            allowed_actions.add("*")
+        # Check for invalid services in allowed NotAction
+        if allowed_not_actions:
+            invalid_not_actions = check_invalid_not_actions(allowed_not_actions)
+            if invalid_not_actions:
+                # Since it is an invalid NotAction, it allows all AWS actions
+                allowed_actions.add("*")
+
+        if "*" in allowed_actions:
+            return True
+        return False
+
+
+def check_invalid_not_actions(not_actions):
+    """
+    Checks if the actions in NotAction have services that are not part of AWS.
+    Args:
+        not_actions (str or list): The NotAction to check.
+    Returns:
+        dict: A dictionary with invalid services and their actions.
+    """
+    invalid_services = {}
+
+    if isinstance(not_actions, str):
+        not_actions = [not_actions]
+
+    for action in not_actions:
+        service = action.split(":")[0]
+        if not is_valid_aws_service(service):
+            if service not in invalid_services:
+                invalid_services[service] = []
+            invalid_services[service].append(action)
+
+    return invalid_services
+
+
+def is_valid_aws_service(service):
+    """
+    Checks if a service is a valid AWS service using aws_regions_by_service.json.
+    Args:
+        service (str): The service to check.
+    Returns:
+        bool: True if the service is valid, False otherwise.
+    """
+    if service in read_aws_regions_file()["services"]:
+        return True
+    return False

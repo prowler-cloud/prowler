@@ -1,5 +1,8 @@
 from prowler.lib.logger import logger
-from prowler.providers.aws.aws_provider import read_aws_regions_file
+from prowler.providers.aws.services.iam.lib.policy import (
+    check_invalid_not_actions,
+    process_actions,
+)
 
 # Does the tool analyze both users and roles, or just one or the other? --> Everything using AttachementCount.
 # Does the tool take a principal-centric or policy-centric approach? --> Policy-centric approach.
@@ -8,6 +11,7 @@ from prowler.providers.aws.aws_provider import read_aws_regions_file
 # Does the tool handle transitive privesc paths (i.e., attack chains)? --> Not yet.
 # Does the tool handle the DENY effect as expected? --> Yes, it checks DENY's statements with Action and NotAction.
 # Does the tool handle NotAction as expected? --> Yes
+# Does the tool handle NotAction with invalid actions as expected? --> Yes
 # Does the tool handle Condition constraints? --> Not yet.
 # Does the tool handle service control policy (SCP) restrictions? --> No, SCP are within Organizations AWS API.
 
@@ -166,44 +170,6 @@ def find_privilege_escalation_combinations(
     return policies_combination
 
 
-def process_actions(effect, actions, target_set):
-    """
-    process_actions processes the actions in the policy.
-    Args:
-        effect (str): The effect of the policy.
-        actions (str or list): The actions to process.
-        target_set (set): The set to store the actions.
-    """
-    if effect in ["Allow", "Deny"] and actions:
-        if isinstance(actions, str):
-            target_set.add(actions)
-        elif isinstance(actions, list):
-            target_set.update(actions)
-
-
-def check_invalid_not_actions(not_actions):
-    """
-    Checks if the actions in NotAction have services that are not part of AWS.
-    Args:
-        not_actions (str or list): The NotAction to check.
-    Returns:
-        dict: A dictionary with invalid services and their actions.
-    """
-    invalid_services = {}
-
-    if isinstance(not_actions, str):
-        not_actions = [not_actions]
-
-    for action in not_actions:
-        service = action.split(":")[0]
-        if not is_valid_aws_service(service):
-            if service not in invalid_services:
-                invalid_services[service] = []
-            invalid_services[service].append(action)
-
-    return invalid_services
-
-
 def check_privilege_escalation(policy: dict) -> str:
     """
     check_privilege_escalation checks if the policy allows privilege escalation.
@@ -272,16 +238,3 @@ def check_privilege_escalation(policy: dict) -> str:
             )
 
     return policies_affected
-
-
-def is_valid_aws_service(service):
-    """
-    Checks if a service is a valid AWS service using aws_regions_by_service.json.
-    Args:
-        service (str): The service to check.
-    Returns:
-        bool: True if the service is valid, False otherwise.
-    """
-    if service in read_aws_regions_file()["services"]:
-        return True
-    return False
