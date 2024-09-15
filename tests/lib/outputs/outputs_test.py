@@ -331,15 +331,15 @@ class TestOutputs:
         finding_1.muted = True
         finding_1.resource_id = "test_resource_1"
         finding_1.check_metadata.Severity = "critical"
-        finding_1.check_metadata.CheckTitle = (
-            "rds_instance_certificate_expiration"
-        )
+        finding_1.check_metadata.CheckTitle = "rds_instance_certificate_expiration"
         finding_2 = mock.MagicMock()
         finding_2.status = "FAIL"
         finding_2.muted = False
         finding_2.resource_id = "test_resource_1"
         finding_2.check_metadata.Severity = "critical"
-        finding_2.check_metadata.CheckTitle = "autoscaling_find_secrets_ec2_launch_configuration"
+        finding_2.check_metadata.CheckTitle = (
+            "autoscaling_find_secrets_ec2_launch_configuration"
+        )
         findings = [finding_1, finding_2]
 
         stats = extract_findings_statistics(findings)
@@ -350,7 +350,7 @@ class TestOutputs:
         assert stats["resources_count"] == 1
         assert stats["critical_failed_findings"] == [
             "rds_instance_certificate_expiration",
-            "autoscaling_find_secrets_ec2_launch_configuration"
+            "autoscaling_find_secrets_ec2_launch_configuration",
         ]
         assert stats["critical_passed_findings"] == []
         assert stats["findings_count"] == 2
@@ -391,9 +391,7 @@ class TestOutputs:
         finding_1.status = "PASS"
         finding_1.muted = True
         finding_1.check_metadata.Severity = "critical"
-        finding_1.check_metadata.CheckTitle = (
-            "rds_instance_certificate_expiration"
-        )
+        finding_1.check_metadata.CheckTitle = "rds_instance_certificate_expiration"
         finding_1.resource_id = "test_resource_1"
         findings = [finding_1]
 
