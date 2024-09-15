@@ -150,7 +150,7 @@ class Slack:
                     "type": "section",
                     "text": {
                         "type": "mrkdwn",
-                        "text": f"\nCritical Failed Findings:\n"
+                        "text": "\nCritical Failed Findings:\n"
                         + "\n".join(
                             [
                                 f"• {finding}"
@@ -164,7 +164,7 @@ class Slack:
                     "type": "section",
                     "text": {
                         "type": "mrkdwn",
-                        "text": f"\nCritical Passed Findings:\n"
+                        "text": "\nCritical Passed Findings:\n"
                         + "\n".join(
                             [
                                 f"• {finding}"
