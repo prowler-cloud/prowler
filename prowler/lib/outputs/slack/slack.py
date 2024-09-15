@@ -150,7 +150,13 @@ class Slack:
                     "type": "section",
                     "text": {
                         "type": "mrkdwn",
-                        "text": f"\nCritical Failed Findings:\n" + "\n".join([f"• {finding}" for finding in stats['critical_failed_findings']]),
+                        "text": f"\nCritical Failed Findings:\n"
+                        + "\n".join(
+                            [
+                                f"• {finding}"
+                                for finding in stats["critical_failed_findings"]
+                            ]
+                        ),
                     },
                 },
                 {"type": "divider"},
@@ -158,7 +164,13 @@ class Slack:
                     "type": "section",
                     "text": {
                         "type": "mrkdwn",
-                        "text": f"\nCritical Passed Findings:\n" + "\n".join([f"• {finding}" for finding in stats['critical_passed_findings']]),
+                        "text": f"\nCritical Passed Findings:\n"
+                        + "\n".join(
+                            [
+                                f"• {finding}"
+                                for finding in stats["critical_passed_findings"]
+                            ]
+                        ),
                     },
                 },
                 {"type": "divider"},
