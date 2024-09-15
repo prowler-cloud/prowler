@@ -51,6 +51,8 @@ class TestSlackIntegration:
         stats = {}
         stats["total_pass"] = 12
         stats["total_fail"] = 10
+        stats['critical_failed_findings'] = ["ec2_instance_account_imdsv2_enabled", "ec2_ebs_snapshot_account_block_public_access", "ec2_ebs_default_encryption"]
+        stats['critical_passed_findings'] = ["cloudfront_distributions_custom_ssl_certificate", "acm_certificates_expiration_check"]
         stats["resources_count"] = 20
         stats["findings_count"] = 22
 
@@ -70,6 +72,8 @@ class TestSlackIntegration:
         stats = {}
         stats["total_pass"] = 12
         stats["total_fail"] = 10
+        stats['critical_failed_findings'] = ["ec2_instance_account_imdsv2_enabled", "ec2_ebs_snapshot_account_block_public_access", "ec2_ebs_default_encryption"]
+        stats['critical_passed_findings'] = ["cloudfront_distributions_custom_ssl_certificate", "acm_certificates_expiration_check"]
         stats["resources_count"] = 20
         stats["findings_count"] = 22
 
@@ -123,6 +127,22 @@ class TestSlackIntegration:
             {"type": "divider"},
             {
                 "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": f"\nCritical Failed Findings:\n" + "\n".join([f"• {finding}" for finding in stats['critical_failed_findings']]),
+                },
+            },
+            {"type": "divider"},
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": f"\nCritical Passed Findings:\n" + "\n".join([f"• {finding}" for finding in stats['critical_passed_findings']]),
+                },
+            },
+            {"type": "divider"},
+            {
+                "type": "section",
                 "text": {"type": "mrkdwn", "text": "Join our Slack Community!"},
                 "accessory": {
                     "type": "button",
@@ -163,6 +183,8 @@ class TestSlackIntegration:
         stats = {}
         stats["total_pass"] = 12
         stats["total_fail"] = 10
+        stats['critical_failed_findings'] = ["ec2_instance_account_imdsv2_enabled", "ec2_ebs_snapshot_account_block_public_access", "ec2_ebs_default_encryption"]
+        stats['critical_passed_findings'] = ["cloudfront_distributions_custom_ssl_certificate", "acm_certificates_expiration_check"]
         stats["resources_count"] = 20
         stats["findings_count"] = 22
 
@@ -218,6 +240,22 @@ class TestSlackIntegration:
             {"type": "divider"},
             {
                 "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": f"\nCritical Failed Findings:\n" + "\n".join([f"• {finding}" for finding in stats['critical_failed_findings']]),
+                },
+            },
+            {"type": "divider"},
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": f"\nCritical Passed Findings:\n" + "\n".join([f"• {finding}" for finding in stats['critical_passed_findings']]),
+                },
+            },
+            {"type": "divider"},
+            {
+                "type": "section",
                 "text": {"type": "mrkdwn", "text": "Join our Slack Community!"},
                 "accessory": {
                     "type": "button",
@@ -258,6 +296,8 @@ class TestSlackIntegration:
         stats = {}
         stats["total_pass"] = 12
         stats["total_fail"] = 10
+        stats['critical_failed_findings'] = ["ec2_instance_account_imdsv2_enabled", "ec2_ebs_snapshot_account_block_public_access", "ec2_ebs_default_encryption"]
+        stats['critical_passed_findings'] = ["cloudfront_distributions_custom_ssl_certificate", "acm_certificates_expiration_check"]
         stats["resources_count"] = 20
         stats["findings_count"] = 22
 
@@ -307,6 +347,22 @@ class TestSlackIntegration:
                         "text": f"Used parameters: `prowler {args}`",
                     }
                 ],
+            },
+            {"type": "divider"},
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": f"\nCritical Failed Findings:\n" + "\n".join([f"• {finding}" for finding in stats['critical_failed_findings']]),
+                },
+            },
+            {"type": "divider"},
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": f"\nCritical Passed Findings:\n" + "\n".join([f"• {finding}" for finding in stats['critical_passed_findings']]),
+                },
             },
             {"type": "divider"},
             {

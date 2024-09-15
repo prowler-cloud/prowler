@@ -244,6 +244,7 @@ class TestOutputs:
         finding_1 = mock.MagicMock()
         finding_1.status = "PASS"
         finding_1.resource_id = "test_resource_1"
+        finding_1.check
         finding_2 = mock.MagicMock()
         finding_2.status = "FAIL"
         finding_2.resource_id = "test_resource_2"
@@ -299,6 +300,8 @@ class TestOutputs:
         assert stats["total_fail"] == 0
         assert stats["total_muted_pass"] == 0
         assert stats["total_muted_fail"] == 0
+        assert stats["critical_failed_findings"] == []
+        assert stats["critical_passed_findings"] == []
         assert stats["resources_count"] == 0
         assert stats["findings_count"] == 0
 
@@ -307,6 +310,8 @@ class TestOutputs:
         finding_1.status = "FAIL"
         finding_1.muted = True
         finding_1.resource_id = "test_resource_1"
+        finding_1.check_metadata.Severity = "high"
+        finding_1.check_metadata.CheckTitle = "acm_certificates_expiration_check"
         findings = [finding_1]
 
         stats = extract_findings_statistics(findings)
@@ -316,6 +321,8 @@ class TestOutputs:
         assert stats["total_muted_fail"] == 1
         assert stats["resources_count"] == 1
         assert stats["findings_count"] == 1
+        assert stats["critical_failed_findings"] == []
+        assert stats["critical_passed_findings"] == []
         assert stats["all_fails_are_muted"]
 
     def test_extract_findings_statistics_all_fail_are_not_muted(self):
@@ -323,10 +330,14 @@ class TestOutputs:
         finding_1.status = "FAIL"
         finding_1.muted = True
         finding_1.resource_id = "test_resource_1"
+        finding_1.check_metadata.Severity = "critical"
+        finding_1.check_metadata.CheckTitle = "cloudfront_distributions_custom_ssl_certificate"
         finding_2 = mock.MagicMock()
         finding_2.status = "FAIL"
         finding_2.muted = False
         finding_2.resource_id = "test_resource_1"
+        finding_2.check_metadata.Severity = "critical"
+        finding_2.check_metadata.CheckTitle = "acm_certificates_expiration_check"
         findings = [finding_1, finding_2]
 
         stats = extract_findings_statistics(findings)
@@ -335,6 +346,8 @@ class TestOutputs:
         assert stats["total_muted_pass"] == 0
         assert stats["total_muted_fail"] == 1
         assert stats["resources_count"] == 1
+        assert stats["critical_failed_findings"] == ["cloudfront_distributions_custom_ssl_certificate", "acm_certificates_expiration_check"]
+        assert stats["critical_passed_findings"] == []
         assert stats["findings_count"] == 2
         assert not stats["all_fails_are_muted"]
 
@@ -343,10 +356,15 @@ class TestOutputs:
         finding_1.status = "PASS"
         finding_1.muted = True
         finding_1.resource_id = "test_resource_1"
+        finding_1.check_metadata.Severity = "critical"
+        finding_1.check_metadata.CheckTitle = "cloudfront_distributions_custom_ssl_certificate"
+
         finding_2 = mock.MagicMock()
         finding_2.status = "PASS"
         finding_2.muted = False
         finding_2.resource_id = "test_resource_1"
+        finding_2.check_metadata.Severity = "high"
+        finding_2.check_metadata.CheckTitle = "acm_certificates_expiration_check"
         findings = [finding_1, finding_2]
 
         stats = extract_findings_statistics(findings)
@@ -355,12 +373,16 @@ class TestOutputs:
         assert stats["total_muted_pass"] == 1
         assert stats["total_muted_fail"] == 0
         assert stats["resources_count"] == 1
+        assert stats["critical_failed_findings"] == []
+        assert stats["critical_passed_findings"] == ["cloudfront_distributions_custom_ssl_certificate"]
         assert stats["findings_count"] == 2
 
     def test_extract_findings_statistics_all_passes_are_muted(self):
         finding_1 = mock.MagicMock()
         finding_1.status = "PASS"
         finding_1.muted = True
+        finding_1.check_metadata.Severity = "critical"
+        finding_1.check_metadata.CheckTitle = "cloudfront_distributions_custom_ssl_certificate"
         finding_1.resource_id = "test_resource_1"
         findings = [finding_1]
 
@@ -370,6 +392,8 @@ class TestOutputs:
         assert stats["total_muted_pass"] == 1
         assert stats["total_muted_fail"] == 0
         assert stats["resources_count"] == 1
+        assert stats["critical_failed_findings"] == []
+        assert stats["critical_passed_findings"] == ["cloudfront_distributions_custom_ssl_certificate"]
         assert stats["findings_count"] == 1
 
     def test_report_with_aws_provider_not_muted_pass(self):

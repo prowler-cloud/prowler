@@ -82,9 +82,14 @@ def extract_findings_statistics(findings: list) -> dict:
     extract_findings_statistics takes a list of findings and returns the following dict with the aggregated statistics
     {
         "total_pass": 0,
+        "total_muted_fail": 0,
         "total_fail": 0,
+        "total_muted_fail": 0,
         "resources_count": 0,
         "findings_count": 0,
+        "critical_failed_findings": [],
+        "critical_passed_findings": []
+        "all_fails_are_muted": False
     }
     """
     logger.info("Extracting audit statistics...")
@@ -96,18 +101,24 @@ def extract_findings_statistics(findings: list) -> dict:
     resources = set()
     findings_count = 0
     all_fails_are_muted = True
+    critical_pass_findings = []
+    critical_fail_findings = []
 
     for finding in findings:
         # Save the resource_id
         resources.add(finding.resource_id)
 
         if finding.status == "PASS":
+            if finding.check_metadata.Severity == "critical":
+                critical_pass_findings.append(finding.check_metadata.CheckTitle)
             total_pass += 1
             findings_count += 1
             if finding.muted is True:
                 muted_pass += 1
 
         if finding.status == "FAIL":
+            if finding.check_metadata.Severity == "critical":
+                critical_fail_findings.append(finding.check_metadata.CheckTitle)
             total_fail += 1
             findings_count += 1
             if finding.muted is True:
@@ -121,6 +132,8 @@ def extract_findings_statistics(findings: list) -> dict:
     stats["total_muted_fail"] = muted_fail
     stats["resources_count"] = len(resources)
     stats["findings_count"] = findings_count
+    stats["critical_failed_findings"] = critical_fail_findings
+    stats["critical_passed_findings"] = critical_pass_findings
     stats["all_fails_are_muted"] = all_fails_are_muted
 
     return stats
