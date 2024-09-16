@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:s3:::bucket_name",
   "Severity": "low",
-  "ResourceType": "AwsS3BucketObjectLockConfiguration",
+  "ResourceType": "AwsS3Bucket",
   "Description": "Check if S3 buckets have object lock enabled",
   "Risk": "Store objects using a write-once-read-many (WORM) model to help you prevent objects from being deleted or overwritten for a fixed amount of time or indefinitely. That helps to prevent ransomware attacks.",
   "RelatedUrl": "",

@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "high",
-  "ResourceType": "AwsIamGroup",
+  "ResourceType": "AwsIamUser",
   "Description": "Ensure users of groups with AdministratorAccess policy have MFA tokens enabled",
   "Risk": "Policy may allow Anonymous users to perform actions.",
   "RelatedUrl": "",

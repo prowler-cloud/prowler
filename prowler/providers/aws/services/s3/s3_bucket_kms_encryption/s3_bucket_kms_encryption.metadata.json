@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:s3:::bucket_name",
   "Severity": "medium",
-  "ResourceType": "AwsS3BucketServerSideEncryptionConfiguration",
+  "ResourceType": "AwsS3Bucket",
   "Description": "Check if S3 buckets have KMS encryption enabled.",
   "Risk": "Amazon S3 KMS encryption provides a way to set the encryption behavior for an S3 bucket using a managed key. This will ensure data-at-rest is encrypted.",
   "RelatedUrl": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingKMSEncryption.html",
