@@ -52,7 +52,7 @@ class Test_ec2_launch_template_no_public_ip:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_launch_template_no_secrets.ec2_launch_template_no_secrets.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_launch_template_no_public_ip.ec2_launch_template_no_public_ip.ec2_client",
             new=EC2(aws_provider),
         ):
             # Test Check
@@ -91,7 +91,7 @@ class Test_ec2_launch_template_no_public_ip:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_launch_template_no_secrets.ec2_launch_template_no_secrets.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_launch_template_no_public_ip.ec2_launch_template_no_public_ip.ec2_client",
             new=EC2(aws_provider),
         ):
             # Test Check
