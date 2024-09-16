@@ -389,13 +389,13 @@ typing-extensions = ">=4.6.0"
 
 [[package]]
 name = "azure-mgmt-containerservice"
-version = "31.0.0"
+version = "32.0.0"
 description = "Microsoft Azure Container Service Management Client Library for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "azure-mgmt-containerservice-31.0.0.tar.gz", hash = "sha256:134358d7f88c4d29b4009f91d7619861e1fad5dbea5e147402dd61ad96b5624a"},
-    {file = "azure_mgmt_containerservice-31.0.0-py3-none-any.whl", hash = "sha256:75c6dbbaf27ed6c8251e34b86fefcfb001fe096c69df9ce93c163de71a2b5275"},
+    {file = "azure_mgmt_containerservice-32.0.0-py3-none-any.whl", hash = "sha256:66ff0a2651122207db0d5492e86550561f9d81509379abe7d401ed4805a1c66b"},
+    {file = "azure_mgmt_containerservice-32.0.0.tar.gz", hash = "sha256:ccb587479d8a93ec78f7162590adc82e4fba4de76e4adc3419f33ad225efb292"},
 ]
 
 [package.dependencies]
@@ -4573,4 +4573,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "ee7c54c50a8e8ff5ab9e6b7ed905eee16cf4d4aeddffd5bda7df3dfb79186625"
+content-hash = "c86647091b3d337567763b3691c932993b815e75493465ea40a55b31a7163fbc"
