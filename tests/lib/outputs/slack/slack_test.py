@@ -51,16 +51,16 @@ class TestSlackIntegration:
         stats = {}
         stats["total_pass"] = 12
         stats["total_fail"] = 10
-        stats["total_critical_severity_pass"] = 2
+        stats["total_critical_severity_pass"] = 4
         stats["total_critical_severity_fail"] = 4
         stats["total_high_severity_fail"] = 1
         stats["total_high_severity_pass"] = 1
         stats["total_medium_severity_fail"] = 2
         stats["total_medium_severity_pass"] = 1
-        stats["total_low_severity_fail"] = 5
+        stats["total_low_severity_fail"] = 3
         stats["total_low_severity_pass"] = 3
         stats["total_informational_severity_fail"] = 1
-        stats["total_informational_severity_pass"] = 3
+        stats["total_informational_severity_pass"] = 1
         stats["resources_count"] = 20
         stats["findings_count"] = 22
 
@@ -86,7 +86,7 @@ class TestSlackIntegration:
         stats["total_high_severity_pass"] = 1
         stats["total_medium_severity_fail"] = 2
         stats["total_medium_severity_pass"] = 1
-        stats["total_low_severity_fail"] = 5
+        stats["total_low_severity_fail"] = 2
         stats["total_low_severity_pass"] = 3
         stats["total_informational_severity_fail"] = 1
         stats["total_informational_severity_pass"] = 3
@@ -183,7 +183,7 @@ class TestSlackIntegration:
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": "\nLow:\n" + "• 5",
+                    "text": "\nLow:\n" + "• 2",
                 },
             },
             {
@@ -247,7 +247,7 @@ class TestSlackIntegration:
         ]
 
     def test_create_message_blocks_azure(self):
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_azure_provider()
         slack = Slack(SLACK_TOKEN, SLACK_CHANNEL, aws_provider)
         args = "--slack"
         stats = {}
@@ -259,7 +259,7 @@ class TestSlackIntegration:
         stats["total_high_severity_pass"] = 1
         stats["total_medium_severity_fail"] = 2
         stats["total_medium_severity_pass"] = 1
-        stats["total_low_severity_fail"] = 5
+        stats["total_low_severity_fail"] = 2
         stats["total_low_severity_pass"] = 3
         stats["total_informational_severity_fail"] = 1
         stats["total_informational_severity_pass"] = 3
@@ -358,7 +358,7 @@ class TestSlackIntegration:
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": "\nLow:\n" + "• 5",
+                    "text": "\nLow:\n" + "• 2",
                 },
             },
             {
@@ -422,7 +422,7 @@ class TestSlackIntegration:
         ]
 
     def test_create_message_blocks_gcp(self):
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_gcp_provider()
         slack = Slack(SLACK_TOKEN, SLACK_CHANNEL, aws_provider)
         args = "--slack"
         stats = {}
@@ -434,7 +434,7 @@ class TestSlackIntegration:
         stats["total_high_severity_pass"] = 1
         stats["total_medium_severity_fail"] = 2
         stats["total_medium_severity_pass"] = 1
-        stats["total_low_severity_fail"] = 5
+        stats["total_low_severity_fail"] = 2
         stats["total_low_severity_pass"] = 3
         stats["total_informational_severity_fail"] = 1
         stats["total_informational_severity_pass"] = 3
@@ -531,7 +531,7 @@ class TestSlackIntegration:
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": "\nLow:\n" + "• 5",
+                    "text": "\nLow:\n" + "• 2",
                 },
             },
             {
