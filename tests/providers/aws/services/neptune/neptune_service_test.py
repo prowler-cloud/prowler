@@ -183,6 +183,7 @@ class Test_Neptune_Service:
             db_subnet_group_id=SUBNET_GROUP_NAME,
             subnets=[SUBNET_1, SUBNET_2],
             tags=NEPTUNE_CLUSTER_TAGS,
+            cloudwatch_logs=[],
         )
 
     def test_describe_db_cluster_snapshots(self):
