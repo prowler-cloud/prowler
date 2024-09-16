@@ -126,14 +126,14 @@ class Slack:
                     "text": {
                         "type": "mrkdwn",
                         "text": "\nCritical:\n"
-                        + f"• {stats["total_critical_severity_pass"]}",
+                        + f"• {stats['total_critical_severity_pass']}",
                     },
                 },
                 {
                     "type": "section",
                     "text": {
                         "type": "mrkdwn",
-                        "text": "\nHigh:\n" + f"• {stats["total_high_severity_pass"]}",
+                        "text": "\nHigh:\n" + f"• {stats['total_high_severity_pass']}",
                     },
                 },
                 {
@@ -141,14 +141,14 @@ class Slack:
                     "text": {
                         "type": "mrkdwn",
                         "text": "\nMedium:\n"
-                        + f"• {stats["total_medium_severity_pass"]}",
+                        + f"• {stats['total_medium_severity_pass']}",
                     },
                 },
                 {
                     "type": "section",
                     "text": {
                         "type": "mrkdwn",
-                        "text": "\nLow:\n" + f"• {stats["total_low_severity_pass"]}",
+                        "text": "\nLow:\n" + f"• {stats['total_low_severity_pass']}",
                     },
                 },
                 {
@@ -156,7 +156,7 @@ class Slack:
                     "text": {
                         "type": "mrkdwn",
                         "text": "\nInformational:\n"
-                        + f"• {stats["total_informational_severity_pass"]}",
+                        + f"• {stats['total_informational_severity_pass']}",
                     },
                 },
                 {
@@ -171,14 +171,14 @@ class Slack:
                     "text": {
                         "type": "mrkdwn",
                         "text": "\nCritical:\n"
-                        + f"• {stats["total_critical_severity_fail"]}",
+                        + f"• {stats['total_critical_severity_fail']}",
                     },
                 },
                 {
                     "type": "section",
                     "text": {
                         "type": "mrkdwn",
-                        "text": "\nHigh:\n" + f"• {stats["total_high_severity_fail"]}",
+                        "text": "\nHigh:\n" + f"• {stats['total_high_severity_fail']}",
                     },
                 },
                 {
@@ -186,14 +186,14 @@ class Slack:
                     "text": {
                         "type": "mrkdwn",
                         "text": "\nMedium:\n"
-                        + f"• {stats["total_medium_severity_fail"]}",
+                        + f"• {stats['total_medium_severity_fail']}",
                     },
                 },
                 {
                     "type": "section",
                     "text": {
                         "type": "mrkdwn",
-                        "text": "\nLow:\n" + f"• {stats["total_low_severity_fail"]}",
+                        "text": "\nLow:\n" + f"• {stats['total_low_severity_fail']}",
                     },
                 },
                 {
@@ -201,7 +201,7 @@ class Slack:
                     "text": {
                         "type": "mrkdwn",
                         "text": "\nInformational:\n"
-                        + f"• {stats["total_informational_severity_fail"]}",
+                        + f"• {stats['total_informational_severity_fail']}",
                     },
                 },
                 {
