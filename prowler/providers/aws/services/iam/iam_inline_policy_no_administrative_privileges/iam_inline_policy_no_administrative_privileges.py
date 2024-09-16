@@ -29,6 +29,5 @@ class iam_inline_policy_no_administrative_privileges(Check):
                     if check_admin_access(policy.document):
                         report.status = "FAIL"
                         report.status_extended = f"{policy.type} policy {policy.name} attached to {resource_type_str} {report.resource_arn} allows '*:*' administrative privileges."
-                        break
                 findings.append(report)
         return findings
