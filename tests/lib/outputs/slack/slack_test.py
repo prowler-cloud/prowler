@@ -104,8 +104,7 @@ class TestSlackIntegration:
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": "\nCritical:\n"
-                    + f"• 2",
+                    "text": "\nCritical:\n" + "• 2",
                 },
             },
             {
@@ -119,8 +118,7 @@ class TestSlackIntegration:
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": "\nCritical:\n"
-                    + f"• 4",
+                    "text": "\nCritical:\n" + "• 4",
                 },
             },
             {
@@ -217,8 +215,7 @@ class TestSlackIntegration:
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": "\nCritical:\n"
-                    + f"• 2",
+                    "text": "\nCritical:\n" + "• 2",
                 },
             },
             {
@@ -232,8 +229,7 @@ class TestSlackIntegration:
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": "\nCritical:\n"
-                    + f"• 4",
+                    "text": "\nCritical:\n" + "• 4",
                 },
             },
             {
@@ -328,8 +324,7 @@ class TestSlackIntegration:
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": "\nCritical:\n"
-                    + f"• 2",
+                    "text": "\nCritical:\n" + "• 2",
                 },
             },
             {
@@ -343,8 +338,7 @@ class TestSlackIntegration:
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": "\nCritical:\n"
-                    + f"• 4",
+                    "text": "\nCritical:\n" + "• 4",
                 },
             },
             {
