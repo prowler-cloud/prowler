@@ -212,7 +212,17 @@ def check_admin_access(policy: dict) -> bool:
             statements = [statements]
 
         for statement in statements:
-            if statement["Resource"] == "*" or statement["Resource"] == ["*"]:
+            if statement.get("Resource") in [
+                "*",
+                ["*"],
+                ["*/*"],
+                "*/*",
+                ["*:*"],
+                "*:*",
+            ] or (
+                statement.get("NotResource")
+                and statement.get("NotResource") not in ["*", ["*"]]
+            ):
                 effect = statement.get("Effect")
                 actions = statement.get("Action")
                 not_actions = statement.get("NotAction")
