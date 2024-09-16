@@ -133,8 +133,7 @@ class Slack:
                     "type": "section",
                     "text": {
                         "type": "mrkdwn",
-                        "text": "\nHigh:\n"
-                        + f"• {stats["total_high_severity_pass"]}",
+                        "text": "\nHigh:\n" + f"• {stats["total_high_severity_pass"]}",
                     },
                 },
                 {
@@ -149,8 +148,7 @@ class Slack:
                     "type": "section",
                     "text": {
                         "type": "mrkdwn",
-                        "text": "\nLow:\n"
-                        + f"• {stats["total_low_severity_pass"]}",
+                        "text": "\nLow:\n" + f"• {stats["total_low_severity_pass"]}",
                     },
                 },
                 {
@@ -180,8 +178,7 @@ class Slack:
                     "type": "section",
                     "text": {
                         "type": "mrkdwn",
-                        "text": "\nHigh:\n"
-                        + f"• {stats["total_high_severity_fail"]}",
+                        "text": "\nHigh:\n" + f"• {stats["total_high_severity_fail"]}",
                     },
                 },
                 {
@@ -196,8 +193,7 @@ class Slack:
                     "type": "section",
                     "text": {
                         "type": "mrkdwn",
-                        "text": "\nLow:\n"
-                        + f"• {stats["total_low_severity_fail"]}",
+                        "text": "\nLow:\n" + f"• {stats["total_low_severity_fail"]}",
                     },
                 },
                 {

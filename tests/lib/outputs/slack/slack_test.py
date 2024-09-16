@@ -127,32 +127,28 @@ class TestSlackIntegration:
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": "\nHigh:\n"
-                    + "• 1",
+                    "text": "\nHigh:\n" + "• 1",
                 },
             },
             {
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": "\nMedium:\n"
-                    + "• 1",
+                    "text": "\nMedium:\n" + "• 1",
                 },
             },
             {
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": "\nLow:\n"
-                    + "• 3",
+                    "text": "\nLow:\n" + "• 3",
                 },
             },
             {
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": "\nInformational:\n"
-                    + "• 3",
+                    "text": "\nInformational:\n" + "• 3",
                 },
             },
             {
@@ -173,32 +169,28 @@ class TestSlackIntegration:
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": "\nHigh:\n"
-                    + "• 1",
+                    "text": "\nHigh:\n" + "• 1",
                 },
             },
             {
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": "\nMedium:\n"
-                    + "• 2",
+                    "text": "\nMedium:\n" + "• 2",
                 },
             },
             {
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": "\nLow:\n"
-                    + "• 5",
+                    "text": "\nLow:\n" + "• 5",
                 },
             },
             {
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": "\nInformational:\n"
-                    + "• 1",
+                    "text": "\nInformational:\n" + "• 1",
                 },
             },
             {
@@ -310,32 +302,28 @@ class TestSlackIntegration:
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": "\nHigh:\n"
-                    + "• 1",
+                    "text": "\nHigh:\n" + "• 1",
                 },
             },
             {
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": "\nMedium:\n"
-                    + "• 1",
+                    "text": "\nMedium:\n" + "• 1",
                 },
             },
             {
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": "\nLow:\n"
-                    + "• 3",
+                    "text": "\nLow:\n" + "• 3",
                 },
             },
             {
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": "\nInformational:\n"
-                    + "• 3",
+                    "text": "\nInformational:\n" + "• 3",
                 },
             },
             {
@@ -356,32 +344,28 @@ class TestSlackIntegration:
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": "\nHigh:\n"
-                    + "• 1",
+                    "text": "\nHigh:\n" + "• 1",
                 },
             },
             {
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": "\nMedium:\n"
-                    + "• 2",
+                    "text": "\nMedium:\n" + "• 2",
                 },
             },
             {
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": "\nLow:\n"
-                    + "• 5",
+                    "text": "\nLow:\n" + "• 5",
                 },
             },
             {
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": "\nInformational:\n"
-                    + "• 1",
+                    "text": "\nInformational:\n" + "• 1",
                 },
             },
             {
@@ -491,32 +475,28 @@ class TestSlackIntegration:
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": "\nHigh:\n"
-                    + "• 1",
+                    "text": "\nHigh:\n" + "• 1",
                 },
             },
             {
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": "\nMedium:\n"
-                    + "• 1",
+                    "text": "\nMedium:\n" + "• 1",
                 },
             },
             {
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": "\nLow:\n"
-                    + "• 3",
+                    "text": "\nLow:\n" + "• 3",
                 },
             },
             {
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": "\nInformational:\n"
-                    + "• 3",
+                    "text": "\nInformational:\n" + "• 3",
                 },
             },
             {
@@ -537,32 +517,28 @@ class TestSlackIntegration:
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": "\nHigh:\n"
-                    + "• 1",
+                    "text": "\nHigh:\n" + "• 1",
                 },
             },
             {
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": "\nMedium:\n"
-                    + "• 2",
+                    "text": "\nMedium:\n" + "• 2",
                 },
             },
             {
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": "\nLow:\n"
-                    + "• 5",
+                    "text": "\nLow:\n" + "• 5",
                 },
             },
             {
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": "\nInformational:\n"
-                    + "• 1",
+                    "text": "\nInformational:\n" + "• 1",
                 },
             },
             {
