@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "high",
-  "ResourceType": "AwsEventsEndpointEventBuses",
+  "ResourceType": "AwsEventsEventbus",
   "Description": "Ensure that your AWS EventBridge event bus is not exposed to everyone.",
   "Risk": "If your AWS EventBridge event bus is exposed to everyone, unauthorized users can access your event bus and potentially view or modify your events.",
   "RelatedUrl": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/CWE_GettingStarted.html",
