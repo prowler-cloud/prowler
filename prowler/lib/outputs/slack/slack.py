@@ -125,7 +125,23 @@ class Slack:
                     "type": "section",
                     "text": {
                         "type": "mrkdwn",
+                        "text": "\nCritical:\n"
+                        + f"• {stats["total_critical_severity_pass"]}",
+                    },
+                },
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
                         "text": f"\n:x: *{stats['total_fail']} Failed findings* ({round(stats['total_fail'] / stats['findings_count'] * 100 , 2)}%)\n ",
+                    },
+                },
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": "\nCritical:\n"
+                        + f"• {stats["total_critical_severity_fail"]}",
                     },
                 },
                 {
@@ -144,34 +160,6 @@ class Slack:
                             "text": f"Used parameters: `prowler {args}`",
                         }
                     ],
-                },
-                {"type": "divider"},
-                {
-                    "type": "section",
-                    "text": {
-                        "type": "mrkdwn",
-                        "text": "\nCritical Failed Findings:\n"
-                        + "\n".join(
-                            [
-                                f"• {finding}"
-                                for finding in stats["critical_failed_findings"]
-                            ]
-                        ),
-                    },
-                },
-                {"type": "divider"},
-                {
-                    "type": "section",
-                    "text": {
-                        "type": "mrkdwn",
-                        "text": "\nCritical Passed Findings:\n"
-                        + "\n".join(
-                            [
-                                f"• {finding}"
-                                for finding in stats["critical_passed_findings"]
-                            ]
-                        ),
-                    },
                 },
                 {"type": "divider"},
                 {
