@@ -244,7 +244,6 @@ class TestOutputs:
         finding_1 = mock.MagicMock()
         finding_1.status = "PASS"
         finding_1.resource_id = "test_resource_1"
-        finding_1.check
         finding_2 = mock.MagicMock()
         finding_2.status = "FAIL"
         finding_2.resource_id = "test_resource_2"
@@ -308,8 +307,6 @@ class TestOutputs:
         assert stats["total_medium_severity_pass"] == 0
         assert stats["total_low_severity_fail"] == 0
         assert stats["total_low_severity_pass"] == 0
-        assert stats["total_informational_severity_fail"] == 0
-        assert stats["total_informational_severity_pass"] == 0
         assert stats["resources_count"] == 0
         assert stats["findings_count"] == 0
 
@@ -320,25 +317,37 @@ class TestOutputs:
         finding_1.resource_id = "test_resource_1"
         finding_1.check_metadata.Severity = "high"
         finding_1.check_metadata.CheckTitle = "acm_certificates_expiration_check"
-        findings = [finding_1]
+        finding_2 = mock.MagicMock()
+        finding_2.status = "FAIL"
+        finding_2.muted = True
+        finding_2.resource_id = "test_resource_2"
+        finding_2.check_metadata.Severity = "medium"
+        finding_2.check_metadata.CheckTitle = (
+            "glue_etl_jobs_amazon_s3_encryption_enabled"
+        )
+        finding_3 = mock.MagicMock()
+        finding_3.status = "FAIL"
+        finding_3.muted = True
+        finding_3.resource_id = "test_resource_3"
+        finding_3.check_metadata.Severity = "low"
+        finding_3.check_metadata.CheckTitle = "lightsail_static_ip_unused"
+        findings = [finding_1, finding_2, finding_3]
 
         stats = extract_findings_statistics(findings)
         assert stats["total_pass"] == 0
-        assert stats["total_fail"] == 1
+        assert stats["total_fail"] == 3
         assert stats["total_muted_pass"] == 0
-        assert stats["total_muted_fail"] == 1
-        assert stats["resources_count"] == 1
-        assert stats["findings_count"] == 1
+        assert stats["total_muted_fail"] == 3
+        assert stats["resources_count"] == 3
+        assert stats["findings_count"] == 3
         assert stats["total_critical_severity_fail"] == 0
         assert stats["total_critical_severity_pass"] == 0
         assert stats["total_high_severity_fail"] == 1
         assert stats["total_high_severity_pass"] == 0
-        assert stats["total_medium_severity_fail"] == 0
+        assert stats["total_medium_severity_fail"] == 1
         assert stats["total_medium_severity_pass"] == 0
-        assert stats["total_low_severity_fail"] == 0
+        assert stats["total_low_severity_fail"] == 1
         assert stats["total_low_severity_pass"] == 0
-        assert stats["total_informational_severity_fail"] == 0
-        assert stats["total_informational_severity_pass"] == 0
         assert stats["all_fails_are_muted"]
 
     def test_extract_findings_statistics_all_fail_are_not_muted(self):
@@ -372,8 +381,6 @@ class TestOutputs:
         assert stats["total_medium_severity_pass"] == 0
         assert stats["total_low_severity_fail"] == 0
         assert stats["total_low_severity_pass"] == 0
-        assert stats["total_informational_severity_fail"] == 0
-        assert stats["total_informational_severity_pass"] == 0
         assert stats["findings_count"] == 2
         assert not stats["all_fails_are_muted"]
 
@@ -409,8 +416,6 @@ class TestOutputs:
         assert stats["total_medium_severity_pass"] == 0
         assert stats["total_low_severity_fail"] == 0
         assert stats["total_low_severity_pass"] == 0
-        assert stats["total_informational_severity_fail"] == 0
-        assert stats["total_informational_severity_pass"] == 0
         assert stats["findings_count"] == 2
 
     def test_extract_findings_statistics_all_passes_are_muted(self):
@@ -436,8 +441,6 @@ class TestOutputs:
         assert stats["total_medium_severity_pass"] == 0
         assert stats["total_low_severity_fail"] == 0
         assert stats["total_low_severity_pass"] == 0
-        assert stats["total_informational_severity_fail"] == 0
-        assert stats["total_informational_severity_pass"] == 0
         assert stats["findings_count"] == 1
 
     def test_report_with_aws_provider_not_muted_pass(self):

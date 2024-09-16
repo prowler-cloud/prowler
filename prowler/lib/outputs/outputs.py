@@ -109,8 +109,6 @@ def extract_findings_statistics(findings: list) -> dict:
     medium_severity_fail = 0
     low_severity_pass = 0
     low_severity_fail = 0
-    informational_severity_pass = 0
-    informational_severity_fail = 0
 
     for finding in findings:
         # Save the resource_id
@@ -125,8 +123,6 @@ def extract_findings_statistics(findings: list) -> dict:
                 medium_severity_pass += 1
             if finding.check_metadata.Severity == "low":
                 low_severity_pass += 1
-            if finding.check_metadata.Severity == "informational":
-                informational_severity_pass += 1
             total_pass += 1
             findings_count += 1
             if finding.muted is True:
@@ -141,8 +137,6 @@ def extract_findings_statistics(findings: list) -> dict:
                 medium_severity_fail += 1
             if finding.check_metadata.Severity == "low":
                 low_severity_fail += 1
-            if finding.check_metadata.Severity == "informational":
-                informational_severity_fail += 1
             total_fail += 1
             findings_count += 1
             if finding.muted is True:
@@ -164,8 +158,6 @@ def extract_findings_statistics(findings: list) -> dict:
     stats["total_medium_severity_pass"] = medium_severity_pass
     stats["total_low_severity_fail"] = medium_severity_fail
     stats["total_low_severity_pass"] = medium_severity_pass
-    stats["total_informational_severity_fail"] = informational_severity_fail
-    stats["total_informational_severity_pass"] = informational_severity_pass
     stats["all_fails_are_muted"] = all_fails_are_muted
 
     return stats
