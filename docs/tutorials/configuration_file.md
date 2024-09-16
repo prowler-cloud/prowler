@@ -46,7 +46,20 @@ The following list includes all the AWS checks with configurable variables that 
 | `ec2_securitygroup_allow_ingress_from_internet_to_any_port`   | `ec2_allowed_instance_owners`                    | List of Strings |
 | `acm_certificates_expiration_check`                           | `days_to_expire_threshold`                       | Integer         |
 | `eks_control_plane_logging_all_types_enabled`                 | `eks_required_log_types`                         | List of Strings |
-| `eks_cluster_uses_a_supported_version`                        | `eks_cluster_oldest_version_supported`                 | String          |
+| `eks_cluster_uses_a_supported_version`                        | `eks_cluster_oldest_version_supported`           | String          |
+| `elbv2_is_in_multiple_az`                                     | `elbv2_min_azs`                                  | Integer         |
+| `elb_is_in_multiple_az`                                       | `elb_min_azs`                                    | Integer         |
+| `autoscaling_find_secrets_ec2_launch_configuration`           | `secrets_ignore_patterns`                        | List of Strings |
+| `awslambda_function_no_secrets_in_code`                       | `secrets_ignore_patterns`                        | List of Strings |
+| `awslambda_function_no_secrets_in_variables`                  | `secrets_ignore_patterns`                        | List of Strings |
+| `cloudformation_stack_outputs_find_secrets`                   | `secrets_ignore_patterns`                        | List of Strings |
+| `cloudwatch_log_group_no_secrets_in_logs`                     | `secrets_ignore_patterns`                        | List of Strings |
+| `codebuild_project_no_secrets_in_variables`                   | `secrets_ignore_patterns`                        | List of Strings |
+| `ec2_instance_secrets_user_data`                              | `secrets_ignore_patterns`                        | List of Strings |
+| `ec2_launch_template_no_secrets`                              | `secrets_ignore_patterns`                        | List of Strings |
+| `ecs_task_definitions_no_environment_secrets`                 | `secrets_ignore_patterns`                        | List of Strings |
+| `ssm_document_secrets`                                        | `secrets_ignore_patterns`                        | List of Strings |
+
 
 ## Azure
 

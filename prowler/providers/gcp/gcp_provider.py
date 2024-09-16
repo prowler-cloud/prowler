@@ -9,14 +9,19 @@ from google.oauth2.credentials import Credentials
 from googleapiclient import discovery
 from googleapiclient.errors import HttpError
 
-from prowler.config.config import (
-    get_default_mute_file_path,
-    load_and_validate_config_file,
-)
+from prowler.config.config import get_default_mute_file_path
 from prowler.lib.logger import logger
 from prowler.lib.utils.utils import print_boxes
 from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
+from prowler.providers.gcp.exceptions.exceptions import (
+    GCPCloudResourceManagerAPINotUsedError,
+    GCPGetProjectError,
+    GCPHTTPError,
+    GCPNoAccesibleProjectsError,
+    GCPSetUpSessionError,
+    GCPTestConnectionError,
+)
 from prowler.providers.gcp.lib.mutelist.mutelist import GCPMutelist
 from prowler.providers.gcp.models import (
     GCPIdentityInfo,
@@ -38,13 +43,30 @@ class GcpProvider(Provider):
     # TODO: this is not optional, enforce for all providers
     audit_metadata: Audit_Metadata
 
-    def __init__(self, arguments):
+    def __init__(
+        self,
+        project_ids: list = None,
+        excluded_project_ids: list = None,
+        credentials_file: str = None,
+        impersonate_service_account: str = None,
+        list_project_ids: bool = False,
+        audit_config: dict = {},
+        fixer_config: dict = {},
+    ):
+        """
+        GCP Provider constructor
+
+        Args:
+            project_ids: list
+            excluded_project_ids: list
+            credentials_file: str
+            impersonate_service_account: str
+            list_project_ids: bool
+            audit_config: dict
+            fixer_config: dict
+        """
         logger.info("Instantiating GCP Provider ...")
-        input_project_ids = arguments.project_id
-        excluded_project_ids = arguments.excluded_project_id
-        credentials_file = arguments.credentials_file
-        self._impersonated_service_account = arguments.impersonate_service_account
-        list_project_ids = arguments.list_project_id
+        self._impersonated_service_account = impersonate_service_account
 
         self._session = self.setup_session(
             credentials_file, self._impersonated_service_account
@@ -56,10 +78,13 @@ class GcpProvider(Provider):
         accessible_projects = self.get_projects()
         if not accessible_projects:
             logger.critical("No Project IDs can be accessed via Google Credentials.")
-            sys.exit(1)
+            raise GCPNoAccesibleProjectsError(
+                file=__file__,
+                message="No Project IDs can be accessed via Google Credentials.",
+            )
 
-        if input_project_ids:
-            for input_project in input_project_ids:
+        if project_ids:
+            for input_project in project_ids:
                 for accessible_project in accessible_projects:
                     if self.is_project_matching(input_project, accessible_project):
                         self._projects[accessible_project] = accessible_projects[
@@ -88,7 +113,10 @@ class GcpProvider(Provider):
             logger.critical(
                 "No Input Project IDs can be accessed via Google Credentials."
             )
-            sys.exit(1)
+            raise GCPNoAccesibleProjectsError(
+                file=__file__,
+                message="No Input Project IDs can be accessed via Google Credentials.",
+            )
 
         if list_project_ids:
             print(
@@ -105,12 +133,10 @@ class GcpProvider(Provider):
 
         # TODO: move this to the providers, pending for AWS, GCP, AZURE and K8s
         # Audit Config
-        self._audit_config = load_and_validate_config_file(
-            self._type, arguments.config_file
-        )
-        self._fixer_config = load_and_validate_config_file(
-            self._type, arguments.fixer_config
-        )
+        self._audit_config = audit_config
+        self._fixer_config = fixer_config
+
+        Provider.set_global_provider(self)
 
     @property
     def identity(self):
@@ -241,7 +267,7 @@ class GcpProvider(Provider):
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            sys.exit(1)
+            raise GCPSetUpSessionError(file=__file__, original_exception=error)
 
     @staticmethod
     def test_connection(
@@ -266,14 +292,21 @@ class GcpProvider(Provider):
             request = service.projects().list()
             request.execute()
             return Connection(is_connected=True)
+
+        # Errors from setup_session
+        except GCPSetUpSessionError as setup_session_error:
+            logger.critical(str(setup_session_error))
+            if raise_on_exception:
+                raise setup_session_error
+            return Connection(error=setup_session_error)
         except HttpError as http_error:
             if "Cloud Resource Manager API has not been used" in str(http_error):
                 logger.critical(
                     "Cloud Resource Manager API has not been used before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/cloudresourcemanager.googleapis.com/ then retry."
                 )
                 if raise_on_exception:
-                    raise Exception(
-                        "Cloud Resource Manager API has not been used before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/cloudresourcemanager.googleapis.com/ then retry."
+                    raise GCPCloudResourceManagerAPINotUsedError(
+                        file=__file__, original_exception=http_error
                     )
             else:
                 logger.critical(
@@ -287,7 +320,7 @@ class GcpProvider(Provider):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             if raise_on_exception:
-                raise error
+                raise GCPTestConnectionError(file=__file__, original_exception=error)
             return Connection(error=error)
 
     def print_credentials(self):
@@ -297,6 +330,10 @@ class GcpProvider(Provider):
             f"GCP Account: {Fore.YELLOW}{self.identity.profile}{Style.RESET_ALL}",
             f"GCP Project IDs: {Fore.YELLOW}{', '.join(self.project_ids)}{Style.RESET_ALL}",
         ]
+        if self.identity.profile:
+            report_lines.append(
+                f"Profile: {Fore.YELLOW}{self.identity.profile}{Style.RESET_ALL}"
+            )
         if self.impersonated_service_account:
             report_lines.append(
                 f"Impersonated Service Account: {Fore.YELLOW}{self.impersonated_service_account}{Style.RESET_ALL}"
@@ -357,16 +394,19 @@ class GcpProvider(Provider):
                 logger.critical(
                     "Cloud Resource Manager API has not been used before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/cloudresourcemanager.googleapis.com/ then retry."
                 )
-                sys.exit(1)
+                raise GCPCloudResourceManagerAPINotUsedError(
+                    file=__file__, original_exception=http_error
+                )
             else:
                 logger.error(
                     f"{http_error.__class__.__name__}[{http_error.__traceback__.tb_lineno}]: {http_error}"
                 )
+                raise GCPHTTPError(file=__file__, original_exception=http_error)
         except Exception as error:
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            sys.exit(1)
+            raise GCPGetProjectError(file=__file__, original_exception=error)
         finally:
             return projects
 

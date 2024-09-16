@@ -1,11 +1,7 @@
 from argparse import ArgumentTypeError, Namespace
-from re import search
+from re import fullmatch, search
 
-from prowler.providers.aws.aws_provider import (
-    get_aws_available_regions,
-    validate_role_session_name,
-    validate_session_duration,
-)
+from prowler.providers.aws.aws_provider import get_aws_available_regions
 from prowler.providers.aws.config import ROLE_SESSION_NAME
 from prowler.providers.aws.lib.arn.arn import arn_type
 
@@ -172,6 +168,42 @@ def init_parser(self):
     )
 
 
+def validate_session_duration(session_duration: int) -> int:
+    """validate_session_duration validates that the input session_duration is valid"""
+    duration = int(session_duration)
+    # Since the range(i,j) goes from i to j-1 we have to j+1
+    if duration not in range(900, 43201):
+        raise ArgumentTypeError(
+            "Session duration must be between 900 and 43200 seconds"
+        )
+    else:
+        return duration
+
+
+def validate_role_session_name(session_name) -> str:
+    """
+    Validates that the role session name is valid.
+
+    Args:
+        session_name (str): The role session name to be validated.
+
+    Returns:
+        str: The validated role session name.
+
+    Raises:
+        ArgumentTypeError: If the role session name is invalid.
+
+    Documentation:
+        - AWS STS AssumeRole API: https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html
+    """
+    if fullmatch(r"[\w+=,.@-]{2,64}", session_name):
+        return session_name
+    else:
+        raise ArgumentTypeError(
+            "Role session name must be between 2 and 64 characters long and may contain alphanumeric characters, hyphens, underscores, plus signs, equal signs, commas, periods, at signs, and tildes."
+        )
+
+
 def validate_arguments(arguments: Namespace) -> tuple[bool, str]:
     """validate_arguments returns {True, "} if the provider arguments passed are valid and can be used together. It performs an extra validation, specific for the AWS provider, apart from the argparse lib."""
 
@@ -190,7 +222,7 @@ def validate_arguments(arguments: Namespace) -> tuple[bool, str]:
     return (True, "")
 
 
-def validate_bucket(bucket_name):
+def validate_bucket(bucket_name: str) -> str:
     """validate_bucket validates that the input bucket_name is valid"""
     if search("(?!(^xn--|.+-s3alias$))^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$", bucket_name):
         return bucket_name

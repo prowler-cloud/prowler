@@ -8,7 +8,7 @@
   "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-instance",
   "Severity": "medium",
   "ResourceType": "AwsRdsDbInstance",
-  "Description": "Check if RDS instances that are not clustered have IAM authentication enabled, the clustered ones are covered by the rds_cluster_iam_authentication check.",
+  "Description": "Check if RDS instances have IAM authentication enabled.",
   "Risk": "Ensure that the IAM Database Authentication feature is enabled for your RDS database instances in order to use the Identity and Access Management (IAM) service to manage database access to your MySQL and PostgreSQL database instances. With this feature enabled, you don't have to use a password when you connect to your MySQL/PostgreSQL database, instead you can use an authentication token. An authentication token is a unique string of characters with a lifetime of 15 minutes that Amazon RDS generates on your request. IAM Database Authentication removes the need of storing user credentials within the database configuration, because authentication is managed externally using Amazon IAM.",
   "RelatedUrl": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.IAMDBAuth.Enabling.html",
   "Remediation": {

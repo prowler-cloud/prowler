@@ -5,6 +5,7 @@ from prowler.providers.aws.services.elb.elb_service import ELB
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
+    AWS_REGION_US_EAST_1_AZA,
     set_mocked_aws_provider,
 )
 
@@ -51,7 +52,7 @@ class Test_ELB_Service:
                 {"Protocol": "tcp", "LoadBalancerPort": 80, "InstancePort": 8080},
                 {"Protocol": "http", "LoadBalancerPort": 81, "InstancePort": 9000},
             ],
-            AvailabilityZones=[f"{AWS_REGION_US_EAST_1}a"],
+            AvailabilityZones=[AWS_REGION_US_EAST_1_AZA],
             Scheme="internal",
             SecurityGroups=[security_group.id],
         )["DNSName"]
@@ -69,6 +70,8 @@ class Test_ELB_Service:
         assert elb.loadbalancers[elb_arn].listeners[0].policies == []
         assert elb.loadbalancers[elb_arn].listeners[1].protocol == "HTTP"
         assert elb.loadbalancers[elb_arn].listeners[1].policies == []
+        assert len(elb.loadbalancers[elb_arn].availability_zones) == 1
+        assert AWS_REGION_US_EAST_1_AZA in elb.loadbalancers[elb_arn].availability_zones
 
     # Test ELB Describe Load Balancers Attributes
     @mock_aws
@@ -99,7 +102,8 @@ class Test_ELB_Service:
                     "S3BucketName": "mb",
                     "EmitInterval": 42,
                     "S3BucketPrefix": "s3bf",
-                }
+                },
+                "CrossZoneLoadBalancing": {"Enabled": True},
             },
         )
         elb_arn = f"arn:aws:elasticloadbalancing:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:loadbalancer/my-lb"
@@ -110,6 +114,7 @@ class Test_ELB_Service:
         assert elb.loadbalancers[elb_arn].region == AWS_REGION_US_EAST_1
         assert elb.loadbalancers[elb_arn].scheme == "internal"
         assert elb.loadbalancers[elb_arn].access_logs
+        assert elb.loadbalancers[elb_arn].cross_zone_load_balancing
 
     # Test ELB Describe Tags
     @mock_aws

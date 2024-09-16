@@ -102,8 +102,9 @@ class Test_rds_instance_enhanced_monitoring_enabled:
     @mock_aws
     def test_rds_instance_with_monitoring(self):
         conn = client("rds", region_name=AWS_REGION_US_EAST_1)
+        instance_id = "db-master-1"
         conn.create_db_instance(
-            DBInstanceIdentifier="db-master-1",
+            DBInstanceIdentifier=instance_id,
             AllocatedStorage=10,
             Engine="postgres",
             DBName="staging-postgres",
@@ -127,7 +128,11 @@ class Test_rds_instance_enhanced_monitoring_enabled:
                     rds_instance_enhanced_monitoring_enabled,
                 )
 
-                service_client.db_instances[0].enhanced_monitoring_arn = "log-stream"
+                instance_arn = f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:db:{instance_id}"
+                service_client.db_instances[instance_arn].enhanced_monitoring_arn = (
+                    "log-stream"
+                )
+
                 check = rds_instance_enhanced_monitoring_enabled()
                 result = check.execute()
 
@@ -135,12 +140,9 @@ class Test_rds_instance_enhanced_monitoring_enabled:
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == "RDS Instance db-master-1 has enhanced monitoring enabled."
+                    == f"RDS Instance {instance_id} has enhanced monitoring enabled."
                 )
-                assert result[0].resource_id == "db-master-1"
+                assert result[0].resource_id == instance_id
                 assert result[0].region == AWS_REGION_US_EAST_1
-                assert (
-                    result[0].resource_arn
-                    == f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:db:db-master-1"
-                )
+                assert result[0].resource_arn == instance_arn
                 assert result[0].resource_tags == []

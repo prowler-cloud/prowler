@@ -1,12 +1,7 @@
-from prowler.lib.check.models import (
-    Check_Metadata_Model,
-    Code,
-    Recommendation,
-    Remediation,
-)
+from prowler.lib.check.models import CheckMetadata, Code, Recommendation, Remediation
 
 test_bulk_checks_metadata = {
-    "vpc_peering_routing_tables_with_least_privilege": Check_Metadata_Model(
+    "vpc_peering_routing_tables_with_least_privilege": CheckMetadata(
         Provider="aws",
         CheckID="vpc_peering_routing_tables_with_least_privilege",
         CheckTitle="Ensure routing tables for VPC peering are least access.",
@@ -37,7 +32,7 @@ test_bulk_checks_metadata = {
         Notes="",
         Compliance=None,
     ),
-    "vpc_subnet_different_az": Check_Metadata_Model(
+    "vpc_subnet_different_az": CheckMetadata(
         Provider="aws",
         CheckID="vpc_subnet_different_az",
         CheckTitle="Ensure all vpc has subnets in more than one availability zone",
@@ -65,7 +60,7 @@ test_bulk_checks_metadata = {
         Notes="",
         Compliance=None,
     ),
-    "vpc_subnet_separate_private_public": Check_Metadata_Model(
+    "vpc_subnet_separate_private_public": CheckMetadata(
         Provider="aws",
         CheckID="vpc_subnet_separate_private_public",
         CheckTitle="Ensure all vpc has public and private subnets defined",
@@ -92,7 +87,7 @@ test_bulk_checks_metadata = {
         Notes="",
         Compliance=None,
     ),
-    "workspaces_volume_encryption_enabled": Check_Metadata_Model(
+    "workspaces_volume_encryption_enabled": CheckMetadata(
         Provider="aws",
         CheckID="workspaces_volume_encryption_enabled",
         CheckTitle="Ensure that your Amazon WorkSpaces storage volumes are encrypted in order to meet security and compliance requirements",
@@ -123,7 +118,7 @@ test_bulk_checks_metadata = {
         Notes="",
         Compliance=None,
     ),
-    "workspaces_vpc_2private_1public_subnets_nat": Check_Metadata_Model(
+    "workspaces_vpc_2private_1public_subnets_nat": CheckMetadata(
         Provider="aws",
         CheckID="workspaces_vpc_2private_1public_subnets_nat",
         CheckTitle="Ensure that the Workspaces VPC are deployed following the best practices using 1 public subnet and 2 private subnets with a NAT Gateway attached",

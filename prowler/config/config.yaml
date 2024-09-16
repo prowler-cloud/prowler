@@ -316,6 +316,21 @@ aws:
 
     ]
 
+  # AWS ELB Configuration
+  # aws.elb_is_in_multiple_az
+  # Minimum number of Availability Zones that an CLB must be in
+  elb_min_azs: 2
+
+  # AWS ELBv2 Configuration
+  # aws.elbv2_is_in_multiple_az
+  # Minimum number of Availability Zones that an ELBv2 must be in
+  elbv2_min_azs: 2
+
+
+  # Known secrets to ignore on detection
+  # this will include a list of regex patterns to ignore on detection
+  secrets_ignore_patterns: []
+
 # Azure Configuration
 azure:
   # Azure Network Configuration

@@ -1,5 +1,6 @@
 from datetime import datetime
-from typing import Optional
+from ipaddress import IPv4Address, IPv6Address, ip_address
+from typing import Optional, Union
 
 from botocore.client import ClientError
 from pydantic import BaseModel
@@ -16,46 +17,50 @@ class EC2(AWSService):
         super().__init__(__class__.__name__, provider)
         self.account_arn_template = f"arn:{self.audited_partition}:ec2:{self.region}:{self.audited_account}:account"
         self.instances = []
-        self.__threading_call__(self.__describe_instances__)
-        self.__threading_call__(self.__get_instance_user_data__, self.instances)
+        self.__threading_call__(self._describe_instances)
+        self.__threading_call__(self._get_instance_user_data, self.instances)
         self.security_groups = {}
         self.regions_with_sgs = []
-        self.__threading_call__(self.__describe_security_groups__)
-        self.network_acls = []
-        self.__threading_call__(self.__describe_network_acls__)
+        self.__threading_call__(self._describe_security_groups)
+        self.network_acls = {}
+        self.__threading_call__(self._describe_network_acls)
         self.snapshots = []
         self.volumes_with_snapshots = {}
         self.regions_with_snapshots = {}
-        self.__threading_call__(self.__describe_snapshots__)
-        self.__threading_call__(self.__determine_public_snapshots__, self.snapshots)
-        self.network_interfaces = []
-        self.__threading_call__(self.__describe_network_interfaces__)
+        self.__threading_call__(self._describe_snapshots)
+        self.__threading_call__(self._determine_public_snapshots, self.snapshots)
+        self.network_interfaces = {}
+        self.__threading_call__(self._describe_network_interfaces)
         self.images = []
-        self.__threading_call__(self.__describe_images__)
+        self.__threading_call__(self._describe_images)
         self.volumes = []
-        self.__threading_call__(self.__describe_volumes__)
+        self.__threading_call__(self._describe_volumes)
         self.attributes_for_regions = {}
-        self.__threading_call__(self.__get_resources_for_regions__)
+        self.__threading_call__(self._get_resources_for_regions)
         self.ebs_encryption_by_default = []
-        self.__threading_call__(self.__get_ebs_encryption_settings__)
+        self.__threading_call__(self._get_ebs_encryption_settings)
         self.elastic_ips = []
-        self.__threading_call__(self.__describe_ec2_addresses__)
+        self.__threading_call__(self._describe_ec2_addresses)
         self.ebs_block_public_access_snapshots_states = []
-        self.__threading_call__(self.__get_snapshot_block_public_access_state__)
+        self.__threading_call__(self._get_snapshot_block_public_access_state)
         self.instance_metadata_defaults = []
-        self.__threading_call__(self.__get_instance_metadata_defaults__)
+        self.__threading_call__(self._get_instance_metadata_defaults)
         self.launch_templates = []
-        self.__threading_call__(self.__describe_launch_templates)
+        self.__threading_call__(self._describe_launch_templates)
         self.__threading_call__(
-            self.__get_launch_template_versions__, self.launch_templates
+            self._describe_launch_template_versions, self.launch_templates
         )
+        self.vpn_endpoints = {}
+        self.__threading_call__(self._describe_vpn_endpoints)
+        self.transit_gateways = {}
+        self.__threading_call__(self._describe_transit_gateways)
 
-    def __get_volume_arn_template__(self, region):
+    def _get_volume_arn_template(self, region):
         return (
             f"arn:{self.audited_partition}:ec2:{region}:{self.audited_account}:volume"
         )
 
-    def __describe_instances__(self, regional_client):
+    def _describe_instances(self, regional_client):
         try:
             describe_instances_paginator = regional_client.get_paginator(
                 "describe_instances"
@@ -67,6 +72,11 @@ class EC2(AWSService):
                         if not self.audit_resources or (
                             is_resource_filtered(arn, self.audit_resources)
                         ):
+                            enis = []
+                            for eni in instance.get("NetworkInterfaces", []):
+                                network_interface_id = eni.get("NetworkInterfaceId")
+                                if network_interface_id:
+                                    enis.append(network_interface_id)
                             self.instances.append(
                                 Instance(
                                     id=instance["InstanceId"],
@@ -95,6 +105,10 @@ class EC2(AWSService):
                                         for sg in instance.get("SecurityGroups", [])
                                     ],
                                     subnet_id=instance.get("SubnetId", ""),
+                                    network_interfaces=enis,
+                                    virtualization_type=instance.get(
+                                        "VirtualizationType"
+                                    ),
                                     tags=instance.get("Tags"),
                                 )
                             )
@@ -103,7 +117,7 @@ class EC2(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_security_groups__(self, regional_client):
+    def _describe_security_groups(self, regional_client):
         try:
             describe_security_groups_paginator = regional_client.get_paginator(
                 "describe_security_groups"
@@ -137,7 +151,7 @@ class EC2(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_network_acls__(self, regional_client):
+    def _describe_network_acls(self, regional_client):
         try:
             describe_network_acls_paginator = regional_client.get_paginator(
                 "describe_network_acls"
@@ -152,22 +166,27 @@ class EC2(AWSService):
                         for tag in nacl.get("Tags", []):
                             if tag["Key"] == "Name":
                                 nacl_name = tag["Value"]
-                        self.network_acls.append(
-                            NetworkACL(
-                                id=nacl["NetworkAclId"],
-                                arn=arn,
-                                name=nacl_name,
-                                region=regional_client.region,
-                                entries=nacl["Entries"],
-                                tags=nacl.get("Tags"),
-                            )
+                        in_use = False
+                        for subnet in nacl["Associations"]:
+                            if subnet["SubnetId"]:
+                                in_use = True
+                                break
+                        self.network_acls[arn] = NetworkACL(
+                            id=nacl["NetworkAclId"],
+                            arn=arn,
+                            name=nacl_name,
+                            region=regional_client.region,
+                            entries=nacl["Entries"],
+                            tags=nacl.get("Tags"),
+                            in_use=in_use,
+                            default=nacl["IsDefault"],
                         )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_snapshots__(self, regional_client):
+    def _describe_snapshots(self, regional_client):
         try:
             snapshots_in_region = False
             describe_snapshots_paginator = regional_client.get_paginator(
@@ -200,7 +219,7 @@ class EC2(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __determine_public_snapshots__(self, snapshot):
+    def _determine_public_snapshots(self, snapshot):
         try:
             regional_client = self.regional_clients[snapshot.region]
             snapshot_public = regional_client.describe_snapshot_attribute(
@@ -223,7 +242,7 @@ class EC2(AWSService):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_network_interfaces__(self, regional_client):
+    def _describe_network_interfaces(self, regional_client):
         try:
             # Get Network Interfaces with Public IPs
             describe_network_interfaces_paginator = regional_client.get_paginator(
@@ -231,8 +250,34 @@ class EC2(AWSService):
             )
             for page in describe_network_interfaces_paginator.paginate():
                 for interface in page["NetworkInterfaces"]:
-                    eni = NetworkInterface(
-                        id=interface["NetworkInterfaceId"],
+                    id = interface["NetworkInterfaceId"]
+                    public_ip_addresses = []
+
+                    # Check for public IPs in the 'PrivateIpAddresses' block
+                    for private_ip_info in interface.get("PrivateIpAddresses", []):
+                        private_association = private_ip_info.get("Association", {})
+                        public_ip_str = private_association.get("PublicIp")
+                        if public_ip_str:
+                            public_ip = ip_address(public_ip_str)
+                            if public_ip.is_global:
+                                public_ip_addresses.append(public_ip)
+
+                        private_ip_str = private_ip_info.get("PrivateIpAddress")
+                        if private_ip_str:
+                            private_ip = ip_address(private_ip_str)
+                            if private_ip.is_global:
+                                public_ip_addresses.append(private_ip)
+
+                    # Check for public IPs in the 'IPv6Addresses' block
+                    for ipv6_info in interface.get("Ipv6Addresses", []):
+                        ipv6_address_str = ipv6_info.get("Ipv6Address")
+                        if ipv6_address_str:
+                            ipv6_address = ip_address(ipv6_address_str)
+                            if ipv6_address.is_global:
+                                public_ip_addresses.append(ipv6_address)
+
+                    self.network_interfaces[id] = NetworkInterface(
+                        id=id,
                         association=interface.get("Association", {}),
                         attachment=interface.get("Attachment", {}),
                         private_ip=interface.get("PrivateIpAddress"),
@@ -241,8 +286,8 @@ class EC2(AWSService):
                         vpc_id=interface["VpcId"],
                         region=regional_client.region,
                         tags=interface.get("TagSet"),
+                        public_ip_addresses=public_ip_addresses,
                     )
-                    self.network_interfaces.append(eni)
                     # Add Network Interface to Security Group
                     # 'Groups': [
                     #     {
@@ -250,8 +295,8 @@ class EC2(AWSService):
                     #         'GroupName': 'default',
                     #     },
                     # ],
-                    self.__add_network_interfaces_to_security_groups__(
-                        eni, interface.get("Groups", [])
+                    self._add_network_interfaces_to_security_groups(
+                        self.network_interfaces[id], interface.get("Groups", [])
                     )
 
         except Exception as error:
@@ -259,7 +304,7 @@ class EC2(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __add_network_interfaces_to_security_groups__(
+    def _add_network_interfaces_to_security_groups(
         self, interface, interface_security_groups
     ):
         try:
@@ -272,7 +317,7 @@ class EC2(AWSService):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_instance_user_data__(self, instance):
+    def _get_instance_user_data(self, instance):
         try:
             regional_client = self.regional_clients[instance.region]
             user_data = regional_client.describe_instance_attribute(
@@ -290,7 +335,7 @@ class EC2(AWSService):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_images__(self, regional_client):
+    def _describe_images(self, regional_client):
         try:
             for image in regional_client.describe_images(Owners=["self"])["Images"]:
                 arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:image/{image['ImageId']}"
@@ -312,7 +357,7 @@ class EC2(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_volumes__(self, regional_client):
+    def _describe_volumes(self, regional_client):
         try:
             describe_volumes_paginator = regional_client.get_paginator(
                 "describe_volumes"
@@ -337,7 +382,7 @@ class EC2(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_ec2_addresses__(self, regional_client):
+    def _describe_ec2_addresses(self, regional_client):
         try:
             for address in regional_client.describe_addresses()["Addresses"]:
                 public_ip = None
@@ -368,7 +413,7 @@ class EC2(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_ebs_encryption_settings__(self, regional_client):
+    def _get_ebs_encryption_settings(self, regional_client):
         try:
             volumes_in_region = self.attributes_for_regions.get(
                 regional_client.region, []
@@ -388,7 +433,7 @@ class EC2(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_snapshot_block_public_access_state__(self, regional_client):
+    def _get_snapshot_block_public_access_state(self, regional_client):
         try:
             snapshots_in_region = self.attributes_for_regions.get(
                 regional_client.region, []
@@ -408,7 +453,7 @@ class EC2(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_instance_metadata_defaults__(self, regional_client):
+    def _get_instance_metadata_defaults(self, regional_client):
         try:
             instances_in_region = self.attributes_for_regions.get(
                 regional_client.region, []
@@ -428,7 +473,7 @@ class EC2(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_resources_for_regions__(self, regional_client):
+    def _get_resources_for_regions(self, regional_client):
         try:
             has_instances = False
             for instance in self.instances:
@@ -455,7 +500,7 @@ class EC2(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_launch_templates(self, regional_client):
+    def _describe_launch_templates(self, regional_client):
         try:
             describe_launch_templates_paginator = regional_client.get_paginator(
                 "describe_launch_templates"
@@ -474,6 +519,7 @@ class EC2(AWSService):
                                 arn=template_arn,
                                 region=regional_client.region,
                                 versions=[],
+                                tags=template.get("Tags"),
                             )
                         )
 
@@ -482,7 +528,7 @@ class EC2(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_launch_template_versions__(self, launch_template):
+    def _describe_launch_template_versions(self, launch_template):
         try:
             regional_client = self.regional_clients[launch_template.region]
             describe_launch_template_versions_paginator = regional_client.get_paginator(
@@ -493,12 +539,87 @@ class EC2(AWSService):
                 LaunchTemplateId=launch_template.id
             ):
                 for template_version in page["LaunchTemplateVersions"]:
+                    enis = []
+                    associate_public_ip = False
+                    for eni in template_version["LaunchTemplateData"].get(
+                        "NetworkInterfaces", []
+                    ):
+                        network_interface_id = eni.get("NetworkInterfaceId")
+                        if network_interface_id in self.network_interfaces:
+                            enis.append(self.network_interfaces[network_interface_id])
+                        if eni.get("AssociatePublicIpAddress", False):
+                            associate_public_ip = True
                     launch_template.versions.append(
                         LaunchTemplateVersion(
                             version_number=template_version["VersionNumber"],
-                            template_data=template_version["LaunchTemplateData"],
+                            template_data=TemplateData(
+                                user_data=template_version["LaunchTemplateData"].get(
+                                    "UserData", ""
+                                ),
+                                network_interfaces=enis,
+                                associate_public_ip_address=associate_public_ip,
+                            ),
                         )
                     )
+
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _describe_vpn_endpoints(self, regional_client):
+        try:
+            describe_client_vpn_endpoints_paginator = regional_client.get_paginator(
+                "describe_client_vpn_endpoints"
+            )
+
+            for page in describe_client_vpn_endpoints_paginator.paginate():
+                for vpn_endpoint in page["ClientVpnEndpoints"]:
+                    vpn_endpoint_arn = f"arn:aws:ec2:{regional_client.region}:{self.audited_account}:client-vpn-endpoint/{vpn_endpoint['ClientVpnEndpointId']}"
+                    if not self.audit_resources or (
+                        is_resource_filtered(vpn_endpoint_arn, self.audit_resources)
+                    ):
+                        self.vpn_endpoints[vpn_endpoint_arn] = VpnEndpoint(
+                            id=vpn_endpoint["ClientVpnEndpointId"],
+                            arn=vpn_endpoint_arn,
+                            connection_logging=vpn_endpoint["ConnectionLogOptions"][
+                                "Enabled"
+                            ],
+                            region=regional_client.region,
+                            tags=vpn_endpoint.get("Tags"),
+                        )
+
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _describe_transit_gateways(self, regional_client):
+        try:
+            describe_transit_gateways_paginator = regional_client.get_paginator(
+                "describe_transit_gateways"
+            )
+
+            for page in describe_transit_gateways_paginator.paginate():
+                for transit_gateway in page["TransitGateways"]:
+                    if not self.audit_resources or (
+                        is_resource_filtered(
+                            transit_gateway["TransitGatewayArn"], self.audit_resources
+                        )
+                    ):
+                        self.transit_gateways[transit_gateway["TransitGatewayArn"]] = (
+                            TransitGateway(
+                                id=transit_gateway["TransitGatewayId"],
+                                auto_accept_shared_attachments=(
+                                    transit_gateway["Options"][
+                                        "AutoAcceptSharedAttachments"
+                                    ]
+                                    == "enable"
+                                ),
+                                region=regional_client.region,
+                                tags=transit_gateway.get("Tags"),
+                            )
+                        )
 
         except Exception as error:
             logger.error(
@@ -525,6 +646,8 @@ class Instance(BaseModel):
     security_groups: list[str]
     subnet_id: str
     instance_profile: Optional[dict]
+    network_interfaces: Optional[list]
+    virtualization_type: Optional[str]
     tags: Optional[list] = []
 
 
@@ -551,6 +674,7 @@ class NetworkInterface(BaseModel):
     association: dict
     attachment: dict
     private_ip: Optional[str]
+    public_ip_addresses: list[Union[IPv4Address, IPv6Address]]
     type: str
     subnet_id: str
     vpc_id: str
@@ -576,6 +700,8 @@ class NetworkACL(BaseModel):
     name: str
     region: str
     entries: list[dict]
+    default: bool
+    in_use: bool
     tags: Optional[list] = []
 
 
@@ -615,9 +741,15 @@ class InstanceMetadataDefaults(BaseModel):
     region: str
 
 
+class TemplateData(BaseModel):
+    user_data: str
+    network_interfaces: Optional[list[NetworkInterface]]
+    associate_public_ip_address: Optional[bool]
+
+
 class LaunchTemplateVersion(BaseModel):
     version_number: int
-    template_data: dict
+    template_data: TemplateData
 
 
 class LaunchTemplate(BaseModel):
@@ -626,3 +758,18 @@ class LaunchTemplate(BaseModel):
     arn: str
     region: str
     versions: list[LaunchTemplateVersion] = []
+    tags: Optional[list] = []
+
+
+class VpnEndpoint(BaseModel):
+    id: str
+    connection_logging: bool
+    region: str
+    tags: Optional[list] = []
+
+
+class TransitGateway(BaseModel):
+    id: str
+    auto_accept_shared_attachments: bool
+    region: str
+    tags: Optional[list] = []

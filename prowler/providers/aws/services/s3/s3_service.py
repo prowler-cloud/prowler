@@ -31,6 +31,7 @@ class S3(AWSService):
         )
         self.__threading_call__(self._get_bucket_tagging, self.buckets.values())
         self.__threading_call__(self._get_bucket_replication, self.buckets.values())
+        self.__threading_call__(self._get_bucket_lifecycle, self.buckets.values())
 
     def _list_buckets(self, provider):
         logger.info("S3 - Listing buckets...")
@@ -379,6 +380,28 @@ class S3(AWSService):
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
+    def _get_bucket_lifecycle(self, bucket):
+        logger.info("S3 - Get buckets lifecycle...")
+        try:
+            regional_client = self.regional_clients[bucket.region]
+            lifecycle_configuration = (
+                regional_client.get_bucket_lifecycle_configuration(Bucket=bucket.name)
+            )
+            for rule in lifecycle_configuration["Rules"]:
+                bucket.lifecycle.append(
+                    LifeCycleRule(
+                        id=rule["ID"],
+                        status=rule["Status"],
+                    )
+                )
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "NoSuchLifecycleConfiguration":
+                bucket.lifecycle = []
+            elif error.response["Error"]["Code"] == "NoSuchBucket":
+                logger.warning(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
     def _get_bucket_replication(self, bucket):
         logger.info("S3 - Get buckets replication...")
         try:
@@ -530,6 +553,11 @@ class AccessPoint(BaseModel):
     region: str
 
 
+class LifeCycleRule(BaseModel):
+    id: str
+    status: str
+
+
 class ReplicationRule(BaseModel):
     id: str
     status: str
@@ -550,4 +578,5 @@ class Bucket(BaseModel):
     object_lock: bool = False
     mfa_delete: bool = False
     tags: Optional[list] = []
+    lifecycle: Optional[list[LifeCycleRule]] = []
     replication_rules: Optional[list[ReplicationRule]] = []

@@ -1,19 +1,23 @@
 import os
-import sys
-from argparse import Namespace
 
 from colorama import Fore, Style
+from kubernetes.client.exceptions import ApiException
 from kubernetes.config.config_exception import ConfigException
+from requests.exceptions import Timeout
 
 from kubernetes import client, config
-from prowler.config.config import (
-    get_default_mute_file_path,
-    load_and_validate_config_file,
-)
+from prowler.config.config import get_default_mute_file_path
 from prowler.lib.logger import logger
 from prowler.lib.utils.utils import print_boxes
 from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
+from prowler.providers.kubernetes.exceptions.exceptions import (
+    KubernetesAPIError,
+    KubernetesCloudResourceManagerAPINotUsedError,
+    KubernetesError,
+    KubernetesSetUpSessionError,
+    KubernetesTimeoutError,
+)
 from prowler.providers.kubernetes.lib.mutelist.mutelist import KubernetesMutelist
 from prowler.providers.kubernetes.models import (
     KubernetesIdentityInfo,
@@ -33,23 +37,37 @@ class KubernetesProvider(Provider):
     # TODO: this is not optional, enforce for all providers
     audit_metadata: Audit_Metadata
 
-    def __init__(self, arguments: Namespace):
+    def __init__(
+        self,
+        kubeconfig_file: str = None,
+        context: str = None,
+        namespace: list = None,
+        audit_config: dict = {},
+        fixer_config: dict = {},
+    ):
         """
         Initializes the KubernetesProvider instance.
         Args:
-            arguments (dict): A dictionary containing configuration arguments.
+            kubeconfig_file (str): Path to the kubeconfig file.
+            context (str): Context name.
+            namespace (list): List of namespaces.
+            audit_config (dict): Audit configuration.
+            fixer_config (dict): Fixer configuration.
         """
+
         logger.info("Instantiating Kubernetes Provider ...")
-        self._session = self.setup_session(arguments.kubeconfig_file, arguments.context)
-        if not arguments.namespace:
+        self._session = self.setup_session(kubeconfig_file, context)
+        if not namespace:
             logger.info("Retrieving all namespaces ...")
             self._namespaces = self.get_all_namespaces()
         else:
-            self._namespaces = arguments.namespace
+            self._namespaces = namespace
 
         if not self._session.api_client:
             logger.critical("Failed to set up a Kubernetes session.")
-            sys.exit(1)
+            raise KubernetesCloudResourceManagerAPINotUsedError(
+                message="Failed to set up a Kubernetes session."
+            )
 
         self._identity = KubernetesIdentityInfo(
             context=self._session.context["name"],
@@ -57,14 +75,12 @@ class KubernetesProvider(Provider):
             cluster=self._session.context["context"]["cluster"],
         )
 
-        # TODO: move this to the providers, pending for AWS, GCP, AZURE and K8s
         # Audit Config
-        self._audit_config = load_and_validate_config_file(
-            self._type, arguments.config_file
-        )
-        self._fixer_config = load_and_validate_config_file(
-            self._type, arguments.fixer_config
-        )
+        self._audit_config = audit_config
+        # Fixer Config
+        self._fixer_config = fixer_config
+
+        Provider.set_global_provider(self)
 
     @property
     def type(self):
@@ -198,12 +214,19 @@ class KubernetesProvider(Provider):
             KubernetesProvider.setup_session(kubeconfig_file, input_context)
             client.CoreV1Api().list_namespace(timeout_seconds=2, _request_timeout=2)
             return Connection(is_connected=True)
+        except ApiException as api_error:
+            logger.critical(
+                f"ApiException[{api_error.__traceback__.tb_lineno}]: {api_error}"
+            )
+            if raise_on_exception:
+                raise KubernetesAPIError(original_exception=api_error)
+            return Connection(error=api_error)
         except Exception as error:
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             if raise_on_exception:
-                raise error
+                raise KubernetesSetUpSessionError(original_exception=error)
             return Connection(error=error)
 
     def search_and_save_roles(
@@ -237,7 +260,9 @@ class KubernetesProvider(Provider):
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            sys.exit(1)
+            raise KubernetesError(
+                original_exception=error, file=os.path.abspath(__file__)
+            )
 
     def get_context_user_roles(self):
         """
@@ -267,11 +292,18 @@ class KubernetesProvider(Provider):
             )
             logger.info("Context user roles retrieved successfully.")
             return roles
+        except ApiException as api_error:
+            logger.critical(
+                f"ApiException[{api_error.__traceback__.tb_lineno}]: {api_error}"
+            )
+            raise KubernetesAPIError(original_exception=api_error)
+        except KubernetesError as error:
+            raise error
         except Exception as error:
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            sys.exit(1)
+            raise KubernetesError(original_exception=error)
 
     def get_all_namespaces(self) -> list[str]:
         """
@@ -285,11 +317,27 @@ class KubernetesProvider(Provider):
             namespaces = [item.metadata.name for item in namespace_list.items]
             logger.info("All namespaces retrieved successfully.")
             return namespaces
+        except ApiException as api_error:
+            logger.critical(
+                f"ApiException[{api_error.__traceback__.tb_lineno}]: {api_error}"
+            )
+            raise KubernetesAPIError(
+                original_exception=api_error, file=os.path.abspath(__file__)
+            )
+        except Timeout as timeout_error:
+            logger.critical(
+                f"Timeout[{timeout_error.__traceback__.tb_lineno}]: {timeout_error}"
+            )
+            raise KubernetesTimeoutError(
+                original_exception=timeout_error, file=os.path.abspath(__file__)
+            )
         except Exception as error:
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            sys.exit()
+            raise KubernetesError(
+                original_exception=error, file=os.path.abspath(__file__)
+            )
 
     def get_pod_current_namespace(self):
         """

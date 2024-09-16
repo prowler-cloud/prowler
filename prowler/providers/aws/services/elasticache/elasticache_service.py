@@ -146,6 +146,8 @@ class ElastiCache(AWSService):
                             engine_version=version,
                             auth_token_enabled=repl_group.get(
                                 "AuthTokenEnabled", False
+                            automatic_failover=repl_group.get(
+                                "AutomaticFailoverStatus", "disabled"
                             ),
                         )
                 except Exception as error:
@@ -222,3 +224,4 @@ class ReplicationGroup(BaseModel):
     auto_minor_version_upgrade: bool = False
     engine_version: Optional[float]
     auth_token_enabled: Optional[bool]
+    automatic_failover: str

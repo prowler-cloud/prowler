@@ -55,7 +55,7 @@ class Test_TrustedAdvisor_Service:
 
     @mock_aws
     # Test TrustedAdvisor session
-    def test__describe_trusted_advisor_checks__(self):
+    def test_describe_trusted_advisor_checks(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         trustedadvisor = TrustedAdvisor(aws_provider)
         assert trustedadvisor.premium_support.enabled

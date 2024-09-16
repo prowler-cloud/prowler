@@ -85,9 +85,10 @@ class Test_Parser:
         assert not parsed.resource_tag
         assert not parsed.scan_unused_services
 
-    def test_default_parser_no_arguments_azure(self):
+    def test_default_parser_no_arguments_azure_only_sp_env_auth(self):
         provider = "azure"
-        command = [prowler_command, provider]
+        basic_argument = "--sp-env-auth"
+        command = [prowler_command, provider, basic_argument]
         parsed = self.parser.parse(command)
         assert parsed.provider == provider
         assert not parsed.status
@@ -120,7 +121,7 @@ class Test_Parser:
         assert not parsed.list_categories
         assert len(parsed.subscription_id) == 0
         assert not parsed.az_cli_auth
-        assert not parsed.sp_env_auth
+        assert parsed.sp_env_auth
         assert not parsed.browser_auth
         assert not parsed.managed_identity_auth
         assert not parsed.shodan
@@ -1064,7 +1065,7 @@ class Test_Parser:
             self.parser.parse(command)
         assert ex.type == SystemExit
 
-    def test_aws_parser_aws_retries_max_attempts(self):
+    def test_aws_parser_retries_max_attempts(self):
         argument = "--aws-retries-max-attempts"
         max_retries = "10"
         command = [prowler_command, argument, max_retries]
@@ -1107,9 +1108,9 @@ class Test_Parser:
     def test_parser_azure_auth_browser(self):
         argument = "--browser-auth"
         command = [prowler_command, "azure", argument]
-        parsed = self.parser.parse(command)
-        assert parsed.provider == "azure"
-        assert parsed.browser_auth
+        parser = self.parser.parse(command)
+        assert parser.provider == "azure"
+        assert parser.browser_auth
 
     def test_parser_azure_tenant_id(self):
         argument = "--tenant-id"
@@ -1128,17 +1129,19 @@ class Test_Parser:
 
     # TODO: change for the global parser
     def test_azure_parser_shodan_short(self):
-        argument = "-N"
+        argument0 = "--sp-env-auth"
+        argument1 = "-N"
         shodan_api_key = str(uuid.uuid4())
-        command = [prowler_command, "azure", argument, shodan_api_key]
+        command = [prowler_command, "azure", argument0, argument1, shodan_api_key]
         parsed = self.parser.parse(command)
         assert parsed.shodan == shodan_api_key
 
     # TODO: change for the global parser
     def test_azure_parser_shodan_long(self):
-        argument = "--shodan"
+        argument0 = "--sp-env-auth"
+        argument1 = "--shodan"
         shodan_api_key = str(uuid.uuid4())
-        command = [prowler_command, "azure", argument, shodan_api_key]
+        command = [prowler_command, "azure", argument0, argument1, shodan_api_key]
         parsed = self.parser.parse(command)
         assert parsed.shodan == shodan_api_key
 
@@ -1150,10 +1153,18 @@ class Test_Parser:
         assert parsed.managed_identity_auth
 
     def test_parser_azure_subscription_id(self):
-        argument = "--subscription-ids"
+        argument0 = "--sp-env-auth"
+        argument1 = "--subscription-ids"
         subscription_1 = "test_subscription_1"
         subscription_2 = "test_subscription_2"
-        command = [prowler_command, "azure", argument, subscription_1, subscription_2]
+        command = [
+            prowler_command,
+            "azure",
+            argument0,
+            argument1,
+            subscription_1,
+            subscription_2,
+        ]
         parsed = self.parser.parse(command)
         assert parsed.provider == "azure"
         assert len(parsed.subscription_id) == 2
@@ -1161,9 +1172,10 @@ class Test_Parser:
         assert parsed.subscription_id[1] == subscription_2
 
     def test_parser_azure_region(self):
-        argument = "--azure-region"
+        argument0 = "--sp-env-auth"
+        argument1 = "--azure-region"
         region = "AzureChinaCloud"
-        command = [prowler_command, "azure", argument, region]
+        command = [prowler_command, "azure", argument0, argument1, region]
         parsed = self.parser.parse(command)
         assert parsed.provider == "azure"
         assert parsed.azure_region == region
@@ -1331,7 +1343,7 @@ class Test_Parser:
             assert argument_error.type == ArgumentTypeError
             assert (
                 argument_error.value.args[0]
-                == "Role Session Name must be 2-64 characters long and consist only of upper- and lower-case alphanumeric characters with no spaces. You can also include underscores or any of the following characters: =,.@-"
+                == "Role session name must be between 2 and 64 characters long and may contain alphanumeric characters, hyphens, underscores, plus signs, equal signs, commas, periods, at signs, and tildes."
             )
 
     def test_validate_role_session_name_valid_role_names(self):

@@ -150,6 +150,20 @@ class TestOutputs:
             "terraform": "true",
         }
 
+    def test_unroll_tags_only_list(self):
+        tags_list = ["tag1", "tag2", "tag3"]
+
+        assert unroll_tags(tags_list) == {
+            "tag1": "",
+            "tag2": "",
+            "tag3": "",
+        }
+
+    def test_unroll_tags_with_key_only(self):
+        tags = [{"key": "name"}]
+
+        assert unroll_tags(tags) == {"name": ""}
+
     def test_unroll_dict(self):
         test_compliance_dict = {
             "CISA": ["your-systems-3", "your-data-1", "your-data-2"],
@@ -238,6 +252,8 @@ class TestOutputs:
         stats = extract_findings_statistics(findings)
         assert stats["total_pass"] == 1
         assert stats["total_fail"] == 1
+        assert stats["total_muted_pass"] == 0
+        assert stats["total_muted_fail"] == 0
         assert stats["resources_count"] == 2
         assert stats["findings_count"] == 2
 
@@ -253,6 +269,8 @@ class TestOutputs:
         stats = extract_findings_statistics(findings)
         assert stats["total_pass"] == 2
         assert stats["total_fail"] == 0
+        assert stats["total_muted_pass"] == 0
+        assert stats["total_muted_fail"] == 0
         assert stats["resources_count"] == 1
         assert stats["findings_count"] == 2
 
@@ -268,6 +286,8 @@ class TestOutputs:
         stats = extract_findings_statistics(findings)
         assert stats["total_pass"] == 1
         assert stats["total_fail"] == 0
+        assert stats["total_muted_pass"] == 0
+        assert stats["total_muted_fail"] == 0
         assert stats["resources_count"] == 1
         assert stats["findings_count"] == 1
 
@@ -277,6 +297,8 @@ class TestOutputs:
         stats = extract_findings_statistics(findings)
         assert stats["total_pass"] == 0
         assert stats["total_fail"] == 0
+        assert stats["total_muted_pass"] == 0
+        assert stats["total_muted_fail"] == 0
         assert stats["resources_count"] == 0
         assert stats["findings_count"] == 0
 
@@ -290,6 +312,8 @@ class TestOutputs:
         stats = extract_findings_statistics(findings)
         assert stats["total_pass"] == 0
         assert stats["total_fail"] == 1
+        assert stats["total_muted_pass"] == 0
+        assert stats["total_muted_fail"] == 1
         assert stats["resources_count"] == 1
         assert stats["findings_count"] == 1
         assert stats["all_fails_are_muted"]
@@ -308,9 +332,45 @@ class TestOutputs:
         stats = extract_findings_statistics(findings)
         assert stats["total_pass"] == 0
         assert stats["total_fail"] == 2
+        assert stats["total_muted_pass"] == 0
+        assert stats["total_muted_fail"] == 1
         assert stats["resources_count"] == 1
         assert stats["findings_count"] == 2
         assert not stats["all_fails_are_muted"]
+
+    def test_extract_findings_statistics_all_passes_are_not_muted(self):
+        finding_1 = mock.MagicMock()
+        finding_1.status = "PASS"
+        finding_1.muted = True
+        finding_1.resource_id = "test_resource_1"
+        finding_2 = mock.MagicMock()
+        finding_2.status = "PASS"
+        finding_2.muted = False
+        finding_2.resource_id = "test_resource_1"
+        findings = [finding_1, finding_2]
+
+        stats = extract_findings_statistics(findings)
+        assert stats["total_pass"] == 2
+        assert stats["total_fail"] == 0
+        assert stats["total_muted_pass"] == 1
+        assert stats["total_muted_fail"] == 0
+        assert stats["resources_count"] == 1
+        assert stats["findings_count"] == 2
+
+    def test_extract_findings_statistics_all_passes_are_muted(self):
+        finding_1 = mock.MagicMock()
+        finding_1.status = "PASS"
+        finding_1.muted = True
+        finding_1.resource_id = "test_resource_1"
+        findings = [finding_1]
+
+        stats = extract_findings_statistics(findings)
+        assert stats["total_pass"] == 1
+        assert stats["total_fail"] == 0
+        assert stats["total_muted_pass"] == 1
+        assert stats["total_muted_fail"] == 0
+        assert stats["resources_count"] == 1
+        assert stats["findings_count"] == 1
 
     def test_report_with_aws_provider_not_muted_pass(self):
         # Mocking check_findings and provider

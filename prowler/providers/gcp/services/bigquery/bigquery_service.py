@@ -12,10 +12,10 @@ class BigQuery(GCPService):
 
         self.datasets = []
         self.tables = []
-        self.__get_datasets__()
-        self.__get_tables__()
+        self._get_datasets()
+        self._get_tables()
 
-    def __get_datasets__(self):
+    def _get_datasets(self):
         for project_id in self.project_ids:
             try:
                 request = self.client.datasets().list(projectId=project_id)
@@ -59,7 +59,7 @@ class BigQuery(GCPService):
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
-    def __get_tables__(self):
+    def _get_tables(self):
         for dataset in self.datasets:
             try:
                 request = self.client.tables().list(

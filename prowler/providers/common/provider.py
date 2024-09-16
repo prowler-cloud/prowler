@@ -2,9 +2,11 @@ import importlib
 import pkgutil
 import sys
 from abc import ABC, abstractmethod
+from argparse import Namespace
 from importlib import import_module
 from typing import Any, Optional
 
+from prowler.config.config import load_and_validate_config_file
 from prowler.lib.logger import logger
 from prowler.lib.mutelist.mutelist import Mutelist
 
@@ -169,7 +171,11 @@ class Provider(ABC):
         return Provider._global
 
     @staticmethod
-    def set_global_provider(arguments):
+    def set_global_provider(global_provider: "Provider") -> None:
+        Provider._global = global_provider
+
+    @staticmethod
+    def init_global_provider(arguments: Namespace) -> None:
         try:
             provider_class_path = (
                 f"{providers_path}.{arguments.provider}.{arguments.provider}_provider"
@@ -178,11 +184,62 @@ class Provider(ABC):
             provider_class = getattr(
                 import_module(provider_class_path), provider_class_name
             )
+            audit_config = load_and_validate_config_file(
+                arguments.provider, arguments.config_file
+            )
+            fixer_config = load_and_validate_config_file(
+                arguments.provider, arguments.fixer_config
+            )
 
             if not isinstance(Provider._global, provider_class):
-                global_provider = provider_class(arguments)
+                if "aws" in provider_class_name.lower():
+                    provider_class(
+                        arguments.aws_retries_max_attempts,
+                        arguments.role,
+                        arguments.session_duration,
+                        arguments.external_id,
+                        arguments.role_session_name,
+                        arguments.mfa,
+                        arguments.profile,
+                        set(arguments.region) if arguments.region else None,
+                        arguments.organizations_role,
+                        arguments.scan_unused_services,
+                        arguments.resource_tag,
+                        arguments.resource_arn,
+                        audit_config,
+                        fixer_config,
+                    )
+                elif "azure" in provider_class_name.lower():
+                    provider_class(
+                        arguments.az_cli_auth,
+                        arguments.sp_env_auth,
+                        arguments.browser_auth,
+                        arguments.managed_identity_auth,
+                        arguments.tenant_id,
+                        arguments.azure_region,
+                        arguments.subscription_id,
+                        audit_config,
+                        fixer_config,
+                    )
+                elif "gcp" in provider_class_name.lower():
+                    provider_class(
+                        arguments.project_id,
+                        arguments.excluded_project_id,
+                        arguments.credentials_file,
+                        arguments.impersonate_service_account,
+                        arguments.list_project_id,
+                        audit_config,
+                        fixer_config,
+                    )
+                elif "kubernetes" in provider_class_name.lower():
+                    provider_class(
+                        arguments.kubeconfig_file,
+                        arguments.context,
+                        arguments.namespace,
+                        audit_config,
+                        fixer_config,
+                    )
 
-            Provider._global = global_provider
         except TypeError as error:
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

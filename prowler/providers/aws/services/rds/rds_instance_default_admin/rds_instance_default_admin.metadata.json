@@ -8,7 +8,7 @@
   "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-instance",
   "Severity": "medium",
   "ResourceType": "AwsRdsDbInstance",
-  "Description": "Ensure that your Amazon RDS instances that are not clustered are not using the default master username, the clustered ones are covered by the rds_cluster_default_admin check.",
+  "Description": "Ensure that your Amazon RDS instances are not using the default master username.",
   "Risk": "Since admin is the Amazon's example for the RDS database master username and postgres is the default PostgreSQL master username. Many AWS customers will use this username for their RDS database instances in production. Malicious users can use this information to their advantage and frequently try to use default master username during brute-force attacks.",
   "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-25",
   "Remediation": {

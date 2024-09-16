@@ -48,7 +48,7 @@ class Test_AutoScaling_Service:
 
     # Test AutoScaling Get APIs
     @mock_aws
-    def test__describe_launch_configurations__(self):
+    def test_describe_launch_configurations(self):
         # Generate AutoScaling Client
         autoscaling_client = client("autoscaling", region_name=AWS_REGION_US_EAST_1)
         # Create AutoScaling API
@@ -84,7 +84,7 @@ class Test_AutoScaling_Service:
 
     # Test Describe Auto Scaling Groups
     @mock_aws
-    def test__describe_auto_scaling_groups__(self):
+    def test_describe_auto_scaling_groups(self):
         # Generate AutoScaling Client
         autoscaling_client = client("autoscaling", region_name=AWS_REGION_US_EAST_1)
         autoscaling_client.create_launch_configuration(

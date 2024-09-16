@@ -1,5 +1,5 @@
 import asyncio
-import sys
+import os
 from argparse import ArgumentTypeError
 from os import getenv
 
@@ -10,12 +10,22 @@ from azure.mgmt.subscription import SubscriptionClient
 from colorama import Fore, Style
 from msgraph import GraphServiceClient
 
-from prowler.config.config import (
-    get_default_mute_file_path,
-    load_and_validate_config_file,
-)
+from prowler.config.config import get_default_mute_file_path
 from prowler.lib.logger import logger
 from prowler.lib.utils.utils import print_boxes
+from prowler.providers.azure.exceptions.exceptions import (
+    AzureArgumentTypeValidationError,
+    AzureBrowserAuthNoTenantIDError,
+    AzureDefaultAzureCredentialError,
+    AzureEnvironmentVariableError,
+    AzureHTTPResponseError,
+    AzureInteractiveBrowserCredentialError,
+    AzureNoAuthenticationMethodError,
+    AzureNoSubscriptionsError,
+    AzureSetUpIdentityError,
+    AzureSetUpRegionConfigError,
+    AzureTenantIDNoBrowserAuthError,
+)
 from prowler.providers.azure.lib.arguments.arguments import validate_azure_region
 from prowler.providers.azure.lib.mutelist.mutelist import AzureMutelist
 from prowler.providers.azure.lib.regions.regions import get_regions_config
@@ -48,7 +58,7 @@ class AzureProvider(Provider):
         audit_metadata (Audit_Metadata): The audit metadata for the Azure provider.
 
     Methods:
-        __init__(self, arguments): Initializes the AzureProvider object.
+        __init__ -> Initializes the Azure provider.
         identity(self): Returns the identity of the Azure provider.
         type(self): Returns the type of the Azure provider.
         session(self): Returns the session object associated with the Azure provider.
@@ -76,16 +86,44 @@ class AzureProvider(Provider):
     # TODO: this is not optional, enforce for all providers
     audit_metadata: Audit_Metadata
 
-    def __init__(self, arguments):
+    def __init__(
+        self,
+        az_cli_auth: bool = False,
+        sp_env_auth: bool = False,
+        browser_auth: bool = False,
+        managed_identity_auth: bool = False,
+        tenant_id: str = None,
+        region: str = "AzureCloud",
+        subscription_ids: list = [],
+        audit_config: dict = {},
+        fixer_config: dict = {},
+    ):
+        """
+        Initializes the Azure provider.
+
+        Args:
+            az_cli_auth (bool): Flag indicating whether to use Azure CLI authentication.
+            sp_env_auth (bool): Flag indicating whether to use Service Principal environment authentication.
+            browser_auth (bool): Flag indicating whether to use interactive browser authentication.
+            managed_identity_auth (bool): Flag indicating whether to use managed identity authentication.
+            tenant_id (str): The Azure Active Directory tenant ID.
+            region (str): The Azure region.
+            subscription_ids (list): List of subscription IDs.
+            audit_config (dict): The audit configuration for the Azure provider.
+            fixer_config (dict): The fixer configuration.
+
+        Returns:
+            None
+
+        Raises:
+            AzureArgumentTypeValidationError: If there is an error in the argument type validation.
+            AzureSetUpRegionConfigError: If there is an error in setting up the region configuration.
+            AzureDefaultAzureCredentialError: If there is an error in retrieving the Azure credentials.
+            AzureInteractiveBrowserCredentialError: If there is an error in retrieving the Azure credentials using browser authentication.
+        """
         logger.info("Setting Azure provider ...")
-        subscription_ids = arguments.subscription_id
 
         logger.info("Checking if any credentials mode is set ...")
-        az_cli_auth = arguments.az_cli_auth
-        sp_env_auth = arguments.sp_env_auth
-        browser_auth = arguments.browser_auth
-        managed_identity_auth = arguments.managed_identity_auth
-        tenant_id = arguments.tenant_id
 
         # Validate the authentication arguments
         self.validate_arguments(
@@ -93,7 +131,6 @@ class AzureProvider(Provider):
         )
 
         logger.info("Checking if region is different than default one")
-        region = arguments.azure_region
         self._region_config = self.setup_region_config(region)
 
         # Set up the Azure session
@@ -118,14 +155,12 @@ class AzureProvider(Provider):
         # TODO: should we keep this here or within the identity?
         self._locations = self.get_locations(self.session)
 
-        # TODO: move this to the providers, pending for AWS, GCP, AZURE and K8s
         # Audit Config
-        self._audit_config = load_and_validate_config_file(
-            self._type, arguments.config_file
-        )
-        self._fixer_config = load_and_validate_config_file(
-            self._type, arguments.fixer_config
-        )
+        self._audit_config = audit_config
+        # Fixer Config
+        self._fixer_config = fixer_config
+
+        Provider.set_global_provider(self)
 
     @property
     def identity(self):
@@ -241,27 +276,27 @@ class AzureProvider(Provider):
             tenant_id (str): The Azure Tenant ID.
 
         Raises:
-            SystemExit: If none of the authentication methods are set.
-            SystemExit: If browser authentication is enabled but the tenant ID is not provided.
-            SystemExit: If tenant ID is provided but browser authentication is not enabled.
+            AzureBrowserAuthNoTenantIDError: If browser authentication is enabled but the tenant ID is not found.
         """
-        if (
+        if not browser_auth and tenant_id:
+            raise AzureTenantIDNoBrowserAuthError(
+                file=os.path.basename(__file__),
+                message="Azure Tenant ID (--tenant-id) is required for browser authentication mode",
+            )
+        elif (
             not az_cli_auth
             and not sp_env_auth
             and not browser_auth
             and not managed_identity_auth
         ):
-            raise SystemExit(
-                "Azure provider requires at least one authentication method set: [--az-cli-auth | --sp-env-auth | --browser-auth | --managed-identity-auth]"
+            raise AzureNoAuthenticationMethodError(
+                file=os.path.basename(__file__),
+                message="Azure provider requires at least one authentication method set: [--az-cli-auth | --sp-env-auth | --browser-auth | --managed-identity-auth]",
             )
         elif browser_auth and not tenant_id:
-            raise SystemExit(
-                "Azure Tenant ID (--tenant-id) is required for browser authentication mode"
-            )
-        # There is no need to handle that since it won't get here
-        elif not browser_auth and tenant_id:
-            raise SystemExit(
-                "Azure Tenant ID (--tenant-id) is required only for browser authentication mode"
+            raise AzureBrowserAuthNoTenantIDError(
+                file=os.path.basename(__file__),
+                message="Azure Tenant ID (--tenant-id) is required for browser authentication mode",
             )
 
     @staticmethod
@@ -290,12 +325,18 @@ class AzureProvider(Provider):
             logger.error(
                 f"{validation_error.__class__.__name__}[{validation_error.__traceback__.tb_lineno}]: {validation_error}"
             )
-            raise validation_error
-        except Exception as validation_error:
-            logger.error(
-                f"{validation_error.__class__.__name__}[{validation_error.__traceback__.tb_lineno}]: {validation_error}"
+            raise AzureArgumentTypeValidationError(
+                file=os.path.basename(__file__),
+                original_exception=validation_error,
             )
-            raise validation_error
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            raise AzureSetUpRegionConfigError(
+                file=os.path.basename(__file__),
+                original_exception=error,
+            )
 
     def print_credentials(self):
         """Azure credentials information.
@@ -357,7 +398,13 @@ class AzureProvider(Provider):
         # Browser auth creds cannot be set with DefaultAzureCredentials()
         if not browser_auth:
             if sp_env_auth:
-                AzureProvider.check_service_principal_creds_env_vars()
+                try:
+                    AzureProvider.check_service_principal_creds_env_vars()
+                except AzureEnvironmentVariableError as environment_credentials_error:
+                    logger.critical(
+                        f"{environment_credentials_error.__class__.__name__}[{environment_credentials_error.__traceback__.tb_lineno}] -- {environment_credentials_error}"
+                    )
+                    raise environment_credentials_error
             try:
                 # Since the input vars come as True when it is wanted to be used, we need to inverse it since
                 # DefaultAzureCredential sets the auth method excluding the others
@@ -379,16 +426,22 @@ class AzureProvider(Provider):
                 logger.critical(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
                 )
-                sys.exit(1)
+                raise AzureDefaultAzureCredentialError(
+                    file=os.path.basename(__file__), original_exception=error
+                )
         else:
             try:
                 credentials = InteractiveBrowserCredential(tenant_id=tenant_id)
             except Exception as error:
-                logger.critical("Failed to retrieve azure credentials")
+                logger.critical(
+                    "Failed to retrieve azure credentials using browser authentication"
+                )
                 logger.critical(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
                 )
-                sys.exit(1)
+                raise AzureInteractiveBrowserCredentialError(
+                    file=os.path.basename(__file__), original_exception=error
+                )
 
         return credentials
 
@@ -420,10 +473,18 @@ class AzureProvider(Provider):
 
         Raises:
             Exception: If failed to test the connection to Azure subscription.
+            AzureArgumentTypeValidationError: If there is an error in the argument type validation.
+            AzureSetUpRegionConfigError: If there is an error in setting up the region configuration.
+            AzureDefaultAzureCredentialError: If there is an error in retrieving the Azure credentials.
+            AzureInteractiveBrowserCredentialError: If there is an error in retrieving the Azure credentials using browser authentication.
+            AzureHTTPResponseError: If there is an HTTP response error.
+
 
         Examples:
             >>> AzureProvider.test_connection(az_cli_auth=True)
             True
+            >>> AzureProvider.test_connection(sp_env_auth=False, browser_auth=True, tenant_id=None)
+            False, ArgumentTypeError: Azure Tenant ID is required only for browser authentication mode
         """
         try:
             AzureProvider.validate_arguments(
@@ -446,37 +507,65 @@ class AzureProvider(Provider):
             subscription = next(subscription_client.subscriptions.list())
 
             logger.info(f"Connected to Azure subscription: {subscription.display_name}")
+
             return Connection(is_connected=True)
-
-        except HttpResponseError as credentials_error:
+        # Exceptions from validate_arguments
+        except AzureNoAuthenticationMethodError as no_auth_method_error:
+            logger.error(str(no_auth_method_error))
+            if raise_on_exception:
+                raise no_auth_method_error
+            return Connection(error=no_auth_method_error)
+        except AzureBrowserAuthNoTenantIDError as browser_no_tenant_error:
+            logger.error(str(browser_no_tenant_error))
+            if raise_on_exception:
+                raise browser_no_tenant_error
+            return Connection(error=browser_no_tenant_error)
+        except AzureTenantIDNoBrowserAuthError as tenant_no_browser_error:
+            logger.error(str(tenant_no_browser_error))
+        # Exceptions from setup_region_config
+        except AzureArgumentTypeValidationError as type_validation_error:
+            logger.error(str(type_validation_error))
+            if raise_on_exception:
+                raise type_validation_error
+            return Connection(error=type_validation_error)
+        except AzureSetUpRegionConfigError as region_config_error:
+            logger.error(str(region_config_error))
+            if raise_on_exception:
+                raise region_config_error
+            return Connection(error=region_config_error)
+        # Exceptions from setup_session
+        except AzureEnvironmentVariableError as environment_credentials_error:
+            logger.error(str(environment_credentials_error))
+            if raise_on_exception:
+                raise environment_credentials_error
+            return Connection(error=environment_credentials_error)
+        except AzureDefaultAzureCredentialError as default_credentials_error:
+            logger.error(str(default_credentials_error))
+            if raise_on_exception:
+                raise default_credentials_error
+            return Connection(error=default_credentials_error)
+        except AzureInteractiveBrowserCredentialError as interactive_browser_error:
+            logger.error(str(interactive_browser_error))
+            if raise_on_exception:
+                raise interactive_browser_error
+            return Connection(error=interactive_browser_error)
+        # Exceptions from SubscriptionClient
+        except HttpResponseError as http_response_error:
             logger.error(
-                f"{credentials_error.__class__.__name__}[{credentials_error.__traceback__.tb_lineno}]: {credentials_error}"
+                f"{http_response_error.__class__.__name__}[{http_response_error.__traceback__.tb_lineno}]: {http_response_error}"
             )
             if raise_on_exception:
-                raise credentials_error
-            return Connection(error=credentials_error)
-
-        except ArgumentTypeError as validation_error:
-            logger.error(
-                f"{validation_error.__class__.__name__}[{validation_error.__traceback__.tb_lineno}]: {validation_error}"
-            )
-            if raise_on_exception:
-                raise validation_error
-            return Connection(error=validation_error)
-
-        except SystemExit as exit_error:
-            logger.error(
-                f"{exit_error.__class__.__name__}[{exit_error.__traceback__.tb_lineno}]: {exit_error}"
-            )
-            if raise_on_exception:
-                raise exit_error
-            return Connection(error=exit_error)
-
+                raise AzureHTTPResponseError(
+                    file=os.path.basename(__file__),
+                    original_exception=http_response_error,
+                )
+            return Connection(error=http_response_error)
         except Exception as error:
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             if raise_on_exception:
+                # Raise directly the exception
                 raise error
             return Connection(error=error)
 
@@ -500,7 +589,10 @@ class AzureProvider(Provider):
                 logger.critical(
                     f"Azure provider: Missing environment variable {env_var} needed to authenticate against Azure"
                 )
-                sys.exit(1)
+                raise AzureEnvironmentVariableError(
+                    file=os.path.basename(__file__),
+                    message=f"Missing environment variable {env_var} required to authenticate.",
+                )
 
     def setup_identity(
         self,
@@ -615,7 +707,10 @@ class AzureProvider(Provider):
                 logger.critical(
                     "It was not possible to retrieve any subscriptions, please check your permission assignments"
                 )
-                sys.exit(1)
+                raise AzureNoSubscriptionsError(
+                    file=os.path.basename(__file__),
+                    message="No subscriptions were found, please check your permission assignments.",
+                )
 
             tenants = subscriptions_client.tenants.list()
             for tenant in tenants:
@@ -628,7 +723,10 @@ class AzureProvider(Provider):
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
             )
-            sys.exit(1)
+            raise AzureSetUpIdentityError(
+                file=os.path.basename(__file__),
+                original_exception=error,
+            )
 
         return identity
 

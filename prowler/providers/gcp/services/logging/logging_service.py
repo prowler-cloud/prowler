@@ -11,10 +11,10 @@ class Logging(GCPService):
         super().__init__(__class__.__name__, provider, api_version="v2")
         self.sinks = []
         self.metrics = []
-        self.__get_sinks__()
-        self.__get_metrics__()
+        self._get_sinks()
+        self._get_metrics()
 
-    def __get_sinks__(self):
+    def _get_sinks(self):
         for project_id in self.project_ids:
             try:
                 request = self.client.sinks().list(parent=f"projects/{project_id}")
@@ -39,7 +39,7 @@ class Logging(GCPService):
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
-    def __get_metrics__(self):
+    def _get_metrics(self):
         for project_id in self.project_ids:
             try:
                 request = (

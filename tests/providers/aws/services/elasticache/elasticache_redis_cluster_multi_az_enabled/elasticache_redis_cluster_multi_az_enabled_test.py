@@ -7,6 +7,10 @@ from moto import mock_aws
 from prowler.providers.aws.services.elasticache.elasticache_service import (
     ReplicationGroup,
 )
+from tests.providers.aws.services.elasticache.elasticache_service_test import (
+    AUTO_MINOR_VERSION_UPGRADE,
+    AUTOMATIC_FAILOVER,
+)
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
@@ -68,6 +72,8 @@ class Test_elasticache_replication_group_multi_az_enabled:
                 transit_encryption=False,
                 multi_az="disabled",
                 tags=REPLICATION_GROUP_TAGS,
+                auto_minor_version_upgrade=AUTO_MINOR_VERSION_UPGRADE,
+                automatic_failover=AUTOMATIC_FAILOVER,
             )
         )
 
@@ -112,6 +118,8 @@ class Test_elasticache_replication_group_multi_az_enabled:
                 transit_encryption=REPLICATION_GROUP_TRANSIT_ENCRYPTION,
                 multi_az=REPLICATION_GROUP_MULTI_AZ,
                 tags=REPLICATION_GROUP_TAGS,
+                auto_minor_version_upgrade=AUTO_MINOR_VERSION_UPGRADE,
+                automatic_failover=AUTOMATIC_FAILOVER,
             )
         )
 
