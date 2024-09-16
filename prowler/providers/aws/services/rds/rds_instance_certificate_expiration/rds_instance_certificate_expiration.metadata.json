@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-instance",
   "Severity": "high",
-  "ResourceType": "AwsRdsDbInstanceDetails",
+  "ResourceType": "AwsRdsDbInstance",
   "Description": "To maintain Amazon RDS database security and avoid interruption of the applications that are using RDS and/or Aurora databases, rotate the required SSL/TLS certificates and update the deprecated Certificate Authority (CA) certificates at the Amazon RDS instance level.",
   "Risk": "Interruption of application if the certificate expires.",
   "RelatedUrl": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.SSL-certificate-rotation.html",

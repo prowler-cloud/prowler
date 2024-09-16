@@ -11,7 +11,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
-  "ResourceType": "AwsCloudTrailTrailDetails",
+  "ResourceType": "AwsCloudTrailTrail",
   "Description": "Ensure CloudTrail log file validation is enabled",
   "Risk": "Enabling log file validation will provide additional integrity checking of CloudTrail logs. ",
   "RelatedUrl": "",

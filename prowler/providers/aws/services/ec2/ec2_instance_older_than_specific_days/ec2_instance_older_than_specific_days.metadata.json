@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
-  "ResourceType": "AwsEc2InstanceDetails",
+  "ResourceType": "AwsEc2Instance",
   "Description": "Check EC2 Instances older than specific days.",
   "Risk": "Having old instances within your AWS account could increase the risk of having vulnerable software.",
   "RelatedUrl": "",

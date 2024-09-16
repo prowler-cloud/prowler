@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
-  "ResourceType": "AwsIamUserDetails",
+  "ResourceType": "AwsIamUser",
   "Description": "Ensure User Access Keys unused are disabled",
   "Risk": "To increase the security of your AWS account, remove IAM user credentials (that is, passwords and access keys) that are not needed. For example, when users leave your organization or no longer need AWS access.",
   "RelatedUrl": "",

@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-instance",
   "Severity": "medium",
-  "ResourceType": "AwsRdsDbInstanceDetails",
+  "ResourceType": "AwsRdsDbInstance",
   "Description": "Check if RDS instances is integrated with CloudWatch Logs.",
   "Risk": "If logs are not enabled, monitoring of service use and threat analysis is not possible.",
   "RelatedUrl": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/publishing_cloudwatchlogs.html",

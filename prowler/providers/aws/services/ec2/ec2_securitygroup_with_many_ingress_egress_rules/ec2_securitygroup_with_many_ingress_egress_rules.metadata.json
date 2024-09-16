@@ -9,7 +9,7 @@
   "SubServiceName": "securitygroup",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "high",
-  "ResourceType": "AwsEc2SecurityGroupDetails",
+  "ResourceType": "AwsEc2SecurityGroup",
   "Description": "Find security groups with more than 50 ingress or egress rules.",
   "Risk": "If Security groups are not properly configured the attack surface is increased.",
   "RelatedUrl": "",

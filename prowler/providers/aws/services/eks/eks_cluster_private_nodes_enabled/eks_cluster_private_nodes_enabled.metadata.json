@@ -10,7 +10,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "AwsEksClusterDetails",
+  "ResourceType": "AwsEksCluster",
   "Description": "Ensure that clusters are created with private nodes, disabling public IP addresses for cluster nodes. Private nodes have no public IP addresses, restricting access to internal networks and enhancing security.",
   "Risk": "Without private nodes, cluster nodes may have public IP addresses, increasing the attack surface and exposing them to potential threats from the internet.",
   "RelatedUrl": "https://docs.aws.amazon.com/eks/latest/userguide/private-clusters.html",

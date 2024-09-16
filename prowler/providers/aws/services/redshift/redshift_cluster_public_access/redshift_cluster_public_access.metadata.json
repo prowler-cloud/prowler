@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:redshift:region:account-id:cluster:cluster-name",
   "Severity": "high",
-  "ResourceType": "AwsRedshiftClusterDetails",
+  "ResourceType": "AwsRedshiftCluster",
   "Description": "Check for Publicly Accessible Redshift Clusters",
   "Risk": "Publicly accessible services could expose sensitive data to bad actors.",
   "RelatedUrl": "https://docs.aws.amazon.com/redshift/latest/mgmt/managing-clusters-vpc.html",

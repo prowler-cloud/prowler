@@ -11,7 +11,7 @@
   "SubServiceName": "networkacl",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
-  "ResourceType": "AwsEc2NetworkAclDetails",
+  "ResourceType": "AwsEc2NetworkAcl",
   "Description": "Ensure no Network ACLs allow ingress from 0.0.0.0/0 to any port.",
   "Risk": "Even having a perimeter firewall, having network acls open allows any user or malware with vpc access to scan for well known and sensitive ports and gain access to instance.",
   "RelatedUrl": "",

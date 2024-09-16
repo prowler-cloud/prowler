@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:sagemaker:region:account-id:notebook-instance",
   "Severity": "medium",
-  "ResourceType": "AwsSageMakerNotebookInstanceDetails",
+  "ResourceType": "AwsSageMakerNotebookInstance",
   "Description": "Check if Amazon SageMaker Notebook instances have data encryption enabled",
   "Risk": "Data exfiltration could happen if information is not protected. KMS keys provide additional security level to IAM policies.",
   "RelatedUrl": "https://docs.aws.amazon.com/sagemaker/latest/dg/key-management.html",

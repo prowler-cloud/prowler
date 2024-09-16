@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:s3:::bucket_name",
   "Severity": "medium",
-  "ResourceType": "AwsS3BucketDetails",
+  "ResourceType": "AwsS3Bucket",
   "Description": "Check if S3 bucket MFA Delete is not enabled.",
   "Risk": "Your security credentials are compromised or unauthorized access is granted.",
   "RelatedUrl": "",

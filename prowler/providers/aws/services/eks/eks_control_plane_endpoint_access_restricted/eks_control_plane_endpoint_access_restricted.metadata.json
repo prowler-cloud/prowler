@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
-  "ResourceType": "AwsEksClusterDetails",
+  "ResourceType": "AwsEksCluster",
   "Description": "Restrict Access to the EKS Control Plane Endpoint",
   "Risk": "By default, this API server endpoint is public to the internet, and access to the API server is secured using a combination of AWS Identity and Access Management (IAM) and native Kubernetes Role Based Access Control (RBAC).",
   "RelatedUrl": "",

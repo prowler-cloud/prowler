@@ -11,7 +11,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
-  "ResourceType": "AwsIamRoleDetails",
+  "ResourceType": "AwsIamRole",
   "Description": "Ensure a support role has been created to manage incidents with AWS Support",
   "Risk": "AWS provides a support center that can be used for incident notification and response, as well as technical support and customer services. Create an IAM Role to allow authorized users to manage incidents with AWS Support.",
   "RelatedUrl": "",

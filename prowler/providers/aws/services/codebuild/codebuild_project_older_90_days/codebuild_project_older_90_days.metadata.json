@@ -10,7 +10,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
-  "ResourceType": "AwsCodeBuildProjectDetails",
+  "ResourceType": "AwsCodeBuildProject",
   "Description": "Ensure CodeBuild Project has been invoked in the last 90 days",
   "Risk": "Older CodeBuild projects can be checked to see if they are currently in use.",
   "RelatedUrl": "",

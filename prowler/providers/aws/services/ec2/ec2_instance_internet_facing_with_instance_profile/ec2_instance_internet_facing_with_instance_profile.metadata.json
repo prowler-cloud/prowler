@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
-  "ResourceType": "AwsEc2InstanceDetails",
+  "ResourceType": "AwsEc2Instance",
   "Description": "Check for internet facing EC2 instances with Instance Profiles attached.",
   "Risk": "Exposing an EC2 directly to internet increases the attack surface and therefore the risk of compromise.",
   "RelatedUrl": "",

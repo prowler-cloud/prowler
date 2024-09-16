@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-instance",
   "Severity": "critical",
-  "ResourceType": "AwsRdsDbInstanceDetails",
+  "ResourceType": "AwsRdsDbInstance",
   "Description": "Ensure there are no Public Accessible RDS instances.",
   "Risk": "Publicly accessible databases could expose sensitive data to bad actors.",
   "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/rds-instance-public-access-check.html",

@@ -267,7 +267,7 @@ The following code is an example output of the [JSON-ASFF](https://docs.aws.amaz
     "Description": "Ensure RDS instances have minor version upgrade enabled.",
     "Resources": [
         {
-            "Type": "AwsRdsDbInstanceDetails",
+            "Type": "AwsRdsDbInstance",
             "Id": "rds-instance-id",
             "Partition": "aws",
             "Region": "eu-west-1"

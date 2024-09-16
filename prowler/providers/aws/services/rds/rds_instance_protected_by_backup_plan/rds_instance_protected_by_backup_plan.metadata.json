@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-instance",
   "Severity": "medium",
-  "ResourceType": "AwsRdsDbInstanceDetails",
+  "ResourceType": "AwsRdsDbInstance",
   "Description": "Check if RDS instances are protected by a backup plan.",
   "Risk": "Without a backup plan, RDS instances are vulnerable to data loss, accidental deletion, or corruption. This could lead to significant operational disruptions or loss of critical data.",
   "RelatedUrl": "https://docs.aws.amazon.com/aws-backup/latest/devguide/assigning-resources.html",

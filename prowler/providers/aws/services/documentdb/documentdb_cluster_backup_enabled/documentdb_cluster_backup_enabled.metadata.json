@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-cluster",
   "Severity": "medium",
-  "ResourceType": "AwsRdsDbClusterDetails",
+  "ResourceType": "AwsRdsDbCluster",
   "Description": "Check if DocumentDB Clusters have backup enabled.",
   "Risk": "Ensure that your Amazon DocumentDB database clusters have set a minimum backup retention period in order to achieve compliance requirements in your organization.",
   "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/documentdb-controls.html#documentdb-2",

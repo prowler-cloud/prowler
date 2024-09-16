@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:guardduty:region:account-id/detector-id",
   "Severity": "medium",
-  "ResourceType": "AwsGuardDutyDetectorDetails",
+  "ResourceType": "AwsGuardDutyDetector",
   "Description": "Check if GuardDuty is enabled",
   "Risk": "Amazon GuardDuty is a continuous security monitoring service that analyzes and processes several datasources.",
   "RelatedUrl": "https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_settingup.html",

@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-cluster",
   "Severity": "low",
-  "ResourceType": "AwsRdsDbClusterDetails",
+  "ResourceType": "AwsRdsDbCluster",
   "Description": "Check if RDS clusters have deletion protection enabled.",
   "Risk": "You can only delete clusters that do not have deletion protection enabled.",
   "RelatedUrl": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_DeleteInstance.html",

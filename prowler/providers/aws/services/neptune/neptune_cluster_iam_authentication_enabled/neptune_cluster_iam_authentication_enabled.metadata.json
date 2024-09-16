@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-cluster",
   "Severity": "medium",
-  "ResourceType": "AwsRdsDbClusterDetails",
+  "ResourceType": "AwsRdsDbCluster",
   "Description": "Check if Neptune Clusters have IAM authentication enabled.",
   "Risk": "Ensure that IAM Database Authentication feature is enabled for your Amazon Neptune database clusters in order to make use of AWS Identity and Access Management (IAM) service to manage database access.",
   "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/neptune-controls.html#neptune-7",

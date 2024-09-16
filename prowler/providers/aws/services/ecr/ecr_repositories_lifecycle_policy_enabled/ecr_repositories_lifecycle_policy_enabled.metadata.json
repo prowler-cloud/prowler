@@ -10,7 +10,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "low",
-  "ResourceType": "AwsEcrRepositoryDetails",
+  "ResourceType": "AwsEcrRepository",
   "Description": "Check if ECR repositories have lifecycle policies enabled",
   "Risk": "Amazon ECR repositories run the risk of retaining huge volumes of images, increasing unnecessary cost.",
   "RelatedUrl": "",

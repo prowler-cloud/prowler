@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
-  "ResourceType": "AwsElbLoadBalancerDetails",
+  "ResourceType": "AwsElbLoadBalancer",
   "Description": "Check if Elastic Load Balancers have SSL listeners.",
   "Risk": "Clear text communication could affect privacy of information in transit.",
   "RelatedUrl": "",

@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "low",
-  "ResourceType": "AwsEc2NetworkAclDetails",
+  "ResourceType": "AwsEc2NetworkAcl",
   "Description": "Ensure that there are no unused network access control lists (network ACLs) in your virtual private cloud (VPC). The control fails if the network ACL isn't associated with a subnet. The control doesn't generate findings for an unused default network ACL.",
   "Risk": "Unused network ACLs may represent a potential security risk if left in place without purpose, as they could be mistakenly associated with subnets later.",
   "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/vpc-network-acl-unused-check.html",

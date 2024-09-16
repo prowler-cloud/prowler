@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "AwsRoute53HostedZoneDetails",
+  "ResourceType": "AwsRoute53HostedZone",
   "Description": "Check if Route53 public hosted zones are logging queries to CloudWatch Logs.",
   "Risk": "If logs are not enabled, monitoring of service use and threat analysis is not possible.",
   "RelatedUrl": "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/monitoring-hosted-zones-with-cloudwatch.html",

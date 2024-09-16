@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:rdmsds:region:account-id:rep",
   "Severity": "critical",
-  "ResourceType": "AwsDmsReplicationInstanceDetails",
+  "ResourceType": "AwsDmsReplicationInstance",
   "Description": "Ensure DMS instances are not publicly accessible.",
   "Risk": "Ensure that your Amazon Database Migration Service (DMS) are not publicly accessible from the Internet in order to avoid exposing private data and minimize security risks. A DMS replication instance should have a private IP address and the Publicly Accessible feature disabled when both the source and the target databases are in the same network that is connected to the instance's VPC through a VPN, VPC peering connection, or using an AWS Direct Connect dedicated connection.",
   "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/dms-controls.html#dms-1",

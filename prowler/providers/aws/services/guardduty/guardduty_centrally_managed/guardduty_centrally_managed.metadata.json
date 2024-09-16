@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:guardduty:region:account-id/detector-id",
   "Severity": "medium",
-  "ResourceType": "AwsGuardDutyDetectorDetails",
+  "ResourceType": "AwsGuardDutyDetector",
   "Description": "GuardDuty is centrally managed",
   "Risk": "If GuardDuty is not centrally managed, it is not possible to centrally manage the GuardDuty findings, settings, and member accounts.",
   "RelatedUrl": "https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_accounts.html",

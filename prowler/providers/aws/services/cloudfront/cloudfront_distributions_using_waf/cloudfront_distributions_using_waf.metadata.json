@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:cloudfront:region:account-id:distribution/resource-id",
   "Severity": "medium",
-  "ResourceType": "AwsCloudFrontDistributionDetails",
+  "ResourceType": "AwsCloudFrontDistribution",
   "Description": "Check if CloudFront distributions are using WAF.",
   "Risk": "Potential attacks and / or abuse of service, more even for even for internet reachable services.",
   "RelatedUrl": "https://docs.aws.amazon.com/waf/latest/developerguide/cloudfront-features.html",

@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "low",
-  "ResourceType": "AwsEc2ClientVpnEndpointDetails",
+  "ResourceType": "AwsEc2ClientVpnEndpoint",
   "Description": "This control checks whether an AWS Client VPN endpoint has client connection logging enabled. The control fails if the endpoint doesn't have client connection logging enabled.",
   "Risk": "Client VPN endpoints allow remote clients to securely connect to resources in a Virtual Private Cloud (VPC) in AWS. Connection logs allow you to track user activity on the VPN endpoint and provides visibility.",
   "RelatedUrl": "https://docs.aws.amazon.com/vpn/latest/clientvpn-admin/what-is.html",

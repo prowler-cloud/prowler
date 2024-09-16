@@ -7,7 +7,7 @@
   "SubServiceName": "Schemas",
   "ResourceIdTemplate": "arn:partition:events:region:account-id:event-bus/resource-id",
   "Severity": "high",
-  "ResourceType": "AwsEventSchemasRegistryDetails",
+  "ResourceType": "AwsEventSchemasRegistry",
   "Description": "Ensure that AWS EventBridge schema registries do not allow unknown cross-account access for delivery of events.",
   "Risk": "The schema registry is a central location for storing and managing schemas. If the schema registry is not properly secured, it can lead to unauthorized access to the schema registry and the schemas stored within it.",
   "RelatedUrl": "https://aws.amazon.com/about-aws/whats-new/2021/09/cross-account-discovery-amazon-eventbridge-schema/",

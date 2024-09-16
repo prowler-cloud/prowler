@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-instance",
   "Severity": "medium",
-  "ResourceType": "AwsRdsDbInstanceDetails",
+  "ResourceType": "AwsRdsDbInstance",
   "Description": "Check if RDS instances have deletion protection enabled.",
   "Risk": "You can only delete instances that do not have deletion protection enabled.",
   "RelatedUrl": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_DeleteInstance.html",

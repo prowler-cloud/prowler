@@ -9,7 +9,7 @@
   "SubServiceName": "securitygroup",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
-  "ResourceType": "AwsEc2SecurityGroupDetails",
+  "ResourceType": "AwsEc2SecurityGroup",
   "Description": "Security Groups created by EC2 Launch Wizard.",
   "Risk": "Security Groups Created on the AWS Console using the EC2 wizard may allow port 22 from 0.0.0.0/0.",
   "RelatedUrl": "",

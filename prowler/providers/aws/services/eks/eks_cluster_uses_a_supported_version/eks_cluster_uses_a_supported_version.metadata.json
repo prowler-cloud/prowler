@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "high",
-  "ResourceType": "AwsEksClusterDetails",
+  "ResourceType": "AwsEksCluster",
   "Description": "Ensure Kubernetes cluster runs on a supported Kubernetes version",
   "Risk": "Running an Amazon EKS cluster on an unsupported Kubernetes version exposes it to common security vulnerabilities",
   "RelatedUrl": "https://docs.aws.amazon.com/eks/latest/userguide/platform-versions.html",

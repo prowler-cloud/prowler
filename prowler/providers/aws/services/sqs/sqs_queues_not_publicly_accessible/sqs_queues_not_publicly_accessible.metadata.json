@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:sqs:region:account-id:queue",
   "Severity": "critical",
-  "ResourceType": "AwsSqsQueueDetails",
+  "ResourceType": "AwsSqsQueue",
   "Description": "Check if SQS queues have policy set as Public",
   "Risk": "Sensitive information could be disclosed",
   "RelatedUrl": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-basic-examples-of-sqs-policies.html",

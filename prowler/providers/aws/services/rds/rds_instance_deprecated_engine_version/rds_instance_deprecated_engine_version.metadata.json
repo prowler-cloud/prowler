@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-instance",
   "Severity": "medium",
-  "ResourceType": "AwsRdsDbInstanceDetails",
+  "ResourceType": "AwsRdsDbInstance",
   "Description": "Check if RDS is using a supported engine version for MariaDB, MySQL and PostgreSQL",
   "Risk": "If not enabled RDS instances may be vulnerable to security issues",
   "RelatedUrl": "https://docs.aws.amazon.com/cli/latest/reference/rds/describe-db-engine-versions.html",

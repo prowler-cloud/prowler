@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "high",
-  "ResourceType": "AwsEc2EipDetails",
+  "ResourceType": "AwsEc2Eip",
   "Description": "Check if any of the Elastic or Public IP are in Shodan (requires Shodan API KEY).",
   "Risk": "Sites like Shodan index exposed systems and further expose them to wider audiences as a quick way to find exploitable systems.",
   "RelatedUrl": "",

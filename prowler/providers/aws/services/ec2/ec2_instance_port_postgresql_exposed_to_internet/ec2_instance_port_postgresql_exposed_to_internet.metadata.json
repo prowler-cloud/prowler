@@ -9,7 +9,7 @@
   "SubServiceName": "instance",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "critical",
-  "ResourceType": "AwsEc2InstanceDetails",
+  "ResourceType": "AwsEc2Instance",
   "Description": "Ensure no EC2 instances allow ingress from the internet to TCP port 5432 (PostgreSQL).",
   "Risk": "PostgreSQL is a popular open-source relational database management system. Exposing the PostgreSQL port to the internet can lead to unauthorized access to the database, data exfiltration, and other security risks.",
   "RelatedUrl": "",

@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-cluster",
   "Severity": "medium",
-  "ResourceType": "AwsRdsDbClusterDetails",
+  "ResourceType": "AwsRdsDbCluster",
   "Description": "Check if Neptune Clusters have multi-AZ enabled.",
   "Risk": "Ensure that your Amazon Neptune graph database clusters are using Multi-AZ deployment configurations to enhance High Availability (HA) through automatic failover to read replicas in the event of a failure such as an Availability Zone (AZ) outage, an internal hardware or network outage, a software failure or in case of planned system maintenance.",
   "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/neptune-controls.html#neptune-9",

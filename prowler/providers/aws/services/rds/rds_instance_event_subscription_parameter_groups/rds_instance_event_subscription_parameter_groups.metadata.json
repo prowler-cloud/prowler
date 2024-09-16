@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-instance",
   "Severity": "low",
-  "ResourceType": "AwsRdsEventSubscriptionDetails",
+  "ResourceType": "AwsRdsEventSubscription",
   "Description": "Ensure that Amazon RDS event notification subscriptions are enabled for database parameter groups events.",
   "Risk": "Amazon RDS event subscriptions for database parameter groups are designed to provide incident notification of events that may affect the security, availability, and reliability of the RDS database instances associated with these parameter groups.",
   "RelatedUrl": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_Events.html",

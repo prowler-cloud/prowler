@@ -12,7 +12,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:backup-vault:backup-vault-id",
   "Severity": "medium",
-  "ResourceType": "AwsBackupBackupVaultDetails",
+  "ResourceType": "AwsBackupBackupVault",
   "Description": "This check ensures that AWS Backup vaults are encrypted with AWS KMS.",
   "Risk": "Without encryption using AWS KMS, an organization's backup data may be at risk of unauthorized access, which can lead to data breaches and other security incidents.",
   "RelatedUrl": "https://docs.aws.amazon.com/aws-backup/latest/devguide/encryption.html",

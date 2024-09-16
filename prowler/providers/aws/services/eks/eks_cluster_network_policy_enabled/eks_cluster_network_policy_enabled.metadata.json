@@ -10,7 +10,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "high",
-  "ResourceType": "AwsEksClusterDetails",
+  "ResourceType": "AwsEksCluster",
   "Description": "Ensure that Network Policy is enabled and set as appropriate in Amazon EKS clusters. Network Policy provides pod-level firewalling to restrict traffic between sources, enhancing network security within the cluster.",
   "Risk": "Without proper Network Policy settings, pods within the cluster may be vulnerable to unauthorized access and communication.",
   "RelatedUrl": "https://docs.aws.amazon.com/eks/latest/userguide/eks-networking-add-ons.html",

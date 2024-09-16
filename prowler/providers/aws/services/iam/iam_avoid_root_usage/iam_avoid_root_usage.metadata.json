@@ -11,7 +11,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "high",
-  "ResourceType": "AwsIamUserDetails",
+  "ResourceType": "AwsIamUser",
   "Description": "Avoid the use of the root account",
   "Risk": "The root account has unrestricted access to all resources in the AWS account. It is highly recommended that the use of this account be avoided.",
   "RelatedUrl": "",

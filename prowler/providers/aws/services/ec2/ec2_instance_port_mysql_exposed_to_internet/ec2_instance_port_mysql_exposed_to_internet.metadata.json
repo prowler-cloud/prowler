@@ -9,7 +9,7 @@
   "SubServiceName": "instance",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "critical",
-  "ResourceType": "AwsEc2InstanceDetails",
+  "ResourceType": "AwsEc2Instance",
   "Description": "Ensure no EC2 instances allow ingress from the internet to TCP port 3306 (MySQL).",
   "Risk": "MySQL is a popular open-source relational database management system that is widely used in web applications. Exposing MySQL to the internet can lead to unauthorized access and data exfiltration.",
   "RelatedUrl": "",

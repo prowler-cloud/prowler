@@ -9,7 +9,7 @@
   "SubServiceName": "instance",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
-  "ResourceType": "AwsEc2InstanceDetails",
+  "ResourceType": "AwsEc2Instance",
   "Description": "Check if EC2 instances are managed by Systems Manager.",
   "Risk": "AWS Config provides AWS Managed Rules, which are predefined, customizable rules that AWS Config uses to evaluate whether your AWS resource configurations comply with common best practices.",
   "RelatedUrl": "",

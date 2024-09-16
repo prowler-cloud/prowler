@@ -12,7 +12,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
-  "ResourceType": "AwsApiGatewayV2ApiDetails",
+  "ResourceType": "AwsApiGatewayV2Api",
   "Description": "Ensure API Gateway V2 has Access Logging enabled.",
   "Risk": "If no authorizer is enabled anyone can use the service.",
   "RelatedUrl": "",

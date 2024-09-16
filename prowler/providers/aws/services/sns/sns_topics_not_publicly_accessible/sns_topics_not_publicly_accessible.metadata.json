@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:sns:region:account-id:topic",
   "Severity": "high",
-  "ResourceType": "AwsSnsTopicDetails",
+  "ResourceType": "AwsSnsTopic",
   "Description": "Check if SNS topics have policy set as Public",
   "Risk": "Publicly accessible services could expose sensitive data to bad actors.",
   "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/sns-topic-policy.html",

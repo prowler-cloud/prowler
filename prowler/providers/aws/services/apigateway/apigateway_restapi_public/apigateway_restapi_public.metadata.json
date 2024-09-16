@@ -12,7 +12,7 @@
   "SubServiceName": "rest_api",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
-  "ResourceType": "AwsApiGatewayRestApiDetails",
+  "ResourceType": "AwsApiGatewayRestApi",
   "Description": "Check if API Gateway endpoint is public or private.",
   "Risk": "If accessible from internet without restrictions opens up attack / abuse surface for any malicious user.",
   "RelatedUrl": "",

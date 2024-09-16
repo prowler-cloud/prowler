@@ -9,7 +9,7 @@
   "SubServiceName": "volume",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
-  "ResourceType": "AwsEc2VolumeDetails",
+  "ResourceType": "AwsEc2Volume",
   "Description": "Check if EBS snapshots exists.",
   "Risk": "Ensure that your EBS volumes (available or in-use) have recent snapshots (taken weekly) available for point-in-time recovery for a better, more reliable data backup strategy.",
   "RelatedUrl": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSSnapshots.html",

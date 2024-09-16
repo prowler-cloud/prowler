@@ -11,7 +11,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "low",
-  "ResourceType": "AwsCloudTrailTrailDetails",
+  "ResourceType": "AwsCloudTrailTrail",
   "Description": "Ensure CloudTrail trails are integrated with CloudWatch Logs",
   "Risk": "Sending CloudTrail logs to CloudWatch Logs will facilitate real-time and historic activity logging based on user, API, resource, and IP address, and provides opportunity to establish alarms and notifications for anomalous or sensitivity account activity.",
   "RelatedUrl": "",

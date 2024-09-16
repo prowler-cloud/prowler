@@ -9,7 +9,7 @@
   "SubServiceName": "instance",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "critical",
-  "ResourceType": "AwsEc2InstanceDetails",
+  "ResourceType": "AwsEc2Instance",
   "Description": "Ensure no EC2 instances allow ingress from the internet to TCP port 3389 (RDP).",
   "Risk": "RDP is a proprietary protocol developed by Microsoft for connecting to Windows systems. Exposing RDP to the internet can allow attackers to brute force the login credentials and gain unauthorized access to the EC2 instance.",
   "RelatedUrl": "",

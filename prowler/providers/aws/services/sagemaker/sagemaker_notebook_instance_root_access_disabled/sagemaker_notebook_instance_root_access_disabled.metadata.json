@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:sagemaker:region:account-id:notebook-instance",
   "Severity": "medium",
-  "ResourceType": "AwsSageMakerNotebookInstanceDetails",
+  "ResourceType": "AwsSageMakerNotebookInstance",
   "Description": "Check if Amazon SageMaker Notebook instances have root access disabled",
   "Risk": "Users with root access have administrator privileges, users can access and edit all files on a notebook instance with root access enabled",
   "RelatedUrl": "https://docs.aws.amazon.com/sagemaker/latest/dg/nbi-root-access.html",
