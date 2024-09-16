@@ -112,8 +112,9 @@ class Test_cloudfront_s3_origin_non_existent_bucket:
         # Buckets
         s3_client = mock.MagicMock
         s3_client.buckets = {
-            "existent_bucket": Bucket(
-                name="existent-bucket", region="eu-west-1", creation_date="2021-01-01"
+            "arn:aws:s3:::existent-bucket": Bucket(
+                name="existent-bucket",
+                region="eu-west-1",
             )
         }
 
