@@ -302,6 +302,14 @@ class TestOutputs:
         assert stats["total_muted_fail"] == 0
         assert stats["total_critical_severity_fail"] == 0
         assert stats["total_critical_severity_pass"] == 0
+        assert stats["total_high_severity_fail"] == 0
+        assert stats["total_high_severity_pass"] == 0
+        assert stats["total_medium_severity_fail"] == 0
+        assert stats["total_medium_severity_pass"] == 0
+        assert stats["total_low_severity_fail"] == 0
+        assert stats["total_low_severity_pass"] == 0
+        assert stats["total_informational_severity_fail"] == 0
+        assert stats["total_informational_severity_pass"] == 0
         assert stats["resources_count"] == 0
         assert stats["findings_count"] == 0
 
@@ -323,6 +331,14 @@ class TestOutputs:
         assert stats["findings_count"] == 1
         assert stats["total_critical_severity_fail"] == 0
         assert stats["total_critical_severity_pass"] == 0
+        assert stats["total_high_severity_fail"] == 1
+        assert stats["total_high_severity_pass"] == 0
+        assert stats["total_medium_severity_fail"] == 0
+        assert stats["total_medium_severity_pass"] == 0
+        assert stats["total_low_severity_fail"] == 0
+        assert stats["total_low_severity_pass"] == 0
+        assert stats["total_informational_severity_fail"] == 0
+        assert stats["total_informational_severity_pass"] == 0
         assert stats["all_fails_are_muted"]
 
     def test_extract_findings_statistics_all_fail_are_not_muted(self):
@@ -350,6 +366,14 @@ class TestOutputs:
         assert stats["resources_count"] == 1
         assert stats["total_critical_severity_fail"] == 2
         assert stats["total_critical_severity_pass"] == 0
+        assert stats["total_high_severity_fail"] == 0
+        assert stats["total_high_severity_pass"] == 0
+        assert stats["total_medium_severity_fail"] == 0
+        assert stats["total_medium_severity_pass"] == 0
+        assert stats["total_low_severity_fail"] == 0
+        assert stats["total_low_severity_pass"] == 0
+        assert stats["total_informational_severity_fail"] == 0
+        assert stats["total_informational_severity_pass"] == 0
         assert stats["findings_count"] == 2
         assert not stats["all_fails_are_muted"]
 
@@ -379,6 +403,14 @@ class TestOutputs:
         assert stats["resources_count"] == 1
         assert stats["total_critical_severity_fail"] == 0
         assert stats["total_critical_severity_pass"] == 1
+        assert stats["total_high_severity_fail"] == 0
+        assert stats["total_high_severity_pass"] == 1
+        assert stats["total_medium_severity_fail"] == 0
+        assert stats["total_medium_severity_pass"] == 0
+        assert stats["total_low_severity_fail"] == 0
+        assert stats["total_low_severity_pass"] == 0
+        assert stats["total_informational_severity_fail"] == 0
+        assert stats["total_informational_severity_pass"] == 0
         assert stats["findings_count"] == 2
 
     def test_extract_findings_statistics_all_passes_are_muted(self):
@@ -398,6 +430,14 @@ class TestOutputs:
         assert stats["resources_count"] == 1
         assert stats["total_critical_severity_fail"] == 0
         assert stats["total_critical_severity_pass"] == 1
+        assert stats["total_high_severity_fail"] == 0
+        assert stats["total_high_severity_pass"] == 0
+        assert stats["total_medium_severity_fail"] == 0
+        assert stats["total_medium_severity_pass"] == 0
+        assert stats["total_low_severity_fail"] == 0
+        assert stats["total_low_severity_pass"] == 0
+        assert stats["total_informational_severity_fail"] == 0
+        assert stats["total_informational_severity_pass"] == 0
         assert stats["findings_count"] == 1
 
     def test_report_with_aws_provider_not_muted_pass(self):

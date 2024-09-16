@@ -103,6 +103,14 @@ def extract_findings_statistics(findings: list) -> dict:
     all_fails_are_muted = True
     critical_severity_pass = 0
     critical_severity_fail = 0
+    high_severity_pass = 0
+    high_severity_fail = 0
+    medium_severity_pass = 0
+    medium_severity_fail = 0
+    low_severity_pass = 0
+    low_severity_fail = 0
+    informational_severity_pass = 0
+    informational_severity_fail = 0
 
     for finding in findings:
         # Save the resource_id
@@ -111,6 +119,14 @@ def extract_findings_statistics(findings: list) -> dict:
         if finding.status == "PASS":
             if finding.check_metadata.Severity == "critical":
                 critical_severity_pass += 1
+            if finding.check_metadata.Severity == "high":
+                high_severity_pass += 1
+            if finding.check_metadata.Severity == "medium":
+                medium_severity_pass += 1
+            if finding.check_metadata.Severity == "low":
+                low_severity_pass += 1
+            if finding.check_metadata.Severity == "informational":
+                informational_severity_pass += 1
             total_pass += 1
             findings_count += 1
             if finding.muted is True:
@@ -119,6 +135,14 @@ def extract_findings_statistics(findings: list) -> dict:
         if finding.status == "FAIL":
             if finding.check_metadata.Severity == "critical":
                 critical_severity_fail += 1
+            if finding.check_metadata.Severity == "high":
+                high_severity_fail += 1
+            if finding.check_metadata.Severity == "medium":
+                medium_severity_fail += 1
+            if finding.check_metadata.Severity == "low":
+                low_severity_fail += 1
+            if finding.check_metadata.Severity == "informational":
+                informational_severity_fail += 1
             total_fail += 1
             findings_count += 1
             if finding.muted is True:
@@ -134,6 +158,14 @@ def extract_findings_statistics(findings: list) -> dict:
     stats["findings_count"] = findings_count
     stats["total_critical_severity_fail"] = critical_severity_fail
     stats["total_critical_severity_pass"] = critical_severity_pass
+    stats["total_high_severity_fail"] = high_severity_fail
+    stats["total_high_severity_pass"] = high_severity_pass
+    stats["total_medium_severity_fail"] = medium_severity_fail
+    stats["total_medium_severity_pass"] = medium_severity_pass
+    stats["total_low_severity_fail"] = medium_severity_fail
+    stats["total_low_severity_pass"] = medium_severity_pass
+    stats["total_informational_severity_fail"] = informational_severity_fail
+    stats["total_informational_severity_pass"] = informational_severity_pass
     stats["all_fails_are_muted"] = all_fails_are_muted
 
     return stats
