@@ -75,22 +75,6 @@ class CloudFront(AWSService):
             for distribution_id in distributions.keys():
                 distribution_config = client.get_distribution_config(Id=distribution_id)
 
-                origin_protocol_policy = ""
-                for item in distribution_config["DistributionConfig"]["Origins"][
-                    "Items"
-                ]:
-                    origin_policy = item.get("CustomOriginConfig", {}).get(
-                        "OriginProtocolPolicy", ""
-                    )
-
-                    if origin_policy == "https-only" and origin_protocol_policy == "":
-                        origin_protocol_policy = "https-only"
-                    elif origin_policy == "match-viewer":
-                        origin_protocol_policy = "match-viewer"
-                    elif origin_policy == "http-only":
-                        origin_protocol_policy = "http-only"
-                        break
-
                 # Global Config
                 distributions[distribution_id].logging_enabled = distribution_config[
                     "DistributionConfig"
@@ -109,9 +93,6 @@ class CloudFront(AWSService):
                     distribution_config["DistributionConfig"].get(
                         "DefaultRootObject", ""
                     )
-                )
-                distributions[distribution_id].origin_protocol_policy = (
-                    origin_protocol_policy
                 )
                 distributions[distribution_id].viewer_protocol_policy = (
                     distribution_config["DistributionConfig"][

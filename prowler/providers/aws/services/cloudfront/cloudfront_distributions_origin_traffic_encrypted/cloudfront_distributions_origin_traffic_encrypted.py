@@ -15,6 +15,7 @@ class cloudfront_distributions_origin_traffic_encrypted(Check):
             report.resource_tags = distribution.tags
             report.status = "PASS"
             report.status_extended = f"CloudFront Distribution {distribution.id} does encrypt traffic to custom origins."
+            unencrypted_origins = []
 
             for origin in distribution.origins:
                 if (
@@ -24,8 +25,11 @@ class cloudfront_distributions_origin_traffic_encrypted(Check):
                     origin.origin_protocol_policy == "match-viewer"
                     and distribution.viewer_protocol_policy == "allow-all"
                 ):
-                    report.status = "FAIL"
-                    report.status_extended = f"CloudFront Distribution {distribution.id} does not encrypt traffic to custom origins."
+                    unencrypted_origins.append(origin.id)
+
+            if unencrypted_origins:
+                report.status = "FAIL"
+                report.status_extended = f"CloudFront Distribution {distribution.id} does not encrypt traffic to custom origins {', '.join(unencrypted_origins)}."
 
             findings.append(report)
 

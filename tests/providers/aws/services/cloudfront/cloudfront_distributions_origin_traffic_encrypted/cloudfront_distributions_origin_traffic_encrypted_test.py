@@ -35,6 +35,7 @@ class Test_cloudfront_distributions_origin_traffic_encrypted:
 
     def test_distribution_no_traffic_encryption(self):
         cloudfront_client = mock.MagicMock
+        id = "origin1"
         cloudfront_client.distributions = {
             "DISTRIBUTION_ID": Distribution(
                 arn=DISTRIBUTION_ARN,
@@ -42,7 +43,7 @@ class Test_cloudfront_distributions_origin_traffic_encrypted:
                 region=REGION,
                 origins=[
                     Origin(
-                        id="origin1",
+                        id=id,
                         domain_name="asdf.s3.us-east-1.amazonaws.com",
                         origin_protocol_policy="",
                         origin_ssl_protocols=[],
@@ -77,12 +78,13 @@ class Test_cloudfront_distributions_origin_traffic_encrypted:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"CloudFront Distribution {DISTRIBUTION_ID} does not encrypt traﬃc to custom origins."
+                == f"CloudFront Distribution {DISTRIBUTION_ID} does not encrypt traffic to custom origins {id}."
             )
             assert result[0].resource_tags == []
 
     def test_distribution_http_only(self):
         cloudfront_client = mock.MagicMock
+        id = "origin1"
         cloudfront_client.distributions = {
             "DISTRIBUTION_ID": Distribution(
                 arn=DISTRIBUTION_ARN,
@@ -90,7 +92,7 @@ class Test_cloudfront_distributions_origin_traffic_encrypted:
                 region=REGION,
                 origins=[
                     Origin(
-                        id="origin1",
+                        id=id,
                         domain_name="asdf.s3.us-east-1.amazonaws.com",
                         origin_protocol_policy="http-only",
                         origin_ssl_protocols=[],
@@ -124,12 +126,13 @@ class Test_cloudfront_distributions_origin_traffic_encrypted:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"CloudFront Distribution {DISTRIBUTION_ID} does not encrypt traﬃc to custom origins."
+                == f"CloudFront Distribution {DISTRIBUTION_ID} does not encrypt traffic to custom origins {id}."
             )
             assert result[0].resource_tags == []
 
     def test_distribution_match_viewer_allow_all(self):
         cloudfront_client = mock.MagicMock
+        id = "origin1"
         cloudfront_client.distributions = {
             "DISTRIBUTION_ID": Distribution(
                 arn=DISTRIBUTION_ARN,
@@ -137,7 +140,7 @@ class Test_cloudfront_distributions_origin_traffic_encrypted:
                 region=REGION,
                 origins=[
                     Origin(
-                        id="origin1",
+                        id=id,
                         domain_name="asdf.s3.us-east-1.amazonaws.com",
                         origin_protocol_policy="match-viewer",
                         origin_ssl_protocols=[],
@@ -172,7 +175,7 @@ class Test_cloudfront_distributions_origin_traffic_encrypted:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"CloudFront Distribution {DISTRIBUTION_ID} does not encrypt traﬃc to custom origins."
+                == f"CloudFront Distribution {DISTRIBUTION_ID} does not encrypt traffic to custom origins {id}."
             )
             assert result[0].resource_tags == []
 
@@ -219,6 +222,6 @@ class Test_cloudfront_distributions_origin_traffic_encrypted:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"CloudFront Distribution {DISTRIBUTION_ID} does encrypt traﬃc to custom origins."
+                == f"CloudFront Distribution {DISTRIBUTION_ID} does encrypt traffic to custom origins."
             )
             assert result[0].resource_tags == []
