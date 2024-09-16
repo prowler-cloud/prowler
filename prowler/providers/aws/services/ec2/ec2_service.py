@@ -544,7 +544,7 @@ class EC2(AWSService):
                     for eni in template_version["LaunchTemplateData"].get(
                         "NetworkInterfaces", []
                     ):
-                        network_interface_id = eni.get("NetworkInterfaceId")
+                        network_interface_id = eni.get("NetworkInterfaceId", "")
                         if network_interface_id in self.network_interfaces:
                             enis.append(self.network_interfaces[network_interface_id])
                         if eni.get("AssociatePublicIpAddress", False):
