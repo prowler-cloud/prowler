@@ -1,0 +1,30 @@
+{
+  "Provider": "aws",
+  "CheckID": "elasticache_redis_cluster_auto_minor_version_upgrades",
+  "CheckTitle": "Ensure Elasticache Redis cache clusters have automatic minor upgrades enabled.",
+  "CheckType": [],
+  "ServiceName": "elasticache",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "high",
+  "ResourceType": "Other",
+  "Description": "Ensure Elasticache Redis cache clusters have automatic minor upgrades enabled.",
+  "Risk": "Not enabling automatic minor version upgrades can expose your Redis cluster to security vulnerabilities, performance issues, and increased operational overhead due to the need for manual updates.",
+  "RelatedUrl": "https://docs.aws.amazon.com/AmazonElastiCache/latest/red-ug/VersionManagement.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws elasticache modify-cache-cluster --cache-cluster-id <cluster_id> --apply-immediately --auto-minor-version-upgrade",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/elasticache-controls.html#elasticache-2",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure Elasticache clusters have automatic minor upgrades enabled.",
+      "Url": "https://docs.aws.amazon.com/AmazonElastiCache/latest/red-ug/Clusters.html#Modify"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

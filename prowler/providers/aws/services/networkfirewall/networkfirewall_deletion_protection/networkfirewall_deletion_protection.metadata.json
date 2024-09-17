@@ -1,0 +1,30 @@
+{
+  "Provider": "aws",
+  "CheckID": "networkfirewall_deletion_protection",
+  "CheckTitle": "Ensure that Deletion Protection safety feature is enabled for your Amazon VPC network firewalls.",
+  "CheckType": [],
+  "ServiceName": "network-firewall",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:network-firewall::account-id:firewall/firewall-name",
+  "Severity": "medium",
+  "ResourceType": "AwsNetworkFirewallFirewall",
+  "Description": "Ensure that Deletion Protection safety feature is enabled for your Amazon VPC network firewalls in order to protect the firewalls from being accidentally deleted. By default, Deletion Protection is disabled for VPC network firewalls.",
+  "Risk": "Without a network firewall, it can be difficult to monitor and control traffic within the VPC. This can make it harder to detect and prevent attacks or unauthorized access to resources.",
+  "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/networkfirewall-controls.html#networkfirewall-9",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws network-firewall update-firewall-delete-protection --region <value> --firewall-name <value> --delete-protection",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure that Deletion Protection safety feature is enabled for your Amazon VPC network firewalls.",
+      "Url": "https://docs.aws.amazon.com/securityhub/latest/userguide/networkfirewall-controls.html#networkfirewall-9"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

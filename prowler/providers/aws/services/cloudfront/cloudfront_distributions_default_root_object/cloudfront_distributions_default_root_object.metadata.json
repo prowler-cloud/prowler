@@ -1,0 +1,30 @@
+{
+  "Provider": "aws",
+  "CheckID": "cloudfront_distributions_default_root_object",
+  "CheckTitle": "Check if CloudFront distributions have a default root object.",
+  "CheckType": [],
+  "ServiceName": "cloudfront",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:cloudfront:region:account-id:distribution/resource-id",
+  "Severity": "high",
+  "ResourceType": "AwsCloudFrontDistribution",
+  "Description": "Check if CloudFront distributions have a default root object.",
+  "Risk": "Without a default root object, requests to the root URL may result in an error or expose unintended content, leading to potential security risks and a poor user experience.",
+  "RelatedUrl": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/DefaultRootObject.html#DefaultRootObjectHow",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws cloudfront update-distribution --id <distribution-id> --default-root-object <new-root-object>",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/cloudfront-controls.html#cloudfront-1",
+      "Terraform": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudFront/cloudfront-default-object.html"
+    },
+    "Recommendation": {
+      "Text": "Configure a default root object for your CloudFront distribution to ensure that a specific file (such as index.html) is returned when users access the root URL. This improves user experience and ensures that sensitive content isn't accidentally exposed.",
+      "Url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/DefaultRootObject.html#DefaultRootObjectHowToDefine"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

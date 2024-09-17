@@ -1,0 +1,30 @@
+{
+  "Provider": "aws",
+  "CheckID": "documentdb_cluster_deletion_protection",
+  "CheckTitle": "Check if DocumentDB Clusters has deletion protection enabled.",
+  "CheckType": [],
+  "ServiceName": "documentdb",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-cluster",
+  "Severity": "medium",
+  "ResourceType": "AwsRdsDbCluster",
+  "Description": "Check if DocumentDB Clusters has deletion protection enabled.",
+  "Risk": "Enabling cluster deletion protection offers an additional layer of protection against accidental database deletion or deletion by an unauthorized user. A DocumentDB cluster can't be deleted while deletion protection is enabled. You must first disable deletion protection before a delete request can succeed.",
+  "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/documentdb-controls.html#documentdb-5",
+  "Remediation": {
+    "Code": {
+      "CLI": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DocumentDB/deletion-protection.html#",
+      "NativeIaC": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DocumentDB/deletion-protection.html#",
+      "Other": "",
+      "Terraform": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DocumentDB/deletion-protection.html#"
+    },
+    "Recommendation": {
+      "Text": "Enable deletion protection for production DocumentDB Clusters.",
+      "Url": "https://docs.aws.amazon.com/securityhub/latest/userguide/documentdb-controls.html#documentdb-5"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

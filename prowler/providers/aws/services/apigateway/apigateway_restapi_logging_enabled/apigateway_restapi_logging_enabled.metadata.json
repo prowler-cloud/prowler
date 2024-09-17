@@ -12,7 +12,7 @@
   "SubServiceName": "rest_api",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
-  "ResourceType": "AwsApiGatewayStage",
+  "ResourceType": "AwsApiGatewayRestApi",
   "Description": "Check if API Gateway Stage has logging enabled.",
   "Risk": "If not enabled, monitoring of service use is not possible. Real-time monitoring of API calls can be achieved by directing CloudTrail Logs to CloudWatch Logs and establishing corresponding metric filters and alarms.",
   "RelatedUrl": "",

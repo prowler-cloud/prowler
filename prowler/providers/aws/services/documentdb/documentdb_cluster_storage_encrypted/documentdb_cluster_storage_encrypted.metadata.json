@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "documentdb_cluster_storage_encrypted",
+  "CheckTitle": "Check if DocumentDB cluster storage is encrypted.",
+  "CheckType": [
+    "Data Protection"
+  ],
+  "ServiceName": "documentdb",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "medium",
+  "ResourceType": "AwsRdsDbCluster",
+  "Description": "Check if DocumentDB cluster storage is encrypted.",
+  "Risk": "Ensure that encryption of data at rest is enabled for your Amazon DocumentDB (with MongoDB compatibility) database clusters for additional data security and regulatory compliance.",
+  "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/documentdb-controls.html#documentdb-1",
+  "Remediation": {
+    "Code": {
+      "CLI": "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_28/",
+      "NativeIaC": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DocumentDB/encryption-enabled.html#",
+      "Other": "",
+      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_28/"
+    },
+    "Recommendation": {
+      "Text": "Enable Encryption. Use a CMK where possible. It will provide additional management and privacy benefits.",
+      "Url": "https://docs.aws.amazon.com/securityhub/latest/userguide/documentdb-controls.html#documentdb-1"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

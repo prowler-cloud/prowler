@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "elasticache_redis_cluster_in_transit_encryption_enabled",
+  "CheckTitle": "Ensure Elasticache Redis cache clusters have in transit encryption enabled.",
+  "CheckType": [],
+  "ServiceName": "elasticache",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "medium",
+  "ResourceType": "Other",
+  "Description": "Ensure Elasticache Redis cache clusters have in transit encryption enabled.",
+  "Risk": "There is a risk of exposing sensitive data if Elasticache Redis cache cluster does not have in transit encryption enabled.",
+  "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/elasticache-controls.html#elasticache-5",
+  "Remediation": {
+    "Code": {
+      "CLI": "https://docs.prowler.com/checks/aws/general-policies/general_10/",
+      "NativeIaC": "https://docs.prowler.com/checks/aws/general-policies/general_10/",
+      "Other": "",
+      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/general_10/"
+    },
+    "Recommendation": {
+      "Text": "Ensure your Elasticache Redis cache clusters have in transit encryption enabled.",
+      "Url": "https://docs.aws.amazon.com/AmazonElastiCache/latest/red-ug/in-transit-encryption.html"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

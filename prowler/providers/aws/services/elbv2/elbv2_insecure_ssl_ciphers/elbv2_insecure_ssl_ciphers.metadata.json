@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
-  "ResourceType": "AwsElasticLoadBalancingV2LoadBalancer",
+  "ResourceType": "AwsElbv2LoadBalancer",
   "Description": "Check if Elastic Load Balancers have insecure SSL ciphers.",
   "Risk": "Using insecure ciphers could affect privacy of in transit information.",
   "RelatedUrl": "",

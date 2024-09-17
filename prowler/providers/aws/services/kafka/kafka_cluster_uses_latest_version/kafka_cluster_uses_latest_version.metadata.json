@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "kafka_cluster_uses_latest_version",
+  "CheckTitle": "MSK cluster should use the latest version.",
+  "CheckType": [
+    "Infrastructure Security"
+  ],
+  "ServiceName": "kafka",
+  "SubServiceName": "cluster",
+  "ResourceIdTemplate": "arn:partition:kafka:region:account-id:cluster",
+  "Severity": "medium",
+  "ResourceType": "AwsMskCluster",
+  "Description": "Ensure that your Amazon Managed Streaming for Apache Kafka (MSK) cluster is using the latest version to benefit from the latest security features, bug fixes, and performance improvements.",
+  "Risk": "Running an outdated version of Amazon MSK may expose your cluster to security vulnerabilities, bugs, and performance issues.",
+  "RelatedUrl": "https://docs.aws.amazon.com/lightsail/latest/userguide/amazon-lightsail-databases.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws kafka update-cluster-configuration --cluster-arn <arn_cluster> --current-version <current_version> --target-version <latest_version>",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/MSK/enable-apache-kafka-latest-security-features.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "To upgrade your Amazon MSK cluster to the latest version, use the AWS Management Console, AWS CLI, or SDKs to update the cluster configuration. For more information, refer to the official Amazon MSK documentation.",
+      "Url": "https://docs.aws.amazon.com/msk/latest/developerguide/version-support.html#version-upgrades"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
