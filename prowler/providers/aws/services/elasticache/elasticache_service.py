@@ -30,9 +30,6 @@ class ElastiCache(AWSService):
                     if not self.audit_resources or (
                         is_resource_filtered(cluster_arn, self.audit_resources)
                     ):
-                        version = cache_cluster.get("EngineVersion", "0.0")
-                        version = float(version[:3])
-
                         self.clusters[cluster_arn] = Cluster(
                             id=cache_cluster["CacheClusterId"],
                             arn=cluster_arn,
@@ -44,7 +41,7 @@ class ElastiCache(AWSService):
                             auto_minor_version_upgrade=cache_cluster.get(
                                 "AutoMinorVersionUpgrade", False
                             ),
-                            engine_version=version,
+                            engine_version=cache_cluster.get("EngineVersion", "0.0"),
                             auth_token_enabled=cache_cluster.get(
                                 "AuthTokenEnabled", False
                             ),
@@ -92,68 +89,53 @@ class ElastiCache(AWSService):
             for repl_group in regional_client.describe_replication_groups()[
                 "ReplicationGroups"
             ]:
-                try:
-                    replication_arn = repl_group["ARN"]
-                    if not self.audit_resources or (
-                        is_resource_filtered(replication_arn, self.audit_resources)
-                    ):
-                        # Get primary cluster
-                        try:
-                            for node_group in repl_group["NodeGroups"][0]:
-                                primary_node = next(
-                                    (
-                                        node
-                                        for node in node_group["NodeGroupMembers"]
-                                        if node["CurrentRole"] == "primary"
-                                    ),
-                                    None,
+                replication_arn = repl_group["ARN"]
+                if not self.audit_resources or (
+                    is_resource_filtered(replication_arn, self.audit_resources)
+                ):
+                    try:
+                        replication_arn = repl_group["ARN"]
+                        if not self.audit_resources or (
+                            is_resource_filtered(replication_arn, self.audit_resources)
+                        ):
+                            member_clusters = repl_group.get("MemberClusters", [])
+                            cluster_list = []
+                            for cluster in member_clusters:
+                                cluster_list.append(
+                                    self.clusters[
+                                        f"arn:aws:elasticache:{regional_client.region}:{self.audited_account}:cluster:{cluster}"
+                                    ]
                                 )
-                                if primary_node:
-                                    primary_id = primary_node["CacheClusterId"]
-                                    break
-
-                        except Exception as error:
-                            primary_node = repl_group["NodeGroups"][0][
-                                "NodeGroupMembers"
-                            ][0]
-                            primary_id = primary_node["CacheClusterId"]
-                            logger.error(
-                                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                            self.replication_groups[replication_arn] = ReplicationGroup(
+                                id=repl_group["ReplicationGroupId"],
+                                arn=replication_arn,
+                                region=regional_client.region,
+                                status=repl_group["Status"],
+                                snapshot_retention=repl_group.get(
+                                    "SnapshotRetentionLimit", 0
+                                ),
+                                encrypted=repl_group.get(
+                                    "AtRestEncryptionEnabled", False
+                                ),
+                                transit_encryption=repl_group.get(
+                                    "TransitEncryptionEnabled", False
+                                ),
+                                multi_az=repl_group.get("MultiAZ", "disabled"),
+                                auto_minor_version_upgrade=repl_group.get(
+                                    "AutoMinorVersionUpgrade", False
+                                ),
+                                auth_token_enabled=repl_group.get(
+                                    "AuthTokenEnabled", False
+                                ),
+                                automatic_failover=repl_group.get(
+                                    "AutomaticFailoverStatus", "disabled"
+                                ),
+                                member_clusters=cluster_list,
                             )
-
-                        if primary_id:
-                            primary_arn = f"arn:aws:elasticache:{regional_client.meta.region_name}:{self.audited_account}:cluster:{primary_id}"
-                            version = self.clusters[primary_arn].engine_version
-                        else:
-                            version = 0.0
-
-                        self.replication_groups[replication_arn] = ReplicationGroup(
-                            id=repl_group["ReplicationGroupId"],
-                            arn=replication_arn,
-                            region=regional_client.region,
-                            status=repl_group["Status"],
-                            snapshot_retention=repl_group.get(
-                                "SnapshotRetentionLimit", 0
-                            ),
-                            encrypted=repl_group.get("AtRestEncryptionEnabled", False),
-                            transit_encryption=repl_group.get(
-                                "TransitEncryptionEnabled", False
-                            ),
-                            multi_az=repl_group.get("MultiAZ", "disabled"),
-                            auto_minor_version_upgrade=repl_group.get(
-                                "AutoMinorVersionUpgrade", False
-                            ),
-                            engine_version=version,
-                            auth_token_enabled=repl_group.get(
-                                "AuthTokenEnabled", False
-                            automatic_failover=repl_group.get(
-                                "AutomaticFailoverStatus", "disabled"
-                            ),
+                    except Exception as error:
+                        logger.error(
+                            f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
-                except Exception as error:
-                    logger.error(
-                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                    )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -207,7 +189,7 @@ class Cluster(BaseModel):
     subnets: list = []
     tags: Optional[list]
     auto_minor_version_upgrade: bool = False
-    engine_version: Optional[float]
+    engine_version: Optional[str]
     auth_token_enabled: Optional[bool]
 
 
@@ -222,6 +204,6 @@ class ReplicationGroup(BaseModel):
     multi_az: str
     tags: Optional[list]
     auto_minor_version_upgrade: bool = False
-    engine_version: Optional[float]
     auth_token_enabled: Optional[bool]
     automatic_failover: str
+    member_clusters: Optional[list[Cluster]]

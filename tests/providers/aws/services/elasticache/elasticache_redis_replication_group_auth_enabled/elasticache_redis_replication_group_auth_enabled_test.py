@@ -4,9 +4,11 @@ from mock import MagicMock, patch
 from moto import mock_aws
 
 from prowler.providers.aws.services.elasticache.elasticache_service import (
+    Cluster,
     ReplicationGroup,
 )
 from tests.providers.aws.services.elasticache.elasticache_service_test import (
+    ELASTICACHE_ENGINE,
     REPLICATION_GROUP_ARN,
     REPLICATION_GROUP_ENCRYPTION,
     REPLICATION_GROUP_ID,
@@ -59,7 +61,7 @@ class Test_elasticache_redis_replication_group_auth_enabled:
     def test_elasticache_no_old_redis_replication_groups(self):
         # Mock ElastiCache Service
         elasticache_service = MagicMock
-        version = 6.0
+        engine_version = "6.0"
         elasticache_service.replication_groups = {
             REPLICATION_GROUP_ARN: ReplicationGroup(
                 arn=REPLICATION_GROUP_ARN,
@@ -71,8 +73,20 @@ class Test_elasticache_redis_replication_group_auth_enabled:
                 transit_encryption=REPLICATION_GROUP_TRANSIT_ENCRYPTION,
                 multi_az=REPLICATION_GROUP_MULTI_AZ,
                 tags=REPLICATION_GROUP_TAGS,
-                engine_version=version,
                 auth_token_enabled=False,
+                automatic_failover="enabled",
+                member_clusters=[
+                    Cluster(
+                        id="test-cluster",
+                        arn="arn:aws:elasticache:us-east-1:123456789012:cluster:test-cluster",
+                        region=AWS_REGION_US_EAST_1,
+                        engine=ELASTICACHE_ENGINE,
+                        subnets=[],
+                        auto_minor_version_upgrade=False,
+                        engine_version=engine_version,
+                        auth_token_enabled=False,
+                    ),
+                ],
             )
         }
 
@@ -103,7 +117,7 @@ class Test_elasticache_redis_replication_group_auth_enabled:
             assert result[0].status == "MANUAL"
             assert (
                 result[0].status_extended
-                == f"Elasticache Redis replication group {REPLICATION_GROUP_ID}(v{version}) does not have to use AUTH, but it should have Redis ACL configured."
+                == f"Elasticache Redis replication group {REPLICATION_GROUP_ID}(v{engine_version}) does not have to use AUTH, but it should have Redis ACL configured."
             )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == REPLICATION_GROUP_ID
@@ -113,7 +127,7 @@ class Test_elasticache_redis_replication_group_auth_enabled:
     def test_elasticache_redis_replication_group_auth_enabled(self):
         # Mock ElastiCache Service
         elasticache_service = MagicMock
-        version = 4.0
+        engine_version = "5.0"
         elasticache_service.replication_groups = {
             REPLICATION_GROUP_ARN: ReplicationGroup(
                 arn=REPLICATION_GROUP_ARN,
@@ -125,8 +139,20 @@ class Test_elasticache_redis_replication_group_auth_enabled:
                 transit_encryption=REPLICATION_GROUP_TRANSIT_ENCRYPTION,
                 multi_az=REPLICATION_GROUP_MULTI_AZ,
                 tags=REPLICATION_GROUP_TAGS,
-                auth_token_enabled=True,
-                engine_version=version,
+                auth_token_enabled=False,
+                automatic_failover="enabled",
+                member_clusters=[
+                    Cluster(
+                        id="test-cluster",
+                        arn="arn:aws:elasticache:us-east-1:123456789012:cluster:test-cluster",
+                        region=AWS_REGION_US_EAST_1,
+                        engine=ELASTICACHE_ENGINE,
+                        subnets=[],
+                        auto_minor_version_upgrade=False,
+                        engine_version=engine_version,
+                        auth_token_enabled=True,
+                    ),
+                ],
             )
         }
 
@@ -158,7 +184,7 @@ class Test_elasticache_redis_replication_group_auth_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Elasticache Redis replication group {REPLICATION_GROUP_ID}(v{version}) does have AUTH enabled."
+                == f"Elasticache Redis replication group {REPLICATION_GROUP_ID}(v{engine_version}) does have AUTH enabled."
             )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == REPLICATION_GROUP_ID
@@ -168,7 +194,7 @@ class Test_elasticache_redis_replication_group_auth_enabled:
     def test_elasticache_redis_cluster_auth_disabled(self):
         # Mock ElastiCache Service
         elasticache_service = MagicMock
-        version = 5.0
+        engine_version = "4.2"
         elasticache_service.replication_groups = {
             REPLICATION_GROUP_ARN: ReplicationGroup(
                 arn=REPLICATION_GROUP_ARN,
@@ -181,7 +207,19 @@ class Test_elasticache_redis_replication_group_auth_enabled:
                 multi_az=REPLICATION_GROUP_MULTI_AZ,
                 tags=REPLICATION_GROUP_TAGS,
                 auth_token_enabled=False,
-                engine_version=version,
+                automatic_failover="enabled",
+                member_clusters=[
+                    Cluster(
+                        id="test-cluster",
+                        arn="arn:aws:elasticache:us-east-1:123456789012:cluster:test-cluster",
+                        region=AWS_REGION_US_EAST_1,
+                        engine=ELASTICACHE_ENGINE,
+                        subnets=[],
+                        auto_minor_version_upgrade=False,
+                        engine_version=engine_version,
+                        auth_token_enabled=False,
+                    ),
+                ],
             )
         }
 
@@ -213,7 +251,7 @@ class Test_elasticache_redis_replication_group_auth_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Elasticache Redis replication group {REPLICATION_GROUP_ID}(v{version}) does not have AUTH enabled."
+                == f"Elasticache Redis replication group {REPLICATION_GROUP_ID}(v{engine_version}) does not have AUTH enabled."
             )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == REPLICATION_GROUP_ID

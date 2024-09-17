@@ -207,7 +207,7 @@ class Test_ElastiCache_Service:
             multi_az=REPLICATION_GROUP_MULTI_AZ,
             tags=REPLICATION_GROUP_TAGS,
             auto_minor_version_upgrade=AUTO_MINOR_VERSION_UPGRADE,
-            engine_version=6.0,
             auth_token_enabled=True,
             automatic_failover="disabled",
+            member_clusters=[],
         )

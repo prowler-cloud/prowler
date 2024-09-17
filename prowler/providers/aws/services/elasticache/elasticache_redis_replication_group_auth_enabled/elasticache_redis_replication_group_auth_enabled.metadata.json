@@ -3,6 +3,8 @@
   "CheckID": "elasticache_redis_replication_group_auth_enabled",
   "CheckTitle": "Ensure Elasticache Elasticache Redis replication groups of earlier versions should have Redis OSS AUTH enabled.",
   "CheckType": [
+    "Software and Configuration Checks",
+    "Industry and Regulatory Standards",
     "NIST 800-53 Controls "
   ],
   "ServiceName": "elasticache",
