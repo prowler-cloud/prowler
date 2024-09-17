@@ -46,6 +46,7 @@ class Neptune(AWSService):
                         backup_retention_period=cluster.get("BackupRetentionPeriod", 0),
                         encrypted=cluster.get("StorageEncrypted", False),
                         kms_key=cluster.get("KmsKeyId", ""),
+                        cloudwatch_logs=cluster.get("EnabledCloudwatchLogsExports", []),
                         multi_az=cluster["MultiAZ"],
                         iam_auth=cluster.get("IAMDatabaseAuthenticationEnabled", False),
                         deletion_protection=cluster.get("DeletionProtection", False),
@@ -172,6 +173,7 @@ class Cluster(BaseModel):
     db_subnet_group_id: str
     subnets: Optional[list]
     tags: Optional[list]
+    cloudwatch_logs: Optional[list]
 
 
 class ClusterSnapshot(BaseModel):
