@@ -12,14 +12,10 @@ class neptune_cluster_copy_tags_to_snapshots(Check):
             report.resource_arn = cluster.arn
             report.resource_tags = cluster.tags
             report.status = "FAIL"
-            report.status_extended = (
-                f"Neptune DB Cluster {cluster.id} is not configured to copy tags to snapshots."
-            )
+            report.status_extended = f"Neptune DB Cluster {cluster.id} is not configured to copy tags to snapshots."
             if cluster.copy_tags_to_snapshot:
                 report.status = "PASS"
-                report.status_extended = (
-                    f"Neptune DB Cluster {cluster.id} is configured to copy tags to snapshots."
-                )
+                report.status_extended = f"Neptune DB Cluster {cluster.id} is configured to copy tags to snapshots."
 
             findings.append(report)
 

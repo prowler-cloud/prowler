@@ -1,10 +1,8 @@
 from unittest import mock
 
 from prowler.providers.aws.services.neptune.neptune_service import Cluster
-from tests.providers.aws.utils import (
-    AWS_ACCOUNT_NUMBER,
-    AWS_REGION_US_EAST_1,
-)
+from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, AWS_REGION_US_EAST_1
+
 
 class Test_neptune_cluster_copy_tags_to_snapshots:
     def test_neptune_no_clusters(self):
@@ -45,7 +43,7 @@ class Test_neptune_cluster_copy_tags_to_snapshots:
                 multi_az=False,
                 iam_auth=False,
                 deletion_protection=False,
-                db_subnet_group_id="subnet-1234abcd"
+                db_subnet_group_id="subnet-1234abcd",
             )
         }
 
@@ -92,7 +90,7 @@ class Test_neptune_cluster_copy_tags_to_snapshots:
                 multi_az=False,
                 iam_auth=False,
                 deletion_protection=False,
-                db_subnet_group_id="subnet-1234abcd"
+                db_subnet_group_id="subnet-1234abcd",
             )
         }
 
