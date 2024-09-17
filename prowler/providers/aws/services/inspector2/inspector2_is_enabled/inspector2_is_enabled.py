@@ -29,21 +29,22 @@ class inspector2_is_enabled(Check):
                 failed_services = []
 
                 if inspector.ec2_status != "ENABLED" and (
-                    inspector2_client.provider.scan_unused_services or ec2_in_region
+                    not inspector2_client.audit_info.ignore_unused_services
+                    or ec2_in_region
                 ):
                     failed_services.append("EC2")
                 if inspector.ecr_status != "ENABLED" and (
-                    inspector2_client.provider.scan_unused_services
+                    not inspector2_client.audit_info.ignore_unused_services
                     or ecr_client.registries[inspector.region].repositories
                 ):
                     failed_services.append("ECR")
                 if inspector.lambda_status != "ENABLED" and (
-                    inspector2_client.provider.scan_unused_services
+                    not inspector2_client.audit_info.ignore_unused_services
                     or funtions_in_region
                 ):
                     failed_services.append("Lambda")
                 if inspector.lambda_code_status != "ENABLED" and (
-                    inspector2_client.provider.scan_unused_services
+                    not inspector2_client.audit_info.ignore_unused_services
                     or funtions_in_region
                 ):
                     failed_services.append("Lambda Code")

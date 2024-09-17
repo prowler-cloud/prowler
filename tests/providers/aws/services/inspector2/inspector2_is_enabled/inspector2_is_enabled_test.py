@@ -60,10 +60,7 @@ class Test_inspector2_is_enabled:
 
                 assert len(result) == 1
                 assert result[0].status == "FAIL"
-                assert (
-                    result[0].status_extended
-                    == "Inspector2 is not enabled in this account."
-                )
+                assert result[0].status_extended == "Inspector2 is not enabled."
                 assert result[0].resource_id == AWS_ACCOUNT_NUMBER
                 assert (
                     result[0].resource_arn
