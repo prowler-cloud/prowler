@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:appstream:region:account-id:fleet/resource-id",
   "Severity": "medium",
-  "ResourceType": "AppStream",
+  "ResourceType": "Other",
   "Description": "Ensure user maximum session duration is no longer than 10 hours.",
   "Risk": "Having a session duration lasting longer than 10 hours should not be necessary and if running for any malicious reasons provides a greater time for usage than should be allowed.",
   "RelatedUrl": "https://docs.aws.amazon.com/appstream2/latest/developerguide/set-up-stacks-fleets.html",

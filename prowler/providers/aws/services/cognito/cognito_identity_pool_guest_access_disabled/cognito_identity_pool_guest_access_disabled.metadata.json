@@ -1,0 +1,30 @@
+{
+  "Provider": "aws",
+  "CheckID": "cognito_identity_pool_guest_access_disabled",
+  "CheckTitle": "Ensure Cognito Identity Pool has guest access disabled",
+  "CheckType": [],
+  "ServiceName": "cognito",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:cognito-idp:region:account:identitypool/identitypool-id",
+  "Severity": "medium",
+  "ResourceType": "Other",
+  "Description": "Guest access allows unauthenticated users to access your identity pool. This is useful for public websites that allow users to sign in with a social identity provider, but it can also be a security risk. If you don't need guest access, you should disable it.",
+  "Risk": "If guest access is enabled, unauthenticated users can access your identity pool. This can be a security risk if you don't need guest access.",
+  "RelatedUrl": "https://docs.aws.amazon.com/location/latest/developerguide/authenticating-using-cognito.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Gues access should be disabled for Cognito Identity Pool. To disable guest access, follow the steps in the Amazon Cognito documentation.",
+      "Url": "https://docs.aws.amazon.com/location/latest/developerguide/authenticating-using-cognito.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

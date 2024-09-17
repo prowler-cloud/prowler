@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:cloudwatch:region:account-id:certificate/resource-id",
   "Severity": "medium",
-  "ResourceType": "AwsCloudWatch",
+  "ResourceType": "AwsAccount",
   "Description": "Check if CloudWatch has allowed cross-account sharing.",
   "Risk": "Cross-Account access to CloudWatch could increase the risk of compromising information between accounts.",
   "RelatedUrl": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Cross-Account-Cross-Region.html",

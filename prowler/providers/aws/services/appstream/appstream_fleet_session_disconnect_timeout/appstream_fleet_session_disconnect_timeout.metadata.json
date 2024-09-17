@@ -11,7 +11,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:appstream:region:account-id:fleet/resource-id",
   "Severity": "medium",
-  "ResourceType": "AppStream",
+  "ResourceType": "Other",
   "Description": "Ensure session disconnect timeout is set to 5 minutes or less",
   "Risk": "Disconnect timeout in minutes, is the amount of of time that a streaming session remains active after users disconnect.",
   "RelatedUrl": "https://docs.aws.amazon.com/appstream2/latest/developerguide/set-up-stacks-fleets.html",

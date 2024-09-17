@@ -1,0 +1,30 @@
+{
+  "Provider": "aws",
+  "CheckID": "neptune_cluster_storage_encrypted",
+  "CheckTitle": "Check if Neptune Clusters storage is encrypted at rest.",
+  "CheckType": [],
+  "ServiceName": "neptune",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-cluster",
+  "Severity": "high",
+  "ResourceType": "AwsRdsDbCluster",
+  "Description": "Check if Neptune Clusters storage is encrypted at rest.",
+  "Risk": "Ensure that the data available on your Amazon Neptune database instances is encrypted in order to meet regulatory requirements and prevent unauthorized users from accessing sensitive information. Encryption provides an additional layer of protection by securing your Neptune databases from unauthorized access to the underlying storage. Neptune is a fast, scalable, highly secure and fully-managed graph database service that makes it easy to build and run applications that work with deeply connected datasets.",
+  "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/neptune-controls.html#neptune-1",
+  "Remediation": {
+    "Code": {
+      "CLI": "https://docs.prowler.com/checks/aws/general-policies/general_18/",
+      "NativeIaC": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Neptune/encryption-enabled.html",
+      "Other": "",
+      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/general_18/"
+    },
+    "Recommendation": {
+      "Text": "Enable Encryption. Use a CMK where possible. It will provide additional management and privacy benefits.",
+      "Url": "https://docs.aws.amazon.com/securityhub/latest/userguide/neptune-controls.html#neptune-1"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

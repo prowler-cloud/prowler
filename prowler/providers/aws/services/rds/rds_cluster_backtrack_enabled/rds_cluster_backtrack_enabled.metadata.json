@@ -1,0 +1,30 @@
+{
+  "Provider": "aws",
+  "CheckID": "rds_cluster_backtrack_enabled",
+  "CheckTitle": "Check if RDS Aurora MySQL Clusters have backtrack enabled.",
+  "CheckType": [],
+  "ServiceName": "rds",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-cluster",
+  "Severity": "medium",
+  "ResourceType": "AwsRdsDbCluster",
+  "Description": "Ensure that the Backtrack feature is enabled for your Amazon Aurora (with MySQL compatibility) database clusters in order to backtrack your clusters to a specific time, without using backups. Backtrack is an Amazon RDS feature that allows you to specify the amount of time that an Aurora MySQL database cluster needs to retain change records, in order to have a fast way to recover from user errors, such as dropping the wrong table or deleting the wrong row by moving your MySQL database to a prior point in time without the need to restore from a recent backup.",
+  "Risk": "Once the Backtrack feature is enabled, Amazon RDS can quickly 'rewind' your Aurora MySQL database cluster to a point in time that you specify. In contrast to the backup and restore method, with Backtrack you can easily undo a destructive action, such as a DELETE query without a WHERE clause, with minimal downtime, you can rewind your Aurora cluster in just few minutes, and you can repeatedly backtrack a database cluster back and forth in time to help determine when a particular data change occurred.",
+  "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-14",
+  "Remediation": {
+    "Code": {
+      "CLI": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/backtrack.html#",
+      "NativeIaC": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/backtrack.html#",
+      "Other": "",
+      "Terraform": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/backtrack.html#"
+    },
+    "Recommendation": {
+      "Text": "Backups help you to recover more quickly from a security incident. They also strengthens the resilience of your systems. Aurora backtracking reduces the time to recover a database to a point in time. It does not require a database restore to do so. You cannot enable backtracking on an existing cluster. Instead, you can create a clone that has backtracking enabled.",
+      "Url": "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-14"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

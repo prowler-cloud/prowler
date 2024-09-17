@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "lightsail_instance_automated_snapshots",
+  "CheckTitle": "Check if instances have automated snapshots enabled",
+  "CheckType": [
+    "Infrastructure Security"
+  ],
+  "ServiceName": "lightsail",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:lightsail:region:account:Instance/instance-id",
+  "Severity": "medium",
+  "ResourceType": "Other",
+  "Description": "Amazon Lightsail automatically creates daily snapshots of your instances. These snapshots are used for automatic backups and are stored at no additional cost. It is recommended to enable automatic snapshots for your Lightsail instances.",
+  "Risk": "If automatic snapshots are not enabled, you may lose data in case of accidental deletion or corruption.",
+  "RelatedUrl": "https://docs.aws.amazon.com/lightsail/latest/userguide/amazon-lightsail-configuring-automatic-snapshots.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "The automatic snapshot is a best practice to protect your data. It is recommended to enable automatic snapshots for your Lightsail instances.",
+      "Url": "https://docs.aws.amazon.com/lightsail/latest/userguide/amazon-lightsail-changing-automatic-snapshot-time.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

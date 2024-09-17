@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "storagegateway_fileshare_encryption_enabled",
+  "CheckTitle": "Check if AWS StorageGateway File Shares are encrypted with KMS CMK.",
+  "CheckType": [
+    "Security"
+  ],
+  "ServiceName": "storagegateway",
+  "SubServiceName": "filegateway",
+  "ResourceIdTemplate": "arn:aws:storagegateway:region:account-id:share",
+  "Severity": "low",
+  "ResourceType": "Other",
+  "Description": "Ensure that Amazon Storage Gateway service is using AWS KMS Customer Master Keys (CMKs) instead of AWS managed-keys (i.e. default keys) for file share data encryption, in order to have a fine-grained control over data-at-rest encryption/decryption process and meet compliance requirements. An AWS Storage Gateway file share is a file system mount point backed by Amazon S3 cloud storage.",
+  "Risk": "This could provide an avenue for unauthorized access to your data by not having fine-grained control over data-at-rest encryption/decryption process and meet compliance requirements.",
+  "RelatedUrl": "https://docs.aws.amazon.com/filegateway/latest/files3/encrypt-objects-stored-by-file-gateway-in-amazon-s3.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws storagegateway update-nfs-file-share --region us-east-1 --file-share-arn arn:aws:storagegateway:us-east-1:123456789012:share/share-abcd1234 --kms-encrypted --kms-key arn:aws:kms:us-east-1:123456789012:key/abcdabcd-1234-1234-1234-abcdabcdabcd",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/StorageGateway/file-shares-encrypted-with-cmk.html#",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure that Amazon Storage Gateway service is using AWS KMS Customer Master Keys (CMKs).",
+      "Url": "https://docs.aws.amazon.com/filegateway/latest/files3/encrypt-objects-stored-by-file-gateway-in-amazon-s3.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

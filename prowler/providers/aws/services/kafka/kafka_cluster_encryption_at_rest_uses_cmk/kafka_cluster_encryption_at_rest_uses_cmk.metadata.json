@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "kafka_cluster_encryption_at_rest_uses_cmk",
+  "CheckTitle": "Ensure Kafka Cluster Encryption at Rest Uses Customer Managed Keys (CMK)",
+  "CheckType": [
+    "Infrastructure Security"
+  ],
+  "ServiceName": "kafka",
+  "SubServiceName": "Kafka Cluster",
+  "ResourceIdTemplate": "arn:partition:kafka:region:account-id:cluster",
+  "Severity": "medium",
+  "ResourceType": "AwsMskCluster",
+  "Description": "Kafka Cluster data stored at rest should be encrypted using Customer Managed Keys (CMK) for enhanced security and control over the encryption process.",
+  "Risk": "Using default AWS-managed encryption keys might not meet certain compliance or regulatory requirements. With CMKs, you have more control over the encryption process and can rotate keys, define access policies, and enable key auditing.",
+  "RelatedUrl": "https://docs.aws.amazon.com/msk/latest/developerguide/msk-encryption.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/MSK/msk-encryption-at-rest-with-cmk.html",
+      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_32/#terraform"
+    },
+    "Recommendation": {
+      "Text": "It is recommended to use Customer Managed Keys (CMK) for Kafka Cluster encryption at rest to maintain control and flexibility over the encryption process.",
+      "Url": "https://docs.aws.amazon.com/msk/latest/developerguide/msk-working-with-encryption.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

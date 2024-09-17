@@ -1,0 +1,30 @@
+{
+  "Provider": "aws",
+  "CheckID": "documentdb_cluster_cloudwatch_log_export",
+  "CheckTitle": "Check if DocumentDB clusters are using the log export feature.",
+  "CheckType": [],
+  "ServiceName": "documentdb",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "medium",
+  "ResourceType": "AwsRdsDbCluster",
+  "Description": "Check if DocumentDB clusters are using the log export feature.",
+  "Risk": "Ensure that all your Amazon DocumentDB clusters are using the Log Exports feature in order to publish audit logs directly to CloudWatch Logs. The events recorded by Log Exports include events such as successful and failed authentication attempts, creating indexes, or dropping collections in DocumentDB databases.",
+  "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/documentdb-controls.html#documentdb-4",
+  "Remediation": {
+    "Code": {
+      "CLI": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DocumentDB/enable-profiler.html",
+      "NativeIaC": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DocumentDB/enable-profiler.html",
+      "Other": "",
+      "Terraform": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DocumentDB/enable-profiler.html"
+    },
+    "Recommendation": {
+      "Text": "Enabled DocumentDB Log export functionality to analyze, monitor, and archive auditing events for security and compliance requirements.",
+      "Url": "https://docs.aws.amazon.com/securityhub/latest/userguide/documentdb-controls.html#documentdb-4"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

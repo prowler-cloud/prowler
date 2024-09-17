@@ -1,0 +1,30 @@
+{
+  "Provider": "aws",
+  "CheckID": "lightsail_static_ip_unused",
+  "CheckTitle": "Static IP are allocated but not attached to any instance",
+  "CheckType": [],
+  "ServiceName": "lightsail",
+  "SubServiceName": "static_ip",
+  "ResourceIdTemplate": "arn:partition:lightsail:region:account:static-ip/static-ip-id",
+  "Severity": "low",
+  "ResourceType": "Other",
+  "Description": "Static IPs that are allocated but not attached to any instance are wasting resources and may pose a security risk if left unused for extended periods.",
+  "Risk": "Unattached static IPs can be potential entry points for unauthorized access or DDoS attacks if not properly secured.",
+  "RelatedUrl": "https://docs.aws.amazon.com/lightsail/latest/userguide/understanding-public-ip-and-private-ip-addresses-in-amazon-lightsail.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws lightsail release-static-ip --static-ip-name static-ip-name",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Release or attach any unused static IPs to ensure efficient resource utilization and minimize potential security risks.",
+      "Url": ""
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

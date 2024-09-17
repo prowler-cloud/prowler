@@ -1,0 +1,30 @@
+{
+  "Provider": "aws",
+  "CheckID": "elasticache_redis_cluster_backup_enabled",
+  "CheckTitle": "Ensure Elasticache Redis cache cluster has automatic backups enabled.",
+  "CheckType": [],
+  "ServiceName": "elasticache",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "high",
+  "ResourceType": "Other",
+  "Description": "Ensure Elasticache Redis cache cluster has automatic backups enabled.",
+  "Risk": "Ensure that your Amazon ElastiCache Redis cache clusters have a sufficient backup retention period set in order to fulfill your organization's compliance requirements. The retention period represents the number of days for which Amazon ElastiCache service retains automatic Redis cluster backups before deleting them.",
+  "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/elasticache-controls.html#elasticache-1",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws elasticache modify-replication-group --region <value> --replication-group-id <value> --snapshot-retention-limit <value> --apply-immediately",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/ensure-that-amazon-elasticache-redis-clusters-have-automatic-backup-turned-on/"
+    },
+    "Recommendation": {
+      "Text": "Ensure Elasticache Cluster has automatic backups enabled.",
+      "Url": "https://docs.aws.amazon.com/securityhub/latest/userguide/elasticache-controls.html#elasticache-1"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

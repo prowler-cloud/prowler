@@ -10,7 +10,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
-  "ResourceType": "AwsOpenSearchDomain",
+  "ResourceType": "AwsOpenSearchServiceDomain",
   "Description": "Check if Amazon Elasticsearch/Opensearch Service domains have internal user database enabled",
   "Risk": "Internal User Database is convenient for demos, for production environment use Federated authentication.",
   "RelatedUrl": "",

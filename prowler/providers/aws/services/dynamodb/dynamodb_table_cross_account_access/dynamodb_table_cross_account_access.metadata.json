@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "dynamodb_table_cross_account_access",
+  "CheckTitle": "DynamoDB tables should not be accessible from other AWS accounts",
+  "CheckType": [
+    "Infrastructure Security"
+  ],
+  "ServiceName": "dynamodb",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:dynamodb:region:account-id:table/resource-id",
+  "Severity": "medium",
+  "ResourceType": "AwsDynamoDbTable",
+  "Description": "This check determines if the DynamoDB table is accessible from other AWS accounts.",
+  "Risk": "If the DynamoDB table is accessible from other AWS accounts, it may lead to unauthorized access to the data stored in the table.",
+  "RelatedUrl": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/access-control-resource-based.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws dynamodb delete-resource-policy --resource-arn <resource-arn>",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure that the DynamoDB table is not accessible from other AWS accounts.",
+      "Url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/rbac-bpa-rbp.html"
+    }
+  },
+  "Categories": [
+    "trustboundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

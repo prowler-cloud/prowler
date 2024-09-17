@@ -12,7 +12,7 @@
   "SubServiceName": "rest_api",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
-  "ResourceType": "AwsApiGatewayStage",
+  "ResourceType": "AwsApiGatewayRestApi",
   "Description": "Check if API Gateway Stage has a WAF ACL attached.",
   "Risk": "Potential attacks and / or abuse of service, more even for even for internet reachable services.",
   "RelatedUrl": "",

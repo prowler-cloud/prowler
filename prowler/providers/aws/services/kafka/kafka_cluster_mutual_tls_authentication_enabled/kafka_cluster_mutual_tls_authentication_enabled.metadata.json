@@ -1,0 +1,30 @@
+{
+  "Provider": "aws",
+  "CheckID": "kafka_cluster_mutual_tls_authentication_enabled",
+  "CheckTitle": "Ensure Mutual TLS Authentication is Enabled for Kafka Cluster",
+  "CheckType": [],
+  "ServiceName": "kafka",
+  "SubServiceName": "cluster",
+  "ResourceIdTemplate": "arn:partition:kafka:region:account-id:cluster",
+  "Severity": "medium",
+  "ResourceType": "AwsMskCluster",
+  "Description": "Mutual TLS Authentication ensures that both the client and the server are authenticated, providing an additional layer of security for communication within the Kafka cluster.",
+  "Risk": "Without Mutual TLS Authentication, the cluster is vulnerable to man-in-the-middle attacks, and unauthorized clients may be able to access the cluster.",
+  "RelatedUrl": "https://docs.aws.amazon.com/msk/latest/developerguide/msk-authentication.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/MSK/enable-mutual-tls-authentication-for-kafka-clients.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "It is recommended to enable Mutual TLS Authentication for your Kafka cluster to ensure secure communication between clients and brokers.",
+      "Url": "https://docs.aws.amazon.com/msk/latest/developerguide/msk-update-security.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

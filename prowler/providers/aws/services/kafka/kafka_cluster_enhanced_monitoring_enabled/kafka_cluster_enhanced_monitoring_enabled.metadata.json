@@ -1,0 +1,30 @@
+{
+  "Provider": "aws",
+  "CheckID": "kafka_cluster_enhanced_monitoring_enabled",
+  "CheckTitle": "Ensure Enhanced Monitoring is Enabled for MSK (Kafka) Brokers",
+  "CheckType": [],
+  "ServiceName": "kafka",
+  "SubServiceName": "cluster",
+  "ResourceIdTemplate": "arn:partition:kafka:region:account-id:cluster",
+  "Severity": "medium",
+  "ResourceType": "AwsMskCluster",
+  "Description": "Enhanced monitoring provides additional visibility into the performance and behavior of MSK (Kafka) brokers. By enabling enhanced monitoring, you can gain insights into potential issues and optimize the performance of your Kafka clusters.",
+  "Risk": "Without enhanced monitoring, you may have limited visibility into the performance and health of your MSK brokers, which could lead to undetected issues and potential performance degradation.",
+  "RelatedUrl": "https://docs.aws.amazon.com/msk/latest/developerguide/monitoring.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws kafka update-monitoring --region region_cluster --cluster-arn arn_cluster --current-version version_cluster --enhanced-monitoring PER_BROKER",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/MSK/enable-enhanced-monitoring-for-apache-kafka-brokers.html#",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "It is recommended to enable enhanced monitoring for MSK (Kafka) brokers to gain deeper insights into the performance and behavior of your clusters.",
+      "Url": "https://docs.aws.amazon.com/msk/latest/developerguide/metrics-details.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

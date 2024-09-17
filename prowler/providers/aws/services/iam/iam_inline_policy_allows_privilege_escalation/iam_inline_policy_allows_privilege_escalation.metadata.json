@@ -1,0 +1,33 @@
+{
+  "Provider": "aws",
+  "CheckID": "iam_inline_policy_allows_privilege_escalation",
+  "CheckTitle": "Ensure no IAM Inline policies allow actions that may lead into Privilege Escalation",
+  "CheckType": [
+    "Software and Configuration Checks",
+    "Industry and Regulatory Standards"
+  ],
+  "ServiceName": "iam",
+  "SubServiceName": "inline_policy",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "high",
+  "ResourceType": "AwsIamPolicy",
+  "Description": "Ensure no Inline IAM policies allow actions that may lead into Privilege Escalation",
+  "Risk": "Users with some IAM permissions are allowed to elevate their privileges up to administrator rights.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Grant usage permission on a per-resource basis and applying least privilege principle.",
+      "Url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#grant-least-privilege"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

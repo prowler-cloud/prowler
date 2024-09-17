@@ -10,7 +10,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:ecr:region:account-id:resource-id",
   "Severity": "medium",
-  "ResourceType": "AwsEcrRegistry",
+  "ResourceType": "Other",
   "Description": "Check if ECR Registry has scan on push enabled",
   "Risk": "Amazon ECR image scanning helps in identifying software vulnerabilities in your container images. Amazon ECR uses the Common Vulnerabilities and Exposures (CVEs) database from the open-source Clair project and provides a list of scan findings. ",
   "RelatedUrl": "",

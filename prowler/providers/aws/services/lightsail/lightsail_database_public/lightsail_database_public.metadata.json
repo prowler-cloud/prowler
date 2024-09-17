@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "lightsail_database_public",
+  "CheckTitle": "Check if the database has the public mode.",
+  "CheckType": [
+    "Infrastructure Security"
+  ],
+  "ServiceName": "lightsail",
+  "SubServiceName": "database",
+  "ResourceIdTemplate": "arn:partition:lightsail:region:account:RelationalDatabase/database-id",
+  "Severity": "high",
+  "ResourceType": "Other",
+  "Description": "The database is in public mode, which means it is exposed to the internet.",
+  "Risk": "This can lead to unauthorized access to the database.",
+  "RelatedUrl": "https://docs.aws.amazon.com/lightsail/latest/userguide/amazon-lightsail-databases.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Change the database to private mode.",
+      "Url": ""
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "kafka_cluster_in_transit_encryption_enabled",
+  "CheckTitle": "Ensure Kafka Cluster Encryption in Transit is Enabled",
+  "CheckType": [
+    "Infrastructure Security"
+  ],
+  "ServiceName": "kafka",
+  "SubServiceName": "cluster",
+  "ResourceIdTemplate": "arn:partition:kafka:region:account-id:cluster",
+  "Severity": "medium",
+  "ResourceType": "AwsMskCluster",
+  "Description": "Kafka clusters should have encryption in transit enabled to protect data as it travels across the network. This ensures that data is encrypted when transmitted between clients and brokers, preventing unauthorized access or data breaches.",
+  "Risk": "If encryption in transit is not enabled, data transmitted over the network could be vulnerable to eavesdropping or man-in-the-middle attacks.",
+  "RelatedUrl": "https://docs.aws.amazon.com/msk/latest/developerguide/msk-encryption.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_32/#cli",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/MSK/encryption-in-transit-for-msk.html",
+      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_32/#terraform"
+    },
+    "Recommendation": {
+      "Text": "It is recommended to enable encryption in transit for Kafka clusters to protect data confidentiality and integrity.",
+      "Url": "https://docs.aws.amazon.com/msk/latest/developerguide/msk-working-with-encryption.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

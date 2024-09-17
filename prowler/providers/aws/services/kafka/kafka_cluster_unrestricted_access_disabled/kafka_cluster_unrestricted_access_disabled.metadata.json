@@ -1,0 +1,30 @@
+{
+  "Provider": "aws",
+  "CheckID": "kafka_cluster_unrestricted_access_disabled",
+  "CheckTitle": "Ensure Kafka Cluster has unrestricted access disabled",
+  "CheckType": [],
+  "ServiceName": "kafka",
+  "SubServiceName": "cluster",
+  "ResourceIdTemplate": "arn:partition:kafka:region:account-id:cluster",
+  "Severity": "high",
+  "ResourceType": "AwsMskCluster",
+  "Description": "Kafka Clusters should not have unrestricted access enabled. Unrestricted access allows anyone to access the Kafka Cluster without any authentication. It is recommended to disable unrestricted access to prevent unauthorized access to the Kafka Cluster.",
+  "Risk": "Unrestricted access to Kafka Clusters can lead to unauthorized access to the cluster and its data. It is recommended to restrict access to Kafka Clusters to only authorized entities.",
+  "RelatedUrl": "https://docs.aws.amazon.com/msk/latest/developerguide/msk-configure-security.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws kafka update-security --region region_name --cluster-arn cluster_arn --current-version kafka_version_of_cluster --client-authentication 'Unauthenticated={Enabled=false}'",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/MSK/unrestricted-access-to-brokers.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "It is recommended to restrict access to Kafka Clusters to only authorized entities. Ensure that the Kafka Cluster's security settings are properly configured to prevent unauthorized access.",
+      "Url": "https://docs.aws.amazon.com/msk/latest/developerguide/security.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
