@@ -53,28 +53,8 @@ class inspector2_is_enabled(Check):
                     report.status_extended = f"Inspector2 is not enabled for the following services: {', '.join(failed_services)}."
                 findings.append(report)
             else:
-<<<<<<< HEAD
-                if inspector2_client.audit_info.ignore_unused_services:
-                    funtions_in_region = False
-                    ec2_in_region = False
-                    for function in awslambda_client.functions.values():
-                        if function.region == inspector.region:
-                            funtions_in_region = True
-                    for instance in ec2_client.instances:
-                        if instance == inspector.region:
-                            ec2_in_region = True
-                if not inspector2_client.audit_info.ignore_unused_services or (
-                    funtions_in_region
-                    or ecr_client.registries[inspector.region].repositories
-                    or ec2_in_region
-                ):
-                    report.status = "FAIL"
-                    report.status_extended = "Inspector2 is not enabled."
-                    findings.append(report)
-=======
                 report.status = "FAIL"
-                report.status_extended = "Inspector2 is not enabled in this account."
+                report.status_extended = "Inspector2 is not enabled."
                 findings.append(report)
->>>>>>> c425e8249 (fix(inspector2): Ensure Inspector2 is enabled for ECR, EC2, Lambda and Lambda Code (#5061))
 
         return findings
