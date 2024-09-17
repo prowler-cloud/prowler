@@ -87,23 +87,17 @@ class DMS(AWSService):
                     if not self.audit_resources or (
                         is_resource_filtered(name, self.audit_resources)
                     ):
-                        self.data_providers.append(
-                            DataProvider(name)
-                            )
-                        
                         settings = provider.get('Settings', {})
                         for setting_key, setting_value in settings.items():
                             ssl_mode = setting_value.get('SslMode')
-                            self.data_providers.append(
-                                DataProvider(ssl_mode)
-                            )
-                        
-
-                    
-                    
-                        
-                    
-                    
+                            if ssl_mode:
+                                settings[setting_value] = ssl_mode
+                            
+                        self.data_providers.append(DataProvider(
+                            name=DataProvider['DataProviderName'],
+                            settings=DataProvider["Settings"]
+                        ))
+                            
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
