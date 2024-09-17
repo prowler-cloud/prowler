@@ -12,6 +12,7 @@ class DMS(AWSService):
         super().__init__(__class__.__name__, provider)
         self.instances = []
         self.endpoints = {}
+        self.data_providers = []
         self.__threading_call__(self.__describe_replication_instances__)
         self.__threading_call__(self.__describe_endpoints__)
 
@@ -72,6 +73,45 @@ class DMS(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+
+    def _describe_data_providers(self, regional_client):
+        logger.info("DMS - Describing DMS Data Providers...")
+        try:
+            describe_data_provider_paginator = regional_client.get_paginator(
+                "describe_data_providers"
+            )
+
+            for page in describe_data_provider_paginator.paginate():
+                for provider in page["DataProviders"]:
+                    name = provider['DataProviderName']
+                    if not self.audit_resources or (
+                        is_resource_filtered(name, self.audit_resources)
+                    ):
+                        self.data_providers.append(
+                            DataProvider(name)
+                            )
+                        
+                        settings = provider.get('Settings', {})
+                        for setting_key, setting_value in settings.items():
+                            ssl_mode = setting_value.get('SslMode')
+                            self.data_providers.append(
+                                DataProvider(ssl_mode)
+                            )
+                        
+
+                    
+                    
+                        
+                    
+                    
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+class DataProvider(BaseModel):
+    name: str
+    settings: dict
 
 
 class Endpoint(BaseModel):
