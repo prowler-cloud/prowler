@@ -12,11 +12,13 @@ class elb_connection_draining_enabled(Check):
             report.resource_arn = loadbalancer_arn
             report.resource_tags = load_balancer.tags
             report.status = "PASS"
-            report.status_extended = f"Connection draining is enabled for Classic Load Balancer {load_balancer.name}."
+            report.status_extended = (
+                f"ELB {load_balancer.name} has connection draining enabled."
+            )
 
             if not load_balancer.connection_draining:
                 report.status = "FAIL"
-                report.status_extended = f"Connection draining is not enabled for Classic Load Balancer {load_balancer.name}."
+                report.status_extended = f"ELB {load_balancer.name} does not have connection draining enabled."
 
             findings.append(report)
 

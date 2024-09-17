@@ -78,7 +78,7 @@ class Test_elb_connection_draining_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "Connection draining is enabled for Classic Load Balancer my-lb."
+                == "ELB my-lb has connection draining enabled."
             )
             assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_id == "my-lb"
@@ -134,7 +134,7 @@ class Test_elb_connection_draining_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Connection draining is not enabled for Classic Load Balancer my-lb."
+                == "ELB my-lb does not have connection draining enabled."
             )
             assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_id == "my-lb"

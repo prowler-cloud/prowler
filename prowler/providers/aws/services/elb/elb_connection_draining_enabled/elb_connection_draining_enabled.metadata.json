@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
-  "ResourceType": "AwsElbLoadBalancerAttributes",
+  "ResourceType": "AwsElbLoadBalancer",
   "Description": "Checks if connection draining is enabled for Classic Load Balancers. Connection draining ensures that the load balancer stops sending requests to instances that are de-registering or unhealthy, while keeping existing connections open. This is particularly useful for instances in Auto Scaling groups, to ensure that connections aren't severed abruptly.",
   "Risk": "Disabling connection draining can lead to abrupt connection termination for users, impacting the user experience and potentially causing application errors.",
   "RelatedUrl": "https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/config-conn-drain.html",
