@@ -28,6 +28,10 @@ class Test_inspector2_active_findings_exist:
                 id=AWS_ACCOUNT_NUMBER,
                 arn=f"arn:aws:inspector2:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:inspector2",
                 status="ENABLED",
+                ec2_status="ENABLED",
+                ecr_status="DISABLED",
+                lambda_status="DISABLED",
+                lambda_code_status="ENABLED",
                 region=AWS_REGION_EU_WEST_1,
                 active_findings=False,
             )
@@ -80,6 +84,10 @@ class Test_inspector2_active_findings_exist:
                 arn=f"arn:aws:inspector2:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:inspector2",
                 region=AWS_REGION_EU_WEST_1,
                 status="ENABLED",
+                ec2_status="ENABLED",
+                ecr_status="DISABLED",
+                lambda_status="DISABLED",
+                lambda_code_status="ENABLED",
                 active_findings=False,
             )
         ]
@@ -131,6 +139,10 @@ class Test_inspector2_active_findings_exist:
                 arn=f"arn:aws:inspector2:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:inspector2",
                 region=AWS_REGION_EU_WEST_1,
                 status="ENABLED",
+                ec2_status="ENABLED",
+                ecr_status="DISABLED",
+                lambda_status="DISABLED",
+                lambda_code_status="ENABLED",
                 active_findings=True,
             )
         ]
@@ -191,6 +203,10 @@ class Test_inspector2_active_findings_exist:
                 id=AWS_ACCOUNT_NUMBER,
                 arn=f"arn:aws:inspector2:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:inspector2",
                 status="DISABLED",
+                ec2_status="ENABLED",
+                ecr_status="DISABLED",
+                lambda_status="DISABLED",
+                lambda_code_status="ENABLED",
                 region=AWS_REGION_EU_WEST_1,
                 active_findings=False,
             )

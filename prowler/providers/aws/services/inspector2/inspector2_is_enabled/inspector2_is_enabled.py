@@ -17,25 +17,45 @@ class inspector2_is_enabled(Check):
             report.region = inspector.region
             if inspector.status == "ENABLED":
                 report.status = "PASS"
-                report.status_extended = "Inspector2 is enabled."
-                findings.append(report)
-            else:
-                if inspector2_client.audit_info.ignore_unused_services:
-                    funtions_in_region = False
-                    ec2_in_region = False
-                    for function in awslambda_client.functions.values():
-                        if function.region == inspector.region:
-                            funtions_in_region = True
-                    for instance in ec2_client.instances:
-                        if instance == inspector.region:
-                            ec2_in_region = True
-                if not inspector2_client.audit_info.ignore_unused_services or (
-                    funtions_in_region
-                    or ecr_client.registries[inspector.region].repositories
+                report.status_extended = "Inspector2 is enabled for EC2 instances, ECR container images, Lambda functions and code."
+                funtions_in_region = False
+                ec2_in_region = False
+                for function in awslambda_client.functions.values():
+                    if function.region == inspector.region:
+                        funtions_in_region = True
+                for instance in ec2_client.instances:
+                    if instance == inspector.region:
+                        ec2_in_region = True
+                failed_services = []
+
+                if inspector.ec2_status != "ENABLED" and (
+                    not inspector2_client.audit_info.ignore_unused_services
                     or ec2_in_region
                 ):
+                    failed_services.append("EC2")
+                if inspector.ecr_status != "ENABLED" and (
+                    not inspector2_client.audit_info.ignore_unused_services
+                    or ecr_client.registries[inspector.region].repositories
+                ):
+                    failed_services.append("ECR")
+                if inspector.lambda_status != "ENABLED" and (
+                    not inspector2_client.audit_info.ignore_unused_services
+                    or funtions_in_region
+                ):
+                    failed_services.append("Lambda")
+                if inspector.lambda_code_status != "ENABLED" and (
+                    not inspector2_client.audit_info.ignore_unused_services
+                    or funtions_in_region
+                ):
+                    failed_services.append("Lambda Code")
+
+                if failed_services:
                     report.status = "FAIL"
-                    report.status_extended = "Inspector2 is not enabled."
-                    findings.append(report)
+                    report.status_extended = f"Inspector2 is not enabled for the following services: {', '.join(failed_services)}."
+                findings.append(report)
+            else:
+                report.status = "FAIL"
+                report.status_extended = "Inspector2 is not enabled."
+                findings.append(report)
 
         return findings

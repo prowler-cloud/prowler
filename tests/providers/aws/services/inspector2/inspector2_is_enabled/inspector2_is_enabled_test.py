@@ -33,8 +33,11 @@ class Test_inspector2_is_enabled:
                 id=AWS_ACCOUNT_NUMBER,
                 arn=f"arn:aws:inspector2:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:inspector2",
                 status="DISABLED",
+                ec2_status="DISABLED",
+                ecr_status="DISABLED",
+                lambda_status="DISABLED",
+                lambda_code_status="DISABLED",
                 region=AWS_REGION_EU_WEST_1,
-                findings=[],
             )
         ]
         current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
@@ -79,8 +82,11 @@ class Test_inspector2_is_enabled:
                 id=AWS_ACCOUNT_NUMBER,
                 arn=f"arn:aws:inspector2:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:inspector2",
                 status="ENABLED",
+                ec2_status="ENABLED",
+                ecr_status="ENABLED",
+                lambda_status="ENABLED",
+                lambda_code_status="ENABLED",
                 region=AWS_REGION_EU_WEST_1,
-                findings=[],
             )
         ]
         current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
@@ -103,7 +109,61 @@ class Test_inspector2_is_enabled:
 
                 assert len(result) == 1
                 assert result[0].status == "PASS"
-                assert result[0].status_extended == "Inspector2 is enabled."
+                assert (
+                    result[0].status_extended
+                    == "Inspector2 is enabled for EC2 instances, ECR container images, Lambda functions and code."
+                )
+                assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+                assert (
+                    result[0].resource_arn
+                    == f"arn:aws:inspector2:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:inspector2"
+                )
+                assert result[0].region == AWS_REGION_EU_WEST_1
+
+    def test_enabled_finding(self):
+        inspector2_client = mock.MagicMock
+        inspector2_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        inspector2_client.audited_account = AWS_ACCOUNT_NUMBER
+        inspector2_client.audited_account_arn = (
+            f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
+        )
+        inspector2_client.region = AWS_REGION_EU_WEST_1
+        inspector2_client.inspectors = [
+            Inspector(
+                id=AWS_ACCOUNT_NUMBER,
+                arn=f"arn:aws:inspector2:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:inspector2",
+                status="ENABLED",
+                ec2_status="ENABLED",
+                ecr_status="DISABLED",
+                lambda_status="DISABLED",
+                lambda_code_status="ENABLED",
+                region=AWS_REGION_EU_WEST_1,
+            )
+        ]
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+
+        with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=current_audit_info,
+        ):
+            with mock.patch(
+                "prowler.providers.aws.services.inspector2.inspector2_is_enabled.inspector2_is_enabled.inspector2_client",
+                new=inspector2_client,
+            ):
+                # Test Check
+                from prowler.providers.aws.services.inspector2.inspector2_is_enabled.inspector2_is_enabled import (
+                    inspector2_is_enabled,
+                )
+
+                check = inspector2_is_enabled()
+                result = check.execute()
+
+                assert len(result) == 1
+                assert result[0].status == "FAIL"
+                assert (
+                    result[0].status_extended
+                    == "Inspector2 is not enabled for the following services: ECR, Lambda."
+                )
                 assert result[0].resource_id == AWS_ACCOUNT_NUMBER
                 assert (
                     result[0].resource_arn
