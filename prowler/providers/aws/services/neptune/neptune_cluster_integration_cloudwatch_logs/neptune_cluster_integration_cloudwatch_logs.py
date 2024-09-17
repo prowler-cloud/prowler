@@ -13,7 +13,7 @@ class neptune_cluster_integration_cloudwatch_logs(Check):
             report.resource_tags = cluster.tags
             report.status = "FAIL"
             report.status_extended = f"Neptune Cluster {cluster.name} does not have cloudwatch audit logs enabled."
-            if cluster.cloudwatch_logs and "audit" in cluster.cloudwatch_logs:
+            if "audit" in cluster.cloudwatch_logs:
                 report.status = "PASS"
                 report.status_extended = (
                     f"Neptune Cluster {cluster.name} has cloudwatch audit logs enabled."
