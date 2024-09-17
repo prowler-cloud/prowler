@@ -143,12 +143,21 @@ def is_condition_restricting_from_private_ip(condition_statement: dict) -> bool:
     return is_from_private_ip
 
 
-def is_policy_public(policy: dict) -> bool:
+# TODO: Add logic for deny statements
+def is_policy_public(
+    policy: dict,
+    source_account: str = "",
+    is_cross_account_allowed=False,
+    not_allowed_actions: list = [],
+) -> bool:
     """
     Check if the statement allows public access to the resource or to a service principal.
     An AWS service principal is considered public access if the policy is not pair with conditions since it can be invoked by AWS services in other accounts.
     Args:
         policy (dict): The AWS policy to check
+        source_account (str): The account to check if it has access, default: ""
+        is_cross_account_allowed (bool): Allow cross-account access, default: False
+        not_allowed_actions (list): List of actions that are not allowed, default: []
     Returns:
         bool: True if the policy allows public access, False otherwise
     """
@@ -157,62 +166,218 @@ def is_policy_public(policy: dict) -> bool:
         if statement["Effect"] == "Allow":
             principal = statement.get("Principal", "")
             if (
-                "*" in principal
-                or "arn:aws:iam::*:root" in principal
-                or (
-                    isinstance(principal, dict)
-                    and (
-                        "*" in principal.get("AWS", "")
-                        or "arn:aws:iam::*:root" in principal.get("AWS", "")
-                        or (
-                            isinstance(principal.get("AWS"), list)
-                            and (
-                                "*" in principal["AWS"]
-                                or "arn:aws:iam::*:root" in principal["AWS"]
+                (
+                    "*" in principal
+                    or "arn:aws:iam::*:root" in principal
+                    or (
+                        isinstance(principal, dict)
+                        and (
+                            "*" in principal.get("AWS", "")
+                            or "arn:aws:iam::*:root" in principal.get("AWS", "")
+                            or (
+                                isinstance(principal.get("AWS"), list)
+                                and (
+                                    "*" in principal["AWS"]
+                                    or "arn:aws:iam::*:root" in principal["AWS"]
+                                )
                             )
-                        )
-                        or "*" in principal.get("CanonicalUser", "")
-                        or "arn:aws:iam::*:root" in principal.get("CanonicalUser", "")
-                        or (  # Check if function can be invoked by other AWS services
-                            (
-                                ".amazonaws.com" in principal.get("Service", "")
-                                or "*" in principal.get("Service", "")
+                            or "*" in principal.get("CanonicalUser", "")
+                            or "arn:aws:iam::*:root"
+                            in principal.get("CanonicalUser", "")
+                            or (  # Check if function can be invoked by other AWS services
+                                (
+                                    ".amazonaws.com" in principal.get("Service", "")
+                                    or "*" in principal.get("Service", "")
+                                )
                             )
                         )
                     )
                 )
+                and (
+                    (
+                        isinstance(statement.get("Action", ""), list)
+                        and "*" not in statement["Action"]
+                    )
+                    or ("*" not in statement.get("Action", ""))
+                )
+                or (
+                    isinstance(statement.get("Action", ""), list)
+                    and any(
+                        action in not_allowed_actions for action in statement["Action"]
+                    )
+                )
+                or (statement.get("Action", "") in not_allowed_actions)
             ):
-                return not has_secure_conditions(statement)
+                return (
+                    not is_condition_block_restrictive(
+                        statement.get("Condition", {}),
+                        source_account,
+                        is_cross_account_allowed,
+                    )
+                    and not is_condition_block_restrictive_organization(
+                        statement.get("Condition", {})
+                    )
+                    and not is_condition_restricting_from_private_ip(
+                        statement.get("Condition", {})
+                    )
+                )
     return False
 
 
-def has_secure_conditions(statement):
+def is_condition_block_restrictive(
+    condition_statement: dict,
+    source_account: str = "",
+    is_cross_account_allowed=False,
+):
     """
-    Check if the statement has secure conditions that restrict the access to the resource.
+    is_condition_block_restrictive parses the IAM Condition policy block and, by default, returns True if the source_account passed as argument is within, False if not.
+
+    If argument is_cross_account_allowed is True it tests if the Condition block includes any of the operators allowlisted returning True if does, False if not.
+
     Args:
-        statement: dict: Statement from the policy
-    Returns:
-        bool: True if the statement has secure conditions, False otherwise
+        condition_statement: dict with an IAM Condition block, e.g.:
+        {
+            "StringLike": {
+                "AWS:SourceAccount": 111122223333
+            }
+        }
+
+        source_account: str with a 12-digit AWS Account number, e.g.: 111122223333, default: ""
+
+        is_cross_account_allowed: bool to allow cross-account access, e.g.: True, default: False
+
     """
-    conditions = statement.get("Condition", {})
-    allowed_conditions = {
-        "aws:sourcearn",
-        "aws:sourceip",
-        "aws:sourcevpc",
-        "aws:sourcevpce",
-        "aws:sourceowner",
-        "aws:sourceaccount",
-        "aws:sourceorgid",
+    is_condition_valid = False
+
+    # The conditions must be defined in lowercase since the context key names are not case-sensitive.
+    # For example, including the aws:SourceAccount context key is equivalent to testing for AWS:SourceAccount
+    # https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_condition.html
+    valid_condition_options = {
+        "StringEquals": [
+            "aws:sourceaccount",
+            "aws:sourceowner",
+            "s3:resourceaccount",
+            "aws:principalaccount",
+            "aws:resourceaccount",
+            "aws:sourcearn",
+            "aws:sourcevpc",
+            "aws:sourcevpce",
+        ],
+        "StringLike": [
+            "aws:sourceaccount",
+            "aws:sourceowner",
+            "aws:sourcearn",
+            "aws:principalarn",
+            "aws:resourceaccount",
+            "aws:principalaccount",
+            "aws:sourcevpc",
+            "aws:sourcevpce",
+        ],
+        "ArnLike": ["aws:sourcearn", "aws:principalarn"],
+        "ArnEquals": ["aws:sourcearn", "aws:principalarn"],
     }
 
-    # Check for conditions with nested keys
-    for _, conditions_dict in conditions.items():
-        for key, value in conditions_dict.items():
-            if isinstance(value, dict):
-                if set(key.lower() for key in value.keys()).intersection(
-                    allowed_conditions
-                ):
-                    return True
-            elif key.lower() in allowed_conditions:
-                return True
-    return False
+    for condition_operator, condition_operator_key in valid_condition_options.items():
+        if condition_operator in condition_statement:
+            for value in condition_operator_key:
+                # We need to transform the condition_statement into lowercase
+                condition_statement[condition_operator] = {
+                    k.lower(): v
+                    for k, v in condition_statement[condition_operator].items()
+                }
+
+                if value in condition_statement[condition_operator]:
+                    # values are a list
+                    if isinstance(
+                        condition_statement[condition_operator][value],
+                        list,
+                    ):
+                        is_condition_key_restrictive = True
+                        # if cross account is not allowed check for each condition block looking for accounts
+                        # different than default
+                        if not is_cross_account_allowed:
+                            # if there is an arn/account without the source account -> we do not consider it safe
+                            # here by default we assume is true and look for false entries
+                            for item in condition_statement[condition_operator][value]:
+                                if source_account not in item:
+                                    is_condition_key_restrictive = False
+                                    break
+
+                        if is_condition_key_restrictive:
+                            is_condition_valid = True
+
+                    # value is a string
+                    elif isinstance(
+                        condition_statement[condition_operator][value],
+                        str,
+                    ):
+                        if is_cross_account_allowed:
+                            is_condition_valid = True
+                        else:
+                            if (
+                                source_account
+                                in condition_statement[condition_operator][value]
+                            ):
+                                is_condition_valid = True
+
+    return is_condition_valid
+
+
+def is_condition_block_restrictive_organization(
+    condition_statement: dict,
+):
+    """
+    is_condition_block_restrictive_organization parses the IAM Condition policy block and returns True if the condition_statement is restrictive for the organization, False if not.
+
+    @param condition_statement: dict with an IAM Condition block, e.g.:
+        {
+            "StringLike": {
+                "AWS:PrincipalOrgID": "o-111122223333"
+            }
+        }
+
+    """
+    is_condition_valid = False
+
+    # The conditions must be defined in lowercase since the context key names are not case-sensitive.
+    # For example, including the aws:PrincipalOrgID context key is equivalent to testing for AWS:PrincipalOrgID
+    # https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_condition.html
+    valid_condition_options = {
+        "StringEquals": [
+            "aws:principalorgid",
+        ],
+        "StringLike": [
+            "aws:principalorgid",
+        ],
+    }
+
+    for condition_operator, condition_operator_key in valid_condition_options.items():
+        if condition_operator in condition_statement:
+            for value in condition_operator_key:
+                # We need to transform the condition_statement into lowercase
+                condition_statement[condition_operator] = {
+                    k.lower(): v
+                    for k, v in condition_statement[condition_operator].items()
+                }
+
+                if value in condition_statement[condition_operator]:
+                    # values are a list
+                    if isinstance(
+                        condition_statement[condition_operator][value],
+                        list,
+                    ):
+                        is_condition_valid = True
+                        for item in condition_statement[condition_operator][value]:
+                            if item == "*":
+                                is_condition_valid = False
+                                break
+
+                    # value is a string
+                    elif isinstance(
+                        condition_statement[condition_operator][value],
+                        str,
+                    ):
+                        if "*" not in condition_statement[condition_operator][value]:
+                            is_condition_valid = True
+
+    return is_condition_valid
