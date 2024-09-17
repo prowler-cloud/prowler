@@ -17,7 +17,7 @@ class inspector2_is_enabled(Check):
             report.region = inspector.region
             if inspector.status == "ENABLED":
                 report.status = "PASS"
-                report.status_extended = "Inspector2 is enabled for all required services (EC2, ECR, Lambda, Lambda Code)."
+                report.status_extended = "Inspector2 is enabled for EC2 instances, ECR container images, Lambda functions and code."
                 funtions_in_region = False
                 ec2_in_region = False
                 for function in awslambda_client.functions.values():

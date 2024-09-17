@@ -114,7 +114,7 @@ class Test_inspector2_is_enabled:
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == "Inspector2 is enabled for all required services (EC2, ECR, Lambda, Lambda Code)."
+                    == "Inspector2 is enabled for EC2 instances, ECR container images, Lambda functions and code."
                 )
                 assert result[0].resource_id == AWS_ACCOUNT_NUMBER
                 assert (
