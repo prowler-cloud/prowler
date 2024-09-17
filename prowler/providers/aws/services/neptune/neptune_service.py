@@ -49,10 +49,10 @@ class Neptune(AWSService):
                         multi_az=cluster["MultiAZ"],
                         iam_auth=cluster.get("IAMDatabaseAuthenticationEnabled", False),
                         deletion_protection=cluster.get("DeletionProtection", False),
+                        copy_tags_to_snapshot=cluster.get("CopyTagsToSnapshot", False), 
                         db_subnet_group_id=cluster["DBSubnetGroup"],
                         region=regional_client.region,
                     )
-
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -168,6 +168,7 @@ class Cluster(BaseModel):
     multi_az: bool
     iam_auth: bool
     deletion_protection: bool
+    copy_tags_to_snapshot: Optional[bool] 
     region: str
     db_subnet_group_id: str
     subnets: Optional[list]
