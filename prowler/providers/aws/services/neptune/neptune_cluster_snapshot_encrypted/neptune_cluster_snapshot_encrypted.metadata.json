@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:rds:region:account-id:cluster-snapshot:db-cluster-snapshot-identifier",
   "Severity": "medium",
-  "ResourceType": "AwsRdsDbClusterSnapshotDetails",
+  "ResourceType": "AwsRdsDbClusterSnapshot",
   "Description": "This check ensures that Neptune DB cluster snapshots are encrypted at rest to protect sensitive data from unauthorized access.",
   "Risk": "If Neptune DB cluster snapshots are not encrypted, sensitive data might be exposed in case of unauthorized access, leading to potential data breaches and non-compliance with data protection regulations.",
   "RelatedUrl": "https://docs.aws.amazon.com/neptune/latest/userguide/backup-restore-create-snapshot.html",
