@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:access-analyzer:region:account-id:analyzer/resource-id",
   "Severity": "low",
-  "ResourceType": "AwsMacieSession",
+  "ResourceType": "Other",
   "Description": "Check if Amazon Macie is enabled.",
   "Risk": "Amazon Macie is a fully managed data security and data privacy service that uses machine learning and pattern matching to help you discover, monitor and protect your sensitive data in AWS.",
   "RelatedUrl": "",

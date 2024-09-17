@@ -41,6 +41,11 @@ def mock_make_api_call(self, operation_name, kwargs):
                             "errorMessage": "string",
                             "status": "ENABLED",
                         },
+                        "lambdaCode": {
+                            "errorCode": "ALREADY_ENABLED",
+                            "errorMessage": "string",
+                            "status": "ENABLED",
+                        },
                     },
                     "state": {
                         "errorCode": "ALREADY_ENABLED",
@@ -104,6 +109,10 @@ class Test_Inspector2_Service:
         assert inspector2.inspectors[0].id == "Inspector2"
         assert inspector2.inspectors[0].region == AWS_REGION_EU_WEST_1
         assert inspector2.inspectors[0].status == "ENABLED"
+        assert inspector2.inspectors[0].ec2_status == "ENABLED"
+        assert inspector2.inspectors[0].ecr_status == "ENABLED"
+        assert inspector2.inspectors[0].lambda_status == "ENABLED"
+        assert inspector2.inspectors[0].lambda_code_status == "ENABLED"
 
     def test_list_active_findings(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])

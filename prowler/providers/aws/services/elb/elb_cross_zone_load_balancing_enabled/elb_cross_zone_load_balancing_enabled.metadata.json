@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
-  "ResourceType": "AWSElasticLoadBalancingLoadBalancer",
+  "ResourceType": "AwsElbLoadBalancer",
   "Description": "Checks whether cross-zone load balancing is enabled for Classic Load Balancers (CLBs). Cross-zone load balancing ensures even distribution of traffic across all registered targets in all Availability Zones, improving fault tolerance and load distribution.",
   "Risk": "If cross-zone load balancing is not enabled, traffic may not be evenly distributed across Availability Zones, leading to over-utilization of resources in certain zones and potential application performance degradation or outages.",
   "RelatedUrl": "https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/enable-disable-crosszone-lb.html",

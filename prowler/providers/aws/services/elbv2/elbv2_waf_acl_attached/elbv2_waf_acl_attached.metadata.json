@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
-  "ResourceType": "AwsElasticLoadBalancingV2LoadBalancer",
+  "ResourceType": "AwsElbv2LoadBalancer",
   "Description": "Check if Application Load Balancer has a WAF ACL attached.",
   "Risk": "If not WAF ACL is attached risk of web attacks increases.",
   "RelatedUrl": "",

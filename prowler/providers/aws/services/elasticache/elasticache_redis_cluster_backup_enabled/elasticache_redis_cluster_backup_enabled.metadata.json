@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "high",
-  "ResourceType": "AWSElastiCacheClusters",
+  "ResourceType": "Other",
   "Description": "Ensure Elasticache Redis cache cluster has automatic backups enabled.",
   "Risk": "Ensure that your Amazon ElastiCache Redis cache clusters have a sufficient backup retention period set in order to fulfill your organization's compliance requirements. The retention period represents the number of days for which Amazon ElastiCache service retains automatic Redis cluster backups before deleting them.",
   "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/elasticache-controls.html#elasticache-1",

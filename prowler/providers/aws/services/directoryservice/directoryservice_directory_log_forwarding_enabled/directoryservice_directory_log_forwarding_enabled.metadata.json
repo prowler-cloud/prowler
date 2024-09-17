@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:codeartifact:region:account-id:directory/directory-id",
   "Severity": "medium",
-  "ResourceType": "AwsDirectoryService",
+  "ResourceType": "Other",
   "Description": "Directory Service monitoring with CloudWatch logs.",
   "Risk": "As a best practice, monitor your organization to ensure that changes are logged. This helps you to ensure that any unexpected change can be investigated and unwanted changes can be rolled back.",
   "RelatedUrl": "https://docs.aws.amazon.com/directoryservice/latest/admin-guide/incident-response.html",

@@ -7,7 +7,7 @@
   "SubServiceName": "instance",
   "ResourceIdTemplate": "arn:partition:lightsail:region:account:Instance/instance-id",
   "Severity": "high",
-  "ResourceType": "Instance",
+  "ResourceType": "Other",
   "Description": "Ensure that Lightsail instances are not publicly accessible",
   "Risk": "If an instance is publicly accessible, it can be accessed by anyone on the internet. This can lead to unauthorized access to the instance and its data.",
   "RelatedUrl": "https://docs.aws.amazon.com/lightsail/latest/userguide/understanding-public-ip-and-private-ip-addresses-in-amazon-lightsail.html#ipv4-addresses",

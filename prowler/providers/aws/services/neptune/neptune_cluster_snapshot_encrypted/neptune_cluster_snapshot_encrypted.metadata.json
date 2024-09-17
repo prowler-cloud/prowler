@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "neptune_cluster_snapshot_encrypted",
+  "CheckTitle": "Check if Neptune DB cluster snapshots are encrypted at rest.",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "neptune",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:rds:region:account-id:cluster-snapshot:db-cluster-snapshot-identifier",
+  "Severity": "medium",
+  "ResourceType": "AwsRdsDbClusterSnapshot",
+  "Description": "This check ensures that Neptune DB cluster snapshots are encrypted at rest to protect sensitive data from unauthorized access.",
+  "Risk": "If Neptune DB cluster snapshots are not encrypted, sensitive data might be exposed in case of unauthorized access, leading to potential data breaches and non-compliance with data protection regulations.",
+  "RelatedUrl": "https://docs.aws.amazon.com/neptune/latest/userguide/backup-restore-create-snapshot.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws rds copy-db-cluster-snapshot --source-db-cluster-snapshot-identifier <source-snapshot> --target-db-cluster-snapshot-identifier <encrypted-snapshot> --kms-key-id <kms-key-id>",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/neptune-controls.html#neptune-6",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure that all Neptune DB cluster snapshots are encrypted at rest by enabling encryption on the cluster before creating snapshots or by copying unencrypted snapshots to encrypted ones.",
+      "Url": "https://docs.aws.amazon.com/neptune/latest/userguide/backup-restore-create-snapshot.html"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
