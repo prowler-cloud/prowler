@@ -277,3 +277,118 @@ class Test_Policy:
             "IpAddress": {"aws:SourceIp": "256.256.256.256"},
         }
         assert not is_condition_restricting_from_private_ip(condition_from_invalid_ip)
+
+    def test__is_policy_public__(self):
+        policy = {
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Principal": "*",
+                    "Action": "elasticfilesystem:ClientMount",
+                    "Resource": "*",
+                }
+            ]
+        }
+        assert is_policy_public(policy)
+
+    def test__is_policy_public__with_principal_dict(self):
+        policy = {
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Principal": {"AWS": "*"},
+                    "Action": "elasticfilesystem:ClientMount",
+                    "Resource": "*",
+                }
+            ]
+        }
+        assert is_policy_public(policy)
+
+    def test__is_policy_public__with_secure_conditions_and_allowed_conditions(
+        self,
+    ):
+        policy = {
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Principal": "*",
+                    "Action": "elasticfilesystem:ClientMount",
+                    "Resource": "*",
+                    "Condition": {
+                        "Bool": {"elasticfilesystem:AccessedViaMountTarget": "true"},
+                        "StringEquals": {"aws:SourceOwner": "123456789012"},
+                    },
+                }
+            ]
+        }
+        assert not is_policy_public(policy)
+
+    def test__is_policy_public__with_secure_conditions_and_allowed_conditions_nested(
+        self,
+    ):
+        policy = {
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Principal": "*",
+                    "Action": "elasticfilesystem:ClientMount",
+                    "Resource": "*",
+                    "Condition": {
+                        "Bool": {"elasticfilesystem:AccessedViaMountTarget": "true"},
+                        "StringEquals": {"aws:SourceOwner": "123456789012"},
+                        "StringEqualsIfExists": {
+                            "aws:SourceVpce": "vpce-1234567890abcdef0"
+                        },
+                    },
+                }
+            ]
+        }
+        assert not is_policy_public(policy)
+
+    def test__is_policy_public__with_secure_conditions_and_allowed_conditions_nested_dict(
+        self,
+    ):
+        policy = {
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Principal": "*",
+                    "Action": "elasticfilesystem:ClientMount",
+                    "Resource": "*",
+                    "Condition": {
+                        "Bool": {"elasticfilesystem:AccessedViaMountTarget": "true"},
+                        "StringEquals": {"aws:SourceOwner": "123456789012"},
+                        "StringEqualsIfExists": {
+                            "aws:SourceVpce": {
+                                "vpce-1234567890abcdef0": "vpce-1234567890abcdef0"
+                            }
+                        },
+                    },
+                }
+            ]
+        }
+        assert not is_policy_public(policy)
+
+    def test__is_policy_public__with_secure_conditions_and_allowed_conditions_nested_dict_key(
+        self,
+    ):
+        policy = {
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Principal": "*",
+                    "Action": "elasticfilesystem:ClientMount",
+                    "Resource": "*",
+                    "Condition": {
+                        "Bool": {"elasticfilesystem:AccessedViaMountTarget": "true"},
+                        "StringEquals": {"aws:SourceOwner": "123456789012"},
+                        "StringEqualsIfExists": {
+                            "aws:SourceVpce": {
+                                "vpce-1234567890abcdef0": "vpce-1234567890abcdef0"
+                            }
+                        },
+                    },
+                }
+            ]
+        }
+        assert not is_policy_public(policy)

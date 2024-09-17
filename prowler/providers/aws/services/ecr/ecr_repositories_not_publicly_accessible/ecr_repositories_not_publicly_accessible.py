@@ -1,5 +1,6 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.ecr.ecr_client import ecr_client
+from prowler.providers.aws.services.iam.lib.policy import is_policy_public
 
 
 class ecr_repositories_not_publicly_accessible(Check):
@@ -16,16 +17,9 @@ class ecr_repositories_not_publicly_accessible(Check):
                 report.status_extended = (
                     f"Repository {repository.name} is not publicly accesible."
                 )
-                if repository.policy:
-                    for statement in repository.policy["Statement"]:
-                        if statement["Effect"] == "Allow":
-                            if "*" in statement["Principal"] or (
-                                "AWS" in statement["Principal"]
-                                and "*" in statement["Principal"]["AWS"]
-                            ):
-                                report.status = "FAIL"
-                                report.status_extended = f"Repository {repository.name} policy may allow anonymous users to perform actions (Principal: '*')."
-                                break
+                if is_policy_public(repository.policy):
+                    report.status = "FAIL"
+                    report.status_extended = f"Repository {repository.name} policy may allow anonymous users to perform actions (Principal: '*')."
 
                 findings.append(report)
 
