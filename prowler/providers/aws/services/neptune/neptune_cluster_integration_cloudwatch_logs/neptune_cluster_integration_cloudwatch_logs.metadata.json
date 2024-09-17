@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-cluster",
   "Severity": "medium",
-  "ResourceType": "AwsRdsDbClusterDetails",
+  "ResourceType": "AwsRdsDbCluster",
   "Description": "Check if Neptune Clusters have audit cloudwatch logs enabled.",
   "Risk": "If audit logs are not enabled, it is difficult to determine the root cause of security incidents.",
   "RelatedUrl": "https://docs.aws.amazon.com/neptune/latest/userguide/auditing.html",
