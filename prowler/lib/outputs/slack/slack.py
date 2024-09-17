@@ -155,14 +155,6 @@ class Slack:
                     "type": "section",
                     "text": {
                         "type": "mrkdwn",
-                        "text": "\nInformational:\n"
-                        + f"• {stats['total_informational_severity_pass']}",
-                    },
-                },
-                {
-                    "type": "section",
-                    "text": {
-                        "type": "mrkdwn",
                         "text": f"\n:x: *{stats['total_fail']} Failed findings* ({round(stats['total_fail'] / stats['findings_count'] * 100 , 2)}%)\n ",
                     },
                 },
@@ -194,14 +186,6 @@ class Slack:
                     "text": {
                         "type": "mrkdwn",
                         "text": "\nLow:\n" + f"• {stats['total_low_severity_fail']}",
-                    },
-                },
-                {
-                    "type": "section",
-                    "text": {
-                        "type": "mrkdwn",
-                        "text": "\nInformational:\n"
-                        + f"• {stats['total_informational_severity_fail']}",
                     },
                 },
                 {

@@ -59,8 +59,6 @@ class TestSlackIntegration:
         stats["total_medium_severity_pass"] = 1
         stats["total_low_severity_fail"] = 3
         stats["total_low_severity_pass"] = 3
-        stats["total_informational_severity_fail"] = 1
-        stats["total_informational_severity_pass"] = 1
         stats["resources_count"] = 20
         stats["findings_count"] = 22
 
@@ -88,8 +86,6 @@ class TestSlackIntegration:
         stats["total_medium_severity_pass"] = 1
         stats["total_low_severity_fail"] = 2
         stats["total_low_severity_pass"] = 3
-        stats["total_informational_severity_fail"] = 1
-        stats["total_informational_severity_pass"] = 3
         stats["resources_count"] = 20
         stats["findings_count"] = 22
 
@@ -148,13 +144,6 @@ class TestSlackIntegration:
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": "\nInformational:\n" + "• 3",
-                },
-            },
-            {
-                "type": "section",
-                "text": {
-                    "type": "mrkdwn",
                     "text": f"\n:x: *{stats['total_fail']} Failed findings* ({round(stats['total_fail'] / stats['findings_count'] * 100 , 2)}%)\n ",
                 },
             },
@@ -184,13 +173,6 @@ class TestSlackIntegration:
                 "text": {
                     "type": "mrkdwn",
                     "text": "\nLow:\n" + "• 2",
-                },
-            },
-            {
-                "type": "section",
-                "text": {
-                    "type": "mrkdwn",
-                    "text": "\nInformational:\n" + "• 1",
                 },
             },
             {
@@ -261,8 +243,6 @@ class TestSlackIntegration:
         stats["total_medium_severity_pass"] = 1
         stats["total_low_severity_fail"] = 2
         stats["total_low_severity_pass"] = 3
-        stats["total_informational_severity_fail"] = 1
-        stats["total_informational_severity_pass"] = 3
         stats["resources_count"] = 20
         stats["findings_count"] = 22
 
@@ -323,13 +303,6 @@ class TestSlackIntegration:
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": "\nInformational:\n" + "• 3",
-                },
-            },
-            {
-                "type": "section",
-                "text": {
-                    "type": "mrkdwn",
                     "text": f"\n:x: *{stats['total_fail']} Failed findings* ({round(stats['total_fail'] / stats['findings_count'] * 100 , 2)}%)\n ",
                 },
             },
@@ -359,13 +332,6 @@ class TestSlackIntegration:
                 "text": {
                     "type": "mrkdwn",
                     "text": "\nLow:\n" + "• 2",
-                },
-            },
-            {
-                "type": "section",
-                "text": {
-                    "type": "mrkdwn",
-                    "text": "\nInformational:\n" + "• 1",
                 },
             },
             {
@@ -436,8 +402,6 @@ class TestSlackIntegration:
         stats["total_medium_severity_pass"] = 1
         stats["total_low_severity_fail"] = 2
         stats["total_low_severity_pass"] = 3
-        stats["total_informational_severity_fail"] = 1
-        stats["total_informational_severity_pass"] = 3
         stats["resources_count"] = 20
         stats["findings_count"] = 22
 
@@ -496,13 +460,6 @@ class TestSlackIntegration:
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": "\nInformational:\n" + "• 3",
-                },
-            },
-            {
-                "type": "section",
-                "text": {
-                    "type": "mrkdwn",
                     "text": f"\n:x: *{stats['total_fail']} Failed findings* ({round(stats['total_fail'] / stats['findings_count'] * 100 , 2)}%)\n ",
                 },
             },
@@ -532,13 +489,6 @@ class TestSlackIntegration:
                 "text": {
                     "type": "mrkdwn",
                     "text": "\nLow:\n" + "• 2",
-                },
-            },
-            {
-                "type": "section",
-                "text": {
-                    "type": "mrkdwn",
-                    "text": "\nInformational:\n" + "• 1",
                 },
             },
             {
