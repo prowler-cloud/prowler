@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:dynamodb:region:account-id:table/resource-id",
   "Severity": "medium",
-  "ResourceType": "AwsDynamoDBTable",
+  "ResourceType": "AwsDynamoDbTable",
   "Description": "This check determines if the DynamoDB table is accessible from other AWS accounts.",
   "Risk": "If the DynamoDB table is accessible from other AWS accounts, it may lead to unauthorized access to the data stored in the table.",
   "RelatedUrl": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/access-control-resource-based.html",

@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:network-firewall::account-id:firewall/firewall-name",
   "Severity": "medium",
-  "ResourceType": "Other",
+  "ResourceType": "AwsEc2Vpc",
   "Description": "Ensure all VPCs have Network Firewall enabled",
   "Risk": "Without a network firewall, it can be difficult to monitor and control traffic within the VPC. This can make it harder to detect and prevent attacks or unauthorized access to resources.",
   "RelatedUrl": "https://docs.aws.amazon.com/network-firewall/latest/developerguide/setting-up.html",

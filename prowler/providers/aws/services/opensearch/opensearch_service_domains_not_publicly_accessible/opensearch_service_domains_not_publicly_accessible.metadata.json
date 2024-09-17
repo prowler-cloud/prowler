@@ -10,7 +10,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "critical",
-  "ResourceType": "AwsOpenSearchDomain",
+  "ResourceType": "AwsOpenSearchServiceDomain",
   "Description": "Check if Amazon Opensearch/Elasticsearch domains are set as Public or if it has open policy access",
   "Risk": "Publicly accessible services could expose sensitive data to bad actors.",
   "RelatedUrl": "",

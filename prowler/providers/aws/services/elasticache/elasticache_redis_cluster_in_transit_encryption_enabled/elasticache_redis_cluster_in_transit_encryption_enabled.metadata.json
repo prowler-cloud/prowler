@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
-  "ResourceType": "AWSElastiCacheReplicationGroups",
+  "ResourceType": "Other",
   "Description": "Ensure Elasticache Redis cache clusters have in transit encryption enabled.",
   "Risk": "There is a risk of exposing sensitive data if Elasticache Redis cache cluster does not have in transit encryption enabled.",
   "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/elasticache-controls.html#elasticache-5",

@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
-  "ResourceType": "AWSElastiCacheReplicationGroup",
+  "ResourceType": "Other",
   "Description": "Ensure Elasticache Redis OSS cache clusters use automatic failover.",
   "Risk": "If automatic failover is not enabled, a failure in the primary node could result in significant downtime, impacting the availability and resilience of your application.",
   "RelatedUrl": "https://docs.aws.amazon.com/AmazonElastiCache/latest/red-ug/AutoFailover.html",
