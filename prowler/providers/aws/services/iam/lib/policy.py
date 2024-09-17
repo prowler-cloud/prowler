@@ -151,13 +151,13 @@ def is_policy_public(
     not_allowed_actions: list = [],
 ) -> bool:
     """
-    Check if the statement allows public access to the resource or to a service principal.
-    An AWS service principal is considered public access if the policy is not pair with conditions since it can be invoked by AWS services in other accounts.
+    Check if the policy allows public access to the resource.
+    If the policy gives access to an AWS service principal is considered public if the policy is not pair with conditions since it can be invoked by AWS services in other accounts.
     Args:
         policy (dict): The AWS policy to check
-        source_account (str): The account to check if it has access, default: ""
-        is_cross_account_allowed (bool): Allow cross-account access, default: False
-        not_allowed_actions (list): List of actions that are not allowed, default: []
+        source_account (str): The account to check if the access is restricted to it, default: ""
+        is_cross_account_allowed (bool): If the policy can allow cross-account access, default: False
+        not_allowed_actions (list): List of actions that are not allowed apart from '*', default: []
     Returns:
         bool: True if the policy allows public access, False otherwise
     """
