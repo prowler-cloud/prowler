@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-instance",
   "Severity": "medium",
-  "ResourceType": "Other",
+  "ResourceType": "AwsRdsDbCluster",
   "Description": "Check if Neptune Clusters have backup enabled.",
   "Risk": "Ensure that your Amazon Neptune graph database clusters have set a minimum backup retention period of 7 days or greater in order to achieve your organization compliance requirements. The retention period represents the number of days to retain automated snapshots.",
   "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/neptune-controls.html#neptune-5",
