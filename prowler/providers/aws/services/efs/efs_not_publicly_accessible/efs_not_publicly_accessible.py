@@ -26,6 +26,5 @@ class efs_not_publicly_accessible(Check):
             ):
                 report.status = "FAIL"
                 report.status_extended = f"EFS {fs.id} has a policy which allows access to any client within the VPC."
-                break
             findings.append(report)
         return findings

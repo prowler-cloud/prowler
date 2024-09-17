@@ -166,34 +166,32 @@ def is_policy_public(
         if statement["Effect"] == "Allow":
             principal = statement.get("Principal", "")
             if (
-                (
-                    "*" in principal
-                    or "arn:aws:iam::*:root" in principal
-                    or (
-                        isinstance(principal, dict)
-                        and (
-                            "*" in principal.get("AWS", "")
-                            or "arn:aws:iam::*:root" in principal.get("AWS", "")
-                            or (
-                                isinstance(principal.get("AWS"), list)
-                                and (
-                                    "*" in principal["AWS"]
-                                    or "arn:aws:iam::*:root" in principal["AWS"]
-                                )
+                "*" in principal
+                or "arn:aws:iam::*:root" in principal
+                or (
+                    isinstance(principal, dict)
+                    and (
+                        "*" in principal.get("AWS", "")
+                        or "arn:aws:iam::*:root" in principal.get("AWS", "")
+                        or (
+                            isinstance(principal.get("AWS"), list)
+                            and (
+                                "*" in principal["AWS"]
+                                or "arn:aws:iam::*:root" in principal["AWS"]
                             )
-                            or "*" in principal.get("CanonicalUser", "")
-                            or "arn:aws:iam::*:root"
-                            in principal.get("CanonicalUser", "")
-                            or (  # Check if function can be invoked by other AWS services
-                                (
-                                    ".amazonaws.com" in principal.get("Service", "")
-                                    or "*" in principal.get("Service", "")
-                                )
+                        )
+                        or "*" in principal.get("CanonicalUser", "")
+                        or "arn:aws:iam::*:root" in principal.get("CanonicalUser", "")
+                        or (  # Check if function can be invoked by other AWS services
+                            (
+                                ".amazonaws.com" in principal.get("Service", "")
+                                or "*" in principal.get("Service", "")
                             )
                         )
                     )
                 )
-                and (
+            ) and (
+                (
                     (
                         isinstance(statement.get("Action", ""), list)
                         and "*" not in statement["Action"]
