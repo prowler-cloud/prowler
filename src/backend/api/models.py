@@ -1,6 +1,8 @@
 import re
 from uuid import uuid4, UUID
 
+from django.contrib.auth.models import AbstractBaseUser
+from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.contrib.postgres.indexes import GinIndex
 from django.contrib.postgres.search import SearchVector, SearchVectorField
 from django.core.validators import MinLengthValidator
@@ -9,10 +11,18 @@ from django.utils.translation import gettext_lazy as _
 from django_celery_results.models import TaskResult
 from uuid6 import uuid7
 
-from api.db_utils import ProviderEnumField, StateEnumField, ScanTriggerEnumField
+from api.db_utils import (
+    ProviderEnumField,
+    StateEnumField,
+    ScanTriggerEnumField,
+    CustomUserManager,
+)
 from api.exceptions import ModelValidationError
-from api.rls import RowLevelSecurityConstraint
-from api.rls import RowLevelSecurityProtectedModel
+from api.rls import (
+    RowLevelSecurityProtectedModel,
+    RowLevelSecurityConstraint,
+    BaseSecurityConstraint,
+)
 
 
 class StateChoices(models.TextChoices):
@@ -22,6 +32,31 @@ class StateChoices(models.TextChoices):
     COMPLETED = "completed", _("Completed")
     FAILED = "failed", _("Failed")
     CANCELLED = "cancelled", _("Cancelled")
+
+
+class User(AbstractBaseUser):
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    username = models.CharField(
+        max_length=150, unique=True, validators=[UnicodeUsernameValidator()]
+    )
+    email = models.EmailField(max_length=254, unique=True)
+    is_active = models.BooleanField(default=True)
+    date_joined = models.DateTimeField(auto_now_add=True, editable=False)
+
+    USERNAME_FIELD = "username"
+    REQUIRED_FIELDS = ["email"]
+
+    objects = CustomUserManager()
+
+    class Meta:
+        db_table = "users"
+
+        constraints = [
+            BaseSecurityConstraint(
+                name="statements_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            )
+        ]
 
 
 class Provider(RowLevelSecurityProtectedModel):

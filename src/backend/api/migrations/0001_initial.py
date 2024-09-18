@@ -1,6 +1,10 @@
 import uuid
 from functools import partial
 
+import django.contrib.auth.models
+import django.contrib.auth.validators
+import django.contrib.postgres.indexes
+import django.contrib.postgres.search
 import django.core.validators
 import django.db.models.deletion
 import django.utils.timezone
@@ -49,7 +53,10 @@ class Migration(migrations.Migration):
     # Required for our kind of `RunPython` operations
     atomic = False
 
-    dependencies = [("django_celery_results", "0011_taskresult_periodic_task_name")]
+    dependencies = [
+        ("django_celery_results", "0011_taskresult_periodic_task_name"),
+        ("auth", "0012_alter_user_first_name_max_length"),
+    ]
 
     operations = [
         migrations.RunSQL(
@@ -72,6 +79,50 @@ class Migration(migrations.Migration):
             GRANT CONNECT ON DATABASE "{DB_NAME}" TO {DB_PROWLER_USER};
             GRANT SELECT ON django_migrations TO {DB_PROWLER_USER};
             """
+        ),
+        migrations.CreateModel(
+            name="User",
+            fields=[
+                ("password", models.CharField(max_length=128, verbose_name="password")),
+                (
+                    "last_login",
+                    models.DateTimeField(
+                        blank=True, null=True, verbose_name="last login"
+                    ),
+                ),
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                (
+                    "username",
+                    models.CharField(
+                        max_length=150,
+                        unique=True,
+                        validators=[
+                            django.contrib.auth.validators.UnicodeUsernameValidator()
+                        ],
+                    ),
+                ),
+                ("email", models.EmailField(max_length=254, unique=True)),
+                ("is_active", models.BooleanField(default=True)),
+                ("date_joined", models.DateTimeField(auto_now_add=True)),
+            ],
+            options={
+                "db_table": "users",
+            },
+        ),
+        migrations.AddConstraint(
+            model_name="user",
+            constraint=api.rls.BaseSecurityConstraint(
+                name="statements_on_user",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
         ),
         # Create and register State type
         migrations.RunPython(

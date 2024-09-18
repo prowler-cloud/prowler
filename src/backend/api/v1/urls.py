@@ -4,6 +4,7 @@ from rest_framework import routers
 
 from api.v1.views import (
     SchemaView,
+    UserViewSet,
     TenantViewSet,
     ProviderViewSet,
     ScanViewSet,
@@ -13,6 +14,7 @@ from api.v1.views import (
 
 router = routers.DefaultRouter(trailing_slash=False)
 
+router.register(r"users", UserViewSet, basename="user")
 router.register(r"tenants", TenantViewSet, basename="tenant")
 router.register(r"providers", ProviderViewSet, basename="provider")
 router.register(r"scans", ScanViewSet, basename="scan")

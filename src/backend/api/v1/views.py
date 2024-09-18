@@ -1,19 +1,19 @@
+from celery.result import AsyncResult
 from django.conf import settings as django_settings
+from django.contrib.postgres.search import SearchQuery
 from django.db.models import F
+from django.db.models import Q
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_control
-from django.contrib.postgres.search import SearchQuery
-from django.db.models import Q
-
 from drf_spectacular.settings import spectacular_settings
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from drf_spectacular.views import SpectacularAPIView
-from rest_framework import status
+from rest_framework import status, permissions
 from rest_framework.decorators import action
+from rest_framework.exceptions import MethodNotAllowed, NotFound
 from rest_framework.generics import get_object_or_404
 from rest_framework_json_api.views import Response
-from celery.result import AsyncResult
 
 from api.base_views import BaseRLSViewSet, BaseViewSet
 from api.filters import (
@@ -23,9 +23,12 @@ from api.filters import (
     TaskFilter,
     ResourceFilter,
 )
-from api.models import Provider, Scan, Task, Resource
+from api.models import User, Provider, Scan, Task, Resource
 from api.rls import Tenant
 from api.v1.serializers import (
+    UserSerializer,
+    UserCreateSerializer,
+    UserUpdateSerializer,
     ProviderSerializer,
     ProviderCreateSerializer,
     ProviderUpdateSerializer,
@@ -56,6 +59,85 @@ class SchemaView(SpectacularAPIView):
             "Prowler API specification.\n\nThis file is auto-generated."
         )
         return super().get(request, *args, **kwargs)
+
+
+@extend_schema_view(
+    create=extend_schema(
+        summary="Register a new user",
+        description="Create a new user account by providing the necessary registration details.",
+    ),
+    partial_update=extend_schema(
+        summary="Update the current user's information",
+        description="Partially update the authenticated user's information.",
+    ),
+    destroy=extend_schema(
+        summary="Delete the current user's account",
+        description="Remove the authenticated user's account from the system.",
+    ),
+    me=extend_schema(
+        summary="Retrieve the current user's information",
+        description="Fetch detailed information about the authenticated user.",
+    ),
+)
+@method_decorator(CACHE_DECORATOR, name="list")
+class UserViewSet(BaseViewSet):
+    serializer_class = UserSerializer
+    http_method_names = ["get", "post", "patch", "delete"]
+    ordering = ["id"]
+    ordering_fields = []
+
+    def get_queryset(self):
+        return User.objects.filter(id=self.request.user.id)
+
+    def get_permissions(self):
+        if self.action == "create":
+            permission_classes = [permissions.AllowAny]
+        else:
+            permission_classes = self.permission_classes
+        return [permission() for permission in permission_classes]
+
+    def get_serializer_class(self):
+        if self.action == "create":
+            return UserCreateSerializer
+        elif self.action == "partial_update":
+            return UserUpdateSerializer
+        else:
+            return UserSerializer
+
+    @extend_schema(exclude=True)
+    def list(self, request, *args, **kwargs):
+        raise MethodNotAllowed(method="GET")
+
+    @extend_schema(exclude=True)
+    def retrieve(self, request, *args, **kwargs):
+        raise MethodNotAllowed(method="GET")
+
+    @action(detail=False, methods=["get"], url_name="me")
+    def me(self, request):
+        user = self.get_queryset().first()
+        serializer = UserSerializer(user, context=self.get_serializer_context())
+        return Response(
+            data=serializer.data,
+            status=status.HTTP_200_OK,
+        )
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(
+            data=request.data, context=self.get_serializer_context()
+        )
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        return Response(data=UserSerializer(user).data, status=status.HTTP_201_CREATED)
+
+    def partial_update(self, request, *args, **kwargs):
+        if kwargs["pk"] != str(request.user.id):
+            raise NotFound(detail="User was not found.")
+        return super().partial_update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        if kwargs["pk"] != str(request.user.id):
+            raise NotFound(detail="User was not found.")
+        return super().destroy(request, *args, **kwargs)
 
 
 @extend_schema_view(

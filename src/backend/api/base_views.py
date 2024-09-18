@@ -1,6 +1,8 @@
 import uuid
 
 from django.db import transaction, connection
+from rest_framework import permissions
+from rest_framework.authentication import BasicAuthentication
 from rest_framework.exceptions import NotAuthenticated
 from rest_framework.filters import SearchFilter
 from rest_framework_json_api import filters
@@ -11,6 +13,8 @@ from api.filters import CustomDjangoFilterBackend
 
 
 class BaseViewSet(ModelViewSet):
+    authentication_classes = [BasicAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
     filter_backends = [
         filters.QueryParameterValidationFilter,
         filters.OrderingFilter,

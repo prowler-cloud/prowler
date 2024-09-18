@@ -1,10 +1,11 @@
 import json
 
+from django.contrib.auth.password_validation import validate_password
 from drf_spectacular.utils import extend_schema_field
 from rest_framework_json_api import serializers
 from rest_framework_json_api.serializers import ValidationError
 
-from api.models import StateChoices, Provider, Scan, Task, Resource, ResourceTag
+from api.models import StateChoices, User, Provider, Scan, Task, Resource, ResourceTag
 from api.rls import Tenant
 from api.utils import merge_dicts
 
@@ -38,6 +39,68 @@ class StateEnumSerializerField(serializers.ChoiceField):
     def __init__(self, **kwargs):
         kwargs["choices"] = StateChoices.choices
         super().__init__(**kwargs)
+
+
+# Users
+
+
+class UserSerializer(BaseSerializerV1):
+    """
+    Serializer for the User model.
+    """
+
+    class Meta:
+        model = User
+        fields = [
+            "id",
+            "username",
+            "email",
+            "date_joined",
+        ]
+
+
+class UserCreateSerializer(BaseWriteSerializer):
+    password = serializers.CharField(write_only=True)
+
+    class Meta:
+        model = User
+        fields = ["username", "password", "email"]
+
+    def validate_password(self, value):
+        user = User(**{k: v for k, v in self.initial_data.items() if k != "type"})
+        validate_password(value, user=user)
+        return value
+
+    def create(self, validated_data):
+        password = validated_data.pop("password")
+        user = User(**validated_data)
+
+        validate_password(password, user=user)
+        user.set_password(password)
+        user.save()
+        return user
+
+
+class UserUpdateSerializer(BaseWriteSerializer):
+    password = serializers.CharField(write_only=True, required=False)
+
+    class Meta:
+        model = User
+        fields = ["id", "password", "email"]
+        extra_kwargs = {
+            "id": {"read_only": True},
+        }
+
+    def validate_password(self, value):
+        validate_password(value, user=self.instance)
+        return value
+
+    def update(self, instance, validated_data):
+        password = validated_data.pop("password", None)
+        if password:
+            validate_password(password, user=instance)
+            instance.set_password(password)
+        return super().update(instance, validated_data)
 
 
 # Tasks
@@ -322,6 +385,7 @@ class ResourceSerializer(RLSSerializer):
             "type_",
             "tags",
             "provider",
+            "url",
         ]
         extra_kwargs = {
             "id": {"read_only": True},

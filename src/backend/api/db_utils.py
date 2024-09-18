@@ -1,6 +1,7 @@
 from contextlib import contextmanager
 
 from django.conf import settings
+from django.contrib.auth.models import BaseUserManager
 from django.db import models
 from psycopg2 import connect as psycopg2_connect
 from psycopg2.extensions import new_type, register_type, register_adapter, AsIs
@@ -35,6 +36,17 @@ def psycopg_connection(database_alias: str):
     finally:
         if psycopg2_connection is not None:
             psycopg2_connection.close()
+
+
+class CustomUserManager(BaseUserManager):
+    def create_user(self, username, email, password=None, **extra_fields):
+        if not email:
+            raise ValueError("The email field must be set")
+        email = self.normalize_email(email)
+        user = self.model(username=username.strip(), email=email, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
 
 
 # Postgres Enums

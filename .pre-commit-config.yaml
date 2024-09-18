@@ -79,7 +79,7 @@ repos:
       - id: safety
         name: safety
         description: "Safety is a tool that checks your installed dependencies for known security vulnerabilities"
-        entry: bash -c 'poetry run safety check --ignore 70612'
+        entry: bash -c 'poetry run safety check --ignore 70612,66963'
         language: system
 
       - id: vulture

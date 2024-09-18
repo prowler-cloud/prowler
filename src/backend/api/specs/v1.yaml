@@ -48,7 +48,7 @@ paths:
         name: filter[inserted_at]
         schema:
           type: string
-          format: date-time
+          format: date
       - in: query
         name: filter[inserted_at__gte]
         schema:
@@ -81,7 +81,7 @@ paths:
         name: filter[updated_at]
         schema:
           type: string
-          format: date-time
+          format: date
       - in: query
         name: filter[updated_at__gte]
         schema:
@@ -129,9 +129,7 @@ paths:
       tags:
       - Provider
       security:
-      - cookieAuth: []
       - basicAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -159,9 +157,7 @@ paths:
               $ref: '#/components/schemas/ProviderCreateRequest'
         required: true
       security:
-      - cookieAuth: []
       - basicAuth: []
-      - {}
       responses:
         '201':
           content:
@@ -203,9 +199,7 @@ paths:
       tags:
       - Provider
       security:
-      - cookieAuth: []
       - basicAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -241,9 +235,7 @@ paths:
               $ref: '#/components/schemas/PatchedProviderUpdateRequest'
         required: true
       security:
-      - cookieAuth: []
       - basicAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -266,9 +258,7 @@ paths:
       tags:
       - Provider
       security:
-      - cookieAuth: []
       - basicAuth: []
-      - {}
       responses:
         '202':
           content:
@@ -293,9 +283,7 @@ paths:
       tags:
       - Provider
       security:
-      - cookieAuth: []
       - basicAuth: []
-      - {}
       responses:
         '202':
           content:
@@ -303,35 +291,49 @@ paths:
               schema:
                 $ref: '#/components/schemas/SerializerMetaclassResponse'
           description: ''
-  /api/v1/scans:
+  /api/v1/resources:
     get:
-      operationId: scans_list
-      description: Retrieve a list of all scans with options for filtering by various
-        criteria.
-      summary: List all scans
+      operationId: resources_list
+      description: Retrieve a list of all resources with options for filtering by
+        various criteria. Resources are objects that are discovered by Prowler. They
+        can be anything from a single host to a whole VPC.
+      summary: List all resources
       parameters:
       - in: query
-        name: fields[Scan]
+        name: fields[Resource]
         schema:
           type: array
           items:
             type: string
             enum:
+            - inserted_at
+            - updated_at
+            - uid
             - name
-            - state
-            - unique_resource_count
-            - progress
-            - scanner_args
-            - duration
+            - region
+            - service
+            - tags
             - provider
-            - started_at
-            - completed_at
-            - scheduled_at
             - url
             - type
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
+      - in: query
+        name: filter[inserted_at]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[inserted_at__gte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[inserted_at__lte]
+        schema:
+          type: string
+          format: date-time
       - in: query
         name: filter[name]
         schema:
@@ -349,6 +351,273 @@ paths:
         schema:
           type: string
           format: uuid
+      - in: query
+        name: filter[provider_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[region]
+        schema:
+          type: string
+      - in: query
+        name: filter[region__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[region__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: filter[service]
+        schema:
+          type: string
+      - in: query
+        name: filter[service__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[service__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[tag]
+        schema:
+          type: string
+      - in: query
+        name: filter[tag_key]
+        schema:
+          type: string
+      - in: query
+        name: filter[tag_value]
+        schema:
+          type: string
+      - in: query
+        name: filter[tags]
+        schema:
+          type: string
+      - in: query
+        name: filter[type]
+        schema:
+          type: string
+      - in: query
+        name: filter[type__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[type__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[uid__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[updated_at]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[updated_at__gte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[updated_at__lte]
+        schema:
+          type: string
+          format: date-time
+      - name: page[number]
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page[size]
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - provider_id
+            - -provider_id
+            - uid
+            - -uid
+            - name
+            - -name
+            - region
+            - -region
+            - service
+            - -service
+            - type
+            - -type
+            - inserted_at
+            - -inserted_at
+            - updated_at
+            - -updated_at
+        explode: false
+      tags:
+      - Resource
+      security:
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResourceList'
+          description: ''
+  /api/v1/resources/{id}:
+    get:
+      operationId: resources_retrieve
+      description: Fetch detailed information about a specific resource by their ID.
+        A Resource is an object that is discovered by Prowler. It can be anything
+        from a single host to a whole VPC.
+      summary: Retrieve data for a resource
+      parameters:
+      - in: query
+        name: fields[Resource]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - inserted_at
+            - updated_at
+            - uid
+            - name
+            - region
+            - service
+            - tags
+            - provider
+            - url
+            - type
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this resource.
+        required: true
+      tags:
+      - Resource
+      security:
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ResourceResponse'
+          description: ''
+  /api/v1/scans:
+    get:
+      operationId: scans_list
+      description: Retrieve a list of all scans with options for filtering by various
+        criteria.
+      summary: List all scans
+      parameters:
+      - in: query
+        name: fields[Scan]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - name
+            - trigger
+            - state
+            - unique_resource_count
+            - progress
+            - scanner_args
+            - duration
+            - provider
+            - started_at
+            - completed_at
+            - scheduled_at
+            - url
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[completed_at]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[inserted_at]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[name]
+        schema:
+          type: string
+      - in: query
+        name: filter[name__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
       - name: filter[search]
         required: false
         in: query
@@ -359,7 +628,7 @@ paths:
         name: filter[started_at]
         schema:
           type: string
-          format: date-time
+          format: date
       - in: query
         name: filter[started_at__gte]
         schema:
@@ -371,7 +640,7 @@ paths:
           type: string
           format: date-time
       - in: query
-        name: filter[type]
+        name: filter[trigger]
         schema:
           type: string
       - name: page[number]
@@ -399,8 +668,8 @@ paths:
             - -provider_id
             - name
             - -name
-            - type
-            - -type
+            - trigger
+            - -trigger
             - attempted_at
             - -attempted_at
             - scheduled_at
@@ -413,9 +682,7 @@ paths:
       tags:
       - Scan
       security:
-      - cookieAuth: []
       - basicAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -447,9 +714,7 @@ paths:
               $ref: '#/components/schemas/ScanCreateRequest'
         required: true
       security:
-      - cookieAuth: []
       - basicAuth: []
-      - {}
       responses:
         '201':
           content:
@@ -471,6 +736,7 @@ paths:
             type: string
             enum:
             - name
+            - trigger
             - state
             - unique_resource_count
             - progress
@@ -481,7 +747,6 @@ paths:
             - completed_at
             - scheduled_at
             - url
-            - type
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
@@ -495,9 +760,7 @@ paths:
       tags:
       - Scan
       security:
-      - cookieAuth: []
       - basicAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -533,9 +796,7 @@ paths:
               $ref: '#/components/schemas/PatchedScanUpdateRequest'
         required: true
       security:
-      - cookieAuth: []
       - basicAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -562,6 +823,7 @@ paths:
             - name
             - state
             - result
+            - task_args
             - metadata
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
@@ -617,9 +879,7 @@ paths:
       tags:
       - Task
       security:
-      - cookieAuth: []
       - basicAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -645,6 +905,7 @@ paths:
             - name
             - state
             - result
+            - task_args
             - metadata
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
@@ -659,9 +920,7 @@ paths:
       tags:
       - Task
       security:
-      - cookieAuth: []
       - basicAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -671,9 +930,8 @@ paths:
           description: ''
     delete:
       operationId: tasks_destroy
-      description: Try to revoke a task using its ID. If the task is being already
-        executed, its result will be ignored but it will finish. To prevent this,
-        use the `force` query parameter under your own risk.
+      description: Try to revoke a task using its ID. Only tasks that are not yet
+        in progress can be revoked.
       summary: Revoke a task
       parameters:
       - in: path
@@ -686,9 +944,7 @@ paths:
       tags:
       - Task
       security:
-      - cookieAuth: []
       - basicAuth: []
-      - {}
       responses:
         '202':
           content:
@@ -720,7 +976,12 @@ paths:
         name: filter[inserted_at]
         schema:
           type: string
-          format: date-time
+          format: date
+      - in: query
+        name: filter[inserted_at__date]
+        schema:
+          type: string
+          format: date
       - in: query
         name: filter[inserted_at__gte]
         schema:
@@ -749,7 +1010,7 @@ paths:
         name: filter[updated_at]
         schema:
           type: string
-          format: date-time
+          format: date
       - in: query
         name: filter[updated_at__gte]
         schema:
@@ -791,9 +1052,7 @@ paths:
       tags:
       - Tenant
       security:
-      - cookieAuth: []
       - basicAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -821,9 +1080,7 @@ paths:
               $ref: '#/components/schemas/TenantRequest'
         required: true
       security:
-      - cookieAuth: []
       - basicAuth: []
-      - {}
       responses:
         '201':
           content:
@@ -860,9 +1117,7 @@ paths:
       tags:
       - Tenant
       security:
-      - cookieAuth: []
       - basicAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -898,9 +1153,7 @@ paths:
               $ref: '#/components/schemas/PatchedTenantRequest'
         required: true
       security:
-      - cookieAuth: []
       - basicAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -923,12 +1176,126 @@ paths:
       tags:
       - Tenant
       security:
-      - cookieAuth: []
       - basicAuth: []
-      - {}
       responses:
         '204':
           description: No response body
+  /api/v1/users:
+    post:
+      operationId: users_create
+      description: Create a new user account by providing the necessary registration
+        details.
+      summary: Register a new user
+      tags:
+      - User
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/UserCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserCreateRequest'
+        required: true
+      security:
+      - basicAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/UserCreateResponse'
+          description: ''
+  /api/v1/users/{id}:
+    patch:
+      operationId: users_partial_update
+      description: Partially update the authenticated user's information.
+      summary: Update the current user's information
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this user.
+        required: true
+      tags:
+      - User
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/PatchedUserUpdateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedUserUpdateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedUserUpdateRequest'
+        required: true
+      security:
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/UserUpdateResponse'
+          description: ''
+    delete:
+      operationId: users_destroy
+      description: Remove the authenticated user's account from the system.
+      summary: Delete the current user's account
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this user.
+        required: true
+      tags:
+      - User
+      security:
+      - basicAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/users/me:
+    get:
+      operationId: users_me_retrieve
+      description: Fetch detailed information about the authenticated user.
+      summary: Retrieve the current user's information
+      parameters:
+      - in: query
+        name: fields[User]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - username
+            - password
+            - email
+            - date_joined
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      tags:
+      - User
+      security:
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+          description: ''
 components:
   schemas:
     DelayedTask:
@@ -967,6 +1334,15 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Provider'
+      required:
+      - data
+    PaginatedResourceList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Resource'
       required:
       - data
     PaginatedScanList:
@@ -1092,6 +1468,42 @@ components:
                   maxLength: 100
               required:
               - name
+      required:
+      - data
+    PatchedUserUpdateRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          - id
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - User
+            id:
+              type: string
+              format: uuid
+            attributes:
+              type: object
+              properties:
+                password:
+                  type: string
+                  writeOnly: true
+                  minLength: 1
+                email:
+                  type: string
+                  format: email
+                  minLength: 1
+                  maxLength: 254
+              required:
+              - email
       required:
       - data
     Provider:
@@ -1253,6 +1665,100 @@ components:
           $ref: '#/components/schemas/Provider'
       required:
       - data
+    Resource:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/ResourceTypeEnum'
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+        id:
+          type: string
+          format: uuid
+        attributes:
+          type: object
+          properties:
+            inserted_at:
+              type: string
+              format: date-time
+              readOnly: true
+            updated_at:
+              type: string
+              format: date-time
+              readOnly: true
+            uid:
+              type: string
+              title: Unique identifier for the resource, set by the provider
+            name:
+              type: string
+              title: Name of the resource, as set in the provider
+            region:
+              type: string
+              title: Location of the resource, as set by the provider
+            service:
+              type: string
+              title: Service of the resource, as set by the provider
+            tags:
+              type: object
+              description: Tags associated with the resource
+              example:
+                env: prod
+                owner: johndoe
+              readOnly: true
+            type:
+              type: string
+              readOnly: true
+          required:
+          - uid
+          - name
+          - region
+          - service
+        relationships:
+          type: object
+          properties:
+            provider:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    type:
+                      type: string
+                      enum:
+                      - Provider
+                      title: Resource Type Name
+                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                        member is used to describe resource objects that share common
+                        attributes and relationships.
+                  required:
+                  - id
+                  - type
+              required:
+              - data
+              description: The identifier of the related object.
+              title: Resource Identifier
+          required:
+          - provider
+    ResourceResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Resource'
+      required:
+      - data
+    ResourceTypeEnum:
+      type: string
+      enum:
+      - Resource
     Scan:
       type: object
       required:
@@ -1277,6 +1783,15 @@ components:
               nullable: true
               maxLength: 100
               minLength: 3
+            trigger:
+              enum:
+              - scheduled
+              - manual
+              type: string
+              description: |-
+                * `scheduled` - Scheduled
+                * `manual` - Manual
+              readOnly: true
             state:
               enum:
               - available
@@ -1320,15 +1835,6 @@ components:
               type: string
               format: date-time
               nullable: true
-            type:
-              enum:
-              - scheduled
-              - manual
-              type: string
-              description: |-
-                * `scheduled` - Scheduled
-                * `manual` - Manual
-              readOnly: true
         relationships:
           type: object
           properties:
@@ -1527,6 +2033,8 @@ components:
               readOnly: true
             result:
               readOnly: true
+            task_args:
+              readOnly: true
             metadata:
               readOnly: true
     TaskResponse:
@@ -1622,15 +2130,172 @@ components:
       type: string
       enum:
       - Provider
+    TypeAddEnum:
+      type: string
+      enum:
+      - User
     TypeB52Enum:
       type: string
       enum:
       - Task
+    User:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/TypeAddEnum'
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+        id:
+          type: string
+          format: uuid
+        attributes:
+          type: object
+          properties:
+            username:
+              type: string
+              pattern: ^[\w.@+-]+$
+              maxLength: 150
+            password:
+              type: string
+              writeOnly: true
+              maxLength: 128
+            email:
+              type: string
+              format: email
+              maxLength: 254
+            date_joined:
+              type: string
+              format: date-time
+              readOnly: true
+          required:
+          - username
+          - password
+          - email
+    UserCreate:
+      type: object
+      required:
+      - type
+      additionalProperties: false
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/TypeAddEnum'
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+        attributes:
+          type: object
+          properties:
+            username:
+              type: string
+              pattern: ^[\w.@+-]+$
+              maxLength: 150
+            password:
+              type: string
+              writeOnly: true
+            email:
+              type: string
+              format: email
+              maxLength: 254
+          required:
+          - username
+          - password
+          - email
+    UserCreateRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - User
+            attributes:
+              type: object
+              properties:
+                username:
+                  type: string
+                  minLength: 1
+                  pattern: ^[\w.@+-]+$
+                  maxLength: 150
+                password:
+                  type: string
+                  writeOnly: true
+                  minLength: 1
+                email:
+                  type: string
+                  format: email
+                  minLength: 1
+                  maxLength: 254
+              required:
+              - username
+              - password
+              - email
+      required:
+      - data
+    UserCreateResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/UserCreate'
+      required:
+      - data
+    UserResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/User'
+      required:
+      - data
+    UserUpdate:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/TypeAddEnum'
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+        id:
+          type: string
+          format: uuid
+        attributes:
+          type: object
+          properties:
+            password:
+              type: string
+              writeOnly: true
+            email:
+              type: string
+              format: email
+              maxLength: 254
+          required:
+          - email
+    UserUpdateResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/UserUpdate'
+      required:
+      - data
   securitySchemes:
     basicAuth:
       type: http
       scheme: basic
-    cookieAuth:
-      type: apiKey
-      in: cookie
-      name: sessionid

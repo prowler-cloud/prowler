@@ -197,9 +197,11 @@ Fixtures are used to populate the database with initial development data.
 
 ```console
 poetry shell
-# For dev tenants
-python manage.py loaddata api/fixtures/dev_tenants.json --database admin
+# For dev users
+python manage.py loaddata api/fixtures/0_dev_users.json --database admin
 ```
+
+> The default credentials are `prowler_dev:thisisapassword123`
 
 ## Run tests
 

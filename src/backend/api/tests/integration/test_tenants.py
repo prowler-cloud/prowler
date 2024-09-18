@@ -1,13 +1,12 @@
 import pytest
 from django.urls import reverse
-from rest_framework.test import APIClient
 
 
 @pytest.mark.django_db
 def test_check_resources_between_different_tenants(
-    enforce_test_user_db_connection, tenants_fixture
+    enforce_test_user_db_connection, authenticated_api_client, tenants_fixture
 ):
-    client = APIClient()
+    client = authenticated_api_client
 
     tenant1 = str(tenants_fixture[0].id)
     tenant2 = str(tenants_fixture[1].id)

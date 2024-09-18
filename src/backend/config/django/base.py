@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from config.custom_logging import LOGGING  # noqa
 from config.env import BASE_DIR, env  # noqa
 from config.settings.celery import *  # noqa
@@ -110,12 +112,21 @@ DATABASE_ROUTERS = ["api.db_router.MainRouter"]
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
 
+AUTH_USER_MODEL = "api.User"
+
 AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
     {
         "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        "OPTIONS": {"min_length": 12},
+    },
+    {
+        "NAME": "api.validators.MaximumLengthValidator",
+        "OPTIONS": {
+            "max_length": 72,
+        },
     },
     {
         "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
@@ -124,6 +135,20 @@ AUTH_PASSWORD_VALIDATORS = [
         "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(
+        minutes=env.int("DJANGO_ACCESS_TOKEN_LIFETIME", 30)
+    ),
+    "REFRESH_TOKEN_LIFETIME": timedelta(
+        minutes=env.int("DJANGO_REFRESH_TOKEN_LIFETIME", 60 * 24)
+    ),
+    "ROTATE_REFRESH_TOKENS": False,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "ALGORITHM": "HS256",
+    "SIGNING_KEY": env.str("DJANGO_TOKEN_SIGNING_KEY", "S3cret"),
+    "AUTH_HEADER_TYPES": ("Bearer",),
+}
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.0/topics/i18n/

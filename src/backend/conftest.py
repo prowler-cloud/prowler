@@ -1,24 +1,35 @@
 import logging
-
+import base64
 import pytest
 from django.conf import settings
-from django.db import connections as django_connections
-from rest_framework import status
+from django.db import connections as django_connections, connection as django_connection
 from django_celery_results.models import TaskResult
-from api.models import Provider, Resource, ResourceTag, Scan, StateChoices, Task
+from rest_framework.test import APIClient
+
+from rest_framework import status
+
+from api.models import User, Provider, Resource, ResourceTag, Scan, StateChoices, Task
 from api.rls import Tenant
 
 API_JSON_CONTENT_TYPE = "application/vnd.api+json"
-# TODO Change to 401 when authentication/authorization is implemented
-NO_TENANT_HTTP_STATUS = status.HTTP_403_FORBIDDEN
+NO_TENANT_HTTP_STATUS = status.HTTP_401_UNAUTHORIZED
+TEST_USER = "testing_user"
+TEST_PASSWORD = "testing_psswd"
+TEST_CREDENTIALS = f"{TEST_USER}:{TEST_PASSWORD}"
+TEST_BASE64_CREDENTIALS = base64.b64encode(TEST_CREDENTIALS.encode()).decode()
 
 
 @pytest.fixture(scope="module")
 def enforce_test_user_db_connection(django_db_setup, django_db_blocker):
     """Ensure tests use the test user for database connections."""
+    test_user = "test"
+    test_password = "test"
+
     with django_db_blocker.unblock():
-        test_user = "test"
-        test_password = "test"
+        with django_connection.cursor() as cursor:
+            # Required for testing purposes using APIClient
+            cursor.execute(f"GRANT ALL PRIVILEGES ON django_session TO {test_user};")
+
         original_user = settings.DATABASES["default"]["USER"]
         original_password = settings.DATABASES["default"]["PASSWORD"]
 
@@ -41,6 +52,28 @@ def enforce_test_user_db_connection(django_db_setup, django_db_blocker):
 @pytest.fixture(autouse=True)
 def disable_logging():
     logging.disable(logging.CRITICAL)
+
+
+@pytest.fixture(scope="session", autouse=True)
+def create_test_user(django_db_setup, django_db_blocker):
+    with django_db_blocker.unblock():
+        user = User.objects.create_user(
+            username=TEST_USER, password=TEST_PASSWORD, email="testing@gmail.com"
+        )
+    return user
+
+
+@pytest.fixture
+def authenticated_client(create_test_user, client):
+    client.defaults["HTTP_AUTHORIZATION"] = f"Basic {TEST_BASE64_CREDENTIALS}"
+    return client
+
+
+@pytest.fixture
+def authenticated_api_client(create_test_user):
+    client = APIClient()
+    client.defaults["HTTP_AUTHORIZATION"] = f"Basic {TEST_BASE64_CREDENTIALS}"
+    return client
 
 
 @pytest.fixture
