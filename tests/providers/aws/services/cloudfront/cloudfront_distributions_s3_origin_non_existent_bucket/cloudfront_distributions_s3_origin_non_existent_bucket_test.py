@@ -24,21 +24,23 @@ class Test_cloudfront_s3_origin_non_existent_bucket:
         s3_client.buckets = {}
 
         with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_aws_provider(REGION),
+        ), mock.patch(
             "prowler.providers.aws.services.cloudfront.cloudfront_service.CloudFront",
             new=cloudfront_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.s3.s3_service.S3", new=s3_client
         ):
-            with mock.patch(
-                "prowler.providers.aws.services.s3.s3_service.S3", new=s3_client
-            ):
-                # Test Check
-                from prowler.providers.aws.services.cloudfront.cloudfront_distributions_s3_origin_non_existent_bucket.cloudfront_distributions_s3_origin_non_existent_bucket import (
-                    cloudfront_distributions_s3_origin_non_existent_bucket,
-                )
+            # Test Check
+            from prowler.providers.aws.services.cloudfront.cloudfront_distributions_s3_origin_non_existent_bucket.cloudfront_distributions_s3_origin_non_existent_bucket import (
+                cloudfront_distributions_s3_origin_non_existent_bucket,
+            )
 
-                check = cloudfront_distributions_s3_origin_non_existent_bucket()
-                result = check.execute()
+            check = cloudfront_distributions_s3_origin_non_existent_bucket()
+            result = check.execute()
 
-                assert len(result) == 0
+            assert len(result) == 0
 
     def test_distribution_nonexistent_origins(self):
         # Distributions
@@ -65,29 +67,31 @@ class Test_cloudfront_s3_origin_non_existent_bucket:
         s3_client.buckets = {}
 
         with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_aws_provider(REGION),
+        ), mock.patch(
             "prowler.providers.aws.services.cloudfront.cloudfront_service.CloudFront",
             new=cloudfront_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.s3.s3_service.S3", new=s3_client
         ):
-            with mock.patch(
-                "prowler.providers.aws.services.s3.s3_service.S3", new=s3_client
-            ):
-                # Test Check
-                from prowler.providers.aws.services.cloudfront.cloudfront_distributions_s3_origin_non_existent_bucket.cloudfront_distributions_s3_origin_non_existent_bucket import (
-                    cloudfront_distributions_s3_origin_non_existent_bucket,
-                )
+            # Test Check
+            from prowler.providers.aws.services.cloudfront.cloudfront_distributions_s3_origin_non_existent_bucket.cloudfront_distributions_s3_origin_non_existent_bucket import (
+                cloudfront_distributions_s3_origin_non_existent_bucket,
+            )
 
-                check = cloudfront_distributions_s3_origin_non_existent_bucket()
-                result = check.execute()
+            check = cloudfront_distributions_s3_origin_non_existent_bucket()
+            result = check.execute()
 
-                assert len(result) == 1
-                assert result[0].region == REGION
-                assert result[0].resource_arn == DISTRIBUTION_ARN
-                assert result[0].resource_id == DISTRIBUTION_ID
-                assert result[0].status == "FAIL"
-                assert (
-                    result[0].status_extended
-                    == f"CloudFront Distribution {DISTRIBUTION_ID} has a non-existent S3 bucket {domain} as the origin or the S3 bucket is out of Prowler's scope."
-                )
+            assert len(result) == 1
+            assert result[0].region == REGION
+            assert result[0].resource_arn == DISTRIBUTION_ARN
+            assert result[0].resource_id == DISTRIBUTION_ID
+            assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == f"CloudFront Distribution {DISTRIBUTION_ID} has a non-existent S3 bucket {domain} as the origin or the S3 bucket is out of Prowler's scope."
+            )
 
     def test_distribution_no_nonexistent_origins(self):
         # Distributions
@@ -123,28 +127,29 @@ class Test_cloudfront_s3_origin_non_existent_bucket:
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_aws_provider(REGION),
+        ), mock.patch(
+            "prowler.providers.aws.services.cloudfront.cloudfront_service.CloudFront",
+            new=cloudfront_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.s3.s3_service.S3", new=s3_client
         ):
             with mock.patch(
-                "prowler.providers.aws.services.cloudfront.cloudfront_service.CloudFront",
-                new=cloudfront_client,
+                "prowler.providers.aws.services.s3.s3_service.S3", new=s3_client
             ):
-                with mock.patch(
-                    "prowler.providers.aws.services.s3.s3_service.S3", new=s3_client
-                ):
-                    # Test Check
-                    from prowler.providers.aws.services.cloudfront.cloudfront_distributions_s3_origin_non_existent_bucket.cloudfront_distributions_s3_origin_non_existent_bucket import (
-                        cloudfront_distributions_s3_origin_non_existent_bucket,
-                    )
+                # Test Check
+                from prowler.providers.aws.services.cloudfront.cloudfront_distributions_s3_origin_non_existent_bucket.cloudfront_distributions_s3_origin_non_existent_bucket import (
+                    cloudfront_distributions_s3_origin_non_existent_bucket,
+                )
 
-                    check = cloudfront_distributions_s3_origin_non_existent_bucket()
-                    result = check.execute()
+                check = cloudfront_distributions_s3_origin_non_existent_bucket()
+                result = check.execute()
 
-                    assert len(result) == 1
-                    assert result[0].region == REGION
-                    assert result[0].resource_arn == DISTRIBUTION_ARN
-                    assert result[0].resource_id == DISTRIBUTION_ID
-                    assert result[0].status == "PASS"
-                    assert (
-                        result[0].status_extended
-                        == f"CloudFront Distribution {DISTRIBUTION_ID} does not have non-existent buckets as S3 origins."
-                    )
+            assert len(result) == 1
+            assert result[0].region == REGION
+            assert result[0].resource_arn == DISTRIBUTION_ARN
+            assert result[0].resource_id == DISTRIBUTION_ID
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == f"CloudFront Distribution {DISTRIBUTION_ID} does not have non-existent buckets as S3 origins."
+            )
