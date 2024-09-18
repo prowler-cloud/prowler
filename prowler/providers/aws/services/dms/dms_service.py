@@ -74,42 +74,6 @@ class DMS(AWSService):
             )
 
 
-    def _describe_data_providers(self, regional_client):
-        logger.info("DMS - Describing DMS Data Providers...")
-        try:
-            describe_data_provider_paginator = regional_client.get_paginator(
-                "describe_data_providers"
-            )
-
-            for page in describe_data_provider_paginator.paginate():
-                for provider in page["DataProviders"]:
-                    arn = provider['DataProviderArn']
-                    if not self.audit_resources or (
-                        is_resource_filtered(arn, self.audit_resources)
-                    ):
-                        settings = provider.get('Settings', {})
-                        for setting_key, setting_value in settings.items():
-                            ssl_mode = setting_value.get('SslMode')
-                            if ssl_mode:
-                                settings[setting_value] = ssl_mode
-                            
-                        self.data_providers.append(DataProvider(
-                            arn=arn,
-                            name=DataProvider['DataProviderName'],
-                            settings=DataProvider["Settings"]
-                        ))
-                            
-        except Exception as error:
-            logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-
-class DataProvider(BaseModel):
-    arn: str
-    name: str
-    settings: dict
-
-
 class Endpoint(BaseModel):
     id: str
     ssl_mode: str
