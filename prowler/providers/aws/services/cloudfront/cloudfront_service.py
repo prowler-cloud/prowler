@@ -32,13 +32,10 @@ class CloudFront(AWSService):
                             origin_groups = item.get("OriginGroups", {}).get(
                                 "Items", []
                             )
-                            origin_failover = False
-                                for origin_group in origin_groups:
-                                    if origin_group.get("Members", {}).get("Quantity", 0) >= 2:
-                                        origin_failover = True
-                                    else:
-                                        origin_failover = False
-                                        break
+                            origin_failover = all(
+                                origin_group.get("Members", {}).get("Quantity", 0) >= 2
+                                for origin_group in origin_groups
+                            )
 
                             default_certificate = item["ViewerCertificate"][
                                 "CloudFrontDefaultCertificate"
