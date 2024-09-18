@@ -77,6 +77,12 @@ class TestASFF:
                 Status=ASFF.generate_status(status),
                 RelatedRequirements=compliance_summary,
                 AssociatedStandards=associated_standards,
+                StatusReasons=[
+                    {
+                        "ReasonCode": ASFF.generate_status(status),
+                        "Description": finding.status_extended,
+                    }
+                ],
             ),
             Remediation=Remediation(
                 Recommendation=Recommendation(
@@ -143,6 +149,12 @@ class TestASFF:
                 Status=ASFF.generate_status(status),
                 RelatedRequirements=compliance_summary,
                 AssociatedStandards=associated_standards,
+                StatusReasons=[
+                    {
+                        "ReasonCode": ASFF.generate_status(status),
+                        "Description": finding.status_extended,
+                    }
+                ],
             ),
             Remediation=Remediation(
                 Recommendation=Recommendation(
@@ -208,6 +220,12 @@ class TestASFF:
                 Status=ASFF.generate_status(status),
                 RelatedRequirements=compliance_summary,
                 AssociatedStandards=associated_standards,
+                StatusReasons=[
+                    {
+                        "ReasonCode": ASFF.generate_status(status),
+                        "Description": finding.status_extended,
+                    }
+                ],
             ),
             Remediation=Remediation(
                 Recommendation=Recommendation(
@@ -277,6 +295,12 @@ class TestASFF:
                 Status=ASFF.generate_status(status),
                 RelatedRequirements=compliance_summary,
                 AssociatedStandards=associated_standards,
+                StatusReasons=[
+                    {
+                        "ReasonCode": ASFF.generate_status(status),
+                        "Description": finding.status_extended,
+                    }
+                ],
             ),
             Remediation=Remediation(
                 Recommendation=Recommendation(
@@ -484,6 +508,12 @@ class TestASFF:
                 Status=ASFF.generate_status(status),
                 RelatedRequirements=compliance_summary,
                 AssociatedStandards=associated_standards,
+                StatusReasons=[
+                    {
+                        "ReasonCode": ASFF.generate_status(status),
+                        "Description": finding.status_extended,
+                    }
+                ],
             ),
             Remediation=Remediation(
                 Recommendation=Recommendation(
@@ -554,6 +584,9 @@ class TestASFF:
                         "test-compliance t e s t - c o m p l i a n c e"
                     ],
                     "AssociatedStandards": [{"StandardsId": "test-compliance"}],
+                    "StatusReasons": [
+                        {"ReasonCode": "PASSED", "Description": "This is a test"}
+                    ],
                 },
                 "Remediation": {
                     "Recommendation": {

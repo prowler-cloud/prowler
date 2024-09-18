@@ -103,6 +103,12 @@ class ASFF(Output):
                             Status=finding_status,
                             AssociatedStandards=associated_standards,
                             RelatedRequirements=compliance_summary,
+                            StatusReasons=[
+                                {
+                                    "ReasonCode": finding_status,
+                                    "Description": finding.status_extended,
+                                }
+                            ],
                         ),
                         Remediation=Remediation(
                             Recommendation=Recommendation(
@@ -299,6 +305,7 @@ class Compliance(BaseModel):
     Status: str
     RelatedRequirements: list[str]
     AssociatedStandards: list[dict]
+    StatusReasons: list[dict]
 
     @validator("Status", pre=True, always=True)
     def status(status):
