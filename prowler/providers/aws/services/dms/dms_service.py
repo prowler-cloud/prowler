@@ -64,7 +64,7 @@ class DMS(AWSService):
                     if not self.audit_resources or (
                         is_resource_filtered(arn, self.audit_resources)
                     ):
-                        self.endpoints[endpoint["EndpointIdentifier"]] = Endpoint(
+                        self.endpoints[arn] = Endpoint(
                             id=endpoint["EndpointIdentifier"],
                             ssl_mode=endpoint.get("SslMode", False)
                         )
@@ -83,9 +83,9 @@ class DMS(AWSService):
 
             for page in describe_data_provider_paginator.paginate():
                 for provider in page["DataProviders"]:
-                    name = provider['DataProviderName']
+                    arn = provider['DataProviderArn']
                     if not self.audit_resources or (
-                        is_resource_filtered(name, self.audit_resources)
+                        is_resource_filtered(arn, self.audit_resources)
                     ):
                         settings = provider.get('Settings', {})
                         for setting_key, setting_value in settings.items():
@@ -94,6 +94,7 @@ class DMS(AWSService):
                                 settings[setting_value] = ssl_mode
                             
                         self.data_providers.append(DataProvider(
+                            arn=arn,
                             name=DataProvider['DataProviderName'],
                             settings=DataProvider["Settings"]
                         ))
@@ -104,6 +105,7 @@ class DMS(AWSService):
             )
 
 class DataProvider(BaseModel):
+    arn: str
     name: str
     settings: dict
 
