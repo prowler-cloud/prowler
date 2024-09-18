@@ -180,4 +180,4 @@ class ReplicationGroup(BaseModel):
     multi_az: str
     tags: Optional[list]
     auto_minor_version_upgrade: bool
-    automatic_failover: Optional[str]
+    automatic_failover: str
