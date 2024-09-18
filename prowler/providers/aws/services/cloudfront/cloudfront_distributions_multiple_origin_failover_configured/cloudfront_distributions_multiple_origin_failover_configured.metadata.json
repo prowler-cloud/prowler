@@ -28,7 +28,7 @@
     }
   },
   "Categories": [
-    "Availability"
+    "redundancy"
   ],
   "DependsOn": [],
   "RelatedTo": [],

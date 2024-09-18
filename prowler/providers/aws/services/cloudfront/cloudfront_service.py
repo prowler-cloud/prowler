@@ -33,10 +33,8 @@ class CloudFront(AWSService):
                                 "Items", []
                             )
                             origin_failover = False
-                            if origin_groups:
                                 for origin_group in origin_groups:
-                                    members = origin_group.get("Members", {})
-                                    if members.get("Quantity", 0) >= 2:
+                                    if origin_group.get("Members", {}).get("Quantity", 0) >= 2:
                                         origin_failover = True
                                     else:
                                         origin_failover = False
