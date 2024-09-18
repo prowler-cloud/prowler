@@ -69,7 +69,6 @@ class GuardDuty(AWSService):
 
                         data_sources = detector_info.get("DataSources", {})
                         s3_logs = data_sources.get("S3Logs", {})
-                        print(s3_logs)
                         if s3_logs.get("Status") == "ENABLED":
                             detector.s3_protection = True
 
