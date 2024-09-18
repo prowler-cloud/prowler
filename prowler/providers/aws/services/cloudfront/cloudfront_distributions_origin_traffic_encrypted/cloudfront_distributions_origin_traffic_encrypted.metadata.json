@@ -1,0 +1,30 @@
+{
+  "Provider": "aws",
+  "CheckID": "cloudfront_distributions_origin_traffic_encrypted",
+  "CheckTitle": "Check if CloudFront distributions encrypt traffic to custom origins.",
+  "CheckType": [],
+  "ServiceName": "cloudfront",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:cloudfront:region:account-id:distribution/resource-id",
+  "Severity": "medium",
+  "ResourceType": "AWSCloudFrontDistribution",
+  "Description": "Check if CloudFront distributions encrypt traffic to custom origins.",
+  "Risk": "Allowing unencrypted HTTP traffic between CloudFront and custom origins can expose data to potential eavesdropping and manipulation, compromising data security and integrity.",
+  "RelatedUrl": "https://docs.aws.amazon.com/whitepapers/latest/secure-content-delivery-amazon-cloudfront/custom-origin-with-cloudfront.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/cloudfront-controls.html#cloudfront-9",
+      "Terraform": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudFront/cloudfront-traffic-to-origin-unencrypted.html"
+    },
+    "Recommendation": {
+      "Text": "Configure your CloudFront distributions to require HTTPS (TLS) for traffic to custom origins, ensuring all data transmitted between CloudFront and the origin is encrypted and protected from unauthorized access.",
+      "Url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-https-cloudfront-to-custom-origin.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

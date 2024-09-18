@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:cloudfront:region:account-id:distribution/resource-id",
   "Severity": "high",
-  "ResourceType": "AWSCloudFrontDistribution",
+  "ResourceType": "AwsCloudFrontDistribution",
   "Description": "Check if CloudFront distributions have a default root object.",
   "Risk": "Without a default root object, requests to the root URL may result in an error or expose unintended content, leading to potential security risks and a poor user experience.",
   "RelatedUrl": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/DefaultRootObject.html#DefaultRootObjectHow",

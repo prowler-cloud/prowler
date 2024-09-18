@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "low",
-  "ResourceType": "AwsS3Bucket",
+  "ResourceType": "AwsCloudTrailTrail",
   "Description": "Ensure that all your AWS CloudTrail trails are configured to log Data events in order to record S3 object-level API operations, such as GetObject, DeleteObject and PutObject, for individual S3 buckets or for all current and future S3 buckets provisioned in your AWS account.",
   "Risk": "If logs are not enabled, monitoring of service use and threat analysis is not possible.",
   "RelatedUrl": "",

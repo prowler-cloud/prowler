@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:codeartifact:region:account-id:directory/directory-id",
   "Severity": "low",
-  "ResourceType": "AwsDirectoryService",
+  "ResourceType": "Other",
   "Description": "Directory Service Manual Snapshots limit reached.",
   "Risk": "A limit reached can bring unwanted results. The maximum number of manual snapshots is a hard limit.",
   "RelatedUrl": "https://docs.aws.amazon.com/general/latest/gr/ds_region.html",

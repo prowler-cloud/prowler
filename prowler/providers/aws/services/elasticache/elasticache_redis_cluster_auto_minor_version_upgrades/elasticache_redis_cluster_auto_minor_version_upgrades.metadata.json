@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "high",
-  "ResourceType": "AWSElastiCacheClusters",
+  "ResourceType": "Other",
   "Description": "Ensure Elasticache Redis cache clusters have automatic minor upgrades enabled.",
   "Risk": "Not enabling automatic minor version upgrades can expose your Redis cluster to security vulnerabilities, performance issues, and increased operational overhead due to the need for manual updates.",
   "RelatedUrl": "https://docs.aws.amazon.com/AmazonElastiCache/latest/red-ug/VersionManagement.html",

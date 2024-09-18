@@ -9,7 +9,7 @@
   "SubServiceName": "Kafka Cluster",
   "ResourceIdTemplate": "arn:partition:kafka:region:account-id:cluster",
   "Severity": "medium",
-  "ResourceType": "",
+  "ResourceType": "AwsMskCluster",
   "Description": "Kafka Cluster data stored at rest should be encrypted using Customer Managed Keys (CMK) for enhanced security and control over the encryption process.",
   "Risk": "Using default AWS-managed encryption keys might not meet certain compliance or regulatory requirements. With CMKs, you have more control over the encryption process and can rotate keys, define access policies, and enable key auditing.",
   "RelatedUrl": "https://docs.aws.amazon.com/msk/latest/developerguide/msk-encryption.html",

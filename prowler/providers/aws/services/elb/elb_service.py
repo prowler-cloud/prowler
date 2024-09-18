@@ -64,6 +64,9 @@ class ELB(AWSService):
             load_balancer.cross_zone_load_balancing = attributes.get(
                 "CrossZoneLoadBalancing", {}
             ).get("Enabled")
+            load_balancer.connection_draining = attributes.get(
+                "ConnectionDraining", {}
+            ).get("Enabled", False)
 
         except Exception as error:
             logger.error(
@@ -101,4 +104,5 @@ class LoadBalancer(BaseModel):
     listeners: list[Listener]
     cross_zone_load_balancing: Optional[bool]
     availability_zones: set[str]
+    connection_draining: Optional[bool]
     tags: Optional[list] = []

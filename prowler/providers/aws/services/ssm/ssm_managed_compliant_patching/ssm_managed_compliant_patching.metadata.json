@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:ec2:region:account-id:instance/instance-id",
   "Severity": "high",
-  "ResourceType": "AwsEc2Instance",
+  "ResourceType": "AwsSsmPatchCompliance",
   "Description": "Check if EC2 instances managed by Systems Manager are compliant with patching requirements.",
   "Risk": "Without the most recent security patches your system is potentially vulnerable to cyberattacks. Even the best-designed software can not anticipate every future threat to cybersecurity. Poor patch management can leave an organizations data exposed subjecting them to malware and ransomware attacks.",
   "RelatedUrl": "https://docs.aws.amazon.com/systems-manager/latest/userguide/patch-compliance-identify.html",

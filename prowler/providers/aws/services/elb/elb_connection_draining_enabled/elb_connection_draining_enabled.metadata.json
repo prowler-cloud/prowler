@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "elb_connection_draining_enabled",
+  "CheckTitle": "Classic Load Balancer Connection Draining Enabled",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability"
+  ],
+  "ServiceName": "elb",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "medium",
+  "ResourceType": "AwsElbLoadBalancer",
+  "Description": "Checks if connection draining is enabled for Classic Load Balancers. Connection draining ensures that the load balancer stops sending requests to instances that are de-registering or unhealthy, while keeping existing connections open. This is particularly useful for instances in Auto Scaling groups, to ensure that connections aren't severed abruptly.",
+  "Risk": "Disabling connection draining can lead to abrupt connection termination for users, impacting the user experience and potentially causing application errors.",
+  "RelatedUrl": "https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/config-conn-drain.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws elb modify-load-balancer-attributes --load-balancer-name <my_load_balancer_name> --load-balancer-attributes '{'ConnectionDraining':{'Enabled':true,'Timeout':300}}'",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/elb-controls.html#elb-7",
+      "Terraform": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ELB/elb-connection-draining-enabled.html#"
+    },
+    "Recommendation": {
+      "Text": "Enable connection draining for all Classic Load Balancers. This ensures that existing connections are not abruptly terminated when instances are removed from the load balancer.",
+      "Url": ""
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
