@@ -16,7 +16,7 @@
           "CLI": "aws dms modify-endpoint --endpoint-arn <endpoint_arn> --ssl-mode require",
           "NativeIaC": "",
           "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/dms-controls.html#dms-9",
-          "Terraform": "resource \"aws_dms_endpoint\" \"example\" {\n  # ... other configurations ...\n  ssl_mode = \"require\"\n}"
+          "Terraform": ""
       },
       "Recommendation": {
           "Text": "Enable SSL mode for all DMS endpoints. Use 'require' as the minimum SSL mode, and consider using 'verify-ca' or 'verify-full' for higher security.",
