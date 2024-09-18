@@ -89,53 +89,38 @@ class ElastiCache(AWSService):
             for repl_group in regional_client.describe_replication_groups()[
                 "ReplicationGroups"
             ]:
-                replication_arn = repl_group["ARN"]
-                if not self.audit_resources or (
-                    is_resource_filtered(replication_arn, self.audit_resources)
-                ):
-                    try:
-                        replication_arn = repl_group["ARN"]
-                        if not self.audit_resources or (
-                            is_resource_filtered(replication_arn, self.audit_resources)
-                        ):
-                            member_clusters = repl_group.get("MemberClusters", [])
-                            cluster_list = []
-                            for cluster in member_clusters:
-                                cluster_list.append(
-                                    self.clusters[
-                                        f"arn:aws:elasticache:{regional_client.region}:{self.audited_account}:cluster:{cluster}"
-                                    ]
-                                )
-                            self.replication_groups[replication_arn] = ReplicationGroup(
-                                id=repl_group["ReplicationGroupId"],
-                                arn=replication_arn,
-                                region=regional_client.region,
-                                status=repl_group["Status"],
-                                snapshot_retention=repl_group.get(
-                                    "SnapshotRetentionLimit", 0
-                                ),
-                                encrypted=repl_group.get(
-                                    "AtRestEncryptionEnabled", False
-                                ),
-                                transit_encryption=repl_group.get(
-                                    "TransitEncryptionEnabled", False
-                                ),
-                                multi_az=repl_group.get("MultiAZ", "disabled"),
-                                auto_minor_version_upgrade=repl_group.get(
-                                    "AutoMinorVersionUpgrade", False
-                                ),
-                                auth_token_enabled=repl_group.get(
-                                    "AuthTokenEnabled", False
-                                ),
-                                automatic_failover=repl_group.get(
-                                    "AutomaticFailoverStatus", "disabled"
-                                ),
-                                member_clusters=cluster_list,
-                            )
-                    except Exception as error:
-                        logger.error(
-                            f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                try:
+                    replication_arn = repl_group["ARN"]
+                    if not self.audit_resources or (
+                        is_resource_filtered(replication_arn, self.audit_resources)
+                    ):
+                        # Get member clusters
+                        pass
+
+                        self.replication_groups[replication_arn] = ReplicationGroup(
+                            id=repl_group["ReplicationGroupId"],
+                            arn=replication_arn,
+                            region=regional_client.region,
+                            status=repl_group["Status"],
+                            snapshot_retention=repl_group.get(
+                                "SnapshotRetentionLimit", 0
+                            ),
+                            encrypted=repl_group.get("AtRestEncryptionEnabled", False),
+                            transit_encryption=repl_group.get(
+                                "TransitEncryptionEnabled", False
+                            ),
+                            multi_az=repl_group.get("MultiAZ", "disabled"),
+                            auto_minor_version_upgrade=repl_group.get(
+                                "AutoMinorVersionUpgrade", False
+                            ),
+                            automatic_failover=repl_group.get(
+                                "AutomaticFailover", "disabled"
+                            ),
                         )
+                except Exception as error:
+                    logger.error(
+                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -203,7 +188,7 @@ class ReplicationGroup(BaseModel):
     transit_encryption: bool
     multi_az: str
     tags: Optional[list]
-    auto_minor_version_upgrade: bool = False
     auth_token_enabled: Optional[bool]
-    automatic_failover: str
     member_clusters: Optional[list[Cluster]]
+    auto_minor_version_upgrade: bool
+    automatic_failover: Optional[str]
