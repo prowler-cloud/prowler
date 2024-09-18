@@ -24,7 +24,7 @@ class Test_dms_instance_multi_az:
             )
 
             check = dms_instance_multi_az_enabled()
-            result = check.execute()    
+            result = check.execute()
             assert len(result) == 0
 
     def test_dms_instance_multi_az_not_enabled(self):
