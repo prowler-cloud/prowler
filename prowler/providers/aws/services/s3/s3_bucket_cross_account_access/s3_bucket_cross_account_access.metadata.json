@@ -16,7 +16,7 @@
   "RelatedUrl": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html",
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "aws s3api put-bucket-policy --bucket <your-bucket-name> --policy '{\"Version\": \"2012-10-17\", \"Statement\": [{\"Effect\": \"Deny\", \"Principal\": \"*\", \"Action\": [\"s3:DeleteBucketPolicy\", \"s3:PutBucketAcl\", \"s3:PutBucketPolicy\", \"s3:PutEncryptionConfiguration\", \"s3:PutObjectAcl\"], \"Resource\": \"arn:aws:s3:::<your-bucket-name>/*\", \"Condition\": {\"StringNotEquals\": {\"aws:PrincipalAccount\": \"<your-aws-account-id>\"}}}]}'",
       "NativeIaC": "",
       "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/s3-controls.html#s3-6",
       "Terraform": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/S3/account-public-access-block.html"
@@ -26,9 +26,7 @@
       "Url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html"
     }
   },
-  "Categories": [
-    ""
-  ],
+  "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

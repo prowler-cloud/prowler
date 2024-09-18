@@ -1,4 +1,5 @@
 import json
+from enum import Enum
 from typing import Optional
 
 from botocore.client import ClientError
@@ -528,6 +529,16 @@ class S3Control(AWSService):
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+
+
+class BlacklistedActions(Enum):
+    """Blacklisted actions for S3 bucket policies"""
+
+    DELETE_BUCKET_POLICY = "s3:DeleteBucketPolicy"
+    PUT_BUCKET_ACL = "s3:PutBucketAcl"
+    PUT_BUCKET_POLICY = "s3:PutBucketPolicy"
+    PUT_ENCRYPTION_CONFIGURATION = "s3:PutEncryptionConfiguration"
+    PUT_OBJECT_ACL = "s3:PutObjectAcl"
 
 
 class ACL_Grantee(BaseModel):
