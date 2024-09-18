@@ -15,13 +15,13 @@ class DynamoDB(AWSService):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.tables = []
-        self.__threading_call__(self.__list_tables__)
-        self.__describe_table__()
-        self.__describe_continuous_backups__()
-        self.__get_resource_policy__()
-        self.__list_tags_for_resource__()
+        self.__threading_call__(self._list_tables)
+        self._describe_table()
+        self._describe_continuous_backups()
+        self._get_resource_policy()
+        self._list_tags_for_resource()
 
-    def __list_tables__(self, regional_client):
+    def _list_tables(self, regional_client):
         logger.info("DynamoDB - Listing tables...")
         try:
             list_tables_paginator = regional_client.get_paginator("list_tables")
@@ -45,7 +45,7 @@ class DynamoDB(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_table__(self):
+    def _describe_table(self):
         logger.info("DynamoDB - Describing Table...")
         try:
             for table in self.tables:
@@ -63,7 +63,7 @@ class DynamoDB(AWSService):
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 
-    def __describe_continuous_backups__(self):
+    def _describe_continuous_backups(self):
         logger.info("DynamoDB - Describing Continuous Backups...")
         try:
             for table in self.tables:
@@ -95,7 +95,7 @@ class DynamoDB(AWSService):
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 
-    def __get_resource_policy__(self):
+    def _get_resource_policy(self):
         logger.info("DynamoDB - Get Resource Policy...")
         try:
             for table in self.tables:
@@ -124,7 +124,7 @@ class DynamoDB(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __list_tags_for_resource__(self):
+    def _list_tags_for_resource(self):
         logger.info("DynamoDB - List Tags...")
         try:
             for table in self.tables:
@@ -156,10 +156,10 @@ class DAX(AWSService):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.clusters = []
-        self.__threading_call__(self.__describe_clusters__)
-        self.__list_tags_for_resource__()
+        self.__threading_call__(self._describe_clusters)
+        self._list_tags_for_resource()
 
-    def __describe_clusters__(self, regional_client):
+    def _describe_clusters(self, regional_client):
         logger.info("DynamoDB DAX - Describing clusters...")
         try:
             describe_clusters_paginator = regional_client.get_paginator(
@@ -189,7 +189,7 @@ class DAX(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __list_tags_for_resource__(self):
+    def _list_tags_for_resource(self):
         logger.info("DAX - List Tags...")
         for cluster in self.clusters:
             try:

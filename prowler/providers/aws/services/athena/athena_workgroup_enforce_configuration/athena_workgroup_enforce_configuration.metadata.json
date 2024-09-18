@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:athena:region:account-id:workgroup/resource-id",
   "Severity": "medium",
-  "ResourceType": "WorkGroup",
+  "ResourceType": "AwsAthenaWorkGroup",
   "Description": "Ensure that workgroup configuration is enforced so it cannot be overriden by client-side settings.",
   "Risk": "If workgroup configuration is not enforced security settings like encryption can be overriden by client-side settings.",
   "RelatedUrl": "https://docs.aws.amazon.com/athena/latest/ug/workgroups-settings-override.html",

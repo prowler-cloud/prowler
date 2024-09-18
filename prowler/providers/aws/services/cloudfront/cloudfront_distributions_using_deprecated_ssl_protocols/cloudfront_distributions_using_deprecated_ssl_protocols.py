@@ -21,10 +21,8 @@ class cloudfront_distributions_using_deprecated_ssl_protocols(Check):
 
             bad_ssl_protocol = False
             for origin in distribution.origins:
-                if "CustomOriginConfig" in origin:
-                    for ssl_protocol in origin["CustomOriginConfig"][
-                        "OriginSslProtocols"
-                    ]["Items"]:
+                if origin.origin_ssl_protocols:
+                    for ssl_protocol in origin.origin_ssl_protocols:
                         if ssl_protocol in (
                             OriginsSSLProtocols.SSLv3.value,
                             OriginsSSLProtocols.TLSv1.value,
@@ -32,6 +30,7 @@ class cloudfront_distributions_using_deprecated_ssl_protocols(Check):
                         ):
                             bad_ssl_protocol = True
                             break
+
                 if bad_ssl_protocol:
                     report.status = "FAIL"
                     report.status_extended = f"CloudFront Distribution {distribution.id} is using a deprecated SSL protocol."

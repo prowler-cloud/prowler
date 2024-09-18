@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
-  "ResourceType": "AWSElastiCacheClusters",
+  "ResourceType": "Other",
   "Description": "Ensure Elasticache Elasticache Redis cache cluster has Multi-AZ enabled.",
   "Risk": "Ensure that your Amazon ElastiCache Redis cache clusters has Multi-AZ enabled.",
   "RelatedUrl": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/ElastiCache/elasticache-multi-az.html#",

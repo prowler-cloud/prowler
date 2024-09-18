@@ -11,7 +11,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:backup-report-plan:backup-report-plan-id",
   "Severity": "low",
-  "ResourceType": "Other",
+  "ResourceType": "AwsBackupBackupPlan",
   "Description": "This check ensures that there is at least one backup report plan in place.",
   "Risk": "Without a backup report plan, an organization may lack visibility into the success or failure of backup operations.",
   "RelatedUrl": "https://docs.aws.amazon.com/aws-backup/latest/devguide/create-report-plan-console.html",

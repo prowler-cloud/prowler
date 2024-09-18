@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
-  "ResourceType": "AwsElasticLoadBalancingV2LoadBalancer",
+  "ResourceType": "AwsElbv2LoadBalancer",
   "Description": "Check if Elastic Load Balancers have deletion protection enabled.",
   "Risk": "If deletion protection is not enabled, the resource is not protected against deletion.",
   "RelatedUrl": "",

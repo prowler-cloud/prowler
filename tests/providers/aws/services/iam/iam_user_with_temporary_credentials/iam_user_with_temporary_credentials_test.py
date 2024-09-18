@@ -18,10 +18,10 @@ class Test_iam_user_with_temporary_credentials:
 
         # Generate temporary credentials usage
         iam_client.user_temporary_credentials_usage = {}
-        iam_client.__get_user_temporary_credentials_usage__ = (
-            IAM.__get_user_temporary_credentials_usage__
+        iam_client._get_user_temporary_credentials_usage = (
+            IAM._get_user_temporary_credentials_usage
         )
-        iam_client.__get_user_temporary_credentials_usage__(iam_client)
+        iam_client._get_user_temporary_credentials_usage(iam_client)
 
         with mock.patch(
             "prowler.providers.aws.services.iam.iam_service.IAM",
@@ -47,10 +47,10 @@ class Test_iam_user_with_temporary_credentials:
 
         # Generate temporary credentials usage
         iam_client.user_temporary_credentials_usage = {}
-        iam_client.__get_user_temporary_credentials_usage__ = (
-            IAM.__get_user_temporary_credentials_usage__
+        iam_client._get_user_temporary_credentials_usage = (
+            IAM._get_user_temporary_credentials_usage
         )
-        iam_client.__get_user_temporary_credentials_usage__(iam_client)
+        iam_client._get_user_temporary_credentials_usage(iam_client)
 
         with mock.patch(
             "prowler.providers.aws.services.iam.iam_service.IAM",
@@ -84,10 +84,10 @@ class Test_iam_user_with_temporary_credentials:
 
         # Generate temporary credentials usage
         iam_client.user_temporary_credentials_usage = {}
-        iam_client.__get_user_temporary_credentials_usage__ = (
-            IAM.__get_user_temporary_credentials_usage__
+        iam_client._get_user_temporary_credentials_usage = (
+            IAM._get_user_temporary_credentials_usage
         )
-        iam_client.__get_user_temporary_credentials_usage__(iam_client)
+        iam_client._get_user_temporary_credentials_usage(iam_client)
 
         with mock.patch(
             "prowler.providers.aws.services.iam.iam_service.IAM",
@@ -121,10 +121,10 @@ class Test_iam_user_with_temporary_credentials:
 
         # Generate temporary credentials usage
         iam_client.user_temporary_credentials_usage = {}
-        iam_client.__get_user_temporary_credentials_usage__ = (
-            IAM.__get_user_temporary_credentials_usage__
+        iam_client._get_user_temporary_credentials_usage = (
+            IAM._get_user_temporary_credentials_usage
         )
-        iam_client.__get_user_temporary_credentials_usage__(iam_client)
+        iam_client._get_user_temporary_credentials_usage(iam_client)
 
         with mock.patch(
             "prowler.providers.aws.services.iam.iam_service.IAM",
@@ -160,10 +160,10 @@ class Test_iam_user_with_temporary_credentials:
 
         # Generate temporary credentials usage
         iam_client.user_temporary_credentials_usage = {}
-        iam_client.__get_user_temporary_credentials_usage__ = (
-            IAM.__get_user_temporary_credentials_usage__
+        iam_client._get_user_temporary_credentials_usage = (
+            IAM._get_user_temporary_credentials_usage
         )
-        iam_client.__get_user_temporary_credentials_usage__(iam_client)
+        iam_client._get_user_temporary_credentials_usage(iam_client)
 
         with mock.patch(
             "prowler.providers.aws.services.iam.iam_service.IAM",
@@ -199,10 +199,10 @@ class Test_iam_user_with_temporary_credentials:
 
         # Generate temporary credentials usage
         iam_client.user_temporary_credentials_usage = {}
-        iam_client.__get_user_temporary_credentials_usage__ = (
-            IAM.__get_user_temporary_credentials_usage__
+        iam_client._get_user_temporary_credentials_usage = (
+            IAM._get_user_temporary_credentials_usage
         )
-        iam_client.__get_user_temporary_credentials_usage__(iam_client)
+        iam_client._get_user_temporary_credentials_usage(iam_client)
 
         with mock.patch(
             "prowler.providers.aws.services.iam.iam_service.IAM",

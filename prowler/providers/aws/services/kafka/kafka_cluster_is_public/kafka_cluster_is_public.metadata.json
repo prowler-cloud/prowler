@@ -7,7 +7,7 @@
   "SubServiceName": "cluster",
   "ResourceIdTemplate": "arn:partition:kafka:region:account-id:cluster",
   "Severity": "high",
-  "ResourceType": "AWS::MSK::Cluster",
+  "ResourceType": "AwsMskCluster",
   "Description": "The Kafka cluster is publicly accessible, which can expose sensitive data and increase the attack surface.",
   "Risk": "Exposing the Kafka cluster to the public can lead to unauthorized access, data breaches, and potential security threats.",
   "RelatedUrl": "https://docs.aws.amazon.com/msk/latest/developerguide/client-access.html",

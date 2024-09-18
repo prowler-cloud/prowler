@@ -13,10 +13,10 @@ class DMS(AWSService):
         self.instances = []
         self.endpoints = {}
         self.data_providers = []
-        self.__threading_call__(self.__describe_replication_instances__)
-        self.__threading_call__(self.__describe_endpoints__)
+        self.__threading_call__(self._describe_replication_instances)
+        self.__threading_call__(self._describe_endpoints)
 
-    def __describe_replication_instances__(self, regional_client):
+    def _describe_replication_instances(self, regional_client):
         logger.info("DMS - Describing DMS Replication Instances...")
         try:
             describe_replication_instances_paginator = regional_client.get_paginator(
@@ -52,7 +52,7 @@ class DMS(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_endpoints__(self, regional_client):
+    def _describe_endpoints(self, regional_client):
         logger.info("DMS - Describing DMS Endpoints...")
         try:
             describe_endpoints_paginator = regional_client.get_paginator(

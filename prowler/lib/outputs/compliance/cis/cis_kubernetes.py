@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from prowler.lib.check.compliance_models import ComplianceBaseModel
+from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.outputs.compliance.cis.models import KubernetesCISModel
 from prowler.lib.outputs.compliance.compliance_output import ComplianceOutput
 from prowler.lib.outputs.finding import Finding
@@ -21,7 +21,7 @@ class KubernetesCIS(ComplianceOutput):
     def transform(
         self,
         findings: list[Finding],
-        compliance: ComplianceBaseModel,
+        compliance: Compliance,
         compliance_name: str,
     ) -> None:
         """
@@ -29,7 +29,7 @@ class KubernetesCIS(ComplianceOutput):
 
         Parameters:
             - findings (list): A list of findings.
-            - compliance (ComplianceBaseModel): A compliance model.
+            - compliance (Compliance): A compliance model.
             - compliance_name (str): The name of the compliance model.
 
         Returns:

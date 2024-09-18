@@ -12,9 +12,9 @@ class CloudStorage(GCPService):
     def __init__(self, provider: GcpProvider):
         super().__init__("storage", provider)
         self.buckets = []
-        self.__get_buckets__()
+        self._get_buckets()
 
-    def __get_buckets__(self):
+    def _get_buckets(self):
         for project_id in self.project_ids:
             try:
                 request = self.client.buckets().list(project=project_id)

@@ -21,7 +21,7 @@ class Test_Organizations_Service:
         assert organizations.service == "organizations"
 
     @mock_aws
-    def test__describe_organization__(self):
+    def test_describe_organization(self):
         # Create Organization
         conn = client("organizations", region_name=AWS_REGION_EU_WEST_1)
         response = conn.create_organization()
@@ -42,7 +42,7 @@ class Test_Organizations_Service:
         assert organizations.organizations[0].delegated_administrators == []
 
     @mock_aws
-    def test__list_policies__(self):
+    def test_list_policies(self):
         # Create Policy
         conn = client("organizations", region_name=AWS_REGION_EU_WEST_1)
         conn.create_organization()

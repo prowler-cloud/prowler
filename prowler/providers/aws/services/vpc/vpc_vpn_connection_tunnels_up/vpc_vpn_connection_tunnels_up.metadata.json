@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "vpc_vpn_connection_tunnels_up",
+  "CheckTitle": "Both VPN tunnels for an AWS Site-to-Site VPN connection should be up",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "vpc",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:vpn-connection/resource-id",
+  "Severity": "medium",
+  "ResourceType": "AwsEc2ClientVpnEndpoint",
+  "Description": "A VPN tunnel is an encrypted link where data can pass from the customer network to or from AWS within an AWS Site-to-Site VPN connection. Each VPN connection includes two VPN tunnels which you can simultaneously use for high availability. Ensuring that both VPN tunnels are up for a VPN connection is important for confirming a secure and highly available connection between an AWS VPC and your remote network.",
+  "Risk": "If one or both VPN tunnels are down, it can compromise the security and availability of the connection between your AWS VPC and your remote network. This could result in connectivity issues and potential data exposure or loss during the downtime, affecting business operations and overall network security.",
+  "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/vpc-vpn-2-tunnels-up.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/ec2-controls.html#ec2-20",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "To modify VPN tunnel options, see Modifying Site-to-Site VPN tunnel options in the AWS Site-to-Site VPN User Guide.",
+      "Url": "https://docs.aws.amazon.com/vpn/latest/s2svpn/modify-vpn-tunnel-options.html"
+    }
+  },
+  "Categories": [
+    "redundancy"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

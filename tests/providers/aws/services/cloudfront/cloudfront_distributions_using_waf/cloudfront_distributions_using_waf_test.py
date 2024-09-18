@@ -38,6 +38,7 @@ class Test_cloudfront_distributions_using_waf:
                 region=REGION,
                 web_acl_id=wef_acl_id,
                 origins=[],
+                origin_failover=False,
             )
         }
 
@@ -72,6 +73,7 @@ class Test_cloudfront_distributions_using_waf:
                 id=DISTRIBUTION_ID,
                 region=REGION,
                 origins=[],
+                origin_failover=False,
             )
         }
 

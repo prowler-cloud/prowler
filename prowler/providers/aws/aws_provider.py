@@ -1,6 +1,5 @@
 import os
 import pathlib
-from argparse import ArgumentTypeError
 from datetime import datetime
 from re import fullmatch
 
@@ -14,13 +13,8 @@ from colorama import Fore, Style
 from pytz import utc
 from tzlocal import get_localzone
 
-from prowler.config.config import (
-    aws_services_json_file,
-    get_default_mute_file_path,
-    load_and_validate_config_file,
-    load_and_validate_fixer_config_file,
-)
-from prowler.lib.check.check import list_modules, recover_checks_from_service
+from prowler.config.config import aws_services_json_file, get_default_mute_file_path
+from prowler.lib.check.utils import list_modules, recover_checks_from_service
 from prowler.lib.logger import logger
 from prowler.lib.utils.utils import open_file, parse_json_file, print_boxes
 from prowler.providers.aws.config import (
@@ -28,6 +22,20 @@ from prowler.providers.aws.config import (
     AWS_STS_GLOBAL_ENDPOINT_REGION,
     BOTO3_USER_AGENT_EXTRA,
     ROLE_SESSION_NAME,
+)
+from prowler.providers.aws.exceptions.exceptions import (
+    AWSArgumentTypeValidationError,
+    AWSAssumeRoleError,
+    AWSClientError,
+    AWSIAMRoleARNEmptyResource,
+    AWSIAMRoleARNInvalidAccountID,
+    AWSIAMRoleARNInvalidResourceType,
+    AWSIAMRoleARNPartitionEmpty,
+    AWSIAMRoleARNRegionNotEmtpy,
+    AWSIAMRoleARNServiceNotIAMnorSTS,
+    AWSNoCredentialsError,
+    AWSProfileNotFoundError,
+    AWSSetUpSessionError,
 )
 from prowler.providers.aws.lib.arn.arn import parse_iam_credentials_arn
 from prowler.providers.aws.lib.arn.models import ARN
@@ -78,8 +86,8 @@ class AwsProvider(Provider):
         scan_unused_services: bool = None,
         resource_tags: list[str] = [],
         resource_arn: list[str] = [],
-        config_file: str = None,
-        fixer_config: str = None,
+        audit_config: dict = {},
+        fixer_config: dict = {},
     ):
         """
         Initializes the AWS provider.
@@ -97,8 +105,8 @@ class AwsProvider(Provider):
             - scan_unused_services: A boolean indicating whether to scan unused services.
             - resource_tags: A list of tags to filter the resources to audit.
             - resource_arn: A list of ARNs of the resources to audit.
-            - config_file: The path to the configuration file.
-            - fixer_config: The path to the fixer configuration
+            - audit_config: The audit configuration.
+            - fixer_config: The fixer configuration.
 
         Raises:
             - ArgumentTypeError: If the input MFA ARN is invalid.
@@ -257,16 +265,12 @@ class AwsProvider(Provider):
         # Set ignore unused services
         self._scan_unused_services = scan_unused_services
 
-        # TODO: move this to the providers, pending for AWS, GCP, AZURE and K8s
         # Audit Config
-        self._audit_config = {}
-        if config_file:
-            self._audit_config = load_and_validate_config_file(self._type, config_file)
-        self._fixer_config = {}
-        if fixer_config:
-            self._fixer_config = load_and_validate_fixer_config_file(
-                self._type, fixer_config
-            )
+        self._audit_config = audit_config
+        # Fixer Config
+        self._fixer_config = fixer_config
+
+        Provider.set_global_provider(self)
 
     @property
     def identity(self):
@@ -462,9 +466,12 @@ class AwsProvider(Provider):
                 )
         except Exception as error:
             logger.critical(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"AWSSetUpSessionError[{error.__traceback__.tb_lineno}]: {error}"
             )
-            raise error
+            raise AWSSetUpSessionError(
+                original_exception=error,
+                file=pathlib.Path(__file__).name,
+            )
 
     def setup_assumed_session(
         self,
@@ -556,7 +563,7 @@ class AwsProvider(Provider):
                 token=assume_role_response.aws_session_token,
                 expiry_time=assume_role_response.expiration.isoformat(),
             )
-            logger.info(f"Refreshed Credentials: {refreshed_credentials}")
+            logger.info("Refreshed Credentials")
 
         return refreshed_credentials
 
@@ -874,7 +881,10 @@ class AwsProvider(Provider):
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
             )
-            raise error
+            raise AWSAssumeRoleError(
+                original_exception=error,
+                file=pathlib.Path(__file__).name,
+            )
 
     def get_aws_enabled_regions(self, current_session: Session) -> set:
         """get_aws_enabled_regions returns a set of enabled AWS regions"""
@@ -1030,23 +1040,91 @@ class AwsProvider(Provider):
                 is_connected=True,
             )
 
-        except (ClientError, ProfileNotFound, NoCredentialsError) as credentials_error:
-            logger.error(
-                f"{credentials_error.__class__.__name__}[{credentials_error.__traceback__.tb_lineno}]: {credentials_error}"
-            )
+        except AWSSetUpSessionError as setup_session_error:
+            logger.error(str(setup_session_error))
             if raise_on_exception:
-                raise credentials_error
+                raise setup_session_error
+            return Connection(error=setup_session_error)
 
-            return Connection(error=credentials_error)
-
-        except ArgumentTypeError as validation_error:
-            logger.error(
-                f"{validation_error.__class__.__name__}[{validation_error.__traceback__.tb_lineno}]: {validation_error}"
-            )
+        except AWSArgumentTypeValidationError as validation_error:
+            logger.error(str(validation_error))
             if raise_on_exception:
                 raise validation_error
-
             return Connection(error=validation_error)
+
+        except AWSIAMRoleARNRegionNotEmtpy as arn_region_not_empty_error:
+            logger.error(str(arn_region_not_empty_error))
+            if raise_on_exception:
+                raise arn_region_not_empty_error
+            return Connection(error=arn_region_not_empty_error)
+
+        except AWSIAMRoleARNPartitionEmpty as arn_partition_empty_error:
+            logger.error(str(arn_partition_empty_error))
+            if raise_on_exception:
+                raise arn_partition_empty_error
+            return Connection(error=arn_partition_empty_error)
+
+        except AWSIAMRoleARNServiceNotIAMnorSTS as arn_service_not_iam_sts_error:
+            logger.error(str(arn_service_not_iam_sts_error))
+            if raise_on_exception:
+                raise arn_service_not_iam_sts_error
+            return Connection(error=arn_service_not_iam_sts_error)
+
+        except AWSIAMRoleARNInvalidAccountID as arn_invalid_account_id_error:
+            logger.error(str(arn_invalid_account_id_error))
+            if raise_on_exception:
+                raise arn_invalid_account_id_error
+            return Connection(error=arn_invalid_account_id_error)
+
+        except AWSIAMRoleARNInvalidResourceType as arn_invalid_resource_type_error:
+            logger.error(str(arn_invalid_resource_type_error))
+            if raise_on_exception:
+                raise arn_invalid_resource_type_error
+            return Connection(error=arn_invalid_resource_type_error)
+
+        except AWSIAMRoleARNEmptyResource as arn_empty_resource_error:
+            logger.error(str(arn_empty_resource_error))
+            if raise_on_exception:
+                raise arn_empty_resource_error
+            return Connection(error=arn_empty_resource_error)
+
+        except AWSAssumeRoleError as assume_role_error:
+            logger.error(str(assume_role_error))
+            if raise_on_exception:
+                raise assume_role_error
+            return Connection(error=assume_role_error)
+
+        except ClientError as client_error:
+            logger.error(
+                f"AWSClientError[{client_error.__traceback__.tb_lineno}]: {client_error}"
+            )
+            if raise_on_exception:
+                raise AWSClientError(
+                    file=os.path.basename(__file__), original_exception=client_error
+                ) from client_error
+            return Connection(error=client_error)
+
+        except ProfileNotFound as profile_not_found_error:
+            logger.error(
+                f"AWSProfileNotFoundError[{profile_not_found_error.__traceback__.tb_lineno}]: {profile_not_found_error}"
+            )
+            if raise_on_exception:
+                raise AWSProfileNotFoundError(
+                    file=os.path.basename(__file__),
+                    original_exception=profile_not_found_error,
+                ) from profile_not_found_error
+            return Connection(error=profile_not_found_error)
+
+        except NoCredentialsError as no_credentials_error:
+            logger.error(
+                f"AWSNoCredentialsError[{no_credentials_error.__traceback__.tb_lineno}]: {no_credentials_error}"
+            )
+            if raise_on_exception:
+                raise AWSNoCredentialsError(
+                    file=os.path.basename(__file__),
+                    original_exception=no_credentials_error,
+                ) from no_credentials_error
+            return Connection(error=no_credentials_error)
 
         except Exception as error:
             logger.critical(
@@ -1157,8 +1235,12 @@ def validate_session_duration(duration: int) -> int:
     duration = int(duration)
     # Since the range(i,j) goes from i to j-1 we have to j+1
     if duration not in range(900, 43201):
-        raise ArgumentTypeError("Session duration must be between 900 and 43200")
-    return duration
+        raise AWSArgumentTypeValidationError(
+            message="Session Duration must be between 900 and 43200 seconds.",
+            file=os.path.basename(__file__),
+        )
+    else:
+        return duration
 
 
 # TODO: this duplicates the provider arguments validation library
@@ -1181,6 +1263,7 @@ def validate_role_session_name(session_name) -> str:
     if fullmatch(r"[\w+=,.@-]{2,64}", session_name):
         return session_name
     else:
-        raise ArgumentTypeError(
-            "Role Session Name must be 2-64 characters long and consist only of upper- and lower-case alphanumeric characters with no spaces. You can also include underscores or any of the following characters: =,.@-"
+        raise AWSArgumentTypeValidationError(
+            file=os.path.basename(__file__),
+            message="Role Session Name must be between 2 and 64 characters and may contain alphanumeric characters, periods, hyphens, and underscores.",
         )
