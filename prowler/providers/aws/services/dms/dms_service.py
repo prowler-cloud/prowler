@@ -12,7 +12,6 @@ class DMS(AWSService):
         super().__init__(__class__.__name__, provider)
         self.instances = []
         self.endpoints = {}
-        self.data_providers = []
         self.__threading_call__(self._describe_replication_instances)
         self.__threading_call__(self._describe_endpoints)
 
