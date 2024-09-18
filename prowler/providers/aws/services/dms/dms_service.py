@@ -65,7 +65,7 @@ class DMS(AWSService):
                     ):
                         self.endpoints[arn] = Endpoint(
                             id=endpoint["EndpointIdentifier"],
-                            ssl_mode=endpoint.get("SslMode", False)
+                            ssl_mode=endpoint.get("SslMode", False),
                         )
         except Exception as error:
             logger.error(
