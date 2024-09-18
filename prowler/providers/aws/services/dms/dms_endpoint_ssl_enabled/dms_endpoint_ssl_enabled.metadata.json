@@ -20,16 +20,13 @@
       },
       "Recommendation": {
           "Text": "Enable SSL mode for all DMS endpoints. Use 'require' as the minimum SSL mode, and consider using 'verify-ca' or 'verify-full' for higher security.",
-          "Url": "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Security.html#CHAP_Security.SSL"
+          "Url": "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Security.SSL.html"
       }
   },
   "Categories": [
-      "encryption",
-      "security-best-practices"
+      "encryption"
   ],
   "DependsOn": [],
-  "RelatedTo": [
-      "dms_replication_instance_not_public"
-  ],
-  "Notes": "Ensure that the SSL certificates are properly configured and managed for the source and target endpoints."
+  "RelatedTo": [],
+  "Notes": ""
 }
