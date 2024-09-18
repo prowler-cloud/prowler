@@ -10,7 +10,7 @@
   "ResourceIdTemplate": "arn:aws:guardduty:<region>:<account-id>:detector/<detector-id>",
   "Severity": "high",
   "ResourceType": "AwsGuardDutyDetector",
-  "Description": "This control checks whether GuardDuty S3 Protection is enabled. For a standalone account, the control fails if GuardDuty S3 Protection is disabled in the account. In a multi-account environment, the control fails if the delegated GuardDuty administrator account and all member accounts don't have S3 Protection enabled.",
+  "Description": "This control checks whether GuardDuty S3 Protection is enabled in the account.",
   "Risk": "Without GuardDuty S3 Protection enabled, your S3 buckets are not monitored for potential security risks at the object level, which may lead to undetected malicious activities and data breaches.",
   "RelatedUrl": "https://docs.aws.amazon.com/guardduty/latest/ug/s3_detection.html",
   "Remediation": {
