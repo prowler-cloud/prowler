@@ -40,7 +40,7 @@ class ecs_task_definitions_no_environment_secrets(Check):
                             ]
                         )
                         container_secrets_found.append(
-                            f"Secrets in container {container.name}: {secrets_string}"
+                            f"Secrets in container {container.name} -> {secrets_string}"
                         )
                 if container_secrets_found:
                     report.status = "FAIL"

@@ -2,7 +2,7 @@ from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.ecs.ecs_client import ecs_client
 
 
-class ecs_task_definitions_user_and_container_for_host_mode(Check):
+class ecs_task_definitions_host_networking_mode_users(Check):
     def execute(self):
         findings = []
         for task_definition in ecs_client.task_definitions.values():
@@ -12,24 +12,19 @@ class ecs_task_definitions_user_and_container_for_host_mode(Check):
             report.resource_arn = task_definition.arn
             report.resource_tags = task_definition.tags
             report.status = "PASS"
-            container_statuses = []
+            report.status_extended = f"ECS task definition '{task_definition.name}' does not have host network mode."
+            failed_containers = []
             if task_definition.network_mode == "host":
                 for container in task_definition.container_definitions:
                     if not container.privileged and (
                         container.user == "root" or container.user == ""
                     ):
                         report.status = "FAIL"
-                        container_statuses.append(
-                            f"Container '{container.name}' is running as root user but is not privileged."
-                        )
+                        failed_containers.append(container.name)
 
-                if container_statuses:
-                    report.status_extended = (
-                        f"ECS task definition '{task_definition.name}' with host network mode has issues:"
-                        + " ".join(container_statuses)
-                    )
+                if failed_containers:
+                    report.status_extended = f"ECS task definition '{task_definition.name}' has containers with host network mode and non-privileged containers running as root or with no user specified: {', '.join(failed_containers)}"
                 else:
-                    report.status_extended = f"ECS task definition '{task_definition.name}' has host network mode but there are no issues with container definitions."
-            else:
-                report.status_extended = f"ECS task definition '{task_definition.name}' does not have host network mode."
+                    report.status_extended = f"ECS task definition '{task_definition.name}' has host network mode but no containers running as root or with no user specified."
+            findings.append(report)
         return findings
