@@ -2,7 +2,7 @@
   "Provider": "aws",
   "CheckID": "dms_endpoint_ssl_enabled",
   "CheckTitle": "Ensure SSL mode is enabled in DMS endpoint",
-  "CheckType": ["Data Exposure"],
+  "CheckType": ["Effects", "Data Exposure"],
   "ServiceName": "dms",
   "SubServiceName": "endpoint",
   "ResourceIdTemplate": "arn:partition:dms:region:account-id:endpoint:resource-id",
