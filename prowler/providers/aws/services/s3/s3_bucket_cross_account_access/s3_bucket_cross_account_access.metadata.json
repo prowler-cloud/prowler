@@ -10,7 +10,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:s3:::bucket_name",
   "Severity": "high",
-  "ResourceType": "AWSS3Bucket",
+  "ResourceType": "AwsS3Bucket",
   "Description": "This check verifies that S3 bucket policies are configured in a way that limits access to the intended AWS accounts only, preventing unauthorized access by external or unintended accounts.",
   "Risk": "Allowing other AWS accounts to perform sensitive actions (e.g., modifying bucket policies, ACLs, or encryption settings) on your S3 buckets can lead to data exposure, unauthorized access, or misconfigurations, increasing the risk of insider threats or attacks.",
   "RelatedUrl": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html",
