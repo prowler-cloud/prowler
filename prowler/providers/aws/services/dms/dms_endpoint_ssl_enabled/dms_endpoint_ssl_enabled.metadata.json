@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "dms_endpoint_ssl_enabled",
+  "CheckTitle": "Ensure SSL mode is enabled in DMS endpoint",
+  "CheckType": ["Effects", "Data Exposure"],
+  "ServiceName": "dms",
+  "SubServiceName": "endpoint",
+  "ResourceIdTemplate": "arn:partition:dms:region:account-id:endpoint:resource-id",
+  "Severity": "high",
+  "ResourceType": "AwsDmsEndpoint",
+  "Description": "This check ensures that SSL mode is enabled for all AWS Database Migration Service (DMS) endpoints. Enabling SSL provides encryption in transit for data transferred through these endpoints.",
+  "Risk": "Without SSL enabled, data transferred through DMS endpoints is not encrypted, potentially exposing sensitive information to unauthorized access or interception during transit.",
+  "RelatedUrl": "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Security.SSL.html",
+  "Remediation": {
+      "Code": {
+          "CLI": "aws dms modify-endpoint --endpoint-arn <endpoint_arn> --ssl-mode require",
+          "NativeIaC": "",
+          "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/dms-controls.html#dms-9",
+          "Terraform": ""
+      },
+      "Recommendation": {
+          "Text": "Enable SSL mode for all DMS endpoints. Use 'require' as the minimum SSL mode, and consider using 'verify-ca' or 'verify-full' for higher security.",
+          "Url": "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Security.SSL.html"
+      }
+  },
+  "Categories": [
+      "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
