@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "neptune_cluster_copy_tags_to_snapshots",
+  "CheckTitle": "Check if Neptune DB clusters are configured to copy tags to snapshots.",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "neptune",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:rds:region:account-id:cluster:db-cluster-identifier",
+  "Severity": "low",
+  "ResourceType": "AwsRdsDbCluster",
+  "Description": "This check ensures that Neptune DB clusters are configured to copy all tags to snapshots when the snapshots are created.",
+  "Risk": "If tags are not copied to snapshots, the snapshots may lack necessary metadata for identification, governance, and access control, leading to potential mismanagement and security risks.",
+  "RelatedUrl": "https://docs.aws.amazon.com/neptune/latest/userguide/tagging.html#tagging-overview",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws neptune modify-db-cluster --db-cluster-identifier <db-cluster-identifier> --copy-tags-to-snapshot --apply-immediately",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/neptune-controls.html#neptune-8",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure your Neptune DB clusters to copy tags to snapshots when the snapshots are created.",
+      "Url": "https://docs.aws.amazon.com/neptune/latest/userguide/tagging.html#tagging-overview"
+    }
+  },
+  "Categories": [
+    "trustboundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
