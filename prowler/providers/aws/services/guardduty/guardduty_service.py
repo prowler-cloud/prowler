@@ -66,6 +66,13 @@ class GuardDuty(AWSService):
                             and detector_info["Status"] == "ENABLED"
                         ):
                             detector.status = True
+
+                        data_sources = detector_info.get("DataSources", {})
+                        s3_logs = data_sources.get("S3Logs", {})
+                        print(s3_logs)
+                        if s3_logs.get("Status") == "ENABLED":
+                            detector.s3_protection = True
+
                 except Exception as error:
                     logger.error(
                         f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
@@ -190,3 +197,4 @@ class Detector(BaseModel):
     member_accounts: list = []
     administrator_account: str = None
     tags: Optional[list] = []
+    s3_protection: bool = False
