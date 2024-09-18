@@ -2223,3 +2223,133 @@ def get_section_containers_ens(data, section_1, section_2, section_3, section_4)
         section_containers.append(section_container)
 
     return html.Div(section_containers, className="compliance-data-layout")
+
+def get_section_containers_kisa_ismsp(data, section_1, section_2):
+    data["STATUS"] = data["STATUS"].apply(map_status_to_icon)
+
+    data.sort_values(by=section_1, inplace=True)
+    data[section_1] = data[section_1].astype(str)
+
+    findings_counts_section = data.groupby([section_2, "STATUS"]).size().unstack(fill_value=0)
+    findings_counts_id = data.groupby([section_1, "STATUS"]).size().unstack(fill_value=0)
+
+    section_containers = []
+    seen_sections = set()
+
+    for section in data[section_2].unique():
+        if section in seen_sections:
+            continue
+        seen_sections.add(section)
+
+        success_section = findings_counts_section.loc[section, pass_emoji] if pass_emoji in findings_counts_section.columns else 0
+        failed_section = findings_counts_section.loc[section, fail_emoji] if fail_emoji in findings_counts_section.columns else 0
+
+        fig_section = go.Figure(
+            data=[
+                go.Bar(
+                    name="Failed",
+                    x=[failed_section],
+                    y=[""],
+                    orientation="h",
+                    marker=dict(color="#e77676"),
+                    width=[0.8],
+                ),
+                go.Bar(
+                    name="Success",
+                    x=[success_section],
+                    y=[""],
+                    orientation="h",
+                    marker=dict(color="#45cc6e"),
+                    width=[0.8],
+                ),
+            ]
+        )
+
+        fig_section.update_layout(
+            barmode="stack",
+            margin=dict(l=10, r=10, t=10, b=10),
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+            showlegend=False,
+            width=350,
+            height=30,
+            xaxis=dict(showticklabels=False, showgrid=False, zeroline=False),
+            yaxis=dict(showticklabels=False, showgrid=False, zeroline=False),
+        )
+
+        graph_section = dcc.Graph(figure=fig_section, config={"staticPlot": True}, className="info-bar")
+        graph_div = html.Div(graph_section, className="graph-section")
+
+        direct_internal_items = []
+
+        for req_id in data[data[section_2] == section][section_1].unique():
+            specific_data = data[(data[section_2] == section) & (data[section_1] == req_id)]
+            success_req = findings_counts_id.loc[req_id, pass_emoji] if pass_emoji in findings_counts_id.columns else 0
+            failed_req = findings_counts_id.loc[req_id, fail_emoji] if fail_emoji in findings_counts_id.columns else 0
+
+            data_table = dash_table.DataTable(
+                data=specific_data.to_dict("records"),
+                columns=[
+                    {"name": i, "id": i}
+                    for i in ["CHECKID", "STATUS", "REGION", "ACCOUNTID", "RESOURCEID"]
+                ],
+                style_table={"overflowX": "auto"},
+                style_as_list_view=True,
+                style_cell={"textAlign": "left", "padding": "5px", "whiteSpace": "normal", "wordBreak": "break-word"},
+            )
+
+            fig_req = go.Figure(
+                data=[
+                    go.Bar(
+                        name="Failed",
+                        x=[failed_req],
+                        y=[""],
+                        orientation="h",
+                        marker=dict(color="#e77676"),
+                    ),
+                    go.Bar(
+                        name="Success",
+                        x=[success_req],
+                        y=[""],
+                        orientation="h",
+                        marker=dict(color="#45cc6e"),
+                    ),
+                ]
+            )
+
+            fig_req.update_layout(
+                barmode="stack",
+                margin=dict(l=10, r=10, t=10, b=10),
+                paper_bgcolor="rgba(0,0,0,0)",
+                plot_bgcolor="rgba(0,0,0,0)",
+                showlegend=False,
+                width=350,
+                height=30,
+                xaxis=dict(showticklabels=False, showgrid=False, zeroline=False),
+                yaxis=dict(showticklabels=False, showgrid=False, zeroline=False),
+            )
+
+            graph_req = dcc.Graph(figure=fig_req, config={"staticPlot": True}, className="info-bar-child")
+            graph_div_req = html.Div(graph_req, className="graph-section-req")
+
+            internal_accordion_item = dbc.AccordionItem(
+                title=req_id,
+                children=[html.Div([data_table], className="inner-accordion-content")],
+            )
+
+            internal_section_container = html.Div(
+                [graph_div_req, dbc.Accordion([internal_accordion_item], start_collapsed=True, flush=True)],
+                className="accordion-inner--child",
+            )
+
+            direct_internal_items.append(internal_section_container)
+
+        accordion_item = dbc.AccordionItem(title=f"{section}", children=direct_internal_items)
+        section_container = html.Div(
+            [graph_div, dbc.Accordion([accordion_item], start_collapsed=True, flush=True)], className="accordion-inner"
+        )
+
+        section_containers.append(section_container)
+
+    return html.Div(section_containers, className="compliance-data-layout")
+

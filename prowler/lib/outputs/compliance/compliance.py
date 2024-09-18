@@ -4,6 +4,7 @@ from prowler.lib.check.models import Check_Report
 from prowler.lib.logger import logger
 from prowler.lib.outputs.compliance.cis.cis import get_cis_table
 from prowler.lib.outputs.compliance.ens.ens import get_ens_table
+from prowler.lib.outputs.compliance.kisa_ismsp.kisa_ismsp import get_kisa_ismsp_table
 from prowler.lib.outputs.compliance.generic.generic_table import (
     get_generic_compliance_table,
 )
@@ -55,6 +56,15 @@ def display_compliance_table(
             )
         elif "mitre_attack" in compliance_framework:
             get_mitre_attack_table(
+                findings,
+                bulk_checks_metadata,
+                compliance_framework,
+                output_filename,
+                output_directory,
+                compliance_overview,
+            )
+        elif "kisa_isms_" in compliance_framework:
+            get_kisa_isms_p_table(
                 findings,
                 bulk_checks_metadata,
                 compliance_framework,
