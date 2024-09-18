@@ -7,22 +7,48 @@ from django.contrib.postgres.indexes import GinIndex
 from django.contrib.postgres.search import SearchVector, SearchVectorField
 from django.core.validators import MinLengthValidator
 from django.db import models
+
 from django.utils.translation import gettext_lazy as _
 from django_celery_results.models import TaskResult
+
 from uuid6 import uuid7
 
+from prowler.lib.outputs.finding import Severity
+
 from api.db_utils import (
+    enum_to_choices,
     ProviderEnumField,
     StateEnumField,
     ScanTriggerEnumField,
+    FindingDeltaEnumField,
+    SeverityEnumField,
+    StatusEnumField,
     CustomUserManager,
 )
 from api.exceptions import ModelValidationError
+
 from api.rls import (
     RowLevelSecurityProtectedModel,
     RowLevelSecurityConstraint,
     BaseSecurityConstraint,
 )
+
+
+# Convert Prowler Severity enum to Django TextChoices
+SeverityChoices = enum_to_choices(Severity)
+
+
+class StatusChoices(models.TextChoices):
+    """
+    This list is based on the finding status in the Prowler CLI.
+
+    However it adds another state, MUTED, which is not in the CLI.
+    """
+
+    PASS = "PASS", _("Pass")
+    FAIL = "FAIL", _("Fail")
+    MANUAL = "MANUAL", _("Manual")
+    MUTED = "MUTED", _("Muted")
 
 
 class StateChoices(models.TextChoices):
@@ -338,7 +364,7 @@ class Resource(RowLevelSecurityProtectedModel):
         indexes = [
             models.Index(
                 fields=["uid", "region", "service", "name"],
-                name="idx_resource_uid_reg_serv_name",
+                name="resource_uid_reg_serv_name_idx",
             ),
             GinIndex(fields=["text_search"], name="gin_resources_search_idx"),
         ]
@@ -375,7 +401,124 @@ class ResourceTagMapping(RowLevelSecurityProtectedModel):
         constraints = [
             models.UniqueConstraint(
                 fields=("tenant_id", "resource_id", "tag_id"),
-                name="unique_resource_tag_mappings_by_tenant_resource_tag",
+                name="unique_resource_tag_mappings_by_tenant",
+            ),
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT"],
+            ),
+        ]
+
+
+class Finding(RowLevelSecurityProtectedModel):
+    class DeltaChoices(models.TextChoices):
+        NEW = "new", _("New")
+        CHANGED = "changed", _("Changed")
+
+    id = models.UUIDField(primary_key=True, default=uuid7, editable=False)
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+
+    delta = FindingDeltaEnumField(
+        choices=DeltaChoices.choices,
+        blank=True,
+        null=True,
+    )
+
+    status = StatusEnumField(choices=StatusChoices)
+    status_extended = models.TextField(blank=True, null=True)
+
+    severity = SeverityEnumField(choices=SeverityChoices)
+
+    impact = SeverityEnumField(choices=SeverityChoices)
+    impact_extended = models.TextField(blank=True, null=True)
+
+    raw_result = models.JSONField(default=dict)
+    tags = models.JSONField(default=dict, null=True, blank=True)
+
+    check_id = models.CharField(max_length=100, blank=False, null=False)
+    check_metadata = models.JSONField(default=dict, null=False)
+
+    # Relationships
+    scan = models.ForeignKey(to=Scan, related_name="findings", on_delete=models.CASCADE)
+
+    # many-to-many Resources. Relationship is defined on Resource
+    resources = models.ManyToManyField(
+        Resource,
+        verbose_name="Resources associated with the finding",
+        through="ResourceFindingMapping",
+        related_name="findings",
+    )
+
+    # TODO: Add resource search
+    text_search = models.GeneratedField(
+        expression=SearchVector(
+            "impact_extended", "status_extended", weight="A", config="simple"
+        ),
+        output_field=SearchVectorField(),
+        db_persist=True,
+        null=True,
+        editable=False,
+    )
+
+    class Meta:
+        db_table = "findings"
+
+        constraints = [
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "UPDATE", "INSERT", "DELETE"],
+            ),
+        ]
+
+        indexes = [
+            models.Index(
+                fields=[
+                    "scan_id",
+                    "impact",
+                    "severity",
+                    "status",
+                    "check_id",
+                    "delta",
+                ],
+                name="findings_filter_idx",
+            ),
+            GinIndex(fields=["text_search"], name="gin_findings_search_idx"),
+        ]
+
+    def add_resources(self, resources: list[Resource] | None):
+        # Add new relationships with the tenant_id field
+        for resource in resources:
+            ResourceFindingMapping.objects.update_or_create(
+                resource=resource, finding=self, tenant_id=self.tenant_id
+            )
+
+        # Save the instance
+        self.save()
+
+
+class ResourceFindingMapping(RowLevelSecurityProtectedModel):
+    # NOTE that we don't really need a primary key here,
+    #      but everything is easier with django if we do
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
+    finding = models.ForeignKey(Finding, on_delete=models.CASCADE)
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "resource_finding_mappings"
+
+        # django will automatically create indexes for:
+        #   - resource_id
+        #   - finding_id
+        #   - tenant_id
+        #   - id
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=("tenant_id", "resource_id", "finding_id"),
+                name="unique_resource_finding_mappings_by_tenant",
             ),
             RowLevelSecurityConstraint(
                 field="tenant_id",

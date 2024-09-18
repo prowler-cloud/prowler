@@ -7,6 +7,8 @@
       "provider": "37b065f8-26b0-4218-a665-0b23d07b27d9",
       "uid": "unique-1",
       "name": "testing 1",
+      "region": "eu-west-1",
+      "service": "ec2",
       "inserted_at": "2024-08-01T17:20:27.050Z",
       "updated_at": "2024-08-01T17:20:27.050Z"
     }
@@ -19,6 +21,8 @@
       "provider": "37b065f8-26b0-4218-a665-0b23d07b27d9",
       "uid": "unique-2",
       "name": "testing 2",
+      "region": "eu-west-1",
+      "service": "ec2",
       "inserted_at": "2024-08-01T17:20:27.050Z",
       "updated_at": "2024-08-01T17:20:27.050Z"
     }

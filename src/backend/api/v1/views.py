@@ -15,6 +15,7 @@ from rest_framework.exceptions import MethodNotAllowed, NotFound
 from rest_framework.generics import get_object_or_404
 from rest_framework_json_api.views import Response
 
+
 from api.base_views import BaseRLSViewSet, BaseViewSet
 from api.filters import (
     ProviderFilter,
@@ -22,8 +23,10 @@ from api.filters import (
     ScanFilter,
     TaskFilter,
     ResourceFilter,
+    FindingFilter,
 )
-from api.models import User, Provider, Scan, Task, Resource
+
+from api.models import User, Provider, Scan, Task, Resource, Finding
 from api.rls import Tenant
 from api.v1.serializers import (
     UserSerializer,
@@ -39,6 +42,7 @@ from api.v1.serializers import (
     ScanCreateSerializer,
     ScanUpdateSerializer,
     ResourceSerializer,
+    FindingSerializer,
 )
 from tasks.tasks import check_provider_connection_task, delete_provider_task
 
@@ -473,11 +477,73 @@ class ResourceViewSet(BaseRLSViewSet):
                 | Q(name=search_value)
                 | Q(region=search_value)
                 | Q(service=search_value)
+                | Q(type=search_value)
                 | Q(text_search=search_query)
                 | Q(uid__contains=search_value)
                 | Q(name__contains=search_value)
                 | Q(region__contains=search_value)
                 | Q(service__contains=search_value)
+                | Q(type__contains=search_value)
+            ).distinct()
+
+        return queryset
+
+
+@extend_schema_view(
+    list=extend_schema(
+        summary="List all findings",
+        description="Retrieve a list of all findings with options for filtering by various criteria.",
+    ),
+    retrieve=extend_schema(
+        summary="Retrieve data from a specific finding",
+        description="Fetch detailed information about a specific finding by its ID.",
+    ),
+)
+@method_decorator(CACHE_DECORATOR, name="list")
+@method_decorator(CACHE_DECORATOR, name="retrieve")
+class FindingViewSet(BaseRLSViewSet):
+    queryset = Finding.objects.all()
+    serializer_class = FindingSerializer
+    http_method_names = ["get"]
+    filterset_class = FindingFilter
+    ordering = ["inserted_at"]
+    ordering_fields = [
+        "status",
+        "severity",
+        "check_id",
+        "inserted_at",
+        "updated_at",
+    ]
+
+    def get_queryset(self):
+        # TODO: require scan_id filter, or if none provided, inject today
+
+        queryset = Finding.objects.all()
+        search_value = self.request.query_params.get("filter[search]", None)
+
+        if search_value:
+            # Django's ORM will build a LEFT JOIN and OUTER JOIN on any "through" tables, resulting in duplicates
+            # The duplicates then require a `distinct` query
+            search_query = SearchQuery(
+                search_value, config="simple", search_type="plain"
+            )
+            queryset = queryset.filter(
+                Q(impact_extended__contains=search_value)
+                | Q(status_extended__contains=search_value)
+                | Q(check_id=search_value)
+                | Q(check_id__icontains=search_value)
+                | Q(text_search=search_query)
+                | Q(resources__uid=search_value)
+                | Q(resources__name=search_value)
+                | Q(resources__region=search_value)
+                | Q(resources__service=search_value)
+                | Q(resources__type=search_value)
+                | Q(resources__uid__contains=search_value)
+                | Q(resources__name__contains=search_value)
+                | Q(resources__region__contains=search_value)
+                | Q(resources__service__contains=search_value)
+                | Q(resources__tags__text_search=search_query)
+                | Q(resources__text_search=search_query)
             ).distinct()
 
         return queryset

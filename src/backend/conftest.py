@@ -8,7 +8,19 @@ from rest_framework.test import APIClient
 
 from rest_framework import status
 
-from api.models import User, Provider, Resource, ResourceTag, Scan, StateChoices, Task
+
+from prowler.lib.outputs.finding import Severity, Status
+
+from api.models import (
+    User,
+    Provider,
+    Finding,
+    Resource,
+    ResourceTag,
+    Scan,
+    StateChoices,
+    Task,
+)
 from api.rls import Tenant
 
 API_JSON_CONTENT_TYPE = "application/vnd.api+json"
@@ -221,7 +233,7 @@ def resources_fixture(providers_fixture):
         uid="arn:aws:ec2:us-east-1:123456789012:instance/i-1234567890abcdef1",
         name="My Instance 2",
         region="eu-west-1",
-        service="ec2",
+        service="s3",
         type="prowler-test",
     )
     resource2.upsert_or_delete_tags(tags)
@@ -232,7 +244,7 @@ def resources_fixture(providers_fixture):
         uid="arn:aws:ec2:us-east-1:123456789012:bucket/i-1234567890abcdef2",
         name="My Bucket 3",
         region="us-east-1",
-        service="s3",
+        service="ec2",
         type="test",
     )
 
@@ -246,6 +258,62 @@ def resources_fixture(providers_fixture):
     resource3.upsert_or_delete_tags(tags)
 
     return resource1, resource2, resource3
+
+
+@pytest.fixture
+def findings_fixture(scans_fixture, resources_fixture):
+    scan, *_ = scans_fixture
+    resource1, resource2, *_ = resources_fixture
+
+    finding1 = Finding.objects.create(
+        tenant_id=scan.tenant_id,
+        scan=scan,
+        delta=None,
+        status=Status.FAIL,
+        status_extended="test status extended ",
+        impact=Severity.critical,
+        impact_extended="test impact extended one",
+        severity=Severity.critical,
+        raw_result={
+            "status": Status.FAIL,
+            "impact": Severity.critical,
+            "severity": Severity.critical,
+        },
+        tags={"test": "dev-qa"},
+        check_id="test_check_id",
+        check_metadata={
+            "CheckId": "test_check_id",
+            "Description": "test description apple sauce",
+        },
+    )
+
+    finding1.add_resources([resource1])
+
+    finding2 = Finding.objects.create(
+        tenant_id=scan.tenant_id,
+        scan=scan,
+        delta="new",
+        status=Status.FAIL,
+        status_extended="Load Balancer exposed to internet",
+        impact=Severity.critical,
+        impact_extended="test impact extended two",
+        severity=Severity.critical,
+        raw_result={
+            "status": Status.FAIL,
+            "impact": Severity.critical,
+            "severity": Severity.critical,
+        },
+        tags={"test": "test"},
+        check_id="test_check_id",
+        check_metadata={
+            "CheckId": "test_check_id",
+            "Description": "test description orange juice",
+        },
+    )
+
+    finding2.add_resources([resource2])
+
+    return finding1, finding2
 
 
 @pytest.fixture

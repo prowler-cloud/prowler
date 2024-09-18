@@ -1347,3 +1347,183 @@ class TestResourceViewSet:
             headers=tenant_header,
         )
         assert response.status_code == status.HTTP_404_NOT_FOUND
+
+
+@pytest.mark.django_db
+class TestFindingViewSet:
+    def test_findings_list_none(self, authenticated_client, tenant_header):
+        response = authenticated_client.get(
+            reverse("finding-list"), headers=tenant_header
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 0
+
+    def test_findings_list(self, authenticated_client, findings_fixture, tenant_header):
+        response = authenticated_client.get(
+            reverse("finding-list"), headers=tenant_header
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == len(findings_fixture)
+        assert (
+            response.json()["data"][0]["attributes"]["status"]
+            == findings_fixture[0].status
+        )
+
+    @pytest.mark.parametrize(
+        "filter_name, filter_value, expected_count",
+        (
+            [
+                ("delta", "new", 1),
+                ("provider_type", "aws", 2),
+                ("provider_uid", "123456789012", 2),
+                (
+                    "resource_uid",
+                    "arn:aws:ec2:us-east-1:123456789012:instance/i-1234567890abcdef0",
+                    1,
+                ),
+                ("resource_uid.icontains", "i-1234567890abcdef", 2),
+                ("resource_name", "My Instance 2", 1),
+                ("resource_name.icontains", "ce 2", 1),
+                ("region", "eu-west-1", 1),
+                ("region.in", "eu-west-1,eu-west-2", 1),
+                ("region.icontains", "east", 1),
+                ("service", "ec2", 1),
+                ("service.in", "ec2,s3", 2),
+                ("service.icontains", "ec", 1),
+                ("inserted_at.gte", "2024-01-01", 2),
+                ("updated_at.lte", "2024-01-01", 0),
+                ("resource_type.icontains", "prowler", 2),
+                # full text search on finding
+                ("search", "dev-qa", 1),
+                ("search", "orange juice", 1),
+                # full text search on resource
+                ("search", "ec2", 2),
+                # full text search on finding tags
+                ("search", "value2", 2),
+            ]
+        ),
+    )
+    def test_finding_filters(
+        self,
+        authenticated_client,
+        findings_fixture,
+        tenant_header,
+        filter_name,
+        filter_value,
+        expected_count,
+    ):
+        response = authenticated_client.get(
+            reverse("finding-list"),
+            {f"filter[{filter_name}]": filter_value},
+            headers=tenant_header,
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == expected_count
+
+    def test_finding_filter_by_provider(
+        self, authenticated_client, findings_fixture, tenant_header
+    ):
+        response = authenticated_client.get(
+            reverse("finding-list"),
+            {
+                "filter[provider]": findings_fixture[0].scan.provider.id,
+            },
+            headers=tenant_header,
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 2
+
+    def test_finding_filter_by_provider_id_in(
+        self, authenticated_client, findings_fixture, tenant_header
+    ):
+        response = authenticated_client.get(
+            reverse("finding-list"),
+            {
+                "filter[provider.in]": [
+                    findings_fixture[0].scan.provider.id,
+                    findings_fixture[1].scan.provider.id,
+                ]
+            },
+            headers=tenant_header,
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 2
+
+    @pytest.mark.parametrize(
+        "filter_name",
+        (
+            [
+                "finding",  # Invalid filter name
+                "invalid",
+            ]
+        ),
+    )
+    def test_findings_filters_invalid(
+        self, authenticated_client, tenant_header, filter_name
+    ):
+        response = authenticated_client.get(
+            reverse("finding-list"),
+            {f"filter[{filter_name}]": "whatever"},
+            headers=tenant_header,
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    @pytest.mark.parametrize(
+        "sort_field",
+        [
+            "status",
+            "severity",
+            "check_id",
+            "inserted_at",
+            "updated_at",
+        ],
+    )
+    def test_findings_sort(self, authenticated_client, tenant_header, sort_field):
+        response = authenticated_client.get(
+            reverse("finding-list"), {"sort": sort_field}, headers=tenant_header
+        )
+        assert response.status_code == status.HTTP_200_OK
+
+    def test_findings_sort_invalid(self, authenticated_client, tenant_header):
+        response = authenticated_client.get(
+            reverse("finding-list"), {"sort": "invalid"}, headers=tenant_header
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()["errors"][0]["code"] == "invalid"
+        assert response.json()["errors"][0]["source"]["pointer"] == "/data"
+        assert (
+            response.json()["errors"][0]["detail"] == "invalid sort parameter: invalid"
+        )
+
+    def test_findings_retrieve(
+        self, authenticated_client, findings_fixture, tenant_header
+    ):
+        finding_1, *_ = findings_fixture
+        response = authenticated_client.get(
+            reverse("finding-detail", kwargs={"pk": finding_1.id}),
+            headers=tenant_header,
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["data"]["attributes"]["status"] == finding_1.status
+        assert (
+            response.json()["data"]["attributes"]["status_extended"]
+            == finding_1.status_extended
+        )
+        assert response.json()["data"]["attributes"]["severity"] == finding_1.severity
+        assert response.json()["data"]["attributes"]["check_id"] == finding_1.check_id
+
+        assert response.json()["data"]["relationships"]["scan"]["data"]["id"] == str(
+            finding_1.scan.id
+        )
+
+        assert response.json()["data"]["relationships"]["resources"]["data"][0][
+            "id"
+        ] == str(finding_1.resources.first().id)
+
+    def test_findings_invalid_retrieve(self, authenticated_client, tenant_header):
+        response = authenticated_client.get(
+            reverse("finding-detail", kwargs={"pk": "random_id"}),
+            headers=tenant_header,
+        )
+        assert response.status_code == status.HTTP_404_NOT_FOUND

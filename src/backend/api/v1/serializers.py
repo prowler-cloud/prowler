@@ -4,8 +4,22 @@ from django.contrib.auth.password_validation import validate_password
 from drf_spectacular.utils import extend_schema_field
 from rest_framework_json_api import serializers
 from rest_framework_json_api.serializers import ValidationError
+from rest_framework_json_api.relations import SerializerMethodResourceRelatedField
 
-from api.models import StateChoices, User, Provider, Scan, Task, Resource, ResourceTag
+
+from api.models import (
+    StateChoices,
+    User,
+    Provider,
+    Scan,
+    Task,
+    Resource,
+    ResourceTag,
+    SeverityChoices,
+    StatusChoices,
+    Finding,
+    ResourceFindingMapping,
+)
 from api.rls import Tenant
 from api.utils import merge_dicts
 
@@ -372,6 +386,10 @@ class ResourceSerializer(RLSSerializer):
     tags = serializers.SerializerMethodField()
     type_ = serializers.CharField(read_only=True)
 
+    findings = SerializerMethodResourceRelatedField(
+        method_name="get_findings", many=True, read_only=True
+    )
+
     class Meta:
         model = Resource
         fields = [
@@ -386,12 +404,21 @@ class ResourceSerializer(RLSSerializer):
             "tags",
             "provider",
             "url",
+            "findings",
         ]
         extra_kwargs = {
             "id": {"read_only": True},
             "inserted_at": {"read_only": True},
             "updated_at": {"read_only": True},
         }
+
+    included_serializers = {
+        "findings": "api.v1.serializers.FindingSerializer",
+    }
+
+    def get_findings(self, obj):
+        mappings = ResourceFindingMapping.objects.filter(resource=obj)
+        return Finding.objects.filter(id__in=[m.finding_id for m in mappings])
 
     @extend_schema_field(
         {
@@ -409,3 +436,70 @@ class ResourceSerializer(RLSSerializer):
         type_ = fields.pop("type_")
         fields["type"] = type_
         return fields
+
+
+class FindingVisbilityEnumSerializerField(serializers.ChoiceField):
+    def __init__(self, **kwargs):
+        kwargs["choices"] = Finding.DeltaChoices.choices
+        super().__init__(**kwargs)
+
+
+class SeverityEnumSerializerField(serializers.ChoiceField):
+    def __init__(self, **kwargs):
+        kwargs["choices"] = SeverityChoices.choices
+        super().__init__(**kwargs)
+
+
+class StatusEnumSerializerField(serializers.ChoiceField):
+    def __init__(self, **kwargs):
+        kwargs["choices"] = StatusChoices.choices
+        super().__init__(**kwargs)
+
+
+class ResourceFindingMappingSerializer(serializers.ModelSerializer):
+    resource = ResourceSerializer(read_only=True)
+
+    class Meta:
+        model = ResourceFindingMapping
+        fields = ["resource"]
+
+
+class FindingSerializer(RLSSerializer):
+    """
+    Serializer for the Finding model.
+    """
+
+    resources = SerializerMethodResourceRelatedField(
+        method_name="get_resources", many=True, read_only=True
+    )
+
+    class Meta:
+        model = Finding
+        fields = [
+            "id",
+            "delta",
+            "status",
+            "status_extended",
+            "severity",
+            "check_id",
+            "check_metadata",
+            "raw_result",
+            "inserted_at",
+            "updated_at",
+            "url",
+            # Relationships
+            "scan",
+            "resources",
+        ]
+
+    included_serializers = {
+        "scan": "api.v1.serializers.ScanSerializer",
+        "resources": "api.v1.serializers.ResourceSerializer",
+    }
+
+    class JSONAPIMeta:
+        resource_name = "findings"
+
+    def get_resources(self, obj):
+        mappings = ResourceFindingMapping.objects.filter(finding=obj)
+        return Resource.objects.filter(id__in={m.resource_id for m in mappings})

@@ -3,6 +3,9 @@ from contextlib import contextmanager
 from django.conf import settings
 from django.contrib.auth.models import BaseUserManager
 from django.db import models
+from django.contrib.postgres.search import SearchVector
+from django.db.models import TextField
+
 from psycopg2 import connect as psycopg2_connect
 from psycopg2.extensions import new_type, register_type, register_adapter, AsIs
 
@@ -47,6 +50,26 @@ class CustomUserManager(BaseUserManager):
         user.set_password(password)
         user.save(using=self._db)
         return user
+
+
+def enum_to_choices(enum_class):
+    """
+    This function converts a Python Enum to a list of tuples, where the first element is the value and the second element is the name.
+
+    It's for use with Django's `choices` attribute, which expects a list of tuples.
+    """
+    return [(item.value, item.name.replace("_", " ").title()) for item in enum_class]
+
+
+# jsonb_to_tsvector
+
+
+class JsonbToTsvector(SearchVector):
+    function = "jsonb_to_tsvector"
+    output_field = TextField()
+
+    def __init__(self, expression):
+        super().__init__(expression)
 
 
 # Postgres Enums
@@ -158,3 +181,39 @@ class StateEnum(EnumType):
 class StateEnumField(PostgresEnumField):
     def __init__(self, *args, **kwargs):
         super().__init__("state", *args, **kwargs)
+
+
+# Postgres enum definition for Finding.Delta
+
+
+class FindingDeltaEnum(EnumType):
+    enum_type_name = "finding_delta"
+
+
+class FindingDeltaEnumField(PostgresEnumField):
+    def __init__(self, *args, **kwargs):
+        super().__init__("finding_delta", *args, **kwargs)
+
+
+# Postgres enum definition for Severity
+
+
+class SeverityEnum(EnumType):
+    enum_type_name = "severity"
+
+
+class SeverityEnumField(PostgresEnumField):
+    def __init__(self, *args, **kwargs):
+        super().__init__("severity", *args, **kwargs)
+
+
+# Postgres enum definition for Status
+
+
+class StatusEnum(EnumType):
+    enum_type_name = "status"
+
+
+class StatusEnumField(PostgresEnumField):
+    def __init__(self, *args, **kwargs):
+        super().__init__("status", *args, **kwargs)

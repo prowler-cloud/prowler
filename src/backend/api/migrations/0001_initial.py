@@ -1,4 +1,5 @@
 import uuid
+from uuid6 import uuid7
 from functools import partial
 
 import django.contrib.auth.models
@@ -10,7 +11,7 @@ import django.db.models.deletion
 import django.utils.timezone
 from django.conf import settings
 from django.db import migrations, models
-from uuid6 import uuid7
+
 
 import api.rls
 from api.db_utils import (
@@ -27,7 +28,14 @@ from api.db_utils import (
     TASK_RUNNER_DB_TABLE,
     POSTGRES_TENANT_VAR,
 )
-from api.models import Provider, Scan, StateChoices
+from api.models import (
+    Provider,
+    Scan,
+    StateChoices,
+    Finding,
+    StatusChoices,
+    SeverityChoices,
+)
 
 DB_NAME = settings.DATABASES["default"]["NAME"]
 
@@ -45,6 +53,23 @@ ScanTriggerEnumMigration = PostgresEnumMigration(
 StateEnumMigration = PostgresEnumMigration(
     enum_name="state",
     enum_values=tuple(state[0] for state in StateChoices.choices),
+)
+
+FindingDeltaEnumMigration = PostgresEnumMigration(
+    enum_name="finding_delta",
+    enum_values=tuple(
+        finding_delta[0] for finding_delta in Finding.DeltaChoices.choices
+    ),
+)
+
+StatusEnumMigration = PostgresEnumMigration(
+    enum_name="status",
+    enum_values=tuple(status[0] for status in StatusChoices.choices),
+)
+
+SeverityEnumMigration = PostgresEnumMigration(
+    enum_name="severity",
+    enum_values=tuple(severity[0] for severity in SeverityChoices),
 )
 
 
@@ -506,6 +531,13 @@ class Migration(migrations.Migration):
                 "abstract": False,
             },
         ),
+        migrations.AddIndex(
+            model_name="resource",
+            index=models.Index(
+                fields=["uid", "region", "service", "name"],
+                name="resource_uid_reg_serv_name_idx",
+            ),
+        ),
         migrations.CreateModel(
             name="ResourceTag",
             fields=[
@@ -631,7 +663,7 @@ class Migration(migrations.Migration):
             model_name="resourcetagmapping",
             constraint=models.UniqueConstraint(
                 fields=("tenant_id", "resource_id", "tag_id"),
-                name="unique_resource_tag_mappings_by_tenant_resource_tag",
+                name="unique_resource_tag_mappings_by_tenant",
             ),
         ),
         migrations.AddConstraint(
@@ -640,13 +672,6 @@ class Migration(migrations.Migration):
                 "tenant_id",
                 name="rls_on_resourcetagmapping",
                 statements=["SELECT"],
-            ),
-        ),
-        migrations.AddIndex(
-            model_name="resource",
-            index=models.Index(
-                fields=["uid", "region", "service", "name"],
-                name="idx_resource_uid_reg_serv_name",
             ),
         ),
         migrations.AddConstraint(
@@ -661,6 +686,222 @@ class Migration(migrations.Migration):
             constraint=api.rls.RowLevelSecurityConstraint(
                 "tenant_id",
                 name="rls_on_resource",
+                statements=["SELECT"],
+            ),
+        ),
+        # Create and register ScanTypeEnum type
+        migrations.RunPython(
+            FindingDeltaEnumMigration.create_enum_type,
+            reverse_code=FindingDeltaEnumMigration.drop_enum_type,
+        ),
+        migrations.RunPython(
+            StatusEnumMigration.create_enum_type,
+            reverse_code=StatusEnumMigration.drop_enum_type,
+        ),
+        migrations.RunPython(
+            SeverityEnumMigration.create_enum_type,
+            reverse_code=SeverityEnumMigration.drop_enum_type,
+        ),
+        migrations.CreateModel(
+            name="Finding",
+            fields=[
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid7,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("inserted_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "delta",
+                    api.db_utils.FindingDeltaEnumField(
+                        choices=[("new", "New"), ("changed", "Changed")],
+                        blank=True,
+                        null=True,
+                    ),
+                ),
+                (
+                    "status",
+                    api.db_utils.StatusEnumField(
+                        choices=[
+                            ("PASS", "Pass"),
+                            ("FAIL", "Fail"),
+                            ("MANUAL", "Manual"),
+                            ("MUTED", "Muted"),
+                        ]
+                    ),
+                ),
+                ("status_extended", models.TextField(blank=True, null=True)),
+                (
+                    "severity",
+                    api.db_utils.SeverityEnumField(
+                        choices=[
+                            ("critical", "Critical"),
+                            ("high", "High"),
+                            ("medium", "Medium"),
+                            ("low", "Low"),
+                            ("informational", "Informational"),
+                        ]
+                    ),
+                ),
+                (
+                    "impact",
+                    api.db_utils.SeverityEnumField(
+                        choices=[
+                            ("critical", "Critical"),
+                            ("high", "High"),
+                            ("medium", "Medium"),
+                            ("low", "Low"),
+                            ("informational", "Informational"),
+                        ]
+                    ),
+                ),
+                ("impact_extended", models.TextField(blank=True, null=True)),
+                ("raw_result", models.JSONField(default=dict)),
+                ("check_id", models.CharField(max_length=100, null=False)),
+                ("check_metadata", models.JSONField(default=dict, null=False)),
+                ("tags", models.JSONField(default=dict, blank=True, null=True)),
+                (
+                    "scan",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="findings",
+                        to="api.scan",
+                    ),
+                ),
+                (
+                    "tenant",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="api.tenant"
+                    ),
+                ),
+            ],
+            options={
+                "db_table": "findings",
+                "indexes": [
+                    models.Index(
+                        fields=[
+                            "scan_id",
+                            "impact",
+                            "severity",
+                            "status",
+                            "check_id",
+                            "delta",
+                        ],
+                        name="findings_filter_idx",
+                    ),
+                ],
+            },
+        ),
+        migrations.RunSQL(
+            sql="""
+              ALTER TABLE findings
+                ADD COLUMN text_search tsvector
+                GENERATED ALWAYS AS (
+                  setweight(to_tsvector('english', coalesce(impact_extended, '')), 'A') ||
+                  setweight(to_tsvector('english', coalesce(status_extended, '')), 'B') ||
+                  setweight(jsonb_to_tsvector('simple', check_metadata, '["string", "numeric"]'), 'D') ||
+                  setweight(jsonb_to_tsvector('simple', tags, '["string", "numeric"]'), 'D')
+                ) STORED;
+            """,
+            reverse_sql="""
+              ALTER TABLE findings
+                DROP COLUMN text_search;
+              """,
+            state_operations=[
+                migrations.AddField(
+                    model_name="finding",
+                    name="text_search",
+                    field=models.GeneratedField(
+                        db_persist=True,
+                        expression=django.contrib.postgres.search.SearchVector(
+                            "impact_extended",
+                            "status_extended",
+                            config="simple",
+                            weight="A",
+                        ),
+                        null=True,
+                        output_field=django.contrib.postgres.search.SearchVectorField(),
+                    ),
+                ),
+            ],
+        ),
+        migrations.AddIndex(
+            model_name="finding",
+            index=django.contrib.postgres.indexes.GinIndex(
+                fields=["text_search"], name="gin_findings_search_idx"
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="finding",
+            constraint=api.rls.RowLevelSecurityConstraint(
+                "tenant_id",
+                name="rls_on_finding",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ),
+        migrations.CreateModel(
+            name="ResourceFindingMapping",
+            fields=[
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                (
+                    "finding",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="api.finding"
+                    ),
+                ),
+                (
+                    "resource",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="api.resource"
+                    ),
+                ),
+                (
+                    "tenant",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="api.tenant"
+                    ),
+                ),
+            ],
+            options={
+                "db_table": "resource_finding_mappings",
+                "abstract": False,
+            },
+        ),
+        migrations.AddField(
+            model_name="finding",
+            name="resources",
+            field=models.ManyToManyField(
+                related_name="findings",
+                through="api.ResourceFindingMapping",
+                to="api.resource",
+                verbose_name="Resources associated with the finding",
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="resourcefindingmapping",
+            constraint=models.UniqueConstraint(
+                fields=("tenant_id", "resource_id", "finding_id"),
+                name="unique_resource_finding_mappings_by_tenant",
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="resourcefindingmapping",
+            constraint=api.rls.RowLevelSecurityConstraint(
+                "tenant_id",
+                name="rls_on_resourcefindingmapping",
                 statements=["SELECT"],
             ),
         ),

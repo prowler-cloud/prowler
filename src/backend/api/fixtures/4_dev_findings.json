@@ -1,0 +1,254 @@
+[
+  {
+    "model": "api.finding",
+    "pk": "01920571-de39-7539-acb8-35f714afdcd9",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "scan": "0191e280-9d2f-71c8-9b18-487a23ba185e",
+      "status": "FAIL",
+      "status_extended": "test status extended",
+      "impact": "low",
+      "impact_extended": "test impact extended",
+      "severity": "low",
+      "check_id": "accessanalyzer_enabled",
+      "check_metadata": {
+        "check_id": "accessanalyzer_enabled",
+        "metadata": {
+          "Categories": [],
+          "CheckID": "accessanalyzer_enabled",
+          "CheckTitle": "Check if IAM Access Analyzer is enabled",
+          "CheckType": [
+            "IAM"
+          ],
+          "DependsOn": [],
+          "Description": "Check if IAM Access Analyzer is enabled",
+          "Notes": "",
+          "Provider": "aws",
+          "RelatedTo": [],
+          "RelatedUrl": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+          "Remediation": {
+            "Code": {
+              "CLI": "aws accessanalyzer create-analyzer --analyzer-name <NAME> --type <ACCOUNT|ORGANIZATION>",
+              "NativeIaC": "",
+              "Other": "",
+              "Terraform": ""
+            },
+            "Recommendation": {
+              "Text": "Enable IAM Access Analyzer for all accounts, create analyzer and take action over it is recommendations (IAM Access Analyzer is available at no additional cost).",
+              "Url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html"
+            }
+          },
+          "ResourceIdTemplate": "arn:partition:access-analyzer:region:account-id:analyzer/resource-id",
+          "ResourceType": "Other",
+          "Risk": "AWS IAM Access Analyzer helps you identify the resources in your organization and accounts, such as Amazon S3 buckets or IAM roles, that are shared with an external entity. This lets you identify unintended access to your resources and data, which is a security risk. IAM Access Analyzer uses a form of mathematical analysis called automated reasoning, which applies logic and mathematical inference to determine all possible access paths allowed by a resource policy.",
+          "ServiceName": "accessanalyzer",
+          "Severity": "low",
+          "SubServiceName": ""
+        }
+      },
+      "raw_result": {
+        "status": "FAIL",
+        "impact": "critical",
+        "severity": "critical"
+      },
+      "inserted_at": "2024-09-01T17:24:27.050Z",
+      "updated_at": "2024-09-01T17:24:27.050Z"
+    }
+  },
+  {
+    "model": "api.resourcefindingmapping",
+    "fields": {
+      "finding": "01920571-de39-7539-acb8-35f714afdcd9",
+      "resource": "a3ba9470-a240-49a6-8196-9230a267a220",
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362"
+    }
+  },
+  {
+    "model": "api.finding",
+    "pk": "01920571-3e43-7fae-9175-ee991af8a13c",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "scan": "01920573-aa9c-73c9-bcda-f2e35c9b19d2",
+      "status": "PASS",
+      "status_extended": "test status extended",
+      "impact": "medium",
+      "impact_extended": "test impact extended",
+      "severity": "medium",
+      "check_id": "workspaces_vpc_2private_1public_subnets_nat",
+      "check_metadata": {
+        "check_id": "workspaces_vpc_2private_1public_subnets_nat",
+        "metadata": {
+          "Categories": [],
+          "CheckID": "workspaces_vpc_2private_1public_subnets_nat",
+          "CheckTitle": "Ensure that the Workspaces VPC are deployed following the best practices using 1 public subnet and 2 private subnets with a NAT Gateway attached",
+          "CheckType": [],
+          "DependsOn": [],
+          "Description": "Ensure that the Workspaces VPC are deployed following the best practices using 1 public subnet and 2 private subnets with a NAT Gateway attached",
+          "Notes": "",
+          "Provider": "aws",
+          "RelatedTo": [],
+          "RelatedUrl": "https://docs.aws.amazon.com/workspaces/latest/adminguide/amazon-workspaces-vpc.html",
+          "Remediation": {
+            "Code": {
+              "CLI": "",
+              "NativeIaC": "",
+              "Other": "",
+              "Terraform": ""
+            },
+            "Recommendation": {
+              "Text": "Follow the documentation and deploy Workspaces VPC using 1 public subnet and 2 private subnets with a NAT Gateway attached",
+              "Url": "https://docs.aws.amazon.com/workspaces/latest/adminguide/amazon-workspaces-vpc.html"
+            }
+          },
+          "ResourceIdTemplate": "arn:aws:workspaces:region:account-id:workspace",
+          "ResourceType": "AwsWorkspaces",
+          "Risk": "Proper network segmentation is a key security best practice. Workspaces VPC should be deployed using 1 public subnet and 2 private subnets with a NAT Gateway attached",
+          "ServiceName": "workspaces",
+          "Severity": "medium",
+          "SubServiceName": ""
+        }
+      },
+      "raw_result": {
+        "status": "FAIL",
+        "impact": "critical",
+        "severity": "critical"
+      },
+      "inserted_at": "2024-09-01T17:24:27.050Z",
+      "updated_at": "2024-09-01T17:24:27.050Z"
+    }
+  },
+  {
+    "model": "api.resourcefindingmapping",
+    "fields": {
+      "finding": "01920571-3e43-7fae-9175-ee991af8a13c",
+      "resource": "a3ba9470-a240-49a6-8196-9230a267a220",
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362"
+    }
+  },
+  {
+    "model": "api.finding",
+    "pk": "01920572-2def-77f4-ba03-d4c7ec46fe8d",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "scan": "01920573-ea5b-77fd-a93f-1ed2ae12f728",
+      "status": "FAIL",
+      "status_extended": "test status extended",
+      "impact": "low",
+      "impact_extended": "test impact extended",
+      "severity": "low",
+      "check_id": "accessanalyzer_enabled",
+      "check_metadata": {
+        "check_id": "accessanalyzer_enabled",
+        "metadata": {
+          "Categories": [],
+          "CheckID": "accessanalyzer_enabled",
+          "CheckTitle": "Check if IAM Access Analyzer is enabled",
+          "CheckType": [
+            "IAM"
+          ],
+          "DependsOn": [],
+          "Description": "Check if IAM Access Analyzer is enabled",
+          "Notes": "",
+          "Provider": "aws",
+          "RelatedTo": [],
+          "RelatedUrl": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+          "Remediation": {
+            "Code": {
+              "CLI": "aws accessanalyzer create-analyzer --analyzer-name <NAME> --type <ACCOUNT|ORGANIZATION>",
+              "NativeIaC": "",
+              "Other": "",
+              "Terraform": ""
+            },
+            "Recommendation": {
+              "Text": "Enable IAM Access Analyzer for all accounts, create analyzer and take action over it is recommendations (IAM Access Analyzer is available at no additional cost).",
+              "Url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html"
+            }
+          },
+          "ResourceIdTemplate": "arn:partition:access-analyzer:region:account-id:analyzer/resource-id",
+          "ResourceType": "Other",
+          "Risk": "AWS IAM Access Analyzer helps you identify the resources in your organization and accounts, such as Amazon S3 buckets or IAM roles, that are shared with an external entity. This lets you identify unintended access to your resources and data, which is a security risk. IAM Access Analyzer uses a form of mathematical analysis called automated reasoning, which applies logic and mathematical inference to determine all possible access paths allowed by a resource policy.",
+          "ServiceName": "accessanalyzer",
+          "Severity": "low",
+          "SubServiceName": ""
+        }
+      },
+      "raw_result": {
+        "status": "FAIL",
+        "impact": "critical",
+        "severity": "critical"
+      },
+      "inserted_at": "2024-09-01T17:24:27.050Z",
+      "updated_at": "2024-09-01T17:24:27.050Z"
+    }
+  },
+  {
+    "model": "api.resourcefindingmapping",
+    "fields": {
+      "finding": "01920572-2def-77f4-ba03-d4c7ec46fe8d",
+      "resource": "a3ba9470-a240-49a6-8196-9230a267a220",
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362"
+    }
+  },
+  {
+    "model": "api.finding",
+    "pk": "01920572-69bd-77c6-a038-fab6a5061477",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "scan": "01920573-ea5b-77fd-a93f-1ed2ae12f728",
+      "status": "PASS",
+      "status_extended": "test status extended",
+      "impact": "medium",
+      "impact_extended": "test impact extended",
+      "severity": "medium",
+      "check_id": "workspaces_vpc_2private_1public_subnets_nat",
+      "check_metadata": {
+        "check_id": "workspaces_vpc_2private_1public_subnets_nat",
+        "metadata": {
+          "Categories": [],
+          "CheckID": "workspaces_vpc_2private_1public_subnets_nat",
+          "CheckTitle": "Ensure that the Workspaces VPC are deployed following the best practices using 1 public subnet and 2 private subnets with a NAT Gateway attached",
+          "CheckType": [],
+          "DependsOn": [],
+          "Description": "Ensure that the Workspaces VPC are deployed following the best practices using 1 public subnet and 2 private subnets with a NAT Gateway attached",
+          "Notes": "",
+          "Provider": "aws",
+          "RelatedTo": [],
+          "RelatedUrl": "https://docs.aws.amazon.com/workspaces/latest/adminguide/amazon-workspaces-vpc.html",
+          "Remediation": {
+            "Code": {
+              "CLI": "",
+              "NativeIaC": "",
+              "Other": "",
+              "Terraform": ""
+            },
+            "Recommendation": {
+              "Text": "Follow the documentation and deploy Workspaces VPC using 1 public subnet and 2 private subnets with a NAT Gateway attached",
+              "Url": "https://docs.aws.amazon.com/workspaces/latest/adminguide/amazon-workspaces-vpc.html"
+            }
+          },
+          "ResourceIdTemplate": "arn:aws:workspaces:region:account-id:workspace",
+          "ResourceType": "AwsWorkspaces",
+          "Risk": "Proper network segmentation is a key security best practice. Workspaces VPC should be deployed using 1 public subnet and 2 private subnets with a NAT Gateway attached",
+          "ServiceName": "workspaces",
+          "Severity": "medium",
+          "SubServiceName": ""
+        }
+      },
+      "raw_result": {
+        "status": "FAIL",
+        "impact": "critical",
+        "severity": "critical"
+      },
+      "inserted_at": "2024-09-01T17:24:27.050Z",
+      "updated_at": "2024-09-01T17:24:27.050Z"
+    }
+  },
+  {
+    "model": "api.resourcefindingmapping",
+    "fields": {
+      "finding": "01920572-69bd-77c6-a038-fab6a5061477",
+      "resource": "a3ba9470-a240-49a6-8196-9230a267a220",
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362"
+    }
+  }
+]

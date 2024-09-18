@@ -1,15 +1,28 @@
+from uuid import UUID
+
 from django.db.models import Q
 from django_filters.rest_framework import (
     FilterSet,
     BooleanFilter,
     CharFilter,
+    UUIDFilter,
     DateFilter,
 )
 from rest_framework_json_api.django_filters.backends import DjangoFilterBackend
 from rest_framework_json_api.serializers import ValidationError
 
 from api.db_utils import ProviderEnumField
-from api.models import Provider, Resource, ResourceTag, Scan, Task, StateChoices
+from api.models import (
+    Provider,
+    Resource,
+    ResourceTag,
+    Scan,
+    Task,
+    StateChoices,
+    Finding,
+    SeverityChoices,
+    StatusChoices,
+)
 from api.rls import Tenant
 from api.v1.serializers import TaskBase
 
@@ -135,12 +148,22 @@ class ProviderRelationshipFilterSet(FilterSet):
     provider_alias__in = CharFilter(method="filter_provider_alias_in")
     provider_alias__icontains = CharFilter(method="filter_provider_alias_icontains")
 
+    # this can be overridden in subclasses
+    provider_type_lookup_field = "provider__provider__exact"
+    provider_type_in_lookup_field = "provider__provider__in"
+    provider_uid_lookup_field = "provider__uid"
+    provider_uid_in_lookup_field = "provider__uid__in"
+    provider_uid_icontains_lookup_field = "provider__uid__icontains"
+    provider_alias_lookup_field = "provider__alias"
+    provider_alias_in_lookup_field = "provider__alias__in"
+    provider_alias_icontains_lookup_field = "provider__alias__icontains"
+
     def filter_provider_type(self, queryset, name, value):
         return enum_filter(
             queryset,
             value,
             enum_choices=Provider.ProviderChoices,
-            lookup_field="provider__provider__exact",
+            lookup_field=self.provider_type_lookup_field,
         )
 
     def filter_provider_type_in(self, queryset, name, value):
@@ -151,30 +174,30 @@ class ProviderRelationshipFilterSet(FilterSet):
             queryset,
             value,
             enum_choices=Provider.ProviderChoices,
-            lookup_field="provider__provider__in",
+            lookup_field=self.provider_type_in_lookup_field,
         )
 
     def filter_provider_uid(self, queryset, name, value):
-        return queryset.filter(provider__uid=value)
+        return queryset.filter(**{self.provider_uid_lookup_field: value})
 
     def filter_provider_uid_in(self, queryset, name, value):
         if isinstance(value, str):
             value = value.split(",")
-        return queryset.filter(provider__uid__in=value)
+        return queryset.filter(**{self.provider_uid_in_lookup_field: value})
 
     def filter_provider_uid_icontains(self, queryset, name, value):
-        return queryset.filter(provider__uid__icontains=value)
+        return queryset.filter(**{self.provider_uid_icontains_lookup_field: value})
 
     def filter_provider_alias(self, queryset, name, value):
-        return queryset.filter(provider__alias=value)
+        return queryset.filter(**{self.provider_alias_lookup_field: value})
 
     def filter_provider_alias_in(self, queryset, name, value):
         if isinstance(value, str):
             value = value.split(",")
-        return queryset.filter(provider__alias__in=value)
+        return queryset.filter(**{self.provider_alias_in_lookup_field: value})
 
     def filter_provider_alias_icontains(self, queryset, name, value):
-        return queryset.filter(provider__alias__icontains=value)
+        return queryset.filter(**{self.provider_alias_icontains_lookup_field: value})
 
 
 class ScanFilter(ProviderRelationshipFilterSet):
@@ -271,3 +294,172 @@ class ResourceFilter(ProviderRelationshipFilterSet):
         # and we don't want to build special filtering logic for every possible
         # provider tag spec, so we'll just do a full text search
         return queryset.filter(tags__text_search=value)
+
+
+class FindingFilter(ProviderRelationshipFilterSet):
+    provider = UUIDFilter(field_name="scan__provider__id", lookup_expr="exact")
+    provider__in = UUIDFilter(method="filter_provider_id_in")
+
+    def filter_provider_id_in(self, queryset, name, value):
+        if isinstance(value, str):
+            value = value.split(",")
+        if isinstance(value, UUID):
+            value = [value]
+        return queryset.filter(scan__provider__id__in=value)
+
+    inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
+    updated_at = DateFilter(field_name="updated_at", lookup_expr="date")
+
+    delta = CharFilter(method="filter_delta")
+    delta__in = CharFilter(method="filter_delta_in")
+    status = CharFilter(method="filter_status")
+    status__in = CharFilter(method="filter_status_in")
+    severity = CharFilter(method="filter_severity")
+    severity__in = CharFilter(method="filter_severity_in")
+    impact = CharFilter(method="filter_severity")
+    impact__in = CharFilter(method="filter_severity_in")
+
+    resources = UUIDFilter(field_name="resource__id", lookup_expr="in")
+
+    region = CharFilter(method="filter_region")
+    region__in = CharFilter(method="filter_region_in")
+    region__icontains = CharFilter(method="filter_region_icontains")
+
+    service = CharFilter(method="filter_service")
+    service__in = CharFilter(method="filter_service_in")
+    service__icontains = CharFilter(method="filter_service_icontains")
+
+    resource_uid = CharFilter(method="filter_resource_uid")
+    resource_uid__in = CharFilter(method="filter_resource_uid_in")
+    resource_uid__icontains = CharFilter(method="filter_resource_uid_icontains")
+
+    resource_name = CharFilter(method="filter_resource_name")
+    resource_name__in = CharFilter(method="filter_resource_name_in")
+    resource_name__icontains = CharFilter(method="filter_resource_name_icontains")
+
+    resource_type = CharFilter(method="filter_resource_type")
+    resource_type__in = CharFilter(method="filter_resource_type_in")
+    resource_type__icontains = CharFilter(method="filter_resource_type_icontains")
+
+    class Meta:
+        model = Finding
+        fields = {
+            "scan": ["exact", "in"],
+            "check_id": ["exact", "in", "icontains"],
+            "inserted_at": ["date", "gte", "lte"],
+            "updated_at": ["gte", "lte"],
+        }
+
+    def __init__(self, *args, **kwargs):
+        self.provider_type_lookup_field = "scan__provider__provider__exact"
+        self.provider_type_in_lookup_field = "scan__provider__provider__in"
+        self.provider_uid_lookup_field = "scan__provider__uid"
+        self.provider_uid_in_lookup_field = "scan__provider__uid__in"
+        self.provider_uid_icontains_lookup_field = "scan__provider__uid__icontains"
+        self.provider_alias_lookup_field = "scan__provider__alias"
+        self.provider_alias_in_lookup_field = "scan__provider__alias__in"
+        self.provider_alias_icontains_lookup_field = "scan__provider__alias__icontains"
+        super().__init__(*args, **kwargs)
+
+    def filter_delta(self, queryset, name, value):
+        return enum_filter(
+            queryset,
+            value,
+            enum_choices=Finding.DeltaChoices,
+            lookup_field="delta",
+        )
+
+    def filter_delta_in(self, queryset, name, value):
+        return enum_filter(
+            queryset,
+            value,
+            enum_choices=Finding.DeltaChoices,
+            lookup_field="delta__in",
+        )
+
+    def filter_severity(self, queryset, name, value):
+        return enum_filter(
+            queryset,
+            value,
+            enum_choices=SeverityChoices,
+            lookup_field="severity",
+        )
+
+    def filter_severity_in(self, queryset, name, value):
+        return enum_filter(
+            queryset,
+            value,
+            enum_choices=SeverityChoices,
+            lookup_field="severity__in",
+        )
+
+    def filter_status(self, queryset, name, value):
+        return enum_filter(
+            queryset,
+            value,
+            enum_choices=StatusChoices,
+            lookup_field="status",
+        )
+
+    def filter_status_in(self, queryset, name, value):
+        return enum_filter(
+            queryset,
+            value,
+            enum_choices=StatusChoices,
+            lookup_field="status__in",
+        )
+
+    def filter_region(self, queryset, name, value):
+        return queryset.filter(resources__region=value)
+
+    def filter_region_in(self, queryset, name, value):
+        if isinstance(value, str):
+            value = value.split(",")
+        return queryset.filter(resources__region__in=value)
+
+    def filter_region_icontains(self, queryset, name, value):
+        return queryset.filter(resources__region__icontains=value)
+
+    def filter_service(self, queryset, name, value):
+        return queryset.filter(resources__service=value)
+
+    def filter_service_in(self, queryset, name, value):
+        if isinstance(value, str):
+            value = value.split(",")
+        return queryset.filter(resources__service__in=value)
+
+    def filter_service_icontains(self, queryset, name, value):
+        return queryset.filter(resources__service__icontains=value)
+
+    def filter_resource_uid(self, queryset, name, value):
+        return queryset.filter(resources__uid=value)
+
+    def filter_resource_uid_in(self, queryset, name, value):
+        if isinstance(value, str):
+            value = value.split(",")
+        return queryset.filter(resources__uid__in=value)
+
+    def filter_resource_uid_icontains(self, queryset, name, value):
+        return queryset.filter(resources__uid__icontains=value)
+
+    def filter_resource_name(self, queryset, name, value):
+        return queryset.filter(resources__name=value)
+
+    def filter_resource_name_in(self, queryset, name, value):
+        if isinstance(value, str):
+            value = value.split(",")
+        return queryset.filter(resources__name__in=value)
+
+    def filter_resource_name_icontains(self, queryset, name, value):
+        return queryset.filter(resources__name__icontains=value)
+
+    def filter_resource_type(self, queryset, name, value):
+        return queryset.filter(resources__type=value)
+
+    def filter_resource_type_in(self, queryset, name, value):
+        if isinstance(value, str):
+            value = value.split(",")
+        return queryset.filter(resources__type__in=value)
+
+    def filter_resource_type_icontains(self, queryset, name, value):
+        return queryset.filter(resources__type__icontains=value)

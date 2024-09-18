@@ -7,6 +7,360 @@ info:
 
     This file is auto-generated.
 paths:
+  /api/v1/findings:
+    get:
+      operationId: findings_list
+      description: Retrieve a list of all findings with options for filtering by various
+        criteria.
+      summary: List all findings
+      parameters:
+      - in: query
+        name: fields[findings]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - delta
+            - status
+            - status_extended
+            - severity
+            - check_id
+            - check_metadata
+            - raw_result
+            - inserted_at
+            - updated_at
+            - url
+            - scan
+            - resources
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[check_id]
+        schema:
+          type: string
+      - in: query
+        name: filter[check_id__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[check_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[delta]
+        schema:
+          type: string
+      - in: query
+        name: filter[delta__in]
+        schema:
+          type: string
+      - in: query
+        name: filter[impact]
+        schema:
+          type: string
+      - in: query
+        name: filter[impact__in]
+        schema:
+          type: string
+      - in: query
+        name: filter[inserted_at]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[inserted_at__date]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[inserted_at__gte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[inserted_at__lte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[provider]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider__in]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_alias]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_alias__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_alias__in]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_type]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_type__in]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_uid__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_uid__in]
+        schema:
+          type: string
+      - in: query
+        name: filter[region]
+        schema:
+          type: string
+      - in: query
+        name: filter[region__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[region__in]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_name]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_name__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_name__in]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_type]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_type__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_type__in]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_uid__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_uid__in]
+        schema:
+          type: string
+      - in: query
+        name: filter[resources]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[scan]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[scan__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: filter[service]
+        schema:
+          type: string
+      - in: query
+        name: filter[service__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[service__in]
+        schema:
+          type: string
+      - in: query
+        name: filter[severity]
+        schema:
+          type: string
+      - in: query
+        name: filter[severity__in]
+        schema:
+          type: string
+      - in: query
+        name: filter[status]
+        schema:
+          type: string
+      - in: query
+        name: filter[status__in]
+        schema:
+          type: string
+      - in: query
+        name: filter[updated_at]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[updated_at__gte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[updated_at__lte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - scan
+            - resources
+        description: include query parameter to allow the client to customize which
+          related resources should be returned.
+        explode: false
+      - name: page[number]
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page[size]
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - status
+            - -status
+            - severity
+            - -severity
+            - check_id
+            - -check_id
+            - inserted_at
+            - -inserted_at
+            - updated_at
+            - -updated_at
+        explode: false
+      tags:
+      - findings
+      security:
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/PaginatedFindingList'
+          description: ''
+  /api/v1/findings/{id}:
+    get:
+      operationId: findings_retrieve
+      description: Fetch detailed information about a specific finding by its ID.
+      summary: Retrieve data from a specific finding
+      parameters:
+      - in: query
+        name: fields[findings]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - delta
+            - status
+            - status_extended
+            - severity
+            - check_id
+            - check_metadata
+            - raw_result
+            - inserted_at
+            - updated_at
+            - url
+            - scan
+            - resources
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this finding.
+        required: true
+      - in: query
+        name: include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - scan
+            - resources
+        description: include query parameter to allow the client to customize which
+          related resources should be returned.
+        explode: false
+      tags:
+      - findings
+      security:
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/FindingResponse'
+          description: ''
   /api/v1/providers:
     get:
       operationId: providers_list
@@ -24,7 +378,7 @@ paths:
             - inserted_at
             - updated_at
             - provider
-            - provider_id
+            - uid
             - alias
             - connection
             - scanner_args
@@ -41,9 +395,33 @@ paths:
         schema:
           type: string
       - in: query
+        name: filter[alias__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
         name: filter[connected]
         schema:
           type: boolean
+      - in: query
+        name: filter[id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
       - in: query
         name: filter[inserted_at]
         schema:
@@ -64,11 +442,7 @@ paths:
         schema:
           type: string
       - in: query
-        name: filter[provider_id]
-        schema:
-          type: string
-      - in: query
-        name: filter[provider_id__icontains]
+        name: filter[provider__in]
         schema:
           type: string
       - name: filter[search]
@@ -77,6 +451,23 @@ paths:
         description: A search term.
         schema:
           type: string
+      - in: query
+        name: filter[uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[uid__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[uid__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
       - in: query
         name: filter[updated_at]
         schema:
@@ -115,8 +506,8 @@ paths:
             enum:
             - provider
             - -provider
-            - provider_id
-            - -provider_id
+            - uid
+            - -uid
             - alias
             - -alias
             - connected
@@ -181,7 +572,7 @@ paths:
             - inserted_at
             - updated_at
             - provider
-            - provider_id
+            - uid
             - alias
             - connection
             - scanner_args
@@ -315,6 +706,7 @@ paths:
             - tags
             - provider
             - url
+            - findings
             - type
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
@@ -346,13 +738,9 @@ paths:
         name: filter[provider]
         schema:
           type: string
-      - in: query
-        name: filter[provider_id]
-        schema:
-          type: string
           format: uuid
       - in: query
-        name: filter[provider_id__in]
+        name: filter[provider__in]
         schema:
           type: array
           items:
@@ -361,6 +749,38 @@ paths:
         description: Multiple values may be separated by commas.
         explode: false
         style: form
+      - in: query
+        name: filter[provider_alias]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_alias__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_alias__in]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_type]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_type__in]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_uid__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_uid__in]
+        schema:
+          type: string
       - in: query
         name: filter[region]
         schema:
@@ -457,6 +877,17 @@ paths:
         schema:
           type: string
           format: date-time
+      - in: query
+        name: include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - findings
+        description: include query parameter to allow the client to customize which
+          related resources should be returned.
+        explode: false
       - name: page[number]
         required: false
         in: query
@@ -478,8 +909,8 @@ paths:
           items:
             type: string
             enum:
-            - provider_id
-            - -provider_id
+            - provider_uid
+            - -provider_uid
             - uid
             - -uid
             - name
@@ -530,6 +961,7 @@ paths:
             - tags
             - provider
             - url
+            - findings
             - type
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
@@ -541,6 +973,17 @@ paths:
           format: uuid
         description: A UUID string identifying this resource.
         required: true
+      - in: query
+        name: include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - findings
+        description: include query parameter to allow the client to customize which
+          related resources should be returned.
+        explode: false
       tags:
       - Resource
       security:
@@ -603,13 +1046,9 @@ paths:
         name: filter[provider]
         schema:
           type: string
-      - in: query
-        name: filter[provider_id]
-        schema:
-          type: string
           format: uuid
       - in: query
-        name: filter[provider_id__in]
+        name: filter[provider__in]
         schema:
           type: array
           items:
@@ -618,6 +1057,38 @@ paths:
         description: Multiple values may be separated by commas.
         explode: false
         style: form
+      - in: query
+        name: filter[provider_alias]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_alias__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_alias__in]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_type]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_type__in]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_uid__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_uid__in]
+        schema:
+          type: string
       - name: filter[search]
         required: false
         in: query
@@ -664,8 +1135,6 @@ paths:
           items:
             type: string
             enum:
-            - provider_id
-            - -provider_id
             - name
             - -name
             - trigger
@@ -1279,7 +1748,6 @@ paths:
             type: string
             enum:
             - username
-            - password
             - email
             - date_joined
         description: endpoint return only specific fields in the response on a per-type
@@ -1327,6 +1795,154 @@ components:
               readOnly: true
           required:
           - id
+    Finding:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/FindingTypeEnum'
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+        id:
+          type: string
+          format: uuid
+        attributes:
+          type: object
+          properties:
+            delta:
+              enum:
+              - new
+              - changed
+              - null
+              type: string
+              description: |-
+                * `new` - New
+                * `changed` - Changed
+              nullable: true
+            status:
+              enum:
+              - PASS
+              - FAIL
+              - MANUAL
+              - MUTED
+              type: string
+              description: |-
+                * `PASS` - Pass
+                * `FAIL` - Fail
+                * `MANUAL` - Manual
+                * `MUTED` - Muted
+            status_extended:
+              type: string
+              nullable: true
+            severity:
+              enum:
+              - critical
+              - high
+              - medium
+              - low
+              - informational
+              type: string
+              description: |-
+                * `critical` - Critical
+                * `high` - High
+                * `medium` - Medium
+                * `low` - Low
+                * `informational` - Informational
+            check_id:
+              type: string
+              maxLength: 100
+            check_metadata: {}
+            raw_result: {}
+            inserted_at:
+              type: string
+              format: date-time
+              readOnly: true
+            updated_at:
+              type: string
+              format: date-time
+              readOnly: true
+          required:
+          - status
+          - severity
+          - check_id
+        relationships:
+          type: object
+          properties:
+            scan:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    type:
+                      type: string
+                      enum:
+                      - Scan
+                      title: Resource Type Name
+                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                        member is used to describe resource objects that share common
+                        attributes and relationships.
+                  required:
+                  - id
+                  - type
+              required:
+              - data
+              description: The identifier of the related object.
+              title: Resource Identifier
+            resources:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    type:
+                      type: string
+                      enum:
+                      - Resource
+                      title: Resource Type Name
+                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                        member is used to describe resource objects that share common
+                        attributes and relationships.
+                  required:
+                  - id
+                  - type
+              required:
+              - data
+              description: The identifier of the related object.
+              title: Resource Identifier
+              readOnly: true
+          required:
+          - scan
+    FindingResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Finding'
+      required:
+      - data
+    FindingTypeEnum:
+      type: string
+      enum:
+      - findings
+    PaginatedFindingList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Finding'
+      required:
+      - data
     PaginatedProviderList:
       type: object
       properties:
@@ -1545,8 +2161,9 @@ components:
                 * `azure` - Azure
                 * `gcp` - GCP
                 * `kubernetes` - Kubernetes
-            provider_id:
+            uid:
               type: string
+              title: Unique identifier for the provider, set by the provider
               maxLength: 63
               minLength: 3
             alias:
@@ -1566,7 +2183,7 @@ components:
             scanner_args: {}
           required:
           - provider
-          - provider_id
+          - uid
     ProviderCreate:
       type: object
       required:
@@ -1599,13 +2216,14 @@ components:
                 * `azure` - Azure
                 * `gcp` - GCP
                 * `kubernetes` - Kubernetes
-            provider_id:
+            uid:
               type: string
+              title: Unique identifier for the provider, set by the provider
               maxLength: 63
               minLength: 3
             scanner_args: {}
           required:
-          - provider_id
+          - uid
     ProviderCreateRequest:
       type: object
       properties:
@@ -1642,13 +2260,14 @@ components:
                     * `azure` - Azure
                     * `gcp` - GCP
                     * `kubernetes` - Kubernetes
-                provider_id:
+                uid:
                   type: string
                   minLength: 3
+                  title: Unique identifier for the provider, set by the provider
                   maxLength: 63
                 scanner_args: {}
               required:
-              - provider_id
+              - uid
       required:
       - data
     ProviderCreateResponse:
@@ -1746,6 +2365,30 @@ components:
               - data
               description: The identifier of the related object.
               title: Resource Identifier
+            findings:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    type:
+                      type: string
+                      enum:
+                      - Finding
+                      title: Resource Type Name
+                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                        member is used to describe resource objects that share common
+                        attributes and relationships.
+                  required:
+                  - id
+                  - type
+              required:
+              - data
+              description: The identifier of the related object.
+              title: Resource Identifier
+              readOnly: true
           required:
           - provider
     ResourceResponse:
@@ -2161,10 +2804,6 @@ components:
               type: string
               pattern: ^[\w.@+-]+$
               maxLength: 150
-            password:
-              type: string
-              writeOnly: true
-              maxLength: 128
             email:
               type: string
               format: email
@@ -2175,7 +2814,6 @@ components:
               readOnly: true
           required:
           - username
-          - password
           - email
     UserCreate:
       type: object
