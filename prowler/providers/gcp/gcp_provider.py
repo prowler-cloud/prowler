@@ -9,10 +9,7 @@ from google.oauth2.credentials import Credentials
 from googleapiclient import discovery
 from googleapiclient.errors import HttpError
 
-from prowler.config.config import (
-    get_default_mute_file_path,
-    load_and_validate_config_file,
-)
+from prowler.config.config import get_default_mute_file_path
 from prowler.lib.logger import logger
 from prowler.lib.utils.utils import print_boxes
 from prowler.providers.common.models import Audit_Metadata, Connection
@@ -53,8 +50,8 @@ class GcpProvider(Provider):
         credentials_file: str = None,
         impersonate_service_account: str = None,
         list_project_ids: bool = False,
-        config_file: str = None,
-        fixer_config: str = None,
+        audit_config: dict = {},
+        fixer_config: dict = {},
     ):
         """
         GCP Provider constructor
@@ -65,8 +62,8 @@ class GcpProvider(Provider):
             credentials_file: str
             impersonate_service_account: str
             list_project_ids: bool
-            config_file: str
-            fixer_config: str
+            audit_config: dict
+            fixer_config: dict
         """
         logger.info("Instantiating GCP Provider ...")
         self._impersonated_service_account = impersonate_service_account
@@ -136,8 +133,10 @@ class GcpProvider(Provider):
 
         # TODO: move this to the providers, pending for AWS, GCP, AZURE and K8s
         # Audit Config
-        self._audit_config = load_and_validate_config_file(self._type, config_file)
-        self._fixer_config = load_and_validate_config_file(self._type, fixer_config)
+        self._audit_config = audit_config
+        self._fixer_config = fixer_config
+
+        Provider.set_global_provider(self)
 
     @property
     def identity(self):

@@ -14,7 +14,10 @@ class rds_instance_event_subscription_security_groups(Check):
                 report.resource_arn = rds_client._get_rds_arn_template(db_event.region)
                 report.region = db_event.region
                 if db_event.source_type == "db-security-group" and db_event.enabled:
-                    if db_event.event_list == []:
+                    if db_event.event_list == [] or set(db_event.event_list) == {
+                        "failure",
+                        "configuration change",
+                    }:
                         report.resource_id = db_event.id
                         report.resource_arn = db_event.arn
                         report.status = "PASS"

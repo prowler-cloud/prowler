@@ -10,7 +10,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "low",
-  "ResourceType": "AwsOpenSearchDomain",
+  "ResourceType": "AwsOpenSearchServiceDomain",
   "Description": "Check if Amazon Elasticsearch/Opensearch Service domains have updates available",
   "Risk": "Amazon ES regularly releases system software updates that add features or otherwise improve your domains.",
   "RelatedUrl": "",

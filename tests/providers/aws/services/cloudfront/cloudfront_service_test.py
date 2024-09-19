@@ -1,12 +1,16 @@
+from unittest import mock
 from unittest.mock import patch
 
 import botocore
-from boto3 import client
 from moto import mock_aws
 
 from prowler.providers.aws.services.cloudfront.cloudfront_service import (
     CloudFront,
+    DefaultCacheConfigBehaviour,
+    Distribution,
     GeoRestrictionType,
+    Origin,
+    SSLSupportMethod,
     ViewerProtocolPolicy,
 )
 from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provider
@@ -23,6 +27,28 @@ def example_distribution_config(ref):
                     "Id": "origin1",
                     "DomainName": "asdf.s3.us-east-1.amazonaws.com",
                     "S3OriginConfig": {"OriginAccessIdentity": ""},
+                },
+            ],
+        },
+        "OriginGroups": {
+            "Quantity": 1,
+            "Items": [
+                {
+                    "Id": "origin-group1",
+                    "FailoverCriteria": {
+                        "StatusCodes": {"Quantity": 1, "Items": [500]}
+                    },
+                    "Members": {
+                        "Quantity": 2,
+                        "Items": [
+                            {
+                                "OriginId": "origin1",
+                            },
+                            {
+                                "OriginId": "origin2",
+                            },
+                        ],
+                    },
                 }
             ],
         },
@@ -34,6 +60,10 @@ def example_distribution_config(ref):
                 "QueryString": False,
                 "Cookies": {"Forward": "none"},
             },
+        },
+        "ViewerCertificate": {
+            "SSLSupportMethod": "static-ip",
+            "Certificate": "arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012",
         },
         "Comment": "an optional comment that's not actually optional",
         "Enabled": False,
@@ -171,64 +201,86 @@ class Test_CloudFront_Service:
 
         assert len(cloudfront.distributions) == 0
 
-    @mock_aws
     def test_list_distributionscomplete(self):
-        cloudfront_client = client("cloudfront")
-        config = example_distribution_config("ref")
-        response = cloudfront_client.create_distribution(DistributionConfig=config)
-        cloudfront_distribution_id = response["Distribution"]["Id"]
-        cloudfront_distribution_arn = response["Distribution"]["ARN"]
-        cloudfront = CloudFront(set_mocked_aws_provider())
+        from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER
 
-        assert len(cloudfront.distributions) == 1
-        assert (
-            cloudfront.distributions[cloudfront_distribution_id].arn
-            == cloudfront_distribution_arn
+        DISTRIBUTION_ID = "E27LVI50CSW06W"
+        DISTRIBUTION_ARN = (
+            f"arn:aws:cloudfront::{AWS_ACCOUNT_NUMBER}:distribution/{DISTRIBUTION_ID}"
         )
-        assert (
-            cloudfront.distributions[cloudfront_distribution_id].id
-            == cloudfront_distribution_id
+        REGION = "us-east-1"
+        LOGGING_ENABLED = True
+        ORIGINS = [
+            Origin(
+                id="origin1",
+                domain_name="asdf.s3.us-east-1.amazonaws.com",
+                origin_protocol_policy="",
+                origin_ssl_protocols=[],
+            ),
+        ]
+        DEFAULT_CACHE_CONFIG = DefaultCacheConfigBehaviour(
+            realtime_log_config_arn="test-log-arn",
+            viewer_protocol_policy=ViewerProtocolPolicy.https_only,
+            field_level_encryption_id="enabled",
         )
-        assert (
-            cloudfront.distributions[cloudfront_distribution_id].region
-            == AWS_REGION_US_EAST_1
-        )
-        assert (
-            cloudfront.distributions[cloudfront_distribution_id].logging_enabled is True
-        )
-        assert (
-            cloudfront.distributions[cloudfront_distribution_id].origins
-            == cloudfront_client.get_distribution(Id=cloudfront_distribution_id)[
-                "Distribution"
-            ]["DistributionConfig"]["Origins"]["Items"]
-        )
-        assert (
-            cloudfront.distributions[cloudfront_distribution_id].geo_restriction_type
-            == GeoRestrictionType.blacklist
-        )
-        assert (
-            cloudfront.distributions[cloudfront_distribution_id].web_acl_id
-            == "test-web-acl"
-        )
-        assert (
-            cloudfront.distributions[
-                cloudfront_distribution_id
-            ].default_cache_config.realtime_log_config_arn
-            == "test-log-arn"
-        )
-        assert (
-            cloudfront.distributions[
-                cloudfront_distribution_id
-            ].default_cache_config.viewer_protocol_policy
-            == ViewerProtocolPolicy.https_only
-        )
-        assert (
-            cloudfront.distributions[
-                cloudfront_distribution_id
-            ].default_cache_config.field_level_encryption_id
-            == "enabled"
-        )
-
-        assert cloudfront.distributions[cloudfront_distribution_id].tags == [
+        GEO_RESTRICTION_TYPE = GeoRestrictionType.blacklist
+        WEB_ACL_ID = "test-web-acl"
+        TAGS = [
             {"Key": "test", "Value": "test"},
         ]
+        SSL_SUPPORT_METHOD = SSLSupportMethod.sni_only
+        CERTIFICATE = "arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012"
+
+        cloudfront = mock.MagicMock
+        cloudfront.distributions = {
+            DISTRIBUTION_ID: Distribution(
+                arn=DISTRIBUTION_ARN,
+                id=DISTRIBUTION_ID,
+                region=REGION,
+                logging_enabled=LOGGING_ENABLED,
+                origins=ORIGINS,
+                default_cache_config=DEFAULT_CACHE_CONFIG,
+                geo_restriction_type=GEO_RESTRICTION_TYPE,
+                web_acl_id=WEB_ACL_ID,
+                tags=TAGS,
+                ssl_support_method=SSL_SUPPORT_METHOD,
+                certificate=CERTIFICATE,
+            )
+        }
+
+        assert len(cloudfront.distributions) == 1
+        assert cloudfront.distributions[DISTRIBUTION_ID].arn == DISTRIBUTION_ARN
+        assert cloudfront.distributions[DISTRIBUTION_ID].id == DISTRIBUTION_ID
+        assert cloudfront.distributions[DISTRIBUTION_ID].region == AWS_REGION_US_EAST_1
+        assert (
+            cloudfront.distributions[DISTRIBUTION_ID].logging_enabled is LOGGING_ENABLED
+        )
+        for origin in cloudfront.distributions[DISTRIBUTION_ID].origins:
+            assert origin.id == "origin1"
+            assert origin.domain_name == "asdf.s3.us-east-1.amazonaws.com"
+            assert origin.origin_protocol_policy == ""
+            assert origin.origin_ssl_protocols == []
+        assert (
+            cloudfront.distributions[DISTRIBUTION_ID].geo_restriction_type
+            == GEO_RESTRICTION_TYPE
+        )
+        assert cloudfront.distributions[DISTRIBUTION_ID].web_acl_id == "test-web-acl"
+        assert (
+            cloudfront.distributions[
+                DISTRIBUTION_ID
+            ].default_cache_config.realtime_log_config_arn
+            == DEFAULT_CACHE_CONFIG.realtime_log_config_arn
+        )
+        assert (
+            cloudfront.distributions[
+                DISTRIBUTION_ID
+            ].default_cache_config.viewer_protocol_policy
+            == DEFAULT_CACHE_CONFIG.viewer_protocol_policy
+        )
+        assert (
+            cloudfront.distributions[
+                DISTRIBUTION_ID
+            ].default_cache_config.field_level_encryption_id
+            == DEFAULT_CACHE_CONFIG.field_level_encryption_id
+        )
+        assert cloudfront.distributions[DISTRIBUTION_ID].tags == TAGS

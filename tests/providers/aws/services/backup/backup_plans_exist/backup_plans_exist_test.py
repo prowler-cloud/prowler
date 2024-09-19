@@ -24,6 +24,9 @@ class Test_backup_plans_exist:
         with mock.patch(
             "prowler.providers.aws.services.backup.backup_service.Backup",
             new=backup_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.backup.backup_plans_exist.backup_plans_exist.backup_client",
+            new=backup_client,
         ):
             # Test Check
             from prowler.providers.aws.services.backup.backup_plans_exist.backup_plans_exist import (
@@ -52,6 +55,9 @@ class Test_backup_plans_exist:
         backup_client.backup_vaults = []
         with mock.patch(
             "prowler.providers.aws.services.backup.backup_service.Backup",
+            new=backup_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.backup.backup_plans_exist.backup_plans_exist.backup_client",
             new=backup_client,
         ):
             # Test Check
@@ -86,6 +92,9 @@ class Test_backup_plans_exist:
         ]
         with mock.patch(
             "prowler.providers.aws.services.backup.backup_service.Backup",
+            new=backup_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.backup.backup_plans_exist.backup_plans_exist.backup_client",
             new=backup_client,
         ):
             # Test Check

@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "cloudfront_distributions_custom_ssl_certificate",
+  "CheckTitle": "CloudFront distributions should use custom SSL/TLS certificates.",
+  "CheckType": [],
+  "ServiceName": "cloudfront",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "medium",
+  "ResourceType": "AwsCloudFrontDistribution",
+  "Description": "Ensure that your Amazon CloudFront distributions are configured to use a custom SSL/TLS certificate instead of the default one.",
+  "Risk": "Using the default SSL/TLS certificate provided by CloudFront can limit your ability to use custom domain names and may not align with your organization's security policies or branding requirements.",
+  "RelatedUrl": "https://aws.amazon.com/what-is/ssl-certificate/",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "https://docs.prowler.com/checks/aws/networking-policies/ensure-aws-cloudfront-distribution-uses-custom-ssl-certificate/",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/cloudfront-controls.html#cloudfront-7",
+      "Terraform": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudFront/cloudfront-distro-custom-tls.html"
+    },
+    "Recommendation": {
+      "Text": "Configure your CloudFront distributions to use a custom SSL/TLS certificate to enable secure access via your own domain names and meet specific security and branding needs. This allows for more control over encryption and authentication settings.",
+      "Url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/CNAMEs.html#CreatingCNAME"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

@@ -1,6 +1,9 @@
 from unittest import mock
 
-from prowler.providers.aws.services.cloudfront.cloudfront_service import Distribution
+from prowler.providers.aws.services.cloudfront.cloudfront_service import (
+    Distribution,
+    Origin,
+)
 from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER
 
 DISTRIBUTION_ID = "E27LVI50CSW06W"
@@ -36,42 +39,14 @@ class Test_cloudfront_distributions_using_deprecated_ssl_protocols:
                 id=DISTRIBUTION_ID,
                 region=REGION,
                 origins=[
-                    {
-                        "Id": "string",
-                        "DomainName": "string",
-                        "OriginPath": "string",
-                        "CustomHeaders": {
-                            "Quantity": 123,
-                            "Items": [
-                                {
-                                    "HeaderName": "string",
-                                    "HeaderValue": "string",
-                                },
-                            ],
-                        },
-                        "S3OriginConfig": {"OriginAccessIdentity": "string"},
-                        "CustomOriginConfig": {
-                            "HTTPPort": 123,
-                            "HTTPSPort": 123,
-                            "OriginProtocolPolicy": "https-only",
-                            "OriginSslProtocols": {
-                                "Quantity": 123,
-                                "Items": [
-                                    "SSLv3",
-                                ],
-                            },
-                            "OriginReadTimeout": 123,
-                            "OriginKeepaliveTimeout": 123,
-                        },
-                        "ConnectionAttempts": 123,
-                        "ConnectionTimeout": 123,
-                        "OriginShield": {
-                            "Enabled": False,
-                            "OriginShieldRegion": "string",
-                        },
-                        "OriginAccessControlId": "string",
-                    },
+                    Origin(
+                        id="string",
+                        domain_name="string",
+                        origin_protocol_policy="https-only",
+                        origin_ssl_protocols=["SSLv3"],
+                    )
                 ],
+                origin_failover=False,
             )
         }
 
@@ -106,43 +81,17 @@ class Test_cloudfront_distributions_using_deprecated_ssl_protocols:
                 id=DISTRIBUTION_ID,
                 region=REGION,
                 origins=[
-                    {
-                        "Id": "string",
-                        "DomainName": "string",
-                        "OriginPath": "string",
-                        "CustomHeaders": {
-                            "Quantity": 123,
-                            "Items": [
-                                {
-                                    "HeaderName": "string",
-                                    "HeaderValue": "string",
-                                },
-                            ],
-                        },
-                        "S3OriginConfig": {"OriginAccessIdentity": "string"},
-                        "CustomOriginConfig": {
-                            "HTTPPort": 123,
-                            "HTTPSPort": 123,
-                            "OriginProtocolPolicy": "https-only",
-                            "OriginSslProtocols": {
-                                "Quantity": 123,
-                                "Items": [
-                                    "SSLv3",
-                                    "TLSv1.2",
-                                ],
-                            },
-                            "OriginReadTimeout": 123,
-                            "OriginKeepaliveTimeout": 123,
-                        },
-                        "ConnectionAttempts": 123,
-                        "ConnectionTimeout": 123,
-                        "OriginShield": {
-                            "Enabled": False,
-                            "OriginShieldRegion": "string",
-                        },
-                        "OriginAccessControlId": "string",
-                    },
+                    Origin(
+                        id="string",
+                        domain_name="string",
+                        origin_protocol_policy="https-only",
+                        origin_ssl_protocols=[
+                            "SSLv3",
+                            "TLSv1.2",
+                        ],
+                    )
                 ],
+                origin_failover=False,
             )
         }
 
@@ -177,43 +126,17 @@ class Test_cloudfront_distributions_using_deprecated_ssl_protocols:
                 id=DISTRIBUTION_ID,
                 region=REGION,
                 origins=[
-                    {
-                        "Id": "string",
-                        "DomainName": "string",
-                        "OriginPath": "string",
-                        "CustomHeaders": {
-                            "Quantity": 123,
-                            "Items": [
-                                {
-                                    "HeaderName": "string",
-                                    "HeaderValue": "string",
-                                },
-                            ],
-                        },
-                        "S3OriginConfig": {"OriginAccessIdentity": "string"},
-                        "CustomOriginConfig": {
-                            "HTTPPort": 123,
-                            "HTTPSPort": 123,
-                            "OriginProtocolPolicy": "https-only",
-                            "OriginSslProtocols": {
-                                "Quantity": 123,
-                                "Items": [
-                                    "SSLv3",
-                                    "TLSv1.1",
-                                ],
-                            },
-                            "OriginReadTimeout": 123,
-                            "OriginKeepaliveTimeout": 123,
-                        },
-                        "ConnectionAttempts": 123,
-                        "ConnectionTimeout": 123,
-                        "OriginShield": {
-                            "Enabled": False,
-                            "OriginShieldRegion": "string",
-                        },
-                        "OriginAccessControlId": "string",
-                    },
+                    Origin(
+                        id="string",
+                        domain_name="string",
+                        origin_protocol_policy="https-only",
+                        origin_ssl_protocols=[
+                            "SSLv3",
+                            "TLSv1.1",
+                        ],
+                    )
                 ],
+                origin_failover=False,
             )
         }
 
@@ -248,40 +171,16 @@ class Test_cloudfront_distributions_using_deprecated_ssl_protocols:
                 id=DISTRIBUTION_ID,
                 region=REGION,
                 origins=[
-                    {
-                        "Id": "string",
-                        "DomainName": "string",
-                        "OriginPath": "string",
-                        "CustomHeaders": {
-                            "Quantity": 123,
-                            "Items": [
-                                {
-                                    "HeaderName": "string",
-                                    "HeaderValue": "string",
-                                },
-                            ],
-                        },
-                        "S3OriginConfig": {"OriginAccessIdentity": "string"},
-                        "CustomOriginConfig": {
-                            "HTTPPort": 123,
-                            "HTTPSPort": 123,
-                            "OriginProtocolPolicy": "https-only",
-                            "OriginSslProtocols": {
-                                "Quantity": 123,
-                                "Items": ["TLSv1.2"],
-                            },
-                            "OriginReadTimeout": 123,
-                            "OriginKeepaliveTimeout": 123,
-                        },
-                        "ConnectionAttempts": 123,
-                        "ConnectionTimeout": 123,
-                        "OriginShield": {
-                            "Enabled": False,
-                            "OriginShieldRegion": "string",
-                        },
-                        "OriginAccessControlId": "string",
-                    },
+                    Origin(
+                        id="string",
+                        domain_name="string",
+                        origin_protocol_policy="https-only",
+                        origin_ssl_protocols=[
+                            "TLSv1.2",
+                        ],
+                    )
                 ],
+                origin_failover=False,
             )
         }
 

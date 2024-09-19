@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:sagemaker:region:account-id:model",
   "Severity": "medium",
-  "ResourceType": "AwsSageMakerModel",
+  "ResourceType": "Other",
   "Description": "Check if Amazon SageMaker Models have VPC settings configured",
   "Risk": "This could provide an avenue for unauthorized access to your data.",
   "RelatedUrl": "https://docs.aws.amazon.com/sagemaker/latest/dg/studio-notebooks-and-internet-access.html",
