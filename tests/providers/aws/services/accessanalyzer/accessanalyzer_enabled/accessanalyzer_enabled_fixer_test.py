@@ -27,7 +27,7 @@ class Test_accessanalyzer_enabled_fixer:
 
         with mock.patch(
             "prowler.providers.aws.services.accessanalyzer.accessanalyzer_service.AccessAnalyzer",
-            new=accessanalyzer_client,
+            accessanalyzer_client,
         ):
             # Test Check
             from prowler.providers.aws.services.accessanalyzer.accessanalyzer_enabled.accessanalyzer_enabled_fixer import (
