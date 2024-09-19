@@ -264,9 +264,6 @@ class RDS(AWSService):
                                             "CopyTagsToSnapshot"
                                         ),
                                         port=cluster.get("Port"),
-                                        vpc_id=cluster.get("DBSubnetGroup", {}).get(
-                                            "VpcId"
-                                        ),
                                     )
                                     # We must use a unique value as the dict key to have unique keys
                                     self.db_clusters[db_cluster_arn] = db_cluster
@@ -540,7 +537,6 @@ class DBCluster(BaseModel):
     tags: Optional[list] = []
     copy_tags_to_snapshot: Optional[bool]
     port: Optional[int]
-    vpc_id: Optional[str]
 
 
 class DBSnapshot(BaseModel):

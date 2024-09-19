@@ -10,7 +10,7 @@ from tests.providers.aws.utils import (
 )
 
 
-class Test_rds_instance_not_default_port:
+class Test_rds_instance_non_default_port:
     @mock_aws
     def test_rds_no_instances(self):
         from prowler.providers.aws.services.rds.rds_service import RDS
@@ -22,15 +22,15 @@ class Test_rds_instance_not_default_port:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.rds.rds_instance_not_default_port.rds_instance_not_default_port.rds_client",
+                "prowler.providers.aws.services.rds.rds_instance_non_default_port.rds_instance_non_default_port.rds_client",
                 new=RDS(aws_provider),
             ):
                 # Test Check
-                from prowler.providers.aws.services.rds.rds_instance_not_default_port.rds_instance_not_default_port import (
-                    rds_instance_not_default_port,
+                from prowler.providers.aws.services.rds.rds_instance_non_default_port.rds_instance_non_default_port import (
+                    rds_instance_non_default_port,
                 )
 
-                check = rds_instance_not_default_port()
+                check = rds_instance_non_default_port()
                 result = check.execute()
 
                 assert len(result) == 0
@@ -62,15 +62,15 @@ class Test_rds_instance_not_default_port:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.rds.rds_instance_not_default_port.rds_instance_not_default_port.rds_client",
+                "prowler.providers.aws.services.rds.rds_instance_non_default_port.rds_instance_non_default_port.rds_client",
                 new=RDS(aws_provider),
             ):
                 # Test Check
-                from prowler.providers.aws.services.rds.rds_instance_not_default_port.rds_instance_not_default_port import (
-                    rds_instance_not_default_port,
+                from prowler.providers.aws.services.rds.rds_instance_non_default_port.rds_instance_non_default_port import (
+                    rds_instance_non_default_port,
                 )
 
-                check = rds_instance_not_default_port()
+                check = rds_instance_non_default_port()
                 result = check.execute()
 
                 assert len(result) == 1
@@ -88,7 +88,7 @@ class Test_rds_instance_not_default_port:
                 assert result[0].resource_tags == [{"Key": "test", "Value": "test"}]
 
     @mock_aws
-    def test_rds_instance_not_default_port_sg_not_allowed(self):
+    def test_rds_instance_non_default_port_sg_not_allowed(self):
         conn = client("rds", region_name=AWS_REGION_US_EAST_1)
         conn.create_db_instance(
             DBInstanceIdentifier="db-master-1",
@@ -114,15 +114,15 @@ class Test_rds_instance_not_default_port:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.rds.rds_instance_not_default_port.rds_instance_not_default_port.rds_client",
+                "prowler.providers.aws.services.rds.rds_instance_non_default_port.rds_instance_non_default_port.rds_client",
                 new=RDS(aws_provider),
             ):
                 # Test Check
-                from prowler.providers.aws.services.rds.rds_instance_not_default_port.rds_instance_not_default_port import (
-                    rds_instance_not_default_port,
+                from prowler.providers.aws.services.rds.rds_instance_non_default_port.rds_instance_non_default_port import (
+                    rds_instance_non_default_port,
                 )
 
-                check = rds_instance_not_default_port()
+                check = rds_instance_non_default_port()
                 result = check.execute()
 
                 assert len(result) == 1
@@ -140,7 +140,7 @@ class Test_rds_instance_not_default_port:
                 assert result[0].resource_tags == [{"Key": "test", "Value": "test"}]
 
     @mock_aws
-    def test_rds_instance_not_default_port_sg_allowed(self):
+    def test_rds_instance_non_default_port_sg_allowed(self):
         ec2_conn = client("ec2", region_name=AWS_REGION_US_EAST_1)
         sg = ec2_conn.create_security_group(
             GroupName="my-security-group",
@@ -187,18 +187,18 @@ class Test_rds_instance_not_default_port:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.rds.rds_instance_not_default_port.rds_instance_not_default_port.rds_client",
+                "prowler.providers.aws.services.rds.rds_instance_non_default_port.rds_instance_non_default_port.rds_client",
                 new=RDS(aws_provider),
             ), mock.patch(
-                "prowler.providers.aws.services.rds.rds_instance_not_default_port.rds_instance_not_default_port.ec2_client",
+                "prowler.providers.aws.services.rds.rds_instance_non_default_port.rds_instance_non_default_port.ec2_client",
                 new=EC2(aws_provider),
             ):
                 # Test Check
-                from prowler.providers.aws.services.rds.rds_instance_not_default_port.rds_instance_not_default_port import (
-                    rds_instance_not_default_port,
+                from prowler.providers.aws.services.rds.rds_instance_non_default_port.rds_instance_non_default_port import (
+                    rds_instance_non_default_port,
                 )
 
-                check = rds_instance_not_default_port()
+                check = rds_instance_non_default_port()
                 result = check.execute()
 
                 assert len(result) == 1

@@ -1,9 +1,9 @@
 {
   "Provider": "aws",
-  "CheckID": "rds_instance_not_default_port",
+  "CheckID": "rds_instance_non_default_port",
   "CheckTitle": "Check if RDS instances are using non-default ports.",
   "CheckType": [
-    "Software and Configuration Checks, AWS Security Best Practices"
+    "Software and Configuration Checks/AWS Security Best Practices"
   ],
   "ServiceName": "rds",
   "SubServiceName": "",
