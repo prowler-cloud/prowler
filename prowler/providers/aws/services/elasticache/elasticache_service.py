@@ -107,7 +107,7 @@ class ElastiCache(AWSService):
                                 "AutoMinorVersionUpgrade", False
                             ),
                             automatic_failover=repl_group.get(
-                                "AutomaticFailoverStatus", "disabled"
+                                "AutomaticFailover", "disabled"
                             ),
                         )
                 except Exception as error:

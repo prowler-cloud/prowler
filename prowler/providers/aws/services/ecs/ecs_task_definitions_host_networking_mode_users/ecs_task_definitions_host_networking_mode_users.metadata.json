@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "ecs_task_definitions_host_networking_mode_users",
+  "CheckTitle": "Amazon ECS task definitions should have secure networking modes and user definitions",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "ecs",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:ecs:region:account-id:task-definition/resource-id",
+  "Severity": "high",
+  "ResourceType": "AwsEcsTaskDefinition",
+  "Description": "This control checks whether an active Amazon ECS task definition with host networking mode has privileged or user container definitions. The control fails for task definitions that have host network mode and container definitions of privileged=false or empty, and user=root or empty.",
+  "Risk": "If ECS tasks are configured with host networking and either lack a defined user or run with elevated privileges, this can lead to privilege escalation, unauthorized access to resources, and increased exposure to vulnerabilities.",
+  "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/ecs-task-definition-user-for-host-mode-check.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws ecs update-task-definition --task-definition <task-definition-name> --network-mode awsvpc --requires-compatibilities FARGATE --user <user-name>",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/ecs-controls.html#ecs-6",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure your ECS task definitions use the awsvpc networking mode and have secure user configurations when using host networking mode.",
+      "Url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/update-task-definition-console-v2.html"
+    }
+  },
+  "Categories": [
+    "trustboundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

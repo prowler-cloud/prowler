@@ -75,6 +75,7 @@ class Test_cloudfront_distributions_geo_restrictions_enabled:
                 region=REGION,
                 origins=[],
                 geo_restriction_type=GeoRestrictionType.whitelist,
+                origin_failover=False,
             )
         }
 
@@ -110,6 +111,7 @@ class Test_cloudfront_distributions_geo_restrictions_enabled:
                 region=REGION,
                 origins=[],
                 geo_restriction_type=GeoRestrictionType.blacklist,
+                origin_failover=False,
             )
         }
 
