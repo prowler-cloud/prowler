@@ -16,6 +16,7 @@ export function FilterColumnTable({ filters }: FilterColumnTableProps) {
       if (key.startsWith("filter[") && key.endsWith("]")) {
         const filterKey = key.slice(7, -1);
         if (filters.some((filter) => filter.key === filterKey)) {
+          // eslint-disable-next-line security/detect-object-injection
           currentFilters[filterKey] = value;
         }
       }
@@ -46,6 +47,7 @@ export function FilterColumnTable({ filters }: FilterColumnTableProps) {
           <Button
             key={`${key}-${value}`}
             onClick={() => applyFilter(key, value)}
+            // eslint-disable-next-line security/detect-object-injection
             variant={activeFilters[key] === value ? "faded" : "light"}
             size="sm"
           >

@@ -1,7 +1,6 @@
 import { Spacer } from "@nextui-org/react";
 
 import { SeverityChart, StatusChart } from "@/components/charts";
-import { FilterControls } from "@/components/filters";
 import { AttackSurface } from "@/components/overview";
 import { Header } from "@/components/ui";
 import { CustomBox } from "@/components/ui/custom";
@@ -11,7 +10,6 @@ export default function Home() {
     <>
       <Header title="Scan Overview" icon="solar:pie-chart-2-outline" />
       <Spacer y={4} />
-      <FilterControls providers date accounts regions mutedFindings />
       <Spacer y={10} />
       <div className="grid grid-cols-12 gap-4">
         <CustomBox

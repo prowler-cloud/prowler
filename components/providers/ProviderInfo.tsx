@@ -7,7 +7,6 @@ import {
   GCPProviderBadge,
   KS8ProviderBadge,
 } from "../icons/providers-badge";
-import { CustomLoader } from "../ui/custom";
 
 interface ProviderInfoProps {
   connected: boolean | null;
