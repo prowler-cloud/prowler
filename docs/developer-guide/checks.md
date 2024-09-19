@@ -272,7 +272,7 @@ Each Prowler check has metadata associated which is stored at the same level of 
   # Severity holds the check's severity, always in lowercase (critical, high, medium, low or informational)
   "Severity": "critical",
   # ResourceType only for AWS, holds the type from here
-  # https://docs.aws.amazon.com/securityhub/1.0/APIReference/API_Types_ResourceDetails.html
+  # https://docs.aws.amazon.com/securityhub/latest/userguide/asff-resources.html
   "ResourceType": "Other",
   # Description holds the title of the check, for now is the same as CheckTitle
   "Description": "Ensure there are no EC2 AMIs set as Public.",
