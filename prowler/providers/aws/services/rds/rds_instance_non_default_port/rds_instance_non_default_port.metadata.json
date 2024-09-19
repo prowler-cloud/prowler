@@ -22,7 +22,7 @@
     },
     "Recommendation": {
       "Text": "Modify the RDS instance to use a non-default port, and ensure that the security group permits access to the new port.",
-      "Url": "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-23"
+      "Url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Overview.DBInstance.Modifying.html"
     }
   },
   "Categories": [],
