@@ -98,12 +98,12 @@ export const SidebarWrap = () => {
         })}
       >
         <Tooltip
-          content="Help & Feedback"
+          content="Feedback & Support"
           isDisabled={!isCompact}
           placement="right"
         >
           <Button
-            aria-label="Help & Feedback"
+            aria-label="Feedback & Support"
             fullWidth
             className={clsx(
               "justify-start truncate text-default-500 data-[hover=true]:text-foreground",
@@ -116,7 +116,7 @@ export const SidebarWrap = () => {
               isCompact ? null : (
                 <Icon
                   className="flex-none text-default-500"
-                  icon="solar:info-circle-line-duotone"
+                  icon="akar-icons:info"
                   width={24}
                   aria-hidden="true"
                 />
@@ -127,12 +127,95 @@ export const SidebarWrap = () => {
             {isCompact ? (
               <Icon
                 className="text-default-500"
-                icon="solar:info-circle-line-duotone"
+                icon="akar-icons:info"
                 width={24}
                 aria-hidden="true"
               />
             ) : (
-              "Help & Information"
+              "Feedback & Support"
+            )}
+          </Button>
+        </Tooltip>
+
+        <Tooltip
+          content="Documentation"
+          isDisabled={!isCompact}
+          placement="right"
+        >
+          <Link
+            href="https://docs.prowler.com/projects/prowler-saas/en/latest/"
+            target="_blank"
+          >
+            <Button
+              aria-label="Documentation"
+              className={clsx(
+                "justify-start text-default-500 data-[hover=true]:text-foreground",
+                {
+                  "justify-center": isCompact,
+                },
+              )}
+              isIconOnly={isCompact}
+              startContent={
+                isCompact ? null : (
+                  <Icon
+                    className="flex-none text-default-500"
+                    icon="tabler:file-type-doc"
+                    width={24}
+                    aria-hidden="true"
+                  />
+                )
+              }
+              variant="light"
+            >
+              {isCompact ? (
+                <Icon
+                  className="text-default-500"
+                  icon="tabler:file-type-doc"
+                  width={24}
+                  aria-hidden="true"
+                />
+              ) : (
+                "Documentation"
+              )}
+            </Button>
+          </Link>
+        </Tooltip>
+
+        <Tooltip
+          content="Product Updates"
+          isDisabled={!isCompact}
+          placement="right"
+        >
+          <Button
+            aria-label="Product Updates"
+            className={clsx(
+              "justify-start text-default-500 data-[hover=true]:text-foreground",
+              {
+                "justify-center": isCompact,
+              },
+            )}
+            isIconOnly={isCompact}
+            startContent={
+              isCompact ? null : (
+                <Icon
+                  className="flex-none text-default-500"
+                  icon="mdi:update"
+                  width={24}
+                  aria-hidden="true"
+                />
+              )
+            }
+            variant="light"
+          >
+            {isCompact ? (
+              <Icon
+                className="text-default-500"
+                icon="mdi:update"
+                width={24}
+                aria-hidden="true"
+              />
+            ) : (
+              "Product Updates"
             )}
           </Button>
         </Tooltip>
@@ -151,8 +234,8 @@ export const SidebarWrap = () => {
             startContent={
               isCompact ? null : (
                 <Icon
-                  className="flex-none rotate-180 text-default-500"
-                  icon="solar:minus-circle-line-duotone"
+                  className="flex-none text-default-500"
+                  icon="heroicons-outline:logout"
                   width={24}
                   aria-hidden="true"
                 />
@@ -162,8 +245,8 @@ export const SidebarWrap = () => {
           >
             {isCompact ? (
               <Icon
-                className="rotate-180 text-default-500"
-                icon="solar:minus-circle-line-duotone"
+                className="text-default-500"
+                icon="heroicons-outline:logout"
                 width={24}
                 aria-hidden="true"
               />
