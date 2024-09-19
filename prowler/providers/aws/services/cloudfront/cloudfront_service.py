@@ -8,7 +8,6 @@ from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################## CloudFront
 class CloudFront(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
@@ -30,6 +29,14 @@ class CloudFront(AWSService):
                         ):
                             distribution_id = item["Id"]
                             distribution_arn = item["ARN"]
+                            origin_groups = item.get("OriginGroups", {}).get(
+                                "Items", []
+                            )
+                            origin_failover = all(
+                                origin_group.get("Members", {}).get("Quantity", 0) >= 2
+                                for origin_group in origin_groups
+                            )
+
                             default_certificate = item["ViewerCertificate"][
                                 "CloudFrontDefaultCertificate"
                             ]
@@ -68,8 +75,9 @@ class CloudFront(AWSService):
                                 id=distribution_id,
                                 origins=origins,
                                 region=region,
-                                default_certificate=default_certificate,
+                                origin_failover=origin_failover,
                                 ssl_support_method=ssl_support_method,
+                                default_certificate=default_certificate,
                                 certificate=certificate,
                             )
                             self.distributions[distribution_id] = distribution
@@ -208,5 +216,6 @@ class Distribution(BaseModel):
     default_root_object: Optional[str]
     viewer_protocol_policy: Optional[str]
     tags: Optional[list] = []
+    origin_failover: Optional[bool]
     ssl_support_method: Optional[SSLSupportMethod]
     certificate: Optional[str]

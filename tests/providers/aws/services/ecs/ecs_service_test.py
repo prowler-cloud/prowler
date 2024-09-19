@@ -1,10 +1,37 @@
 from unittest.mock import patch
 
-from boto3 import client
-from moto import mock_aws
+import botocore
 
 from prowler.providers.aws.services.ecs.ecs_service import ECS
 from tests.providers.aws.utils import AWS_REGION_EU_WEST_1, set_mocked_aws_provider
+
+make_api_call = botocore.client.BaseClient._make_api_call
+
+
+def mock_make_api_call(self, operation_name, kwarg):
+    if operation_name == "ListTaskDefinitions":
+        return {
+            "taskDefinitionArns": [
+                "arn:aws:ecs:eu-west-1:123456789012:task-definition/test_ecs_task:1"
+            ]
+        }
+    if operation_name == "DescribeTaskDefinition":
+        return {
+            "taskDefinition": {
+                "containerDefinitions": [
+                    {
+                        "name": "test-container",
+                        "image": "test-image",
+                        "environment": [
+                            {"name": "DB_PASSWORD", "value": "pass-12343"},
+                        ],
+                    }
+                ],
+                "networkMode": "host",
+                "tags": [],
+            }
+        }
+    return make_api_call(self, operation_name, kwarg)
 
 
 def mock_generate_regional_clients(provider, service):
@@ -40,94 +67,49 @@ class Test_ECS_Service:
         assert ecs.session.__class__.__name__ == "Session"
 
     # Test list ECS task definitions
-    @mock_aws
+    @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     def test_list_task_definitions(self):
-        ecs_client = client("ecs", region_name=AWS_REGION_EU_WEST_1)
-
-        definition = dict(
-            family="test_ecs_task",
-            containerDefinitions=[
-                {
-                    "name": "hello_world",
-                    "image": "hello-world:latest",
-                    "memory": 400,
-                }
-            ],
-        )
-
-        task_definition = ecs_client.register_task_definition(**definition)
         aws_provider = set_mocked_aws_provider()
         ecs = ECS(aws_provider)
 
-        assert len(ecs.task_definitions) == 1
-        assert (
-            ecs.task_definitions[0].name == task_definition["taskDefinition"]["family"]
-        )
-        assert (
-            ecs.task_definitions[0].arn
-            == task_definition["taskDefinition"]["taskDefinitionArn"]
-        )
-        assert ecs.task_definitions[0].environment_variables == []
+        task_arn = "arn:aws:ecs:eu-west-1:123456789012:task-definition/test_ecs_task:1"
 
-    @mock_aws
+        assert len(ecs.task_definitions) == 1
+        assert ecs.task_definitions[task_arn].name == "test_ecs_task"
+        assert ecs.task_definitions[task_arn].arn == task_arn
+        assert ecs.task_definitions[task_arn].revision == "1"
+        assert ecs.task_definitions[task_arn].region == AWS_REGION_EU_WEST_1
+
+    @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     # Test describe ECS task definitions
     def test__describe_task_definitions__(self):
-        ecs_client = client("ecs", region_name=AWS_REGION_EU_WEST_1)
-
-        definition = dict(
-            family="test_ecs_task",
-            containerDefinitions=[
-                {
-                    "name": "hello_world",
-                    "image": "hello-world:latest",
-                    "memory": 400,
-                    "environment": [
-                        {"name": "test-env", "value": "test-env-value"},
-                        {"name": "test-env2", "value": "test-env-value2"},
-                    ],
-                }
-            ],
-            tags=[
-                {"key": "test", "value": "test"},
-            ],
-        )
-
-        task_definition = ecs_client.register_task_definition(**definition)
         aws_provider = set_mocked_aws_provider()
         ecs = ECS(aws_provider)
 
+        task_arn = "arn:aws:ecs:eu-west-1:123456789012:task-definition/test_ecs_task:1"
+
         assert len(ecs.task_definitions) == 1
+        assert ecs.task_definitions[task_arn].name == "test_ecs_task"
+        assert ecs.task_definitions[task_arn].arn == task_arn
+        assert ecs.task_definitions[task_arn].revision == "1"
+        assert ecs.task_definitions[task_arn].region == AWS_REGION_EU_WEST_1
+        assert len(ecs.task_definitions[task_arn].container_definitions) == 1
         assert (
-            ecs.task_definitions[0].name == task_definition["taskDefinition"]["family"]
-        )
-        assert ecs.task_definitions[0].tags == [
-            {"key": "test", "value": "test"},
-        ]
-        assert (
-            ecs.task_definitions[0].arn
-            == task_definition["taskDefinition"]["taskDefinitionArn"]
-        )
-        assert (
-            ecs.task_definitions[0].environment_variables[0].name
-            == task_definition["taskDefinition"]["containerDefinitions"][0][
-                "environment"
-            ][0]["name"]
+            ecs.task_definitions[task_arn].container_definitions[0].name
+            == "test-container"
         )
         assert (
-            ecs.task_definitions[0].environment_variables[0].value
-            == task_definition["taskDefinition"]["containerDefinitions"][0][
-                "environment"
-            ][0]["value"]
+            len(ecs.task_definitions[task_arn].container_definitions[0].environment)
+            == 1
         )
         assert (
-            ecs.task_definitions[0].environment_variables[1].name
-            == task_definition["taskDefinition"]["containerDefinitions"][0][
-                "environment"
-            ][1]["name"]
+            ecs.task_definitions[task_arn].container_definitions[0].environment[0].name
+            == "DB_PASSWORD"
         )
         assert (
-            ecs.task_definitions[0].environment_variables[1].value
-            == task_definition["taskDefinition"]["containerDefinitions"][0][
-                "environment"
-            ][1]["value"]
+            ecs.task_definitions[task_arn].container_definitions[0].environment[0].value
+            == "pass-12343"
         )
+        assert ecs.task_definitions[task_arn].network_mode == "host"
+        assert not ecs.task_definitions[task_arn].container_definitions[0].privileged
+        assert ecs.task_definitions[task_arn].container_definitions[0].user == ""

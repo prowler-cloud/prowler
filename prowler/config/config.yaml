@@ -101,6 +101,8 @@ aws:
       "ruby2.5",
       "ruby2.7",
     ]
+  # aws.awslambda_function_vpc_is_in_multi_azs
+  lambda_min_azs: 2
 
   # AWS Organizations
   # aws.organizations_scp_check_deny_regions
