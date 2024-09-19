@@ -1,20 +1,9 @@
 from unittest import mock
-from uuid import uuid4
 
-from moto import mock_aws
-
-from tests.providers.aws.utils import (
-    AWS_ACCOUNT_ARN,
-    AWS_ACCOUNT_NUMBER,
-    AWS_REGION_EU_WEST_1,
-)
-
-ANALYZER_ID = str(uuid4())
-ANALYZER_ARN = f"arn:aws:accessanalyzer:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:detector/{ANALYZER_ID}"
+from tests.providers.aws.utils import AWS_ACCOUNT_ARN, AWS_REGION_EU_WEST_1
 
 
 class Test_accessanalyzer_enabled_fixer:
-    @mock_aws
     def test_accessanalyzer_enabled_fixer(self):
         regional_client = mock.MagicMock()
         accessanalyzer_client = mock.MagicMock()
@@ -27,7 +16,10 @@ class Test_accessanalyzer_enabled_fixer:
 
         with mock.patch(
             "prowler.providers.aws.services.accessanalyzer.accessanalyzer_service.AccessAnalyzer",
-            accessanalyzer_client,
+            new=accessanalyzer_client,
+        ) as accessanalyzer_client, mock.patch(
+            "prowler.providers.aws.services.accessanalyzer.accessanalyzer_client.accessanalyzer_client",
+            new=accessanalyzer_client,
         ):
             # Test Check
             from prowler.providers.aws.services.accessanalyzer.accessanalyzer_enabled.accessanalyzer_enabled_fixer import (
