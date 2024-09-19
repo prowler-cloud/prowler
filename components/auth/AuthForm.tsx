@@ -57,6 +57,7 @@ export const AuthForm = ({ type }: { type: string }) => {
       //   const newUser = await signUp(data);
       // }
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error(error);
     }
   };
