@@ -95,6 +95,7 @@ class Test_RDS_Service:
                 {"Key": "test", "Value": "test"},
             ],
             CopyTagsToSnapshot=True,
+            Port=5432,
         )
         # RDS client for this test class
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
@@ -121,6 +122,7 @@ class Test_RDS_Service:
         ]
         assert "test" in db_instance.parameter_groups
         assert db_instance.copy_tags_to_snapshot
+        assert db_instance.port == 5432
 
     @mock_aws
     def test_describe_db_parameters(self):
@@ -276,6 +278,7 @@ class Test_RDS_Service:
                 {"Key": "test", "Value": "test"},
             ],
             CopyTagsToSnapshot=True,
+            Port=5432,
         )
         # RDS client for this test class
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
@@ -306,6 +309,7 @@ class Test_RDS_Service:
         assert rds.db_clusters[db_cluster_arn].force_ssl == "0"
         assert rds.db_clusters[db_cluster_arn].require_secure_transport == "OFF"
         assert rds.db_clusters[db_cluster_arn].copy_tags_to_snapshot
+        assert rds.db_clusters[db_cluster_arn].port == 5432
 
     # Test RDS Describe DB Cluster Snapshots
     @mock_aws

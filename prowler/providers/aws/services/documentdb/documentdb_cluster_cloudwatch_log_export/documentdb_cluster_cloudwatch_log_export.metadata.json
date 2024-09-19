@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
-  "ResourceType": "AwsRDSDBCluster",
+  "ResourceType": "AwsRdsDbCluster",
   "Description": "Check if DocumentDB clusters are using the log export feature.",
   "Risk": "Ensure that all your Amazon DocumentDB clusters are using the Log Exports feature in order to publish audit logs directly to CloudWatch Logs. The events recorded by Log Exports include events such as successful and failed authentication attempts, creating indexes, or dropping collections in DocumentDB databases.",
   "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/documentdb-controls.html#documentdb-4",

@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:sagemaker:region:account-id:training-job",
   "Severity": "medium",
-  "ResourceType": "AwsSageMakerTrainingJob",
+  "ResourceType": "Other",
   "Description": "Check if Amazon SageMaker Training jobs have volume and output with KMS encryption enabled",
   "Risk": "Data exfiltration could happen if information is not protected. KMS keys provide additional security level to IAM policies.",
   "RelatedUrl": "https://docs.aws.amazon.com/sagemaker/latest/dg/key-management.html",

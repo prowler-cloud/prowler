@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-cluster",
   "Severity": "low",
-  "ResourceType": "AwsRdsEventSubscription",
+  "ResourceType": "AwsRdsDbCluster",
   "Description": "Ensure that Amazon RDS event notification subscriptions are enabled for database cluster events, particularly maintenance and failure.",
   "Risk": "Without event subscriptions for critical events, such as maintenance and failures, you may not be aware of issues affecting your RDS clusters, leading to downtime or security vulnerabilities.",
   "RelatedUrl": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_Events.html",

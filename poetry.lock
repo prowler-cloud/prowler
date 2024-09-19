@@ -401,13 +401,13 @@ typing-extensions = ">=4.6.0"
 
 [[package]]
 name = "azure-mgmt-containerservice"
-version = "31.0.0"
+version = "32.0.0"
 description = "Microsoft Azure Container Service Management Client Library for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "azure-mgmt-containerservice-31.0.0.tar.gz", hash = "sha256:134358d7f88c4d29b4009f91d7619861e1fad5dbea5e147402dd61ad96b5624a"},
-    {file = "azure_mgmt_containerservice-31.0.0-py3-none-any.whl", hash = "sha256:75c6dbbaf27ed6c8251e34b86fefcfb001fe096c69df9ce93c163de71a2b5275"},
+    {file = "azure_mgmt_containerservice-32.0.0-py3-none-any.whl", hash = "sha256:66ff0a2651122207db0d5492e86550561f9d81509379abe7d401ed4805a1c66b"},
+    {file = "azure_mgmt_containerservice-32.0.0.tar.gz", hash = "sha256:ccb587479d8a93ec78f7162590adc82e4fba4de76e4adc3419f33ad225efb292"},
 ]
 
 [package.dependencies]
@@ -610,23 +610,23 @@ typing-extensions = ">=4.6.0"
 
 [[package]]
 name = "azure-storage-blob"
-version = "12.22.0"
+version = "12.23.0"
 description = "Microsoft Azure Blob Storage Client Library for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "azure-storage-blob-12.22.0.tar.gz", hash = "sha256:b3804bb4fe8ab1c32771fa464053da772a682c2737b19da438a3f4e5e3b3736e"},
-    {file = "azure_storage_blob-12.22.0-py3-none-any.whl", hash = "sha256:bb7d2d824ce3f11f14a27ee7d9281289f7e072ac8311c52e3652672455b7d5e8"},
+    {file = "azure_storage_blob-12.23.0-py3-none-any.whl", hash = "sha256:8ac4b34624ed075eda1e38f0c6dadb601e1b199e27a09aa63edc429bf4a23329"},
+    {file = "azure_storage_blob-12.23.0.tar.gz", hash = "sha256:2fadbceda1d99c4a72dfd32e0122d7bca8b5e8d2563f5c624d634aeaff49c9df"},
 ]
 
 [package.dependencies]
-azure-core = ">=1.28.0"
+azure-core = ">=1.30.0"
 cryptography = ">=2.1.4"
 isodate = ">=0.6.1"
 typing-extensions = ">=4.6.0"
 
 [package.extras]
-aio = ["azure-core[aio] (>=1.28.0)"]
+aio = ["azure-core[aio] (>=1.30.0)"]
 
 [[package]]
 name = "babel"
@@ -725,17 +725,17 @@ files = [
 
 [[package]]
 name = "boto3"
-version = "1.35.16"
+version = "1.35.21"
 description = "The AWS SDK for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "boto3-1.35.16-py3-none-any.whl", hash = "sha256:9c5b0ce4a25bb78d659478d1c552f1dbb7ff275aab3263bb41cdbef8bca28693"},
-    {file = "boto3-1.35.16.tar.gz", hash = "sha256:9b96c210678cf430b16b49dee87db30f46044602bb9a605a465e1900f468a43f"},
+    {file = "boto3-1.35.21-py3-none-any.whl", hash = "sha256:247f88eedce9ae4e014a8fc14a9473759bb8e391460d49396a3b600fb649f33b"},
+    {file = "boto3-1.35.21.tar.gz", hash = "sha256:db5fbbd10248db060f2ccce3ae17764f1641c99c8b9f51d422c26ebe25703a1e"},
 ]
 
 [package.dependencies]
-botocore = ">=1.35.16,<1.36.0"
+botocore = ">=1.35.21,<1.36.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.10.0,<0.11.0"
 
@@ -744,13 +744,13 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "botocore"
-version = "1.35.17"
+version = "1.35.22"
 description = "Low-level, data-driven core of boto 3."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "botocore-1.35.17-py3-none-any.whl", hash = "sha256:a93f773ca93139529b5d36730b382dbee63ab4c7f26129aa5c84835255ca999d"},
-    {file = "botocore-1.35.17.tar.gz", hash = "sha256:0d35d03ea647b5d464c7f77bdab6fb23ae5d49752b13cf97ab84444518c7b1bd"},
+    {file = "botocore-1.35.22-py3-none-any.whl", hash = "sha256:d9bc656e7dde0b3e3f3080fc54bacff6a97fd7806b98acbcc21c7f9d4d0102b9"},
+    {file = "botocore-1.35.22.tar.gz", hash = "sha256:18362b7ec748561d786aebf1dd5c9faf22c4732efbf89344314199f96d3bbb65"},
 ]
 
 [package.dependencies]
@@ -1152,13 +1152,13 @@ test-randomorder = ["pytest-randomly"]
 
 [[package]]
 name = "dash"
-version = "2.18.0"
+version = "2.18.1"
 description = "A Python framework for building reactive web-apps. Developed by Plotly."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "dash-2.18.0-py3-none-any.whl", hash = "sha256:2d37b479be20bef1a184d35be4a654e4da131da6538d563fc813be3e28b90cbc"},
-    {file = "dash-2.18.0.tar.gz", hash = "sha256:9be6ea7562d40bb70211df8cbfb23611cc2ca9ae63cfca9af8f96679989adc40"},
+    {file = "dash-2.18.1-py3-none-any.whl", hash = "sha256:07c4513bb5f79a4b936847a0b49afc21dbd4b001ff77ea78d4d836043e211a07"},
+    {file = "dash-2.18.1.tar.gz", hash = "sha256:ffdf89690d734f6851ef1cb344222826ffb11ad2214ab9172668bf8aadd75d12"},
 ]
 
 [package.dependencies]
@@ -1619,13 +1619,13 @@ grpcio-gcp = ["grpcio-gcp (>=0.2.2,<1.0.dev0)"]
 
 [[package]]
 name = "google-api-python-client"
-version = "2.145.0"
+version = "2.146.0"
 description = "Google API Client Library for Python"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "google_api_python_client-2.145.0-py2.py3-none-any.whl", hash = "sha256:d74da1358f3f2d63daf3c6f26bd96d89652051183bc87cf10a56ceb2a70beb50"},
-    {file = "google_api_python_client-2.145.0.tar.gz", hash = "sha256:8b84dde11aaccadc127e4846f5cd932331d804ea324e353131595e3f25376e97"},
+    {file = "google_api_python_client-2.146.0-py2.py3-none-any.whl", hash = "sha256:b1e62c9889c5ef6022f11d30d7ef23dc55100300f0e8aaf8aa09e8e92540acad"},
+    {file = "google_api_python_client-2.146.0.tar.gz", hash = "sha256:41f671be10fa077ee5143ee9f0903c14006d39dc644564f4e044ae96b380bf68"},
 ]
 
 [package.dependencies]
@@ -2473,13 +2473,13 @@ min-versions = ["babel (==2.9.0)", "click (==7.0)", "colorama (==0.4)", "ghp-imp
 
 [[package]]
 name = "mkdocs-git-revision-date-localized-plugin"
-version = "1.2.8"
+version = "1.2.9"
 description = "Mkdocs plugin that enables displaying the localized date of the last git modification of a markdown file."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "mkdocs_git_revision_date_localized_plugin-1.2.8-py3-none-any.whl", hash = "sha256:c7ec3b1481ca23134269e84927bd8a5dc1aa359c0e515b832dbd5d25019b5748"},
-    {file = "mkdocs_git_revision_date_localized_plugin-1.2.8.tar.gz", hash = "sha256:6e09c308bb27bcf36b211d17b74152ecc2837cdfc351237f70cffc723ef0fd99"},
+    {file = "mkdocs_git_revision_date_localized_plugin-1.2.9-py3-none-any.whl", hash = "sha256:dea5c8067c23df30275702a1708885500fadf0abfb595b60e698bffc79c7a423"},
+    {file = "mkdocs_git_revision_date_localized_plugin-1.2.9.tar.gz", hash = "sha256:df9a50873fba3a42ce9123885f8c53d589e90ef6c2443fe3280ef1e8d33c8f65"},
 ]
 
 [package.dependencies]
@@ -4430,13 +4430,13 @@ files = [
 
 [[package]]
 name = "slack-sdk"
-version = "3.32.0"
+version = "3.33.0"
 description = "The Slack API Platform SDK for Python"
 optional = false
 python-versions = ">=3.6"
 files = [
-    {file = "slack_sdk-3.32.0-py2.py3-none-any.whl", hash = "sha256:f35e85f2847e6c25cf7c2d1df206ca0ad75556263fb592457bf03cca68ef64bb"},
-    {file = "slack_sdk-3.32.0.tar.gz", hash = "sha256:af8fc4ef1d1cbcecd28d01acf6955a3bb5b13d56f0a43a1b1c7e3b212cc5ec5b"},
+    {file = "slack_sdk-3.33.0-py2.py3-none-any.whl", hash = "sha256:853bb55154115d080cae342c4099f2ccb559a78ae8d0f5109b49842401a920fa"},
+    {file = "slack_sdk-3.33.0.tar.gz", hash = "sha256:070eb1fb355c149a5f80fa0be6eeb5f5588e4ddff4dd76acf060454435cb037e"},
 ]
 
 [package.extras]
@@ -4659,13 +4659,13 @@ socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
 
 [[package]]
 name = "vulture"
-version = "2.11"
+version = "2.12"
 description = "Find dead code"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "vulture-2.11-py2.py3-none-any.whl", hash = "sha256:12d745f7710ffbf6aeb8279ba9068a24d4e52e8ed333b8b044035c9d6b823aba"},
-    {file = "vulture-2.11.tar.gz", hash = "sha256:f0fbb60bce6511aad87ee0736c502456737490a82d919a44e6d92262cb35f1c2"},
+    {file = "vulture-2.12-py2.py3-none-any.whl", hash = "sha256:68ee4c4ce0128bb504dc7c2df4244c97ef5a2e29af42f27a976a6e30906e993a"},
+    {file = "vulture-2.12.tar.gz", hash = "sha256:c35e98e992eb84b01cdadbfeb0aca2d44363e7dfe6c19416f65001ae69360ccc"},
 ]
 
 [package.dependencies]
@@ -4967,4 +4967,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "68aedb69b79c496ed5840f27915d78e07732fc467e8f920b080a22504f8b822a"
+content-hash = "e8c080a1d744c490bec9899301b7182a0804f41173a88ff52c6f4604d8cf1a8b"

@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "cloudfront_distributions_s3_origin_access_control",
+  "CheckTitle": "Check if CloudFront distributions with S3 origin use OAC.",
+  "CheckType": [
+    "Data Exposure"
+  ],
+  "ServiceName": "cloudfront",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:cloudfront:region:account-id:distribution/resource-id",
+  "Severity": "medium",
+  "ResourceType": "AWSCloudFrontDistribution",
+  "Description": "Check if CloudFront distributions use origin access control.",
+  "Risk": "Without OAC, your S3 bucket could be accessed directly, bypassing CloudFront, which could expose your content to unauthorized access. Additionally, relying on Origin Access Identity (OAI) may limit functionality and security features, making your distribution less secure and more difficult to manage.",
+  "RelatedUrl": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html#migrate-from-oai-to-oac",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "https://docs.prowler.com/checks/aws/iam-policies/ensure-aws-cloudfromt-distribution-with-s3-have-origin-access-set-to-enabled/",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/cloudfront-controls.html#cloudfront-13",
+      "Terraform": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudFront/s3-origin.html"
+    },
+    "Recommendation": {
+      "Text": "Configure Origin Access Control (OAC) for CloudFront distributions that use an Amazon S3 origin. This will ensure that the content in your S3 bucket is accessible only through the specified CloudFront distribution, enhancing security by preventing direct access to the bucket.",
+      "Url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

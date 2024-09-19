@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
-  "ResourceType": "AWSCloudFrontDistribution",
+  "ResourceType": "AwsCloudFrontDistribution",
   "Description": "Ensure that your Amazon CloudFront distributions are configured to use a custom SSL/TLS certificate instead of the default one.",
   "Risk": "Using the default SSL/TLS certificate provided by CloudFront can limit your ability to use custom domain names and may not align with your organization's security policies or branding requirements.",
   "RelatedUrl": "https://aws.amazon.com/what-is/ssl-certificate/",

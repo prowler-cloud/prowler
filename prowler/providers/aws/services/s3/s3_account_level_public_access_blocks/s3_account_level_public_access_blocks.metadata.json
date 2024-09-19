@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:s3:::bucket_name",
   "Severity": "high",
-  "ResourceType": "AwsS3Bucket",
+  "ResourceType": "AwsS3AccountPublicAccessBlock",
   "Description": "Check S3 Account Level Public Access Block.",
   "Risk": "Public access policies may be applied to sensitive data buckets.",
   "RelatedUrl": "",

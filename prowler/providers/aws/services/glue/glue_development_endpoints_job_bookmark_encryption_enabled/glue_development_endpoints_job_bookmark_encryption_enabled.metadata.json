@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:glue:region:account-id:certificate/resource-id",
   "Severity": "medium",
-  "ResourceType": "AwsGlue",
+  "ResourceType": "Other",
   "Description": "Check if Glue development endpoints have Job bookmark encryption enabled.",
   "Risk": "If not enabled sensitive information at rest is not protected.",
   "RelatedUrl": "https://docs.aws.amazon.com/glue/latest/dg/console-security-configurations.html",
