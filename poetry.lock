@@ -610,23 +610,23 @@ typing-extensions = ">=4.6.0"
 
 [[package]]
 name = "azure-storage-blob"
-version = "12.22.0"
+version = "12.23.0"
 description = "Microsoft Azure Blob Storage Client Library for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "azure-storage-blob-12.22.0.tar.gz", hash = "sha256:b3804bb4fe8ab1c32771fa464053da772a682c2737b19da438a3f4e5e3b3736e"},
-    {file = "azure_storage_blob-12.22.0-py3-none-any.whl", hash = "sha256:bb7d2d824ce3f11f14a27ee7d9281289f7e072ac8311c52e3652672455b7d5e8"},
+    {file = "azure_storage_blob-12.23.0-py3-none-any.whl", hash = "sha256:8ac4b34624ed075eda1e38f0c6dadb601e1b199e27a09aa63edc429bf4a23329"},
+    {file = "azure_storage_blob-12.23.0.tar.gz", hash = "sha256:2fadbceda1d99c4a72dfd32e0122d7bca8b5e8d2563f5c624d634aeaff49c9df"},
 ]
 
 [package.dependencies]
-azure-core = ">=1.28.0"
+azure-core = ">=1.30.0"
 cryptography = ">=2.1.4"
 isodate = ">=0.6.1"
 typing-extensions = ">=4.6.0"
 
 [package.extras]
-aio = ["azure-core[aio] (>=1.28.0)"]
+aio = ["azure-core[aio] (>=1.30.0)"]
 
 [[package]]
 name = "babel"
@@ -725,17 +725,17 @@ files = [
 
 [[package]]
 name = "boto3"
-version = "1.35.19"
+version = "1.35.21"
 description = "The AWS SDK for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "boto3-1.35.19-py3-none-any.whl", hash = "sha256:84b3fe1727945bc3cada832d969ddb3dc0d08fce1677064ca8bdc13a89c1a143"},
-    {file = "boto3-1.35.19.tar.gz", hash = "sha256:9979fe674780a0b7100eae9156d74ee374cd1638a9f61c77277e3ce712f3e496"},
+    {file = "boto3-1.35.21-py3-none-any.whl", hash = "sha256:247f88eedce9ae4e014a8fc14a9473759bb8e391460d49396a3b600fb649f33b"},
+    {file = "boto3-1.35.21.tar.gz", hash = "sha256:db5fbbd10248db060f2ccce3ae17764f1641c99c8b9f51d422c26ebe25703a1e"},
 ]
 
 [package.dependencies]
-botocore = ">=1.35.19,<1.36.0"
+botocore = ">=1.35.21,<1.36.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.10.0,<0.11.0"
 
@@ -744,13 +744,13 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "botocore"
-version = "1.35.20"
+version = "1.35.22"
 description = "Low-level, data-driven core of boto 3."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "botocore-1.35.20-py3-none-any.whl", hash = "sha256:62412038f960691a299e60492f9ee7e8e75af563f2eca7f3640b3b54b8f5d236"},
-    {file = "botocore-1.35.20.tar.gz", hash = "sha256:82ad8a73fcd5852d127461c8dadbe40bf679f760a4efb0dde8d4d269ad3f126f"},
+    {file = "botocore-1.35.22-py3-none-any.whl", hash = "sha256:d9bc656e7dde0b3e3f3080fc54bacff6a97fd7806b98acbcc21c7f9d4d0102b9"},
+    {file = "botocore-1.35.22.tar.gz", hash = "sha256:18362b7ec748561d786aebf1dd5c9faf22c4732efbf89344314199f96d3bbb65"},
 ]
 
 [package.dependencies]
@@ -1619,13 +1619,13 @@ grpcio-gcp = ["grpcio-gcp (>=0.2.2,<1.0.dev0)"]
 
 [[package]]
 name = "google-api-python-client"
-version = "2.145.0"
+version = "2.146.0"
 description = "Google API Client Library for Python"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "google_api_python_client-2.145.0-py2.py3-none-any.whl", hash = "sha256:d74da1358f3f2d63daf3c6f26bd96d89652051183bc87cf10a56ceb2a70beb50"},
-    {file = "google_api_python_client-2.145.0.tar.gz", hash = "sha256:8b84dde11aaccadc127e4846f5cd932331d804ea324e353131595e3f25376e97"},
+    {file = "google_api_python_client-2.146.0-py2.py3-none-any.whl", hash = "sha256:b1e62c9889c5ef6022f11d30d7ef23dc55100300f0e8aaf8aa09e8e92540acad"},
+    {file = "google_api_python_client-2.146.0.tar.gz", hash = "sha256:41f671be10fa077ee5143ee9f0903c14006d39dc644564f4e044ae96b380bf68"},
 ]
 
 [package.dependencies]
@@ -3670,21 +3670,21 @@ testing = ["fields", "hunter", "process-tests", "pytest-xdist", "virtualenv"]
 
 [[package]]
 name = "pytest-env"
-version = "1.1.4"
+version = "1.1.5"
 description = "pytest plugin that allows you to add environment variables."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "pytest_env-1.1.4-py3-none-any.whl", hash = "sha256:a4212056d4d440febef311a98fdca56c31256d58fb453d103cba4e8a532b721d"},
-    {file = "pytest_env-1.1.4.tar.gz", hash = "sha256:86653658da8f11c6844975db955746c458a9c09f1e64957603161e2ff93f5133"},
+    {file = "pytest_env-1.1.5-py3-none-any.whl", hash = "sha256:ce90cf8772878515c24b31cd97c7fa1f4481cd68d588419fd45f10ecaee6bc30"},
+    {file = "pytest_env-1.1.5.tar.gz", hash = "sha256:91209840aa0e43385073ac464a554ad2947cc2fd663a9debf88d03b01e0cc1cf"},
 ]
 
 [package.dependencies]
-pytest = ">=8.3.2"
+pytest = ">=8.3.3"
 tomli = {version = ">=2.0.1", markers = "python_version < \"3.11\""}
 
 [package.extras]
-test = ["covdefaults (>=2.3)", "coverage (>=7.6.1)", "pytest-mock (>=3.14)"]
+testing = ["covdefaults (>=2.3)", "coverage (>=7.6.1)", "pytest-mock (>=3.14)"]
 
 [[package]]
 name = "pytest-randomly"
@@ -4430,13 +4430,13 @@ files = [
 
 [[package]]
 name = "slack-sdk"
-version = "3.32.0"
+version = "3.33.0"
 description = "The Slack API Platform SDK for Python"
 optional = false
 python-versions = ">=3.6"
 files = [
-    {file = "slack_sdk-3.32.0-py2.py3-none-any.whl", hash = "sha256:f35e85f2847e6c25cf7c2d1df206ca0ad75556263fb592457bf03cca68ef64bb"},
-    {file = "slack_sdk-3.32.0.tar.gz", hash = "sha256:af8fc4ef1d1cbcecd28d01acf6955a3bb5b13d56f0a43a1b1c7e3b212cc5ec5b"},
+    {file = "slack_sdk-3.33.0-py2.py3-none-any.whl", hash = "sha256:853bb55154115d080cae342c4099f2ccb559a78ae8d0f5109b49842401a920fa"},
+    {file = "slack_sdk-3.33.0.tar.gz", hash = "sha256:070eb1fb355c149a5f80fa0be6eeb5f5588e4ddff4dd76acf060454435cb037e"},
 ]
 
 [package.extras]
@@ -4659,13 +4659,13 @@ socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
 
 [[package]]
 name = "vulture"
-version = "2.11"
+version = "2.12"
 description = "Find dead code"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "vulture-2.11-py2.py3-none-any.whl", hash = "sha256:12d745f7710ffbf6aeb8279ba9068a24d4e52e8ed333b8b044035c9d6b823aba"},
-    {file = "vulture-2.11.tar.gz", hash = "sha256:f0fbb60bce6511aad87ee0736c502456737490a82d919a44e6d92262cb35f1c2"},
+    {file = "vulture-2.12-py2.py3-none-any.whl", hash = "sha256:68ee4c4ce0128bb504dc7c2df4244c97ef5a2e29af42f27a976a6e30906e993a"},
+    {file = "vulture-2.12.tar.gz", hash = "sha256:c35e98e992eb84b01cdadbfeb0aca2d44363e7dfe6c19416f65001ae69360ccc"},
 ]
 
 [package.dependencies]
@@ -4967,4 +4967,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "5c1da3ab902128e764bdddb5ded458d4ed093ae7ab23519970e36578e35c7a45"
+content-hash = "4fef0f22a58be7bc9fc1f30048814f5596e76fde4845f356bc312c044f3cb014"
