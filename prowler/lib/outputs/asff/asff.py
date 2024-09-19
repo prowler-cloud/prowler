@@ -89,7 +89,11 @@ class ASFF(Output):
                         CreatedAt=timestamp,
                         Severity=Severity(Label=finding.severity.value),
                         Title=finding.check_title,
-                        Description=finding.description,
+                        Description=(
+                            (finding.status_extended[:1000] + "...")
+                            if len(finding.status_extended) > 1000
+                            else finding.status_extended
+                        ),
                         Resources=[
                             Resource(
                                 Id=finding.resource_uid,
@@ -103,12 +107,6 @@ class ASFF(Output):
                             Status=finding_status,
                             AssociatedStandards=associated_standards,
                             RelatedRequirements=compliance_summary,
-                            StatusReasons=[
-                                {
-                                    "ReasonCode": finding_status,
-                                    "Description": finding.status_extended,
-                                }
-                            ],
                         ),
                         Remediation=Remediation(
                             Recommendation=Recommendation(
@@ -305,7 +303,6 @@ class Compliance(BaseModel):
     Status: str
     RelatedRequirements: list[str]
     AssociatedStandards: list[dict]
-    StatusReasons: list[dict]
 
     @validator("Status", pre=True, always=True)
     def status(status):
