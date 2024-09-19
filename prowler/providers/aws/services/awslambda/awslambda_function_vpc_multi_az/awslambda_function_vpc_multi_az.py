@@ -6,7 +6,7 @@ from prowler.providers.aws.services.awslambda.awslambda_function_inside_vpc.awsl
 from prowler.providers.aws.services.vpc.vpc_client import vpc_client
 
 
-class awslambda_function_vpc_is_in_multi_azs(Check):
+class awslambda_function_vpc_multi_az(Check):
     def execute(self) -> list[Check_Report_AWS]:
         findings = []
         LAMBDA_MIN_AZS = awslambda_client.audit_config.get("lambda_min_azs", 2)
@@ -27,18 +27,15 @@ class awslambda_function_vpc_is_in_multi_azs(Check):
                 )
 
                 if function.vpc_id:
-                    function_availability_zones = set(
-                        [
-                            getattr(
-                                vpc_client.vpc_subnets.get(subnet_id, None),
-                                "availability_zone",
-                                None,
-                            )  # BUG: if prowler executes this check with --resource-arn option, it will not have the subnets in the vpc_client.vpc_subnets dict (Exception managed in the getattr function)
-                            for subnet_id in function.subnet_ids
-                        ]
-                    )
-                    # Remove None values from the set
-                    function_availability_zones.discard(None)
+                    function_availability_zones = {
+                        getattr(
+                            vpc_client.vpc_subnets.get(subnet_id),
+                            "availability_zone",
+                            None,
+                        )
+                        for subnet_id in function.subnet_ids
+                        if subnet_id in vpc_client.vpc_subnets
+                    }
 
                     if len(function_availability_zones) >= LAMBDA_MIN_AZS:
                         report.status = "PASS"
