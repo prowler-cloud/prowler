@@ -105,7 +105,7 @@ class Test_elasticache_redis_replication_group_auth_enabled:
             assert result[0].status == "MANUAL"
             assert (
                 result[0].status_extended
-                == f"Elasticache Redis replication group {REPLICATION_GROUP_ID}(v{engine_version}) does not have to use AUTH, but it should have Redis ACL configured."
+                == f"Elasticache Redis replication group {REPLICATION_GROUP_ID} has version {engine_version} which supports Redis ACLs. Please review the ACL configuration."
             )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == REPLICATION_GROUP_ID

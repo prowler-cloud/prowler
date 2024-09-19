@@ -26,7 +26,7 @@ class elasticache_redis_replication_group_auth_enabled(Check):
                     report.status_extended = f"Elasticache Redis replication group {repl_group.id}(v{repl_group.engine_version}) does have AUTH enabled."
             else:
                 report.status = "MANUAL"
-                report.status_extended = f"Elasticache Redis replication group {repl_group.id}(v{repl_group.engine_version}) does not have to use AUTH, but it should have Redis ACL configured."
+                report.status_extended = f"Elasticache Redis replication group {repl_group.id} has version {repl_group.engine_version} which supports Redis ACLs. Please review the ACL configuration."
 
             findings.append(report)
 
