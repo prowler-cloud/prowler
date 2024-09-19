@@ -125,30 +125,13 @@ class Slack:
                     "type": "section",
                     "text": {
                         "type": "mrkdwn",
-                        "text": "\nCritical:\n"
-                        + f"• {stats['total_critical_severity_pass']}",
-                    },
-                },
-                {
-                    "type": "section",
-                    "text": {
-                        "type": "mrkdwn",
-                        "text": "\nHigh:\n" + f"• {stats['total_high_severity_pass']}",
-                    },
-                },
-                {
-                    "type": "section",
-                    "text": {
-                        "type": "mrkdwn",
-                        "text": "\nMedium:\n"
-                        + f"• {stats['total_medium_severity_pass']}",
-                    },
-                },
-                {
-                    "type": "section",
-                    "text": {
-                        "type": "mrkdwn",
-                        "text": "\nLow:\n" + f"• {stats['total_low_severity_pass']}",
+                        "text": (
+                            "*Severities:*\n"
+                            f"• *Critical:* {stats['total_critical_severity_pass']} "
+                            f"• *High:* {stats['total_high_severity_pass']} "
+                            f"• *Medium:* {stats['total_medium_severity_pass']} "
+                            f"• *Low:* {stats['total_low_severity_pass']}"
+                        ),
                     },
                 },
                 {
@@ -162,30 +145,13 @@ class Slack:
                     "type": "section",
                     "text": {
                         "type": "mrkdwn",
-                        "text": "\nCritical:\n"
-                        + f"• {stats['total_critical_severity_fail']}",
-                    },
-                },
-                {
-                    "type": "section",
-                    "text": {
-                        "type": "mrkdwn",
-                        "text": "\nHigh:\n" + f"• {stats['total_high_severity_fail']}",
-                    },
-                },
-                {
-                    "type": "section",
-                    "text": {
-                        "type": "mrkdwn",
-                        "text": "\nMedium:\n"
-                        + f"• {stats['total_medium_severity_fail']}",
-                    },
-                },
-                {
-                    "type": "section",
-                    "text": {
-                        "type": "mrkdwn",
-                        "text": "\nLow:\n" + f"• {stats['total_low_severity_fail']}",
+                        "text": (
+                            "*Severities:*\n"
+                            f"• *Critical:* {stats['total_critical_severity_fail']} "
+                            f"• *High:* {stats['total_high_severity_fail']} "
+                            f"• *Medium:* {stats['total_medium_severity_fail']} "
+                            f"• *Low:* {stats['total_low_severity_fail']}"
+                        ),
                     },
                 },
                 {

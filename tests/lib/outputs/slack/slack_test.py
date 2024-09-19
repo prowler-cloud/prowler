@@ -116,28 +116,13 @@ class TestSlackIntegration:
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": "\nCritical:\n" + "• 2",
-                },
-            },
-            {
-                "type": "section",
-                "text": {
-                    "type": "mrkdwn",
-                    "text": "\nHigh:\n" + "• 1",
-                },
-            },
-            {
-                "type": "section",
-                "text": {
-                    "type": "mrkdwn",
-                    "text": "\nMedium:\n" + "• 1",
-                },
-            },
-            {
-                "type": "section",
-                "text": {
-                    "type": "mrkdwn",
-                    "text": "\nLow:\n" + "• 3",
+                    "text": (
+                        "*Severities:*\n"
+                        "• *Critical:* 2 "
+                        "• *High:* 1 "
+                        "• *Medium:* 1 "
+                        "• *Low:* 3"
+                    ),
                 },
             },
             {
@@ -151,28 +136,13 @@ class TestSlackIntegration:
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": "\nCritical:\n" + "• 4",
-                },
-            },
-            {
-                "type": "section",
-                "text": {
-                    "type": "mrkdwn",
-                    "text": "\nHigh:\n" + "• 1",
-                },
-            },
-            {
-                "type": "section",
-                "text": {
-                    "type": "mrkdwn",
-                    "text": "\nMedium:\n" + "• 2",
-                },
-            },
-            {
-                "type": "section",
-                "text": {
-                    "type": "mrkdwn",
-                    "text": "\nLow:\n" + "• 2",
+                    "text": (
+                        "*Severities:*\n"
+                        "• *Critical:* 4 "
+                        "• *High:* 1 "
+                        "• *Medium:* 2 "
+                        "• *Low:* 2"
+                    ),
                 },
             },
             {
@@ -275,28 +245,13 @@ class TestSlackIntegration:
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": "\nCritical:\n" + "• 2",
-                },
-            },
-            {
-                "type": "section",
-                "text": {
-                    "type": "mrkdwn",
-                    "text": "\nHigh:\n" + "• 1",
-                },
-            },
-            {
-                "type": "section",
-                "text": {
-                    "type": "mrkdwn",
-                    "text": "\nMedium:\n" + "• 1",
-                },
-            },
-            {
-                "type": "section",
-                "text": {
-                    "type": "mrkdwn",
-                    "text": "\nLow:\n" + "• 3",
+                    "text": (
+                        "*Severities:*\n"
+                        "• *Critical:* 2 "
+                        "• *High:* 1 "
+                        "• *Medium:* 1 "
+                        "• *Low:* 3"
+                    ),
                 },
             },
             {
@@ -310,28 +265,13 @@ class TestSlackIntegration:
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": "\nCritical:\n" + "• 4",
-                },
-            },
-            {
-                "type": "section",
-                "text": {
-                    "type": "mrkdwn",
-                    "text": "\nHigh:\n" + "• 1",
-                },
-            },
-            {
-                "type": "section",
-                "text": {
-                    "type": "mrkdwn",
-                    "text": "\nMedium:\n" + "• 2",
-                },
-            },
-            {
-                "type": "section",
-                "text": {
-                    "type": "mrkdwn",
-                    "text": "\nLow:\n" + "• 2",
+                    "text": (
+                        "*Severities:*\n"
+                        "• *Critical:* 4 "
+                        "• *High:* 1 "
+                        "• *Medium:* 2 "
+                        "• *Low:* 2"
+                    ),
                 },
             },
             {
@@ -432,28 +372,13 @@ class TestSlackIntegration:
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": "\nCritical:\n" + "• 2",
-                },
-            },
-            {
-                "type": "section",
-                "text": {
-                    "type": "mrkdwn",
-                    "text": "\nHigh:\n" + "• 1",
-                },
-            },
-            {
-                "type": "section",
-                "text": {
-                    "type": "mrkdwn",
-                    "text": "\nMedium:\n" + "• 1",
-                },
-            },
-            {
-                "type": "section",
-                "text": {
-                    "type": "mrkdwn",
-                    "text": "\nLow:\n" + "• 3",
+                    "text": (
+                        "*Severities:*\n"
+                        "• *Critical:* 2 "
+                        "• *High:* 1 "
+                        "• *Medium:* 1 "
+                        "• *Low:* 3"
+                    ),
                 },
             },
             {
@@ -467,28 +392,13 @@ class TestSlackIntegration:
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": "\nCritical:\n" + "• 4",
-                },
-            },
-            {
-                "type": "section",
-                "text": {
-                    "type": "mrkdwn",
-                    "text": "\nHigh:\n" + "• 1",
-                },
-            },
-            {
-                "type": "section",
-                "text": {
-                    "type": "mrkdwn",
-                    "text": "\nMedium:\n" + "• 2",
-                },
-            },
-            {
-                "type": "section",
-                "text": {
-                    "type": "mrkdwn",
-                    "text": "\nLow:\n" + "• 2",
+                    "text": (
+                        "*Severities:*\n"
+                        "• *Critical:* 4 "
+                        "• *High:* 1 "
+                        "• *Medium:* 2 "
+                        "• *Low:* 2"
+                    ),
                 },
             },
             {
