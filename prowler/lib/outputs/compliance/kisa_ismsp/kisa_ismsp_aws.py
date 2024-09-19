@@ -1,6 +1,6 @@
 from prowler.lib.check.compliance_models import Compliance
-from prowler.lib.outputs.compliance.kisa_ismsp.models import AWSKISAISMSPModel
 from prowler.lib.outputs.compliance.compliance_output import ComplianceOutput
+from prowler.lib.outputs.compliance.kisa_ismsp.models import AWSKISAISMSPModel
 from prowler.lib.outputs.finding import Finding
 
 

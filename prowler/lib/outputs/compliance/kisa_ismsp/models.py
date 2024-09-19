@@ -1,10 +1,13 @@
-from pydantic import BaseModel
 from typing import Optional
+
+from pydantic import BaseModel
+
 
 class AWSKISAISMSPModel(BaseModel):
     """
     The AWS KISA-ISMS-P Model outputs findings in a format compliant with the AWS KISA-ISMS-P standard
     """
+
     Provider: str
     Description: str
     AccountId: str

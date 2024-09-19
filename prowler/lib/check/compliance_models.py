@@ -168,10 +168,11 @@ class Mitre_Requirement(BaseModel):
     ]
     Checks: list[str]
 
+
 # KISA-ISMS-P Requirement Attribute
 class KISA_ISMSP_Requirement_Attribute(BaseModel):
     """KISA ISMS-P Requirement Attribute"""
-    
+
     Domain: str
     Subdomain: str
     Section: str
@@ -179,6 +180,7 @@ class KISA_ISMSP_Requirement_Attribute(BaseModel):
     RelatedRegulations: Optional[list[str]]
     AuditEvidence: Optional[list[str]]
     NonComplianceCases: Optional[list[str]]
+
 
 # Base Compliance Model
 # TODO: move this to compliance folder

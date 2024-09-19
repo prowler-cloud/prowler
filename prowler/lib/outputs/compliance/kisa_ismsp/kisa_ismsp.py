@@ -57,9 +57,7 @@ def get_kisa_ismsp_table(
         kisa_ismsp_compliance_table["Muted"].append(
             f"{orange_color}{sections[section]['Muted']}{Style.RESET_ALL}"
         )
-    if (
-        len(fail_count) + len(pass_count) + len(muted_count) > 1
-    ):
+    if len(fail_count) + len(pass_count) + len(muted_count) > 1:
         print(
             f"\nCompliance Status of {Fore.YELLOW}{compliance_framework.upper()}{Style.RESET_ALL} Framework:"
         )
