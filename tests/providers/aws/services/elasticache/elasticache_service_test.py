@@ -110,17 +110,8 @@ def mock_make_api_call(self, operation_name, kwargs):
                     "AtRestEncryptionEnabled": REPLICATION_GROUP_ENCRYPTION,
                     "ARN": REPLICATION_GROUP_ARN,
                     "AutoMinorVersionUpgrade": AUTO_MINOR_VERSION_UPGRADE,
-                    "NodeGroups": [
-                        {
-                            "NodeGroupMembers": [
-                                {
-                                    "CacheClusterId": ELASTICACHE_CLUSTER_NAME,
-                                    "CurrentRole": "primary",
-                                }
-                            ]
-                        }
-                    ],
-                    "AuthTokenEnabled": True,
+                    "Memberclusters": [ELASTICACHE_CLUSTER_NAME],
+                    "AuthTokenEnabled": False,
                 },
             ]
         }
@@ -187,7 +178,7 @@ class Test_ElastiCache_Service:
             auth_token_enabled=False,
         )
 
-    # Test Elasticache Redis cache clusters
+    # Test Elasticache Redis replication_groups
     def test_describe_replication_groups(self):
         aws_provider = set_mocked_aws_provider()
         elasticache = ElastiCache(aws_provider)
@@ -207,7 +198,7 @@ class Test_ElastiCache_Service:
             multi_az=REPLICATION_GROUP_MULTI_AZ,
             tags=REPLICATION_GROUP_TAGS,
             auto_minor_version_upgrade=AUTO_MINOR_VERSION_UPGRADE,
-            auth_token_enabled=True,
+            auth_token_enabled=False,
             automatic_failover="disabled",
-            member_clusters=[],
+            engine_version="0.0",
         )

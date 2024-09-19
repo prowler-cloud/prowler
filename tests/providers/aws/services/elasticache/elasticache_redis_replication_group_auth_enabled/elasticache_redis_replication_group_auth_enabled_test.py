@@ -4,11 +4,9 @@ from mock import MagicMock, patch
 from moto import mock_aws
 
 from prowler.providers.aws.services.elasticache.elasticache_service import (
-    Cluster,
     ReplicationGroup,
 )
 from tests.providers.aws.services.elasticache.elasticache_service_test import (
-    ELASTICACHE_ENGINE,
     REPLICATION_GROUP_ARN,
     REPLICATION_GROUP_ENCRYPTION,
     REPLICATION_GROUP_ID,
@@ -73,20 +71,10 @@ class Test_elasticache_redis_replication_group_auth_enabled:
                 transit_encryption=REPLICATION_GROUP_TRANSIT_ENCRYPTION,
                 multi_az=REPLICATION_GROUP_MULTI_AZ,
                 tags=REPLICATION_GROUP_TAGS,
-                auth_token_enabled=False,
                 automatic_failover="enabled",
-                member_clusters=[
-                    Cluster(
-                        id="test-cluster",
-                        arn="arn:aws:elasticache:us-east-1:123456789012:cluster:test-cluster",
-                        region=AWS_REGION_US_EAST_1,
-                        engine=ELASTICACHE_ENGINE,
-                        subnets=[],
-                        auto_minor_version_upgrade=False,
-                        engine_version=engine_version,
-                        auth_token_enabled=False,
-                    ),
-                ],
+                auto_minor_version_upgrade=False,
+                engine_version=engine_version,
+                auth_token_enabled=False,
             )
         }
 
@@ -139,20 +127,10 @@ class Test_elasticache_redis_replication_group_auth_enabled:
                 transit_encryption=REPLICATION_GROUP_TRANSIT_ENCRYPTION,
                 multi_az=REPLICATION_GROUP_MULTI_AZ,
                 tags=REPLICATION_GROUP_TAGS,
-                auth_token_enabled=False,
                 automatic_failover="enabled",
-                member_clusters=[
-                    Cluster(
-                        id="test-cluster",
-                        arn="arn:aws:elasticache:us-east-1:123456789012:cluster:test-cluster",
-                        region=AWS_REGION_US_EAST_1,
-                        engine=ELASTICACHE_ENGINE,
-                        subnets=[],
-                        auto_minor_version_upgrade=False,
-                        engine_version=engine_version,
-                        auth_token_enabled=True,
-                    ),
-                ],
+                auto_minor_version_upgrade=False,
+                engine_version=engine_version,
+                auth_token_enabled=True,
             )
         }
 
@@ -206,20 +184,10 @@ class Test_elasticache_redis_replication_group_auth_enabled:
                 transit_encryption=REPLICATION_GROUP_TRANSIT_ENCRYPTION,
                 multi_az=REPLICATION_GROUP_MULTI_AZ,
                 tags=REPLICATION_GROUP_TAGS,
-                auth_token_enabled=False,
                 automatic_failover="enabled",
-                member_clusters=[
-                    Cluster(
-                        id="test-cluster",
-                        arn="arn:aws:elasticache:us-east-1:123456789012:cluster:test-cluster",
-                        region=AWS_REGION_US_EAST_1,
-                        engine=ELASTICACHE_ENGINE,
-                        subnets=[],
-                        auto_minor_version_upgrade=False,
-                        engine_version=engine_version,
-                        auth_token_enabled=False,
-                    ),
-                ],
+                auto_minor_version_upgrade=False,
+                engine_version=engine_version,
+                auth_token_enabled=False,
             )
         }
 

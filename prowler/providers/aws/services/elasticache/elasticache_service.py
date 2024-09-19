@@ -94,8 +94,13 @@ class ElastiCache(AWSService):
                     if not self.audit_resources or (
                         is_resource_filtered(replication_arn, self.audit_resources)
                     ):
-                        # Get member clusters
-                        pass
+                        # Get first cluster version as they all have the same unless an upgrade is being made
+                        member_clusters = repl_group.get("MemberClusters", [])
+                        if member_clusters:
+                            cluster_arn = f"arn:aws:s3:::{member_clusters[0]}"
+                            engine_version = self.clusters[cluster_arn].engine_version
+                        else:
+                            engine_version = "0.0"
 
                         self.replication_groups[replication_arn] = ReplicationGroup(
                             id=repl_group["ReplicationGroupId"],
@@ -116,6 +121,10 @@ class ElastiCache(AWSService):
                             automatic_failover=repl_group.get(
                                 "AutomaticFailover", "disabled"
                             ),
+                            auth_token_enabled=repl_group.get(
+                                "AuthTokenEnabled", False
+                            ),
+                            engine_version=engine_version,
                         )
                 except Exception as error:
                     logger.error(
@@ -188,7 +197,7 @@ class ReplicationGroup(BaseModel):
     transit_encryption: bool
     multi_az: str
     tags: Optional[list]
-    auth_token_enabled: Optional[bool]
-    member_clusters: Optional[list[Cluster]]
+    auth_token_enabled: bool
     auto_minor_version_upgrade: bool
-    automatic_failover: Optional[str]
+    automatic_failover: str
+    engine_version: str
