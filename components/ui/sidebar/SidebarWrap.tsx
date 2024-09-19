@@ -186,43 +186,38 @@ export const SidebarWrap = () => {
           isDisabled={!isCompact}
           placement="right"
         >
-          <Link
-            href="https://docs.prowler.com/projects/prowler-saas/en/latest/"
-            target="_blank"
-          >
-            <Button
-              aria-label="Product Updates"
-              className={clsx(
-                "justify-start text-default-500 data-[hover=true]:text-foreground",
-                {
-                  "justify-center": isCompact,
-                },
-              )}
-              isIconOnly={isCompact}
-              startContent={
-                isCompact ? null : (
-                  <Icon
-                    className="flex-none text-default-500"
-                    icon="mdi:update"
-                    width={24}
-                    aria-hidden="true"
-                  />
-                )
-              }
-              variant="light"
-            >
-              {isCompact ? (
+          <Button
+            aria-label="Product Updates"
+            className={clsx(
+              "justify-start text-default-500 data-[hover=true]:text-foreground",
+              {
+                "justify-center": isCompact,
+              },
+            )}
+            isIconOnly={isCompact}
+            startContent={
+              isCompact ? null : (
                 <Icon
-                  className="text-default-500"
+                  className="flex-none text-default-500"
                   icon="mdi:update"
                   width={24}
                   aria-hidden="true"
                 />
-              ) : (
-                "Product Updates"
-              )}
-            </Button>
-          </Link>
+              )
+            }
+            variant="light"
+          >
+            {isCompact ? (
+              <Icon
+                className="text-default-500"
+                icon="mdi:update"
+                width={24}
+                aria-hidden="true"
+              />
+            ) : (
+              "Product Updates"
+            )}
+          </Button>
         </Tooltip>
 
         <Tooltip content="Log Out" isDisabled={!isCompact} placement="right">
