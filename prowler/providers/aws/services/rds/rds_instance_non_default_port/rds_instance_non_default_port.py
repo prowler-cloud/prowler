@@ -24,13 +24,15 @@ class rds_instance_non_default_port(Check):
                 f"{db_instance.port} for {db_instance.engine}."
             )
             if db_instance.port in default_ports:
-                keyword = default_ports[db_instance.port]
-                if keyword.lower() in db_instance.engine.lower():
-                    report.status = "FAIL"
-                    report.status_extended = (
-                        f"RDS Instance {db_instance.id} is using the default port "
-                        f"{db_instance.port} for {db_instance.engine}."
-                    )
+                keywords = default_ports[db_instance.port]
+                engine_lower = db_instance.engine.lower()
+                for keyword in keywords:
+                    if keyword.lower() in engine_lower:
+                        report.status = "FAIL"
+                        report.status_extended = (
+                            f"RDS Instance {db_instance.id} is using the default port "
+                            f"{db_instance.port} for {db_instance.engine}."
+                        )
 
             findings.append(report)
 
