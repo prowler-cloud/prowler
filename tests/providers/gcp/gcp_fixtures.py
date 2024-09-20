@@ -6,6 +6,7 @@ from mock import MagicMock
 from prowler.providers.gcp.lib.audit_info.models import GCP_Audit_Info
 
 GCP_PROJECT_ID = "123456789012"
+GCP_US_CENTER1_LOCATION = "us-central1"
 
 
 # Mocked Azure Audit Info

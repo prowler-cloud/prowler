@@ -91,7 +91,7 @@ class Test_apikeys_api_restrictions_configured:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert search(
-                f"API key {key.name} doens't have restrictions configured.",
+                f"API key {key.name} does not have restrictions configured.",
                 result[0].status_extended,
             )
             assert result[0].resource_id == key.id
@@ -132,7 +132,7 @@ class Test_apikeys_api_restrictions_configured:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert search(
-                f"API key {key.name} doens't have restrictions configured.",
+                f"API key {key.name} does not have restrictions configured.",
                 result[0].status_extended,
             )
             assert result[0].resource_id == key.id
