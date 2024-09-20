@@ -4,7 +4,7 @@ import { useRef } from "react";
 
 import { deleteProvider } from "@/actions";
 
-import { CustomButtonClientAction } from "../ui/custom";
+import { CustomAlertDialog, CustomButtonClientAction } from "../ui/custom";
 import { useToast } from "../ui/toast";
 
 export const DeleteProvider = ({ id }: { id: string }) => {
@@ -35,7 +35,7 @@ export const DeleteProvider = ({ id }: { id: string }) => {
   return (
     <form ref={ref} action={clientAction} className="flex gap-x-2">
       <input type="hidden" name="id" value={id} />
-      <CustomButtonClientAction buttonLabel="Delete" danger />
+      {/* <CustomButtonClientAction buttonLabel="Delete" danger /> */}
     </form>
   );
 };

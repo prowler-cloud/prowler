@@ -1,5 +1,6 @@
 export * from "./action-card/ActionCard";
 export * from "./alert/Alert";
+export * from "./alert-dialog/AlertDialog";
 export * from "./chart/Chart";
 export * from "./dialog/Dialog";
 export * from "./dropdown/Dropdown";
