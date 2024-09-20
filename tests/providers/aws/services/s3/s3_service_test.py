@@ -501,6 +501,9 @@ class Test_S3_Service:
         assert s3_client.head_bucket(
             Bucket=bucket_name,
         )
+        assert not s3_client.head_bucket(
+            Bucket="bucket-does-not-exist",
+        )
         assert s3.buckets[bucket_arn].region == AWS_REGION_US_EAST_1
 
     # Test S3 List Access Points
