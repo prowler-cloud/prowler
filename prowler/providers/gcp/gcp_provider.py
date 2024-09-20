@@ -202,12 +202,7 @@ class GcpProvider(Provider):
             # "partition": "identity.partition",
         }
 
-<<<<<<< HEAD
-    def setup_session(self, credentials_file: str, service_account: str) -> Credentials:
-=======
-    @staticmethod
-    def setup_session(credentials_file: str, service_account: str) -> tuple:
->>>>>>> 4badcca4f (fix(gcp): add default project for org level checks (#5003))
+    def setup_session(self, credentials_file: str, service_account: str) -> tuple:
         """
         Setup the GCP session with the provided credentials file or service account to impersonate
         Args:
@@ -247,68 +242,12 @@ class GcpProvider(Provider):
             )
             sys.exit(1)
 
-<<<<<<< HEAD
     def __set_gcp_creds_env_var__(self, credentials_file):
         logger.info(
             "GCP provider: Setting GOOGLE_APPLICATION_CREDENTIALS environment variable..."
         )
         client_secrets_path = os.path.abspath(credentials_file)
         os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = client_secrets_path
-=======
-    @staticmethod
-    def test_connection(
-        credentials_file: str = None,
-        service_account: str = None,
-        raise_on_exception: bool = True,
-    ) -> Connection:
-        """
-        Test the connection to GCP with the provided credentials file or service account to impersonate.
-        If the connection is successful, return a Connection object with is_connected set to True. If the connection fails, return a Connection object with error set to the exception.
-        Raise an exception if raise_on_exception is set to True.
-        If the Cloud Resource Manager API has not been used before or it is disabled, log a critical message and return a Connection object with error set to the exception.
-        Args:
-            credentials_file: str
-            service_account: str
-        Returns:
-            Connection object with is_connected set to True if the connection is successful, or error set to the exception if the connection fails
-        """
-        try:
-            session, _ = GcpProvider.setup_session(credentials_file, service_account)
-            service = discovery.build("cloudresourcemanager", "v1", credentials=session)
-            request = service.projects().list()
-            request.execute()
-            return Connection(is_connected=True)
-
-        # Errors from setup_session
-        except GCPSetUpSessionError as setup_session_error:
-            logger.critical(str(setup_session_error))
-            if raise_on_exception:
-                raise setup_session_error
-            return Connection(error=setup_session_error)
-        except HttpError as http_error:
-            if "Cloud Resource Manager API has not been used" in str(http_error):
-                logger.critical(
-                    "Cloud Resource Manager API has not been used before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/cloudresourcemanager.googleapis.com/ then retry."
-                )
-                if raise_on_exception:
-                    raise GCPCloudResourceManagerAPINotUsedError(
-                        file=__file__, original_exception=http_error
-                    )
-            else:
-                logger.critical(
-                    f"{http_error.__class__.__name__}[{http_error.__traceback__.tb_lineno}]: {http_error}"
-                )
-            if raise_on_exception:
-                raise http_error
-            return Connection(error=http_error)
-        except Exception as error:
-            logger.critical(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-            if raise_on_exception:
-                raise GCPTestConnectionError(file=__file__, original_exception=error)
-            return Connection(error=error)
->>>>>>> 4badcca4f (fix(gcp): add default project for org level checks (#5003))
 
     def print_credentials(self):
         # TODO: Beautify audited profile, set "default" if there is no profile set
