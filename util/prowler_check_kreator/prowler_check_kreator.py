@@ -83,7 +83,7 @@ class ProwlerCheckKreator:
         # Let the user to use the model that he wants
         self._model = None
         supported_models = [
-            "gemini-1.5-flash (default)",
+            "gemini-1.5-flash",
             "gemini-1.5-pro",
             "gemini-1.0-pro",
         ]
@@ -361,8 +361,8 @@ if __name__ == "__main__":
         sys.exit(prowler_check_creator.kreate_check())
 
     except ValueError as e:
-        print(f"Error: {e}")
+        print(f"Error: {e} (line {sys.exc_info()[-1].tb_lineno})")
         sys.exit(1)
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Error: {e} (line {sys.exc_info()[-1].tb_lineno})")
         sys.exit(1)

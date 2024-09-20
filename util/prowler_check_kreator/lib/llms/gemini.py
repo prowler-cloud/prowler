@@ -1,5 +1,6 @@
 import json
 import os
+import re
 
 import google.generativeai as genai
 
@@ -67,7 +68,11 @@ class Gemini:
 
     def _prepare_check_prompt(self, check_name: str, check_reference: str) -> list:
         """Prepare the prompt for generating the check."""
-        class_name = check_reference.split("(")[0].split("class ")[1]
+
+        class_name = re.search(
+            r"class\s+([A-Za-z_][A-Za-z0-9_]*)\s*\((.*?)\)\s*:", check_reference
+        ).group(1)
+
         prompt_parts = [
             f"Your task is to create a new security check called '{check_name}' for Prowler (a Cloud Security tool).",
             "The control is a Python class that inherits from the Check class and has only one method called execute.",
