@@ -12,13 +12,14 @@ GCP_US_CENTER1_LOCATION = "us-central1"
 
 
 def set_mocked_gcp_provider(
-    project_ids: list[str] = [], profile: str = ""
+    project_ids: list[str] = [GCP_PROJECT_ID], profile: str = ""
 ) -> GcpProvider:
     provider = MagicMock()
     provider.type = "gcp"
     provider.session = MagicMock()
     provider.session._service_account_email = "test@test.com"
     provider.project_ids = project_ids
+    provider.default_project_id = GCP_PROJECT_ID
     provider.identity = GCPIdentityInfo(
         profile=profile,
     )
