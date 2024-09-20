@@ -11,7 +11,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
-  "ResourceType": "AwsEFSFileSystem",
+  "ResourceType": "AwsEfsFileSystem",
   "Description": "Check if EFS File systems have backup enabled",
   "Risk": "If backup is not enabled, data is vulnerable. Human error or bad actors could erase or modify data.",
   "RelatedUrl": "",

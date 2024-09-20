@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:dynamodb:region:account-id:table/resource-id",
   "Severity": "medium",
-  "ResourceType": "AwsDynamoDBTable",
+  "ResourceType": "AwsDynamoDbTable",
   "Description": "Check if DynamoDB tables point-in-time recovery (PITR) is enabled.",
   "Risk": "If the DynamoDB Table does not have point-in-time recovery enabled, it is vulnerable to accidental write or delete operations.",
   "RelatedUrl": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/PointInTimeRecovery_Howitworks.html",

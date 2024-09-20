@@ -8,7 +8,6 @@ from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################## CloudFront
 class CloudFront(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
@@ -30,6 +29,17 @@ class CloudFront(AWSService):
                         ):
                             distribution_id = item["Id"]
                             distribution_arn = item["ARN"]
+                            origin_groups = item.get("OriginGroups", {}).get(
+                                "Items", []
+                            )
+                            origin_failover = all(
+                                origin_group.get("Members", {}).get("Quantity", 0) >= 2
+                                for origin_group in origin_groups
+                            )
+
+                            default_certificate = item["ViewerCertificate"][
+                                "CloudFrontDefaultCertificate"
+                            ]
                             certificate = item["ViewerCertificate"].get(
                                 "Certificate", ""
                             )
@@ -52,6 +62,12 @@ class CloudFront(AWSService):
                                         )
                                         .get("OriginSslProtocols", {})
                                         .get("Items", []),
+                                        origin_access_control=origin.get(
+                                            "OriginAccessControlId", ""
+                                        ),
+                                        s3_origin_config=origin.get(
+                                            "S3OriginConfig", {}
+                                        ),
                                     )
                                 )
                             distribution = Distribution(
@@ -59,7 +75,9 @@ class CloudFront(AWSService):
                                 id=distribution_id,
                                 origins=origins,
                                 region=region,
+                                origin_failover=origin_failover,
                                 ssl_support_method=ssl_support_method,
+                                default_certificate=default_certificate,
                                 certificate=certificate,
                             )
                             self.distributions[distribution_id] = distribution
@@ -74,6 +92,7 @@ class CloudFront(AWSService):
         try:
             for distribution_id in distributions.keys():
                 distribution_config = client.get_distribution_config(Id=distribution_id)
+
                 # Global Config
                 distributions[distribution_id].logging_enabled = distribution_config[
                     "DistributionConfig"
@@ -89,7 +108,14 @@ class CloudFront(AWSService):
                     "DistributionConfig"
                 ]["WebACLId"]
                 distributions[distribution_id].default_root_object = (
-                    distribution_config["DistributionConfig"].get("DefaultRootObject")
+                    distribution_config["DistributionConfig"].get(
+                        "DefaultRootObject", ""
+                    )
+                )
+                distributions[distribution_id].viewer_protocol_policy = (
+                    distribution_config["DistributionConfig"][
+                        "DefaultCacheBehavior"
+                    ].get("ViewerProtocolPolicy", "")
                 )
 
                 # Default Cache Config
@@ -171,6 +197,8 @@ class Origin(BaseModel):
     domain_name: str
     origin_protocol_policy: str
     origin_ssl_protocols: list[str]
+    origin_access_control: Optional[str]
+    s3_origin_config: Optional[dict]
 
 
 class Distribution(BaseModel):
@@ -184,7 +212,10 @@ class Distribution(BaseModel):
     geo_restriction_type: Optional[GeoRestrictionType]
     origins: list[Origin]
     web_acl_id: str = ""
+    default_certificate: Optional[bool]
     default_root_object: Optional[str]
+    viewer_protocol_policy: Optional[str]
     tags: Optional[list] = []
+    origin_failover: Optional[bool]
     ssl_support_method: Optional[SSLSupportMethod]
     certificate: Optional[str]

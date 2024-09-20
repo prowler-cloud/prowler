@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "critical",
-  "ResourceType": "AwsNeptuneDBClusterSnapshot",
+  "ResourceType": "AwsRdsDbClusterSnapshot",
   "Description": "Check if NeptuneDB manual cluster snapshot is public.",
   "Risk": "If you share an unencrypted manual snapshot as public, the snapshot is available to all AWS accounts. Public snapshots may result in unintended data exposure.",
   "RelatedUrl": "https://docs.aws.amazon.com/neptune/latest/userguide/security-considerations.html",

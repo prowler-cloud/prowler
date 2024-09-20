@@ -7,7 +7,7 @@
   "SubServiceName": "cluster",
   "ResourceIdTemplate": "arn:partition:kafka:region:account-id:cluster",
   "Severity": "high",
-  "ResourceType": "AWS::MSK::Cluster",
+  "ResourceType": "AwsMskCluster",
   "Description": "Kafka Clusters should not have unrestricted access enabled. Unrestricted access allows anyone to access the Kafka Cluster without any authentication. It is recommended to disable unrestricted access to prevent unauthorized access to the Kafka Cluster.",
   "Risk": "Unrestricted access to Kafka Clusters can lead to unauthorized access to the cluster and its data. It is recommended to restrict access to Kafka Clusters to only authorized entities.",
   "RelatedUrl": "https://docs.aws.amazon.com/msk/latest/developerguide/msk-configure-security.html",

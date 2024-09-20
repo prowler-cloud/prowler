@@ -7,7 +7,7 @@
   "SubServiceName": "cluster",
   "ResourceIdTemplate": "arn:partition:kafka:region:account-id:cluster",
   "Severity": "medium",
-  "ResourceType": "AWS::MSK::Cluster",
+  "ResourceType": "AwsMskCluster",
   "Description": "Mutual TLS Authentication ensures that both the client and the server are authenticated, providing an additional layer of security for communication within the Kafka cluster.",
   "Risk": "Without Mutual TLS Authentication, the cluster is vulnerable to man-in-the-middle attacks, and unauthorized clients may be able to access the cluster.",
   "RelatedUrl": "https://docs.aws.amazon.com/msk/latest/developerguide/msk-authentication.html",

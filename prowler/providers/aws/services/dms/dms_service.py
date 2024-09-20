@@ -11,7 +11,9 @@ class DMS(AWSService):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.instances = []
+        self.endpoints = {}
         self.__threading_call__(self._describe_replication_instances)
+        self.__threading_call__(self._describe_endpoints)
 
     def _describe_replication_instances(self, regional_client):
         logger.info("DMS - Describing DMS Replication Instances...")
@@ -48,6 +50,32 @@ class DMS(AWSService):
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+
+    def _describe_endpoints(self, regional_client):
+        logger.info("DMS - Describing DMS Endpoints...")
+        try:
+            describe_endpoints_paginator = regional_client.get_paginator(
+                "describe_endpoints"
+            )
+            for page in describe_endpoints_paginator.paginate():
+                for endpoint in page["Endpoints"]:
+                    arn = endpoint["EndpointArn"]
+                    if not self.audit_resources or (
+                        is_resource_filtered(arn, self.audit_resources)
+                    ):
+                        self.endpoints[arn] = Endpoint(
+                            id=endpoint["EndpointIdentifier"],
+                            ssl_mode=endpoint.get("SslMode", False),
+                        )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+
+class Endpoint(BaseModel):
+    id: str
+    ssl_mode: str
 
 
 class RepInstance(BaseModel):

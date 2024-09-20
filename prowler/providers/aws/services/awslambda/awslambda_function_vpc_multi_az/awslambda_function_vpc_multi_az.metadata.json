@@ -1,0 +1,30 @@
+{
+  "Provider": "aws",
+  "CheckID": "awslambda_function_vpc_multi_az",
+  "CheckTitle": "Check if AWS Lambda Function VPC is deployed Across Multiple Availability Zones",
+  "CheckType": [],
+  "ServiceName": "lambda",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:lambda:region:account-id:function/function-name",
+  "Severity": "medium",
+  "ResourceType": "AwsLambdaFunction",
+  "Description": "This control checks whether an AWS Lambda function connected to a VPC operates in at least the specified number of Availability Zones (AZs). A failure occurs if the function does not operate in the required number of AZs, which by default is two.",
+  "Risk": "A Lambda function not deployed across multiple AZs increases the risk of a single point of failure, which can result in a complete disruption of the function's operations if an AZ becomes unavailable.",
+  "RelatedUrl": "https://docs.aws.amazon.com/lambda/latest/operatorguide/networking-vpc.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/lambda-controls.html#lambda-5",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure that your AWS Lambda functions connected to a VPC are distributed across multiple Availability Zones (AZs) to enhance availability and resilience.",
+      "Url": "https://docs.aws.amazon.com/lambda/latest/dg/configuration-vpc.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

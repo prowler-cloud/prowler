@@ -27,6 +27,28 @@ def example_distribution_config(ref):
                     "Id": "origin1",
                     "DomainName": "asdf.s3.us-east-1.amazonaws.com",
                     "S3OriginConfig": {"OriginAccessIdentity": ""},
+                },
+            ],
+        },
+        "OriginGroups": {
+            "Quantity": 1,
+            "Items": [
+                {
+                    "Id": "origin-group1",
+                    "FailoverCriteria": {
+                        "StatusCodes": {"Quantity": 1, "Items": [500]}
+                    },
+                    "Members": {
+                        "Quantity": 2,
+                        "Items": [
+                            {
+                                "OriginId": "origin1",
+                            },
+                            {
+                                "OriginId": "origin2",
+                            },
+                        ],
+                    },
                 }
             ],
         },
@@ -179,7 +201,7 @@ class Test_CloudFront_Service:
 
         assert len(cloudfront.distributions) == 0
 
-    def test__list_distributions__complete(self):
+    def test_list_distributionscomplete(self):
         from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER
 
         DISTRIBUTION_ID = "E27LVI50CSW06W"

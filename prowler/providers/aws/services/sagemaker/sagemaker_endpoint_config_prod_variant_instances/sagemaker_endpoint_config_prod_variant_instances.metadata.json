@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "sagemaker_endpoint_config_prod_variant_instances",
+  "CheckTitle": "SageMaker endpoint production variants should have at least two initial instances",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "sagemaker",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:sagemaker:region:account-id:endpoint-config/resource-id",
+  "Severity": "medium",
+  "ResourceType": "Other",
+  "Description": "This control checks whether production variants of an Amazon SageMaker endpoint have an initial instance count greater than 1. A single instance creates a single point of failure and reduces availability.",
+  "Risk": "Having only one instance for a SageMaker endpoint production variant can lead to reduced availability, single points of failure, and slow recovery during incidents, especially if the instance becomes unavailable due to failure or security incidents.",
+  "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/sagemaker-endpoint-config-prod-instance-count.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws sagemaker update-endpoint --endpoint-name <endpoint-name> --endpoint-config-name <config-name>",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/sagemaker-controls.html#sagemaker-4",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "To increase the initial instance count, configure your SageMaker endpoint to use more than 1 instance in the production variant for high availability.",
+      "Url": "https://docs.aws.amazon.com/sagemaker/latest/dg/serverless-endpoints-create.html#serverless-endpoints-create-config"
+    }
+  },
+  "Categories": [
+    "redundancy"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
