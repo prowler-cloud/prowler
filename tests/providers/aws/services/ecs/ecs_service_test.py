@@ -31,6 +31,28 @@ def mock_make_api_call(self, operation_name, kwarg):
                 "tags": [],
             }
         }
+    if operation_name == "ListServices":
+        return {
+            "serviceArns": [
+                "arn:aws:ecs:eu-west-1:123456789012:service/test_ecs_service"
+            ]
+        }
+    if operation_name == "DescribeServices":
+        return {
+            "services": [
+                {
+                    "serviceName": "test_ecs_service",
+                    "launchType": "EC2",
+                    "networkConfiguration": {
+                        "awsvpcConfiguration": {
+                            "subnets": ["subnet-12345678"],
+                            "securityGroups": ["sg-12345678"],
+                            "assignPublicIp": "ENABLED",
+                        }
+                    },
+                }
+            ]
+        }
     return make_api_call(self, operation_name, kwarg)
 
 
@@ -82,7 +104,7 @@ class Test_ECS_Service:
 
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     # Test describe ECS task definitions
-    def test__describe_task_definitions__(self):
+    def test_describe_task_definitions(self):
         aws_provider = set_mocked_aws_provider()
         ecs = ECS(aws_provider)
 
@@ -113,3 +135,30 @@ class Test_ECS_Service:
         assert ecs.task_definitions[task_arn].network_mode == "host"
         assert not ecs.task_definitions[task_arn].container_definitions[0].privileged
         assert ecs.task_definitions[task_arn].container_definitions[0].user == ""
+
+    # Test list ECS task definitions
+    @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
+    def test_list_services(self):
+        aws_provider = set_mocked_aws_provider()
+        ecs = ECS(aws_provider)
+
+        service_arn = "arn:aws:ecs:eu-west-1:123456789012:service/test_ecs_service"
+
+        assert len(ecs.services) == 1
+        assert ecs.services[service_arn].arn == service_arn
+        assert ecs.services[service_arn].region == AWS_REGION_EU_WEST_1
+
+    @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
+    # Test describe ECS task definitions
+    def test_describe_services(self):
+        aws_provider = set_mocked_aws_provider()
+        ecs = ECS(aws_provider)
+
+        service_arn = "arn:aws:ecs:eu-west-1:123456789012:service/test_ecs_service"
+
+        assert len(ecs.services) == 1
+        assert ecs.services[service_arn].name == "test_ecs_service"
+        assert ecs.services[service_arn].arn == service_arn
+        assert ecs.services[service_arn].region == AWS_REGION_EU_WEST_1
+        assert not ecs.services[service_arn].assign_public_ip
+        assert ecs.services[service_arn].tags == []

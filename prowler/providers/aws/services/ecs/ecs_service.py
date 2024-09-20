@@ -14,8 +14,13 @@ class ECS(AWSService):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.task_definitions = {}
+        self.services = {}
         self.__threading_call__(self._list_task_definitions)
-        self._describe_task_definition()
+        self.__threading_call__(
+            self._describe_task_definition, self.task_definitions.values()
+        )
+        self.__threading_call__(self._list_services)
+        self.__threading_call__(self._describe_services, self.services.values())
 
     def _list_task_definitions(self, regional_client):
         logger.info("ECS - Listing Task Definitions...")
@@ -39,41 +44,77 @@ class ECS(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def _describe_task_definition(self):
+    def _describe_task_definition(self, task_definition):
         logger.info("ECS - Describing Task Definitions...")
         try:
-            for task_definition in self.task_definitions.values():
-                client = self.regional_clients[task_definition.region]
-                response = client.describe_task_definition(
-                    taskDefinition=task_definition.arn,
-                    include=[
-                        "TAGS",
-                    ],
-                )
-                container_definitions = response["taskDefinition"][
-                    "containerDefinitions"
-                ]
-                for container in container_definitions:
-                    environment = []
-                    if "environment" in container:
-                        for env_var in container["environment"]:
-                            environment.append(
-                                ContainerEnvVariable(
-                                    name=env_var["name"], value=env_var["value"]
-                                )
+            client = self.regional_clients[task_definition.region]
+            response = client.describe_task_definition(
+                taskDefinition=task_definition.arn,
+                include=[
+                    "TAGS",
+                ],
+            )
+            container_definitions = response["taskDefinition"]["containerDefinitions"]
+            for container in container_definitions:
+                environment = []
+                if "environment" in container:
+                    for env_var in container["environment"]:
+                        environment.append(
+                            ContainerEnvVariable(
+                                name=env_var["name"], value=env_var["value"]
                             )
-                    task_definition.container_definitions.append(
-                        ContainerDefinition(
-                            name=container["name"],
-                            privileged=container.get("privileged", False),
-                            user=container.get("user", ""),
-                            environment=environment,
                         )
+                task_definition.container_definitions.append(
+                    ContainerDefinition(
+                        name=container["name"],
+                        privileged=container.get("privileged", False),
+                        user=container.get("user", ""),
+                        environment=environment,
                     )
-                task_definition.tags = response.get("tags")
-                task_definition.network_mode = response["taskDefinition"].get(
-                    "networkMode"
                 )
+            task_definition.tags = response.get("tags")
+            task_definition.network_mode = response["taskDefinition"].get("networkMode")
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _list_services(self, regional_client):
+        logger.info("ECS - Listing Services...")
+        try:
+            list_ecs_paginator = regional_client.get_paginator("list_services")
+            for page in list_ecs_paginator.paginate():
+                for service in page["serviceArns"]:
+                    if not self.audit_resources or (
+                        is_resource_filtered(service, self.audit_resources)
+                    ):
+                        self.services[service] = Service(
+                            name=sub(":.*", "", service.split("/")[1]),
+                            arn=service,
+                            region=regional_client.region,
+                        )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _describe_services(self, service):
+        logger.info("ECS - Describing Services...")
+        try:
+            client = self.regional_clients[service.region]
+            response = client.describe_service(
+                taskDefinition=service.arn,
+                include=[
+                    "TAGS",
+                ],
+            )
+            service.assign_public_ip = (
+                response.get("networkConfiguration", {})
+                .get("awsvpcConfiguration", {})
+                .get("assignPublicIp", "DISABLED")
+                == "ENABLED"
+            )
+            service.tags = response.get("tags")
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -100,3 +141,11 @@ class TaskDefinition(BaseModel):
     container_definitions: list[ContainerDefinition] = []
     tags: Optional[list] = []
     network_mode: Optional[str]
+
+
+class Service(BaseModel):
+    name: str
+    arn: str
+    region: str
+    assign_public_ip: Optional[bool]
+    tags: Optional[list] = []
