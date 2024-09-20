@@ -20,11 +20,18 @@ class Inspector2(AWSService):
             batch_get_account_status = regional_client.batch_get_account_status(
                 accountIds=[self.audited_account]
             )["accounts"][0]
+            resourceStates = batch_get_account_status.get("resourceState")
             self.inspectors.append(
                 Inspector(
                     id="Inspector2",
                     arn=f"arn:{self.audited_partition}:inspector2:{regional_client.region}:{self.audited_account}:inspector2",
                     status=batch_get_account_status.get("state").get("status"),
+                    ec2_status=resourceStates.get("ec2", {}).get("status"),
+                    ecr_status=resourceStates.get("ecr", {}).get("status"),
+                    lambda_status=resourceStates.get("lambda", {}).get("status"),
+                    lambda_code_status=resourceStates.get("lambdaCode", {}).get(
+                        "status"
+                    ),
                     region=regional_client.region,
                 )
             )
@@ -59,4 +66,8 @@ class Inspector(BaseModel):
     arn: str
     region: str
     status: str
+    ec2_status: str
+    ecr_status: str
+    lambda_status: str
+    lambda_code_status: str
     active_findings: bool = False

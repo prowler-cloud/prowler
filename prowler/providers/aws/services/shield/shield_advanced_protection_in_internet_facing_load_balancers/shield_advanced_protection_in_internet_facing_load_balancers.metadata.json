@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "AwsElasticLoadBalancingV2LoadBalancer",
+  "ResourceType": "AwsElbv2LoadBalancer",
   "Description": "Check if internet-facing Application Load Balancers are protected by AWS Shield Advanced.",
   "Risk": "AWS Shield Advanced provides expanded DDoS attack protection for your resources.",
   "RelatedUrl": "https://docs.aws.amazon.com/waf/latest/developerguide/configure-new-protection.html",

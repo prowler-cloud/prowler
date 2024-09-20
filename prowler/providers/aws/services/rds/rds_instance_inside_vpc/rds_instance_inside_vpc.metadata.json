@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "rds_instance_inside_vpc",
+  "CheckTitle": "Check if RDS instances are deployed within a VPC.",
+  "CheckType": [
+    "Software and Configuration Checks, AWS Security Best Practices"
+  ],
+  "ServiceName": "rds",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-instance",
+  "Severity": "high",
+  "ResourceType": "AwsRdsDbInstance",
+  "Description": "Check if RDS instances are deployed within a VPC.",
+  "Risk": "If your RDS instances are not deployed within a VPC, they are not isolated from the public internet and are exposed to potential security threats. Deploying RDS instances within a VPC allows you to control inbound and outbound traffic to and from the instances, and provides an additional layer of security to your database instances.",
+  "RelatedUrl": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_VPC.WorkingWithRDSInstanceinaVPC.html#USER_VPC.Subnets",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws rds modify-db-instance --db-instance-identifier <instance-identifier> --vpc-security-group-ids <vpc-security-group-ids>",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-18",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure that your RDS instances are deployed within a VPC to provide an additional layer of security to your database instances.",
+      "Url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Overview.DBInstance.Modifying.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

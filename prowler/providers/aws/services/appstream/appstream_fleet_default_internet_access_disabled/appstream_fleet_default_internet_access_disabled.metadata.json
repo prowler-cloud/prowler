@@ -11,7 +11,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:appstream:region:account-id:fleet/resource-id",
   "Severity": "medium",
-  "ResourceType": "AppStream",
+  "ResourceType": "Other",
   "Description": "Ensure default Internet Access from your Amazon AppStream fleet streaming instances should remain unchecked.",
   "Risk": "Default Internet Access from your fleet streaming instances should be controlled using a NAT gateway in the VPC.",
   "RelatedUrl": "https://docs.aws.amazon.com/appstream2/latest/developerguide/set-up-stacks-fleets.html",

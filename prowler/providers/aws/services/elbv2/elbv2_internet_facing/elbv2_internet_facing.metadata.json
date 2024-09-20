@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
-  "ResourceType": "AwsElasticLoadBalancingV2LoadBalancer",
+  "ResourceType": "AwsElbv2LoadBalancer",
   "Description": "Check for internet facing Elastic Load Balancers.",
   "Risk": "Publicly accessible load balancers could expose sensitive data to bad actors.",
   "RelatedUrl": "",

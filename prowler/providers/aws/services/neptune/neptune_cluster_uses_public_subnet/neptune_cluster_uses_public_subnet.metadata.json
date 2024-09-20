@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:rds:<region>:<account>:cluster:<resource_name>",
   "Severity": "medium",
-  "ResourceType": "AWSNeptuneDBCluster",
+  "ResourceType": "AwsRdsDbCluster",
   "Description": "Ensure Neptune Cluster is not using a public subnet",
   "Risk": "There is a risk of exposing sensitive data if Neptune Cluster uses a public subnet.",
   "RelatedUrl": "https://docs.aws.amazon.com/neptune/latest/userguide/get-started-vpc.html",

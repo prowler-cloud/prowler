@@ -46,6 +46,7 @@ class Test_cloudfront_distributions_using_deprecated_ssl_protocols:
                         origin_ssl_protocols=["SSLv3"],
                     )
                 ],
+                origin_failover=False,
             )
         }
 
@@ -90,6 +91,7 @@ class Test_cloudfront_distributions_using_deprecated_ssl_protocols:
                         ],
                     )
                 ],
+                origin_failover=False,
             )
         }
 
@@ -134,6 +136,7 @@ class Test_cloudfront_distributions_using_deprecated_ssl_protocols:
                         ],
                     )
                 ],
+                origin_failover=False,
             )
         }
 
@@ -177,6 +180,7 @@ class Test_cloudfront_distributions_using_deprecated_ssl_protocols:
                         ],
                     )
                 ],
+                origin_failover=False,
             )
         }
 

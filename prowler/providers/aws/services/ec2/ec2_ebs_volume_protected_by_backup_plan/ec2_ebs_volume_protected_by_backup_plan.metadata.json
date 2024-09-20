@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "ec2_ebs_volume_protected_by_backup_plan",
+  "CheckTitle": "Amazon EBS volumes should be protected by a backup plan.",
+  "CheckType": [
+    "Software and Configuration Checks, AWS Security Best Practices"
+  ],
+  "ServiceName": "ec2",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:volume/volume-id",
+  "Severity": "low",
+  "ResourceType": "AwsEc2Volume",
+  "Description": "Evaluates if an Amazon EBS volume in in-use state is covered by a backup plan. The check fails if an EBS volume isn't covered by a backup plan. If you set the backupVaultLockCheck parameter equal to true, the control passes only if the EBS volume is backed up in an AWS Backup locked vault.",
+  "Risk": "Without backup coverage, Amazon EBS volumes are vulnerable to data loss or deletion, reducing the resilience of your systems and making recovery from incidents more difficult.",
+  "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/ebs-resources-protected-by-backup-plan.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/ec2-controls.html#ec2-28",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure that all in-use Amazon EBS volumes are included in a backup plan, and consider using AWS Backup Vault Lock for additional protection.",
+      "Url": "https://docs.aws.amazon.com/aws-backup/latest/devguide/assigning-resources.html"
+    }
+  },
+  "Categories": [
+    "redundancy"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

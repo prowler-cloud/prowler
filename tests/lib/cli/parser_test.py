@@ -238,11 +238,8 @@ class Test_Parser:
 
     def test_root_parser_azure_provider(self):
         command = [prowler_command, "azure"]
-        # Expecting a SystemExit exception
-        with pytest.raises(SystemExit) as wrapped_exit:
-            _ = self.parser.parse(command)
-        assert wrapped_exit.type == SystemExit
-        assert wrapped_exit.value.code == 2
+        parsed = self.parser.parse(command)
+        assert parsed.provider == "azure"
 
     def test_root_parser_gcp_provider(self):
         command = [prowler_command, "gcp"]
@@ -1110,22 +1107,18 @@ class Test_Parser:
 
     def test_parser_azure_auth_browser(self):
         argument = "--browser-auth"
-        # Expected to raise an error
         command = [prowler_command, "azure", argument]
-        with pytest.raises(SystemExit) as wrapped_exit:
-            _ = self.parser.parse(command)
-        assert wrapped_exit.type == SystemExit
-        assert wrapped_exit.value.code == 2
+        parser = self.parser.parse(command)
+        assert parser.provider == "azure"
+        assert parser.browser_auth
 
     def test_parser_azure_tenant_id(self):
         argument = "--tenant-id"
         tenant_id = "test-tenant-id"
         command = [prowler_command, "azure", argument, tenant_id]
-        # Expected to raise an error
-        with pytest.raises(SystemExit) as wrapped_exit:
-            _ = self.parser.parse(command)
-        assert wrapped_exit.type == SystemExit
-        assert wrapped_exit.value.code == 2
+        parsed = self.parser.parse(command)
+        assert parsed.provider == "azure"
+        assert parsed.tenant_id == tenant_id
 
     def test_parser_azure_auth_az_cli(self):
         argument = "--az-cli-auth"

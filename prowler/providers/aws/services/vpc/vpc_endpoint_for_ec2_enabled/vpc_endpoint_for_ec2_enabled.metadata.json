@@ -1,0 +1,30 @@
+{
+  "Provider": "aws",
+  "CheckID": "vpc_endpoint_for_ec2_enabled",
+  "CheckTitle": "Amazon EC2 should be configured to use VPC endpoints that are created for the Amazon EC2 service.",
+  "CheckType": [],
+  "ServiceName": "ec2",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "medium",
+  "ResourceType": "AwsEc2VpcEndpointService",
+  "Description": "Ensure that a service endpoint for Amazon EC2 is created for each VPC. The check fails if a VPC does not have a VPC endpoint created for the Amazon EC2 service.",
+  "Risk": "Without VPC endpoints, network traffic between your VPC and Amazon EC2 may traverse the public internet, increasing the risk of unintended access or data exposure.",
+  "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/service-vpc-endpoint-enabled.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/ec2-controls.html#ec2-10",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "To improve the security posture of your VPC, configure Amazon EC2 to use an interface VPC endpoint powered by AWS PrivateLink.",
+      "Url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/interface-vpc-endpoints.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

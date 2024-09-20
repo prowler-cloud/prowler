@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:codeartifact:region:account-id:directory/directory-id",
   "Severity": "medium",
-  "ResourceType": "AwsDirectoryService",
+  "ResourceType": "Other",
   "Description": "Ensure Radius server in DS is using the recommended security protocol.",
   "Risk": "As a best practice, you might need to configure the authentication protocol between the Microsoft AD DCs and the RADIUS/MFA server. Supported protocols are PAP, CHAP MS-CHAPv1, and MS-CHAPv2. MS-CHAPv2 is recommended because it provides the strongest security of the three options.",
   "RelatedUrl": "https://aws.amazon.com/blogs/security/how-to-enable-multi-factor-authentication-for-amazon-workspaces-and-amazon-quicksight-by-using-microsoft-ad-and-on-premises-credentials/",
