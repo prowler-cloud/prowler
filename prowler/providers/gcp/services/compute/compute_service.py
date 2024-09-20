@@ -282,20 +282,23 @@ class Compute(GCPService):
 
     def __describe_backend_service__(self):
         for balancer in self.load_balancers:
-            try:
-                response = (
-                    self.client.backendServices()
-                    .get(
-                        project=balancer.project_id,
-                        backendService=balancer.service.split("/")[-1],
+            if balancer.service:
+                try:
+                    response = (
+                        self.client.backendServices()
+                        .get(
+                            project=balancer.project_id,
+                            backendService=balancer.service.split("/")[-1],
+                        )
+                        .execute()
                     )
-                    .execute()
-                )
-                balancer.logging = response.get("logConfig", {}).get("enable", False)
-            except Exception as error:
-                logger.error(
-                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                )
+                    balancer.logging = response.get("logConfig", {}).get(
+                        "enable", False
+                    )
+                except Exception as error:
+                    logger.error(
+                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
 
 
 class Instance(BaseModel):
