@@ -14,15 +14,19 @@ class cloudfront_distributions_s3_origin_non_existent_bucket(Check):
             report.resource_arn = distribution.arn
             report.resource_id = distribution.id
             report.resource_tags = distribution.tags
+            non_existent_buckets = []
 
             for origin in distribution.origins:
-                report.status = "FAIL"
-                report.status_extended = f"CloudFront Distribution {distribution.id} has a non-existent S3 bucket {origin.domain_name} as the origin or the S3 bucket is out of Prowler's scope."
-                bucket_arn = f"arn:aws:s3:::{origin.domain_name.split('.')[0]}"
+                bucket_name = origin.domain_name.split(".")[0]
+                if not s3_client._head_bucket(bucket_name):
+                    non_existent_buckets.append(bucket_name)
 
-                if bucket_arn in s3_client.buckets:
-                    report.status = "PASS"
-                    report.status_extended = f"CloudFront Distribution {distribution.id} does not have non-existent buckets as S3 origins."
+            if len(non_existent_buckets) == 0:
+                report.status = "PASS"
+                report.status_extended = f"CloudFront Distribution {distribution.id} does not have non-existent S3 buckets as origins."
+            else:
+                report.status = "FAIL"
+                report.status_extended = f"CloudFront Distribution {distribution.id} has non-existent S3 buckets as origins: {','.join(non_existent_buckets)}"
 
             findings.append(report)
 
