@@ -12,7 +12,7 @@ class iam_inline_policy_allows_privilege_escalation(Check):
         for policy in iam_client.policies:
             if policy.type == "Inline":
                 report = Check_Report_AWS(self.metadata())
-                report.resource_id = policy.name
+                report.resource_id = f"{policy.entity}/{policy.name}"
                 report.resource_arn = policy.arn
                 report.region = iam_client.region
                 report.resource_tags = policy.tags
