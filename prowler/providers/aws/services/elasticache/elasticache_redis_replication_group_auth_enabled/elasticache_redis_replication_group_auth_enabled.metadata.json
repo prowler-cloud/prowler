@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
-  "ResourceType": "AWSElastiCacheReplicationGroup",
+  "ResourceType": "Other",
   "Description": "Ensure Elasticache Redis replication groups of earlier versions use Redis OSS AUTH.",
   "Risk": "Without Redis AUTH enabled, your ElastiCache (Redis) instance is vulnerable to unauthorized access and potential data breaches.",
   "RelatedUrl": "https://docs.aws.amazon.com/AmazonElastiCache/latest/red-ug/auth.html",
