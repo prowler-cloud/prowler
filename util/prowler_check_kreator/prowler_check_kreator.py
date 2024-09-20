@@ -3,12 +3,6 @@ import json
 import os
 import sys
 
-import google.generativeai as genai
-
-from util.prowler_check_kreator.lib.metadata_types import (
-    get_metadata_valid_check_type,
-    get_metadata_valid_resource_type,
-)
 from util.prowler_check_kreator.lib.templates import (
     load_check_template,
     load_test_template,
@@ -73,9 +67,7 @@ class ProwlerCheckKreator:
                 .lower()
             )
 
-            if user_input == "no":
-                raise ValueError(f"Check {check_name} already exists")
-            else:
+            if user_input == "yes":
                 self._check_name = check_name
                 self._check_path = os.path.join(
                     self._prowler_folder,
@@ -85,6 +77,41 @@ class ProwlerCheckKreator:
                     service_name,
                     check_name,
                 )
+            else:
+                raise ValueError(f"Check {check_name} already exists")
+
+        # Let the user to use the model that he wants
+        self._model = None
+        supported_models = [
+            "gemini-1.5-flash (default)",
+            "gemini-1.5-pro",
+            "gemini-1.0-pro",
+        ]
+
+        print("Select the model that you want to use:")
+        for i, model in enumerate(supported_models):
+            print(f"{i + 1}. {model}")
+
+        user_input = input(
+            "Type the number of the model and press enter (default is 1): "
+        ).strip()
+
+        if not user_input:
+            model_index = 1
+        else:
+            model_index = int(user_input)
+
+        if model_index < 1 or model_index > len(supported_models):
+            raise ValueError("Invalid model selected")
+
+        model_name = supported_models[model_index - 1]
+
+        if "gemini" in model_name:
+            from util.prowler_check_kreator.lib.llms.gemini import Gemini
+
+            self._model = Gemini(model_name)
+        else:
+            raise ValueError("Invalid model selected")
 
     def kreate_check(self) -> None:
         """Create a new check in Prowler"""
@@ -199,7 +226,7 @@ class ProwlerCheckKreator:
     def _write_check_file(self) -> None:
         """Write the check file"""
 
-        check_template = load_check_template(
+        check_content = load_check_template(
             self._provider, self._service_name, self._check_name
         )
 
@@ -229,16 +256,16 @@ class ProwlerCheckKreator:
             ) as f:
                 check_reference = f.read()
 
-            check_template = self._fill_check_with_gemini(
+            check_content = self._model.generate_check(
                 self._check_name, check_reference
             )
         else:
             print(
-                "Referenced check does not exist. Check will be created with the standard template"
+                "Referenced check does not exist. Check will be created with the standard template."
             )
 
         with open(os.path.join(self._check_path, f"{self._check_name}.py"), "w") as f:
-            f.write(check_template)
+            f.write(check_content)
 
     def _write_metadata_file(self) -> None:
         """Write the metadata file"""
@@ -291,7 +318,7 @@ class ProwlerCheckKreator:
                     f"Please provide some context from {source} (leave empty if none): "
                 )
 
-            filled_metadata = self._fill_metadata_with_gemini(
+            filled_metadata = self._model.generate_metadata(
                 metadata_template, context_sources
             )
         else:
@@ -320,175 +347,6 @@ class ProwlerCheckKreator:
 
         with open(os.path.join(test_folder, f"{self._check_name}_test.py"), "w") as f:
             f.write(test_template)
-
-    def _fill_check_with_gemini(self, check_name: str, check_reference: str) -> str:
-        """Fill the check with Gemini AI
-
-        Keyword arguments:
-        check_name -- The name of the check to be created
-        check_reference -- The reference check to be used as inspiration
-        """
-
-        filled_check = ""
-
-        if check_reference:
-            try:
-                genai.configure(api_key=os.environ["GEMINI_API_KEY"])
-
-                generation_config = {
-                    "temperature": 0,
-                    "top_p": 1,
-                    "top_k": 1,
-                }
-
-                safety_settings = [
-                    {
-                        "category": "HARM_CATEGORY_HARASSMENT",
-                        "threshold": "BLOCK_MEDIUM_AND_ABOVE",
-                    },
-                    {
-                        "category": "HARM_CATEGORY_HATE_SPEECH",
-                        "threshold": "BLOCK_MEDIUM_AND_ABOVE",
-                    },
-                    {
-                        "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-                        "threshold": "BLOCK_MEDIUM_AND_ABOVE",
-                    },
-                    {
-                        "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
-                        "threshold": "BLOCK_MEDIUM_AND_ABOVE",
-                    },
-                ]
-
-                model = genai.GenerativeModel(
-                    model_name="gemini-1.5-flash",
-                    generation_config=generation_config,
-                    safety_settings=safety_settings,
-                )
-
-                # Extract the class name from the reference check. Example: class elb_connection_draining_enabled(Check)
-                class_name = check_reference.split("(")[0].split("class ")[1]
-
-                prompt_parts = [
-                    f"Your task is to create a new security check called '{check_name}' for Prowler (an open-source CSPM tool). The control is a Python class that inherits from the Check class and has only one method called execute. The execute method must return a list of Check_Report_AWS objects.",
-                    "I need the answer only with Python formatted text.",
-                    "Use the following check as inspiration to create the new check: ",
-                    f"{class_name}:",
-                    check_reference,
-                    f"{check_name}:",
-                ]
-
-                response = model.generate_content(prompt_parts)
-
-                if response:
-                    # Format the response to a Python class, removing the prompt parts
-                    filled_check = (
-                        response.text.replace("python", "").replace("```", "").strip()
-                    )
-
-                else:
-                    raise Exception("Error generating check with Gemini AI")
-
-            except Exception as e:
-                raise Exception(f"Error generating check with Gemini AI: {e}")
-
-        return filled_check
-
-    def _fill_metadata_with_gemini(self, metadata: dict, context_sources: dict) -> dict:
-        filled_metadata = {}
-
-        if metadata:
-            try:
-                genai.configure(api_key=os.environ["GEMINI_API_KEY"])
-
-                generation_config = {
-                    "temperature": 0,
-                    "top_p": 1,
-                    "top_k": 1,
-                }
-
-                safety_settings = [
-                    {
-                        "category": "HARM_CATEGORY_HARASSMENT",
-                        "threshold": "BLOCK_MEDIUM_AND_ABOVE",
-                    },
-                    {
-                        "category": "HARM_CATEGORY_HATE_SPEECH",
-                        "threshold": "BLOCK_MEDIUM_AND_ABOVE",
-                    },
-                    {
-                        "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-                        "threshold": "BLOCK_MEDIUM_AND_ABOVE",
-                    },
-                    {
-                        "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
-                        "threshold": "BLOCK_MEDIUM_AND_ABOVE",
-                    },
-                ]
-
-                # Remove empty context sources
-                context_sources = {k: v for k, v in context_sources.items() if v}
-
-                # Remove metadata that we don't want to be filled by Gemini
-                metadata.pop("SubServiceName", None)
-                metadata["Remediation"]["Code"].pop("NativeIaC", None)
-                metadata["Remediation"]["Code"].pop("Other", None)
-                metadata["Remediation"]["Code"].pop("Terraform", None)
-                metadata.pop("DependsOn", None)
-                metadata.pop("RelatedTo", None)
-
-                model = genai.GenerativeModel(
-                    model_name="gemini-1.5-flash",
-                    generation_config=generation_config,
-                    safety_settings=safety_settings,
-                )
-
-                prompt_parts = [
-                    "Your task is to fill the metadata for a new cybersecurity check in Prowler (an open-source CSPM tool). The metadata is a JSON object with the following fields: ",
-                    json.dumps(metadata, indent=2),
-                    "Use the following context sources as inspiration to fill the metadata: ",
-                    json.dumps(context_sources, indent=2),
-                    "The field CheckType should be filled following the format: 'namespace/category/classifier', where namespace, category, and classifier are the values from the following dict: ",
-                    json.dumps(
-                        get_metadata_valid_check_type(metadata["Provider"]), indent=2
-                    ),
-                    "One example of a valid CheckType value is: 'Software and Configuration Checks/Vulnerabilities/CVE'. If you don't have a valid value for CheckType, you can leave it empty.",
-                    "The field ResourceType must be one of the following values:",
-                    ", ".join(get_metadata_valid_resource_type(metadata["Provider"])),
-                    "If you don't have a valid value for ResourceType, you can leave it empty.",
-                    "The field Category must be one or more of the following values: encryption, forensics-ready, internet-exposed, logging, redundancy, secrets, thread-detection, trustboundaries or vulnerability-management. If you don't have a valid value for Category, you can leave it empty.",
-                    "I need the answer only with JSON formatted text.",
-                ]
-
-                response = model.generate_content(prompt_parts)
-
-                if response:
-                    # Format the response to a JSON object, removing the prompt parts
-                    response = (
-                        response.text.replace("\n", "")
-                        .replace("json", "")
-                        .replace("JSON", "")
-                        .replace("```", "")
-                        .strip()
-                    )
-
-                    filled_metadata = json.loads(response)
-
-                    # Add removed fields back to the metadata
-                    metadata["SubServiceName"] = ""
-                    metadata["Remediation"]["Code"]["NativeIaC"] = ""
-                    metadata["Remediation"]["Code"]["Other"] = ""
-                    metadata["Remediation"]["Code"]["Terraform"] = ""
-                    metadata["DependsOn"] = []
-                    metadata["RelatedTo"] = []
-
-                else:
-                    raise Exception("Error generating metadata with Gemini AI")
-
-            except Exception as e:
-                raise Exception(f"Error generating metadata with Gemini AI: {e}")
-
-        return filled_metadata
 
 
 if __name__ == "__main__":
