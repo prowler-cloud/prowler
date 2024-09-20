@@ -3,9 +3,7 @@
   "CheckID": "cloudfront_distributions_s3_origin_non_existent_bucket",
   "CheckTitle": "CloudFront distributions should not point to non-existent S3 origins.",
   "CheckType": [
-    "Software and Configuration Checks",
-    "Industry and Regulatory Standards",
-    "NIST 800-53 Controls"
+    "Software and Configuration Checks/Industry and Regulatory Standards/NIST 800-53 Controls"
   ],
   "ServiceName": "cloudfront",
   "SubServiceName": "",

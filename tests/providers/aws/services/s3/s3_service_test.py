@@ -493,17 +493,14 @@ class Test_S3_Service:
             ObjectLockEnabledForBucket=True,
         )
 
-        # Head Bucket
-        response = s3_client.head_bucket(
-            Bucket=bucket_name,
-        )
-
         # S3 client for this test class
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         s3 = S3(aws_provider)
         assert len(s3.buckets) == 1
         assert s3.buckets[bucket_arn].name == bucket_name
-        assert response
+        assert s3_client.head_bucket(
+            Bucket=bucket_name,
+        )
         assert s3.buckets[bucket_arn].region == AWS_REGION_US_EAST_1
 
     # Test S3 List Access Points
