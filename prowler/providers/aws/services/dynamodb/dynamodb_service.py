@@ -9,16 +9,15 @@ from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################## DynamoDB
 class DynamoDB(AWSService):
     def __init__(self, provider):
-        # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.tables = []
         self.__threading_call__(self._list_tables)
         self._describe_table()
         self._describe_continuous_backups()
         self._get_resource_policy()
+        self._describe_autoscaling()
         self._list_tags_for_resource()
 
     def _list_tables(self, regional_client):
@@ -35,6 +34,7 @@ class DynamoDB(AWSService):
                             Table(
                                 arn=arn,
                                 name=table,
+                                billing_mode="PROVISIONED",
                                 encryption_type=None,
                                 kms_arn=None,
                                 region=regional_client.region,
@@ -53,6 +53,10 @@ class DynamoDB(AWSService):
                 properties = regional_client.describe_table(TableName=table.name)[
                     "Table"
                 ]
+                if "BillingModeSummary" in properties:
+                    table.billing_mode = properties["BillingModeSummary"]["BillingMode"]
+                else:
+                    table.billing_mode = "PROVISIONED"
                 if "SSEDescription" in properties:
                     if "SSEType" in properties["SSEDescription"]:
                         table.encryption_type = properties["SSEDescription"]["SSEType"]
@@ -124,6 +128,37 @@ class DynamoDB(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _describe_autoscaling(self):
+        logger.info("DynamoDB - Describing Auto Scaling...")
+        try:
+            for table in self.tables:
+                if table.billing_mode == "PROVISIONED":
+                    application_autoscaling_client = self.session.client(
+                        "application-autoscaling", region_name=table.region
+                    )
+                    read_response = (
+                        application_autoscaling_client.describe_scaling_policies(
+                            ServiceNamespace="dynamodb",
+                            ResourceId=f"table/{table.name}",
+                            ScalableDimension="dynamodb:table:ReadCapacityUnits",
+                        )
+                    )
+                    if read_response["ScalingPolicies"]:
+                        table.read_autoscaling = True
+                    write_response = (
+                        application_autoscaling_client.describe_scaling_policies(
+                            ServiceNamespace="dynamodb",
+                            ResourceId=f"table/{table.name}",
+                            ScalableDimension="dynamodb:table:WriteCapacityUnits",
+                        )
+                    )
+                    if write_response["ScalingPolicies"]:
+                        table.write_autoscaling = True
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
+            )
+
     def _list_tags_for_resource(self):
         logger.info("DynamoDB - List Tags...")
         try:
@@ -150,10 +185,8 @@ class DynamoDB(AWSService):
             )
 
 
-################## DynamoDB DAX
 class DAX(AWSService):
     def __init__(self, provider):
-        # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.clusters = []
         self.__threading_call__(self._describe_clusters)
@@ -214,6 +247,9 @@ class DAX(AWSService):
 class Table(BaseModel):
     arn: str
     name: str
+    billing_mode: str = "PROVISIONED"
+    read_autoscaling: bool = False
+    write_autoscaling: bool = False
     encryption_type: Optional[str]
     kms_arn: Optional[str]
     pitr: bool = False

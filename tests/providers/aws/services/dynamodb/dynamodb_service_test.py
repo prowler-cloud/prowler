@@ -71,7 +71,8 @@ class Test_DynamoDB_Service:
                 {"AttributeName": "client", "KeyType": "HASH"},
                 {"AttributeName": "app", "KeyType": "RANGE"},
             ],
-            BillingMode="PAY_PER_REQUEST",
+            BillingMode="PROVISIONED",
+            ProvisionedThroughput={"ReadCapacityUnits": 5, "WriteCapacityUnits": 5},
         )
         # DynamoDB client for this test class
         aws_provider = set_mocked_aws_provider()
@@ -81,6 +82,8 @@ class Test_DynamoDB_Service:
         assert dynamo.tables[1].name == "test2"
         assert dynamo.tables[0].region == AWS_REGION_US_EAST_1
         assert dynamo.tables[1].region == AWS_REGION_US_EAST_1
+        assert dynamo.tables[0].billing_mode == "PAY_PER_REQUEST"
+        assert dynamo.tables[1].billing_mode == "PROVISIONED"
 
     # Test DynamoDB Describe Table
     @mock_aws
@@ -113,6 +116,7 @@ class Test_DynamoDB_Service:
         assert dynamo.tables[0].tags == [
             {"Key": "test", "Value": "test"},
         ]
+        assert dynamo.tables[0].billing_mode == "PAY_PER_REQUEST"
 
     # Test DynamoDB Describe Continuous Backups
     @mock_aws
