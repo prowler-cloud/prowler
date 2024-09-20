@@ -442,6 +442,33 @@ class S3(AWSService):
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
+    def head_bucket(self, bucket):
+        logger.info("S3 - Checking bucket existance and access permission...")
+        try:
+            regional_client = self.regional_clients[bucket.region]
+            response = regional_client.head_bucket(Bucket=bucket.name)
+            if response:
+                logger.info(f"Bucket {bucket.name} exists and access is permitted.")
+                return True
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "AccessDenied":
+                logger.error(
+                    f"Bucket {bucket.name} exists but access is denied. Error: {error}"
+                )
+                return True
+            if error.response["Error"]["Code"] == "NoSuchBucket":
+                logger.error(f"Bucket {bucket.name} does not exist. Error: {error}")
+                return False
+        except Exception as error:
+            if regional_client:
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
 
 class S3Control(AWSService):
     def __init__(self, provider):
