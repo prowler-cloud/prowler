@@ -65,6 +65,7 @@ nav:
       - Pentesting: tutorials/pentesting.md
       - Parallel Execution: tutorials/parallel-execution.md
       - Developer Guide: developer-guide/introduction.md
+      - Prowler Check Kreator: tutorials/prowler-check-kreator.md
       - AWS:
           - Authentication: tutorials/aws/authentication.md
           - Assume Role: tutorials/aws/role-assumption.md
