@@ -23,13 +23,13 @@ class dynamodb_table_autoscaling_enabled(Check):
                 else:
                     s = f"DynamoDB table {table.name} is in PROVISIONED mode without auto scaling enabled for "
                     if not table.read_autoscaling:
-                        s.append("read")
+                        s += "read"
                         if not table.write_autoscaling:
-                            s.append(" and write.")
+                            s += " and write."
                         else:
-                            s.append(".")
+                            s += "."
                     else:
-                        s.append("write.")
+                        s += "write."
                     report.status_extended = s
             findings.append(report)
         return findings
