@@ -14,6 +14,8 @@ class cloudfront_distributions_s3_origin_non_existent_bucket(Check):
             report.resource_arn = distribution.arn
             report.resource_id = distribution.id
             report.resource_tags = distribution.tags
+            report.status = "PASS"
+            report.status_extended = f"CloudFront Distribution {distribution.id} does not have non-existent S3 buckets as origins."
             non_existent_buckets = []
 
             for origin in distribution.origins:
@@ -21,10 +23,7 @@ class cloudfront_distributions_s3_origin_non_existent_bucket(Check):
                 if not s3_client._head_bucket(bucket_name):
                     non_existent_buckets.append(bucket_name)
 
-            if len(non_existent_buckets) == 0:
-                report.status = "PASS"
-                report.status_extended = f"CloudFront Distribution {distribution.id} does not have non-existent S3 buckets as origins."
-            else:
+            if non_existent_buckets:
                 report.status = "FAIL"
                 report.status_extended = f"CloudFront Distribution {distribution.id} has non-existent S3 buckets as origins: {','.join(non_existent_buckets)}"
 
