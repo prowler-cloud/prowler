@@ -1,10 +1,6 @@
 from unittest import mock
 
-from tests.providers.gcp.gcp_fixtures import (
-    GCP_PROJECT_ID,
-    GCP_US_CENTER1_LOCATION,
-    set_mocked_gcp_provider,
-)
+from tests.providers.gcp.gcp_fixtures import GCP_PROJECT_ID, GCP_US_CENTER1_LOCATION
 
 
 class Test_kms_key_rotation_enabled:
@@ -12,9 +8,6 @@ class Test_kms_key_rotation_enabled:
         kms_client = mock.MagicMock
 
         with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
             "prowler.providers.gcp.services.kms.kms_key_rotation_enabled.kms_key_rotation_enabled.kms_client",
             new=kms_client,
         ):
@@ -34,9 +27,6 @@ class Test_kms_key_rotation_enabled:
         kms_client = mock.MagicMock
 
         with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
             "prowler.providers.gcp.services.kms.kms_key_rotation_enabled.kms_key_rotation_enabled.kms_client",
             new=kms_client,
         ):
@@ -90,9 +80,6 @@ class Test_kms_key_rotation_enabled:
         kms_client = mock.MagicMock
 
         with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
             "prowler.providers.gcp.services.kms.kms_key_rotation_enabled.kms_key_rotation_enabled.kms_client",
             new=kms_client,
         ):
@@ -147,9 +134,6 @@ class Test_kms_key_rotation_enabled:
         kms_client = mock.MagicMock
 
         with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
             "prowler.providers.gcp.services.kms.kms_key_rotation_enabled.kms_key_rotation_enabled.kms_client",
             new=kms_client,
         ):
@@ -204,9 +188,6 @@ class Test_kms_key_rotation_enabled:
         kms_client = mock.MagicMock
 
         with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
             "prowler.providers.gcp.services.kms.kms_key_rotation_enabled.kms_key_rotation_enabled.kms_client",
             new=kms_client,
         ):
@@ -261,9 +242,6 @@ class Test_kms_key_rotation_enabled:
         kms_client = mock.MagicMock
 
         with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
             "prowler.providers.gcp.services.kms.kms_key_rotation_enabled.kms_key_rotation_enabled.kms_client",
             new=kms_client,
         ):
@@ -318,9 +296,6 @@ class Test_kms_key_rotation_enabled:
         kms_client = mock.MagicMock
 
         with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
             "prowler.providers.gcp.services.kms.kms_key_rotation_enabled.kms_key_rotation_enabled.kms_client",
             new=kms_client,
         ):
@@ -378,9 +353,6 @@ class Test_kms_key_rotation_enabled:
         kms_client = mock.MagicMock
 
         with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
             "prowler.providers.gcp.services.kms.kms_key_rotation_enabled.kms_key_rotation_enabled.kms_client",
             new=kms_client,
         ):
@@ -436,9 +408,6 @@ class Test_kms_key_rotation_enabled:
         kms_client = mock.MagicMock
 
         with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
             "prowler.providers.gcp.services.kms.kms_key_rotation_enabled.kms_key_rotation_enabled.kms_client",
             new=kms_client,
         ):
@@ -496,9 +465,6 @@ class Test_kms_key_rotation_enabled:
         kms_client = mock.MagicMock
 
         with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
             "prowler.providers.gcp.services.kms.kms_key_rotation_enabled.kms_key_rotation_enabled.kms_client",
             new=kms_client,
         ):
@@ -554,9 +520,6 @@ class Test_kms_key_rotation_enabled:
         kms_client = mock.MagicMock
 
         with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
             "prowler.providers.gcp.services.kms.kms_key_rotation_enabled.kms_key_rotation_enabled.kms_client",
             new=kms_client,
         ):
