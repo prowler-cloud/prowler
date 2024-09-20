@@ -361,8 +361,8 @@ if __name__ == "__main__":
         sys.exit(prowler_check_creator.kreate_check())
 
     except ValueError as e:
-        print(f"Error: {e} (line {sys.exc_info()[-1].tb_lineno})")
+        print(f"Error: {e}")
         sys.exit(1)
     except Exception as e:
-        print(f"Error: {e} (line {sys.exc_info()[-1].tb_lineno})")
+        print(f"Error: {e}")
         sys.exit(1)

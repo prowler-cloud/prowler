@@ -12,7 +12,10 @@ from util.prowler_check_kreator.lib.metadata_types import (
 
 class Gemini:
     def __init__(self, model: str = "gemini-1.5-flash"):
-        self.api_key = os.getenv("GEMINI_API_KEY")
+        if os.getenv("GEMINI_API_KEY"):
+            self.api_key = os.getenv("GEMINI_API_KEY")
+        else:
+            raise Exception("GEMINI_API_KEY environment variable is not set")
 
         if model not in ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-1.0-pro"]:
             raise Exception("Invalid Gemini AI model")
