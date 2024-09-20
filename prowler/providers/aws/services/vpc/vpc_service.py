@@ -331,6 +331,8 @@ class VPC(AWSService):
                             regional_client_for_subnet = self.regional_clients[
                                 regional_client.region
                             ]
+                            public = False
+                            nat_gateway = False
                             route_tables_for_subnet = (
                                 regional_client_for_subnet.describe_route_tables(
                                     Filters=[
@@ -353,21 +355,20 @@ class VPC(AWSService):
                                         ]
                                     )
                                 )
-                            public = False
-                            nat_gateway = False
-                            for route in route_tables_for_subnet.get("RouteTables")[
-                                0
-                            ].get("Routes"):
-                                if (
-                                    "GatewayId" in route
-                                    and "igw" in route["GatewayId"]
-                                    and route.get("DestinationCidrBlock", "")
-                                    == "0.0.0.0/0"
-                                ):
-                                    # If the route table has a default route to an internet gateway, the subnet is public
-                                    public = True
-                                if "NatGatewayId" in route:
-                                    nat_gateway = True
+                            for route_table in route_tables_for_subnet.get(
+                                "RouteTables"
+                            ):
+                                for route in route_table.get("Routes"):
+                                    if (
+                                        "GatewayId" in route
+                                        and "igw" in route["GatewayId"]
+                                        and route.get("DestinationCidrBlock", "")
+                                        == "0.0.0.0/0"
+                                    ):
+                                        # If the route table has a default route to an internet gateway, the subnet is public
+                                        public = True
+                                    if "NatGatewayId" in route:
+                                        nat_gateway = True
                             subnet_name = ""
                             for tag in subnet.get("Tags", []):
                                 if tag["Key"] == "Name":
