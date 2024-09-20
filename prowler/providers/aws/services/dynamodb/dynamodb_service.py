@@ -137,22 +137,22 @@ class DynamoDB(AWSService):
                         "application-autoscaling", region_name=table.region
                     )
                     read_response = (
-                        application_autoscaling_client.describe_scaling_policies(
+                        application_autoscaling_client.describe_scalable_targets(
                             ServiceNamespace="dynamodb",
-                            ResourceId=f"table/{table.name}",
+                            ResourceIds=[f"table/{table.name}"],
                             ScalableDimension="dynamodb:table:ReadCapacityUnits",
                         )
                     )
-                    if read_response["ScalingPolicies"]:
+                    if read_response["ScalableTargets"]:
                         table.read_autoscaling = True
                     write_response = (
-                        application_autoscaling_client.describe_scaling_policies(
+                        application_autoscaling_client.describe_scalable_targets(
                             ServiceNamespace="dynamodb",
-                            ResourceId=f"table/{table.name}",
+                            ResourceIds=[f"table/{table.name}"],
                             ScalableDimension="dynamodb:table:WriteCapacityUnits",
                         )
                     )
-                    if write_response["ScalingPolicies"]:
+                    if write_response["ScalableTargets"]:
                         table.write_autoscaling = True
         except Exception as error:
             logger.error(
