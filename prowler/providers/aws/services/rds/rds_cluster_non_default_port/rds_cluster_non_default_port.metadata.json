@@ -7,7 +7,7 @@
   ],
   "ServiceName": "rds",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-cluster",
+  "ResourceIdTemplate": "arn:aws:rds:region:account-id:cluster:db-cluster",
   "Severity": "low",
   "ResourceType": "AwsRdsDbInstance",
   "Description": "Checks if an cluster uses a port other than the default port of the database engine. The control fails if the RDS cluster uses the default port.",

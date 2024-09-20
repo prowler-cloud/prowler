@@ -42,7 +42,7 @@ class Test_rds_cluster_non_default_port:
             Engine="aurora-postgresql",
             StorageEncrypted=True,
             DeletionProtection=True,
-            MasterUsername="master",
+            MasterUsername="cluster",
             MasterUserPassword="password",
             Port=5432,
             Tags=[{"Key": "test", "Value": "test"}],
@@ -71,13 +71,13 @@ class Test_rds_cluster_non_default_port:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == "RDS Cluster db-master-1 is using the default port 5432 for postgres."
+                    == "RDS Cluster db-cluster-1 is using the default port 5432 for aurora-postgresql."
                 )
-                assert result[0].resource_id == "db-master-1"
+                assert result[0].resource_id == "db-cluster-1"
                 assert result[0].region == AWS_REGION_US_EAST_1
                 assert (
                     result[0].resource_arn
-                    == f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:db:db-master-1"
+                    == f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:cluster:db-cluster-1"
                 )
                 assert result[0].resource_tags == [{"Key": "test", "Value": "test"}]
 
@@ -89,10 +89,10 @@ class Test_rds_cluster_non_default_port:
             Engine="aurora-postgresql",
             StorageEncrypted=True,
             DeletionProtection=True,
-            MasterUsername="master",
+            MasterUsername="cluster",
             MasterUserPassword="password",
             Port=5433,
-            Tags=[{"Key": "test", "Value": "test"}],
+            Tags=[{"Key": "env", "Value": "production"}],
         )
 
         from prowler.providers.aws.services.rds.rds_service import RDS
@@ -118,30 +118,30 @@ class Test_rds_cluster_non_default_port:
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == "RDS Cluster db-master-1 is not using the default port 5433 for postgres."
+                    == "RDS Cluster db-cluster-1 is not using the default port 5433 for aurora-postgresql."
                 )
-                assert result[0].resource_id == "db-master-1"
+                assert result[0].resource_id == "db-cluster-1"
                 assert result[0].region == AWS_REGION_US_EAST_1
                 assert (
                     result[0].resource_arn
-                    == f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:db:db-master-1"
+                    == f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:cluster:db-cluster-1"
                 )
                 assert result[0].resource_tags == [
                     {"Key": "env", "Value": "production"}
                 ]
 
     @mock_aws
-    def test_rds_cluster_mariadb_default_port(self):
+    def test_rds_cluster_neptune_default_port(self):
         conn = client("rds", region_name=AWS_REGION_US_EAST_1)
         conn.create_db_cluster(
             DBClusterIdentifier="db-cluster-1",
-            Engine="mariadb",
+            Engine="neptune",
             StorageEncrypted=True,
             DeletionProtection=True,
-            MasterUsername="master",
+            MasterUsername="cluster",
             MasterUserPassword="password",
-            Port=3306,
-            Tags=[{"Key": "test", "Value": "test"}],
+            Port=8182,
+            Tags=[{"Key": "env", "Value": "staging"}],
         )
 
         from prowler.providers.aws.services.rds.rds_service import RDS
@@ -167,28 +167,28 @@ class Test_rds_cluster_non_default_port:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == "RDS Cluster db-master-1 is using the default port 3306 for mariadb."
+                    == "RDS Cluster db-cluster-1 is using the default port 8182 for neptune."
                 )
-                assert result[0].resource_id == "db-master-1"
+                assert result[0].resource_id == "db-cluster-1"
                 assert result[0].region == AWS_REGION_US_EAST_1
                 assert (
                     result[0].resource_arn
-                    == f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:db:db-master-1"
+                    == f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:cluster:db-cluster-1"
                 )
                 assert result[0].resource_tags == [{"Key": "env", "Value": "staging"}]
 
     @mock_aws
-    def test_rds_cluster_mariadb_non_default_port(self):
+    def test_rds_cluster_neptune_non_default_port(self):
         conn = client("rds", region_name=AWS_REGION_US_EAST_1)
         conn.create_db_cluster(
             DBClusterIdentifier="db-cluster-1",
-            Engine="mariadb",
+            Engine="neptune",
             StorageEncrypted=True,
             DeletionProtection=True,
-            MasterUsername="master",
+            MasterUsername="cluster",
             MasterUserPassword="password",
-            Port=3307,
-            Tags=[{"Key": "test", "Value": "test"}],
+            Port=8183,
+            Tags=[{"Key": "env", "Value": "production"}],
         )
 
         from prowler.providers.aws.services.rds.rds_service import RDS
@@ -214,13 +214,13 @@ class Test_rds_cluster_non_default_port:
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == "RDS Cluster db-master-1 is not using the default port 3307 for mariadb."
+                    == "RDS Cluster db-cluster-1 is not using the default port 8183 for neptune."
                 )
-                assert result[0].resource_id == "db-master-1"
+                assert result[0].resource_id == "db-cluster-1"
                 assert result[0].region == AWS_REGION_US_EAST_1
                 assert (
                     result[0].resource_arn
-                    == f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:db:db-master-1"
+                    == f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:cluster:db-cluster-1"
                 )
                 assert result[0].resource_tags == [
                     {"Key": "env", "Value": "production"}
