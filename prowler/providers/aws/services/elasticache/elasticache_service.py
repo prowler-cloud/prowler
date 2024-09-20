@@ -96,11 +96,11 @@ class ElastiCache(AWSService):
                     ):
                         # Get first cluster version as they all have the same unless an upgrade is being made
                         member_clusters = repl_group.get("MemberClusters", [])
+                        engine_version = "0.0"
                         if member_clusters:
-                            cluster_arn = f"arn:aws:s3:::{member_clusters[0]}"
+                            print(f"MEMBER CLUSERS: {member_clusters}")
+                            cluster_arn = f"arn:aws:elasticache:{regional_client.region}:{self.audited_account}:cluster:{member_clusters[0]}"
                             engine_version = self.clusters[cluster_arn].engine_version
-                        else:
-                            engine_version = "0.0"
 
                         self.replication_groups[replication_arn] = ReplicationGroup(
                             id=repl_group["ReplicationGroupId"],
