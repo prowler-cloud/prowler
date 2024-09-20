@@ -16,9 +16,14 @@ class kms_key_rotation_enabled(Check):
             now = datetime.datetime.now()
             condition_next_rotation_time = False
             if key.next_rotation_time:
-                next_rotation_time = datetime.datetime.strptime(
-                    key.next_rotation_time, "%Y-%m-%dT%H:%M:%SZ"
-                )
+                try:
+                    next_rotation_time = datetime.datetime.strptime(
+                        key.next_rotation_time, "%Y-%m-%dT%H:%M:%S.%fZ"
+                    )
+                except ValueError:
+                    next_rotation_time = datetime.datetime.strptime(
+                        key.next_rotation_time, "%Y-%m-%dT%H:%M:%SZ"
+                    )
                 condition_next_rotation_time = (
                     abs((next_rotation_time - now).days) <= 90
                 )
