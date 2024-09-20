@@ -73,6 +73,8 @@ class Test_elasticache_replication_group_at_rest_encryption_enabled:
                 tags=REPLICATION_GROUP_TAGS,
                 auto_minor_version_upgrade=AUTO_MINOR_VERSION_UPGRADE,
                 automatic_failover=AUTOMATIC_FAILOVER,
+                engine_version="6.0",
+                auth_token_enabled=False,
             )
         )
 
@@ -119,6 +121,8 @@ class Test_elasticache_replication_group_at_rest_encryption_enabled:
                 tags=REPLICATION_GROUP_TAGS,
                 auto_minor_version_upgrade=AUTO_MINOR_VERSION_UPGRADE,
                 automatic_failover=AUTOMATIC_FAILOVER,
+                engine_version="6.0",
+                auth_token_enabled=False,
             )
         )
 
