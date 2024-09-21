@@ -9,8 +9,8 @@ import { ProviderProps } from "@/types";
 import { DateWithTime } from "../DateWithTime";
 import { ProviderInfo } from "../ProviderInfo";
 import { SnippetIdProvider } from "../SnippetIdProvider";
+import { DataTableColumnHeader } from "./data-table-column-header";
 import { DataTableRowActions } from "./data-table-row-actions";
-import { DataTableColumnHeader } from "./DataTableColumnHeader";
 
 const getProviderData = (row: { original: ProviderProps }) => {
   return row.original;
