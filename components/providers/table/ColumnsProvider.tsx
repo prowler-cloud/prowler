@@ -1,40 +1,20 @@
 "use client";
 
-import {
-  Button,
-  Dropdown,
-  DropdownItem,
-  DropdownMenu,
-  DropdownSection,
-  DropdownTrigger,
-} from "@nextui-org/react";
 import { ColumnDef } from "@tanstack/react-table";
-import clsx from "clsx";
 import { add } from "date-fns";
 
-import { VerticalDotsIcon } from "@/components/icons";
 import { StatusBadge } from "@/components/ui";
 import { ProviderProps } from "@/types";
 
-import { CheckConnectionProvider } from "../CheckConnectionProvider";
 import { DateWithTime } from "../DateWithTime";
-import { DeleteProvider } from "../DeleteProvider";
 import { ProviderInfo } from "../ProviderInfo";
+import { SnippetIdProvider } from "../SnippetIdProvider";
+import { DataTableRowActions } from "./data-table-row-actions";
 import { DataTableColumnHeader } from "./DataTableColumnHeader";
+
 const getProviderData = (row: { original: ProviderProps }) => {
   return row.original;
 };
-
-import {
-  AddNoteBulkIcon,
-  DeleteDocumentBulkIcon,
-  EditDocumentBulkIcon,
-} from "@nextui-org/shared-icons";
-
-import { SnippetIdProvider } from "../SnippetIdProvider";
-
-const iconClasses =
-  "text-2xl text-default-500 pointer-events-none flex-shrink-0";
 
 export const ColumnsProvider: ColumnDef<ProviderProps>[] = [
   {
@@ -133,68 +113,9 @@ export const ColumnsProvider: ColumnDef<ProviderProps>[] = [
     },
   },
   {
-    accessorKey: "actions",
-    header: () => <div className="text-right">Actions</div>,
     id: "actions",
     cell: ({ row }) => {
-      const { id } = getProviderData(row);
-      return (
-        <div className="relative flex justify-end items-center gap-2">
-          <Dropdown className="shadow-xl" placement="bottom">
-            <DropdownTrigger>
-              <Button isIconOnly radius="full" size="sm" variant="light">
-                <VerticalDotsIcon className="text-default-400" />
-              </Button>
-            </DropdownTrigger>
-            <DropdownMenu
-              closeOnSelect
-              aria-label="Actions"
-              color="default"
-              variant="flat"
-            >
-              <DropdownSection title="Actions">
-                <DropdownItem
-                  key="new"
-                  description="Check the connection to the provider"
-                  shortcut="⌘N"
-                  textValue="Check Connection"
-                  startContent={<AddNoteBulkIcon className={iconClasses} />}
-                >
-                  <CheckConnectionProvider id={id} />
-                </DropdownItem>
-                <DropdownItem
-                  key="edit"
-                  description="Allows you to edit the provider"
-                  shortcut="⌘⇧E"
-                  textValue="Edit Provider"
-                  startContent={
-                    <EditDocumentBulkIcon className={iconClasses} />
-                  }
-                >
-                  Edit provider
-                </DropdownItem>
-              </DropdownSection>
-              <DropdownSection title="Danger zone">
-                <DropdownItem
-                  key="delete"
-                  className="text-danger"
-                  color="danger"
-                  description="Delete the provider permanently"
-                  textValue="Delete Provider"
-                  shortcut="⌘⇧D"
-                  startContent={
-                    <DeleteDocumentBulkIcon
-                      className={clsx(iconClasses, "!text-danger")}
-                    />
-                  }
-                >
-                  <DeleteProvider id={id} />
-                </DropdownItem>
-              </DropdownSection>
-            </DropdownMenu>
-          </Dropdown>
-        </div>
-      );
+      return <DataTableRowActions row={row} />;
     },
   },
 ];
