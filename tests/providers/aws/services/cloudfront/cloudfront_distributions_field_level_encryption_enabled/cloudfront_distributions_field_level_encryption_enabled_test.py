@@ -45,6 +45,7 @@ class Test_cloudfront_distributions_field_level_encryption_enabled:
                     viewer_protocol_policy=ViewerProtocolPolicy.https_only,
                     field_level_encryption_id="AAAAAAAA",
                 ),
+                origin_failover=False,
             )
         }
 
@@ -84,6 +85,7 @@ class Test_cloudfront_distributions_field_level_encryption_enabled:
                     viewer_protocol_policy=ViewerProtocolPolicy.https_only,
                     field_level_encryption_id="",
                 ),
+                origin_failover=False,
             )
         }
 

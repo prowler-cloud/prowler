@@ -30,6 +30,28 @@ def example_distribution_config(ref):
                 },
             ],
         },
+        "OriginGroups": {
+            "Quantity": 1,
+            "Items": [
+                {
+                    "Id": "origin-group1",
+                    "FailoverCriteria": {
+                        "StatusCodes": {"Quantity": 1, "Items": [500]}
+                    },
+                    "Members": {
+                        "Quantity": 2,
+                        "Items": [
+                            {
+                                "OriginId": "origin1",
+                            },
+                            {
+                                "OriginId": "origin2",
+                            },
+                        ],
+                    },
+                }
+            ],
+        },
         "DefaultCacheBehavior": {
             "TargetOriginId": "origin1",
             "ViewerProtocolPolicy": "allow-all",

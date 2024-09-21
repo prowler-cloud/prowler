@@ -10,7 +10,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
-  "ResourceType": "AwsEFSFileSystem",
+  "ResourceType": "AwsEfsFileSystem",
   "Description": "Check if EFS have policies which allow access to any client within the VPC",
   "Risk": "Restricting access to EFS file systems is a security best practice. Allowing access to any client within the VPC can lead to unauthorized access to the file system.",
   "RelatedUrl": "",

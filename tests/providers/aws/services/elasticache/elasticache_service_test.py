@@ -19,7 +19,7 @@ SUBNET_1 = "subnet-1"
 SUBNET_2 = "subnet-2"
 
 ELASTICACHE_CLUSTER_NAME = "test-cluster"
-ELASTICACHE_CLUSTER_ARN = f"arn:aws:elasticache:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:{ELASTICACHE_CLUSTER_NAME}"
+ELASTICACHE_CLUSTER_ARN = f"arn:aws:elasticache:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:cluster:{ELASTICACHE_CLUSTER_NAME}"
 ELASTICACHE_ENGINE = "redis"
 ELASTICACHE_ENGINE_MEMCACHED = "memcached"
 
@@ -63,6 +63,8 @@ def mock_make_api_call(self, operation_name, kwargs):
                     "Engine": ELASTICACHE_ENGINE,
                     "SecurityGroups": [],
                     "AutoMinorVersionUpgrade": AUTO_MINOR_VERSION_UPGRADE,
+                    "EngineVersion": "6.0",
+                    "AuthTokenEnabled": False,
                 },
             ]
         }
@@ -108,6 +110,8 @@ def mock_make_api_call(self, operation_name, kwargs):
                     "AtRestEncryptionEnabled": REPLICATION_GROUP_ENCRYPTION,
                     "ARN": REPLICATION_GROUP_ARN,
                     "AutoMinorVersionUpgrade": AUTO_MINOR_VERSION_UPGRADE,
+                    "Memberclusters": [ELASTICACHE_CLUSTER_NAME],
+                    "AuthTokenEnabled": False,
                 },
             ]
         }
@@ -162,7 +166,6 @@ class Test_ElastiCache_Service:
         assert elasticache.clusters[ELASTICACHE_CLUSTER_ARN]
         assert elasticache.clusters[ELASTICACHE_CLUSTER_ARN] == Cluster(
             arn=ELASTICACHE_CLUSTER_ARN,
-            name=ELASTICACHE_CLUSTER_NAME,
             id=ELASTICACHE_CLUSTER_NAME,
             engine=ELASTICACHE_ENGINE,
             region=AWS_REGION_US_EAST_1,
@@ -171,9 +174,11 @@ class Test_ElastiCache_Service:
             subnets=[SUBNET_1, SUBNET_2],
             tags=ELASTICACHE_CLUSTER_TAGS,
             auto_minor_version_upgrade=AUTO_MINOR_VERSION_UPGRADE,
+            engine_version=6.0,
+            auth_token_enabled=False,
         )
 
-    # Test Elasticache Redis cache clusters
+    # Test Elasticache Redis replication_groups
     def test_describe_replication_groups(self):
         aws_provider = set_mocked_aws_provider()
         elasticache = ElastiCache(aws_provider)
@@ -193,5 +198,7 @@ class Test_ElastiCache_Service:
             multi_az=REPLICATION_GROUP_MULTI_AZ,
             tags=REPLICATION_GROUP_TAGS,
             auto_minor_version_upgrade=AUTO_MINOR_VERSION_UPGRADE,
+            auth_token_enabled=False,
             automatic_failover="disabled",
+            engine_version="0.0",
         )

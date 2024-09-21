@@ -100,6 +100,8 @@ class RDS(AWSService):
                                 copy_tags_to_snapshot=instance.get(
                                     "CopyTagsToSnapshot"
                                 ),
+                                port=instance.get("Endpoint", {}).get("Port"),
+                                vpc_id=instance.get("DBSubnetGroup", {}).get("VpcId"),
                             )
         except Exception as error:
             logger.error(
@@ -109,10 +111,7 @@ class RDS(AWSService):
     def _describe_db_parameters(self, regional_client):
         logger.info("RDS - Describe DB Parameters...")
         try:
-            for (
-                instance_arn,
-                instance,
-            ) in self.db_instances.items():
+            for instance in self.db_instances.values():
                 if instance.region == regional_client.region:
                     for parameter_group in instance.parameter_groups:
                         describe_db_parameters_paginator = (
@@ -137,23 +136,26 @@ class RDS(AWSService):
                     describe_db_certificates_paginator = regional_client.get_paginator(
                         "describe_certificates"
                     )
-                    for page in describe_db_certificates_paginator.paginate(
-                        CertificateIdentifier=instance.ca_cert
-                    ):
-                        for certificate in page["Certificates"]:
-                            instance.cert.append(
-                                Certificate(
-                                    id=certificate["CertificateIdentifier"],
-                                    arn=certificate["CertificateArn"],
-                                    type=certificate["CertificateType"],
-                                    valid_from=certificate["ValidFrom"],
-                                    valid_till=certificate["ValidTill"],
-                                    customer_override=certificate["CustomerOverride"],
-                                    customer_override_valid_till=certificate.get(
-                                        "CustomerOverrideValidTill"
-                                    ),
+                    if instance.ca_cert:
+                        for page in describe_db_certificates_paginator.paginate(
+                            CertificateIdentifier=instance.ca_cert
+                        ):
+                            for certificate in page["Certificates"]:
+                                instance.cert.append(
+                                    Certificate(
+                                        id=certificate["CertificateIdentifier"],
+                                        arn=certificate["CertificateArn"],
+                                        type=certificate["CertificateType"],
+                                        valid_from=certificate["ValidFrom"],
+                                        valid_till=certificate["ValidTill"],
+                                        customer_override=certificate[
+                                            "CustomerOverride"
+                                        ],
+                                        customer_override_valid_till=certificate.get(
+                                            "CustomerOverrideValidTill"
+                                        ),
+                                    )
                                 )
-                            )
 
         except Exception as error:
             logger.error(
@@ -261,6 +263,7 @@ class RDS(AWSService):
                                         copy_tags_to_snapshot=cluster.get(
                                             "CopyTagsToSnapshot"
                                         ),
+                                        port=cluster.get("Port"),
                                     )
                                     # We must use a unique value as the dict key to have unique keys
                                     self.db_clusters[db_cluster_arn] = db_cluster
@@ -507,6 +510,8 @@ class DBInstance(BaseModel):
     ca_cert: Optional[str]
     cert: list[Certificate] = []
     copy_tags_to_snapshot: Optional[bool]
+    port: Optional[int]
+    vpc_id: Optional[str]
 
 
 class DBCluster(BaseModel):
@@ -531,6 +536,7 @@ class DBCluster(BaseModel):
     region: str
     tags: Optional[list] = []
     copy_tags_to_snapshot: Optional[bool]
+    port: Optional[int]
 
 
 class DBSnapshot(BaseModel):

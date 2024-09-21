@@ -13,7 +13,7 @@ class ECS(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
-        self.task_definitions = []
+        self.task_definitions = {}
         self.__threading_call__(self._list_task_definitions)
         self._describe_task_definition()
 
@@ -26,15 +26,13 @@ class ECS(AWSService):
                     if not self.audit_resources or (
                         is_resource_filtered(task_definition, self.audit_resources)
                     ):
-                        self.task_definitions.append(
-                            TaskDefinition(
-                                # we want the family name without the revision
-                                name=sub(":.*", "", task_definition.split("/")[1]),
-                                arn=task_definition,
-                                revision=task_definition.split(":")[-1],
-                                region=regional_client.region,
-                                environment_variables=[],
-                            )
+                        self.task_definitions[task_definition] = TaskDefinition(
+                            # we want the family name without the revision
+                            name=sub(":.*", "", task_definition.split("/")[1]),
+                            arn=task_definition,
+                            revision=task_definition.split(":")[-1],
+                            region=regional_client.region,
+                            environment_variables=[],
                         )
         except Exception as error:
             logger.error(
@@ -44,7 +42,7 @@ class ECS(AWSService):
     def _describe_task_definition(self):
         logger.info("ECS - Describing Task Definitions...")
         try:
-            for task_definition in self.task_definitions:
+            for task_definition in self.task_definitions.values():
                 client = self.regional_clients[task_definition.region]
                 response = client.describe_task_definition(
                     taskDefinition=task_definition.arn,
@@ -56,13 +54,22 @@ class ECS(AWSService):
                     "containerDefinitions"
                 ]
                 for container in container_definitions:
+                    environment = []
                     if "environment" in container:
                         for env_var in container["environment"]:
-                            task_definition.environment_variables.append(
+                            environment.append(
                                 ContainerEnvVariable(
                                     name=env_var["name"], value=env_var["value"]
                                 )
                             )
+                    task_definition.container_definitions.append(
+                        ContainerDefinition(
+                            name=container["name"],
+                            privileged=container.get("privileged", False),
+                            user=container.get("user", ""),
+                            environment=environment,
+                        )
+                    )
                 task_definition.tags = response.get("tags")
                 task_definition.network_mode = response["taskDefinition"].get(
                     "networkMode"
@@ -78,11 +85,18 @@ class ContainerEnvVariable(BaseModel):
     value: str
 
 
+class ContainerDefinition(BaseModel):
+    name: str
+    privileged: bool
+    user: str
+    environment: list[ContainerEnvVariable]
+
+
 class TaskDefinition(BaseModel):
     name: str
     arn: str
     revision: str
     region: str
-    environment_variables: list[ContainerEnvVariable]
+    container_definitions: list[ContainerDefinition] = []
     tags: Optional[list] = []
     network_mode: Optional[str]

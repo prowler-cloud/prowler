@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:codeartifact:region:account-id:directory/directory-id",
   "Severity": "medium",
-  "ResourceType": "AwsDirectoryService",
+  "ResourceType": "Other",
   "Description": "Directory Service Manual Snapshots limit reached.",
   "Risk": "Expired certificates can impact service availability.",
   "RelatedUrl": "https://docs.aws.amazon.com/directoryservice/latest/admin-guide/ms_ad_ldap.html",

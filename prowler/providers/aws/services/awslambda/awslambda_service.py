@@ -44,6 +44,7 @@ class Lambda(AWSService):
                             arn=lambda_arn,
                             security_groups=vpc_config.get("SecurityGroupIds", []),
                             vpc_id=vpc_config.get("VpcId"),
+                            subnet_ids=set(vpc_config.get("SubnetIds", [])),
                             region=regional_client.region,
                         )
                         if "Runtime" in function:
@@ -202,4 +203,5 @@ class Function(BaseModel):
     code: LambdaCode = None
     url_config: URLConfig = None
     vpc_id: Optional[str]
+    subnet_ids: Optional[set]
     tags: Optional[list] = []

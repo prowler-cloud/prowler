@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "elasticache_redis_replication_group_auth_enabled",
+  "CheckTitle": "Ensure Elasticache Elasticache Redis replication groups of earlier versions should have Redis OSS AUTH enabled.",
+  "CheckType": [
+    "Software and Configuration Checks/Industry and Regulatory Standards/NIST 800-53 Controls"
+  ],
+  "ServiceName": "elasticache",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "medium",
+  "ResourceType": "Other",
+  "Description": "Ensure Elasticache Redis replication groups of earlier versions use Redis OSS AUTH.",
+  "Risk": "Without Redis AUTH enabled, your ElastiCache (Redis) instance is vulnerable to unauthorized access and potential data breaches.",
+  "RelatedUrl": "https://docs.aws.amazon.com/AmazonElastiCache/latest/red-ug/auth.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/elasticache-controls.html#elasticache-6",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable Redis AUTH to require authentication before accessing your Redis instance, and for Redis 6.0 and later, consider implementing Role-Based Access Control (RBAC) for enhanced security.",
+      "Url": "https://docs.aws.amazon.com/AmazonElastiCache/latest/red-ug/auth.html#auth-modifyng-token"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

@@ -84,7 +84,7 @@ class TestASFF:
                     Url=finding.remediation_recommendation_url,
                 )
             ),
-            Description=finding.description,
+            Description=finding.status_extended,
         )
 
         asff = ASFF(findings=[finding])
@@ -150,7 +150,7 @@ class TestASFF:
                     Url="https://docs.aws.amazon.com/securityhub/latest/userguide/what-is-securityhub.html",
                 )
             ),
-            Description=finding.description,
+            Description=finding.status_extended,
         )
 
         asff = ASFF(findings=[finding])
@@ -215,7 +215,7 @@ class TestASFF:
                     Url="https://docs.aws.amazon.com/securityhub/latest/userguide/what-is-securityhub.html",
                 )
             ),
-            Description=finding.description,
+            Description=finding.status_extended,
         )
 
         asff = ASFF(findings=[finding])
@@ -284,7 +284,7 @@ class TestASFF:
                     Url="https://docs.aws.amazon.com/securityhub/latest/userguide/what-is-securityhub.html",
                 )
             ),
-            Description=finding.description,
+            Description=finding.status_extended,
         )
 
         asff = ASFF(findings=[finding])
@@ -491,7 +491,7 @@ class TestASFF:
                     Url=finding.remediation_recommendation_url,
                 )
             ),
-            Description=finding.description,
+            Description=finding.status_extended,
         )
 
         asff = ASFF(findings=[finding])
@@ -538,7 +538,7 @@ class TestASFF:
                 "CreatedAt": timestamp,
                 "Severity": {"Label": "HIGH"},
                 "Title": "test-check-id",
-                "Description": "check description",
+                "Description": "This is a test",
                 "Resources": [
                     {
                         "Type": "test-resource",

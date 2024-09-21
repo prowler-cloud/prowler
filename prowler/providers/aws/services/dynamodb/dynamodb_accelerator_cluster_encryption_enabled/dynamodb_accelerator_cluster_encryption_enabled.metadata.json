@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:dax:region:account-id:cache/resource-id",
   "Severity": "medium",
-  "ResourceType": "AwsDaxCluster",
+  "ResourceType": "Other",
   "Description": "Check if DynamoDB DAX Clusters are encrypted at rest.",
   "Risk": "Encryption at rest provides an additional layer of data protection by securing your data from unauthorized access to the underlying storage.",
   "RelatedUrl": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DAXEncryptionAtRest.html",
