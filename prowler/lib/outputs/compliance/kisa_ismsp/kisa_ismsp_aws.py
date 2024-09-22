@@ -82,7 +82,7 @@ class AWSKISAISMSP(ComplianceOutput):
                         Requirements_Attributes_AuditChecklist=attribute.AuditChecklist,
                         Requirements_Attributes_RelatedRegulations=attribute.RelatedRegulations,
                         Requirements_Attributes_AuditEvidence=attribute.AuditEvidence,
-                        Requirements_Attributes_AuditNonComplianceCases=attribute.NonComplianceCases,
+                        Requirements_Attributes_NonComplianceCases=attribute.NonComplianceCases,
                         Status="MANUAL",
                         StatusExtended="Manual check",
                         ResourceId="manual_check",
