@@ -22,6 +22,7 @@ import { CustomAlertModal } from "@/components/ui/custom";
 
 import { CheckConnectionProvider } from "../CheckConnectionProvider";
 import { DeleteForm } from "../forms/DeleteForm";
+import EditForm from "../forms/EditForm";
 
 interface DataTableRowActionsProps<ProviderProps> {
   row: Row<ProviderProps>;
@@ -32,18 +33,19 @@ const iconClasses =
 export function DataTableRowActions<ProviderProps>({
   row,
 }: DataTableRowActionsProps<ProviderProps>) {
-  //   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const providerId = (row.original as { id: string }).id;
   return (
     <>
-      {/* <ResponsiveDialog
+      <CustomAlertModal
         isOpen={isEditOpen}
-        setIsOpen={setIsEditOpen}
-        title="Edit Person"
+        onOpenChange={setIsEditOpen}
+        title="Edit Provider"
+        description={"Edit the provider details"}
       >
         <EditForm providerId={providerId} setIsOpen={setIsEditOpen} />
-      </ResponsiveDialog> */}
+      </CustomAlertModal>
       <CustomAlertModal
         isOpen={isDeleteOpen}
         onOpenChange={setIsDeleteOpen}
@@ -82,6 +84,7 @@ export function DataTableRowActions<ProviderProps>({
                 shortcut="⌘⇧E"
                 textValue="Edit Provider"
                 startContent={<EditDocumentBulkIcon className={iconClasses} />}
+                onClick={() => setIsEditOpen(true)}
               >
                 Edit Provider
               </DropdownItem>

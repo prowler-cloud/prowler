@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth.config";
 import { parseStringify } from "@/lib";
 
-export const getProvider = async ({
+export const getProviders = async ({
   page = 1,
   query = "",
   sort = "",
@@ -47,6 +47,28 @@ export const getProvider = async ({
   }
 };
 
+export const getProvider = async (formData: FormData) => {
+  const keyServer = process.env.API_BASE_URL;
+
+  const providerId = formData.get("id");
+
+  try {
+    const response = await fetch(`${keyServer}/providers/${providerId}`, {
+      method: "GET",
+      headers: {
+        "X-Tenant-ID": `${process.env.HEADER_TENANT_ID}`,
+      },
+    });
+    const data = await response.json();
+    revalidatePath("/providers");
+    return parseStringify(data);
+  } catch (error) {
+    return {
+      error: getErrorMessage(error),
+    };
+  }
+};
+
 export const addProvider = async (formData: FormData) => {
   const keyServer = process.env.API_BASE_URL;
 
@@ -81,8 +103,8 @@ export const addProvider = async (formData: FormData) => {
       error: getErrorMessage(error),
     };
   }
-  revalidatePath("/providers");
 };
+
 export const checkConnectionProvider = async (formData: FormData) => {
   const keyServer = process.env.API_BASE_URL;
 
@@ -107,6 +129,7 @@ export const checkConnectionProvider = async (formData: FormData) => {
     };
   }
 };
+
 export const deleteProvider = async (formData: FormData) => {
   const keyServer = process.env.API_BASE_URL;
 

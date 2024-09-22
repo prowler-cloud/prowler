@@ -1,7 +1,7 @@
 import { Spacer } from "@nextui-org/react";
 import { Suspense } from "react";
 
-import { getProvider } from "@/actions";
+import { getProviders } from "@/actions";
 import { FilterControls } from "@/components/filters";
 import { AddProviderModal } from "@/components/providers";
 import {
@@ -54,7 +54,7 @@ const SSRDataTable = async ({
   // Extract query from filters
   const query = (filters["filter[search]"] as string) || "";
 
-  const providersData = await getProvider({ query, page, sort, filters });
+  const providersData = await getProviders({ query, page, sort, filters });
 
   return (
     <DataTableProvider
