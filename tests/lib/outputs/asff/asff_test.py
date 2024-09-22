@@ -447,6 +447,8 @@ class TestASFF:
                     "si-4-5",
                 ],
                 "FedRAMP-Low-Revision-4": ["ac-2", "au-2", "ca-7"],
+                "KISA-ISMS-P-2023": ["2.6.1"],
+                "KISA-ISMS-P-2023-korean": ["2.6.1"],
             },
         )
 
