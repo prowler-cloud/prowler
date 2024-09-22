@@ -45,7 +45,7 @@ class TestGCPProvider:
 
         with patch(
             "prowler.providers.gcp.gcp_provider.GcpProvider.setup_session",
-            return_value=None,
+            return_value=(None, "test-project"),
         ), patch(
             "prowler.providers.gcp.gcp_provider.GcpProvider.get_projects",
             return_value=projects,
@@ -68,6 +68,7 @@ class TestGCPProvider:
             assert gcp_provider.session is None
             assert gcp_provider.project_ids == ["test-project"]
             assert gcp_provider.projects == projects
+            assert gcp_provider.default_project_id == "test-project"
             assert gcp_provider.identity == GCPIdentityInfo(profile="default")
             assert gcp_provider.audit_config == {"shodan_api_key": None}
 
@@ -108,7 +109,7 @@ class TestGCPProvider:
         )
         with patch(
             "prowler.providers.gcp.gcp_provider.GcpProvider.setup_session",
-            return_value=None,
+            return_value=(None, None),
         ), patch(
             "prowler.providers.gcp.gcp_provider.GcpProvider.get_projects",
             return_value=projects,
@@ -201,7 +202,7 @@ class TestGCPProvider:
         )
         with patch(
             "prowler.providers.gcp.gcp_provider.GcpProvider.setup_session",
-            return_value=None,
+            return_value=(None, None),
         ), patch(
             "prowler.providers.gcp.gcp_provider.GcpProvider.get_projects",
             return_value=projects,

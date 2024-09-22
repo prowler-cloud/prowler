@@ -25,8 +25,9 @@ class DNS(GCPService):
                             ManagedZone(
                                 name=managed_zone["name"],
                                 id=managed_zone["id"],
-                                dnssec=managed_zone["dnssecConfig"]["state"] == "on",
-                                key_specs=managed_zone["dnssecConfig"][
+                                dnssec=managed_zone.get("dnssecConfig", {})["state"]
+                                == "on",
+                                key_specs=managed_zone.get("dnssecConfig", {})[
                                     "defaultKeySpecs"
                                 ],
                                 project_id=project_id,
