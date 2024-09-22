@@ -21,8 +21,8 @@ import { VerticalDotsIcon } from "@/components/icons";
 import { CustomAlertModal } from "@/components/ui/custom";
 
 import { CheckConnectionProvider } from "../CheckConnectionProvider";
+import { EditForm } from "../forms";
 import { DeleteForm } from "../forms/DeleteForm";
-import EditForm from "../forms/EditForm";
 
 interface DataTableRowActionsProps<ProviderProps> {
   row: Row<ProviderProps>;
@@ -36,6 +36,7 @@ export function DataTableRowActions<ProviderProps>({
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const providerId = (row.original as { id: string }).id;
+  const providerAlias = (row.original as any).attributes?.alias;
   return (
     <>
       <CustomAlertModal
@@ -44,7 +45,11 @@ export function DataTableRowActions<ProviderProps>({
         title="Edit Provider"
         description={"Edit the provider details"}
       >
-        <EditForm providerId={providerId} setIsOpen={setIsEditOpen} />
+        <EditForm
+          providerId={providerId}
+          providerAlias={providerAlias}
+          setIsOpen={setIsEditOpen}
+        />
       </CustomAlertModal>
       <CustomAlertModal
         isOpen={isDeleteOpen}

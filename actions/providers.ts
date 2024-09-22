@@ -48,21 +48,61 @@ export const getProviders = async ({
 };
 
 export const getProvider = async (formData: FormData) => {
-  const keyServer = process.env.API_BASE_URL;
-
+  const session = await auth();
+  const tenantId = session?.user.tenantId;
   const providerId = formData.get("id");
 
+  const keyServer = process.env.API_BASE_URL;
+  const url = new URL(`${keyServer}/providers/${providerId}`);
+
   try {
-    const response = await fetch(`${keyServer}/providers/${providerId}`, {
-      method: "GET",
+    const providers = await fetch(url.toString(), {
       headers: {
-        "X-Tenant-ID": `${process.env.HEADER_TENANT_ID}`,
+        "X-Tenant-ID": `${tenantId}`,
       },
+    });
+    const data = await providers.json();
+    const parsedData = parseStringify(data);
+    return parsedData;
+  } catch (error) {
+    return {
+      error: getErrorMessage(error),
+    };
+  }
+};
+
+export const updateProvider = async (formData: FormData) => {
+  const session = await auth();
+  const keyServer = process.env.API_BASE_URL;
+
+  const tenantId = session?.user.tenantId;
+  const providerId = formData.get("id");
+  const alias = formData.get("alias");
+
+  const url = new URL(`${keyServer}/providers/${providerId}`);
+
+  try {
+    const response = await fetch(url.toString(), {
+      method: "PATCH",
+      headers: {
+        "X-Tenant-ID": `${tenantId}`,
+        "Content-Type": "application/vnd.api+json",
+      },
+      body: JSON.stringify({
+        data: {
+          type: "Provider",
+          id: providerId,
+          attributes: {
+            alias: alias,
+          },
+        },
+      }),
     });
     const data = await response.json();
     revalidatePath("/providers");
     return parseStringify(data);
   } catch (error) {
+    console.error(error);
     return {
       error: getErrorMessage(error),
     };
