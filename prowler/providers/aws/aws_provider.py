@@ -540,6 +540,7 @@ class AwsProvider(Provider):
         regions = (
             ", ".join(self._identity.audited_regions)
             if self._identity.audited_regions is not None
+            and self._identity.audited_regions != set()
             else "all"
         )
         # Beautify audited profile, set "default" if there is no profile set
