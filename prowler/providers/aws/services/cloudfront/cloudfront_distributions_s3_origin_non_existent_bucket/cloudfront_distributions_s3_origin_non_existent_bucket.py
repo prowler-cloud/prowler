@@ -25,7 +25,7 @@ class cloudfront_distributions_s3_origin_non_existent_bucket(Check):
 
             if non_existent_buckets:
                 report.status = "FAIL"
-                report.status_extended = f"CloudFront Distribution {distribution.id} has non-existent S3 buckets as origins: {','.join(non_existent_buckets)}"
+                report.status_extended = f"CloudFront Distribution {distribution.id} has non-existent S3 buckets as origins: {','.join(non_existent_buckets)}."
 
             findings.append(report)
 

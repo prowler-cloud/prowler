@@ -40,6 +40,7 @@ class Test_iam_organization_essential_contacts_configured:
             essentialcontacts_client.organizations = [
                 Organization(id="test_id", name="test", contacts=True)
             ]
+            essentialcontacts_client.default_project_id = "test_id"
             from prowler.providers.gcp.services.iam.iam_organization_essential_contacts_configured.iam_organization_essential_contacts_configured import (
                 iam_organization_essential_contacts_configured,
             )
@@ -73,6 +74,7 @@ class Test_iam_organization_essential_contacts_configured:
             essentialcontacts_client.organizations = [
                 Organization(id="test_id", name="test", contacts=False)
             ]
+            essentialcontacts_client.default_project_id = "test_id"
 
             from prowler.providers.gcp.services.iam.iam_organization_essential_contacts_configured.iam_organization_essential_contacts_configured import (
                 iam_organization_essential_contacts_configured,

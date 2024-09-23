@@ -70,6 +70,8 @@ class Test_elasticache_redis_cluster_automatic_failover_enabled:
                 tags=REPLICATION_GROUP_TAGS,
                 auto_minor_version_upgrade=not AUTO_MINOR_VERSION_UPGRADE,
                 automatic_failover="disabled",
+                engine_version="6.0",
+                auth_token_enabled=False,
             )
         )
 
@@ -115,6 +117,8 @@ class Test_elasticache_redis_cluster_automatic_failover_enabled:
                 tags=REPLICATION_GROUP_TAGS,
                 auto_minor_version_upgrade=AUTO_MINOR_VERSION_UPGRADE,
                 automatic_failover=AUTOMATIC_FAILOVER,
+                engine_version="6.0",
+                auth_token_enabled=False,
             )
         )
 
