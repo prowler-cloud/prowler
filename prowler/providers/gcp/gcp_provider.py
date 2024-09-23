@@ -46,7 +46,7 @@ class GcpProvider(Provider):
         self._impersonated_service_account = arguments.impersonate_service_account
         list_project_ids = arguments.list_project_id
 
-        self._session = self.setup_session(
+        self._session, self._default_project_id = self.setup_session(
             credentials_file, self._impersonated_service_account
         )
 
@@ -129,6 +129,10 @@ class GcpProvider(Provider):
         return self._projects
 
     @property
+    def default_project_id(self):
+        return self._default_project_id
+
+    @property
     def impersonated_service_account(self):
         return self._impersonated_service_account
 
@@ -198,14 +202,14 @@ class GcpProvider(Provider):
             # "partition": "identity.partition",
         }
 
-    def setup_session(self, credentials_file: str, service_account: str) -> Credentials:
+    def setup_session(self, credentials_file: str, service_account: str) -> tuple:
         """
         Setup the GCP session with the provided credentials file or service account to impersonate
         Args:
             credentials_file: str
             service_account: str
         Returns:
-            Credentials object
+            Credentials object and default project ID
         """
         try:
             scopes = ["https://www.googleapis.com/auth/cloud-platform"]
@@ -215,7 +219,7 @@ class GcpProvider(Provider):
                 self.__set_gcp_creds_env_var__(credentials_file)
 
             # Get default credentials
-            credentials, _ = default(scopes=scopes)
+            credentials, default_project_id = default(scopes=scopes)
 
             # Refresh the credentials to ensure they are valid
             credentials.refresh(Request())
@@ -231,7 +235,7 @@ class GcpProvider(Provider):
                 )
                 logger.info(f"Impersonated credentials: {credentials}")
 
-            return credentials
+            return credentials, default_project_id
         except Exception as error:
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
