@@ -12,14 +12,12 @@ class ecs_service_no_assign_public_ip(Check):
             report.resource_arn = service.arn
             report.resource_tags = service.tags
             report.status = "PASS"
-            report.status_extended = (
-                f"ECS Service '{service.name}' does not assign public IP address."
-            )
+            report.status_extended = f"ECS Service {service.name} does not have automatic public IP assignment."
 
             if service.assign_public_ip:
                 report.status = "FAIL"
                 report.status_extended = (
-                    f"ECS Service '{service.name}' assigns public IP address."
+                    f"ECS Service {service.name} has automatic public IP assignment."
                 )
 
             findings.append(report)
