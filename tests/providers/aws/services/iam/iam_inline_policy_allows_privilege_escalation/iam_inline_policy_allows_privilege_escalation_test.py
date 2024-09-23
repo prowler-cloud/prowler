@@ -106,9 +106,9 @@ class Test_iam_inline_policy_allows_privilege_escalation:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Inline Policy '{policy_name}' attached to role {role_arn} does not allow privilege escalation."
+                == f"Inline policy {policy_name} attached to role {role_name} does not allow privilege escalation."
             )
-            assert result[0].resource_id == policy_name
+            assert result[0].resource_id == f"test_role/{policy_name}"
             assert result[0].resource_arn == role_arn
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []
@@ -162,9 +162,9 @@ class Test_iam_inline_policy_allows_privilege_escalation:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Inline Policy '{policy_name}' attached to user {user_arn} does not allow privilege escalation."
+                == f"Inline policy {policy_name} attached to user {user_name} does not allow privilege escalation."
             )
-            assert result[0].resource_id == policy_name
+            assert result[0].resource_id == f"test_user/{policy_name}"
             assert result[0].resource_arn == user_arn
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []
@@ -228,9 +228,9 @@ class Test_iam_inline_policy_allows_privilege_escalation:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Inline Policy '{policy_name}' attached to group {group_arn} does not allow privilege escalation."
+                == f"Inline policy {policy_name} attached to group {group_name} does not allow privilege escalation."
             )
-            assert result[0].resource_id == policy_name
+            assert result[0].resource_id == f"test_group/{policy_name}"
             assert result[0].resource_arn == group_arn
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []
@@ -289,13 +289,13 @@ class Test_iam_inline_policy_allows_privilege_escalation:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert result[0].resource_id == policy_name
+            assert result[0].resource_id == f"test_role/{policy_name}"
             assert result[0].resource_arn == role_arn
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []
 
             assert search(
-                f"Inline Policy '{policy_name}' attached to role {role_arn} allows privilege escalation using the following actions: ",
+                f"Inline policy {policy_name} attached to role {role_name} allows privilege escalation using the following actions: ",
                 result[0].status_extended,
             )
             assert search("iam:PassRole", result[0].status_extended)
@@ -348,13 +348,13 @@ class Test_iam_inline_policy_allows_privilege_escalation:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert result[0].resource_id == policy_name
+            assert result[0].resource_id == f"test_role/{policy_name}"
             assert result[0].resource_arn == role_arn
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []
 
             assert search(
-                f"Inline Policy '{policy_name}' attached to role {role_arn} allows privilege escalation using the following actions: ",
+                f"Inline policy {policy_name} attached to role {role_name} allows privilege escalation using the following actions: ",
                 result[0].status_extended,
             )
             assert search("iam:PassRole", result[0].status_extended)
@@ -425,13 +425,13 @@ class Test_iam_inline_policy_allows_privilege_escalation:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert result[0].resource_id == policy_name
+            assert result[0].resource_id == f"test_role/{policy_name}"
             assert result[0].resource_arn == role_arn
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []
 
             assert search(
-                f"Inline Policy '{policy_name}' attached to role {role_arn} allows privilege escalation using the following actions: ",
+                f"Inline policy {policy_name} attached to role {role_name} allows privilege escalation using the following actions: ",
                 result[0].status_extended,
             )
             assert search("iam:PassRole", result[0].status_extended)
@@ -491,13 +491,13 @@ class Test_iam_inline_policy_allows_privilege_escalation:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert result[0].resource_id == policy_name
+            assert result[0].resource_id == f"test_role/{policy_name}"
             assert result[0].resource_arn == role_arn
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []
 
             assert search(
-                f"Inline Policy '{policy_name}' attached to role {role_arn} allows privilege escalation using the following actions: ",
+                f"Inline policy {policy_name} attached to role {role_name} allows privilege escalation using the following actions: ",
                 result[0].status_extended,
             )
             assert search("iam:PassRole", result[0].status_extended)
@@ -551,13 +551,13 @@ class Test_iam_inline_policy_allows_privilege_escalation:
                 result = check.execute()
                 assert len(result) == 1
                 assert result[0].status == "FAIL"
-                assert result[0].resource_id == policy_name
+                assert result[0].resource_id == f"test_role/{policy_name}"
                 assert result[0].resource_arn == role_arn
                 assert result[0].region == AWS_REGION_US_EAST_1
                 assert result[0].resource_tags == []
 
                 assert search(
-                    f"Inline Policy '{policy_name}' attached to role {role_arn} allows privilege escalation using the following actions: ",
+                    f"Inline policy {policy_name} attached to role {role_name} allows privilege escalation using the following actions: ",
                     result[0].status_extended,
                 )
 
