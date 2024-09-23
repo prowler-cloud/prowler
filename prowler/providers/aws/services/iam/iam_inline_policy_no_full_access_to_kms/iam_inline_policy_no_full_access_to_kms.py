@@ -17,22 +17,17 @@ class iam_inline_policy_no_full_access_to_kms(Check):
                 report.resource_id = f"{policy.entity}/{policy.name}"
                 report.resource_tags = policy.tags
                 report.status = "PASS"
-                if "role" in report.resource_arn:
-                    resource_type_str = "role"
-                elif "group" in report.resource_arn:
-                    resource_type_str = "group"
-                elif "user" in report.resource_arn:
-                    resource_type_str = "user"
-                else:
-                    resource_type_str = "resource"
 
-                report.status_extended = f"{policy.type} policy {policy.name}{' attached to ' + resource_type_str + ' ' + report.resource_arn if policy.attached else ''} does not allow '{critical_service}:*' privileges."
+                resource_type_str = report.resource_arn.split(":")[-1].split("/")[0]
+                resource_attached = report.resource_arn.split(":")[-1].split("/")[1]
+
+                report.status_extended = f"{policy.type} policy {policy.name}{' attached to ' + resource_type_str + ' ' + resource_attached if policy.attached else ''} does not allow '{critical_service}:*' privileges."
 
                 if policy.document and check_full_service_access(
                     critical_service, policy.document
                 ):
                     report.status = "FAIL"
-                    report.status_extended = f"{policy.type} policy {policy.name}{' attached to ' + resource_type_str + ' ' + report.resource_arn if policy.attached else ''} allows '{critical_service}:*' privileges."
+                    report.status_extended = f"{policy.type} policy {policy.name}{' attached to ' + resource_type_str + ' ' + resource_attached if policy.attached else ''} allows '{critical_service}:*' privileges."
 
                 findings.append(report)
 
