@@ -131,16 +131,16 @@ class Test_rds_cluster_non_default_port:
                 ]
 
     @mock_aws
-    def test_rds_cluster_neptune_default_port(self):
+    def test_rds_cluster_mysql_default_port(self):
         conn = client("rds", region_name=AWS_REGION_US_EAST_1)
         conn.create_db_cluster(
             DBClusterIdentifier="db-cluster-1",
-            Engine="neptune",
+            Engine="mysql",
             StorageEncrypted=True,
             DeletionProtection=True,
             MasterUsername="cluster",
             MasterUserPassword="password",
-            Port=8182,
+            Port=3306,
             Tags=[{"Key": "env", "Value": "staging"}],
         )
 
@@ -167,7 +167,7 @@ class Test_rds_cluster_non_default_port:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == "RDS Cluster db-cluster-1 is using the default port 8182 for neptune."
+                    == "RDS Cluster db-cluster-1 is using the default port 3306 for mysql."
                 )
                 assert result[0].resource_id == "db-cluster-1"
                 assert result[0].region == AWS_REGION_US_EAST_1
@@ -178,16 +178,16 @@ class Test_rds_cluster_non_default_port:
                 assert result[0].resource_tags == [{"Key": "env", "Value": "staging"}]
 
     @mock_aws
-    def test_rds_cluster_neptune_non_default_port(self):
+    def test_rds_cluster_mysql_non_default_port(self):
         conn = client("rds", region_name=AWS_REGION_US_EAST_1)
         conn.create_db_cluster(
             DBClusterIdentifier="db-cluster-1",
-            Engine="neptune",
+            Engine="mysql",
             StorageEncrypted=True,
             DeletionProtection=True,
             MasterUsername="cluster",
             MasterUserPassword="password",
-            Port=8183,
+            Port=3307,
             Tags=[{"Key": "env", "Value": "production"}],
         )
 
@@ -214,7 +214,7 @@ class Test_rds_cluster_non_default_port:
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == "RDS Cluster db-cluster-1 is not using the default port 8183 for neptune."
+                    == "RDS Cluster db-cluster-1 is not using the default port 3307 for mysql."
                 )
                 assert result[0].resource_id == "db-cluster-1"
                 assert result[0].region == AWS_REGION_US_EAST_1
