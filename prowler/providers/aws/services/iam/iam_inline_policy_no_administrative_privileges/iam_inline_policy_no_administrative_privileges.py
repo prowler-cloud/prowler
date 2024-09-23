@@ -15,19 +15,12 @@ class iam_inline_policy_no_administrative_privileges(Check):
                 report.resource_tags = policy.tags
                 report.status = "PASS"
 
-                if "role" in report.resource_arn:
-                    resource_type_str = "role"
-                elif "group" in report.resource_arn:
-                    resource_type_str = "group"
-                elif "user" in report.resource_arn:
-                    resource_type_str = "user"
-                else:
-                    resource_type_str = "resource"
+                resource_type_str = report.resource_arn.split(":")[-1].split("/")[0]
+                resource_attached = report.resource_arn.split("/")[-1]
 
-                report.status_extended = f"{policy.type} policy {policy.name} attached to {resource_type_str} {report.resource_arn} does not allow '*:*' administrative privileges."
-                if policy.document:
-                    if check_admin_access(policy.document):
-                        report.status = "FAIL"
-                        report.status_extended = f"{policy.type} policy {policy.name} attached to {resource_type_str} {report.resource_arn} allows '*:*' administrative privileges."
+                report.status_extended = f"{policy.type} policy {policy.name} attached to {resource_type_str} {resource_attached} does not allow '*:*' administrative privileges."
+                if policy.document and check_admin_access(policy.document):
+                  report.status = "FAIL"
+                  report.status_extended = f"{policy.type} policy {policy.name} attached to {resource_type_str} {resource_attached} allows '*:*' administrative privileges."
                 findings.append(report)
         return findings

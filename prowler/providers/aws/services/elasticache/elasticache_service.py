@@ -41,6 +41,10 @@ class ElastiCache(AWSService):
                             auto_minor_version_upgrade=cache_cluster.get(
                                 "AutoMinorVersionUpgrade", False
                             ),
+                            engine_version=cache_cluster.get("EngineVersion", "0.0"),
+                            auth_token_enabled=cache_cluster.get(
+                                "AuthTokenEnabled", False
+                            ),
                         )
                 except Exception as error:
                     logger.error(
@@ -90,6 +94,13 @@ class ElastiCache(AWSService):
                     if not self.audit_resources or (
                         is_resource_filtered(replication_arn, self.audit_resources)
                     ):
+                        # Get first cluster version as they all have the same unless an upgrade is being made
+                        member_clusters = repl_group.get("MemberClusters", [])
+                        engine_version = "0.0"
+                        if member_clusters:
+                            cluster_arn = f"arn:aws:elasticache:{regional_client.region}:{self.audited_account}:cluster:{member_clusters[0]}"
+                            engine_version = self.clusters[cluster_arn].engine_version
+
                         self.replication_groups[replication_arn] = ReplicationGroup(
                             id=repl_group["ReplicationGroupId"],
                             arn=replication_arn,
@@ -107,8 +118,12 @@ class ElastiCache(AWSService):
                                 "AutoMinorVersionUpgrade", False
                             ),
                             automatic_failover=repl_group.get(
-                                "AutomaticFailoverStatus", "disabled"
+                                "AutomaticFailover", "disabled"
                             ),
+                            auth_token_enabled=repl_group.get(
+                                "AuthTokenEnabled", False
+                            ),
+                            engine_version=engine_version,
                         )
                 except Exception as error:
                     logger.error(
@@ -167,6 +182,8 @@ class Cluster(BaseModel):
     subnets: list = []
     tags: Optional[list]
     auto_minor_version_upgrade: bool = False
+    engine_version: Optional[str]
+    auth_token_enabled: Optional[bool]
 
 
 class ReplicationGroup(BaseModel):
@@ -179,5 +196,7 @@ class ReplicationGroup(BaseModel):
     transit_encryption: bool
     multi_az: str
     tags: Optional[list]
+    auth_token_enabled: bool
     auto_minor_version_upgrade: bool
     automatic_failover: str
+    engine_version: str

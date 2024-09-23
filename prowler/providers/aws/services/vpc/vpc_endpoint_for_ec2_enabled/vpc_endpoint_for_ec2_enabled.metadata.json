@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
-  "ResourceType": "AwsEc2VPC",
+  "ResourceType": "AwsEc2VpcEndpointService",
   "Description": "Ensure that a service endpoint for Amazon EC2 is created for each VPC. The check fails if a VPC does not have a VPC endpoint created for the Amazon EC2 service.",
   "Risk": "Without VPC endpoints, network traffic between your VPC and Amazon EC2 may traverse the public internet, increasing the risk of unintended access or data exposure.",
   "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/service-vpc-endpoint-enabled.html",

@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "AwsRoute53Domain",
+  "ResourceType": "AwsRoute53HostedZone",
   "Description": "Check if Route53 hosted zones are protected by AWS Shield Advanced.",
   "Risk": "AWS Shield Advanced provides expanded DDoS attack protection for your resources.",
   "RelatedUrl": "https://docs.aws.amazon.com/waf/latest/developerguide/configure-new-protection.html",

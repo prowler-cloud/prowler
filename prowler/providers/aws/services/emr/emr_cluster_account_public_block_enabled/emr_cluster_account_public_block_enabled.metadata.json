@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:emr:region:account-id",
   "Severity": "high",
-  "ResourceType": "AwsEMR",
+  "ResourceType": "AwsAccount",
   "Description": "EMR Account Public Access Block enabled.",
   "Risk": "EMR Clusters must have Account Public Access Block enabled.",
   "RelatedUrl": "https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-block-public-access.html",

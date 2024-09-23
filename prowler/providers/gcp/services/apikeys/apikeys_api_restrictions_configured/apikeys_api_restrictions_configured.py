@@ -16,12 +16,12 @@ class apikeys_api_restrictions_configured(Check):
             if key.restrictions == {} or any(
                 [
                     target.get("service") == "cloudapis.googleapis.com"
-                    for target in key.restrictions["apiTargets"]
+                    for target in key.restrictions.get("apiTargets", [])
                 ]
             ):
                 report.status = "FAIL"
                 report.status_extended = (
-                    f"API key {key.name} doens't have restrictions configured."
+                    f"API key {key.name} does not have restrictions configured."
                 )
             findings.append(report)
 
