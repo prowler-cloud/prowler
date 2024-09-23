@@ -1390,7 +1390,10 @@ class TestFindingViewSet:
                 ("service", "ec2", 1),
                 ("service.in", "ec2,s3", 2),
                 ("service.icontains", "ec", 1),
+                ("inserted_at", "2024-01-01", 0),
+                ("inserted_at.date", "2024-01-01", 0),
                 ("inserted_at.gte", "2024-01-01", 2),
+                ("inserted_at.lte", "2024-12-31", 2),
                 ("updated_at.lte", "2024-01-01", 0),
                 ("resource_type.icontains", "prowler", 2),
                 # full text search on finding
@@ -1420,6 +1423,35 @@ class TestFindingViewSet:
 
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == expected_count
+
+    def test_finding_filter_by_scan_id(
+        self, authenticated_client, findings_fixture, tenant_header
+    ):
+        response = authenticated_client.get(
+            reverse("finding-list"),
+            {
+                "filter[scan]": findings_fixture[0].scan.id,
+            },
+            headers=tenant_header,
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 2
+
+    def test_finding_filter_by_scan_id_in(
+        self, authenticated_client, findings_fixture, tenant_header
+    ):
+        response = authenticated_client.get(
+            reverse("finding-list"),
+            {
+                "filter[scan.in]": [
+                    findings_fixture[0].scan.id,
+                    findings_fixture[1].scan.id,
+                ]
+            },
+            headers=tenant_header,
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 2
 
     def test_finding_filter_by_provider(
         self, authenticated_client, findings_fixture, tenant_header

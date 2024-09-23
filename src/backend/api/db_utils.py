@@ -3,9 +3,6 @@ from contextlib import contextmanager
 from django.conf import settings
 from django.contrib.auth.models import BaseUserManager
 from django.db import models
-from django.contrib.postgres.search import SearchVector
-from django.db.models import TextField
-
 from psycopg2 import connect as psycopg2_connect
 from psycopg2.extensions import new_type, register_type, register_adapter, AsIs
 
@@ -34,6 +31,7 @@ def psycopg_connection(database_alias: str):
             user=admin_db["USER"],
             password=admin_db["PASSWORD"],
             host=admin_db["HOST"],
+            port=admin_db["PORT"],
         )
         yield psycopg2_connection
     finally:
@@ -59,17 +57,6 @@ def enum_to_choices(enum_class):
     It's for use with Django's `choices` attribute, which expects a list of tuples.
     """
     return [(item.value, item.name.replace("_", " ").title()) for item in enum_class]
-
-
-# jsonb_to_tsvector
-
-
-class JsonbToTsvector(SearchVector):
-    function = "jsonb_to_tsvector"
-    output_field = TextField()
-
-    def __init__(self, expression):
-        super().__init__(expression)
 
 
 # Postgres Enums

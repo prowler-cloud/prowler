@@ -15,7 +15,6 @@ from rest_framework.exceptions import MethodNotAllowed, NotFound
 from rest_framework.generics import get_object_or_404
 from rest_framework_json_api.views import Response
 
-
 from api.base_views import BaseRLSViewSet, BaseViewSet
 from api.filters import (
     ProviderFilter,
@@ -25,9 +24,9 @@ from api.filters import (
     ResourceFilter,
     FindingFilter,
 )
-
 from api.models import User, Provider, Scan, Task, Resource, Finding
 from api.rls import Tenant
+from api.uuid_utils import datetime_to_uuid7
 from api.v1.serializers import (
     UserSerializer,
     UserCreateSerializer,
@@ -491,10 +490,12 @@ class ResourceViewSet(BaseRLSViewSet):
 
 @extend_schema_view(
     list=extend_schema(
+        tags=["Finding"],
         summary="List all findings",
-        description="Retrieve a list of all findings with options for filtering by various criteria.",
+        description="Retrieve a list of all findings with options for filtering by various criteria. If no `scan` or `inserted_at` filter is provided, a default filter will be applied that will return all findings for the current day.",
     ),
     retrieve=extend_schema(
+        tags=["Finding"],
         summary="Retrieve data from a specific finding",
         description="Fetch detailed information about a specific finding by its ID.",
     ),
@@ -506,14 +507,23 @@ class FindingViewSet(BaseRLSViewSet):
     serializer_class = FindingSerializer
     http_method_names = ["get"]
     filterset_class = FindingFilter
-    ordering = ["inserted_at"]
+    # Default sort order will put failed findings first
+    # and then by severity
+    # and then by most recently inserted via the id field
+    ordering = ["status", "severity", "-id"]
     ordering_fields = [
+        "id",
         "status",
         "severity",
         "check_id",
         "inserted_at",
         "updated_at",
     ]
+
+    def inserted_at_to_uuidv7(self, inserted_at):
+        if inserted_at is None:
+            return None
+        return datetime_to_uuid7(inserted_at)
 
     def get_queryset(self):
         # TODO: require scan_id filter, or if none provided, inject today

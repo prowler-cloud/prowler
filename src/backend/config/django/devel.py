@@ -8,7 +8,7 @@ ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=["*"])
 # Database
 DATABASES = {
     "prowler_user": {
-        "ENGINE": "django.db.backends.postgresql",
+        "ENGINE": "psqlextra.backend",
         "NAME": env("POSTGRES_DB", default="prowler_db"),
         "USER": env("POSTGRES_USER", default="prowler_user"),
         "PASSWORD": env("POSTGRES_PASSWORD", default="prowler"),
@@ -16,7 +16,7 @@ DATABASES = {
         "PORT": env("POSTGRES_PORT", default="5432"),
     },
     "admin": {
-        "ENGINE": "django.db.backends.postgresql",
+        "ENGINE": "psqlextra.backend",
         "NAME": env("POSTGRES_DB", default="prowler_db"),
         "USER": env("POSTGRES_ADMIN_USER", default="prowler"),
         "PASSWORD": env("POSTGRES_ADMIN_PASSWORD", default="S3cret"),

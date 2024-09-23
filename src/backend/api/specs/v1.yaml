@@ -11,7 +11,8 @@ paths:
     get:
       operationId: findings_list
       description: Retrieve a list of all findings with options for filtering by various
-        criteria.
+        criteria. If no `scan` or `inserted_at` filter is provided, a default filter
+        will be applied that will return all findings for the current day.
       summary: List all findings
       parameters:
       - in: query
@@ -83,12 +84,12 @@ paths:
         name: filter[inserted_at__gte]
         schema:
           type: string
-          format: date-time
+          format: date
       - in: query
         name: filter[inserted_at__lte]
         schema:
           type: string
-          format: date-time
+          format: date
       - in: query
         name: filter[provider]
         schema:
@@ -188,17 +189,10 @@ paths:
         name: filter[scan]
         schema:
           type: string
-          format: uuid
       - in: query
         name: filter[scan__in]
         schema:
-          type: array
-          items:
-            type: string
-            format: uuid
-        description: Multiple values may be separated by commas.
-        explode: false
-        style: form
+          type: string
       - name: filter[search]
         required: false
         in: query
@@ -281,6 +275,8 @@ paths:
           items:
             type: string
             enum:
+            - id
+            - -id
             - status
             - -status
             - severity
@@ -293,7 +289,7 @@ paths:
             - -updated_at
         explode: false
       tags:
-      - findings
+      - Findings
       security:
       - basicAuth: []
       responses:
@@ -351,7 +347,7 @@ paths:
           related resources should be returned.
         explode: false
       tags:
-      - findings
+      - Findings
       security:
       - basicAuth: []
       responses:
@@ -1826,14 +1822,14 @@ components:
               nullable: true
             status:
               enum:
-              - PASS
               - FAIL
+              - PASS
               - MANUAL
               - MUTED
               type: string
               description: |-
-                * `PASS` - Pass
                 * `FAIL` - Fail
+                * `PASS` - Pass
                 * `MANUAL` - Manual
                 * `MUTED` - Muted
             status_extended:

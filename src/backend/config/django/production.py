@@ -17,7 +17,7 @@ DATABASES = {
         "PORT": env("POSTGRES_PORT"),
     },
     "admin": {
-        "ENGINE": "django.db.backends.postgresql",
+        "ENGINE": "psqlextra.backend",
         "NAME": env("POSTGRES_DB"),
         "USER": env("POSTGRES_ADMIN_USER"),
         "PASSWORD": env("POSTGRES_ADMIN_PASSWORD"),

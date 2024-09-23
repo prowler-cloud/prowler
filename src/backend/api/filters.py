@@ -1,5 +1,7 @@
+from datetime import date, datetime, timezone
 from uuid import UUID
 
+from django.conf import settings
 from django.db.models import Q
 from django_filters.rest_framework import (
     FilterSet,
@@ -24,6 +26,13 @@ from api.models import (
     StatusChoices,
 )
 from api.rls import Tenant
+from api.uuid_utils import (
+    datetime_to_uuid7,
+    uuid7_start,
+    uuid7_end,
+    uuid7_range,
+    parse_params_to_uuid7,
+)
 from api.v1.serializers import TaskBase
 
 
@@ -307,7 +316,6 @@ class FindingFilter(ProviderRelationshipFilterSet):
             value = [value]
         return queryset.filter(scan__provider__id__in=value)
 
-    inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
     updated_at = DateFilter(field_name="updated_at", lookup_expr="date")
 
     delta = CharFilter(method="filter_delta")
@@ -341,6 +349,14 @@ class FindingFilter(ProviderRelationshipFilterSet):
     resource_type__in = CharFilter(method="filter_resource_type_in")
     resource_type__icontains = CharFilter(method="filter_resource_type_icontains")
 
+    scan = CharFilter(method="filter_scan_id")
+    scan__in = CharFilter(method="filter_scan_id_in")
+
+    inserted_at = DateFilter(method="filter_inserted_at", lookup_expr="date")
+    inserted_at__date = DateFilter(method="filter_inserted_at", lookup_expr="date")
+    inserted_at__gte = DateFilter(method="filter_inserted_at_gte")
+    inserted_at__lte = DateFilter(method="filter_inserted_at_lte")
+
     class Meta:
         model = Finding
         fields = {
@@ -360,6 +376,23 @@ class FindingFilter(ProviderRelationshipFilterSet):
         self.provider_alias_in_lookup_field = "scan__provider__alias__in"
         self.provider_alias_icontains_lookup_field = "scan__provider__alias__icontains"
         super().__init__(*args, **kwargs)
+
+        data = self.data
+        if not data or (
+            not data.get("scan")
+            and not data.get("scan__in")
+            and not data.get("inserted_at")
+            and not data.get("inserted_at.date")
+            and not data.get("inserted_at__gte")
+            and not data.get("inserted_at__lte")
+        ):
+            self.add_default_filter()
+
+    def add_default_filter(self):
+        utc_now = datetime.now(timezone.utc)
+        start = uuid7_start(datetime_to_uuid7(utc_now))
+
+        self.queryset = self.queryset.filter(id__gte=start)
 
     def filter_delta(self, queryset, name, value):
         return enum_filter(
@@ -463,3 +496,52 @@ class FindingFilter(ProviderRelationshipFilterSet):
 
     def filter_resource_type_icontains(self, queryset, name, value):
         return queryset.filter(resources__type__icontains=value)
+
+    #  Convert filter values to UUIDv7 values for use with partitioning
+
+    def filter_scan_id(self, queryset, name, value):
+        value = parse_params_to_uuid7(value)
+
+        start = uuid7_start(value)
+        end = uuid7_end(value, settings.FINDINGS_TABLE_PARTITION_DAYS)
+        return queryset.filter(id__gte=start).filter(id__lt=end).filter(scan__id=value)
+
+    def filter_scan_id_in(self, queryset, name, value):
+        value = parse_params_to_uuid7(value)
+        if isinstance(value, UUID):
+            value = [value]
+
+        start, end = uuid7_range(value)
+        if start == end:
+            return queryset.filter(id__gte=start).filter(scan__id__in=value)
+        else:
+            return (
+                queryset.filter(id__gte=start)
+                .filter(id__lt=end)
+                .filter(scan__id__in=value)
+            )
+
+    def filter_inserted_at(self, queryset, name, value):
+        value = self.maybe_date_to_datetime(value)
+        start = uuid7_start(datetime_to_uuid7(value))
+
+        return queryset.filter(id__gte=start).filter(inserted_at=value)
+
+    def filter_inserted_at_gte(self, queryset, name, value):
+        value = self.maybe_date_to_datetime(value)
+        start = uuid7_start(datetime_to_uuid7(value))
+
+        return queryset.filter(id__gte=start).filter(inserted_at__gte=value)
+
+    def filter_inserted_at_lte(self, queryset, name, value):
+        value = self.maybe_date_to_datetime(value)
+        end = uuid7_start(datetime_to_uuid7(value))
+
+        return queryset.filter(id__lte=end).filter(inserted_at__lte=value)
+
+    @staticmethod
+    def maybe_date_to_datetime(value):
+        dt = value
+        if isinstance(value, date):
+            dt = datetime.combine(value, datetime.min.time(), tzinfo=timezone.utc)
+        return dt

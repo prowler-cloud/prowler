@@ -26,7 +26,11 @@ class Tenant(models.Model):
 
 # TODO Add abstract class for non-RLS models
 class RowLevelSecurityConstraint(models.BaseConstraint):
-    """Model constraint to enforce row-level security on a tenant based model, in addition to the least privileges."""
+    """
+    Model constraint to enforce row-level security on a tenant based model, in addition to the least privileges.
+
+    The constraint can be applied to a partitioned table by specifying the `partition_name` keyword argument.
+    """
 
     rls_sql_query = """
         ALTER TABLE %(table_name)s ENABLE ROW LEVEL SECURITY;
@@ -60,10 +64,15 @@ class RowLevelSecurityConstraint(models.BaseConstraint):
         DROP POLICY IF EXISTS %(db_user)s_%(table_name)s_{statement} on %(table_name)s;
     """
 
-    def __init__(self, field: str, name: str, statements: list | None = None) -> None:
+    def __init__(
+        self, field: str, name: str, statements: list | None = None, **kwargs
+    ) -> None:
         super().__init__(name=name)
         self.target_field: str = field
         self.statements = statements or ["SELECT"]
+        self.partition_name = None
+        if "partition_name" in kwargs:
+            self.partition_name = kwargs["partition_name"]
 
     def create_sql(self, model: Any, schema_editor: Any) -> Any:
         field_column = schema_editor.quote_name(self.target_field)
@@ -81,12 +90,17 @@ class RowLevelSecurityConstraint(models.BaseConstraint):
             f"{self.rls_sql_query}" f"{policy_queries}" f"{grant_queries}"
         )
 
+        table_name = model._meta.db_table
+        if self.partition_name:
+            table_name = f"{table_name}_{self.partition_name}"
+
         return Statement(
             full_create_sql_query,
-            table_name=model._meta.db_table,
+            table_name=table_name,
             field_column=field_column,
             db_user=DB_USER,
             tenant_setting=POSTGRES_TENANT_VAR,
+            partition_name=self.partition_name,
         )
 
     def remove_sql(self, model: Any, schema_editor: Any) -> Any:
@@ -95,11 +109,15 @@ class RowLevelSecurityConstraint(models.BaseConstraint):
             f"{self.drop_sql_query}"
             f"{''.join([self.drop_policy_sql_query.format(statement) for statement in self.statements])}"
         )
+        table_name = model._meta.db_table
+        if self.partition_name:
+            table_name = f"{table_name}_{self.partition_name}"
         return Statement(
             full_drop_sql_query,
-            table_name=Table(model._meta.db_table, schema_editor.quote_name),
+            table_name=Table(table_name, schema_editor.quote_name),
             field_column=field_column,
             db_user=DB_USER,
+            partition_name=self.partition_name,
         )
 
     def __eq__(self, other: object) -> bool:

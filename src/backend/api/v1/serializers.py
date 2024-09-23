@@ -3,9 +3,8 @@ import json
 from django.contrib.auth.password_validation import validate_password
 from drf_spectacular.utils import extend_schema_field
 from rest_framework_json_api import serializers
-from rest_framework_json_api.serializers import ValidationError
 from rest_framework_json_api.relations import SerializerMethodResourceRelatedField
-
+from rest_framework_json_api.serializers import ValidationError
 
 from api.models import (
     StateChoices,
@@ -438,7 +437,7 @@ class ResourceSerializer(RLSSerializer):
         return fields
 
 
-class FindingVisbilityEnumSerializerField(serializers.ChoiceField):
+class FindingDeltaEnumSerializerField(serializers.ChoiceField):
     def __init__(self, **kwargs):
         kwargs["choices"] = Finding.DeltaChoices.choices
         super().__init__(**kwargs)
@@ -498,7 +497,7 @@ class FindingSerializer(RLSSerializer):
     }
 
     class JSONAPIMeta:
-        resource_name = "findings"
+        resource_name = "Findings"
 
     def get_resources(self, obj):
         mappings = ResourceFindingMapping.objects.filter(finding=obj)

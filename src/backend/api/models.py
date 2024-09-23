@@ -7,13 +7,12 @@ from django.contrib.postgres.indexes import GinIndex
 from django.contrib.postgres.search import SearchVector, SearchVectorField
 from django.core.validators import MinLengthValidator
 from django.db import models
-
 from django.utils.translation import gettext_lazy as _
 from django_celery_results.models import TaskResult
-
-from uuid6 import uuid7
-
 from prowler.lib.outputs.finding import Severity
+from psqlextra.models import PostgresPartitionedModel
+from psqlextra.types import PostgresPartitioningMethod
+from uuid6 import uuid7
 
 from api.db_utils import (
     enum_to_choices,
@@ -26,13 +25,11 @@ from api.db_utils import (
     CustomUserManager,
 )
 from api.exceptions import ModelValidationError
-
 from api.rls import (
     RowLevelSecurityProtectedModel,
     RowLevelSecurityConstraint,
     BaseSecurityConstraint,
 )
-
 
 # Convert Prowler Severity enum to Django TextChoices
 SeverityChoices = enum_to_choices(Severity)
@@ -45,8 +42,8 @@ class StatusChoices(models.TextChoices):
     However it adds another state, MUTED, which is not in the CLI.
     """
 
-    PASS = "PASS", _("Pass")
     FAIL = "FAIL", _("Fail")
+    PASS = "PASS", _("Pass")
     MANUAL = "MANUAL", _("Manual")
     MUTED = "MUTED", _("Muted")
 
@@ -411,7 +408,19 @@ class ResourceTagMapping(RowLevelSecurityProtectedModel):
         ]
 
 
-class Finding(RowLevelSecurityProtectedModel):
+class Finding(PostgresPartitionedModel, RowLevelSecurityProtectedModel):
+    """
+    Defines the Finding model.
+
+    Findings uses a partitioned table to store findings. The partitions are created based on the UUIDv7 `id` field.
+
+    Note when creating migrations, you must use `python manage.py pgmakemigrations` to create the migrations.
+    """
+
+    class PartitioningMeta:
+        method = PostgresPartitioningMethod.RANGE
+        key = ["id"]
+
     class DeltaChoices(models.TextChoices):
         NEW = "new", _("New")
         CHANGED = "changed", _("Changed")
@@ -462,13 +471,19 @@ class Finding(RowLevelSecurityProtectedModel):
         editable=False,
     )
 
-    class Meta:
+    class Meta(RowLevelSecurityProtectedModel.Meta):
         db_table = "findings"
 
         constraints = [
             RowLevelSecurityConstraint(
                 field="tenant_id",
                 name="rls_on_%(class)s",
+                statements=["SELECT", "UPDATE", "INSERT", "DELETE"],
+            ),
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s_default",
+                partition_name="default",
                 statements=["SELECT", "UPDATE", "INSERT", "DELETE"],
             ),
         ]
@@ -499,12 +514,24 @@ class Finding(RowLevelSecurityProtectedModel):
         self.save()
 
 
-class ResourceFindingMapping(RowLevelSecurityProtectedModel):
+class ResourceFindingMapping(PostgresPartitionedModel, RowLevelSecurityProtectedModel):
+    """
+    Defines the ResourceFindingMapping model.
+
+    ResourceFindingMapping is used to map a Finding to a Resource.
+
+    It follows the same partitioning strategy as the Finding model.
+    """
+
     # NOTE that we don't really need a primary key here,
     #      but everything is easier with django if we do
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
     finding = models.ForeignKey(Finding, on_delete=models.CASCADE)
+
+    class PartitioningMeta:
+        method = PostgresPartitioningMethod.RANGE
+        key = ["finding_id"]
 
     class Meta(RowLevelSecurityProtectedModel.Meta):
         db_table = "resource_finding_mappings"

@@ -8,7 +8,7 @@ ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=["localhost", "127.0.0.
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql",
+        "ENGINE": "psqlextra.backend",
         "NAME": "prowler_db_test",
         "USER": env("POSTGRES_USER", default="prowler"),
         "PASSWORD": env("POSTGRES_PASSWORD", default="S3cret"),

@@ -1,5 +1,4 @@
 import uuid
-from uuid6 import uuid7
 from functools import partial
 
 import django.contrib.auth.models
@@ -11,7 +10,16 @@ import django.db.models.deletion
 import django.utils.timezone
 from django.conf import settings
 from django.db import migrations, models
-
+from psqlextra.backend.migrations.operations.add_default_partition import (
+    PostgresAddDefaultPartition,
+)
+from psqlextra.backend.migrations.operations.create_partitioned_model import (
+    PostgresCreatePartitionedModel,
+)
+from psqlextra.manager.manager import PostgresManager
+from psqlextra.models.partitioned import PostgresPartitionedModel
+from psqlextra.types import PostgresPartitioningMethod
+from uuid6 import uuid7
 
 import api.rls
 from api.db_utils import (
@@ -702,7 +710,7 @@ class Migration(migrations.Migration):
             SeverityEnumMigration.create_enum_type,
             reverse_code=SeverityEnumMigration.drop_enum_type,
         ),
-        migrations.CreateModel(
+        PostgresCreatePartitionedModel(
             name="Finding",
             fields=[
                 (
@@ -782,20 +790,16 @@ class Migration(migrations.Migration):
             ],
             options={
                 "db_table": "findings",
-                "indexes": [
-                    models.Index(
-                        fields=[
-                            "scan_id",
-                            "impact",
-                            "severity",
-                            "status",
-                            "check_id",
-                            "delta",
-                        ],
-                        name="findings_filter_idx",
-                    ),
-                ],
+                "base_manager_name": "objects",
             },
+            partitioning_options={
+                "method": PostgresPartitioningMethod["RANGE"],
+                "key": ["id"],
+            },
+            bases=(PostgresPartitionedModel,),
+            managers=[
+                ("objects", PostgresManager()),
+            ],
         ),
         migrations.RunSQL(
             sql="""
@@ -832,10 +836,22 @@ class Migration(migrations.Migration):
         ),
         migrations.AddIndex(
             model_name="finding",
+            index=models.Index(
+                fields=["scan_id", "impact", "severity", "status", "check_id", "delta"],
+                name="findings_filter_idx",
+            ),
+        ),
+        migrations.AddIndex(
+            model_name="finding",
             index=django.contrib.postgres.indexes.GinIndex(
                 fields=["text_search"], name="gin_findings_search_idx"
             ),
         ),
+        PostgresAddDefaultPartition(
+            model_name="Finding",
+            name="default",
+        ),
+        # NOTE: the RLS policy needs to be explicitly set on the partitions
         migrations.AddConstraint(
             model_name="finding",
             constraint=api.rls.RowLevelSecurityConstraint(
@@ -844,7 +860,16 @@ class Migration(migrations.Migration):
                 statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
             ),
         ),
-        migrations.CreateModel(
+        migrations.AddConstraint(
+            model_name="finding",
+            constraint=api.rls.RowLevelSecurityConstraint(
+                "tenant_id",
+                name="rls_on_finding_default",
+                partition_name="default",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ),
+        PostgresCreatePartitionedModel(
             name="ResourceFindingMapping",
             fields=[
                 (
@@ -878,7 +903,16 @@ class Migration(migrations.Migration):
             options={
                 "db_table": "resource_finding_mappings",
                 "abstract": False,
+                "base_manager_name": "objects",
             },
+            partitioning_options={
+                "method": PostgresPartitioningMethod["RANGE"],
+                "key": ["finding_id"],
+            },
+            bases=(PostgresPartitionedModel,),
+            managers=[
+                ("objects", PostgresManager()),
+            ],
         ),
         migrations.AddField(
             model_name="finding",
@@ -904,5 +938,22 @@ class Migration(migrations.Migration):
                 name="rls_on_resourcefindingmapping",
                 statements=["SELECT"],
             ),
+        ),
+        PostgresAddDefaultPartition(
+            model_name="resourcefindingmapping",
+            name="default",
+        ),
+        migrations.AddConstraint(
+            model_name="resourcefindingmapping",
+            constraint=api.rls.RowLevelSecurityConstraint(
+                "tenant_id",
+                name="rls_on_resource_finding_mappings_default",
+                partition_name="default",
+                statements=["SELECT"],
+            ),
+        ),
+        migrations.AlterModelOptions(
+            name="finding",
+            options={},
         ),
     ]

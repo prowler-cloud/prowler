@@ -1,7 +1,7 @@
 [
   {
     "model": "api.finding",
-    "pk": "01920571-de39-7539-acb8-35f714afdcd9",
+    "pk": "01920bdb-faf8-7cb1-ba66-dee96f78f048",
     "fields": {
       "tenant": "12646005-9067-4d2a-a098-8bb378604362",
       "scan": "0191e280-9d2f-71c8-9b18-487a23ba185e",
@@ -51,21 +51,21 @@
         "impact": "critical",
         "severity": "critical"
       },
-      "inserted_at": "2024-09-01T17:24:27.050Z",
-      "updated_at": "2024-09-01T17:24:27.050Z"
+      "inserted_at": "2024-09-19T19:56:59.590Z",
+      "updated_at": "2024-09-19T19:56:59.590Z"
     }
   },
   {
     "model": "api.resourcefindingmapping",
     "fields": {
-      "finding": "01920571-de39-7539-acb8-35f714afdcd9",
+      "finding": "01920bdb-faf8-7cb1-ba66-dee96f78f048",
       "resource": "a3ba9470-a240-49a6-8196-9230a267a220",
       "tenant": "12646005-9067-4d2a-a098-8bb378604362"
     }
   },
   {
     "model": "api.finding",
-    "pk": "01920571-3e43-7fae-9175-ee991af8a13c",
+    "pk": "01920bdb-faf8-7fbd-9aa4-ae144d4b4b91",
     "fields": {
       "tenant": "12646005-9067-4d2a-a098-8bb378604362",
       "scan": "01920573-aa9c-73c9-bcda-f2e35c9b19d2",
@@ -113,21 +113,21 @@
         "impact": "critical",
         "severity": "critical"
       },
-      "inserted_at": "2024-09-01T17:24:27.050Z",
-      "updated_at": "2024-09-01T17:24:27.050Z"
+      "inserted_at": "2024-09-19T19:56:59.596Z",
+      "updated_at": "2024-09-19T19:56:59.596Z"
     }
   },
   {
     "model": "api.resourcefindingmapping",
     "fields": {
-      "finding": "01920571-3e43-7fae-9175-ee991af8a13c",
+      "finding": "01920bdb-faf8-7fbd-9aa4-ae144d4b4b91",
       "resource": "a3ba9470-a240-49a6-8196-9230a267a220",
       "tenant": "12646005-9067-4d2a-a098-8bb378604362"
     }
   },
   {
     "model": "api.finding",
-    "pk": "01920572-2def-77f4-ba03-d4c7ec46fe8d",
+    "pk": "01920bdf-8150-7630-a385-62a80cdc75b5",
     "fields": {
       "tenant": "12646005-9067-4d2a-a098-8bb378604362",
       "scan": "01920573-ea5b-77fd-a93f-1ed2ae12f728",
@@ -177,21 +177,21 @@
         "impact": "critical",
         "severity": "critical"
       },
-      "inserted_at": "2024-09-01T17:24:27.050Z",
-      "updated_at": "2024-09-01T17:24:27.050Z"
+      "inserted_at": "2024-09-19T20:00:50.354Z",
+      "updated_at": "2024-09-19T20:00:50.354Z"
     }
   },
   {
     "model": "api.resourcefindingmapping",
     "fields": {
-      "finding": "01920572-2def-77f4-ba03-d4c7ec46fe8d",
+      "finding": "01920bdf-8150-7630-a385-62a80cdc75b5",
       "resource": "a3ba9470-a240-49a6-8196-9230a267a220",
       "tenant": "12646005-9067-4d2a-a098-8bb378604362"
     }
   },
   {
     "model": "api.finding",
-    "pk": "01920572-69bd-77c6-a038-fab6a5061477",
+    "pk": "01920be0-8320-75ce-a9a2-f927821769fa",
     "fields": {
       "tenant": "12646005-9067-4d2a-a098-8bb378604362",
       "scan": "01920573-ea5b-77fd-a93f-1ed2ae12f728",
@@ -239,14 +239,14 @@
         "impact": "critical",
         "severity": "critical"
       },
-      "inserted_at": "2024-09-01T17:24:27.050Z",
-      "updated_at": "2024-09-01T17:24:27.050Z"
+      "inserted_at": "2024-09-19T20:01:56.306Z",
+      "updated_at": "2024-09-19T20:01:56.306Z"
     }
   },
   {
     "model": "api.resourcefindingmapping",
     "fields": {
-      "finding": "01920572-69bd-77c6-a038-fab6a5061477",
+      "finding": "01920be0-8320-75ce-a9a2-f927821769fa",
       "resource": "a3ba9470-a240-49a6-8196-9230a267a220",
       "tenant": "12646005-9067-4d2a-a098-8bb378604362"
     }
