@@ -11,7 +11,6 @@ import {
 } from "@tanstack/react-table";
 import { useState } from "react";
 
-import { DataTablePagination } from "@/components/providers";
 import {
   Table,
   TableBody,
@@ -21,6 +20,8 @@ import {
   TableRow,
 } from "@/components/ui";
 import { MetaDataProps } from "@/types";
+
+import { DataTablePagination } from "./DataTablePagination";
 
 interface DataTableUserProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];

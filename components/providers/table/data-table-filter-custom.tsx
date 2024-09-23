@@ -1,12 +1,14 @@
+"use client";
+
 import { Button } from "@nextui-org/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useMemo } from "react";
 
-interface FilterColumnTableProps {
+interface DataTableFilterCustomProps {
   filters: { key: string; values: string[] }[];
 }
 
-export function FilterColumnTable({ filters }: FilterColumnTableProps) {
+export function DataTableFilterCustom({ filters }: DataTableFilterCustomProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 

@@ -3,12 +3,12 @@ import { Suspense } from "react";
 
 import { getProvider } from "@/actions";
 import { FilterControls } from "@/components/filters";
+import { AddProviderModal } from "@/components/providers";
 import {
-  AddProviderModal,
   ColumnsProvider,
   DataTableProvider,
   SkeletonTableProvider,
-} from "@/components/providers";
+} from "@/components/providers/table";
 import { Header } from "@/components/ui";
 import { SearchParamsProps } from "@/types";
 

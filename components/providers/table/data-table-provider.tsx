@@ -23,8 +23,8 @@ import {
 } from "@/components/ui";
 import { MetaDataProps } from "@/types";
 
-import { DataTablePagination } from "./DataTablePagination";
-import { FilterColumnTable } from "./FilterColumnTable";
+import { DataTableFilterCustom } from "./data-table-filter-custom";
+import { DataTablePagination } from "./data-table-pagination";
 
 interface DataTableProviderProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -56,7 +56,7 @@ export function DataTableProvider<TData, TValue>({
   });
 
   // This will be used to have "custom" filters in the table and will be
-  // passed to the FilterColumnTable component. This needs to be dynamic
+  // passed to the DataTableFilterCustom component. This needs to be dynamic
   // based on the columns that are available in the table.
 
   const filters = [
@@ -67,7 +67,7 @@ export function DataTableProvider<TData, TValue>({
 
   return (
     <>
-      <FilterColumnTable filters={filters} />
+      <DataTableFilterCustom filters={filters} />
       <div className="rounded-md border w-full">
         <Table>
           <TableHeader>
