@@ -25,7 +25,9 @@
       "Url": "https://docs.aws.amazon.com/network-firewall/latest/developerguide/firewall-update-logging-configuration.html"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
