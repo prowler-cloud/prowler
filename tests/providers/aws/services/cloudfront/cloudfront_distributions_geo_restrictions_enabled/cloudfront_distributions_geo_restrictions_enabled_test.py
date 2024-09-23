@@ -34,7 +34,7 @@ class Test_cloudfront_distributions_geo_restrictions_enabled:
     def test_one_distribution_geo_restriction_disabled(self):
         cloudfront_client = mock.MagicMock
         cloudfront_client.distributions = {
-            "DISTRIBUTION_ID": Distribution(
+            DISTRIBUTION_ID: Distribution(
                 arn=DISTRIBUTION_ARN,
                 id=DISTRIBUTION_ID,
                 region=REGION,
@@ -69,7 +69,7 @@ class Test_cloudfront_distributions_geo_restrictions_enabled:
     def test_one_distribution_geo_restriction_enabled_whitelist(self):
         cloudfront_client = mock.MagicMock
         cloudfront_client.distributions = {
-            "DISTRIBUTION_ID": Distribution(
+            DISTRIBUTION_ID: Distribution(
                 arn=DISTRIBUTION_ARN,
                 id=DISTRIBUTION_ID,
                 region=REGION,
@@ -105,7 +105,7 @@ class Test_cloudfront_distributions_geo_restrictions_enabled:
     def test_one_distribution_geo_restriction_enabled_blacklist(self):
         cloudfront_client = mock.MagicMock
         cloudfront_client.distributions = {
-            "DISTRIBUTION_ID": Distribution(
+            DISTRIBUTION_ID: Distribution(
                 arn=DISTRIBUTION_ARN,
                 id=DISTRIBUTION_ID,
                 region=REGION,

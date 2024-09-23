@@ -31,7 +31,7 @@ class Test_cloudfront_distributions_custom_ssl_certificate:
     def test_distribution_default_certificate(self):
         cloudfront_client = mock.MagicMock
         cloudfront_client.distributions = {
-            "DISTRIBUTION_ID": Distribution(
+            DISTRIBUTION_ID: Distribution(
                 arn=DISTRIBUTION_ARN,
                 id=DISTRIBUTION_ID,
                 region=REGION,
@@ -66,7 +66,7 @@ class Test_cloudfront_distributions_custom_ssl_certificate:
     def test_distribution_custom_certificate(self):
         cloudfront_client = mock.MagicMock
         cloudfront_client.distributions = {
-            "DISTRIBUTION_ID": Distribution(
+            DISTRIBUTION_ID: Distribution(
                 arn=DISTRIBUTION_ARN,
                 id=DISTRIBUTION_ID,
                 region=REGION,
