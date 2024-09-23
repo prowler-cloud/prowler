@@ -26,9 +26,8 @@ def stdout_report(finding, color, verbose, status, fix):
 
 
 # TODO: Only pass check_findings, provider.output_options and provider.type
-def report(check_findings, provider):
+def report(check_findings, provider, output_options):
     try:
-        output_options = provider.output_options
         if check_findings:
             # TO-DO Generic Function
             if provider.type == "aws":
