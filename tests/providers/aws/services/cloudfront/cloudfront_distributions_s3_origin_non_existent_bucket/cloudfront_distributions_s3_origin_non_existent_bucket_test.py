@@ -24,13 +24,13 @@ class Test_cloudfront_s3_origin_non_existent_bucket:
         s3_client.buckets = {}
 
         with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider(REGION),
-        ), mock.patch(
             "prowler.providers.aws.services.cloudfront.cloudfront_service.CloudFront",
             new=cloudfront_client,
         ), mock.patch(
             "prowler.providers.aws.services.s3.s3_service.S3", new=s3_client
+        ), mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_aws_provider(REGION),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudfront.cloudfront_distributions_s3_origin_non_existent_bucket.cloudfront_distributions_s3_origin_non_existent_bucket import (
@@ -69,13 +69,13 @@ class Test_cloudfront_s3_origin_non_existent_bucket:
         s3_client._head_bucket = mock.MagicMock(return_value=False)
 
         with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider(REGION),
-        ), mock.patch(
             "prowler.providers.aws.services.cloudfront.cloudfront_service.CloudFront",
             new=cloudfront_client,
         ), mock.patch(
             "prowler.providers.aws.services.s3.s3_service.S3", new=s3_client
+        ), mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_aws_provider(REGION),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudfront.cloudfront_distributions_s3_origin_non_existent_bucket.cloudfront_distributions_s3_origin_non_existent_bucket import (
@@ -128,24 +128,21 @@ class Test_cloudfront_s3_origin_non_existent_bucket:
         s3_client._head_bucket = mock.MagicMock(return_value=True)
 
         with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider(REGION),
-        ), mock.patch(
             "prowler.providers.aws.services.cloudfront.cloudfront_service.CloudFront",
             new=cloudfront_client,
         ), mock.patch(
             "prowler.providers.aws.services.s3.s3_service.S3", new=s3_client
+        ), mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_aws_provider(REGION),
         ):
-            with mock.patch(
-                "prowler.providers.aws.services.s3.s3_service.S3", new=s3_client
-            ):
-                # Test Check
-                from prowler.providers.aws.services.cloudfront.cloudfront_distributions_s3_origin_non_existent_bucket.cloudfront_distributions_s3_origin_non_existent_bucket import (
-                    cloudfront_distributions_s3_origin_non_existent_bucket,
-                )
+            # Test Check
+            from prowler.providers.aws.services.cloudfront.cloudfront_distributions_s3_origin_non_existent_bucket.cloudfront_distributions_s3_origin_non_existent_bucket import (
+                cloudfront_distributions_s3_origin_non_existent_bucket,
+            )
 
-                check = cloudfront_distributions_s3_origin_non_existent_bucket()
-                result = check.execute()
+            check = cloudfront_distributions_s3_origin_non_existent_bucket()
+            result = check.execute()
 
             assert len(result) == 1
             assert result[0].region == REGION
