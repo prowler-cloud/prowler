@@ -19,7 +19,7 @@ class iam_inline_policy_allows_privilege_escalation(Check):
                 report.status = "PASS"
 
                 resource_type_str = report.resource_arn.split(":")[-1].split("/")[0]
-                resource_attached = report.resource_arn.split(":")[-1].split("/")[1]
+                resource_attached = report.resource_arn.split("/")[-1]
 
                 report.status_extended = f"{policy.type} policy {policy.name}{' attached to ' + resource_type_str + ' ' + resource_attached if policy.attached else ''} does not allow privilege escalation."
 
