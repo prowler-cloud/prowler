@@ -572,7 +572,6 @@ def execute(
             check_class, verbose, global_provider.output_options.only_logs
         )
 
-        print(check_findings)
         # Exclude findings per status
         if global_provider.output_options.status:
             check_findings = [
