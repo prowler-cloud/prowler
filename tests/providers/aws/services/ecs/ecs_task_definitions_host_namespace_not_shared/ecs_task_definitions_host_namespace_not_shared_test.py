@@ -79,7 +79,7 @@ class Test_ecs_task_definitions_host_namespace_not_shared:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"ECS task definition '{task_name}' does not share a host's process namespace with its containers."
+                == f"ECS task definition '{task_name}' with revision {task_revision} does not share a host's process namespace with its containers."
             )
 
     def test_task_definition_host_pid_mode(self):
@@ -119,7 +119,7 @@ class Test_ecs_task_definitions_host_namespace_not_shared:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"ECS task definition '{task_name}' is configured to share a host's process namespace with its containers."
+                == f"ECS task definition '{task_name}' with revision {task_revision} is configured to share a host's process namespace with its containers."
             )
 
     def test_task_definition_no_pid_mode(self):
@@ -159,5 +159,5 @@ class Test_ecs_task_definitions_host_namespace_not_shared:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"ECS task definition '{task_name}' does not share a host's process namespace with its containers."
+                == f"ECS task definition '{task_name}' with revision {task_revision} does not share a host's process namespace with its containers."
             )
