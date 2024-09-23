@@ -27,7 +27,7 @@ class iam_inline_policy_allows_privilege_escalation(Check):
                 else:
                     resource_type_str = "resource"
 
-                report.status_extended = f"Inline Policy '{report.resource_id}'{' attached to ' + resource_type_str + ' ' + report.resource_arn if policy.attached else ''} does not allow privilege escalation."
+                report.status_extended = f"{policy.type} policy {policy.name}{' attached to ' + resource_type_str + ' ' + report.resource_arn if policy.attached else ''} does not allow privilege escalation."
 
                 policies_affected = check_privilege_escalation(
                     getattr(policy, "document", {})
@@ -37,7 +37,7 @@ class iam_inline_policy_allows_privilege_escalation(Check):
                     report.status = "FAIL"
 
                     report.status_extended = (
-                        f"Inline Policy '{report.resource_id}'{' attached to ' + resource_type_str + ' ' + report.resource_arn if policy.attached else ''} allows privilege escalation using the following actions: {policies_affected}".rstrip()
+                        f"{policy.type} policy {policy.name}{' attached to ' + resource_type_str + ' ' + report.resource_arn if policy.attached else ''} allows privilege escalation using the following actions: {policies_affected}".rstrip()
                         + "."
                     )
 
