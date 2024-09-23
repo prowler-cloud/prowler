@@ -7,9 +7,11 @@ from datetime import datetime, timedelta
 from json import dumps
 from os import rmdir
 from re import search
+from unittest import mock
 
 import botocore
 from boto3 import client, resource, session
+from colorama import Fore, Style
 from freezegun import freeze_time
 from mock import patch
 from moto import mock_aws
@@ -1685,3 +1687,114 @@ aws:
 
         assert len(session_token) == 356
         assert search(r"^FQoGZXIvYXdzE.*$", session_token)
+
+
+def mock_print_boxes(report_lines, report_title):
+    return report_lines, report_title
+
+
+class TestPrintCredentials:
+    @mock.patch("prowler.providers.aws.aws_provider.print_boxes")
+    def test_print_credentials(self, mock_print_boxes):
+        from prowler.providers.aws.aws_provider import AwsProvider
+
+        mock_self = AwsProvider.__new__(AwsProvider)
+
+        mock_self._identity = mock.MagicMock()
+        mock_self._identity.audited_regions = ["us-east-1", "us-west-2"]
+        mock_self._identity.profile = "my-profile"
+        mock_self._identity.account = "123456789012"
+        mock_self._identity.user_id = "AID1234567890"
+        mock_self._identity.identity_arn = "arn:aws:iam::123456789012:user/my-user"
+
+        mock_self._assumed_role = mock.MagicMock()
+        mock_self._assumed_role.info.role_arn.arn = (
+            "arn:aws:sts::123456789012:assumed-role/my-role"
+        )
+
+        mock_self.print_credentials()
+
+        expected_lines = [
+            f"AWS-CLI Profile: {Fore.YELLOW}my-profile{Style.RESET_ALL}",
+            f"AWS Regions: {Fore.YELLOW}us-east-1, us-west-2{Style.RESET_ALL}",
+            f"AWS Account: {Fore.YELLOW}123456789012{Style.RESET_ALL}",
+            f"User Id: {Fore.YELLOW}AID1234567890{Style.RESET_ALL}",
+            f"Caller Identity ARN: {Fore.YELLOW}arn:aws:iam::123456789012:user/my-user{Style.RESET_ALL}",
+            f"Assumed Role ARN: {Fore.YELLOW}[arn:aws:sts::123456789012:assumed-role/my-role]{Style.RESET_ALL}",
+        ]
+
+        expected_title = (
+            f"{Style.BRIGHT}Using the AWS credentials below:{Style.RESET_ALL}"
+        )
+
+        mock_print_boxes.assert_called_once_with(expected_lines, expected_title)
+
+    @mock.patch("prowler.providers.aws.aws_provider.print_boxes")
+    def test_print_credentials_no_regions_None(self, mock_print_boxes):
+        from prowler.providers.aws.aws_provider import AwsProvider
+
+        mock_self = AwsProvider.__new__(AwsProvider)
+
+        mock_self._identity = mock.MagicMock()
+        mock_self._identity.audited_regions = None
+        mock_self._identity.profile = "my-profile"
+        mock_self._identity.account = "123456789012"
+        mock_self._identity.user_id = "AID1234567890"
+        mock_self._identity.identity_arn = "arn:aws:iam::123456789012:user/my-user"
+
+        mock_self._assumed_role = mock.MagicMock()
+        mock_self._assumed_role.info.role_arn.arn = (
+            "arn:aws:sts::123456789012:assumed-role/my-role"
+        )
+
+        mock_self.print_credentials()
+
+        expected_lines = [
+            f"AWS-CLI Profile: {Fore.YELLOW}my-profile{Style.RESET_ALL}",
+            f"AWS Regions: {Fore.YELLOW}all{Style.RESET_ALL}",
+            f"AWS Account: {Fore.YELLOW}123456789012{Style.RESET_ALL}",
+            f"User Id: {Fore.YELLOW}AID1234567890{Style.RESET_ALL}",
+            f"Caller Identity ARN: {Fore.YELLOW}arn:aws:iam::123456789012:user/my-user{Style.RESET_ALL}",
+            f"Assumed Role ARN: {Fore.YELLOW}[arn:aws:sts::123456789012:assumed-role/my-role]{Style.RESET_ALL}",
+        ]
+
+        expected_title = (
+            f"{Style.BRIGHT}Using the AWS credentials below:{Style.RESET_ALL}"
+        )
+
+        mock_print_boxes.assert_called_once_with(expected_lines, expected_title)
+
+    @mock.patch("prowler.providers.aws.aws_provider.print_boxes")
+    def test_print_credentials_no_regions_empty_set(self, mock_print_boxes):
+        from prowler.providers.aws.aws_provider import AwsProvider
+
+        mock_self = AwsProvider.__new__(AwsProvider)
+
+        mock_self._identity = mock.MagicMock()
+        mock_self._identity.audited_regions = set()
+        mock_self._identity.profile = "my-profile"
+        mock_self._identity.account = "123456789012"
+        mock_self._identity.user_id = "AID1234567890"
+        mock_self._identity.identity_arn = "arn:aws:iam::123456789012:user/my-user"
+
+        mock_self._assumed_role = mock.MagicMock()
+        mock_self._assumed_role.info.role_arn.arn = (
+            "arn:aws:sts::123456789012:assumed-role/my-role"
+        )
+
+        mock_self.print_credentials()
+
+        expected_lines = [
+            f"AWS-CLI Profile: {Fore.YELLOW}my-profile{Style.RESET_ALL}",
+            f"AWS Regions: {Fore.YELLOW}all{Style.RESET_ALL}",
+            f"AWS Account: {Fore.YELLOW}123456789012{Style.RESET_ALL}",
+            f"User Id: {Fore.YELLOW}AID1234567890{Style.RESET_ALL}",
+            f"Caller Identity ARN: {Fore.YELLOW}arn:aws:iam::123456789012:user/my-user{Style.RESET_ALL}",
+            f"Assumed Role ARN: {Fore.YELLOW}[arn:aws:sts::123456789012:assumed-role/my-role]{Style.RESET_ALL}",
+        ]
+
+        expected_title = (
+            f"{Style.BRIGHT}Using the AWS credentials below:{Style.RESET_ALL}"
+        )
+
+        mock_print_boxes.assert_called_once_with(expected_lines, expected_title)
