@@ -25,6 +25,8 @@ class Glue(AWSService):
         self.__threading_call__(self.__get_security_configurations__)
         self.jobs = []
         self.__threading_call__(self.__get_jobs__)
+        self.transforms = []
+        self.__threading_call__(self.__get_ml_transorms__)
 
     def __get_data_catalog_arn_template__(self, region):
         return f"arn:{self.audited_partition}:glue:{region}:{self.audited_account}:data-catalog"
@@ -206,6 +208,32 @@ class Glue(AWSService):
             )
 
 
+    def __get_ml_transorms__(self, regional_client):
+        logger.info("Glue - Checking ml_transfroms encryption while at rest...")
+        try:
+            response = regional_client.get_ml_transforms()['Transforms']
+            print(response)
+            transform_encryption = dict()
+            for transform in response:
+                transform_encryption_long_dict = transform.get("TransformEncryption", {}).get('MlUserDataEncryption').get('MlUserDataEncryptionMode')
+                transform_encryption.update(transform_encryption_long_dict)
+
+            self.transforms = [
+            Transforms(
+                id=transform['TransformId'],
+                name=transform['Name'],
+                transform_encryption=Transforms(transform_encryption)
+            )
+        ]
+                          
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}")
+        
+
+
+
+
 class Connection(BaseModel):
     name: str
     arn: str
@@ -255,3 +283,8 @@ class SecurityConfig(BaseModel):
     jb_encryption: str
     jb_key_arn: Optional[str]
     region: str
+
+class Transforms(BaseModel):
+    id: str
+    name: str
+    transform_encryption: dict
