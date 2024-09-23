@@ -1,8 +1,10 @@
+from unittest import mock
 from unittest.mock import patch
 
 import botocore
 
 from prowler.providers.aws.services.networkfirewall.networkfirewall_service import (
+    Firewall,
     NetworkFirewall,
 )
 from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provider
@@ -83,6 +85,34 @@ class Test_NetworkFirewall_Service:
         assert networkfirewall.network_firewalls[0].arn == FIREWALL_ARN
         assert networkfirewall.network_firewalls[0].region == AWS_REGION_US_EAST_1
         assert networkfirewall.network_firewalls[0].name == FIREWALL_NAME
+
+    def test_describe_logging_configuration(self):
+        networkfirewall = mock.MagicMock
+        networkfirewall.provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        networkfirewall.region = AWS_REGION_US_EAST_1
+        networkfirewall.network_firewalls = [
+            Firewall(
+                arn=FIREWALL_ARN,
+                name=FIREWALL_NAME,
+                region=AWS_REGION_US_EAST_1,
+                policy_arn=POLICY_ARN,
+                vpc_id=VPC_ID,
+                tags=[{"Key": "test_tag", "Value": "test_value"}],
+                encryption_type="CUSTOMER_KMS",
+                logging_enabled=True,
+            )
+        ]
+
+        assert len(networkfirewall.network_firewalls) == 1
+        assert networkfirewall.network_firewalls[0].arn == FIREWALL_ARN
+        assert networkfirewall.network_firewalls[0].region == AWS_REGION_US_EAST_1
+        assert networkfirewall.network_firewalls[0].name == FIREWALL_NAME
+        assert networkfirewall.network_firewalls[0].policy_arn == POLICY_ARN
+        assert networkfirewall.network_firewalls[0].vpc_id == VPC_ID
+        assert networkfirewall.network_firewalls[0].tags == [
+            {"Key": "test_tag", "Value": "test_value"}
+        ]
+        assert networkfirewall.network_firewalls[0].logging_enabled
 
     def test_describe_firewall(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
