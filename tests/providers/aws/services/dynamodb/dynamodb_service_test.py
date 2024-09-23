@@ -102,6 +102,7 @@ class Test_DynamoDB_Service:
             Tags=[
                 {"Key": "test", "Value": "test"},
             ],
+            DeletionProtectionEnabled=True,
         )["TableDescription"]
         # DynamoDB client for this test class
         aws_provider = set_mocked_aws_provider()
@@ -113,6 +114,7 @@ class Test_DynamoDB_Service:
         assert dynamo.tables[0].tags == [
             {"Key": "test", "Value": "test"},
         ]
+        assert dynamo.tables[0].deletion_protection
 
     # Test DynamoDB Describe Continuous Backups
     @mock_aws
