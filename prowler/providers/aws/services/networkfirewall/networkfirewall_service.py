@@ -61,6 +61,28 @@ class NetworkFirewall(AWSService):
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 
+    def _describe_logging_configuration(self):
+        logger.info(
+            "Network Firewall - Describe Network Firewalls Logging Configuration..."
+        )
+        try:
+            for network_firewall in self.network_firewalls:
+                regional_client = self.regional_clients[network_firewall.region]
+                describe_logging_configuration = (
+                    regional_client.describe_logging_configuration(
+                        FirewallArn=network_firewall.arn
+                    )["LoggingConfiguration"]
+                )
+                network_firewall.logging_enabled = bool(
+                    describe_logging_configuration.get("LoggingConfiguration", {}).get(
+                        "LogDestinationConfigs", []
+                    )
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
+            )
+
 
 class Firewall(BaseModel):
     arn: str
@@ -71,3 +93,4 @@ class Firewall(BaseModel):
     tags: list = []
     encryption_type: str = None
     deletion_protection: bool = False
+    logging_enabled: bool = False
