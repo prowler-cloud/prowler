@@ -5,7 +5,6 @@ import botocore
 import botocore.exceptions
 from boto3 import client
 from moto import mock_aws
-from pytest import raises
 
 from prowler.providers.aws.services.s3.s3_service import S3, S3Control
 from tests.providers.aws.utils import (
@@ -482,6 +481,7 @@ class Test_S3_Service:
 
     # Test S3 Head Bucket
     @mock_aws
+    @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     def test_head_bucket(self):
         # Generate S3 Client
         s3_client = client("s3")
@@ -500,15 +500,10 @@ class Test_S3_Service:
         s3 = S3(aws_provider)
         assert len(s3.buckets) == 1
         assert s3.buckets[bucket_arn].name == bucket_name
-        assert s3_client.head_bucket(
-            Bucket=bucket_name,
+        assert s3._head_bucket(
+            bucket_name=bucket_name,
         )
         assert s3.buckets[bucket_arn].region == AWS_REGION_US_EAST_1
-        # Check for non-existent bucket
-        with raises(botocore.exceptions.ClientError) as e:
-            s3_client.head_bucket(Bucket="non-existent-bucket")
-            assert e.response["Error"]["Code"] == "404"
-            assert e.response["Error"]["Message"] == "Not Found"
 
     # Test S3 List Access Points
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)

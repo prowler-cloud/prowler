@@ -5,13 +5,12 @@ from prowler.providers.aws.services.cloudfront.cloudfront_service import (
     Origin,
 )
 from prowler.providers.aws.services.s3.s3_service import Bucket
-from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, set_mocked_aws_provider
+from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, AWS_REGION_EU_WEST_1
 
 DISTRIBUTION_ID = "E27LVI50CSW06W"
 DISTRIBUTION_ARN = (
     f"arn:aws:cloudfront::{AWS_ACCOUNT_NUMBER}:distribution/{DISTRIBUTION_ID}"
 )
-REGION = "eu-west-1"
 
 
 class Test_cloudfront_s3_origin_non_existent_bucket:
@@ -24,13 +23,10 @@ class Test_cloudfront_s3_origin_non_existent_bucket:
         s3_client.buckets = {}
 
         with mock.patch(
-            "prowler.providers.aws.services.cloudfront.cloudfront_service.CloudFront",
-            new=cloudfront_client,
-        ), mock.patch(
             "prowler.providers.aws.services.s3.s3_service.S3", new=s3_client
         ), mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider(REGION),
+            "prowler.providers.aws.services.cloudfront.cloudfront_service.CloudFront",
+            new=cloudfront_client,
         ):
             # Test Check
             from prowler.providers.aws.services.cloudfront.cloudfront_distributions_s3_origin_non_existent_bucket.cloudfront_distributions_s3_origin_non_existent_bucket import (
@@ -42,15 +38,19 @@ class Test_cloudfront_s3_origin_non_existent_bucket:
 
             assert len(result) == 0
 
+    @mock.patch(
+        "prowler.providers.aws.services.s3.s3_service.S3._head_bucket",
+        new=mock.MagicMock(return_value=False),
+    )
     def test_distribution_nonexistent_origins(self):
         # Distributions
         domain = "nonexistent-bucket.s3.eu-west-1.amazonaws.com"
         cloudfront_client = mock.MagicMock
         cloudfront_client.distributions = {
-            "DISTRIBUTION_ID": Distribution(
+            DISTRIBUTION_ID: Distribution(
                 arn=DISTRIBUTION_ARN,
                 id=DISTRIBUTION_ID,
-                region=REGION,
+                region=AWS_REGION_EU_WEST_1,
                 logging_enabled=True,
                 origins=[
                     Origin(
@@ -66,16 +66,12 @@ class Test_cloudfront_s3_origin_non_existent_bucket:
         nonexistent_bucket = "nonexistent-bucket"
         s3_client = mock.MagicMock
         s3_client.buckets = {}
-        s3_client._head_bucket = mock.MagicMock(return_value=False)
 
         with mock.patch(
-            "prowler.providers.aws.services.cloudfront.cloudfront_service.CloudFront",
-            new=cloudfront_client,
-        ), mock.patch(
             "prowler.providers.aws.services.s3.s3_service.S3", new=s3_client
         ), mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider(REGION),
+            "prowler.providers.aws.services.cloudfront.cloudfront_service.CloudFront",
+            new=cloudfront_client,
         ):
             # Test Check
             from prowler.providers.aws.services.cloudfront.cloudfront_distributions_s3_origin_non_existent_bucket.cloudfront_distributions_s3_origin_non_existent_bucket import (
@@ -86,7 +82,7 @@ class Test_cloudfront_s3_origin_non_existent_bucket:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].region == REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_arn == DISTRIBUTION_ARN
             assert result[0].resource_id == DISTRIBUTION_ID
             assert result[0].status == "FAIL"
@@ -95,15 +91,19 @@ class Test_cloudfront_s3_origin_non_existent_bucket:
                 == f"CloudFront Distribution {DISTRIBUTION_ID} has non-existent S3 buckets as origins: {nonexistent_bucket}."
             )
 
+    @mock.patch(
+        "prowler.providers.aws.services.s3.s3_service.S3._head_bucket",
+        new=mock.MagicMock(return_value=True),
+    )
     def test_distribution_no_nonexistent_origins(self):
         # Distributions
         domain = "existent-bucket.s3.eu-west-1.amazonaws.com"
         cloudfront_client = mock.MagicMock
         cloudfront_client.distributions = {
-            "DISTRIBUTION_ID": Distribution(
+            DISTRIBUTION_ID: Distribution(
                 arn=DISTRIBUTION_ARN,
                 id=DISTRIBUTION_ID,
-                region=REGION,
+                region=AWS_REGION_EU_WEST_1,
                 logging_enabled=True,
                 origins=[
                     Origin(
@@ -122,19 +122,15 @@ class Test_cloudfront_s3_origin_non_existent_bucket:
         s3_client.buckets = {
             f"arn:aws:s3:::{bucket_name}": Bucket(
                 name=bucket_name,
-                region="eu-west-1",
+                region=AWS_REGION_EU_WEST_1,
             )
         }
-        s3_client._head_bucket = mock.MagicMock(return_value=True)
 
         with mock.patch(
-            "prowler.providers.aws.services.cloudfront.cloudfront_service.CloudFront",
-            new=cloudfront_client,
-        ), mock.patch(
             "prowler.providers.aws.services.s3.s3_service.S3", new=s3_client
         ), mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider(REGION),
+            "prowler.providers.aws.services.cloudfront.cloudfront_service.CloudFront",
+            new=cloudfront_client,
         ):
             # Test Check
             from prowler.providers.aws.services.cloudfront.cloudfront_distributions_s3_origin_non_existent_bucket.cloudfront_distributions_s3_origin_non_existent_bucket import (
@@ -145,7 +141,7 @@ class Test_cloudfront_s3_origin_non_existent_bucket:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].region == REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_arn == DISTRIBUTION_ARN
             assert result[0].resource_id == DISTRIBUTION_ID
             assert result[0].status == "PASS"
