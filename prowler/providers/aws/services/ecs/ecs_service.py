@@ -74,6 +74,7 @@ class ECS(AWSService):
                 task_definition.network_mode = response["taskDefinition"].get(
                     "networkMode"
                 )
+                task_definition.pid_mode = response["taskDefinition"].get("pidMode", "")
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -98,5 +99,6 @@ class TaskDefinition(BaseModel):
     revision: str
     region: str
     container_definitions: list[ContainerDefinition] = []
+    pid_mode: Optional[str]
     tags: Optional[list] = []
     network_mode: Optional[str]
