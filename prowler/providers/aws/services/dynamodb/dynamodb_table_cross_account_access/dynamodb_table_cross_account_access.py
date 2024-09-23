@@ -19,7 +19,8 @@ class dynamodb_table_cross_account_access(Check):
             if table.policy:
                 report.status_extended = f"DynamoDB table {table.name} has a resource-based policy but is not cross account."
                 if is_policy_public(
-                    table.policy, source_account=dynamodb_client.audited_account
+                    table.policy,
+                    source_account=dynamodb_client.audited_account,
                 ):
                     report.status = "FAIL"
                     report.status_extended = f"DynamoDB table {table.name} has a resource-based policy allowing cross account access."
