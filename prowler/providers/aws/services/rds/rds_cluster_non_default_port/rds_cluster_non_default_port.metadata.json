@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:rds:region:account-id:cluster:db-cluster",
   "Severity": "low",
-  "ResourceType": "AwsRdsDbInstance",
+  "ResourceType": "AwsRdsDbCluster",
   "Description": "Checks if an cluster uses a port other than the default port of the database engine. The control fails if the RDS cluster uses the default port.",
   "Risk": "Using a default database port exposes the cluster to potential security vulnerabilities, as attackers are more likely to target known, commonly-used ports. This may result in unauthorized access to the database or increased susceptibility to automated attacks.",
   "RelatedUrl": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Overview.DBInstance.Modifying.html",
