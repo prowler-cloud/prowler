@@ -21,5 +21,5 @@ def get_table(data):
     ].copy()
 
     return get_section_containers_kisa_ismsp(
-        aux, "REQUIREMENTS_ATTRIBUTES_SECTION", "REQUIREMENTS_ATTRIBUTES_SUBDOMAIN"
+        aux, "REQUIREMENTS_ATTRIBUTES_SUBDOMAIN", "REQUIREMENTS_ATTRIBUTES_SECTION"
     )

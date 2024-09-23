@@ -2225,43 +2225,47 @@ def get_section_containers_ens(data, section_1, section_2, section_3, section_4)
     return html.Div(section_containers, className="compliance-data-layout")
 
 
+# This function extracts and compares up to two numeric values, ensuring correct sorting for version-like strings.
+def extract_numeric_values(value):
+    numbers = re.findall(r'\d+', str(value))
+    if len(numbers) >= 2:
+        return int(numbers[0]), int(numbers[1])
+    elif len(numbers) == 1:
+        return int(numbers[0]), 0
+    return 0, 0
+
 def get_section_containers_kisa_ismsp(data, section_1, section_2):
     data["STATUS"] = data["STATUS"].apply(map_status_to_icon)
-
-    data.sort_values(by=section_1, inplace=True)
     data[section_1] = data[section_1].astype(str)
+    data[section_2] = data[section_2].astype(str)
+    data.sort_values(by=section_1, key=lambda x: x.map(extract_numeric_values), ascending=True, inplace=True)
 
     findings_counts_section = (
         data.groupby([section_2, "STATUS"]).size().unstack(fill_value=0)
     )
-    findings_counts_id = (
+    findings_counts_name = (
         data.groupby([section_1, "STATUS"]).size().unstack(fill_value=0)
     )
 
     section_containers = []
-    seen_sections = set()
 
-    for section in data[section_2].unique():
-        if section in seen_sections:
-            continue
-        seen_sections.add(section)
-
-        success_section = (
-            findings_counts_section.loc[section, pass_emoji]
-            if pass_emoji in findings_counts_section.columns
+    for name in data[section_1].unique():
+        success_name = (
+            findings_counts_name.loc[name, pass_emoji]
+            if pass_emoji in findings_counts_name.columns
             else 0
         )
-        failed_section = (
-            findings_counts_section.loc[section, fail_emoji]
-            if fail_emoji in findings_counts_section.columns
+        failed_name = (
+            findings_counts_name.loc[name, fail_emoji]
+            if fail_emoji in findings_counts_name.columns
             else 0
         )
 
-        fig_section = go.Figure(
+        fig_name = go.Figure(
             data=[
                 go.Bar(
                     name="Failed",
-                    x=[failed_section],
+                    x=[failed_name],
                     y=[""],
                     orientation="h",
                     marker=dict(color="#e77676"),
@@ -2269,7 +2273,7 @@ def get_section_containers_kisa_ismsp(data, section_1, section_2):
                 ),
                 go.Bar(
                     name="Success",
-                    x=[success_section],
+                    x=[success_name],
                     y=[""],
                     orientation="h",
                     marker=dict(color="#45cc6e"),
@@ -2278,7 +2282,7 @@ def get_section_containers_kisa_ismsp(data, section_1, section_2):
             ]
         )
 
-        fig_section.update_layout(
+        fig_name.update_layout(
             barmode="stack",
             margin=dict(l=10, r=10, t=10, b=10),
             paper_bgcolor="rgba(0,0,0,0)",
@@ -2288,27 +2292,52 @@ def get_section_containers_kisa_ismsp(data, section_1, section_2):
             height=30,
             xaxis=dict(showticklabels=False, showgrid=False, zeroline=False),
             yaxis=dict(showticklabels=False, showgrid=False, zeroline=False),
+            annotations=[
+                dict(
+                    x=success_name + failed_name,
+                    y=0,
+                    xref="x",
+                    yref="y",
+                    text=str(success_name),
+                    showarrow=False,
+                    font=dict(color="#45cc6e", size=14),
+                    xanchor="left",
+                    yanchor="middle",
+                ),
+                dict(
+                    x=0,
+                    y=0,
+                    xref="x",
+                    yref="y",
+                    text=str(failed_name),
+                    showarrow=False,
+                    font=dict(color="#e77676", size=14),
+                    xanchor="right",
+                    yanchor="middle",
+                ),
+            ],
         )
 
-        graph_section = dcc.Graph(
-            figure=fig_section, config={"staticPlot": True}, className="info-bar"
+        graph_name = dcc.Graph(
+            figure=fig_name, config={"staticPlot": True}, className="info-bar"
         )
-        graph_div = html.Div(graph_section, className="graph-section")
+
+        graph_div = html.Div(graph_name, className="graph-section")
 
         direct_internal_items = []
 
-        for req_id in data[data[section_2] == section][section_1].unique():
+        for section in data[data[section_1] == name][section_2].unique():
             specific_data = data[
-                (data[section_2] == section) & (data[section_1] == req_id)
+                (data[section_1] == name) & (data[section_2] == section)
             ]
-            success_req = (
-                findings_counts_id.loc[req_id, pass_emoji]
-                if pass_emoji in findings_counts_id.columns
+            success_section = (
+                findings_counts_section.loc[section, pass_emoji]
+                if pass_emoji in findings_counts_section.columns
                 else 0
             )
-            failed_req = (
-                findings_counts_id.loc[req_id, fail_emoji]
-                if fail_emoji in findings_counts_id.columns
+            failed_section = (
+                findings_counts_section.loc[section, fail_emoji]
+                if fail_emoji in findings_counts_section.columns
                 else 0
             )
 
@@ -2320,26 +2349,21 @@ def get_section_containers_kisa_ismsp(data, section_1, section_2):
                 ],
                 style_table={"overflowX": "auto"},
                 style_as_list_view=True,
-                style_cell={
-                    "textAlign": "left",
-                    "padding": "5px",
-                    "whiteSpace": "normal",
-                    "wordBreak": "break-word",
-                },
+                style_cell={"textAlign": "left", "padding": "5px"},
             )
 
-            fig_req = go.Figure(
+            fig_section = go.Figure(
                 data=[
                     go.Bar(
                         name="Failed",
-                        x=[failed_req],
+                        x=[failed_section],
                         y=[""],
                         orientation="h",
                         marker=dict(color="#e77676"),
                     ),
                     go.Bar(
                         name="Success",
-                        x=[success_req],
+                        x=[success_section],
                         y=[""],
                         orientation="h",
                         marker=dict(color="#45cc6e"),
@@ -2347,7 +2371,7 @@ def get_section_containers_kisa_ismsp(data, section_1, section_2):
                 ]
             )
 
-            fig_req.update_layout(
+            fig_section.update_layout(
                 barmode="stack",
                 margin=dict(l=10, r=10, t=10, b=10),
                 paper_bgcolor="rgba(0,0,0,0)",
@@ -2357,22 +2381,48 @@ def get_section_containers_kisa_ismsp(data, section_1, section_2):
                 height=30,
                 xaxis=dict(showticklabels=False, showgrid=False, zeroline=False),
                 yaxis=dict(showticklabels=False, showgrid=False, zeroline=False),
+                annotations=[
+                    dict(
+                        x=success_section + failed_section,
+                        y=0,
+                        xref="x",
+                        yref="y",
+                        text=str(success_section),
+                        showarrow=False,
+                        font=dict(color="#45cc6e", size=14),
+                        xanchor="left",
+                        yanchor="middle",
+                    ),
+                    dict(
+                        x=0,
+                        y=0,
+                        xref="x",
+                        yref="y",
+                        text=str(failed_section),
+                        showarrow=False,
+                        font=dict(color="#e77676", size=14),
+                        xanchor="right",
+                        yanchor="middle",
+                    ),
+                ],
             )
 
-            graph_req = dcc.Graph(
-                figure=fig_req, config={"staticPlot": True}, className="info-bar-child"
+            graph_section = dcc.Graph(
+                figure=fig_section,
+                config={"staticPlot": True},
+                className="info-bar-child",
             )
 
-            graph_div_req = html.Div(graph_req, className="graph-section-req")
+            graph_div_section = html.Div(graph_section, className="graph-section-req")
 
             internal_accordion_item = dbc.AccordionItem(
-                title=req_id,
+                title=section,
                 children=[html.Div([data_table], className="inner-accordion-content")],
             )
 
             internal_section_container = html.Div(
                 [
-                    graph_div_req,
+                    graph_div_section,
                     dbc.Accordion(
                         [internal_accordion_item], start_collapsed=True, flush=True
                     ),
@@ -2383,7 +2433,7 @@ def get_section_containers_kisa_ismsp(data, section_1, section_2):
             direct_internal_items.append(internal_section_container)
 
         accordion_item = dbc.AccordionItem(
-            title=f"{section}", children=direct_internal_items
+            title=f"{name}", children=direct_internal_items
         )
         section_container = html.Div(
             [
