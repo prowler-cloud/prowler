@@ -23,7 +23,7 @@ packages = [
   {include = "dashboard"}
 ]
 readme = "README.md"
-version = "4.3.6"
+version = "4.3.7"
 
 [tool.poetry.dependencies]
 alive-progress = "3.1.5"
