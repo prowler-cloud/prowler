@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "dynamodb_table_deletion_protection_enabled",
+  "CheckTitle": "Check if DynamoDB tables have deletion protection enabled.",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "dynamodb",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:dynamodb:region:account-id:table/table-name",
+  "Severity": "medium",
+  "ResourceType": "AwsDynamoDbTable",
+  "Description": "This control checks whether an Amazon DynamoDB table has deletion protection enabled to prevent accidental deletion during regular table management operations.",
+  "Risk": "If deletion protection is not enabled, a DynamoDB table could be accidentally deleted, leading to data loss and potential disruption of business operations.",
+  "RelatedUrl": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/WorkingWithTables.Basics.html#WorkingWithTables.Basics.DeletionProtection",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws dynamodb update-table --table-name <table-name> --deletion-protection-enabled",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/dynamodb-controls.html#dynamodb-6",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable deletion protection for your DynamoDB tables to prevent accidental deletion.",
+      "Url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/WorkingWithTables.Basics.html#WorkingWithTables.Basics.DeletionProtection"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
