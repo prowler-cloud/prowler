@@ -20,10 +20,7 @@ class Test_ecs_task_definitions_host_networking_mode_users:
 
         with mock.patch(
             "prowler.providers.aws.services.ecs.ecs_service.ECS",
-            new=ecs_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.ecs.ecs_client.ecs_client",
-            new=ecs_client,
+            ecs_client,
         ):
             from prowler.providers.aws.services.ecs.ecs_task_definitions_host_networking_mode_users.ecs_task_definitions_host_networking_mode_users import (
                 ecs_task_definitions_host_networking_mode_users,
@@ -59,10 +56,7 @@ class Test_ecs_task_definitions_host_networking_mode_users:
 
         with mock.patch(
             "prowler.providers.aws.services.ecs.ecs_service.ECS",
-            new=ecs_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.ecs.ecs_client.ecs_client",
-            new=ecs_client,
+            ecs_client,
         ):
             from prowler.providers.aws.services.ecs.ecs_task_definitions_host_networking_mode_users.ecs_task_definitions_host_networking_mode_users import (
                 ecs_task_definitions_host_networking_mode_users,
@@ -98,10 +92,7 @@ class Test_ecs_task_definitions_host_networking_mode_users:
 
         with mock.patch(
             "prowler.providers.aws.services.ecs.ecs_service.ECS",
-            new=ecs_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.ecs.ecs_client.ecs_client",
-            new=ecs_client,
+            ecs_client,
         ):
             from prowler.providers.aws.services.ecs.ecs_task_definitions_host_networking_mode_users.ecs_task_definitions_host_networking_mode_users import (
                 ecs_task_definitions_host_networking_mode_users,
@@ -137,10 +128,7 @@ class Test_ecs_task_definitions_host_networking_mode_users:
 
         with mock.patch(
             "prowler.providers.aws.services.ecs.ecs_service.ECS",
-            new=ecs_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.ecs.ecs_client.ecs_client",
-            new=ecs_client,
+            ecs_client,
         ):
             from prowler.providers.aws.services.ecs.ecs_task_definitions_host_networking_mode_users.ecs_task_definitions_host_networking_mode_users import (
                 ecs_task_definitions_host_networking_mode_users,
@@ -176,10 +164,7 @@ class Test_ecs_task_definitions_host_networking_mode_users:
 
         with mock.patch(
             "prowler.providers.aws.services.ecs.ecs_service.ECS",
-            new=ecs_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.ecs.ecs_client.ecs_client",
-            new=ecs_client,
+            ecs_client,
         ):
             from prowler.providers.aws.services.ecs.ecs_task_definitions_host_networking_mode_users.ecs_task_definitions_host_networking_mode_users import (
                 ecs_task_definitions_host_networking_mode_users,
