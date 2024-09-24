@@ -98,7 +98,7 @@ class ElastiCache(AWSService):
                         member_clusters = repl_group.get("MemberClusters", [])
                         engine_version = "0.0"
                         if member_clusters:
-                            cluster_arn = f"arn:aws:elasticache:{regional_client.region}:{self.audited_account}:cluster:{member_clusters[0]}"
+                            cluster_arn = f"arn:{self.audited_partition}:elasticache:{regional_client.region}:{self.audited_account}:cluster:{member_clusters[0]}"
                             engine_version = self.clusters[cluster_arn].engine_version
 
                         self.replication_groups[replication_arn] = ReplicationGroup(
