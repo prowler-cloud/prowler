@@ -4,7 +4,7 @@ from prowler.providers.aws.services.organizations.organizations_client import (
 )
 
 
-class organizations_tags_policies_enabled_and_attached(Check):
+class organizations_opt_out_ai_services_policy(Check):
     def execute(self):
         findings = []
 
@@ -17,17 +17,20 @@ class organizations_tags_policies_enabled_and_attached(Check):
             report.status_extended = (
                 "AWS Organizations is not in-use for this AWS Account."
             )
-
             if org.status == "ACTIVE":
-                report.status_extended = (
-                    f"AWS Organizations {org.id} does not have tag policies."
-                )
+                report.status_extended = f"AWS Organization {org.id} has not opted out of all AI services, granting consent for AWS to access its data."
                 if org.policies is not None:  # Access Denied to list_policies
-                    for policy in org.policies.get("TAG_POLICY", []):
-                        report.status_extended = f"AWS Organization {org.id} has tag policies enabled but not attached."
-                        if policy.targets:
+                    for policy in org.policies.get("AISERVICES_OPT_OUT_POLICY", []):
+                        if (
+                            policy.content.get("services", {})
+                            .get("default", {})
+                            .get("opt_out_policy", {})
+                            .get("@@assign")
+                            == "optOut"
+                        ):
                             report.status = "PASS"
-                            report.status_extended = f"AWS Organization {org.id} has tag policies enabled and attached to an AWS account."
+                            report.status_extended = f"AWS Organization {org.id} has opted out of all AI services, not granting consent for AWS to access its data."
+                            break
 
             findings.append(report)
 
