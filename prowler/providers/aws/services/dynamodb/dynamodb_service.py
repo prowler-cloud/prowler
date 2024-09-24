@@ -14,7 +14,7 @@ class DynamoDB(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
-        self.tables = []
+        self.tables = {}
         self.__threading_call__(self._list_tables)
         self._describe_table()
         self._describe_continuous_backups()
@@ -31,15 +31,14 @@ class DynamoDB(AWSService):
                     if not self.audit_resources or (
                         is_resource_filtered(arn, self.audit_resources)
                     ):
-                        self.tables.append(
-                            Table(
-                                arn=arn,
-                                name=table,
-                                encryption_type=None,
-                                kms_arn=None,
-                                region=regional_client.region,
-                            )
+                        table = Table(
+                            arn=arn,
+                            name=table,
+                            encryption_type=None,
+                            kms_arn=None,
+                            region=regional_client.region,
                         )
+                        self.tables[arn] = table
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -48,7 +47,7 @@ class DynamoDB(AWSService):
     def _describe_table(self):
         logger.info("DynamoDB - Describing Table...")
         try:
-            for table in self.tables:
+            for table in self.tables.values():
                 regional_client = self.regional_clients[table.region]
                 properties = regional_client.describe_table(TableName=table.name)[
                     "Table"
@@ -66,7 +65,7 @@ class DynamoDB(AWSService):
     def _describe_continuous_backups(self):
         logger.info("DynamoDB - Describing Continuous Backups...")
         try:
-            for table in self.tables:
+            for table in self.tables.values():
                 try:
                     regional_client = self.regional_clients[table.region]
                     properties = regional_client.describe_continuous_backups(
@@ -98,7 +97,7 @@ class DynamoDB(AWSService):
     def _get_resource_policy(self):
         logger.info("DynamoDB - Get Resource Policy...")
         try:
-            for table in self.tables:
+            for table in self.tables.values():
                 try:
                     regional_client = self.regional_clients[table.region]
                     response = regional_client.get_resource_policy(
@@ -127,7 +126,7 @@ class DynamoDB(AWSService):
     def _list_tags_for_resource(self):
         logger.info("DynamoDB - List Tags...")
         try:
-            for table in self.tables:
+            for table in self.tables.values():
                 try:
                     regional_client = self.regional_clients[table.region]
                     response = regional_client.list_tags_of_resource(

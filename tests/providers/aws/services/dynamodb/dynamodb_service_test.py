@@ -77,10 +77,11 @@ class Test_DynamoDB_Service:
         aws_provider = set_mocked_aws_provider()
         dynamo = DynamoDB(aws_provider)
         assert len(dynamo.tables) == 2
-        assert dynamo.tables[0].name == "test1"
-        assert dynamo.tables[1].name == "test2"
-        assert dynamo.tables[0].region == AWS_REGION_US_EAST_1
-        assert dynamo.tables[1].region == AWS_REGION_US_EAST_1
+        table_names = [table.name for table in dynamo.tables.values()]
+        assert "test1" in table_names
+        assert "test2" in table_names
+        for table in dynamo.tables.values():
+            assert table.region == AWS_REGION_US_EAST_1
 
     # Test DynamoDB Describe Table
     @mock_aws
@@ -107,10 +108,11 @@ class Test_DynamoDB_Service:
         aws_provider = set_mocked_aws_provider()
         dynamo = DynamoDB(aws_provider)
         assert len(dynamo.tables) == 1
-        assert dynamo.tables[0].arn == table["TableArn"]
-        assert dynamo.tables[0].name == "test1"
-        assert dynamo.tables[0].region == AWS_REGION_US_EAST_1
-        assert dynamo.tables[0].tags == [
+        tables_arn, tables = next(iter(dynamo.tables.items()))
+        assert tables.arn == table["TableArn"]
+        assert tables.name == "test1"
+        assert tables.region == AWS_REGION_US_EAST_1
+        assert tables.tags == [
             {"Key": "test", "Value": "test"},
         ]
 
@@ -140,10 +142,11 @@ class Test_DynamoDB_Service:
         aws_provider = set_mocked_aws_provider()
         dynamo = DynamoDB(aws_provider)
         assert len(dynamo.tables) == 1
-        assert dynamo.tables[0].arn == table["TableArn"]
-        assert dynamo.tables[0].name == "test1"
-        assert dynamo.tables[0].pitr
-        assert dynamo.tables[0].region == AWS_REGION_US_EAST_1
+        tables_arn, tables = next(iter(dynamo.tables.items()))
+        assert tables.arn == table["TableArn"]
+        assert tables.name == "test1"
+        assert tables.pitr
+        assert tables.region == AWS_REGION_US_EAST_1
 
     # Test DAX Describe Clusters
     @mock_aws
