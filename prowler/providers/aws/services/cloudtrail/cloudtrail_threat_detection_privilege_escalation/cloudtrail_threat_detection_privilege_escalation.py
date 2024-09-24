@@ -71,7 +71,7 @@ class cloudtrail_threat_detection_privilege_escalation(Check):
                     cloudtrail_client.region
                 )
                 report.status = "FAIL"
-                report.status_extended = f"Potential privilege escalation attack detected from AWS {aws_identity_type} {aws_identity_arn.split("/")[-1]} with an threshold of {identity_threshold}."
+                report.status_extended = f"Potential privilege escalation attack detected from AWS {aws_identity_type} {aws_identity_arn.split('/')[-1]} with an threshold of {identity_threshold}."
                 findings.append(report)
         if not found_potential_privilege_escalation:
             report = Check_Report_AWS(self.metadata())
