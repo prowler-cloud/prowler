@@ -580,6 +580,19 @@ def execute(
     custom_checks_metadata: Any,
     output_options: Any = None,
 ):
+    """
+    Execute the check and report the findings
+
+    Args:
+        service (str): service name
+        check_name (str): check name
+        global_provider (Any): provider object
+        custom_checks_metadata (Any): custom checks metadata
+        output_options (Any): output options, depending on the provider
+
+    Returns:
+        list: list of findings
+    """
     try:
         # Import check module
         check_module_path = f"prowler.providers.{global_provider.type}.services.{service}.{check_name}.{check_name}"
@@ -597,11 +610,20 @@ def execute(
             )
 
         # Run check
-        verbose = output_options.verbose or output_options.fixer
-        check_findings = run_check(check_class, verbose, output_options.only_logs)
+        verbose = False
+        if hasattr(output_options, "verbose"):
+            verbose = output_options.verbose
+        elif hasattr(output_options, "fixer"):
+            verbose = output_options.fixer
+
+        only_logs = False
+        if hasattr(output_options, "only_logs"):
+            only_logs = output_options.only_logs
+
+        check_findings = run_check(check_class, verbose, only_logs)
 
         # Exclude findings per status
-        if output_options.status:
+        if hasattr(output_options, "status") and output_options.status:
             check_findings = [
                 finding
                 for finding in check_findings

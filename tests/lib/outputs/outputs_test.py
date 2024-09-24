@@ -460,12 +460,11 @@ class TestOutputs:
 
         provider = MagicMock()
         provider.type = "aws"
-        provider.output_options = output_options
 
         # Assertions
         with mock.patch("builtins.print") as mocked_print:
             # Call the report method
-            report(check_findings, provider)
+            report(check_findings, provider, output_options)
 
             # Assertions
             check_findings_sorted = [finding_1, finding_2]
@@ -503,12 +502,11 @@ class TestOutputs:
 
         provider = MagicMock()
         provider.type = "aws"
-        provider.output_options = output_options
 
         # Assertions
         with mock.patch("builtins.print") as mocked_print:
             # Call the report method
-            report(check_findings, provider)
+            report(check_findings, provider, output_options)
 
             # Assertions
             check_findings_sorted = [finding_1, finding_2]
@@ -546,12 +544,11 @@ class TestOutputs:
 
         provider = MagicMock()
         provider.type = "aws"
-        provider.output_options = output_options
 
         # Assertions
         with mock.patch("builtins.print") as mocked_print:
             # Call the report method
-            report(check_findings, provider)
+            report(check_findings, provider, output_options)
 
             # Assertions
             check_findings_sorted = [finding_1, finding_2]
@@ -589,12 +586,11 @@ class TestOutputs:
 
         provider = MagicMock()
         provider.type = "aws"
-        provider.output_options = output_options
 
         # Assertions
         with mock.patch("builtins.print") as mocked_print:
             # Call the report method
-            report(check_findings, provider)
+            report(check_findings, provider, output_options)
 
             # Assertions
             check_findings_sorted = [finding_1, finding_2]
@@ -634,12 +630,11 @@ class TestOutputs:
 
         provider = MagicMock()
         provider.type = "azure"
-        provider.output_options = output_options
 
         # Assertions
         with mock.patch("builtins.print") as mocked_print:
             # Call the report method
-            report(check_findings, provider)
+            report(check_findings, provider, output_options)
 
             # Assertions
             check_findings_sorted = [finding_2, finding_1]
@@ -679,12 +674,11 @@ class TestOutputs:
 
         provider = MagicMock()
         provider.type = "azure"
-        provider.output_options = output_options
 
         # Assertions
         with mock.patch("builtins.print") as mocked_print:
             # Call the report method
-            report(check_findings, provider)
+            report(check_findings, provider, output_options)
 
             # Assertions
             check_findings_sorted = [finding_2, finding_1]
@@ -724,12 +718,11 @@ class TestOutputs:
 
         provider = MagicMock()
         provider.type = "azure"
-        provider.output_options = output_options
 
         # Assertions
         with mock.patch("builtins.print") as mocked_print:
             # Call the report method
-            report(check_findings, provider)
+            report(check_findings, provider, output_options)
 
             # Assertions
             check_findings_sorted = [finding_2, finding_1]
@@ -769,12 +762,11 @@ class TestOutputs:
 
         provider = MagicMock()
         provider.type = "azure"
-        provider.output_options = output_options
 
         # Assertions
         with mock.patch("builtins.print") as mocked_print:
             # Call the report method
-            report(check_findings, provider)
+            report(check_findings, provider, output_options)
 
             # Assertions
             check_findings_sorted = [finding_2, finding_1]
@@ -812,12 +804,11 @@ class TestOutputs:
 
         provider = MagicMock()
         provider.type = "gcp"
-        provider.output_options = output_options
 
         # Assertions
         with mock.patch("builtins.print") as mocked_print:
             # Call the report method
-            report(check_findings, provider)
+            report(check_findings, provider, output_options)
 
             # Assertions
             check_findings_sorted = [finding_2, finding_1]
@@ -855,12 +846,11 @@ class TestOutputs:
 
         provider = MagicMock()
         provider.type = "gcp"
-        provider.output_options = output_options
 
         # Assertions
         with mock.patch("builtins.print") as mocked_print:
             # Call the report method
-            report(check_findings, provider)
+            report(check_findings, provider, output_options)
 
             # Assertions
             check_findings_sorted = [finding_2, finding_1]
@@ -898,12 +888,11 @@ class TestOutputs:
 
         provider = MagicMock()
         provider.type = "gcp"
-        provider.output_options = output_options
 
         # Assertions
         with mock.patch("builtins.print") as mocked_print:
             # Call the report method
-            report(check_findings, provider)
+            report(check_findings, provider, output_options)
 
             # Assertions
             check_findings_sorted = [finding_2, finding_1]
@@ -941,12 +930,11 @@ class TestOutputs:
 
         provider = MagicMock()
         provider.type = "gcp"
-        provider.output_options = output_options
 
         # Assertions
         with mock.patch("builtins.print") as mocked_print:
             # Call the report method
-            report(check_findings, provider)
+            report(check_findings, provider, output_options)
 
             # Assertions
             check_findings_sorted = [finding_2, finding_1]
@@ -984,12 +972,11 @@ class TestOutputs:
 
         provider = MagicMock()
         provider.type = "kubernetes"
-        provider.output_options = output_options
 
         # Assertions
         with mock.patch("builtins.print") as mocked_print:
             # Call the report method
-            report(check_findings, provider)
+            report(check_findings, provider, output_options)
 
             # Assertions
             check_findings_sorted = [finding_2, finding_1]
@@ -1027,12 +1014,11 @@ class TestOutputs:
 
         provider = MagicMock()
         provider.type = "kubernetes"
-        provider.output_options = output_options
 
         # Assertions
         with mock.patch("builtins.print") as mocked_print:
             # Call the report method
-            report(check_findings, provider)
+            report(check_findings, provider, output_options)
 
             # Assertions
             check_findings_sorted = [finding_2, finding_1]
@@ -1070,12 +1056,11 @@ class TestOutputs:
 
         provider = MagicMock()
         provider.type = "kubernetes"
-        provider.output_options = output_options
 
         # Assertions
         with mock.patch("builtins.print") as mocked_print:
             # Call the report method
-            report(check_findings, provider)
+            report(check_findings, provider, output_options)
 
             # Assertions
             check_findings_sorted = [finding_2, finding_1]
@@ -1113,12 +1098,11 @@ class TestOutputs:
 
         provider = MagicMock()
         provider.type = "kubernetes"
-        provider.output_options = output_options
 
         # Assertions
         with mock.patch("builtins.print") as mocked_print:
             # Call the report method
-            report(check_findings, provider)
+            report(check_findings, provider, output_options)
 
             # Assertions
             check_findings_sorted = [finding_2, finding_1]
@@ -1142,10 +1126,9 @@ class TestOutputs:
 
         provider = MagicMock()
         provider.type = "azure"
-        provider.output_options = output_options
 
         with mock.patch("builtins.print") as mocked_print:
-            report(check_findings, provider)
+            report(check_findings, provider, output_options)
 
             # Assertions
             mocked_print.assert_any_call(
