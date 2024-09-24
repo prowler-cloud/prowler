@@ -193,8 +193,12 @@ def is_policy_public(
                     )
                 )
             ) and (
-                not not_allowed_actions  # If not_allowed_actions is empty, the function will not consider the actions in the policy
-                and "Action" in statement
+                (
+                    statement.get(
+                        "Action"
+                    )  # If the statement has no action, it is not public
+                    and not not_allowed_actions
+                )  # If not_allowed_actions is empty, the function will not consider the actions in the policy
                 or (
                     (
                         (
