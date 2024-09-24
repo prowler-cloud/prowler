@@ -508,68 +508,6 @@ class EC2(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-<<<<<<< HEAD
-=======
-    def _describe_vpn_endpoints(self, regional_client):
-        try:
-            describe_client_vpn_endpoints_paginator = regional_client.get_paginator(
-                "describe_client_vpn_endpoints"
-            )
-
-            for page in describe_client_vpn_endpoints_paginator.paginate():
-                for vpn_endpoint in page["ClientVpnEndpoints"]:
-                    vpn_endpoint_arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:client-vpn-endpoint/{vpn_endpoint['ClientVpnEndpointId']}"
-                    if not self.audit_resources or (
-                        is_resource_filtered(vpn_endpoint_arn, self.audit_resources)
-                    ):
-                        self.vpn_endpoints[vpn_endpoint_arn] = VpnEndpoint(
-                            id=vpn_endpoint["ClientVpnEndpointId"],
-                            arn=vpn_endpoint_arn,
-                            connection_logging=vpn_endpoint["ConnectionLogOptions"][
-                                "Enabled"
-                            ],
-                            region=regional_client.region,
-                            tags=vpn_endpoint.get("Tags"),
-                        )
-
-        except Exception as error:
-            logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-
-    def _describe_transit_gateways(self, regional_client):
-        try:
-            describe_transit_gateways_paginator = regional_client.get_paginator(
-                "describe_transit_gateways"
-            )
-
-            for page in describe_transit_gateways_paginator.paginate():
-                for transit_gateway in page["TransitGateways"]:
-                    if not self.audit_resources or (
-                        is_resource_filtered(
-                            transit_gateway["TransitGatewayArn"], self.audit_resources
-                        )
-                    ):
-                        self.transit_gateways[transit_gateway["TransitGatewayArn"]] = (
-                            TransitGateway(
-                                id=transit_gateway["TransitGatewayId"],
-                                auto_accept_shared_attachments=(
-                                    transit_gateway["Options"][
-                                        "AutoAcceptSharedAttachments"
-                                    ]
-                                    == "enable"
-                                ),
-                                region=regional_client.region,
-                                tags=transit_gateway.get("Tags"),
-                            )
-                        )
-
-        except Exception as error:
-            logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-
->>>>>>> 348cea67c (fix(aws): always use audited partition (#5174))
 
 class Instance(BaseModel):
     id: str

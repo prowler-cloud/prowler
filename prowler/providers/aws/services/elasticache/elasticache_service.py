@@ -88,16 +88,6 @@ class ElastiCache(AWSService):
                     if not self.audit_resources or (
                         is_resource_filtered(replication_arn, self.audit_resources)
                     ):
-<<<<<<< HEAD
-=======
-                        # Get first cluster version as they all have the same unless an upgrade is being made
-                        member_clusters = repl_group.get("MemberClusters", [])
-                        engine_version = "0.0"
-                        if member_clusters:
-                            cluster_arn = f"arn:{self.audited_partition}:elasticache:{regional_client.region}:{self.audited_account}:cluster:{member_clusters[0]}"
-                            engine_version = self.clusters[cluster_arn].engine_version
-
->>>>>>> 348cea67c (fix(aws): always use audited partition (#5174))
                         self.replication_groups[replication_arn] = ReplicationGroup(
                             id=repl_group["ReplicationGroupId"],
                             arn=replication_arn,
