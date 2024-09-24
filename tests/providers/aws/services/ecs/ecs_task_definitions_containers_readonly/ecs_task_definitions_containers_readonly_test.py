@@ -19,10 +19,7 @@ class Test_ecs_task_definitions_containers_readonly:
 
         with mock.patch(
             "prowler.providers.aws.services.ecs.ecs_service.ECS",
-            new=ecs_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.ecs.ecs_client.ecs_client",
-            new=ecs_client,
+            ecs_client,
         ):
             from prowler.providers.aws.services.ecs.ecs_task_definitions_containers_readonly.ecs_task_definitions_containers_readonly import (
                 ecs_task_definitions_containers_readonly,
@@ -55,10 +52,7 @@ class Test_ecs_task_definitions_containers_readonly:
 
         with mock.patch(
             "prowler.providers.aws.services.ecs.ecs_service.ECS",
-            new=ecs_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.ecs.ecs_client.ecs_client",
-            new=ecs_client,
+            ecs_client,
         ):
             from prowler.providers.aws.services.ecs.ecs_task_definitions_containers_readonly.ecs_task_definitions_containers_readonly import (
                 ecs_task_definitions_containers_readonly,
@@ -96,10 +90,7 @@ class Test_ecs_task_definitions_containers_readonly:
 
         with mock.patch(
             "prowler.providers.aws.services.ecs.ecs_service.ECS",
-            new=ecs_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.ecs.ecs_client.ecs_client",
-            new=ecs_client,
+            ecs_client,
         ):
             from prowler.providers.aws.services.ecs.ecs_task_definitions_containers_readonly.ecs_task_definitions_containers_readonly import (
                 ecs_task_definitions_containers_readonly,
@@ -144,10 +135,7 @@ class Test_ecs_task_definitions_containers_readonly:
 
         with mock.patch(
             "prowler.providers.aws.services.ecs.ecs_service.ECS",
-            new=ecs_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.ecs.ecs_client.ecs_client",
-            new=ecs_client,
+            ecs_client,
         ):
             from prowler.providers.aws.services.ecs.ecs_task_definitions_containers_readonly.ecs_task_definitions_containers_readonly import (
                 ecs_task_definitions_containers_readonly,
