@@ -6,6 +6,9 @@ from freezegun import freeze_time
 
 from prowler.config.config import output_file_timestamp
 from prowler.providers.aws.models import AWSOutputOptions
+from prowler.providers.azure.models import AzureOutputOptions
+from prowler.providers.gcp.models import GCPOutputOptions
+from prowler.providers.kubernetes.models import KubernetesOutputOptions
 
 
 class Test_Output_Options:
@@ -25,7 +28,7 @@ class Test_Output_Options:
         identity = mock.MagicMock()
         identity.account = "123456789012"
 
-        output_options = AWSOutputOptions(arguments, None, identity)
+        output_options = AWSOutputOptions(arguments, {}, identity)
 
         assert output_options.status == ["FAIL"]
         assert output_options.output_modes == ["csv", "json-asff"]
@@ -40,4 +43,127 @@ class Test_Output_Options:
             output_options.output_filename
             == f"prowler-output-{identity.account}-{output_file_timestamp}"
         )
-        assert not output_options.bulk_checks_metadata
+        assert output_options.bulk_checks_metadata == {}
+
+    @freeze_time(datetime.today())
+    def test_set_output_options_aws(self):
+        arguments = Namespace()
+        arguments.status = []
+        arguments.output_formats = ["csv"]
+        arguments.output_directory = "output_test_directory"
+        arguments.verbose = True
+        arguments.output_filename = "output_test_filename"
+        arguments.security_hub = True
+        arguments.shodan = None
+        arguments.only_logs = False
+        arguments.unix_timestamp = False
+        arguments.send_sh_only_fails = True
+
+        identity = mock.MagicMock()
+        identity.account = "123456789012"
+
+        output_options = AWSOutputOptions(arguments, {}, identity)
+
+        assert isinstance(output_options, AWSOutputOptions)
+        assert output_options.security_hub_enabled
+        assert output_options.send_sh_only_fails
+        assert output_options.status == []
+        assert output_options.output_modes == ["csv", "json-asff"]
+        assert output_options.output_directory == arguments.output_directory
+        assert output_options.bulk_checks_metadata == {}
+        assert output_options.verbose
+        assert output_options.output_filename == arguments.output_filename
+
+    @freeze_time(datetime.today())
+    def test_azure_provider_output_options_with_domain(self):
+        arguments = Namespace()
+        # Output Options
+        arguments.output_formats = ["csv"]
+        arguments.output_directory = "output_test_directory"
+        output_directory = arguments.output_directory
+        arguments.status = []
+        arguments.verbose = True
+        arguments.only_logs = False
+        arguments.unix_timestamp = False
+        arguments.shodan = None
+
+        identity = mock.MagicMock()
+        identity.tenant_domain = "test-domain"
+
+        output_options = AzureOutputOptions(
+            arguments,
+            {},
+            identity,
+        )
+
+        assert isinstance(output_options, AzureOutputOptions)
+        assert output_options.status == []
+        assert output_options.output_modes == [
+            "csv",
+        ]
+        assert output_options.output_directory == output_directory
+        assert output_options.bulk_checks_metadata == {}
+        assert output_options.verbose
+        assert (
+            output_options.output_filename
+            == f"prowler-output-{identity.tenant_domain}-{output_file_timestamp}"
+        )
+
+    @freeze_time(datetime.today())
+    def test_gcp_output_options(self):
+        arguments = Namespace()
+        # Output options
+        arguments.status = []
+        arguments.output_formats = ["csv"]
+        arguments.output_directory = "output_test_directory"
+        arguments.verbose = True
+        arguments.only_logs = False
+        arguments.unix_timestamp = False
+        arguments.shodan = None
+
+        identity = mock.MagicMock()
+        identity.profile = "test-profile"
+
+        output_optionss = GCPOutputOptions(
+            arguments,
+            {},
+            identity,
+        )
+
+        assert isinstance(output_optionss, GCPOutputOptions)
+        assert output_optionss.status == []
+        assert output_optionss.output_modes == [
+            "csv",
+        ]
+        assert output_optionss.output_directory == arguments.output_directory
+        assert output_optionss.bulk_checks_metadata == {}
+        assert output_optionss.verbose
+        assert f"prowler-output-{identity.profile}" in output_optionss.output_filename
+
+    def test_set_output_options_kubernetes(self):
+        arguments = Namespace()
+        arguments.status = []
+        arguments.output_formats = ["csv"]
+        arguments.output_directory = "output_test_directory"
+        arguments.verbose = True
+        arguments.output_filename = "output_test_filename"
+        arguments.only_logs = False
+        arguments.unix_timestamp = False
+        arguments.shodan = None
+
+        identity = mock.MagicMock()
+        identity.context = "test-context"
+
+        output_options = KubernetesOutputOptions(
+            arguments,
+            {},
+            identity,
+        )
+
+        assert isinstance(output_options, KubernetesOutputOptions)
+        assert output_options.status == []
+        assert output_options.output_modes == ["csv"]
+        assert output_options.output_directory == arguments.output_directory
+        assert output_options.bulk_checks_metadata == {}
+        assert output_options.verbose
+        assert output_options.output_filename == arguments.output_filename
