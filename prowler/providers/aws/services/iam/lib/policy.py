@@ -193,31 +193,31 @@ def is_policy_public(
                     )
                 )
             ) and (
-                (
+                not not_allowed_actions  # If not_allowed_actions is empty, the function will not consider the actions in the policy
+                or (
                     statement.get(
                         "Action"
                     )  # If the statement has no action, it is not public
-                    and not not_allowed_actions
-                )  # If not_allowed_actions is empty, the function will not consider the actions in the policy
-                or (
-                    (
+                    and (
                         (
-                            isinstance(statement.get("Action", ""), list)
-                            and "*" in statement["Action"]
+                            (
+                                isinstance(statement.get("Action", ""), list)
+                                and "*" in statement["Action"]
+                            )
+                            or (
+                                isinstance(statement.get("Action", ""), str)
+                                and statement.get("Action", "") == "*"
+                            )
                         )
                         or (
-                            isinstance(statement.get("Action", ""), str)
-                            and statement.get("Action", "") == "*"
+                            isinstance(statement.get("Action", ""), list)
+                            and any(
+                                action in not_allowed_actions
+                                for action in statement["Action"]
+                            )
                         )
+                        or (statement.get("Action", "") in not_allowed_actions)
                     )
-                    or (
-                        isinstance(statement.get("Action", ""), list)
-                        and any(
-                            action in not_allowed_actions
-                            for action in statement["Action"]
-                        )
-                    )
-                    or (statement.get("Action", "") in not_allowed_actions)
                 )
             ):
                 is_public = (
