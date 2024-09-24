@@ -76,8 +76,8 @@ export const updateProvider = async (formData: FormData) => {
   const keyServer = process.env.API_BASE_URL;
 
   const tenantId = session?.user.tenantId;
-  const providerId = formData.get("id");
-  const alias = formData.get("alias");
+  const providerId = formData.get("providerId");
+  const providerAlias = formData.get("alias");
 
   const url = new URL(`${keyServer}/providers/${providerId}`);
 
@@ -93,7 +93,7 @@ export const updateProvider = async (formData: FormData) => {
           type: "Provider",
           id: providerId,
           attributes: {
-            alias: alias,
+            alias: providerAlias,
           },
         },
       }),

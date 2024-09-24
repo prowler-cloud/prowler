@@ -8,13 +8,9 @@ import * as z from "zod";
 
 import { updateProvider } from "@/actions";
 import { useToast } from "@/components/ui";
-import { CustomInput } from "@/components/ui/custom";
+import { CustomInputNew } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
-
-const formSchema = z.object({
-  alias: z.string(),
-  providerId: z.string(),
-});
+import { editProviderFormSchema } from "@/types";
 
 export const EditForm = ({
   providerId,
@@ -25,18 +21,26 @@ export const EditForm = ({
   providerAlias?: string;
   setIsOpen: Dispatch<SetStateAction<boolean>>;
 }) => {
+  const formSchema = editProviderFormSchema(providerAlias ?? "");
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      alias: "",
+      providerId: providerId,
+      alias: providerAlias,
     },
   });
 
   const { toast } = useToast();
   const isLoading = form.formState.isSubmitting;
 
-  async function onSubmitClient(formData: FormData) {
-    // client-side validation
+  const onSubmitClient = async (values: z.infer<typeof formSchema>) => {
+    const formData = new FormData();
+
+    Object.entries(values).forEach(
+      ([key, value]) => value !== undefined && formData.append(key, value),
+    );
+
     const data = await updateProvider(formData);
 
     if (data?.errors && data.errors.length > 0) {
@@ -54,18 +58,27 @@ export const EditForm = ({
         description: "The provider was updated successfully.",
       });
     }
-  }
+  };
 
   return (
     <Form {...form}>
       <form
-        action={onSubmitClient}
+        // action={onSubmitClient}
+        onSubmit={form.handleSubmit(onSubmitClient)}
         className="flex flex-col space-y-2 sm:px-0 px-4"
       >
-        <input type="hidden" name="id" value={providerId} />
+        <input type="hidden" name="providerId" value={providerId} />
         <div>Current alias: {providerAlias}</div>
 
-        <CustomInput
+        {/* <CustomInput
+          control={form.control}
+          name="alias"
+          type="text"
+          label="Alias"
+          placeholder={providerAlias}
+        /> */}
+
+        <CustomInputNew
           control={form.control}
           name="alias"
           type="text"
@@ -90,13 +103,9 @@ export const EditForm = ({
             type="submit"
             disabled={isLoading}
             className="w-full"
-            onPress={() => setIsOpen(false)}
           >
             {isLoading ? (
-              <>
-                <CircularProgress aria-label="Loading..." size="sm" />
-                Saving...
-              </>
+              <CircularProgress aria-label="Loading..." size="md" />
             ) : (
               <span>Save</span>
             )}
