@@ -2227,18 +2227,24 @@ def get_section_containers_ens(data, section_1, section_2, section_3, section_4)
 
 # This function extracts and compares up to two numeric values, ensuring correct sorting for version-like strings.
 def extract_numeric_values(value):
-    numbers = re.findall(r'\d+', str(value))
+    numbers = re.findall(r"\d+", str(value))
     if len(numbers) >= 2:
         return int(numbers[0]), int(numbers[1])
     elif len(numbers) == 1:
         return int(numbers[0]), 0
     return 0, 0
 
+
 def get_section_containers_kisa_ismsp(data, section_1, section_2):
     data["STATUS"] = data["STATUS"].apply(map_status_to_icon)
     data[section_1] = data[section_1].astype(str)
     data[section_2] = data[section_2].astype(str)
-    data.sort_values(by=section_1, key=lambda x: x.map(extract_numeric_values), ascending=True, inplace=True)
+    data.sort_values(
+        by=section_1,
+        key=lambda x: x.map(extract_numeric_values),
+        ascending=True,
+        inplace=True,
+    )
 
     findings_counts_section = (
         data.groupby([section_2, "STATUS"]).size().unstack(fill_value=0)
