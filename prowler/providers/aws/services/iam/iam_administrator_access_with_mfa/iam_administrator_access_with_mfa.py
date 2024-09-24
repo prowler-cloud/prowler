@@ -22,7 +22,7 @@ class iam_administrator_access_with_mfa(Check):
                 for group_policy in group.attached_policies:
                     if (
                         group_policy["PolicyArn"]
-                        == "arn:aws:iam::aws:policy/AdministratorAccess"
+                        == f"arn:{iam_client.audited_partition}:iam::aws:policy/AdministratorAccess"
                     ):
                         # users in group are Administrators
                         if group.users:

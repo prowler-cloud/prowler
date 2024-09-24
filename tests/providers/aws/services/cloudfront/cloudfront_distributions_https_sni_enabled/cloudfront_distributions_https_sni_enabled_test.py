@@ -34,7 +34,7 @@ class Test_cloudfront_distributions_https_sni_enabled:
     def test_distribution_no_certificate(self):
         cloudfront_client = mock.MagicMock
         cloudfront_client.distributions = {
-            "DISTRIBUTION_ID": Distribution(
+            DISTRIBUTION_ID: Distribution(
                 arn=DISTRIBUTION_ARN,
                 id=DISTRIBUTION_ID,
                 region=REGION,
@@ -60,7 +60,7 @@ class Test_cloudfront_distributions_https_sni_enabled:
     def test_distribution_certificate_not_set_up(self):
         cloudfront_client = mock.MagicMock
         cloudfront_client.distributions = {
-            "DISTRIBUTION_ID": Distribution(
+            DISTRIBUTION_ID: Distribution(
                 arn=DISTRIBUTION_ARN,
                 id=DISTRIBUTION_ID,
                 region=REGION,
@@ -96,7 +96,7 @@ class Test_cloudfront_distributions_https_sni_enabled:
     def test_distribution_valid_configuration(self):
         cloudfront_client = mock.MagicMock
         cloudfront_client.distributions = {
-            "DISTRIBUTION_ID": Distribution(
+            DISTRIBUTION_ID: Distribution(
                 arn=DISTRIBUTION_ARN,
                 id=DISTRIBUTION_ID,
                 region=REGION,

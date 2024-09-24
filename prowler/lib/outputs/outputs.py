@@ -82,9 +82,14 @@ def extract_findings_statistics(findings: list) -> dict:
     extract_findings_statistics takes a list of findings and returns the following dict with the aggregated statistics
     {
         "total_pass": 0,
+        "total_muted_pass": 0,
         "total_fail": 0,
+        "total_muted_fail": 0,
         "resources_count": 0,
         "findings_count": 0,
+        "critical_failed_findings": [],
+        "critical_passed_findings": []
+        "all_fails_are_muted": False
     }
     """
     logger.info("Extracting audit statistics...")
@@ -96,18 +101,42 @@ def extract_findings_statistics(findings: list) -> dict:
     resources = set()
     findings_count = 0
     all_fails_are_muted = True
+    critical_severity_pass = 0
+    critical_severity_fail = 0
+    high_severity_pass = 0
+    high_severity_fail = 0
+    medium_severity_pass = 0
+    medium_severity_fail = 0
+    low_severity_pass = 0
+    low_severity_fail = 0
 
     for finding in findings:
         # Save the resource_id
         resources.add(finding.resource_id)
 
         if finding.status == "PASS":
+            if finding.check_metadata.Severity == "critical":
+                critical_severity_pass += 1
+            if finding.check_metadata.Severity == "high":
+                high_severity_pass += 1
+            if finding.check_metadata.Severity == "medium":
+                medium_severity_pass += 1
+            if finding.check_metadata.Severity == "low":
+                low_severity_pass += 1
             total_pass += 1
             findings_count += 1
             if finding.muted is True:
                 muted_pass += 1
 
         if finding.status == "FAIL":
+            if finding.check_metadata.Severity == "critical":
+                critical_severity_fail += 1
+            if finding.check_metadata.Severity == "high":
+                high_severity_fail += 1
+            if finding.check_metadata.Severity == "medium":
+                medium_severity_fail += 1
+            if finding.check_metadata.Severity == "low":
+                low_severity_fail += 1
             total_fail += 1
             findings_count += 1
             if finding.muted is True:
@@ -121,6 +150,14 @@ def extract_findings_statistics(findings: list) -> dict:
     stats["total_muted_fail"] = muted_fail
     stats["resources_count"] = len(resources)
     stats["findings_count"] = findings_count
+    stats["total_critical_severity_fail"] = critical_severity_fail
+    stats["total_critical_severity_pass"] = critical_severity_pass
+    stats["total_high_severity_fail"] = high_severity_fail
+    stats["total_high_severity_pass"] = high_severity_pass
+    stats["total_medium_severity_fail"] = medium_severity_fail
+    stats["total_medium_severity_pass"] = medium_severity_pass
+    stats["total_low_severity_fail"] = medium_severity_fail
+    stats["total_low_severity_pass"] = medium_severity_pass
     stats["all_fails_are_muted"] = all_fails_are_muted
 
     return stats

@@ -35,7 +35,7 @@ class Test_cloudfront_distributions_default_root_object:
     def test_distribution_no_root_object(self):
         cloudfront_client = mock.MagicMock
         cloudfront_client.distributions = {
-            "DISTRIBUTION_ID": Distribution(
+            DISTRIBUTION_ID: Distribution(
                 arn=DISTRIBUTION_ARN,
                 id=DISTRIBUTION_ID,
                 region=REGION,
@@ -75,7 +75,7 @@ class Test_cloudfront_distributions_default_root_object:
         cloudfront_client = mock.MagicMock
         dro = "index.html"
         cloudfront_client.distributions = {
-            "DISTRIBUTION_ID": Distribution(
+            DISTRIBUTION_ID: Distribution(
                 arn=DISTRIBUTION_ARN,
                 id=DISTRIBUTION_ID,
                 region=REGION,
