@@ -161,6 +161,7 @@ class Test_DynamoDB_Service:
             Tags=[
                 {"Key": "test", "Value": "test"},
             ],
+            ClusterEndpointEncryptionType="TLS",
         )
         dax_client.create_cluster(
             ClusterName="daxcluster2",
@@ -183,6 +184,7 @@ class Test_DynamoDB_Service:
         assert dax.clusters[0].tags == [
             {"Key": "test", "Value": "test"},
         ]
+        assert dax.clusters[0].tls_encryption
 
         assert dax.clusters[1].name == "daxcluster2"
         assert dax.clusters[1].region == AWS_REGION_US_EAST_1
@@ -190,3 +192,4 @@ class Test_DynamoDB_Service:
         assert dax.clusters[1].tags == [
             {"Key": "test", "Value": "test"},
         ]
+        assert not dax.clusters[1].tls_encryption
