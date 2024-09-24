@@ -5,6 +5,9 @@ import botocore
 
 from prowler.providers.aws.services.networkfirewall.networkfirewall_service import (
     Firewall,
+    LogDestinationType,
+    LoggingConfiguration,
+    LogType,
     NetworkFirewall,
 )
 from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provider
@@ -99,7 +102,15 @@ class Test_NetworkFirewall_Service:
                 vpc_id=VPC_ID,
                 tags=[{"Key": "test_tag", "Value": "test_value"}],
                 encryption_type="CUSTOMER_KMS",
-                logging_enabled=True,
+                logging_configuration=[
+                    LoggingConfiguration(
+                        log_type=LogType.flow,
+                        log_destination_type=LogDestinationType.s3,
+                        log_destination={
+                            "bucket_name": "my-bucket",
+                        },
+                    )
+                ],
             )
         ]
 
@@ -112,7 +123,13 @@ class Test_NetworkFirewall_Service:
         assert networkfirewall.network_firewalls[0].tags == [
             {"Key": "test_tag", "Value": "test_value"}
         ]
-        assert networkfirewall.network_firewalls[0].logging_enabled
+        assert networkfirewall.network_firewalls[0].logging_configuration == [
+            LoggingConfiguration(
+                log_type=LogType.flow,
+                log_destination_type=LogDestinationType.s3,
+                log_destination={"bucket_name": "my-bucket"},
+            )
+        ]
 
     def test_describe_firewall(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])

@@ -2,6 +2,9 @@ from unittest import mock
 
 from prowler.providers.aws.services.networkfirewall.networkfirewall_service import (
     Firewall,
+    LogDestinationType,
+    LoggingConfiguration,
+    LogType,
 )
 from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provider
 
@@ -41,7 +44,7 @@ class Test_networkfirewall_logging_enabled:
 
                 assert len(result) == 0
 
-    def Test_networkfirewall_logging_disabled(self):
+    def test_networkfirewall_logging_disabled(self):
         networkfirewall_client = mock.MagicMock
         networkfirewall_client.provider = set_mocked_aws_provider(
             [AWS_REGION_US_EAST_1]
@@ -56,7 +59,7 @@ class Test_networkfirewall_logging_enabled:
                 vpc_id=VPC_ID_PROTECTED,
                 tags=[],
                 encryption_type="CUSTOMER_KMS",
-                logging_enabled=False,
+                logging_configuration=[],
             )
         ]
 
@@ -82,14 +85,14 @@ class Test_networkfirewall_logging_enabled:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == f"Network Firewall {FIREWALL_NAME} does not have deletion protection enabled."
+                    == f"Network Firewall {FIREWALL_NAME} does not have logging enabled in any destination."
                 )
                 assert result[0].region == AWS_REGION_US_EAST_1
                 assert result[0].resource_id == FIREWALL_NAME
                 assert result[0].resource_tags == []
                 assert result[0].resource_arn == FIREWALL_ARN
 
-    def Test_networkfirewall_logging_enabled(self):
+    def test_networkfirewall_logging_enabled(self):
         networkfirewall_client = mock.MagicMock
         networkfirewall_client.provider = set_mocked_aws_provider(
             [AWS_REGION_US_EAST_1]
@@ -104,8 +107,16 @@ class Test_networkfirewall_logging_enabled:
                 vpc_id=VPC_ID_PROTECTED,
                 tags=[],
                 encryption_type="CUSTOMER_KMS",
-                logging_enabled=True,
-            )
+                logging_configuration=[
+                    LoggingConfiguration(
+                        log_type=LogType.flow,
+                        log_destination_type=LogDestinationType.s3,
+                        log_destination={
+                            "bucket_name": "my-bucket",
+                        },
+                    )
+                ],
+            ),
         ]
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
@@ -130,7 +141,7 @@ class Test_networkfirewall_logging_enabled:
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == f"Network Firewall {FIREWALL_NAME} has deletion protection enabled."
+                    == f"Network Firewall {FIREWALL_NAME} has logging enabled in at least one destination."
                 )
                 assert result[0].region == AWS_REGION_US_EAST_1
                 assert result[0].resource_id == FIREWALL_NAME

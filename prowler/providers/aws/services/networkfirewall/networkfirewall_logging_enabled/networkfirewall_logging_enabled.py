@@ -2,6 +2,9 @@ from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.networkfirewall.networkfirewall_client import (
     networkfirewall_client,
 )
+from prowler.providers.aws.services.networkfirewall.networkfirewall_service import (
+    LogType,
+)
 
 
 class networkfirewall_logging_enabled(Check):
@@ -14,15 +17,18 @@ class networkfirewall_logging_enabled(Check):
             report.resource_arn = firewall.arn
             report.resource_tags = firewall.tags
             report.status = "FAIL"
-            report.status_extended = (
-                f"Network Firewall {firewall.name} does not have logging enabled."
-            )
+            report.status_extended = f"Network Firewall {firewall.name} does not have logging enabled in any destination."
 
-            if firewall.logging_enabled:
-                report.status = "PASS"
-                report.status_extended = (
-                    f"Network Firewall {firewall.name} has logging enabled."
-                )
+            print(firewall.logging_configuration)
+
+            for configuration in firewall.logging_configuration:
+                if (
+                    configuration.log_type in LogType
+                    and configuration.log_destination != {}
+                ):
+                    report.status = "PASS"
+                    report.status_extended = f"Network Firewall {firewall.name} has logging enabled in at least one destination."
+                    break
 
             findings.append(report)
 
