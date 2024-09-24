@@ -56,7 +56,6 @@ class Test_Parser:
         assert not parsed.unix_timestamp
         assert parsed.log_level == "CRITICAL"
         assert not parsed.log_file
-        assert not parsed.only_logs
         assert not parsed.check
         assert not parsed.checks_file
         assert not parsed.checks_folder
@@ -104,7 +103,6 @@ class Test_Parser:
         assert not parsed.unix_timestamp
         assert parsed.log_level == "CRITICAL"
         assert not parsed.log_file
-        assert not parsed.only_logs
         assert not parsed.check
         assert not parsed.checks_file
         assert not parsed.checks_folder
@@ -144,7 +142,6 @@ class Test_Parser:
         assert not parsed.unix_timestamp
         assert parsed.log_level == "CRITICAL"
         assert not parsed.log_file
-        assert not parsed.only_logs
         assert not parsed.check
         assert not parsed.checks_file
         assert not parsed.checks_folder
@@ -179,7 +176,6 @@ class Test_Parser:
         assert not parsed.unix_timestamp
         assert parsed.log_level == "CRITICAL"
         assert not parsed.log_file
-        assert not parsed.only_logs
         assert not parsed.check
         assert not parsed.checks_file
         assert not parsed.checks_folder
@@ -364,12 +360,6 @@ class Test_Parser:
         command = [prowler_command, "--unix-timestamp"]
         parsed = self.parser.parse(command)
         assert parsed.unix_timestamp
-
-    def test_logging_parser_only_logs_set(self):
-        command = [prowler_command, "--only-logs"]
-        parsed = self.parser.parse(command)
-        assert parsed.only_logs
-        assert parsed.no_banner
 
     def test_logging_parser_log_level_default(self):
         log_level = "CRITICAL"

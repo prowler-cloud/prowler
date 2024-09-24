@@ -1048,7 +1048,6 @@ aws:
         arguments.verbose = True
         arguments.security_hub = True
         arguments.shodan = "test-api-key"
-        arguments.only_logs = False
         arguments.unix_timestamp = False
         arguments.send_sh_only_fails = True
 
@@ -1097,7 +1096,6 @@ aws:
         arguments.output_filename = "output_test_filename"
         arguments.security_hub = True
         arguments.shodan = "test-api-key"
-        arguments.only_logs = False
         arguments.unix_timestamp = False
         arguments.send_sh_only_fails = True
 

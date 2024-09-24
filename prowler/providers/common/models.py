@@ -24,7 +24,6 @@ class ProviderOutputOptions:
     bulk_checks_metadata: dict
     verbose: str
     output_filename: str
-    only_logs: bool
     unix_timestamp: bool
 
     def __init__(self, arguments, bulk_checks_metadata):
@@ -33,7 +32,6 @@ class ProviderOutputOptions:
         self.output_directory = arguments.output_directory
         self.verbose = arguments.verbose
         self.bulk_checks_metadata = bulk_checks_metadata
-        self.only_logs = arguments.only_logs
         self.unix_timestamp = arguments.unix_timestamp
         self.shodan_api_key = arguments.shodan
         self.fixer = getattr(arguments, "fixer", None)

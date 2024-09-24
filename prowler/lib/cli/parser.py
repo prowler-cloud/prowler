@@ -112,7 +112,7 @@ Detailed documentation at https://docs.prowler.com
             )
 
         # Only Logging Configuration
-        if args.provider != "dashboard" and (args.only_logs or args.list_checks_json):
+        if args.provider != "dashboard" and args.list_checks_json:
             args.no_banner = True
 
         # Extra validation for provider arguments
@@ -200,11 +200,6 @@ Detailed documentation at https://docs.prowler.com
             "--log-file",
             nargs="?",
             help="Set log file name",
-        )
-        common_logging_parser.add_argument(
-            "--only-logs",
-            action="store_true",
-            help="Print only Prowler logs by the stdout. This option sets --no-banner.",
         )
 
     def __init_exclude_checks_parser__(self):

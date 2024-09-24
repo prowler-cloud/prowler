@@ -225,7 +225,6 @@ class TestAzureProvider:
         output_directory = arguments.output_directory
         arguments.status = []
         arguments.verbose = True
-        arguments.only_logs = False
         arguments.unix_timestamp = False
         arguments.shodan = "test-api-key"
 
