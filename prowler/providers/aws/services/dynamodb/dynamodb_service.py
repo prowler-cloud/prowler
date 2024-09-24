@@ -9,7 +9,6 @@ from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################## DynamoDB
 class DynamoDB(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
@@ -147,7 +146,6 @@ class DynamoDB(AWSService):
             )
 
 
-################## DynamoDB DAX
 class DAX(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
@@ -170,15 +168,20 @@ class DAX(AWSService):
                         )
                     ):
                         encryption = False
+                        tls_encryption = False
                         if "SSEDescription" in cluster:
                             if cluster["SSEDescription"]["Status"] == "ENABLED":
                                 encryption = True
+                        if "ClusterEndpointEncryptionType" in cluster:
+                            if cluster["ClusterEndpointEncryptionType"] == "TLS":
+                                tls_encryption = True
                         self.clusters.append(
                             Cluster(
                                 arn=cluster["ClusterArn"],
                                 name=cluster["ClusterName"],
                                 encryption=encryption,
                                 region=regional_client.region,
+                                tls_encryption=tls_encryption,
                             )
                         )
         except Exception as error:
@@ -224,3 +227,4 @@ class Cluster(BaseModel):
     encryption: bool
     region: str
     tags: Optional[list] = []
+    tls_encryption: bool
