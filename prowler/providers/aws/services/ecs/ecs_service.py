@@ -15,12 +15,14 @@ class ECS(AWSService):
         super().__init__(__class__.__name__, provider)
         self.task_definitions = {}
         self.services = {}
+        self.clusters = {}
         self.__threading_call__(self._list_task_definitions)
         self.__threading_call__(
             self._describe_task_definition, self.task_definitions.values()
         )
-        self.__threading_call__(self._list_services)
-        self.__threading_call__(self._describe_services, self.services.values())
+        self.__threading_call__(self._list_clusters)
+        self.__threading_call__(self._describe_clusters, self.clusters.values())
+        self.__threading_call__(self._describe_services, self.clusters.values())
 
     def _list_task_definitions(self, regional_client):
         logger.info("ECS - Listing Task Definitions...")
@@ -79,18 +81,56 @@ class ECS(AWSService):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def _list_services(self, regional_client):
-        logger.info("ECS - Listing Services...")
+    def _describe_services(self, cluster):
+        logger.info("ECS - Describing Services for each Cluster...")
         try:
-            list_ecs_paginator = regional_client.get_paginator("list_services")
+            client = self.regional_clients[cluster.region]
+
+            list_ecs_paginator = client.get_paginator("list_services")
+            service_arns = []
+            for page in list_ecs_paginator.paginate(cluster=cluster.arn):
+                service_arns.extend(page["serviceArns"])
+
+            if service_arns:
+                describe_response = client.describe_services(
+                    cluster=cluster.arn,
+                    services=service_arns,
+                    include=["TAGS"],
+                )
+
+                for service_desc in describe_response["services"]:
+                    service_arn = service_desc["serviceArn"]
+                    service_obj = Service(
+                        name=sub(":.*", "", service_arn.split("/")[2]),
+                        arn=service_arn,
+                        region=cluster.region,
+                        assign_public_ip=(
+                            service_desc.get("networkConfiguration", {})
+                            .get("awsvpcConfiguration", {})
+                            .get("assignPublicIp", "DISABLED")
+                            == "ENABLED"
+                        ),
+                        tags=service_desc.get("tags", []),
+                    )
+                    cluster.services[service_arn] = service_obj
+                    self.services[service_arn] = service_obj
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _list_clusters(self, regional_client):
+        logger.info("ECS - Listing Clusters...")
+        try:
+            list_ecs_paginator = regional_client.get_paginator("list_clusters")
             for page in list_ecs_paginator.paginate():
-                for service in page["serviceArns"]:
+                for cluster in page["clusterArns"]:
                     if not self.audit_resources or (
-                        is_resource_filtered(service, self.audit_resources)
+                        is_resource_filtered(cluster, self.audit_resources)
                     ):
-                        self.services[service] = Service(
-                            name=sub(":.*", "", service.split("/")[1]),
-                            arn=service,
+                        self.clusters[cluster] = Cluster(
+                            name=sub(":.*", "", cluster.split("/")[1]),
+                            arn=cluster,
                             region=regional_client.region,
                         )
         except Exception as error:
@@ -98,23 +138,17 @@ class ECS(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def _describe_services(self, service):
-        logger.info("ECS - Describing Services...")
+    def _describe_clusters(self, cluster):
+        logger.info("ECS - Describing Clusters...")
         try:
-            client = self.regional_clients[service.region]
-            response = client.describe_service(
-                taskDefinition=service.arn,
+            client = self.regional_clients[cluster.region]
+            response = client.describe_clusters(
+                clusters=[cluster.arn],
                 include=[
                     "TAGS",
                 ],
             )
-            service.assign_public_ip = (
-                response.get("networkConfiguration", {})
-                .get("awsvpcConfiguration", {})
-                .get("assignPublicIp", "DISABLED")
-                == "ENABLED"
-            )
-            service.tags = response.get("tags")
+            cluster.tags = response["clusters"][0].get("tags", [])
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -148,4 +182,12 @@ class Service(BaseModel):
     arn: str
     region: str
     assign_public_ip: Optional[bool]
+    tags: Optional[list] = []
+
+
+class Cluster(BaseModel):
+    name: str
+    arn: str
+    region: str
+    services: dict = {}
     tags: Optional[list] = []
