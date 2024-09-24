@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "rds_cluster_non_default_port",
+  "CheckTitle": "Check if RDS clusters are using non-default ports.",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "rds",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:rds:region:account-id:cluster:db-cluster",
+  "Severity": "low",
+  "ResourceType": "AwsRdsDbCluster",
+  "Description": "Checks if an cluster uses a port other than the default port of the database engine. The control fails if the RDS cluster uses the default port.",
+  "Risk": "Using a default database port exposes the cluster to potential security vulnerabilities, as attackers are more likely to target known, commonly-used ports. This may result in unauthorized access to the database or increased susceptibility to automated attacks.",
+  "RelatedUrl": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Overview.DBInstance.Modifying.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws rds modify-db-cluster --db-cluster-identifier <db-cluster-id> --port <non-default-port>",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-23",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Modify the RDS cluster to use a non-default port, and ensure that the security group permits access to the new port.",
+      "Url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Overview.DBInstance.Modifying.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
