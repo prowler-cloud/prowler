@@ -113,3 +113,8 @@ class Test_ECS_Service:
         assert ecs.task_definitions[task_arn].network_mode == "host"
         assert not ecs.task_definitions[task_arn].container_definitions[0].privileged
         assert ecs.task_definitions[task_arn].container_definitions[0].user == ""
+        assert (
+            not ecs.task_definitions[task_arn]
+            .container_definitions[0]
+            .readonly_rootfilesystem
+        )

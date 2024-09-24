@@ -66,6 +66,9 @@ class ECS(AWSService):
                         ContainerDefinition(
                             name=container["name"],
                             privileged=container.get("privileged", False),
+                            readonly_rootfilesystem=container.get(
+                                "readonlyRootFilesystem", False
+                            ),
                             user=container.get("user", ""),
                             environment=environment,
                         )
@@ -88,6 +91,7 @@ class ContainerEnvVariable(BaseModel):
 class ContainerDefinition(BaseModel):
     name: str
     privileged: bool
+    readonly_rootfilesystem: bool = False
     user: str
     environment: list[ContainerEnvVariable]
 
