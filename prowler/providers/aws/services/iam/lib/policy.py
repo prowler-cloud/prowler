@@ -161,6 +161,7 @@ def is_policy_public(
     Returns:
         bool: True if the policy allows public access, False otherwise
     """
+    is_public = False
     for statement in policy.get("Statement", []):
         # Only check allow statements
         if statement["Effect"] == "Allow":
@@ -206,7 +207,7 @@ def is_policy_public(
                 )
                 or (statement.get("Action", "") in not_allowed_actions)
             ):
-                return (
+                is_public = (
                     not is_condition_block_restrictive(
                         statement.get("Condition", {}),
                         source_account,
@@ -219,7 +220,9 @@ def is_policy_public(
                         statement.get("Condition", {})
                     )
                 )
-    return False
+                if is_public:
+                    break
+    return is_public
 
 
 def is_condition_block_restrictive(
