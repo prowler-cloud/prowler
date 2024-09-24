@@ -12,9 +12,11 @@ class dynamodb_accelerator_cluster_in_transit_encryption_enabled(Check):
             report.region = cluster.region
             report.resource_tags = cluster.tags
             report.status = "FAIL"
-            report.status_extended = f"DynamoDB cluster {cluster.name} does not have encryption in transit enabled."
+            report.status_extended = f"DAX cluster {cluster.name} does not have encryption in transit enabled."
             if cluster.tls_encryption:
                 report.status = "PASS"
-                report.status_extended = f"DynamoDB cluster {cluster.name} has encryption in transit enabled."
+                report.status_extended = (
+                    f"DAX cluster {cluster.name} has encryption in transit enabled."
+                )
             findings.append(report)
         return findings

@@ -72,7 +72,7 @@ class Test_dynamodb_accelerator_cluster_in_transit_encryption_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "DynamoDB cluster daxcluster does not have encryption in transit enabled."
+                == "DAX cluster daxcluster does not have encryption in transit enabled."
             )
             assert result[0].resource_id == cluster["ClusterName"]
             assert result[0].resource_arn == cluster["ClusterArn"]
@@ -115,7 +115,7 @@ class Test_dynamodb_accelerator_cluster_in_transit_encryption_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "DynamoDB cluster daxcluster has encryption in transit enabled."
+                == "DAX cluster daxcluster has encryption in transit enabled."
             )
             assert result[0].resource_id == cluster["ClusterName"]
             assert result[0].resource_arn == cluster["ClusterArn"]
