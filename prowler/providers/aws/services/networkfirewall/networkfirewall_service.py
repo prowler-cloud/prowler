@@ -27,12 +27,11 @@ class NetworkFirewall(AWSService):
                             network_firewall["FirewallArn"], self.audit_resources
                         )
                     ):
-                        self.network_firewalls[network_firewall.get("FirewallArn")] = (
-                            Firewall(
-                                arn=network_firewall.get("FirewallArn"),
-                                region=regional_client.region,
-                                name=network_firewall.get("FirewallName"),
-                            )
+                        self.network_firewalls[
+                            network_firewall.get("FirewallArn", "")
+                        ] = Firewall(
+                            region=regional_client.region,
+                            name=network_firewall.get("FirewallName"),
                         )
 
         except Exception as error:
@@ -43,11 +42,11 @@ class NetworkFirewall(AWSService):
     def _describe_firewall(self):
         logger.info("Network Firewall - Describe Network Firewalls...")
         try:
-            for network_firewall in self.network_firewalls.values():
+            for arn, network_firewall in self.network_firewalls.items():
                 regional_client = self.regional_clients[network_firewall.region]
                 try:
                     describe_firewall = regional_client.describe_firewall(
-                        FirewallArn=network_firewall.arn
+                        FirewallArn=arn,
                     )["Firewall"]
                     network_firewall.policy_arn = describe_firewall.get(
                         "FirewallPolicyArn"
@@ -73,7 +72,6 @@ class NetworkFirewall(AWSService):
 
 
 class Firewall(BaseModel):
-    arn: str
     name: str
     region: str
     policy_arn: str = None
