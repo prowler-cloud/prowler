@@ -107,7 +107,7 @@ class Schema(AWSService):
             for registry in regional_client.list_registries()["Registries"]:
                 registry_arn = registry.get(
                     "RegistryArn",
-                    f"arn:aws:schemas:{regional_client.region}:{self.audited_account}:registry/{registry.get('RegistryName', '')}",
+                    f"arn:{self.audited_partition}:schemas:{regional_client.region}:{self.audited_account}:registry/{registry.get('RegistryName', '')}",
                 )
                 if not self.audit_resources or (
                     is_resource_filtered(registry_arn, self.audit_resources)

@@ -466,7 +466,7 @@ class EC2(AWSService):
 
             for page in describe_launch_templates_paginator.paginate():
                 for template in page["LaunchTemplates"]:
-                    template_arn = f"arn:aws:ec2:{regional_client.region}:{self.audited_account}:launch-template/{template['LaunchTemplateId']}"
+                    template_arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:launch-template/{template['LaunchTemplateId']}"
                     if not self.audit_resources or (
                         is_resource_filtered(template_arn, self.audit_resources)
                     ):
