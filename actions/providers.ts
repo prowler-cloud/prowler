@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth.config";
 import { parseStringify } from "@/lib";
 
-export const getProvider = async ({
+export const getProviders = async ({
   page = 1,
   query = "",
   sort = "",
@@ -47,6 +47,68 @@ export const getProvider = async ({
   }
 };
 
+export const getProvider = async (formData: FormData) => {
+  const session = await auth();
+  const tenantId = session?.user.tenantId;
+  const providerId = formData.get("id");
+
+  const keyServer = process.env.API_BASE_URL;
+  const url = new URL(`${keyServer}/providers/${providerId}`);
+
+  try {
+    const providers = await fetch(url.toString(), {
+      headers: {
+        "X-Tenant-ID": `${tenantId}`,
+      },
+    });
+    const data = await providers.json();
+    const parsedData = parseStringify(data);
+    return parsedData;
+  } catch (error) {
+    return {
+      error: getErrorMessage(error),
+    };
+  }
+};
+
+export const updateProvider = async (formData: FormData) => {
+  const session = await auth();
+  const keyServer = process.env.API_BASE_URL;
+
+  const tenantId = session?.user.tenantId;
+  const providerId = formData.get("providerId");
+  const providerAlias = formData.get("alias");
+
+  const url = new URL(`${keyServer}/providers/${providerId}`);
+
+  try {
+    const response = await fetch(url.toString(), {
+      method: "PATCH",
+      headers: {
+        "X-Tenant-ID": `${tenantId}`,
+        "Content-Type": "application/vnd.api+json",
+      },
+      body: JSON.stringify({
+        data: {
+          type: "Provider",
+          id: providerId,
+          attributes: {
+            alias: providerAlias,
+          },
+        },
+      }),
+    });
+    const data = await response.json();
+    revalidatePath("/providers");
+    return parseStringify(data);
+  } catch (error) {
+    console.error(error);
+    return {
+      error: getErrorMessage(error),
+    };
+  }
+};
+
 export const addProvider = async (formData: FormData) => {
   const keyServer = process.env.API_BASE_URL;
 
@@ -81,8 +143,8 @@ export const addProvider = async (formData: FormData) => {
       error: getErrorMessage(error),
     };
   }
-  revalidatePath("/providers");
 };
+
 export const checkConnectionProvider = async (formData: FormData) => {
   const keyServer = process.env.API_BASE_URL;
 
@@ -107,6 +169,7 @@ export const checkConnectionProvider = async (formData: FormData) => {
     };
   }
 };
+
 export const deleteProvider = async (formData: FormData) => {
   const keyServer = process.env.API_BASE_URL;
 

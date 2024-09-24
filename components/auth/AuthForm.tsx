@@ -126,7 +126,7 @@ export const AuthForm = ({ type }: { type: string }) => {
               placeholder="Enter your email"
             />
 
-            <CustomInput control={form.control} password />
+            <CustomInput control={form.control} name="password" password />
 
             {type === "sign-in" && (
               <div className="flex items-center justify-between px-1 py-2">

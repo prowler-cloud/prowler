@@ -3,48 +3,39 @@
 import { Icon } from "@iconify/react";
 import { Input } from "@nextui-org/react";
 import React, { useState } from "react";
-import { Control, FieldPath } from "react-hook-form";
-import { z } from "zod";
+import { Control, FieldPath, FieldValues } from "react-hook-form";
 
 import { FormControl, FormField, FormMessage } from "@/components/ui/form";
-import { authFormSchema } from "@/types";
 
-const formSchema = authFormSchema("sign-up");
-
-type CustomInputProps = {
-  control: Control<z.infer<typeof formSchema>>;
+interface CustomInputProps<T extends FieldValues> {
+  control: Control<T>;
+  name: FieldPath<T>;
+  label?: string;
+  labelPlacement?: "inside" | "outside";
+  variant?: "flat" | "bordered" | "underlined" | "faded";
+  type?: string;
+  placeholder?: string;
+  password?: boolean;
   isRequired?: boolean;
-} & (
-  | {
-      password?: false;
-      name: FieldPath<z.infer<typeof formSchema>>;
-      label: string;
-      type: "text" | "email";
-      placeholder: string;
-    }
-  | {
-      password: true;
-      name?: never;
-      label?: never;
-      type?: never;
-      placeholder?: never;
-    }
-);
+  isInvalid?: boolean;
+}
 
-export const CustomInput = ({
+export const CustomInput = <T extends FieldValues>({
   control,
   name,
-  type,
-  label,
+  type = "text",
+  label = name,
+  labelPlacement = "inside",
   placeholder,
+  variant = "bordered",
   password = false,
   isRequired = true,
-}: CustomInputProps) => {
+  isInvalid,
+}: CustomInputProps<T>) => {
   const [isVisible, setIsVisible] = useState(false);
 
   const toggleVisibility = () => setIsVisible(!isVisible);
 
-  const inputName = password ? "password" : name!;
   const inputLabel = password ? "Password" : label;
   const inputType = password ? (isVisible ? "text" : "password") : type;
   const inputPlaceholder = password ? "Enter your password" : placeholder;
@@ -62,16 +53,18 @@ export const CustomInput = ({
   return (
     <FormField
       control={control}
-      name={inputName as FieldPath<z.infer<typeof formSchema>>}
+      name={name}
       render={({ field }) => (
         <>
           <FormControl>
             <Input
               isRequired={inputIsRequired}
               label={inputLabel}
+              labelPlacement={labelPlacement}
               placeholder={inputPlaceholder}
               type={inputType}
-              variant="bordered"
+              variant={variant}
+              isInvalid={isInvalid}
               endContent={endContent}
               {...field}
             />

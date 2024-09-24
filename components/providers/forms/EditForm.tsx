@@ -6,30 +6,42 @@ import React, { Dispatch, SetStateAction } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
-import { deleteProvider } from "@/actions";
+import { updateProvider } from "@/actions";
 import { useToast } from "@/components/ui";
+import { CustomInput } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
+import { editProviderFormSchema } from "@/types";
 
-const formSchema = z.object({
-  providerId: z.string(),
-});
-
-export const DeleteForm = ({
+export const EditForm = ({
   providerId,
+  providerAlias,
   setIsOpen,
 }: {
   providerId: string;
+  providerAlias?: string;
   setIsOpen: Dispatch<SetStateAction<boolean>>;
 }) => {
+  const formSchema = editProviderFormSchema(providerAlias ?? "");
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
+    defaultValues: {
+      providerId: providerId,
+      alias: providerAlias,
+    },
   });
+
   const { toast } = useToast();
   const isLoading = form.formState.isSubmitting;
 
-  async function onSubmitClient(formData: FormData) {
-    // client-side validation
-    const data = await deleteProvider(formData);
+  const onSubmitClient = async (values: z.infer<typeof formSchema>) => {
+    const formData = new FormData();
+
+    Object.entries(values).forEach(
+      ([key, value]) => value !== undefined && formData.append(key, value),
+    );
+
+    const data = await updateProvider(formData);
 
     if (data?.errors && data.errors.length > 0) {
       const error = data.errors[0];
@@ -43,15 +55,36 @@ export const DeleteForm = ({
     } else {
       toast({
         title: "Success!",
-        description: "The provider was removed successfully.",
+        description: "The provider was updated successfully.",
       });
+      setIsOpen(false); // Close the modal on success
     }
-  }
+  };
 
   return (
     <Form {...form}>
-      <form action={onSubmitClient}>
-        <input type="hidden" name="id" value={providerId} />
+      <form
+        onSubmit={form.handleSubmit(onSubmitClient)}
+        className="flex flex-col space-y-4"
+      >
+        <div className="text-md">
+          Current alias: <span className="font-bold">{providerAlias}</span>
+        </div>
+        <div>
+          <CustomInput
+            control={form.control}
+            name="alias"
+            type="text"
+            label="Alias"
+            labelPlacement="inside"
+            placeholder={providerAlias}
+            variant="bordered"
+            isRequired={false}
+            isInvalid={!!form.formState.errors.alias}
+          />
+        </div>
+        <input type="hidden" name="providerId" value={providerId} />
+
         <div className="w-full flex justify-center sm:space-x-6">
           <Button
             size="lg"
@@ -63,19 +96,17 @@ export const DeleteForm = ({
           >
             Cancel
           </Button>
+
           <Button
             size="lg"
             type="submit"
             disabled={isLoading}
-            className="w-full bg-system-error hover:bg-system-error/90 text-white"
+            className="w-full"
           >
             {isLoading ? (
-              <>
-                <CircularProgress aria-label="Loading..." size="sm" />
-                Deleting
-              </>
+              <CircularProgress aria-label="Loading..." size="md" />
             ) : (
-              <span>Delete</span>
+              <span>Save</span>
             )}
           </Button>
         </div>

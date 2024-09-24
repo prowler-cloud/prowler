@@ -27,8 +27,8 @@ export const CustomAlertModal: React.FC<CustomAlertModalProps> = ({
         {(_onClose) => (
           <>
             <ModalHeader className="flex flex-col py-0">{title}</ModalHeader>
-            <ModalBody className="space-y-2">
-              <p>{description}</p>
+            <ModalBody>
+              {description}
               {children}
             </ModalBody>
           </>
