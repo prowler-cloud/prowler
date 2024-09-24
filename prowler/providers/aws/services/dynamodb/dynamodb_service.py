@@ -31,13 +31,12 @@ class DynamoDB(AWSService):
                     if not self.audit_resources or (
                         is_resource_filtered(arn, self.audit_resources)
                     ):
-                        table = Table(
+                        self.tables[arn] = Table(
                             name=table,
                             encryption_type=None,
                             kms_arn=None,
                             region=regional_client.region,
                         )
-                        self.tables[arn] = table
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
