@@ -7,7 +7,7 @@ from prowler.providers.aws.services.networkfirewall.networkfirewall_client impor
 class networkfirewall_deletion_protection(Check):
     def execute(self):
         findings = []
-        for firewall in networkfirewall_client.network_firewalls:
+        for firewall in networkfirewall_client.network_firewalls.values():
             report = Check_Report_AWS(self.metadata())
             report.region = firewall.region
             report.resource_id = firewall.name

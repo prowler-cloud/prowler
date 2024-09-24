@@ -20,7 +20,7 @@ class Test_networkfirewall_in_all_vpc:
             [AWS_REGION_US_EAST_1]
         )
         networkfirewall_client.region = AWS_REGION_US_EAST_1
-        networkfirewall_client.network_firewalls = []
+        networkfirewall_client.network_firewalls = {}
         vpc_client = mock.MagicMock
         vpc_client.provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         vpc_client.region = AWS_REGION_US_EAST_1
@@ -56,8 +56,8 @@ class Test_networkfirewall_in_all_vpc:
             [AWS_REGION_US_EAST_1]
         )
         networkfirewall_client.region = AWS_REGION_US_EAST_1
-        networkfirewall_client.network_firewalls = [
-            Firewall(
+        networkfirewall_client.network_firewalls = {
+            FIREWALL_ARN: Firewall(
                 arn=FIREWALL_ARN,
                 name=FIREWALL_NAME,
                 region=AWS_REGION_US_EAST_1,
@@ -67,7 +67,7 @@ class Test_networkfirewall_in_all_vpc:
                 encryption_type="CUSTOMER_KMS",
                 deletion_protection=True,
             )
-        ]
+        }
         vpc_client = mock.MagicMock
         vpc_client.provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         vpc_client.region = AWS_REGION_US_EAST_1
@@ -139,7 +139,7 @@ class Test_networkfirewall_in_all_vpc:
             [AWS_REGION_US_EAST_1]
         )
         networkfirewall_client.region = AWS_REGION_US_EAST_1
-        networkfirewall_client.network_firewalls = []
+        networkfirewall_client.network_firewalls = {}
         vpc_client = mock.MagicMock
         vpc_client.provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         vpc_client.region = AWS_REGION_US_EAST_1
@@ -211,7 +211,7 @@ class Test_networkfirewall_in_all_vpc:
             [AWS_REGION_US_EAST_1]
         )
         networkfirewall_client.region = AWS_REGION_US_EAST_1
-        networkfirewall_client.network_firewalls = []
+        networkfirewall_client.network_firewalls = {}
 
         vpc_client = mock.MagicMock
         vpc_client.provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
@@ -284,8 +284,8 @@ class Test_networkfirewall_in_all_vpc:
             [AWS_REGION_US_EAST_1]
         )
         networkfirewall_client.region = AWS_REGION_US_EAST_1
-        networkfirewall_client.network_firewalls = [
-            Firewall(
+        networkfirewall_client.network_firewalls = {
+            FIREWALL_ARN: Firewall(
                 arn=FIREWALL_ARN,
                 name=FIREWALL_NAME,
                 region=AWS_REGION_US_EAST_1,
@@ -295,7 +295,7 @@ class Test_networkfirewall_in_all_vpc:
                 encryption_type="CUSTOMER_KMS",
                 deletion_protection=True,
             )
-        ]
+        }
         vpc_client = mock.MagicMock
         vpc_client.provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         vpc_client.region = AWS_REGION_US_EAST_1
@@ -405,7 +405,7 @@ class Test_networkfirewall_in_all_vpc:
             [AWS_REGION_US_EAST_1]
         )
         networkfirewall_client.region = AWS_REGION_US_EAST_1
-        networkfirewall_client.network_firewalls = []
+        networkfirewall_client.network_firewalls = {}
         vpc_client = mock.MagicMock
         vpc_client.provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         vpc_client.region = AWS_REGION_US_EAST_1
@@ -469,7 +469,7 @@ class Test_networkfirewall_in_all_vpc:
             [AWS_REGION_US_EAST_1]
         )
         networkfirewall_client.region = AWS_REGION_US_EAST_1
-        networkfirewall_client.network_firewalls = []
+        networkfirewall_client.network_firewalls = {}
         vpc_client = mock.MagicMock
         vpc_client.provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         vpc_client.region = AWS_REGION_US_EAST_1
