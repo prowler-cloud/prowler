@@ -57,6 +57,7 @@ class IAM(AWSService):
         self.mfa_arn_template = (
             f"arn:{self.audited_partition}:iam:{self.region}:{self.audited_account}:mfa"
         )
+<<<<<<< HEAD
         self.users = self.__get_users__()
         self.roles = self.__get_roles__()
         self.account_summary = self.__get_account_summary__()
@@ -72,10 +73,27 @@ class IAM(AWSService):
         support_policy_arn = (
             "arn:aws:iam::aws:policy/aws-service-role/AWSSupportServiceRolePolicy"
         )
+=======
+        self.users = self._get_users()
+        self.roles = self._get_roles()
+        self.account_summary = self._get_account_summary()
+        self.virtual_mfa_devices = self._list_virtual_mfa_devices()
+        self.credential_report = self._get_credential_report()
+        self.groups = self._get_groups()
+        self._get_group_users()
+        self._list_attached_group_policies()
+        self._list_attached_user_policies()
+        self._list_attached_role_policies()
+        self._list_mfa_devices()
+        self.password_policy = self._get_password_policy()
+        support_policy_arn = f"arn:{self.audited_partition}:iam::aws:policy/aws-service-role/AWSSupportServiceRolePolicy"
+>>>>>>> 348cea67c (fix(aws): always use audited partition (#5174))
         self.entities_role_attached_to_support_policy = (
             self.__list_entities_role_for_policy__(support_policy_arn)
         )
-        securityaudit_policy_arn = "arn:aws:iam::aws:policy/SecurityAudit"
+        securityaudit_policy_arn = (
+            f"arn:{self.audited_partition}:iam::aws:policy/SecurityAudit"
+        )
         self.entities_role_attached_to_securityaudit_policy = (
             self.__list_entities_role_for_policy__(securityaudit_policy_arn)
         )
