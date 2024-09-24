@@ -15,7 +15,7 @@
   "RelatedUrl": "https://docs.aws.amazon.com/aws-backup/latest/devguide/assigning-resources.html",
   "Remediation": {
     "Code": {
-      "CLI": "aws backup create-backup-plan --backup-plan <backup-plan-configuration>, , aws backup tag-resource --resource-arn <dynamodb-table-arn> --tags Key=backup,Value=true",
+      "CLI": "",
       "NativeIaC": "",
       "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/dynamodb-controls.html#dynamodb-4",
       "Terraform": ""

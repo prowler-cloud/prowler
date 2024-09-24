@@ -95,11 +95,11 @@ class DynamoDB(AWSService):
     def _get_resource_policy(self):
         logger.info("DynamoDB - Get Resource Policy...")
         try:
-            for table in self.tables.values():
+            for table_arn, table in self.tables.items():
                 try:
                     regional_client = self.regional_clients[table.region]
                     response = regional_client.get_resource_policy(
-                        ResourceArn=table.arn
+                        ResourceArn=table_arn
                     )
                     table.policy = json.loads(response["Policy"])
                 except ClientError as error:
