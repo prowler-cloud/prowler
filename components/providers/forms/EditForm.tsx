@@ -8,7 +8,7 @@ import * as z from "zod";
 
 import { updateProvider } from "@/actions";
 import { useToast } from "@/components/ui";
-import { CustomInputNew } from "@/components/ui/custom";
+import { CustomInput } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
 import { editProviderFormSchema } from "@/types";
 
@@ -70,15 +70,7 @@ export const EditForm = ({
         <input type="hidden" name="providerId" value={providerId} />
         <div>Current alias: {providerAlias}</div>
 
-        {/* <CustomInput
-          control={form.control}
-          name="alias"
-          type="text"
-          label="Alias"
-          placeholder={providerAlias}
-        /> */}
-
-        <CustomInputNew
+        <CustomInput
           control={form.control}
           name="alias"
           type="text"
