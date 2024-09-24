@@ -195,9 +195,9 @@ def is_policy_public(
                 (
                     (
                         isinstance(statement.get("Action", ""), list)
-                        and "*" not in statement["Action"]
+                        and "*" in statement["Action"]
                     )
-                    or ("*" not in statement.get("Action", ""))
+                    or ("*" in statement.get("Action", ""))
                 )
                 or (
                     isinstance(statement.get("Action", ""), list)

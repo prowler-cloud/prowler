@@ -1835,3 +1835,33 @@ class Test_Policy:
             ]
         }
         assert not is_policy_public(policy)
+
+    def test__is_policy_public_with_action_wildcard(
+        self,
+    ):
+        policy = {
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Principal": "*",
+                    "Action": "elasticfilesystem:*",
+                    "Resource": "*",
+                }
+            ]
+        }
+        assert is_policy_public(policy)
+
+    def test__is_policy_public_allowing_all_actions(
+        self,
+    ):
+        policy = {
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Principal": "*",
+                    "Action": "*",
+                    "Resource": "*",
+                }
+            ]
+        }
+        assert is_policy_public(policy)
