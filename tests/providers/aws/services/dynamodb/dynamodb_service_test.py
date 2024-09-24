@@ -109,7 +109,7 @@ class Test_DynamoDB_Service:
         dynamo = DynamoDB(aws_provider)
         assert len(dynamo.tables) == 1
         tables_arn, tables = next(iter(dynamo.tables.items()))
-        assert tables.arn == table["TableArn"]
+        assert tables_arn == table["TableArn"]
         assert tables.name == "test1"
         assert tables.region == AWS_REGION_US_EAST_1
         assert tables.tags == [
@@ -143,7 +143,7 @@ class Test_DynamoDB_Service:
         dynamo = DynamoDB(aws_provider)
         assert len(dynamo.tables) == 1
         tables_arn, tables = next(iter(dynamo.tables.items()))
-        assert tables.arn == table["TableArn"]
+        assert tables_arn == table["TableArn"]
         assert tables.name == "test1"
         assert tables.pitr
         assert tables.region == AWS_REGION_US_EAST_1

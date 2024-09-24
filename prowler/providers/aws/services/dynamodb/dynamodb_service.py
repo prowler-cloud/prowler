@@ -32,7 +32,6 @@ class DynamoDB(AWSService):
                         is_resource_filtered(arn, self.audit_resources)
                     ):
                         table = Table(
-                            arn=arn,
                             name=table,
                             encryption_type=None,
                             kms_arn=None,
@@ -126,11 +125,11 @@ class DynamoDB(AWSService):
     def _list_tags_for_resource(self):
         logger.info("DynamoDB - List Tags...")
         try:
-            for table in self.tables.values():
+            for table_arn, table in self.tables.items():
                 try:
                     regional_client = self.regional_clients[table.region]
                     response = regional_client.list_tags_of_resource(
-                        ResourceArn=table.arn
+                        ResourceArn=table_arn
                     )["Tags"]
                     table.tags = response
                 except ClientError as error:
@@ -211,7 +210,6 @@ class DAX(AWSService):
 
 
 class Table(BaseModel):
-    arn: str
     name: str
     encryption_type: Optional[str]
     kms_arn: Optional[str]
