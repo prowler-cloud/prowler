@@ -34,7 +34,7 @@ class Test_cloudfront_distributions_using_deprecated_ssl_protocols:
     def test_one_distribution_using_deprecated_ssl_protocols(self):
         cloudfront_client = mock.MagicMock
         cloudfront_client.distributions = {
-            "DISTRIBUTION_ID": Distribution(
+            DISTRIBUTION_ID: Distribution(
                 arn=DISTRIBUTION_ARN,
                 id=DISTRIBUTION_ID,
                 region=REGION,
@@ -76,7 +76,7 @@ class Test_cloudfront_distributions_using_deprecated_ssl_protocols:
     def test_one_distribution_using_SSL_and_TLS(self):
         cloudfront_client = mock.MagicMock
         cloudfront_client.distributions = {
-            "DISTRIBUTION_ID": Distribution(
+            DISTRIBUTION_ID: Distribution(
                 arn=DISTRIBUTION_ARN,
                 id=DISTRIBUTION_ID,
                 region=REGION,
@@ -121,7 +121,7 @@ class Test_cloudfront_distributions_using_deprecated_ssl_protocols:
     def test_one_distribution_using_SSL_and_bad_TLS(self):
         cloudfront_client = mock.MagicMock
         cloudfront_client.distributions = {
-            "DISTRIBUTION_ID": Distribution(
+            DISTRIBUTION_ID: Distribution(
                 arn=DISTRIBUTION_ARN,
                 id=DISTRIBUTION_ID,
                 region=REGION,
@@ -166,7 +166,7 @@ class Test_cloudfront_distributions_using_deprecated_ssl_protocols:
     def test_one_distribution_not_using_deprecated_ssl_protocols(self):
         cloudfront_client = mock.MagicMock
         cloudfront_client.distributions = {
-            "DISTRIBUTION_ID": Distribution(
+            DISTRIBUTION_ID: Distribution(
                 arn=DISTRIBUTION_ARN,
                 id=DISTRIBUTION_ID,
                 region=REGION,
