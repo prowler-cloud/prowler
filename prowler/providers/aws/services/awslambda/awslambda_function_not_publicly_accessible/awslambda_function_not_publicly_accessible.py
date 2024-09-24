@@ -19,10 +19,6 @@ class awslambda_function_not_publicly_accessible(Check):
                 function.policy,
                 awslambda_client.audited_account,
                 is_cross_account_allowed=True,
-                not_allowed_actions=[
-                    "lambda:InvokeFunction",
-                    "lambda:InvokeFunctionUrl",
-                ],
             ):
                 report.status = "FAIL"
                 report.status_extended = f"Lambda function {function.name} has a policy resource-based policy with public access."

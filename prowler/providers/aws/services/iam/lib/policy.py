@@ -158,7 +158,7 @@ def is_policy_public(
         policy (dict): The AWS policy to check
         source_account (str): The account to check if the access is restricted to it, default: ""
         is_cross_account_allowed (bool): If the policy can allow cross-account access, default: False
-        not_allowed_actions (list): List of actions that are not allowed apart from '*', default: []
+        not_allowed_actions (list): List of actions that are not allowed, default: []. If not_allowed_actions is empty, the function will not consider the actions in the policy.
     Returns:
         bool: True if the policy allows public access, False otherwise
     """
@@ -193,20 +193,28 @@ def is_policy_public(
                     )
                 )
             ) and (
-                (
-                    (
-                        isinstance(statement.get("Action", ""), list)
-                        and "*" in statement["Action"]
-                    )
-                    or ("*" in statement.get("Action", ""))
-                )
+                not not_allowed_actions  # If not_allowed_actions is empty, the function will not consider the actions in the policy
+                and "Action" in statement
                 or (
-                    isinstance(statement.get("Action", ""), list)
-                    and any(
-                        action in not_allowed_actions for action in statement["Action"]
+                    (
+                        (
+                            isinstance(statement.get("Action", ""), list)
+                            and "*" in statement["Action"]
+                        )
+                        or (
+                            isinstance(statement.get("Action", ""), str)
+                            and statement.get("Action", "") == "*"
+                        )
                     )
+                    or (
+                        isinstance(statement.get("Action", ""), list)
+                        and any(
+                            action in not_allowed_actions
+                            for action in statement["Action"]
+                        )
+                    )
+                    or (statement.get("Action", "") in not_allowed_actions)
                 )
-                or (statement.get("Action", "") in not_allowed_actions)
             ):
                 is_public = (
                     not is_condition_block_restrictive(
