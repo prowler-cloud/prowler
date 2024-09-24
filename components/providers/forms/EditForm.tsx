@@ -57,26 +57,33 @@ export const EditForm = ({
         title: "Success!",
         description: "The provider was updated successfully.",
       });
+      setIsOpen(false); // Close the modal on success
     }
   };
 
   return (
     <Form {...form}>
       <form
-        // action={onSubmitClient}
         onSubmit={form.handleSubmit(onSubmitClient)}
-        className="flex flex-col space-y-2 sm:px-0 px-4"
+        className="flex flex-col space-y-4"
       >
+        <div className="text-md">
+          Current alias: <span className="font-bold">{providerAlias}</span>
+        </div>
+        <div>
+          <CustomInput
+            control={form.control}
+            name="alias"
+            type="text"
+            label="Alias"
+            labelPlacement="inside"
+            placeholder={providerAlias}
+            variant="bordered"
+            isRequired={false}
+            isInvalid={!!form.formState.errors.alias}
+          />
+        </div>
         <input type="hidden" name="providerId" value={providerId} />
-        <div>Current alias: {providerAlias}</div>
-
-        <CustomInput
-          control={form.control}
-          name="alias"
-          type="text"
-          label="Alias"
-          placeholder={providerAlias}
-        />
 
         <div className="w-full flex justify-center sm:space-x-6">
           <Button

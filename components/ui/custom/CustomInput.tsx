@@ -11,10 +11,13 @@ interface CustomInputProps<T extends FieldValues> {
   control: Control<T>;
   name: FieldPath<T>;
   label?: string;
+  labelPlacement?: "inside" | "outside";
+  variant?: "flat" | "bordered" | "underlined" | "faded";
   type?: string;
   placeholder?: string;
-  isRequired?: boolean;
   password?: boolean;
+  isRequired?: boolean;
+  isInvalid?: boolean;
 }
 
 export const CustomInput = <T extends FieldValues>({
@@ -22,9 +25,12 @@ export const CustomInput = <T extends FieldValues>({
   name,
   type = "text",
   label = name,
+  labelPlacement = "inside",
   placeholder,
+  variant = "bordered",
   password = false,
   isRequired = true,
+  isInvalid,
 }: CustomInputProps<T>) => {
   const [isVisible, setIsVisible] = useState(false);
 
@@ -54,9 +60,11 @@ export const CustomInput = <T extends FieldValues>({
             <Input
               isRequired={inputIsRequired}
               label={inputLabel}
+              labelPlacement={labelPlacement}
               placeholder={inputPlaceholder}
               type={inputType}
-              variant="bordered"
+              variant={variant}
+              isInvalid={isInvalid}
               endContent={endContent}
               {...field}
             />
