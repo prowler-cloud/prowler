@@ -153,7 +153,7 @@ class Test_cloudtrail_threat_detection_privilege_escalation:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Potential privilege escalation attack detected from AWS identity EXAMPLE6E4XEGITWATV6R with an threshold of 1.0."
+                == "Potential privilege escalation attack detected from AWS IAMUser Mateo with an threshold of 1.0."
             )
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
             assert result[0].region == AWS_REGION_US_EAST_1
