@@ -9,9 +9,7 @@ class iam_support_role_created(Check):
             report = Check_Report_AWS(self.metadata())
             report.region = iam_client.region
             report.resource_id = "AWSSupportServiceRolePolicy"
-            report.resource_arn = (
-                "arn:aws:iam::aws:policy/aws-service-role/AWSSupportServiceRolePolicy"
-            )
+            report.resource_arn = f"arn:{iam_client.audited_partition}:iam::aws:policy/aws-service-role/AWSSupportServiceRolePolicy"
             if iam_client.entities_role_attached_to_support_policy:
                 report.status = "PASS"
                 report.status_extended = f"Support policy attached to role {iam_client.entities_role_attached_to_support_policy[0]['RoleName']}."

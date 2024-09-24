@@ -397,6 +397,202 @@ class EC2(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+<<<<<<< HEAD
+=======
+    def _get_snapshot_block_public_access_state(self, regional_client):
+        try:
+            snapshots_in_region = self.attributes_for_regions.get(
+                regional_client.region, []
+            )
+            snapshots_in_region = snapshots_in_region.get("has_snapshots", False)
+            self.ebs_block_public_access_snapshots_states.append(
+                EbsSnapshotBlockPublicAccess(
+                    status=regional_client.get_snapshot_block_public_access_state()[
+                        "State"
+                    ],
+                    snapshots=snapshots_in_region,
+                    region=regional_client.region,
+                )
+            )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _get_instance_metadata_defaults(self, regional_client):
+        try:
+            instances_in_region = self.attributes_for_regions.get(
+                regional_client.region, []
+            )
+            instances_in_region = instances_in_region.get("has_instances", False)
+            metadata_defaults = regional_client.get_instance_metadata_defaults()
+            account_level = metadata_defaults.get("AccountLevel", {})
+            self.instance_metadata_defaults.append(
+                InstanceMetadataDefaults(
+                    http_tokens=account_level.get("HttpTokens", None),
+                    instances=instances_in_region,
+                    region=regional_client.region,
+                )
+            )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _get_resources_for_regions(self, regional_client):
+        try:
+            has_instances = False
+            for instance in self.instances:
+                if instance.region == regional_client.region:
+                    has_instances = True
+                    break
+            has_snapshots = False
+            for snapshot in self.snapshots:
+                if snapshot.region == regional_client.region:
+                    has_snapshots = True
+                    break
+            has_volumes = False
+            for volume in self.volumes:
+                if volume.region == regional_client.region:
+                    has_volumes = True
+                    break
+            self.attributes_for_regions[regional_client.region] = {
+                "has_instances": has_instances,
+                "has_snapshots": has_snapshots,
+                "has_volumes": has_volumes,
+            }
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _describe_launch_templates(self, regional_client):
+        try:
+            describe_launch_templates_paginator = regional_client.get_paginator(
+                "describe_launch_templates"
+            )
+
+            for page in describe_launch_templates_paginator.paginate():
+                for template in page["LaunchTemplates"]:
+                    template_arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:launch-template/{template['LaunchTemplateId']}"
+                    if not self.audit_resources or (
+                        is_resource_filtered(template_arn, self.audit_resources)
+                    ):
+                        self.launch_templates.append(
+                            LaunchTemplate(
+                                name=template["LaunchTemplateName"],
+                                id=template["LaunchTemplateId"],
+                                arn=template_arn,
+                                region=regional_client.region,
+                                versions=[],
+                                tags=template.get("Tags"),
+                            )
+                        )
+
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _describe_launch_template_versions(self, launch_template):
+        try:
+            regional_client = self.regional_clients[launch_template.region]
+            describe_launch_template_versions_paginator = regional_client.get_paginator(
+                "describe_launch_template_versions"
+            )
+
+            for page in describe_launch_template_versions_paginator.paginate(
+                LaunchTemplateId=launch_template.id
+            ):
+                for template_version in page["LaunchTemplateVersions"]:
+                    enis = []
+                    associate_public_ip = False
+                    for eni in template_version["LaunchTemplateData"].get(
+                        "NetworkInterfaces", []
+                    ):
+                        network_interface_id = eni.get("NetworkInterfaceId", "")
+                        if network_interface_id in self.network_interfaces:
+                            enis.append(self.network_interfaces[network_interface_id])
+                        if eni.get("AssociatePublicIpAddress", False):
+                            associate_public_ip = True
+                    launch_template.versions.append(
+                        LaunchTemplateVersion(
+                            version_number=template_version["VersionNumber"],
+                            template_data=TemplateData(
+                                user_data=template_version["LaunchTemplateData"].get(
+                                    "UserData", ""
+                                ),
+                                network_interfaces=enis,
+                                associate_public_ip_address=associate_public_ip,
+                            ),
+                        )
+                    )
+
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _describe_vpn_endpoints(self, regional_client):
+        try:
+            describe_client_vpn_endpoints_paginator = regional_client.get_paginator(
+                "describe_client_vpn_endpoints"
+            )
+
+            for page in describe_client_vpn_endpoints_paginator.paginate():
+                for vpn_endpoint in page["ClientVpnEndpoints"]:
+                    vpn_endpoint_arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:client-vpn-endpoint/{vpn_endpoint['ClientVpnEndpointId']}"
+                    if not self.audit_resources or (
+                        is_resource_filtered(vpn_endpoint_arn, self.audit_resources)
+                    ):
+                        self.vpn_endpoints[vpn_endpoint_arn] = VpnEndpoint(
+                            id=vpn_endpoint["ClientVpnEndpointId"],
+                            arn=vpn_endpoint_arn,
+                            connection_logging=vpn_endpoint["ConnectionLogOptions"][
+                                "Enabled"
+                            ],
+                            region=regional_client.region,
+                            tags=vpn_endpoint.get("Tags"),
+                        )
+
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _describe_transit_gateways(self, regional_client):
+        try:
+            describe_transit_gateways_paginator = regional_client.get_paginator(
+                "describe_transit_gateways"
+            )
+
+            for page in describe_transit_gateways_paginator.paginate():
+                for transit_gateway in page["TransitGateways"]:
+                    if not self.audit_resources or (
+                        is_resource_filtered(
+                            transit_gateway["TransitGatewayArn"], self.audit_resources
+                        )
+                    ):
+                        self.transit_gateways[transit_gateway["TransitGatewayArn"]] = (
+                            TransitGateway(
+                                id=transit_gateway["TransitGatewayId"],
+                                auto_accept_shared_attachments=(
+                                    transit_gateway["Options"][
+                                        "AutoAcceptSharedAttachments"
+                                    ]
+                                    == "enable"
+                                ),
+                                region=regional_client.region,
+                                tags=transit_gateway.get("Tags"),
+                            )
+                        )
+
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+>>>>>>> 348cea67c (fix(aws): always use audited partition (#5174))
 
 class Instance(BaseModel):
     id: str
