@@ -40,19 +40,20 @@ class cloudtrail_threat_detection_privilege_escalation(Check):
                     minutes=threat_detection_minutes,
                 ):
                     event_log = json.loads(event_log["CloudTrailEvent"])
-                    if ".amazonaws.com" not in event_log["sourceIPAddress"]:
-                        if (
-                            event_log["sourceIPAddress"]
-                            not in potential_privilege_escalation
-                        ):
-                            potential_privilege_escalation[
-                                event_log["sourceIPAddress"]
-                            ] = set()
+                    if (
+                        event_log["userIdentity"]["principalId"]
+                        not in potential_privilege_escalation
+                    ):
                         potential_privilege_escalation[
-                            event_log["sourceIPAddress"]
-                        ].add(event_name)
-        for source_ip, actions in potential_privilege_escalation.items():
-            ip_threshold = round(len(actions) / len(privilege_escalation_actions), 2)
+                            event_log["userIdentity"]["principalId"]
+                        ] = set()
+                    potential_privilege_escalation[
+                        event_log["userIdentity"]["principalId"]
+                    ].add(event_name)
+        for aws_identity, actions in potential_privilege_escalation.items():
+            identity_threshold = round(
+                len(actions) / len(privilege_escalation_actions), 2
+            )
             if len(actions) / len(privilege_escalation_actions) > threshold:
                 found_potential_privilege_escalation = True
                 report = Check_Report_AWS(self.metadata())
@@ -62,7 +63,7 @@ class cloudtrail_threat_detection_privilege_escalation(Check):
                     cloudtrail_client.region
                 )
                 report.status = "FAIL"
-                report.status_extended = f"Potential privilege escalation attack detected from source IP {source_ip} with an threshold of {ip_threshold}."
+                report.status_extended = f"Potential privilege escalation attack detected from AWS identity {aws_identity} with an threshold of {identity_threshold}."
                 findings.append(report)
         if not found_potential_privilege_escalation:
             report = Check_Report_AWS(self.metadata())
