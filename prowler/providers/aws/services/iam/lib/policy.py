@@ -384,6 +384,7 @@ def is_condition_block_restrictive_organization(
 
     return is_condition_valid
 
+
 def process_actions(effect, actions, target_set):
     """
     process_actions processes the actions in the policy.
