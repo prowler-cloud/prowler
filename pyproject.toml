@@ -83,7 +83,7 @@ mock = "5.1.0"
 moto = {extras = ["all"], version = "5.0.15"}
 openapi-schema-validator = "0.6.2"
 openapi-spec-validator = "0.7.1"
-pylint = "3.3.0"
+pylint = "3.3.1"
 pytest = "8.3.3"
 pytest-cov = "5.0.0"
 pytest-env = "1.1.5"
