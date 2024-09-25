@@ -3,8 +3,7 @@
   "CheckID": "s3_bucket_cross_account_access",
   "CheckTitle": "Ensure that general-purpose bucket policies restrict access to other AWS accounts.",
   "CheckType": [
-    "Effects",
-    "Data Exposure"
+    "Effects/Data Exposure"
   ],
   "ServiceName": "s3",
   "SubServiceName": "",
