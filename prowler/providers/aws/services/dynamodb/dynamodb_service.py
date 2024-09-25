@@ -128,7 +128,7 @@ class DynamoDB(AWSService):
     def _describe_autoscaling(self):
         logger.info("DynamoDB - Describing Auto Scaling...")
         try:
-            for table in self.tables:
+            for table in self.tables.values():
                 if table.billing_mode == "PROVISIONED":
                     application_autoscaling_client = self.session.client(
                         "application-autoscaling", region_name=table.region

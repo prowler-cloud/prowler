@@ -119,7 +119,7 @@ class Test_DynamoDB_Service:
         assert tables.tags == [
             {"Key": "test", "Value": "test"},
         ]
-        assert dynamo.tables[0].billing_mode == "PAY_PER_REQUEST"
+        assert tables.billing_mode == "PAY_PER_REQUEST"
 
     # Test DynamoDB Describe Continuous Backups
     @mock_aws
@@ -191,11 +191,12 @@ class Test_DynamoDB_Service:
         aws_provider = set_mocked_aws_provider()
         dynamo = DynamoDB(aws_provider)
         assert len(dynamo.tables) == 1
-        assert dynamo.tables[0].arn == table["TableArn"]
-        assert dynamo.tables[0].name == "test1"
-        assert dynamo.tables[0].region == AWS_REGION_US_EAST_1
-        assert dynamo.tables[0].read_autoscaling
-        assert dynamo.tables[0].write_autoscaling
+        tables_arn, tables = next(iter(dynamo.tables.items()))
+        assert tables_arn == table["TableArn"]
+        assert tables.name == "test1"
+        assert tables.region == AWS_REGION_US_EAST_1
+        assert tables.read_autoscaling
+        assert tables.write_autoscaling
 
     # Test DAX Describe Clusters
     @mock_aws
