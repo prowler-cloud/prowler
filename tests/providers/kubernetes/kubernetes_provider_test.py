@@ -1,5 +1,4 @@
 from argparse import Namespace
-from os import rmdir
 from unittest.mock import patch
 
 from kubernetes import client
@@ -11,7 +10,6 @@ from prowler.config.config import (
 from prowler.providers.kubernetes.kubernetes_provider import KubernetesProvider
 from prowler.providers.kubernetes.models import (
     KubernetesIdentityInfo,
-    KubernetesOutputOptions,
     KubernetesSession,
 )
 from tests.providers.kubernetes.kubernetes_fixtures import KUBERNETES_CONFIG
@@ -79,76 +77,6 @@ class TestKubernetesProvider:
             assert kubernetes_provider.identity.user == "test-user"
 
             assert kubernetes_provider.audit_config == KUBERNETES_CONFIG
-
-    def test_set_provider_output_options_kubernetes(self):
-        arguments = Namespace()
-        arguments.kubeconfig_file = "dummy_path"
-        arguments.context = None
-        arguments.only_logs = False
-        arguments.namespace = None
-        arguments.config_file = default_config_file_path
-        arguments.fixer_config = default_fixer_config_file_path
-        arguments.status = []
-        arguments.output_formats = ["csv"]
-        arguments.output_directory = "output_test_directory"
-        arguments.verbose = True
-        arguments.output_filename = "output_test_filename"
-        arguments.only_logs = False
-        arguments.unix_timestamp = False
-        arguments.shodan = "test-api-key"
-
-        context = {
-            "name": "test-context",
-            "context": {
-                "user": "test-user",
-                "cluster": "test-cluster",
-            },
-        }
-        with patch(
-            "prowler.providers.kubernetes.kubernetes_provider.KubernetesProvider.setup_session",
-            return_value=KubernetesSession(
-                api_client=client.ApiClient,
-                context=context,
-            ),
-        ), patch(
-            "prowler.providers.kubernetes.kubernetes_provider.KubernetesProvider.get_all_namespaces",
-            return_value=["namespace-1"],
-        ):
-
-            kubernetes_provider = KubernetesProvider(
-                arguments.kubeconfig_file,
-                arguments.context,
-                arguments.namespace,
-                arguments.config_file,
-                arguments.fixer_config,
-            )
-            # This is needed since the output_options requires to get the global provider to get the audit config
-            with patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=kubernetes_provider,
-            ):
-
-                kubernetes_provider.output_options = arguments, {}
-
-                assert isinstance(
-                    kubernetes_provider.output_options, KubernetesOutputOptions
-                )
-                assert kubernetes_provider.output_options.status == []
-                assert kubernetes_provider.output_options.output_modes == ["csv"]
-                assert (
-                    kubernetes_provider.output_options.output_directory
-                    == arguments.output_directory
-                )
-                assert kubernetes_provider.output_options.bulk_checks_metadata == {}
-                assert kubernetes_provider.output_options.verbose
-                assert (
-                    kubernetes_provider.output_options.output_filename
-                    == arguments.output_filename
-                )
-
-                # Delete testing directory
-                rmdir(f"{arguments.output_directory}/compliance")
-                rmdir(arguments.output_directory)
 
     # @patch("kubernetes.client.RbacAuthorizationV1Api")
     # @patch("kubernetes.config.list_kube_config_contexts")

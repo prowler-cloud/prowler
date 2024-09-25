@@ -69,8 +69,12 @@ from prowler.lib.outputs.slack.slack import Slack
 from prowler.lib.outputs.summary_table import display_summary_table
 from prowler.providers.aws.lib.s3.s3 import S3
 from prowler.providers.aws.lib.security_hub.security_hub import SecurityHub
+from prowler.providers.aws.models import AWSOutputOptions
+from prowler.providers.azure.models import AzureOutputOptions
 from prowler.providers.common.provider import Provider
 from prowler.providers.common.quick_inventory import run_provider_quick_inventory
+from prowler.providers.gcp.models import GCPOutputOptions
+from prowler.providers.kubernetes.models import KubernetesOutputOptions
 
 
 def prowler():
@@ -236,7 +240,22 @@ def prowler():
     global_provider.mutelist = args.mutelist_file
 
     # Setup Output Options
-    global_provider.output_options = (args, bulk_checks_metadata)
+    if provider == "aws":
+        output_options = AWSOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
+    elif provider == "azure":
+        output_options = AzureOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
+    elif provider == "gcp":
+        output_options = GCPOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
+    elif provider == "kubernetes":
+        output_options = KubernetesOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
 
     # Run the quick inventory for the provider if available
     if hasattr(args, "quick_inventory") and args.quick_inventory:
@@ -252,6 +271,7 @@ def prowler():
             global_provider,
             custom_checks_metadata,
             args.config_file,
+            output_options,
         )
     else:
         logger.error(
@@ -259,7 +279,7 @@ def prowler():
         )
 
     # Prowler Fixer
-    if global_provider.output_options.fixer:
+    if output_options.fixer:
         print(f"{Style.BRIGHT}\nRunning Prowler Fixer, please wait...{Style.RESET_ALL}")
         # Check if there are any FAIL findings
         if any("FAIL" in finding.status for finding in findings):
@@ -305,7 +325,8 @@ def prowler():
     # TODO: this part is needed since the checks generates a Check_Report_XXX and the output uses Finding
     # This will be refactored for the outputs generate directly the Finding
     finding_outputs = [
-        Finding.generate_output(global_provider, finding) for finding in findings
+        Finding.generate_output(global_provider, finding, output_options)
+        for finding in findings
     ]
 
     generated_outputs = {"regular": [], "compliance": []}
@@ -313,8 +334,8 @@ def prowler():
     if args.output_formats:
         for mode in args.output_formats:
             filename = (
-                f"{global_provider.output_options.output_directory}/"
-                f"{global_provider.output_options.output_filename}"
+                f"{output_options.output_directory}/"
+                f"{output_options.output_filename}"
             )
             if mode == "csv":
                 csv_output = CSV(
@@ -356,16 +377,16 @@ def prowler():
                 )
 
     # Compliance Frameworks
-    input_compliance_frameworks = set(
-        global_provider.output_options.output_modes
-    ).intersection(get_available_compliance_frameworks(provider))
+    input_compliance_frameworks = set(output_options.output_modes).intersection(
+        get_available_compliance_frameworks(provider)
+    )
     if provider == "aws":
         for compliance_name in input_compliance_frameworks:
             if compliance_name.startswith("cis_"):
                 # Generate CIS Finding Object
                 filename = (
-                    f"{global_provider.output_options.output_directory}/compliance/"
-                    f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
                 )
                 cis = AWSCIS(
                     findings=finding_outputs,
@@ -378,8 +399,8 @@ def prowler():
             elif compliance_name == "mitre_attack_aws":
                 # Generate MITRE ATT&CK Finding Object
                 filename = (
-                    f"{global_provider.output_options.output_directory}/compliance/"
-                    f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
                 )
                 mitre_attack = AWSMitreAttack(
                     findings=finding_outputs,
@@ -392,8 +413,8 @@ def prowler():
             elif compliance_name.startswith("ens_"):
                 # Generate ENS Finding Object
                 filename = (
-                    f"{global_provider.output_options.output_directory}/compliance/"
-                    f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
                 )
                 ens = AWSENS(
                     findings=finding_outputs,
@@ -406,8 +427,8 @@ def prowler():
             elif compliance_name.startswith("aws_well_architected_framework"):
                 # Generate AWS Well-Architected Finding Object
                 filename = (
-                    f"{global_provider.output_options.output_directory}/compliance/"
-                    f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
                 )
                 aws_well_architected = AWSWellArchitected(
                     findings=finding_outputs,
@@ -420,8 +441,8 @@ def prowler():
             elif compliance_name.startswith("iso27001_"):
                 # Generate ISO27001 Finding Object
                 filename = (
-                    f"{global_provider.output_options.output_directory}/compliance/"
-                    f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
                 )
                 iso27001 = AWSISO27001(
                     findings=finding_outputs,
@@ -447,8 +468,8 @@ def prowler():
                 kisa_ismsp.batch_write_data_to_file()
             else:
                 filename = (
-                    f"{global_provider.output_options.output_directory}/compliance/"
-                    f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
                 )
                 generic_compliance = GenericCompliance(
                     findings=finding_outputs,
@@ -464,8 +485,8 @@ def prowler():
             if compliance_name.startswith("cis_"):
                 # Generate CIS Finding Object
                 filename = (
-                    f"{global_provider.output_options.output_directory}/compliance/"
-                    f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
                 )
                 cis = AzureCIS(
                     findings=finding_outputs,
@@ -478,8 +499,8 @@ def prowler():
             elif compliance_name == "mitre_attack_azure":
                 # Generate MITRE ATT&CK Finding Object
                 filename = (
-                    f"{global_provider.output_options.output_directory}/compliance/"
-                    f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
                 )
                 mitre_attack = AzureMitreAttack(
                     findings=finding_outputs,
@@ -491,8 +512,8 @@ def prowler():
                 mitre_attack.batch_write_data_to_file()
             else:
                 filename = (
-                    f"{global_provider.output_options.output_directory}/compliance/"
-                    f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
                 )
                 generic_compliance = GenericCompliance(
                     findings=finding_outputs,
@@ -508,8 +529,8 @@ def prowler():
             if compliance_name.startswith("cis_"):
                 # Generate CIS Finding Object
                 filename = (
-                    f"{global_provider.output_options.output_directory}/compliance/"
-                    f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
                 )
                 cis = GCPCIS(
                     findings=finding_outputs,
@@ -522,8 +543,8 @@ def prowler():
             elif compliance_name == "mitre_attack_gcp":
                 # Generate MITRE ATT&CK Finding Object
                 filename = (
-                    f"{global_provider.output_options.output_directory}/compliance/"
-                    f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
                 )
                 mitre_attack = GCPMitreAttack(
                     findings=finding_outputs,
@@ -535,8 +556,8 @@ def prowler():
                 mitre_attack.batch_write_data_to_file()
             else:
                 filename = (
-                    f"{global_provider.output_options.output_directory}/compliance/"
-                    f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
                 )
                 generic_compliance = GenericCompliance(
                     findings=finding_outputs,
@@ -552,8 +573,8 @@ def prowler():
             if compliance_name.startswith("cis_"):
                 # Generate CIS Finding Object
                 filename = (
-                    f"{global_provider.output_options.output_directory}/compliance/"
-                    f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
                 )
                 cis = KubernetesCIS(
                     findings=finding_outputs,
@@ -565,8 +586,8 @@ def prowler():
                 cis.batch_write_data_to_file()
             else:
                 filename = (
-                    f"{global_provider.output_options.output_directory}/compliance/"
-                    f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
                 )
                 generic_compliance = GenericCompliance(
                     findings=finding_outputs,
@@ -609,7 +630,7 @@ def prowler():
                 aws_partition=global_provider.identity.partition,
                 aws_session=global_provider.session.current_session,
                 findings=asff_output.data,
-                send_only_fails=global_provider.output_options.send_sh_only_fails,
+                send_only_fails=output_options.send_sh_only_fails,
                 aws_security_hub_available_regions=security_hub_regions,
             )
             # Send the findings to Security Hub
@@ -635,7 +656,7 @@ def prowler():
         display_summary_table(
             findings,
             global_provider,
-            global_provider.output_options,
+            output_options,
         )
         # Only display compliance table if there are findings (not all MANUAL) and it is a default execution
         if (
@@ -654,13 +675,13 @@ def prowler():
                     findings,
                     bulk_checks_metadata,
                     compliance,
-                    global_provider.output_options.output_filename,
-                    global_provider.output_options.output_directory,
+                    output_options.output_filename,
+                    output_options.output_directory,
                     compliance_overview,
                 )
             if compliance_overview:
                 print(
-                    f"\nDetailed compliance results are in {Fore.YELLOW}{global_provider.output_options.output_directory}/compliance/{Style.RESET_ALL}\n"
+                    f"\nDetailed compliance results are in {Fore.YELLOW}{output_options.output_directory}/compliance/{Style.RESET_ALL}\n"
                 )
 
     # If custom checks were passed, remove the modules

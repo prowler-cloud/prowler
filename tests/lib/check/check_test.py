@@ -826,6 +826,7 @@ class TestCheck:
                     expected_checks=["accessanalyzer_enabled"]
                 ),
                 custom_checks_metadata=None,
+                output_options=None,
             )
             assert len(findings) == 1
 
@@ -843,6 +844,8 @@ class TestCheck:
             )
         ]
         status = ["PASS"]
+        output_options = mock.MagicMock()
+        output_options.status = status
         with mock.patch(
             "prowler.providers.aws.services.accessanalyzer.accessanalyzer_service.AccessAnalyzer",
             accessanalyzer_client,
@@ -851,9 +854,10 @@ class TestCheck:
                 service="accessanalyzer",
                 check_name="accessanalyzer_enabled",
                 global_provider=set_mocked_aws_provider(
-                    status=status, expected_checks=["accessanalyzer_enabled"]
+                    expected_checks=["accessanalyzer_enabled"]
                 ),
                 custom_checks_metadata=None,
+                output_options=output_options,
             )
             assert len(findings) == 0
 
