@@ -39,6 +39,23 @@ class Test_vpc_subnet_separate_private_public:
             RouteTableId=route_table_private["RouteTable"]["RouteTableId"],
             SubnetId=subnet_private["Subnet"]["SubnetId"],
         )
+        nacls = (
+            ec2_client.describe_network_acls(
+                Filters=[
+                    {
+                        "Name": "association.subnet-id",
+                        "Values": [subnet_private["Subnet"]["SubnetId"]],
+                    }
+                ]
+            )
+        )["NetworkAcls"]
+        # Remove public ingress rule from private subnet in default NACLs
+        for nacl in nacls:
+            ec2_client.delete_network_acl_entry(
+                NetworkAclId=nacl["NetworkAclId"],
+                Egress=False,
+                RuleNumber=100,
+            )
 
         from prowler.providers.aws.services.vpc.vpc_service import VPC
 
@@ -193,6 +210,23 @@ class Test_vpc_subnet_separate_private_public:
             RouteTableId=route_table_private["RouteTable"]["RouteTableId"],
             SubnetId=subnet_private["Subnet"]["SubnetId"],
         )
+        nacls = (
+            ec2_client.describe_network_acls(
+                Filters=[
+                    {
+                        "Name": "association.subnet-id",
+                        "Values": [subnet_private["Subnet"]["SubnetId"]],
+                    }
+                ]
+            )
+        )["NetworkAcls"]
+        # Remove public ingress rule from private subnet in default NACLs
+        for nacl in nacls:
+            ec2_client.delete_network_acl_entry(
+                NetworkAclId=nacl["NetworkAclId"],
+                Egress=False,
+                RuleNumber=100,
+            )
         # VPC Public
         subnet = ec2.create_subnet(VpcId=vpc.id, CidrBlock="10.0.128.0/17")
         # Create IGW and attach to VPC

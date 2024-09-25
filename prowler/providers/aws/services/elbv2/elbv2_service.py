@@ -47,6 +47,7 @@ class ELBv2(AWSService):
                             type=elbv2["Type"],
                             dns=elbv2.get("DNSName", None),
                             scheme=elbv2.get("Scheme", None),
+                            security_groups=elbv2.get("SecurityGroups", []),
                             availability_zones={
                                 az["ZoneName"]: az["SubnetId"]
                                 for az in elbv2.get("AvailabilityZones", [])
@@ -204,6 +205,7 @@ class LoadBalancerv2(BaseModel):
     drop_invalid_header_fields: Optional[str]
     listeners: Dict[str, Listenerv2] = {}
     scheme: Optional[str]
+    security_groups: list[str] = []
     # Key: ZoneName, Value: SubnetId
     availability_zones: Dict[str, str] = {}
     tags: Optional[list] = []

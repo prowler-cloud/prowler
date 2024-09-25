@@ -1,4 +1,6 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
+from prowler.providers.aws.services.ec2.ec2_client import ec2_client
+from prowler.providers.aws.services.ec2.lib.security_groups import check_security_group
 from prowler.providers.aws.services.elbv2.elbv2_client import elbv2_client
 
 
@@ -18,6 +20,18 @@ class elbv2_internet_facing(Check):
                 report.status_extended = (
                     f"ELBv2 ALB {lb.name} is internet facing in {lb.dns}."
                 )
+            elif lb.security_groups:
+                for sg_id in lb.security_groups:
+                    sg_arn = f"arn:{elbv2_client.audited_partition}:ec2:{lb.region}:{elbv2_client.audited_account}:security-group/{sg_id}"
+                    if sg_arn in ec2_client.security_groups:
+                        for ingress_rule in ec2_client.security_groups[
+                            sg_arn
+                        ].ingress_rules:
+                            if check_security_group(
+                                ingress_rule, "tcp", any_address=True
+                            ):
+                                report.status = "FAIL"
+                                report.status_extended = f"ELBv2 ALB {lb.name} is internet facing due to public security group {sg_id}."
 
             findings.append(report)
 
