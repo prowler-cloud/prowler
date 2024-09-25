@@ -9,7 +9,6 @@ from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################## Backup
 class Backup(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
@@ -19,8 +18,10 @@ class Backup(AWSService):
         self.backup_vault_arn_template = f"arn:{self.audited_partition}:backup:{self.region}:{self.audited_account}:backup-vault"
         self.backup_vaults = []
         self.__threading_call__(self._list_backup_vaults)
+        self.__threading_call__(self._list_tags, self.backup_vaults)
         self.backup_plans = []
         self.__threading_call__(self._list_backup_plans)
+        self.__threading_call__(self._list_tags, self.backup_plans)
         self.backup_report_plans = []
         self.__threading_call__(self._list_backup_report_plans)
         self.protected_resources = {}
@@ -167,6 +168,17 @@ class Backup(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _list_tags(self, resource):
+        try:
+            tags = self.regional_clients[resource.region].list_tags(
+                ResourceArn=resource.arn
+            )["Tags"]
+            resource.tags = [tags] if tags else []
+        except Exception as error:
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class BackupVault(BaseModel):
     arn: str
@@ -177,6 +189,7 @@ class BackupVault(BaseModel):
     locked: bool
     min_retention_days: int = None
     max_retention_days: int = None
+    tags: Optional[list]
 
 
 class BackupPlan(BaseModel):
@@ -187,6 +200,7 @@ class BackupPlan(BaseModel):
     version_id: str
     last_execution_date: Optional[datetime]
     advanced_settings: list
+    tags: Optional[list]
 
 
 class BackupReportPlan(BaseModel):
@@ -195,6 +209,7 @@ class BackupReportPlan(BaseModel):
     name: str
     last_attempted_execution_date: Optional[datetime]
     last_successful_execution_date: Optional[datetime]
+    tags: Optional[list]
 
 
 class ProtectedResource(BaseModel):
