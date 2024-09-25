@@ -92,13 +92,14 @@ class ECS(AWSService):
                 service_arns.extend(page["serviceArns"])
 
             if service_arns:
-                describe_response = client.describe_services(
-                    cluster=cluster.arn,
-                    services=service_arns,
-                    include=["TAGS"],
-                )
+                for service_arn in service_arns:
+                    describe_response = client.describe_services(
+                        cluster=cluster.arn,
+                        services=service_arn,
+                        include=["TAGS"],
+                    )
 
-                for service_desc in describe_response["services"]:
+                    service_desc = describe_response["services"][0]
                     service_arn = service_desc["serviceArn"]
                     service_obj = Service(
                         name=sub(":.*", "", service_arn.split("/")[2]),
