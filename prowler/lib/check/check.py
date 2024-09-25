@@ -477,7 +477,7 @@ def execute_checks(
                     custom_checks_metadata,
                     output_options,
                 )
-                report(check_findings, global_provider)
+                report(check_findings, global_provider, output_options)
                 all_findings.extend(check_findings)
 
                 # Update Audit Status
@@ -557,7 +557,9 @@ def execute_checks(
                         custom_checks_metadata,
                         output_options,
                     )
-                    report(check_findings, global_provider)
+
+                    report(check_findings, global_provider, output_options)
+
                     all_findings.extend(check_findings)
                     services_executed.add(service)
                     checks_executed.add(check_name)
@@ -590,9 +592,7 @@ def execute_checks(
             custom_report_interface = getattr(outputs_module, "report")
 
             # TODO: review this call and see if we can remove the global_provider.output_options since it is contained in the global_provider
-            custom_report_interface(
-                check_findings, global_provider.output_options, global_provider
-            )
+            custom_report_interface(check_findings, output_options, global_provider)
         except Exception:
             sys.exit(1)
 
@@ -626,11 +626,11 @@ def execute(
             check = update_check_metadata(
                 check, custom_checks_metadata["Checks"][check.CheckID]
             )
-            
+
         only_logs = False
         if hasattr(output_options, "only_logs"):
             only_logs = output_options.only_logs
-            
+
         # Execute the check
         check_findings = []
         logger.debug(f"Executing check: {check.CheckID}")
@@ -668,7 +668,7 @@ def execute(
                 finding.muted = global_provider.mutelist.is_finding_muted(
                     **is_finding_muted_args
                 )
-                
+
     except ModuleNotFoundError:
         logger.error(
             f"Check '{check.CheckID}' was not found for the {global_provider.type.upper()} provider"

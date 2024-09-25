@@ -1,6 +1,7 @@
 from unittest import mock
 
 import pytest
+from mock import MagicMock, patch
 
 from prowler.lib.scan.scan import Scan, get_service_checks_to_execute
 from tests.lib.outputs.fixtures.fixtures import generate_finding_output
@@ -33,7 +34,7 @@ finding = generate_finding_output(
 
 @pytest.fixture
 def mock_provider():
-    return set_mocked_aws_provider(status=["PASS"])
+    return set_mocked_aws_provider()
 
 
 @pytest.fixture
@@ -203,18 +204,40 @@ class TestScan:
         assert scan.get_completed_services() == set()
         assert scan.get_completed_checks() == set()
 
+    @patch("importlib.import_module")
     def test_scan(
-        mock_global_provider, mock_execute, mock_logger, mock_generate_output
+        mock_import_module,
+        mock_global_provider,
+        mock_execute,
+        mock_logger,
+        mock_generate_output,
     ):
-        checks_to_execute = {"accessanalyzer_enabled", "ec2_instance_public_ip"}
+        mock_check_class = MagicMock()
+        mock_check_instance = mock_check_class.return_value
+        mock_check_instance.Provider = "aws"
+        mock_check_instance.CheckID = "accessanalyzer_enabled"
+        mock_check_instance.CheckTitle = "Check if IAM Access Analyzer is enabled"
+
+        mock_import_module.return_value = MagicMock(
+            accessanalyzer_enabled=mock_check_class
+        )
+
+        checks_to_execute = {"accessanalyzer_enabled"}
         custom_checks_metadata = {}
-        # Create a Scan object
         mock_global_provider.type = "aws"
+
         scan = Scan(mock_global_provider, checks_to_execute)
-        # Mock the execute function and the import_check function
-        with mock.patch("prowler.lib.scan.scan.import_check", autospec=True):
-            scan.scan(custom_checks_metadata)
-        # Check that the execute function was called
-        mock_execute.assert_called_once()
-        # Check that the progress is 100%
-        assert scan.progress == 100
+        results = list(scan.scan(custom_checks_metadata))
+
+        assert mock_generate_output.call_count == 1 * len(mock_execute.side_effect())
+        assert mock_execute.call_count == 1
+        assert len(results) == 1
+        assert results[0][1] == mock_execute.side_effect()
+        assert results[0][0] == 100.0
+        assert scan.progress == 100.0
+        assert scan._number_of_checks_completed == 1
+        assert scan.service_checks_completed == {
+            "accessanalyzer": {"accessanalyzer_enabled"},
+        }
+        assert scan.findings == mock_execute.side_effect()
+        mock_logger.error.assert_not_called()

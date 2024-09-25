@@ -1,5 +1,6 @@
 from argparse import Namespace
 from datetime import datetime
+from os import rmdir
 from unittest import mock
 
 from freezegun import freeze_time
@@ -45,6 +46,9 @@ class Test_Output_Options:
         )
         assert output_options.bulk_checks_metadata == {}
 
+        rmdir(f"{arguments.output_directory}/compliance")
+        rmdir(arguments.output_directory)
+
     @freeze_time(datetime.today())
     def test_set_output_options_aws(self):
         arguments = Namespace()
@@ -73,6 +77,9 @@ class Test_Output_Options:
         assert output_options.bulk_checks_metadata == {}
         assert output_options.verbose
         assert output_options.output_filename == arguments.output_filename
+
+        rmdir(f"{arguments.output_directory}/compliance")
+        rmdir(arguments.output_directory)
 
     @freeze_time(datetime.today())
     def test_azure_provider_output_options_with_domain(self):
@@ -109,6 +116,9 @@ class Test_Output_Options:
             == f"prowler-output-{identity.tenant_domain}-{output_file_timestamp}"
         )
 
+        rmdir(f"{arguments.output_directory}/compliance")
+        rmdir(arguments.output_directory)
+
     @freeze_time(datetime.today())
     def test_gcp_output_options(self):
         arguments = Namespace()
@@ -140,6 +150,9 @@ class Test_Output_Options:
         assert output_optionss.verbose
         assert f"prowler-output-{identity.profile}" in output_optionss.output_filename
 
+        rmdir(f"{arguments.output_directory}/compliance")
+        rmdir(arguments.output_directory)
+
     def test_set_output_options_kubernetes(self):
         arguments = Namespace()
         arguments.status = []
@@ -167,3 +180,6 @@ class Test_Output_Options:
         assert output_options.bulk_checks_metadata == {}
         assert output_options.verbose
         assert output_options.output_filename == arguments.output_filename
+
+        rmdir(f"{arguments.output_directory}/compliance")
+        rmdir(arguments.output_directory)

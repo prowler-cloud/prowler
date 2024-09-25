@@ -66,6 +66,7 @@ class Test_cloudfront_s3_origin_non_existent_bucket:
         nonexistent_bucket = "nonexistent-bucket"
         s3_client = mock.MagicMock
         s3_client.buckets = {}
+        s3_client._head_bucket = mock.MagicMock(return_value=False)
 
         with mock.patch(
             "prowler.providers.aws.services.s3.s3_service.S3", new=s3_client
@@ -125,6 +126,7 @@ class Test_cloudfront_s3_origin_non_existent_bucket:
                 region=AWS_REGION_EU_WEST_1,
             )
         }
+        s3_client._head_bucket = mock.MagicMock(return_value=True)
 
         with mock.patch(
             "prowler.providers.aws.services.s3.s3_service.S3", new=s3_client
