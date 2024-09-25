@@ -47,8 +47,9 @@ class ECR(AWSService):
                                 scan_on_push=repository["imageScanningConfiguration"][
                                     "scanOnPush"
                                 ],
-                                immutability=repository["imageTagMutability"]
-                                == "IMMUTABLE",
+                                immutability=repository.get(
+                                    "imageTagMutability", "MUTABLE"
+                                ),
                                 policy=None,
                                 images_details=[],
                                 lifecycle_policy=None,
@@ -374,7 +375,7 @@ class Repository(BaseModel):
     region: str
     registry_id = str
     scan_on_push: bool
-    immutability: Optional[bool]
+    immutability: Optional[str]
     policy: Optional[dict]
     images_details: Optional[list[ImageDetails]]
     lifecycle_policy: Optional[str]

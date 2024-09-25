@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "ecr_repositories_immutability_tag_configured",
+  "CheckID": "ecr_private_repository_tag_immutability",
   "CheckTitle": "ECR private repositories should have tag immutability configured",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices"

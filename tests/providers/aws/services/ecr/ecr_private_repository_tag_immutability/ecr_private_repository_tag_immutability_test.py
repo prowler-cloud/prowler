@@ -24,7 +24,7 @@ repo_policy_public = {
 }
 
 
-class Test_ecr_repositories_immutability_tag_configured:
+class Test_ecr_private_repository_tag_immutability:
     # Mocked Audit Info
 
     def test_no_registries(self):
@@ -35,14 +35,14 @@ class Test_ecr_repositories_immutability_tag_configured:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_aws_provider(),
         ), mock.patch(
-            "prowler.providers.aws.services.ecr.ecr_repositories_immutability_tag_configured.ecr_repositories_immutability_tag_configured.ecr_client",
+            "prowler.providers.aws.services.ecr.ecr_private_repository_tag_immutability.ecr_private_repository_tag_immutability.ecr_client",
             ecr_client,
         ):
-            from prowler.providers.aws.services.ecr.ecr_repositories_immutability_tag_configured.ecr_repositories_immutability_tag_configured import (
-                ecr_repositories_immutability_tag_configured,
+            from prowler.providers.aws.services.ecr.ecr_private_repository_tag_immutability.ecr_private_repository_tag_immutability import (
+                ecr_private_repository_tag_immutability,
             )
 
-            check = ecr_repositories_immutability_tag_configured()
+            check = ecr_private_repository_tag_immutability()
             result = check.execute()
             assert len(result) == 0
 
@@ -61,14 +61,14 @@ class Test_ecr_repositories_immutability_tag_configured:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_aws_provider(),
         ), mock.patch(
-            "prowler.providers.aws.services.ecr.ecr_repositories_immutability_tag_configured.ecr_repositories_immutability_tag_configured.ecr_client",
+            "prowler.providers.aws.services.ecr.ecr_private_repository_tag_immutability.ecr_private_repository_tag_immutability.ecr_client",
             ecr_client,
         ):
-            from prowler.providers.aws.services.ecr.ecr_repositories_immutability_tag_configured.ecr_repositories_immutability_tag_configured import (
-                ecr_repositories_immutability_tag_configured,
+            from prowler.providers.aws.services.ecr.ecr_private_repository_tag_immutability.ecr_private_repository_tag_immutability import (
+                ecr_private_repository_tag_immutability,
             )
 
-            check = ecr_repositories_immutability_tag_configured()
+            check = ecr_private_repository_tag_immutability()
             result = check.execute()
             assert len(result) == 0
 
@@ -86,7 +86,7 @@ class Test_ecr_repositories_immutability_tag_configured:
                     arn=repository_arn,
                     region=AWS_REGION_EU_WEST_1,
                     scan_on_push=True,
-                    immutability=True,
+                    immutability="IMMUTABLE",
                     policy=repo_policy_public,
                     images_details=None,
                     lifecycle_policy="test-policy",
@@ -98,14 +98,14 @@ class Test_ecr_repositories_immutability_tag_configured:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_aws_provider(),
         ), mock.patch(
-            "prowler.providers.aws.services.ecr.ecr_repositories_immutability_tag_configured.ecr_repositories_immutability_tag_configured.ecr_client",
+            "prowler.providers.aws.services.ecr.ecr_private_repository_tag_immutability.ecr_private_repository_tag_immutability.ecr_client",
             ecr_client,
         ):
-            from prowler.providers.aws.services.ecr.ecr_repositories_immutability_tag_configured.ecr_repositories_immutability_tag_configured import (
-                ecr_repositories_immutability_tag_configured,
+            from prowler.providers.aws.services.ecr.ecr_private_repository_tag_immutability.ecr_private_repository_tag_immutability import (
+                ecr_private_repository_tag_immutability,
             )
 
-            check = ecr_repositories_immutability_tag_configured()
+            check = ecr_private_repository_tag_immutability()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
@@ -131,7 +131,7 @@ class Test_ecr_repositories_immutability_tag_configured:
                     arn=repository_arn,
                     region=AWS_REGION_EU_WEST_1,
                     scan_on_push=False,
-                    immutability=False,
+                    immutability="MUTABLE",
                     policy=repo_policy_public,
                     images_details=None,
                     lifecycle_policy=None,
@@ -143,14 +143,14 @@ class Test_ecr_repositories_immutability_tag_configured:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_aws_provider(),
         ), mock.patch(
-            "prowler.providers.aws.services.ecr.ecr_repositories_immutability_tag_configured.ecr_repositories_immutability_tag_configured.ecr_client",
+            "prowler.providers.aws.services.ecr.ecr_private_repository_tag_immutability.ecr_private_repository_tag_immutability.ecr_client",
             ecr_client,
         ):
-            from prowler.providers.aws.services.ecr.ecr_repositories_immutability_tag_configured.ecr_repositories_immutability_tag_configured import (
-                ecr_repositories_immutability_tag_configured,
+            from prowler.providers.aws.services.ecr.ecr_private_repository_tag_immutability.ecr_private_repository_tag_immutability import (
+                ecr_private_repository_tag_immutability,
             )
 
-            check = ecr_repositories_immutability_tag_configured()
+            check = ecr_private_repository_tag_immutability()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
