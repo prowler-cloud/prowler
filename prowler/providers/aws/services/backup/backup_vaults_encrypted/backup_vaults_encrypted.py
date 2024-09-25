@@ -16,6 +16,7 @@ class backup_vaults_encrypted(Check):
                 report.resource_arn = backup_vault.arn
                 report.resource_id = backup_vault.name
                 report.region = backup_vault.region
+                report.resource_tags = backup_vault.tags
                 # if it is encrypted we only change the status and the status extended
                 if backup_vault.encryption:
                     report.status = "PASS"

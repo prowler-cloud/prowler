@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "dynamodb_table_protected_by_backup_plan",
+  "CheckTitle": "Check if DynamoDB tables are included in a backup plan.",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "dynamodb",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:dynamodb:region:account-id:table/table-name",
+  "Severity": "medium",
+  "ResourceType": "AwsDynamoDbTable",
+  "Description": "This control checks whether an Amazon DynamoDB table is covered by a backup plan. The control fails if the DynamoDB table isn't included in a backup plan.",
+  "Risk": "If a DynamoDB table is not covered by a backup plan, data loss may occur due to accidental deletion, corruption, or unexpected failure, compromising the resilience of your application.",
+  "RelatedUrl": "https://docs.aws.amazon.com/aws-backup/latest/devguide/assigning-resources.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/dynamodb-controls.html#dynamodb-4",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure that all active DynamoDB tables are included in a backup plan to safeguard against data loss.",
+      "Url": "https://docs.aws.amazon.com/aws-backup/latest/devguide/assigning-resources.html"
+    }
+  },
+  "Categories": [
+    "redundancy"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
