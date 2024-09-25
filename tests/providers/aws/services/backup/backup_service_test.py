@@ -2,10 +2,15 @@ from datetime import datetime
 from unittest.mock import patch
 
 import botocore
+from boto3 import client
 from moto import mock_aws
 
 from prowler.providers.aws.services.backup.backup_service import Backup
-from tests.providers.aws.utils import AWS_REGION_EU_WEST_1, set_mocked_aws_provider
+from tests.providers.aws.utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_provider,
+)
 
 # Mocking Backup Calls
 make_api_call = botocore.client.BaseClient._make_api_call
@@ -74,15 +79,14 @@ def mock_generate_regional_clients(provider, service):
     return {AWS_REGION_EU_WEST_1: regional_client}
 
 
-@mock_aws
-# Patch every AWS call using Boto3 and generate_regional_clients to have 1 client
-@patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
-@patch(
-    "prowler.providers.aws.aws_provider.AwsProvider.generate_regional_clients",
-    new=mock_generate_regional_clients,
-)
 class Test_Backup_Service:
     # Test Backup Client
+    @mock_aws
+    @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
+    @patch(
+        "prowler.providers.aws.aws_provider.AwsProvider.generate_regional_clients",
+        new=mock_generate_regional_clients,
+    )
     def test_get_client(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         backup = Backup(aws_provider)
@@ -91,18 +95,36 @@ class Test_Backup_Service:
         )
 
     # Test Backup Session
+    @mock_aws
+    @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
+    @patch(
+        "prowler.providers.aws.aws_provider.AwsProvider.generate_regional_clients",
+        new=mock_generate_regional_clients,
+    )
     def test__get_session__(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         access_analyzer = Backup(aws_provider)
         assert access_analyzer.session.__class__.__name__ == "Session"
 
-    # Test Backup Service
+    # Test Backup Serviceç
+    @mock_aws
+    @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
+    @patch(
+        "prowler.providers.aws.aws_provider.AwsProvider.generate_regional_clients",
+        new=mock_generate_regional_clients,
+    )
     def test__get_service__(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         access_analyzer = Backup(aws_provider)
         assert access_analyzer.service == "backup"
 
     # Test Backup List Backup Vaults
+    @mock_aws
+    @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
+    @patch(
+        "prowler.providers.aws.aws_provider.AwsProvider.generate_regional_clients",
+        new=mock_generate_regional_clients,
+    )
     def test_list_backup_vaults(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         backup = Backup(aws_provider)
@@ -117,6 +139,12 @@ class Test_Backup_Service:
         assert backup.backup_vaults[0].max_retention_days == 2
 
     # Test Backup List Backup Plans
+    @mock_aws
+    @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
+    @patch(
+        "prowler.providers.aws.aws_provider.AwsProvider.generate_regional_clients",
+        new=mock_generate_regional_clients,
+    )
     def test_list_backup_plans(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         backup = Backup(aws_provider)
@@ -130,6 +158,12 @@ class Test_Backup_Service:
         assert backup.backup_plans[0].advanced_settings == []
 
     # Test Backup List Report Plans
+    @mock_aws
+    @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
+    @patch(
+        "prowler.providers.aws.aws_provider.AwsProvider.generate_regional_clients",
+        new=mock_generate_regional_clients,
+    )
     def test_list_backup_report_plans(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         backup = Backup(aws_provider)
@@ -144,6 +178,12 @@ class Test_Backup_Service:
             2015, 1, 1
         )
 
+    @mock_aws
+    @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
+    @patch(
+        "prowler.providers.aws.aws_provider.AwsProvider.generate_regional_clients",
+        new=mock_generate_regional_clients,
+    )
     def test_list_protected_resources(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         backup = Backup(aws_provider)
@@ -155,3 +195,43 @@ class Test_Backup_Service:
         assert protected_resource.resource_type == "RDS"
         assert protected_resource.region == AWS_REGION_EU_WEST_1
         assert protected_resource.last_backup_time == datetime(2015, 1, 1)
+
+    @mock_aws
+    def test_list_tags(self):
+        backup_client = client("backup", region_name=AWS_REGION_EU_WEST_1)
+
+        # Create necessary resources and tags
+        backup_vault = backup_client.create_backup_vault(
+            BackupVaultName="TestVault",
+            EncryptionKeyArn=f"arn:aws:kms:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:key/1234abcd-12ab-34cd-56ef-123456789012",
+        )
+
+        tags = {"TestKey": "TestValue"}
+
+        backup_client.tag_resource(
+            ResourceArn=backup_vault["BackupVaultArn"], Tags=tags
+        )
+
+        # Create a backup plan
+        backup_client.create_backup_plan(
+            BackupPlan={
+                "BackupPlanName": "TestPlan",
+                "Rules": [
+                    {
+                        "RuleName": "TestRule",
+                        "TargetBackupVaultName": "TestVault",  # Match the vault name
+                        "ScheduleExpression": "cron(0 12 * * ? *)",
+                    }
+                ],
+            }
+        )
+
+        # Test list_tags
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        backup = Backup(aws_provider)
+
+        assert len(backup.backup_vaults) == 1
+        assert len(backup.backup_vaults[0].tags) == 1
+        assert backup.backup_vaults[0].tags[0]["TestKey"] == "TestValue"
+        assert len(backup.backup_plans) == 1
+        assert len(backup.backup_plans[0].tags) == 0
