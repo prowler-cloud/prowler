@@ -103,7 +103,7 @@ class Test_iam_inline_policy_no_administrative_privileges:
             assert results[0].status == "FAIL"
             assert (
                 results[0].status_extended
-                == f"Inline policy {policy_name} attached to group {group_arn} allows '*:*' administrative privileges."
+                == f"Inline policy {policy_name} attached to group {group_name} allows '*:*' administrative privileges."
             )
 
     @mock_aws
@@ -147,7 +147,7 @@ class Test_iam_inline_policy_no_administrative_privileges:
             assert results[0].status == "PASS"
             assert (
                 results[0].status_extended
-                == f"Inline policy {policy_name} attached to group {group_arn} does not allow '*:*' administrative privileges."
+                == f"Inline policy {policy_name} attached to group {group_name} does not allow '*:*' administrative privileges."
             )
 
     @mock_aws
@@ -201,7 +201,7 @@ class Test_iam_inline_policy_no_administrative_privileges:
                     assert result.status == "FAIL"
                     assert (
                         result.status_extended
-                        == f"Inline policy {policy_name_admin} attached to group {group_arn} allows '*:*' administrative privileges."
+                        == f"Inline policy {policy_name_admin} attached to group {group_name} allows '*:*' administrative privileges."
                     )
 
                 elif result.resource_id == policy_name_not_admin:
@@ -212,7 +212,7 @@ class Test_iam_inline_policy_no_administrative_privileges:
                     assert result.status == "PASS"
                     assert (
                         result.status_extended
-                        == f"Inline policy {policy_name_not_admin} attached to group {group_arn} does not allow '*:*' administrative privileges."
+                        == f"Inline policy {policy_name_not_admin} attached to group {group_name} does not allow '*:*' administrative privileges."
                     )
 
     # Roles
@@ -291,7 +291,7 @@ class Test_iam_inline_policy_no_administrative_privileges:
             assert results[0].status == "FAIL"
             assert (
                 results[0].status_extended
-                == f"Inline policy {policy_name} attached to role {role_arn} allows '*:*' administrative privileges."
+                == f"Inline policy {policy_name} attached to role {role_name} allows '*:*' administrative privileges."
             )
 
     @mock_aws
@@ -338,7 +338,7 @@ class Test_iam_inline_policy_no_administrative_privileges:
             assert results[0].status == "PASS"
             assert (
                 results[0].status_extended
-                == f"Inline policy {policy_name} attached to role {role_arn} does not allow '*:*' administrative privileges."
+                == f"Inline policy {policy_name} attached to role {role_name} does not allow '*:*' administrative privileges."
             )
 
     @mock_aws
@@ -394,7 +394,7 @@ class Test_iam_inline_policy_no_administrative_privileges:
                     assert result.status == "FAIL"
                     assert (
                         result.status_extended
-                        == f"Inline policy {policy_name_admin} attached to group {role_arn} allows '*:*' administrative privileges."
+                        == f"Inline policy {policy_name_admin} attached to group {role_name} allows '*:*' administrative privileges."
                     )
 
                 elif result.resource_id == policy_name_not_admin:
@@ -405,7 +405,7 @@ class Test_iam_inline_policy_no_administrative_privileges:
                     assert result.status == "PASS"
                     assert (
                         result.status_extended
-                        == f"Inline policy {policy_name_not_admin} attached to group {role_arn} does not allow '*:*' administrative privileges."
+                        == f"Inline policy {policy_name_not_admin} attached to group {role_name} does not allow '*:*' administrative privileges."
                     )
 
     # Users
@@ -484,7 +484,7 @@ class Test_iam_inline_policy_no_administrative_privileges:
             assert results[0].status == "FAIL"
             assert (
                 results[0].status_extended
-                == f"Inline policy {policy_name} attached to user {user_arn} allows '*:*' administrative privileges."
+                == f"Inline policy {policy_name} attached to user {user_name} allows '*:*' administrative privileges."
             )
 
     @mock_aws
@@ -532,7 +532,7 @@ class Test_iam_inline_policy_no_administrative_privileges:
             assert results[0].status == "PASS"
             assert (
                 results[0].status_extended
-                == f"Inline policy {policy_name} attached to user {user_arn} does not allow '*:*' administrative privileges."
+                == f"Inline policy {policy_name} attached to user {user_name} does not allow '*:*' administrative privileges."
             )
 
     @mock_aws
@@ -589,7 +589,7 @@ class Test_iam_inline_policy_no_administrative_privileges:
                     assert result.status == "FAIL"
                     assert (
                         result.status_extended
-                        == f"Inline policy {policy_name_admin} attached to user {user_arn} allows '*:*' administrative privileges."
+                        == f"Inline policy {policy_name_admin} attached to user {user_name} allows '*:*' administrative privileges."
                     )
 
                 elif result.resource_id == policy_name_not_admin:
@@ -600,5 +600,5 @@ class Test_iam_inline_policy_no_administrative_privileges:
                     assert result.status == "PASS"
                     assert (
                         result.status_extended
-                        == f"Inline policy {policy_name_not_admin} attached to user {user_arn} does not allow '*:*' administrative privileges."
+                        == f"Inline policy {policy_name_not_admin} attached to user {user_name} does not allow '*:*' administrative privileges."
                     )
