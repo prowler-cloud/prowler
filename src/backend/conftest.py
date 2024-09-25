@@ -1,25 +1,26 @@
-import logging
 import base64
+import logging
+
 import pytest
 from django.conf import settings
 from django.db import connections as django_connections, connection as django_connection
 from django_celery_results.models import TaskResult
+from prowler.lib.outputs.finding import Severity, Status
+from rest_framework import status
 from rest_framework.test import APIClient
 
-from rest_framework import status
-
-
-from prowler.lib.outputs.finding import Severity, Status
-
+from api.models import (
+    Finding,
+)
 from api.models import (
     User,
     Provider,
-    Finding,
     Resource,
     ResourceTag,
     Scan,
     StateChoices,
     Task,
+    Membership,
 )
 from api.rls import Tenant
 
@@ -70,13 +71,17 @@ def disable_logging():
 def create_test_user(django_db_setup, django_db_blocker):
     with django_db_blocker.unblock():
         user = User.objects.create_user(
-            username=TEST_USER, password=TEST_PASSWORD, email="testing@gmail.com"
+            name="testing",
+            username=TEST_USER,
+            password=TEST_PASSWORD,
+            email="testing@gmail.com",
         )
     return user
 
 
 @pytest.fixture
 def authenticated_client(create_test_user, client):
+    client.user = create_test_user
     client.defaults["HTTP_AUTHORIZATION"] = f"Basic {TEST_BASE64_CREDENTIALS}"
     return client
 
@@ -89,12 +94,22 @@ def authenticated_api_client(create_test_user):
 
 
 @pytest.fixture
-def tenants_fixture():
+def tenants_fixture(create_test_user):
+    user = create_test_user
     tenant1 = Tenant.objects.create(
         name="Tenant One",
     )
+    Membership.objects.create(
+        user=user,
+        tenant=tenant1,
+    )
     tenant2 = Tenant.objects.create(
         name="Tenant Two",
+    )
+    Membership.objects.create(
+        user=user,
+        tenant=tenant2,
+        role=Membership.RoleChoices.OWNER,
     )
     return tenant1, tenant2
 

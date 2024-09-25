@@ -18,6 +18,7 @@ DB_PROWLER_PASSWORD = (
 )
 TASK_RUNNER_DB_TABLE = "django_celery_results_taskresult"
 POSTGRES_TENANT_VAR = "api.tenant_id"
+POSTGRES_USER_VAR = "api.user_id"
 
 
 @contextmanager
@@ -132,6 +133,18 @@ def register_enum(apps, schema_editor, enum_class):  # noqa: F841
         )
         register_type(enum_instance, connection)
         register_adapter(enum_class, enum_adapter)
+
+
+# Postgres enum definition for member role
+
+
+class MemberRoleEnum(EnumType):
+    enum_type_name = "member_role"
+
+
+class MemberRoleEnumField(PostgresEnumField):
+    def __init__(self, *args, **kwargs):
+        super().__init__("member_role", *args, **kwargs)
 
 
 # Postgres enum definition for Provider.provider

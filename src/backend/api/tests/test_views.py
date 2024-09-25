@@ -1,3 +1,4 @@
+import base64
 from datetime import datetime
 from unittest.mock import Mock, patch
 
@@ -5,9 +6,14 @@ import pytest
 from django.urls import reverse
 from rest_framework import status
 
-from api.models import User, Provider, Scan
+from api.models import User, Membership, Provider, Scan
 from api.rls import Tenant
-from conftest import API_JSON_CONTENT_TYPE, NO_TENANT_HTTP_STATUS
+from conftest import (
+    API_JSON_CONTENT_TYPE,
+    NO_TENANT_HTTP_STATUS,
+    TEST_USER,
+    TEST_PASSWORD,
+)
 
 TODAY = str(datetime.today().date())
 
@@ -18,11 +24,11 @@ class TestUserViewSet:
         response = authenticated_client.get(reverse("user-list"))
         assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
 
-    def test_users_retrieve_not_allowed(self, authenticated_client, create_test_user):
+    def test_users_retrieve(self, authenticated_client, create_test_user):
         response = authenticated_client.get(
             reverse("user-detail", kwargs={"pk": create_test_user.id})
         )
-        assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
+        assert response.status_code == status.HTTP_200_OK
 
     def test_users_me(self, authenticated_client, create_test_user):
         response = authenticated_client.get(reverse("user-me"))
@@ -34,6 +40,7 @@ class TestUserViewSet:
 
     def test_users_create(self, client):
         valid_user_payload = {
+            "name": "test",
             "username": "newuser",
             "password": "newpassword123",
             "email": "newuser@example.com",
@@ -47,6 +54,7 @@ class TestUserViewSet:
 
     def test_users_invalid_create(self, client):
         invalid_user_payload = {
+            "name": "test",
             "username": "theusernameisfine",
             "password": "thepasswordisfine123",
             "email": "invalidemail",
@@ -87,6 +95,7 @@ class TestUserViewSet:
     )
     def test_users_create_invalid_passwords(self, authenticated_client, password):
         invalid_user_payload = {
+            "name": "test",
             "username": "thisisfine",
             "password": password,
             "email": "thisisafineemail@prowler.com",
@@ -231,6 +240,7 @@ class TestUserViewSet:
         self, client, attribute_key, attribute_value, error_field
     ):
         invalid_payload = {
+            "name": "test",
             "username": "testuser",
             "password": "testpassword",
             "email": "test@example.com",
@@ -269,6 +279,33 @@ class TestTenantViewSet:
             "inserted_at": "2023-01-05",
             "updated_at": "2023-01-06",
         }
+
+    @pytest.fixture
+    def extra_users(self, tenants_fixture):
+        _, tenant2 = tenants_fixture
+        user2 = User.objects.create_user(
+            name="testing2",
+            username="testing2",
+            password=TEST_PASSWORD,
+            email="testing2@gmail.com",
+        )
+        user3 = User.objects.create_user(
+            name="testing3",
+            username="testing3",
+            password=TEST_PASSWORD,
+            email="testing3@gmail.com",
+        )
+        membership2 = Membership.objects.create(
+            user=user2,
+            tenant=tenant2,
+            role=Membership.RoleChoices.OWNER,
+        )
+        membership3 = Membership.objects.create(
+            user=user3,
+            tenant=tenant2,
+            role=Membership.RoleChoices.MEMBER,
+        )
+        return (user2, membership2), (user3, membership3)
 
     def test_tenants_list(self, authenticated_client, tenants_fixture):
         response = authenticated_client.get(reverse("tenant-list"))
@@ -452,6 +489,267 @@ class TestTenantViewSet:
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == 2
         assert response.json()["data"][0]["attributes"]["name"] == tenant2.name
+
+    def test_tenants_list_memberships_as_owner(
+        self, authenticated_client, tenants_fixture, extra_users
+    ):
+        _, tenant2 = tenants_fixture
+        response = authenticated_client.get(
+            reverse("tenant-membership-list", kwargs={"tenant_pk": tenant2.id})
+        )
+        assert response.status_code == status.HTTP_200_OK
+        # Test user + 2 extra users for tenant 2
+        assert len(response.json()["data"]) == 3
+
+    def test_tenants_list_memberships_as_member(
+        self, authenticated_client, tenants_fixture, extra_users
+    ):
+        _, tenant2 = tenants_fixture
+        _, user3_membership = extra_users
+        user3, membership3 = user3_membership
+        base_64_credentials = base64.b64encode(
+            f"{user3.username}:{TEST_PASSWORD}".encode()
+        ).decode()
+        response = authenticated_client.get(
+            reverse("tenant-membership-list", kwargs={"tenant_pk": tenant2.id}),
+            headers={"Authorization": f"Basic {base_64_credentials}"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        # User is a member and can only see its own membership
+        assert len(response.json()["data"]) == 1
+        assert response.json()["data"][0]["id"] == str(membership3.id)
+
+    def test_tenants_delete_own_membership_as_member(
+        self, authenticated_client, tenants_fixture, extra_users
+    ):
+        tenant1, _ = tenants_fixture
+        membership = Membership.objects.get(tenant=tenant1, user__username=TEST_USER)
+
+        response = authenticated_client.delete(
+            reverse(
+                "tenant-membership-detail",
+                kwargs={"tenant_pk": tenant1.id, "pk": membership.id},
+            )
+        )
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+        assert not Membership.objects.filter(id=membership.id).exists()
+
+    def test_tenants_delete_own_membership_as_owner(
+        self, authenticated_client, tenants_fixture, extra_users
+    ):
+        # With extra_users, tenant2 has 2 owners
+        _, tenant2 = tenants_fixture
+        user_membership = Membership.objects.get(
+            tenant=tenant2, user__username=TEST_USER
+        )
+        response = authenticated_client.delete(
+            reverse(
+                "tenant-membership-detail",
+                kwargs={"tenant_pk": tenant2.id, "pk": user_membership.id},
+            )
+        )
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+        assert not Membership.objects.filter(id=user_membership.id).exists()
+
+    def test_tenants_delete_own_membership_as_last_owner(
+        self, authenticated_client, tenants_fixture
+    ):
+        _, tenant2 = tenants_fixture
+        user_membership = Membership.objects.get(
+            tenant=tenant2, user__username=TEST_USER
+        )
+        response = authenticated_client.delete(
+            reverse(
+                "tenant-membership-detail",
+                kwargs={"tenant_pk": tenant2.id, "pk": user_membership.id},
+            )
+        )
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert Membership.objects.filter(id=user_membership.id).exists()
+
+    def test_tenants_delete_another_membership_as_owner(
+        self, authenticated_client, tenants_fixture, extra_users
+    ):
+        _, tenant2 = tenants_fixture
+        _, user3_membership = extra_users
+        user3, membership3 = user3_membership
+
+        response = authenticated_client.delete(
+            reverse(
+                "tenant-membership-detail",
+                kwargs={"tenant_pk": tenant2.id, "pk": membership3.id},
+            )
+        )
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+        assert not Membership.objects.filter(id=membership3.id).exists()
+
+    def test_tenants_delete_another_membership_as_member(
+        self, authenticated_client, tenants_fixture, extra_users
+    ):
+        _, tenant2 = tenants_fixture
+        _, user3_membership = extra_users
+        user3, membership3 = user3_membership
+
+        # Downgrade membership role manually
+        user_membership = Membership.objects.get(
+            tenant=tenant2, user__username=TEST_USER
+        )
+        user_membership.role = Membership.RoleChoices.MEMBER
+        user_membership.save()
+
+        response = authenticated_client.delete(
+            reverse(
+                "tenant-membership-detail",
+                kwargs={"tenant_pk": tenant2.id, "pk": membership3.id},
+            )
+        )
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert Membership.objects.filter(id=membership3.id).exists()
+
+    def test_tenants_list_memberships_not_member_of_tenant(self, authenticated_client):
+        # Create a tenant the user is not a member of
+        tenant3 = Tenant.objects.create(name="Tenant Three")
+
+        response = authenticated_client.get(
+            reverse("tenant-membership-list", kwargs={"tenant_pk": tenant3.id})
+        )
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+
+@pytest.mark.django_db
+class TestMembershipViewSet:
+    def test_memberships_list(self, authenticated_client, tenants_fixture):
+        user_id = authenticated_client.user.pk
+        response = authenticated_client.get(
+            reverse("user-membership-list", kwargs={"user_pk": user_id}),
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == len(tenants_fixture)
+
+    def test_memberships_retrieve(self, authenticated_client, tenants_fixture):
+        user_id = authenticated_client.user.pk
+        list_response = authenticated_client.get(
+            reverse("user-membership-list", kwargs={"user_pk": user_id}),
+        )
+        assert list_response.status_code == status.HTTP_200_OK
+        membership = list_response.json()["data"][0]
+
+        response = authenticated_client.get(
+            reverse(
+                "user-membership-detail",
+                kwargs={"user_pk": user_id, "pk": membership["id"]},
+            ),
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert (
+            response.json()["data"]["relationships"]["tenant"]["data"]["id"]
+            == membership["relationships"]["tenant"]["data"]["id"]
+        )
+        assert (
+            response.json()["data"]["relationships"]["user"]["data"]["id"]
+            == membership["relationships"]["user"]["data"]["id"]
+        )
+
+    def test_memberships_invalid_retrieve(self, authenticated_client, tenant_header):
+        user_id = authenticated_client.user.pk
+        response = authenticated_client.get(
+            reverse(
+                "user-membership-detail",
+                kwargs={
+                    "user_pk": user_id,
+                    "pk": "b91c5eff-13f5-469c-9fd8-917b3a3037b6",
+                },
+            ),
+        )
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    @pytest.mark.parametrize(
+        "filter_name, filter_value, expected_count",
+        [
+            ("role", "owner", 1),
+            ("role", "member", 1),
+            ("date_joined", TODAY, 2),
+            ("date_joined.gte", "2024-01-01", 2),
+            ("date_joined.lte", "2024-01-01", 0),
+        ],
+    )
+    def test_memberships_filters(
+        self,
+        authenticated_client,
+        tenants_fixture,
+        filter_name,
+        filter_value,
+        expected_count,
+    ):
+        user_id = authenticated_client.user.pk
+        response = authenticated_client.get(
+            reverse("user-membership-list", kwargs={"user_pk": user_id}),
+            {f"filter[{filter_name}]": filter_value},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == expected_count
+
+    def test_memberships_filters_relationships(
+        self, authenticated_client, tenants_fixture
+    ):
+        user_id = authenticated_client.user.pk
+        tenant, *_ = tenants_fixture
+        # No filter
+        response = authenticated_client.get(
+            reverse("user-membership-list", kwargs={"user_pk": user_id}),
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 2
+
+        # Filter by tenant
+        response = authenticated_client.get(
+            reverse("user-membership-list", kwargs={"user_pk": user_id}),
+            {"filter[tenant]": tenant.id},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 1
+
+    @pytest.mark.parametrize(
+        "filter_name",
+        [
+            "role",  # Valid filter, invalid value
+            "tenant",  # Valid filter, invalid value
+            "invalid",  # Invalid filter
+        ],
+    )
+    def test_memberships_filters_invalid(
+        self, authenticated_client, tenants_fixture, filter_name
+    ):
+        user_id = authenticated_client.user.pk
+        response = authenticated_client.get(
+            reverse("user-membership-list", kwargs={"user_pk": user_id}),
+            {f"filter[{filter_name}]": "whatever"},
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    @pytest.mark.parametrize(
+        "sort_field",
+        [
+            "tenant",
+            "role",
+            "date_joined",
+        ],
+    )
+    def test_memberships_sort(self, authenticated_client, tenants_fixture, sort_field):
+        user_id = authenticated_client.user.pk
+        response = authenticated_client.get(
+            reverse("user-membership-list", kwargs={"user_pk": user_id}),
+            {"sort": sort_field},
+        )
+        assert response.status_code == status.HTTP_200_OK
+
+    def test_memberships_sort_invalid(self, authenticated_client, tenants_fixture):
+        user_id = authenticated_client.user.pk
+        response = authenticated_client.get(
+            reverse("user-membership-list", kwargs={"user_pk": user_id}),
+            {"sort": "invalid"},
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
 
 
 @pytest.mark.django_db

@@ -24,6 +24,7 @@ def test_basic_authentication(providers_fixture, tenant_header):
             "data": {
                 "type": "User",
                 "attributes": {
+                    "name": "test",
                     "username": test_user,
                     "password": test_password,
                     "email": "thisisnotimportant@prowler.com",

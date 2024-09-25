@@ -61,3 +61,16 @@ class BaseRLSViewSet(BaseViewSet):
         tenant_id = self.request.headers.get("X-Tenant-ID")
         context["tenant_id"] = tenant_id
         return context
+
+
+class BaseTenantViewset(BaseViewSet):
+    def dispatch(self, request, *args, **kwargs):
+        with transaction.atomic():
+            return super().dispatch(request, *args, **kwargs)
+
+    def initial(self, request, *args, **kwargs):
+        user_id = str(request.user.id)
+
+        with connection.cursor() as cursor:
+            cursor.execute(f"SELECT set_config('api.user_id', '{user_id}', TRUE);")
+            return super().initial(request, *args, **kwargs)

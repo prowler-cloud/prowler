@@ -701,8 +701,8 @@ paths:
             - service
             - tags
             - provider
-            - url
             - findings
+            - url
             - type
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
@@ -956,8 +956,8 @@ paths:
             - service
             - tags
             - provider
-            - url
             - findings
+            - url
             - type
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
@@ -1645,6 +1645,111 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/v1/tenants/{tenant_pk}/members:
+    get:
+      operationId: tenants_members_list
+      description: List the membership details of users in a tenant you are a part
+        of.
+      summary: List tenant memberships
+      parameters:
+      - in: query
+        name: fields[Membership]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - user
+            - tenant
+            - role
+            - date_joined
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - name: page[number]
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page[size]
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - -id
+            - user
+            - -user
+            - tenant
+            - -tenant
+            - role
+            - -role
+            - date_joined
+            - -date_joined
+        explode: false
+      - in: path
+        name: tenant_pk
+        schema:
+          type: string
+          format: uuid
+        description: Tenant ID
+        required: true
+      tags:
+      - Tenant
+      security:
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/PaginatedMembershipList'
+          description: ''
+  /api/v1/tenants/{tenant_pk}/members/{id}:
+    delete:
+      operationId: tenants_members_destroy
+      description: Delete the membership details of users in a tenant. You need to
+        be one of the owners to delete a membership that is not yours. If you are
+        the last owner of a tenant, you cannot delete your own membership.
+      summary: Delete tenant memberships
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this membership.
+        required: true
+      - in: path
+        name: tenant_pk
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Tenant
+      security:
+      - basicAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/v1/users:
     post:
       operationId: users_create
@@ -1743,6 +1848,7 @@ paths:
           items:
             type: string
             enum:
+            - name
             - username
             - email
             - date_joined
@@ -1759,6 +1865,139 @@ paths:
             application/vnd.api+json:
               schema:
                 $ref: '#/components/schemas/UserResponse'
+          description: ''
+  /api/v1/users/me/memberships:
+    get:
+      operationId: users_me_memberships_list
+      description: Retrieve a list of all user memberships with options for filtering
+        by various criteria.
+      summary: List user memberships
+      parameters:
+      - in: query
+        name: fields[Membership]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - user
+            - tenant
+            - role
+            - date_joined
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[date_joined]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[date_joined__date]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[date_joined__gte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[date_joined__lte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[role]
+        schema:
+          type: string
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: filter[tenant]
+        schema:
+          type: string
+          format: uuid
+      - name: page[number]
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page[size]
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - tenant
+            - -tenant
+            - role
+            - -role
+            - date_joined
+            - -date_joined
+        explode: false
+      tags:
+      - User
+      security:
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/PaginatedMembershipList'
+          description: ''
+  /api/v1/users/me/memberships/{id}:
+    get:
+      operationId: users_me_memberships_retrieve
+      description: Fetch detailed information about a specific user membership by
+        their ID.
+      summary: Retrieve membership data from the user
+      parameters:
+      - in: query
+        name: fields[Membership]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - user
+            - tenant
+            - role
+            - date_joined
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - User
+      security:
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/MembershipResponse'
           description: ''
 components:
   schemas:
@@ -1930,6 +2169,104 @@ components:
       type: string
       enum:
       - findings
+    Membership:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/MembershipTypeEnum'
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+        id:
+          type: string
+          format: uuid
+        attributes:
+          type: object
+          properties:
+            role:
+              enum:
+              - owner
+              - member
+              type: string
+              description: |-
+                * `owner` - Owner
+                * `member` - Member
+            date_joined:
+              type: string
+              format: date-time
+              readOnly: true
+          required:
+          - role
+        relationships:
+          type: object
+          properties:
+            user:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    type:
+                      type: string
+                      enum:
+                      - User
+                      title: Resource Type Name
+                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                        member is used to describe resource objects that share common
+                        attributes and relationships.
+                  required:
+                  - id
+                  - type
+              required:
+              - data
+              description: The identifier of the related object.
+              title: Resource Identifier
+            tenant:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    type:
+                      type: string
+                      enum:
+                      - Tenant
+                      title: Resource Type Name
+                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                        member is used to describe resource objects that share common
+                        attributes and relationships.
+                  required:
+                  - id
+                  - type
+              required:
+              - data
+              description: The identifier of the related object.
+              title: Resource Identifier
+          required:
+          - user
+          - tenant
+    MembershipResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Membership'
+      required:
+      - data
+    MembershipTypeEnum:
+      type: string
+      enum:
+      - Membership
     PaginatedFindingList:
       type: object
       properties:
@@ -1937,6 +2274,15 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Finding'
+      required:
+      - data
+    PaginatedMembershipList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Membership'
       required:
       - data
     PaginatedProviderList:
@@ -2105,6 +2451,10 @@ components:
             attributes:
               type: object
               properties:
+                name:
+                  type: string
+                  minLength: 3
+                  maxLength: 150
                 password:
                   type: string
                   writeOnly: true
@@ -2115,6 +2465,7 @@ components:
                   minLength: 1
                   maxLength: 254
               required:
+              - name
               - email
       required:
       - data
@@ -2796,6 +3147,10 @@ components:
         attributes:
           type: object
           properties:
+            name:
+              type: string
+              maxLength: 150
+              minLength: 3
             username:
               type: string
               pattern: ^[\w.@+-]+$
@@ -2809,6 +3164,7 @@ components:
               format: date-time
               readOnly: true
           required:
+          - name
           - username
           - email
     UserCreate:
@@ -2826,6 +3182,10 @@ components:
         attributes:
           type: object
           properties:
+            name:
+              type: string
+              maxLength: 150
+              minLength: 3
             username:
               type: string
               pattern: ^[\w.@+-]+$
@@ -2838,6 +3198,7 @@ components:
               format: email
               maxLength: 254
           required:
+          - name
           - username
           - password
           - email
@@ -2860,6 +3221,10 @@ components:
             attributes:
               type: object
               properties:
+                name:
+                  type: string
+                  minLength: 3
+                  maxLength: 150
                 username:
                   type: string
                   minLength: 1
@@ -2875,6 +3240,7 @@ components:
                   minLength: 1
                   maxLength: 254
               required:
+              - name
               - username
               - password
               - email
@@ -2913,6 +3279,10 @@ components:
         attributes:
           type: object
           properties:
+            name:
+              type: string
+              maxLength: 150
+              minLength: 3
             password:
               type: string
               writeOnly: true
@@ -2921,6 +3291,7 @@ components:
               format: email
               maxLength: 254
           required:
+          - name
           - email
     UserUpdateResponse:
       type: object

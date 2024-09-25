@@ -24,7 +24,6 @@ class Tenant(models.Model):
         db_table = "tenants"
 
 
-# TODO Add abstract class for non-RLS models
 class RowLevelSecurityConstraint(models.BaseConstraint):
     """
     Model constraint to enforce row-level security on a tenant based model, in addition to the least privileges.

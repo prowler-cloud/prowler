@@ -9,6 +9,7 @@ from rest_framework_json_api.serializers import ValidationError
 from api.models import (
     StateChoices,
     User,
+    Membership,
     Provider,
     Scan,
     Task,
@@ -62,14 +63,11 @@ class UserSerializer(BaseSerializerV1):
     Serializer for the User model.
     """
 
+    memberships = serializers.ResourceRelatedField(many=True, read_only=True)
+
     class Meta:
         model = User
-        fields = [
-            "id",
-            "username",
-            "email",
-            "date_joined",
-        ]
+        fields = ["id", "name", "username", "email", "date_joined", "memberships"]
 
 
 class UserCreateSerializer(BaseWriteSerializer):
@@ -77,7 +75,7 @@ class UserCreateSerializer(BaseWriteSerializer):
 
     class Meta:
         model = User
-        fields = ["username", "password", "email"]
+        fields = ["name", "username", "password", "email"]
 
     def validate_password(self, value):
         user = User(**{k: v for k, v in self.initial_data.items() if k != "type"})
@@ -99,7 +97,7 @@ class UserUpdateSerializer(BaseWriteSerializer):
 
     class Meta:
         model = User
-        fields = ["id", "password", "email"]
+        fields = ["id", "name", "password", "email"]
         extra_kwargs = {
             "id": {"read_only": True},
         }
@@ -229,9 +227,32 @@ class TenantSerializer(BaseSerializerV1):
     Serializer for the Tenant model.
     """
 
+    memberships = serializers.ResourceRelatedField(many=True, read_only=True)
+
     class Meta:
         model = Tenant
-        fields = "__all__"
+        fields = ["id", "name", "memberships"]
+
+
+# Memberships
+
+
+class MemberRoleEnumSerializerField(serializers.ChoiceField):
+    def __init__(self, **kwargs):
+        kwargs["choices"] = Membership.RoleChoices.choices
+        super().__init__(**kwargs)
+
+
+class MembershipSerializer(serializers.ModelSerializer):
+    role = MemberRoleEnumSerializerField()
+    user = serializers.HyperlinkedRelatedField(view_name="user-detail", read_only=True)
+    tenant = serializers.HyperlinkedRelatedField(
+        view_name="tenant-detail", read_only=True
+    )
+
+    class Meta:
+        model = Membership
+        fields = ["id", "user", "tenant", "role", "date_joined"]
 
 
 # Providers
@@ -402,8 +423,8 @@ class ResourceSerializer(RLSSerializer):
             "type_",
             "tags",
             "provider",
-            "url",
             "findings",
+            "url",
         ]
         extra_kwargs = {
             "id": {"read_only": True},

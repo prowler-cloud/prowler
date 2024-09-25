@@ -15,6 +15,7 @@ from rest_framework_json_api.serializers import ValidationError
 
 from api.db_utils import ProviderEnumField
 from api.models import (
+    Membership,
     Provider,
     Resource,
     ResourceTag,
@@ -104,6 +105,27 @@ class TenantFilter(FilterSet):
             "name": ["exact", "icontains"],
             "inserted_at": ["date", "gte", "lte"],
             "updated_at": ["gte", "lte"],
+        }
+
+
+class MembershipFilter(FilterSet):
+    date_joined = DateFilter(field_name="date_joined", lookup_expr="date")
+    role = CharFilter(method="filter_role")
+
+    def filter_role(self, queryset, name, value):
+        return enum_filter(
+            queryset,
+            value,
+            enum_choices=Membership.RoleChoices,
+            lookup_field="role",
+        )
+
+    class Meta:
+        model = Membership
+        fields = {
+            "tenant": ["exact"],
+            "role": ["exact"],
+            "date_joined": ["date", "gte", "lte"],
         }
 
 

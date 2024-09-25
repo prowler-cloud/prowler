@@ -24,6 +24,8 @@ from uuid6 import uuid7
 import api.rls
 from api.db_utils import (
     PostgresEnumMigration,
+    MemberRoleEnumField,
+    MemberRoleEnum,
     ProviderEnum,
     ProviderEnumField,
     ScanTriggerEnum,
@@ -35,6 +37,7 @@ from api.db_utils import (
     DB_PROWLER_PASSWORD,
     TASK_RUNNER_DB_TABLE,
     POSTGRES_TENANT_VAR,
+    POSTGRES_USER_VAR,
 )
 from api.models import (
     Provider,
@@ -43,10 +46,15 @@ from api.models import (
     Finding,
     StatusChoices,
     SeverityChoices,
+    Membership,
 )
 
 DB_NAME = settings.DATABASES["default"]["NAME"]
 
+MemberRoleEnumMigration = PostgresEnumMigration(
+    enum_name="member_role",
+    enum_values=tuple(role[0] for role in Membership.RoleChoices.choices),
+)
 
 ProviderEnumMigration = PostgresEnumMigration(
     enum_name="provider",
@@ -116,13 +124,6 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="User",
             fields=[
-                ("password", models.CharField(max_length=128, verbose_name="password")),
-                (
-                    "last_login",
-                    models.DateTimeField(
-                        blank=True, null=True, verbose_name="last login"
-                    ),
-                ),
                 (
                     "id",
                     models.UUIDField(
@@ -130,6 +131,20 @@ class Migration(migrations.Migration):
                         editable=False,
                         primary_key=True,
                         serialize=False,
+                    ),
+                ),
+                (
+                    "name",
+                    models.CharField(
+                        max_length=150,
+                        validators=[django.core.validators.MinLengthValidator(3)],
+                    ),
+                ),
+                ("password", models.CharField(max_length=128, verbose_name="password")),
+                (
+                    "last_login",
+                    models.DateTimeField(
+                        blank=True, null=True, verbose_name="last login"
                     ),
                 ),
                 (
@@ -189,6 +204,146 @@ class Migration(migrations.Migration):
             GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE tenants TO {DB_PROWLER_USER};
             """
         ),
+        # Create and register MemberRoleEnum type
+        migrations.RunPython(
+            MemberRoleEnumMigration.create_enum_type,
+            reverse_code=MemberRoleEnumMigration.drop_enum_type,
+        ),
+        migrations.RunPython(partial(register_enum, enum_class=MemberRoleEnum)),
+        migrations.CreateModel(
+            name="Membership",
+            fields=[
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                (
+                    "role",
+                    MemberRoleEnumField(
+                        choices=[("scheduled", "Scheduled"), ("member", "Member")],
+                        default="member",
+                    ),
+                ),
+                ("date_joined", models.DateTimeField(auto_now_add=True)),
+                (
+                    "tenant",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="memberships",
+                        related_query_name="membership",
+                        to="api.tenant",
+                    ),
+                ),
+                (
+                    "user",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="memberships",
+                        related_query_name="membership",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+            ],
+            options={
+                "db_table": "memberships",
+            },
+        ),
+        migrations.AddConstraint(
+            model_name="membership",
+            constraint=api.rls.BaseSecurityConstraint(
+                name="statements_on_membership",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="membership",
+            constraint=models.UniqueConstraint(
+                fields=("user", "tenant"),
+                name="unique_resources_by_membership",
+            ),
+        ),
+        # Enable tenants RLS based on memberships
+        migrations.RunSQL(f"""
+        ALTER TABLE tenants ENABLE ROW LEVEL SECURITY;
+
+        -- Policy for SELECT
+        CREATE POLICY "{DB_PROWLER_USER}_tenants_select"
+        ON tenants
+        FOR SELECT
+        TO {DB_PROWLER_USER}
+        USING (
+            CASE
+                WHEN (current_setting('{POSTGRES_USER_VAR}', true) IS NOT NULL AND current_setting('{POSTGRES_USER_VAR}', true) <> '') THEN
+                    EXISTS (
+                        SELECT 1
+                        FROM memberships
+                        WHERE
+                            memberships.tenant_id = tenants.id
+                            AND memberships.user_id = current_setting('{POSTGRES_USER_VAR}', true)::uuid
+                    )
+                WHEN (current_setting('{POSTGRES_TENANT_VAR}', true) IS NOT NULL AND current_setting('{POSTGRES_TENANT_VAR}', true) <> '') THEN
+                    tenants.id = current_setting('{POSTGRES_TENANT_VAR}', true)::uuid
+                ELSE
+                    FALSE
+            END
+        );
+
+        -- Policy for UPDATE
+        CREATE POLICY "{DB_PROWLER_USER}_tenants_update"
+        ON tenants
+        FOR UPDATE
+        TO {DB_PROWLER_USER}
+        USING (
+            CASE
+                WHEN (current_setting('{POSTGRES_USER_VAR}', true) IS NOT NULL AND current_setting('{POSTGRES_USER_VAR}', true) <> '') THEN
+                    EXISTS (
+                        SELECT 1
+                        FROM memberships
+                        WHERE
+                            memberships.tenant_id = tenants.id
+                            AND memberships.user_id = current_setting('{POSTGRES_USER_VAR}', true)::uuid
+                    )
+                WHEN (current_setting('{POSTGRES_TENANT_VAR}', true) IS NOT NULL AND current_setting('{POSTGRES_TENANT_VAR}', true) <> '') THEN
+                    tenants.id = current_setting('{POSTGRES_TENANT_VAR}', true)::uuid
+                ELSE
+                    FALSE
+            END
+        );
+
+        -- Policy for DELETE
+        CREATE POLICY "{DB_PROWLER_USER}_tenants_delete"
+        ON tenants
+        FOR DELETE
+        TO {DB_PROWLER_USER}
+        USING (
+            CASE
+                WHEN (current_setting('{POSTGRES_USER_VAR}', true) IS NOT NULL AND current_setting('{POSTGRES_USER_VAR}', true) <> '') THEN
+                    EXISTS (
+                        SELECT 1
+                        FROM memberships
+                        WHERE
+                            memberships.tenant_id = tenants.id
+                            AND memberships.user_id = current_setting('{POSTGRES_USER_VAR}', true)::uuid
+                    )
+                WHEN (current_setting('{POSTGRES_TENANT_VAR}', true) IS NOT NULL AND current_setting('{POSTGRES_TENANT_VAR}', true) <> '') THEN
+                    tenants.id = current_setting('{POSTGRES_TENANT_VAR}', true)::uuid
+                ELSE
+                    FALSE
+            END
+        );
+
+        -- Policy for INSERT
+        CREATE POLICY "{DB_PROWLER_USER}_tenants_insert"
+        ON tenants
+        FOR INSERT
+        TO {DB_PROWLER_USER}
+        WITH CHECK (true);
+                """),
         # Create and register ProviderEnum type
         migrations.RunPython(
             ProviderEnumMigration.create_enum_type,

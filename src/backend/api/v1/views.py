@@ -1,36 +1,41 @@
 from celery.result import AsyncResult
 from django.conf import settings as django_settings
 from django.contrib.postgres.search import SearchQuery
-from django.db.models import F
-from django.db.models import Q
+from django.db.models import F, Q
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_control
 from drf_spectacular.settings import spectacular_settings
+from drf_spectacular.utils import (
+    OpenApiParameter,
+    OpenApiTypes,
+)
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from drf_spectacular.views import SpectacularAPIView
 from rest_framework import status, permissions
 from rest_framework.decorators import action
-from rest_framework.exceptions import MethodNotAllowed, NotFound
+from rest_framework.exceptions import MethodNotAllowed, NotFound, PermissionDenied
 from rest_framework.generics import get_object_or_404
 from rest_framework_json_api.views import Response
 
-from api.base_views import BaseRLSViewSet, BaseViewSet
+from api.base_views import BaseTenantViewset, BaseRLSViewSet, BaseViewSet
 from api.filters import (
     ProviderFilter,
     TenantFilter,
+    MembershipFilter,
     ScanFilter,
     TaskFilter,
     ResourceFilter,
     FindingFilter,
 )
-from api.models import User, Provider, Scan, Task, Resource, Finding
+from api.models import User, Membership, Provider, Scan, Task, Resource, Finding
 from api.rls import Tenant
 from api.uuid_utils import datetime_to_uuid7
 from api.v1.serializers import (
     UserSerializer,
     UserCreateSerializer,
     UserUpdateSerializer,
+    MembershipSerializer,
     ProviderSerializer,
     ProviderCreateSerializer,
     ProviderUpdateSerializer,
@@ -65,6 +70,10 @@ class SchemaView(SpectacularAPIView):
 
 
 @extend_schema_view(
+    retrieve=extend_schema(
+        summary="Retrieve a user's information",
+        description="Fetch detailed information about an authenticated user. It only allows using your own user ID.",
+    ),
     create=extend_schema(
         summary="Register a new user",
         description="Create a new user account by providing the necessary registration details.",
@@ -111,9 +120,10 @@ class UserViewSet(BaseViewSet):
     def list(self, request, *args, **kwargs):
         raise MethodNotAllowed(method="GET")
 
-    @extend_schema(exclude=True)
     def retrieve(self, request, *args, **kwargs):
-        raise MethodNotAllowed(method="GET")
+        if kwargs["pk"] != str(request.user.id):
+            raise NotFound(detail="User was not found.")
+        return super().retrieve(request, *args, **kwargs)
 
     @action(detail=False, methods=["get"], url_name="me")
     def me(self, request):
@@ -167,7 +177,7 @@ class UserViewSet(BaseViewSet):
 )
 @method_decorator(CACHE_DECORATOR, name="list")
 @method_decorator(CACHE_DECORATOR, name="retrieve")
-class TenantViewSet(BaseViewSet):
+class TenantViewSet(BaseTenantViewset):
     queryset = Tenant.objects.all()
     serializer_class = TenantSerializer
     http_method_names = ["get", "post", "patch", "delete"]
@@ -178,6 +188,127 @@ class TenantViewSet(BaseViewSet):
 
     def get_queryset(self):
         return Tenant.objects.all()
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        tenant = serializer.save()
+        Membership.objects.create(
+            user=self.request.user, tenant=tenant, role=Membership.RoleChoices.OWNER
+        )
+        return Response(data=serializer.data, status=status.HTTP_201_CREATED)
+
+
+@extend_schema_view(
+    list=extend_schema(
+        tags=["User"],
+        summary="List user memberships",
+        description="Retrieve a list of all user memberships with options for filtering by various criteria.",
+    ),
+    retrieve=extend_schema(
+        tags=["User"],
+        summary="Retrieve membership data from the user",
+        description="Fetch detailed information about a specific user membership by their ID.",
+    ),
+)
+@method_decorator(CACHE_DECORATOR, name="list")
+class MembershipViewSet(BaseTenantViewset):
+    http_method_names = ["get"]
+    serializer_class = MembershipSerializer
+    queryset = Membership.objects.all()
+    filterset_class = MembershipFilter
+    ordering = ["date_joined"]
+    ordering_fields = [
+        "tenant",
+        "role",
+        "date_joined",
+    ]
+
+    def get_queryset(self):
+        user = self.request.user
+        return Membership.objects.filter(user_id=user.id)
+
+
+@extend_schema_view(
+    list=extend_schema(
+        summary="List tenant memberships",
+        description="List the membership details of users in a tenant you are a part of.",
+        tags=["Tenant"],
+        parameters=[
+            OpenApiParameter(
+                name="tenant_pk",
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.PATH,
+                description="Tenant ID",
+            ),
+        ],
+    ),
+    destroy=extend_schema(
+        summary="Delete tenant memberships",
+        description="Delete the membership details of users in a tenant. You need to be one of the owners to delete a "
+        "membership that is not yours. If you are the last owner of a tenant, you cannot delete your own "
+        "membership.",
+        tags=["Tenant"],
+    ),
+)
+@method_decorator(CACHE_DECORATOR, name="list")
+class TenantMembersViewSet(BaseTenantViewset):
+    http_method_names = ["get", "delete"]
+    serializer_class = MembershipSerializer
+    queryset = Membership.objects.none()
+
+    def get_queryset(self):
+        tenant = self.get_tenant()
+        requesting_membership = self.get_requesting_membership(tenant)
+
+        if requesting_membership.role == Membership.RoleChoices.OWNER:
+            return Membership.objects.filter(tenant=tenant)
+        else:
+            return Membership.objects.filter(tenant=tenant, user=self.request.user)
+
+    def get_tenant(self):
+        tenant_id = self.kwargs.get("tenant_pk")
+        tenant = get_object_or_404(Tenant, id=tenant_id)
+        return tenant
+
+    def get_requesting_membership(self, tenant):
+        try:
+            membership = Membership.objects.get(user=self.request.user, tenant=tenant)
+        except Membership.DoesNotExist:
+            raise NotFound("Membership does not exist.")
+        return membership
+
+    # TODO: Add invite functionality
+
+    @extend_schema(exclude=True)
+    def retrieve(self, request, *args, **kwargs):
+        raise MethodNotAllowed(method="GET")
+
+    def destroy(self, request, *args, **kwargs):
+        tenant = self.get_tenant()
+        membership_to_delete = get_object_or_404(
+            Membership, tenant=tenant, id=kwargs.get("pk")
+        )
+        requesting_membership = self.get_requesting_membership(tenant)
+
+        if requesting_membership.role == Membership.RoleChoices.OWNER:
+            if membership_to_delete.user == request.user:
+                # Check if the user is the last owner
+                other_owners = Membership.objects.filter(
+                    tenant=tenant, role=Membership.RoleChoices.OWNER
+                ).exclude(user=request.user)
+                if not other_owners.exists():
+                    raise PermissionDenied(
+                        "You cannot delete your own membership as the last owner."
+                    )
+        else:
+            if membership_to_delete.user != request.user:
+                raise PermissionDenied(
+                    "You do not have permission to delete this membership."
+                )
+
+        membership_to_delete.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 @extend_schema_view(

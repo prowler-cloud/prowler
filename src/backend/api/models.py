@@ -15,6 +15,7 @@ from psqlextra.types import PostgresPartitioningMethod
 from uuid6 import uuid7
 
 from api.db_utils import (
+    MemberRoleEnumField,
     enum_to_choices,
     ProviderEnumField,
     StateEnumField,
@@ -27,6 +28,9 @@ from api.db_utils import (
 from api.exceptions import ModelValidationError
 from api.rls import (
     RowLevelSecurityProtectedModel,
+)
+from api.rls import (
+    Tenant,
     RowLevelSecurityConstraint,
     BaseSecurityConstraint,
 )
@@ -39,7 +43,7 @@ class StatusChoices(models.TextChoices):
     """
     This list is based on the finding status in the Prowler CLI.
 
-    However it adds another state, MUTED, which is not in the CLI.
+    However, it adds another state, MUTED, which is not in the CLI.
     """
 
     FAIL = "FAIL", _("Fail")
@@ -59,6 +63,7 @@ class StateChoices(models.TextChoices):
 
 class User(AbstractBaseUser):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    name = models.CharField(max_length=150, validators=[MinLengthValidator(3)])
     username = models.CharField(
         max_length=150, unique=True, validators=[UnicodeUsernameValidator()]
     )
@@ -67,7 +72,7 @@ class User(AbstractBaseUser):
     date_joined = models.DateTimeField(auto_now_add=True, editable=False)
 
     USERNAME_FIELD = "username"
-    REQUIRED_FIELDS = ["email"]
+    REQUIRED_FIELDS = ["name", "email"]
 
     objects = CustomUserManager()
 
@@ -79,6 +84,42 @@ class User(AbstractBaseUser):
                 name="statements_on_%(class)s",
                 statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
             )
+        ]
+
+
+class Membership(models.Model):
+    class RoleChoices(models.TextChoices):
+        OWNER = "owner", _("Owner")
+        MEMBER = "member", _("Member")
+
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="memberships",
+        related_query_name="membership",
+    )
+    tenant = models.ForeignKey(
+        Tenant,
+        on_delete=models.CASCADE,
+        related_name="memberships",
+        related_query_name="membership",
+    )
+    role = MemberRoleEnumField(choices=RoleChoices.choices, default=RoleChoices.MEMBER)
+    date_joined = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "memberships"
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=("user", "tenant"),
+                name="unique_resources_by_membership",
+            ),
+            BaseSecurityConstraint(
+                name="statements_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
         ]
 
 
