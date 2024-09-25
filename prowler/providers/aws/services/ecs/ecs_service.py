@@ -95,7 +95,7 @@ class ECS(AWSService):
                 for service_arn in service_arns:
                     describe_response = client.describe_services(
                         cluster=cluster.arn,
-                        services=service_arn,
+                        services=[service_arn],
                         include=["TAGS"],
                     )
 
