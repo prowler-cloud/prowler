@@ -435,6 +435,7 @@ def execute_checks(
     global_provider: Any,
     custom_checks_metadata: Any,
     config_file: str,
+    output_options: Any,
 ) -> list:
     # List to store all the check's findings
     all_findings = []
@@ -471,7 +472,7 @@ def execute_checks(
             )
 
     # Execution with the --only-logs flag
-    if global_provider.output_options.only_logs:
+    if output_options.only_logs:
         for check_name in checks_to_execute:
             # Recover service from check name
             service = check_name.split("_")[0]
@@ -481,6 +482,7 @@ def execute_checks(
                     check_name,
                     global_provider,
                     custom_checks_metadata,
+                    output_options,
                 )
                 all_findings.extend(check_findings)
 
@@ -544,6 +546,7 @@ def execute_checks(
                         check_name,
                         global_provider,
                         custom_checks_metadata,
+                        output_options,
                     )
                     all_findings.extend(check_findings)
                     services_executed.add(service)
@@ -575,7 +578,21 @@ def execute(
     check_name: str,
     global_provider: Any,
     custom_checks_metadata: Any,
+    output_options: Any = None,
 ):
+    """
+    Execute the check and report the findings
+
+    Args:
+        service (str): service name
+        check_name (str): check name
+        global_provider (Any): provider object
+        custom_checks_metadata (Any): custom checks metadata
+        output_options (Any): output options, depending on the provider
+
+    Returns:
+        list: list of findings
+    """
     try:
         # Import check module
         check_module_path = f"prowler.providers.{global_provider.type}.services.{service}.{check_name}.{check_name}"
@@ -593,20 +610,24 @@ def execute(
             )
 
         # Run check
-        verbose = (
-            global_provider.output_options.verbose
-            or global_provider.output_options.fixer
-        )
-        check_findings = run_check(
-            check_class, verbose, global_provider.output_options.only_logs
-        )
+        verbose = False
+        if hasattr(output_options, "verbose"):
+            verbose = output_options.verbose
+        elif hasattr(output_options, "fixer"):
+            verbose = output_options.fixer
+
+        only_logs = False
+        if hasattr(output_options, "only_logs"):
+            only_logs = output_options.only_logs
+
+        check_findings = run_check(check_class, verbose, only_logs)
 
         # Exclude findings per status
-        if global_provider.output_options.status:
+        if hasattr(output_options, "status") and output_options.status:
             check_findings = [
                 finding
                 for finding in check_findings
-                if finding.status in global_provider.output_options.status
+                if finding.status in output_options.status
             ]
 
         # Mutelist findings
@@ -628,7 +649,7 @@ def execute(
 
         # Refactor(Outputs)
         # Report the check's findings
-        report(check_findings, global_provider)
+        report(check_findings, global_provider, output_options)
 
         # Refactor(Outputs)
         if os.environ.get("PROWLER_REPORT_LIB_PATH"):
@@ -638,10 +659,8 @@ def execute(
                 outputs_module = importlib.import_module(lib)
                 custom_report_interface = getattr(outputs_module, "report")
 
-                # TODO: review this call and see if we can remove the global_provider.output_options since it is contained in the global_provider
-                custom_report_interface(
-                    check_findings, global_provider.output_options, global_provider
-                )
+                # TODO: review this call and see if we can remove the output_options since it is contained in the global_provider
+                custom_report_interface(check_findings, output_options, global_provider)
             except Exception:
                 sys.exit(1)
     except ModuleNotFoundError:

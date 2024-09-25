@@ -85,7 +85,6 @@ class Test_NetworkFirewall_Service:
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         networkfirewall = NetworkFirewall(aws_provider)
         assert len(networkfirewall.network_firewalls) == 1
-        assert networkfirewall.network_firewalls[FIREWALL_ARN].arn == FIREWALL_ARN
         assert (
             networkfirewall.network_firewalls[FIREWALL_ARN].region
             == AWS_REGION_US_EAST_1
@@ -116,17 +115,20 @@ class Test_NetworkFirewall_Service:
                 ],
             )
         ]
-
         assert len(networkfirewall.network_firewalls) == 1
-        assert networkfirewall.network_firewalls[0].arn == FIREWALL_ARN
-        assert networkfirewall.network_firewalls[0].region == AWS_REGION_US_EAST_1
-        assert networkfirewall.network_firewalls[0].name == FIREWALL_NAME
-        assert networkfirewall.network_firewalls[0].policy_arn == POLICY_ARN
-        assert networkfirewall.network_firewalls[0].vpc_id == VPC_ID
-        assert networkfirewall.network_firewalls[0].tags == [
+        assert (
+            networkfirewall.network_firewalls[FIREWALL_ARN].region
+            == AWS_REGION_US_EAST_1
+        )
+        assert networkfirewall.network_firewalls[FIREWALL_ARN].name == FIREWALL_NAME
+        assert networkfirewall.network_firewalls[FIREWALL_ARN].policy_arn == POLICY_ARN
+        assert networkfirewall.network_firewalls[FIREWALL_ARN].vpc_id == VPC_ID
+        assert networkfirewall.network_firewalls[FIREWALL_ARN].tags == [
             {"Key": "test_tag", "Value": "test_value"}
         ]
-        assert networkfirewall.network_firewalls[0].logging_configuration == [
+        assert networkfirewall.network_firewalls[
+            FIREWALL_ARN
+        ].logging_configuration == [
             LoggingConfiguration(
                 log_type=LogType.flow,
                 log_destination_type=LogDestinationType.s3,

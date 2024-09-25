@@ -12,11 +12,13 @@ class dynamodb_accelerator_cluster_encryption_enabled(Check):
             report.region = cluster.region
             report.resource_tags = cluster.tags
             report.status = "FAIL"
-            report.status_extended = f"DynamoDB cluster {cluster.name} does not have encryption at rest enabled."
+            report.status_extended = (
+                f"DAX cluster {cluster.name} does not have encryption at rest enabled."
+            )
             if cluster.encryption:
                 report.status = "PASS"
                 report.status_extended = (
-                    f"DynamoDB cluster {cluster.name} has encryption at rest enabled."
+                    f"DAX cluster {cluster.name} has encryption at rest enabled."
                 )
             findings.append(report)
         return findings

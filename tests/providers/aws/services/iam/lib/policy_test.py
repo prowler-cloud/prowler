@@ -1,4 +1,5 @@
 from prowler.providers.aws.services.iam.lib.policy import (
+    check_admin_access,
     check_full_service_access,
     is_condition_restricting_from_private_ip,
     is_policy_cross_account,
@@ -277,3 +278,49 @@ class Test_Policy:
             "IpAddress": {"aws:SourceIp": "256.256.256.256"},
         }
         assert not is_condition_restricting_from_private_ip(condition_from_invalid_ip)
+
+    def test_check_admin_access(self):
+        policy = {
+            "Version": "2012-10-17",
+            "Statement": [{"Effect": "Allow", "Action": ["*"], "Resource": "*"}],
+        }
+        assert check_admin_access(policy)
+
+    def test_check_admin_access_false(self):
+        policy = {
+            "Version": "2012-10-17",
+            "Statement": [{"Effect": "Allow", "Action": ["s3:*"], "Resource": "*"}],
+        }
+        assert not check_admin_access(policy)
+
+    def test_check_admin_access_not_action(self):
+        policy = {
+            "Version": "2012-10-17",
+            "Statement": [{"Effect": "Allow", "NotAction": "s3:*", "Resource": "*"}],
+        }
+        assert check_admin_access(policy)
+
+    def test_check_admin_access_not_action_with_random_action(self):
+        policy = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {"Effect": "Allow", "NotAction": "prowler:action", "Resource": "*"}
+            ],
+        }
+        assert check_admin_access(policy)
+
+    def test_check_admin_access_not_resource(self):
+        policy = {
+            "Version": "2012-10-17",
+            "Statement": [{"Effect": "Allow", "Action": "*", "NotResource": "*"}],
+        }
+        assert not check_admin_access(policy)
+
+    def test_check_admin_access_not_resource_with_random_resource(self):
+        policy = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {"Effect": "Allow", "Action": "*", "NotResource": "prowler:resource"}
+            ],
+        }
+        assert check_admin_access(policy)

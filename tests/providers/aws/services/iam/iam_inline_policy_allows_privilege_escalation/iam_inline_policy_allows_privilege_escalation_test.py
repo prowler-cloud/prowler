@@ -1115,3 +1115,60 @@ class Test_iam_inline_policy_allows_privilege_escalation:
                         finding.status_extended
                         == f"Inline Policy '{policy_name_1}' attached to role {role_arn} does not allow privilege escalation."
                     )
+
+    @mock_aws
+    def test_iam_policy_random_not_action(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
+        role_name = "test_role"
+        role_arn = iam_client.create_role(
+            RoleName=role_name,
+            AssumeRolePolicyDocument=dumps(ADMINISTRATOR_ROLE_ASSUME_ROLE_POLICY),
+        )["Role"]["Arn"]
+
+        policy_name = "privileged_policy_1"
+        policy_document = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "NotAction": "prowler:action",
+                    "Resource": "*",
+                },
+            ],
+        }
+
+        _ = iam_client.put_role_policy(
+            RoleName=role_name,
+            PolicyName=policy_name,
+            PolicyDocument=dumps(policy_document),
+        )
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        from prowler.providers.aws.services.iam.iam_service import IAM
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.iam.iam_inline_policy_allows_privilege_escalation.iam_inline_policy_allows_privilege_escalation.iam_client",
+            new=IAM(aws_provider),
+        ):
+            from prowler.providers.aws.services.iam.iam_inline_policy_allows_privilege_escalation.iam_inline_policy_allows_privilege_escalation import (
+                iam_inline_policy_allows_privilege_escalation,
+            )
+
+            check = iam_inline_policy_allows_privilege_escalation()
+            result = check.execute()
+            assert len(result) == 1
+            for finding in result:
+                if finding.resource_id == policy_name:
+                    assert finding.status == "FAIL"
+                    assert finding.resource_id == policy_name
+                    assert finding.resource_arn == role_arn
+                    assert finding.region == AWS_REGION_US_EAST_1
+                    assert finding.resource_tags == []
+                    assert search(
+                        f"Inline Policy '{policy_name}' attached to role {role_arn} allows privilege escalation using the following actions:",
+                        finding.status_extended,
+                    )
