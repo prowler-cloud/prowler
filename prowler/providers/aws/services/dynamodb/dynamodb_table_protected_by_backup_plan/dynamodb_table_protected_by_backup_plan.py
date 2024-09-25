@@ -1,5 +1,3 @@
-import re
-
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.backup.backup_client import backup_client
 from prowler.providers.aws.services.dynamodb.dynamodb_client import dynamodb_client
@@ -8,11 +6,6 @@ from prowler.providers.aws.services.dynamodb.dynamodb_client import dynamodb_cli
 class dynamodb_table_protected_by_backup_plan(Check):
     def execute(self):
         findings = []
-        # Pre-compiling the patterns for performance
-        protected_patterns = [
-            self.convert_pattern_to_regex(pattern)
-            for pattern in backup_client.protected_resources
-        ]
         for table_arn, table in dynamodb_client.tables.items():
             report = Check_Report_AWS(self.metadata())
             report.resource_id = table.name
@@ -24,8 +17,10 @@ class dynamodb_table_protected_by_backup_plan(Check):
                 f"DynamoDB table {table.name} is not protected by a backup plan."
             )
 
-            if table_arn in backup_client.protected_resources or any(
-                regex.match(table_arn) for regex in protected_patterns
+            if (
+                table_arn in backup_client.protected_resources
+                or table_arn == "arn:aws:dynamodb:*:*:table/*"
+                or table_arn == "*"
             ):
                 report.status = "PASS"
                 report.status_extended = (
@@ -35,19 +30,3 @@ class dynamodb_table_protected_by_backup_plan(Check):
             findings.append(report)
 
         return findings
-
-    @staticmethod
-    def convert_pattern_to_regex(pattern: str) -> re.Pattern:
-        """
-        Converts a pattern with wildcards '*' into a compiled regular expression.
-
-        Args:
-            pattern (str): The pattern with possible wildcards.
-
-        Returns:
-            re.Pattern: The compiled regular expression pattern.
-        """
-        escaped = re.escape(pattern)
-        # Replace '\*' for '.*' in order to match any character
-        regex_pattern = "^" + escaped.replace(r"\*", ".*") + "$"
-        return re.compile(regex_pattern)
