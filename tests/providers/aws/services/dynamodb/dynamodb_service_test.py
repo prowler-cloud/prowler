@@ -78,12 +78,14 @@ class Test_DynamoDB_Service:
         aws_provider = set_mocked_aws_provider()
         dynamo = DynamoDB(aws_provider)
         assert len(dynamo.tables) == 2
-        assert dynamo.tables[0].name == "test1"
-        assert dynamo.tables[1].name == "test2"
-        assert dynamo.tables[0].region == AWS_REGION_US_EAST_1
-        assert dynamo.tables[1].region == AWS_REGION_US_EAST_1
-        assert dynamo.tables[0].billing_mode == "PAY_PER_REQUEST"
-        assert dynamo.tables[1].billing_mode == "PROVISIONED"
+        table_names = [table.name for table in dynamo.tables.values()]
+        assert "test1" in table_names
+        assert "test2" in table_names
+        for table in dynamo.tables.values():
+            assert table.region == AWS_REGION_US_EAST_1
+        table_billing = [table.billing_mode for table in dynamo.tables.values()]
+        assert "PAY_PER_REQUEST" in table_billing
+        assert "PROVISIONED" in table_billing
 
     # Test DynamoDB Describe Table
     @mock_aws
@@ -110,10 +112,11 @@ class Test_DynamoDB_Service:
         aws_provider = set_mocked_aws_provider()
         dynamo = DynamoDB(aws_provider)
         assert len(dynamo.tables) == 1
-        assert dynamo.tables[0].arn == table["TableArn"]
-        assert dynamo.tables[0].name == "test1"
-        assert dynamo.tables[0].region == AWS_REGION_US_EAST_1
-        assert dynamo.tables[0].tags == [
+        tables_arn, tables = next(iter(dynamo.tables.items()))
+        assert tables_arn == table["TableArn"]
+        assert tables.name == "test1"
+        assert tables.region == AWS_REGION_US_EAST_1
+        assert tables.tags == [
             {"Key": "test", "Value": "test"},
         ]
         assert dynamo.tables[0].billing_mode == "PAY_PER_REQUEST"
@@ -144,10 +147,11 @@ class Test_DynamoDB_Service:
         aws_provider = set_mocked_aws_provider()
         dynamo = DynamoDB(aws_provider)
         assert len(dynamo.tables) == 1
-        assert dynamo.tables[0].arn == table["TableArn"]
-        assert dynamo.tables[0].name == "test1"
-        assert dynamo.tables[0].pitr
-        assert dynamo.tables[0].region == AWS_REGION_US_EAST_1
+        tables_arn, tables = next(iter(dynamo.tables.items()))
+        assert tables_arn == table["TableArn"]
+        assert tables.name == "test1"
+        assert tables.pitr
+        assert tables.region == AWS_REGION_US_EAST_1
 
     @mock_aws
     def test_describe_autoscaling(self):
@@ -209,6 +213,7 @@ class Test_DynamoDB_Service:
             Tags=[
                 {"Key": "test", "Value": "test"},
             ],
+            ClusterEndpointEncryptionType="TLS",
         )
         dax_client.create_cluster(
             ClusterName="daxcluster2",
@@ -231,6 +236,7 @@ class Test_DynamoDB_Service:
         assert dax.clusters[0].tags == [
             {"Key": "test", "Value": "test"},
         ]
+        assert dax.clusters[0].tls_encryption
 
         assert dax.clusters[1].name == "daxcluster2"
         assert dax.clusters[1].region == AWS_REGION_US_EAST_1
@@ -238,3 +244,4 @@ class Test_DynamoDB_Service:
         assert dax.clusters[1].tags == [
             {"Key": "test", "Value": "test"},
         ]
+        assert not dax.clusters[1].tls_encryption

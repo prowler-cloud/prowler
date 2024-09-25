@@ -352,13 +352,46 @@ class Test_VPC_Service:
         # Generate VPC Client
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
         # Create VPC
-        vpc = ec2_client.create_vpc(
-            CidrBlock="172.28.7.0/24", InstanceTenancy="default"
+        vpc_id = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]["VpcId"]
+        default_sg = ec2_client.describe_security_groups(GroupNames=["default"])[
+            "SecurityGroups"
+        ][0]
+        default_sg_id = default_sg["GroupId"]
+        ec2_client.authorize_security_group_ingress(
+            GroupId=default_sg_id,
+            IpPermissions=[
+                {
+                    "IpProtocol": "tcp",
+                    "FromPort": 389,
+                    "ToPort": 389,
+                    "IpRanges": [{"CidrIp": "0.0.0.0/0"}],
+                }
+            ],
         )
-        subnet = ec2_client.create_subnet(
-            VpcId=vpc["Vpc"]["VpcId"],
-            CidrBlock="172.28.7.192/26",
+        subnet_id = ec2_client.create_subnet(
+            VpcId=vpc_id,
+            CidrBlock="10.0.0.0/16",
             AvailabilityZone=f"{AWS_REGION_US_EAST_1}a",
+        )["Subnet"]["SubnetId"]
+        # add default route of subnet to an internet gateway to make it public
+        igw_id = ec2_client.create_internet_gateway()["InternetGateway"][
+            "InternetGatewayId"
+        ]
+        # attach internet gateway to subnet
+        ec2_client.attach_internet_gateway(InternetGatewayId=igw_id, VpcId=vpc_id)
+        # create route table
+        route_table_id = ec2_client.create_route_table(VpcId=vpc_id)["RouteTable"][
+            "RouteTableId"
+        ]
+        # associate route table with subnet
+        ec2_client.associate_route_table(
+            RouteTableId=route_table_id, SubnetId=subnet_id
+        )
+        # add route to route table
+        ec2_client.create_route(
+            RouteTableId=route_table_id,
+            DestinationCidrBlock="0.0.0.0/0",
+            GatewayId=igw_id,
         )
         # VPC client for this test class
         aws_provider = set_mocked_aws_provider(
@@ -371,13 +404,13 @@ class Test_VPC_Service:
             len(vpc.vpcs) == 3
         )  # Number of AWS regions + created VPC, one default VPC per region
         for vpc in vpc.vpcs.values():
-            if vpc.cidr_block == "172.28.7.0/24":
-                assert vpc.subnets[0].id == subnet["Subnet"]["SubnetId"]
+            if vpc.cidr_block == "10.0.0.0/16":
+                assert vpc.subnets[0].id == subnet_id
                 assert vpc.subnets[0].default is False
-                assert vpc.subnets[0].vpc_id == vpc.id
-                assert vpc.subnets[0].cidr_block == "172.28.7.192/26"
+                assert vpc.subnets[0].vpc_id == vpc_id
+                assert vpc.subnets[0].cidr_block == "10.0.0.0/16"
                 assert vpc.subnets[0].availability_zone == f"{AWS_REGION_US_EAST_1}a"
-                assert vpc.subnets[0].public is False
+                assert vpc.subnets[0].public
                 assert vpc.subnets[0].nat_gateway is False
                 assert vpc.subnets[0].region == AWS_REGION_US_EAST_1
                 assert vpc.subnets[0].tags is None
