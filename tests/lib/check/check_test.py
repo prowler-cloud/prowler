@@ -851,7 +851,6 @@ class TestCheck:
         check.Status = "PASS"
         output_options = mock.MagicMock()
         output_options.status = status
-
         with mock.patch(
             "prowler.providers.aws.services.accessanalyzer.accessanalyzer_service.AccessAnalyzer",
             accessanalyzer_client,

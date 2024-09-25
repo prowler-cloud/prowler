@@ -36,7 +36,6 @@ class CloudFront(AWSService):
                                 origin_group.get("Members", {}).get("Quantity", 0) >= 2
                                 for origin_group in origin_groups
                             )
-
                             default_certificate = item["ViewerCertificate"][
                                 "CloudFrontDefaultCertificate"
                             ]

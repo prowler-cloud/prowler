@@ -626,11 +626,11 @@ def execute(
             check = update_check_metadata(
                 check, custom_checks_metadata["Checks"][check.CheckID]
             )
-
+            
         only_logs = False
         if hasattr(output_options, "only_logs"):
             only_logs = output_options.only_logs
-
+            
         # Execute the check
         check_findings = []
         logger.debug(f"Executing check: {check.CheckID}")
@@ -668,6 +668,7 @@ def execute(
                 finding.muted = global_provider.mutelist.is_finding_muted(
                     **is_finding_muted_args
                 )
+                
     except ModuleNotFoundError:
         logger.error(
             f"Check '{check.CheckID}' was not found for the {global_provider.type.upper()} provider"
