@@ -967,7 +967,6 @@ class TestCheck:
                 )
                 == findings
             )
-            print(caplog.record_tuples)
             assert caplog.record_tuples == [
                 ("root", 40, f"Check '{checks[0]}' was not found for the AWS provider")
             ]
