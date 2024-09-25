@@ -79,7 +79,7 @@ def mock_generate_regional_clients(provider, service):
     return {AWS_REGION_EU_WEST_1: regional_client}
 
 
-class Test_Backup_Service:
+class TestBackupService:
     # Test Backup Client
     @mock_aws
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
