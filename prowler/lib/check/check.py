@@ -406,6 +406,7 @@ def execute_checks(
     global_provider: Any,
     custom_checks_metadata: Any,
     config_file: str,
+    output_options: Any,
 ) -> list:
     # List to store all the check's findings
     all_findings = []
@@ -441,11 +442,15 @@ def execute_checks(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    verbose = (
-        global_provider.output_options.verbose or global_provider.output_options.fixer
-    )
+    # Set verbose flag
+    verbose = False
+    if hasattr(output_options, "verbose"):
+        verbose = output_options.verbose
+    elif hasattr(output_options, "fixer"):
+        verbose = output_options.fixer
+
     # Execution with the --only-logs flag
-    if global_provider.output_options.only_logs:
+    if output_options.only_logs:
         for check_name in checks_to_execute:
             # Recover service from check name
             service = check_name.split("_")[0]
@@ -470,6 +475,7 @@ def execute_checks(
                     check,
                     global_provider,
                     custom_checks_metadata,
+                    output_options,
                 )
                 report(check_findings, global_provider)
                 all_findings.extend(check_findings)
@@ -549,6 +555,7 @@ def execute_checks(
                         check,
                         global_provider,
                         custom_checks_metadata,
+                        output_options,
                     )
                     report(check_findings, global_provider)
                     all_findings.extend(check_findings)
@@ -596,7 +603,21 @@ def execute(
     check: Check,
     global_provider: Any,
     custom_checks_metadata: Any,
+    output_options: Any = None,
 ):
+    """
+    Execute the check and report the findings
+
+    Args:
+        service (str): service name
+        check_name (str): check name
+        global_provider (Any): provider object
+        custom_checks_metadata (Any): custom checks metadata
+        output_options (Any): output options, depending on the provider
+
+    Returns:
+        list: list of findings
+    """
     try:
         # Update check metadata to reflect that in the outputs
         if custom_checks_metadata and custom_checks_metadata["Checks"].get(
@@ -606,13 +627,17 @@ def execute(
                 check, custom_checks_metadata["Checks"][check.CheckID]
             )
 
+        only_logs = False
+        if hasattr(output_options, "only_logs"):
+            only_logs = output_options.only_logs
+
         # Execute the check
         check_findings = []
         logger.debug(f"Executing check: {check.CheckID}")
         try:
             check_findings = check.execute()
         except Exception as error:
-            if not global_provider.output_options.only_logs:
+            if not only_logs:
                 print(
                     f"Something went wrong in {check.CheckID}, please use --log-level ERROR"
                 )
@@ -621,11 +646,11 @@ def execute(
             )
 
         # Exclude findings per status
-        if global_provider.output_options.status:
+        if hasattr(output_options, "status") and output_options.status:
             check_findings = [
                 finding
                 for finding in check_findings
-                if finding.status in global_provider.output_options.status
+                if finding.status in output_options.status
             ]
 
         # Before returning the findings, we need to apply the mute list logic

@@ -116,6 +116,7 @@ class Scan:
                         check,
                         self._provider,
                         custom_checks_metadata,
+                        output_options=None,
                     )
 
                     # Store findings
@@ -141,7 +142,9 @@ class Scan:
                     )
 
                     findings = [
-                        Finding.generate_output(self._provider, finding)
+                        Finding.generate_output(
+                            self._provider, finding, output_options=None
+                        )
                         for finding in check_findings
                     ]
 

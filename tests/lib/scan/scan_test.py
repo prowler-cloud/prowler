@@ -64,7 +64,7 @@ def mock_generate_output():
     with mock.patch(
         "prowler.lib.outputs.finding.Finding.generate_output", autospec=True
     ) as mock_gen_output:
-        mock_gen_output.side_effect = lambda provider, finding: finding
+        mock_gen_output.side_effect = lambda provider, finding, output_options: finding
         yield mock_gen_output
 
 
