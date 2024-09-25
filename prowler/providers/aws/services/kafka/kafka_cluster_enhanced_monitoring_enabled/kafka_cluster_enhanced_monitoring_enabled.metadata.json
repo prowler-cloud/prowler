@@ -7,7 +7,7 @@
   "SubServiceName": "cluster",
   "ResourceIdTemplate": "arn:partition:kafka:region:account-id:cluster",
   "Severity": "medium",
-  "ResourceType": "",
+  "ResourceType": "AwsMskCluster",
   "Description": "Enhanced monitoring provides additional visibility into the performance and behavior of MSK (Kafka) brokers. By enabling enhanced monitoring, you can gain insights into potential issues and optimize the performance of your Kafka clusters.",
   "Risk": "Without enhanced monitoring, you may have limited visibility into the performance and health of your MSK brokers, which could lead to undetected issues and potential performance degradation.",
   "RelatedUrl": "https://docs.aws.amazon.com/msk/latest/developerguide/monitoring.html",

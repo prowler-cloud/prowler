@@ -104,6 +104,7 @@ class Test_ELB_Service:
                     "S3BucketPrefix": "s3bf",
                 },
                 "CrossZoneLoadBalancing": {"Enabled": True},
+                "ConnectionDraining": {"Enabled": True, "Timeout": 60},
             },
         )
         elb_arn = f"arn:aws:elasticloadbalancing:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:loadbalancer/my-lb"
@@ -115,6 +116,7 @@ class Test_ELB_Service:
         assert elb.loadbalancers[elb_arn].scheme == "internal"
         assert elb.loadbalancers[elb_arn].access_logs
         assert elb.loadbalancers[elb_arn].cross_zone_load_balancing
+        assert elb.loadbalancers[elb_arn].connection_draining
 
     # Test ELB Describe Tags
     @mock_aws

@@ -23,12 +23,7 @@ from prowler.providers.gcp.exceptions.exceptions import (
     GCPTestConnectionError,
 )
 from prowler.providers.gcp.lib.mutelist.mutelist import GCPMutelist
-from prowler.providers.gcp.models import (
-    GCPIdentityInfo,
-    GCPOrganization,
-    GCPOutputOptions,
-    GCPProject,
-)
+from prowler.providers.gcp.models import GCPIdentityInfo, GCPOrganization, GCPProject
 
 
 class GcpProvider(Provider):
@@ -38,7 +33,6 @@ class GcpProvider(Provider):
     _excluded_project_ids: list
     _identity: GCPIdentityInfo
     _audit_config: dict
-    _output_options: GCPOutputOptions
     _mutelist: GCPMutelist
     # TODO: this is not optional, enforce for all providers
     audit_metadata: Audit_Metadata
@@ -68,7 +62,7 @@ class GcpProvider(Provider):
         logger.info("Instantiating GCP Provider ...")
         self._impersonated_service_account = impersonate_service_account
 
-        self._session = self.setup_session(
+        self._session, self._default_project_id = self.setup_session(
             credentials_file, self._impersonated_service_account
         )
 
@@ -155,6 +149,10 @@ class GcpProvider(Provider):
         return self._projects
 
     @property
+    def default_project_id(self):
+        return self._default_project_id
+
+    @property
     def impersonated_service_account(self):
         return self._impersonated_service_account
 
@@ -173,17 +171,6 @@ class GcpProvider(Provider):
     @property
     def fixer_config(self):
         return self._fixer_config
-
-    @property
-    def output_options(self):
-        return self._output_options
-
-    @output_options.setter
-    def output_options(self, options: tuple):
-        arguments, bulk_checks_metadata = options
-        self._output_options = GCPOutputOptions(
-            arguments, bulk_checks_metadata, self._identity
-        )
 
     @property
     def mutelist(self) -> GCPMutelist:
@@ -225,14 +212,14 @@ class GcpProvider(Provider):
         }
 
     @staticmethod
-    def setup_session(credentials_file: str, service_account: str) -> Credentials:
+    def setup_session(credentials_file: str, service_account: str) -> tuple:
         """
         Setup the GCP session with the provided credentials file or service account to impersonate
         Args:
             credentials_file: str
             service_account: str
         Returns:
-            Credentials object
+            Credentials object and default project ID
         """
         try:
             scopes = ["https://www.googleapis.com/auth/cloud-platform"]
@@ -246,7 +233,7 @@ class GcpProvider(Provider):
                 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = client_secrets_path
 
             # Get default credentials
-            credentials, _ = default(scopes=scopes)
+            credentials, default_project_id = default(scopes=scopes)
 
             # Refresh the credentials to ensure they are valid
             credentials.refresh(Request())
@@ -262,7 +249,7 @@ class GcpProvider(Provider):
                 )
                 logger.info(f"Impersonated credentials: {credentials}")
 
-            return credentials
+            return credentials, default_project_id
         except Exception as error:
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -287,7 +274,7 @@ class GcpProvider(Provider):
             Connection object with is_connected set to True if the connection is successful, or error set to the exception if the connection fails
         """
         try:
-            session = GcpProvider.setup_session(credentials_file, service_account)
+            session, _ = GcpProvider.setup_session(credentials_file, service_account)
             service = discovery.build("cloudresourcemanager", "v1", credentials=session)
             request = service.projects().list()
             request.execute()

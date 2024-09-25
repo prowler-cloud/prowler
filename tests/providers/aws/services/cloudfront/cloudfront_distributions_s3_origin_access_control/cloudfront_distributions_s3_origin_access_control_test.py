@@ -34,7 +34,7 @@ class Test_cloudfront_distributions_s3_origin_access_control:
     def test_no_s3_origin_distributions(self):
         cloudfront_client = mock.MagicMock
         cloudfront_client.distributions = {
-            "DISTRIBUTION_ID": Distribution(
+            DISTRIBUTION_ID: Distribution(
                 arn=DISTRIBUTION_ARN,
                 id=DISTRIBUTION_ID,
                 region=REGION,
@@ -66,7 +66,7 @@ class Test_cloudfront_distributions_s3_origin_access_control:
     def test_distribution_using_origin_access_control(self):
         cloudfront_client = mock.MagicMock
         cloudfront_client.distributions = {
-            "DISTRIBUTION_ID": Distribution(
+            DISTRIBUTION_ID: Distribution(
                 arn=DISTRIBUTION_ARN,
                 id=DISTRIBUTION_ID,
                 region=REGION,
@@ -112,7 +112,7 @@ class Test_cloudfront_distributions_s3_origin_access_control:
         cloudfront_client = mock.MagicMock
         id = "EXAMPLE-OAC-ID"
         cloudfront_client.distributions = {
-            "DISTRIBUTION_ID": Distribution(
+            DISTRIBUTION_ID: Distribution(
                 arn=DISTRIBUTION_ARN,
                 id=DISTRIBUTION_ID,
                 region=REGION,

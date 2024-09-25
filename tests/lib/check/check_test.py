@@ -1,14 +1,12 @@
 import json
 import os
 import pathlib
-import traceback
 from importlib.machinery import FileFinder
-from logging import DEBUG, ERROR
+from logging import ERROR
 from pkgutil import ModuleInfo
 from unittest import mock
 
 from boto3 import client
-from colorama import Fore, Style
 from mock import Mock, patch
 from moto import mock_aws
 
@@ -16,13 +14,13 @@ from prowler.lib.check.check import (
     exclude_checks_to_run,
     exclude_services_to_run,
     execute,
+    execute_checks,
     list_categories,
     list_checks_json,
     list_services,
     parse_checks_from_file,
     parse_checks_from_folder,
     remove_custom_checks_module,
-    run_check,
     update_audit_metadata,
 )
 from prowler.lib.check.models import load_check_metadata
@@ -815,17 +813,24 @@ class TestCheck:
                 region=AWS_REGION_US_EAST_1,
             )
         ]
-        with mock.patch(
+        finding = Mock()
+        finding.status = "PASS"
+        findings = [finding]
+        check = Mock()
+        check.CheckID = "test-check"
+        check.execute = Mock(return_value=findings)
+
+        with patch("prowler.lib.check.check.execute", return_value=findings), patch(
             "prowler.providers.aws.services.accessanalyzer.accessanalyzer_service.AccessAnalyzer",
             accessanalyzer_client,
         ):
             findings = execute(
-                service="accessanalyzer",
-                check_name="accessanalyzer_enabled",
+                check=check,
                 global_provider=set_mocked_aws_provider(
                     expected_checks=["accessanalyzer_enabled"]
                 ),
                 custom_checks_metadata=None,
+                output_options=None,
             )
             assert len(findings) == 1
 
@@ -843,105 +848,24 @@ class TestCheck:
             )
         ]
         status = ["PASS"]
+        check = mock.MagicMock()
+        check.CheckID = "accessanalyzer_enabled"
+        check.Status = "PASS"
+        output_options = mock.MagicMock()
+        output_options.status = status
         with mock.patch(
             "prowler.providers.aws.services.accessanalyzer.accessanalyzer_service.AccessAnalyzer",
             accessanalyzer_client,
         ):
             findings = execute(
-                service="accessanalyzer",
-                check_name="accessanalyzer_enabled",
+                check=check,
                 global_provider=set_mocked_aws_provider(
-                    status=status, expected_checks=["accessanalyzer_enabled"]
+                    expected_checks=["accessanalyzer_enabled"]
                 ),
                 custom_checks_metadata=None,
+                output_options=output_options,
             )
             assert len(findings) == 0
-
-    def test_run_check(self, caplog):
-        caplog.set_level(DEBUG)
-
-        findings = []
-        check = Mock()
-        check.CheckID = "test-check"
-        check.execute = Mock(return_value=findings)
-
-        with patch("prowler.lib.check.check.execute", return_value=findings):
-            assert run_check(check) == findings
-            assert caplog.record_tuples == [
-                (
-                    "root",
-                    DEBUG,
-                    f"Executing check: {check.CheckID}",
-                )
-            ]
-
-    def test_run_check_verbose(self, capsys):
-
-        findings = []
-        check = Mock()
-        check.CheckID = "test-check"
-        check.ServiceName = "test-service"
-        check.Severity = "test-severity"
-        check.execute = Mock(return_value=findings)
-
-        with patch("prowler.lib.check.check.execute", return_value=findings):
-            assert run_check(check, verbose=True) == findings
-            assert (
-                capsys.readouterr().out
-                == f"\nCheck ID: {check.CheckID} - {Fore.MAGENTA}{check.ServiceName}{Fore.YELLOW} [{check.Severity}]{Style.RESET_ALL}\n"
-            )
-
-    def test_run_check_exception_only_logs(self, caplog):
-        caplog.set_level(ERROR)
-
-        findings = []
-        check = Mock()
-        check.CheckID = "test-check"
-        check.ServiceName = "test-service"
-        check.Severity = "test-severity"
-        error = Exception()
-        check.execute = Mock(side_effect=error)
-
-        with patch("prowler.lib.check.check.execute", return_value=findings):
-            assert run_check(check, only_logs=True) == findings
-            assert caplog.record_tuples == [
-                (
-                    "root",
-                    ERROR,
-                    f"{check.CheckID} -- {error.__class__.__name__}[{traceback.extract_tb(error.__traceback__)[-1].lineno}]: {error}",
-                )
-            ]
-
-    def test_run_check_exception(self, caplog, capsys):
-        caplog.set_level(ERROR)
-
-        findings = []
-        check = Mock()
-        check.CheckID = "test-check"
-        check.ServiceName = "test-service"
-        check.Severity = "test-severity"
-        error = Exception()
-        check.execute = Mock(side_effect=error)
-
-        with patch("prowler.lib.check.check.execute", return_value=findings):
-            assert (
-                run_check(
-                    check,
-                    verbose=False,
-                )
-                == findings
-            )
-            assert caplog.record_tuples == [
-                (
-                    "root",
-                    ERROR,
-                    f"{check.CheckID} -- {error.__class__.__name__}[{traceback.extract_tb(error.__traceback__)[-1].lineno}]: {error}",
-                )
-            ]
-            assert (
-                capsys.readouterr().out
-                == f"Something went wrong in {check.CheckID}, please use --log-level ERROR\n"
-            )
 
     def test_aws_checks_metadata_is_valid(self):
         # Check if the checkID in the metadata.json of the checks is correct
@@ -1016,3 +940,33 @@ class TestCheck:
                                 assert (
                                     check_id == check_dir
                                 ), f"CheckID in metadata does not match the check name in {check_directory}. Found CheckID: {check_id}"
+
+    def test_execute_check_exception_only_logs(self, caplog):
+        caplog.set_level(ERROR)
+
+        findings = []
+        check = Mock()
+        checks = ["test-check"]
+
+        provider = mock.MagicMock()
+        provider.type = "aws"
+
+        output_options = mock.MagicMock()
+        output_options.only_logs = True
+        error = Exception()
+        check.execute = Mock(side_effect=error)
+
+        with patch("prowler.lib.check.check.execute", return_value=findings):
+            assert (
+                execute_checks(
+                    checks,
+                    provider,
+                    custom_checks_metadata=None,
+                    config_file=None,
+                    output_options=output_options,
+                )
+                == findings
+            )
+            assert caplog.record_tuples == [
+                ("root", 40, f"Check '{checks[0]}' was not found for the AWS provider")
+            ]

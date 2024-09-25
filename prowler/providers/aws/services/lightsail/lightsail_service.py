@@ -28,7 +28,7 @@ class Lightsail(AWSService):
                         f"arn:{self.audited_partition}:lightsail:{regional_client.region}:{self.audited_account}:Instance",
                     )
 
-                    if not self.audit_resources or is_resource_filtered(
+                    if not self.audit_resources or (
                         is_resource_filtered(arn, self.audit_resources)
                     ):
                         ports = []

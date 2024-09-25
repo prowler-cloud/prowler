@@ -17,7 +17,7 @@ class networkfirewall_in_all_vpc(Check):
                 report.resource_tags = vpc.tags
                 report.status = "FAIL"
                 report.status_extended = f"VPC {vpc.name if vpc.name else vpc.id} does not have Network Firewall enabled."
-                for firewall in networkfirewall_client.network_firewalls:
+                for firewall in networkfirewall_client.network_firewalls.values():
                     if firewall.vpc_id == vpc.id:
                         report.status = "PASS"
                         report.status_extended = f"VPC {vpc.name if vpc.name else vpc.id} has Network Firewall enabled."
