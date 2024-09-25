@@ -101,6 +101,12 @@ class Test_Redshift_Service:
         assert redshift.clusters[0].id == cluster_id
         assert redshift.clusters[0].region == AWS_REGION_EU_WEST_1
         assert redshift.clusters[0].public_access
+        assert redshift.clusters[0].vpc_id == response["Cluster"].get("VpcId")
+        assert redshift.clusters[0].vpc_security_groups == [
+            sg["VpcSecurityGroupId"]
+            for sg in response["Cluster"]["VpcSecurityGroups"]
+            if sg["Status"] == "active"
+        ]
         assert (
             redshift.clusters[0].endpoint_address
             == response["Cluster"]["Endpoint"]["Address"]

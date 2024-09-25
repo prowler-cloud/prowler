@@ -121,6 +121,7 @@ class Test_RDS_Service:
             {"Key": "test", "Value": "test"},
         ]
         assert "test" in db_instance.parameter_groups
+        assert db_instance.subnet_ids == []
         assert db_instance.copy_tags_to_snapshot
         assert db_instance.port == 5432
 

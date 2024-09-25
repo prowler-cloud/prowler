@@ -102,6 +102,13 @@ class RDS(AWSService):
                                 ),
                                 port=instance.get("Endpoint", {}).get("Port"),
                                 vpc_id=instance.get("DBSubnetGroup", {}).get("VpcId"),
+                                subnet_ids=[
+                                    subnet_id["SubnetIdentifier"]
+                                    for subnet_id in instance.get(
+                                        "DBSubnetGroup", {}
+                                    ).get("Subnets", [])
+                                    if subnet_id["SubnetStatus"] == "Active"
+                                ],
                             )
         except Exception as error:
             logger.error(
@@ -512,6 +519,7 @@ class DBInstance(BaseModel):
     copy_tags_to_snapshot: Optional[bool]
     port: Optional[int]
     vpc_id: Optional[str]
+    subnet_ids: list[str] = []
 
 
 class DBCluster(BaseModel):

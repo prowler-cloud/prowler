@@ -32,7 +32,8 @@ class Redshift(AWSService):
                             vpc_id=cluster.get("VpcId"),
                             vpc_security_groups=[
                                 sg["VpcSecurityGroupId"]
-                                for sg in cluster.get("VpcSecurityGroups", [])
+                                for sg in cluster.get("VpcSecurityGroups")
+                                if sg["Status"] == "active"
                             ],
                             region=regional_client.region,
                             tags=cluster.get("Tags"),

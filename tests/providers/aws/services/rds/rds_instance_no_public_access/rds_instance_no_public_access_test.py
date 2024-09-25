@@ -274,3 +274,81 @@ class Test_rds_instance_no_public_access:
                     == f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:db:db-master-1"
                 )
                 assert result[0].resource_tags == []
+
+    @mock_aws
+    def test_rds_instance_public_with_public_subnet(self):
+        ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
+        vpc_id = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]["VpcId"]
+        subnet_id = ec2_client.create_subnet(
+            VpcId=vpc_id,
+            CidrBlock="10.0.0.0/16",
+            AvailabilityZone=f"{AWS_REGION_US_EAST_1}a",
+        )["Subnet"]["SubnetId"]
+        # add default route of subnet to an internet gateway to make it public
+        igw_id = ec2_client.create_internet_gateway()["InternetGateway"][
+            "InternetGatewayId"
+        ]
+        # attach internet gateway to subnet
+        ec2_client.attach_internet_gateway(InternetGatewayId=igw_id, VpcId=vpc_id)
+        # create route table
+        route_table_id = ec2_client.create_route_table(VpcId=vpc_id)["RouteTable"][
+            "RouteTableId"
+        ]
+        # associate route table with subnet
+        ec2_client.associate_route_table(
+            RouteTableId=route_table_id, SubnetId=subnet_id
+        )
+        # add route to route table
+        ec2_client.create_route(
+            RouteTableId=route_table_id,
+            DestinationCidrBlock="0.0.0.0/0",
+            GatewayId=igw_id,
+        )
+        conn = client("rds", region_name=AWS_REGION_US_EAST_1)
+        conn.create_db_subnet_group(
+            DBSubnetGroupName="subnet-group",
+            DBSubnetGroupDescription="subnet-group",
+            SubnetIds=[subnet_id],
+        )
+        conn.create_db_instance(
+            DBInstanceIdentifier="db-master-1",
+            AllocatedStorage=10,
+            Engine="postgres",
+            DBName="staging-postgres",
+            DBInstanceClass="db.m1.small",
+            PubliclyAccessible=False,
+            DBSubnetGroupName="subnet-group",
+        )
+        from prowler.providers.aws.services.rds.rds_service import RDS
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ):
+            with mock.patch(
+                "prowler.providers.aws.services.rds.rds_instance_no_public_access.rds_instance_no_public_access.rds_client",
+                new=RDS(aws_provider),
+            ):
+                # Test Check
+                from prowler.providers.aws.services.rds.rds_instance_no_public_access.rds_instance_no_public_access import (
+                    rds_instance_no_public_access,
+                )
+
+                check = rds_instance_no_public_access()
+                result = check.execute()
+
+                assert len(result) == 1
+                assert result[0].status == "FAIL"
+                assert (
+                    result[0].status_extended
+                    == f"RDS Instance db-master-1 is in a public subnet {subnet_id}."
+                )
+                assert result[0].resource_id == "db-master-1"
+                assert result[0].region == AWS_REGION_US_EAST_1
+                assert (
+                    result[0].resource_arn
+                    == f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:db:db-master-1"
+                )
+                assert result[0].resource_tags == []

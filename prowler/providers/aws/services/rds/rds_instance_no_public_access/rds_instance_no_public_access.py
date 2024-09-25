@@ -2,6 +2,7 @@ from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 from prowler.providers.aws.services.ec2.lib.security_groups import check_security_group
 from prowler.providers.aws.services.rds.rds_client import rds_client
+from prowler.providers.aws.services.vpc.vpc_client import vpc_client
 
 
 class rds_instance_no_public_access(Check):
@@ -37,6 +38,17 @@ class rds_instance_no_public_access(Check):
                                         report.status = "FAIL"
                                         report.status_extended = f"RDS Instance {db_instance.id} is set as publicly accessible and security group {security_group.name} ({security_group.id}) has {db_instance.engine} port {db_instance_port} open to the Internet at endpoint {db_instance.endpoint.get('Address')}."
                                         break
+            # If the DB Instance is in a public subnet, it is publicly accessible
+            if report.status == "PASS" and db_instance.subnet_ids:
+                for subnet_id in db_instance.subnet_ids:
+                    if (
+                        subnet_id in vpc_client.vpc_subnets
+                        and vpc_client.vpc_subnets[subnet_id].public
+                    ):
+                        report.status = "FAIL"
+                        report.status_extended = f"RDS Instance {db_instance.id} is in a public subnet {subnet_id}."
+                        break
+
             findings.append(report)
 
         return findings
