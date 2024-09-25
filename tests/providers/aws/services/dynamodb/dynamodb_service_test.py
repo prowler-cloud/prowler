@@ -116,7 +116,7 @@ class Test_DynamoDB_Service:
         assert tables.tags == [
             {"Key": "test", "Value": "test"},
         ]
-        assert dynamo.tables[0].deletion_protection
+        assert tables.deletion_protection
 
     # Test DynamoDB Describe Continuous Backups
     @mock_aws
