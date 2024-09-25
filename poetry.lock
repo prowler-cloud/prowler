@@ -2524,13 +2524,13 @@ dev = ["click", "codecov", "mkdocs-gen-files", "mkdocs-git-authors-plugin", "mkd
 
 [[package]]
 name = "mkdocs-material"
-version = "9.5.36"
+version = "9.5.37"
 description = "Documentation that simply works"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "mkdocs_material-9.5.36-py3-none-any.whl", hash = "sha256:36734c1fd9404bea74236242ba3359b267fc930c7233b9fd086b0898825d0ac9"},
-    {file = "mkdocs_material-9.5.36.tar.gz", hash = "sha256:140456f761320f72b399effc073fa3f8aac744c77b0970797c201cae2f6c967f"},
+    {file = "mkdocs_material-9.5.37-py3-none-any.whl", hash = "sha256:6e8a986abad77be5edec3dd77cf1ddf2480963fb297a8e971f87a82fd464b070"},
+    {file = "mkdocs_material-9.5.37.tar.gz", hash = "sha256:2c31607431ec234db124031255b0a9d4f3e1c3ecc2c47ad97ecfff0460471941"},
 ]
 
 [package.dependencies]
@@ -5005,4 +5005,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "7eea3c730cf741feed5b5ff35e771f6e7b0a874910c471898fc39f9e838af288"
+content-hash = "f9ac760feca23cf5405a3f3cb14a459e34abfa51b6995c990ec9b789d35dec01"
