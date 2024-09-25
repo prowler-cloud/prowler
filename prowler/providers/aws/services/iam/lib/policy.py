@@ -162,6 +162,8 @@ def is_policy_public(
         bool: True if the policy allows public access, False otherwise
     """
     is_public = False
+    source_account = ""
+    trusted_account_ids = []
     # Get service client from the check to get the trusted account IDs and source account
     for var_name, value in inspect.stack()[1].frame.f_globals.items():
         if "_client" in var_name:
@@ -229,8 +231,8 @@ def is_policy_public(
                     not is_condition_block_restrictive(
                         statement.get("Condition", {}),
                         source_account,
-                        trusted_account_ids,
                         is_cross_account_allowed,
+                        trusted_account_ids,
                     )
                     and not is_condition_block_restrictive_organization(
                         statement.get("Condition", {})
@@ -247,8 +249,8 @@ def is_policy_public(
 def is_condition_block_restrictive(
     condition_statement: dict,
     source_account: str = "",
-    trusted_account_ids: list = [],
     is_cross_account_allowed=False,
+    trusted_account_ids: list = [],
 ):
     """
     is_condition_block_restrictive parses the IAM Condition policy block and, by default, returns True if the source_account passed as argument is within, False if not.
@@ -322,13 +324,17 @@ def is_condition_block_restrictive(
                             # if there is an arn/account without the source account or trusted accounts -> we do not consider it safe
                             # here by default we assume is true and look for false entries
                             for item in condition_statement[condition_operator][value]:
-                                if source_account not in item:
-                                    if not any(
-                                        trusted_account_id in item
-                                        for trusted_account_id in trusted_account_ids
-                                    ):
-                                        is_condition_key_restrictive = False
-                                        break
+                                if (
+                                    "aws:sourcevpc" != value
+                                    and "aws:sourcevpce" != value
+                                ):
+                                    if source_account not in item:
+                                        if not any(
+                                            trusted_account_id in item
+                                            for trusted_account_id in trusted_account_ids
+                                        ):
+                                            is_condition_key_restrictive = False
+                                            break
 
                         if is_condition_key_restrictive:
                             is_condition_valid = True
@@ -338,18 +344,21 @@ def is_condition_block_restrictive(
                         condition_statement[condition_operator][value],
                         str,
                     ):
-                        if is_cross_account_allowed:
+                        if "aws:sourcevpc" == value or "aws:sourcevpce" == value:
                             is_condition_valid = True
                         else:
-                            if (
-                                source_account
-                                in condition_statement[condition_operator][value]
-                            ) or any(
-                                trusted_account_id
-                                in condition_statement[condition_operator][value]
-                                for trusted_account_id in trusted_account_ids
-                            ):
+                            if is_cross_account_allowed:
                                 is_condition_valid = True
+                            else:
+                                if (
+                                    source_account
+                                    in condition_statement[condition_operator][value]
+                                ) or any(
+                                    trusted_account_id
+                                    in condition_statement[condition_operator][value]
+                                    for trusted_account_id in trusted_account_ids
+                                ):
+                                    is_condition_valid = True
 
     return is_condition_valid
 
