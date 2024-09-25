@@ -89,19 +89,34 @@ class NetworkFirewall(AWSService):
                 network_firewall.logging_configuration = []
                 if destination_configs:
                     for log_destination_config in destination_configs:
+                        log_type = LogType(
+                            log_destination_config.get("LogType", "FLOW")
+                        )
+                        log_destination_type = LogDestinationType(
+                            log_destination_config.get("LogDestinationType", "S3")
+                        )
+                        log_destination = log_destination_config.get(
+                            "LogDestination", {}
+                        ).get(
+                            "bucket-name"
+                            if log_destination_type == LogDestinationType.s3
+                            else (
+                                "logGroup"
+                                if log_destination_type
+                                == LogDestinationType.cloudwatch_logs
+                                else (
+                                    "deliveryStream"
+                                    if log_destination_type
+                                    == LogDestinationType.kinesis_data_firehose
+                                    else ""
+                                )
+                            )
+                        )
                         network_firewall.logging_configuration.append(
                             LoggingConfiguration(
-                                log_type=LogType(
-                                    log_destination_config.get("LogType", "FLOW")
-                                ),
-                                log_destination_type=LogDestinationType(
-                                    log_destination_config.get(
-                                        "LogDestinationType", "S3"
-                                    )
-                                ),
-                                log_destination=log_destination_config.get(
-                                    "LogDestination", {}
-                                ),
+                                log_type=log_type,
+                                log_destination_type=log_destination_type,
+                                log_destination=log_destination,
                             )
                         )
         except Exception as error:
@@ -131,7 +146,7 @@ class LoggingConfiguration(BaseModel):
 
     log_type: LogType
     log_destination_type: LogDestinationType
-    log_destination: dict = {}
+    log_destination: str = ""
 
 
 class Firewall(BaseModel):
