@@ -209,7 +209,6 @@ class BackupReportPlan(BaseModel):
     name: str
     last_attempted_execution_date: Optional[datetime]
     last_successful_execution_date: Optional[datetime]
-    tags: Optional[list]
 
 
 class ProtectedResource(BaseModel):
