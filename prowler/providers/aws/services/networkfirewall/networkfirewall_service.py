@@ -77,10 +77,10 @@ class NetworkFirewall(AWSService):
             "Network Firewall - Describe Network Firewalls Logging Configuration..."
         )
         try:
-            for network_firewall in self.network_firewalls:
+            for arn, network_firewall in self.network_firewalls.items():
                 describe_logging_configuration = (
                     self.regional_clients[network_firewall.region]
-                    .describe_logging_configuration(FirewallArn=network_firewall.arn)
+                    .describe_logging_configuration(FirewallArn=arn)
                     .get("LoggingConfiguration", {})
                 )
                 destination_configs = describe_logging_configuration.get(
@@ -137,7 +137,6 @@ class LoggingConfiguration(BaseModel):
 class Firewall(BaseModel):
     """Firewall Model for Network Firewall"""
 
-    arn: str
     name: str
     region: str
     policy_arn: str = None

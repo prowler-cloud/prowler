@@ -22,7 +22,7 @@ class Test_networkfirewall_logging_enabled:
             [AWS_REGION_US_EAST_1]
         )
         networkfirewall_client.region = AWS_REGION_US_EAST_1
-        networkfirewall_client.network_firewalls = []
+        networkfirewall_client.network_firewalls = {}
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
@@ -50,9 +50,8 @@ class Test_networkfirewall_logging_enabled:
             [AWS_REGION_US_EAST_1]
         )
         networkfirewall_client.region = AWS_REGION_US_EAST_1
-        networkfirewall_client.network_firewalls = [
-            Firewall(
-                arn=FIREWALL_ARN,
+        networkfirewall_client.network_firewalls = {
+            FIREWALL_ARN: Firewall(
                 name=FIREWALL_NAME,
                 region=AWS_REGION_US_EAST_1,
                 policy_arn=POLICY_ARN,
@@ -61,7 +60,7 @@ class Test_networkfirewall_logging_enabled:
                 encryption_type="CUSTOMER_KMS",
                 logging_configuration=[],
             )
-        ]
+        }
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
@@ -98,8 +97,8 @@ class Test_networkfirewall_logging_enabled:
             [AWS_REGION_US_EAST_1]
         )
         networkfirewall_client.region = AWS_REGION_US_EAST_1
-        networkfirewall_client.network_firewalls = [
-            Firewall(
+        networkfirewall_client.network_firewalls = {
+            FIREWALL_ARN: Firewall(
                 arn=FIREWALL_ARN,
                 name=FIREWALL_NAME,
                 region=AWS_REGION_US_EAST_1,
@@ -117,7 +116,7 @@ class Test_networkfirewall_logging_enabled:
                     )
                 ],
             ),
-        ]
+        }
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 

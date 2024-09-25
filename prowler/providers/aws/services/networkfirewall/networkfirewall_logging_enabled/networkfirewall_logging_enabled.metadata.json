@@ -5,11 +5,11 @@
   "CheckType": [
     "Software and Configuration Checks/Industry and Regulatory Standards/NIST 800-53"
   ],
-  "ServiceName": "Network Firewall",
-  "SubServiceName": "Logging",
+  "ServiceName": "networkfirewall",
+  "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:network-firewall::account-id:firewall/firewall-name",
   "Severity": "medium",
-  "ResourceType": "AwsNetworkFirewallLoggingConfiguration",
+  "ResourceType": "AwsNetworkFirewallFirewall",
   "Description": "This control checks whether logging is enabled for an AWS Network Firewall firewall. The control fails if logging isn't enabled for at least one log type or if the logging destination doesn't exist.",
   "Risk": "Failing to enable logging on an AWS Network Firewall can lead to a lack of visibility into network traffic, making it difficult to monitor and respond to security incidents effectively, which could jeopardize the security and integrity of your infrastructure.",
   "RelatedUrl": "https://docs.aws.amazon.com/network-firewall/latest/developerguide/firewall-logging.html",

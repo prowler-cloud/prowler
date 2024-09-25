@@ -95,8 +95,8 @@ class Test_NetworkFirewall_Service:
         networkfirewall = mock.MagicMock
         networkfirewall.provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         networkfirewall.region = AWS_REGION_US_EAST_1
-        networkfirewall.network_firewalls = [
-            Firewall(
+        networkfirewall.network_firewalls = {
+            FIREWALL_ARN: Firewall(
                 arn=FIREWALL_ARN,
                 name=FIREWALL_NAME,
                 region=AWS_REGION_US_EAST_1,
@@ -114,7 +114,7 @@ class Test_NetworkFirewall_Service:
                     )
                 ],
             )
-        ]
+        }
         assert len(networkfirewall.network_firewalls) == 1
         assert (
             networkfirewall.network_firewalls[FIREWALL_ARN].region
@@ -140,7 +140,6 @@ class Test_NetworkFirewall_Service:
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         networkfirewall = NetworkFirewall(aws_provider)
         assert len(networkfirewall.network_firewalls) == 1
-        assert networkfirewall.network_firewalls[FIREWALL_ARN].arn == FIREWALL_ARN
         assert (
             networkfirewall.network_firewalls[FIREWALL_ARN].region
             == AWS_REGION_US_EAST_1
