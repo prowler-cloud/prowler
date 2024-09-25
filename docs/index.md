@@ -19,20 +19,22 @@ It contains hundreds of controls covering CIS, NIST 800, NIST CSF, CISA, RBI, Fe
 ## Quick Start
 ### Installation
 
-Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), thus can be installed using pip with `Python >= 3.9`:
+Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), thus can be installed as Python package with `Python >= 3.9`:
 
 === "Generic"
+
+    We recommend using `pipx` to install Prowler in order to avoid conflicts with other Python packages.
 
     _Requirements_:
 
     * `Python >= 3.9`
-    * `Python pip >= 3.9`
+    * `pipx` installed: [pipx installation](https://pipx.pypa.io/stable/installation/).
     * AWS, GCP, Azure and/or Kubernetes credentials
 
     _Commands_:
 
     ``` bash
-    pip install prowler
+    pipx install prowler
     prowler -v
     ```
 
@@ -41,8 +43,8 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), 
     _Requirements_:
 
     * Have `docker` installed: https://docs.docker.com/get-docker/.
-    * AWS, GCP, Azure and/or Kubernetes credentials
     * In the command below, change `-v` to your local directory path in order to access the reports.
+    * AWS, GCP, Azure and/or Kubernetes credentials
 
     _Commands_:
 
@@ -54,41 +56,21 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), 
     --env AWS_SESSION_TOKEN toniblyx/prowler:latest
     ```
 
-=== "Ubuntu"
-
-    _Requirements for Ubuntu 20.04.3 LTS_:
-
-    * AWS, GCP, Azure and/or Kubernetes credentials
-    * Install python 3.9 with: `sudo apt-get install python3.9`
-    * Remove python 3.8 to avoid conflicts if you can: `sudo apt-get remove python3.8`
-    * Make sure you have the python3 distutils package installed: `sudo apt-get install python3-distutils`
-    * To make sure you use pip for 3.9 get the get-pip script with: `curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py`
-    * Execute it with the proper python version: `sudo python3.9 get-pip.py`
-    * Now you should have pip for 3.9 ready: `pip3.9 --version`
-
-    _Commands_:
-
-    ```
-    pip3.9 install prowler
-    export PATH=$PATH:/home/$HOME/.local/bin/
-    prowler -v
-    ```
-
 === "GitHub"
 
     _Requirements for Developers_:
 
+    * `git`
+    * `poetry` installed: [poetry installation](https://python-poetry.org/docs/#installation).
     * AWS, GCP, Azure and/or Kubernetes credentials
-    * `git`, `Python >= 3.9`, `pip` and `poetry` installed (`pip install poetry`)
 
     _Commands_:
 
     ```
     git clone https://github.com/prowler-cloud/prowler
     cd prowler
-    poetry shell
     poetry install
-    python prowler.py -v
+    poetry run python prowler.py -v
     ```
     ???+ note
         If you want to clone Prowler from Windows, use `git config core.longpaths true` to allow long file paths.
