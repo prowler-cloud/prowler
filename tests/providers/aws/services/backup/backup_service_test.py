@@ -213,7 +213,7 @@ class TestBackupService:
         )
 
         # Create a backup plan
-        backup_client.create_backup_plan(
+        backup_plan = backup_client.create_backup_plan(
             BackupPlan={
                 "BackupPlanName": "TestPlan",
                 "Rules": [
@@ -226,6 +226,8 @@ class TestBackupService:
             }
         )
 
+        backup_client.tag_resource(ResourceArn=backup_plan["BackupPlanArn"], Tags=tags)
+
         # Test list_tags
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         backup = Backup(aws_provider)
@@ -234,4 +236,5 @@ class TestBackupService:
         assert len(backup.backup_vaults[0].tags) == 1
         assert backup.backup_vaults[0].tags[0]["TestKey"] == "TestValue"
         assert len(backup.backup_plans) == 1
-        assert len(backup.backup_plans[0].tags) == 0
+        assert len(backup.backup_plans[0].tags) == 1
+        assert backup.backup_plans[0].tags[0]["TestKey"] == "TestValue"
