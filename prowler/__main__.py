@@ -455,8 +455,8 @@ def prowler():
             elif compliance_name.startswith("kisa"):
                 # Generate KISA-ISMS-P Finding Object
                 filename = (
-                    f"{global_provider.output_options.output_directory}/compliance/"
-                    f"{global_provider.output_options.output_filename}_{compliance_name}.csv"
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
                 )
                 kisa_ismsp = AWSKISAISMSP(
                     findings=finding_outputs,
