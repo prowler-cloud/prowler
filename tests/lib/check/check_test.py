@@ -2,6 +2,7 @@ import json
 import os
 import pathlib
 from importlib.machinery import FileFinder
+from logging import ERROR
 from pkgutil import ModuleInfo
 from unittest import mock
 
@@ -13,6 +14,7 @@ from prowler.lib.check.check import (
     exclude_checks_to_run,
     exclude_services_to_run,
     execute,
+    execute_checks,
     list_categories,
     list_checks_json,
     list_services,
@@ -938,3 +940,34 @@ class TestCheck:
                                 assert (
                                     check_id == check_dir
                                 ), f"CheckID in metadata does not match the check name in {check_directory}. Found CheckID: {check_id}"
+
+    def test_execute_check_exception_only_logs(self, caplog):
+        caplog.set_level(ERROR)
+
+        findings = []
+        check = Mock()
+        checks = ["test-check"]
+
+        provider = mock.MagicMock()
+        provider.type = "aws"
+
+        output_options = mock.MagicMock()
+        output_options.only_logs = True
+        error = Exception()
+        check.execute = Mock(side_effect=error)
+
+        with patch("prowler.lib.check.check.execute", return_value=findings):
+            assert (
+                execute_checks(
+                    checks,
+                    provider,
+                    custom_checks_metadata=None,
+                    config_file=None,
+                    output_options=output_options,
+                )
+                == findings
+            )
+            print(caplog.record_tuples)
+            assert caplog.record_tuples == [
+                ("root", 40, f"Check '{checks[0]}' was not found for the AWS provider")
+            ]
