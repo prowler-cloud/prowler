@@ -28,6 +28,14 @@ class Test_Policy:
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
+    def test_condition_parser_string_equals_aws_SourceAccount_list_using_config(self):
+        condition_statement = {
+            "StringEquals": {"aws:SourceAccount": [TRUSTED_AWS_ACCOUNT_NUMBER]}
+        }
+        assert is_condition_block_restrictive(
+            condition_statement, trusted_account_ids=[TRUSTED_AWS_ACCOUNT_NUMBER]
+        )
+
     def test_condition_parser_string_equals_aws_SourceAccount_list_not_valid(self):
         condition_statement = {
             "StringEquals": {
@@ -47,6 +55,14 @@ class Test_Policy:
         }
         assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
+        )
+
+    def test_condition_parser_string_equals_aws_SourceAccount_str_using_config(self):
+        condition_statement = {
+            "StringEquals": {"aws:SourceAccount": TRUSTED_AWS_ACCOUNT_NUMBER}
+        }
+        assert is_condition_block_restrictive(
+            condition_statement, trusted_account_ids=[TRUSTED_AWS_ACCOUNT_NUMBER]
         )
 
     def test_condition_parser_string_equals_aws_SourceAccount_str_not_valid(self):
@@ -1718,7 +1734,7 @@ class Test_Policy:
         }
         assert not is_condition_restricting_from_private_ip(condition_from_invalid_ip)
 
-    def test__is_policy_public__(self):
+    def test_is_policy_public_(self):
         policy = {
             "Statement": [
                 {
@@ -1733,7 +1749,7 @@ class Test_Policy:
             policy, not_allowed_actions=["elasticfilesystem:ClientMount"]
         )
 
-    def test__is_policy_public__with_principal_dict(self):
+    def test_is_policy_public_with_principal_dict(self):
         policy = {
             "Statement": [
                 {
@@ -1748,7 +1764,7 @@ class Test_Policy:
             policy, not_allowed_actions=["elasticfilesystem:ClientMount"]
         )
 
-    def test__is_policy_public__with_secure_conditions_and_allowed_conditions(
+    def test_is_policy_public_with_secure_conditions_and_allowed_conditions(
         self,
     ):
         policy = {
@@ -1767,7 +1783,7 @@ class Test_Policy:
         }
         assert not is_policy_public(policy)
 
-    def test__is_policy_public__with_secure_conditions_and_allowed_conditions_nested(
+    def test_is_policy_public_with_secure_conditions_and_allowed_conditions_nested(
         self,
     ):
         policy = {
@@ -1789,7 +1805,7 @@ class Test_Policy:
         }
         assert not is_policy_public(policy)
 
-    def test__is_policy_public__with_secure_conditions_and_allowed_conditions_nested_dict(
+    def test_is_policy_public_with_secure_conditions_and_allowed_conditions_nested_dict(
         self,
     ):
         policy = {
@@ -1813,7 +1829,7 @@ class Test_Policy:
         }
         assert not is_policy_public(policy)
 
-    def test__is_policy_public__with_secure_conditions_and_allowed_conditions_nested_dict_key(
+    def test_is_policy_public_with_secure_conditions_and_allowed_conditions_nested_dict_key(
         self,
     ):
         policy = {
@@ -1837,7 +1853,7 @@ class Test_Policy:
         }
         assert not is_policy_public(policy)
 
-    def test__is_policy_public_with_action_wildcard(
+    def test_is_policy_public_with_action_wildcard(
         self,
     ):
         policy = {
@@ -1852,7 +1868,7 @@ class Test_Policy:
         }
         assert is_policy_public(policy)
 
-    def test__is_policy_public_allowing_all_actions(
+    def test_is_policy_public_allowing_all_actions(
         self,
     ):
         policy = {
@@ -1866,6 +1882,19 @@ class Test_Policy:
             ]
         }
         assert is_policy_public(policy)
+
+    def test_is_policy_public_allowing_other_account(self):
+        policy = {
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Principal": {"AWS": "arn:aws:iam::123456789012:root"},
+                    "Action": "*",
+                    "Resource": "*",
+                }
+            ]
+        }
+        assert not is_policy_public(policy)
 
     def test_check_admin_access(self):
         policy = {
