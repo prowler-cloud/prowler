@@ -63,10 +63,10 @@ class Test_s3_bucket_cross_account_access:
                 result = check.execute()
 
                 assert len(result) == 1
-                assert result[0].status == "FAIL"
+                assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == f"S3 Bucket {bucket_name_us} does not have any policy attached."
+                    == f"S3 Bucket {bucket_name_us} does not have a bucket policy."
                 )
                 assert result[0].resource_id == bucket_name_us
                 assert (
@@ -121,7 +121,7 @@ class Test_s3_bucket_cross_account_access:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == f"S3 Bucket {bucket_name_us} does allow actions {delete_bucket_policy} to be performed by principals from other AWS accounts."
+                    == f"S3 Bucket {bucket_name_us} has a bucket policy allowing cross account access."
                 )
                 assert result[0].resource_id == bucket_name_us
                 assert (
@@ -141,7 +141,7 @@ class Test_s3_bucket_cross_account_access:
             "Statement": [
                 {
                     "Effect": "Allow",
-                    "Principal": {"AWS": "arn:aws:iam::example:root"},
+                    "Principal": {"AWS": "arn:aws:iam::*:root"},
                     "Action": [
                         put_encryption_configuration,
                         put_bucket_policy,
@@ -180,7 +180,7 @@ class Test_s3_bucket_cross_account_access:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == f"S3 Bucket {bucket_name_us} does allow actions {put_encryption_configuration}, {put_bucket_policy} to be performed by principals from other AWS accounts."
+                    == f"S3 Bucket {bucket_name_us} has a bucket policy allowing cross account access."
                 )
                 assert result[0].resource_id == bucket_name_us
                 assert (
@@ -235,7 +235,7 @@ class Test_s3_bucket_cross_account_access:
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == f"S3 Bucket {bucket_name_us} does not allow actions to be performed by principals from other AWS accounts."
+                    == f"S3 Bucket {bucket_name_us} has a bucket policy but it does not allow cross account access."
                 )
                 assert result[0].resource_id == bucket_name_us
                 assert (
