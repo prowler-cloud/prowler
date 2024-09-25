@@ -595,3 +595,86 @@ export const SuccessIcon: React.FC<IconSvgProps> = ({
     />
   </svg>
 );
+
+export const ArrowUpIcon: React.FC<IconSvgProps> = ({
+  size,
+  height,
+  width,
+  ...props
+}) => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      height={size || height || "1em"}
+      viewBox="0 0 12 12"
+      width={size || width || "1em"}
+      aria-hidden="true"
+      focusable="false"
+      role="presentation"
+      {...props}
+    >
+      <path
+        d="M3 7.5L6 4.5L9 7.5"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.5"
+      />
+    </svg>
+  );
+};
+
+export const ArrowDownIcon: React.FC<IconSvgProps> = ({
+  size,
+  height,
+  width,
+  ...props
+}) => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      height={size || height || "1em"}
+      viewBox="0 0 12 12"
+      width={size || width || "1em"}
+      aria-hidden="true"
+      focusable="false"
+      role="presentation"
+      {...props}
+    >
+      <path
+        d="M3 4.5L6 7.5L9 4.5"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.5"
+      />
+    </svg>
+  );
+};
+
+export const ChevronsLeftRightIcon: React.FC<IconSvgProps> = ({
+  size,
+  height,
+  width,
+  ...props
+}) => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      height={size || height || 24}
+      viewBox="0 0 24 24"
+      width={size || width || 24}
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="lucide lucide-chevrons-left-right ml-2 h-4 w-4 rotate-90"
+      {...props}
+    >
+      <path d="m9 7-5 5 5 5M15 7l5 5-5 5" />
+    </svg>
+  );
+};

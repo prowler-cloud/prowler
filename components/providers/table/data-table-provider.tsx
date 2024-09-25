@@ -1,5 +1,6 @@
 "use client";
-
+import { Icon } from "@iconify/react";
+import { Button, Chip } from "@nextui-org/react";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -11,7 +12,7 @@ import {
   SortingState,
   useReactTable,
 } from "@tanstack/react-table";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import {
   Table,
@@ -64,11 +65,36 @@ export function DataTableProvider<TData, TValue>({
     { key: "connected", values: ["false", "true"] },
     // Add more filter categories as needed
   ];
+  const topBar = useMemo(() => {
+    return (
+      <div className="mb-[18px] w-full flex items-center justify-between">
+        <div className="flex w-fit items-center gap-2">
+          <h1 className="text-2xl font-[700] leading-[32px]">Providers</h1>
+          <Chip
+            className="hidden items-center text-default-500 sm:flex"
+            size="sm"
+            variant="flat"
+          >
+            3
+          </Chip>
+        </div>
+        <Button
+          color="primary"
+          endContent={<Icon icon="solar:add-circle-bold" width={20} />}
+        >
+          Add Account
+        </Button>
+      </div>
+    );
+  }, []);
 
   return (
     <>
+      {topBar}
+
       <DataTableFilterCustom filters={filters} />
-      <div className="rounded-md border w-full">
+
+      <div className="p-4 z-0 flex flex-col relative justify-between gap-4 bg-content1 overflow-auto rounded-large shadow-small w-full  ">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
