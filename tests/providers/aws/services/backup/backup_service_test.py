@@ -53,15 +53,32 @@ def mock_make_api_call(self, operation_name, kwarg):
                 }
             ]
         }
-    if operation_name == "ListProtectedResources":
+    if operation_name == "ListBackupSelections":
         return {
-            "Results": [
+            "BackupSelectionsList": [
                 {
-                    "ResourceArn": "arn:aws:rds:eu-west-1:123456789012:db:my-db-instance",
-                    "ResourceType": "RDS",
-                    "LastBackupTime": datetime(2015, 1, 1),
+                    "SelectionId": "selection-id-1",
+                    "SelectionName": "TestSelection",
+                    "BackupPlanId": "ID-TestBackupPlan",
+                    "CreationDate": datetime(2015, 1, 1),
+                    "CreatorRequestId": "request-id-1",
+                    "IamRoleArn": "arn:aws:iam::123456789012:role/service-role/AWSBackupDefaultServiceRole",
                 }
             ]
+        }
+    if operation_name == "GetBackupSelection":
+        return {
+            "BackupSelection": {
+                "SelectionName": "TestSelection",
+                "IamRoleArn": "arn:aws:iam::123456789012:role/service-role/AWSBackupDefaultServiceRole",
+                "Resources": [
+                    "arn:aws:dynamodb:eu-west-1:123456789012:table/MyDynamoDBTable"
+                ],
+            },
+            "SelectionId": "selection-id-1",
+            "BackupPlanId": "ID-TestBackupPlan",
+            "CreationDate": datetime(2015, 1, 1),
+            "CreatorRequestId": "request-id-1",
         }
     return make_api_call(self, operation_name, kwarg)
 
@@ -144,14 +161,12 @@ class Test_Backup_Service:
             2015, 1, 1
         )
 
-    def test_list_protected_resources(self):
+    # Test Backup List Backup Selections
+    def test_list_backup_selections(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         backup = Backup(aws_provider)
         assert len(backup.protected_resources) == 1
-        arn = "arn:aws:rds:eu-west-1:123456789012:db:my-db-instance"
-        protected_resource = backup.protected_resources.get(arn)
-        assert protected_resource is not None
-        assert protected_resource.arn == arn
-        assert protected_resource.resource_type == "RDS"
-        assert protected_resource.region == AWS_REGION_EU_WEST_1
-        assert protected_resource.last_backup_time == datetime(2015, 1, 1)
+        assert (
+            "arn:aws:dynamodb:eu-west-1:123456789012:table/MyDynamoDBTable"
+            in backup.protected_resources
+        )
