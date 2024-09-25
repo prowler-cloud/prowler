@@ -126,12 +126,16 @@ def is_condition_restricting_from_private_ip(condition_statement: dict) -> bool:
 
                 for ip in condition_statement[CONDITION_OPERATOR][CONDITION_KEY]:
                     # Select if IP address or IP network searching in the string for '/'
-                    if "/" in ip:
-                        if not ip_network(ip, strict=False).is_private:
-                            break
+                    if ip == "*":
+                        is_from_private_ip = False
+                        break
                     else:
-                        if not ip_address(ip).is_private:
-                            break
+                        if "/" in ip:
+                            if not ip_network(ip, strict=False).is_private:
+                                break
+                        else:
+                            if not ip_address(ip).is_private:
+                                break
                 else:
                     is_from_private_ip = True
 

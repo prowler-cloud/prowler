@@ -88,7 +88,6 @@ class OpenSearchService(AWSService):
                     DomainName=domain.name
                 )
                 domain.arn = describe_domain["DomainStatus"]["ARN"]
-                domain.vpc_endpoints = None
                 if "Endpoints" in describe_domain["DomainStatus"]:
                     if "vpc" in describe_domain["DomainStatus"]["Endpoints"]:
                         domain.vpc_endpoints = [
@@ -98,11 +97,13 @@ class OpenSearchService(AWSService):
                             ].values()
                         ]
 
-                domain.vpc_id = None
                 if "VPCOptions" in describe_domain["DomainStatus"]:
-                    domain.vpc_id = describe_domain["DomainStatus"]["VPCOptions"][
+                    domain.vpc_id = describe_domain["DomainStatus"]["VPCOptions"].get(
                         "VPCId"
-                    ]
+                    )
+                    domain.subnet_ids = describe_domain["DomainStatus"][
+                        "VPCOptions"
+                    ].get("SubnetIds", [])
                 domain.cognito_options = describe_domain["DomainStatus"][
                     "CognitoOptions"
                 ]["Enabled"]
@@ -157,8 +158,9 @@ class OpenSearchDomain(BaseModel):
     region: str
     arn: str = None
     logging: list[PublishingLoggingOption] = []
-    vpc_endpoints: list[str] = None
+    vpc_endpoints: list[str] = []
     vpc_id: str = None
+    subnet_ids: list[str] = []
     access_policy: dict = None
     cognito_options: bool = None
     encryption_at_rest: bool = None

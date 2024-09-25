@@ -135,7 +135,7 @@ class Test_OpenSearchService_Service:
         assert opensearch.opensearch_domains[0].name == test_domain_name
         assert opensearch.opensearch_domains[0].region == AWS_REGION_EU_WEST_1
 
-    # Test OpenSearchService describ domain config
+    # Test OpenSearchService describe domain config
     def test_describe_domain_config(self):
         aws_provider = set_mocked_aws_provider([])
         opensearch = OpenSearchService(aws_provider)
@@ -150,7 +150,7 @@ class Test_OpenSearchService_Service:
         assert opensearch.opensearch_domains[0].logging[2].name == "AUDIT_LOGS"
         assert opensearch.opensearch_domains[0].logging[2].enabled
 
-    # Test OpenSearchService describ domain
+    # Test OpenSearchService describe domain
     def test_describe_domain(self):
         aws_provider = set_mocked_aws_provider([])
         opensearch = OpenSearchService(aws_provider)
