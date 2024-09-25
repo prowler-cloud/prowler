@@ -7,7 +7,6 @@ from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################################ Redshift
 class Redshift(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
@@ -18,7 +17,7 @@ class Redshift(AWSService):
         self._describe_cluster_snapshots(self.regional_clients)
 
     def _describe_clusters(self, regional_client):
-        logger.info("Redshift - describing clusters...")
+        logger.info("Redshift - Describing Clusters...")
         try:
             list_clusters_paginator = regional_client.get_paginator("describe_clusters")
             for page in list_clusters_paginator.paginate():
@@ -30,6 +29,11 @@ class Redshift(AWSService):
                         cluster_to_append = Cluster(
                             arn=arn,
                             id=cluster["ClusterIdentifier"],
+                            vpc_id=cluster.get("VpcId"),
+                            vpc_security_groups=[
+                                sg["VpcSecurityGroupId"]
+                                for sg in cluster.get("VpcSecurityGroups", [])
+                            ],
                             region=regional_client.region,
                             tags=cluster.get("Tags"),
                         )
@@ -54,7 +58,7 @@ class Redshift(AWSService):
             )
 
     def _describe_logging_status(self, regional_clients):
-        logger.info("Redshift - describing logging status...")
+        logger.info("Redshift - Describing Logging Status...")
         try:
             for cluster in self.clusters:
                 regional_client = regional_clients[cluster.region]
@@ -75,7 +79,7 @@ class Redshift(AWSService):
             )
 
     def _describe_cluster_snapshots(self, regional_clients):
-        logger.info("Redshift - describing logging status...")
+        logger.info("Redshift - Describing Cluster Snapshots...")
         try:
             for cluster in self.clusters:
                 regional_client = regional_clients[cluster.region]
@@ -95,10 +99,12 @@ class Cluster(BaseModel):
     id: str
     arn: str
     region: str
-    public_access: bool = None
+    vpc_id: str = None
+    vpc_security_groups: list = []
+    public_access: bool = False
     endpoint_address: str = None
-    allow_version_upgrade: bool = None
-    logging_enabled: bool = None
+    allow_version_upgrade: bool = False
+    logging_enabled: bool = False
     bucket: str = None
     cluster_snapshots: bool = None
     tags: Optional[list] = []

@@ -421,6 +421,8 @@ class VPC(AWSService):
                             for vpc in self.vpcs.values():
                                 if vpc.id == subnet["VpcId"]:
                                     vpc.subnets.append(object)
+                                    if object.public:
+                                        vpc.public = True
                         except Exception as error:
                             logger.error(
                                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -482,6 +484,7 @@ class VPCs(BaseModel):
     name: str
     default: bool
     in_use: bool = False
+    public: bool = False
     cidr_block: str
     flow_log: bool = False
     region: str
