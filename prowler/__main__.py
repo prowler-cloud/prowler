@@ -135,7 +135,7 @@ def prowler():
         sys.exit()
 
     # Load checks metadata
-    logger.debug("Loading checks metadata from .metadata.json files")
+    logger.debug("Loading checks metadata from <check_name>.metadata.json files")
     bulk_checks_metadata = CheckMetadata.get_bulk(provider)
 
     if args.list_categories:
