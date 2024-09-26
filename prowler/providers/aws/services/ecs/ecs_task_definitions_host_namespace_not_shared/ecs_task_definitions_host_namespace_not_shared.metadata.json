@@ -6,7 +6,7 @@
     "Software and Configuration Checks/AWS Security Best Practices"
   ],
   "ServiceName": "ecs",
-  "SubServiceName": "taskDefinition",
+  "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:ecs:{region}:{account-id}:task-definition/{task-definition-name}",
   "Severity": "high",
   "ResourceType": "AwsEcsTaskDefinition",
