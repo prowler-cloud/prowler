@@ -23,9 +23,12 @@ class Test_dms_endpoint_ssl_enabled:
 
     def test_dms_endpoint_ssl_none(self):
         dms_client = mock.MagicMock
+        endpoint_arn = f"arn:aws:dms:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:endpoint:test-endpoint-no-ssl"
         dms_client.endpoints = {
-            "test-endpoint-no-ssl": Endpoint(
+            endpoint_arn: Endpoint(
+                arn=endpoint_arn,
                 id="test-endpoint-no-ssl",
+                region=AWS_REGION_US_EAST_1,
                 ssl_mode="none",
                 tags=[{"Key": "Name", "Value": "test-endpoint-no-ssl"}],
             )
@@ -48,7 +51,10 @@ class Test_dms_endpoint_ssl_enabled:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].resource_id == "test-endpoint-no-ssl"
-            assert result[0].resource_arn == "test-endpoint-no-ssl"
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:dms:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:endpoint:test-endpoint-no-ssl"
+            )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert (
                 result[0].status_extended
@@ -60,9 +66,12 @@ class Test_dms_endpoint_ssl_enabled:
 
     def test_dms_endpoint_ssl_require(self):
         dms_client = mock.MagicMock
+        endpoint_arn = f"arn:aws:dms:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:endpoint:test-endpoint-ssl-require"
         dms_client.endpoints = {
-            "test-endpoint-ssl-require": Endpoint(
+            endpoint_arn: Endpoint(
+                arn=endpoint_arn,
                 id="test-endpoint-ssl-require",
+                region=AWS_REGION_US_EAST_1,
                 ssl_mode="require",
                 tags=[{"Key": "Name", "Value": "test-endpoint-ssl-require"}],
             )
@@ -85,7 +94,7 @@ class Test_dms_endpoint_ssl_enabled:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert result[0].resource_id == "test-endpoint-ssl-require"
-            assert result[0].resource_arn == "test-endpoint-ssl-require"
+            assert result[0].resource_arn == endpoint_arn
             assert result[0].region == AWS_REGION_US_EAST_1
             assert (
                 result[0].status_extended
@@ -97,9 +106,12 @@ class Test_dms_endpoint_ssl_enabled:
 
     def test_dms_endpoint_ssl_verify_ca(self):
         dms_client = mock.MagicMock
+        endpoint_arn = f"arn:aws:dms:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:endpoint:test-endpoint-ssl-verify-ca"
         dms_client.endpoints = {
-            "test-endpoint-ssl-verify-ca": Endpoint(
+            endpoint_arn: Endpoint(
+                arn=endpoint_arn,
                 id="test-endpoint-ssl-verify-ca",
+                region=AWS_REGION_US_EAST_1,
                 ssl_mode="verify-ca",
                 tags=[{"Key": "Name", "Value": "test-endpoint-ssl-verify-ca"}],
             )
@@ -122,7 +134,7 @@ class Test_dms_endpoint_ssl_enabled:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert result[0].resource_id == "test-endpoint-ssl-verify-ca"
-            assert result[0].resource_arn == "test-endpoint-ssl-verify-ca"
+            assert result[0].resource_arn == endpoint_arn
             assert result[0].region == AWS_REGION_US_EAST_1
             assert (
                 result[0].status_extended
@@ -134,9 +146,12 @@ class Test_dms_endpoint_ssl_enabled:
 
     def test_dms_endpoint_ssl_verify_full(self):
         dms_client = mock.MagicMock
+        endpoint_arn = f"arn:aws:dms:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:endpoint:test-endpoint-ssl-verify-full"
         dms_client.endpoints = {
-            "test-endpoint-ssl-verify-full": Endpoint(
+            endpoint_arn: Endpoint(
+                arn=endpoint_arn,
                 id="test-endpoint-ssl-verify-full",
+                region=AWS_REGION_US_EAST_1,
                 ssl_mode="verify-full",
                 tags=[{"Key": "Name", "Value": "test-endpoint-ssl-verify-full"}],
             )
@@ -159,7 +174,7 @@ class Test_dms_endpoint_ssl_enabled:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert result[0].resource_id == "test-endpoint-ssl-verify-full"
-            assert result[0].resource_arn == "test-endpoint-ssl-verify-full"
+            assert result[0].resource_arn == endpoint_arn
             assert result[0].region == AWS_REGION_US_EAST_1
             assert (
                 result[0].status_extended

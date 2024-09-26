@@ -7,7 +7,6 @@ from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################## Database Migration Service
 class DMS(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
@@ -15,11 +14,9 @@ class DMS(AWSService):
         self.instances = []
         self.endpoints = {}
         self.__threading_call__(self._describe_replication_instances)
-        self.__threading_call__(
-            self._list_tags, [instance.arn for instance in self.instances]
-        )
+        self.__threading_call__(self._list_tags, self.instances)
         self.__threading_call__(self._describe_endpoints)
-        self.__threading_call__(self._list_tags, list(self.endpoints.keys()))
+        self.__threading_call__(self._list_tags, self.endpoints.values())
 
     def _describe_replication_instances(self, regional_client):
         logger.info("DMS - Describing DMS Replication Instances...")
@@ -70,7 +67,9 @@ class DMS(AWSService):
                         is_resource_filtered(arn, self.audit_resources)
                     ):
                         self.endpoints[arn] = Endpoint(
+                            arn=arn,
                             id=endpoint["EndpointIdentifier"],
+                            region=regional_client.region,
                             ssl_mode=endpoint.get("SslMode", False),
                         )
         except Exception as error:
@@ -78,29 +77,21 @@ class DMS(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def _list_tags(self, resource_arn: str):
+    def _list_tags(self, resource: any):
         try:
-            tags = self.regional_clients[
-                resource_arn.split(":")[3]
-            ].list_tags_for_resource(ResourceArn=resource_arn)["TagList"]
-
-            # Based on the resource_arn, we can determine if it's a Replication Instance or an Endpoint
-            if resource_arn.split(":")[5] == "rep":
-                for instance in self.instances:
-                    if instance.arn == resource_arn:
-                        instance.tags = tags
-                        break
-            elif resource_arn.split(":")[5] == "endpoint":
-                self.endpoints[resource_arn].tags = tags
-
+            resource.tags = self.regional_clients[
+                resource.region
+            ].list_tags_for_resource(ResourceArn=resource.arn)["TagList"]
         except Exception as error:
             logger.error(
-                f"{self.client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{resource.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
 
 class Endpoint(BaseModel):
+    arn: str
     id: str
+    region: str
     ssl_mode: str
     tags: Optional[list]
 
