@@ -678,3 +678,56 @@ export const ChevronsLeftRightIcon: React.FC<IconSvgProps> = ({
     </svg>
   );
 };
+
+export const PlusCircleIcon: React.FC<IconSvgProps> = ({
+  size,
+  height,
+  width,
+  ...props
+}) => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      height={size || height || 15}
+      viewBox="0 0 15 15"
+      width={size || width || 15}
+      className="mr-2 size-4"
+      {...props}
+    >
+      <path
+        d="M7.5.877a6.623 6.623 0 1 0 0 13.246A6.623 6.623 0 0 0 7.5.877ZM1.827 7.5a5.673 5.673 0 1 1 11.346 0 5.673 5.673 0 0 1-11.346 0ZM7.5 4a.5.5 0 0 1 .5.5V7h2.5a.5.5 0 1 1 0 1H8v2.5a.5.5 0 0 1-1 0V8H4.5a.5.5 0 0 1 0-1H7V4.5a.5.5 0 0 1 .5-.5Z"
+        fill="currentColor"
+        fillRule="evenodd"
+        clipRule="evenodd"
+      />
+    </svg>
+  );
+};
+
+export const CustomFilterIcon: React.FC<IconSvgProps> = ({
+  size,
+  height,
+  width,
+  ...props
+}) => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      height={size || height || 15}
+      viewBox="0 0 15 15"
+      width={size || width || 15}
+      className="mr-2 size-3.5 shrink-0"
+      aria-hidden="true"
+      {...props}
+    >
+      <path
+        d="M2.15 4a1.85 1.85 0 1 1 3.7 0 1.85 1.85 0 0 1-3.7 0ZM4 1.25a2.75 2.75 0 1 0 0 5.5 2.75 2.75 0 0 0 0-5.5ZM5.82 11 2.5 12.837V9.163L5.82 11ZM2.64 8.212a.7.7 0 0 0-1.039.612v4.352a.7.7 0 0 0 1.039.613l3.933-2.176a.7.7 0 0 0 0-1.225L2.64 8.212ZM8.3 9a.7.7 0 0 1 .7-.7h4a.7.7 0 0 1 .7.7v4a.7.7 0 0 1-.7.7H9a.7.7 0 0 1-.7-.7V9Zm.9.2v3.6h3.6V9.2H9.2Zm4.243-7.007a.45.45 0 0 0-.636-.636L11 3.364 9.193 1.557a.45.45 0 1 0-.636.636L10.364 4 8.557 5.807a.45.45 0 1 0 .636.636L11 4.636l1.807 1.807a.45.45 0 0 0 .636-.636L11.636 4l1.807-1.807Z"
+        fill="currentColor"
+        fillRule="evenodd"
+        clipRule="evenodd"
+      />
+    </svg>
+  );
+};
