@@ -23,10 +23,15 @@ module.exports = {
           blue: {
             midnight: "#030921",
             pale: "#f3fcff",
+            smoky: "#7b8390",
           },
           grey: {
             medium: "#353a4d",
             light: "#868994",
+          },
+          green: {
+            DEFAULT: "#9FD655",
+            medium: "#09BF3D",
           },
           theme: {
             green: "#6af400",
