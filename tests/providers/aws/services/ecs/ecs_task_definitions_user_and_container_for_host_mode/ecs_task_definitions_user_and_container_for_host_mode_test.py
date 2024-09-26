@@ -5,11 +5,7 @@ from prowler.providers.aws.services.ecs.ecs_service import (
     ContainerEnvVariable,
     TaskDefinition,
 )
-from tests.providers.aws.utils import (
-    AWS_ACCOUNT_NUMBER,
-    AWS_REGION_US_EAST_1,
-    set_mocked_aws_provider,
-)
+from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, AWS_REGION_US_EAST_1
 
 task_name = "test-task"
 task_revision = "1"
@@ -23,9 +19,6 @@ class Test_ecs_task_definitions_host_networking_mode_users:
         ecs_client.task_definitions = {}
 
         with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
-        ), mock.patch(
             "prowler.providers.aws.services.ecs.ecs_service.ECS",
             ecs_client,
         ):
@@ -62,9 +55,6 @@ class Test_ecs_task_definitions_host_networking_mode_users:
         )
 
         with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
-        ), mock.patch(
             "prowler.providers.aws.services.ecs.ecs_service.ECS",
             ecs_client,
         ):
@@ -78,7 +68,7 @@ class Test_ecs_task_definitions_host_networking_mode_users:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"ECS task definition '{task_name}' does not have host network mode."
+                == f"ECS task definition {task_name} does not have host network mode."
             )
 
     def test_task_definition_host_mode_container_root_non_privileged(self):
@@ -101,9 +91,6 @@ class Test_ecs_task_definitions_host_networking_mode_users:
         )
 
         with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
-        ), mock.patch(
             "prowler.providers.aws.services.ecs.ecs_service.ECS",
             ecs_client,
         ):
@@ -117,7 +104,7 @@ class Test_ecs_task_definitions_host_networking_mode_users:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"ECS task definition '{task_name}' has containers with host network mode and non-privileged containers running as root or with no user specified: {container_name}"
+                == f"ECS task definition {task_name} has containers with host network mode and non-privileged containers running as root or with no user specified: {container_name}"
             )
 
     def test_task_definition_host_mode_container_privileged(self):
@@ -140,9 +127,6 @@ class Test_ecs_task_definitions_host_networking_mode_users:
         )
 
         with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
-        ), mock.patch(
             "prowler.providers.aws.services.ecs.ecs_service.ECS",
             ecs_client,
         ):
@@ -156,7 +140,7 @@ class Test_ecs_task_definitions_host_networking_mode_users:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"ECS task definition '{task_name}' has host network mode but no containers running as root or with no user specified."
+                == f"ECS task definition {task_name} has host network mode but no containers running as root or with no user specified."
             )
 
     def test_task_definition_host_mode_container_not_root(self):
@@ -179,9 +163,6 @@ class Test_ecs_task_definitions_host_networking_mode_users:
         )
 
         with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
-        ), mock.patch(
             "prowler.providers.aws.services.ecs.ecs_service.ECS",
             ecs_client,
         ):
@@ -195,5 +176,5 @@ class Test_ecs_task_definitions_host_networking_mode_users:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"ECS task definition '{task_name}' has host network mode but no containers running as root or with no user specified."
+                == f"ECS task definition {task_name} has host network mode but no containers running as root or with no user specified."
             )
