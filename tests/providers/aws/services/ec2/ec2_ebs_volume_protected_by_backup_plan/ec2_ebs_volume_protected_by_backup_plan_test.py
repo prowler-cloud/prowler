@@ -165,15 +165,20 @@ class Test_ec2_ebs_volume_protected_by_backup_plan:
             f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:volume/volume-tester"
         ]
 
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
         with mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_service.EC2",
-            new=ec2_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_client.ec2_client",
-            new=ec2_client,
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.backup.backup_service.Backup",
+                "prowler.providers.aws.services.ec2.ec2_ebs_volume_protected_by_backup_plan.ec2_ebs_volume_protected_by_backup_plan.ec2_client",
+                new=ec2_client,
+            ), mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_client.ec2_client",
+                new=ec2_client,
+            ), mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_ebs_volume_protected_by_backup_plan.ec2_ebs_volume_protected_by_backup_plan.backup_client",
                 new=backup_client,
             ), mock.patch(
                 "prowler.providers.aws.services.backup.backup_client.backup_client",
@@ -218,15 +223,20 @@ class Test_ec2_ebs_volume_protected_by_backup_plan:
         backup_client = mock.MagicMock()
         backup_client.protected_resources = ["arn:aws:ec2:*:*:volume/*"]
 
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
         with mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_service.EC2",
-            new=ec2_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_client.ec2_client",
-            new=ec2_client,
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.backup.backup_service.Backup",
+                "prowler.providers.aws.services.ec2.ec2_ebs_volume_protected_by_backup_plan.ec2_ebs_volume_protected_by_backup_plan.ec2_client",
+                new=ec2_client,
+            ), mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_client.ec2_client",
+                new=ec2_client,
+            ), mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_ebs_volume_protected_by_backup_plan.ec2_ebs_volume_protected_by_backup_plan.backup_client",
                 new=backup_client,
             ), mock.patch(
                 "prowler.providers.aws.services.backup.backup_client.backup_client",
@@ -271,15 +281,20 @@ class Test_ec2_ebs_volume_protected_by_backup_plan:
         backup_client = mock.MagicMock()
         backup_client.protected_resources = ["*"]
 
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
         with mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_service.EC2",
-            new=ec2_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_client.ec2_client",
-            new=ec2_client,
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.backup.backup_service.Backup",
+                "prowler.providers.aws.services.ec2.ec2_ebs_volume_protected_by_backup_plan.ec2_ebs_volume_protected_by_backup_plan.ec2_client",
+                new=ec2_client,
+            ), mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_client.ec2_client",
+                new=ec2_client,
+            ), mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_ebs_volume_protected_by_backup_plan.ec2_ebs_volume_protected_by_backup_plan.backup_client",
                 new=backup_client,
             ), mock.patch(
                 "prowler.providers.aws.services.backup.backup_client.backup_client",

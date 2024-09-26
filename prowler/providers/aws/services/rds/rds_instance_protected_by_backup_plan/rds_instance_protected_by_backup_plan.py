@@ -25,7 +25,7 @@ class rds_instance_protected_by_backup_plan(Check):
             ):
                 report.status = "PASS"
                 report.status_extended = (
-                    f"DynamoDB table {db_instance.id} is protected by a backup plan."
+                    f"RDS Instance {db_instance.id} is protected by a backup plan."
                 )
 
             findings.append(report)
