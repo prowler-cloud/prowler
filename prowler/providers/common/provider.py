@@ -37,7 +37,6 @@ class Provider(ABC):
         identity (property): The identity of the provider for auditing.
         session (property): The session of the provider for auditing.
         audit_config (property): The audit configuration of the provider.
-        output_options (property): The output configuration of the provider for auditing.
 
     Methods:
         print_credentials(): Displays the provider's credentials used for auditing in the command-line interface.
@@ -104,26 +103,6 @@ class Provider(ABC):
     def print_credentials(self) -> None:
         """
         print_credentials is used to display in the CLI the provider's credentials used to audit.
-
-        This method needs to be created in each provider.
-        """
-        raise NotImplementedError()
-
-    @property
-    @abstractmethod
-    def output_options(self) -> str:
-        """
-        output_options method returns the provider's audit output configuration.
-
-        This method needs to be created in each provider.
-        """
-        raise NotImplementedError()
-
-    @output_options.setter
-    @abstractmethod
-    def output_options(self, value: str) -> Any:
-        """
-        output_options.setter sets the provider's audit output configuration.
 
         This method needs to be created in each provider.
         """

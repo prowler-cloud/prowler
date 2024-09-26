@@ -1,6 +1,7 @@
 from unittest import mock
 
 import pytest
+from mock import MagicMock, patch
 
 from prowler.lib.scan.scan import Scan, get_service_checks_to_execute
 from tests.lib.outputs.fixtures.fixtures import generate_finding_output
@@ -64,7 +65,7 @@ def mock_generate_output():
     with mock.patch(
         "prowler.lib.outputs.finding.Finding.generate_output", autospec=True
     ) as mock_gen_output:
-        mock_gen_output.side_effect = lambda provider, finding: finding
+        mock_gen_output.side_effect = lambda provider, finding, output_options: finding
         yield mock_gen_output
 
 
@@ -203,42 +204,40 @@ class TestScan:
         assert scan.get_completed_services() == set()
         assert scan.get_completed_checks() == set()
 
+    @patch("importlib.import_module")
     def test_scan(
-        mock_global_provider, mock_execute, mock_logger, mock_generate_output
+        mock_import_module,
+        mock_global_provider,
+        mock_execute,
+        mock_logger,
+        mock_generate_output,
     ):
-        checks_to_execute = {"accessanalyzer_enabled", "ec2_instance_public"}
+        mock_check_class = MagicMock()
+        mock_check_instance = mock_check_class.return_value
+        mock_check_instance.Provider = "aws"
+        mock_check_instance.CheckID = "accessanalyzer_enabled"
+        mock_check_instance.CheckTitle = "Check if IAM Access Analyzer is enabled"
+
+        mock_import_module.return_value = MagicMock(
+            accessanalyzer_enabled=mock_check_class
+        )
+
+        checks_to_execute = {"accessanalyzer_enabled"}
         custom_checks_metadata = {}
+        mock_global_provider.type = "aws"
 
-        # Create a Scan object
         scan = Scan(mock_global_provider, checks_to_execute)
-
-        # Execute the scan
         results = list(scan.scan(custom_checks_metadata))
 
-        # Verify that generate_output was called with the correct findings
-        assert mock_generate_output.call_count == 2 * len(mock_execute.side_effect())
-
-        # Verify that execute was called twice
-        assert mock_execute.call_count == 2
-
-        assert len(results) == 2
+        assert mock_generate_output.call_count == 1 * len(mock_execute.side_effect())
+        assert mock_execute.call_count == 1
+        assert len(results) == 1
         assert results[0][1] == mock_execute.side_effect()
-        assert results[1][1] == mock_execute.side_effect()
-
-        # Check the audit progress for the last result
-        assert results[1][0] == 100.0
-
-        # Verify that the progress is 100.0
-        assert scan.progress == 100.0  # 100% progress is 100
-        assert scan._number_of_checks_completed == 2
-        assert scan.service_checks_to_execute == {}
+        assert results[0][0] == 100.0
+        assert scan.progress == 100.0
+        assert scan._number_of_checks_completed == 1
         assert scan.service_checks_completed == {
-            "ec2": {"ec2_instance_public"},
             "accessanalyzer": {"accessanalyzer_enabled"},
         }
-
-        # Verify that the findings are correct
-        assert scan.findings == mock_execute.side_effect() + mock_execute.side_effect()
-
-        # Verify that no error was logged
+        assert scan.findings == mock_execute.side_effect()
         mock_logger.error.assert_not_called()

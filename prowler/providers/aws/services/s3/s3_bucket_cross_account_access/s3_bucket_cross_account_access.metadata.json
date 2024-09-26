@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "s3_bucket_cross_account_access",
+  "CheckTitle": "Ensure that general-purpose bucket policies restrict access to other AWS accounts.",
+  "CheckType": [
+    "Effects/Data Exposure"
+  ],
+  "ServiceName": "s3",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:s3:::bucket_name",
+  "Severity": "high",
+  "ResourceType": "AwsS3Bucket",
+  "Description": "This check verifies that S3 bucket policies are configured in a way that limits access to the intended AWS accounts only, preventing unauthorized access by external or unintended accounts.",
+  "Risk": "Allowing other AWS accounts to perform sensitive actions (e.g., modifying bucket policies, ACLs, or encryption settings) on your S3 buckets can lead to data exposure, unauthorized access, or misconfigurations, increasing the risk of insider threats or attacks.",
+  "RelatedUrl": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/s3-controls.html#s3-6",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Review and update your S3 bucket policies to remove permissions that grant external AWS accounts access to critical actions and implement least privilege principles to ensure sensitive operations are restricted to trusted accounts only",
+      "Url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
