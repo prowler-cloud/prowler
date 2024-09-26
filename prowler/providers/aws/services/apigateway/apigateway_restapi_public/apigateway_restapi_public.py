@@ -15,7 +15,7 @@ class apigateway_restapi_public(Check):
             report.resource_tags = rest_api.tags
             if rest_api.public_endpoint:
                 report.status = "FAIL"
-                report.status_extended = f"API Gateway {rest_api.name} ID {rest_api.id} is internet accesible."
+                report.status_extended = f"API Gateway {rest_api.name} ID {rest_api.id} is internet accessible."
             else:
                 report.status = "PASS"
                 report.status_extended = (

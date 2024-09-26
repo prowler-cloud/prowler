@@ -116,6 +116,9 @@ class Organizations(AWSService):
         except ClientError as error:
             if error.response["Error"]["Code"] == "AccessDeniedException":
                 policies = None
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
         except Exception as error:
             logger.error(
@@ -219,5 +222,5 @@ class Organization(BaseModel):
     id: str
     status: str
     master_id: str
-    policies: dict[str, list[Policy]] = {}
+    policies: Optional[dict[str, list[Policy]]] = {}
     delegated_administrators: list[DelegatedAdministrator] = None
