@@ -5,7 +5,6 @@ from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, AWS_REGION_US_EAST_1
 
 
 class Test_dms_endpoint_ssl_enabled:
-
     def test_dms_no_endpoints(self):
         dms_client = mock.MagicMock
         dms_client.endpoints = {}
@@ -25,7 +24,11 @@ class Test_dms_endpoint_ssl_enabled:
     def test_dms_endpoint_ssl_none(self):
         dms_client = mock.MagicMock
         dms_client.endpoints = {
-            "test-endpoint-no-ssl": Endpoint(id="test-endpoint-no-ssl", ssl_mode="none")
+            "test-endpoint-no-ssl": Endpoint(
+                id="test-endpoint-no-ssl",
+                ssl_mode="none",
+                tags=[{"Key": "Name", "Value": "test-endpoint-no-ssl"}],
+            )
         }
         dms_client.audited_account = AWS_ACCOUNT_NUMBER
         dms_client.audited_partition = "aws"
@@ -51,12 +54,17 @@ class Test_dms_endpoint_ssl_enabled:
                 result[0].status_extended
                 == "DMS Endpoint test-endpoint-no-ssl is not using SSL."
             )
+            assert result[0].resource_tags == [
+                {"Key": "Name", "Value": "test-endpoint-no-ssl"}
+            ]
 
     def test_dms_endpoint_ssl_require(self):
         dms_client = mock.MagicMock
         dms_client.endpoints = {
             "test-endpoint-ssl-require": Endpoint(
-                id="test-endpoint-ssl-require", ssl_mode="require"
+                id="test-endpoint-ssl-require",
+                ssl_mode="require",
+                tags=[{"Key": "Name", "Value": "test-endpoint-ssl-require"}],
             )
         }
         dms_client.audited_account = AWS_ACCOUNT_NUMBER
@@ -83,12 +91,17 @@ class Test_dms_endpoint_ssl_enabled:
                 result[0].status_extended
                 == "DMS Endpoint test-endpoint-ssl-require is using SSL with mode: require."
             )
+            assert result[0].resource_tags == [
+                {"Key": "Name", "Value": "test-endpoint-ssl-require"}
+            ]
 
     def test_dms_endpoint_ssl_verify_ca(self):
         dms_client = mock.MagicMock
         dms_client.endpoints = {
             "test-endpoint-ssl-verify-ca": Endpoint(
-                id="test-endpoint-ssl-verify-ca", ssl_mode="verify-ca"
+                id="test-endpoint-ssl-verify-ca",
+                ssl_mode="verify-ca",
+                tags=[{"Key": "Name", "Value": "test-endpoint-ssl-verify-ca"}],
             )
         }
         dms_client.audited_account = AWS_ACCOUNT_NUMBER
@@ -115,12 +128,17 @@ class Test_dms_endpoint_ssl_enabled:
                 result[0].status_extended
                 == "DMS Endpoint test-endpoint-ssl-verify-ca is using SSL with mode: verify-ca."
             )
+            assert result[0].resource_tags == [
+                {"Key": "Name", "Value": "test-endpoint-ssl-verify-ca"}
+            ]
 
     def test_dms_endpoint_ssl_verify_full(self):
         dms_client = mock.MagicMock
         dms_client.endpoints = {
             "test-endpoint-ssl-verify-full": Endpoint(
-                id="test-endpoint-ssl-verify-full", ssl_mode="verify-full"
+                id="test-endpoint-ssl-verify-full",
+                ssl_mode="verify-full",
+                tags=[{"Key": "Name", "Value": "test-endpoint-ssl-verify-full"}],
             )
         }
         dms_client.audited_account = AWS_ACCOUNT_NUMBER
@@ -147,3 +165,6 @@ class Test_dms_endpoint_ssl_enabled:
                 result[0].status_extended
                 == "DMS Endpoint test-endpoint-ssl-verify-full is using SSL with mode: verify-full."
             )
+            assert result[0].resource_tags == [
+                {"Key": "Name", "Value": "test-endpoint-ssl-verify-full"}
+            ]
