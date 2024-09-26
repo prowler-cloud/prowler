@@ -2,7 +2,7 @@ from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.ecr.ecr_client import ecr_client
 
 
-class ecr_private_repository_tag_immutability(Check):
+class ecr_repositories_tag_immutability(Check):
     def execute(self):
         findings = []
         for registry in ecr_client.registries.values():
