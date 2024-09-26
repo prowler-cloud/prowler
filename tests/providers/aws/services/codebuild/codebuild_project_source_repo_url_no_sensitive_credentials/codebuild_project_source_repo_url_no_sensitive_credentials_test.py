@@ -20,6 +20,7 @@ class Test_codebuild_project_source_repo_url_no_sensitive_credentials:
                 buildspec="",
                 source=None,
                 secondary_sources=[],
+                tags=[],
             )
         }
         with mock.patch(
@@ -60,6 +61,7 @@ class Test_codebuild_project_source_repo_url_no_sensitive_credentials:
                     location="https://bitbucket.org/exampleuser/my-repo.git",
                 ),
                 secondary_sources=[],
+                tags=[],
             )
         }
         with mock.patch(
@@ -100,6 +102,7 @@ class Test_codebuild_project_source_repo_url_no_sensitive_credentials:
                     location="https://user:pass123@bitbucket.org/exampleuser/my-repo2.git",
                 ),
                 secondary_sources=[],
+                tags=[],
             )
         }
         with mock.patch(
@@ -140,6 +143,7 @@ class Test_codebuild_project_source_repo_url_no_sensitive_credentials:
                     location="https://x-token-auth:7saBEbfXpRg-zlO-YQC9Lvh8vtKmdETITD_-GCqYw0ZHbV7ZbMDbUCybDGM4=053EA782@bitbucket.org/testissue4244/test4244.git",
                 ),
                 secondary_sources=[],
+                tags=[],
             )
         }
         with mock.patch(

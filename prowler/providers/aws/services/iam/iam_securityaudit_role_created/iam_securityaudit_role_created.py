@@ -9,7 +9,9 @@ class iam_securityaudit_role_created(Check):
             report = Check_Report_AWS(self.metadata())
             report.region = iam_client.region
             report.resource_id = "SecurityAudit"
-            report.resource_arn = "arn:aws:iam::aws:policy/SecurityAudit"
+            report.resource_arn = (
+                f"arn:{iam_client.audited_partition}:iam::aws:policy/SecurityAudit"
+            )
             if iam_client.entities_role_attached_to_securityaudit_policy:
                 report.status = "PASS"
                 report.status_extended = f"SecurityAudit policy attached to role {iam_client.entities_role_attached_to_securityaudit_policy[0]['RoleName']}."

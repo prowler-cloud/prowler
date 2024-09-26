@@ -40,6 +40,7 @@ class Test_dms_instance_minor_version_upgrade_enabled:
                 auto_minor_version_upgrade=False,
                 multi_az=True,
                 region=AWS_REGION_US_EAST_1,
+                tags=[{"Key": "Name", "Value": DMS_INSTANCE_NAME}],
             )
         )
 
@@ -62,6 +63,9 @@ class Test_dms_instance_minor_version_upgrade_enabled:
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == DMS_INSTANCE_NAME
             assert result[0].resource_arn == DMS_INSTANCE_ARN
+            assert result[0].resource_tags == [
+                {"Key": "Name", "Value": DMS_INSTANCE_NAME}
+            ]
 
     def test_dms_instance_minor_version_upgrade_enabled(self):
         dms_client = mock.MagicMock
@@ -76,6 +80,7 @@ class Test_dms_instance_minor_version_upgrade_enabled:
                 auto_minor_version_upgrade=True,
                 multi_az=True,
                 region=AWS_REGION_US_EAST_1,
+                tags=[{"Key": "Name", "Value": DMS_INSTANCE_NAME}],
             )
         )
 
@@ -98,3 +103,6 @@ class Test_dms_instance_minor_version_upgrade_enabled:
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == DMS_INSTANCE_NAME
             assert result[0].resource_arn == DMS_INSTANCE_ARN
+            assert result[0].resource_tags == [
+                {"Key": "Name", "Value": DMS_INSTANCE_NAME}
+            ]

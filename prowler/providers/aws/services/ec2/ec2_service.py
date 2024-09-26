@@ -508,7 +508,7 @@ class EC2(AWSService):
 
             for page in describe_launch_templates_paginator.paginate():
                 for template in page["LaunchTemplates"]:
-                    template_arn = f"arn:aws:ec2:{regional_client.region}:{self.audited_account}:launch-template/{template['LaunchTemplateId']}"
+                    template_arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:launch-template/{template['LaunchTemplateId']}"
                     if not self.audit_resources or (
                         is_resource_filtered(template_arn, self.audit_resources)
                     ):
@@ -575,7 +575,7 @@ class EC2(AWSService):
 
             for page in describe_client_vpn_endpoints_paginator.paginate():
                 for vpn_endpoint in page["ClientVpnEndpoints"]:
-                    vpn_endpoint_arn = f"arn:aws:ec2:{regional_client.region}:{self.audited_account}:client-vpn-endpoint/{vpn_endpoint['ClientVpnEndpointId']}"
+                    vpn_endpoint_arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:client-vpn-endpoint/{vpn_endpoint['ClientVpnEndpointId']}"
                     if not self.audit_resources or (
                         is_resource_filtered(vpn_endpoint_arn, self.audit_resources)
                     ):

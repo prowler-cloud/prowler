@@ -215,10 +215,8 @@ class TestFinding:
         check_output.region = "us-west-1"
         output_options = MagicMock()
         output_options.unix_timestamp = 1234567890
-        global_provider = MagicMock()
-        global_provider.output_options = output_options
         # Call the method under test
-        finding_output = Finding.generate_output(provider, check_output)
+        finding_output = Finding.generate_output(provider, check_output, output_options)
 
         # Assertions to verify expected behavior
         assert finding_output is not None
@@ -293,10 +291,8 @@ class TestFinding:
         check_output.region = "us-west-1"
         output_options = MagicMock()
         output_options.unix_timestamp = 1234567890
-        global_provider = MagicMock()
-        global_provider.output_options = output_options
         # Call the method under test
-        finding_output = Finding.generate_output(provider, check_output)
+        finding_output = Finding.generate_output(provider, check_output, output_options)
 
         # Assertions to verify expected behavior
         assert finding_output is not None
@@ -367,7 +363,7 @@ class TestFinding:
         output_options = MagicMock()
         output_options.unix_timestamp = 1234567890
 
-        finding_output = Finding.generate_output(provider, check_output)
+        finding_output = Finding.generate_output(provider, check_output, output_options)
 
         assert finding_output is not None
         assert finding_output.auth_method == "Principal: mock_auth"
@@ -438,7 +434,7 @@ class TestFinding:
         output_options = MagicMock()
         output_options.unix_timestamp = 1234567890
 
-        finding_output = Finding.generate_output(provider, check_output)
+        finding_output = Finding.generate_output(provider, check_output, output_options)
 
         assert finding_output is not None
         assert finding_output.auth_method == "in-cluster"
