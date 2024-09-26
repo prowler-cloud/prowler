@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
@@ -13,7 +15,11 @@ class DMS(AWSService):
         self.instances = []
         self.endpoints = {}
         self.__threading_call__(self._describe_replication_instances)
+        self.__threading_call__(
+            self._list_tags, [instance.arn for instance in self.instances]
+        )
         self.__threading_call__(self._describe_endpoints)
+        self.__threading_call__(self._list_tags, list(self.endpoints.keys()))
 
     def _describe_replication_instances(self, regional_client):
         logger.info("DMS - Describing DMS Replication Instances...")
@@ -72,10 +78,31 @@ class DMS(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _list_tags(self, resource_arn: str):
+        try:
+            tags = self.regional_clients[
+                resource_arn.split(":")[3]
+            ].list_tags_for_resource(ResourceArn=resource_arn)["TagList"]
+
+            # Based on the resource_arn, we can determine if it's a Replication Instance or an Endpoint
+            if resource_arn.split(":")[5] == "rep":
+                for instance in self.instances:
+                    if instance.arn == resource_arn:
+                        instance.tags = tags
+                        break
+            elif resource_arn.split(":")[5] == "endpoint":
+                self.endpoints[resource_arn].tags = tags
+
+        except Exception as error:
+            logger.error(
+                f"{self.client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class Endpoint(BaseModel):
     id: str
     ssl_mode: str
+    tags: Optional[list]
 
 
 class RepInstance(BaseModel):
@@ -88,3 +115,4 @@ class RepInstance(BaseModel):
     security_groups: list[str] = []
     multi_az: bool
     region: str
+    tags: Optional[list]
