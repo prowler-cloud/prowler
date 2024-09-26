@@ -14,7 +14,7 @@ TASK_ARN = f"arn:aws:ecs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:task-defini
 
 class Test_ecs_task_definitions_containers_readonly_access:
     def test_no_task_definitions(self):
-        ecs_client = mock.MagicMock()
+        ecs_client = mock.MagicMock
         ecs_client.task_definitions = {}
 
         with mock.patch(
@@ -30,7 +30,7 @@ class Test_ecs_task_definitions_containers_readonly_access:
             assert len(result) == 0
 
     def test_task_definition_all_containers_readonly(self):
-        ecs_client = mock.MagicMock()
+        ecs_client = mock.MagicMock
         ecs_client.task_definitions = {}
         ecs_client.task_definitions[TASK_ARN] = TaskDefinition(
             name=TASK_NAME,
@@ -67,7 +67,7 @@ class Test_ecs_task_definitions_containers_readonly_access:
             )
 
     def test_task_definition_some_containers_not_readonly(self):
-        ecs_client = mock.MagicMock()
+        ecs_client = mock.MagicMock
         ecs_client.task_definitions = {}
         ecs_client.task_definitions[TASK_ARN] = TaskDefinition(
             name=TASK_NAME,
@@ -100,11 +100,11 @@ class Test_ecs_task_definitions_containers_readonly_access:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"ECS task definition '{TASK_NAME}' has containers with write access to the root filesystem: {CONTAINER_NAME}"
+                == f"ECS task definition {TASK_NAME} has containers with write access to the root filesystem: {CONTAINER_NAME}"
             )
 
     def test_task_definition_mixed_containers(self):
-        ecs_client = mock.MagicMock()
+        ecs_client = mock.MagicMock
         ecs_client.task_definitions = {
             TASK_ARN: TaskDefinition(
                 name=TASK_NAME,
@@ -145,5 +145,5 @@ class Test_ecs_task_definitions_containers_readonly_access:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"ECS task definition '{TASK_NAME}' has containers with write access to the root filesystem: {CONTAINER_NAME}"
+                == f"ECS task definition {TASK_NAME} has containers with write access to the root filesystem: {CONTAINER_NAME}"
             )

@@ -21,7 +21,7 @@ class ecs_task_definitions_containers_readonly_access(Check):
                     failed_containers.append(container.name)
 
             if failed_containers:
-                report.status_extended = f"ECS task definition '{task_definition.name}' has containers with write access to the root filesystem: {', '.join(failed_containers)}"
+                report.status_extended = f"ECS task definition {task_definition.name} has containers with write access to the root filesystem: {', '.join(failed_containers)}"
             findings.append(report)
 
         return findings
