@@ -149,11 +149,14 @@ class Backup(AWSService):
                 for page in paginator.paginate(BackupPlanId=backup_plan.id):
                     for selection in page.get("BackupSelectionsList", []):
                         selection_id = selection.get("SelectionId")
-                        backup_selection = regional_client.get_backup_selection(
-                            BackupPlanId=backup_plan.id, SelectionId=selection_id
-                        )["BackupSelection"]
+                        if selection_id:
+                            backup_selection = regional_client.get_backup_selection(
+                                BackupPlanId=backup_plan.id, SelectionId=selection_id
+                            )["BackupSelection"]
 
-                        self.protected_resources = backup_selection.get("Resources", [])
+                            self.protected_resources.extend(
+                                backup_selection.get("Resources", [])
+                            )
 
         except ClientError as error:
             logger.error(

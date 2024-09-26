@@ -197,6 +197,11 @@ class TestBackupService:
 
     # Test Backup List Backup Selections
     @mock_aws
+    @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
+    @patch(
+        "prowler.providers.aws.aws_provider.AwsProvider.generate_regional_clients",
+        new=mock_generate_regional_clients,
+    )
     def test_list_backup_selections(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         backup = Backup(aws_provider)
