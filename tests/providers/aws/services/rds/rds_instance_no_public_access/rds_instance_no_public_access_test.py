@@ -304,6 +304,23 @@ class Test_rds_instance_no_public_access:
             DestinationCidrBlock="0.0.0.0/0",
             GatewayId=igw_id,
         )
+        nacls = (
+            ec2_client.describe_network_acls(
+                Filters=[
+                    {
+                        "Name": "association.subnet-id",
+                        "Values": [subnet_id],
+                    }
+                ]
+            )
+        )["NetworkAcls"]
+        # Remove public ingress rule from private subnet in default NACLs
+        for nacl in nacls:
+            ec2_client.delete_network_acl_entry(
+                NetworkAclId=nacl["NetworkAclId"],
+                Egress=False,
+                RuleNumber=100,
+            )
         conn = client("rds", region_name=AWS_REGION_US_EAST_1)
         conn.create_db_subnet_group(
             DBSubnetGroupName="subnet-group",
