@@ -162,22 +162,21 @@ class Test_dynamodb_table_protected_by_backup_plan:
                 assert result[0].resource_tags == []
 
     def test_dynamodb_table_with_backup_plan(self):
-        dynamodb_client = mock.MagicMock
+        dynamodb_client = mock.MagicMock()
         from prowler.providers.aws.services.dynamodb.dynamodb_service import Table
 
         dynamodb_client.audited_account = AWS_ACCOUNT_NUMBER
-        arn = (
-            f"arn:aws:dynamodb:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:table/test1"
-        )
         dynamodb_client.tables = {
-            arn: Table(
+            f"arn:aws:dynamodb:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:table/test1": Table(
                 name="test1",
                 region=AWS_REGION_US_EAST_1,
             )
         }
 
-        backup = mock.MagicMock
-        backup.protected_resources = [arn]
+        backup = mock.MagicMock()
+        backup.protected_resources = [
+            f"arn:aws:dynamodb:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:table/test1"
+        ]
 
         with mock.patch(
             "prowler.providers.aws.services.dynamodb.dynamodb_service.DynamoDB",
@@ -207,16 +206,18 @@ class Test_dynamodb_table_protected_by_backup_plan:
                 == "DynamoDB table test1 is protected by a backup plan."
             )
             assert result[0].resource_id == "test1"
-            assert result[0].resource_arn == arn
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:dynamodb:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:table/test1"
+            )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []
 
     def test_dynamodb_table_with_backup_plan_via_wildcard_all_tables(self):
-        dynamodb_client = mock.MagicMock
+        dynamodb_client = mock.MagicMock()
         from prowler.providers.aws.services.dynamodb.dynamodb_service import Table
 
         dynamodb_client.audited_account = AWS_ACCOUNT_NUMBER
-        arn = "arn:aws:dynamodb:*:*:table/*"
         dynamodb_client.tables = {
             f"arn:aws:dynamodb:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:table/test1": Table(
                 name="test1",
@@ -224,8 +225,8 @@ class Test_dynamodb_table_protected_by_backup_plan:
             )
         }
 
-        backup = mock.MagicMock
-        backup.protected_resources = [arn]
+        backup = mock.MagicMock()
+        backup.protected_resources = ["arn:aws:dynamodb:*:*:table/*"]
 
         with mock.patch(
             "prowler.providers.aws.services.dynamodb.dynamodb_service.DynamoDB",
@@ -255,16 +256,18 @@ class Test_dynamodb_table_protected_by_backup_plan:
                 == "DynamoDB table test1 is protected by a backup plan."
             )
             assert result[0].resource_id == "test1"
-            assert result[0].resource_arn == arn
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:dynamodb:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:table/test1"
+            )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []
 
     def test_dynamodb_table_with_backup_plan_via_wildcard_all_resources(self):
-        dynamodb_client = mock.MagicMock
+        dynamodb_client = mock.MagicMock()
         from prowler.providers.aws.services.dynamodb.dynamodb_service import Table
 
         dynamodb_client.audited_account = AWS_ACCOUNT_NUMBER
-        arn = "*"
         dynamodb_client.tables = {
             f"arn:aws:dynamodb:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:table/test1": Table(
                 name="test1",
@@ -272,8 +275,8 @@ class Test_dynamodb_table_protected_by_backup_plan:
             )
         }
 
-        backup = mock.MagicMock
-        backup.protected_resources = [arn]
+        backup = mock.MagicMock()
+        backup.protected_resources = ["*"]
 
         with mock.patch(
             "prowler.providers.aws.services.dynamodb.dynamodb_service.DynamoDB",
@@ -303,6 +306,9 @@ class Test_dynamodb_table_protected_by_backup_plan:
                 == "DynamoDB table test1 is protected by a backup plan."
             )
             assert result[0].resource_id == "test1"
-            assert result[0].resource_arn == arn
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:dynamodb:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:table/test1"
+            )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []

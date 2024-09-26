@@ -19,8 +19,9 @@ class rds_instance_protected_by_backup_plan(Check):
 
             if (
                 db_instance_arn in backup_client.protected_resources
-                or db_instance_arn == "arn:aws:dynamodb:*:*:instance:*"
-                or db_instance_arn == "*"
+                or "arn:aws:dynamodb:*:*:instance:*"
+                in backup_client.protected_resources
+                or "*" in backup_client.protected_resources
             ):
                 report.status = "PASS"
                 report.status_extended = (
