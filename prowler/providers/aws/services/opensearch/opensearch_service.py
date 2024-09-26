@@ -127,7 +127,9 @@ class OpenSearchService(AWSService):
                     "ServiceSoftwareOptions"
                 ]["UpdateAvailable"]
                 domain.version = describe_domain["DomainStatus"]["EngineVersion"]
-                domain.advanced_settings_enabled = describe_domain["DomainStatus"]["AdvancedSecurityOptions"]["Enabled"]
+                domain.advanced_settings_enabled = describe_domain["DomainStatus"][
+                    "AdvancedSecurityOptions"
+                ]["Enabled"]
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

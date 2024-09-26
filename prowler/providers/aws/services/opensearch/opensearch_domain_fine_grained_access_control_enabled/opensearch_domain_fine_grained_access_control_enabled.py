@@ -14,14 +14,10 @@ class opensearch_domain_fine_grained_access_control_enabled(Check):
             report.resource_arn = domain.arn
             report.resource_tags = domain.tags
             report.status = "FAIL"
-            report.status_extended = (
-                f"Opensearch domain {domain.name} does not have fine grained access control enabled."
-            )
+            report.status_extended = f"Opensearch domain {domain.name} does not have fine grained access control enabled."
             if domain.advanced_settings_enabled:
                 report.status = "PASS"
-                report.status_extended = (
-                    f"Opensearch domain {domain.name} has fine grained access control enabled."
-                )
+                report.status_extended = f"Opensearch domain {domain.name} has fine grained access control enabled."
 
             findings.append(report)
 

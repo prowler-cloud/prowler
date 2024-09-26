@@ -55,7 +55,10 @@ class Test_opensearch_domain_fine_grained_access_control_enabled:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert search("does not have fine grained access control enabled.", result[0].status_extended)
+            assert search(
+                "does not have fine grained access control enabled.",
+                result[0].status_extended,
+            )
             assert result[0].resource_id == domain_name
             assert result[0].resource_arn == domain_arn
 
@@ -84,6 +87,8 @@ class Test_opensearch_domain_fine_grained_access_control_enabled:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert search("has fine grained access control enabled.", result[0].status_extended)
+            assert search(
+                "has fine grained access control enabled.", result[0].status_extended
+            )
             assert result[0].resource_id == domain_name
             assert result[0].resource_arn == domain_arn
