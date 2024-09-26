@@ -17,7 +17,7 @@ export interface ProviderProps {
   type: "providers";
   attributes: {
     provider: "aws" | "azure" | "gcp";
-    provider_id: string;
+    uid: string;
     alias: string;
     status: "completed" | "pending" | "cancelled";
     resources: number;
