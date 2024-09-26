@@ -10,8 +10,8 @@
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "high",
   "ResourceType": "AwsEc2SecurityGroup",
-  "Description": "Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to any port.",
-  "Risk": "If Security groups are not properly configured the attack surface is increased.",
+  "Description": "Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to any port and not attached to a network interface with not allowed network interface types or instance owners.",
+  "Risk": "The security group allows all traffic from the internet to any port. This could allow an attacker to access the instance.",
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
