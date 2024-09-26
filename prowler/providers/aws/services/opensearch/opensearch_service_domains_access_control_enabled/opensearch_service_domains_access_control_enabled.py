@@ -4,7 +4,7 @@ from prowler.providers.aws.services.opensearch.opensearch_client import (
 )
 
 
-class opensearch_domain_fine_grained_access_control_enabled(Check):
+class opensearch_service_domains_access_control_enabled(Check):
     def execute(self):
         findings = []
         for domain in opensearch_client.opensearch_domains:

@@ -10,7 +10,7 @@ domain_name = "test-domain"
 domain_arn = f"arn:aws:es:us-west-2:{AWS_ACCOUNT_NUMBER}:domain/{domain_name}"
 
 
-class Test_opensearch_domain_fine_grained_access_control_enabled:
+class Test_opensearch_service_domains_access_control_enabled:
     def test_no_domains(self):
         opensearch_client = mock.MagicMock
         opensearch_client.opensearch_domains = []
@@ -19,14 +19,14 @@ class Test_opensearch_domain_fine_grained_access_control_enabled:
             "prowler.providers.aws.services.opensearch.opensearch_service.OpenSearchService",
             new=opensearch_client,
         ), mock.patch(
-            "prowler.providers.aws.services.opensearch.opensearch_domain_fine_grained_access_control_enabled.opensearch_domain_fine_grained_access_control_enabled.opensearch_client",
+            "prowler.providers.aws.services.opensearch.opensearch_service_domains_access_control_enabled.opensearch_service_domains_access_control_enabled.opensearch_client",
             new=opensearch_client,
         ):
-            from prowler.providers.aws.services.opensearch.opensearch_domain_fine_grained_access_control_enabled.opensearch_domain_fine_grained_access_control_enabled import (
-                opensearch_domain_fine_grained_access_control_enabled,
+            from prowler.providers.aws.services.opensearch.opensearch_service_domains_access_control_enabled.opensearch_service_domains_access_control_enabled import (
+                opensearch_service_domains_access_control_enabled,
             )
 
-            check = opensearch_domain_fine_grained_access_control_enabled()
+            check = opensearch_service_domains_access_control_enabled()
             result = check.execute()
             assert len(result) == 0
 
@@ -44,14 +44,14 @@ class Test_opensearch_domain_fine_grained_access_control_enabled:
             "prowler.providers.aws.services.opensearch.opensearch_service.OpenSearchService",
             new=opensearch_client,
         ), mock.patch(
-            "prowler.providers.aws.services.opensearch.opensearch_domain_fine_grained_access_control_enabled.opensearch_domain_fine_grained_access_control_enabled.opensearch_client",
+            "prowler.providers.aws.services.opensearch.opensearch_service_domains_access_control_enabled.opensearch_service_domains_access_control_enabled.opensearch_client",
             new=opensearch_client,
         ):
-            from prowler.providers.aws.services.opensearch.opensearch_domain_fine_grained_access_control_enabled.opensearch_domain_fine_grained_access_control_enabled import (
-                opensearch_domain_fine_grained_access_control_enabled,
+            from prowler.providers.aws.services.opensearch.opensearch_service_domains_access_control_enabled.opensearch_service_domains_access_control_enabled import (
+                opensearch_service_domains_access_control_enabled,
             )
 
-            check = opensearch_domain_fine_grained_access_control_enabled()
+            check = opensearch_service_domains_access_control_enabled()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -76,14 +76,14 @@ class Test_opensearch_domain_fine_grained_access_control_enabled:
             "prowler.providers.aws.services.opensearch.opensearch_service.OpenSearchService",
             new=opensearch_client,
         ), mock.patch(
-            "prowler.providers.aws.services.opensearch.opensearch_domain_fine_grained_access_control_enabled.opensearch_domain_fine_grained_access_control_enabled.opensearch_client",
+            "prowler.providers.aws.services.opensearch.opensearch_service_domains_access_control_enabled.opensearch_service_domains_access_control_enabled.opensearch_client",
             new=opensearch_client,
         ):
-            from prowler.providers.aws.services.opensearch.opensearch_domain_fine_grained_access_control_enabled.opensearch_domain_fine_grained_access_control_enabled import (
-                opensearch_domain_fine_grained_access_control_enabled,
+            from prowler.providers.aws.services.opensearch.opensearch_service_domains_access_control_enabled.opensearch_service_domains_access_control_enabled import (
+                opensearch_service_domains_access_control_enabled,
             )
 
-            check = opensearch_domain_fine_grained_access_control_enabled()
+            check = opensearch_service_domains_access_control_enabled()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
