@@ -21,9 +21,27 @@ It contains hundreds of controls covering CIS, NIST 800, NIST CSF, CISA, RBI, Fe
 
 Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), thus can be installed as Python package with `Python >= 3.9`:
 
-=== "Generic"
+=== "pip"
 
-    We recommend using `pipx` to install Prowler in order to avoid conflicts with other Python packages.
+    ???+ warning
+        This method is not recommended because it will modify the environment which you choose to install. Consider using `pipx` for a global installation.
+
+    _Requirements_:
+
+    * `Python >= 3.9`
+    * `Python pip >= 21.0.0`
+    * AWS, GCP, Azure and/or Kubernetes credentials
+
+    _Commands_:
+
+    ``` bash
+    pip install prowler
+    prowler -v
+    ```
+
+=== "pipx"
+
+    [pipx](https://pipx.pypa.io/stable/) is a tool to install Python applications in isolated environments. It is recommended to use `pipx` for a global installation.
 
     _Requirements_:
 
@@ -79,15 +97,15 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), 
 
     _Requirements_:
 
+    * `Python >= 3.9`
     * AWS, GCP, Azure and/or Kubernetes credentials
-    * Latest Amazon Linux 2 should come with Python 3.9 already installed however it may need pip. Install Python pip 3.9 with: `sudo yum install -y python3-pip`.
-    * Make sure setuptools for python is already installed with: `pip3 install setuptools`
 
     _Commands_:
 
     ```
-    pip3.9 install prowler
-    export PATH=$PATH:/home/$HOME/.local/bin/
+    python3 -m pip install --user pipx
+    python3 -m pipx ensurepath
+    pipx install prowler
     prowler -v
     ```
 
@@ -107,7 +125,7 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), 
 
 === "AWS CloudShell"
 
-    After the migration of AWS CloudShell from Amazon Linux 2 to Amazon Linux 2023 [[1]](https://aws.amazon.com/about-aws/whats-new/2023/12/aws-cloudshell-migrated-al2023/) [2](https://docs.aws.amazon.com/cloudshell/latest/userguide/cloudshell-AL2023-migration.html), there is no longer a need to manually compile Python 3.9 as it's already included in AL2023. Prowler can thus be easily installed following the Generic method of installation via pip. Follow the steps below to successfully execute Prowler v4 in AWS CloudShell:
+    After the migration of AWS CloudShell from Amazon Linux 2 to Amazon Linux 2023 [[1]](https://aws.amazon.com/about-aws/whats-new/2023/12/aws-cloudshell-migrated-al2023/) [[2]](https://docs.aws.amazon.com/cloudshell/latest/userguide/cloudshell-AL2023-migration.html), there is no longer a need to manually compile Python 3.9 as it's already included in AL2023. Prowler can thus be easily installed following the Generic method of installation via pip. Follow the steps below to successfully execute Prowler v4 in AWS CloudShell:
 
     _Requirements_:
 
@@ -115,11 +133,13 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), 
 
     _Commands_:
 
-    ```
+    ```bash
     sudo bash
     adduser prowler
     su prowler
-    pip install prowler
+    python3 -m pip install --user pipx
+    python3 -m pipx ensurepath
+    pipx install prowler
     cd /tmp
     prowler aws
     ```
@@ -135,9 +155,12 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), 
 
     _Commands_:
 
-    ```
-    pip install prowler
-    prowler -v
+    ```bash
+    python3 -m pip install --user pipx
+    python3 -m pipx ensurepath
+    pipx install prowler
+    cd /tmp
+    prowler azure --az-cli-auth
     ```
 
 ## Prowler container versions
