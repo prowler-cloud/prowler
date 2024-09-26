@@ -25,10 +25,12 @@ def stdout_report(finding, color, verbose, status, fix):
             )
 
 
-# TODO: Only pass check_findings, provider.output_options and provider.type
-def report(check_findings, provider):
+# TODO: Only pass check_findings, output_options and provider.type
+def report(check_findings, provider, output_options):
     try:
-        output_options = provider.output_options
+        verbose = False
+        if hasattr(output_options, "verbose"):
+            verbose = output_options.verbose
         if check_findings:
             # TO-DO Generic Function
             if provider.type == "aws":
@@ -39,21 +41,27 @@ def report(check_findings, provider):
 
             for finding in check_findings:
                 # Print findings by stdout
+                status = []
+                if hasattr(output_options, "status"):
+                    status = output_options.status
+                fixer = False
+                if hasattr(output_options, "fixer"):
+                    fixer = output_options.fixer
                 color = set_report_color(finding.status, finding.muted)
                 stdout_report(
                     finding,
                     color,
-                    output_options.verbose,
-                    output_options.status,
-                    output_options.fixer,
+                    verbose,
+                    status,
+                    fixer,
                 )
 
         else:  # No service resources in the whole account
             color = set_report_color("MANUAL")
-            if output_options.verbose:
+            if verbose:
                 print(f"\t{color}INFO{Style.RESET_ALL} There are no resources")
         # Separator between findings and bar
-        if output_options.verbose:
+        if verbose:
             print()
     except Exception as error:
         logger.error(

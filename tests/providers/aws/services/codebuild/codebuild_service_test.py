@@ -51,6 +51,7 @@ def mock_make_api_call(self, operation_name, kwarg):
                             "buildspec": "",
                         }
                     ],
+                    "tags": [{"key": "Name", "value": project_name}],
                 }
             ]
         }
@@ -66,13 +67,12 @@ def mock_generate_regional_clients(provider, service):
     return {AWS_REGION_EU_WEST_1: regional_client}
 
 
-@patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
-@patch(
-    "prowler.providers.aws.aws_provider.AwsProvider.generate_regional_clients",
-    new=mock_generate_regional_clients,
-)
 class Test_Codebuild_Service:
-    # Test Codebuild Session
+    @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
+    @patch(
+        "prowler.providers.aws.aws_provider.AwsProvider.generate_regional_clients",
+        new=mock_generate_regional_clients,
+    )
     def test_codebuild_service(self):
         codebuild = Codebuild(set_mocked_aws_provider())
 
@@ -93,3 +93,5 @@ class Test_Codebuild_Service:
             secondary_bitbucket_url
             in codebuild.projects[project_arn].secondary_sources[0].location
         )
+        assert codebuild.projects[project_arn].tags[0]["key"] == "Name"
+        assert codebuild.projects[project_arn].tags[0]["value"] == project_name

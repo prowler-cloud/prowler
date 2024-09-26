@@ -11,6 +11,7 @@ class glue_etl_jobs_job_bookmark_encryption_enabled(Check):
             report.resource_id = job.name
             report.resource_arn = job.arn
             report.region = job.region
+            report.resource_tags = job.tags
             for sec_config in glue_client.security_configs:
                 if sec_config.name == job.security:
                     no_sec_configs = False

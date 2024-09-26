@@ -19,6 +19,7 @@ class Test_codebuild_project_user_controlled_buildspec:
                 region="eu-west-1",
                 last_invoked_time=None,
                 buildspec=None,
+                tags=[],
             )
         }
         with mock.patch(
@@ -54,6 +55,7 @@ class Test_codebuild_project_user_controlled_buildspec:
                 region="eu-west-1",
                 last_invoked_time=None,
                 buildspec="arn:aws:s3:::my-codebuild-sample2/buildspec.out",
+                tags=[],
             )
         }
 
@@ -90,6 +92,7 @@ class Test_codebuild_project_user_controlled_buildspec:
                 region="eu-west-1",
                 last_invoked_time=None,
                 buildspec="arn:aws:s3:::my-codebuild-sample2/buildspec.yaml",
+                tags=[],
             )
         }
         with mock.patch(
@@ -124,6 +127,7 @@ class Test_codebuild_project_user_controlled_buildspec:
                 region="eu-west-1",
                 last_invoked_time=None,
                 buildspec="arn:aws:s3:::my-codebuild-sample2/buildspecyaml",
+                tags=[],
             )
         }
         with mock.patch(

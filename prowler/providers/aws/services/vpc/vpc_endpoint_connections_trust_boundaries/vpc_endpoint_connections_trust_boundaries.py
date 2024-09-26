@@ -1,9 +1,7 @@
 from re import compile
 
 from prowler.lib.check.models import Check, Check_Report_AWS
-from prowler.providers.aws.lib.policy_condition_parser.policy_condition_parser import (
-    is_condition_block_restrictive,
-)
+from prowler.providers.aws.services.iam.lib.policy import is_condition_block_restrictive
 from prowler.providers.aws.services.vpc.vpc_client import vpc_client
 
 
