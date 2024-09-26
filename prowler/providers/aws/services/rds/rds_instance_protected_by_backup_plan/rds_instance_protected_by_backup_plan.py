@@ -12,15 +12,21 @@ class rds_instance_protected_by_backup_plan(Check):
             report.resource_id = db_instance.id
             report.resource_arn = db_instance_arn
             report.resource_tags = db_instance.tags
-            if db_instance_arn in backup_client.protected_resources:
+            report.status = "FAIL"
+            report.status_extended = (
+                f"RDS Instance {db_instance.id} is not protected by a backup plan."
+            )
+
+            if (
+                db_instance_arn in backup_client.protected_resources
+                or "arn:aws:dynamodb:*:*:instance:*"
+                in backup_client.protected_resources
+                or "*" in backup_client.protected_resources
+            ):
                 report.status = "PASS"
                 report.status_extended = (
                     f"RDS Instance {db_instance.id} is protected by a backup plan."
                 )
-            else:
-                report.status = "FAIL"
-                report.status_extended = (
-                    f"RDS Instance {db_instance.id} is not protected by a backup plan."
-                )
+
             findings.append(report)
         return findings
