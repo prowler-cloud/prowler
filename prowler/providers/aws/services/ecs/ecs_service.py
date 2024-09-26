@@ -15,7 +15,9 @@ class ECS(AWSService):
         super().__init__(__class__.__name__, provider)
         self.task_definitions = {}
         self.__threading_call__(self._list_task_definitions)
-        self._describe_task_definition()
+        self.__threading_call__(
+            self._describe_task_definition, self.task_definitions.values()
+        )
 
     def _list_task_definitions(self, regional_client):
         logger.info("ECS - Listing Task Definitions...")

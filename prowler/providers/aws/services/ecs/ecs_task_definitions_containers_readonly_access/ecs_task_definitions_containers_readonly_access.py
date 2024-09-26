@@ -2,7 +2,7 @@ from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.ecs.ecs_client import ecs_client
 
 
-class ecs_task_definitions_containers_readonly(Check):
+class ecs_task_definitions_containers_readonly_access(Check):
     def execute(self):
         findings = []
         for task_definition in ecs_client.task_definitions.values():
@@ -12,7 +12,7 @@ class ecs_task_definitions_containers_readonly(Check):
             report.resource_arn = task_definition.arn
             report.resource_tags = task_definition.tags
             report.status = "PASS"
-            report.status_extended = f"ECS task definition {task_definition.name} containers have read-only root filesystems."
+            report.status_extended = f"ECS task definition {task_definition.name} does not have containers with write access to the root filesystems."
 
             failed_containers = []
             for container in task_definition.container_definitions:

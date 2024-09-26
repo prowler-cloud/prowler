@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "ecs_task_definitions_containers_readonly",
+  "CheckID": "ecs_task_definitions_containers_readonly_access",
   "CheckTitle": "ECS containers should be limited to read-only access to root filesystems",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices"
