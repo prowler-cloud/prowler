@@ -77,6 +77,8 @@ filesystem_policy_with_mount_target_condition = {
 class Test_efs_not_publicly_accessible:
     def test_efs_valid_policy(self):
         efs_client = mock.MagicMock
+        efs_client.audited_account = AWS_ACCOUNT_NUMBER
+        efs_client.audit_config = {}
         efs_arn = f"arn:aws:elasticfilesystem:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:file-system/{file_system_id}"
         efs_client.filesystems = [
             FileSystem(
@@ -111,6 +113,8 @@ class Test_efs_not_publicly_accessible:
 
     def test_efs_valid_policy_with_mount_target_condition(self):
         efs_client = mock.MagicMock
+        efs_client.audited_account = AWS_ACCOUNT_NUMBER
+        efs_client.audit_config = {}
         efs_arn = f"arn:aws:elasticfilesystem:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:file-system/{file_system_id}"
         efs_client.filesystems = [
             FileSystem(
@@ -145,6 +149,8 @@ class Test_efs_not_publicly_accessible:
 
     def test_efs_valid_policy_with_source_arn_condition(self):
         efs_client = mock.MagicMock
+        efs_client.audited_account = AWS_ACCOUNT_NUMBER
+        efs_client.audit_config = {}
         efs_arn = f"arn:aws:elasticfilesystem:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:file-system/{file_system_id}"
         efs_client.filesystems = [
             FileSystem(
@@ -179,6 +185,8 @@ class Test_efs_not_publicly_accessible:
 
     def test_efs_invalid_policy(self):
         efs_client = mock.MagicMock
+        efs_client.audited_account = AWS_ACCOUNT_NUMBER
+        efs_client.audit_config = {}
         efs_arn = f"arn:aws:elasticfilesystem:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:file-system/{file_system_id}"
 
         efs_client.filesystems = [
@@ -214,6 +222,8 @@ class Test_efs_not_publicly_accessible:
 
     def test_efs_no_policy(self):
         efs_client = mock.MagicMock
+        efs_client.audited_account = AWS_ACCOUNT_NUMBER
+        efs_client.audit_config = {}
         efs_arn = f"arn:aws:elasticfilesystem:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:file-system/{file_system_id}"
         efs_client.filesystems = [
             FileSystem(
