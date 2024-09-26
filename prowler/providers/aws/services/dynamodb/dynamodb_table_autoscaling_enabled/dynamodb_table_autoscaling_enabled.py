@@ -21,15 +21,14 @@ class dynamodb_table_autoscaling_enabled(Check):
                     report.status = "PASS"
                     report.status_extended = f"DynamoDB table {table.name} is in PROVISIONED mode with auto scaling enabled for both read and write capacity units."
                 else:
-                    s = f"DynamoDB table {table.name} is in PROVISIONED mode without auto scaling enabled for "
+                    missing_autoscaling = []
                     if not table.read_autoscaling:
-                        s += "read"
-                        if not table.write_autoscaling:
-                            s += " and write."
-                        else:
-                            s += "."
-                    else:
-                        s += "write."
-                    report.status_extended = s
+                        missing_autoscaling.append("read")
+                    if not table.write_autoscaling:
+                        missing_autoscaling.append("write")
+
+                    if missing_autoscaling:
+                        report.status_extended = f"DynamoDB table {table.name} is in PROVISIONED mode without auto scaling enabled for {', '.join(missing_autoscaling)}."
+
             findings.append(report)
         return findings

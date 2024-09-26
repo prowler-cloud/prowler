@@ -32,7 +32,6 @@ class DynamoDB(AWSService):
                     ):
                         self.tables[arn] = Table(
                             name=table,
-                            billing_mode="PROVISIONED",
                             encryption_type=None,
                             kms_arn=None,
                             region=regional_client.region,
@@ -50,10 +49,9 @@ class DynamoDB(AWSService):
                 properties = regional_client.describe_table(TableName=table.name)[
                     "Table"
                 ]
-                if "BillingModeSummary" in properties:
-                    table.billing_mode = properties["BillingModeSummary"]["BillingMode"]
-                else:
-                    table.billing_mode = "PROVISIONED"
+                table.billing_mode = properties.get("BillingModeSummary", {}).get(
+                    "BillingMode", "PROVISIONED"
+                )
                 if "SSEDescription" in properties:
                     if "SSEType" in properties["SSEDescription"]:
                         table.encryption_type = properties["SSEDescription"]["SSEType"]
