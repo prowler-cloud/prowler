@@ -10,6 +10,7 @@ class dms_endpoint_ssl_enabled(Check):
             report.resource_id = endpoint.id
             report.resource_arn = endpoint_arn
             report.region = dms_client.audited_region
+            report.resource_tags = endpoint.tags
 
             if endpoint.ssl_mode == "none":
                 report.status = "FAIL"
