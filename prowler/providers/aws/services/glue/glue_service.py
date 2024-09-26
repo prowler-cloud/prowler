@@ -209,16 +209,11 @@ class Glue(AWSService):
 
     def _list_tags(self, resource: any):
         try:
-            if (
-                getattr(resource, "arn", None)
-                and getattr(resource, "region", None)
-                and hasattr(resource, "tags")
-            ):
-                resource.tags = [
-                    self.regional_clients[resource.region].get_tags(
-                        ResourceArn=resource.arn
-                    )["Tags"]
-                ]
+            resource.tags = [
+                self.regional_clients[resource.region].get_tags(
+                    ResourceArn=resource.arn
+                )["Tags"]
+            ]
         except Exception as error:
             logger.error(
                 f"{resource.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
