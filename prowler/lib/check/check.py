@@ -403,7 +403,6 @@ def run_fixer(check_findings: list) -> int:
 def execute_checks(
     checks_to_execute: list,
     global_provider: Any,
-    custom_checks_metadata: Any,
     config_file: str,
     output_options: Any,
 ) -> list:

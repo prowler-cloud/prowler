@@ -269,7 +269,6 @@ def prowler():
         findings = execute_checks(
             checks_to_execute,
             global_provider,
-            custom_checks_metadata,
             args.config_file,
             output_options,
         )
