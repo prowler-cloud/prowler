@@ -212,20 +212,20 @@ class Glue(AWSService):
         logger.info("Glue - Checking ml_transfroms encryption while at rest...")
         try:
             response = regional_client.get_ml_transforms()['Transforms']
-            print(response)
             transform_encryption = dict()
             for transform in response:
-                transform_encryption_long_dict = transform.get("TransformEncryption", {}).get('MlUserDataEncryption').get('MlUserDataEncryptionMode')
-                transform_encryption.update(transform_encryption_long_dict)
-
+                data_encryption_mode = transform.get("TransformEncryption", {}).get('MlUserDataEncryption', {}).get('MlUserDataEncryptionMode')
+                transform_encryption.update(data_encryption_mode)
+            
+            print(transform_encryption)
             self.transforms = [
             Transforms(
                 id=transform['TransformId'],
                 name=transform['Name'],
-                transform_encryption=Transforms(transform_encryption)
+                transform_encryption=transform(transform_encryption)
             )
         ]
-                          
+        
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}")
