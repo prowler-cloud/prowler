@@ -33,7 +33,6 @@ def mock_make_api_call(self, operation_name, kwarg):
 
 @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
 class Test_RDS_Service:
-
     # Test Dynamo Service
     @mock_aws
     def test_service(self):
@@ -382,3 +381,37 @@ class Test_RDS_Service:
             rds.db_engines[AWS_REGION_US_EAST_1]["mysql"].engine_description
             == "description"
         )
+
+    @mock_aws
+    def test_list_tags(self):
+        # RDS client for this test class
+        conn = client("rds", region_name=AWS_REGION_US_EAST_1)
+        conn.create_db_instance(
+            DBInstanceIdentifier="db-primary-1",
+            AllocatedStorage=10,
+            Engine="postgres",
+            DBName="staging-postgres",
+            DBInstanceClass="db.m1.small",
+        )
+        event_sub = conn.create_event_subscription(
+            SubscriptionName="TestSub",
+            SnsTopicArn=f"arn:aws:sns:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:test",
+            SourceType="db-security-group",
+            Enabled=True,
+            Tags=[
+                {"Key": "test", "Value": "testing"},
+            ],
+        )
+        # Tag event subscription
+        conn.add_tags_to_resource(
+            ResourceName=event_sub["EventSubscription"]["EventSubscriptionArn"],
+            Tags=[
+                {"Key": "test", "Value": "testing"},
+            ],
+        )
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        rds = RDS(aws_provider)
+        assert len(rds.db_event_subscriptions) == 1
+        assert rds.db_event_subscriptions[0].tags == [
+            {"Key": "test", "Value": "testing"},
+        ]

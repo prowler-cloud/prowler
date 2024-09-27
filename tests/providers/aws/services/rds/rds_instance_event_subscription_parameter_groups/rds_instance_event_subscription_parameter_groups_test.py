@@ -46,6 +46,7 @@ class Test_rds_instance__no_event_subscriptions:
                 assert result[0].region == AWS_REGION_US_EAST_1
                 assert result[0].resource_id == AWS_ACCOUNT_NUMBER
                 assert result[0].resource_arn == RDS_ACCOUNT_ARN
+                assert result[0].resource_tags == []
 
     @mock_aws
     def test_rds_no_events_ignoring(self):
@@ -130,6 +131,7 @@ class Test_rds_instance__no_event_subscriptions:
                     result[0].resource_arn
                     == f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:es:TestSub"
                 )
+                assert result[0].resource_tags == [{"Key": "test", "Value": "testing"}]
 
     @mock_aws
     def test_rds_parameter_event_configuration_change_only_subscription(self):
@@ -187,3 +189,4 @@ class Test_rds_instance__no_event_subscriptions:
                     result[0].resource_arn
                     == f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:es:TestSub"
                 )
+                assert result[0].resource_tags == []
