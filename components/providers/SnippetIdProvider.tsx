@@ -12,6 +12,7 @@ export const SnippetIdProvider: React.FC<SnippetIdProviderProps> = ({
   return (
     <Snippet
       className="flex items-center py-0"
+      color="default"
       size="sm"
       variant="flat"
       radius="lg"
@@ -21,7 +22,9 @@ export const SnippetIdProvider: React.FC<SnippetIdProviderProps> = ({
     >
       <p className="flex items-center space-x-2">
         <IdIcon size={16} />
-        <span className="text-sm max-w-24 overflow-x-scroll">{providerId}</span>
+        <span className="text-sm max-w-24 overflow-x-scroll no-scrollbar">
+          {providerId}
+        </span>
       </p>
     </Snippet>
   );

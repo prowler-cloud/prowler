@@ -42,7 +42,7 @@ export const SidebarWrap = () => {
   return (
     <div
       className={clsx(
-        "relative flex h-screen flex-col !border-r-small border-divider transition-width",
+        "relative flex h-screen flex-col !border-r-small border-divider transition-width bg-prowler-blue-midnight",
         {
           "w-72 p-6": !isCompact,
           "w-16 items-center px-2 py-6": isCompact,
@@ -79,7 +79,7 @@ export const SidebarWrap = () => {
         />{" "}
       </Link>
 
-      <ScrollShadow className="-mr-6 h-full max-h-full py-6 pr-6">
+      <ScrollShadow hideScrollBar className="-mr-6 h-full max-h-full py-6 pr-6">
         <Sidebar
           defaultSelectedKey="overview"
           isCompact={isCompact}
