@@ -1,5 +1,23 @@
 import { Button, CircularProgress } from "@nextui-org/react";
+import type { PressEvent } from "@react-types/shared";
 import clsx from "clsx";
+
+type NextUIVariants =
+  | "solid"
+  | "faded"
+  | "bordered"
+  | "light"
+  | "flat"
+  | "ghost"
+  | "shadow";
+
+type NextUIColors =
+  | "primary"
+  | "secondary"
+  | "success"
+  | "warning"
+  | "danger"
+  | "default";
 
 export const buttonClasses = {
   base: "px-2 inline-flex items-center justify-center relative z-0 text-center whitespace-nowrap",
@@ -7,7 +25,7 @@ export const buttonClasses = {
   secondary: "bg-prowler-grey-light dark:bg-prowler-grey-medium text-white",
   action: "text-white bg-prowler-blue-smoky dark:bg-prowler-grey-medium",
   dashed:
-    "border border-default border-dashed bg-transparent hover:bg-accent justify-center whitespace-nowrap font-medium shadow-sm hover:bg-accent hover:text-accent-foreground",
+    "border border-default border-dashed bg-transparent  justify-center whitespace-nowrap font-medium shadow-sm hover:border-solid hover:bg-default-100 active:bg-default-200 active:border-solid",
   transparent: "border-0 border-transparent bg-transparent",
   disabled: "pointer-events-none opacity-40",
   hover: "hover:shadow-md",
@@ -33,7 +51,7 @@ interface ButtonProps {
     | "warning"
     | "danger"
     | "transparent";
-  onPress?: (event: React.MouseEvent<HTMLButtonElement>) => void;
+  onPress?: (e: PressEvent) => void;
   children: React.ReactNode;
   startContent?: React.ReactNode;
   endContent?: React.ReactNode;
@@ -64,8 +82,8 @@ export const CustomButton = ({
   <Button
     type={type}
     onPress={onPress}
-    variant={variant}
-    color={color}
+    variant={variant as NextUIVariants}
+    color={color as NextUIColors}
     className={clsx(
       buttonClasses.base,
       {
