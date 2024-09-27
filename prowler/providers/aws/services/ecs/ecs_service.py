@@ -47,7 +47,7 @@ class ECS(AWSService):
             )
 
     def _describe_task_definition(self, task_definition):
-        logger.info("ECS - Describing Task Definitions...")
+        logger.info("ECS - Describing Task Definition...")
         try:
             client = self.regional_clients[task_definition.region]
             response = client.describe_task_definition(
@@ -70,6 +70,9 @@ class ECS(AWSService):
                     ContainerDefinition(
                         name=container["name"],
                         privileged=container.get("privileged", False),
+                        readonly_rootfilesystem=container.get(
+                            "readonlyRootFilesystem", False
+                        ),
                         user=container.get("user", ""),
                         environment=environment,
                         log_driver=container.get("logConfiguration", {}).get(
@@ -77,8 +80,11 @@ class ECS(AWSService):
                         ),
                     )
                 )
+            task_definition.pid_mode = response["taskDefinition"].get("pidMode", "")
             task_definition.tags = response.get("tags")
-            task_definition.network_mode = response["taskDefinition"].get("networkMode")
+            task_definition.network_mode = response["taskDefinition"].get(
+                "networkMode", "bridge"
+            )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -167,6 +173,7 @@ class ContainerEnvVariable(BaseModel):
 class ContainerDefinition(BaseModel):
     name: str
     privileged: bool
+    readonly_rootfilesystem: bool = False
     user: str
     environment: list[ContainerEnvVariable]
     log_driver: Optional[str]
@@ -178,6 +185,7 @@ class TaskDefinition(BaseModel):
     revision: str
     region: str
     container_definitions: list[ContainerDefinition] = []
+    pid_mode: Optional[str]
     tags: Optional[list] = []
     network_mode: Optional[str]
 
