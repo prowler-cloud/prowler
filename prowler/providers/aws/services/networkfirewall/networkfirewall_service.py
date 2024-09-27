@@ -5,7 +5,6 @@ from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################## NetworkFirewall
 class NetworkFirewall(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
@@ -30,10 +29,10 @@ class NetworkFirewall(AWSService):
                         self.network_firewalls[
                             network_firewall.get("FirewallArn", "")
                         ] = Firewall(
+                            arn=network_firewall.get("FirewallArn"),
                             region=regional_client.region,
                             name=network_firewall.get("FirewallName"),
                         )
-
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -72,6 +71,7 @@ class NetworkFirewall(AWSService):
 
 
 class Firewall(BaseModel):
+    arn: str
     name: str
     region: str
     policy_arn: str = None
