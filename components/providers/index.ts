@@ -1,6 +1,4 @@
-export * from "./AddProvider";
-export * from "./AddProviderModal";
-export * from "./ButtonAddProvider";
+export * from "./add-provider";
 export * from "./CheckConnectionProvider";
 export * from "./CustomRadioProvider";
 export * from "./DateWithTime";

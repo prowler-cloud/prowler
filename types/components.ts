@@ -33,7 +33,7 @@ export interface ProviderProps {
   id: string;
   type: "providers";
   attributes: {
-    provider: "aws" | "azure" | "gcp";
+    provider: "aws" | "azure" | "gcp" | "kubernetes";
     uid: string;
     alias: string;
     status: "completed" | "pending" | "cancelled";

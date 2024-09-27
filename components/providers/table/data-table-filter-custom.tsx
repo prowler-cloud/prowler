@@ -1,17 +1,20 @@
 "use client";
 
-import { Button } from "@nextui-org/react";
-// import {
-//   Button,
-//   Input,
-//   Popover,
-//   PopoverContent,
-//   PopoverTrigger,
-//   RadioGroup,
-// } from "@nextui-org/react";
-// import { Icon, Radio, SearchIcon } from "lucide-react";
+import {
+  Button,
+  Checkbox,
+  CheckboxGroup,
+  Input,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@nextui-org/react";
+import { SearchIcon } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useMemo } from "react";
+
+import { CustomFilterIcon, PlusCircleIcon } from "@/components/icons";
+import { CustomButton } from "@/components/ui/custom";
 
 interface DataTableFilterCustomProps {
   filters: { key: string; values: string[] }[];
@@ -53,7 +56,7 @@ export function DataTableFilterCustom({ filters }: DataTableFilterCustomProps) {
 
   return (
     <>
-      {/* <div className="flex items-center gap-4 overflow-auto px-[6px] py-[4px]">
+      <div className="flex items-center gap-4 overflow-auto px-[6px] py-[4px]">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-4">
             <Input
@@ -70,60 +73,50 @@ export function DataTableFilterCustom({ filters }: DataTableFilterCustomProps) {
           <div>
             <Popover placement="bottom">
               <PopoverTrigger>
-                <Button className="bg-default-100 text-default-800" size="sm">
+                <Button
+                  className="bg-default-100 text-default-800"
+                  startContent={
+                    <PlusCircleIcon className="text-default-400" width={16} />
+                  }
+                  size="sm"
+                >
                   Filter
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-80">
                 <div className="flex w-full flex-col gap-6 px-2 py-4">
-                  <RadioGroup
-                    label="Worker Type"
-                    // value={workerTypeFilter}
-                    // onValueChange={setWorkerTypeFilter}
+                  <CheckboxGroup
+                    label="Select cities"
+                    defaultValue={["buenos-aires", "london"]}
                   >
-                    <Radio value="all">All</Radio>
-                    <Radio value="employee">Employee</Radio>
-                    <Radio value="contractor">Contractor</Radio>
-                  </RadioGroup>
-
-                  <RadioGroup
-                    label="Status"
-                    // value={statusFilter}
-                    // onValueChange={setStatusFilter}
-                  >
-                    <Radio value="all">All</Radio>
-                    <Radio value="active">Active</Radio>
-                    <Radio value="inactive">Inactive</Radio>
-                    <Radio value="paused">Paused</Radio>
-                    <Radio value="vacation">Vacation</Radio>
-                  </RadioGroup>
-
-                  <RadioGroup
-                    label="Start Date"
-                    // value={startDateFilter}
-                    // onValueChange={setStartDateFilter}
-                  >
-                    <Radio value="all">All</Radio>
-                    <Radio value="last7Days">Last 7 days</Radio>
-                    <Radio value="last30Days">Last 30 days</Radio>
-                    <Radio value="last60Days">Last 60 days</Radio>
-                  </RadioGroup>
+                    <Checkbox value="buenos-aires">Buenos Aires</Checkbox>
+                    <Checkbox value="sydney">Sydney</Checkbox>
+                    <Checkbox value="san-francisco">San Francisco</Checkbox>
+                    <Checkbox value="london">London</Checkbox>
+                    <Checkbox value="tokyo">Tokyo</Checkbox>
+                  </CheckboxGroup>
                 </div>
               </PopoverContent>
             </Popover>
           </div>
         </div>
-      </div> */}
+      </div>
 
       <div className="flex flex-wrap items-center space-x-2">
+        <CustomButton
+          variant="dashed"
+          size="sm"
+          startContent={<CustomFilterIcon size={16} />}
+        >
+          Show Filters
+        </CustomButton>
         {filters.flatMap(({ key, values }) =>
           values.map((value) => (
             <Button
               key={`${key}-${value}`}
-              onClick={() => applyFilter(key, value)}
+              onPress={() => applyFilter(key, value)}
               // eslint-disable-next-line security/detect-object-injection
               variant={activeFilters[key] === value ? "faded" : "light"}
-              size="sm"
             >
               {value || "All"}
             </Button>
