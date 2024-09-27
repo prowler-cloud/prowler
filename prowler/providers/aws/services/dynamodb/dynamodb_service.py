@@ -57,6 +57,10 @@ class DynamoDB(AWSService):
                         table.encryption_type = properties["SSEDescription"]["SSEType"]
                 if table.encryption_type == "KMS":
                     table.kms_arn = properties["SSEDescription"]["KMSMasterKeyArn"]
+
+                table.deletion_protection = properties.get(
+                    "DeletionProtectionEnabled", False
+                )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
@@ -255,6 +259,7 @@ class Table(BaseModel):
     policy: Optional[dict] = None
     region: str
     tags: Optional[list] = []
+    deletion_protection: bool = False
 
 
 class Cluster(BaseModel):
