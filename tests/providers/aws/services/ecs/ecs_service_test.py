@@ -157,6 +157,7 @@ class Test_ECS_Service:
         assert ecs.task_definitions[task_arn].network_mode == "host"
         assert not ecs.task_definitions[task_arn].container_definitions[0].privileged
         assert ecs.task_definitions[task_arn].container_definitions[0].user == ""
+        assert ecs.task_definitions[task_arn].container_definitions[0].log_driver == ""
 
     # Test list ECS clusters
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)

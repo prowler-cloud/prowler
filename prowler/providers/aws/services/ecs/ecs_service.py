@@ -72,6 +72,9 @@ class ECS(AWSService):
                         privileged=container.get("privileged", False),
                         user=container.get("user", ""),
                         environment=environment,
+                        log_driver=container.get("logConfiguration", {}).get(
+                            "logDriver", ""
+                        ),
                     )
                 )
             task_definition.tags = response.get("tags")
@@ -166,6 +169,7 @@ class ContainerDefinition(BaseModel):
     privileged: bool
     user: str
     environment: list[ContainerEnvVariable]
+    log_driver: Optional[str]
 
 
 class TaskDefinition(BaseModel):
