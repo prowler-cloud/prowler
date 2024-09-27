@@ -35,7 +35,6 @@ export const AddForm = ({
   const isLoading = form.formState.isSubmitting;
 
   const onSubmitClient = async (values: z.infer<typeof formSchema>) => {
-    console.log(values);
     const formData = new FormData();
 
     Object.entries(values).forEach(
