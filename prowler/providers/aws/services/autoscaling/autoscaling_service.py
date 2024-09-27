@@ -5,7 +5,6 @@ from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################## AutoScaling
 class AutoScaling(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
@@ -74,6 +73,49 @@ class AutoScaling(AWSService):
             )
 
 
+# Global list for service namespaces needed for Describe Scalable Targets
+service_namespaces = ["dynamodb"]
+
+
+class ApplicationAutoScaling(AWSService):
+    def __init__(self, provider):
+        super().__init__("application-autoscaling", provider)
+        self.scalable_targets = []
+        self.__threading_call__(self._describe_scalable_targets)
+
+    def _describe_scalable_targets(self, regional_client):
+        logger.info("ApplicationAutoScaling - Describing Scalable Targets...")
+        try:
+            describe_scalable_targets_paginator = regional_client.get_paginator(
+                "describe_scalable_targets"
+            )
+            for service_namespace in service_namespaces:
+                logger.info(f"Processing ServiceNamespace: {service_namespace}")
+                for page in describe_scalable_targets_paginator.paginate(
+                    ServiceNamespace=service_namespace
+                ):
+                    for target in page.get("ScalableTargets", []):
+                        if not self.audit_resources or (
+                            is_resource_filtered(
+                                target["ScalableTargetARN"],
+                                self.audit_resources,
+                            )
+                        ):
+                            self.scalable_targets.append(
+                                ScalableTarget(
+                                    arn=target.get("ScalableTargetARN", ""),
+                                    resource_id=target.get("ResourceId"),
+                                    service_namespace=target.get("ServiceNamespace"),
+                                    scalable_dimension=target.get("ScalableDimension"),
+                                    region=regional_client.region,
+                                )
+                            )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+
 class LaunchConfiguration(BaseModel):
     arn: str
     name: str
@@ -88,3 +130,11 @@ class Group(BaseModel):
     region: str
     availability_zones: list
     tags: list = []
+
+
+class ScalableTarget(BaseModel):
+    arn: str
+    resource_id: str
+    service_namespace: str
+    scalable_dimension: str
+    region: str

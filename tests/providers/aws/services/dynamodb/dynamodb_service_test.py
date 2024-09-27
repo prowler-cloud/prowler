@@ -155,51 +155,6 @@ class Test_DynamoDB_Service:
         assert tables.pitr
         assert tables.region == AWS_REGION_US_EAST_1
 
-    @mock_aws
-    def test_describe_autoscaling(self):
-        dynamodb_client = client("dynamodb", region_name=AWS_REGION_US_EAST_1)
-        table = dynamodb_client.create_table(
-            TableName="test1",
-            AttributeDefinitions=[
-                {"AttributeName": "client", "AttributeType": "S"},
-                {"AttributeName": "app", "AttributeType": "S"},
-            ],
-            KeySchema=[
-                {"AttributeName": "client", "KeyType": "HASH"},
-                {"AttributeName": "app", "KeyType": "RANGE"},
-            ],
-            BillingMode="PROVISIONED",
-            ProvisionedThroughput={"ReadCapacityUnits": 5, "WriteCapacityUnits": 5},
-        )["TableDescription"]
-
-        autoscaling_client = client(
-            "application-autoscaling", region_name=AWS_REGION_US_EAST_1
-        )
-        autoscaling_client.register_scalable_target(
-            ServiceNamespace="dynamodb",
-            ResourceId=f"table/{table['TableName']}",
-            ScalableDimension="dynamodb:table:ReadCapacityUnits",
-            MinCapacity=1,
-            MaxCapacity=10,
-        )
-        autoscaling_client.register_scalable_target(
-            ServiceNamespace="dynamodb",
-            ResourceId=f"table/{table['TableName']}",
-            ScalableDimension="dynamodb:table:WriteCapacityUnits",
-            MinCapacity=1,
-            MaxCapacity=10,
-        )
-
-        aws_provider = set_mocked_aws_provider()
-        dynamo = DynamoDB(aws_provider)
-        assert len(dynamo.tables) == 1
-        tables_arn, tables = next(iter(dynamo.tables.items()))
-        assert tables_arn == table["TableArn"]
-        assert tables.name == "test1"
-        assert tables.region == AWS_REGION_US_EAST_1
-        assert tables.read_autoscaling
-        assert tables.write_autoscaling
-
     # Test DAX Describe Clusters
     @mock_aws
     def test_describe_clusters(self):

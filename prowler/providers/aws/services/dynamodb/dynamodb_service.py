@@ -17,7 +17,6 @@ class DynamoDB(AWSService):
         self._describe_table()
         self._describe_continuous_backups()
         self._get_resource_policy()
-        self._describe_autoscaling()
         self._list_tags_for_resource()
 
     def _list_tables(self, regional_client):
@@ -127,37 +126,6 @@ class DynamoDB(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def _describe_autoscaling(self):
-        logger.info("DynamoDB - Describing Auto Scaling...")
-        try:
-            for table in self.tables.values():
-                if table.billing_mode == "PROVISIONED":
-                    application_autoscaling_client = self.session.client(
-                        "application-autoscaling", region_name=table.region
-                    )
-                    read_response = (
-                        application_autoscaling_client.describe_scalable_targets(
-                            ServiceNamespace="dynamodb",
-                            ResourceIds=[f"table/{table.name}"],
-                            ScalableDimension="dynamodb:table:ReadCapacityUnits",
-                        )
-                    )
-                    if read_response["ScalableTargets"]:
-                        table.read_autoscaling = True
-                    write_response = (
-                        application_autoscaling_client.describe_scalable_targets(
-                            ServiceNamespace="dynamodb",
-                            ResourceIds=[f"table/{table.name}"],
-                            ScalableDimension="dynamodb:table:WriteCapacityUnits",
-                        )
-                    )
-                    if write_response["ScalableTargets"]:
-                        table.write_autoscaling = True
-        except Exception as error:
-            logger.error(
-                f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
-            )
-
     def _list_tags_for_resource(self):
         logger.info("DynamoDB - List Tags...")
         try:
@@ -251,8 +219,6 @@ class DAX(AWSService):
 class Table(BaseModel):
     name: str
     billing_mode: str = "PROVISIONED"
-    read_autoscaling: bool = False
-    write_autoscaling: bool = False
     encryption_type: Optional[str]
     kms_arn: Optional[str]
     pitr: bool = False
