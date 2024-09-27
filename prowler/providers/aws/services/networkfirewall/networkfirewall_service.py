@@ -12,6 +12,7 @@ class NetworkFirewall(AWSService):
         self.network_firewalls = {}
         self.__threading_call__(self._list_firewalls)
         self._describe_firewall()
+        self._describe_firewall_policy()
 
     def _list_firewalls(self, regional_client):
         logger.info("Network Firewall - Listing Network Firewalls...")
@@ -69,6 +70,41 @@ class NetworkFirewall(AWSService):
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 
+    def _describe_firewall_policy(self):
+        logger.info("Network Firewall - Describe Network Firewall Policies...")
+        try:
+            for arn, network_firewall in self.network_firewalls.items():
+                regional_client = self.regional_clients[network_firewall.region]
+                try:
+                    describe_firewall_policy = regional_client.describe_firewall_policy(
+                        FirewallPolicyArn=network_firewall.policy_arn,
+                    )
+                    stateless_rule_groups = []
+                    for stateless_rule_group in describe_firewall_policy.get(
+                        "StatelessRuleGroupReferences", []
+                    ):
+                        stateless_rule_groups.append(
+                            stateless_rule_group["ResourceArn"]
+                        )
+                    network_firewall.stateful_rule_groups = stateless_rule_groups
+
+                    stateful_rule_groups = []
+                    for stateful_rule_group in describe_firewall_policy.get(
+                        "StatefulRuleGroupReferences", []
+                    ):
+                        stateful_rule_groups.append(stateful_rule_group["ResourceArn"])
+                    network_firewall.stateless_rule_groups = stateless_rule_groups
+
+                except Exception as error:
+                    logger.error(
+                        f"Error describing firewall policy {network_firewall.policy_arn} in region {network_firewall.region}: "
+                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
+            )
+
 
 class Firewall(BaseModel):
     arn: str
@@ -79,3 +115,5 @@ class Firewall(BaseModel):
     tags: list = []
     encryption_type: str = None
     deletion_protection: bool = False
+    stateless_rule_groups: list[str] = []
+    stateful_rule_groups: list[str] = []
