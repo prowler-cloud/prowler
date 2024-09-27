@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "networkfirewall_policies_rule_group_associated",
+  "CheckID": "networkfirewall_policy_rule_group_associated",
   "CheckTitle": "Ensure Network Firewall Policies Have at Least One Rule Group Associated",
   "CheckType": [
     "Software and Configuration Checks/Industry and Regulatory Standards/NIST 800-53"

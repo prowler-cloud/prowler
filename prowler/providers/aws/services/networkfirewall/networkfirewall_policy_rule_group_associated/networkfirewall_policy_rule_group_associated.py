@@ -4,7 +4,7 @@ from prowler.providers.aws.services.networkfirewall.networkfirewall_client impor
 )
 
 
-class networkfirewall_policies_rule_group_associated(Check):
+class networkfirewall_policy_rule_group_associated(Check):
     def execute(self):
         findings = []
         for firewall in networkfirewall_client.network_firewalls.values():
