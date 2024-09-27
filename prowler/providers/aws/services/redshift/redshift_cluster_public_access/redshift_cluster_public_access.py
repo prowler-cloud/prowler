@@ -18,28 +18,31 @@ class redshift_cluster_public_access(Check):
             report.status_extended = (
                 f"Redshift Cluster {cluster.id} is not publicly accessible."
             )
+            # 1. Check if Redshift Cluster is publicly accessible
             if cluster.endpoint_address and cluster.public_access:
-                report.status = "FAIL"
-                report.status_extended = f"Redshift Cluster {cluster.id} is publicly accessible at endpoint {cluster.endpoint_address}."
-            elif (
-                cluster.vpc_id
-                and cluster.vpc_id in vpc_client.vpcs
-                and vpc_client.vpcs[cluster.vpc_id].public
-            ):
-                report.status = "FAIL"
-                report.status_extended = f"Redshift Cluster {cluster.id} is in a public VPC {cluster.vpc_id}."
-            elif cluster.vpc_security_groups:
-                for sg_id in cluster.vpc_security_groups:
-                    sg_arn = f"arn:{redshift_client.audited_partition}:ec2:{cluster.region}:{redshift_client.audited_account}:security-group/{sg_id}"
-                    if sg_arn in ec2_client.security_groups:
-                        for ingress_rule in ec2_client.security_groups[
-                            sg_arn
-                        ].ingress_rules:
-                            if check_security_group(
-                                ingress_rule, "tcp", any_address=True
-                            ):
-                                report.status = "FAIL"
-                                report.status_extended = f"Redshift Cluster {cluster.id} is in VPC {cluster.vpc_id} with a public security group {sg_id}."
+                report.status_extended = f"Redshift Cluster {cluster.id} has the endpoint {cluster.endpoint_address} set as publicly accessible but is not publicly exposed."
+                # 2. Check if Redshift Cluster is in a public VPC
+                if (
+                    cluster.vpc_id
+                    and cluster.vpc_id in vpc_client.vpcs
+                    and vpc_client.vpcs[cluster.vpc_id].public
+                ):
+                    report.status_extended = f"Redshift Cluster {cluster.id} has the endpoint {cluster.endpoint_address} set as publicly accessible in the public VPC {cluster.vpc_id} but is not publicly exposed."
+                    # 3. Check if any Redshift Cluster Security Group is publicly open
+                    for sg_id in getattr(cluster, "vpc_security_groups", []):
+                        sg_arn = f"arn:{redshift_client.audited_partition}:ec2:{cluster.region}:{redshift_client.audited_account}:security-group/{sg_id}"
+                        if sg_arn in ec2_client.security_groups:
+                            for ingress_rule in ec2_client.security_groups[
+                                sg_arn
+                            ].ingress_rules:
+                                if check_security_group(
+                                    ingress_rule, "tcp", any_address=True
+                                ):
+                                    report.status = "FAIL"
+                                    report.status_extended = f"Redshift Cluster {cluster.id} has the endpoint {cluster.endpoint_address} set as publicly accessible and it is exposed to the Internet by security group ({sg_id}) in public VPC {cluster.vpc_id}."
+                                    break
+                        if report.status == "FAIL":
+                            break
 
             findings.append(report)
 
