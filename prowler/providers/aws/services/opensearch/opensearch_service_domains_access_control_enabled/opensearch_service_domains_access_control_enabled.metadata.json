@@ -1,0 +1,30 @@
+{
+  "Provider": "aws",
+  "CheckID": "opensearch_service_domains_access_control_enabled",
+  "CheckTitle": "Check if Amazon Elasticsearch/Opensearch Service domains have fine grained access control enabled",
+  "CheckType": [],
+  "ServiceName": "opensearch",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "high",
+  "ResourceType": "AwsOpenSearchServiceDomain",
+  "Description": "Check if Amazon Elasticsearch/Opensearch Service domains have fine grained access control enabled",
+  "Risk": "Amazon ES's fine graine access control enhances security by verifying that access to OpenSearch domains is controlled at a granular level, allowing for more precise permissions management and reducing the risk of unauthorised access.",
+  "RelatedUrl": "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/fgac.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/opensearch-controls.html#opensearch-7",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable fine grained access control for your OpenSearch domains",
+      "Url": "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/fgac.html#fgac-enabling"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
