@@ -9,6 +9,23 @@ export type IconProps = {
   style?: React.CSSProperties;
 };
 
+export type NextUIVariants =
+  | "solid"
+  | "faded"
+  | "bordered"
+  | "light"
+  | "flat"
+  | "ghost"
+  | "shadow";
+
+export type NextUIColors =
+  | "primary"
+  | "secondary"
+  | "success"
+  | "warning"
+  | "danger"
+  | "default";
+
 export interface SearchParamsProps {
   [key: string]: string | string[] | undefined;
 }

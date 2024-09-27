@@ -2,22 +2,7 @@ import { Button, CircularProgress } from "@nextui-org/react";
 import type { PressEvent } from "@react-types/shared";
 import clsx from "clsx";
 
-type NextUIVariants =
-  | "solid"
-  | "faded"
-  | "bordered"
-  | "light"
-  | "flat"
-  | "ghost"
-  | "shadow";
-
-type NextUIColors =
-  | "primary"
-  | "secondary"
-  | "success"
-  | "warning"
-  | "danger"
-  | "default";
+import { NextUIColors, NextUIVariants } from "@/types";
 
 export const buttonClasses = {
   base: "px-2 inline-flex items-center justify-center relative z-0 text-center whitespace-nowrap",
