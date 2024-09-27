@@ -5,7 +5,6 @@ from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################## NetworkFirewall
 class NetworkFirewall(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
@@ -60,6 +59,15 @@ class NetworkFirewall(AWSService):
                     network_firewall.deletion_protection = describe_firewall.get(
                         "DeleteProtection", False
                     )
+                    subnet_list = describe_firewall.get("SubnetMappings", [])
+                    if subnet_list != []:
+                        for subnet in subnet_list:
+                            network_firewall.subnet_mappings.append(
+                                Subnet(
+                                    subnet_id=subnet.get("SubnetId"),
+                                    ip_addr_type=subnet.get("IPAddressType"),
+                                )
+                            )
                 except Exception as error:
                     logger.error(
                         f"Error describing firewall {network_firewall.arn} in region {network_firewall.region}: "
@@ -71,6 +79,11 @@ class NetworkFirewall(AWSService):
             )
 
 
+class Subnet(BaseModel):
+    subnet_id: str
+    ip_addr_type: str
+
+
 class Firewall(BaseModel):
     name: str
     region: str
@@ -79,3 +92,4 @@ class Firewall(BaseModel):
     tags: list = []
     encryption_type: str = None
     deletion_protection: bool = False
+    subnet_mappings: list[Subnet] = []
