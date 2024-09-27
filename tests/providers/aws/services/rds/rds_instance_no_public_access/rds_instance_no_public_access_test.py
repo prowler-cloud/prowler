@@ -146,7 +146,7 @@ class Test_rds_instance_no_public_access:
                 assert result[0].resource_tags == []
 
     @mock_aws
-    def test_rds_instance_public_with_public_sg(self):
+    def test_rds_instance_public_with_public_sg_in_private_subnet(self):
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
         ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
         default_sg = ec2_client.describe_security_groups(GroupNames=["default"])[
@@ -201,10 +201,10 @@ class Test_rds_instance_no_public_access:
                 result = check.execute()
 
                 assert len(result) == 1
-                assert result[0].status == "FAIL"
+                assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == f"RDS Instance db-master-1 is set as publicly accessible and security group default ({default_sg_id}) has postgres port 5432 open to the Internet at endpoint db-master-1.aaaaaaaaaa.us-east-1.rds.amazonaws.com."
+                    == f"RDS Instance db-master-1 is set as publicly accessible and security group default ({default_sg_id}) has postgres port 5432 open to the Internet at endpoint db-master-1.aaaaaaaaaa.us-east-1.rds.amazonaws.com but is not in a public subnet."
                 )
                 assert result[0].resource_id == "db-master-1"
                 assert result[0].region == AWS_REGION_US_EAST_1
@@ -279,6 +279,26 @@ class Test_rds_instance_no_public_access:
     def test_rds_instance_public_with_public_subnet(self):
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
         vpc_id = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]["VpcId"]
+        # Get default security group from VPC
+        default_sg_id = (
+            ec2_client.describe_security_groups(
+                Filters=[
+                    {
+                        "Name": "vpc-id",
+                        "Values": [vpc_id],
+                    }
+                ]
+            )
+        )["SecurityGroups"][0]["GroupId"]
+        ec2_client.authorize_security_group_ingress(
+            GroupId=default_sg_id,
+            IpPermissions=[
+                {
+                    "IpProtocol": "-1",
+                    "IpRanges": [{"CidrIp": "0.0.0.0/0"}],
+                }
+            ],
+        )
         subnet_id = ec2_client.create_subnet(
             VpcId=vpc_id,
             CidrBlock="10.0.0.0/16",
@@ -333,8 +353,9 @@ class Test_rds_instance_no_public_access:
             Engine="postgres",
             DBName="staging-postgres",
             DBInstanceClass="db.m1.small",
-            PubliclyAccessible=False,
+            PubliclyAccessible=True,
             DBSubnetGroupName="subnet-group",
+            VpcSecurityGroupIds=[default_sg_id],
         )
         from prowler.providers.aws.services.ec2.ec2_service import EC2
         from prowler.providers.aws.services.rds.rds_service import RDS
@@ -364,7 +385,7 @@ class Test_rds_instance_no_public_access:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == f"RDS Instance db-master-1 is in a public subnet {subnet_id}."
+                    == f"RDS Instance db-master-1 is set as publicly accessible and security group default ({default_sg_id}) has postgres port 5432 open to the Internet at endpoint db-master-1.aaaaaaaaaa.us-east-1.rds.amazonaws.com in a public subnet {subnet_id}."
                 )
                 assert result[0].resource_id == "db-master-1"
                 assert result[0].region == AWS_REGION_US_EAST_1
