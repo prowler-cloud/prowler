@@ -23,12 +23,7 @@ from prowler.providers.gcp.exceptions.exceptions import (
     GCPTestConnectionError,
 )
 from prowler.providers.gcp.lib.mutelist.mutelist import GCPMutelist
-from prowler.providers.gcp.models import (
-    GCPIdentityInfo,
-    GCPOrganization,
-    GCPOutputOptions,
-    GCPProject,
-)
+from prowler.providers.gcp.models import GCPIdentityInfo, GCPOrganization, GCPProject
 
 
 class GcpProvider(Provider):
@@ -38,7 +33,6 @@ class GcpProvider(Provider):
     _excluded_project_ids: list
     _identity: GCPIdentityInfo
     _audit_config: dict
-    _output_options: GCPOutputOptions
     _mutelist: GCPMutelist
     # TODO: this is not optional, enforce for all providers
     audit_metadata: Audit_Metadata
@@ -177,17 +171,6 @@ class GcpProvider(Provider):
     @property
     def fixer_config(self):
         return self._fixer_config
-
-    @property
-    def output_options(self):
-        return self._output_options
-
-    @output_options.setter
-    def output_options(self, options: tuple):
-        arguments, bulk_checks_metadata = options
-        self._output_options = GCPOutputOptions(
-            arguments, bulk_checks_metadata, self._identity
-        )
 
     @property
     def mutelist(self) -> GCPMutelist:

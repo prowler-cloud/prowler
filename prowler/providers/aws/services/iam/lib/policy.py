@@ -1,6 +1,7 @@
 from ipaddress import ip_address, ip_network
 
 from prowler.lib.logger import logger
+from prowler.providers.aws.aws_provider import read_aws_regions_file
 
 
 def is_policy_cross_account(policy: dict, audited_account: str) -> bool:
@@ -38,39 +39,6 @@ def is_policy_cross_account(policy: dict, audited_account: str) -> bool:
                         audited_account not in statement["Principal"]["AWS"]
                         or "*" == statement["Principal"]["AWS"]
                     ):
-                        return True
-    return False
-
-
-def is_policy_public(policy: dict) -> bool:
-    """
-    is_policy_public checks if the policy is publicly accessible.
-    If the "Principal" element value is set to { "AWS": "*" } and the policy statement is not using any Condition clauses to filter the access, the selected policy is publicly accessible.
-    Args:
-        policy (dict): The policy to check.
-        Returns:
-        bool: True if the policy is publicly accessible, False otherwise.
-    """
-    if policy and "Statement" in policy:
-        for statement in policy["Statement"]:
-            if (
-                "Principal" in statement
-                and (
-                    "*" == statement["Principal"]
-                    or "arn:aws:iam::*:root" in statement["Principal"]
-                )
-                and "Condition" not in statement
-            ):
-                return True
-            elif "Principal" in statement and "AWS" in statement["Principal"]:
-                if isinstance(statement["Principal"]["AWS"], str):
-                    principals = [statement["Principal"]["AWS"]]
-                else:
-                    principals = statement["Principal"]["AWS"]
-                for principal_arn in principals:
-                    if (
-                        principal_arn == "*" or principal_arn == "arn:aws:iam::*:root"
-                    ) and "Condition" not in statement:
                         return True
     return False
 
@@ -174,3 +142,363 @@ def is_condition_restricting_from_private_ip(condition_statement: dict) -> bool:
         )
 
     return is_from_private_ip
+
+
+# TODO: Add logic for deny statements
+def is_policy_public(
+    policy: dict,
+    source_account: str = "",
+    is_cross_account_allowed=False,
+    not_allowed_actions: list = [],
+) -> bool:
+    """
+    Check if the policy allows public access to the resource.
+    If the policy gives access to an AWS service principal is considered public if the policy is not pair with conditions since it can be invoked by AWS services in other accounts.
+    Args:
+        policy (dict): The AWS policy to check
+        source_account (str): The account to check if the access is restricted to it, default: ""
+        is_cross_account_allowed (bool): If the policy can allow cross-account access, default: False
+        not_allowed_actions (list): List of actions that are not allowed, default: []. If not_allowed_actions is empty, the function will not consider the actions in the policy.
+    Returns:
+        bool: True if the policy allows public access, False otherwise
+    """
+    is_public = False
+    for statement in policy.get("Statement", []):
+        # Only check allow statements
+        if statement["Effect"] == "Allow":
+            principal = statement.get("Principal", "")
+            if (
+                "*" in principal
+                or "arn:aws:iam::*:root" in principal
+                or (
+                    isinstance(principal, dict)
+                    and (
+                        "*" in principal.get("AWS", "")
+                        or "arn:aws:iam::*:root" in principal.get("AWS", "")
+                        or (
+                            isinstance(principal.get("AWS"), list)
+                            and (
+                                "*" in principal["AWS"]
+                                or "arn:aws:iam::*:root" in principal["AWS"]
+                            )
+                        )
+                        or "*" in principal.get("CanonicalUser", "")
+                        or "arn:aws:iam::*:root" in principal.get("CanonicalUser", "")
+                        or (  # Check if function can be invoked by other AWS services
+                            (
+                                ".amazonaws.com" in principal.get("Service", "")
+                                or "*" in principal.get("Service", "")
+                            )
+                        )
+                    )
+                )
+            ) and (
+                not not_allowed_actions  # If not_allowed_actions is empty, the function will not consider the actions in the policy
+                or (
+                    statement.get(
+                        "Action"
+                    )  # If the statement has no action, it is not public
+                    and (
+                        (
+                            (
+                                isinstance(statement.get("Action", ""), list)
+                                and "*" in statement["Action"]
+                            )
+                            or (
+                                isinstance(statement.get("Action", ""), str)
+                                and statement.get("Action", "") == "*"
+                            )
+                        )
+                        or (
+                            isinstance(statement.get("Action", ""), list)
+                            and any(
+                                action in not_allowed_actions
+                                for action in statement["Action"]
+                            )
+                        )
+                        or (statement.get("Action", "") in not_allowed_actions)
+                    )
+                )
+            ):
+                is_public = (
+                    not is_condition_block_restrictive(
+                        statement.get("Condition", {}),
+                        source_account,
+                        is_cross_account_allowed,
+                    )
+                    and not is_condition_block_restrictive_organization(
+                        statement.get("Condition", {})
+                    )
+                    and not is_condition_restricting_from_private_ip(
+                        statement.get("Condition", {})
+                    )
+                )
+                if is_public:
+                    break
+    return is_public
+
+
+def is_condition_block_restrictive(
+    condition_statement: dict,
+    source_account: str = "",
+    is_cross_account_allowed=False,
+):
+    """
+    is_condition_block_restrictive parses the IAM Condition policy block and, by default, returns True if the source_account passed as argument is within, False if not.
+
+    If argument is_cross_account_allowed is True it tests if the Condition block includes any of the operators allowlisted returning True if does, False if not.
+
+    Args:
+        condition_statement: dict with an IAM Condition block, e.g.:
+        {
+            "StringLike": {
+                "AWS:SourceAccount": 111122223333
+            }
+        }
+
+        source_account: str with a 12-digit AWS Account number, e.g.: 111122223333, default: ""
+
+        is_cross_account_allowed: bool to allow cross-account access, e.g.: True, default: False
+
+    """
+    is_condition_valid = False
+
+    # The conditions must be defined in lowercase since the context key names are not case-sensitive.
+    # For example, including the aws:SourceAccount context key is equivalent to testing for AWS:SourceAccount
+    # https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_condition.html
+    valid_condition_options = {
+        "StringEquals": [
+            "aws:sourceaccount",
+            "aws:sourceowner",
+            "s3:resourceaccount",
+            "aws:principalaccount",
+            "aws:resourceaccount",
+            "aws:sourcearn",
+            "aws:sourcevpc",
+            "aws:sourcevpce",
+        ],
+        "StringLike": [
+            "aws:sourceaccount",
+            "aws:sourceowner",
+            "aws:sourcearn",
+            "aws:principalarn",
+            "aws:resourceaccount",
+            "aws:principalaccount",
+            "aws:sourcevpc",
+            "aws:sourcevpce",
+        ],
+        "ArnLike": ["aws:sourcearn", "aws:principalarn"],
+        "ArnEquals": ["aws:sourcearn", "aws:principalarn"],
+    }
+
+    for condition_operator, condition_operator_key in valid_condition_options.items():
+        if condition_operator in condition_statement:
+            for value in condition_operator_key:
+                # We need to transform the condition_statement into lowercase
+                condition_statement[condition_operator] = {
+                    k.lower(): v
+                    for k, v in condition_statement[condition_operator].items()
+                }
+
+                if value in condition_statement[condition_operator]:
+                    # values are a list
+                    if isinstance(
+                        condition_statement[condition_operator][value],
+                        list,
+                    ):
+                        is_condition_key_restrictive = True
+                        # if cross account is not allowed check for each condition block looking for accounts
+                        # different than default
+                        if not is_cross_account_allowed:
+                            # if there is an arn/account without the source account -> we do not consider it safe
+                            # here by default we assume is true and look for false entries
+                            for item in condition_statement[condition_operator][value]:
+                                if source_account not in item:
+                                    is_condition_key_restrictive = False
+                                    break
+
+                        if is_condition_key_restrictive:
+                            is_condition_valid = True
+
+                    # value is a string
+                    elif isinstance(
+                        condition_statement[condition_operator][value],
+                        str,
+                    ):
+                        if is_cross_account_allowed:
+                            is_condition_valid = True
+                        else:
+                            if (
+                                source_account
+                                in condition_statement[condition_operator][value]
+                            ):
+                                is_condition_valid = True
+
+    return is_condition_valid
+
+
+def is_condition_block_restrictive_organization(
+    condition_statement: dict,
+):
+    """
+    is_condition_block_restrictive_organization parses the IAM Condition policy block and returns True if the condition_statement is restrictive for the organization, False if not.
+
+    @param condition_statement: dict with an IAM Condition block, e.g.:
+        {
+            "StringLike": {
+                "AWS:PrincipalOrgID": "o-111122223333"
+            }
+        }
+
+    """
+    is_condition_valid = False
+
+    # The conditions must be defined in lowercase since the context key names are not case-sensitive.
+    # For example, including the aws:PrincipalOrgID context key is equivalent to testing for AWS:PrincipalOrgID
+    # https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_condition.html
+    valid_condition_options = {
+        "StringEquals": [
+            "aws:principalorgid",
+        ],
+        "StringLike": [
+            "aws:principalorgid",
+        ],
+    }
+
+    for condition_operator, condition_operator_key in valid_condition_options.items():
+        if condition_operator in condition_statement:
+            for value in condition_operator_key:
+                # We need to transform the condition_statement into lowercase
+                condition_statement[condition_operator] = {
+                    k.lower(): v
+                    for k, v in condition_statement[condition_operator].items()
+                }
+
+                if value in condition_statement[condition_operator]:
+                    # values are a list
+                    if isinstance(
+                        condition_statement[condition_operator][value],
+                        list,
+                    ):
+                        is_condition_valid = True
+                        for item in condition_statement[condition_operator][value]:
+                            if item == "*":
+                                is_condition_valid = False
+                                break
+
+                    # value is a string
+                    elif isinstance(
+                        condition_statement[condition_operator][value],
+                        str,
+                    ):
+                        if "*" not in condition_statement[condition_operator][value]:
+                            is_condition_valid = True
+
+    return is_condition_valid
+
+
+def process_actions(effect, actions, target_set):
+    """
+    process_actions processes the actions in the policy.
+    Args:
+        effect (str): The effect of the policy.
+        actions (str or list): The actions to process.
+        target_set (set): The set to store the actions.
+    """
+    if effect in ["Allow", "Deny"] and actions:
+        if isinstance(actions, str):
+            target_set.add(actions)
+        elif isinstance(actions, list):
+            target_set.update(actions)
+
+
+def check_admin_access(policy: dict) -> bool:
+    """
+    check_admin_access checks if the policy allows admin access.
+    Args:
+        policy (dict): The policy to check.
+    Returns:
+        bool: True if the policy allows admin access, False otherwise.
+    """
+
+    if policy:
+        allowed_actions = set()
+        allowed_not_actions = set()
+        denied_actions = set()
+        denied_not_actions = set()
+
+        statements = policy.get("Statement", [])
+        if not isinstance(statements, list):
+            statements = [statements]
+
+        for statement in statements:
+            if statement.get("Resource") in [
+                "*",
+                ["*"],
+                ["*/*"],
+                "*/*",
+                ["*:*"],
+                "*:*",
+            ] or (
+                statement.get("NotResource")
+                and statement.get("NotResource") not in ["*", ["*"]]
+            ):
+                effect = statement.get("Effect")
+                actions = statement.get("Action")
+                not_actions = statement.get("NotAction")
+                if effect == "Allow":
+                    process_actions(effect, actions, allowed_actions)
+                    process_actions(effect, not_actions, allowed_not_actions)
+                elif effect == "Deny":
+                    process_actions(effect, actions, denied_actions)
+                    process_actions(effect, not_actions, denied_not_actions)
+
+        # If there is only NotAction, it allows the rest of the actions
+        if not allowed_actions and allowed_not_actions:
+            allowed_actions.add("*")
+        # Check for invalid services in allowed NotAction
+        if allowed_not_actions:
+            invalid_not_actions = check_invalid_not_actions(allowed_not_actions)
+            if invalid_not_actions:
+                # Since it is an invalid NotAction, it allows all AWS actions
+                allowed_actions.add("*")
+
+        if "*" in allowed_actions:
+            return True
+        return False
+
+
+def check_invalid_not_actions(not_actions):
+    """
+    Checks if the actions in NotAction have services that are not part of AWS.
+    Args:
+        not_actions (str or list): The NotAction to check.
+    Returns:
+        dict: A dictionary with invalid services and their actions.
+    """
+    invalid_services = {}
+
+    if isinstance(not_actions, str):
+        not_actions = [not_actions]
+
+    for action in not_actions:
+        service = action.split(":")[0]
+        if not is_valid_aws_service(service):
+            if service not in invalid_services:
+                invalid_services[service] = []
+            invalid_services[service].append(action)
+
+    return invalid_services
+
+
+def is_valid_aws_service(service):
+    """
+    Checks if a service is a valid AWS service using aws_regions_by_service.json.
+    Args:
+        service (str): The service to check.
+    Returns:
+        bool: True if the service is valid, False otherwise.
+    """
+    if service in read_aws_regions_file()["services"]:
+        return True
+    return False

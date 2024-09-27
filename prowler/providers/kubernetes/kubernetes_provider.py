@@ -21,7 +21,6 @@ from prowler.providers.kubernetes.exceptions.exceptions import (
 from prowler.providers.kubernetes.lib.mutelist.mutelist import KubernetesMutelist
 from prowler.providers.kubernetes.models import (
     KubernetesIdentityInfo,
-    KubernetesOutputOptions,
     KubernetesSession,
 )
 
@@ -32,7 +31,6 @@ class KubernetesProvider(Provider):
     _namespaces: list
     _audit_config: dict
     _identity: KubernetesIdentityInfo
-    _output_options: KubernetesOutputOptions
     _mutelist: dict
     # TODO: this is not optional, enforce for all providers
     audit_metadata: Audit_Metadata
@@ -105,17 +103,6 @@ class KubernetesProvider(Provider):
     @property
     def fixer_config(self):
         return self._fixer_config
-
-    @property
-    def output_options(self):
-        return self._output_options
-
-    @output_options.setter
-    def output_options(self, options: tuple):
-        arguments, bulk_checks_metadata = options
-        self._output_options = KubernetesOutputOptions(
-            arguments, bulk_checks_metadata, self._identity
-        )
 
     @property
     def mutelist(self) -> KubernetesMutelist:

@@ -49,7 +49,7 @@ class TestOutputs:
         assert unroll_list(list, ",") == "test, test1, test2"
 
     def test_parse_html_string(self):
-        string = "CISA: your-systems-3, your-data-1, your-data-2 | CIS-1.4: 2.1.1 | CIS-1.5: 2.1.1 | GDPR: article_32 | AWS-Foundational-Security-Best-Practices: s3 | HIPAA: 164_308_a_1_ii_b, 164_308_a_4_ii_a, 164_312_a_2_iv, 164_312_c_1, 164_312_c_2, 164_312_e_2_ii | GxP-21-CFR-Part-11: 11.10-c, 11.30 | GxP-EU-Annex-11: 7.1-data-storage-damage-protection | NIST-800-171-Revision-2: 3_3_8, 3_5_10, 3_13_11, 3_13_16 | NIST-800-53-Revision-4: sc_28 | NIST-800-53-Revision-5: au_9_3, cm_6_a, cm_9_b, cp_9_d, cp_9_8, pm_11_b, sc_8_3, sc_8_4, sc_13_a, sc_16_1, sc_28_1, si_19_4 | ENS-RD2022: mp.si.2.aws.s3.1 | NIST-CSF-1.1: ds_1 | RBI-Cyber-Security-Framework: annex_i_1_3 | FFIEC: d3-pc-am-b-12 | PCI-3.2.1: s3 | FedRamp-Moderate-Revision-4: sc-13, sc-28 | FedRAMP-Low-Revision-4: sc-13"
+        string = "CISA: your-systems-3, your-data-1, your-data-2 | CIS-1.4: 2.1.1 | CIS-1.5: 2.1.1 | GDPR: article_32 | AWS-Foundational-Security-Best-Practices: s3 | HIPAA: 164_308_a_1_ii_b, 164_308_a_4_ii_a, 164_312_a_2_iv, 164_312_c_1, 164_312_c_2, 164_312_e_2_ii | GxP-21-CFR-Part-11: 11.10-c, 11.30 | GxP-EU-Annex-11: 7.1-data-storage-damage-protection | NIST-800-171-Revision-2: 3_3_8, 3_5_10, 3_13_11, 3_13_16 | NIST-800-53-Revision-4: sc_28 | NIST-800-53-Revision-5: au_9_3, cm_6_a, cm_9_b, cp_9_d, cp_9_8, pm_11_b, sc_8_3, sc_8_4, sc_13_a, sc_16_1, sc_28_1, si_19_4 | ENS-RD2022: mp.si.2.aws.s3.1 | NIST-CSF-1.1: ds_1 | RBI-Cyber-Security-Framework: annex_i_1_3 | FFIEC: d3-pc-am-b-12 | PCI-3.2.1: s3 | FedRamp-Moderate-Revision-4: sc-13, sc-28 | FedRAMP-Low-Revision-4: sc-13 | KISA-ISMS-P-2023: 2.6.1 | KISA-ISMS-P-2023-korean: 2.6.1"
         assert (
             parse_html_string(string)
             == """
@@ -88,6 +88,10 @@ class TestOutputs:
 &#x2022;FedRamp-Moderate-Revision-4: sc-13, sc-28
 
 &#x2022;FedRAMP-Low-Revision-4: sc-13
+
+&#x2022;KISA-ISMS-P-2023: 2.6.1
+
+&#x2022;KISA-ISMS-P-2023-korean: 2.6.1
 """
         )
 
@@ -204,10 +208,12 @@ class TestOutputs:
             "PCI-3.2.1": ["s3"],
             "FedRamp-Moderate-Revision-4": ["sc-13", "sc-28"],
             "FedRAMP-Low-Revision-4": ["sc-13"],
+            "KISA-ISMS-P-2023": ["2.6.1"],
+            "KISA-ISMS-P-2023-korean": ["2.6.1"],
         }
         assert (
             unroll_dict(test_compliance_dict, separator=": ")
-            == "CISA: your-systems-3, your-data-1, your-data-2 | CIS-1.4: 2.1.1 | CIS-1.5: 2.1.1 | GDPR: article_32 | AWS-Foundational-Security-Best-Practices: s3 | HIPAA: 164_308_a_1_ii_b, 164_308_a_4_ii_a, 164_312_a_2_iv, 164_312_c_1, 164_312_c_2, 164_312_e_2_ii | GxP-21-CFR-Part-11: 11.10-c, 11.30 | GxP-EU-Annex-11: 7.1-data-storage-damage-protection | NIST-800-171-Revision-2: 3_3_8, 3_5_10, 3_13_11, 3_13_16 | NIST-800-53-Revision-4: sc_28 | NIST-800-53-Revision-5: au_9_3, cm_6_a, cm_9_b, cp_9_d, cp_9_8, pm_11_b, sc_8_3, sc_8_4, sc_13_a, sc_16_1, sc_28_1, si_19_4 | ENS-RD2022: mp.si.2.aws.s3.1 | NIST-CSF-1.1: ds_1 | RBI-Cyber-Security-Framework: annex_i_1_3 | FFIEC: d3-pc-am-b-12 | PCI-3.2.1: s3 | FedRamp-Moderate-Revision-4: sc-13, sc-28 | FedRAMP-Low-Revision-4: sc-13"
+            == "CISA: your-systems-3, your-data-1, your-data-2 | CIS-1.4: 2.1.1 | CIS-1.5: 2.1.1 | GDPR: article_32 | AWS-Foundational-Security-Best-Practices: s3 | HIPAA: 164_308_a_1_ii_b, 164_308_a_4_ii_a, 164_312_a_2_iv, 164_312_c_1, 164_312_c_2, 164_312_e_2_ii | GxP-21-CFR-Part-11: 11.10-c, 11.30 | GxP-EU-Annex-11: 7.1-data-storage-damage-protection | NIST-800-171-Revision-2: 3_3_8, 3_5_10, 3_13_11, 3_13_16 | NIST-800-53-Revision-4: sc_28 | NIST-800-53-Revision-5: au_9_3, cm_6_a, cm_9_b, cp_9_d, cp_9_8, pm_11_b, sc_8_3, sc_8_4, sc_13_a, sc_16_1, sc_28_1, si_19_4 | ENS-RD2022: mp.si.2.aws.s3.1 | NIST-CSF-1.1: ds_1 | RBI-Cyber-Security-Framework: annex_i_1_3 | FFIEC: d3-pc-am-b-12 | PCI-3.2.1: s3 | FedRamp-Moderate-Revision-4: sc-13, sc-28 | FedRAMP-Low-Revision-4: sc-13 | KISA-ISMS-P-2023: 2.6.1 | KISA-ISMS-P-2023-korean: 2.6.1"
         )
 
     def test_unroll_dict_to_list(self):
@@ -460,12 +466,11 @@ class TestOutputs:
 
         provider = MagicMock()
         provider.type = "aws"
-        provider.output_options = output_options
 
         # Assertions
         with mock.patch("builtins.print") as mocked_print:
             # Call the report method
-            report(check_findings, provider)
+            report(check_findings, provider, output_options)
 
             # Assertions
             check_findings_sorted = [finding_1, finding_2]
@@ -503,12 +508,11 @@ class TestOutputs:
 
         provider = MagicMock()
         provider.type = "aws"
-        provider.output_options = output_options
 
         # Assertions
         with mock.patch("builtins.print") as mocked_print:
             # Call the report method
-            report(check_findings, provider)
+            report(check_findings, provider, output_options)
 
             # Assertions
             check_findings_sorted = [finding_1, finding_2]
@@ -546,12 +550,11 @@ class TestOutputs:
 
         provider = MagicMock()
         provider.type = "aws"
-        provider.output_options = output_options
 
         # Assertions
         with mock.patch("builtins.print") as mocked_print:
             # Call the report method
-            report(check_findings, provider)
+            report(check_findings, provider, output_options)
 
             # Assertions
             check_findings_sorted = [finding_1, finding_2]
@@ -589,12 +592,11 @@ class TestOutputs:
 
         provider = MagicMock()
         provider.type = "aws"
-        provider.output_options = output_options
 
         # Assertions
         with mock.patch("builtins.print") as mocked_print:
             # Call the report method
-            report(check_findings, provider)
+            report(check_findings, provider, output_options)
 
             # Assertions
             check_findings_sorted = [finding_1, finding_2]
@@ -634,12 +636,11 @@ class TestOutputs:
 
         provider = MagicMock()
         provider.type = "azure"
-        provider.output_options = output_options
 
         # Assertions
         with mock.patch("builtins.print") as mocked_print:
             # Call the report method
-            report(check_findings, provider)
+            report(check_findings, provider, output_options)
 
             # Assertions
             check_findings_sorted = [finding_2, finding_1]
@@ -679,12 +680,11 @@ class TestOutputs:
 
         provider = MagicMock()
         provider.type = "azure"
-        provider.output_options = output_options
 
         # Assertions
         with mock.patch("builtins.print") as mocked_print:
             # Call the report method
-            report(check_findings, provider)
+            report(check_findings, provider, output_options)
 
             # Assertions
             check_findings_sorted = [finding_2, finding_1]
@@ -724,12 +724,11 @@ class TestOutputs:
 
         provider = MagicMock()
         provider.type = "azure"
-        provider.output_options = output_options
 
         # Assertions
         with mock.patch("builtins.print") as mocked_print:
             # Call the report method
-            report(check_findings, provider)
+            report(check_findings, provider, output_options)
 
             # Assertions
             check_findings_sorted = [finding_2, finding_1]
@@ -769,12 +768,11 @@ class TestOutputs:
 
         provider = MagicMock()
         provider.type = "azure"
-        provider.output_options = output_options
 
         # Assertions
         with mock.patch("builtins.print") as mocked_print:
             # Call the report method
-            report(check_findings, provider)
+            report(check_findings, provider, output_options)
 
             # Assertions
             check_findings_sorted = [finding_2, finding_1]
@@ -812,12 +810,11 @@ class TestOutputs:
 
         provider = MagicMock()
         provider.type = "gcp"
-        provider.output_options = output_options
 
         # Assertions
         with mock.patch("builtins.print") as mocked_print:
             # Call the report method
-            report(check_findings, provider)
+            report(check_findings, provider, output_options)
 
             # Assertions
             check_findings_sorted = [finding_2, finding_1]
@@ -855,12 +852,11 @@ class TestOutputs:
 
         provider = MagicMock()
         provider.type = "gcp"
-        provider.output_options = output_options
 
         # Assertions
         with mock.patch("builtins.print") as mocked_print:
             # Call the report method
-            report(check_findings, provider)
+            report(check_findings, provider, output_options)
 
             # Assertions
             check_findings_sorted = [finding_2, finding_1]
@@ -898,12 +894,11 @@ class TestOutputs:
 
         provider = MagicMock()
         provider.type = "gcp"
-        provider.output_options = output_options
 
         # Assertions
         with mock.patch("builtins.print") as mocked_print:
             # Call the report method
-            report(check_findings, provider)
+            report(check_findings, provider, output_options)
 
             # Assertions
             check_findings_sorted = [finding_2, finding_1]
@@ -941,12 +936,11 @@ class TestOutputs:
 
         provider = MagicMock()
         provider.type = "gcp"
-        provider.output_options = output_options
 
         # Assertions
         with mock.patch("builtins.print") as mocked_print:
             # Call the report method
-            report(check_findings, provider)
+            report(check_findings, provider, output_options)
 
             # Assertions
             check_findings_sorted = [finding_2, finding_1]
@@ -984,12 +978,11 @@ class TestOutputs:
 
         provider = MagicMock()
         provider.type = "kubernetes"
-        provider.output_options = output_options
 
         # Assertions
         with mock.patch("builtins.print") as mocked_print:
             # Call the report method
-            report(check_findings, provider)
+            report(check_findings, provider, output_options)
 
             # Assertions
             check_findings_sorted = [finding_2, finding_1]
@@ -1027,12 +1020,11 @@ class TestOutputs:
 
         provider = MagicMock()
         provider.type = "kubernetes"
-        provider.output_options = output_options
 
         # Assertions
         with mock.patch("builtins.print") as mocked_print:
             # Call the report method
-            report(check_findings, provider)
+            report(check_findings, provider, output_options)
 
             # Assertions
             check_findings_sorted = [finding_2, finding_1]
@@ -1070,12 +1062,11 @@ class TestOutputs:
 
         provider = MagicMock()
         provider.type = "kubernetes"
-        provider.output_options = output_options
 
         # Assertions
         with mock.patch("builtins.print") as mocked_print:
             # Call the report method
-            report(check_findings, provider)
+            report(check_findings, provider, output_options)
 
             # Assertions
             check_findings_sorted = [finding_2, finding_1]
@@ -1113,12 +1104,11 @@ class TestOutputs:
 
         provider = MagicMock()
         provider.type = "kubernetes"
-        provider.output_options = output_options
 
         # Assertions
         with mock.patch("builtins.print") as mocked_print:
             # Call the report method
-            report(check_findings, provider)
+            report(check_findings, provider, output_options)
 
             # Assertions
             check_findings_sorted = [finding_2, finding_1]
@@ -1142,10 +1132,9 @@ class TestOutputs:
 
         provider = MagicMock()
         provider.type = "azure"
-        provider.output_options = output_options
 
         with mock.patch("builtins.print") as mocked_print:
-            report(check_findings, provider)
+            report(check_findings, provider, output_options)
 
             # Assertions
             mocked_print.assert_any_call(

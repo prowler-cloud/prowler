@@ -45,7 +45,6 @@ class Test_dms_instance_no_public_access:
                 result = check.execute()
                 assert len(result) == 0
 
-    @mock_aws
     def test_dms_private(self):
         dms_client = mock.MagicMock
         dms_client.instances = []
@@ -60,6 +59,7 @@ class Test_dms_instance_no_public_access:
                 auto_minor_version_upgrade=False,
                 multi_az=False,
                 region=AWS_REGION_US_EAST_1,
+                tags=[{"Key": "Name", "Value": DMS_INSTANCE_NAME}],
             )
         )
 
@@ -88,8 +88,13 @@ class Test_dms_instance_no_public_access:
                 assert result[0].region == AWS_REGION_US_EAST_1
                 assert result[0].resource_id == DMS_INSTANCE_NAME
                 assert result[0].resource_arn == DMS_INSTANCE_ARN
+                assert result[0].resource_tags == [
+                    {
+                        "Key": "Name",
+                        "Value": DMS_INSTANCE_NAME,
+                    }
+                ]
 
-    @mock_aws
     def test_dms_public(self):
         dms_client = mock.MagicMock
         dms_client.instances = []
@@ -104,6 +109,7 @@ class Test_dms_instance_no_public_access:
                 auto_minor_version_upgrade=False,
                 multi_az=False,
                 region=AWS_REGION_US_EAST_1,
+                tags=[{"Key": "Name", "Value": DMS_INSTANCE_NAME}],
             )
         )
 
@@ -132,6 +138,12 @@ class Test_dms_instance_no_public_access:
                 assert result[0].region == AWS_REGION_US_EAST_1
                 assert result[0].resource_id == DMS_INSTANCE_NAME
                 assert result[0].resource_arn == DMS_INSTANCE_ARN
+                assert result[0].resource_tags == [
+                    {
+                        "Key": "Name",
+                        "Value": DMS_INSTANCE_NAME,
+                    }
+                ]
 
     @mock_aws
     def test_dms_public_with_public_sg(self):
@@ -163,6 +175,7 @@ class Test_dms_instance_no_public_access:
                 auto_minor_version_upgrade=False,
                 multi_az=False,
                 region=AWS_REGION_US_EAST_1,
+                tags=[{"Key": "Name", "Value": DMS_INSTANCE_NAME}],
             )
         )
 
@@ -201,6 +214,12 @@ class Test_dms_instance_no_public_access:
                 assert result[0].region == AWS_REGION_US_EAST_1
                 assert result[0].resource_id == DMS_INSTANCE_NAME
                 assert result[0].resource_arn == DMS_INSTANCE_ARN
+                assert result[0].resource_tags == [
+                    {
+                        "Key": "Name",
+                        "Value": DMS_INSTANCE_NAME,
+                    }
+                ]
 
     @mock_aws
     def test_dms_public_with_filtered_sg(self):
@@ -232,6 +251,7 @@ class Test_dms_instance_no_public_access:
                 auto_minor_version_upgrade=False,
                 multi_az=False,
                 region=AWS_REGION_US_EAST_1,
+                tags=[{"Key": "Name", "Value": DMS_INSTANCE_NAME}],
             )
         )
 
@@ -270,3 +290,9 @@ class Test_dms_instance_no_public_access:
                 assert result[0].region == AWS_REGION_US_EAST_1
                 assert result[0].resource_id == DMS_INSTANCE_NAME
                 assert result[0].resource_arn == DMS_INSTANCE_ARN
+                assert result[0].resource_tags == [
+                    {
+                        "Key": "Name",
+                        "Value": DMS_INSTANCE_NAME,
+                    }
+                ]

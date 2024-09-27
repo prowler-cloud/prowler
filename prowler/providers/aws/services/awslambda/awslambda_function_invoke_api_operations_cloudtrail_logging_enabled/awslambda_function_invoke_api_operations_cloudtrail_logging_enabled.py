@@ -28,7 +28,8 @@ class awslambda_function_invoke_api_operations_cloudtrail_logging_enabled(Check)
                             for resource in data_event.event_selector["DataResources"]:
                                 if resource["Type"] == "AWS::Lambda::Function" and (
                                     function.arn in resource["Values"]
-                                    or "arn:aws:lambda" in resource["Values"]
+                                    or f"arn:{awslambda_client.audited_partition}:lambda"
+                                    in resource["Values"]
                                 ):
                                     lambda_recorded_cloudtrail = True
                                     break

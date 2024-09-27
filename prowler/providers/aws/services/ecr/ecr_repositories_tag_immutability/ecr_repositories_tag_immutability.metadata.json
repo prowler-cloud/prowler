@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "ecr_repositories_tag_immutability",
+  "CheckTitle": "ECR repositories should have tag immutability configured",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "ecr",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:ecr:{region}:{account-id}:repository/{repository-name}",
+  "Severity": "medium",
+  "ResourceType": "AwsEcrRepository",
+  "Description": "This control checks whether a ECR repository has tag immutability enabled. The control fails if a ECR repository has tag immutability disabled and passes if tag immutability is set to IMMUTABLE.",
+  "Risk": "Disabling tag immutability in an ECR repository increases the risk of image tampering by allowing tags to be overridden, which can lead to deploying unintended images and security vulnerabilities.",
+  "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/ecr-private-tag-immutability-enabled.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws ecr put-image-tag-mutability --repository-name <repository-name> --image-tag-mutability IMMUTABLE",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/ecr-controls.html#ecr-2",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable tag immutability on your ECR repositories to prevent image tags from being overwritten.",
+      "Url": "https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-tag-mutability.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
