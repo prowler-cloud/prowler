@@ -118,6 +118,9 @@ class Test_dynamodb_table_autoscaling_enabled:
             MaxCapacity=10,
         )
 
+        from prowler.providers.aws.services.autoscaling.autoscaling_service import (
+            ApplicationAutoScaling,
+        )
         from prowler.providers.aws.services.dynamodb.dynamodb_service import DynamoDB
 
         aws_provider = set_mocked_aws_provider(
@@ -130,6 +133,9 @@ class Test_dynamodb_table_autoscaling_enabled:
         ), mock.patch(
             "prowler.providers.aws.services.dynamodb.dynamodb_table_autoscaling_enabled.dynamodb_table_autoscaling_enabled.dynamodb_client",
             new=DynamoDB(aws_provider),
+        ), mock.patch(
+            "prowler.providers.aws.services.dynamodb.dynamodb_table_autoscaling_enabled.dynamodb_table_autoscaling_enabled.applicationautoscaling_client",
+            new=ApplicationAutoScaling(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.dynamodb.dynamodb_table_autoscaling_enabled.dynamodb_table_autoscaling_enabled import (
@@ -177,6 +183,9 @@ class Test_dynamodb_table_autoscaling_enabled:
             MaxCapacity=10,
         )
 
+        from prowler.providers.aws.services.autoscaling.autoscaling_service import (
+            ApplicationAutoScaling,
+        )
         from prowler.providers.aws.services.dynamodb.dynamodb_service import DynamoDB
 
         aws_provider = set_mocked_aws_provider(
@@ -189,6 +198,9 @@ class Test_dynamodb_table_autoscaling_enabled:
         ), mock.patch(
             "prowler.providers.aws.services.dynamodb.dynamodb_table_autoscaling_enabled.dynamodb_table_autoscaling_enabled.dynamodb_client",
             new=DynamoDB(aws_provider),
+        ), mock.patch(
+            "prowler.providers.aws.services.dynamodb.dynamodb_table_autoscaling_enabled.dynamodb_table_autoscaling_enabled.applicationautoscaling_client",
+            new=ApplicationAutoScaling(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.dynamodb.dynamodb_table_autoscaling_enabled.dynamodb_table_autoscaling_enabled import (
@@ -236,6 +248,9 @@ class Test_dynamodb_table_autoscaling_enabled:
             MaxCapacity=10,
         )
 
+        from prowler.providers.aws.services.autoscaling.autoscaling_service import (
+            ApplicationAutoScaling,
+        )
         from prowler.providers.aws.services.dynamodb.dynamodb_service import DynamoDB
 
         aws_provider = set_mocked_aws_provider(
@@ -248,6 +263,9 @@ class Test_dynamodb_table_autoscaling_enabled:
         ), mock.patch(
             "prowler.providers.aws.services.dynamodb.dynamodb_table_autoscaling_enabled.dynamodb_table_autoscaling_enabled.dynamodb_client",
             new=DynamoDB(aws_provider),
+        ), mock.patch(
+            "prowler.providers.aws.services.dynamodb.dynamodb_table_autoscaling_enabled.dynamodb_table_autoscaling_enabled.applicationautoscaling_client",
+            new=ApplicationAutoScaling(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.dynamodb.dynamodb_table_autoscaling_enabled.dynamodb_table_autoscaling_enabled import (
@@ -284,6 +302,9 @@ class Test_dynamodb_table_autoscaling_enabled:
             ProvisionedThroughput={"ReadCapacityUnits": 5, "WriteCapacityUnits": 5},
         )["TableDescription"]
 
+        from prowler.providers.aws.services.autoscaling.autoscaling_service import (
+            ApplicationAutoScaling,
+        )
         from prowler.providers.aws.services.dynamodb.dynamodb_service import DynamoDB
 
         aws_provider = set_mocked_aws_provider(
@@ -296,6 +317,9 @@ class Test_dynamodb_table_autoscaling_enabled:
         ), mock.patch(
             "prowler.providers.aws.services.dynamodb.dynamodb_table_autoscaling_enabled.dynamodb_table_autoscaling_enabled.dynamodb_client",
             new=DynamoDB(aws_provider),
+        ), mock.patch(
+            "prowler.providers.aws.services.dynamodb.dynamodb_table_autoscaling_enabled.dynamodb_table_autoscaling_enabled.applicationautoscaling_client",
+            new=ApplicationAutoScaling(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.dynamodb.dynamodb_table_autoscaling_enabled.dynamodb_table_autoscaling_enabled import (
