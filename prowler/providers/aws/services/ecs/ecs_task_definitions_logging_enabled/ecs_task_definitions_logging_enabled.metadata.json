@@ -1,12 +1,12 @@
 {
   "Provider": "aws",
-  "CheckID": "ecs_task_definition_containers_log_enabled",
+  "CheckID": "ecs_task_definitions_logging_enabled",
   "CheckTitle": "ECS task definitions containers should have a logging configuration",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices"
   ],
   "ServiceName": "ecs",
-  "SubServiceName": "taskDefinition",
+  "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:ecs:{region}:{account-id}:task-definition/{task-definition-name}",
   "Severity": "high",
   "ResourceType": "AwsEcsTaskDefinition",

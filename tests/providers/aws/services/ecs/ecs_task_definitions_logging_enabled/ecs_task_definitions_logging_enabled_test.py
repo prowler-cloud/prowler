@@ -47,7 +47,7 @@ def mock_make_api_call(self, operation_name, kwarg):
     return make_api_call(self, operation_name, kwarg)
 
 
-class Test_ecs_task_definition_containers_log_enabled:
+class Test_ecs_task_definitions_logging_enabled:
     def test_no_task_definitions(self):
         ecs_client = mock.MagicMock
         ecs_client.task_definitions = {}
@@ -56,11 +56,11 @@ class Test_ecs_task_definition_containers_log_enabled:
             "prowler.providers.aws.services.ecs.ecs_service.ECS",
             ecs_client,
         ):
-            from prowler.providers.aws.services.ecs.ecs_task_definition_containers_log_enabled.ecs_task_definition_containers_log_enabled import (
-                ecs_task_definition_containers_log_enabled,
+            from prowler.providers.aws.services.ecs.ecs_task_definitions_logging_enabled.ecs_task_definitions_logging_enabled import (
+                ecs_task_definitions_logging_enabled,
             )
 
-            check = ecs_task_definition_containers_log_enabled()
+            check = ecs_task_definitions_logging_enabled()
             result = check.execute()
             assert len(result) == 0
 
@@ -75,20 +75,20 @@ class Test_ecs_task_definition_containers_log_enabled:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.ecs.ecs_task_definition_containers_log_enabled.ecs_task_definition_containers_log_enabled.ecs_client",
+            "prowler.providers.aws.services.ecs.ecs_task_definitions_logging_enabled.ecs_task_definitions_logging_enabled.ecs_client",
             new=ECS(aws_provider),
         ):
-            from prowler.providers.aws.services.ecs.ecs_task_definition_containers_log_enabled.ecs_task_definition_containers_log_enabled import (
-                ecs_task_definition_containers_log_enabled,
+            from prowler.providers.aws.services.ecs.ecs_task_definitions_logging_enabled.ecs_task_definitions_logging_enabled import (
+                ecs_task_definitions_logging_enabled,
             )
 
-            check = ecs_task_definition_containers_log_enabled()
+            check = ecs_task_definitions_logging_enabled()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"ECS task definition {TASK_NAME} has containers running with no logging configuration: {CONTAINER_NAME}"
+                == f"ECS task definition {TASK_NAME} with revision {TASK_REVISION} has containers running with no logging configuration: {CONTAINER_NAME}"
             )
 
     def test_task_definition_no_logdriver(self):
@@ -115,17 +115,17 @@ class Test_ecs_task_definition_containers_log_enabled:
             "prowler.providers.aws.services.ecs.ecs_service.ECS",
             ecs_client,
         ):
-            from prowler.providers.aws.services.ecs.ecs_task_definition_containers_log_enabled.ecs_task_definition_containers_log_enabled import (
-                ecs_task_definition_containers_log_enabled,
+            from prowler.providers.aws.services.ecs.ecs_task_definitions_logging_enabled.ecs_task_definitions_logging_enabled import (
+                ecs_task_definitions_logging_enabled,
             )
 
-            check = ecs_task_definition_containers_log_enabled()
+            check = ecs_task_definitions_logging_enabled()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"ECS task definition {TASK_NAME} has containers running with no logging configuration: {CONTAINER_NAME}"
+                == f"ECS task definition {TASK_NAME} with revision {TASK_REVISION} has containers running with no logging configuration: {CONTAINER_NAME}"
             )
 
     def test_task_definition_privileged_container(self):
@@ -152,15 +152,15 @@ class Test_ecs_task_definition_containers_log_enabled:
             "prowler.providers.aws.services.ecs.ecs_service.ECS",
             ecs_client,
         ):
-            from prowler.providers.aws.services.ecs.ecs_task_definition_containers_log_enabled.ecs_task_definition_containers_log_enabled import (
-                ecs_task_definition_containers_log_enabled,
+            from prowler.providers.aws.services.ecs.ecs_task_definitions_logging_enabled.ecs_task_definitions_logging_enabled import (
+                ecs_task_definitions_logging_enabled,
             )
 
-            check = ecs_task_definition_containers_log_enabled()
+            check = ecs_task_definitions_logging_enabled()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"ECS task definition {TASK_NAME} containers have logging configured."
+                == f"ECS task definition {TASK_NAME} with revision {TASK_REVISION} containers have logging configured."
             )
