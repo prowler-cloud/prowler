@@ -28,9 +28,9 @@ export const CustomDatePicker = () => {
     (date: any) => {
       const params = new URLSearchParams(searchParams.toString());
       if (date) {
-        params.set("filter[updated_at__lte]", date.toString());
+        params.set("filter[updated_at]", date.toString());
       } else {
-        params.delete("filter[updated_at__lte]");
+        params.delete("filter[updated_at]");
       }
       router.push(`?${params.toString()}`, { scroll: false });
     },
