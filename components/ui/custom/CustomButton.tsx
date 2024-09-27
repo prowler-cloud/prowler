@@ -2,7 +2,7 @@ import { Button, CircularProgress } from "@nextui-org/react";
 import clsx from "clsx";
 
 export const buttonClasses = {
-  base: "px-4 inline-flex items-center justify-center relative z-0 text-center whitespace-nowrap",
+  base: "px-2 inline-flex items-center justify-center relative z-0 text-center whitespace-nowrap",
   primary: "bg-default-100 hover:bg-default-200 text-default-800",
   secondary: "bg-prowler-grey-light dark:bg-prowler-grey-medium text-white",
   action: "text-white bg-prowler-blue-smoky dark:bg-prowler-grey-medium",
@@ -14,7 +14,7 @@ export const buttonClasses = {
 };
 
 interface ButtonProps {
-  type: "button" | "submit" | "reset";
+  type?: "button" | "submit" | "reset";
   className?: string;
   variant?:
     | "solid"

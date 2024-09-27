@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 
 import { deleteProvider } from "@/actions";
+import { DeleteIcon } from "@/components/icons";
 import { useToast } from "@/components/ui";
 import { CustomButton } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
@@ -73,6 +74,7 @@ export const DeleteForm = ({
             color="danger"
             size="lg"
             isLoading={isLoading}
+            startContent={!isLoading && <DeleteIcon size={24} />}
           >
             {isLoading ? <>Loading</> : <span>Delete</span>}
           </CustomButton>

@@ -1,11 +1,12 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import React, { Dispatch, SetStateAction } from "react";
+import { Dispatch, SetStateAction } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
 import { updateProvider } from "@/actions";
+import { SaveIcon } from "@/components/icons";
 import { useToast } from "@/components/ui";
 import { CustomButton, CustomInput } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
@@ -105,6 +106,7 @@ export const EditForm = ({
             color="action"
             size="lg"
             isLoading={isLoading}
+            startContent={!isLoading && <SaveIcon size={24} />}
           >
             {isLoading ? <>Loading</> : <span>Save</span>}
           </CustomButton>
