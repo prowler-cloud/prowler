@@ -14,6 +14,7 @@ class codebuild_project_source_repo_url_no_sensitive_credentials(Check):
             report.region = project.region
             report.resource_id = project.name
             report.resource_arn = project.arn
+            report.resource_tags = project.tags
             report.status = "PASS"
             report.status_extended = f"CodeBuild project {project.name} does not contain sensitive credentials in any source repository URLs."
             secrets_found = []

@@ -29,11 +29,7 @@ from prowler.providers.azure.exceptions.exceptions import (
 from prowler.providers.azure.lib.arguments.arguments import validate_azure_region
 from prowler.providers.azure.lib.mutelist.mutelist import AzureMutelist
 from prowler.providers.azure.lib.regions.regions import get_regions_config
-from prowler.providers.azure.models import (
-    AzureIdentityInfo,
-    AzureOutputOptions,
-    AzureRegionConfig,
-)
+from prowler.providers.azure.models import AzureIdentityInfo, AzureRegionConfig
 from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
 
@@ -53,7 +49,6 @@ class AzureProvider(Provider):
         _audit_config (dict): The audit configuration for the Azure provider.
         _region_config (AzureRegionConfig): The region configuration for the Azure provider.
         _locations (dict): A dictionary containing the available locations for the Azure provider.
-        _output_options (AzureOutputOptions): The output options for the Azure provider.
         _mutelist (AzureMutelist): The mutelist object associated with the Azure provider.
         audit_metadata (Audit_Metadata): The audit metadata for the Azure provider.
 
@@ -81,7 +76,6 @@ class AzureProvider(Provider):
     _audit_config: dict
     _region_config: AzureRegionConfig
     _locations: dict
-    _output_options: AzureOutputOptions
     _mutelist: AzureMutelist
     # TODO: this is not optional, enforce for all providers
     audit_metadata: Audit_Metadata
@@ -196,28 +190,6 @@ class AzureProvider(Provider):
     def fixer_config(self):
         """Returns the fixer configuration."""
         return self._fixer_config
-
-    @property
-    def output_options(self):
-        """Returns the output options for the Azure provider."""
-        return self._output_options
-
-    @output_options.setter
-    def output_options(self, options: tuple):
-        """Set output options for the Azure provider.
-
-        Sets the output options for the Azure provider using the provided arguments and bulk checks metadata.
-
-        Args:
-            options (tuple): A tuple containing the arguments and bulk checks metadata.
-
-        Returns:
-            None
-        """
-        arguments, bulk_checks_metadata = options
-        self._output_options = AzureOutputOptions(
-            arguments, bulk_checks_metadata, self._identity
-        )
 
     @property
     def mutelist(self) -> AzureMutelist:
