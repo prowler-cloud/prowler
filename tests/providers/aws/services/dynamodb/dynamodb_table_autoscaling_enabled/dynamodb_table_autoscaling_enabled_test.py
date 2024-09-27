@@ -308,7 +308,7 @@ class Test_dynamodb_table_autoscaling_enabled:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].status_extended == (
-                "DynamoDB table test1 is in PROVISIONED mode without auto scaling enabled for read and write."
+                "DynamoDB table test1 is in PROVISIONED mode without auto scaling enabled for read, write."
             )
             assert result[0].resource_id == table["TableName"]
             assert result[0].resource_arn == table["TableArn"]
