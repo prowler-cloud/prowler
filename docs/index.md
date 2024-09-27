@@ -38,6 +38,12 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), 
     prowler -v
     ```
 
+    To upgrade Prowler to the latest version, run:
+
+    ``` bash
+    pipx upgrade prowler
+    ```
+
 === "pip"
 
     ???+ warning
