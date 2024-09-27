@@ -21,24 +21,6 @@ It contains hundreds of controls covering CIS, NIST 800, NIST CSF, CISA, RBI, Fe
 
 Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), thus can be installed as Python package with `Python >= 3.9`:
 
-=== "pip"
-
-    ???+ warning
-        This method is not recommended because it will modify the environment which you choose to install. Consider using `pipx` for a global installation.
-
-    _Requirements_:
-
-    * `Python >= 3.9`
-    * `Python pip >= 21.0.0`
-    * AWS, GCP, Azure and/or Kubernetes credentials
-
-    _Commands_:
-
-    ``` bash
-    pip install prowler
-    prowler -v
-    ```
-
 === "pipx"
 
     [pipx](https://pipx.pypa.io/stable/) is a tool to install Python applications in isolated environments. It is recommended to use `pipx` for a global installation.
@@ -53,6 +35,24 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), 
 
     ``` bash
     pipx install prowler
+    prowler -v
+    ```
+
+=== "pip"
+
+    ???+ warning
+        This method is not recommended because it will modify the environment which you choose to install. Consider using [pipx](https://docs.prowler.com/projects/prowler-open-source/en/latest/#__tabbed_1_1) for a global installation.
+
+    _Requirements_:
+
+    * `Python >= 3.9`
+    * `Python pip >= 21.0.0`
+    * AWS, GCP, Azure and/or Kubernetes credentials
+
+    _Commands_:
+
+    ``` bash
+    pip install prowler
     prowler -v
     ```
 
@@ -105,6 +105,24 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), 
     ```
     python3 -m pip install --user pipx
     python3 -m pipx ensurepath
+    pipx install prowler
+    prowler -v
+    ```
+
+=== "Ubuntu"
+
+    _Requirements_:
+
+    * `Ubuntu 23.04` or above, if you are using an older version of Ubuntu check [pipx installation](https://docs.prowler.com/projects/prowler-open-source/en/latest/#__tabbed_1_1) and ensure you have `Python >= 3.9`.
+    * `Python >= 3.9`
+    * AWS, GCP, Azure and/or Kubernetes credentials
+
+    _Commands_:
+
+    ``` bash
+    sudo apt update
+    sudo apt install pipx
+    pipx ensurepath
     pipx install prowler
     prowler -v
     ```
