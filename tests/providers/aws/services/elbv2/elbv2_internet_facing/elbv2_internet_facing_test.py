@@ -142,9 +142,9 @@ class Test_elbv2_internet_facing:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].status == "FAIL"
+            assert result[0].status == "PASS"
             assert result[0].status_extended == (
-                f"ELBv2 ALB my-lb is internet facing in {lb['DNSName']}."
+                f"ELBv2 ALB my-lb has an internet facing scheme in {lb['DNSName']} but is not public."
             )
             assert result[0].resource_id == "my-lb"
             assert result[0].resource_arn == lb["LoadBalancerArn"]
@@ -186,7 +186,7 @@ class Test_elbv2_internet_facing:
             Name="my-lb",
             Subnets=[subnet1.id, subnet2.id],
             SecurityGroups=[default_sg_id],
-            Scheme="internal",
+            Scheme="internet-facing",
         )["LoadBalancers"][0]
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
@@ -217,7 +217,7 @@ class Test_elbv2_internet_facing:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].status_extended == (
-                f"ELBv2 ALB my-lb is internet facing due to public security group {default_sg_id}."
+                f"ELBv2 ALB my-lb is internet facing in {lb['DNSName']} due to a public security group {default_sg_id}."
             )
             assert result[0].resource_id == "my-lb"
             assert result[0].resource_arn == lb["LoadBalancerArn"]
