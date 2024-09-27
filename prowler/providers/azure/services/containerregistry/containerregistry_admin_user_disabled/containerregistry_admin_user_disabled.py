@@ -5,7 +5,7 @@ from prowler.providers.azure.services.containerregistry.containerregistry_client
 
 
 class containerregistry_admin_user_disabled(Check):
-    def execute(self) -> Check_Report_Azure:
+    def execute(self) -> list[Check_Report_Azure]:
         findings = []
 
         for subscription, registries in containerregistry_client.registries.items():
