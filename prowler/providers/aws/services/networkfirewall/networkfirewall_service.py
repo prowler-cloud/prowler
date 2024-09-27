@@ -73,28 +73,25 @@ class NetworkFirewall(AWSService):
     def _describe_firewall_policy(self):
         logger.info("Network Firewall - Describe Network Firewall Policies...")
         try:
-            for arn, network_firewall in self.network_firewalls.items():
+            for network_firewall in self.network_firewalls.values():
                 regional_client = self.regional_clients[network_firewall.region]
                 try:
                     describe_firewall_policy = regional_client.describe_firewall_policy(
                         FirewallPolicyArn=network_firewall.policy_arn,
                     )
-                    stateless_rule_groups = []
-                    for stateless_rule_group in describe_firewall_policy.get(
-                        "StatelessRuleGroupReferences", []
-                    ):
-                        stateless_rule_groups.append(
-                            stateless_rule_group["ResourceArn"]
+                    firewall_policy = describe_firewall_policy.get("FirewallPolicy", {})
+                    network_firewall.stateless_rule_groups = [
+                        group.get("ResourceArn", "")
+                        for group in firewall_policy.get(
+                            "StatelessRuleGroupReferences", []
                         )
-                    network_firewall.stateful_rule_groups = stateless_rule_groups
-
-                    stateful_rule_groups = []
-                    for stateful_rule_group in describe_firewall_policy.get(
-                        "StatefulRuleGroupReferences", []
-                    ):
-                        stateful_rule_groups.append(stateful_rule_group["ResourceArn"])
-                    network_firewall.stateless_rule_groups = stateless_rule_groups
-
+                    ]
+                    network_firewall.stateful_rule_groups = [
+                        group.get("ResourceArn", "")
+                        for group in firewall_policy.get(
+                            "StatefulRuleGroupReferences", []
+                        )
+                    ]
                 except Exception as error:
                     logger.error(
                         f"Error describing firewall policy {network_firewall.policy_arn} in region {network_firewall.region}: "
