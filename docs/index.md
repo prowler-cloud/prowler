@@ -62,6 +62,12 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), 
     prowler -v
     ```
 
+    To upgrade Prowler to the latest version, run:
+
+    ``` bash
+    pip install --upgrade prowler
+    ```
+
 === "Docker"
 
     _Requirements_:
