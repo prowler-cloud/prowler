@@ -1,9 +1,10 @@
 "use client";
 
-import { Button } from "@nextui-org/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useCallback, useEffect, useState } from "react";
 
+import { CrossIcon } from "../icons";
+import { CustomButton } from "../ui/custom";
 import { CustomAccountSelection } from "./CustomAccountSelection";
 import { CustomCheckboxMutedFindings } from "./CustomCheckboxMutedFindings";
 import { CustomDatePicker } from "./CustomDatePicker";
@@ -59,15 +60,16 @@ export const FilterControls: React.FC<FilterControlsProps> = ({
       {mutedFindings && <CustomCheckboxMutedFindings />}
 
       {showClearButton && (
-        <Button
-          className="w-full md:w-fit transition-all duration-300 ease-in-out"
-          onClick={clearAllFilters}
-          variant="flat"
-          color="default"
+        <CustomButton
+          className="w-fit"
+          onPress={clearAllFilters}
+          variant="dashed"
           size="sm"
+          endContent={<CrossIcon size={24} />}
+          radius="sm"
         >
-          Clear all
-        </Button>
+          Reset
+        </CustomButton>
       )}
     </div>
   );
