@@ -14,6 +14,7 @@ class shield_advanced_protection_in_global_accelerators(Check):
                 report.region = shield_client.region
                 report.resource_id = accelerator.name
                 report.resource_arn = accelerator.arn
+                report.resource_tags = accelerator.tags
                 report.status = "FAIL"
                 report.status_extended = f"Global Accelerator {accelerator.name} is not protected by AWS Shield Advanced."
 
