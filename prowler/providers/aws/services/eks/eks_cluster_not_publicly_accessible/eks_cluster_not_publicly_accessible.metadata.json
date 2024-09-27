@@ -1,14 +1,13 @@
 {
   "Provider": "aws",
   "CheckID": "eks_cluster_not_publicly_accessible",
-  "CheckTitle": "Ensure EKS Clusters not publicly accessible",
+  "CheckTitle": "Ensure EKS Clusters are not publicly accessible",
   "CheckAliases": [
-    "eks_endpoints_not_publicly_accessible"
+    "eks_endpoints_not_publicly_accessible",
+    "eks_control_plane_endpoint_access_restricted"
   ],
   "CheckType": [
-    "Protect",
-    "Secure network configuration",
-    "Resources not publicly accessible"
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability"
   ],
   "ServiceName": "eks",
   "SubServiceName": "",
@@ -17,7 +16,7 @@
   "ResourceType": "AwsEksCluster",
   "Description": "Ensure that your Amazon EKS cluster's Kubernetes API server endpoint is not publicly accessible from the Internet in order to avoid exposing private data and minimizing security risks.",
   "Risk": "By default, this API server endpoint is publicly accessible, meaning any machine on the internet can potentially connect to your EKS cluster using its public endpoint. This exposes your cluster to a higher risk of malicious activities and attacks.",
-  "RelatedUrl": "https://docs.aws.amazon.com/eks/latest/userguide/cluster-endpoint.html",
+  "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/eks-controls.html#eks-1",
   "Remediation": {
     "Code": {
       "CLI": "aws eks update-cluster-config --region <region_name> --name <cluster_name> --resources-vpc-config endpointPublicAccess=false,endpointPrivateAccess=true,publicAccessCidrs=[\"123.123.123.123/32\"]",
@@ -27,7 +26,7 @@
     },
     "Recommendation": {
       "Text": "Restricting public access to the Kubernetes API endpoint managed by the EKS cluster is a security best practice that helps protect your cluster from unauthorized access and potential security threats. By not allowing public access to the cluster's Kubernetes API endpoint, you ensure that only authorized entities can interact with your Amazon EKS cluster.",
-      "Url": "https://docs.aws.amazon.com/eks/latest/userguide/network-reqs.html"
+      "Url": "https://docs.aws.amazon.com/eks/latest/userguide/cluster-endpoint.html"
     }
   },
   "Categories": [
