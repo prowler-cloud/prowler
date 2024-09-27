@@ -1,8 +1,8 @@
-import { Button } from "@nextui-org/react";
+import { Button, CircularProgress } from "@nextui-org/react";
 import clsx from "clsx";
 
 export const buttonClasses = {
-  base: "w-full md:w-fit px-4 inline-flex items-center justify-center relative z-0 text-center whitespace-nowrap",
+  base: "px-4 inline-flex items-center justify-center relative z-0 text-center whitespace-nowrap",
   primary: "bg-default-100 hover:bg-default-200 text-default-800",
   secondary: "bg-prowler-grey-light dark:bg-prowler-grey-medium text-white",
   action: "text-white bg-prowler-blue-smoky dark:bg-prowler-grey-medium",
@@ -14,6 +14,8 @@ export const buttonClasses = {
 };
 
 interface ButtonProps {
+  type: "button" | "submit" | "reset";
+  className?: string;
   variant?:
     | "solid"
     | "faded"
@@ -31,7 +33,7 @@ interface ButtonProps {
     | "warning"
     | "danger"
     | "transparent";
-  onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
+  onPress?: (event: React.MouseEvent<HTMLButtonElement>) => void;
   children: React.ReactNode;
   startContent?: React.ReactNode;
   endContent?: React.ReactNode;
@@ -44,9 +46,11 @@ interface ButtonProps {
 }
 
 export const CustomButton = ({
+  type = "button",
+  className,
   variant = "solid",
   color = "primary",
-  onClick,
+  onPress,
   children,
   startContent,
   endContent,
@@ -58,23 +62,28 @@ export const CustomButton = ({
   ...props
 }: ButtonProps) => (
   <Button
-    type="button"
-    onClick={onClick}
+    type={type}
+    onPress={onPress}
     variant={variant}
     color={color}
-    className={clsx(buttonClasses.base, {
-      [buttonClasses.primary]: color === "primary",
-      [buttonClasses.secondary]: color === "secondary",
-      [buttonClasses.action]: color === "action",
-      [buttonClasses.dashed]: variant === "dashed",
-      [buttonClasses.transparent]: color === "transparent",
-      [buttonClasses.disabled]: disabled,
-      [buttonClasses.hover]: color !== "transparent" && !disabled,
-    })}
+    className={clsx(
+      buttonClasses.base,
+      {
+        [buttonClasses.primary]: color === "primary",
+        [buttonClasses.secondary]: color === "secondary",
+        [buttonClasses.action]: color === "action",
+        [buttonClasses.dashed]: variant === "dashed",
+        [buttonClasses.transparent]: color === "transparent",
+        [buttonClasses.disabled]: disabled,
+        [buttonClasses.hover]: color !== "transparent" && !disabled,
+      },
+      className,
+    )}
     startContent={startContent}
     endContent={endContent}
     size={size}
     radius={radius}
+    spinner={<CircularProgress aria-label="Loading..." size="sm" />}
     isLoading={isLoading}
     isIconOnly={isIconOnly}
     {...props}

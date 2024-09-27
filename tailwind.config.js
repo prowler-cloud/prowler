@@ -81,6 +81,7 @@ module.exports = {
             low: "#fcd34d",
           },
         },
+        danger: "#E11D48",
       },
       fontFamily: {
         sans: ["var(--font-sans)"],

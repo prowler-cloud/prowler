@@ -1,14 +1,13 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Button, CircularProgress } from "@nextui-org/react";
 import React, { Dispatch, SetStateAction } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
 import { updateProvider } from "@/actions";
 import { useToast } from "@/components/ui";
-import { CustomInput } from "@/components/ui/custom";
+import { CustomButton, CustomInput } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
 import { editProviderFormSchema } from "@/types";
 
@@ -32,6 +31,7 @@ export const EditForm = ({
   });
 
   const { toast } = useToast();
+
   const isLoading = form.formState.isSubmitting;
 
   const onSubmitClient = async (values: z.infer<typeof formSchema>) => {
@@ -86,29 +86,28 @@ export const EditForm = ({
         <input type="hidden" name="providerId" value={providerId} />
 
         <div className="w-full flex justify-center sm:space-x-6">
-          <Button
-            size="lg"
-            variant="bordered"
-            disabled={isLoading}
-            className="w-full hidden sm:block"
+          <CustomButton
             type="button"
-            onPress={() => setIsOpen(false)}
-          >
-            Cancel
-          </Button>
-
-          <Button
+            className="w-full bg-transparent"
+            variant="faded"
             size="lg"
-            type="submit"
+            radius="lg"
+            onPress={() => setIsOpen(false)}
             disabled={isLoading}
-            className="w-full"
           >
-            {isLoading ? (
-              <CircularProgress aria-label="Loading..." size="md" />
-            ) : (
-              <span>Save</span>
-            )}
-          </Button>
+            <span>Cancel</span>
+          </CustomButton>
+
+          <CustomButton
+            type="submit"
+            className="w-full"
+            variant="solid"
+            color="action"
+            size="lg"
+            isLoading={isLoading}
+          >
+            {isLoading ? <>Loading</> : <span>Save</span>}
+          </CustomButton>
         </div>
       </form>
     </Form>

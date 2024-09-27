@@ -1,13 +1,13 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Button, CircularProgress } from "@nextui-org/react";
 import React, { Dispatch, SetStateAction } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
 import { deleteProvider } from "@/actions";
 import { useToast } from "@/components/ui";
+import { CustomButton } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
 
 const formSchema = z.object({
@@ -46,6 +46,7 @@ export const DeleteForm = ({
         description: "The provider was removed successfully.",
       });
     }
+    setIsOpen(false); // Close the modal on success
   }
 
   return (
@@ -53,31 +54,28 @@ export const DeleteForm = ({
       <form action={onSubmitClient}>
         <input type="hidden" name="id" value={providerId} />
         <div className="w-full flex justify-center sm:space-x-6">
-          <Button
-            size="lg"
-            variant="bordered"
-            disabled={isLoading}
-            className="w-full hidden sm:block"
+          <CustomButton
             type="button"
-            onPress={() => setIsOpen(false)}
-          >
-            Cancel
-          </Button>
-          <Button
+            className="w-full bg-transparent"
+            variant="faded"
             size="lg"
-            type="submit"
+            radius="lg"
+            onPress={() => setIsOpen(false)}
             disabled={isLoading}
-            className="w-full bg-system-error hover:bg-system-error/90 text-white"
           >
-            {isLoading ? (
-              <>
-                <CircularProgress aria-label="Loading..." size="sm" />
-                Deleting
-              </>
-            ) : (
-              <span>Delete</span>
-            )}
-          </Button>
+            <span>Cancel</span>
+          </CustomButton>
+
+          <CustomButton
+            type="submit"
+            className="w-full"
+            variant="solid"
+            color="danger"
+            size="lg"
+            isLoading={isLoading}
+          >
+            {isLoading ? <>Loading</> : <span>Delete</span>}
+          </CustomButton>
         </div>
       </form>
     </Form>
