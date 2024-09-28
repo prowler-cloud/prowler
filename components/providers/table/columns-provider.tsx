@@ -3,7 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { add } from "date-fns";
 
-import { StatusBadge } from "@/components/ui";
+import { StatusBadge } from "@/components/ui/table";
 import { ProviderProps } from "@/types";
 
 import { DateWithTime } from "../DateWithTime";

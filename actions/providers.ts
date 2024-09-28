@@ -22,7 +22,7 @@ export const getProviders = async ({
   if (isNaN(Number(page)) || page < 1) redirect("/providers");
 
   const keyServer = process.env.API_BASE_URL;
-  const url = new URL(`${keyServer}/providers`);
+  const url = new URL(`${keyServer}/providers?sort=-inserted_at`);
 
   if (page) url.searchParams.append("page[number]", page.toString());
   if (query) url.searchParams.append("filter[search]", query);

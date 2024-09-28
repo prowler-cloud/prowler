@@ -8,7 +8,4 @@ export * from "./header/Header";
 export * from "./label/Label";
 export * from "./select/Select";
 export * from "./sidebar";
-export * from "./table/SeverityBadge";
-export * from "./table/StatusBadge";
-export * from "./table/Table";
 export * from "./toast";

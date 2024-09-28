@@ -20,7 +20,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui";
+} from "@/components/ui/table";
 import { MetaDataProps } from "@/types";
 
 import { DataTableFilterCustom } from "./data-table-filter-custom";
