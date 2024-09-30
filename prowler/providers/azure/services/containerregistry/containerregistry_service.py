@@ -37,7 +37,7 @@ class ContainerRegistry(AzureService):
                                     registry, "public_network_access", ""
                                 ),
                                 admin_user_enabled=getattr(
-                                    registry, "admin_user_enabled", ""
+                                    registry, "admin_user_enabled", False
                                 ),
                                 monitor_diagnostic_settings=self._get_registry_monitor_settings(
                                     registry.name, resource_group, subscription

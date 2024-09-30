@@ -1,14 +1,14 @@
 {
   "Provider": "azure",
   "CheckID": "containerregistry_admin_user_disabled",
-  "CheckTitle": "Admin User is disabled for Azure Container Registry",
+  "CheckTitle": "Ensure admin user is disabled for Azure Container Registry",
   "CheckType": [],
   "ServiceName": "containerregistry",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "ContainerRegistry",
-  "Description": "Enabling the admin user for Azure Container Registry (ACR) can pose security risks as it grants unrestricted access to the registry. It is recommended to disable the admin user and utilize Role-Based Access Control (RBAC) instead.",
+  "Description": "Ensure that the admin user is disabled and Role-Based Access Control (RBAC) is used instead since it could grant unrestricted access to the registry",
   "Risk": "If the admin user is enabled, it may lead to unauthorized access to the container registry and its resources, which could compromise the confidentiality, integrity, and availability of the images stored within.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/azure/container-registry/container-registry-authentication?tabs=azure-cli#admin-account",
   "Remediation": {
