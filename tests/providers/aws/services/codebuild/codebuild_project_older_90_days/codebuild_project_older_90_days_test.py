@@ -20,6 +20,7 @@ class Test_codebuild_project_older_90_days:
                 region="eu-west-1",
                 last_invoked_time=datetime.now(timezone.utc) - timedelta(days=100),
                 buildspec=None,
+                tags=[],
             )
         }
 
@@ -55,6 +56,7 @@ class Test_codebuild_project_older_90_days:
                 region="eu-west-1",
                 last_invoked_time=None,
                 buildspec=None,
+                tags=[],
             )
         }
 
@@ -88,6 +90,7 @@ class Test_codebuild_project_older_90_days:
                 region="eu-west-1",
                 last_invoked_time=datetime.now(timezone.utc) - timedelta(days=10),
                 buildspec=None,
+                tags=[],
             )
         }
 

@@ -169,6 +169,19 @@ class Mitre_Requirement(BaseModel):
     Checks: list[str]
 
 
+# KISA-ISMS-P Requirement Attribute
+class KISA_ISMSP_Requirement_Attribute(BaseModel):
+    """KISA ISMS-P Requirement Attribute"""
+
+    Domain: str
+    Subdomain: str
+    Section: str
+    AuditChecklist: Optional[list[str]]
+    RelatedRegulations: Optional[list[str]]
+    AuditEvidence: Optional[list[str]]
+    NonComplianceCases: Optional[list[str]]
+
+
 # Base Compliance Model
 # TODO: move this to compliance folder
 class Compliance_Requirement(BaseModel):
@@ -183,6 +196,7 @@ class Compliance_Requirement(BaseModel):
             ENS_Requirement_Attribute,
             ISO27001_2013_Requirement_Attribute,
             AWS_Well_Architected_Requirement_Attribute,
+            KISA_ISMSP_Requirement_Attribute,
             # Generic_Compliance_Requirement_Attribute must be the last one since it is the fallback for generic compliance framework
             Generic_Compliance_Requirement_Attribute,
         ]

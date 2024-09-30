@@ -220,6 +220,7 @@ class Test_ECR_Service:
         ecr_client.create_repository(
             repositoryName=repo_name,
             imageScanningConfiguration={"scanOnPush": True},
+            imageTagMutability="IMMUTABLE",
         )
         aws_provider = set_mocked_aws_provider()
         ecr = ECR(aws_provider)
@@ -248,6 +249,7 @@ class Test_ECR_Service:
         ecr_client.create_repository(
             repositoryName=repo_name,
             imageScanningConfiguration={"scanOnPush": True},
+            imageTagMutability="IMMUTABLE",
         )
         aws_provider = set_mocked_aws_provider()
         ecr = ECR(aws_provider)
@@ -257,6 +259,7 @@ class Test_ECR_Service:
         assert ecr.registries[AWS_REGION_EU_WEST_1].repositories[0].arn == repo_arn
         assert ecr.registries[AWS_REGION_EU_WEST_1].repositories[0].scan_on_push
         assert ecr.registries[AWS_REGION_EU_WEST_1].repositories[0].lifecycle_policy
+        assert ecr.registries[AWS_REGION_EU_WEST_1].repositories[0].immutability
 
     # Test get image details
     @mock_aws

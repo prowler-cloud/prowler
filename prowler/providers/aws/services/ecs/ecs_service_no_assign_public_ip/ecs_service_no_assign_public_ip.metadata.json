@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "ecs_service_no_assign_public_ip",
+  "CheckTitle": "ECS services should not assign public IPs automatically",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "ecs",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:ecs:{region}:{account-id}:service/{service-name}",
+  "Severity": "high",
+  "ResourceType": "AwsEcsService",
+  "Description": "This control checks whether Amazon ECS services are configured to automatically assign public IP addresses. The control fails if AssignPublicIP is ENABLED and passes if it is DISABLED.",
+  "Risk": "Having public IP addresses assigned to ECS services automatically can expose services to the internet, increasing the risk of unauthorized access, data breaches, and cyberattacks.",
+  "RelatedUrl": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/Welcome.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws ecs update-service --cluster <cluster-name> --service <service-name> --network-configuration 'awsvpcConfiguration={assignPublicIp=DISABLED}'",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/ecs-controls.html#ecs-2",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Disable automatic public IP address assignment for your ECS services to ensure they are not publicly accessible.",
+      "Url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/security.html"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
