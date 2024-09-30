@@ -1,7 +1,7 @@
 {
   "Provider": "azure",
   "CheckID": "containerregistry_admin_user_disabled",
-  "CheckTitle": "Disable Admin User for Azure Container Registry",
+  "CheckTitle": "Admin User is disabled for Azure Container Registry",
   "CheckType": [],
   "ServiceName": "containerregistry",
   "SubServiceName": "",
