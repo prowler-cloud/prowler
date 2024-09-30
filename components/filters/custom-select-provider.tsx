@@ -2,7 +2,7 @@
 
 import { Select, SelectItem } from "@nextui-org/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useMemo } from "react";
 
 import {
   CustomProviderInputAWS,
@@ -34,10 +34,9 @@ const dataInputsProvider = [
   },
 ];
 
-export const CustomSelectProvider = () => {
+export const CustomSelectProvider: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [selectedProvider, setSelectedProvider] = useState("");
 
   const applyProviderFilter = useCallback(
     (value: string) => {
@@ -52,34 +51,34 @@ export const CustomSelectProvider = () => {
     [router, searchParams],
   );
 
-  useEffect(() => {
-    const providerFromUrl = searchParams.get("filter[provider__in]") || "";
-    setSelectedProvider(providerFromUrl);
-  }, [searchParams]);
+  const currentProvider = searchParams.get("filter[provider__in]") || "";
+
+  const selectedKeys = useMemo(() => {
+    return dataInputsProvider.some(
+      (provider) => provider.key === currentProvider,
+    )
+      ? [currentProvider]
+      : [];
+  }, [currentProvider]);
 
   return (
     <Select
       items={dataInputsProvider}
-      // selectionMode="multiple"
-      // label="Select a Provider"
       aria-label="Select a Provider"
       placeholder="Select a provider"
       labelPlacement="outside"
       size="sm"
       onChange={(e) => {
         const value = e.target.value;
-        setSelectedProvider(value);
         applyProviderFilter(value);
       }}
-      selectedKeys={selectedProvider ? [selectedProvider] : []}
+      selectedKeys={selectedKeys}
       renderValue={(items) => {
-        return items.map((item) => {
-          return (
-            <div key={item.key} className="flex items-center gap-2">
-              {item.data?.value}
-            </div>
-          );
-        });
+        return items.map((item) => (
+          <div key={item.key} className="flex items-center gap-2">
+            {item.data?.value}
+          </div>
+        ));
       }}
     >
       {(item) => (
