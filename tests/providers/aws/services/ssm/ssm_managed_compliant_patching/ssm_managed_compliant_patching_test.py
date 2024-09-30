@@ -4,7 +4,11 @@ from prowler.providers.aws.services.ssm.ssm_service import (
     ComplianceResource,
     ResourceStatus,
 )
-from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, AWS_REGION_US_EAST_1
+from tests.providers.aws.utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_US_EAST_1,
+    set_mocked_aws_provider,
+)
 
 
 class Test_ssm_managed_compliant_patching:
@@ -37,10 +41,26 @@ class Test_ssm_managed_compliant_patching:
                 status=ResourceStatus.COMPLIANT,
             )
         }
+        ec2_client = mock.MagicMock
+        ec2_client.instances = [
+            mock.MagicMock(
+                id=instance_id,
+                tags=[
+                    {"Key": "Name", "Value": "test_instance"},
+                    {"Key": "Environment", "Value": "development"},
+                ],
+            )
+        ]
 
         with mock.patch(
             "prowler.providers.aws.services.ssm.ssm_service.SSM",
             new=ssm_client,
+        ), mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
+        ), mock.patch(
+            "prowler.providers.aws.services.ssm.ssm_managed_compliant_patching.ssm_managed_compliant_patching.ec2_client",
+            new=ec2_client,
         ):
             # Test Check
             from prowler.providers.aws.services.ssm.ssm_managed_compliant_patching.ssm_managed_compliant_patching import (
@@ -62,6 +82,10 @@ class Test_ssm_managed_compliant_patching:
                 result[0].status_extended
                 == f"EC2 managed instance {instance_id} is compliant."
             )
+            assert result[0].resource_tags == [
+                {"Key": "Name", "Value": "test_instance"},
+                {"Key": "Environment", "Value": "development"},
+            ]
 
     def test_compliance_resources_non_compliant(self):
         ssm_client = mock.MagicMock
@@ -75,10 +99,26 @@ class Test_ssm_managed_compliant_patching:
                 status=ResourceStatus.NON_COMPLIANT,
             )
         }
+        ec2_client = mock.MagicMock
+        ec2_client.instances = [
+            mock.MagicMock(
+                id=instance_id,
+                tags=[
+                    {"Key": "Name", "Value": "test_instance"},
+                    {"Key": "Environment", "Value": "development"},
+                ],
+            )
+        ]
 
         with mock.patch(
             "prowler.providers.aws.services.ssm.ssm_service.SSM",
             new=ssm_client,
+        ), mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
+        ), mock.patch(
+            "prowler.providers.aws.services.ssm.ssm_managed_compliant_patching.ssm_managed_compliant_patching.ec2_client",
+            new=ec2_client,
         ):
             # Test Check
             from prowler.providers.aws.services.ssm.ssm_managed_compliant_patching.ssm_managed_compliant_patching import (
@@ -100,3 +140,7 @@ class Test_ssm_managed_compliant_patching:
                 result[0].status_extended
                 == f"EC2 managed instance {instance_id} is non-compliant."
             )
+            assert result[0].resource_tags == [
+                {"Key": "Name", "Value": "test_instance"},
+                {"Key": "Environment", "Value": "development"},
+            ]

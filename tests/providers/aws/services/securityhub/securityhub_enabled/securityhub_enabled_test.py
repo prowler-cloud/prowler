@@ -18,6 +18,7 @@ class Test_securityhub_enabled:
                 standards="",
                 integrations="",
                 region=AWS_REGION_EU_WEST_1,
+                tags=[{"test_key": "test_value"}],
             )
         ]
         with mock.patch(
@@ -37,6 +38,7 @@ class Test_securityhub_enabled:
             assert result[0].resource_id == "Security Hub"
             assert result[0].resource_arn == AWS_ACCOUNT_ARN
             assert result[0].region == AWS_REGION_EU_WEST_1
+            assert result[0].resource_tags == [{"test_key": "test_value"}]
 
     def test_securityhub_hub_active_with_standards(self):
         securityhub_client = mock.MagicMock
@@ -47,7 +49,8 @@ class Test_securityhub_enabled:
                 status="ACTIVE",
                 standards="cis-aws-foundations-benchmark/v/1.2.0",
                 integrations="",
-                region="eu-west-1",
+                region=AWS_REGION_EU_WEST_1,
+                tags=[{"test_key": "test_value"}],
             )
         ]
         with mock.patch(
@@ -73,6 +76,7 @@ class Test_securityhub_enabled:
                 == "arn:aws:securityhub:us-east-1:0123456789012:hub/default"
             )
             assert result[0].region == AWS_REGION_EU_WEST_1
+            assert result[0].resource_tags == [{"test_key": "test_value"}]
 
     def test_securityhub_hub_active_with_integrations(self):
         securityhub_client = mock.MagicMock
@@ -83,7 +87,8 @@ class Test_securityhub_enabled:
                 status="ACTIVE",
                 standards="",
                 integrations="prowler",
-                region="eu-west-1",
+                region=AWS_REGION_EU_WEST_1,
+                tags=[{"test_key": "test_value"}],
             )
         ]
         with mock.patch(
@@ -109,6 +114,7 @@ class Test_securityhub_enabled:
                 == "arn:aws:securityhub:us-east-1:0123456789012:hub/default"
             )
             assert result[0].region == AWS_REGION_EU_WEST_1
+            assert result[0].resource_tags == [{"test_key": "test_value"}]
 
     def test_securityhub_hub_active_without_integrations_or_standards(self):
         securityhub_client = mock.MagicMock
@@ -120,7 +126,8 @@ class Test_securityhub_enabled:
                 status="ACTIVE",
                 standards="",
                 integrations="",
-                region="eu-west-1",
+                region=AWS_REGION_EU_WEST_1,
+                tags=[{"test_key": "test_value"}],
             )
         ]
         with mock.patch(
@@ -146,6 +153,7 @@ class Test_securityhub_enabled:
                 == "arn:aws:securityhub:us-east-1:0123456789012:hub/default"
             )
             assert result[0].region == AWS_REGION_EU_WEST_1
+            assert result[0].resource_tags == [{"test_key": "test_value"}]
 
     def test_securityhub_hub_active_without_integrations_or_standards_muted(self):
         securityhub_client = mock.MagicMock
@@ -159,6 +167,7 @@ class Test_securityhub_enabled:
                 standards="",
                 integrations="",
                 region="eu-south-2",
+                tags=[],
             )
         ]
         with mock.patch(
@@ -185,3 +194,4 @@ class Test_securityhub_enabled:
                 == "arn:aws:securityhub:us-east-1:0123456789012:hub/default"
             )
             assert result[0].region == "eu-south-2"
+            assert result[0].resource_tags == []
