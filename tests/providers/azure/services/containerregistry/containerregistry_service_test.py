@@ -1,4 +1,5 @@
 from unittest.mock import MagicMock, patch
+from uuid import uuid4
 
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
@@ -15,22 +16,25 @@ class TestContainerRegistryService:
             "prowler.providers.azure.services.monitor.monitor_service.Monitor",
             new=MagicMock(),
         ):
-            pass
+            from prowler.providers.azure.services.containerregistry.containerregistry_service import (
+                ContainerRegistryInfo,
+            )
 
             # Initialize ContainerRegistry with the mocked provider
             containerregistry_service = MagicMock()
+            registry_id = str(uuid4())
             containerregistry_service.registries = {
                 AZURE_SUBSCRIPTION_ID: {
-                    "6e999c5a-a74a-4337-bb99-7f59741f4414": {
-                        "id": "mock_registry_id",
-                        "name": "mock_registry",
-                        "location": "westeurope",
-                        "resource_group": "mock_resource_group",
-                        "sku": "Basic",
-                        "login_server": "mock_login_server.azurecr.io",
-                        "public_network_access": "Enabled",
-                        "admin_user_enabled": True,
-                        "monitor_diagnostic_settings": [
+                    registry_id: ContainerRegistryInfo(
+                        id=registry_id,
+                        name="mock_registry",
+                        location="westeurope",
+                        resource_group="mock_resource_group",
+                        sku="Basic",
+                        login_server="mock_login_server.azurecr.io",
+                        public_network_access="Enabled",
+                        admin_user_enabled=True,
+                        monitor_diagnostic_settings=[
                             {
                                 "id": "id1/id1",
                                 "logs": [
@@ -48,7 +52,7 @@ class TestContainerRegistryService:
                                 "name": "mock_diagnostic_setting",
                             }
                         ],
-                    }
+                    )
                 }
             }
 
@@ -56,22 +60,22 @@ class TestContainerRegistryService:
             assert len(containerregistry_service.registries[AZURE_SUBSCRIPTION_ID]) == 1
 
             registry_info = containerregistry_service.registries[AZURE_SUBSCRIPTION_ID][
-                "6e999c5a-a74a-4337-bb99-7f59741f4414"
+                registry_id
             ]
 
-            assert registry_info["id"] == "mock_registry_id"
-            assert registry_info["name"] == "mock_registry"
-            assert registry_info["location"] == "westeurope"
-            assert registry_info["resource_group"] == "mock_resource_group"
-            assert registry_info["sku"] == "Basic"
-            assert registry_info["login_server"] == "mock_login_server.azurecr.io"
-            assert registry_info["public_network_access"] == "Enabled"
-            assert registry_info["admin_user_enabled"] is True
-            assert isinstance(registry_info["monitor_diagnostic_settings"], list)
+            assert registry_info.id == registry_id
+            assert registry_info.name == "mock_registry"
+            assert registry_info.location == "westeurope"
+            assert registry_info.resource_group == "mock_resource_group"
+            assert registry_info.sku == "Basic"
+            assert registry_info.login_server == "mock_login_server.azurecr.io"
+            assert registry_info.public_network_access == "Enabled"
+            assert registry_info.admin_user_enabled is True
+            assert isinstance(registry_info.monitor_diagnostic_settings, list)
 
             # Check the properties of monitor diagnostic settings
-            monitor_setting = registry_info["monitor_diagnostic_settings"][0]
-            assert monitor_setting["id"] == "id1/id1"
+            monitor_setting = registry_info.monitor_diagnostic_settings[0]
+            assert monitor_setting["id"] == "id1/id1"  # Use dictionary access here
             assert monitor_setting["storage_account_name"] == "mock_storage_account"
             assert monitor_setting["storage_account_id"] == "mock_storage_account_id"
             assert monitor_setting["name"] == "mock_diagnostic_setting"
