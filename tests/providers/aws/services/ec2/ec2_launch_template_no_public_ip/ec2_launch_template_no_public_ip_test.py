@@ -10,6 +10,7 @@ from moto import mock_aws
 
 from prowler.config.config import encoding_format_utf_8
 from prowler.providers.aws.services.ec2.ec2_service import (
+    Attachment,
     LaunchTemplate,
     LaunchTemplateVersion,
     NetworkInterface,
@@ -190,7 +191,7 @@ class Test_ec2_launch_template_no_public_ip:
         network_interface = NetworkInterface(
             id="eni-1234567890",
             association={},
-            attachment={},
+            attachment=Attachment(),
             private_ip="",
             public_ip_addresses=[IPv4Address("192.175.48.10")],
             type="interface",
@@ -287,7 +288,7 @@ class Test_ec2_launch_template_no_public_ip:
         network_interface = NetworkInterface(
             id="eni-1234567890",
             association={},
-            attachment={},
+            attachment=Attachment(),
             private_ip="",
             public_ip_addresses=[IPv6Address("::1234:5678")],
             type="interface",
