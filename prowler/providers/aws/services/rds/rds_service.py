@@ -474,9 +474,18 @@ class RDS(AWSService):
 
     def _list_tags(self, resource: any):
         try:
-            resource.tags = self.regional_clients[
-                resource.region
-            ].list_tags_for_resource(ResourceName=resource.arn)["TagList"]
+            if (
+                hasattr(resource, "tags")
+                and hasattr(resource, "region")
+                and hasattr(resource, "arn")
+            ):
+                resource.tags = self.regional_clients[
+                    resource.region
+                ].list_tags_for_resource(ResourceName=resource.arn)["TagList"]
+            else:
+                logger.warning(
+                    f"{resource.region} -- {resource.__class__.__name__} is not a valid resource to list tags."
+                )
 
         except Exception as error:
             logger.error(
