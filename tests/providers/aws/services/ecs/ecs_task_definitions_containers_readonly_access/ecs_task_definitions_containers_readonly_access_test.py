@@ -63,7 +63,7 @@ class Test_ecs_task_definitions_containers_readonly_access:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"ECS task definition {TASK_NAME} does not have containers with write access to the root filesystems."
+                == f"ECS task definition {TASK_NAME} with revision {TASK_REVISION} does not have containers with write access to the root filesystems."
             )
 
     def test_task_definition_some_containers_not_readonly(self):
@@ -100,7 +100,7 @@ class Test_ecs_task_definitions_containers_readonly_access:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"ECS task definition {TASK_NAME} has containers with write access to the root filesystem: {CONTAINER_NAME}"
+                == f"ECS task definition {TASK_NAME} with revision {TASK_REVISION} has containers with write access to the root filesystem: {CONTAINER_NAME}"
             )
 
     def test_task_definition_mixed_containers(self):
@@ -145,5 +145,5 @@ class Test_ecs_task_definitions_containers_readonly_access:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"ECS task definition {TASK_NAME} has containers with write access to the root filesystem: {CONTAINER_NAME}"
+                == f"ECS task definition {TASK_NAME} with revision {TASK_REVISION} has containers with write access to the root filesystem: {CONTAINER_NAME}"
             )
