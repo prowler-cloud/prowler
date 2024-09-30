@@ -62,6 +62,7 @@ export const CustomSelectProvider = () => {
       items={dataInputsProvider}
       // selectionMode="multiple"
       // label="Select a Provider"
+      aria-label="Select a Provider"
       placeholder="Select a provider"
       labelPlacement="outside"
       size="sm"
