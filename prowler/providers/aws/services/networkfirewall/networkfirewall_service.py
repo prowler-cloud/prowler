@@ -16,6 +16,10 @@ class NetworkFirewall(AWSService):
         self.__threading_call__(
             self._describe_firewall, self.network_firewalls.values()
         )
+        self.__threading_call__(
+            self._describe_firewall_policy, self.network_firewalls.values()
+        )
+
 
     def _list_firewalls(self, regional_client):
         logger.info("Network Firewall - Listing Network Firewalls...")
@@ -33,7 +37,8 @@ class NetworkFirewall(AWSService):
                         self.network_firewalls[
                             network_firewall.get("FirewallArn", "")
                         ] = Firewall(
-                            arn=network_firewall.get("FirewallArn", ""),
+                            arn=network_firewall.get("FirewallArn"),
+                            region=regional_client.region,
                             name=network_firewall.get("FirewallName"),
                             region=regional_client.region,
                         )
@@ -71,6 +76,27 @@ class NetworkFirewall(AWSService):
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 
+    def _describe_firewall_policy(self, network_firewall):
+        logger.info("Network Firewall - Describe Network Firewall Policies...")
+        try:
+            regional_client = self.regional_clients[network_firewall.region]
+            describe_firewall_policy = regional_client.describe_firewall_policy(
+                FirewallPolicyArn=network_firewall.policy_arn,
+            )
+            firewall_policy = describe_firewall_policy.get("FirewallPolicy", {})
+            network_firewall.stateless_rule_groups = [
+                group.get("ResourceArn", "")
+                for group in firewall_policy.get("StatelessRuleGroupReferences", [])
+            ]
+            network_firewall.stateful_rule_groups = [
+                group.get("ResourceArn", "")
+                for group in firewall_policy.get("StatefulRuleGroupReferences", [])
+            ]
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
+            )
+
 
 class IPAddressType(Enum):
     """Enum for IP Address Type"""
@@ -97,3 +123,5 @@ class Firewall(BaseModel):
     encryption_type: str = None
     deletion_protection: bool = False
     subnet_mappings: list[Subnet] = []
+    stateless_rule_groups: list[str] = []
+    stateful_rule_groups: list[str] = []

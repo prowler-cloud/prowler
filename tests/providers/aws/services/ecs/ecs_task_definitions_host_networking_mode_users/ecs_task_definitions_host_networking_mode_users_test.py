@@ -68,7 +68,7 @@ class Test_ecs_task_definitions_host_networking_mode_users:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"ECS task definition {TASK_NAME} does not have host network mode."
+                == f"ECS task definition {TASK_NAME} with revision {TASK_REVISION} does not have host network mode."
             )
 
     def test_task_definition_host_mode_container_root_non_privileged(self):
@@ -104,7 +104,7 @@ class Test_ecs_task_definitions_host_networking_mode_users:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"ECS task definition {TASK_NAME} has containers with host network mode and non-privileged containers running as root or with no user specified: {CONTAINER_NAME}"
+                == f"ECS task definition {TASK_NAME} with revision {TASK_REVISION} has containers with host network mode and non-privileged containers running as root or with no user specified: {CONTAINER_NAME}"
             )
 
     def test_task_definition_host_mode_container_privileged(self):
@@ -140,7 +140,7 @@ class Test_ecs_task_definitions_host_networking_mode_users:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"ECS task definition {TASK_NAME} has host network mode but no containers running as root or with no user specified."
+                == f"ECS task definition {TASK_NAME} with revision {TASK_REVISION} has host network mode but no containers running as root or with no user specified."
             )
 
     def test_task_definition_host_mode_container_not_root(self):
@@ -176,5 +176,5 @@ class Test_ecs_task_definitions_host_networking_mode_users:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"ECS task definition {TASK_NAME} has host network mode but no containers running as root or with no user specified."
+                == f"ECS task definition {TASK_NAME} with revision {TASK_REVISION} has host network mode but no containers running as root or with no user specified."
             )
