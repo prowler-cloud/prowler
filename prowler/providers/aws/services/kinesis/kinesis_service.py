@@ -22,13 +22,13 @@ class Kinesis(AWSService):
             for page in list_streams_paginator.paginate():
                 for stream in page["StreamSummaries"]:
                     if not self.audit_resources or (
-                        is_resource_filtered(stream, self.audit_resources)
+                        is_resource_filtered(stream["StreamARN"], self.audit_resources)
                     ):
                         self.streams[stream["StreamARN"]] = Stream(
                             arn=stream["StreamARN"],
                             name=stream["StreamName"],
                             region=regional_client.region,
-                            status=StreamStatus(stream.get("StreamStatus", "DELETING")),
+                            status=StreamStatus(stream.get("StreamStatus", "ACTIVE")),
                         )
         except Exception as error:
             logger.error(
@@ -44,7 +44,6 @@ class Kinesis(AWSService):
                     describe_stream = regional_client.describe_stream(
                         StreamName=stream_name
                     )["StreamDescription"]
-                    stream.status = describe_stream.get("StreamStatus")
                     stream.tags = describe_stream.get("Tags", [])
                 except Exception as error:
                     logger.error(
