@@ -89,11 +89,15 @@ class SecurityHub(AWSService):
 
     def _list_tags(self, resource: any):
         try:
-            resource.tags = [
-                self.regional_clients[resource.region].list_tags_for_resource(
-                    ResourceArn=resource.arn
-                )["Tags"]
-            ]
+            if (
+                isinstance(resource, SecurityHubHub)
+                and not resource.status == "NOT_AVAILABLE"
+            ):
+                resource.tags = [
+                    self.regional_clients[resource.region].list_tags_for_resource(
+                        ResourceArn=resource.arn
+                    )["Tags"]
+                ]
         except Exception as error:
             logger.error(
                 f"{resource.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
