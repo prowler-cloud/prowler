@@ -10,6 +10,7 @@ class wafv2_webacl_logging_enabled(Check):
             report.region = web_acl.region
             report.resource_id = web_acl.id
             report.resource_arn = web_acl.arn
+            report.resource_tags = web_acl.tags
 
             if web_acl.logging_enabled:
                 report.status = "PASS"
