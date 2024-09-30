@@ -2,7 +2,7 @@ export * from "./action-card/ActionCard";
 export * from "./alert/Alert";
 export * from "./alert-dialog/AlertDialog";
 export * from "./chart/Chart";
-export * from "./dialog/dialogg";
+export * from "./dialog/dialog";
 export * from "./dropdown/Dropdown";
 export * from "./header/Header";
 export * from "./label/Label";
