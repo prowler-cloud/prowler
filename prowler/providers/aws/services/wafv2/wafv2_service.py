@@ -1,3 +1,5 @@
+from typing import Optional
+
 from botocore.exceptions import ClientError
 from pydantic import BaseModel
 
@@ -6,7 +8,6 @@ from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################### WAFv2
 class WAFv2(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
@@ -15,6 +16,7 @@ class WAFv2(AWSService):
         self.__threading_call__(self._list_web_acls)
         self.__threading_call__(self._list_resources_for_web_acl)
         self.__threading_call__(self._get_logging_configuration)
+        self.__threading_call__(self._list_tags, self.web_acls)
 
     def _list_web_acls(self, regional_client):
         logger.info("WAFv2 - Listing Regional Web ACLs...")
@@ -84,6 +86,20 @@ class WAFv2(AWSService):
                         f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
 
+    def _list_tags(self, resource: any):
+        logger.info("WAFv2 - Listing tags...")
+        try:
+            resource.tags = (
+                self.regional_clients[resource.region]
+                .list_tags_for_resource(ResourceARN=resource.arn)
+                .get("TagInfoForResource", {})
+                .get("TagList", [])
+            )
+        except Exception as error:
+            logger.error(
+                f"{resource.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class WebAclv2(BaseModel):
     arn: str
@@ -93,3 +109,4 @@ class WebAclv2(BaseModel):
     user_pools: list[str]
     region: str
     logging_enabled: bool = False
+    tags: Optional[list]

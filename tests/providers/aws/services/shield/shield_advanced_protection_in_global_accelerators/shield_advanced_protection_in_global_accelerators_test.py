@@ -43,6 +43,7 @@ class Test_shield_advanced_protection_in_global_accelerators:
                 name=accelerator_name,
                 region=AWS_REGION_EU_WEST_1,
                 enabled=True,
+                tags=[{"Key": "Name", "Value": "TestAccelerator"}],
             )
         }
 
@@ -85,6 +86,9 @@ class Test_shield_advanced_protection_in_global_accelerators:
                 result[0].status_extended
                 == f"Global Accelerator {accelerator_id} is protected by AWS Shield Advanced."
             )
+            assert result[0].resource_tags == [
+                {"Key": "Name", "Value": "TestAccelerator"}
+            ]
 
     def test_shield_enabled_globalaccelerator_not_protected(self):
         # GlobalAccelerator Client
@@ -98,6 +102,7 @@ class Test_shield_advanced_protection_in_global_accelerators:
                 name=accelerator_name,
                 region=AWS_REGION_EU_WEST_1,
                 enabled=True,
+                tags=[{"Key": "Name", "Value": "TestAccelerator"}],
             )
         }
 
@@ -131,6 +136,9 @@ class Test_shield_advanced_protection_in_global_accelerators:
                 result[0].status_extended
                 == f"Global Accelerator {accelerator_id} is not protected by AWS Shield Advanced."
             )
+            assert result[0].resource_tags == [
+                {"Key": "Name", "Value": "TestAccelerator"}
+            ]
 
     def test_shield_disabled_globalaccelerator_not_protected(self):
         # GlobalAccelerator Client
