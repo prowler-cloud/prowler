@@ -33,10 +33,6 @@ class NetworkFirewall(AWSService):
                     ):
                         arn = network_firewall.get("FirewallArn", "")
                         self.network_firewalls[arn] = Firewall(
-                            arn=arn,
-                        self.network_firewalls[
-                            network_firewall.get("FirewallArn", "")
-                        ] = Firewall(
                             arn=network_firewall.get("FirewallArn"),
                             region=regional_client.region,
                             name=network_firewall.get("FirewallName"),
@@ -82,29 +78,6 @@ class NetworkFirewall(AWSService):
                 group.get("ResourceArn", "")
                 for group in firewall_policy.get("StatefulRuleGroupReferences", [])
             ]
-        except Exception as error:
-            logger.error(
-                f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
-            )
-
-    def _describe_firewall_policy(self):
-        logger.info("Network Firewall - Describe Network Firewall Policies...")
-        try:
-            for network_firewall in self.network_firewalls.values():
-                regional_client = self.regional_clients[network_firewall.region]
-                try:
-                    describe_firewall_policy = regional_client.describe_firewall_policy(
-                        FirewallPolicyArn=network_firewall.policy_arn,
-                    )
-                    firewall_policy = describe_firewall_policy.get("FirewallPolicy", {})
-                    network_firewall.default_stateless_frag_actions = (
-                        firewall_policy.get("StatelessFragmentDefaultActions", [])
-                    )
-                except Exception as error:
-                    logger.error(
-                        f"Error describing firewall policy {network_firewall.policy_arn} in region {network_firewall.region}: "
-                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                    )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
