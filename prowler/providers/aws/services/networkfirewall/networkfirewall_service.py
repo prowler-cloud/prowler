@@ -1,3 +1,5 @@
+from enum import Enum
+
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
@@ -29,10 +31,10 @@ class NetworkFirewall(AWSService):
                         self.network_firewalls[
                             network_firewall.get("FirewallArn", "")
                         ] = Firewall(
-                            region=regional_client.region,
+                            arn=network_firewall.get("FirewallArn", ""),
                             name=network_firewall.get("FirewallName"),
+                            region=regional_client.region,
                         )
-
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -79,12 +81,23 @@ class NetworkFirewall(AWSService):
             )
 
 
+class IPAddressType(Enum):
+    """Enum for IP Address Type"""
+
+    IPV4 = "IPV4"
+    IPV6 = "IPV6"
+    DUALSTACK = "DUALSTACK"
+
+
 class Subnet(BaseModel):
+    """Subnet model for SubnetMappings"""
+
     subnet_id: str
-    ip_addr_type: str
+    ip_addr_type: IPAddressType
 
 
 class Firewall(BaseModel):
+    arn: str
     name: str
     region: str
     policy_arn: str = None
