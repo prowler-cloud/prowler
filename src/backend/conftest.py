@@ -1,9 +1,9 @@
-import base64
 import logging
 
 import pytest
 from django.conf import settings
 from django.db import connections as django_connections, connection as django_connection
+from django.urls import reverse
 from django_celery_results.models import TaskResult
 from prowler.lib.outputs.finding import Severity, Status
 from rest_framework import status
@@ -23,13 +23,12 @@ from api.models import (
     Membership,
 )
 from api.rls import Tenant
+from api.v1.serializers import TokenSerializer
 
 API_JSON_CONTENT_TYPE = "application/vnd.api+json"
 NO_TENANT_HTTP_STATUS = status.HTTP_401_UNAUTHORIZED
-TEST_USER = "testing_user"
+TEST_USER = "dev@prowler.com"
 TEST_PASSWORD = "testing_psswd"
-TEST_CREDENTIALS = f"{TEST_USER}:{TEST_PASSWORD}"
-TEST_BASE64_CREDENTIALS = base64.b64encode(TEST_CREDENTIALS.encode()).decode()
 
 
 @pytest.fixture(scope="module")
@@ -72,24 +71,33 @@ def create_test_user(django_db_setup, django_db_blocker):
     with django_db_blocker.unblock():
         user = User.objects.create_user(
             name="testing",
-            username=TEST_USER,
+            email=TEST_USER,
             password=TEST_PASSWORD,
-            email="testing@gmail.com",
         )
     return user
 
 
 @pytest.fixture
-def authenticated_client(create_test_user, client):
+def authenticated_client(create_test_user, tenants_fixture, client):
     client.user = create_test_user
-    client.defaults["HTTP_AUTHORIZATION"] = f"Basic {TEST_BASE64_CREDENTIALS}"
+    serializer = TokenSerializer(
+        data={"type": "Token", "email": TEST_USER, "password": TEST_PASSWORD}
+    )
+    serializer.is_valid()
+    access_token = serializer.validated_data["access"]
+    client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {access_token}"
     return client
 
 
 @pytest.fixture
-def authenticated_api_client(create_test_user):
+def authenticated_api_client(create_test_user, tenants_fixture):
     client = APIClient()
-    client.defaults["HTTP_AUTHORIZATION"] = f"Basic {TEST_BASE64_CREDENTIALS}"
+    serializer = TokenSerializer(
+        data={"type": "Token", "email": TEST_USER, "password": TEST_PASSWORD}
+    )
+    serializer.is_valid()
+    access_token = serializer.validated_data["access"]
+    client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {access_token}"
     return client
 
 
@@ -331,6 +339,29 @@ def findings_fixture(scans_fixture, resources_fixture):
     return finding1, finding2
 
 
-@pytest.fixture
-def tenant_header(tenants_fixture):
-    return {"X-Tenant-ID": str(tenants_fixture[0].id)}
+def get_api_tokens(
+    api_client, user_email: str, user_password: str, tenant_id: str = None
+) -> tuple[str, str]:
+    json_body = {
+        "data": {
+            "type": "Token",
+            "attributes": {
+                "email": user_email,
+                "password": user_password,
+            },
+        }
+    }
+    if tenant_id is not None:
+        json_body["data"]["attributes"]["tenant_id"] = tenant_id
+    response = api_client.post(
+        reverse("token-obtain"),
+        data=json_body,
+        format="vnd.api+json",
+    )
+    return response.json()["data"]["attributes"]["access"], response.json()["data"][
+        "attributes"
+    ]["refresh"]
+
+
+def get_authorization_header(access_token: str) -> dict:
+    return {"Authorization": f"Bearer {access_token}"}

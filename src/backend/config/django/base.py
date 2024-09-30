@@ -27,6 +27,7 @@ INSTALLED_APPS = [
     "django_guid",
     "rest_framework_json_api",
     "django_celery_results",
+    "rest_framework_simplejwt.token_blacklist",
 ]
 
 MIDDLEWARE = [
@@ -64,6 +65,9 @@ TEMPLATES = [
 
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular_jsonapi.schemas.openapi.JsonApiAutoSchema",
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ),
     "PAGE_SIZE": 10,
     "EXCEPTION_HANDLER": "api.exceptions.custom_exception_handler",
     "DEFAULT_PAGINATION_CLASS": "drf_spectacular_jsonapi.schemas.pagination.JsonApiPageNumberPagination",
@@ -145,11 +149,15 @@ SIMPLE_JWT = {
     "REFRESH_TOKEN_LIFETIME": timedelta(
         minutes=env.int("DJANGO_REFRESH_TOKEN_LIFETIME", 60 * 24)
     ),
-    "ROTATE_REFRESH_TOKENS": False,
+    "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
-    "ALGORITHM": "HS256",
-    "SIGNING_KEY": env.str("DJANGO_TOKEN_SIGNING_KEY", "S3cret"),
+    # TODO Add environment variable for this
+    "ALGORITHM": "RS256",
+    "SIGNING_KEY": env.str("DJANGO_TOKEN_SIGNING_KEY", ""),
+    "VERIFYING_KEY": env.str("DJANGO_TOKEN_VERIFYING_KEY", ""),
     "AUTH_HEADER_TYPES": ("Bearer",),
+    "TOKEN_OBTAIN_SERIALIZER": "api.serializers.TokenSerializer",
+    "TOKEN_REFRESH_SERIALIZER": "api.serializers.TokenRefreshSerializer",
 }
 
 # Internationalization

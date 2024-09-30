@@ -1,10 +1,15 @@
 import json
 
+from django.conf import settings
+from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
 from drf_spectacular.utils import extend_schema_field
+from jwt.exceptions import InvalidKeyError
 from rest_framework_json_api import serializers
 from rest_framework_json_api.relations import SerializerMethodResourceRelatedField
 from rest_framework_json_api.serializers import ValidationError
+from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from api.models import (
     StateChoices,
@@ -22,6 +27,100 @@ from api.models import (
 )
 from api.rls import Tenant
 from api.utils import merge_dicts
+
+
+# Tokens
+
+
+class TokenSerializer(serializers.Serializer):
+    email = serializers.EmailField(write_only=True)
+    password = serializers.CharField(write_only=True)
+    tenant_id = serializers.UUIDField(
+        write_only=True,
+        required=False,
+        help_text="If not provided, the tenant ID of the first membership that was added"
+        " to the user will be used.",
+    )
+
+    # Output tokens
+    refresh = serializers.CharField(read_only=True)
+    access = serializers.CharField(read_only=True)
+
+    class JSONAPIMeta:
+        resource_name = "Token"
+
+    def validate(self, attrs):
+        email = attrs.get("email")
+        password = attrs.get("password")
+        tenant_id = str(attrs.get("tenant_id", ""))
+
+        # Authenticate user
+        user = authenticate(username=email, password=password)
+        if user is None:
+            raise serializers.ValidationError("Invalid credentials")
+
+        if tenant_id:
+            if not user.is_member_of_tenant(tenant_id):
+                raise serializers.ValidationError(
+                    "Tenant does not exist or user is not a member."
+                )
+        else:
+            first_membership = user.memberships.order_by("date_joined").first()
+            if first_membership is None:
+                raise serializers.ValidationError("User has no memberships.")
+            tenant_id = str(first_membership.tenant_id)
+
+        # Generate tokens
+        try:
+            refresh = RefreshToken.for_user(user)
+            refresh["tenant_id"] = tenant_id
+            access = refresh.access_token
+        except InvalidKeyError:
+            # Handle invalid key error
+            raise serializers.ValidationError(
+                {
+                    "detail": "Token generation failed due to invalid key configuration. Provide valid "
+                    "DJANGO_TOKEN_SIGNING_KEY and DJANGO_TOKEN_VERIFYING_KEY in the environment."
+                }
+            )
+        except Exception as e:
+            raise serializers.ValidationError({"detail": str(e)})
+
+        return {"refresh": str(refresh), "access": str(access)}
+
+
+class TokenRefreshSerializer(serializers.Serializer):
+    refresh = serializers.CharField()
+
+    # Output token
+    access = serializers.CharField(read_only=True)
+
+    class JSONAPIMeta:
+        resource_name = "TokenRefresh"
+
+    def validate(self, attrs):
+        refresh_token = attrs.get("refresh")
+
+        try:
+            # Validate the refresh token
+            refresh = RefreshToken(refresh_token)
+            # Generate new access token
+            access_token = refresh.access_token
+
+            if settings.SIMPLE_JWT["ROTATE_REFRESH_TOKENS"]:
+                if settings.SIMPLE_JWT["BLACKLIST_AFTER_ROTATION"]:
+                    try:
+                        refresh.blacklist()
+                    except AttributeError:
+                        pass
+
+                refresh.set_jti()
+                refresh.set_exp()
+                refresh.set_iat()
+
+            return {"access": str(access_token), "refresh": str(refresh)}
+        except TokenError:
+            raise serializers.ValidationError({"refresh": "Invalid or expired token"})
 
 
 # Base
@@ -67,15 +166,16 @@ class UserSerializer(BaseSerializerV1):
 
     class Meta:
         model = User
-        fields = ["id", "name", "username", "email", "date_joined", "memberships"]
+        fields = ["id", "name", "email", "company_name", "date_joined", "memberships"]
 
 
 class UserCreateSerializer(BaseWriteSerializer):
     password = serializers.CharField(write_only=True)
+    company_name = serializers.CharField(required=False)
 
     class Meta:
         model = User
-        fields = ["name", "username", "password", "email"]
+        fields = ["name", "password", "email", "company_name"]
 
     def validate_password(self, value):
         user = User(**{k: v for k, v in self.initial_data.items() if k != "type"})
@@ -97,7 +197,7 @@ class UserUpdateSerializer(BaseWriteSerializer):
 
     class Meta:
         model = User
-        fields = ["id", "name", "password", "email"]
+        fields = ["id", "name", "password", "email", "company_name"]
         extra_kwargs = {
             "id": {"read_only": True},
         }

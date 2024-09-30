@@ -2,7 +2,6 @@ import uuid
 from functools import partial
 
 import django.contrib.auth.models
-import django.contrib.auth.validators
 import django.contrib.postgres.indexes
 import django.contrib.postgres.search
 import django.core.validators
@@ -147,17 +146,8 @@ class Migration(migrations.Migration):
                         blank=True, null=True, verbose_name="last login"
                     ),
                 ),
-                (
-                    "username",
-                    models.CharField(
-                        max_length=150,
-                        unique=True,
-                        validators=[
-                            django.contrib.auth.validators.UnicodeUsernameValidator()
-                        ],
-                    ),
-                ),
                 ("email", models.EmailField(max_length=254, unique=True)),
+                ("company_name", models.CharField(max_length=150, blank=True)),
                 ("is_active", models.BooleanField(default=True)),
                 ("date_joined", models.DateTimeField(auto_now_add=True)),
             ],
@@ -225,11 +215,14 @@ class Migration(migrations.Migration):
                 (
                     "role",
                     MemberRoleEnumField(
-                        choices=[("scheduled", "Scheduled"), ("member", "Member")],
+                        choices=[("owner", "Owner"), ("member", "Member")],
                         default="member",
                     ),
                 ),
-                ("date_joined", models.DateTimeField(auto_now_add=True)),
+                (
+                    "date_joined",
+                    models.DateTimeField(auto_now_add=True, editable=False),
+                ),
                 (
                     "tenant",
                     models.ForeignKey(
@@ -891,8 +884,8 @@ class Migration(migrations.Migration):
                     "status",
                     api.db_utils.StatusEnumField(
                         choices=[
-                            ("PASS", "Pass"),
                             ("FAIL", "Fail"),
+                            ("PASS", "Pass"),
                             ("MANUAL", "Manual"),
                             ("MUTED", "Muted"),
                         ]

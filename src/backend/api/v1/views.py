@@ -6,17 +6,16 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_control
 from drf_spectacular.settings import spectacular_settings
-from drf_spectacular.utils import (
-    OpenApiParameter,
-    OpenApiTypes,
-)
-from drf_spectacular.utils import extend_schema, extend_schema_view
+from drf_spectacular.utils import OpenApiTypes
+from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiParameter
 from drf_spectacular.views import SpectacularAPIView
 from rest_framework import status, permissions
 from rest_framework.decorators import action
 from rest_framework.exceptions import MethodNotAllowed, NotFound, PermissionDenied
-from rest_framework.generics import get_object_or_404
+from rest_framework.generics import get_object_or_404, GenericAPIView
 from rest_framework_json_api.views import Response
+from rest_framework_simplejwt.exceptions import InvalidToken
+from rest_framework_simplejwt.exceptions import TokenError
 
 from api.base_views import BaseTenantViewset, BaseRLSViewSet, BaseViewSet
 from api.filters import (
@@ -32,6 +31,8 @@ from api.models import User, Membership, Provider, Scan, Task, Resource, Finding
 from api.rls import Tenant
 from api.uuid_utils import datetime_to_uuid7
 from api.v1.serializers import (
+    TokenSerializer,
+    TokenRefreshSerializer,
     UserSerializer,
     UserCreateSerializer,
     UserUpdateSerializer,
@@ -54,6 +55,55 @@ CACHE_DECORATOR = cache_control(
     max_age=django_settings.CACHE_MAX_AGE,
     stale_while_revalidate=django_settings.CACHE_STALE_WHILE_REVALIDATE,
 )
+
+
+@extend_schema(
+    tags=["Token"],
+    summary="Obtain a token",
+    description="Obtain a token by providing valid credentials and an optional tenant ID.",
+)
+class CustomTokenObtainView(GenericAPIView):
+    resource_name = "Token"
+    serializer_class = TokenSerializer
+    http_method_names = ["post"]
+
+    def post(self, request):
+        serializer = TokenSerializer(data=request.data)
+
+        try:
+            serializer.is_valid(raise_exception=True)
+        except TokenError as e:
+            raise InvalidToken(e.args[0])
+
+        return Response(
+            data={"type": "Token", "attributes": serializer.validated_data},
+            status=status.HTTP_200_OK,
+        )
+
+
+@extend_schema(
+    tags=["Token"],
+    summary="Refresh a token",
+    description="Refresh an access token by providing a valid refresh token. Former refresh tokens are invalidated "
+    "when a new one is issued.",
+)
+class CustomTokenRefreshView(GenericAPIView):
+    resource_name = "TokenRefresh"
+    serializer_class = TokenRefreshSerializer
+    http_method_names = ["post"]
+
+    def post(self, request):
+        serializer = TokenRefreshSerializer(data=request.data)
+
+        try:
+            serializer.is_valid(raise_exception=True)
+        except TokenError as e:
+            raise InvalidToken(e.args[0])
+
+        return Response(
+            data={"type": "TokenRefresh", "attributes": serializer.validated_data},
+            status=status.HTTP_200_OK,
+        )
 
 
 @extend_schema(exclude=True)
@@ -140,6 +190,12 @@ class UserViewSet(BaseViewSet):
         )
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
+        tenant = Tenant.objects.create(
+            name=f"{user.email.split('@')[0]} default tenant"
+        )
+        Membership.objects.create(
+            user=user, tenant=tenant, role=Membership.RoleChoices.OWNER
+        )
         return Response(data=UserSerializer(user).data, status=status.HTTP_201_CREATED)
 
     def partial_update(self, request, *args, **kwargs):
@@ -393,7 +449,7 @@ class ProviderViewSet(BaseRLSViewSet):
     def connection(self, request, pk=None):
         get_object_or_404(Provider, pk=pk)
         task = check_provider_connection_task.delay(
-            provider_id=pk, tenant_id=request.headers.get("X-Tenant-ID")
+            provider_id=pk, tenant_id=request.tenant_id
         )
         serializer = DelayedTaskSerializer(task)
         return Response(
@@ -406,9 +462,7 @@ class ProviderViewSet(BaseRLSViewSet):
 
     def destroy(self, request, *args, pk=None, **kwargs):
         get_object_or_404(Provider, pk=pk)
-        task = delete_provider_task.delay(
-            provider_id=pk, tenant_id=request.headers.get("X-Tenant-ID")
-        )
+        task = delete_provider_task.delay(provider_id=pk, tenant_id=request.tenant_id)
         serializer = DelayedTaskSerializer(task)
         return Response(
             data=serializer.data,

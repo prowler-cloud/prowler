@@ -16,7 +16,7 @@ paths:
       summary: List all findings
       parameters:
       - in: query
-        name: fields[findings]
+        name: fields[Findings]
         schema:
           type: array
           items:
@@ -289,9 +289,9 @@ paths:
             - -updated_at
         explode: false
       tags:
-      - Findings
+      - Finding
       security:
-      - basicAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -306,7 +306,7 @@ paths:
       summary: Retrieve data from a specific finding
       parameters:
       - in: query
-        name: fields[findings]
+        name: fields[Findings]
         schema:
           type: array
           items:
@@ -347,9 +347,9 @@ paths:
           related resources should be returned.
         explode: false
       tags:
-      - Findings
+      - Finding
       security:
-      - basicAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -516,7 +516,7 @@ paths:
       tags:
       - Provider
       security:
-      - basicAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -544,7 +544,7 @@ paths:
               $ref: '#/components/schemas/ProviderCreateRequest'
         required: true
       security:
-      - basicAuth: []
+      - jwtAuth: []
       responses:
         '201':
           content:
@@ -586,7 +586,7 @@ paths:
       tags:
       - Provider
       security:
-      - basicAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -622,7 +622,7 @@ paths:
               $ref: '#/components/schemas/PatchedProviderUpdateRequest'
         required: true
       security:
-      - basicAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -645,7 +645,7 @@ paths:
       tags:
       - Provider
       security:
-      - basicAuth: []
+      - jwtAuth: []
       responses:
         '202':
           content:
@@ -670,7 +670,7 @@ paths:
       tags:
       - Provider
       security:
-      - basicAuth: []
+      - jwtAuth: []
       responses:
         '202':
           content:
@@ -925,7 +925,7 @@ paths:
       tags:
       - Resource
       security:
-      - basicAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -983,7 +983,7 @@ paths:
       tags:
       - Resource
       security:
-      - basicAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -1147,7 +1147,7 @@ paths:
       tags:
       - Scan
       security:
-      - basicAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -1179,7 +1179,7 @@ paths:
               $ref: '#/components/schemas/ScanCreateRequest'
         required: true
       security:
-      - basicAuth: []
+      - jwtAuth: []
       responses:
         '201':
           content:
@@ -1225,7 +1225,7 @@ paths:
       tags:
       - Scan
       security:
-      - basicAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -1261,7 +1261,7 @@ paths:
               $ref: '#/components/schemas/PatchedScanUpdateRequest'
         required: true
       security:
-      - basicAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -1344,7 +1344,7 @@ paths:
       tags:
       - Task
       security:
-      - basicAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -1385,7 +1385,7 @@ paths:
       tags:
       - Task
       security:
-      - basicAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -1409,7 +1409,7 @@ paths:
       tags:
       - Task
       security:
-      - basicAuth: []
+      - jwtAuth: []
       responses:
         '202':
           content:
@@ -1431,9 +1431,8 @@ paths:
           items:
             type: string
             enum:
-            - inserted_at
-            - updated_at
             - name
+            - memberships
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
@@ -1517,7 +1516,7 @@ paths:
       tags:
       - Tenant
       security:
-      - basicAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -1545,7 +1544,7 @@ paths:
               $ref: '#/components/schemas/TenantRequest'
         required: true
       security:
-      - basicAuth: []
+      - jwtAuth: []
       responses:
         '201':
           content:
@@ -1566,9 +1565,8 @@ paths:
           items:
             type: string
             enum:
-            - inserted_at
-            - updated_at
             - name
+            - memberships
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
@@ -1582,7 +1580,7 @@ paths:
       tags:
       - Tenant
       security:
-      - basicAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -1618,7 +1616,7 @@ paths:
               $ref: '#/components/schemas/PatchedTenantRequest'
         required: true
       security:
-      - basicAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -1641,13 +1639,13 @@ paths:
       tags:
       - Tenant
       security:
-      - basicAuth: []
+      - jwtAuth: []
       responses:
         '204':
           description: No response body
-  /api/v1/tenants/{tenant_pk}/members:
+  /api/v1/tenants/{tenant_pk}/memberships:
     get:
-      operationId: tenants_members_list
+      operationId: tenants_memberships_list
       description: List the membership details of users in a tenant you are a part
         of.
       summary: List tenant memberships
@@ -1714,7 +1712,7 @@ paths:
       tags:
       - Tenant
       security:
-      - basicAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -1722,9 +1720,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginatedMembershipList'
           description: ''
-  /api/v1/tenants/{tenant_pk}/members/{id}:
+  /api/v1/tenants/{tenant_pk}/memberships/{id}:
     delete:
-      operationId: tenants_members_destroy
+      operationId: tenants_memberships_destroy
       description: Delete the membership details of users in a tenant. You need to
         be one of the owners to delete a membership that is not yours. If you are
         the last owner of a tenant, you cannot delete your own membership.
@@ -1746,10 +1744,69 @@ paths:
       tags:
       - Tenant
       security:
-      - basicAuth: []
+      - jwtAuth: []
       responses:
         '204':
           description: No response body
+  /api/v1/tokens:
+    post:
+      operationId: tokens_create
+      description: Obtain a token by providing valid credentials and an optional tenant
+        ID.
+      summary: Obtain a token
+      tags:
+      - Token
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/TokenRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+          description: ''
+  /api/v1/tokens/refresh:
+    post:
+      operationId: tokens_refresh_create
+      description: Refresh an access token by providing a valid refresh token.
+      summary: Refresh a token
+      tags:
+      - Token
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/TokenRefreshRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenRefreshRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenRefreshRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/TokenRefreshResponse'
+          description: ''
   /api/v1/users:
     post:
       operationId: users_create
@@ -1771,7 +1828,7 @@ paths:
               $ref: '#/components/schemas/UserCreateRequest'
         required: true
       security:
-      - basicAuth: []
+      - jwtAuth: []
       - {}
       responses:
         '201':
@@ -1781,6 +1838,45 @@ paths:
                 $ref: '#/components/schemas/UserCreateResponse'
           description: ''
   /api/v1/users/{id}:
+    get:
+      operationId: users_retrieve
+      description: Fetch detailed information about an authenticated user. It only
+        allows using your own user ID.
+      summary: Retrieve a user's information
+      parameters:
+      - in: query
+        name: fields[User]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - name
+            - email
+            - company_name
+            - date_joined
+            - memberships
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this user.
+        required: true
+      tags:
+      - User
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+          description: ''
     patch:
       operationId: users_partial_update
       description: Partially update the authenticated user's information.
@@ -1808,7 +1904,7 @@ paths:
               $ref: '#/components/schemas/PatchedUserUpdateRequest'
         required: true
       security:
-      - basicAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -1831,44 +1927,13 @@ paths:
       tags:
       - User
       security:
-      - basicAuth: []
+      - jwtAuth: []
       responses:
         '204':
           description: No response body
-  /api/v1/users/me:
+  /api/v1/users/{user_pk}/memberships:
     get:
-      operationId: users_me_retrieve
-      description: Fetch detailed information about the authenticated user.
-      summary: Retrieve the current user's information
-      parameters:
-      - in: query
-        name: fields[User]
-        schema:
-          type: array
-          items:
-            type: string
-            enum:
-            - name
-            - username
-            - email
-            - date_joined
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
-        explode: false
-      tags:
-      - User
-      security:
-      - basicAuth: []
-      responses:
-        '200':
-          content:
-            application/vnd.api+json:
-              schema:
-                $ref: '#/components/schemas/UserResponse'
-          description: ''
-  /api/v1/users/me/memberships:
-    get:
-      operationId: users_me_memberships_list
+      operationId: users_memberships_list
       description: Retrieve a list of all user memberships with options for filtering
         by various criteria.
       summary: List user memberships
@@ -1950,10 +2015,16 @@ paths:
             - date_joined
             - -date_joined
         explode: false
+      - in: path
+        name: user_pk
+        schema:
+          type: string
+          format: uuid
+        required: true
       tags:
       - User
       security:
-      - basicAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -1961,9 +2032,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginatedMembershipList'
           description: ''
-  /api/v1/users/me/memberships/{id}:
+  /api/v1/users/{user_pk}/memberships/{id}:
     get:
-      operationId: users_me_memberships_retrieve
+      operationId: users_memberships_retrieve
       description: Fetch detailed information about a specific user membership by
         their ID.
       summary: Retrieve membership data from the user
@@ -1987,17 +2058,56 @@ paths:
         schema:
           type: string
           format: uuid
+        description: A UUID string identifying this membership.
+        required: true
+      - in: path
+        name: user_pk
+        schema:
+          type: string
+          format: uuid
         required: true
       tags:
       - User
       security:
-      - basicAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
             application/vnd.api+json:
               schema:
                 $ref: '#/components/schemas/MembershipResponse'
+          description: ''
+  /api/v1/users/me:
+    get:
+      operationId: users_me_retrieve
+      description: Fetch detailed information about the authenticated user.
+      summary: Retrieve the current user's information
+      parameters:
+      - in: query
+        name: fields[User]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - name
+            - email
+            - company_name
+            - date_joined
+            - memberships
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      tags:
+      - User
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
           description: ''
 components:
   schemas:
@@ -2168,7 +2278,7 @@ components:
     FindingTypeEnum:
       type: string
       enum:
-      - findings
+      - Findings
     Membership:
       type: object
       required:
@@ -2213,7 +2323,7 @@ components:
                   properties:
                     id:
                       type: string
-                      format: uuid
+                      format: uri
                     type:
                       type: string
                       enum:
@@ -2229,6 +2339,7 @@ components:
               - data
               description: The identifier of the related object.
               title: Resource Identifier
+              readOnly: true
             tenant:
               type: object
               properties:
@@ -2237,7 +2348,7 @@ components:
                   properties:
                     id:
                       type: string
-                      format: uuid
+                      format: uri
                     type:
                       type: string
                       enum:
@@ -2253,9 +2364,7 @@ components:
               - data
               description: The identifier of the related object.
               title: Resource Identifier
-          required:
-          - user
-          - tenant
+              readOnly: true
     MembershipResponse:
       type: object
       properties:
@@ -2412,20 +2521,44 @@ components:
             attributes:
               type: object
               properties:
-                inserted_at:
-                  type: string
-                  format: date-time
-                  readOnly: true
-                updated_at:
-                  type: string
-                  format: date-time
-                  readOnly: true
                 name:
                   type: string
                   minLength: 1
                   maxLength: 100
               required:
               - name
+            relationships:
+              type: object
+              properties:
+                memberships:
+                  type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                            title: Resource Identifier
+                            description: The identifier of the related object.
+                          type:
+                            type: string
+                            enum:
+                            - Membership
+                            title: Resource Type Name
+                            description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                              member is used to describe resource objects that share
+                              common attributes and relationships.
+                        required:
+                        - id
+                        - type
+                  required:
+                  - data
+                  description: A related resource object from type Membership
+                  title: Membership
+                  readOnly: true
       required:
       - data
     PatchedUserUpdateRequest:
@@ -2464,6 +2597,9 @@ components:
                   format: email
                   minLength: 1
                   maxLength: 254
+                company_name:
+                  type: string
+                  maxLength: 150
               required:
               - name
               - email
@@ -3053,19 +3189,43 @@ components:
         attributes:
           type: object
           properties:
-            inserted_at:
-              type: string
-              format: date-time
-              readOnly: true
-            updated_at:
-              type: string
-              format: date-time
-              readOnly: true
             name:
               type: string
               maxLength: 100
           required:
           - name
+        relationships:
+          type: object
+          properties:
+            memberships:
+              type: object
+              properties:
+                data:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                        title: Resource Identifier
+                        description: The identifier of the related object.
+                      type:
+                        type: string
+                        enum:
+                        - Membership
+                        title: Resource Type Name
+                        description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                          member is used to describe resource objects that share common
+                          attributes and relationships.
+                    required:
+                    - id
+                    - type
+              required:
+              - data
+              description: A related resource object from type Membership
+              title: Membership
+              readOnly: true
     TenantRequest:
       type: object
       properties:
@@ -3085,20 +3245,44 @@ components:
             attributes:
               type: object
               properties:
-                inserted_at:
-                  type: string
-                  format: date-time
-                  readOnly: true
-                updated_at:
-                  type: string
-                  format: date-time
-                  readOnly: true
                 name:
                   type: string
                   minLength: 1
                   maxLength: 100
               required:
               - name
+            relationships:
+              type: object
+              properties:
+                memberships:
+                  type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                            title: Resource Identifier
+                            description: The identifier of the related object.
+                          type:
+                            type: string
+                            enum:
+                            - Membership
+                            title: Resource Type Name
+                            description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                              member is used to describe resource objects that share
+                              common attributes and relationships.
+                        required:
+                        - id
+                        - type
+                  required:
+                  - data
+                  description: A related resource object from type Membership
+                  title: Membership
+                  readOnly: true
       required:
       - data
     TenantResponse:
@@ -3112,6 +3296,164 @@ components:
       type: string
       enum:
       - Tenant
+    Token:
+      type: object
+      required:
+      - type
+      additionalProperties: false
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/TokenTypeEnum'
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+        attributes:
+          type: object
+          properties:
+            email:
+              type: string
+              format: email
+              writeOnly: true
+            password:
+              type: string
+              writeOnly: true
+            tenant_id:
+              type: string
+              format: uuid
+              writeOnly: true
+              description: If not provided, the tenant ID of the first membership
+                that was added to the user will be used.
+            refresh:
+              type: string
+              readOnly: true
+            access:
+              type: string
+              readOnly: true
+          required:
+          - email
+          - password
+    TokenRefresh:
+      type: object
+      required:
+      - type
+      additionalProperties: false
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/TokenRefreshTypeEnum'
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+        attributes:
+          type: object
+          properties:
+            refresh:
+              type: string
+            access:
+              type: string
+              readOnly: true
+          required:
+          - refresh
+    TokenRefreshRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - TokenRefresh
+            attributes:
+              type: object
+              properties:
+                refresh:
+                  type: string
+                  minLength: 1
+                access:
+                  type: string
+                  readOnly: true
+                  minLength: 1
+              required:
+              - refresh
+      required:
+      - data
+    TokenRefreshResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/TokenRefresh'
+      required:
+      - data
+    TokenRefreshTypeEnum:
+      type: string
+      enum:
+      - TokenRefresh
+    TokenRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - Token
+            attributes:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  writeOnly: true
+                  minLength: 1
+                password:
+                  type: string
+                  writeOnly: true
+                  minLength: 1
+                tenant_id:
+                  type: string
+                  format: uuid
+                  writeOnly: true
+                  description: If not provided, the tenant ID of the first membership
+                    that was added to the user will be used.
+                refresh:
+                  type: string
+                  readOnly: true
+                  minLength: 1
+                access:
+                  type: string
+                  readOnly: true
+                  minLength: 1
+              required:
+              - email
+              - password
+      required:
+      - data
+    TokenResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Token'
+      required:
+      - data
+    TokenTypeEnum:
+      type: string
+      enum:
+      - Token
     Type2bbEnum:
       type: string
       enum:
@@ -3151,22 +3493,52 @@ components:
               type: string
               maxLength: 150
               minLength: 3
-            username:
-              type: string
-              pattern: ^[\w.@+-]+$
-              maxLength: 150
             email:
               type: string
               format: email
               maxLength: 254
+            company_name:
+              type: string
+              maxLength: 150
             date_joined:
               type: string
               format: date-time
               readOnly: true
           required:
           - name
-          - username
           - email
+        relationships:
+          type: object
+          properties:
+            memberships:
+              type: object
+              properties:
+                data:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                        title: Resource Identifier
+                        description: The identifier of the related object.
+                      type:
+                        type: string
+                        enum:
+                        - Membership
+                        title: Resource Type Name
+                        description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                          member is used to describe resource objects that share common
+                          attributes and relationships.
+                    required:
+                    - id
+                    - type
+              required:
+              - data
+              description: A related resource object from type Membership
+              title: Membership
+              readOnly: true
     UserCreate:
       type: object
       required:
@@ -3186,10 +3558,6 @@ components:
               type: string
               maxLength: 150
               minLength: 3
-            username:
-              type: string
-              pattern: ^[\w.@+-]+$
-              maxLength: 150
             password:
               type: string
               writeOnly: true
@@ -3197,9 +3565,10 @@ components:
               type: string
               format: email
               maxLength: 254
+            company_name:
+              type: string
           required:
           - name
-          - username
           - password
           - email
     UserCreateRequest:
@@ -3225,11 +3594,6 @@ components:
                   type: string
                   minLength: 3
                   maxLength: 150
-                username:
-                  type: string
-                  minLength: 1
-                  pattern: ^[\w.@+-]+$
-                  maxLength: 150
                 password:
                   type: string
                   writeOnly: true
@@ -3239,9 +3603,11 @@ components:
                   format: email
                   minLength: 1
                   maxLength: 254
+                company_name:
+                  type: string
+                  minLength: 1
               required:
               - name
-              - username
               - password
               - email
       required:
@@ -3290,6 +3656,9 @@ components:
               type: string
               format: email
               maxLength: 254
+            company_name:
+              type: string
+              maxLength: 150
           required:
           - name
           - email
@@ -3301,6 +3670,7 @@ components:
       required:
       - data
   securitySchemes:
-    basicAuth:
+    jwtAuth:
       type: http
-      scheme: basic
+      scheme: bearer
+      bearerFormat: JWT

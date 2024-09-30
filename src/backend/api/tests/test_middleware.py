@@ -2,8 +2,6 @@ from unittest.mock import patch, Mock, ANY
 
 import pytest
 
-from api.middleware import extract_tenant_id
-
 
 @pytest.mark.django_db
 @patch("logging.getLogger")
@@ -33,10 +31,3 @@ def test_api_logger_middleware(mock_get_logger, client):
     )
 
     assert isinstance(mock_logger.info.call_args[1]["extra"]["duration"], float)
-
-
-def test_extract_tenant_id():
-    mock_request = Mock()
-    extract_tenant_id(mock_request)
-
-    mock_request.headers.get.assert_called_once_with("X-Tenant-ID")

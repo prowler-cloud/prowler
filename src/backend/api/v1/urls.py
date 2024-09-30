@@ -3,6 +3,8 @@ from drf_spectacular.views import SpectacularRedocView
 from rest_framework_nested import routers
 
 from api.v1.views import (
+    CustomTokenObtainView,
+    CustomTokenRefreshView,
     SchemaView,
     UserViewSet,
     TenantViewSet,
@@ -34,6 +36,8 @@ users_router = routers.NestedSimpleRouter(router, r"users", lookup="user")
 users_router.register(r"memberships", MembershipViewSet, basename="user-membership")
 
 urlpatterns = [
+    path("tokens", CustomTokenObtainView.as_view(), name="token-obtain"),
+    path("tokens/refresh", CustomTokenRefreshView.as_view(), name="token-refresh"),
     path("", include(router.urls)),
     path("", include(tenants_router.urls)),
     path("", include(users_router.urls)),

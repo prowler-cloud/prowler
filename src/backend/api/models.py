@@ -2,7 +2,6 @@ import re
 from uuid import uuid4, UUID
 
 from django.contrib.auth.models import AbstractBaseUser
-from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.contrib.postgres.indexes import GinIndex
 from django.contrib.postgres.search import SearchVector, SearchVectorField
 from django.core.validators import MinLengthValidator
@@ -64,17 +63,18 @@ class StateChoices(models.TextChoices):
 class User(AbstractBaseUser):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     name = models.CharField(max_length=150, validators=[MinLengthValidator(3)])
-    username = models.CharField(
-        max_length=150, unique=True, validators=[UnicodeUsernameValidator()]
-    )
     email = models.EmailField(max_length=254, unique=True)
+    company_name = models.CharField(max_length=150, blank=True)
     is_active = models.BooleanField(default=True)
     date_joined = models.DateTimeField(auto_now_add=True, editable=False)
 
-    USERNAME_FIELD = "username"
-    REQUIRED_FIELDS = ["name", "email"]
+    USERNAME_FIELD = "email"
+    REQUIRED_FIELDS = ["name"]
 
     objects = CustomUserManager()
+
+    def is_member_of_tenant(self, tenant_id):
+        return self.memberships.filter(tenant_id=tenant_id).exists()
 
     class Meta:
         db_table = "users"
@@ -106,7 +106,7 @@ class Membership(models.Model):
         related_query_name="membership",
     )
     role = MemberRoleEnumField(choices=RoleChoices.choices, default=RoleChoices.MEMBER)
-    date_joined = models.DateTimeField(auto_now_add=True)
+    date_joined = models.DateTimeField(auto_now_add=True, editable=False)
 
     class Meta:
         db_table = "memberships"

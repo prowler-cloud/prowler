@@ -1,20 +1,19 @@
-import base64
-
 import pytest
 from django.urls import reverse
 from rest_framework.test import APIClient
 
+from conftest import TEST_PASSWORD, get_api_tokens, get_authorization_header
+
 
 @pytest.mark.django_db
-def test_basic_authentication(providers_fixture, tenant_header):
+def test_basic_authentication():
     client = APIClient()
 
-    test_user = "test_user"
+    test_user = "test_email@prowler.com"
     test_password = "test_password"
-    credentials = base64.b64encode(f"{test_user}:{test_password}".encode()).decode()
 
     # Check that a 401 is returned when no basic authentication is provided
-    no_auth_response = client.get(reverse("provider-list"), headers=tenant_header)
+    no_auth_response = client.get(reverse("provider-list"))
     assert no_auth_response.status_code == 401
 
     # Check that we can create a new user without any kind of authentication
@@ -25,9 +24,8 @@ def test_basic_authentication(providers_fixture, tenant_header):
                 "type": "User",
                 "attributes": {
                     "name": "test",
-                    "username": test_user,
+                    "email": test_user,
                     "password": test_password,
-                    "email": "thisisnotimportant@prowler.com",
                 },
             }
         },
@@ -36,10 +34,65 @@ def test_basic_authentication(providers_fixture, tenant_header):
     assert user_creation_response.status_code == 201
 
     # Check that using our new user's credentials we can authenticate and get the providers
+    access_token, _ = get_api_tokens(client, test_user, test_password)
+    auth_headers = get_authorization_header(access_token)
+
     auth_response = client.get(
         reverse("provider-list"),
-        headers=tenant_header,
-        HTTP_AUTHORIZATION=f"Basic {credentials}",
+        headers=auth_headers,
     )
     assert auth_response.status_code == 200
-    assert len(auth_response.json()["data"]) == len(providers_fixture)
+
+
+@pytest.mark.django_db
+def test_refresh_token(create_test_user, tenants_fixture):
+    client = APIClient()
+
+    # Assert that we can obtain a new access token using the refresh one
+    access_token, refresh_token = get_api_tokens(
+        client, create_test_user.email, TEST_PASSWORD
+    )
+    valid_refresh_response = client.post(
+        reverse("token-refresh"),
+        data={
+            "data": {
+                "type": "TokenRefresh",
+                "attributes": {"refresh": refresh_token},
+            }
+        },
+        format="vnd.api+json",
+    )
+    assert valid_refresh_response.status_code == 200
+    assert (
+        valid_refresh_response.json()["data"]["attributes"]["refresh"] != refresh_token
+    )
+
+    # Assert the former refresh token gets invalidated
+    invalid_refresh_response = client.post(
+        reverse("token-refresh"),
+        data={
+            "data": {
+                "type": "TokenRefresh",
+                "attributes": {"refresh": refresh_token},
+            }
+        },
+        format="vnd.api+json",
+    )
+    assert invalid_refresh_response.status_code == 400
+
+    # Assert that the new refresh token could be used
+    new_refresh_response = client.post(
+        reverse("token-refresh"),
+        data={
+            "data": {
+                "type": "TokenRefresh",
+                "attributes": {
+                    "refresh": valid_refresh_response.json()["data"]["attributes"][
+                        "refresh"
+                    ]
+                },
+            }
+        },
+        format="vnd.api+json",
+    )
+    assert new_refresh_response.status_code == 200
