@@ -89,10 +89,7 @@ class SecurityHub(AWSService):
 
     def _list_tags(self, resource: any):
         try:
-            if (
-                isinstance(resource, SecurityHubHub)
-                and not resource.status == "NOT_AVAILABLE"
-            ):
+            if resource.status != "NOT_AVAILABLE":
                 resource.tags = [
                     self.regional_clients[resource.region].list_tags_for_resource(
                         ResourceArn=resource.arn
