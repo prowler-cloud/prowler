@@ -13,6 +13,7 @@ class NetworkFirewall(AWSService):
         self.network_firewalls = {}
         self.__threading_call__(self._list_firewalls)
         self._describe_firewall()
+        self._describe_firewall_policy()
 
     def _list_firewalls(self, regional_client):
         logger.info("Network Firewall - Listing Network Firewalls...")
