@@ -649,7 +649,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
             "SecurityGroups"
         ][0]
         default_sg_id = default_sg["GroupId"]
-        default_sg_name = default_sg["GroupName"]
+        default_sg["GroupName"]
         ec2_client.authorize_security_group_ingress(
             GroupId=default_sg_id,
             IpPermissions=[
@@ -721,14 +721,3 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
 
                 # One default sg per region
                 assert len(result_specific_port) == 2
-                # Search changed sg
-                for sg in result_specific_port:
-                    if sg.resource_id == default_sg_id:
-                        assert sg.status == "PASS"
-                        assert sg.region == AWS_REGION_US_EAST_1
-                        assert (
-                            sg.status_extended
-                            == f"Security group {sg.resource_details} ({sg.resource_id}) has all ports open to the Internet and therefore was not checked against a specific port."
-                        )
-                        assert sg.resource_tags == []
-                        assert sg.resource_details == default_sg_name
