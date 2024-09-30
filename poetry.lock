@@ -4335,13 +4335,13 @@ crt = ["botocore[crt] (>=1.33.2,<2.0a.0)"]
 
 [[package]]
 name = "safety"
-version = "3.2.7"
+version = "3.2.8"
 description = "Checks installed dependencies for known vulnerabilities and licenses."
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "safety-3.2.7-py3-none-any.whl", hash = "sha256:7f111b689901f2e65f7dd524e4c84158c368bcbbdbb38cbbb06ba1249250da11"},
-    {file = "safety-3.2.7.tar.gz", hash = "sha256:cd6093b82d84e85815f037334f1b83ed89d31f767b7b324bfed6228c434f2667"},
+    {file = "safety-3.2.8-py3-none-any.whl", hash = "sha256:af6b8c0bb5305b27e00a24b91d3c691d980d43c9becc919d16e5264a78a0437e"},
+    {file = "safety-3.2.8.tar.gz", hash = "sha256:4385ea2b321fda163910d1a96ecaaca89d518e28ea5a88c1bb3f53171b45bf94"},
 ]
 
 [package.dependencies]
@@ -5006,4 +5006,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "4ecf627174ba567e92a99546ad84f980c89f92ebffb6b7e96ff17d0f8cbc91e8"
+content-hash = "5ecab6f4bfd1a1c971f3ed75f6292f9be932abe9b387e26c9fd06dd16a85eddc"
