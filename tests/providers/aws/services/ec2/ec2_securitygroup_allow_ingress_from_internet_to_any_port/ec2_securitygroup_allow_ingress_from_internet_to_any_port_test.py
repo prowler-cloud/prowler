@@ -98,9 +98,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
         self, default_sg_id, default_sg_name, network_interface_response
     ):
         eni = network_interface_response.get("NetworkInterface", {})
-        att = eni.get("Attachment", {})
         eni_type = eni.get("InterfaceType", "")
-        att.get("InstanceOwnerId", "")
         from prowler.providers.aws.services.ec2.ec2_service import EC2
         from prowler.providers.aws.services.vpc.vpc_service import VPC
 
