@@ -6,6 +6,10 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth.config";
 import { parseStringify } from "@/lib";
 
+// Credentials for basic auth
+const username = process.env.API_USERNAME;
+const password = process.env.API_PASSWORD;
+
 export const getProviders = async ({
   page = 1,
   query = "",
@@ -18,7 +22,7 @@ export const getProviders = async ({
   if (isNaN(Number(page)) || page < 1) redirect("/providers");
 
   const keyServer = process.env.API_BASE_URL;
-  const url = new URL(`${keyServer}/providers`);
+  const url = new URL(`${keyServer}/providers?sort=-inserted_at`);
 
   if (page) url.searchParams.append("page[number]", page.toString());
   if (query) url.searchParams.append("filter[search]", query);
@@ -35,6 +39,7 @@ export const getProviders = async ({
     const providers = await fetch(url.toString(), {
       headers: {
         "X-Tenant-ID": `${tenantId}`,
+        Authorization: "Basic " + btoa(`${username}:${password}`),
       },
     });
     const data = await providers.json();
@@ -59,6 +64,7 @@ export const getProvider = async (formData: FormData) => {
     const providers = await fetch(url.toString(), {
       headers: {
         "X-Tenant-ID": `${tenantId}`,
+        Authorization: "Basic " + btoa(`${username}:${password}`),
       },
     });
     const data = await providers.json();
@@ -86,6 +92,7 @@ export const updateProvider = async (formData: FormData) => {
       method: "PATCH",
       headers: {
         "X-Tenant-ID": `${tenantId}`,
+        Authorization: "Basic " + btoa(`${username}:${password}`),
         "Content-Type": "application/vnd.api+json",
       },
       body: JSON.stringify({
@@ -110,26 +117,32 @@ export const updateProvider = async (formData: FormData) => {
 };
 
 export const addProvider = async (formData: FormData) => {
+  const session = await auth();
   const keyServer = process.env.API_BASE_URL;
 
-  const provider = formData.get("provider");
-  const providerId = formData.get("id");
-  const alias = formData.get("alias");
+  const tenantId = session?.user.tenantId;
+
+  const providerType = formData.get("providerType");
+  const providerId = formData.get("providerId");
+  const providerAlias = formData.get("providerAlias");
+
+  const url = new URL(`${keyServer}/providers`);
 
   try {
-    const response = await fetch(`${keyServer}/providers`, {
+    const response = await fetch(url.toString(), {
       method: "POST",
       headers: {
-        "X-Tenant-ID": `${process.env.HEADER_TENANT_ID}`,
+        "X-Tenant-ID": `${tenantId}`,
+        Authorization: "Basic " + btoa(`${username}:${password}`),
         "Content-Type": "application/vnd.api+json",
       },
       body: JSON.stringify({
         data: {
           type: "Provider",
           attributes: {
-            provider: provider,
-            provider_id: providerId,
-            alias: alias,
+            provider: providerType,
+            uid: providerId,
+            alias: providerAlias,
           },
         },
       }),
@@ -146,40 +159,20 @@ export const addProvider = async (formData: FormData) => {
 };
 
 export const checkConnectionProvider = async (formData: FormData) => {
+  const session = await auth();
   const keyServer = process.env.API_BASE_URL;
+  const tenantId = session?.user.tenantId;
 
   const providerId = formData.get("id");
 
-  try {
-    const response = await fetch(
-      `${keyServer}/providers/${providerId}/connection`,
-      {
-        method: "POST",
-        headers: {
-          "X-Tenant-ID": `${process.env.HEADER_TENANT_ID}`,
-        },
-      },
-    );
-    const data = await response.json();
-    revalidatePath("/providers");
-    return parseStringify(data);
-  } catch (error) {
-    return {
-      error: getErrorMessage(error),
-    };
-  }
-};
-
-export const deleteProvider = async (formData: FormData) => {
-  const keyServer = process.env.API_BASE_URL;
-
-  const providerId = formData.get("id");
+  const url = new URL(`${keyServer}/providers/${providerId}/connection`);
 
   try {
-    const response = await fetch(`${keyServer}/providers/${providerId}`, {
-      method: "DELETE",
+    const response = await fetch(url.toString(), {
+      method: "POST",
       headers: {
-        "X-Tenant-ID": `${process.env.HEADER_TENANT_ID}`,
+        "X-Tenant-ID": `${tenantId}`,
+        Authorization: "Basic " + btoa(`${username}:${password}`),
       },
     });
     const data = await response.json();
@@ -191,6 +184,33 @@ export const deleteProvider = async (formData: FormData) => {
     };
   }
 };
+
+export const deleteProvider = async (formData: FormData) => {
+  const session = await auth();
+  const keyServer = process.env.API_BASE_URL;
+  const tenantId = session?.user.tenantId;
+
+  const providerId = formData.get("id");
+  const url = new URL(`${keyServer}/providers/${providerId}`);
+
+  try {
+    const response = await fetch(url.toString(), {
+      method: "DELETE",
+      headers: {
+        "X-Tenant-ID": `${tenantId}`,
+        Authorization: "Basic " + btoa(`${username}:${password}`),
+      },
+    });
+    const data = await response.json();
+    revalidatePath("/providers");
+    return parseStringify(data);
+  } catch (error) {
+    return {
+      error: getErrorMessage(error),
+    };
+  }
+};
+
 export const getErrorMessage = (error: unknown): string => {
   let message: string;
 

@@ -30,3 +30,10 @@
     --chart-5: 340 75% 55%;
   }
 }
+
+@layer utilities {
+  /* Hide scrollbar */
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+}

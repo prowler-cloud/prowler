@@ -10,8 +10,7 @@ import {
 import { ColumnDef } from "@tanstack/react-table";
 
 import { VerticalDotsIcon } from "@/components/icons";
-import { StatusBadge } from "@/components/ui";
-import { SeverityBadge } from "@/components/ui";
+import { SeverityBadge, StatusBadge } from "@/components/ui/table";
 import { FindingProps } from "@/types";
 
 const getFindingsAttributes = (row: { original: FindingProps }) => {

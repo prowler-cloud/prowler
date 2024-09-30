@@ -1,5 +1,11 @@
 import { z } from "zod";
 
+export const addProviderFormSchema = z.object({
+  providerType: z.string(),
+  providerAlias: z.string(),
+  providerId: z.string(),
+});
+
 export const editProviderFormSchema = (currentAlias: string) =>
   z.object({
     alias: z

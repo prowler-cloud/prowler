@@ -9,7 +9,7 @@ import {
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 
-import { extractPaginationInfo } from "@/lib";
+import { getPaginationInfo } from "@/lib";
 import { MetaDataProps } from "@/types";
 
 interface DataTablePaginationProps {
@@ -22,8 +22,7 @@ export function DataTablePagination({ metadata }: DataTablePaginationProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const { currentPage, totalPages, totalEntries } =
-    extractPaginationInfo(metadata);
+  const { currentPage, totalPages, totalEntries } = getPaginationInfo(metadata);
 
   const createPageUrl = (pageNumber: number | string) => {
     const params = new URLSearchParams(searchParams);

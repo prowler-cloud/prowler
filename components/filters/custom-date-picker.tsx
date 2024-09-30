@@ -28,9 +28,9 @@ export const CustomDatePicker = () => {
     (date: any) => {
       const params = new URLSearchParams(searchParams.toString());
       if (date) {
-        params.set("filter[updated_at__lte]", date.toString());
+        params.set("filter[updated_at]", date.toString());
       } else {
-        params.delete("filter[updated_at__lte]");
+        params.delete("filter[updated_at]");
       }
       router.push(`?${params.toString()}`, { scroll: false });
     },
@@ -59,7 +59,6 @@ export const CustomDatePicker = () => {
   return (
     <div className="flex flex-col md:gap-2 w-full">
       <DatePicker
-        CalendarBottomContent={<div className="min-w-[380px]"></div>}
         CalendarTopContent={
           <ButtonGroup
             fullWidth
@@ -89,7 +88,6 @@ export const CustomDatePicker = () => {
         }}
         value={value}
         onChange={handleDateChange}
-        label="Scan date"
         size="sm"
         variant="flat"
       />

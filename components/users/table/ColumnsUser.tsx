@@ -3,7 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 
 import { DateWithTime } from "@/components/providers";
-import { StatusBadge } from "@/components/ui";
+import { StatusBadge } from "@/components/ui/table";
 import { UserActions } from "@/components/users";
 import { UserProps } from "@/types";
 

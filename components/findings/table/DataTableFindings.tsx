@@ -19,7 +19,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui";
+} from "@/components/ui/table";
 import { FindingProps } from "@/types";
 
 interface DataTableFindingsProps<TData extends FindingProps, TValue> {

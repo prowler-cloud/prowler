@@ -1,6 +1,6 @@
 import { Input } from "@nextui-org/react";
 import debounce from "lodash.debounce";
-import { XCircle } from "lucide-react";
+import { SearchIcon, XCircle } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useCallback, useEffect, useState } from "react";
 
@@ -37,11 +37,11 @@ export const CustomSearchInput: React.FC = () => {
 
   return (
     <Input
-      variant="bordered"
+      variant="flat"
       placeholder="Search..."
-      label="Search"
-      labelPlacement="inside"
+      labelPlacement="outside"
       value={searchQuery}
+      startContent={<SearchIcon className="text-default-400" width={16} />}
       onChange={(e) => {
         const value = e.target.value;
         setSearchQuery(value);
@@ -54,6 +54,7 @@ export const CustomSearchInput: React.FC = () => {
           </button>
         )
       }
+      radius="sm"
       size="sm"
     />
   );

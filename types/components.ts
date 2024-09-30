@@ -9,6 +9,23 @@ export type IconProps = {
   style?: React.CSSProperties;
 };
 
+export type NextUIVariants =
+  | "solid"
+  | "faded"
+  | "bordered"
+  | "light"
+  | "flat"
+  | "ghost"
+  | "shadow";
+
+export type NextUIColors =
+  | "primary"
+  | "secondary"
+  | "success"
+  | "warning"
+  | "danger"
+  | "default";
+
 export interface SearchParamsProps {
   [key: string]: string | string[] | undefined;
 }
@@ -16,8 +33,8 @@ export interface ProviderProps {
   id: string;
   type: "providers";
   attributes: {
-    provider: "aws" | "azure" | "gcp";
-    provider_id: string;
+    provider: "aws" | "azure" | "gcp" | "kubernetes";
+    uid: string;
     alias: string;
     status: "completed" | "pending" | "cancelled";
     resources: number;

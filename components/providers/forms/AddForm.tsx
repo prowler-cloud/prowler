@@ -5,29 +5,28 @@ import { Dispatch, SetStateAction } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
-import { updateProvider } from "@/actions";
+import { addProvider } from "@/actions";
 import { SaveIcon } from "@/components/icons";
 import { useToast } from "@/components/ui";
 import { CustomButton, CustomInput } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
-import { editProviderFormSchema } from "@/types";
+import { addProviderFormSchema } from "@/types";
 
-export const EditForm = ({
-  providerId,
-  providerAlias,
+import { CustomRadioProvider } from "../CustomRadioProvider";
+
+export const AddForm = ({
   setIsOpen,
 }: {
-  providerId: string;
-  providerAlias?: string;
   setIsOpen: Dispatch<SetStateAction<boolean>>;
 }) => {
-  const formSchema = editProviderFormSchema(providerAlias ?? "");
+  const formSchema = addProviderFormSchema;
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      providerId: providerId,
-      alias: providerAlias,
+      providerType: "",
+      providerId: "",
+      providerAlias: "",
     },
   });
 
@@ -42,7 +41,7 @@ export const EditForm = ({
       ([key, value]) => value !== undefined && formData.append(key, value),
     );
 
-    const data = await updateProvider(formData);
+    const data = await addProvider(formData);
 
     if (data?.errors && data.errors.length > 0) {
       const error = data.errors[0];
@@ -68,23 +67,29 @@ export const EditForm = ({
         onSubmit={form.handleSubmit(onSubmitClient)}
         className="flex flex-col space-y-4"
       >
-        <div className="text-md">
-          Current alias: <span className="font-bold">{providerAlias}</span>
-        </div>
-        <div>
-          <CustomInput
-            control={form.control}
-            name="alias"
-            type="text"
-            label="Alias"
-            labelPlacement="inside"
-            placeholder={providerAlias}
-            variant="bordered"
-            isRequired={false}
-            isInvalid={!!form.formState.errors.alias}
-          />
-        </div>
-        <input type="hidden" name="providerId" value={providerId} />
+        <CustomRadioProvider control={form.control} />
+        <CustomInput
+          control={form.control}
+          name="providerId"
+          type="text"
+          label="Provider ID"
+          labelPlacement="inside"
+          placeholder={"Enter the provider ID"}
+          variant="bordered"
+          isRequired
+          isInvalid={!!form.formState.errors.providerId}
+        />
+        <CustomInput
+          control={form.control}
+          name="providerAlias"
+          type="text"
+          label="Alias"
+          labelPlacement="inside"
+          placeholder={"Enter the provider alias"}
+          variant="bordered"
+          isRequired={false}
+          isInvalid={!!form.formState.errors.providerAlias}
+        />
 
         <div className="w-full flex justify-center sm:space-x-6">
           <CustomButton
@@ -108,7 +113,7 @@ export const EditForm = ({
             isLoading={isLoading}
             startContent={!isLoading && <SaveIcon size={24} />}
           >
-            {isLoading ? <>Loading</> : <span>Save</span>}
+            {isLoading ? <>Loading</> : <span>Confirm</span>}
           </CustomButton>
         </div>
       </form>

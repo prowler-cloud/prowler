@@ -2,13 +2,14 @@
 
 import { Button } from "@nextui-org/react";
 import { Column } from "@tanstack/react-table";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { HTMLAttributes } from "react";
+
 import {
   ArrowDownIcon,
   ArrowUpIcon,
   ChevronsLeftRightIcon,
-} from "lucide-react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { HTMLAttributes } from "react";
+} from "@/components/icons";
 
 interface DataTableColumnHeaderProps<TData, TValue>
   extends HTMLAttributes<HTMLDivElement> {
@@ -64,12 +65,12 @@ export const DataTableColumnHeader = <TData, TValue>({
       currentSortParam === "" ||
       (currentSortParam !== param && currentSortParam !== `-${param}`)
     ) {
-      return <ChevronsLeftRightIcon className="ml-2 h-4 w-4 rotate-90" />;
+      return <ChevronsLeftRightIcon size={14} className="ml-2 rotate-90" />;
     }
     return currentSortParam === `-${param}` ? (
-      <ArrowDownIcon className="ml-2 h-4 w-4" />
+      <ArrowDownIcon size={12} className="ml-2" />
     ) : (
-      <ArrowUpIcon className="ml-2 h-4 w-4" />
+      <ArrowUpIcon size={12} className="ml-2" />
     );
   };
 
@@ -79,9 +80,7 @@ export const DataTableColumnHeader = <TData, TValue>({
 
   return (
     <Button
-      variant="light"
-      size="md"
-      className="text-slate-500 dark:text-slate-400 h-8"
+      className="w-full justify-between px-0 text-left align-middle dark:text-slate-400 h-10 bg-transparent whitespace-nowrap text-foreground-500 text-tiny font-semibold outline-none"
       onClick={getToggleSortingHandler}
     >
       <span>{title}</span>

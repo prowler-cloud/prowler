@@ -3,7 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { add } from "date-fns";
 
-import { StatusBadge } from "@/components/ui";
+import { StatusBadge } from "@/components/ui/table";
 import { ProviderProps } from "@/types";
 
 import { DateWithTime } from "../DateWithTime";
@@ -40,15 +40,15 @@ export const ColumnsProvider: ColumnDef<ProviderProps>[] = [
     },
   },
   {
-    accessorKey: "id",
+    accessorKey: "uid",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title={"Id"} param="provider_id" />
     ),
     cell: ({ row }) => {
       const {
-        attributes: { provider_id },
+        attributes: { uid },
       } = getProviderData(row);
-      return <SnippetIdProvider providerId={provider_id} />;
+      return <SnippetIdProvider providerId={uid} />;
     },
   },
   {
