@@ -1,5 +1,5 @@
 "use client";
-const _ = require("lodash");
+
 import {
   Badge,
   Button,
@@ -10,6 +10,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@nextui-org/react";
+import _ from "lodash";
 import { useSearchParams } from "next/navigation";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 
