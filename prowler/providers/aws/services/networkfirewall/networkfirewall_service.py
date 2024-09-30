@@ -28,10 +28,9 @@ class NetworkFirewall(AWSService):
                             network_firewall["FirewallArn"], self.audit_resources
                         )
                     ):
-                        self.network_firewalls[
-                            network_firewall.get("FirewallArn", "")
-                        ] = Firewall(
-                            arn=network_firewall.get("FirewallArn", ""),
+                        arn = network_firewall.get("FirewallArn", "")
+                        self.network_firewalls[arn] = Firewall(
+                            arn=arn,
                             region=regional_client.region,
                             name=network_firewall.get("FirewallName"),
                         )
