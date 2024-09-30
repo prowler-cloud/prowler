@@ -1,4 +1,5 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
+from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 from prowler.providers.aws.services.ssm.ssm_client import ssm_client
 from prowler.providers.aws.services.ssm.ssm_service import ResourceStatus
 
@@ -11,6 +12,11 @@ class ssm_managed_compliant_patching(Check):
             report.region = resource.region
             report.resource_id = resource.id
             report.resource_arn = resource.arn
+            # Find tags of the instance in ec2_client
+            for instance in ec2_client.instances:
+                if instance.id == resource.id:
+                    report.resource_tags = instance.tags
+
             if resource.status == ResourceStatus.COMPLIANT:
                 report.status = "PASS"
                 report.status_extended = (

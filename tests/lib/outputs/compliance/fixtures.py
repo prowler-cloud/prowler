@@ -12,6 +12,7 @@ from prowler.lib.check.compliance_models import (
     Mitre_Requirement_Attribute_AWS,
     Mitre_Requirement_Attribute_Azure,
     Mitre_Requirement_Attribute_GCP,
+    KISA_ISMSP_Requirement_Attribute,
 )
 
 CIS_1_4_AWS_NAME = "cis_1.4_aws"
@@ -626,6 +627,76 @@ NIST_800_53_REVISION_4_AWS = Compliance(
                     Section="Access Control (AC)",
                     SubSection="Account Management (AC-2)",
                     Service="aws",
+                )
+            ],
+            Checks=[],
+        ),
+    ],
+)
+KISA_ISMSP_AWS_NAME = "kisa_isms-p_2023_aws"
+KISA_ISMSP_AWS = Compliance(
+    Framework="KISA-ISMS-P",
+    Provider="AWS",
+    Version="2023",
+    Description="The ISMS-P certification, established by KISA Korea Internet & Security Agency",
+    Requirements=[
+        Compliance_Requirement(
+            Id="2.5.3",
+            Name="User Authentication",
+            Description="User access to information systems",
+            Attributes=[
+                KISA_ISMSP_Requirement_Attribute(
+                    Domain="2. Protection Measure Requirements",
+                    Subdomain="2.5. Authentication and Authorization Management",
+                    Section="2.5.3 User Authentication",
+                    AuditChecklist=[
+                        "Is access to information systems and personal information controlled through secure authentication?",
+                        "Are login attempt limitations enforced?",
+                    ],
+                    RelatedRegulations=[
+                        "Personal Information Protection Act, Article 29",
+                        "Standards for Ensuring the Safety of Personal Information, Article 5",
+                    ],
+                    AuditEvidence=[
+                        "Login screen for information systems",
+                        "Login failure message screen",
+                    ],
+                    NonComplianceCases=[
+                        "Case 1: Insufficient authentication when accessing information systems externally.",
+                        "Case 2: No limitation on login failure attempts.",
+                    ],
+                )
+            ],
+            Checks=[
+                "cloudwatch_log_metric_filter_authentication_failures",
+                "cognito_user_pool_mfa_enabled",
+            ],
+        ),
+        Compliance_Requirement(
+            Id="2.5.4",
+            Name="User Authentication",
+            Description="User access to information systems",
+            Attributes=[
+                KISA_ISMSP_Requirement_Attribute(
+                    Domain="2. Protection Measure Requirements",
+                    Subdomain="2.5. Authentication and Authorization Management",
+                    Section="2.5.3 User Authentication",
+                    AuditChecklist=[
+                        "Is access to information systems and personal information controlled through secure authentication?",
+                        "Are login attempt limitations enforced?",
+                    ],
+                    RelatedRegulations=[
+                        "Personal Information Protection Act, Article 29",
+                        "Standards for Ensuring the Safety of Personal Information, Article 5",
+                    ],
+                    AuditEvidence=[
+                        "Login screen for information systems",
+                        "Login failure message screen",
+                    ],
+                    NonComplianceCases=[
+                        "Case 1: Insufficient authentication when accessing information systems externally.",
+                        "Case 2: No limitation on login failure attempts.",
+                    ],
                 )
             ],
             Checks=[],

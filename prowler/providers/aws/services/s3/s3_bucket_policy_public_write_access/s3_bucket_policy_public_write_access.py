@@ -1,4 +1,5 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
+from prowler.providers.aws.services.iam.lib.policy import is_policy_public
 from prowler.providers.aws.services.s3.s3_client import s3_client
 from prowler.providers.aws.services.s3.s3control_client import s3control_client
 
@@ -37,37 +38,18 @@ class s3_bucket_policy_public_write_access(Check):
             else:
                 report.status = "PASS"
                 report.status_extended = f"S3 Bucket {bucket.name} does not allow public write access in the bucket policy."
-                for statement in bucket.policy["Statement"]:
-                    if (
-                        statement["Effect"] == "Allow"
-                        and "Condition" not in statement
-                        and (
-                            "Principal" in statement
-                            and "*" in str(statement["Principal"])
-                        )
-                        and (
-                            (
-                                isinstance(statement["Action"], list)
-                                and (
-                                    "s3:PutObject" in statement["Action"]
-                                    or "*" in statement["Action"]
-                                    or "s3:*" in statement["Action"]
-                                    or "s3:Put*" in statement["Action"]
-                                )
-                            )
-                            or (
-                                isinstance(statement["Action"], str)
-                                and (
-                                    "s3:PutObject" == statement["Action"]
-                                    or "*" == statement["Action"]
-                                    or "s3:*" == statement["Action"]
-                                    or "s3:Put*" == statement["Action"]
-                                )
-                            )
-                        )
-                    ):
-                        report.status = "FAIL"
-                        report.status_extended = f"S3 Bucket {bucket.name} allows public write access in the bucket policy."
+                if is_policy_public(
+                    bucket.policy,
+                    not_allowed_actions=[
+                        "s3:PutObject",
+                        "s3:DeleteObject",
+                        "s3:*",
+                        "s3:Put*",
+                        "s3:Delete*",
+                    ],
+                ):
+                    report.status = "FAIL"
+                    report.status_extended = f"S3 Bucket {bucket.name} allows public write access in the bucket policy."
 
             findings.append(report)
         return findings

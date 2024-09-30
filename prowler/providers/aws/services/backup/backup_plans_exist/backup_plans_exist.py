@@ -12,6 +12,7 @@ class backup_plans_exist(Check):
             report.resource_arn = backup_client.backup_plans[0].arn
             report.resource_id = backup_client.backup_plans[0].name
             report.region = backup_client.backup_plans[0].region
+            report.resource_tags = backup_client.backup_plans[0].tags
             findings.append(report)
         elif backup_client.backup_vaults:
             report = Check_Report_AWS(self.metadata())
@@ -20,5 +21,6 @@ class backup_plans_exist(Check):
             report.resource_arn = backup_client.backup_plan_arn_template
             report.resource_id = backup_client.audited_account
             report.region = backup_client.region
+            report.resource_tags = []
             findings.append(report)
         return findings

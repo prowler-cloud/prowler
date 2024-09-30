@@ -390,6 +390,8 @@ class Test_Config:
             "fedramp_low_revision_4_aws",
             "cis_2.0_gcp",
             "cis_1.8_kubernetes",
+            "kisa_isms-p_2023_aws",
+            "kisa_isms-p_2023-korean_aws",
         ]
         assert (
             get_available_compliance_frameworks().sort() == compliance_frameworks.sort()

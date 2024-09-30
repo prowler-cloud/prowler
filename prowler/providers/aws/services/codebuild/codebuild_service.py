@@ -93,6 +93,7 @@ class Codebuild(AWSService):
                 EnvironmentVariable(**var) for var in env_vars
             ]
             project.buildspec = project_info.get("source", {}).get("buildspec", "")
+            project.tags = project_info.get("tags", [])
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -124,3 +125,4 @@ class Project(BaseModel):
     source: Optional[Source]
     secondary_sources: Optional[list[Source]] = []
     environment_variables: Optional[List[EnvironmentVariable]]
+    tags: Optional[list]

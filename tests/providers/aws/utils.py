@@ -120,13 +120,6 @@ def set_mocked_aws_provider(
     # AWS Provider
     provider = AwsProvider()
 
-    # Set output options
-    provider.output_options = arguments, {}
-
-    # Output options
-
-    provider.output_options = arguments, {}
-
     # Mock Session
     provider._session.session_config = None
     provider._session.original_session = original_session

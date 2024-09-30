@@ -32,6 +32,7 @@ class RDS(AWSService):
         self.__threading_call__(self._describe_db_cluster_snapshot_attributes)
         self.__threading_call__(self._describe_db_engine_versions)
         self.__threading_call__(self._describe_db_event_subscriptions)
+        self.__threading_call__(self._list_tags, self.db_event_subscriptions)
 
     def _get_rds_arn_template(self, region):
         return (
@@ -463,11 +464,23 @@ class RDS(AWSService):
                         event_list=[],
                         enabled=False,
                         region=regional_client.region,
+                        tags=[],
                     )
                 )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _list_tags(self, resource: any):
+        try:
+            resource.tags = self.regional_clients[
+                resource.region
+            ].list_tags_for_resource(ResourceName=resource.arn)["TagList"]
+
+        except Exception as error:
+            logger.error(
+                f"{resource.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
 
@@ -578,3 +591,4 @@ class EventSubscription(BaseModel):
     event_list: list
     enabled: bool
     region: str
+    tags: Optional[list]

@@ -1,5 +1,6 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.awslambda.awslambda_client import awslambda_client
+from prowler.providers.aws.services.iam.lib.policy import is_policy_public
 
 
 class awslambda_function_not_publicly_accessible(Check):
@@ -14,37 +15,11 @@ class awslambda_function_not_publicly_accessible(Check):
 
             report.status = "PASS"
             report.status_extended = f"Lambda function {function.name} has a policy resource-based policy not public."
-
-            public_access = False
-            if function.policy:
-                for statement in function.policy["Statement"]:
-                    # Only check allow statements
-                    if statement["Effect"] == "Allow" and (
-                        "*" in statement["Principal"]
-                        or (
-                            isinstance(statement["Principal"], dict)
-                            and (
-                                "*" in statement["Principal"].get("AWS", "")
-                                or "*"
-                                in statement["Principal"].get("CanonicalUser", "")
-                                or (  # Check if function can be invoked by other AWS services
-                                    (
-                                        ".amazonaws.com"
-                                        in statement["Principal"].get("Service", "")
-                                    )
-                                    and (
-                                        "*" in statement.get("Action", "")
-                                        or "InvokeFunction"
-                                        in statement.get("Action", "")
-                                    )
-                                )
-                            )
-                        )
-                    ):
-                        public_access = True
-                        break
-
-            if public_access:
+            if is_policy_public(
+                function.policy,
+                awslambda_client.audited_account,
+                is_cross_account_allowed=True,
+            ):
                 report.status = "FAIL"
                 report.status_extended = f"Lambda function {function.name} has a policy resource-based policy with public access."
 

@@ -110,6 +110,11 @@ class Test_ec2_launch_template_no_public_ip:
             )
             assert result[0].resource_id == launch_template_id
             assert result[0].region == AWS_REGION_US_EAST_1
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:123456789012:launch-template/{launch_template_id}"
+            )
+            assert result[0].resource_tags == []
 
     def test_launch_template_public_ip_auto_assign(self):
         ec2_client = mock.MagicMock()
@@ -166,6 +171,11 @@ class Test_ec2_launch_template_no_public_ip:
             )
             assert result[0].resource_id == launch_template_id
             assert result[0].region == AWS_REGION_US_EAST_1
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:123456789012:launch-template/{launch_template_id}"
+            )
+            assert result[0].resource_tags == []
 
     def test_network_interface_with_public_ipv4_network_interface_autoassign_true_and_false(
         self,
@@ -258,6 +268,11 @@ class Test_ec2_launch_template_no_public_ip:
             )
             assert result[0].resource_id == launch_template_id
             assert result[0].region == AWS_REGION_US_EAST_1
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:123456789012:launch-template/{launch_template_id}"
+            )
+            assert result[0].resource_tags == []
 
     def test_network_interface_with_public_ipv6_network_interface_autoassign_true_and_false(
         self,
@@ -340,3 +355,8 @@ class Test_ec2_launch_template_no_public_ip:
             )
             assert result[0].resource_id == launch_template_id
             assert result[0].region == AWS_REGION_US_EAST_1
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:123456789012:launch-template/{launch_template_id}"
+            )
+            assert result[0].resource_tags == []
