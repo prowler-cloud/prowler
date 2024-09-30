@@ -12,10 +12,10 @@ class NetworkFirewall(AWSService):
         self.network_firewalls = {}
         self.__threading_call__(self._list_firewalls)
         self.__threading_call__(
-            self._describe_firewall(), self.network_firewalls.values()
+            self._describe_firewall, self.network_firewalls.values()
         )
         self.__threading_call__(
-            self._describe_firewall_policy(), self.network_firewalls.values()
+            self._describe_firewall_policy, self.network_firewalls.values()
         )
 
     def _list_firewalls(self, regional_client):
