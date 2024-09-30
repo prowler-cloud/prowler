@@ -15,12 +15,8 @@ class networkfirewall_policy_rule_group_associated(Check):
             report.resource_tags = firewall.tags
             report.status = "PASS"
             report.status_extended = f"Network Firewall {firewall.name} policy has at least one rule group associated."
-            print(firewall.stateless_rule_groups)
-            print(firewall.stateful_rule_groups)
-            if (
-                firewall.stateful_rule_groups == []
-                and firewall.stateless_rule_groups == []
-            ):
+
+            if not firewall.stateful_rule_groups and not firewall.stateless_rule_groups:
                 report.status = "FAIL"
                 report.status_extended = f"Network Firewall {firewall.name} policy does not have rule groups associated."
 
