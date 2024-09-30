@@ -37,8 +37,8 @@ class NetworkFirewall(AWSService):
                             network_firewall.get("FirewallArn", "")
                         ] = Firewall(
                             arn=network_firewall.get("FirewallArn"),
-                            name=network_firewall.get("FirewallName"),
                             region=regional_client.region,
+                            name=network_firewall.get("FirewallName"),
                         )
         except Exception as error:
             logger.error(
