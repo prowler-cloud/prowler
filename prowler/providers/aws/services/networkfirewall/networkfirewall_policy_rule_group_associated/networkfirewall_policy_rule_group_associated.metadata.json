@@ -5,8 +5,8 @@
   "CheckType": [
     "Software and Configuration Checks/Industry and Regulatory Standards/NIST 800-53"
   ],
-  "ServiceName": "Network Firewall",
-  "SubServiceName": "Firewall Policy",
+  "ServiceName": "network-firewall",
+  "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:network-firewall::account-id:firewall-policy/policy-name",
   "Severity": "medium",
   "ResourceType": "AwsNetworkFirewallFirewallPolicy",
@@ -15,7 +15,7 @@
   "RelatedUrl": "https://docs.aws.amazon.com/network-firewall/latest/developerguide/rule-groups.html",
   "Remediation": {
     "Code": {
-      "CLI": "aws network-firewall update-firewall-policy --firewall-policy-arn <policy-arn> --rule-group-arn <rule-group-arn>",
+      "CLI": "",
       "NativeIaC": "",
       "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/networkfirewall-controls.html#networkfirewall-3",
       "Terraform": ""
