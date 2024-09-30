@@ -717,19 +717,16 @@ export const CustomFilterIcon: React.FC<IconSvgProps> = ({
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      height={size || height || 15}
-      viewBox="0 0 15 15"
-      width={size || width || 15}
       aria-hidden="true"
+      height={size || height || 16}
+      width={size || width || 16}
+      viewBox="0 0 24 24"
       {...props}
     >
-      <path
-        d="M2.15 4a1.85 1.85 0 1 1 3.7 0 1.85 1.85 0 0 1-3.7 0ZM4 1.25a2.75 2.75 0 1 0 0 5.5 2.75 2.75 0 0 0 0-5.5ZM5.82 11 2.5 12.837V9.163L5.82 11ZM2.64 8.212a.7.7 0 0 0-1.039.612v4.352a.7.7 0 0 0 1.039.613l3.933-2.176a.7.7 0 0 0 0-1.225L2.64 8.212ZM8.3 9a.7.7 0 0 1 .7-.7h4a.7.7 0 0 1 .7.7v4a.7.7 0 0 1-.7.7H9a.7.7 0 0 1-.7-.7V9Zm.9.2v3.6h3.6V9.2H9.2Zm4.243-7.007a.45.45 0 0 0-.636-.636L11 3.364 9.193 1.557a.45.45 0 1 0-.636.636L10.364 4 8.557 5.807a.45.45 0 1 0 .636.636L11 4.636l1.807 1.807a.45.45 0 0 0 .636-.636L11.636 4l1.807-1.807Z"
-        fill="currentColor"
-        fillRule="evenodd"
-        clipRule="evenodd"
-      />
+      <g fill="none" stroke="currentColor" strokeWidth="1.5">
+        <path d="M9.5 14a3 3 0 1 1 0 6 3 3 0 0 1 0-6Zm5-10a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z" />
+        <path strokeLinecap="round" d="M15 16.959h7m-13-10H2m0 10h2m18-10h-2" />
+      </g>
     </svg>
   );
 };

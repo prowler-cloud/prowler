@@ -37,7 +37,7 @@ export const CustomSearchInput: React.FC = () => {
 
   return (
     <Input
-      variant="bordered"
+      variant="flat"
       placeholder="Search..."
       labelPlacement="outside"
       value={searchQuery}
@@ -54,8 +54,8 @@ export const CustomSearchInput: React.FC = () => {
           </button>
         )
       }
-      radius="full"
-      size="lg"
+      radius="sm"
+      size="sm"
     />
   );
 };

@@ -1,52 +1,34 @@
 "use client";
 
-import {
-  Button,
-  Checkbox,
-  CheckboxGroup,
-  Input,
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@nextui-org/react";
-import { SearchIcon } from "lucide-react";
+import { Divider } from "@nextui-org/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useMemo } from "react";
+import React, { useState } from "react";
+import { useCallback } from "react";
 
-import { CustomFilterIcon, PlusCircleIcon } from "@/components/icons";
-import { CustomButton } from "@/components/ui/custom";
+import { CustomFilterIcon } from "@/components/icons";
+import { CustomButton, CustomDropdownFilter } from "@/components/ui/custom";
+import { FilterOption } from "@/types";
 
-interface DataTableFilterCustomProps {
-  filters: { key: string; values: string[] }[];
+export interface DataTableFilterCustomProps {
+  filters: FilterOption[];
 }
 
-export function DataTableFilterCustom({ filters }: DataTableFilterCustomProps) {
+export const DataTableFilterCustom = ({
+  filters,
+}: DataTableFilterCustomProps) => {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [showFilters, setShowFilters] = useState(false);
 
-  const activeFilters = useMemo(() => {
-    const currentFilters: Record<string, string> = {};
-    Array.from(searchParams.entries()).forEach(([key, value]) => {
-      if (key.startsWith("filter[") && key.endsWith("]")) {
-        const filterKey = key.slice(7, -1);
-        if (filters.some((filter) => filter.key === filterKey)) {
-          // eslint-disable-next-line security/detect-object-injection
-          currentFilters[filterKey] = value;
-        }
-      }
-    });
-    return currentFilters;
-  }, [searchParams, filters]);
-
-  const applyFilter = useCallback(
-    (key: string, value: string) => {
+  const pushDropdownFilter = useCallback(
+    (key: string, values: string[]) => {
       const params = new URLSearchParams(searchParams);
       const filterKey = `filter[${key}]`;
 
-      if (params.get(filterKey) === value) {
+      if (values.length === 0) {
         params.delete(filterKey);
       } else {
-        params.set(filterKey, value);
+        params.set(filterKey, values.join(","));
       }
 
       router.push(`?${params.toString()}`);
@@ -55,74 +37,41 @@ export function DataTableFilterCustom({ filters }: DataTableFilterCustomProps) {
   );
 
   return (
-    <>
-      <div className="flex items-center gap-4 overflow-auto px-[6px] py-[4px]">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-4">
-            <Input
-              className="min-w-[200px]"
-              endContent={
-                <SearchIcon className="text-default-400" width={16} />
-              }
-              placeholder="Search"
-              size="sm"
-              // value={filterValue}
-              // onValueChange={onSearchChange}
+    <div className="flex flex-row items-center gap-4">
+      <CustomButton
+        variant="flat"
+        color={showFilters ? "action" : "primary"}
+        size="sm"
+        startContent={<CustomFilterIcon size={16} />}
+        onPress={() => setShowFilters(!showFilters)}
+      >
+        {showFilters ? "Hide Filters" : "Show Filters"}
+      </CustomButton>
+
+      <div
+        className={`transition-all duration-500 ease-in-out ${
+          showFilters
+            ? "opacity-100 max-h-96 overflow-visible"
+            : "opacity-0 max-h-0 overflow-hidden"
+        }`}
+      >
+        <div className="flex flex-row gap-4">
+          {filters.map((filter) => (
+            <CustomDropdownFilter
+              key={filter.key}
+              filter={{
+                ...filter,
+                labelCheckboxGroup: filter.labelCheckboxGroup,
+              }}
+              onFilterChange={pushDropdownFilter}
             />
-          </div>
-          <div>
-            <Popover placement="bottom">
-              <PopoverTrigger>
-                <Button
-                  className="bg-default-100 text-default-800"
-                  startContent={
-                    <PlusCircleIcon className="text-default-400" width={16} />
-                  }
-                  size="sm"
-                >
-                  Filter
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-80">
-                <div className="flex w-full flex-col gap-6 px-2 py-4">
-                  <CheckboxGroup
-                    label="Select cities"
-                    defaultValue={["buenos-aires", "london"]}
-                  >
-                    <Checkbox value="buenos-aires">Buenos Aires</Checkbox>
-                    <Checkbox value="sydney">Sydney</Checkbox>
-                    <Checkbox value="san-francisco">San Francisco</Checkbox>
-                    <Checkbox value="london">London</Checkbox>
-                    <Checkbox value="tokyo">Tokyo</Checkbox>
-                  </CheckboxGroup>
-                </div>
-              </PopoverContent>
-            </Popover>
+          ))}
+          <div className="flex flex-row items-center gap-2">
+            <Divider className="text-default-800 h-5" orientation="vertical" />
+            <span className="text-sm text-default-800">Selected</span>
           </div>
         </div>
       </div>
-
-      <div className="flex flex-wrap items-center space-x-2">
-        <CustomButton
-          variant="dashed"
-          size="sm"
-          startContent={<CustomFilterIcon size={16} />}
-        >
-          Show Filters
-        </CustomButton>
-        {filters.flatMap(({ key, values }) =>
-          values.map((value) => (
-            <Button
-              key={`${key}-${value}`}
-              onPress={() => applyFilter(key, value)}
-              // eslint-disable-next-line security/detect-object-injection
-              variant={activeFilters[key] === value ? "faded" : "light"}
-            >
-              {value || "All"}
-            </Button>
-          )),
-        )}
-      </div>
-    </>
+    </div>
   );
-}
+};

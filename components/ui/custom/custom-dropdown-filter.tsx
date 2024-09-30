@@ -1,40 +1,56 @@
 "use client";
 
 import {
+  Badge,
   Button,
   Checkbox,
   CheckboxGroup,
+  Divider,
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@nextui-org/react";
-import React, { useCallback, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 
 import { PlusCircleIcon } from "@/components/icons";
-
-interface FilterOption {
-  key: string;
-  labelCheckboxGroup: string;
-  values: string[];
-}
-
-interface CustomDropdownFilterProps {
-  filter?: FilterOption;
-  onFilterChange?: (key: string, values: string[]) => void;
-}
+import { CustomDropdownFilterProps } from "@/types";
 
 export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
   filter,
   onFilterChange,
 }) => {
-  // Early return if filter is undefined
-  if (!filter) {
-    return null;
-  }
-
+  const searchParams = useSearchParams();
   const [groupSelected, setGroupSelected] = useState(new Set<string>());
 
-  const allFilterKeys = filter.values || [];
+  const allFilterKeys = filter?.values || [];
+
+  const getActiveFilter = useMemo(() => {
+    const currentFilters: Record<string, string> = {};
+    Array.from(searchParams.entries()).forEach(([key, value]) => {
+      if (key.startsWith("filter[") && key.endsWith("]")) {
+        const filterKey = key.slice(7, -1);
+        if (filter && filter.key === filterKey) {
+          // eslint-disable-next-line security/detect-object-injection
+          currentFilters[filterKey] = value;
+        }
+      }
+    });
+    return currentFilters;
+  }, [searchParams, filter]);
+
+  useEffect(() => {
+    if (filter && getActiveFilter[filter.key]) {
+      const activeValues = getActiveFilter[filter.key].split(",");
+      const newSelection = new Set(activeValues);
+      if (newSelection.size === allFilterKeys.length) {
+        newSelection.add("all");
+      }
+      setGroupSelected(newSelection);
+    } else {
+      setGroupSelected(new Set());
+    }
+  }, [getActiveFilter, filter, allFilterKeys]);
 
   const onSelectionChange = useCallback(
     (keys: string[]) => {
@@ -72,7 +88,6 @@ export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
       setGroupSelected(new Set(["all", ...allFilterKeys]));
     }
   }, [groupSelected, allFilterKeys]);
-
   return (
     <div className="flex w-full max-w-xs flex-col gap-2">
       <Popover placement="bottom">
@@ -84,13 +99,46 @@ export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
             }
             size="sm"
           >
-            {filter.key}
+            {filter?.labelCheckboxGroup}
+            {groupSelected.size > 0 && (
+              <>
+                <Divider orientation="vertical" className="mx-2 h-4" />
+                <Badge
+                  variant="flat"
+                  className="rounded-sm px-1 font-normal lg:hidden"
+                >
+                  {groupSelected.size}
+                </Badge>
+                <div className="hidden space-x-1 lg:flex">
+                  {groupSelected.size > 2 ? (
+                    <Badge
+                      variant="flat"
+                      className="rounded-sm px-1 font-normal"
+                    >
+                      {groupSelected.size} selected
+                    </Badge>
+                  ) : (
+                    Array.from(groupSelected)
+                      .filter((value) => value !== "all")
+                      .map((value) => (
+                        <Badge
+                          variant="flat"
+                          key={value}
+                          className="rounded-sm px-1 font-normal"
+                        >
+                          {value}
+                        </Badge>
+                      ))
+                  )}
+                </div>
+              </>
+            )}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-80">
           <div className="flex w-full flex-col gap-6 px-2 py-4">
             <CheckboxGroup
-              label={filter.labelCheckboxGroup}
+              label={filter?.labelCheckboxGroup}
               value={Array.from(groupSelected)}
               onValueChange={onSelectionChange}
             >
@@ -106,12 +154,14 @@ export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
           </div>
         </PopoverContent>
       </Popover>
-      <p className="text-small text-default-500">
-        Selected:{" "}
-        {Array.from(groupSelected)
-          .filter((item) => item !== "all")
-          .join(", ")}
-      </p>
+      {groupSelected?.size > 0 && (
+        <p className="text-small text-default-500">
+          Selected:{" "}
+          {Array.from(groupSelected)
+            .filter((item) => item !== "all")
+            .join(", ")}
+        </p>
+      )}
     </div>
   );
 };

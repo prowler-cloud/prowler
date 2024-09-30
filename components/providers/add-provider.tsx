@@ -1,6 +1,5 @@
 "use client";
 
-import { Chip } from "@nextui-org/react";
 import { useState } from "react";
 
 import { AddIcon } from "../icons";
@@ -23,17 +22,7 @@ export const AddProvider = () => {
         <AddForm setIsOpen={setIsAddOpen} />
       </CustomAlertModal>
 
-      <div className="w-full flex items-center justify-between">
-        <div className="flex w-fit items-center gap-2">
-          <h1 className="text-2xl font-[700] leading-[32px]">TBD</h1>
-          <Chip
-            className="hidden items-center text-default-500 sm:flex"
-            size="sm"
-            variant="flat"
-          >
-            3
-          </Chip>
-        </div>
+      <div className="w-full flex items-center justify-end">
         <CustomButton
           variant="solid"
           color="action"

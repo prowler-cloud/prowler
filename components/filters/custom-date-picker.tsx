@@ -59,7 +59,6 @@ export const CustomDatePicker = () => {
   return (
     <div className="flex flex-col md:gap-2 w-full">
       <DatePicker
-        CalendarBottomContent={<div className="min-w-[380px]"></div>}
         CalendarTopContent={
           <ButtonGroup
             fullWidth
@@ -89,7 +88,6 @@ export const CustomDatePicker = () => {
         }}
         value={value}
         onChange={handleDateChange}
-        label="Scan date"
         size="sm"
         variant="flat"
       />

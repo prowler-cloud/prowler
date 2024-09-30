@@ -3,25 +3,17 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useCallback, useEffect, useState } from "react";
 
+import { FilterControlsProps } from "@/types";
+
 import { CrossIcon } from "../icons";
 import { DataTableFilterCustom } from "../providers/table";
 import { CustomButton } from "../ui/custom";
-import { CustomAccountSelection } from "./CustomAccountSelection";
-import { CustomCheckboxMutedFindings } from "./CustomCheckboxMutedFindings";
-import { CustomDatePicker } from "./CustomDatePicker";
-import { CustomRegionSelection } from "./CustomRegionSelection";
-import { CustomSearchInput } from "./CustomSearchInput";
-import { CustomSelectProvider } from "./CustomSelectProvider";
-
-interface FilterControlsProps {
-  search?: boolean;
-  providers?: boolean;
-  date?: boolean;
-  regions?: boolean;
-  accounts?: boolean;
-  mutedFindings?: boolean;
-  customFilters?: { key: string; values: string[] }[];
-}
+import { CustomCheckboxMutedFindings } from "./custo-checkbox-muted-findings";
+import { CustomAccountSelection } from "./custom-account-selection";
+import { CustomDatePicker } from "./custom-date-picker";
+import { CustomRegionSelection } from "./custom-region-selection";
+import { CustomSearchInput } from "./custom-search-input";
+import { CustomSelectProvider } from "./custom-select-provider";
 
 export const FilterControls: React.FC<FilterControlsProps> = ({
   search = false,

@@ -1,8 +1,8 @@
 export const filtersProviders = [
   {
-    key: "provider",
-    labelCheckboxGroup: "Provider",
-    values: ["aws", "gcp", "azure"],
+    key: "provider__in",
+    labelCheckboxGroup: "Select a Provider",
+    values: ["aws", "gcp", "azure", "kubernetes"],
   },
   {
     key: "connected",

@@ -9,7 +9,7 @@ import {
   CustomProviderInputAzure,
   CustomProviderInputGCP,
   CustomProviderInputKubernetes,
-} from "./CustomProviderInputs";
+} from "./custom-provider-inputs";
 
 const dataInputsProvider = [
   {
@@ -43,9 +43,9 @@ export const CustomSelectProvider = () => {
     (value: string) => {
       const params = new URLSearchParams(searchParams.toString());
       if (value) {
-        params.set("filter[provider]", value);
+        params.set("filter[provider__in]", value);
       } else {
-        params.delete("filter[provider]");
+        params.delete("filter[provider__in]");
       }
       router.push(`?${params.toString()}`, { scroll: false });
     },
@@ -53,21 +53,18 @@ export const CustomSelectProvider = () => {
   );
 
   useEffect(() => {
-    const providerFromUrl = searchParams.get("filter[provider]") || "";
+    const providerFromUrl = searchParams.get("filter[provider__in]") || "";
     setSelectedProvider(providerFromUrl);
   }, [searchParams]);
 
   return (
     <Select
       items={dataInputsProvider}
-      label="Select a Provider"
+      // selectionMode="multiple"
+      // label="Select a Provider"
       placeholder="Select a provider"
-      labelPlacement="inside"
+      labelPlacement="outside"
       size="sm"
-      classNames={{
-        base: "w-full",
-        trigger: "h-12",
-      }}
       onChange={(e) => {
         const value = e.target.value;
         setSelectedProvider(value);
