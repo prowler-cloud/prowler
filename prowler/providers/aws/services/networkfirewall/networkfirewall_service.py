@@ -33,7 +33,6 @@ class NetworkFirewall(AWSService):
                             region=regional_client.region,
                             name=network_firewall.get("FirewallName"),
                         )
-
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -70,6 +69,29 @@ class NetworkFirewall(AWSService):
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 
+    def _describe_firewall_policy(self):
+        logger.info("Network Firewall - Describe Network Firewall Policies...")
+        try:
+            for network_firewall in self.network_firewalls.values():
+                regional_client = self.regional_clients[network_firewall.region]
+                try:
+                    describe_firewall_policy = regional_client.describe_firewall_policy(
+                        FirewallPolicyArn=network_firewall.policy_arn,
+                    )
+                    firewall_policy = describe_firewall_policy.get("FirewallPolicy", {})
+                    network_firewall.default_stateless_actions = firewall_policy.get(
+                        "StatelessDefaultActions", []
+                    )
+                except Exception as error:
+                    logger.error(
+                        f"Error describing firewall policy {network_firewall.policy_arn} in region {network_firewall.region}: "
+                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
+            )
+
 
 class Firewall(BaseModel):
     name: str
@@ -79,3 +101,4 @@ class Firewall(BaseModel):
     tags: list = []
     encryption_type: str = None
     deletion_protection: bool = False
+    default_stateless_actions: list = []
