@@ -57,6 +57,7 @@ export const FilterControls: React.FC<FilterControlsProps> = ({
 
         {showClearButton && (
           <CustomButton
+            ariaLabel="Reset"
             className="w-fit"
             onPress={clearAllFilters}
             variant="dashed"

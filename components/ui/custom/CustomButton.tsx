@@ -18,6 +18,7 @@ export const buttonClasses = {
 
 interface ButtonProps {
   type?: "button" | "submit" | "reset";
+  ariaLabel: string;
   className?: string;
   variant?:
     | "solid"
@@ -50,6 +51,7 @@ interface ButtonProps {
 
 export const CustomButton = ({
   type = "button",
+  ariaLabel,
   className,
   variant = "solid",
   color = "primary",
@@ -66,6 +68,7 @@ export const CustomButton = ({
 }: ButtonProps) => (
   <Button
     type={type}
+    aria-label={ariaLabel}
     onPress={onPress}
     variant={variant as NextUIVariants}
     color={color as NextUIColors}

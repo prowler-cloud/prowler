@@ -89,6 +89,7 @@ export const EditForm = ({
         <div className="w-full flex justify-center sm:space-x-6">
           <CustomButton
             type="button"
+            ariaLabel="Cancel"
             className="w-full bg-transparent"
             variant="faded"
             size="lg"
@@ -101,6 +102,7 @@ export const EditForm = ({
 
           <CustomButton
             type="submit"
+            ariaLabel="Save"
             className="w-full"
             variant="solid"
             color="action"

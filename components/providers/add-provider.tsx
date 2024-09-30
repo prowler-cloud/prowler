@@ -24,6 +24,7 @@ export const AddProvider = () => {
 
       <div className="w-full flex items-center justify-end">
         <CustomButton
+          ariaLabel="Add Account"
           variant="solid"
           color="action"
           size="md"

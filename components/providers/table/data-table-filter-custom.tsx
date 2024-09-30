@@ -39,6 +39,7 @@ export const DataTableFilterCustom = ({
   return (
     <div className="flex flex-row items-center gap-4">
       <CustomButton
+        ariaLabel={showFilters ? "Hide Filters" : "Show Filters"}
         variant="flat"
         color={showFilters ? "action" : "primary"}
         size="sm"

@@ -94,6 +94,7 @@ export const AddForm = ({
         <div className="w-full flex justify-center sm:space-x-6">
           <CustomButton
             type="button"
+            ariaLabel="Cancel"
             className="w-full bg-transparent"
             variant="faded"
             size="lg"
@@ -106,6 +107,7 @@ export const AddForm = ({
 
           <CustomButton
             type="submit"
+            ariaLabel="Confirm"
             className="w-full"
             variant="solid"
             color="action"
