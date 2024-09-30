@@ -19,13 +19,13 @@ class ec2_launch_template_no_secrets(Check):
             report.region = template.region
             report.resource_id = template.id
             report.resource_arn = template.arn
+            report.resource_tags = template.tags
 
             versions_with_secrets = []
 
             for version in template.versions:
                 if not version.template_data.user_data:
                     continue
-
                 user_data = b64decode(version.template_data.user_data)
 
                 try:

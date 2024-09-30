@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "cloudfront_distributions_https_sni_enabled",
+  "CheckTitle": "Check if CloudFront distributions are using SNI to serve HTTPS requests.",
+  "CheckType": [],
+  "ServiceName": "cloudfront",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:cloudfront:region:account-id:distribution/resource-id",
+  "Severity": "low",
+  "ResourceType": "AwsCloudFrontDistribution",
+  "Description": "Check if CloudFront distributions are using SNI to serve HTTPS requests.",
+  "Risk": "If SNI is not used, CloudFront will allocate a dedicated IP address for each SSL certificate, leading to higher costs and inefficient IP address utilization. This could also complicate scaling and managing multiple distributions, especially if your domain requires multiple SSL certificates.",
+  "RelatedUrl": "https://www.cloudflare.com/es-es/learning/ssl/what-is-sni/",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/cloudfront-controls.html#cloudfront-8",
+      "Terraform": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudFront/cloudfront-sni.html"
+    },
+    "Recommendation": {
+      "Text": "Ensure that your CloudFront distributions are configured to use Server Name Indication (SNI) when serving HTTPS requests with custom SSL/TLS certificates. This is the recommended approach for reducing costs and optimizing IP address usage.",
+      "Url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/cnames-https-dedicated-ip-or-sni.html#cnames-https-sni"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

@@ -52,7 +52,6 @@ from prowler.providers.aws.models import (
     AWSIdentityInfo,
     AWSMFAInfo,
     AWSOrganizationsInfo,
-    AWSOutputOptions,
     AWSSession,
 )
 from prowler.providers.common.models import Audit_Metadata, Connection
@@ -68,7 +67,6 @@ class AwsProvider(Provider):
     _audit_config: dict
     _scan_unused_services: bool = False
     _enabled_regions: set = set()
-    _output_options: AWSOutputOptions
     # TODO: this is not optional, enforce for all providers
     audit_metadata: Audit_Metadata
 
@@ -270,6 +268,8 @@ class AwsProvider(Provider):
         # Fixer Config
         self._fixer_config = fixer_config
 
+        Provider.set_global_provider(self)
+
     @property
     def identity(self):
         return self._identity
@@ -301,17 +301,6 @@ class AwsProvider(Provider):
     @property
     def fixer_config(self):
         return self._fixer_config
-
-    @property
-    def output_options(self):
-        return self._output_options
-
-    @output_options.setter
-    def output_options(self, options: tuple):
-        arguments, bulk_checks_metadata = options
-        self._output_options = AWSOutputOptions(
-            arguments, bulk_checks_metadata, self._identity
-        )
 
     @property
     def mutelist(self) -> AWSMutelist:

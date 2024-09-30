@@ -14,6 +14,9 @@ DMS_INSTANCE_ARN = (
 )
 KMS_KEY_ID = f"arn:aws:kms:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:key/abcdabcd-1234-abcd-1234-abcdabcdabcd"
 
+DMS_ENDPOINT_NAME = "dms-endpoint"
+DMS_ENDPOINT_ARN = f"arn:aws:dms:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:endpoint:{DMS_ENDPOINT_NAME}"
+
 # Mocking Access Analyzer Calls
 make_api_call = botocore.client.BaseClient._make_api_call
 
@@ -34,6 +37,31 @@ def mock_make_api_call(self, operation_name, kwargs):
                 },
             ]
         }
+    elif operation_name == "DescribeEndpoints":
+        return {
+            "Endpoints": [
+                {
+                    "EndpointIdentifier": DMS_ENDPOINT_NAME,
+                    "EndpointArn": DMS_ENDPOINT_ARN,
+                    "SslMode": "require",
+                }
+            ]
+        }
+    elif operation_name == "ListTagsForResource":
+        if kwargs["ResourceArn"] == DMS_INSTANCE_ARN:
+            return {
+                "TagList": [
+                    {"Key": "Name", "Value": "rep-instance"},
+                    {"Key": "Owner", "Value": "admin"},
+                ]
+            }
+        elif kwargs["ResourceArn"] == DMS_ENDPOINT_ARN:
+            return {
+                "TagList": [
+                    {"Key": "Name", "Value": "dms-endpoint"},
+                    {"Key": "Owner", "Value": "admin"},
+                ]
+            }
 
     return make_api_call(self, operation_name, kwargs)
 
@@ -84,3 +112,25 @@ class Test_DMS_Service:
         assert dms.instances[0].auto_minor_version_upgrade
         assert dms.instances[0].multi_az
         assert dms.instances[0].security_groups == []
+
+    # Test DMS Endpoints
+    def test_describe_endpoints(self):
+        aws_provider = set_mocked_aws_provider()
+        dms = DMS(aws_provider)
+
+        assert len(dms.endpoints) == 1
+        assert dms.endpoints[DMS_ENDPOINT_ARN].id == DMS_ENDPOINT_NAME
+        assert dms.endpoints[DMS_ENDPOINT_ARN].ssl_mode == "require"
+
+    def test_list_tags(self):
+        aws_provider = set_mocked_aws_provider()
+        dms = DMS(aws_provider)
+
+        assert dms.instances[0].tags == [
+            {"Key": "Name", "Value": "rep-instance"},
+            {"Key": "Owner", "Value": "admin"},
+        ]
+        assert dms.endpoints[DMS_ENDPOINT_ARN].tags == [
+            {"Key": "Name", "Value": "dms-endpoint"},
+            {"Key": "Owner", "Value": "admin"},
+        ]

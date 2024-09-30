@@ -1,6 +1,6 @@
 from argparse import Namespace
 from datetime import datetime
-from os import environ, rmdir
+from os import environ
 
 from freezegun import freeze_time
 from mock import MagicMock, patch
@@ -11,8 +11,7 @@ from prowler.config.config import (
     load_and_validate_config_file,
 )
 from prowler.providers.gcp.gcp_provider import GcpProvider
-from prowler.providers.gcp.models import GCPIdentityInfo, GCPOutputOptions, GCPProject
-from tests.providers.gcp.gcp_fixtures import mock_api_client
+from prowler.providers.gcp.models import GCPIdentityInfo, GCPProject
 
 
 class TestGCPProvider:
@@ -45,7 +44,7 @@ class TestGCPProvider:
 
         with patch(
             "prowler.providers.gcp.gcp_provider.GcpProvider.setup_session",
-            return_value=None,
+            return_value=(None, "test-project"),
         ), patch(
             "prowler.providers.gcp.gcp_provider.GcpProvider.get_projects",
             return_value=projects,
@@ -68,101 +67,9 @@ class TestGCPProvider:
             assert gcp_provider.session is None
             assert gcp_provider.project_ids == ["test-project"]
             assert gcp_provider.projects == projects
+            assert gcp_provider.default_project_id == "test-project"
             assert gcp_provider.identity == GCPIdentityInfo(profile="default")
             assert gcp_provider.audit_config == {"shodan_api_key": None}
-
-    @freeze_time(datetime.today())
-    def test_gcp_provider_output_options(self):
-        arguments = Namespace()
-        arguments.project_id = []
-        arguments.excluded_project_id = []
-        arguments.list_project_id = False
-        arguments.credentials_file = ""
-        arguments.impersonate_service_account = ""
-        arguments.config_file = default_config_file_path
-        arguments.fixer_config = default_fixer_config_file_path
-
-        # Output options
-        arguments.status = []
-        arguments.output_formats = ["csv"]
-        arguments.output_directory = "output_test_directory"
-        arguments.verbose = True
-        arguments.only_logs = False
-        arguments.unix_timestamp = False
-        arguments.shodan = "test-api-key"
-
-        projects = {
-            "test-project": GCPProject(
-                number="55555555",
-                id="project/55555555",
-                name="test-project",
-                labels={"test": "value"},
-                lifecycle_state="",
-            )
-        }
-
-        mocked_service = MagicMock()
-
-        mocked_service.projects.list.return_value = MagicMock(
-            execute=MagicMock(return_value={"projects": projects})
-        )
-        with patch(
-            "prowler.providers.gcp.gcp_provider.GcpProvider.setup_session",
-            return_value=None,
-        ), patch(
-            "prowler.providers.gcp.gcp_provider.GcpProvider.get_projects",
-            return_value=projects,
-        ), patch(
-            "prowler.providers.gcp.gcp_provider.GcpProvider.update_projects_with_organizations",
-            return_value=None,
-        ), patch(
-            "prowler.providers.gcp.gcp_provider.discovery.build",
-            new=mock_api_client,
-        ), patch(
-            "prowler.providers.gcp.gcp_provider.discovery.build",
-            return_value=mocked_service,
-        ):
-            gcp_provider = GcpProvider(
-                arguments.project_id,
-                arguments.excluded_project_id,
-                arguments.credentials_file,
-                arguments.impersonate_service_account,
-                arguments.list_project_id,
-                arguments.config_file,
-                arguments.fixer_config,
-            )
-            # This is needed since the output_options requires to get the global provider to get the audit config
-            with patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=gcp_provider,
-            ):
-                gcp_provider.output_options = arguments, {}
-
-                assert isinstance(gcp_provider.output_options, GCPOutputOptions)
-                assert gcp_provider.output_options.status == []
-                assert gcp_provider.output_options.output_modes == [
-                    "csv",
-                ]
-                assert (
-                    gcp_provider.output_options.output_directory
-                    == arguments.output_directory
-                )
-                assert gcp_provider.output_options.bulk_checks_metadata == {}
-                assert gcp_provider.output_options.verbose
-                assert (
-                    f"prowler-output-{gcp_provider.identity.profile}"
-                    in gcp_provider.output_options.output_filename
-                )
-                # Flaky due to the millisecond part of the timestamp
-                # assert (
-                #     gcp_provider.output_options.output_filename
-                #     == f"prowler-output-{gcp_provider.identity.profile}-{datetime.today().strftime('%Y%m%d%H%M%S')}"
-                # )
-
-                # Delete testing directory
-                # TODO: move this to a fixtures file
-                rmdir(f"{arguments.output_directory}/compliance")
-                rmdir(arguments.output_directory)
 
     @freeze_time(datetime.today())
     def test_is_project_matching(self):
@@ -201,7 +108,7 @@ class TestGCPProvider:
         )
         with patch(
             "prowler.providers.gcp.gcp_provider.GcpProvider.setup_session",
-            return_value=None,
+            return_value=(None, None),
         ), patch(
             "prowler.providers.gcp.gcp_provider.GcpProvider.get_projects",
             return_value=projects,

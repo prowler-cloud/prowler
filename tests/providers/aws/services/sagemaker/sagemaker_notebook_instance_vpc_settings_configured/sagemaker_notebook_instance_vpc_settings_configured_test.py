@@ -2,7 +2,11 @@ from unittest import mock
 from uuid import uuid4
 
 from prowler.providers.aws.services.sagemaker.sagemaker_service import NotebookInstance
-from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, AWS_REGION_EU_WEST_1
+from tests.providers.aws.utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_provider,
+)
 
 test_notebook_instance = "test-notebook-instance"
 notebook_instance_arn = f"arn:aws:sagemaker:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:notebook-instance/{test_notebook_instance}"
@@ -13,8 +17,14 @@ class Test_sagemaker_notebook_instance_vpc_settings_configured:
     def test_no_instances(self):
         sagemaker_client = mock.MagicMock
         sagemaker_client.sagemaker_notebook_instances = []
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+
         with mock.patch(
-            "prowler.providers.aws.services.sagemaker.sagemaker_service.SageMaker",
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.sagemaker.sagemaker_notebook_instance_vpc_settings_configured.sagemaker_notebook_instance_vpc_settings_configured.sagemaker_client",
             sagemaker_client,
         ):
             from prowler.providers.aws.services.sagemaker.sagemaker_notebook_instance_vpc_settings_configured.sagemaker_notebook_instance_vpc_settings_configured import (
@@ -36,8 +46,14 @@ class Test_sagemaker_notebook_instance_vpc_settings_configured:
                 subnet_id=subnet_id,
             )
         )
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+
         with mock.patch(
-            "prowler.providers.aws.services.sagemaker.sagemaker_service.SageMaker",
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.sagemaker.sagemaker_notebook_instance_vpc_settings_configured.sagemaker_notebook_instance_vpc_settings_configured.sagemaker_client",
             sagemaker_client,
         ):
             from prowler.providers.aws.services.sagemaker.sagemaker_notebook_instance_vpc_settings_configured.sagemaker_notebook_instance_vpc_settings_configured import (
@@ -66,8 +82,14 @@ class Test_sagemaker_notebook_instance_vpc_settings_configured:
                 root_access=True,
             )
         )
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+
         with mock.patch(
-            "prowler.providers.aws.services.sagemaker.sagemaker_service.SageMaker",
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.sagemaker.sagemaker_notebook_instance_vpc_settings_configured.sagemaker_notebook_instance_vpc_settings_configured.sagemaker_client",
             sagemaker_client,
         ):
             from prowler.providers.aws.services.sagemaker.sagemaker_notebook_instance_vpc_settings_configured.sagemaker_notebook_instance_vpc_settings_configured import (

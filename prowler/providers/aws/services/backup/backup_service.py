@@ -9,7 +9,6 @@ from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################## Backup
 class Backup(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
@@ -19,12 +18,14 @@ class Backup(AWSService):
         self.backup_vault_arn_template = f"arn:{self.audited_partition}:backup:{self.region}:{self.audited_account}:backup-vault"
         self.backup_vaults = []
         self.__threading_call__(self._list_backup_vaults)
+        self.__threading_call__(self._list_tags, self.backup_vaults)
         self.backup_plans = []
         self.__threading_call__(self._list_backup_plans)
+        self.__threading_call__(self._list_tags, self.backup_plans)
         self.backup_report_plans = []
         self.__threading_call__(self._list_backup_report_plans)
-        self.protected_resources = {}
-        self.__threading_call__(self._list_protected_resources)
+        self.protected_resources = []
+        self.__threading_call__(self._list_backup_selections)
 
     def _list_backup_vaults(self, regional_client):
         logger.info("Backup - Listing Backup Vaults...")
@@ -140,31 +141,41 @@ class Backup(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def _list_protected_resources(self, regional_client):
-        logger.info("Backup - Listing Protected Resources...")
-
+    def _list_backup_selections(self, regional_client):
+        logger.info("Backup - Listing Backup Selections...")
         try:
-            list_protected_resources_paginator = regional_client.get_paginator(
-                "list_protected_resources"
+            for backup_plan in self.backup_plans:
+                paginator = regional_client.get_paginator("list_backup_selections")
+                for page in paginator.paginate(BackupPlanId=backup_plan.id):
+                    for selection in page.get("BackupSelectionsList", []):
+                        selection_id = selection.get("SelectionId")
+                        if selection_id:
+                            backup_selection = regional_client.get_backup_selection(
+                                BackupPlanId=backup_plan.id, SelectionId=selection_id
+                            )["BackupSelection"]
+
+                            self.protected_resources.extend(
+                                backup_selection.get("Resources", [])
+                            )
+
+        except ClientError as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            for page in list_protected_resources_paginator.paginate():
-                for resource in page.get("Results", []):
-                    arn = resource.get("ResourceArn", "")
-                    if not self.audit_resources or (
-                        is_resource_filtered(
-                            arn,
-                            self.audit_resources,
-                        )
-                    ):
-                        self.protected_resources[arn] = ProtectedResource(
-                            arn=arn,
-                            resource_type=resource.get("ResourceType"),
-                            region=regional_client.region,
-                            last_backup_time=resource.get("LastBackupTime"),
-                        )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _list_tags(self, resource):
+        try:
+            tags = self.regional_clients[resource.region].list_tags(
+                ResourceArn=resource.arn
+            )["Tags"]
+            resource.tags = [tags] if tags else []
+        except Exception as error:
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
 
@@ -177,6 +188,7 @@ class BackupVault(BaseModel):
     locked: bool
     min_retention_days: int = None
     max_retention_days: int = None
+    tags: Optional[list]
 
 
 class BackupPlan(BaseModel):
@@ -187,6 +199,7 @@ class BackupPlan(BaseModel):
     version_id: str
     last_execution_date: Optional[datetime]
     advanced_settings: list
+    tags: Optional[list]
 
 
 class BackupReportPlan(BaseModel):
@@ -195,10 +208,3 @@ class BackupReportPlan(BaseModel):
     name: str
     last_attempted_execution_date: Optional[datetime]
     last_successful_execution_date: Optional[datetime]
-
-
-class ProtectedResource(BaseModel):
-    arn: str
-    resource_type: str
-    region: str
-    last_backup_time: Optional[datetime]

@@ -54,9 +54,9 @@ class Test_iam_inline_policy_no_full_access_to_kms:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Inline Policy {policy_name} allows 'kms:*' privileges."
+                == f"Inline policy {policy_name} attached to role {role_name} allows 'kms:*' privileges."
             )
-            assert result[0].resource_id == "policy_kms_full"
+            assert result[0].resource_id == f"test_role/{policy_name}"
             assert result[0].resource_arn == role_arn
             assert result[0].region == "eu-west-1"
 
@@ -101,9 +101,9 @@ class Test_iam_inline_policy_no_full_access_to_kms:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Inline Policy {policy_name} does not allow 'kms:*' privileges."
+                == f"Inline policy {policy_name} attached to role {role_name} does not allow 'kms:*' privileges."
             )
-            assert result[0].resource_id == "policy_no_kms_full"
+            assert result[0].resource_id == f"test_role/{policy_name}"
             assert result[0].resource_arn == role_arn
             assert result[0].region == "eu-west-1"
 
@@ -148,9 +148,9 @@ class Test_iam_inline_policy_no_full_access_to_kms:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Inline Policy {policy_name} allows 'kms:*' privileges."
+                == f"Inline policy {policy_name} attached to role {role_name} allows 'kms:*' privileges."
             )
-            assert result[0].resource_id == "policy_kms_full"
+            assert result[0].resource_id == f"test_role/{policy_name}"
             assert result[0].resource_arn == role_arn
             assert result[0].region == "eu-west-1"
 
@@ -199,9 +199,9 @@ class Test_iam_inline_policy_no_full_access_to_kms:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Inline Policy {policy_name} does not allow 'kms:*' privileges."
+                == f"Inline policy {policy_name} attached to role {role_name} does not allow 'kms:*' privileges."
             )
-            assert result[0].resource_id == "policy_no_kms_full"
+            assert result[0].resource_id == f"test_role/{policy_name}"
             assert result[0].resource_arn == role_arn
             assert result[0].region == "eu-west-1"
 
@@ -250,8 +250,8 @@ class Test_iam_inline_policy_no_full_access_to_kms:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Inline Policy {policy_name} allows 'kms:*' privileges."
+                == f"Inline policy {policy_name} attached to role {role_name} allows 'kms:*' privileges."
             )
-            assert result[0].resource_id == "policy_kms_full"
+            assert result[0].resource_id == f"test_role/{policy_name}"
             assert result[0].resource_arn == role_arn
             assert result[0].region == "eu-west-1"

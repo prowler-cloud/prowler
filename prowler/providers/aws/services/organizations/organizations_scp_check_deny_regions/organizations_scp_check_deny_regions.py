@@ -12,27 +12,24 @@ class organizations_scp_check_deny_regions(Check):
         )
 
         for org in organizations_client.organizations:
-            report = Check_Report_AWS(self.metadata())
-            report.resource_id = org.id
-            report.resource_arn = org.arn
-            report.region = organizations_client.region
-            if org.status == "ACTIVE":
-                if org.policies is None:
-                    # Access Denied to list_policies
-                    continue
-                if not org.policies:
-                    report.status = "FAIL"
+            if org.policies is not None:  # Access denied to list policies
+                report = Check_Report_AWS(self.metadata())
+                report.resource_id = org.id
+                report.resource_arn = org.arn
+                report.region = organizations_client.region
+                report.status = "FAIL"
+                report.status_extended = (
+                    "AWS Organizations is not in-use for this AWS Account."
+                )
+
+                if org.status == "ACTIVE":
                     report.status_extended = (
-                        f"AWS Organization {org.id} has no SCP policies."
+                        f"AWS Organizations {org.id} does not have SCP policies."
                     )
-                else:
                     # We use this flag if we find a statement that is restricting regions but not all the configured ones:
                     is_region_restricted_statement = False
 
-                    for policy in org.policies:
-                        # We only check SCP policies here
-                        if policy.type != "SERVICE_CONTROL_POLICY":
-                            continue
+                    for policy in org.policies.get("SERVICE_CONTROL_POLICY", []):
 
                         # Statements are not always list
                         statements = policy.content.get("Statement")
@@ -96,12 +93,6 @@ class organizations_scp_check_deny_regions(Check):
                         report.status = "FAIL"
                         report.status_extended = f"AWS Organization {org.id} has SCP policies but don't restrict AWS Regions."
 
-            else:
-                report.status = "FAIL"
-                report.status_extended = (
-                    "AWS Organizations is not in-use for this AWS Account."
-                )
-
-            findings.append(report)
+                findings.append(report)
 
         return findings

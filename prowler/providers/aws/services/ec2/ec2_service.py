@@ -22,7 +22,7 @@ class EC2(AWSService):
         self.security_groups = {}
         self.regions_with_sgs = []
         self.__threading_call__(self._describe_security_groups)
-        self.network_acls = []
+        self.network_acls = {}
         self.__threading_call__(self._describe_network_acls)
         self.snapshots = []
         self.volumes_with_snapshots = {}
@@ -72,6 +72,11 @@ class EC2(AWSService):
                         if not self.audit_resources or (
                             is_resource_filtered(arn, self.audit_resources)
                         ):
+                            enis = []
+                            for eni in instance.get("NetworkInterfaces", []):
+                                network_interface_id = eni.get("NetworkInterfaceId")
+                                if network_interface_id:
+                                    enis.append(network_interface_id)
                             self.instances.append(
                                 Instance(
                                     id=instance["InstanceId"],
@@ -100,6 +105,10 @@ class EC2(AWSService):
                                         for sg in instance.get("SecurityGroups", [])
                                     ],
                                     subnet_id=instance.get("SubnetId", ""),
+                                    network_interfaces=enis,
+                                    virtualization_type=instance.get(
+                                        "VirtualizationType"
+                                    ),
                                     tags=instance.get("Tags"),
                                 )
                             )
@@ -157,15 +166,20 @@ class EC2(AWSService):
                         for tag in nacl.get("Tags", []):
                             if tag["Key"] == "Name":
                                 nacl_name = tag["Value"]
-                        self.network_acls.append(
-                            NetworkACL(
-                                id=nacl["NetworkAclId"],
-                                arn=arn,
-                                name=nacl_name,
-                                region=regional_client.region,
-                                entries=nacl["Entries"],
-                                tags=nacl.get("Tags"),
-                            )
+                        in_use = False
+                        for subnet in nacl["Associations"]:
+                            if subnet["SubnetId"]:
+                                in_use = True
+                                break
+                        self.network_acls[arn] = NetworkACL(
+                            id=nacl["NetworkAclId"],
+                            arn=arn,
+                            name=nacl_name,
+                            region=regional_client.region,
+                            entries=nacl["Entries"],
+                            tags=nacl.get("Tags"),
+                            in_use=in_use,
+                            default=nacl["IsDefault"],
                         )
         except Exception as error:
             logger.error(
@@ -261,11 +275,22 @@ class EC2(AWSService):
                             ipv6_address = ip_address(ipv6_address_str)
                             if ipv6_address.is_global:
                                 public_ip_addresses.append(ipv6_address)
-
+                    attachment = Attachment(
+                        attachment_id=interface.get("Attachment", {}).get(
+                            "AttachmentId", ""
+                        ),
+                        instance_id=interface.get("Attachment", {}).get(
+                            "InstanceId", ""
+                        ),
+                        instance_owner_id=interface.get("Attachment", {}).get(
+                            "InstanceOwnerId", ""
+                        ),
+                        status=interface.get("Attachment", {}).get("Status", ""),
+                    )
                     self.network_interfaces[id] = NetworkInterface(
                         id=id,
                         association=interface.get("Association", {}),
-                        attachment=interface.get("Attachment", {}),
+                        attachment=attachment,
                         private_ip=interface.get("PrivateIpAddress"),
                         type=interface["InterfaceType"],
                         subnet_id=interface["SubnetId"],
@@ -494,7 +519,7 @@ class EC2(AWSService):
 
             for page in describe_launch_templates_paginator.paginate():
                 for template in page["LaunchTemplates"]:
-                    template_arn = f"arn:aws:ec2:{regional_client.region}:{self.audited_account}:launch-template/{template['LaunchTemplateId']}"
+                    template_arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:launch-template/{template['LaunchTemplateId']}"
                     if not self.audit_resources or (
                         is_resource_filtered(template_arn, self.audit_resources)
                     ):
@@ -530,7 +555,7 @@ class EC2(AWSService):
                     for eni in template_version["LaunchTemplateData"].get(
                         "NetworkInterfaces", []
                     ):
-                        network_interface_id = eni.get("NetworkInterfaceId")
+                        network_interface_id = eni.get("NetworkInterfaceId", "")
                         if network_interface_id in self.network_interfaces:
                             enis.append(self.network_interfaces[network_interface_id])
                         if eni.get("AssociatePublicIpAddress", False):
@@ -561,7 +586,7 @@ class EC2(AWSService):
 
             for page in describe_client_vpn_endpoints_paginator.paginate():
                 for vpn_endpoint in page["ClientVpnEndpoints"]:
-                    vpn_endpoint_arn = f"arn:aws:ec2:{regional_client.region}:{self.audited_account}:client-vpn-endpoint/{vpn_endpoint['ClientVpnEndpointId']}"
+                    vpn_endpoint_arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:client-vpn-endpoint/{vpn_endpoint['ClientVpnEndpointId']}"
                     if not self.audit_resources or (
                         is_resource_filtered(vpn_endpoint_arn, self.audit_resources)
                     ):
@@ -632,6 +657,8 @@ class Instance(BaseModel):
     security_groups: list[str]
     subnet_id: str
     instance_profile: Optional[dict]
+    network_interfaces: Optional[list]
+    virtualization_type: Optional[str]
     tags: Optional[list] = []
 
 
@@ -653,10 +680,17 @@ class Volume(BaseModel):
     tags: Optional[list] = []
 
 
+class Attachment(BaseModel):
+    attachment_id: str = ""
+    instance_id: str = ""
+    instance_owner_id: str = ""
+    status: str = ""
+
+
 class NetworkInterface(BaseModel):
     id: str
     association: dict
-    attachment: dict
+    attachment: Attachment
     private_ip: Optional[str]
     public_ip_addresses: list[Union[IPv4Address, IPv6Address]]
     type: str
@@ -684,6 +718,8 @@ class NetworkACL(BaseModel):
     name: str
     region: str
     entries: list[dict]
+    default: bool
+    in_use: bool
     tags: Optional[list] = []
 
 

@@ -1,13 +1,9 @@
-from argparse import Namespace
-from datetime import datetime
-from os import rmdir
 from unittest.mock import patch
 from uuid import uuid4
 
 import pytest
 from azure.core.credentials import AccessToken
 from azure.identity import DefaultAzureCredential
-from freezegun import freeze_time
 from mock import MagicMock
 
 from prowler.config.config import (
@@ -22,11 +18,7 @@ from prowler.providers.azure.exceptions.exceptions import (
     AzureNoAuthenticationMethodError,
     AzureTenantIDNoBrowserAuthError,
 )
-from prowler.providers.azure.models import (
-    AzureIdentityInfo,
-    AzureOutputOptions,
-    AzureRegionConfig,
-)
+from prowler.providers.azure.models import AzureIdentityInfo, AzureRegionConfig
 from prowler.providers.common.models import Connection
 
 
@@ -202,87 +194,6 @@ class TestAzureProvider:
                 exception.value.args[0]
                 == "[1919] Azure Tenant ID (--tenant-id) is required for browser authentication mode"
             )
-
-    @freeze_time(datetime.today())
-    def test_azure_provider_output_options_with_domain(self):
-        arguments = Namespace()
-        subscription_id = None
-        tenant_id = None
-
-        # We need to set exactly one auth method
-        az_cli_auth = None
-        sp_env_auth = True
-        browser_auth = None
-        managed_identity_auth = None
-
-        config_file = default_config_file_path
-        fixer_config = default_fixer_config_file_path
-        azure_region = "AzureCloud"
-
-        # Output Options
-        arguments.output_formats = ["csv"]
-        arguments.output_directory = "output_test_directory"
-        output_directory = arguments.output_directory
-        arguments.status = []
-        arguments.verbose = True
-        arguments.only_logs = False
-        arguments.unix_timestamp = False
-        arguments.shodan = "test-api-key"
-
-        tenant_domain = "test-domain"
-        with patch(
-            "prowler.providers.azure.azure_provider.AzureProvider.setup_identity",
-            return_value=AzureIdentityInfo(tenant_domain=tenant_domain),
-        ), patch(
-            "prowler.providers.azure.azure_provider.AzureProvider.get_locations",
-            return_value={},
-        ), patch(
-            "prowler.providers.azure.azure_provider.AzureProvider.setup_session",
-            return_value=DefaultAzureCredential(),
-        ):
-            azure_provider = AzureProvider(
-                az_cli_auth,
-                sp_env_auth,
-                browser_auth,
-                managed_identity_auth,
-                tenant_id,
-                azure_region,
-                subscription_id,
-                config_file,
-                fixer_config,
-            )
-            # This is needed since the output_options requires to get the global provider to get the audit config
-            with patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=azure_provider,
-            ):
-
-                azure_provider.output_options = arguments, {}
-
-                assert isinstance(azure_provider.output_options, AzureOutputOptions)
-                assert azure_provider.output_options.status == []
-                assert azure_provider.output_options.output_modes == [
-                    "csv",
-                ]
-                assert (
-                    azure_provider.output_options.output_directory == output_directory
-                )
-                assert azure_provider.output_options.bulk_checks_metadata == {}
-                assert azure_provider.output_options.verbose
-                # Flaky due to the millisecond part of the timestamp
-                # assert (
-                #     azure_provider.output_options.output_filename
-                #     == f"prowler-output-{azure_provider.identity.tenant_domain}-{datetime.today().strftime('%Y%m%d%H%M%S')}"
-                # )
-                assert (
-                    f"prowler-output-{azure_provider.identity.tenant_domain}"
-                    in azure_provider.output_options.output_filename
-                )
-
-                # Delete testing directory
-                # TODO: move this to a fixtures file
-                rmdir(f"{arguments.output_directory}/compliance")
-                rmdir(arguments.output_directory)
 
     def test_test_connection_browser_auth(self):
         with patch(

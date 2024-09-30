@@ -145,6 +145,9 @@ class Test_EC2_Service:
             == f"ec2-{ec2.instances[0].public_ip.replace('.', '-')}.compute-1.amazonaws.com"
         )
 
+        assert ec2.instances[0].network_interfaces is not None
+        assert ec2.instances[0].virtualization_type == "hvm"
+
     # Test EC2 Describe Security Groups
     @mock_aws
     def test_describe_security_groups(self):
@@ -240,14 +243,16 @@ class Test_EC2_Service:
         ec2 = EC2(aws_provider)
 
         assert nacl_id in str(ec2.network_acls)
-        for acl in ec2.network_acls:
+        for arn, acl in ec2.network_acls.items():
             if acl.id == nacl_id:
                 assert re.match(r"acl-[0-9a-z]{8}", acl.id)
                 assert (
-                    acl.arn
+                    arn
                     == f"arn:{aws_provider.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:network-acl/{acl.id}"
                 )
                 assert acl.entries == []
+                assert not acl.in_use
+                assert not acl.default
                 assert acl.tags == [
                     {"Key": "test", "Value": "test"},
                 ]
@@ -671,6 +676,14 @@ class Test_EC2_Service:
                     KNOWN_SECRET_USER_DATA.encode(encoding_format_utf_8)
                 ).decode(encoding_format_utf_8),
             },
+            TagSpecifications=[
+                {
+                    "ResourceType": "launch-template",
+                    "Tags": [
+                        {"Key": "test", "Value": "test"},
+                    ],
+                }
+            ],
         )
 
         # EC2 client for this test class
@@ -686,6 +699,9 @@ class Test_EC2_Service:
             ec2.launch_templates[0].arn
             == f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:launch-template/{ec2.launch_templates[0].id}"
         )
+        assert ec2.launch_templates[0].tags == [
+            {"Key": "test", "Value": "test"},
+        ]
 
     # Test EC2 Describe Launch Templates
     @mock_aws
