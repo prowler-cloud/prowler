@@ -41,6 +41,7 @@ class Test_wafv2_webacl_logging_enabled:
                 user_pools=[],
                 region=AWS_REGION_EU_WEST_1,
                 logging_enabled=True,
+                tags=[{"Key": "Name", "Value": waf_name}],
             )
         )
         with mock.patch(
@@ -65,6 +66,7 @@ class Test_wafv2_webacl_logging_enabled:
             assert result[0].resource_id == waf_id
             assert result[0].resource_arn == waf_arn
             assert result[0].region == AWS_REGION_EU_WEST_1
+            assert result[0].resource_tags == [{"Key": "Name", "Value": waf_name}]
 
     def test_wafv2_wb_acl_without_logging(self):
         wafv2_client = mock.MagicMock
@@ -79,6 +81,7 @@ class Test_wafv2_webacl_logging_enabled:
                 user_pools=[],
                 region=AWS_REGION_EU_WEST_1,
                 logging_enabled=False,
+                tags=[{"Key": "Name", "Value": waf_name}],
             )
         )
         with mock.patch(
@@ -103,3 +106,4 @@ class Test_wafv2_webacl_logging_enabled:
             assert result[0].resource_id == waf_id
             assert result[0].resource_arn == waf_arn
             assert result[0].region == AWS_REGION_EU_WEST_1
+            assert result[0].resource_tags == [{"Key": "Name", "Value": waf_name}]

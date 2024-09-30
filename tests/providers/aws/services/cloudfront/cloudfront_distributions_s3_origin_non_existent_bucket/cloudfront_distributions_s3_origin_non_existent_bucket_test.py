@@ -22,7 +22,7 @@ class Test_cloudfront_s3_origin_non_existent_bucket:
         # Distributions
         cloudfront_client = mock.MagicMock
         cloudfront_client.distributions = {}
-        s3_client = mock.MagicMock
+        s3_client = mock.MagicMock()
         # Buckets
         s3_client.buckets = {}
 
@@ -42,10 +42,6 @@ class Test_cloudfront_s3_origin_non_existent_bucket:
 
             assert len(result) == 0
 
-    @mock.patch(
-        "prowler.providers.aws.services.s3.s3_service.S3._head_bucket",
-        new=mock.MagicMock(return_value=False),
-    )
     def test_distribution_nonexistent_origins(self):
         # Distributions
         domain = "nonexistent-bucket.s3.eu-west-1.amazonaws.com"
@@ -68,7 +64,7 @@ class Test_cloudfront_s3_origin_non_existent_bucket:
         }
         # Buckets
         nonexistent_bucket = "nonexistent-bucket"
-        s3_client = mock.MagicMock
+        s3_client = mock.MagicMock()
         s3_client.buckets = {}
 
         with mock.patch(
@@ -76,6 +72,9 @@ class Test_cloudfront_s3_origin_non_existent_bucket:
         ), mock.patch(
             "prowler.providers.aws.services.cloudfront.cloudfront_service.CloudFront",
             new=cloudfront_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.cloudfront.cloudfront_distributions_s3_origin_non_existent_bucket.cloudfront_distributions_s3_origin_non_existent_bucket.s3_client._head_bucket",
+            new=mock.MagicMock(return_value=False),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudfront.cloudfront_distributions_s3_origin_non_existent_bucket.cloudfront_distributions_s3_origin_non_existent_bucket import (
@@ -95,10 +94,6 @@ class Test_cloudfront_s3_origin_non_existent_bucket:
                 == f"CloudFront Distribution {DISTRIBUTION_ID} has non-existent S3 buckets as origins: {nonexistent_bucket}."
             )
 
-    @mock.patch(
-        "prowler.providers.aws.services.s3.s3_service.S3._head_bucket",
-        new=mock.MagicMock(return_value=True),
-    )
     def test_distribution_no_nonexistent_origins(self):
         # Distributions
         domain = "existent-bucket.s3.eu-west-1.amazonaws.com"
@@ -121,7 +116,7 @@ class Test_cloudfront_s3_origin_non_existent_bucket:
         }
         # Buckets
         bucket_name = "existent-bucket"
-        s3_client = mock.MagicMock
+        s3_client = mock.MagicMock()
         s3_client.audited_account = AWS_ACCOUNT_NUMBER
         s3_client.buckets = {
             f"arn:aws:s3:::{bucket_name}": Bucket(
@@ -135,6 +130,9 @@ class Test_cloudfront_s3_origin_non_existent_bucket:
         ), mock.patch(
             "prowler.providers.aws.services.cloudfront.cloudfront_service.CloudFront",
             new=cloudfront_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.cloudfront.cloudfront_distributions_s3_origin_non_existent_bucket.cloudfront_distributions_s3_origin_non_existent_bucket.s3_client._head_bucket",
+            new=mock.MagicMock(return_value=True),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudfront.cloudfront_distributions_s3_origin_non_existent_bucket.cloudfront_distributions_s3_origin_non_existent_bucket import (

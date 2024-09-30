@@ -100,6 +100,12 @@ def mock_make_api_call(self, operation_name, kwarg):
                 },
             ],
         }
+    elif operation_name == "GetTags":
+        return {
+            "Tags": {
+                "test_key": "test_value",
+            },
+        }
     return make_api_call(self, operation_name, kwarg)
 
 
@@ -227,3 +233,11 @@ class Test_Glue_Service:
             "--enable-job-insights": "false",
         }
         assert glue.jobs[0].region == AWS_REGION_US_EAST_1
+
+    @mock_aws
+    def test_get_tags(self):
+        aws_provider = set_mocked_aws_provider()
+        glue = Glue(aws_provider)
+
+        assert glue.dev_endpoints[0].tags == [{"test_key": "test_value"}]
+        assert glue.jobs[0].tags == [{"test_key": "test_value"}]

@@ -5,14 +5,18 @@ from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################## NetworkFirewall
 class NetworkFirewall(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
         super().__init__("network-firewall", provider)
         self.network_firewalls = {}
         self.__threading_call__(self._list_firewalls)
-        self._describe_firewall()
+        self.__threading_call__(
+            self._describe_firewall, self.network_firewalls.values()
+        )
+        self.__threading_call__(
+            self._describe_firewall_policy, self.network_firewalls.values()
+        )
 
     def _list_firewalls(self, regional_client):
         logger.info("Network Firewall - Listing Network Firewalls...")
@@ -30,41 +34,51 @@ class NetworkFirewall(AWSService):
                         self.network_firewalls[
                             network_firewall.get("FirewallArn", "")
                         ] = Firewall(
+                            arn=network_firewall.get("FirewallArn"),
                             region=regional_client.region,
                             name=network_firewall.get("FirewallName"),
                         )
-
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def _describe_firewall(self):
+    def _describe_firewall(self, network_firewall):
         logger.info("Network Firewall - Describe Network Firewalls...")
         try:
-            for arn, network_firewall in self.network_firewalls.items():
-                regional_client = self.regional_clients[network_firewall.region]
-                try:
-                    describe_firewall = regional_client.describe_firewall(
-                        FirewallArn=arn,
-                    )["Firewall"]
-                    network_firewall.policy_arn = describe_firewall.get(
-                        "FirewallPolicyArn"
-                    )
-                    network_firewall.vpc_id = describe_firewall.get("VpcId")
-                    network_firewall.tags = describe_firewall.get("Tags", [])
-                    encryption_config = describe_firewall.get(
-                        "EncryptionConfiguration", {}
-                    )
-                    network_firewall.encryption_type = encryption_config.get("Type")
-                    network_firewall.deletion_protection = describe_firewall.get(
-                        "DeleteProtection", False
-                    )
-                except Exception as error:
-                    logger.error(
-                        f"Error describing firewall {network_firewall.arn} in region {network_firewall.region}: "
-                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                    )
+            regional_client = self.regional_clients[network_firewall.region]
+            describe_firewall = regional_client.describe_firewall(
+                FirewallArn=network_firewall.arn,
+            )["Firewall"]
+            network_firewall.policy_arn = describe_firewall.get("FirewallPolicyArn")
+            network_firewall.vpc_id = describe_firewall.get("VpcId")
+            network_firewall.tags = describe_firewall.get("Tags", [])
+            encryption_config = describe_firewall.get("EncryptionConfiguration", {})
+            network_firewall.encryption_type = encryption_config.get("Type")
+            network_firewall.deletion_protection = describe_firewall.get(
+                "DeleteProtection", False
+            )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
+            )
+
+    def _describe_firewall_policy(self, network_firewall):
+        logger.info("Network Firewall - Describe Network Firewall Policies...")
+        try:
+            regional_client = self.regional_clients[network_firewall.region]
+            describe_firewall_policy = regional_client.describe_firewall_policy(
+                FirewallPolicyArn=network_firewall.policy_arn,
+            )
+            firewall_policy = describe_firewall_policy.get("FirewallPolicy", {})
+            network_firewall.stateless_rule_groups = [
+                group.get("ResourceArn", "")
+                for group in firewall_policy.get("StatelessRuleGroupReferences", [])
+            ]
+            network_firewall.stateful_rule_groups = [
+                group.get("ResourceArn", "")
+                for group in firewall_policy.get("StatefulRuleGroupReferences", [])
+            ]
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
@@ -72,6 +86,7 @@ class NetworkFirewall(AWSService):
 
 
 class Firewall(BaseModel):
+    arn: str
     name: str
     region: str
     policy_arn: str = None
@@ -79,3 +94,5 @@ class Firewall(BaseModel):
     tags: list = []
     encryption_type: str = None
     deletion_protection: bool = False
+    stateless_rule_groups: list[str] = []
+    stateful_rule_groups: list[str] = []

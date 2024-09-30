@@ -8,23 +8,25 @@ from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################## Glue
 class Glue(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.connections = []
         self.__threading_call__(self._get_connections)
+        self.__threading_call__(self._list_tags, self.connections)
         self.tables = []
         self.__threading_call__(self._search_tables)
         self.catalog_encryption_settings = []
         self.__threading_call__(self._get_data_catalog_encryption_settings)
         self.dev_endpoints = []
         self.__threading_call__(self._get_dev_endpoints)
+        self.__threading_call__(self._list_tags, self.dev_endpoints)
         self.security_configs = []
         self.__threading_call__(self._get_security_configurations)
         self.jobs = []
         self.__threading_call__(self._get_jobs)
+        self.__threading_call__(self._list_tags, self.jobs)
 
     def _get_data_catalog_arn_template(self, region):
         return f"arn:{self.audited_partition}:glue:{region}:{self.audited_account}:data-catalog"
@@ -205,6 +207,18 @@ class Glue(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _list_tags(self, resource: any):
+        try:
+            resource.tags = [
+                self.regional_clients[resource.region].get_tags(
+                    ResourceArn=resource.arn
+                )["Tags"]
+            ]
+        except Exception as error:
+            logger.error(
+                f"{resource.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class Connection(BaseModel):
     name: str
@@ -212,6 +226,7 @@ class Connection(BaseModel):
     type: str
     properties: dict
     region: str
+    tags: Optional[list]
 
 
 class Table(BaseModel):
@@ -236,6 +251,7 @@ class DevEndpoint(BaseModel):
     arn: str
     security: Optional[str]
     region: str
+    tags: Optional[list]
 
 
 class Job(BaseModel):
@@ -244,6 +260,7 @@ class Job(BaseModel):
     security: Optional[str]
     arguments: Optional[dict]
     region: str
+    tags: Optional[list]
 
 
 class SecurityConfig(BaseModel):

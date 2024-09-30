@@ -28,6 +28,7 @@ def mock_make_api_call(self, operation_name, kwarg):
                     }
                 ],
                 "networkMode": "host",
+                "pidMode": "host",
                 "tags": [],
             }
         }
@@ -157,6 +158,13 @@ class Test_ECS_Service:
         assert ecs.task_definitions[task_arn].network_mode == "host"
         assert not ecs.task_definitions[task_arn].container_definitions[0].privileged
         assert ecs.task_definitions[task_arn].container_definitions[0].user == ""
+        assert ecs.task_definitions[task_arn].container_definitions[0].log_driver == ""
+        assert ecs.task_definitions[task_arn].pid_mode == "host"
+        assert (
+            not ecs.task_definitions[task_arn]
+            .container_definitions[0]
+            .readonly_rootfilesystem
+        )
 
     # Test list ECS clusters
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)

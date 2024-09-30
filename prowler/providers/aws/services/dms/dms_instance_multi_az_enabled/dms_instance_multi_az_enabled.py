@@ -10,6 +10,7 @@ class dms_instance_multi_az_enabled(Check):
             report.region = instance.region
             report.resource_id = instance.id
             report.resource_arn = instance.arn
+            report.resource_tags = instance.tags
             report.status = "FAIL"
             report.status_extended = f"DMS Replication Instance {instance.id} does not have multi az enabled."
             if instance.multi_az:

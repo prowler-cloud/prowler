@@ -37,6 +37,11 @@ def mock_make_api_call(self, operation_name, kwarg):
         return {
             "HubArn": "arn:aws:securityhub:us-east-1:0123456789012:hub/default",
         }
+    if operation_name == "ListTagsForResource":
+        return {
+            "Tags": {"test_key": "test_value"},
+        }
+
     return make_api_call(self, operation_name, kwarg)
 
 
@@ -80,3 +85,9 @@ class Test_SecurityHub_Service:
         assert securityhub.securityhubs[0].id == "default"
         assert securityhub.securityhubs[0].standards == "cis-aws-foundations-benchmark "
         assert securityhub.securityhubs[0].integrations == "prowler "
+
+    def test_list_tags(self):
+        # Set partition for the service
+        securityhub = SecurityHub(set_mocked_aws_provider([AWS_REGION_EU_WEST_1]))
+        assert len(securityhub.securityhubs) == 1
+        assert securityhub.securityhubs[0].tags == [{"test_key": "test_value"}]
