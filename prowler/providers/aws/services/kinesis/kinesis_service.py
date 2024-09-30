@@ -13,7 +13,7 @@ class Kinesis(AWSService):
         super().__init__("kinesis", provider)
         self.streams = {}
         self.__threading_call__(self._list_streams)
-        self._describe_stream()
+        self.__threading_call__(self._describe_stream, self.streams.values())
 
     def _list_streams(self, regional_client):
         logger.info("Kinesis - Listing Kinesis Streams...")
@@ -35,20 +35,14 @@ class Kinesis(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def _describe_stream(self):
-        logger.info("Kinesis - Describe Kinesis Streams...")
+    def _describe_stream(self, stream):
+        logger.info("Kinesis - Describing Kinesis Streams...")
         try:
-            for stream_name, stream in self.streams.items():
-                regional_client = self.regional_clients[stream.region]
-                try:
-                    describe_stream = regional_client.describe_stream(
-                        StreamName=stream_name
-                    )["StreamDescription"]
-                    stream.tags = describe_stream.get("Tags", [])
-                except Exception as error:
-                    logger.error(
-                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                    )
+            regional_client = self.regional_clients[stream.region]
+            describe_stream = regional_client.describe_stream(StreamName=stream.name)[
+                "StreamDescription"
+            ]
+            stream.tags = describe_stream.get("Tags", [])
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
