@@ -23,7 +23,6 @@ import {
 } from "@/components/ui/table";
 import { MetaDataProps } from "@/types";
 
-import { DataTableFilterCustom } from "./data-table-filter-custom";
 import { DataTablePagination } from "./data-table-pagination";
 
 interface DataTableProviderProps<TData, TValue> {
@@ -55,20 +54,8 @@ export function DataTableProvider<TData, TValue>({
     },
   });
 
-  // This will be used to have "custom" filters in the table and will be
-  // passed to the DataTableFilterCustom component. This needs to be dynamic
-  // based on the columns that are available in the table.
-
-  const filters = [
-    { key: "provider", values: ["aws", "gcp", "azure"] },
-    { key: "connected", values: ["false", "true"] },
-    // Add more filter categories as needed
-  ];
-
   return (
     <>
-      <DataTableFilterCustom filters={filters} />
-
       <div className="p-4 z-0 flex flex-col relative justify-between gap-4 bg-content1 overflow-auto rounded-large shadow-small w-full  ">
         <Table>
           <TableHeader>

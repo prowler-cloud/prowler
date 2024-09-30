@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import React, { useCallback, useEffect, useState } from "react";
 
 import { CrossIcon } from "../icons";
+import { DataTableFilterCustom } from "../providers/table";
 import { CustomButton } from "../ui/custom";
 import { CustomAccountSelection } from "./CustomAccountSelection";
 import { CustomCheckboxMutedFindings } from "./CustomCheckboxMutedFindings";
@@ -19,6 +20,7 @@ interface FilterControlsProps {
   regions?: boolean;
   accounts?: boolean;
   mutedFindings?: boolean;
+  customFilters?: { key: string; values: string[] }[];
 }
 
 export const FilterControls: React.FC<FilterControlsProps> = ({
@@ -28,6 +30,7 @@ export const FilterControls: React.FC<FilterControlsProps> = ({
   regions = false,
   accounts = false,
   mutedFindings = false,
+  customFilters = [],
 }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -51,26 +54,29 @@ export const FilterControls: React.FC<FilterControlsProps> = ({
   }, [router, searchParams]);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-x-4 gap-y-4 items-center">
-      {search && <CustomSearchInput />}
-      {providers && <CustomSelectProvider />}
-      {date && <CustomDatePicker />}
-      {regions && <CustomRegionSelection />}
-      {accounts && <CustomAccountSelection />}
-      {mutedFindings && <CustomCheckboxMutedFindings />}
+    <div className="flex flex-col gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-x-4 gap-y-4 items-center">
+        {search && <CustomSearchInput />}
+        {providers && <CustomSelectProvider />}
+        {date && <CustomDatePicker />}
+        {regions && <CustomRegionSelection />}
+        {accounts && <CustomAccountSelection />}
+        {mutedFindings && <CustomCheckboxMutedFindings />}
 
-      {showClearButton && (
-        <CustomButton
-          className="w-fit"
-          onPress={clearAllFilters}
-          variant="dashed"
-          size="sm"
-          endContent={<CrossIcon size={24} />}
-          radius="sm"
-        >
-          Reset
-        </CustomButton>
-      )}
+        {showClearButton && (
+          <CustomButton
+            className="w-fit"
+            onPress={clearAllFilters}
+            variant="dashed"
+            size="sm"
+            endContent={<CrossIcon size={24} />}
+            radius="sm"
+          >
+            Reset
+          </CustomButton>
+        )}
+      </div>
+      <DataTableFilterCustom filters={customFilters} />
     </div>
   );
 };

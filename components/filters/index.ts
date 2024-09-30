@@ -5,3 +5,4 @@ export * from "../filters/CustomProviderInputs";
 export * from "../filters/CustomRegionSelection";
 export * from "../filters/CustomSelectProvider";
 export * from "../filters/FilterControls";
+export * from "../filters/filters";

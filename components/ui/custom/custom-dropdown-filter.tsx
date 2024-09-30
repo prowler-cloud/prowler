@@ -20,10 +20,12 @@ interface FilterOption {
 
 interface CustomDropdownFilterProps {
   filter?: FilterOption;
+  onFilterChange?: (key: string, values: string[]) => void;
 }
 
 export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
   filter,
+  onFilterChange,
 }) => {
   // Early return if filter is undefined
   if (!filter) {
@@ -52,8 +54,15 @@ export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
       } else {
         setGroupSelected(newSelection);
       }
+
+      if (onFilterChange && filter) {
+        const selectedValues = Array.from(newSelection).filter(
+          (key) => key !== "all",
+        );
+        onFilterChange(filter.key, selectedValues);
+      }
     },
-    [allFilterKeys, groupSelected],
+    [allFilterKeys, groupSelected, onFilterChange, filter],
   );
 
   const handleSelectAllClick = useCallback(() => {
@@ -85,11 +94,7 @@ export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
               value={Array.from(groupSelected)}
               onValueChange={onSelectionChange}
             >
-              <Checkbox
-                value="all"
-                // isSelected={allSelected}
-                onValueChange={handleSelectAllClick}
-              >
+              <Checkbox value="all" onValueChange={handleSelectAllClick}>
                 Select All
               </Checkbox>
               {allFilterKeys.map((value) => (
