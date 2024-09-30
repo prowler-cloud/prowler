@@ -649,7 +649,6 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
             "SecurityGroups"
         ][0]
         default_sg_id = default_sg["GroupId"]
-        default_sg["GroupName"]
         ec2_client.authorize_security_group_ingress(
             GroupId=default_sg_id,
             IpPermissions=[
