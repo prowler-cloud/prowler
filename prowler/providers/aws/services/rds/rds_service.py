@@ -476,8 +476,8 @@ class RDS(AWSService):
         try:
             if (
                 hasattr(resource, "tags")
-                and hasattr(resource, "region")
-                and hasattr(resource, "arn")
+                and getattr(resource, "region", "")
+                and getattr(resource, "arn", "")
             ):
                 resource.tags = self.regional_clients[
                     resource.region
