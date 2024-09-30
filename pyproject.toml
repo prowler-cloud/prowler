@@ -89,7 +89,7 @@ pytest-cov = "5.0.0"
 pytest-env = "1.1.5"
 pytest-randomly = "3.15.0"
 pytest-xdist = "3.6.1"
-safety = "3.2.7"
+safety = "3.2.8"
 vulture = "2.12"
 
 [tool.poetry.group.docs]
