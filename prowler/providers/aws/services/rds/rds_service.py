@@ -474,10 +474,12 @@ class RDS(AWSService):
 
     def _list_tags(self, resource: any):
         try:
-            resource.tags = self.regional_clients[
-                resource.region
-            ].list_tags_for_resource(ResourceName=resource.arn)["TagList"]
-
+            if getattr(resource, "region", "") and getattr(resource, "arn", ""):
+                resource.tags = (
+                    self.regional_clients[resource.region]
+                    .list_tags_for_resource(ResourceName=resource.arn)
+                    .get("TagList", [])
+                )
         except Exception as error:
             logger.error(
                 f"{resource.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
