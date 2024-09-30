@@ -1,5 +1,5 @@
 "use client";
-
+const _ = require("lodash");
 import {
   Badge,
   Button,
@@ -90,7 +90,7 @@ export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
   }, [groupSelected, allFilterKeys]);
   return (
     <div className="flex w-full max-w-xs flex-col gap-2">
-      <Popover placement="bottom">
+      <Popover backdrop="opaque" placement="bottom">
         <PopoverTrigger>
           <Button
             className="bg-default-100 text-default-800"
@@ -99,7 +99,8 @@ export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
             }
             size="sm"
           >
-            {filter?.labelCheckboxGroup}
+            <h3 className="text-small">{filter?.labelCheckboxGroup}</h3>
+
             {groupSelected.size > 0 && (
               <>
                 <Divider orientation="vertical" className="mx-2 h-4" />
@@ -136,18 +137,24 @@ export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-80">
-          <div className="flex w-full flex-col gap-6 px-2 py-4">
+          <div className="flex w-full flex-col gap-6 p-2">
             <CheckboxGroup
+              color="default"
               label={filter?.labelCheckboxGroup}
               value={Array.from(groupSelected)}
               onValueChange={onSelectionChange}
+              className="text-small font-bold"
             >
-              <Checkbox value="all" onValueChange={handleSelectAllClick}>
+              <Checkbox
+                className="font-normal"
+                value="all"
+                onValueChange={handleSelectAllClick}
+              >
                 Select All
               </Checkbox>
               {allFilterKeys.map((value) => (
-                <Checkbox key={value} value={value}>
-                  {value}
+                <Checkbox className="font-normal" key={value} value={value}>
+                  {_.capitalize(value)}
                 </Checkbox>
               ))}
             </CheckboxGroup>
