@@ -9,39 +9,41 @@ from prowler.providers.azure.services.monitor.monitor_client import monitor_clie
 from prowler.providers.azure.services.monitor.monitor_service import DiagnosticSetting
 
 
-########################## Container Registry
 class ContainerRegistry(AzureService):
     def __init__(self, provider: AzureProvider):
         super().__init__(ContainerRegistryManagementClient, provider)
-        self.registries = self._get_container_registries(provider)
+        self.registries = self._get_container_registries()
 
-    def _get_container_registries(self, provider):
+    def _get_container_registries(self):
         logger.info("Container Registry - Getting registries...")
         registries = {}
         for subscription, client in self.clients.items():
             try:
-                registries.update({subscription: []})
                 registries_list = client.registries.list()
+                registries.update({subscription: {}})
+
                 for registry in registries_list:
                     resource_group = self._get_resource_group(registry.id)
-                    registries[subscription].append(
-                        ContainerRegistryInfo(
-                            id=getattr(registry, "id", ""),
-                            name=getattr(registry, "name", ""),
-                            location=getattr(registry, "location", ""),
-                            resource_group=resource_group,
-                            sku=getattr(registry.sku, "name", ""),
-                            login_server=getattr(registry, "login_server", ""),
-                            public_network_access=getattr(
-                                registry, "public_network_access", ""
-                            ),
-                            admin_user_enabled=getattr(
-                                registry, "admin_user_enabled", ""
-                            ),
-                            monitor_diagnostic_settings=self._get_registry_monitor_settings(
-                                registry.name, resource_group, subscription
-                            ),
-                        )
+                    registries[subscription].update(
+                        {
+                            registry.id: ContainerRegistryInfo(
+                                id=getattr(registry, "id", ""),
+                                name=getattr(registry, "name", ""),
+                                location=getattr(registry, "location", ""),
+                                resource_group=resource_group,
+                                sku=getattr(registry.sku, "name", ""),
+                                login_server=getattr(registry, "login_server", ""),
+                                public_network_access=getattr(
+                                    registry, "public_network_access", ""
+                                ),
+                                admin_user_enabled=getattr(
+                                    registry, "admin_user_enabled", ""
+                                ),
+                                monitor_diagnostic_settings=self._get_registry_monitor_settings(
+                                    registry.name, resource_group, subscription
+                                ),
+                            )
+                        }
                     )
             except Exception as error:
                 logger.error(

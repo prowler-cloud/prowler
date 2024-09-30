@@ -1,4 +1,6 @@
 from unittest import mock
+from unittest.mock import MagicMock
+from uuid import uuid4
 
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
@@ -8,7 +10,7 @@ from tests.providers.azure.azure_fixtures import (
 
 class TestContainerRegistryAdminUserDisabled:
     def test_no_container_registries(self):
-        containerregistry_client = mock.MagicMock
+        containerregistry_client = MagicMock()
         containerregistry_client.registries = {}
 
         with mock.patch(
@@ -27,8 +29,8 @@ class TestContainerRegistryAdminUserDisabled:
             assert len(result) == 0
 
     def test_container_registry_admin_user_enabled(self):
-        containerregistry_client = mock.MagicMock
-        containerregistry_client.registries = {}
+        containerregistry_client = MagicMock()
+        registry_id = str(uuid4())
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
@@ -45,9 +47,9 @@ class TestContainerRegistryAdminUserDisabled:
             )
 
             containerregistry_client.registries = {
-                AZURE_SUBSCRIPTION_ID: [
-                    ContainerRegistryInfo(
-                        id="mock_registry_id",
+                AZURE_SUBSCRIPTION_ID: {
+                    registry_id: ContainerRegistryInfo(
+                        id=registry_id,
                         name="mock_registry",
                         location="westeurope",
                         resource_group="mock_resource_group",
@@ -56,10 +58,11 @@ class TestContainerRegistryAdminUserDisabled:
                         public_network_access="Enabled",
                         admin_user_enabled=True,
                     )
-                ]
+                }
             }
 
             check = containerregistry_admin_user_disabled()
+
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -71,12 +74,14 @@ class TestContainerRegistryAdminUserDisabled:
             assert result[0].resource_name == "mock_registry"
             assert (
                 result[0].resource_id
-                == containerregistry_client.registries[AZURE_SUBSCRIPTION_ID][0].id
+                == containerregistry_client.registries[AZURE_SUBSCRIPTION_ID][
+                    registry_id
+                ].id
             )
             assert result[0].location == "westeurope"
 
     def test_container_registry_admin_user_disabled(self):
-        containerregistry_client = mock.MagicMock
+        containerregistry_client = mock.MagicMock()
         containerregistry_client.registries = {}
 
         with mock.patch(
@@ -93,10 +98,12 @@ class TestContainerRegistryAdminUserDisabled:
                 ContainerRegistryInfo,
             )
 
+            registry_id = "mock_registry_id"
+
             containerregistry_client.registries = {
-                AZURE_SUBSCRIPTION_ID: [
-                    ContainerRegistryInfo(
-                        id="mock_registry_id",
+                AZURE_SUBSCRIPTION_ID: {
+                    registry_id: ContainerRegistryInfo(
+                        id=registry_id,
                         name="mock_registry",
                         location="westeurope",
                         resource_group="mock_resource_group",
@@ -105,7 +112,7 @@ class TestContainerRegistryAdminUserDisabled:
                         public_network_access="Enabled",
                         admin_user_enabled=False,
                     )
-                ]
+                }
             }
 
             check = containerregistry_admin_user_disabled()
@@ -120,6 +127,8 @@ class TestContainerRegistryAdminUserDisabled:
             assert result[0].resource_name == "mock_registry"
             assert (
                 result[0].resource_id
-                == containerregistry_client.registries[AZURE_SUBSCRIPTION_ID][0].id
+                == containerregistry_client.registries[AZURE_SUBSCRIPTION_ID][
+                    registry_id
+                ].id
             )
             assert result[0].location == "westeurope"
