@@ -1,3 +1,3 @@
 export * from "./severity-badge";
 export * from "./status-badge";
-export * from "./tablee";
+export * from "./table";
