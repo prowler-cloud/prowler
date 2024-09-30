@@ -13,10 +13,10 @@
   "RelatedUrl": "https://learn.microsoft.com/en-us/azure/container-registry/container-registry-authentication?tabs=azure-cli#admin-account",
   "Remediation": {
     "Code": {
-      "CLI": "az acr update --name <RegistryName> --resource-group <ResourceGroupName> --admin-user-enabled false",
+      "CLI": "az acr update --name <RegistryName> --resource-group <ResourceGroupName> --admin-enabled false",
       "NativeIaC": "",
       "Other": "",
-      "Terraform": "resource \"azurerm_container_registry\" \"example\" { admin_enabled = false }"
+      "Terraform": ""
     },
     "Recommendation": {
       "Text": "Disable the admin user on Azure Container Registry through the Azure Portal: 1. Navigate to your Container Registry. 2. In the settings, select 'Access keys'. 3. Ensure the 'Admin user' checkbox is not ticked. For all actions relying on registry access, switch to using Role-Based Access Control.",
