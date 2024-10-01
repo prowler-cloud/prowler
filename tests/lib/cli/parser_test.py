@@ -974,7 +974,7 @@ class Test_Parser:
         assert parsed.quick_inventory
 
     def test_aws_parser_quick_inventory_long(self):
-        argument = "--quick-inventory"
+        argument = "--inventory"
         command = [prowler_command, argument]
         parsed = self.parser.parse(command)
         assert parsed.quick_inventory

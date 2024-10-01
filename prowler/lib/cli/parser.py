@@ -378,3 +378,16 @@ Detailed documentation at https://docs.prowler.com
             action="store_true",
             help="Send a summary of the execution with a Slack APP in your channel. Environment variables SLACK_API_TOKEN and SLACK_CHANNEL_NAME are required (see more in https://docs.prowler.cloud/en/latest/tutorials/integrations/#slack).",
         )
+
+    def __init_inventory_parser__(self):
+        inventory_parser = self.common_providers_parser.add_argument_group("Inventory")
+        inventory_parser.add_argument(
+            "--inventory",
+            action="store_true",
+            help="Run Prowler in inventory mode",
+        )
+        inventory_parser.add_argument(
+            "-i",
+            nargs="?",
+            help="Output folder path for the inventory",
+        )

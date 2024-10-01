@@ -71,8 +71,8 @@ from prowler.providers.aws.lib.s3.s3 import S3
 from prowler.providers.aws.lib.security_hub.security_hub import SecurityHub
 from prowler.providers.aws.models import AWSOutputOptions
 from prowler.providers.azure.models import AzureOutputOptions
+from prowler.providers.common.inventory import run_prowler_inventory
 from prowler.providers.common.provider import Provider
-from prowler.providers.common.quick_inventory import run_provider_quick_inventory
 from prowler.providers.gcp.models import GCPOutputOptions
 from prowler.providers.kubernetes.models import KubernetesOutputOptions
 
@@ -256,11 +256,6 @@ def prowler():
         output_options = KubernetesOutputOptions(
             args, bulk_checks_metadata, global_provider.identity
         )
-
-    # Run the quick inventory for the provider if available
-    if hasattr(args, "quick_inventory") and args.quick_inventory:
-        run_provider_quick_inventory(global_provider, args)
-        sys.exit()
 
     # Execute checks
     findings = []
@@ -687,6 +682,11 @@ def prowler():
     # If custom checks were passed, remove the modules
     if checks_folder:
         remove_custom_checks_module(checks_folder, provider)
+
+    # Run the quick inventory for the provider if available
+    if hasattr(args, "inventory") and args.inventory:
+        run_prowler_inventory(checks_to_execute, args.provider)
+        sys.exit()
 
     # If there are failed findings exit code 3, except if -z is input
     if (
