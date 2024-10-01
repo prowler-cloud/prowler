@@ -380,9 +380,11 @@ Detailed documentation at https://docs.prowler.com
         )
 
     def __init_inventory_parser__(self):
-        inventory_parser = self.common_providers_parser.add_argument_group("Inventory")
+        inventory_parser = self.common_providers_parser.add_argument_group(
+            "ScanInventory"
+        )
         inventory_parser.add_argument(
-            "--inventory",
+            "--scan-inventory",
             action="store_true",
             help="Run Prowler in inventory mode",
         )

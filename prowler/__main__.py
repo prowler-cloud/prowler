@@ -684,7 +684,7 @@ def prowler():
         remove_custom_checks_module(checks_folder, provider)
 
     # Run the quick inventory for the provider if available
-    if hasattr(args, "inventory") and args.inventory:
+    if hasattr(args, "scan_inventory") and args.scan_inventory:
         run_prowler_inventory(checks_to_execute, args.provider)
         sys.exit()
 

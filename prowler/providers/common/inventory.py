@@ -10,6 +10,7 @@ from tqdm import tqdm
 
 
 def run_prowler_inventory(checks_to_execute, provider):
+    print(f"\nRunning scan inventory for {provider}")
     output_folder_path = f"./output/inventory/{provider}"
     meta_json_file = {}
 

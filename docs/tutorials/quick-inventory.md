@@ -6,7 +6,7 @@ Prowler allows you to execute a quick inventory to extract the number of resourc
     Currently, it is only available for AWS provider.
 
 
-- You can use option `-i`/`--inventory` to execute it:
+- You can use option `-i`/`--scan-inventory` to execute it:
 ```sh
 prowler <provider> -i
 ```

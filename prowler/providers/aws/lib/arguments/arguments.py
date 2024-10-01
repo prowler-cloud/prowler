@@ -95,7 +95,7 @@ def init_parser(self):
     # AWS Quick Inventory
     aws_quick_inventory_subparser = aws_parser.add_argument_group("Inventory")
     aws_quick_inventory_subparser.add_argument(
-        "--inventory",
+        "--scan-inventory",
         "-i",
         action="store_true",
         help="Run Prowler Inventory. The inventory will be stored in an output json file.",
