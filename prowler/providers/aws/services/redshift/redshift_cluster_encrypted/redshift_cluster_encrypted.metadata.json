@@ -10,7 +10,7 @@
   "ResourceIdTemplate": "arn:aws:redshift:region:account-id:cluster/cluster-name",
   "Severity": "medium",
   "ResourceType": "AwsRedshiftCluster",
-  "Description": "This control checks whether Amazon Redshift clusters are encrypted at rest. The control fails if a Redshift cluster isn't encrypted at rest or if the encryption key used is different from the specified key in the rule parameter.",
+  "Description": "This control checks whether Amazon Redshift clusters are encrypted at rest. The control fails if a Redshift cluster isn't encrypted at rest.",
   "Risk": "Without encryption at rest, sensitive data stored in Redshift clusters is vulnerable to unauthorized access, which could lead to data breaches and regulatory non-compliance.",
   "RelatedUrl": "https://docs.aws.amazon.com/redshift/latest/mgmt/working-with-db-encryption.html",
   "Remediation": {
