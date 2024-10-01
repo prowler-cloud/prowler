@@ -40,10 +40,11 @@ class Kinesis(AWSService):
     def _list_tags_for_stream(self, stream):
         logger.info(f"Kinesis - Listing tags for Stream {stream.name}...")
         try:
-            tags = self.regional_clients[stream.region].list_tags_for_stream(
-                StreamName=stream.name
-            )["Tags"]
-            stream.tags = tags
+            stream.tags = (
+                self.regional_clients[stream.region]
+                .list_tags_for_stream(StreamName=stream.name)
+                .get("Tags", [])
+            )
         except Exception as error:
             logger.error(
                 f"{stream.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
