@@ -35,7 +35,7 @@ class ECS(AWSService):
                     ):
                         self.task_definitions[task_definition] = TaskDefinition(
                             # we want the family name without the revision
-                            name=sub(":.*", "", task_definition.split("/")[1]),
+                            name=sub(":.*", "", task_definition.split("/")[-1]),
                             arn=task_definition,
                             revision=task_definition.split(":")[-1],
                             region=regional_client.region,
@@ -111,7 +111,7 @@ class ECS(AWSService):
                     service_desc = describe_response["services"][0]
                     service_arn = service_desc["serviceArn"]
                     service_obj = Service(
-                        name=sub(":.*", "", service_arn.split("/")[2]),
+                        name=sub(":.*", "", service_arn.split("/")[-1]),
                         arn=service_arn,
                         region=cluster.region,
                         assign_public_ip=(
@@ -139,7 +139,7 @@ class ECS(AWSService):
                         is_resource_filtered(cluster, self.audit_resources)
                     ):
                         self.clusters[cluster] = Cluster(
-                            name=sub(":.*", "", cluster.split("/")[1]),
+                            name=sub(":.*", "", cluster.split("/")[-1]),
                             arn=cluster,
                             region=regional_client.region,
                         )
