@@ -52,7 +52,7 @@ class Test_cloudwatch_log_group_no_secrets_in_logs:
         # Generate Logs Client
         logs_client = client("logs", region_name=AWS_REGION_US_EAST_1)
         # Request Logs group
-        logs_client.create_log_group(logGroupName="test")
+        logs_client.create_log_group(logGroupName="test", tags={"test": "test"})
         logs_client.create_log_stream(logGroupName="test", logStreamName="test stream")
         logs_client.put_log_events(
             logGroupName="test",
@@ -99,13 +99,19 @@ class Test_cloudwatch_log_group_no_secrets_in_logs:
             assert result[0].status == "PASS"
             assert result[0].status_extended == "No secrets found in test log group."
             assert result[0].resource_id == "test"
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:123456789012:log-group:test"
+            )
+            assert result[0].region == AWS_REGION_US_EAST_1
+            assert result[0].resource_tags == [{"test": "test"}]
 
     @mock_aws
     def test_cloudwatch_log_group_with_secrets(self):
         # Generate Logs Client
         logs_client = client("logs", region_name=AWS_REGION_US_EAST_1)
         # Request Logs group
-        logs_client.create_log_group(logGroupName="test")
+        logs_client.create_log_group(logGroupName="test", tags={"test": "test"})
         logs_client.create_log_stream(logGroupName="test", logStreamName="test stream")
         logs_client.put_log_events(
             logGroupName="test",
@@ -154,6 +160,12 @@ class Test_cloudwatch_log_group_no_secrets_in_logs:
                 "Potential secrets found in log group", result[0].status_extended
             )
             assert result[0].resource_id == "test"
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:123456789012:log-group:test"
+            )
+            assert result[0].region == AWS_REGION_US_EAST_1
+            assert result[0].resource_tags == [{"test": "test"}]
 
     @mock_aws
     def test_access_denied(self):
