@@ -7,7 +7,6 @@ from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################################ Redshift
 class Redshift(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
@@ -47,6 +46,8 @@ class Redshift(AWSService):
                             and cluster["AllowVersionUpgrade"]
                         ):
                             cluster_to_append.allow_version_upgrade = True
+                        if ("Encrypted" in cluster) and (cluster["Encrypted"]):
+                            cluster_to_append.encrypted = True
                         self.clusters.append(cluster_to_append)
         except Exception as error:
             logger.error(
@@ -96,6 +97,7 @@ class Cluster(BaseModel):
     arn: str
     region: str
     public_access: bool = None
+    encrypted: bool = False
     endpoint_address: str = None
     allow_version_upgrade: bool = None
     logging_enabled: bool = None
