@@ -19,6 +19,7 @@ class ec2_launch_template_no_secrets(Check):
             report.region = template.region
             report.resource_id = template.id
             report.resource_arn = template.arn
+            report.resource_tags = template.tags
 
             versions_with_secrets = []
 

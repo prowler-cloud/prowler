@@ -12,6 +12,7 @@ class codebuild_project_older_90_days(Check):
             report.region = project.region
             report.resource_id = project.name
             report.resource_arn = project.arn
+            report.resource_tags = project.tags
             report.status = "PASS"
             report.status_extended = f"CodeBuild project {project.name} has been invoked in the last 90 days."
             if project.last_invoked_time:

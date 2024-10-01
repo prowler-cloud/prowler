@@ -49,6 +49,7 @@ class Test_networkfirewall_deletion_protection:
         networkfirewall_client.region = AWS_REGION_US_EAST_1
         networkfirewall_client.network_firewalls = {
             FIREWALL_ARN: Firewall(
+                arn=FIREWALL_ARN,
                 name=FIREWALL_NAME,
                 region=AWS_REGION_US_EAST_1,
                 policy_arn=POLICY_ARN,
@@ -95,6 +96,7 @@ class Test_networkfirewall_deletion_protection:
         networkfirewall_client.region = AWS_REGION_US_EAST_1
         networkfirewall_client.network_firewalls = {
             FIREWALL_ARN: Firewall(
+                arn=FIREWALL_ARN,
                 name=FIREWALL_NAME,
                 region=AWS_REGION_US_EAST_1,
                 policy_arn=POLICY_ARN,

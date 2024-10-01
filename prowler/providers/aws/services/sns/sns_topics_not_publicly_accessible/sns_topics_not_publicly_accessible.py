@@ -1,5 +1,5 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
-from prowler.providers.aws.lib.policy_condition_parser.policy_condition_parser import (
+from prowler.providers.aws.services.iam.lib.policy import (
     is_condition_block_restrictive,
     is_condition_block_restrictive_organization,
 )
@@ -17,7 +17,7 @@ class sns_topics_not_publicly_accessible(Check):
             report.resource_tags = topic.tags
             report.status = "PASS"
             report.status_extended = (
-                f"SNS topic {topic.name} is not publicly accesible."
+                f"SNS topic {topic.name} is not publicly accessible."
             )
             if topic.policy:
                 for statement in topic.policy["Statement"]:

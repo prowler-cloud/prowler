@@ -5,16 +5,12 @@ from prowler.providers.aws.services.ecs.ecs_service import (
     ContainerEnvVariable,
     TaskDefinition,
 )
-from tests.providers.aws.utils import (
-    AWS_ACCOUNT_NUMBER,
-    AWS_REGION_US_EAST_1,
-    set_mocked_aws_provider,
-)
+from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, AWS_REGION_US_EAST_1
 
-task_name = "test-task"
-task_revision = "1"
-container_name = "test-container"
-task_arn = f"arn:aws:ecs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:task-definition/{task_name}:{task_revision}"
+TASK_NAME = "test-task-hostmode"
+TASK_REVISION = "1"
+CONTAINER_NAME = "test-container"
+TASK_ARN = f"arn:aws:ecs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:task-definition/{TASK_NAME}:{TASK_REVISION}"
 
 
 class Test_ecs_task_definitions_host_networking_mode_users:
@@ -23,9 +19,6 @@ class Test_ecs_task_definitions_host_networking_mode_users:
         ecs_client.task_definitions = {}
 
         with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
-        ), mock.patch(
             "prowler.providers.aws.services.ecs.ecs_service.ECS",
             ecs_client,
         ):
@@ -40,15 +33,15 @@ class Test_ecs_task_definitions_host_networking_mode_users:
     def test_task_definition_no_host_network_mode(self):
         ecs_client = mock.MagicMock
         ecs_client.task_definitions = {}
-        ecs_client.task_definitions[task_arn] = TaskDefinition(
-            name=task_name,
-            arn=task_arn,
-            revision=task_revision,
+        ecs_client.task_definitions[TASK_ARN] = TaskDefinition(
+            name=TASK_NAME,
+            arn=TASK_ARN,
+            revision=TASK_REVISION,
             region=AWS_REGION_US_EAST_1,
             network_mode="bridge",
             container_definitions=[
                 ContainerDefinition(
-                    name=container_name,
+                    name=CONTAINER_NAME,
                     privileged=False,
                     user="",
                     environment=[
@@ -62,9 +55,6 @@ class Test_ecs_task_definitions_host_networking_mode_users:
         )
 
         with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
-        ), mock.patch(
             "prowler.providers.aws.services.ecs.ecs_service.ECS",
             ecs_client,
         ):
@@ -78,21 +68,21 @@ class Test_ecs_task_definitions_host_networking_mode_users:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"ECS task definition '{task_name}' does not have host network mode."
+                == f"ECS task definition {TASK_NAME} with revision {TASK_REVISION} does not have host network mode."
             )
 
     def test_task_definition_host_mode_container_root_non_privileged(self):
         ecs_client = mock.MagicMock
         ecs_client.task_definitions = {}
-        ecs_client.task_definitions[task_arn] = TaskDefinition(
-            name=task_name,
-            arn=task_arn,
-            revision=task_revision,
+        ecs_client.task_definitions[TASK_ARN] = TaskDefinition(
+            name=TASK_NAME,
+            arn=TASK_ARN,
+            revision=TASK_REVISION,
             region=AWS_REGION_US_EAST_1,
             network_mode="host",
             container_definitions=[
                 ContainerDefinition(
-                    name=container_name,
+                    name=CONTAINER_NAME,
                     privileged=False,
                     user="root",
                     environment=[],
@@ -101,9 +91,6 @@ class Test_ecs_task_definitions_host_networking_mode_users:
         )
 
         with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
-        ), mock.patch(
             "prowler.providers.aws.services.ecs.ecs_service.ECS",
             ecs_client,
         ):
@@ -117,21 +104,21 @@ class Test_ecs_task_definitions_host_networking_mode_users:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"ECS task definition '{task_name}' has containers with host network mode and non-privileged containers running as root or with no user specified: {container_name}"
+                == f"ECS task definition {TASK_NAME} with revision {TASK_REVISION} has containers with host network mode and non-privileged containers running as root or with no user specified: {CONTAINER_NAME}"
             )
 
     def test_task_definition_host_mode_container_privileged(self):
         ecs_client = mock.MagicMock
         ecs_client.task_definitions = {}
-        ecs_client.task_definitions[task_arn] = TaskDefinition(
-            name=task_name,
-            arn=f"arn:aws:ecs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:task-definition/{task_name}:{task_revision}",
-            revision=task_revision,
+        ecs_client.task_definitions[TASK_ARN] = TaskDefinition(
+            name=TASK_NAME,
+            arn=f"arn:aws:ecs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:task-definition/{TASK_NAME}:{TASK_REVISION}",
+            revision=TASK_REVISION,
             region=AWS_REGION_US_EAST_1,
             network_mode="host",
             container_definitions=[
                 ContainerDefinition(
-                    name=container_name,
+                    name=CONTAINER_NAME,
                     privileged=True,
                     user="root",
                     environment=[],
@@ -140,9 +127,6 @@ class Test_ecs_task_definitions_host_networking_mode_users:
         )
 
         with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
-        ), mock.patch(
             "prowler.providers.aws.services.ecs.ecs_service.ECS",
             ecs_client,
         ):
@@ -156,21 +140,21 @@ class Test_ecs_task_definitions_host_networking_mode_users:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"ECS task definition '{task_name}' has host network mode but no containers running as root or with no user specified."
+                == f"ECS task definition {TASK_NAME} with revision {TASK_REVISION} has host network mode but no containers running as root or with no user specified."
             )
 
     def test_task_definition_host_mode_container_not_root(self):
         ecs_client = mock.MagicMock
         ecs_client.task_definitions = {}
-        ecs_client.task_definitions[task_arn] = TaskDefinition(
-            name=task_name,
-            arn=task_arn,
-            revision=task_revision,
+        ecs_client.task_definitions[TASK_ARN] = TaskDefinition(
+            name=TASK_NAME,
+            arn=TASK_ARN,
+            revision=TASK_REVISION,
             region=AWS_REGION_US_EAST_1,
             network_mode="host",
             container_definitions=[
                 ContainerDefinition(
-                    name=container_name,
+                    name=CONTAINER_NAME,
                     privileged=False,
                     user="appuser",
                     environment=[],
@@ -179,9 +163,6 @@ class Test_ecs_task_definitions_host_networking_mode_users:
         )
 
         with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
-        ), mock.patch(
             "prowler.providers.aws.services.ecs.ecs_service.ECS",
             ecs_client,
         ):
@@ -195,5 +176,5 @@ class Test_ecs_task_definitions_host_networking_mode_users:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"ECS task definition '{task_name}' has host network mode but no containers running as root or with no user specified."
+                == f"ECS task definition {TASK_NAME} with revision {TASK_REVISION} has host network mode but no containers running as root or with no user specified."
             )

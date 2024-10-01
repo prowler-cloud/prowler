@@ -28,8 +28,53 @@ def mock_make_api_call(self, operation_name, kwarg):
                     }
                 ],
                 "networkMode": "host",
+                "pidMode": "host",
                 "tags": [],
             }
+        }
+    if operation_name == "ListServices":
+        return {
+            "serviceArns": [
+                "arn:aws:ecs:eu-west-1:123456789012:service/test_cluster_1/test_ecs_service"
+            ]
+        }
+    if operation_name == "DescribeServices":
+        return {
+            "services": [
+                {
+                    "serviceArn": "arn:aws:ecs:eu-west-1:123456789012:service/test_cluster_1/test_ecs_service",
+                    "serviceName": "test_ecs_service",
+                    "launchType": "EC2",
+                    "networkConfiguration": {
+                        "awsvpcConfiguration": {
+                            "subnets": ["subnet-12345678"],
+                            "securityGroups": ["sg-12345678"],
+                            "assignPublicIp": "ENABLED",
+                        }
+                    },
+                }
+            ]
+        }
+    if operation_name == "ListClusters":
+        return {
+            "clusterArns": [
+                "arn:aws:ecs:eu-west-1:123456789012:cluster/test_cluster_1",
+            ]
+        }
+    if operation_name == "DescribeClusters":
+        return {
+            "clusters": [
+                {
+                    "clusterArn": "arn:aws:ecs:eu-west-1:123456789012:cluster/test_cluster_1",
+                    "clusterName": "test_cluster_1",
+                    "status": "ACTIVE",
+                    "tags": [{"key": "Name", "value": "test_cluster_1"}],
+                    "registeredContainerInstancesCount": 5,
+                    "runningTasksCount": 10,
+                    "pendingTasksCount": 1,
+                    "activeServicesCount": 2,
+                },
+            ]
         }
     return make_api_call(self, operation_name, kwarg)
 
@@ -82,7 +127,7 @@ class Test_ECS_Service:
 
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     # Test describe ECS task definitions
-    def test__describe_task_definitions__(self):
+    def test_describe_task_definitions(self):
         aws_provider = set_mocked_aws_provider()
         ecs = ECS(aws_provider)
 
@@ -113,3 +158,57 @@ class Test_ECS_Service:
         assert ecs.task_definitions[task_arn].network_mode == "host"
         assert not ecs.task_definitions[task_arn].container_definitions[0].privileged
         assert ecs.task_definitions[task_arn].container_definitions[0].user == ""
+        assert ecs.task_definitions[task_arn].container_definitions[0].log_driver == ""
+        assert ecs.task_definitions[task_arn].pid_mode == "host"
+        assert (
+            not ecs.task_definitions[task_arn]
+            .container_definitions[0]
+            .readonly_rootfilesystem
+        )
+
+    # Test list ECS clusters
+    @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
+    def test_list_clusters(self):
+        aws_provider = set_mocked_aws_provider()
+        ecs = ECS(aws_provider)
+
+        cluster_arn1 = "arn:aws:ecs:eu-west-1:123456789012:cluster/test_cluster_1"
+
+        assert len(ecs.clusters) == 1
+        assert ecs.clusters[cluster_arn1].name == "test_cluster_1"
+        assert ecs.clusters[cluster_arn1].arn == cluster_arn1
+        assert ecs.clusters[cluster_arn1].region == AWS_REGION_EU_WEST_1
+
+    @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
+    # Test describe ECS clusters
+    def test_describe_clusters(self):
+        aws_provider = set_mocked_aws_provider()
+        ecs = ECS(aws_provider)
+
+        cluster_arn1 = "arn:aws:ecs:eu-west-1:123456789012:cluster/test_cluster_1"
+
+        assert len(ecs.clusters) == 1
+        assert ecs.clusters[cluster_arn1].name == "test_cluster_1"
+        assert ecs.clusters[cluster_arn1].arn == cluster_arn1
+        assert ecs.clusters[cluster_arn1].region == AWS_REGION_EU_WEST_1
+        assert ecs.clusters[cluster_arn1].services
+        assert ecs.clusters[cluster_arn1].tags == [
+            {"key": "Name", "value": "test_cluster_1"}
+        ]
+
+    @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
+    # Test describe ECS services
+    def test_describe_services(self):
+        aws_provider = set_mocked_aws_provider()
+        ecs = ECS(aws_provider)
+
+        service_arn = (
+            "arn:aws:ecs:eu-west-1:123456789012:service/test_cluster_1/test_ecs_service"
+        )
+
+        assert len(ecs.services) == 1
+        assert ecs.services[service_arn].name == "test_ecs_service"
+        assert ecs.services[service_arn].arn == service_arn
+        assert ecs.services[service_arn].region == AWS_REGION_EU_WEST_1
+        assert ecs.services[service_arn].assign_public_ip
+        assert ecs.services[service_arn].tags == []
