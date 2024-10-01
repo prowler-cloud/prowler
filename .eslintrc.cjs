@@ -10,6 +10,7 @@ module.exports = {
     "plugin:@typescript-eslint/recommended",
     "plugin:security/recommended-legacy",
     "plugin:jsx-a11y/recommended",
+    "eslint-config-prettier",
     "prettier",
   ],
   parserOptions: {

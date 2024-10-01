@@ -36,7 +36,7 @@ export const DataTableFilterCustom = ({
   );
 
   return (
-    <div className="flex flex-col md:flex-row md:items-start gap-4">
+    <div className="flex flex-col gap-4 md:flex-row md:items-start">
       <CustomButton
         ariaLabel={showFilters ? "Hide Filters" : "Show Filters"}
         variant="flat"
@@ -53,11 +53,11 @@ export const DataTableFilterCustom = ({
       <div
         className={`transition-all duration-700 ease-in-out ${
           showFilters
-            ? "opacity-100 translate-x-0 w-full md:max-w-80 max-h-96 overflow-visible"
-            : "opacity-0 -translate-x-full max-h-0 overflow-hidden"
+            ? "max-h-96 w-full translate-x-0 overflow-visible opacity-100 md:max-w-80"
+            : "max-h-0 -translate-x-full overflow-hidden opacity-0"
         }`}
       >
-        <div className="flex flex-col md:flex-row gap-4">
+        <div className="flex flex-col gap-4 md:flex-row">
           {filters.map((filter) => (
             <CustomDropdownFilter
               key={filter.key}

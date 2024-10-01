@@ -93,11 +93,11 @@ export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
     }
   }, [groupSelected, allFilterKeys]);
   return (
-    <div className="flex flex-col w-full gap-2">
+    <div className="flex w-full flex-col gap-2">
       <Popover backdrop="transparent" placement="bottom-start">
         <PopoverTrigger>
           <Button
-            className="inline-flex items-center justify-center whitespace-nowrap font-medium transition-colors focus-visible:outline-none disabled:opacity-50 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground rounded-md px-3 text-xs h-8 border-dashed"
+            className="border-input hover:bg-accent hover:text-accent-foreground inline-flex h-8 items-center justify-center whitespace-nowrap rounded-md border border-dashed bg-background px-3 text-xs font-medium shadow-sm transition-colors focus-visible:outline-none disabled:opacity-50"
             startContent={<PlusCircleIcon size={16} />}
             size="sm"
           >
@@ -107,7 +107,7 @@ export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
               <>
                 <Divider orientation="vertical" className="mx-2 h-4" />
 
-                <div className="hidden space-x-1 lg:flex max-w-24 overflow-x-auto no-scrollbar">
+                <div className="no-scrollbar hidden max-w-24 space-x-1 overflow-x-auto lg:flex">
                   {groupSelected.size > 3 ? (
                     <span
                       className={filterSelectedClass}
@@ -145,7 +145,7 @@ export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
               <Divider orientation="horizontal" className="mt-2" />
               <ScrollShadow
                 hideScrollBar
-                className="flex flex-col gap-y-2 py-2 max-w-56 max-h-96"
+                className="flex max-h-96 max-w-56 flex-col gap-y-2 py-2"
               >
                 {allFilterKeys.map((value) => (
                   <Checkbox className="font-normal" key={value} value={value}>
