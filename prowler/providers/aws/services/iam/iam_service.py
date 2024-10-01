@@ -89,13 +89,16 @@ class IAM(AWSService):
         self._list_inline_role_policies()
         self.saml_providers = self._list_saml_providers()
         self.server_certificates = self._list_server_certificates()
-        self._list_tags_for_resource()
         self.access_keys_metadata = {}
         self._get_access_keys_metadata()
         self.last_accessed_services = {}
         self._get_last_accessed_services()
         self.user_temporary_credentials_usage = {}
         self._get_user_temporary_credentials_usage()
+        # List missing tags
+        self.__threading_call__(self._list_tags, self.users)
+        self.__threading_call__(self._list_tags, self.roles)
+        self.__threading_call__(self._list_tags, self.policies)
 
     def _get_client(self):
         return self.client
@@ -768,71 +771,21 @@ class IAM(AWSService):
         finally:
             return server_certificates
 
-    def _list_tags_for_resource(self):
+    def _list_tags(self, resource: any):
         logger.info("IAM - List Tags...")
         try:
-            if self.roles:
-                for role in self.roles:
-                    try:
-                        response = self.client.list_role_tags(RoleName=role.name)[
-                            "Tags"
-                        ]
-                        role.tags = response
-                    except ClientError as error:
-                        if error.response["Error"]["Code"] == "NoSuchEntity":
-                            role.tags = []
-                        else:
-                            logger.error(
-                                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                            )
-                    except Exception as error:
-                        logger.error(
-                            f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                        )
-
-        except Exception as error:
-            logger.error(
-                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-
-        try:
-            for user in self.users:
-                try:
-                    response = self.client.list_user_tags(UserName=user.name)["Tags"]
-                    user.tags = response
-                except ClientError as error:
-                    if error.response["Error"]["Code"] == "NoSuchEntity":
-                        user.tags = []
-                    else:
-                        logger.error(
-                            f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                        )
-
-        except Exception as error:
-            logger.error(
-                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-
-        try:
-            for policy in self.policies:
-                try:
-                    if policy.type != "Inline":
-                        response = self.client.list_policy_tags(PolicyArn=policy.arn)[
-                            "Tags"
-                        ]
-                        policy.tags = response
-                except ClientError as error:
-                    if error.response["Error"]["Code"] == "NoSuchEntity":
-                        policy.tags = []
-                    else:
-                        logger.error(
-                            f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                        )
-                except Exception as error:
-                    logger.error(
-                        f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                    )
-
+            if isinstance(resource, Role):
+                resource.tags = self.client.list_role_tags(RoleName=resource.name)[
+                    "Tags"
+                ]
+            elif isinstance(resource, User):
+                resource.tags = self.client.list_user_tags(UserName=resource.name)[
+                    "Tags"
+                ]
+            elif isinstance(resource, Policy):
+                resource.tags = self.client.list_policy_tags(PolicyArn=resource.arn)[
+                    "Tags"
+                ]
         except Exception as error:
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
