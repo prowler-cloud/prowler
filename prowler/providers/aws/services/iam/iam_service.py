@@ -47,7 +47,6 @@ def is_service_role(role):
     return False
 
 
-################## IAM
 class IAM(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
