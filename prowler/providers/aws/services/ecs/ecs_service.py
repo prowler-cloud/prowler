@@ -117,6 +117,9 @@ class ECS(AWSService):
                             .get("assignPublicIp", "DISABLED")
                             == "ENABLED"
                         ),
+                        launch_type=service_desc.get("launchType", ""),
+                        platform_version=service_desc.get("platformVersion", ""),
+                        platform_family=service_desc.get("platformFamily", ""),
                         tags=service_desc.get("tags", []),
                     )
                     cluster.services[service_arn] = service_obj
@@ -190,6 +193,9 @@ class Service(BaseModel):
     name: str
     arn: str
     region: str
+    launch_type: str = ""
+    platform_version: Optional[str]
+    platform_family: Optional[str]
     assign_public_ip: Optional[bool]
     tags: Optional[list] = []
 
