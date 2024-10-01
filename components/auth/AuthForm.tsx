@@ -97,7 +97,6 @@ export const AuthForm = ({ type }: { type: string }) => {
         <Form {...form}>
           <form
             className="flex flex-col gap-3"
-            // Fix TS types.
             onSubmit={form.handleSubmit(onSubmit)}
           >
             {type === "sign-up" && (
@@ -115,6 +114,7 @@ export const AuthForm = ({ type }: { type: string }) => {
                   type="text"
                   label="Company Name"
                   placeholder="Enter your company name"
+                  isRequired={false}
                 />
               </>
             )}
@@ -138,35 +138,17 @@ export const AuthForm = ({ type }: { type: string }) => {
                 </Link>
               </div>
             )}
-            {/* <Input
-                isRequired
-                endContent={
-                  <button type="button" onClick={toggleConfirmVisibility}>
-                    {isConfirmVisible ? (
-                      <Icon
-                        className="pointer-events-none text-2xl text-default-400"
-                        icon="solar:eye-closed-linear"
-                      />
-                    ) : (
-                      <Icon
-                        className="pointer-events-none text-2xl text-default-400"
-                        icon="solar:eye-bold"
-                      />
-                    )}
-                  </button>
-                }
-                label="Confirm Password"
-                name="confirmPassword"
-                placeholder="Confirm your password"
-                type={isConfirmVisible ? "text" : "password"}
-                variant="bordered"
-              /> */}
             {type === "sign-up" && (
               <FormField
                 control={form.control}
                 name="termsAndConditions"
                 render={({ field }) => (
                   <>
+                    <CustomInput
+                      control={form.control}
+                      name="confirmPassword"
+                      confirmPassword
+                    />
                     <FormControl>
                       <Checkbox
                         isRequired

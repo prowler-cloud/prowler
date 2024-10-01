@@ -16,6 +16,7 @@ interface CustomInputProps<T extends FieldValues> {
   type?: string;
   placeholder?: string;
   password?: boolean;
+  confirmPassword?: boolean;
   isRequired?: boolean;
   isInvalid?: boolean;
 }
@@ -28,24 +29,53 @@ export const CustomInput = <T extends FieldValues>({
   labelPlacement = "inside",
   placeholder,
   variant = "bordered",
+  confirmPassword = false,
   password = false,
   isRequired = true,
   isInvalid,
 }: CustomInputProps<T>) => {
-  const [isVisible, setIsVisible] = useState(false);
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] =
+    useState(false);
 
-  const toggleVisibility = () => setIsVisible(!isVisible);
+  const inputLabel = confirmPassword
+    ? "Confirm Password"
+    : password
+      ? "Password"
+      : label;
 
-  const inputLabel = password ? "Password" : label;
-  const inputType = password ? (isVisible ? "text" : "password") : type;
-  const inputPlaceholder = password ? "Enter your password" : placeholder;
-  const inputIsRequired = password ? true : isRequired;
+  const inputPlaceholder = confirmPassword
+    ? "Confirm Password"
+    : password
+      ? "Password"
+      : placeholder;
 
-  const endContent = password && (
+  const inputType =
+    password || confirmPassword
+      ? isPasswordVisible || isConfirmPasswordVisible
+        ? "text"
+        : "password"
+      : type;
+  const inputIsRequired = password || confirmPassword ? true : isRequired;
+
+  const toggleVisibility = () => {
+    if (password) {
+      setIsPasswordVisible(!isPasswordVisible);
+    } else if (confirmPassword) {
+      setIsConfirmPasswordVisible(!isConfirmPasswordVisible);
+    }
+  };
+
+  const endContent = (password || confirmPassword) && (
     <button type="button" onClick={toggleVisibility}>
       <Icon
         className="pointer-events-none text-2xl text-default-400"
-        icon={isVisible ? "solar:eye-closed-linear" : "solar:eye-bold"}
+        icon={
+          (password && isPasswordVisible) ||
+          (confirmPassword && isConfirmPasswordVisible)
+            ? "solar:eye-closed-linear"
+            : "solar:eye-bold"
+        }
       />
     </button>
   );
