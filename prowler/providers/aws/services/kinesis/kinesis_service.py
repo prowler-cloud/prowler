@@ -14,7 +14,7 @@ class Kinesis(AWSService):
         super().__init__(__class__.__name__, provider)
         self.streams = {}
         self.__threading_call__(self._list_streams)
-        self.__threading_call__(self._describe_stream, self.streams.values())
+        self.__threading_call__(self._list_tags_for_stream, self.streams.values())
 
     def _list_streams(self, regional_client):
         logger.info("Kinesis - Listing Kinesis Streams...")
@@ -25,7 +25,7 @@ class Kinesis(AWSService):
                     if not self.audit_resources or (
                         is_resource_filtered(stream["StreamARN"], self.audit_resources)
                     ):
-                        arn = stream.get("StreamARN", "")
+                        arn = stream["StreamARN"]
                         self.streams[arn] = Stream(
                             arn=arn,
                             name=stream["StreamName"],
@@ -37,17 +37,16 @@ class Kinesis(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def _describe_stream(self, stream):
-        logger.info("Kinesis - Describing Kinesis Streams...")
+    def _list_tags_for_stream(self, stream):
+        logger.info(f"Kinesis - Listing tags for Stream {stream.name}...")
         try:
-            regional_client = self.regional_clients[stream.region]
-            describe_stream = regional_client.describe_stream(StreamName=stream.name)[
-                "StreamDescription"
-            ]
-            stream.tags = describe_stream.get("Tags", [])
+            tags = self.regional_clients[stream.region].list_tags_for_stream(
+                StreamName=stream.name
+            )["Tags"]
+            stream.tags = tags
         except Exception as error:
             logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{stream.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
 

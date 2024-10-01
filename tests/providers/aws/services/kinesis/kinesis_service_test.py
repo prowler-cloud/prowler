@@ -27,9 +27,11 @@ def mock_make_api_call(self, operation_name, kwarg):
                 "StreamName": "test-stream",
                 "StreamARN": "arn:aws:kinesis:us-east-1:123456789012:stream/test-stream",
                 "StreamStatus": "ACTIVE",
-                "Tags": [],
+                "Tags": [{"Key": "test_tag", "Value": "test_value"}],
             }
         }
+    if operation_name == "ListTagsForStream":
+        return {"Tags": [{"Key": "test_tag", "Value": "test_value"}]}
     return make_api_call(self, operation_name, kwarg)
 
 
@@ -67,6 +69,6 @@ class Test_Kinesis_Service:
         assert len(kinesis.streams) == 1
         assert kinesis.streams[arn].name == "test-stream"
         assert kinesis.streams[arn].status == StreamStatus.ACTIVE
-        assert kinesis.streams[arn].tags == []
+        assert kinesis.streams[arn].tags == [{"Key": "test_tag", "Value": "test_value"}]
         assert kinesis.streams[arn].region == AWS_REGION_US_EAST_1
         assert kinesis.streams[arn].arn == arn
