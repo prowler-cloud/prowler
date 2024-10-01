@@ -24,8 +24,9 @@ class Kinesis(AWSService):
                     if not self.audit_resources or (
                         is_resource_filtered(stream["StreamARN"], self.audit_resources)
                     ):
-                        self.streams[stream["StreamARN"]] = Stream(
-                            arn=stream["StreamARN"],
+                        arn = stream.get("StreamARN", "")
+                        self.streams[arn] = Stream(
+                            arn=arn,
                             name=stream["StreamName"],
                             region=regional_client.region,
                             status=StreamStatus(stream.get("StreamStatus", "ACTIVE")),
