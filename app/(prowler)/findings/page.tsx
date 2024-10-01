@@ -13,7 +13,7 @@ export default async function Findings() {
     <>
       <Header title="Findings" icon="ph:list-checks-duotone" />
       <Spacer />
-      <div className="flex flex-col items-start w-full overflow-hidden">
+      <div className="flex w-full flex-col items-start overflow-hidden">
         <Spacer y={6} />
         <Suspense fallback={<SkeletonTableFindings />}>
           <SSRDataTable />

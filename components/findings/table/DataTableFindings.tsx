@@ -48,7 +48,7 @@ export function DataTableFindings<TData extends FindingProps, TValue>({
 
   return (
     <>
-      <div className="flex flex-row w-full">
+      <div className="flex w-full flex-row">
         <div
           className={clsx("transition-all duration-300", {
             "w-2/3": selectedRow,

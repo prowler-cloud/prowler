@@ -29,7 +29,7 @@ export default async function Users({
     <>
       <Header title="User Management" icon="ci:users" />
       <Spacer y={4} />
-      <div className="flex flex-col items-end w-full">
+      <div className="flex w-full flex-col items-end">
         <div className="flex space-x-6">
           <AddUserModal />
         </div>

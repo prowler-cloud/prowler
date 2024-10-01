@@ -37,6 +37,7 @@ export const CustomRegionSelection = () => {
   return (
     <Select
       label="Region"
+      aria-label="Select a Region"
       placeholder="Select a region"
       selectionMode="multiple"
       className="w-full"

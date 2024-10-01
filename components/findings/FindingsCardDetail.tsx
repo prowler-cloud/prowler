@@ -34,9 +34,9 @@ export const FindingsCardDetail: React.FC<FindingsCardDetailProps> = ({
     <>
       {description && (
         <div
-          className={`text-sm mt-3 rounded-md border-2 ${getDetailColorClass(type)} p-2`}
+          className={`mt-3 rounded-md border-2 text-sm ${getDetailColorClass(type)} p-2`}
         >
-          <p className="font-bold flex justify-between items-center mb-2">
+          <p className="mb-2 flex items-center justify-between font-bold">
             <span>{title}</span>
             {url && (
               <Button

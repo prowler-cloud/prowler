@@ -22,7 +22,7 @@ export const CustomSelectUser: React.FC<CustomSelectUserProps> = ({
         Select a role<span className="text-red-500">*</span>
       </Label>
       <Select>
-        <SelectTrigger className="shadow-none h-12 rounded-xl bg-zinc-100 border-transparent text-foreground-500 focus:ring-2 focus:ring-blue-600 ring-0 hover:bg-zinc-200 focus:border-2 focus:border-white">
+        <SelectTrigger className="h-12 rounded-xl border-transparent bg-zinc-100 text-foreground-500 shadow-none ring-0 hover:bg-zinc-200 focus:border-2 focus:border-white focus:ring-2 focus:ring-blue-600">
           <SelectValue
             placeholder={(userData && userData?.role) || "Select a role"}
           />

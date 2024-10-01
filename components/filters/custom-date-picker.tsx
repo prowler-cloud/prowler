@@ -57,12 +57,13 @@ export const CustomDatePicker = () => {
   };
 
   return (
-    <div className="flex flex-col md:gap-2 w-full">
+    <div className="flex w-full flex-col md:gap-2">
       <DatePicker
+        aria-label="Select a Date"
         CalendarTopContent={
           <ButtonGroup
             fullWidth
-            className="px-3 pb-2 pt-3 bg-content1 [&>button]:text-default-500 [&>button]:border-default-200/60"
+            className="bg-content1 px-3 pb-2 pt-3 [&>button]:border-default-200/60 [&>button]:text-default-500"
             radius="full"
             size="sm"
             variant="bordered"

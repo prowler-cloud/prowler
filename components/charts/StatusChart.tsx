@@ -55,7 +55,7 @@ export function StatusChart() {
   }, []);
 
   return (
-    <div className="flex items-center justify-center self-center my-auto">
+    <div className="my-auto flex items-center justify-center self-center">
       <ChartContainer
         config={chartConfig}
         className="mx-auto aspect-square min-w-[200px] md:min-h-[250px]"
@@ -102,7 +102,7 @@ export function StatusChart() {
           </Pie>
         </PieChart>
       </ChartContainer>
-      <div className="flex flex-col justify-center gap-2 mx-6 text-small">
+      <div className="mx-6 flex flex-col justify-center gap-2 text-small">
         <div className="flex space-x-4">
           <Chip
             className="h-5"
@@ -122,7 +122,7 @@ export function StatusChart() {
           No change from last scan
         </div>
         <Spacer y={4} />
-        <div className="flex flex-col gap-2 leading-none text-muted-foreground">
+        <div className="text-muted-foreground flex flex-col gap-2 leading-none">
           <div className="flex space-x-4">
             <Chip
               className="h-5"
@@ -138,7 +138,7 @@ export function StatusChart() {
             <span>{updatedChartData[1].percent}</span>
             <Divider orientation="vertical" />
           </div>
-          <div className="flex items-center font-medium leading-none gap-1">
+          <div className="flex items-center gap-1 font-medium leading-none">
             +2 findings from last scan <TrendingUp className="h-4 w-4" />
           </div>
         </div>

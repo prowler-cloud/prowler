@@ -54,9 +54,10 @@ export const DeleteForm = ({
     <Form {...form}>
       <form action={onSubmitClient}>
         <input type="hidden" name="id" value={providerId} />
-        <div className="w-full flex justify-center sm:space-x-6">
+        <div className="flex w-full justify-center sm:space-x-6">
           <CustomButton
             type="button"
+            ariaLabel="Cancel"
             className="w-full bg-transparent"
             variant="faded"
             size="lg"
@@ -69,6 +70,7 @@ export const DeleteForm = ({
 
           <CustomButton
             type="submit"
+            ariaLabel="Delete"
             className="w-full"
             variant="solid"
             color="danger"

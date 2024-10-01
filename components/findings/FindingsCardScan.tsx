@@ -16,7 +16,7 @@ export const FindingsCardScan: React.FC<FindingsCardScanProps> = ({
 
   return (
     <>
-      <p className="text-sm font-bold mt-3">{title}</p>
+      <p className="mt-3 text-sm font-bold">{title}</p>
       <p className="text-sm">
         {formattedDate} at {formattedTime}
       </p>

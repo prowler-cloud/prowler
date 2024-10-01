@@ -20,7 +20,7 @@ export default function Error({
   }, [error]);
 
   return (
-    <Alert className="w-fit mx-auto mt-[35%]">
+    <Alert className="mx-auto mt-[35%] w-fit">
       <RocketIcon className="h-5 w-5" />
       <AlertTitle className="text-lg">An unexpected error occurred</AlertTitle>
       <AlertDescription className="mb-5">

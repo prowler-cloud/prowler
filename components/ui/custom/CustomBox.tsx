@@ -19,17 +19,17 @@ export const CustomBox = ({
     <Card fullWidth {...props}>
       {(preTitle || subTitle || title) && (
         <>
-          <CardHeader className="pt-4 pb-3 px-3 flex-col items-start">
+          <CardHeader className="flex-col items-start px-3 pb-3 pt-4">
             {preTitle && (
-              <p className="text-tiny uppercase font-bold">{preTitle}</p>
+              <p className="text-tiny font-bold uppercase">{preTitle}</p>
             )}
             {subTitle && <small className="text-default-500">{subTitle}</small>}
-            {title && <h4 className="font-bold text-large">{title}</h4>}
+            {title && <h4 className="text-large font-bold">{title}</h4>}
           </CardHeader>
           <Divider />
         </>
       )}
-      <CardBody className="px-3 pt-3 pb-4">{children}</CardBody>
+      <CardBody className="px-3 pb-4 pt-3">{children}</CardBody>
     </Card>
   );
 };

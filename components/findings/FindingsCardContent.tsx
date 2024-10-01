@@ -14,7 +14,7 @@ export const FindingsCardContent: React.FC<FindingsCardContentProps> = ({
 }) => {
   return (
     <>
-      <p className="text-sm font-bold mt-3">{title}</p>
+      <p className="mt-3 text-sm font-bold">{title}</p>
       {url ? (
         <Link className="text-sm" href={url}>
           {description}

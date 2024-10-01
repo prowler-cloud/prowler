@@ -60,7 +60,7 @@ export const ActionCard = React.forwardRef<HTMLDivElement, ActionCardProps>(
         shadow="sm"
         {...props}
       >
-        <CardBody className="flex h-full flex-row gap-2 p-2 items-center">
+        <CardBody className="flex h-full flex-row items-center gap-2 p-2">
           <div
             className={cn(
               "item-center flex rounded-medium border p-1",

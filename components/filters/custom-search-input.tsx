@@ -38,6 +38,7 @@ export const CustomSearchInput: React.FC = () => {
   return (
     <Input
       variant="flat"
+      aria-label="Search"
       placeholder="Search..."
       labelPlacement="outside"
       value={searchQuery}

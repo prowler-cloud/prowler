@@ -42,7 +42,7 @@ export const SidebarWrap = () => {
   return (
     <div
       className={clsx(
-        "relative flex h-screen flex-col !border-r-small border-divider transition-width bg-prowler-blue-midnight",
+        "relative flex h-screen flex-col !border-r-small border-divider transition-width",
         {
           "w-72 p-6": !isCompact,
           "w-16 items-center px-2 py-6": isCompact,
@@ -50,7 +50,7 @@ export const SidebarWrap = () => {
       )}
     >
       <div
-        className={clsx("flex items-center gap-3 px-3 justify-center", {
+        className={clsx("flex items-center justify-center gap-3 px-3", {
           "gap-0": isCompact,
         })}
       >
@@ -268,9 +268,9 @@ export const SidebarWrap = () => {
         >
           <div
             className={clsx(
-              "text-default-500 data-[hover=true]:text-foreground px-0",
+              "px-0 text-default-500 data-[hover=true]:text-foreground",
               {
-                "justify-center mt-3": isCompact,
+                "mt-3 justify-center": isCompact,
               },
             )}
           >
@@ -284,7 +284,7 @@ export const SidebarWrap = () => {
           <Button
             aria-label={isCompact ? "Open sidebar" : "Close sidebar"}
             className={clsx(
-              "text-default-500 data-[hover=true]:text-foreground px-0",
+              "px-0 text-default-500 data-[hover=true]:text-foreground",
               {
                 "justify-center": isCompact,
               },

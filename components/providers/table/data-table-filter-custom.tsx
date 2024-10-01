@@ -1,6 +1,5 @@
 "use client";
 
-import { Divider } from "@nextui-org/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useState } from "react";
 import { useCallback } from "react";
@@ -37,25 +36,28 @@ export const DataTableFilterCustom = ({
   );
 
   return (
-    <div className="flex flex-row items-center gap-4">
+    <div className="flex flex-col gap-4 md:flex-row md:items-start">
       <CustomButton
+        ariaLabel={showFilters ? "Hide Filters" : "Show Filters"}
         variant="flat"
         color={showFilters ? "action" : "primary"}
         size="sm"
         startContent={<CustomFilterIcon size={16} />}
         onPress={() => setShowFilters(!showFilters)}
       >
-        {showFilters ? "Hide Filters" : "Show Filters"}
+        <h3 className="text-small">
+          {showFilters ? "Hide Filters" : "Show Filters"}
+        </h3>
       </CustomButton>
 
       <div
-        className={`transition-all duration-500 ease-in-out ${
+        className={`transition-all duration-700 ease-in-out ${
           showFilters
-            ? "opacity-100 max-h-96 overflow-visible"
-            : "opacity-0 max-h-0 overflow-hidden"
+            ? "max-h-96 w-full translate-x-0 overflow-visible opacity-100 md:max-w-80"
+            : "max-h-0 -translate-x-full overflow-hidden opacity-0"
         }`}
       >
-        <div className="flex flex-row gap-4">
+        <div className="flex flex-col gap-4 md:flex-row">
           {filters.map((filter) => (
             <CustomDropdownFilter
               key={filter.key}
@@ -66,10 +68,6 @@ export const DataTableFilterCustom = ({
               onFilterChange={pushDropdownFilter}
             />
           ))}
-          <div className="flex flex-row items-center gap-2">
-            <Divider className="text-default-800 h-5" orientation="vertical" />
-            <span className="text-sm text-default-800">Selected</span>
-          </div>
         </div>
       </div>
     </div>

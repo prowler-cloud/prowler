@@ -18,6 +18,7 @@ export const CustomAccountSelection = () => {
   return (
     <Select
       label="Account"
+      aria-label="Select an Account"
       placeholder="Select an account"
       selectionMode="multiple"
       className="w-full"

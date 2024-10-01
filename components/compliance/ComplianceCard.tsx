@@ -50,15 +50,15 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
 
   return (
     <Card fullWidth isPressable isHoverable shadow="sm">
-      <CardBody className="flex flex-row items-center space-x-4 justify-between">
-        <div className="flex space-x-4 items-center w-full">
+      <CardBody className="flex flex-row items-center justify-between space-x-4">
+        <div className="flex w-full items-center space-x-4">
           <Image
             src={getComplianceIcon(title)}
             alt={`${title} logo`}
-            className="rounded-md p-1 border-gray-300 border-1 bg-white object-contain h-10 w-10 min-w-10"
+            className="h-10 w-10 min-w-10 rounded-md border-1 border-gray-300 bg-white object-contain p-1"
           />
-          <div className="flex flex-col w-full">
-            <h4 className="font-bold text-md 3xl:text-lg leading-5">{title}</h4>
+          <div className="flex w-full flex-col">
+            <h4 className="text-md font-bold leading-5 3xl:text-lg">{title}</h4>
             <Progress
               label="Your Rating:"
               size="sm"
@@ -68,9 +68,9 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
               className="mt-2 font-semibold"
               color={getRatingColor(ratingPercentage)}
             />
-            <div className="flex justify-between mt-2">
+            <div className="mt-2 flex justify-between">
               <small>
-                <span className="font-semibold mr-1">
+                <span className="mr-1 font-semibold">
                   {passingRequirements} / {totalRequirements}
                 </span>
                 Passing Requirements

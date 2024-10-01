@@ -21,22 +21,22 @@ export const UserActions: React.FC<UserActionsProps> = ({ userData }) => {
 
   return (
     <>
-      <div className="relative flex justify-end items-center gap-2">
+      <div className="relative flex items-center justify-end gap-2">
         <DropdownMenu modal={false}>
           <DropdownMenuTrigger>
             <VerticalDotsIcon
               size={28}
-              className="text-default-400 p-0.5 hover:bg-gray-200 hover:rounded-full"
+              className="p-0.5 text-default-400 hover:rounded-full hover:bg-gray-200"
             />
           </DropdownMenuTrigger>
           <DropdownMenuContent className="bg-white">
             <DropdownMenuItem
-              className="hover:bg-gray-200 hover:cursor-pointer"
+              className="hover:cursor-pointer hover:bg-gray-200"
               onClick={() => setIsEditOpen(true)}
             >
               Edit
             </DropdownMenuItem>
-            <DropdownMenuItem className="hover:bg-gray-200 hover:cursor-pointer">
+            <DropdownMenuItem className="hover:cursor-pointer hover:bg-gray-200">
               Delete
             </DropdownMenuItem>
           </DropdownMenuContent>

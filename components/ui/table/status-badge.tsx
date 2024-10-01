@@ -30,7 +30,7 @@ export const StatusBadge = ({ status }: { status: Status }) => {
 
   return (
     <Chip
-      className="capitalize border-none gap-1 text-default-600"
+      className="gap-1 border-none capitalize text-default-600"
       size="sm"
       variant="flat"
       color={color}
