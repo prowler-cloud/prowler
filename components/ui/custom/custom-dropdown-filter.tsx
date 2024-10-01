@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  Badge,
   Button,
   Checkbox,
   CheckboxGroup,
@@ -9,6 +8,7 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
+  ScrollShadow,
 } from "@nextui-org/react";
 import _ from "lodash";
 import { useSearchParams } from "next/navigation";
@@ -90,11 +90,11 @@ export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
     }
   }, [groupSelected, allFilterKeys]);
   return (
-    <div className="flex w-full max-w-xs flex-col gap-2">
-      <Popover backdrop="opaque" placement="bottom">
+    <div className="flex flex-col w-full gap-2">
+      <Popover backdrop="transparent" placement="bottom-start">
         <PopoverTrigger>
           <Button
-            className="bg-default-100 text-default-800"
+            className="inline-flex items-center justify-center whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground rounded-md px-3 text-xs h-8 border-dashed"
             startContent={
               <PlusCircleIcon className="text-default-400" width={16} />
             }
@@ -105,33 +105,20 @@ export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
             {groupSelected.size > 0 && (
               <>
                 <Divider orientation="vertical" className="mx-2 h-4" />
-                <Badge
-                  variant="flat"
-                  className="rounded-sm px-1 font-normal lg:hidden"
-                >
-                  {groupSelected.size}
-                </Badge>
-                <div className="hidden space-x-1 lg:flex">
-                  {groupSelected.size > 2 ? (
-                    <Badge
-                      variant="flat"
-                      className="rounded-sm px-1 font-normal"
-                    >
-                      {groupSelected.size} selected
-                    </Badge>
-                  ) : (
-                    Array.from(groupSelected)
-                      .filter((value) => value !== "all")
-                      .map((value) => (
-                        <Badge
-                          variant="flat"
-                          key={value}
-                          className="rounded-sm px-1 font-normal"
-                        >
-                          {value}
-                        </Badge>
-                      ))
-                  )}
+
+                <div className="hidden space-x-1 lg:flex overflow-x-auto no-scrollbar">
+                  {groupSelected.size > 3
+                    ? `+${groupSelected.size - 2} selected`
+                    : Array.from(groupSelected)
+                        .filter((value) => value !== "all")
+                        .map((value) => (
+                          <div
+                            key={value}
+                            className="inline-flex items-center border py-0.5 text-xs transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-default-500 text-secondary-foreground hover:bg-default-500/80 rounded-sm px-2 font-normal"
+                          >
+                            {_.capitalize(value)}
+                          </div>
+                        ))}
                 </div>
               </>
             )}
@@ -144,7 +131,7 @@ export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
               label={filter?.labelCheckboxGroup}
               value={Array.from(groupSelected)}
               onValueChange={onSelectionChange}
-              className="text-small font-bold"
+              className="font-bold"
             >
               <Checkbox
                 className="font-normal"
@@ -153,23 +140,21 @@ export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
               >
                 Select All
               </Checkbox>
-              {allFilterKeys.map((value) => (
-                <Checkbox className="font-normal" key={value} value={value}>
-                  {_.capitalize(value)}
-                </Checkbox>
-              ))}
+              <Divider orientation="horizontal" className="mt-2" />
+              <ScrollShadow
+                hideScrollBar
+                className="flex flex-col gap-y-2 py-2 max-w-56 max-h-96"
+              >
+                {allFilterKeys.map((value) => (
+                  <Checkbox className="font-normal" key={value} value={value}>
+                    {_.capitalize(value)}
+                  </Checkbox>
+                ))}
+              </ScrollShadow>
             </CheckboxGroup>
           </div>
         </PopoverContent>
       </Popover>
-      {groupSelected?.size > 0 && (
-        <p className="text-small text-default-500">
-          Selected:{" "}
-          {Array.from(groupSelected)
-            .filter((item) => item !== "all")
-            .join(", ")}
-        </p>
-      )}
     </div>
   );
 };

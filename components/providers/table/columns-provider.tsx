@@ -18,7 +18,7 @@ const getProviderData = (row: { original: ProviderProps }) => {
 
 export const ColumnsProvider: ColumnDef<ProviderProps>[] = [
   {
-    header: "n",
+    header: " ",
     cell: ({ row }) => <p className="text-medium">{row.index + 1}</p>,
   },
   {
