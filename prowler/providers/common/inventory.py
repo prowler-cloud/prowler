@@ -5,12 +5,13 @@ import shutil
 from collections import deque
 from datetime import datetime
 
+from colorama import Fore, Style
 from pydantic import BaseModel
-from tqdm import tqdm
+
+from prowler.config.config import orange_color
 
 
 def run_prowler_inventory(checks_to_execute, provider):
-    print(f"\nRunning scan inventory for {provider}")
     output_folder_path = f"./output/inventory/{provider}"
     meta_json_file = {}
 
@@ -46,7 +47,7 @@ def run_prowler_inventory(checks_to_execute, provider):
 
     service_set = set()
 
-    for check_name in tqdm(checks_to_execute):
+    for check_name in checks_to_execute:
         try:
             service = check_name.split("_")[0]
 
@@ -117,3 +118,6 @@ def run_prowler_inventory(checks_to_execute, provider):
 
     # Compress the folder into a zip file
     shutil.make_archive(f"{output_zip_file}", "zip", folder_to_compress)
+    print(
+        f"\n{Style.BRIGHT}{Fore.GREEN}Scan inventory for {provider} results: {orange_color}{output_folder_path}"
+    )
