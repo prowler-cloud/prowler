@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -10,7 +11,7 @@ from prowler.providers.aws.lib.service.service import AWSService
 class Kinesis(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
-        super().__init__("kinesis", provider)
+        super().__init__(__class__.__name__, provider)
         self.streams = {}
         self.__threading_call__(self._list_streams)
         self.__threading_call__(self._describe_stream, self.streams.values())
@@ -66,4 +67,4 @@ class Stream(BaseModel):
     region: str
     name: str
     status: StreamStatus
-    tags: list = []
+    tags: Optional[list]
