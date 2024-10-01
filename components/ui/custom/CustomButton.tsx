@@ -5,7 +5,7 @@ import clsx from "clsx";
 import { NextUIColors, NextUIVariants } from "@/types";
 
 export const buttonClasses = {
-  base: "px-2 inline-flex items-center justify-center relative z-0 text-center whitespace-nowrap",
+  base: "px-4 inline-flex items-center justify-center relative z-0 text-center whitespace-nowrap",
   primary: "bg-default-100 hover:bg-default-200 text-default-800",
   secondary: "bg-prowler-grey-light dark:bg-prowler-grey-medium text-white",
   action: "text-white bg-prowler-blue-smoky dark:bg-prowler-grey-medium",

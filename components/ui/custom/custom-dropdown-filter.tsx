@@ -17,6 +17,9 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { PlusCircleIcon } from "@/components/icons";
 import { CustomDropdownFilterProps } from "@/types";
 
+const filterSelectedClass =
+  "inline-flex items-center border py-0.5 text-xs transition-colors border-transparent bg-default-500 text-secondary-foreground hover:bg-default-500/80 rounded-md px-2 font-normal";
+
 export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
   filter,
   onFilterChange,
@@ -94,10 +97,8 @@ export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
       <Popover backdrop="transparent" placement="bottom-start">
         <PopoverTrigger>
           <Button
-            className="inline-flex items-center justify-center whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground rounded-md px-3 text-xs h-8 border-dashed"
-            startContent={
-              <PlusCircleIcon className="text-default-400" width={16} />
-            }
+            className="inline-flex items-center justify-center whitespace-nowrap font-medium transition-colors focus-visible:outline-none disabled:opacity-50 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground rounded-md px-3 text-xs h-8 border-dashed"
+            startContent={<PlusCircleIcon size={16} />}
             size="sm"
           >
             <h3 className="text-small">{filter?.labelCheckboxGroup}</h3>
@@ -106,19 +107,20 @@ export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
               <>
                 <Divider orientation="vertical" className="mx-2 h-4" />
 
-                <div className="hidden space-x-1 lg:flex overflow-x-auto no-scrollbar">
-                  {groupSelected.size > 3
-                    ? `+${groupSelected.size - 2} selected`
-                    : Array.from(groupSelected)
-                        .filter((value) => value !== "all")
-                        .map((value) => (
-                          <div
-                            key={value}
-                            className="inline-flex items-center border py-0.5 text-xs transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-default-500 text-secondary-foreground hover:bg-default-500/80 rounded-sm px-2 font-normal"
-                          >
-                            {_.capitalize(value)}
-                          </div>
-                        ))}
+                <div className="hidden space-x-1 lg:flex max-w-24 overflow-x-auto no-scrollbar">
+                  {groupSelected.size > 3 ? (
+                    <span
+                      className={filterSelectedClass}
+                    >{`+${groupSelected.size - 2} selected`}</span>
+                  ) : (
+                    Array.from(groupSelected)
+                      .filter((value) => value !== "all")
+                      .map((value) => (
+                        <div key={value} className={filterSelectedClass}>
+                          {_.capitalize(value)}
+                        </div>
+                      ))
+                  )}
                 </div>
               </>
             )}
