@@ -21,6 +21,15 @@ def mock_make_api_call(self, operation_name, kwarg):
                 }
             ],
         }
+    if operation_name == "DescribeStream":
+        return {
+            "StreamDescription": {
+                "StreamName": "test-stream",
+                "StreamARN": "arn:aws:kinesis:us-east-1:123456789012:stream/test-stream",
+                "StreamStatus": "ACTIVE",
+                "Tags": [],
+            }
+        }
     return make_api_call(self, operation_name, kwarg)
 
 
