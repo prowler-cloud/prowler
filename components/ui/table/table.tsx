@@ -45,7 +45,7 @@ const TableFooter = React.forwardRef<
   <tfoot
     ref={ref}
     className={cn(
-      "font-medium [&>tr]:last:border-b-0 dark:bg-slate-800/50",
+      "font-medium dark:bg-slate-800/50 [&>tr]:last:border-b-0",
       className,
     )}
     {...props}
@@ -75,7 +75,7 @@ const TableHead = React.forwardRef<
   <th
     ref={ref}
     className={cn(
-      "px-4 text-left align-middle bg-default-100 [&:has([role=checkbox])]:pr-0 dark:text-slate-400 h-10 rtl:text-right whitespace-nowrap text-foreground-500 text-tiny font-semibold first:rounded-l-lg rtl:first:rounded-r-lg rtl:first:rounded-l-[unset] last:rounded-r-lg rtl:last:rounded-l-lg rtl:last:rounded-r-[unset] data-[hover=true]:text-foreground-400 outline-none data-[focus-visible=true]:z-10 data-[focus-visible=true]:outline-2 data-[focus-visible=true]:outline-focus data-[focus-visible=true]:outline-offset-2",
+      "h-10 whitespace-nowrap bg-default-100 px-4 text-left align-middle text-tiny font-semibold text-foreground-500 outline-none first:rounded-l-lg last:rounded-r-lg data-[focus-visible=true]:z-10 data-[hover=true]:text-foreground-400 data-[focus-visible=true]:outline-2 data-[focus-visible=true]:outline-offset-2 data-[focus-visible=true]:outline-focus dark:text-slate-400 rtl:text-right rtl:first:rounded-l-[unset] rtl:first:rounded-r-lg rtl:last:rounded-l-lg rtl:last:rounded-r-[unset] [&:has([role=checkbox])]:pr-0",
       className,
     )}
     {...props}

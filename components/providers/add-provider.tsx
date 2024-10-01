@@ -22,7 +22,7 @@ export const AddProvider = () => {
         <AddForm setIsOpen={setIsAddOpen} />
       </CustomAlertModal>
 
-      <div className="w-full flex items-center justify-end">
+      <div className="flex w-full items-center justify-end">
         <CustomButton
           ariaLabel="Add Account"
           variant="solid"

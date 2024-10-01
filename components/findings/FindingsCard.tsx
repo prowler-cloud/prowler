@@ -41,12 +41,12 @@ export const FindingsCard: React.FC<FindingsCardProps> = ({ selectedRow }) => {
         className={clsx(
           "max-h-[calc(100vh-146px)] overflow-y-auto rounded-md border bg-background transition-all duration-300",
           {
-            "w-1/3 translate-x-0 ml-2 p-3 opacity-100": selectedRow,
-            "translate-x-full w-0 opacity-0": !selectedRow,
+            "ml-2 w-1/3 translate-x-0 p-3 opacity-100": selectedRow,
+            "w-0 translate-x-full opacity-0": !selectedRow,
           },
         )}
       >
-        <p className="font-bold mb-3">{CheckTitle}</p>
+        <p className="mb-3 font-bold">{CheckTitle}</p>
         <Divider />
 
         <FindingsCardContent

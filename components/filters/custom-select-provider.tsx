@@ -83,7 +83,7 @@ export const CustomSelectProvider: React.FC = () => {
     >
       {(item) => (
         <SelectItem key={item.key} textValue={item.key} aria-label={item.label}>
-          <div className="flex gap-2 items-center">{item.value}</div>
+          <div className="flex items-center gap-2">{item.value}</div>
         </SelectItem>
       )}
     </Select>

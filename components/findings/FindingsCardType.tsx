@@ -16,7 +16,7 @@ export const FindingsCardType: React.FC<FindingsCardTypeProps> = ({
 
   return (
     <>
-      <p className="text-sm font-bold mt-3">
+      <p className="mt-3 text-sm font-bold">
         {type.length > 1 ? "Types:" : "Type:"}
       </p>
       <p className="text-sm">{typeContent()}</p>

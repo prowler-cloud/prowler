@@ -22,7 +22,7 @@ import { CustomAlertModal } from "@/components/ui/custom";
 
 import { CheckConnectionProvider } from "../CheckConnectionProvider";
 import { EditForm } from "../forms";
-import { DeleteForm } from "../forms/DeleteForm";
+import { DeleteForm } from "../forms/delete-form";
 
 interface DataTableRowActionsProps<ProviderProps> {
   row: Row<ProviderProps>;
@@ -60,7 +60,7 @@ export function DataTableRowActions<ProviderProps>({
         <DeleteForm providerId={providerId} setIsOpen={setIsDeleteOpen} />
       </CustomAlertModal>
 
-      <div className="relative flex justify-end items-center gap-2">
+      <div className="relative flex items-center justify-end gap-2">
         <Dropdown className="shadow-xl" placement="bottom">
           <DropdownTrigger>
             <Button isIconOnly radius="full" size="sm" variant="light">

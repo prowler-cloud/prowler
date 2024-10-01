@@ -12,7 +12,7 @@ export const Header: React.FC<HeaderProps> = ({ title, icon }) => {
     <>
       <header className="flex items-center gap-3 py-4">
         <Icon className="text-default-500" height={40} icon={icon} width={40} />
-        <h1 className="font-bold text-default-700 text-2xl">{title}</h1>
+        <h1 className="text-2xl font-bold text-default-700">{title}</h1>
       </header>
       <Divider className="mb-4" />
     </>

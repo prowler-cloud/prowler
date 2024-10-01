@@ -56,7 +56,7 @@ export function DataTableProvider<TData, TValue>({
 
   return (
     <>
-      <div className="p-4 z-0 flex flex-col relative justify-between gap-4 bg-content1 overflow-auto rounded-large shadow-small w-full  ">
+      <div className="relative z-0 flex w-full flex-col justify-between gap-4 overflow-auto rounded-large bg-content1 p-4 shadow-small">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -106,7 +106,7 @@ export function DataTableProvider<TData, TValue>({
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center w-full space-x-2 py-4">
+      <div className="flex w-full items-center space-x-2 py-4">
         <DataTablePagination metadata={metadata} />
       </div>
     </>

@@ -47,7 +47,7 @@ export const FilterControls: React.FC<FilterControlsProps> = ({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-x-4 gap-y-4 items-center">
+      <div className="grid grid-cols-1 items-center gap-x-4 gap-y-4 md:grid-cols-2 xl:grid-cols-4">
         {search && <CustomSearchInput />}
         {providers && <CustomSelectProvider />}
         {date && <CustomDatePicker />}

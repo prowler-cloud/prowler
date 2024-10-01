@@ -12,7 +12,7 @@ import { CustomButton, CustomInput } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
 import { addProviderFormSchema } from "@/types";
 
-import { CustomRadioProvider } from "../CustomRadioProvider";
+import { RadioGroupProvider } from "../radio-group-provider";
 
 export const AddForm = ({
   setIsOpen,
@@ -67,7 +67,7 @@ export const AddForm = ({
         onSubmit={form.handleSubmit(onSubmitClient)}
         className="flex flex-col space-y-4"
       >
-        <CustomRadioProvider control={form.control} />
+        <RadioGroupProvider control={form.control} />
         <CustomInput
           control={form.control}
           name="providerId"
@@ -91,7 +91,7 @@ export const AddForm = ({
           isInvalid={!!form.formState.errors.providerAlias}
         />
 
-        <div className="w-full flex justify-center sm:space-x-6">
+        <div className="flex w-full justify-center sm:space-x-6">
           <CustomButton
             type="button"
             ariaLabel="Cancel"

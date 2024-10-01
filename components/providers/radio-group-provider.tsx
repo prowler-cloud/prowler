@@ -35,8 +35,8 @@ export const CustomRadio: React.FC<CustomRadioProps> = (props) => {
     <Component
       {...getBaseProps()}
       className={cn(
-        "group inline-flex items-center hover:opacity-70 active:opacity-50 justify-between flex-row-reverse tap-highlight-transparent",
-        "max-w-full cursor-pointer border-2 border-default rounded-lg gap-4 p-4",
+        "group inline-flex flex-row-reverse items-center justify-between tap-highlight-transparent hover:opacity-70 active:opacity-50",
+        "max-w-full cursor-pointer gap-4 rounded-lg border-2 border-default p-4",
         "data-[selected=true]:border-primary",
       )}
     >
@@ -58,11 +58,11 @@ export const CustomRadio: React.FC<CustomRadioProps> = (props) => {
   );
 };
 
-interface CustomRadioProviderProps {
+interface RadioGroupProviderProps {
   control: Control<z.infer<typeof addProviderFormSchema>>;
 }
 
-export const CustomRadioProvider: React.FC<CustomRadioProviderProps> = ({
+export const RadioGroupProvider: React.FC<RadioGroupProviderProps> = ({
   control,
 }) => {
   return (

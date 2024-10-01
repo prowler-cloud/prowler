@@ -1,3 +1,3 @@
-export * from "./AddForm";
-export * from "./DeleteForm";
-export * from "./EditForm";
+export * from "./add-form";
+export * from "./delete-form";
+export * from "./edit-form";

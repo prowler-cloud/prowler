@@ -22,7 +22,7 @@ export const SnippetIdProvider: React.FC<SnippetIdProviderProps> = ({
     >
       <p className="flex items-center space-x-2">
         <IdIcon size={16} />
-        <span className="text-sm max-w-24 overflow-x-scroll no-scrollbar">
+        <span className="no-scrollbar max-w-24 overflow-x-scroll text-sm">
           {providerId}
         </span>
       </p>

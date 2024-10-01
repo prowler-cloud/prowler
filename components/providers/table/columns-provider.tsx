@@ -6,9 +6,9 @@ import { add } from "date-fns";
 import { StatusBadge } from "@/components/ui/table";
 import { ProviderProps } from "@/types";
 
-import { DateWithTime } from "../DateWithTime";
-import { ProviderInfo } from "../ProviderInfo";
-import { SnippetIdProvider } from "../SnippetIdProvider";
+import { DateWithTime } from "../date-with-time";
+import { ProviderInfo } from "../provider-info";
+import { SnippetIdProvider } from "../snippet-id-provider";
 import { DataTableColumnHeader } from "./data-table-column-header";
 import { DataTableRowActions } from "./data-table-row-actions";
 

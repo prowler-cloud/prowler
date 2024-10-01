@@ -17,7 +17,7 @@ export const CustomButtonClientAction = ({
 
   return (
     <Button
-      className={clsx("bg-transparent border-none p-0 m-0 h-fit min-w-min", {
+      className={clsx("m-0 h-fit min-w-min border-none bg-transparent p-0", {
         "text-danger": danger,
       })}
       spinner={<CircularProgress aria-label="Loading..." size="sm" />}

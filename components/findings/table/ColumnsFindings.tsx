@@ -47,7 +47,7 @@ export const ColumnsFindings: ColumnDef<FindingProps>[] = [
     header: "Region",
     cell: ({ row }) => {
       const { region } = getFindingsAttributes(row);
-      return <p className="text-sm text-nowrap">{region}</p>;
+      return <p className="text-nowrap text-sm">{region}</p>;
     },
   },
   {
@@ -69,8 +69,8 @@ export const ColumnsFindings: ColumnDef<FindingProps>[] = [
   {
     accessorKey: "actions",
     header: () => (
-      <div className="relative flex justify-end items-center gap-2">
-        <Dropdown className="bg-background border-1 border-default-200">
+      <div className="relative flex items-center justify-end gap-2">
+        <Dropdown className="border-1 border-default-200 bg-background">
           <DropdownTrigger>
             <Button isIconOnly radius="full" size="sm" variant="light">
               <VerticalDotsIcon className="text-default-400" />

@@ -36,7 +36,7 @@ export const SeverityBadge = ({ severity }: { severity: Severity }) => {
 
   return (
     <Chip
-      className={clsx("capitalize border-none gap-1 text-default-600", {
+      className={clsx("gap-1 border-none capitalize text-default-600", {
         "bg-rose-700/20": severity === "critical",
       })}
       size="sm"

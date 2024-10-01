@@ -113,7 +113,7 @@ const Sidebar = React.forwardRef<HTMLElement, SidebarProps>(
             endContent={
               isCompact || isNestType || hideEndContent
                 ? null
-                : item.endContent ?? null
+                : (item.endContent ?? null)
             }
             startContent={
               isCompact || isNestType ? null : item.icon ? (
@@ -127,7 +127,7 @@ const Sidebar = React.forwardRef<HTMLElement, SidebarProps>(
                   width={24}
                 />
               ) : (
-                item.startContent ?? null
+                (item.startContent ?? null)
               )
             }
             title={isCompact || isNestType ? null : item.title}
@@ -146,7 +146,7 @@ const Sidebar = React.forwardRef<HTMLElement, SidebarProps>(
                       width={24}
                     />
                   ) : (
-                    item.startContent ?? null
+                    (item.startContent ?? null)
                   )}
                 </div>
               </Tooltip>
@@ -180,7 +180,7 @@ const Sidebar = React.forwardRef<HTMLElement, SidebarProps>(
                         </span>
                       </div>
                     ) : (
-                      item.startContent ?? null
+                      (item.startContent ?? null)
                     )
                   }
                 >
@@ -223,7 +223,7 @@ const Sidebar = React.forwardRef<HTMLElement, SidebarProps>(
             {...item}
             key={item.key}
             endContent={
-              isCompact || hideEndContent ? null : item.endContent ?? null
+              isCompact || hideEndContent ? null : (item.endContent ?? null)
             }
             startContent={
               isCompact ? null : item.icon ? (
@@ -236,7 +236,7 @@ const Sidebar = React.forwardRef<HTMLElement, SidebarProps>(
                   width={24}
                 />
               ) : (
-                item.startContent ?? null
+                (item.startContent ?? null)
               )
             }
             textValue={item.title}
@@ -255,7 +255,7 @@ const Sidebar = React.forwardRef<HTMLElement, SidebarProps>(
                       width={24}
                     />
                   ) : (
-                    item.startContent ?? null
+                    (item.startContent ?? null)
                   )}
                 </div>
               </Tooltip>

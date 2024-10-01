@@ -30,10 +30,10 @@ export const AddUserModal = () => {
         className="flex flex-col sm:max-w-md md:max-w-lg"
       >
         <DialogHeader className="mb-6 space-y-3">
-          <DialogTitle className="text-2xl text-center">Add User</DialogTitle>
+          <DialogTitle className="text-center text-2xl">Add User</DialogTitle>
         </DialogHeader>
         <form ref={ref} onSubmit={() => setOpen(false)}>
-          <div className="col-span-1 flex flex-col gap-y-2 my-auto">
+          <div className="col-span-1 my-auto flex flex-col gap-y-2">
             <Input
               type="text"
               name="email"
@@ -52,7 +52,7 @@ export const AddUserModal = () => {
             />
             <CustomSelectUser />
           </div>
-          <div className="col-span-2 flex justify-center mt-4">
+          <div className="col-span-2 mt-4 flex justify-center">
             <ButtonAddUser />
           </div>
         </form>

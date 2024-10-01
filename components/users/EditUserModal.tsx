@@ -34,10 +34,10 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
         className="flex flex-col sm:max-w-md md:max-w-lg"
       >
         <DialogHeader className="mb-6 space-y-3">
-          <DialogTitle className="text-2xl text-center">Edit User</DialogTitle>
+          <DialogTitle className="text-center text-2xl">Edit User</DialogTitle>
         </DialogHeader>
         <form ref={ref} onSubmit={() => setIsOpen(false)}>
-          <div className="col-span-1 flex flex-col gap-y-2 my-auto">
+          <div className="col-span-1 my-auto flex flex-col gap-y-2">
             <Input
               type="name"
               name="name"
@@ -72,7 +72,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
             />
             <CustomSelectUser userData={userData} />
           </div>
-          <div className="col-span-2 flex justify-center mt-4">
+          <div className="col-span-2 mt-4 flex justify-center">
             <ButtonEditUser />
           </div>
         </form>

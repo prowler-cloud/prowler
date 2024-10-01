@@ -74,7 +74,7 @@ export const AuthForm = ({ type }: { type: string }) => {
     >
       {/* Brand Logo and ThemeSwitch */}
       <div className="absolute right-10 top-10">
-        <div className="flex items-center self-center gap-4">
+        <div className="flex items-center gap-4 self-center">
           <ThemeSwitch aria-label="Toggle theme" />
           <ProwlerExtended />
         </div>
@@ -82,7 +82,7 @@ export const AuthForm = ({ type }: { type: string }) => {
 
       {/* Testimonial */}
       <div className="absolute bottom-10 right-10 hidden md:block">
-        <p className="max-w-xl text-right text-white/60 text-md">
+        <p className="text-md max-w-xl text-right text-white/60">
           <span className="font-medium">“</span>
           Open Cloud Security
           <span className="font-medium">”</span>
