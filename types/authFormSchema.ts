@@ -3,7 +3,8 @@ import { z } from "zod";
 export const authFormSchema = (type: string) =>
   z.object({
     // Sign Up
-    companyName: type === "sign-in" ? z.string().optional() : z.string().min(3),
+    companyName:
+      type === "sign-in" ? z.string().optional() : z.string().min(3).optional(),
     firstName:
       type === "sign-in"
         ? z.string().optional()
@@ -13,6 +14,8 @@ export const authFormSchema = (type: string) =>
               message: "The name must be at least 3 characters.",
             })
             .max(20),
+    confirmPassword:
+      type === "sign-in" ? z.string().optional() : z.string().min(6),
     termsAndConditions:
       type === "sign-in"
         ? z.enum(["true"]).optional()
