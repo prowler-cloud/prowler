@@ -37,7 +37,10 @@ export const authFormSchema = (type: string) =>
         message: "It must contain at least 12 characters.",
       }),
     })
-    .refine((data) => data.password === data.confirmPassword, {
-      message: "The password must match",
-      path: ["confirmPassword"],
-    });
+    .refine(
+      (data) => type === "sign-in" || data.password === data.confirmPassword,
+      {
+        message: "The password must match",
+        path: ["confirmPassword"],
+      },
+    );
