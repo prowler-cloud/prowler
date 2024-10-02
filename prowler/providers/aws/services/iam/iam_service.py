@@ -98,6 +98,7 @@ class IAM(AWSService):
         self.__threading_call__(self._list_tags, self.users)
         self.__threading_call__(self._list_tags, self.roles)
         self.__threading_call__(self._list_tags, self.policies)
+        self.__threading_call__(self._list_tags, self.server_certificates)
 
     def _get_client(self):
         return self.client
@@ -745,7 +746,7 @@ class IAM(AWSService):
         finally:
             return saml_providers
 
-    def _list_server_certificates(self):
+    def _list_server_certificates(self) -> list:
         logger.info("IAM - List Server Certificates...")
         try:
             server_certificates = []
@@ -774,17 +775,21 @@ class IAM(AWSService):
         logger.info("IAM - List Tags...")
         try:
             if isinstance(resource, Role):
-                resource.tags = self.client.list_role_tags(RoleName=resource.name)[
-                    "Tags"
-                ]
+                resource.tags = self.client.list_role_tags(RoleName=resource.name).get(
+                    "Tags", []
+                )
             elif isinstance(resource, User):
-                resource.tags = self.client.list_user_tags(UserName=resource.name)[
-                    "Tags"
-                ]
+                resource.tags = self.client.list_user_tags(UserName=resource.name).get(
+                    "Tags", []
+                )
             elif isinstance(resource, Policy):
-                resource.tags = self.client.list_policy_tags(PolicyArn=resource.arn)[
-                    "Tags"
-                ]
+                resource.tags = self.client.list_policy_tags(
+                    PolicyArn=resource.arn
+                ).get("Tags", [])
+            elif isinstance(resource, Certificate):
+                resource.tags = self.client.list_server_certificate_tags(
+                    ServerCertificateName=resource.name
+                ).get("Tags", [])
         except Exception as error:
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -904,7 +909,7 @@ class User(BaseModel):
     console_access: Optional[bool]
     attached_policies: list[dict] = []
     inline_policies: list[str] = []
-    tags: Optional[list] = []
+    tags: Optional[list]
 
 
 class Role(BaseModel):
@@ -914,7 +919,7 @@ class Role(BaseModel):
     is_service_role: bool
     attached_policies: list[dict] = []
     inline_policies: list[str] = []
-    tags: Optional[list] = []
+    tags: Optional[list]
 
 
 class Group(BaseModel):
@@ -943,6 +948,7 @@ class Certificate(BaseModel):
     id: str
     arn: str
     expiration: datetime
+    tags: Optional[list]
 
 
 class Policy(BaseModel):
@@ -953,4 +959,4 @@ class Policy(BaseModel):
     type: str
     attached: bool
     document: Optional[dict]
-    tags: Optional[list] = []
+    tags: Optional[list]
