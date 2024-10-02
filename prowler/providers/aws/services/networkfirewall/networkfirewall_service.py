@@ -1,3 +1,6 @@
+from enum import Enum
+from typing import Optional
+
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
@@ -16,6 +19,9 @@ class NetworkFirewall(AWSService):
         )
         self.__threading_call__(
             self._describe_firewall_policy, self.network_firewalls.values()
+        )
+        self.__threading_call__(
+            self._describe_logging_configuration, self.network_firewalls.values()
         )
 
     def _list_firewalls(self, regional_client):
@@ -84,8 +90,67 @@ class NetworkFirewall(AWSService):
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 
+    def _describe_logging_configuration(self, network_firewall):
+        logger.info(
+            "Network Firewall - Describe Network Firewalls Logging Configuration..."
+        )
+        try:
+            describe_logging_configuration = (
+                self.regional_clients[network_firewall.region]
+                .describe_logging_configuration(FirewallArn=network_firewall.arn)
+                .get("LoggingConfiguration", {})
+            )
+            destination_configs = describe_logging_configuration.get(
+                "LogDestinationConfigs", []
+            )
+            network_firewall.logging_configuration = []
+            if destination_configs:
+                for log_destination_config in destination_configs:
+                    log_type = LogType(log_destination_config.get("LogType", "FLOW"))
+                    log_destination_type = LogDestinationType(
+                        log_destination_config.get("LogDestinationType", "S3")
+                    )
+                    log_destination = log_destination_config.get("LogDestination", {})
+                    network_firewall.logging_configuration.append(
+                        LoggingConfiguration(
+                            log_type=log_type,
+                            log_destination_type=log_destination_type,
+                            log_destination=log_destination,
+                        )
+                    )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
+            )
+
+
+class LogType(Enum):
+    """Log Type for Network Firewall"""
+
+    alert = "ALERT"
+    flow = "FLOW"
+    tls = "TLS"
+
+
+class LogDestinationType(Enum):
+    """Log Destination Type for Network Firewall"""
+
+    s3 = "S3"
+    cloudwatch_logs = "CloudWatchLogs"
+    kinesis_data_firehose = "KinesisDataFirehose"
+
+
+class LoggingConfiguration(BaseModel):
+    """Logging Configuration for Network Firewall"""
+
+    log_type: LogType
+    log_destination_type: LogDestinationType
+    log_destination: dict = {}
+
 
 class Firewall(BaseModel):
+    """Firewall Model for Network Firewall"""
+
     arn: str
     name: str
     region: str
@@ -94,5 +159,6 @@ class Firewall(BaseModel):
     tags: list = []
     encryption_type: str = None
     deletion_protection: bool = False
+    logging_configuration: Optional[list[LoggingConfiguration]]
     stateless_rule_groups: list[str] = []
     stateful_rule_groups: list[str] = []
