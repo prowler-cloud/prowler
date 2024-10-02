@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 
-import { checkConnectionProvider } from "@/actions";
+import { checkConnectionProvider } from "@/actions/providers";
 
 import { CustomButtonClientAction } from "../ui/custom";
 import { useToast } from "../ui/toast";

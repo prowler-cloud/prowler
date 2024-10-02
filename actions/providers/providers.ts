@@ -11,8 +11,6 @@ export const getProviders = async ({
   sort = "",
   filters = {},
 }) => {
-  // const session = await auth();
-
   if (isNaN(Number(page)) || page < 1) redirect("/providers");
 
   const keyServer = process.env.API_BASE_URL;
@@ -46,7 +44,6 @@ export const getProviders = async ({
 };
 
 export const getProvider = async (formData: FormData) => {
-  // const session = await auth();
   const providerId = formData.get("id");
 
   const keyServer = process.env.API_BASE_URL;
@@ -69,7 +66,6 @@ export const getProvider = async (formData: FormData) => {
 };
 
 export const updateProvider = async (formData: FormData) => {
-  // const session = await auth();
   const keyServer = process.env.API_BASE_URL;
 
   const providerId = formData.get("providerId");
@@ -106,7 +102,6 @@ export const updateProvider = async (formData: FormData) => {
 };
 
 export const addProvider = async (formData: FormData) => {
-  // const session = await auth();
   const keyServer = process.env.API_BASE_URL;
 
   const providerType = formData.get("providerType");
@@ -145,7 +140,6 @@ export const addProvider = async (formData: FormData) => {
 };
 
 export const checkConnectionProvider = async (formData: FormData) => {
-  // const session = await auth();
   const keyServer = process.env.API_BASE_URL;
 
   const providerId = formData.get("id");
@@ -170,7 +164,6 @@ export const checkConnectionProvider = async (formData: FormData) => {
 };
 
 export const deleteProvider = async (formData: FormData) => {
-  // const session = await auth();
   const keyServer = process.env.API_BASE_URL;
 
   const providerId = formData.get("id");

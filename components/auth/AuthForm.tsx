@@ -9,7 +9,7 @@ import { useFormState } from "react-dom";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-import { authenticate } from "@/actions";
+import { authenticate } from "@/actions/auth";
 import {
   Form,
   FormControl,
@@ -53,14 +53,12 @@ export const AuthForm = ({ type }: { type: string }) => {
     try {
       // Sign-up logic will be here.
       if (type === "sign-in") {
-        console.log(data);
         dispatch({
           email: data.email.toLowerCase(),
           password: data.password,
         });
       }
       if (type === "sign-up") {
-        console.log(data);
         // const newUser = await signUp(data);
       }
     } catch (error) {

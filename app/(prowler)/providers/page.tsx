@@ -1,7 +1,7 @@
 import { Spacer } from "@nextui-org/react";
 import { Suspense } from "react";
 
-import { getProviders } from "@/actions";
+import { getProviders } from "@/actions/providers";
 import { FilterControls, filtersProviders } from "@/components/filters";
 import { AddProvider } from "@/components/providers";
 import {

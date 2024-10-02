@@ -5,7 +5,7 @@ import React, { Dispatch, SetStateAction } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
-import { deleteProvider } from "@/actions";
+import { deleteProvider } from "@/actions/providers";
 import { DeleteIcon } from "@/components/icons";
 import { useToast } from "@/components/ui";
 import { CustomButton } from "@/components/ui/custom";

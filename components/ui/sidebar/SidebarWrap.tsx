@@ -9,7 +9,7 @@ import { useSession } from "next-auth/react";
 import React, { useCallback } from "react";
 import { useMediaQuery } from "usehooks-ts";
 
-import { logOut } from "@/actions";
+import { logOut } from "@/actions/auth";
 import { useUIStore } from "@/store";
 
 import {
