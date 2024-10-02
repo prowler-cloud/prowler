@@ -783,9 +783,10 @@ class IAM(AWSService):
                     "Tags", []
                 )
             elif isinstance(resource, Policy):
-                resource.tags = self.client.list_policy_tags(
-                    PolicyArn=resource.arn
-                ).get("Tags", [])
+                if resource.type == "Custom":
+                    resource.tags = self.client.list_policy_tags(
+                        PolicyArn=resource.arn
+                    ).get("Tags", [])
             elif isinstance(resource, Certificate):
                 resource.tags = self.client.list_server_certificate_tags(
                     ServerCertificateName=resource.name
