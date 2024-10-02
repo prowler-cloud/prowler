@@ -12,10 +12,14 @@ class redshift_cluster_encrypted(Check):
             report.resource_arn = cluster.arn
             report.resource_tags = cluster.tags
             report.status = "FAIL"
-            report.status_extended = f"Redshift Cluster {cluster.id} is not encrypted."
+            report.status_extended = (
+                f"Redshift Cluster {cluster.id} is not encrypted at rest."
+            )
             if cluster.encrypted:
                 report.status = "PASS"
-                report.status_extended = f"Redshift Cluster {cluster.id} is encrypted."
+                report.status_extended = (
+                    f"Redshift Cluster {cluster.id} is encrypted at rest."
+                )
 
             findings.append(report)
 

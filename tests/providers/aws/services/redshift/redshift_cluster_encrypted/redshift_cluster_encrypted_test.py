@@ -78,7 +78,7 @@ class Test_redshift_cluster_encrypted:
                 assert len(result) == 1
                 assert result[0].status == "FAIL"
                 assert result[0].status_extended == (
-                    f"Redshift Cluster {CLUSTER_ID} is not encrypted."
+                    f"Redshift Cluster {CLUSTER_ID} is not encrypted at rest."
                 )
                 assert result[0].resource_id == CLUSTER_ID
                 assert result[0].resource_arn == CLUSTER_ARN
@@ -124,7 +124,7 @@ class Test_redshift_cluster_encrypted:
                 assert len(result) == 1
                 assert result[0].status == "PASS"
                 assert result[0].status_extended == (
-                    f"Redshift Cluster {CLUSTER_ID} is encrypted."
+                    f"Redshift Cluster {CLUSTER_ID} is encrypted at rest."
                 )
                 assert result[0].resource_id == CLUSTER_ID
                 assert result[0].resource_arn == CLUSTER_ARN
