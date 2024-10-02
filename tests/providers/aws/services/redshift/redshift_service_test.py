@@ -112,6 +112,7 @@ class Test_Redshift_Service:
         assert redshift.clusters[0].tags == [
             {"Key": "test", "Value": "test"},
         ]
+        assert redshift.clusters[0].masterusername == "user"
 
     @mock_aws
     def test_describe_logging_status(self):

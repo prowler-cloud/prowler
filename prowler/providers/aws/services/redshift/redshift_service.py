@@ -32,6 +32,7 @@ class Redshift(AWSService):
                             id=cluster["ClusterIdentifier"],
                             region=regional_client.region,
                             tags=cluster.get("Tags"),
+                            masterusername=cluster.get("MasterUsername", ""),
                         )
                         if (
                             "PubliclyAccessible" in cluster
@@ -96,6 +97,7 @@ class Cluster(BaseModel):
     arn: str
     region: str
     public_access: bool = None
+    masterusername: str = None
     endpoint_address: str = None
     allow_version_upgrade: bool = None
     logging_enabled: bool = None
