@@ -69,6 +69,9 @@ def mock_make_api_call(self, operation_name, kwarg):
                     "clusterName": "test_cluster_1",
                     "status": "ACTIVE",
                     "tags": [{"key": "Name", "value": "test_cluster_1"}],
+                    "settings": [
+                        {"name": "containerInsights", "value": "enabled"},
+                    ],
                     "registeredContainerInstancesCount": 5,
                     "runningTasksCount": 10,
                     "pendingTasksCount": 1,
@@ -194,6 +197,9 @@ class Test_ECS_Service:
         assert ecs.clusters[cluster_arn1].services
         assert ecs.clusters[cluster_arn1].tags == [
             {"key": "Name", "value": "test_cluster_1"}
+        ]
+        assert ecs.clusters[cluster_arn1].settings == [
+            {"name": "containerInsights", "value": "enabled"}
         ]
 
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)

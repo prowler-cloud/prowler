@@ -158,6 +158,7 @@ class ECS(AWSService):
                     "TAGS",
                 ],
             )
+            cluster.settings = response["clusters"][0].get("settings", [])
             cluster.tags = response["clusters"][0].get("tags", [])
         except Exception as error:
             logger.error(
@@ -203,4 +204,5 @@ class Cluster(BaseModel):
     arn: str
     region: str
     services: dict = {}
+    settings: Optional[list] = []
     tags: Optional[list] = []
