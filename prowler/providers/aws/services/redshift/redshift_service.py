@@ -7,7 +7,6 @@ from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################################ Redshift
 class Redshift(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
@@ -16,6 +15,7 @@ class Redshift(AWSService):
         self.__threading_call__(self._describe_clusters)
         self._describe_logging_status(self.regional_clients)
         self._describe_cluster_snapshots(self.regional_clients)
+        self._describe_cluster_parameters(self.regional_clients)
 
     def _describe_clusters(self, regional_client):
         logger.info("Redshift - describing clusters...")
@@ -47,6 +47,10 @@ class Redshift(AWSService):
                             and cluster["AllowVersionUpgrade"]
                         ):
                             cluster_to_append.allow_version_upgrade = True
+                        if "ClusterParameterGroups" in cluster:
+                            cluster_to_append.parameter_group_name = cluster[
+                                "ClusterParameterGroups"
+                            ][0]["ParameterGroupName"]
                         self.clusters.append(cluster_to_append)
         except Exception as error:
             logger.error(
@@ -90,6 +94,30 @@ class Redshift(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _describe_cluster_parameters(self, regional_clients):
+        logger.info("Redshift - describing cluster parameter groups...")
+        try:
+            for cluster in self.clusters:
+                regional_client = regional_clients[cluster.region]
+                print(
+                    f"Describing parameters for cluster {cluster.id} with Parameter Group {cluster.parameter_group_name}"
+                )
+                cluster_parameter_groups = regional_client.describe_cluster_parameters(
+                    ClusterParameterGroupName=cluster.parameter_group_name
+                )
+                for parameter_group in cluster_parameter_groups["Parameters"]:
+                    print(
+                        f"Processing Parameter: {parameter_group['ParameterName']} = {parameter_group['ParameterValue']}"
+                    )
+                    if parameter_group["ParameterName"].lower() == "require_ssl":
+                        if parameter_group["ParameterValue"].lower() == "true":
+                            cluster.require_ssl = True
+
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class Cluster(BaseModel):
     id: str
@@ -102,3 +130,5 @@ class Cluster(BaseModel):
     bucket: str = None
     cluster_snapshots: bool = None
     tags: Optional[list] = []
+    parameter_group_name: str = None
+    require_ssl: bool = False
