@@ -114,7 +114,7 @@ class Test_Redshift_Service:
             {"Key": "test", "Value": "test"},
         ]
         assert redshift.clusters[0].encrypted
-        assert redshift.clusters[0].masterusername == "user"
+        assert redshift.clusters[0].master_username == "user"
 
     @mock_aws
     def test_describe_logging_status(self):

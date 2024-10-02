@@ -13,7 +13,7 @@ class redshift_cluster_non_default_username(Check):
             report.resource_tags = cluster.tags
             report.status = "PASS"
             report.status_extended = f"Redshift Cluster {cluster.id} does not have the default Admin username."
-            if cluster.masterusername == "awsuser":
+            if cluster.master_username == "awsuser":
                 report.status = "FAIL"
                 report.status_extended = (
                     f"Redshift Cluster {cluster.id} has the default Admin username."
