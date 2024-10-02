@@ -17,17 +17,16 @@ backup_valid_invalid_policy_status_2 = "DISABLED"
 class Test_efs_have_backup_enabled:
     def test_efs_valid_backup_policy(self):
         efs_client = mock.MagicMock
+        efs_client.filesystems = {}
         efs_arn = f"arn:aws:elasticfilesystem:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:file-system/{file_system_id}"
-        efs_client.filesystems = [
-            FileSystem(
-                id=file_system_id,
-                arn=efs_arn,
-                region=AWS_REGION,
-                policy=None,
-                backup_policy=backup_valid_policy_status,
-                encrypted=True,
-            )
-        ]
+        efs_client.filesystems[efs_arn] = FileSystem(
+            id=file_system_id,
+            arn=efs_arn,
+            region=AWS_REGION,
+            policy=None,
+            backup_policy=backup_valid_policy_status,
+            encrypted=True,
+        )
         with mock.patch(
             "prowler.providers.aws.services.efs.efs_service.EFS",
             efs_client,
@@ -46,17 +45,16 @@ class Test_efs_have_backup_enabled:
 
     def test_efs_invalid_policy_backup_1(self):
         efs_client = mock.MagicMock
+        efs_client.filesystems = {}
         efs_arn = f"arn:aws:elasticfilesystem:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:file-system/{file_system_id}"
-        efs_client.filesystems = [
-            FileSystem(
-                id=file_system_id,
-                arn=efs_arn,
-                region=AWS_REGION,
-                policy=None,
-                backup_policy=backup_valid_invalid_policy_status_1,
-                encrypted=True,
-            )
-        ]
+        efs_client.filesystems[efs_arn] = FileSystem(
+            id=file_system_id,
+            arn=efs_arn,
+            region=AWS_REGION,
+            policy=None,
+            backup_policy=backup_valid_invalid_policy_status_1,
+            encrypted=True,
+        )
         with mock.patch(
             "prowler.providers.aws.services.efs.efs_service.EFS",
             efs_client,
@@ -75,17 +73,16 @@ class Test_efs_have_backup_enabled:
 
     def test_efs_invalid_policy_backup_2(self):
         efs_client = mock.MagicMock
+        efs_client.filesystems = {}
         efs_arn = f"arn:aws:elasticfilesystem:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:file-system/{file_system_id}"
-        efs_client.filesystems = [
-            FileSystem(
-                id=file_system_id,
-                arn=efs_arn,
-                region=AWS_REGION,
-                policy=None,
-                backup_policy=backup_valid_invalid_policy_status_2,
-                encrypted=True,
-            )
-        ]
+        efs_client.filesystems[efs_arn] = FileSystem(
+            id=file_system_id,
+            arn=efs_arn,
+            region=AWS_REGION,
+            policy=None,
+            backup_policy=backup_valid_invalid_policy_status_2,
+            encrypted=True,
+        )
         with mock.patch(
             "prowler.providers.aws.services.efs.efs_service.EFS",
             efs_client,
