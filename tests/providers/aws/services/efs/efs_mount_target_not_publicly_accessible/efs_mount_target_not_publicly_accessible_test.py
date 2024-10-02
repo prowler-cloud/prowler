@@ -37,7 +37,7 @@ class Test_efs_mount_target_not_publicly_accessible:
     @mock_aws
     def test_efs_no_mount_target(self):
         efs_client = client("efs", region_name=AWS_REGION_US_EAST_1)
-        efs_client.create_file_system(CreationToken=CREATION_TOKEN)
+        file_system = efs_client.create_file_system(CreationToken=CREATION_TOKEN)
 
         from prowler.providers.aws.services.efs.efs_service import EFS
 
@@ -56,7 +56,17 @@ class Test_efs_mount_target_not_publicly_accessible:
 
             check = efs_mount_target_not_publicly_accessible()
             result = check.execute()
-            assert len(result) == 0
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == f"EFS {file_system['FileSystemId']} does not have any public mount targets."
+            )
+            assert result[0].resource_id == file_system["FileSystemId"]
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:elasticfilesystem:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:file-system/{file_system['FileSystemId']}"
+            )
 
     @mock_aws
     def test_efs_mount_target_public_subnet(self):
@@ -117,7 +127,7 @@ class Test_efs_mount_target_not_publicly_accessible:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"EFS {file_system['FileSystemId']} has public mount targets due to public subnets: {mount_target['MountTargetId']}"
+                == f"EFS {file_system['FileSystemId']} has public mount targets: {mount_target['MountTargetId']}"
             )
             assert result[0].resource_id == file_system["FileSystemId"]
             assert (
