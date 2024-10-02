@@ -88,6 +88,7 @@ export const CustomInput = <T extends FieldValues>({
         <>
           <FormControl>
             <Input
+              id={name}
               isRequired={inputIsRequired}
               label={inputLabel}
               labelPlacement={labelPlacement}
