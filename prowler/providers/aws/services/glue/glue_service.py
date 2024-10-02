@@ -25,7 +25,7 @@ class Glue(AWSService):
         self.__threading_call__(self.__get_security_configurations__)
         self.jobs = []
         self.__threading_call__(self.__get_jobs__)
-        self.transforms = []
+        self.transforms = {}
         self.__threading_call__(self.__get_ml_transorms__)
 
     def __get_data_catalog_arn_template__(self, region):
@@ -208,27 +208,25 @@ class Glue(AWSService):
             )
 
 
-    def __get_ml_transorms__(self, regional_client):
-        logger.info("Glue - Checking ml_transfroms encryption while at rest...")
+    def __get_ml_transforms__(self, regional_client):
+        logger.info("Glue - Checking ml_transforms encryption while at rest...")
         try:
-            response = regional_client.get_ml_transforms()['Transforms']
-            transform_encryption = dict()
-            for transform in response:
-                data_encryption_mode = transform.get("TransformEncryption", {}).get('MlUserDataEncryption', {}).get('MlUserDataEncryptionMode')
-                transform_encryption.update(data_encryption_mode)
-            
-            print(transform_encryption)
-            self.transforms = [
-            Transforms(
-                id=transform['TransformId'],
-                name=transform['Name'],
-                transform_encryption=transform(transform_encryption)
-            )
-        ]
-        
+            paginator = regional_client.get_paginator('get_ml_transforms')
+            for page in paginator.paginate():
+                for transform in page['Transforms']:
+                    crafted_arn = f"arn:{self.audited_partition}:glue:{regional_client.region}:{self.audited_account}:mlTransform/{transform['Name']}"
+                    if not self.audit_resources or is_resource_filtered(crafted_arn, self.audit_resources):
+                        user_data_encryption = transform.get('TransformEncryption', {}).get('MlUserDataEncryption', {}).get('MlUserDataEncryptionMode')
+                        self.transforms[crafted_arn] = Transforms(
+                            id=transform['TransformId'],
+                            name=transform['Name'],
+                            user_data_encryption=user_data_encryption,
+                            region=regional_client.region
+                            )
+                        
         except Exception as error:
-            logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}")
+            logger.error(f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}")
+
         
 
 
@@ -285,6 +283,8 @@ class SecurityConfig(BaseModel):
     region: str
 
 class Transforms(BaseModel):
+    arn: str
     id: str
     name: str
-    transform_encryption: dict
+    transform_encryption: str
+    region: str

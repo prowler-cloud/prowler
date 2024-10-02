@@ -1,0 +1,30 @@
+{
+  "Provider": "aws",
+  "CheckID": "glue_ml_transform_encryption_at_rest_enabled",
+  "CheckTitle": "Check if Glue ML Transform Encryption at Rest is Enabled",
+  "CheckType": ["Data Protection"],
+  "ServiceName": "glue",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:glue:region:account-id:mlTransform/transform-id",
+  "Severity": "medium",
+  "ResourceType": "AwsGlueMLTransform",
+  "Description": "This check ensures that AWS Glue ML Transforms have encryption at rest enabled",
+  "Risk": "Unencrypted data at rest is vulnerable to unauthorized access if the storage system is compromised.",
+  "RelatedUrl": "https://docs.aws.amazon.com/glue/latest/dg/encryption-at-rest.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws glue update-ml-transform --transform-id <transform_id> --encryption-at-rest 'KmsKeyId=<kms_key_id>'",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable encryption at rest for Glue ML Transforms using AWS KMS keys.",
+      "Url": "https://docs.aws.amazon.com/glue/latest/dg/encryption-at-rest.html"
+    }
+  },
+  "Categories": ["encryption"],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
