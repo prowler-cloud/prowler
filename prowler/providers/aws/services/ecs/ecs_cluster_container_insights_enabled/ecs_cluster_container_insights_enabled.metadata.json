@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "ecs_clusters_container_insights_enabled",
+  "CheckID": "ecs_cluster_container_insights_enabled",
   "CheckTitle": "ECS clusters should use Container Insights",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices"

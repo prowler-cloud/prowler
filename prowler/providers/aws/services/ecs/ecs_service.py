@@ -200,5 +200,5 @@ class Cluster(BaseModel):
     arn: str
     region: str
     services: dict = {}
-    settings: Optional[list]
+    settings: Optional[list] = []
     tags: Optional[list] = []

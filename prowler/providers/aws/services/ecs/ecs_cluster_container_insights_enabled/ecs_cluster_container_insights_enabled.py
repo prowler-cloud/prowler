@@ -2,7 +2,7 @@ from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.ecs.ecs_client import ecs_client
 
 
-class ecs_clusters_container_insights_enabled(Check):
+class ecs_cluster_container_insights_enabled(Check):
     def execute(self):
         findings = []
         for cluster in ecs_client.clusters.values():
@@ -17,9 +17,11 @@ class ecs_clusters_container_insights_enabled(Check):
             )
             if cluster.settings:
                 for setting in cluster.settings:
-                    if setting["name"] == "containerInsights":
-                        if setting["value"] == "enabled":
-                            report.status = "PASS"
-                            report.status_extended = f"ECS cluster {cluster.name} has container insights enabled."
+                    if (
+                        setting["name"] == "containerInsights"
+                        and setting["value"] == "enabled"
+                    ):
+                        report.status = "PASS"
+                        report.status_extended = f"ECS cluster {cluster.name} has container insights enabled."
             findings.append(report)
         return findings
