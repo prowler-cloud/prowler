@@ -2,7 +2,7 @@ from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.redshift.redshift_client import redshift_client
 
 
-class redshift_cluster_encrypted(Check):
+class redshift_cluster_encrypted_at_rest(Check):
     def execute(self):
         findings = []
         for cluster in redshift_client.clusters:

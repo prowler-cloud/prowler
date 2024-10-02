@@ -27,14 +27,14 @@ class Test_redshift_cluster_encrypted:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.redshift.redshift_cluster_encrypted.redshift_cluster_encrypted.redshift_client",
+                "prowler.providers.aws.services.redshift.redshift_cluster_encrypted_at_rest.redshift_cluster_encrypted_at_rest.redshift_client",
                 new=Redshift(aws_provider),
             ):
-                from prowler.providers.aws.services.redshift.redshift_cluster_encrypted.redshift_cluster_encrypted import (
-                    redshift_cluster_encrypted,
+                from prowler.providers.aws.services.redshift.redshift_cluster_encrypted_at_rest.redshift_cluster_encrypted_at_rest import (
+                    redshift_cluster_encrypted_at_rest,
                 )
 
-                check = redshift_cluster_encrypted()
+                check = redshift_cluster_encrypted_at_rest()
                 result = check.execute()
 
                 assert len(result) == 0
@@ -65,14 +65,14 @@ class Test_redshift_cluster_encrypted:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.redshift.redshift_cluster_encrypted.redshift_cluster_encrypted.redshift_client",
+                "prowler.providers.aws.services.redshift.redshift_cluster_encrypted_at_rest.redshift_cluster_encrypted_at_rest.redshift_client",
                 new=Redshift(aws_provider),
             ):
-                from prowler.providers.aws.services.redshift.redshift_cluster_encrypted.redshift_cluster_encrypted import (
-                    redshift_cluster_encrypted,
+                from prowler.providers.aws.services.redshift.redshift_cluster_encrypted_at_rest.redshift_cluster_encrypted_at_rest import (
+                    redshift_cluster_encrypted_at_rest,
                 )
 
-                check = redshift_cluster_encrypted()
+                check = redshift_cluster_encrypted_at_rest()
                 result = check.execute()
 
                 assert len(result) == 1
@@ -111,14 +111,14 @@ class Test_redshift_cluster_encrypted:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.redshift.redshift_cluster_encrypted.redshift_cluster_encrypted.redshift_client",
+                "prowler.providers.aws.services.redshift.redshift_cluster_encrypted_at_rest.redshift_cluster_encrypted_at_rest.redshift_client",
                 new=Redshift(aws_provider),
             ):
-                from prowler.providers.aws.services.redshift.redshift_cluster_encrypted.redshift_cluster_encrypted import (
-                    redshift_cluster_encrypted,
+                from prowler.providers.aws.services.redshift.redshift_cluster_encrypted_at_rest.redshift_cluster_encrypted_at_rest import (
+                    redshift_cluster_encrypted_at_rest,
                 )
 
-                check = redshift_cluster_encrypted()
+                check = redshift_cluster_encrypted_at_rest()
                 result = check.execute()
 
                 assert len(result) == 1

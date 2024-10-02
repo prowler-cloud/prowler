@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "redshift_cluster_encrypted",
+  "CheckID": "redshift_cluster_encrypted_at_rest",
   "CheckTitle": "Check if Redshift clusters are encrypted at rest.",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices"
