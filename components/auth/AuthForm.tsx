@@ -31,6 +31,11 @@ export const AuthForm = ({ type }: { type: string }) => {
     defaultValues: {
       email: "",
       password: "",
+      ...(type === "sign-up" && {
+        firstName: "",
+        companyName: "",
+        confirmPassword: "",
+      }),
     },
   });
 
@@ -48,14 +53,16 @@ export const AuthForm = ({ type }: { type: string }) => {
     try {
       // Sign-up logic will be here.
       if (type === "sign-in") {
+        console.log(data);
         dispatch({
           email: data.email.toLowerCase(),
           password: data.password,
         });
       }
-      // if (type === "sign-up") {
-      //   const newUser = await signUp(data);
-      // }
+      if (type === "sign-up") {
+        console.log(data);
+        // const newUser = await signUp(data);
+      }
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error(error);

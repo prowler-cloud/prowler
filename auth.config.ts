@@ -5,6 +5,13 @@ import { z } from "zod";
 
 import { userMockData } from "./lib";
 
+// const key = new TextEncoder().encode(process.env.AUTH_SECRET);
+// const SALT_ROUNDS = 10;
+
+// export async function hashPassword(password: string) {
+//   return hash(password, SALT_ROUNDS);
+// }
+
 async function getUser(email: string, password: string): Promise<any | null> {
   // Check if the user exists in the userMockData array.
   const user = userMockData.find((user) => user.email === email);
@@ -32,17 +39,22 @@ export const authConfig = {
     newUser: "/sign-up",
   },
   callbacks: {
-    // authorized({ auth, request: { nextUrl } }) {
-    //   const isLoggedIn = !!auth?.user;
-    //   const isOnDashboard = nextUrl.pathname.startsWith("/");
-    //   if (isOnDashboard) {
-    //     if (isLoggedIn) return true;
-    //     return false; // Redirect unauthenticated users to login page
-    //   } else if (isLoggedIn) {
-    //     return Response.redirect(new URL("/", nextUrl));
-    //   }
-    //   return true;
-    // },
+    authorized({ auth, request: { nextUrl } }) {
+      const isLoggedIn = !!auth?.user;
+      const isOnDashboard = nextUrl.pathname.startsWith("/");
+      const isSignUpPage = nextUrl.pathname === "/sign-up";
+
+      // Permitir acceso a /sign-up incluso si no está autenticado
+      if (isSignUpPage) return true;
+
+      if (isOnDashboard) {
+        if (isLoggedIn) return true;
+        return false; // Redirigir usuarios no autenticados a la página de login
+      } else if (isLoggedIn) {
+        return Response.redirect(new URL("/", nextUrl));
+      }
+      return true;
+    },
 
     jwt({ token, user }) {
       if (user) {
@@ -75,6 +87,8 @@ export const authConfig = {
           return null;
         }
         const { email, password } = parsedCredentials.data;
+        console.log("email", email);
+        console.log("password", password);
 
         const user = await getUser(email, password);
         if (!user) return null;

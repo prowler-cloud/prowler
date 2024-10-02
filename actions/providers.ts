@@ -3,12 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { auth } from "@/auth.config";
 import { parseStringify } from "@/lib";
-
-// Credentials for basic auth
-const username = process.env.API_USERNAME;
-const password = process.env.API_PASSWORD;
 
 export const getProviders = async ({
   page = 1,
@@ -16,8 +11,7 @@ export const getProviders = async ({
   sort = "",
   filters = {},
 }) => {
-  const session = await auth();
-  const tenantId = session?.user.tenantId;
+  // const session = await auth();
 
   if (isNaN(Number(page)) || page < 1) redirect("/providers");
 
@@ -38,8 +32,7 @@ export const getProviders = async ({
   try {
     const providers = await fetch(url.toString(), {
       headers: {
-        "X-Tenant-ID": `${tenantId}`,
-        Authorization: "Basic " + btoa(`${username}:${password}`),
+        Accept: "application/vnd.api+json",
       },
     });
     const data = await providers.json();
@@ -53,8 +46,7 @@ export const getProviders = async ({
 };
 
 export const getProvider = async (formData: FormData) => {
-  const session = await auth();
-  const tenantId = session?.user.tenantId;
+  // const session = await auth();
   const providerId = formData.get("id");
 
   const keyServer = process.env.API_BASE_URL;
@@ -63,8 +55,7 @@ export const getProvider = async (formData: FormData) => {
   try {
     const providers = await fetch(url.toString(), {
       headers: {
-        "X-Tenant-ID": `${tenantId}`,
-        Authorization: "Basic " + btoa(`${username}:${password}`),
+        Accept: "application/vnd.api+json",
       },
     });
     const data = await providers.json();
@@ -78,10 +69,9 @@ export const getProvider = async (formData: FormData) => {
 };
 
 export const updateProvider = async (formData: FormData) => {
-  const session = await auth();
+  // const session = await auth();
   const keyServer = process.env.API_BASE_URL;
 
-  const tenantId = session?.user.tenantId;
   const providerId = formData.get("providerId");
   const providerAlias = formData.get("alias");
 
@@ -91,9 +81,8 @@ export const updateProvider = async (formData: FormData) => {
     const response = await fetch(url.toString(), {
       method: "PATCH",
       headers: {
-        "X-Tenant-ID": `${tenantId}`,
-        Authorization: "Basic " + btoa(`${username}:${password}`),
         "Content-Type": "application/vnd.api+json",
+        Accept: "application/vnd.api+json",
       },
       body: JSON.stringify({
         data: {
@@ -117,10 +106,8 @@ export const updateProvider = async (formData: FormData) => {
 };
 
 export const addProvider = async (formData: FormData) => {
-  const session = await auth();
+  // const session = await auth();
   const keyServer = process.env.API_BASE_URL;
-
-  const tenantId = session?.user.tenantId;
 
   const providerType = formData.get("providerType");
   const providerId = formData.get("providerId");
@@ -132,9 +119,8 @@ export const addProvider = async (formData: FormData) => {
     const response = await fetch(url.toString(), {
       method: "POST",
       headers: {
-        "X-Tenant-ID": `${tenantId}`,
-        Authorization: "Basic " + btoa(`${username}:${password}`),
         "Content-Type": "application/vnd.api+json",
+        Accept: "application/vnd.api+json",
       },
       body: JSON.stringify({
         data: {
@@ -159,9 +145,8 @@ export const addProvider = async (formData: FormData) => {
 };
 
 export const checkConnectionProvider = async (formData: FormData) => {
-  const session = await auth();
+  // const session = await auth();
   const keyServer = process.env.API_BASE_URL;
-  const tenantId = session?.user.tenantId;
 
   const providerId = formData.get("id");
 
@@ -171,8 +156,7 @@ export const checkConnectionProvider = async (formData: FormData) => {
     const response = await fetch(url.toString(), {
       method: "POST",
       headers: {
-        "X-Tenant-ID": `${tenantId}`,
-        Authorization: "Basic " + btoa(`${username}:${password}`),
+        Accept: "application/vnd.api+json",
       },
     });
     const data = await response.json();
@@ -186,9 +170,8 @@ export const checkConnectionProvider = async (formData: FormData) => {
 };
 
 export const deleteProvider = async (formData: FormData) => {
-  const session = await auth();
+  // const session = await auth();
   const keyServer = process.env.API_BASE_URL;
-  const tenantId = session?.user.tenantId;
 
   const providerId = formData.get("id");
   const url = new URL(`${keyServer}/providers/${providerId}`);
@@ -197,8 +180,7 @@ export const deleteProvider = async (formData: FormData) => {
     const response = await fetch(url.toString(), {
       method: "DELETE",
       headers: {
-        "X-Tenant-ID": `${tenantId}`,
-        Authorization: "Basic " + btoa(`${username}:${password}`),
+        Accept: "application/vnd.api+json",
       },
     });
     const data = await response.json();
