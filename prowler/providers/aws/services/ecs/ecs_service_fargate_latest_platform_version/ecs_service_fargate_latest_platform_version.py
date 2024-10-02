@@ -19,7 +19,7 @@ class ecs_service_fargate_latest_platform_version(Check):
                     "fargate_windows_latest_version", "1.0.0"
                 )
                 report.status = "PASS"
-                report.status_extended = f"ECS Service {service.name} is using latest FARGATE {service.platform_family} version {fargate_latest_linux_version if service.platform_family == "Linux" else fargate_latest_windows_version}."
+                report.status_extended = f"ECS Service {service.name} is using latest FARGATE {service.platform_family} version {fargate_latest_linux_version if service.platform_family == 'Linux' else fargate_latest_windows_version}."
                 if (
                     service.platform_version != "LATEST"
                     and (
@@ -32,7 +32,7 @@ class ecs_service_fargate_latest_platform_version(Check):
                     )
                 ):
                     report.status = "FAIL"
-                    report.status_extended = f"ECS Service {service.name} is not using latest FARGATE {service.platform_family} version {fargate_latest_linux_version if service.platform_family == "Linux" else fargate_latest_windows_version}, currently using {service.platform_version}."
+                    report.status_extended = f"ECS Service {service.name} is not using latest FARGATE {service.platform_family} version {fargate_latest_linux_version if service.platform_family == 'Linux' else fargate_latest_windows_version}, currently using {service.platform_version}."
 
                 findings.append(report)
         return findings
