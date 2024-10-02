@@ -97,7 +97,10 @@ class IAM(AWSService):
         # List missing tags
         self.__threading_call__(self._list_tags, self.users)
         self.__threading_call__(self._list_tags, self.roles)
-        self.__threading_call__(self._list_tags, self.policies)
+        self.__threading_call__(
+            self._list_tags,
+            [policy for policy in self.policies if policy.type == "Custom"],
+        )
         self.__threading_call__(self._list_tags, self.server_certificates)
 
     def _get_client(self):
@@ -960,4 +963,4 @@ class Policy(BaseModel):
     type: str
     attached: bool
     document: Optional[dict]
-    tags: Optional[list]
+    tags: Optional[list] = []
