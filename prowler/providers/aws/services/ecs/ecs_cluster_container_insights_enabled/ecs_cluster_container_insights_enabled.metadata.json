@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "ecs_cluster_container_insights_enabled",
+  "CheckTitle": "ECS clusters should use Container Insights",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "ecs",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:ecs:{region}:{account-id}:cluster/{cluster-name}",
+  "Severity": "medium",
+  "ResourceType": "AwsEcsCluster",
+  "Description": "This control checks if ECS clusters use Container Insights. This control fails if Container Insights are not set up for a cluster.",
+  "Risk": "Without Container Insights, important performance metrics and diagnostic information from containerized applications may not be captured, which can hinder monitoring and troubleshooting.",
+  "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/ecs-container-insights-enabled.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws ecs update-cluster-settings --cluster <cluster-name> --settings name=containerInsights,value=enabled",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/ecs-controls.html#ecs-12",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable Container Insights for your ECS clusters to collect and monitor key performance metrics and diagnostic data from your containers.",
+      "Url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/deploy-container-insights-ECS-cluster.html"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

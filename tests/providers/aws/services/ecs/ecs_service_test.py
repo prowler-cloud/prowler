@@ -12,7 +12,7 @@ def mock_make_api_call(self, operation_name, kwarg):
     if operation_name == "ListTaskDefinitions":
         return {
             "taskDefinitionArns": [
-                "arn:aws:ecs:eu-west-1:123456789012:task-definition/test_ecs_task:1"
+                "arn:aws:ecs:eu-west-1:123456789012:task-definition/test_cluster_1/test_ecs_task:1"
             ]
         }
     if operation_name == "DescribeTaskDefinition":
@@ -69,6 +69,9 @@ def mock_make_api_call(self, operation_name, kwarg):
                     "clusterName": "test_cluster_1",
                     "status": "ACTIVE",
                     "tags": [{"key": "Name", "value": "test_cluster_1"}],
+                    "settings": [
+                        {"name": "containerInsights", "value": "enabled"},
+                    ],
                     "registeredContainerInstancesCount": 5,
                     "runningTasksCount": 10,
                     "pendingTasksCount": 1,
@@ -117,7 +120,7 @@ class Test_ECS_Service:
         aws_provider = set_mocked_aws_provider()
         ecs = ECS(aws_provider)
 
-        task_arn = "arn:aws:ecs:eu-west-1:123456789012:task-definition/test_ecs_task:1"
+        task_arn = "arn:aws:ecs:eu-west-1:123456789012:task-definition/test_cluster_1/test_ecs_task:1"
 
         assert len(ecs.task_definitions) == 1
         assert ecs.task_definitions[task_arn].name == "test_ecs_task"
@@ -131,7 +134,7 @@ class Test_ECS_Service:
         aws_provider = set_mocked_aws_provider()
         ecs = ECS(aws_provider)
 
-        task_arn = "arn:aws:ecs:eu-west-1:123456789012:task-definition/test_ecs_task:1"
+        task_arn = "arn:aws:ecs:eu-west-1:123456789012:task-definition/test_cluster_1/test_ecs_task:1"
 
         assert len(ecs.task_definitions) == 1
         assert ecs.task_definitions[task_arn].name == "test_ecs_task"
@@ -194,6 +197,9 @@ class Test_ECS_Service:
         assert ecs.clusters[cluster_arn1].services
         assert ecs.clusters[cluster_arn1].tags == [
             {"key": "Name", "value": "test_cluster_1"}
+        ]
+        assert ecs.clusters[cluster_arn1].settings == [
+            {"name": "containerInsights", "value": "enabled"}
         ]
 
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
