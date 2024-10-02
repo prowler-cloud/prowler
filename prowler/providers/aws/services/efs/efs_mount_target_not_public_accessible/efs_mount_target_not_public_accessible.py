@@ -14,14 +14,16 @@ class efs_mount_target_not_public_accessible(Check):
                 report.resource_arn = fs.arn
                 report.resource_tags = fs.tags
                 report.status = "PASS"
-                report.status_extended = f"EFS {fs.id} does not have any mount target associated with a public subnet."
+                report.status_extended = (
+                    f"EFS {fs.id} does not have any public mount targets."
+                )
                 mount_targets = []
                 for mt in fs.mount_targets:
                     if vpc_client.vpc_subnets[mt.subnet_id].public:
                         mount_targets.append(mt)
                 if mount_targets:
                     report.status = "FAIL"
-                    report.status_extended = f"EFS {fs.id} has mount targets associated with public subnets: {', '.join([mt.id for mt in mount_targets])}"
+                    report.status_extended = f"EFS {fs.id} has public mount targets due to public subnets: {', '.join([mt.id for mt in mount_targets])}"
 
                 findings.append(report)
         return findings

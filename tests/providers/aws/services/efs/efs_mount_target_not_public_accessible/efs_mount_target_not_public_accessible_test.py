@@ -117,7 +117,7 @@ class Test_efs_mount_target_not_public_accessible:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"EFS {file_system['FileSystemId']} has mount targets associated with public subnets: {mount_target['MountTargetId']}"
+                == f"EFS {file_system['FileSystemId']} has public mount targets due to public subnets: {mount_target['MountTargetId']}"
             )
             assert result[0].resource_id == file_system["FileSystemId"]
             assert (
@@ -169,7 +169,7 @@ class Test_efs_mount_target_not_public_accessible:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"EFS {file_system['FileSystemId']} does not have any mount target associated with a public subnet."
+                == f"EFS {file_system['FileSystemId']} does not have any public mount targets."
             )
             assert result[0].resource_id == file_system["FileSystemId"]
             assert (

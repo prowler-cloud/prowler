@@ -1,16 +1,16 @@
 {
   "Provider": "aws",
   "CheckID": "efs_mount_target_not_public_accessible",
-  "CheckTitle": "EFS mount targets should not be associated with a public subnet",
+  "CheckTitle": "EFS mount targets should not be public accessible",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices"
   ],
   "ServiceName": "efs",
-  "SubServiceName": "filesystem",
+  "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:elasticfilesystem:{region}:{account-id}:file-system/{filesystem-id}",
   "Severity": "medium",
   "ResourceType": "AwsEfsFileSystem",
-  "Description": "This control checks whether an Amazon EFS mount target is associated with a private subnet. The control fails if the mount target is associated with a public subnet.",
+  "Description": "This control checks whether an Amazon EFS mount target is associated with a public subnet since it can be accessed from the internet.",
   "Risk": "Mount targets in public subnets may expose your EFS to unauthorized access or attacks.",
   "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/efs-mount-target-public-accessible.html",
   "Remediation": {
