@@ -85,7 +85,7 @@ class Test_networkfirewall_logging_enabled:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == f"Network Firewall {FIREWALL_NAME} does not have logging enabled in any destination."
+                    == f"Network Firewall {FIREWALL_NAME} does not have logging enabled."
                 )
                 assert result[0].region == AWS_REGION_US_EAST_1
                 assert result[0].resource_id == FIREWALL_NAME
@@ -139,7 +139,7 @@ class Test_networkfirewall_logging_enabled:
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == f"Network Firewall {FIREWALL_NAME} has logging enabled in at least one destination."
+                    == f"Network Firewall {FIREWALL_NAME} has logging enabled."
                 )
                 assert result[0].region == AWS_REGION_US_EAST_1
                 assert result[0].resource_id == FIREWALL_NAME
