@@ -44,7 +44,6 @@ def mock_make_api_call(self, operation_name, kwarg):
                 {
                     "serviceArn": "arn:aws:ecs:eu-west-1:123456789012:service/test_cluster_1/test_ecs_service",
                     "serviceName": "test_ecs_service",
-                    "launchType": "EC2",
                     "networkConfiguration": {
                         "awsvpcConfiguration": {
                             "subnets": ["subnet-12345678"],
@@ -52,6 +51,9 @@ def mock_make_api_call(self, operation_name, kwarg):
                             "assignPublicIp": "ENABLED",
                         }
                     },
+                    "launchType": "FARGATE",
+                    "platformVersion": "1.4.0",
+                    "platformFamily": "Linux",
                 }
             ]
         }
@@ -218,3 +220,6 @@ class Test_ECS_Service:
         assert ecs.services[service_arn].region == AWS_REGION_EU_WEST_1
         assert ecs.services[service_arn].assign_public_ip
         assert ecs.services[service_arn].tags == []
+        assert ecs.services[service_arn].launch_type == "FARGATE"
+        assert ecs.services[service_arn].platform_version == "1.4.0"
+        assert ecs.services[service_arn].platform_family == "Linux"
