@@ -52,6 +52,7 @@ class Test_networkfirewall_logging_enabled:
         networkfirewall_client.region = AWS_REGION_US_EAST_1
         networkfirewall_client.network_firewalls = {
             FIREWALL_ARN: Firewall(
+                arn=FIREWALL_ARN,
                 name=FIREWALL_NAME,
                 region=AWS_REGION_US_EAST_1,
                 policy_arn=POLICY_ARN,
@@ -110,9 +111,7 @@ class Test_networkfirewall_logging_enabled:
                     LoggingConfiguration(
                         log_type=LogType.flow,
                         log_destination_type=LogDestinationType.s3,
-                        log_destination={
-                            "bucket_name": "my-bucket",
-                        },
+                        log_destination={"bucket_name": "my-bucket"},
                     )
                 ],
             ),
