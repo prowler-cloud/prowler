@@ -68,7 +68,7 @@ class Test_ecs_task_definitions_no_privileged_containers:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"ECS task definition {TASK_NAME} does not have privileged containers."
+                == f"ECS task definition {TASK_NAME} with revision {TASK_REVISION} does not have privileged containers."
             )
 
     def test_task_definition_privileged_container(self):
@@ -104,5 +104,5 @@ class Test_ecs_task_definitions_no_privileged_containers:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"ECS task definition {TASK_NAME} has privileged containers: {CONTAINER_NAME}"
+                == f"ECS task definition {TASK_NAME} with revision {TASK_REVISION} has privileged containers: {CONTAINER_NAME}"
             )

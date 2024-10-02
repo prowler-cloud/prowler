@@ -14,7 +14,7 @@ Once that is satisfied go ahead and clone your forked repo:
 git clone https://github.com/<your-github-user>/prowler
 cd prowler
 ```
-For isolation and to avoid conflicts with other environments, we recommend using `poetry`, a Python dependency management tool. You can install it by following the instructions [here] (https://python-poetry.org/docs/).
+For isolation and to avoid conflicts with other environments, we recommend using `poetry`, a Python dependency management tool. You can install it by following the instructions [here](https://python-poetry.org/docs/#installation).
 
 Then install all dependencies including the ones for developers:
 ```

@@ -75,6 +75,9 @@ class ECS(AWSService):
                         ),
                         user=container.get("user", ""),
                         environment=environment,
+                        log_driver=container.get("logConfiguration", {}).get(
+                            "logDriver", ""
+                        ),
                     )
                 )
             task_definition.pid_mode = response["taskDefinition"].get("pidMode", "")
@@ -173,6 +176,7 @@ class ContainerDefinition(BaseModel):
     readonly_rootfilesystem: bool = False
     user: str
     environment: list[ContainerEnvVariable]
+    log_driver: Optional[str]
 
 
 class TaskDefinition(BaseModel):

@@ -12,7 +12,7 @@ class ecs_task_definitions_host_networking_mode_users(Check):
             report.resource_arn = task_definition.arn
             report.resource_tags = task_definition.tags
             report.status = "PASS"
-            report.status_extended = f"ECS task definition {task_definition.name} does not have host network mode."
+            report.status_extended = f"ECS task definition {task_definition.name} with revision {task_definition.revision} does not have host network mode."
             failed_containers = []
             if task_definition.network_mode == "host":
                 for container in task_definition.container_definitions:
@@ -23,8 +23,8 @@ class ecs_task_definitions_host_networking_mode_users(Check):
                         failed_containers.append(container.name)
 
                 if failed_containers:
-                    report.status_extended = f"ECS task definition {task_definition.name} has containers with host network mode and non-privileged containers running as root or with no user specified: {', '.join(failed_containers)}"
+                    report.status_extended = f"ECS task definition {task_definition.name} with revision {task_definition.revision} has containers with host network mode and non-privileged containers running as root or with no user specified: {', '.join(failed_containers)}"
                 else:
-                    report.status_extended = f"ECS task definition {task_definition.name} has host network mode but no containers running as root or with no user specified."
+                    report.status_extended = f"ECS task definition {task_definition.name} with revision {task_definition.revision} has host network mode but no containers running as root or with no user specified."
             findings.append(report)
         return findings
