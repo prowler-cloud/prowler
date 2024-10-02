@@ -21,6 +21,9 @@ class Test_ssm_managed_compliant_patching:
             "prowler.providers.aws.services.ssm.ssm_service.SSM",
             new=ssm_client,
         ), mock.patch(
+            "prowler.providers.aws.services.ssm.ssm_client.ssm_client",
+            new=ssm_client,
+        ), mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
         ), mock.patch(
@@ -62,6 +65,9 @@ class Test_ssm_managed_compliant_patching:
 
         with mock.patch(
             "prowler.providers.aws.services.ssm.ssm_service.SSM",
+            new=ssm_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.ssm.ssm_client.ssm_client",
             new=ssm_client,
         ), mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
@@ -120,6 +126,9 @@ class Test_ssm_managed_compliant_patching:
 
         with mock.patch(
             "prowler.providers.aws.services.ssm.ssm_service.SSM",
+            new=ssm_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.ssm.ssm_client.ssm_client",
             new=ssm_client,
         ), mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
