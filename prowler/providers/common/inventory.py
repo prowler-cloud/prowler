@@ -1,7 +1,6 @@
 import importlib
 import json
 import os
-import shutil
 from collections import deque
 from datetime import datetime
 
@@ -108,16 +107,6 @@ def run_prowler_inventory(checks_to_execute, provider):
 
         except Exception as e:
             print("Exception: ", e)
-
-    with open(f"{output_folder_path}/output_metadata.json", "w+") as fp:
-        json.dump(meta_json_file, fp=fp, default=str, indent=4)
-
-    # end of all things
-    folder_to_compress = f"{output_folder_path}"
-    output_zip_file = f"{output_folder_path}/prowler-scan-compressed"  # The output file (without extension)
-
-    # Compress the folder into a zip file
-    shutil.make_archive(f"{output_zip_file}", "zip", folder_to_compress)
     print(
         f"\n{Style.BRIGHT}{Fore.GREEN}Scan inventory for {provider} results: {orange_color}{output_folder_path}"
     )

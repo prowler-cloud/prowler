@@ -93,12 +93,19 @@ def init_parser(self):
         help="Send only Prowler failed findings to SecurityHub",
     )
     # AWS Quick Inventory
-    aws_quick_inventory_subparser = aws_parser.add_argument_group("Inventory")
+    aws_quick_inventory_subparser = aws_parser.add_argument_group("Quick Inventory")
     aws_quick_inventory_subparser.add_argument(
-        "--scan-inventory",
+        "--quick-inventory",
         "-i",
         action="store_true",
-        help="Run Prowler Inventory. The inventory will be stored in an output json file.",
+        help="Run Prowler Quick Inventory. The inventory will be stored in an output csv by default",
+    )
+    # AWS Scan Inventory
+    aws_scan_inventory_subparser = aws_parser.add_argument_group("Scan Inventory")
+    aws_scan_inventory_subparser.add_argument(
+        "--scan-inventory",
+        action="store_true",
+        help="Run Prowler Scan Inventory. The inventory will be stored in an output json file.",
     )
     # AWS Outputs
     aws_outputs_subparser = aws_parser.add_argument_group("AWS Outputs to S3")

@@ -73,6 +73,7 @@ from prowler.providers.aws.models import AWSOutputOptions
 from prowler.providers.azure.models import AzureOutputOptions
 from prowler.providers.common.inventory import run_prowler_inventory
 from prowler.providers.common.provider import Provider
+from prowler.providers.common.quick_inventory import run_provider_quick_inventory
 from prowler.providers.gcp.models import GCPOutputOptions
 from prowler.providers.kubernetes.models import KubernetesOutputOptions
 
@@ -256,6 +257,11 @@ def prowler():
         output_options = KubernetesOutputOptions(
             args, bulk_checks_metadata, global_provider.identity
         )
+
+    # Run the quick inventory for the provider if available
+    if hasattr(args, "quick_inventory") and args.quick_inventory:
+        run_provider_quick_inventory(global_provider, args)
+        sys.exit()
 
     # Execute checks
     findings = []
