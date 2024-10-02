@@ -74,7 +74,7 @@ class AutoScaling(AWSService):
 
 
 # Global list for service namespaces needed for Describe Scalable Targets
-service_namespaces = ["dynamodb"]
+SERVICE_NAMESPACES = ["dynamodb"]
 
 
 class ApplicationAutoScaling(AWSService):
@@ -89,7 +89,7 @@ class ApplicationAutoScaling(AWSService):
             describe_scalable_targets_paginator = regional_client.get_paginator(
                 "describe_scalable_targets"
             )
-            for service_namespace in service_namespaces:
+            for service_namespace in SERVICE_NAMESPACES:
                 logger.info(f"Processing ServiceNamespace: {service_namespace}")
                 for page in describe_scalable_targets_paginator.paginate(
                     ServiceNamespace=service_namespace

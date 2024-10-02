@@ -76,7 +76,7 @@ class Test_dynamodb_table_autoscaling_enabled:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert result[0].status_extended == (
-                "DynamoDB table test1 uses PAY_PER_REQUEST billing mode and automatically scales capacity with demand."
+                "DynamoDB table test1 automatically scales capacity on demand."
             )
             assert result[0].resource_id == table["TableName"]
             assert result[0].resource_arn == table["TableArn"]
@@ -148,7 +148,7 @@ class Test_dynamodb_table_autoscaling_enabled:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert result[0].status_extended == (
-                "DynamoDB table test1 is in PROVISIONED mode with auto scaling enabled for both read and write capacity units."
+                "DynamoDB table test1 is in provisioned mode with auto scaling enabled for both read and write capacity units."
             )
             assert result[0].resource_id == table["TableName"]
             assert result[0].resource_arn == table["TableArn"]
@@ -213,7 +213,7 @@ class Test_dynamodb_table_autoscaling_enabled:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].status_extended == (
-                "DynamoDB table test1 is in PROVISIONED mode without auto scaling enabled for write."
+                "DynamoDB table test1 is in provisioned mode without auto scaling enabled for write."
             )
             assert result[0].resource_id == table["TableName"]
             assert result[0].resource_arn == table["TableArn"]
@@ -278,7 +278,7 @@ class Test_dynamodb_table_autoscaling_enabled:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].status_extended == (
-                "DynamoDB table test1 is in PROVISIONED mode without auto scaling enabled for read."
+                "DynamoDB table test1 is in provisioned mode without auto scaling enabled for read."
             )
             assert result[0].resource_id == table["TableName"]
             assert result[0].resource_arn == table["TableArn"]
@@ -332,7 +332,7 @@ class Test_dynamodb_table_autoscaling_enabled:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].status_extended == (
-                "DynamoDB table test1 is in PROVISIONED mode without auto scaling enabled for read, write."
+                "DynamoDB table test1 is in provisioned mode without auto scaling enabled for read, write."
             )
             assert result[0].resource_id == table["TableName"]
             assert result[0].resource_arn == table["TableArn"]
