@@ -114,7 +114,7 @@ def run_prowler_inventory(checks_to_execute, provider):
 
     # end of all things
     folder_to_compress = f"{output_folder_path}"
-    output_zip_file = f"{output_folder_path}/rmfx-scan-compressed"  # The output file (without extension)
+    output_zip_file = f"{output_folder_path}/prowler-scan-compressed"  # The output file (without extension)
 
     # Compress the folder into a zip file
     shutil.make_archive(f"{output_zip_file}", "zip", folder_to_compress)
