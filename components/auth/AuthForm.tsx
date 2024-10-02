@@ -48,8 +48,6 @@ export const AuthForm = ({ type }: { type: string }) => {
   }, [state]);
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
-    // Do something with the form values
-    // this will be type-safe and validated
     try {
       // Sign-up logic will be here.
       if (type === "sign-in") {
@@ -183,7 +181,7 @@ export const AuthForm = ({ type }: { type: string }) => {
             {state?.message === "Credentials error" && (
               <div className="flex flex-row items-center gap-2 text-system-error">
                 <NotificationIcon size={16} />
-                <p className="text-s">Incorrect email or password</p>
+                <p className="text-s">No user found</p>
               </div>
             )}
 

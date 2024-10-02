@@ -18,12 +18,12 @@ export const authConfig = {
       const isOnDashboard = nextUrl.pathname.startsWith("/");
       const isSignUpPage = nextUrl.pathname === "/sign-up";
 
-      // Permitir acceso a /sign-up incluso si no está autenticado
+      // Allow access to sign-up page
       if (isSignUpPage) return true;
 
       if (isOnDashboard) {
         if (isLoggedIn) return true;
-        return false; // Redirigir usuarios no autenticados a la página de login
+        return false; // Redirect users who are not logged in to the login page
       } else if (isLoggedIn) {
         return Response.redirect(new URL("/", nextUrl));
       }
