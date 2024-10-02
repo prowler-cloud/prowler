@@ -3,7 +3,7 @@ from prowler.providers.aws.services.efs.efs_client import efs_client
 from prowler.providers.aws.services.vpc.vpc_client import vpc_client
 
 
-class efs_mount_target_not_public_accessible(Check):
+class efs_mount_target_not_publicly_accessible(Check):
     def execute(self):
         findings = []
         for fs in efs_client.filesystems.values():

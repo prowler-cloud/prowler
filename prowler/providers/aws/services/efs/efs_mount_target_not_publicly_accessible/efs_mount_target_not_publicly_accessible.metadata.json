@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
-  "CheckID": "efs_mount_target_not_public_accessible",
-  "CheckTitle": "EFS mount targets should not be public accessible",
+  "CheckID": "efs_mount_target_not_publicly_accessible",
+  "CheckTitle": "EFS mount targets should not be publicly accessible",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices"
   ],

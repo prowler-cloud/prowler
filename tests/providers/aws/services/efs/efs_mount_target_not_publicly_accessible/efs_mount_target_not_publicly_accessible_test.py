@@ -12,7 +12,7 @@ from tests.providers.aws.utils import (
 CREATION_TOKEN = "fs-123"
 
 
-class Test_efs_mount_target_not_public_accessible:
+class Test_efs_mount_target_not_publicly_accessible:
     @mock_aws
     def test_efs_no_file_system(self):
         from prowler.providers.aws.services.efs.efs_service import EFS
@@ -23,14 +23,14 @@ class Test_efs_mount_target_not_public_accessible:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.efs.efs_mount_target_not_public_accessible.efs_mount_target_not_public_accessible.efs_client",
+            "prowler.providers.aws.services.efs.efs_mount_target_not_publicly_accessible.efs_mount_target_not_publicly_accessible.efs_client",
             new=EFS(aws_provider),
         ):
-            from prowler.providers.aws.services.efs.efs_mount_target_not_public_accessible.efs_mount_target_not_public_accessible import (
-                efs_mount_target_not_public_accessible,
+            from prowler.providers.aws.services.efs.efs_mount_target_not_publicly_accessible.efs_mount_target_not_publicly_accessible import (
+                efs_mount_target_not_publicly_accessible,
             )
 
-            check = efs_mount_target_not_public_accessible()
+            check = efs_mount_target_not_publicly_accessible()
             result = check.execute()
             assert len(result) == 0
 
@@ -47,14 +47,14 @@ class Test_efs_mount_target_not_public_accessible:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.efs.efs_mount_target_not_public_accessible.efs_mount_target_not_public_accessible.efs_client",
+            "prowler.providers.aws.services.efs.efs_mount_target_not_publicly_accessible.efs_mount_target_not_publicly_accessible.efs_client",
             new=EFS(aws_provider),
         ):
-            from prowler.providers.aws.services.efs.efs_mount_target_not_public_accessible.efs_mount_target_not_public_accessible import (
-                efs_mount_target_not_public_accessible,
+            from prowler.providers.aws.services.efs.efs_mount_target_not_publicly_accessible.efs_mount_target_not_publicly_accessible import (
+                efs_mount_target_not_publicly_accessible,
             )
 
-            check = efs_mount_target_not_public_accessible()
+            check = efs_mount_target_not_publicly_accessible()
             result = check.execute()
             assert len(result) == 0
 
@@ -101,17 +101,17 @@ class Test_efs_mount_target_not_public_accessible:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.efs.efs_mount_target_not_public_accessible.efs_mount_target_not_public_accessible.efs_client",
+            "prowler.providers.aws.services.efs.efs_mount_target_not_publicly_accessible.efs_mount_target_not_publicly_accessible.efs_client",
             new=EFS(aws_provider),
         ), mock.patch(
-            "prowler.providers.aws.services.efs.efs_mount_target_not_public_accessible.efs_mount_target_not_public_accessible.vpc_client",
+            "prowler.providers.aws.services.efs.efs_mount_target_not_publicly_accessible.efs_mount_target_not_publicly_accessible.vpc_client",
             new=VPC(aws_provider),
         ):
-            from prowler.providers.aws.services.efs.efs_mount_target_not_public_accessible.efs_mount_target_not_public_accessible import (
-                efs_mount_target_not_public_accessible,
+            from prowler.providers.aws.services.efs.efs_mount_target_not_publicly_accessible.efs_mount_target_not_publicly_accessible import (
+                efs_mount_target_not_publicly_accessible,
             )
 
-            check = efs_mount_target_not_public_accessible()
+            check = efs_mount_target_not_publicly_accessible()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -153,17 +153,17 @@ class Test_efs_mount_target_not_public_accessible:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.efs.efs_mount_target_not_public_accessible.efs_mount_target_not_public_accessible.efs_client",
+            "prowler.providers.aws.services.efs.efs_mount_target_not_publicly_accessible.efs_mount_target_not_publicly_accessible.efs_client",
             new=EFS(aws_provider),
         ), mock.patch(
-            "prowler.providers.aws.services.efs.efs_mount_target_not_public_accessible.efs_mount_target_not_public_accessible.vpc_client",
+            "prowler.providers.aws.services.efs.efs_mount_target_not_publicly_accessible.efs_mount_target_not_publicly_accessible.vpc_client",
             new=VPC(aws_provider),
         ):
-            from prowler.providers.aws.services.efs.efs_mount_target_not_public_accessible.efs_mount_target_not_public_accessible import (
-                efs_mount_target_not_public_accessible,
+            from prowler.providers.aws.services.efs.efs_mount_target_not_publicly_accessible.efs_mount_target_not_publicly_accessible import (
+                efs_mount_target_not_publicly_accessible,
             )
 
-            check = efs_mount_target_not_public_accessible()
+            check = efs_mount_target_not_publicly_accessible()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"

@@ -6,10 +6,10 @@ from prowler.providers.aws.services.efs.efs_service import FileSystem
 AWS_REGION = "eu-west-1"
 AWS_ACCOUNT_NUMBER = "123456789012"
 
-file_system_id = "fs-c7a0456e"
+FILE_SYSTEM_ID = "fs-c7a0456e"
 
 
-filesystem_policy = {
+FILE_SYSTEM_POLICY = {
     "Id": "1",
     "Statement": [
         {
@@ -20,7 +20,7 @@ filesystem_policy = {
     ],
 }
 
-filesystem_invalid_policy = {
+FILE_SYSTEM_INVALID_POLICY = {
     "Id": "1",
     "Statement": [
         {
@@ -32,7 +32,7 @@ filesystem_invalid_policy = {
 }
 
 # https://docs.aws.amazon.com/efs/latest/ug/access-control-block-public-access.html#what-is-a-public-policy
-filesystem_policy_with_source_arn_condition = {
+FILE_SYSTEM_POLICY_WITH_SOURCE_ARN_CONDITION = {
     "Version": "2012-10-17",
     "Id": "efs-policy-wizard-15ad9567-2546-4bbb-8168-5541b6fc0e55",
     "Statement": [
@@ -55,7 +55,7 @@ filesystem_policy_with_source_arn_condition = {
 }
 
 # https://docs.aws.amazon.com/efs/latest/ug/access-control-block-public-access.html#what-is-a-public-policy
-filesystem_policy_with_mount_target_condition = {
+FILE_SYSTEM_POLICY_WITH_MOUNT_TARGET_CONDITION = {
     "Version": "2012-10-17",
     "Id": "efs-policy-wizard-15ad9567-2546-4bbb-8168-5541b6fc0e55",
     "Statement": [
@@ -78,12 +78,12 @@ class Test_efs_not_publicly_accessible:
     def test_efs_valid_policy(self):
         efs_client = mock.MagicMock
         efs_client.filesystems = {}
-        efs_arn = f"arn:aws:elasticfilesystem:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:file-system/{file_system_id}"
+        efs_arn = f"arn:aws:elasticfilesystem:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:file-system/{FILE_SYSTEM_ID}"
         efs_client.filesystems[efs_arn] = FileSystem(
-            id=file_system_id,
+            id=FILE_SYSTEM_ID,
             arn=efs_arn,
             region=AWS_REGION,
-            policy=filesystem_policy,
+            policy=FILE_SYSTEM_POLICY,
             backup_policy=None,
             encrypted=True,
         )
@@ -101,9 +101,9 @@ class Test_efs_not_publicly_accessible:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"EFS {file_system_id} has a policy which does not allow access to any client within the VPC."
+                == f"EFS {FILE_SYSTEM_ID} has a policy which does not allow access to any client within the VPC."
             )
-            assert result[0].resource_id == file_system_id
+            assert result[0].resource_id == FILE_SYSTEM_ID
             assert result[0].resource_arn == efs_arn
             assert result[0].region == AWS_REGION
             assert result[0].resource_tags == []
@@ -111,48 +111,12 @@ class Test_efs_not_publicly_accessible:
     def test_efs_valid_policy_with_mount_target_condition(self):
         efs_client = mock.MagicMock
         efs_client.filesystems = {}
-        efs_arn = f"arn:aws:elasticfilesystem:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:file-system/{file_system_id}"
+        efs_arn = f"arn:aws:elasticfilesystem:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:file-system/{FILE_SYSTEM_ID}"
         efs_client.filesystems[efs_arn] = FileSystem(
-            id=file_system_id,
+            id=FILE_SYSTEM_ID,
             arn=efs_arn,
             region=AWS_REGION,
-            policy=filesystem_policy_with_mount_target_condition,
-            backup_policy=None,
-            encrypted=True,
-        )
-        with mock.patch(
-            "prowler.providers.aws.services.efs.efs_service.EFS",
-            new=efs_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.efs.efs_client.efs_client",
-            new=efs_client,
-        ):
-            from prowler.providers.aws.services.efs.efs_not_publicly_accessible.efs_not_publicly_accessible import (
-                efs_not_publicly_accessible,
-            )
-
-            check = efs_not_publicly_accessible()
-            result = check.execute()
-            assert len(result) == 1
-            assert result[0].status == "PASS"
-            assert (
-                result[0].status_extended
-                == f"EFS {file_system_id} has a policy which does not allow access to any client within the VPC."
-            )
-            assert result[0].resource_id == file_system_id
-            assert result[0].resource_arn == efs_arn
-            assert result[0].region == AWS_REGION
-            assert result[0].resource_tags == []
-
-    def test_efs_valid_policy_with_source_arn_condition(self):
-        efs_client = mock.MagicMock
-        efs_client.filesystems = {}
-        efs_arn = f"arn:aws:elasticfilesystem:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:file-system/{file_system_id}"
-        efs_client.filesystems[efs_arn] = FileSystem(
-            id=file_system_id,
-            arn=efs_arn,
-            region=AWS_REGION,
-            policy=filesystem_policy_with_source_arn_condition,
+            policy=FILE_SYSTEM_POLICY_WITH_MOUNT_TARGET_CONDITION,
             backup_policy=None,
             encrypted=True,
         )
@@ -170,9 +134,42 @@ class Test_efs_not_publicly_accessible:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"EFS {file_system_id} has a policy which does not allow access to any client within the VPC."
+                == f"EFS {FILE_SYSTEM_ID} has a policy which does not allow access to any client within the VPC."
             )
-            assert result[0].resource_id == file_system_id
+            assert result[0].resource_id == FILE_SYSTEM_ID
+            assert result[0].resource_arn == efs_arn
+            assert result[0].region == AWS_REGION
+            assert result[0].resource_tags == []
+
+    def test_efs_valid_policy_with_source_arn_condition(self):
+        efs_client = mock.MagicMock
+        efs_client.filesystems = {}
+        efs_arn = f"arn:aws:elasticfilesystem:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:file-system/{FILE_SYSTEM_ID}"
+        efs_client.filesystems[efs_arn] = FileSystem(
+            id=FILE_SYSTEM_ID,
+            arn=efs_arn,
+            region=AWS_REGION,
+            policy=FILE_SYSTEM_POLICY_WITH_SOURCE_ARN_CONDITION,
+            backup_policy=None,
+            encrypted=True,
+        )
+        with mock.patch(
+            "prowler.providers.aws.services.efs.efs_service.EFS",
+            efs_client,
+        ):
+            from prowler.providers.aws.services.efs.efs_not_publicly_accessible.efs_not_publicly_accessible import (
+                efs_not_publicly_accessible,
+            )
+
+            check = efs_not_publicly_accessible()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == f"EFS {FILE_SYSTEM_ID} has a policy which does not allow access to any client within the VPC."
+            )
+            assert result[0].resource_id == FILE_SYSTEM_ID
             assert result[0].resource_arn == efs_arn
             assert result[0].region == AWS_REGION
             assert result[0].resource_tags == []
@@ -180,12 +177,12 @@ class Test_efs_not_publicly_accessible:
     def test_efs_invalid_policy(self):
         efs_client = mock.MagicMock
         efs_client.filesystems = {}
-        efs_arn = f"arn:aws:elasticfilesystem:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:file-system/{file_system_id}"
+        efs_arn = f"arn:aws:elasticfilesystem:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:file-system/{FILE_SYSTEM_ID}"
         efs_client.filesystems[efs_arn] = FileSystem(
-            id=file_system_id,
+            id=FILE_SYSTEM_ID,
             arn=efs_arn,
             region=AWS_REGION,
-            policy=filesystem_invalid_policy,
+            policy=FILE_SYSTEM_INVALID_POLICY,
             backup_policy=None,
             encrypted=True,
         )
@@ -203,9 +200,9 @@ class Test_efs_not_publicly_accessible:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"EFS {file_system_id} has a policy which allows access to any client within the VPC."
+                == f"EFS {FILE_SYSTEM_ID} has a policy which allows access to any client within the VPC."
             )
-            assert result[0].resource_id == file_system_id
+            assert result[0].resource_id == FILE_SYSTEM_ID
             assert result[0].resource_arn == efs_arn
             assert result[0].region == AWS_REGION
             assert result[0].resource_tags == []
@@ -213,9 +210,9 @@ class Test_efs_not_publicly_accessible:
     def test_efs_no_policy(self):
         efs_client = mock.MagicMock
         efs_client.filesystems = {}
-        efs_arn = f"arn:aws:elasticfilesystem:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:file-system/{file_system_id}"
+        efs_arn = f"arn:aws:elasticfilesystem:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:file-system/{FILE_SYSTEM_ID}"
         efs_client.filesystems[efs_arn] = FileSystem(
-            id=file_system_id,
+            id=FILE_SYSTEM_ID,
             arn=efs_arn,
             region=AWS_REGION,
             policy=None,
@@ -236,9 +233,9 @@ class Test_efs_not_publicly_accessible:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"EFS {file_system_id} doesn't have any policy which means it grants full access to any client within the VPC."
+                == f"EFS {FILE_SYSTEM_ID} doesn't have any policy which means it grants full access to any client within the VPC."
             )
-            assert result[0].resource_id == file_system_id
+            assert result[0].resource_id == FILE_SYSTEM_ID
             assert result[0].resource_arn == efs_arn
             assert result[0].region == AWS_REGION
             assert result[0].resource_tags == []
