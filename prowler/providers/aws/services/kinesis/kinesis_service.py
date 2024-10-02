@@ -22,10 +22,10 @@ class Kinesis(AWSService):
             list_streams_paginator = regional_client.get_paginator("list_streams")
             for page in list_streams_paginator.paginate():
                 for stream in page["StreamSummaries"]:
+                    arn = stream["StreamARN"]
                     if not self.audit_resources or (
-                        is_resource_filtered(stream["StreamARN"], self.audit_resources)
+                        is_resource_filtered(arn, self.audit_resources)
                     ):
-                        arn = stream["StreamARN"]
                         self.streams[arn] = Stream(
                             arn=arn,
                             name=stream["StreamName"],
