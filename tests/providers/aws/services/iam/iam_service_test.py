@@ -79,7 +79,6 @@ def mock_make_api_call(self, operation_name, kwargs):
 # Patch every AWS call using Boto3
 @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
 class Test_IAM_Service:
-
     # Test IAM Client
     @mock_aws
     def test_get_client(self):
@@ -806,16 +805,18 @@ nTTxU4a7x1naFxzYXK1iQ1vMARKMjDb19QEJIEJKZlDK4uS7yMlf1nFS
         </KeyDescriptor>
 </EntityDescriptor>"""
         saml_provider_name = "test"
-        iam_client.create_saml_provider(
+        saml_arn = iam_client.create_saml_provider(
             SAMLMetadataDocument=xml_template, Name=saml_provider_name
-        )
+        )["SAMLProviderArn"]
 
         # IAM client for this test class
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         iam = IAM(aws_provider)
 
         assert len(iam.saml_providers) == 1
-        assert iam.saml_providers[0]["Arn"].split("/")[1] == saml_provider_name
+        assert saml_arn in iam.saml_providers
+        assert iam.saml_providers[saml_arn].name == saml_provider_name
+        assert iam.saml_providers[saml_arn].arn == saml_arn
 
     # Test IAM User Inline Policy
     @mock_aws
