@@ -102,6 +102,7 @@ class IAM(AWSService):
             [policy for policy in self.policies if policy.type == "Custom"],
         )
         self.__threading_call__(self._list_tags, self.server_certificates)
+        self.__threading_call__(self._list_tags, self.saml_providers.values())
 
     def _get_client(self):
         return self.client
@@ -739,15 +740,23 @@ class IAM(AWSService):
 
     def _list_saml_providers(self):
         logger.info("IAM - List SAML Providers...")
+        saml_providers = {}
         try:
-            saml_providers = self.client.list_saml_providers()["SAMLProviderList"]
+            saml_providers_list = self.client.list_saml_providers()["SAMLProviderList"]
+
+            for provider in saml_providers_list:
+                if not self.audit_resources or (
+                    is_resource_filtered(provider["Arn"], self.audit_resources)
+                ):
+                    saml_providers[provider["Arn"]] = SAMLProvider(
+                        name=provider["Arn"].split("/")[-1], arn=provider["Arn"]
+                    )
         except Exception as error:
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            saml_providers = None
-        finally:
-            return saml_providers
+
+        return saml_providers
 
     def _list_server_certificates(self) -> list:
         logger.info("IAM - List Server Certificates...")
@@ -793,6 +802,10 @@ class IAM(AWSService):
             elif isinstance(resource, Certificate):
                 resource.tags = self.client.list_server_certificate_tags(
                     ServerCertificateName=resource.name
+                ).get("Tags", [])
+            elif isinstance(resource, SAMLProvider):
+                resource.tags = self.client.list_saml_provider_tags(
+                    SAMLProviderArn=resource.arn
                 ).get("Tags", [])
         except Exception as error:
             logger.error(
@@ -964,3 +977,9 @@ class Policy(BaseModel):
     attached: bool
     document: Optional[dict]
     tags: Optional[list] = []
+
+
+class SAMLProvider(BaseModel):
+    name: str
+    arn: str
+    tags: Optional[list]
