@@ -14,12 +14,12 @@ class networkfirewall_policy_default_action_drop_forward(Check):
             report.resource_arn = arn
             report.resource_tags = firewall.tags
             report.status = "FAIL"
-            report.status_extended = f"Network Firewall {firewall.name} ."
+            report.status_extended = f"Network Firewall {firewall.name} policy does not drop or forward full packets by default."
 
             for action in firewall.default_stateless_actions:
                 if action == "aws:drop" or action == "aws:forward_to_sfe":
                     report.status = "PASS"
-                    report.status_extended = f"Network Firewall {firewall.name} ."
+                    report.status_extended = f"Network Firewall {firewall.name} policy does drop or forward full packets by default."
 
             findings.append(report)
 
