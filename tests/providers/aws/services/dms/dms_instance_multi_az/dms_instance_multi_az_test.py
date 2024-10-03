@@ -24,7 +24,7 @@ class Test_dms_instance_multi_az:
             )
 
             check = dms_instance_multi_az_enabled()
-            result = check.execute()    
+            result = check.execute()
             assert len(result) == 0
 
     def test_dms_instance_multi_az_not_enabled(self):
@@ -40,6 +40,7 @@ class Test_dms_instance_multi_az:
                 auto_minor_version_upgrade=False,
                 multi_az=False,
                 region=AWS_REGION_US_EAST_1,
+                tags=[{"Key": "Name", "Value": DMS_INSTANCE_NAME}],
             )
         )
 
@@ -62,6 +63,9 @@ class Test_dms_instance_multi_az:
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == DMS_INSTANCE_NAME
             assert result[0].resource_arn == DMS_INSTANCE_ARN
+            assert result[0].resource_tags == [
+                {"Key": "Name", "Value": DMS_INSTANCE_NAME}
+            ]
 
     def test_dms_instance_multi_az_enabled(self):
         dms_client = mock.MagicMock
@@ -76,6 +80,7 @@ class Test_dms_instance_multi_az:
                 auto_minor_version_upgrade=True,
                 multi_az=True,
                 region=AWS_REGION_US_EAST_1,
+                tags=[{"Key": "Name", "Value": DMS_INSTANCE_NAME}],
             )
         )
 
@@ -98,3 +103,6 @@ class Test_dms_instance_multi_az:
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == DMS_INSTANCE_NAME
             assert result[0].resource_arn == DMS_INSTANCE_ARN
+            assert result[0].resource_tags == [
+                {"Key": "Name", "Value": DMS_INSTANCE_NAME}
+            ]

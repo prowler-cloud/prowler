@@ -93,6 +93,8 @@ config_aws = {
         8080,
         8088,
     ],
+    "fargate_linux_latest_version": "1.4.0",
+    "fargate_windows_latest_version": "1.0.0",
     "trusted_account_ids": [],
     "log_group_retention_days": 365,
     "max_idle_disconnect_timeout_in_seconds": 600,
@@ -121,6 +123,7 @@ config_aws = {
         "ruby2.5",
         "ruby2.7",
     ],
+    "lambda_min_azs": 2,
     "organizations_enabled_regions": [],
     "organizations_trusted_delegated_administrators": [],
     "ecr_repository_vulnerability_minimum_severity": "MEDIUM",
@@ -290,6 +293,7 @@ config_aws = {
     "excluded_sensitive_environment_variables": [],
     "elb_min_azs": 2,
     "elbv2_min_azs": 2,
+    "secrets_ignore_patterns": [],
 }
 
 config_azure = {
@@ -388,6 +392,8 @@ class Test_Config:
             "fedramp_low_revision_4_aws",
             "cis_2.0_gcp",
             "cis_1.8_kubernetes",
+            "kisa_isms-p_2023_aws",
+            "kisa_isms-p_2023-korean_aws",
         ]
         assert (
             get_available_compliance_frameworks().sort() == compliance_frameworks.sort()

@@ -2,22 +2,20 @@ import json
 import os
 import re
 import tempfile
-from argparse import ArgumentTypeError, Namespace
 from datetime import datetime, timedelta
 from json import dumps
-from os import rmdir
 from re import search
 from unittest import mock
 
 import botocore
 import botocore.exceptions
 from boto3 import client, resource, session
-from freezegun import freeze_time
 from mock import patch
 from moto import mock_aws
 from pytest import raises
 from tzlocal import get_localzone
 
+from prowler.config.config import load_and_validate_config_file
 from prowler.providers.aws.aws_provider import (
     AwsProvider,
     get_aws_available_regions,
@@ -28,7 +26,11 @@ from prowler.providers.aws.config import (
     BOTO3_USER_AGENT_EXTRA,
     ROLE_SESSION_NAME,
 )
-from prowler.providers.aws.lib.arn.error import RoleArnParsingInvalidResourceType
+from prowler.providers.aws.exceptions.exceptions import (
+    AWSArgumentTypeValidationError,
+    AWSIAMRoleARNInvalidResourceType,
+    AWSNoCredentialsError,
+)
 from prowler.providers.aws.lib.arn.models import ARN
 from prowler.providers.aws.lib.mutelist.mutelist import AWSMutelist
 from prowler.providers.aws.models import (
@@ -37,7 +39,6 @@ from prowler.providers.aws.models import (
     AWSCredentials,
     AWSMFAInfo,
     AWSOrganizationsInfo,
-    AWSOutputOptions,
 )
 from prowler.providers.common.models import Connection
 from prowler.providers.common.provider import Provider
@@ -583,8 +584,9 @@ aws:
         config_file_input.write(bytes(config, encoding="raw_unicode_escape"))
         config_file_input.close()
         config_file_input = config_file_input.name
+        audit_config = load_and_validate_config_file("aws", config_file_input)
         aws_provider = AwsProvider(
-            config_file=config_file_input,
+            audit_config=audit_config,
         )
 
         os.remove(config_file_input)
@@ -779,7 +781,7 @@ aws:
         aws_provider = AwsProvider()
         response = aws_provider.generate_regional_clients("ec2")
 
-        assert len(response.keys()) == 29
+        assert len(response.keys()) == 30
 
     @mock_aws
     def test_generate_regional_clients_with_enabled_regions(self):
@@ -995,11 +997,11 @@ aws:
             ],
         )
         instance_id = instances["Instances"][0]["InstanceId"]
-        instance_arn = f"arn:aws:ec2:{AWS_REGION_EU_CENTRAL_1}::instance/{instance_id}"
+        instance_arn = f"arn:aws:ec2:{AWS_REGION_EU_CENTRAL_1}:{AWS_ACCOUNT_NUMBER}:ec2:instance/{instance_id}"
         image_id = ec2_client.create_image(Name="testami", InstanceId=instance_id)[
             "ImageId"
         ]
-        image_arn = f"arn:aws:ec2:{AWS_REGION_EU_CENTRAL_1}::image/{image_id}"
+        image_arn = f"arn:aws:ec2:{AWS_REGION_EU_CENTRAL_1}:{AWS_ACCOUNT_NUMBER}:ec2:image/{image_id}"
         ec2_client.create_tags(
             Resources=[image_id], Tags=[{"Key": "ami", "Value": "test"}]
         )
@@ -1031,97 +1033,6 @@ aws:
         )
 
         assert aws_provider.audit_resources == [AWS_ACCOUNT_ARN]
-
-    @mock_aws
-    @freeze_time(datetime.today())
-    def test_set_provider_output_options_aws_no_output_filename(self):
-        arguments = Namespace()
-        arguments.status = ["FAIL"]
-        arguments.output_formats = ["csv"]
-        arguments.output_directory = "output_test_directory"
-        arguments.verbose = True
-        arguments.security_hub = True
-        arguments.shodan = "test-api-key"
-        arguments.only_logs = False
-        arguments.unix_timestamp = False
-        arguments.send_sh_only_fails = True
-
-        aws_provider = AwsProvider()
-        # This is needed since the output_options requires to get the global provider to get the audit config
-        with patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ):
-
-            aws_provider.output_options = arguments, {}
-
-            assert isinstance(aws_provider.output_options, AWSOutputOptions)
-            assert aws_provider.output_options.security_hub_enabled
-            assert aws_provider.output_options.send_sh_only_fails
-            assert aws_provider.output_options.status == ["FAIL"]
-            assert aws_provider.output_options.output_modes == ["csv", "json-asff"]
-            assert (
-                aws_provider.output_options.output_directory
-                == arguments.output_directory
-            )
-            assert aws_provider.output_options.bulk_checks_metadata == {}
-            assert aws_provider.output_options.verbose
-            assert (
-                f"prowler-output-{AWS_ACCOUNT_NUMBER}"
-                in aws_provider.output_options.output_filename
-            )
-            # Flaky due to the millisecond part of the timestamp
-            # assert (
-            #     aws_provider.output_options.output_filename
-            #     == f"prowler-output-{AWS_ACCOUNT_NUMBER}-{datetime.today().strftime('%Y%m%d%H%M%S')}"
-            # )
-
-            # Delete testing directory
-            rmdir(f"{arguments.output_directory}/compliance")
-            rmdir(arguments.output_directory)
-
-    @mock_aws
-    @freeze_time(datetime.today())
-    def test_set_provider_output_options_aws(self):
-        arguments = Namespace()
-        arguments.status = []
-        arguments.output_formats = ["csv"]
-        arguments.output_directory = "output_test_directory"
-        arguments.verbose = True
-        arguments.output_filename = "output_test_filename"
-        arguments.security_hub = True
-        arguments.shodan = "test-api-key"
-        arguments.only_logs = False
-        arguments.unix_timestamp = False
-        arguments.send_sh_only_fails = True
-
-        aws_provider = AwsProvider()
-        # This is needed since the output_options requires to get the global provider to get the audit config
-        with patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ):
-
-            aws_provider.output_options = arguments, {}
-
-            assert isinstance(aws_provider.output_options, AWSOutputOptions)
-            assert aws_provider.output_options.security_hub_enabled
-            assert aws_provider.output_options.send_sh_only_fails
-            assert aws_provider.output_options.status == []
-            assert aws_provider.output_options.output_modes == ["csv", "json-asff"]
-            assert (
-                aws_provider.output_options.output_directory
-                == arguments.output_directory
-            )
-            assert aws_provider.output_options.bulk_checks_metadata == {}
-            assert aws_provider.output_options.verbose
-            assert (
-                aws_provider.output_options.output_filename == arguments.output_filename
-            )
-
-            # Delete testing directory
-            rmdir(f"{arguments.output_directory}/compliance")
-            rmdir(arguments.output_directory)
 
     @mock_aws
     def test_validate_credentials_commercial_partition_with_regions(self):
@@ -1281,13 +1192,15 @@ aws:
             clear=True,
         ):
 
-            with raises(botocore.exceptions.NoCredentialsError) as exception:
+            with raises(AWSNoCredentialsError) as exception:
                 AwsProvider.test_connection(
                     profile=None
                 )  # No profile to avoid ProfileNotFound error
 
-            assert exception.type == botocore.exceptions.NoCredentialsError
-            assert "Unable to locate credentials" in str(exception.value)
+            assert exception.type == AWSNoCredentialsError
+            assert "AWSNoCredentialsError[1904]: No AWS credentials found" in str(
+                exception.value
+            )
 
     @mock_aws
     def test_test_connection_with_role_from_env(self, monkeypatch):
@@ -1321,12 +1234,13 @@ aws:
         role_arn = (
             f"arn:{AWS_COMMERCIAL_PARTITION}:iam::{AWS_ACCOUNT_NUMBER}:role/{role_name}"
         )
-        with raises(ArgumentTypeError) as exception:
+        with raises(AWSArgumentTypeValidationError) as exception:
             AwsProvider.test_connection(role_arn=role_arn, session_duration=899)
 
-        assert exception.type == ArgumentTypeError
+        assert exception.type == AWSArgumentTypeValidationError
         assert (
-            exception.value.args[0] == "Session duration must be between 900 and 43200"
+            exception.value.args[0]
+            == "[1905] Session Duration must be between 900 and 43200 seconds."
         )
 
     @mock_aws
@@ -1343,9 +1257,10 @@ aws:
 
         assert isinstance(connection, Connection)
         assert not connection.is_connected
-        assert isinstance(connection.error, ArgumentTypeError)
+        assert isinstance(connection.error, AWSArgumentTypeValidationError)
         assert (
-            connection.error.args[0] == "Session duration must be between 900 and 43200"
+            connection.error.args[0]
+            == "[1905] Session Duration must be between 900 and 43200 seconds."
         )
 
     @mock_aws
@@ -1355,13 +1270,13 @@ aws:
             f"arn:{AWS_COMMERCIAL_PARTITION}:iam::{AWS_ACCOUNT_NUMBER}:role/{role_name}"
         )
 
-        with raises(ArgumentTypeError) as exception:
+        with raises(AWSArgumentTypeValidationError) as exception:
             AwsProvider.test_connection(role_arn=role_arn, role_session_name="???")
 
-        assert exception.type == ArgumentTypeError
+        assert exception.type == AWSArgumentTypeValidationError
         assert (
             exception.value.args[0]
-            == "Role Session Name must be 2-64 characters long and consist only of upper- and lower-case alphanumeric characters with no spaces. You can also include underscores or any of the following characters: =,.@-"
+            == "[1905] Role Session Name must be between 2 and 64 characters and may contain alphanumeric characters, periods, hyphens, and underscores."
         )
 
     @mock_aws
@@ -1369,13 +1284,13 @@ aws:
         role_name = "test-role"
         role_arn = f"arn:{AWS_COMMERCIAL_PARTITION}:iam::{AWS_ACCOUNT_NUMBER}:not-role/{role_name}"
 
-        with raises(RoleArnParsingInvalidResourceType) as exception:
+        with raises(AWSIAMRoleARNInvalidResourceType) as exception:
             AwsProvider.test_connection(role_arn=role_arn)
 
-        assert exception.type == RoleArnParsingInvalidResourceType
+        assert exception.type == AWSIAMRoleARNInvalidResourceType
         assert (
             exception.value.args[0]
-            == "The assumed role ARN contains a value for resource type different than role, please input a valid ARN"
+            == "[1912] AWS IAM Role ARN resource type is invalid"
         )
 
     @mock_aws
@@ -1415,7 +1330,7 @@ aws:
 
     @mock_aws
     @patch(
-        "prowler.lib.check.check.recover_checks_from_provider",
+        "prowler.lib.check.utils.recover_checks_from_provider",
         new=mock_recover_checks_from_aws_provider_elb_service,
     )
     def test_get_checks_from_input_arn_elb(self):
@@ -1436,7 +1351,7 @@ aws:
 
     @mock_aws
     @patch(
-        "prowler.lib.check.check.recover_checks_from_provider",
+        "prowler.lib.check.utils.recover_checks_from_provider",
         new=mock_recover_checks_from_aws_provider_efs_service,
     )
     def test_get_checks_from_input_arn_efs(self):
@@ -1457,7 +1372,7 @@ aws:
 
     @mock_aws
     @patch(
-        "prowler.lib.check.check.recover_checks_from_provider",
+        "prowler.lib.check.utils.recover_checks_from_provider",
         new=mock_recover_checks_from_aws_provider_lambda_service,
     )
     def test_get_checks_from_input_arn_lambda(self):
@@ -1477,7 +1392,7 @@ aws:
 
     @mock_aws
     @patch(
-        "prowler.lib.check.check.recover_checks_from_provider",
+        "prowler.lib.check.utils.recover_checks_from_provider",
         new=mock_recover_checks_from_aws_provider_iam_service,
     )
     def test_get_checks_from_input_arn_iam(self):
@@ -1499,7 +1414,7 @@ aws:
     @mock_aws
     @mock_aws
     @patch(
-        "prowler.lib.check.check.recover_checks_from_provider",
+        "prowler.lib.check.utils.recover_checks_from_provider",
         new=mock_recover_checks_from_aws_provider_s3_service,
     )
     def test_get_checks_from_input_arn_s3(self):
@@ -1518,7 +1433,7 @@ aws:
 
     @mock_aws
     @patch(
-        "prowler.lib.check.check.recover_checks_from_provider",
+        "prowler.lib.check.utils.recover_checks_from_provider",
         new=mock_recover_checks_from_aws_provider_cloudwatch_service,
     )
     def test_get_checks_from_input_arn_cloudwatch(self):
@@ -1538,7 +1453,7 @@ aws:
 
     @mock_aws
     @patch(
-        "prowler.lib.check.check.recover_checks_from_provider",
+        "prowler.lib.check.utils.recover_checks_from_provider",
         new=mock_recover_checks_from_aws_provider_cognito_service,
     )
     def test_get_checks_from_input_arn_cognito(self):
@@ -1554,7 +1469,7 @@ aws:
 
     @mock_aws
     @patch(
-        "prowler.lib.check.check.recover_checks_from_provider",
+        "prowler.lib.check.utils.recover_checks_from_provider",
         new=mock_recover_checks_from_aws_provider_ec2_service,
     )
     def test_get_checks_from_input_arn_ec2_security_group(self):
@@ -1570,7 +1485,7 @@ aws:
 
     @mock_aws
     @patch(
-        "prowler.lib.check.check.recover_checks_from_provider",
+        "prowler.lib.check.utils.recover_checks_from_provider",
         new=mock_recover_checks_from_aws_provider_ec2_service,
     )
     def test_get_checks_from_input_arn_ec2_acl(self):
@@ -1586,7 +1501,7 @@ aws:
 
     @mock_aws
     @patch(
-        "prowler.lib.check.check.recover_checks_from_provider",
+        "prowler.lib.check.utils.recover_checks_from_provider",
         new=mock_recover_checks_from_aws_provider_rds_service,
     )
     def test_get_checks_from_input_arn_rds_snapshots(self):
@@ -1602,7 +1517,7 @@ aws:
 
     @mock_aws
     @patch(
-        "prowler.lib.check.check.recover_checks_from_provider",
+        "prowler.lib.check.utils.recover_checks_from_provider",
         new=mock_recover_checks_from_aws_provider_ec2_service,
     )
     def test_get_checks_from_input_arn_ec2_ami(self):
@@ -1730,7 +1645,7 @@ aws:
 
     @mock_aws
     @patch(
-        "prowler.lib.check.check.recover_checks_from_provider",
+        "prowler.lib.check.utils.recover_checks_from_provider",
         new=mock_recover_checks_from_aws_provider_ec2_service,
     )
     def test_get_checks_to_execute_by_audit_resources(self):

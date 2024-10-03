@@ -14,12 +14,12 @@ class OpenSearchService(AWSService):
         # Call AWSService's __init__
         super().__init__("opensearch", provider)
         self.opensearch_domains = []
-        self.__threading_call__(self.__list_domain_names__)
-        self.__describe_domain_config__(self.regional_clients)
-        self.__describe_domain__(self.regional_clients)
-        self.__list_tags__()
+        self.__threading_call__(self._list_domain_names)
+        self._describe_domain_config(self.regional_clients)
+        self._describe_domain(self.regional_clients)
+        self._list_tags()
 
-    def __list_domain_names__(self, regional_client):
+    def _list_domain_names(self, regional_client):
         logger.info("OpenSearch - listing domain names...")
         try:
             domains = regional_client.list_domain_names()
@@ -40,7 +40,7 @@ class OpenSearchService(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_domain_config__(self, regional_clients):
+    def _describe_domain_config(self, regional_clients):
         logger.info("OpenSearch - describing domain configurations...")
         try:
             for domain in self.opensearch_domains:
@@ -79,7 +79,7 @@ class OpenSearchService(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_domain__(self, regional_clients):
+    def _describe_domain(self, regional_clients):
         logger.info("OpenSearch - describing domain configurations...")
         try:
             for domain in self.opensearch_domains:
@@ -127,12 +127,15 @@ class OpenSearchService(AWSService):
                     "ServiceSoftwareOptions"
                 ]["UpdateAvailable"]
                 domain.version = describe_domain["DomainStatus"]["EngineVersion"]
+                domain.advanced_settings_enabled = describe_domain["DomainStatus"][
+                    "AdvancedSecurityOptions"
+                ]["Enabled"]
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __list_tags__(self):
+    def _list_tags(self):
         logger.info("OpenSearch - List Tags...")
         for domain in self.opensearch_domains:
             try:
@@ -169,3 +172,4 @@ class OpenSearchDomain(BaseModel):
     update_available: bool = None
     version: str = None
     tags: Optional[list] = []
+    advanced_settings_enabled: bool = None

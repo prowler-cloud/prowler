@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
-  "ResourceType": "AwsElasticLoadBalancingV2LoadBalancer",
+  "ResourceType": "AwsElbv2LoadBalancer",
   "Description": "Ensure whether Elastic Load Balancer V2 (Application, Network, or Gateway Load Balancer) is configured to operate across multiple Availability Zones (AZs). Ensuring that your load balancer is spread across at least two AZs helps maintain high availability and fault tolerance in case of an AZ failure.",
   "Risk": "If an ELBv2 is not configured across multiple AZs, there is a risk that an Availability Zone failure could lead to downtime for your application. This could result in a single point of failure, impacting the availability and reliability of your services.",
   "RelatedUrl": "https://docs.aws.amazon.com/elasticloadbalancing/latest/userguide/how-elastic-load-balancing-works.html#availability-zones",

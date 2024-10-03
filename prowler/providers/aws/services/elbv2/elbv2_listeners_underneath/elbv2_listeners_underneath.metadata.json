@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
-  "ResourceType": "AwsElasticLoadBalancingV2LoadBalancer",
+  "ResourceType": "AwsElbv2LoadBalancer",
   "Description": "Check if ELBV2 has listeners underneath.",
   "Risk": "The rules that are defined for a listener determine how the load balancer routes requests to its registered targets.",
   "RelatedUrl": "",

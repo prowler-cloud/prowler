@@ -1,0 +1,30 @@
+{
+  "Provider": "aws",
+  "CheckID": "rds_instance_event_subscription_parameter_groups",
+  "CheckTitle": "Check if RDS Parameter Group events are subscribed.",
+  "CheckType": [],
+  "ServiceName": "rds",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-instance",
+  "Severity": "low",
+  "ResourceType": "AwsRdsEventSubscription",
+  "Description": "Ensure that Amazon RDS event notification subscriptions are enabled for database parameter groups events.",
+  "Risk": "Amazon RDS event subscriptions for database parameter groups are designed to provide incident notification of events that may affect the security, availability, and reliability of the RDS database instances associated with these parameter groups.",
+  "RelatedUrl": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_Events.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws rds create-event-subscription --source-type db-instance --event-categories 'configuration change' --sns-topic-arn <sns-topic-arn>",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-21",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "To subscribe to RDS instance event notifications, see Subscribing to Amazon RDS event notification in the Amazon RDS User Guide.",
+      "Url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_Events.Subscribing.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

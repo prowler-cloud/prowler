@@ -9,19 +9,17 @@ from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################## DynamoDB
 class DynamoDB(AWSService):
     def __init__(self, provider):
-        # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
-        self.tables = []
-        self.__threading_call__(self.__list_tables__)
-        self.__describe_table__()
-        self.__describe_continuous_backups__()
-        self.__get_resource_policy__()
-        self.__list_tags_for_resource__()
+        self.tables = {}
+        self.__threading_call__(self._list_tables)
+        self._describe_table()
+        self._describe_continuous_backups()
+        self._get_resource_policy()
+        self._list_tags_for_resource()
 
-    def __list_tables__(self, regional_client):
+    def _list_tables(self, regional_client):
         logger.info("DynamoDB - Listing tables...")
         try:
             list_tables_paginator = regional_client.get_paginator("list_tables")
@@ -31,42 +29,46 @@ class DynamoDB(AWSService):
                     if not self.audit_resources or (
                         is_resource_filtered(arn, self.audit_resources)
                     ):
-                        self.tables.append(
-                            Table(
-                                arn=arn,
-                                name=table,
-                                encryption_type=None,
-                                kms_arn=None,
-                                region=regional_client.region,
-                            )
+                        self.tables[arn] = Table(
+                            name=table,
+                            encryption_type=None,
+                            kms_arn=None,
+                            region=regional_client.region,
                         )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_table__(self):
+    def _describe_table(self):
         logger.info("DynamoDB - Describing Table...")
         try:
-            for table in self.tables:
+            for table in self.tables.values():
                 regional_client = self.regional_clients[table.region]
                 properties = regional_client.describe_table(TableName=table.name)[
                     "Table"
                 ]
+                table.billing_mode = properties.get("BillingModeSummary", {}).get(
+                    "BillingMode", "PROVISIONED"
+                )
                 if "SSEDescription" in properties:
                     if "SSEType" in properties["SSEDescription"]:
                         table.encryption_type = properties["SSEDescription"]["SSEType"]
                 if table.encryption_type == "KMS":
                     table.kms_arn = properties["SSEDescription"]["KMSMasterKeyArn"]
+
+                table.deletion_protection = properties.get(
+                    "DeletionProtectionEnabled", False
+                )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 
-    def __describe_continuous_backups__(self):
+    def _describe_continuous_backups(self):
         logger.info("DynamoDB - Describing Continuous Backups...")
         try:
-            for table in self.tables:
+            for table in self.tables.values():
                 try:
                     regional_client = self.regional_clients[table.region]
                     properties = regional_client.describe_continuous_backups(
@@ -95,14 +97,14 @@ class DynamoDB(AWSService):
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 
-    def __get_resource_policy__(self):
+    def _get_resource_policy(self):
         logger.info("DynamoDB - Get Resource Policy...")
         try:
-            for table in self.tables:
+            for table_arn, table in self.tables.items():
                 try:
                     regional_client = self.regional_clients[table.region]
                     response = regional_client.get_resource_policy(
-                        ResourceArn=table.arn
+                        ResourceArn=table_arn
                     )
                     table.policy = json.loads(response["Policy"])
                 except ClientError as error:
@@ -124,14 +126,14 @@ class DynamoDB(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __list_tags_for_resource__(self):
+    def _list_tags_for_resource(self):
         logger.info("DynamoDB - List Tags...")
         try:
-            for table in self.tables:
+            for table_arn, table in self.tables.items():
                 try:
                     regional_client = self.regional_clients[table.region]
                     response = regional_client.list_tags_of_resource(
-                        ResourceArn=table.arn
+                        ResourceArn=table_arn
                     )["Tags"]
                     table.tags = response
                 except ClientError as error:
@@ -150,16 +152,14 @@ class DynamoDB(AWSService):
             )
 
 
-################## DynamoDB DAX
 class DAX(AWSService):
     def __init__(self, provider):
-        # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.clusters = []
-        self.__threading_call__(self.__describe_clusters__)
-        self.__list_tags_for_resource__()
+        self.__threading_call__(self._describe_clusters)
+        self._list_tags_for_resource()
 
-    def __describe_clusters__(self, regional_client):
+    def _describe_clusters(self, regional_client):
         logger.info("DynamoDB DAX - Describing clusters...")
         try:
             describe_clusters_paginator = regional_client.get_paginator(
@@ -173,15 +173,20 @@ class DAX(AWSService):
                         )
                     ):
                         encryption = False
+                        tls_encryption = False
                         if "SSEDescription" in cluster:
                             if cluster["SSEDescription"]["Status"] == "ENABLED":
                                 encryption = True
+                        if "ClusterEndpointEncryptionType" in cluster:
+                            if cluster["ClusterEndpointEncryptionType"] == "TLS":
+                                tls_encryption = True
                         self.clusters.append(
                             Cluster(
                                 arn=cluster["ClusterArn"],
                                 name=cluster["ClusterName"],
                                 encryption=encryption,
                                 region=regional_client.region,
+                                tls_encryption=tls_encryption,
                             )
                         )
         except Exception as error:
@@ -189,7 +194,7 @@ class DAX(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __list_tags_for_resource__(self):
+    def _list_tags_for_resource(self):
         logger.info("DAX - List Tags...")
         for cluster in self.clusters:
             try:
@@ -212,14 +217,15 @@ class DAX(AWSService):
 
 
 class Table(BaseModel):
-    arn: str
     name: str
+    billing_mode: str = "PROVISIONED"
     encryption_type: Optional[str]
     kms_arn: Optional[str]
     pitr: bool = False
     policy: Optional[dict] = None
     region: str
     tags: Optional[list] = []
+    deletion_protection: bool = False
 
 
 class Cluster(BaseModel):
@@ -228,3 +234,4 @@ class Cluster(BaseModel):
     encryption: bool
     region: str
     tags: Optional[list] = []
+    tls_encryption: bool

@@ -8,30 +8,32 @@ from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################## Glue
 class Glue(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.connections = []
-        self.__threading_call__(self.__get_connections__)
+        self.__threading_call__(self._get_connections)
+        self.__threading_call__(self._list_tags, self.connections)
         self.tables = []
-        self.__threading_call__(self.__search_tables__)
+        self.__threading_call__(self._search_tables)
         self.catalog_encryption_settings = []
-        self.__threading_call__(self.__get_data_catalog_encryption_settings__)
+        self.__threading_call__(self._get_data_catalog_encryption_settings)
         self.dev_endpoints = []
-        self.__threading_call__(self.__get_dev_endpoints__)
+        self.__threading_call__(self._get_dev_endpoints)
+        self.__threading_call__(self._list_tags, self.dev_endpoints)
         self.security_configs = []
-        self.__threading_call__(self.__get_security_configurations__)
+        self.__threading_call__(self._get_security_configurations)
         self.jobs = []
         self.__threading_call__(self.__get_jobs__)
+        self.__threading_call__(self._list_tags, self.jobs)
         self.transforms = {}
         self.__threading_call__(self.__get_ml_transorms__)
 
-    def __get_data_catalog_arn_template__(self, region):
+    def _get_data_catalog_arn_template(self, region):
         return f"arn:{self.audited_partition}:glue:{region}:{self.audited_account}:data-catalog"
 
-    def __get_connections__(self, regional_client):
+    def _get_connections(self, regional_client):
         logger.info("Glue - Getting connections...")
         try:
             get_connections_paginator = regional_client.get_paginator("get_connections")
@@ -55,7 +57,7 @@ class Glue(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_dev_endpoints__(self, regional_client):
+    def _get_dev_endpoints(self, regional_client):
         logger.info("Glue - Getting dev endpoints...")
         try:
             get_dev_endpoints_paginator = regional_client.get_paginator(
@@ -92,7 +94,7 @@ class Glue(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_jobs__(self, regional_client):
+    def _get_jobs(self, regional_client):
         logger.info("Glue - Getting jobs...")
         try:
             get_jobs_paginator = regional_client.get_paginator("get_jobs")
@@ -116,7 +118,7 @@ class Glue(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_security_configurations__(self, regional_client):
+    def _get_security_configurations(self, regional_client):
         logger.info("Glue - Getting security configs...")
         try:
             get_security_configurations_paginator = regional_client.get_paginator(
@@ -156,7 +158,7 @@ class Glue(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __search_tables__(self, regional_client):
+    def _search_tables(self, regional_client):
         logger.info("Glue - Search Tables...")
         try:
             for table in regional_client.search_tables()["TableList"]:
@@ -178,7 +180,7 @@ class Glue(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_data_catalog_encryption_settings__(self, regional_client):
+    def _get_data_catalog_encryption_settings(self, regional_client):
         logger.info("Glue - Catalog Encryption Settings...")
         try:
             settings = regional_client.get_data_catalog_encryption_settings()[
@@ -207,29 +209,44 @@ class Glue(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _list_tags(self, resource: any):
+        try:
+            resource.tags = [
+                self.regional_clients[resource.region].get_tags(
+                    ResourceArn=resource.arn
+                )["Tags"]
+            ]
+        except Exception as error:
+            logger.error(
+                f"{resource.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
     def __get_ml_transforms__(self, regional_client):
         logger.info("Glue - Checking ml_transforms encryption while at rest...")
         try:
-            paginator = regional_client.get_paginator('get_ml_transforms')
+            paginator = regional_client.get_paginator("get_ml_transforms")
             for page in paginator.paginate():
-                for transform in page['Transforms']:
+                for transform in page["Transforms"]:
                     crafted_arn = f"arn:{self.audited_partition}:glue:{regional_client.region}:{self.audited_account}:mlTransform/{transform['Name']}"
-                    if not self.audit_resources or is_resource_filtered(crafted_arn, self.audit_resources):
-                        user_data_encryption = transform.get('TransformEncryption', {}).get('MlUserDataEncryption', {}).get('MlUserDataEncryptionMode')
+                    if not self.audit_resources or is_resource_filtered(
+                        crafted_arn, self.audit_resources
+                    ):
+                        user_data_encryption = (
+                            transform.get("TransformEncryption", {})
+                            .get("MlUserDataEncryption", {})
+                            .get("MlUserDataEncryptionMode")
+                        )
                         self.transforms[crafted_arn] = Transforms(
-                            id=transform['TransformId'],
-                            name=transform['Name'],
+                            id=transform["TransformId"],
+                            name=transform["Name"],
                             user_data_encryption=user_data_encryption,
-                            region=regional_client.region
-                            )
-                        
+                            region=regional_client.region,
+                        )
+
         except Exception as error:
-            logger.error(f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}")
-
-        
-
-
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
 
 class Connection(BaseModel):
@@ -238,6 +255,7 @@ class Connection(BaseModel):
     type: str
     properties: dict
     region: str
+    tags: Optional[list]
 
 
 class Table(BaseModel):
@@ -262,6 +280,7 @@ class DevEndpoint(BaseModel):
     arn: str
     security: Optional[str]
     region: str
+    tags: Optional[list]
 
 
 class Job(BaseModel):
@@ -270,6 +289,7 @@ class Job(BaseModel):
     security: Optional[str]
     arguments: Optional[dict]
     region: str
+    tags: Optional[list]
 
 
 class SecurityConfig(BaseModel):
@@ -281,6 +301,7 @@ class SecurityConfig(BaseModel):
     jb_encryption: str
     jb_key_arn: Optional[str]
     region: str
+
 
 class Transforms(BaseModel):
     arn: str

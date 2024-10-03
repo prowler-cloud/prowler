@@ -19,12 +19,12 @@ class Lambda(AWSService):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.functions = {}
-        self.__threading_call__(self.__list_functions__)
-        self.__list_tags_for_resource__()
-        self.__threading_call__(self.__get_policy__)
-        self.__threading_call__(self.__get_function_url_config__)
+        self.__threading_call__(self._list_functions)
+        self._list_tags_for_resource()
+        self.__threading_call__(self._get_policy)
+        self.__threading_call__(self._get_function_url_config)
 
-    def __list_functions__(self, regional_client):
+    def _list_functions(self, regional_client):
         logger.info("Lambda - Listing Functions...")
         try:
             list_functions_paginator = regional_client.get_paginator("list_functions")
@@ -44,6 +44,7 @@ class Lambda(AWSService):
                             arn=lambda_arn,
                             security_groups=vpc_config.get("SecurityGroupIds", []),
                             vpc_id=vpc_config.get("VpcId"),
+                            subnet_ids=set(vpc_config.get("SubnetIds", [])),
                             region=regional_client.region,
                         )
                         if "Runtime" in function:
@@ -61,12 +62,12 @@ class Lambda(AWSService):
                 f" {error}"
             )
 
-    def __get_function_code__(self):
+    def _get_function_code(self):
         logger.info("Lambda - Getting Function Code...")
-        # Use a thread pool handle the queueing and execution of the __fetch_function_code__ tasks, up to max_workers tasks concurrently.
+        # Use a thread pool handle the queueing and execution of the _fetch_function_code tasks, up to max_workers tasks concurrently.
         lambda_functions_to_fetch = {
             self.thread_pool.submit(
-                self.__fetch_function_code__, function.name, function.region
+                self._fetch_function_code, function.name, function.region
             ): function
             for function in self.functions.values()
         }
@@ -82,7 +83,7 @@ class Lambda(AWSService):
                     f"{function.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
-    def __fetch_function_code__(self, function_name, function_region):
+    def _fetch_function_code(self, function_name, function_region):
         try:
             regional_client = self.regional_clients[function_region]
             function_information = regional_client.get_function(
@@ -101,7 +102,7 @@ class Lambda(AWSService):
             )
             raise
 
-    def __get_policy__(self, regional_client):
+    def _get_policy(self, regional_client):
         logger.info("Lambda - Getting Policy...")
         try:
             for function in self.functions.values():
@@ -124,7 +125,7 @@ class Lambda(AWSService):
                 f" {error}"
             )
 
-    def __get_function_url_config__(self, regional_client):
+    def _get_function_url_config(self, regional_client):
         logger.info("Lambda - Getting Function URL Config...")
         try:
             for function in self.functions.values():
@@ -153,7 +154,7 @@ class Lambda(AWSService):
                 f" {error}"
             )
 
-    def __list_tags_for_resource__(self):
+    def _list_tags_for_resource(self):
         logger.info("Lambda - List Tags...")
         try:
             for function in self.functions.values():
@@ -202,4 +203,5 @@ class Function(BaseModel):
     code: LambdaCode = None
     url_config: URLConfig = None
     vpc_id: Optional[str]
+    subnet_ids: Optional[set]
     tags: Optional[list] = []

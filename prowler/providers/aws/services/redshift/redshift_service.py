@@ -7,17 +7,16 @@ from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################################ Redshift
 class Redshift(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.clusters = []
-        self.__threading_call__(self.__describe_clusters__)
-        self.__describe_logging_status__(self.regional_clients)
-        self.__describe_cluster_snapshots__(self.regional_clients)
+        self.__threading_call__(self._describe_clusters)
+        self._describe_logging_status(self.regional_clients)
+        self._describe_cluster_snapshots(self.regional_clients)
 
-    def __describe_clusters__(self, regional_client):
+    def _describe_clusters(self, regional_client):
         logger.info("Redshift - describing clusters...")
         try:
             list_clusters_paginator = regional_client.get_paginator("describe_clusters")
@@ -30,30 +29,25 @@ class Redshift(AWSService):
                         cluster_to_append = Cluster(
                             arn=arn,
                             id=cluster["ClusterIdentifier"],
+                            endpoint_address=cluster.get("Endpoint", {}).get(
+                                "Address", ""
+                            ),
+                            public_access=cluster.get("PubliclyAccessible", False),
+                            allow_version_upgrade=cluster.get(
+                                "AllowVersionUpgrade", False
+                            ),
+                            encrypted=cluster.get("Encrypted", False),
                             region=regional_client.region,
                             tags=cluster.get("Tags"),
+                            master_username=cluster.get("MasterUsername", ""),
                         )
-                        if (
-                            "PubliclyAccessible" in cluster
-                            and cluster["PubliclyAccessible"]
-                        ):
-                            cluster_to_append.public_access = True
-                        if "Endpoint" in cluster and "Address" in cluster["Endpoint"]:
-                            cluster_to_append.endpoint_address = cluster["Endpoint"][
-                                "Address"
-                            ]
-                        if (
-                            "AllowVersionUpgrade" in cluster
-                            and cluster["AllowVersionUpgrade"]
-                        ):
-                            cluster_to_append.allow_version_upgrade = True
                         self.clusters.append(cluster_to_append)
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_logging_status__(self, regional_clients):
+    def _describe_logging_status(self, regional_clients):
         logger.info("Redshift - describing logging status...")
         try:
             for cluster in self.clusters:
@@ -74,7 +68,7 @@ class Redshift(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_cluster_snapshots__(self, regional_clients):
+    def _describe_cluster_snapshots(self, regional_clients):
         logger.info("Redshift - describing logging status...")
         try:
             for cluster in self.clusters:
@@ -95,10 +89,12 @@ class Cluster(BaseModel):
     id: str
     arn: str
     region: str
-    public_access: bool = None
+    public_access: bool = False
+    encrypted: bool = False
+    master_username: str = None
     endpoint_address: str = None
-    allow_version_upgrade: bool = None
-    logging_enabled: bool = None
+    allow_version_upgrade: bool = False
+    logging_enabled: bool = False
     bucket: str = None
-    cluster_snapshots: bool = None
+    cluster_snapshots: bool = False
     tags: Optional[list] = []

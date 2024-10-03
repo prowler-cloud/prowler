@@ -32,12 +32,13 @@ class Test_cloudfront_distributions_using_waf:
         wef_acl_id = "TEST-WAF-ACL"
         cloudfront_client = mock.MagicMock
         cloudfront_client.distributions = {
-            "DISTRIBUTION_ID": Distribution(
+            DISTRIBUTION_ID: Distribution(
                 arn=DISTRIBUTION_ARN,
                 id=DISTRIBUTION_ID,
                 region=REGION,
                 web_acl_id=wef_acl_id,
                 origins=[],
+                origin_failover=False,
             )
         }
 
@@ -67,11 +68,12 @@ class Test_cloudfront_distributions_using_waf:
     def test_one_distribution_no_waf(self):
         cloudfront_client = mock.MagicMock
         cloudfront_client.distributions = {
-            "DISTRIBUTION_ID": Distribution(
+            DISTRIBUTION_ID: Distribution(
                 arn=DISTRIBUTION_ARN,
                 id=DISTRIBUTION_ID,
                 region=REGION,
                 origins=[],
+                origin_failover=False,
             )
         }
 

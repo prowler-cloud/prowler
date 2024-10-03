@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:autoscaling:region:account-id:autoScalingGroupName/resource-name",
   "Severity": "medium",
-  "ResourceType": "Other",
+  "ResourceType": "AwsAutoScalingAutoScalingGroup",
   "Description": "EC2 Auto Scaling Group should use multiple Availability Zones",
   "Risk": "In case of a failure in a single Availability Zone, the Auto Scaling Group will not be able to launch new instances to replace the failed ones.",
   "RelatedUrl": "https://docs.aws.amazon.com/autoscaling/ec2/userguide/as-add-availability-zone.html",

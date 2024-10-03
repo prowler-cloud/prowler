@@ -14,10 +14,12 @@ from tests.providers.kubernetes.kubernetes_fixtures import (
 )
 
 html_stats = {
-    "total_pass": 0,
-    "total_fail": 1,
+    "total_pass": 25,
+    "total_muted_pass": 20,
+    "total_fail": 5,
+    "total_muted_fail": 5,
     "resources_count": 1,
-    "findings_count": 1,
+    "findings_count": 30,
 }
 pass_html_finding = """
                         <tr class="p-3 mb-2 bg-success-custom">
@@ -300,13 +302,19 @@ def get_aws_html_header(args: list) -> str:
                 </div>
                 <ul class="list-group list-group-flush">
                     <li class="list-group-item">
-                        <b>Total Findings:</b> 1
+                        <b>Total Findings:</b> 30
                     </li>
                     <li class="list-group-item">
-                        <b>Passed:</b> 0
+                        <b>Passed:</b> 25
                     </li>
                     <li class="list-group-item">
-                        <b>Failed:</b> 1
+                        <b>Passed (Muted):</b> 20
+                    </li>
+                    <li class="list-group-item">
+                        <b>Failed:</b> 5
+                    </li>
+                    <li class="list-group-item">
+                        <b>Failed (Muted):</b> 5
                     </li>
                     <li class="list-group-item">
                         <b>Total Resources:</b> 1

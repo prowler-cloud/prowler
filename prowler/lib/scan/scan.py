@@ -1,6 +1,6 @@
 from typing import Generator
 
-from prowler.lib.check.check import execute, update_audit_metadata
+from prowler.lib.check.check import execute, import_check, update_audit_metadata
 from prowler.lib.logger import logger
 from prowler.lib.outputs.finding import Finding
 from prowler.providers.common.models import Audit_Metadata
@@ -99,13 +99,24 @@ class Scan:
                 try:
                     # Recover service from check name
                     service = get_service_name_from_check_name(check_name)
-
+                    try:
+                        # Import check module
+                        check_module_path = f"prowler.providers.{self._provider.type}.services.{service}.{check_name}.{check_name}"
+                        lib = import_check(check_module_path)
+                        # Recover functions from check
+                        check_to_execute = getattr(lib, check_name)
+                        check = check_to_execute()
+                    except ModuleNotFoundError:
+                        logger.error(
+                            f"Check '{check_name}' was not found for the {self._provider.type.upper()} provider"
+                        )
+                        continue
                     # Execute the check
                     check_findings = execute(
-                        service,
-                        check_name,
+                        check,
                         self._provider,
                         custom_checks_metadata,
+                        output_options=None,
                     )
 
                     # Store findings
@@ -131,7 +142,9 @@ class Scan:
                     )
 
                     findings = [
-                        Finding.generate_output(self._provider, finding)
+                        Finding.generate_output(
+                            self._provider, finding, output_options=None
+                        )
                         for finding in check_findings
                     ]
 

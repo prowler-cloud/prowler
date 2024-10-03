@@ -88,29 +88,37 @@ class Finding(BaseModel):
 
     @classmethod
     def generate_output(
-        cls, provider: Provider, check_output: Check_Report
+        cls, provider: Provider, check_output: Check_Report, output_options
     ) -> "Finding":
         """Generates the output for a finding based on the provider and output options
 
         Args:
             provider (Provider): the provider object
             check_output (Check_Report): the check output object
+            output_options: the output options object, depending on the provider
         Returns:
             finding_output (Finding): the finding output object
 
         """
-        output_options = provider.output_options
         # TODO: think about get_provider_data_mapping
         provider_data_mapping = get_provider_data_mapping(provider)
+
         # TODO: move fill_common_finding_data
-        common_finding_data = fill_common_finding_data(
-            check_output, output_options.unix_timestamp
-        )
+        unix_timestamp = False
+        if hasattr(output_options, "unix_timestamp"):
+            unix_timestamp = output_options.unix_timestamp
+
+        common_finding_data = fill_common_finding_data(check_output, unix_timestamp)
         output_data = {}
         output_data.update(provider_data_mapping)
         output_data.update(common_finding_data)
+
+        bulk_checks_metadata = {}
+        if hasattr(output_options, "bulk_checks_metadata"):
+            bulk_checks_metadata = output_options.bulk_checks_metadata
+
         output_data["compliance"] = get_check_compliance(
-            check_output, provider.type, output_options.bulk_checks_metadata
+            check_output, provider.type, bulk_checks_metadata
         )
         try:
             if provider.type == "aws":

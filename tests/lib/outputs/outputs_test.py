@@ -49,7 +49,7 @@ class TestOutputs:
         assert unroll_list(list, ",") == "test, test1, test2"
 
     def test_parse_html_string(self):
-        string = "CISA: your-systems-3, your-data-1, your-data-2 | CIS-1.4: 2.1.1 | CIS-1.5: 2.1.1 | GDPR: article_32 | AWS-Foundational-Security-Best-Practices: s3 | HIPAA: 164_308_a_1_ii_b, 164_308_a_4_ii_a, 164_312_a_2_iv, 164_312_c_1, 164_312_c_2, 164_312_e_2_ii | GxP-21-CFR-Part-11: 11.10-c, 11.30 | GxP-EU-Annex-11: 7.1-data-storage-damage-protection | NIST-800-171-Revision-2: 3_3_8, 3_5_10, 3_13_11, 3_13_16 | NIST-800-53-Revision-4: sc_28 | NIST-800-53-Revision-5: au_9_3, cm_6_a, cm_9_b, cp_9_d, cp_9_8, pm_11_b, sc_8_3, sc_8_4, sc_13_a, sc_16_1, sc_28_1, si_19_4 | ENS-RD2022: mp.si.2.aws.s3.1 | NIST-CSF-1.1: ds_1 | RBI-Cyber-Security-Framework: annex_i_1_3 | FFIEC: d3-pc-am-b-12 | PCI-3.2.1: s3 | FedRamp-Moderate-Revision-4: sc-13, sc-28 | FedRAMP-Low-Revision-4: sc-13"
+        string = "CISA: your-systems-3, your-data-1, your-data-2 | CIS-1.4: 2.1.1 | CIS-1.5: 2.1.1 | GDPR: article_32 | AWS-Foundational-Security-Best-Practices: s3 | HIPAA: 164_308_a_1_ii_b, 164_308_a_4_ii_a, 164_312_a_2_iv, 164_312_c_1, 164_312_c_2, 164_312_e_2_ii | GxP-21-CFR-Part-11: 11.10-c, 11.30 | GxP-EU-Annex-11: 7.1-data-storage-damage-protection | NIST-800-171-Revision-2: 3_3_8, 3_5_10, 3_13_11, 3_13_16 | NIST-800-53-Revision-4: sc_28 | NIST-800-53-Revision-5: au_9_3, cm_6_a, cm_9_b, cp_9_d, cp_9_8, pm_11_b, sc_8_3, sc_8_4, sc_13_a, sc_16_1, sc_28_1, si_19_4 | ENS-RD2022: mp.si.2.aws.s3.1 | NIST-CSF-1.1: ds_1 | RBI-Cyber-Security-Framework: annex_i_1_3 | FFIEC: d3-pc-am-b-12 | PCI-3.2.1: s3 | FedRamp-Moderate-Revision-4: sc-13, sc-28 | FedRAMP-Low-Revision-4: sc-13 | KISA-ISMS-P-2023: 2.6.1 | KISA-ISMS-P-2023-korean: 2.6.1"
         assert (
             parse_html_string(string)
             == """
@@ -88,6 +88,10 @@ class TestOutputs:
 &#x2022;FedRamp-Moderate-Revision-4: sc-13, sc-28
 
 &#x2022;FedRAMP-Low-Revision-4: sc-13
+
+&#x2022;KISA-ISMS-P-2023: 2.6.1
+
+&#x2022;KISA-ISMS-P-2023-korean: 2.6.1
 """
         )
 
@@ -204,10 +208,12 @@ class TestOutputs:
             "PCI-3.2.1": ["s3"],
             "FedRamp-Moderate-Revision-4": ["sc-13", "sc-28"],
             "FedRAMP-Low-Revision-4": ["sc-13"],
+            "KISA-ISMS-P-2023": ["2.6.1"],
+            "KISA-ISMS-P-2023-korean": ["2.6.1"],
         }
         assert (
             unroll_dict(test_compliance_dict, separator=": ")
-            == "CISA: your-systems-3, your-data-1, your-data-2 | CIS-1.4: 2.1.1 | CIS-1.5: 2.1.1 | GDPR: article_32 | AWS-Foundational-Security-Best-Practices: s3 | HIPAA: 164_308_a_1_ii_b, 164_308_a_4_ii_a, 164_312_a_2_iv, 164_312_c_1, 164_312_c_2, 164_312_e_2_ii | GxP-21-CFR-Part-11: 11.10-c, 11.30 | GxP-EU-Annex-11: 7.1-data-storage-damage-protection | NIST-800-171-Revision-2: 3_3_8, 3_5_10, 3_13_11, 3_13_16 | NIST-800-53-Revision-4: sc_28 | NIST-800-53-Revision-5: au_9_3, cm_6_a, cm_9_b, cp_9_d, cp_9_8, pm_11_b, sc_8_3, sc_8_4, sc_13_a, sc_16_1, sc_28_1, si_19_4 | ENS-RD2022: mp.si.2.aws.s3.1 | NIST-CSF-1.1: ds_1 | RBI-Cyber-Security-Framework: annex_i_1_3 | FFIEC: d3-pc-am-b-12 | PCI-3.2.1: s3 | FedRamp-Moderate-Revision-4: sc-13, sc-28 | FedRAMP-Low-Revision-4: sc-13"
+            == "CISA: your-systems-3, your-data-1, your-data-2 | CIS-1.4: 2.1.1 | CIS-1.5: 2.1.1 | GDPR: article_32 | AWS-Foundational-Security-Best-Practices: s3 | HIPAA: 164_308_a_1_ii_b, 164_308_a_4_ii_a, 164_312_a_2_iv, 164_312_c_1, 164_312_c_2, 164_312_e_2_ii | GxP-21-CFR-Part-11: 11.10-c, 11.30 | GxP-EU-Annex-11: 7.1-data-storage-damage-protection | NIST-800-171-Revision-2: 3_3_8, 3_5_10, 3_13_11, 3_13_16 | NIST-800-53-Revision-4: sc_28 | NIST-800-53-Revision-5: au_9_3, cm_6_a, cm_9_b, cp_9_d, cp_9_8, pm_11_b, sc_8_3, sc_8_4, sc_13_a, sc_16_1, sc_28_1, si_19_4 | ENS-RD2022: mp.si.2.aws.s3.1 | NIST-CSF-1.1: ds_1 | RBI-Cyber-Security-Framework: annex_i_1_3 | FFIEC: d3-pc-am-b-12 | PCI-3.2.1: s3 | FedRamp-Moderate-Revision-4: sc-13, sc-28 | FedRAMP-Low-Revision-4: sc-13 | KISA-ISMS-P-2023: 2.6.1 | KISA-ISMS-P-2023-korean: 2.6.1"
         )
 
     def test_unroll_dict_to_list(self):
@@ -252,6 +258,8 @@ class TestOutputs:
         stats = extract_findings_statistics(findings)
         assert stats["total_pass"] == 1
         assert stats["total_fail"] == 1
+        assert stats["total_muted_pass"] == 0
+        assert stats["total_muted_fail"] == 0
         assert stats["resources_count"] == 2
         assert stats["findings_count"] == 2
 
@@ -267,6 +275,8 @@ class TestOutputs:
         stats = extract_findings_statistics(findings)
         assert stats["total_pass"] == 2
         assert stats["total_fail"] == 0
+        assert stats["total_muted_pass"] == 0
+        assert stats["total_muted_fail"] == 0
         assert stats["resources_count"] == 1
         assert stats["findings_count"] == 2
 
@@ -282,6 +292,8 @@ class TestOutputs:
         stats = extract_findings_statistics(findings)
         assert stats["total_pass"] == 1
         assert stats["total_fail"] == 0
+        assert stats["total_muted_pass"] == 0
+        assert stats["total_muted_fail"] == 0
         assert stats["resources_count"] == 1
         assert stats["findings_count"] == 1
 
@@ -291,6 +303,16 @@ class TestOutputs:
         stats = extract_findings_statistics(findings)
         assert stats["total_pass"] == 0
         assert stats["total_fail"] == 0
+        assert stats["total_muted_pass"] == 0
+        assert stats["total_muted_fail"] == 0
+        assert stats["total_critical_severity_fail"] == 0
+        assert stats["total_critical_severity_pass"] == 0
+        assert stats["total_high_severity_fail"] == 0
+        assert stats["total_high_severity_pass"] == 0
+        assert stats["total_medium_severity_fail"] == 0
+        assert stats["total_medium_severity_pass"] == 0
+        assert stats["total_low_severity_fail"] == 0
+        assert stats["total_low_severity_pass"] == 0
         assert stats["resources_count"] == 0
         assert stats["findings_count"] == 0
 
@@ -299,13 +321,31 @@ class TestOutputs:
         finding_1.status = "FAIL"
         finding_1.muted = True
         finding_1.resource_id = "test_resource_1"
-        findings = [finding_1]
+        finding_1.check_metadata.Severity = "medium"
+        finding_1.check_metadata.CheckID = "glue_etl_jobs_amazon_s3_encryption_enabled"
+        finding_2 = mock.MagicMock()
+        finding_2.status = "FAIL"
+        finding_2.muted = True
+        finding_2.resource_id = "test_resource_2"
+        finding_2.check_metadata.Severity = "low"
+        finding_2.check_metadata.CheckID = "lightsail_static_ip_unused"
+        findings = [finding_1, finding_2]
 
         stats = extract_findings_statistics(findings)
         assert stats["total_pass"] == 0
-        assert stats["total_fail"] == 1
-        assert stats["resources_count"] == 1
-        assert stats["findings_count"] == 1
+        assert stats["total_fail"] == 2
+        assert stats["total_muted_pass"] == 0
+        assert stats["total_muted_fail"] == 2
+        assert stats["resources_count"] == 2
+        assert stats["findings_count"] == 2
+        assert stats["total_critical_severity_fail"] == 0
+        assert stats["total_critical_severity_pass"] == 0
+        assert stats["total_high_severity_fail"] == 0
+        assert stats["total_high_severity_pass"] == 0
+        assert stats["total_medium_severity_fail"] == 1
+        assert stats["total_medium_severity_pass"] == 0
+        assert stats["total_low_severity_fail"] == 1
+        assert stats["total_low_severity_pass"] == 0
         assert stats["all_fails_are_muted"]
 
     def test_extract_findings_statistics_all_fail_are_not_muted(self):
@@ -313,18 +353,93 @@ class TestOutputs:
         finding_1.status = "FAIL"
         finding_1.muted = True
         finding_1.resource_id = "test_resource_1"
+        finding_1.check_metadata.Severity = "critical"
+        finding_1.check_metadata.CheckID = "rds_instance_certificate_expiration"
         finding_2 = mock.MagicMock()
         finding_2.status = "FAIL"
         finding_2.muted = False
         finding_2.resource_id = "test_resource_1"
+        finding_2.check_metadata.Severity = "critical"
+        finding_2.check_metadata.CheckID = (
+            "autoscaling_find_secrets_ec2_launch_configuration"
+        )
         findings = [finding_1, finding_2]
 
         stats = extract_findings_statistics(findings)
         assert stats["total_pass"] == 0
         assert stats["total_fail"] == 2
+        assert stats["total_muted_pass"] == 0
+        assert stats["total_muted_fail"] == 1
         assert stats["resources_count"] == 1
+        assert stats["total_critical_severity_fail"] == 2
+        assert stats["total_critical_severity_pass"] == 0
+        assert stats["total_high_severity_fail"] == 0
+        assert stats["total_high_severity_pass"] == 0
+        assert stats["total_medium_severity_fail"] == 0
+        assert stats["total_medium_severity_pass"] == 0
+        assert stats["total_low_severity_fail"] == 0
+        assert stats["total_low_severity_pass"] == 0
         assert stats["findings_count"] == 2
         assert not stats["all_fails_are_muted"]
+
+    def test_extract_findings_statistics_all_passes_are_not_muted(self):
+        finding_1 = mock.MagicMock()
+        finding_1.status = "PASS"
+        finding_1.muted = True
+        finding_1.resource_id = "test_resource_1"
+        finding_1.check_metadata.Severity = "critical"
+        finding_1.check_metadata.CheckID = (
+            "autoscaling_find_secrets_ec2_launch_configuration"
+        )
+
+        finding_2 = mock.MagicMock()
+        finding_2.status = "PASS"
+        finding_2.muted = False
+        finding_2.resource_id = "test_resource_1"
+        finding_2.check_metadata.Severity = "high"
+        finding_2.check_metadata.CheckID = "acm_certificates_expiration_check"
+        findings = [finding_1, finding_2]
+
+        stats = extract_findings_statistics(findings)
+        assert stats["total_pass"] == 2
+        assert stats["total_fail"] == 0
+        assert stats["total_muted_pass"] == 1
+        assert stats["total_muted_fail"] == 0
+        assert stats["resources_count"] == 1
+        assert stats["total_critical_severity_fail"] == 0
+        assert stats["total_critical_severity_pass"] == 1
+        assert stats["total_high_severity_fail"] == 0
+        assert stats["total_high_severity_pass"] == 1
+        assert stats["total_medium_severity_fail"] == 0
+        assert stats["total_medium_severity_pass"] == 0
+        assert stats["total_low_severity_fail"] == 0
+        assert stats["total_low_severity_pass"] == 0
+        assert stats["findings_count"] == 2
+
+    def test_extract_findings_statistics_all_passes_are_muted(self):
+        finding_1 = mock.MagicMock()
+        finding_1.status = "PASS"
+        finding_1.muted = True
+        finding_1.check_metadata.Severity = "critical"
+        finding_1.check_metadata.CheckID = "rds_instance_certificate_expiration"
+        finding_1.resource_id = "test_resource_1"
+        findings = [finding_1]
+
+        stats = extract_findings_statistics(findings)
+        assert stats["total_pass"] == 1
+        assert stats["total_fail"] == 0
+        assert stats["total_muted_pass"] == 1
+        assert stats["total_muted_fail"] == 0
+        assert stats["resources_count"] == 1
+        assert stats["total_critical_severity_fail"] == 0
+        assert stats["total_critical_severity_pass"] == 1
+        assert stats["total_high_severity_fail"] == 0
+        assert stats["total_high_severity_pass"] == 0
+        assert stats["total_medium_severity_fail"] == 0
+        assert stats["total_medium_severity_pass"] == 0
+        assert stats["total_low_severity_fail"] == 0
+        assert stats["total_low_severity_pass"] == 0
+        assert stats["findings_count"] == 1
 
     def test_report_with_aws_provider_not_muted_pass(self):
         # Mocking check_findings and provider
@@ -351,12 +466,11 @@ class TestOutputs:
 
         provider = MagicMock()
         provider.type = "aws"
-        provider.output_options = output_options
 
         # Assertions
         with mock.patch("builtins.print") as mocked_print:
             # Call the report method
-            report(check_findings, provider)
+            report(check_findings, provider, output_options)
 
             # Assertions
             check_findings_sorted = [finding_1, finding_2]
@@ -394,12 +508,11 @@ class TestOutputs:
 
         provider = MagicMock()
         provider.type = "aws"
-        provider.output_options = output_options
 
         # Assertions
         with mock.patch("builtins.print") as mocked_print:
             # Call the report method
-            report(check_findings, provider)
+            report(check_findings, provider, output_options)
 
             # Assertions
             check_findings_sorted = [finding_1, finding_2]
@@ -437,12 +550,11 @@ class TestOutputs:
 
         provider = MagicMock()
         provider.type = "aws"
-        provider.output_options = output_options
 
         # Assertions
         with mock.patch("builtins.print") as mocked_print:
             # Call the report method
-            report(check_findings, provider)
+            report(check_findings, provider, output_options)
 
             # Assertions
             check_findings_sorted = [finding_1, finding_2]
@@ -480,12 +592,11 @@ class TestOutputs:
 
         provider = MagicMock()
         provider.type = "aws"
-        provider.output_options = output_options
 
         # Assertions
         with mock.patch("builtins.print") as mocked_print:
             # Call the report method
-            report(check_findings, provider)
+            report(check_findings, provider, output_options)
 
             # Assertions
             check_findings_sorted = [finding_1, finding_2]
@@ -525,12 +636,11 @@ class TestOutputs:
 
         provider = MagicMock()
         provider.type = "azure"
-        provider.output_options = output_options
 
         # Assertions
         with mock.patch("builtins.print") as mocked_print:
             # Call the report method
-            report(check_findings, provider)
+            report(check_findings, provider, output_options)
 
             # Assertions
             check_findings_sorted = [finding_2, finding_1]
@@ -570,12 +680,11 @@ class TestOutputs:
 
         provider = MagicMock()
         provider.type = "azure"
-        provider.output_options = output_options
 
         # Assertions
         with mock.patch("builtins.print") as mocked_print:
             # Call the report method
-            report(check_findings, provider)
+            report(check_findings, provider, output_options)
 
             # Assertions
             check_findings_sorted = [finding_2, finding_1]
@@ -615,12 +724,11 @@ class TestOutputs:
 
         provider = MagicMock()
         provider.type = "azure"
-        provider.output_options = output_options
 
         # Assertions
         with mock.patch("builtins.print") as mocked_print:
             # Call the report method
-            report(check_findings, provider)
+            report(check_findings, provider, output_options)
 
             # Assertions
             check_findings_sorted = [finding_2, finding_1]
@@ -660,12 +768,11 @@ class TestOutputs:
 
         provider = MagicMock()
         provider.type = "azure"
-        provider.output_options = output_options
 
         # Assertions
         with mock.patch("builtins.print") as mocked_print:
             # Call the report method
-            report(check_findings, provider)
+            report(check_findings, provider, output_options)
 
             # Assertions
             check_findings_sorted = [finding_2, finding_1]
@@ -703,12 +810,11 @@ class TestOutputs:
 
         provider = MagicMock()
         provider.type = "gcp"
-        provider.output_options = output_options
 
         # Assertions
         with mock.patch("builtins.print") as mocked_print:
             # Call the report method
-            report(check_findings, provider)
+            report(check_findings, provider, output_options)
 
             # Assertions
             check_findings_sorted = [finding_2, finding_1]
@@ -746,12 +852,11 @@ class TestOutputs:
 
         provider = MagicMock()
         provider.type = "gcp"
-        provider.output_options = output_options
 
         # Assertions
         with mock.patch("builtins.print") as mocked_print:
             # Call the report method
-            report(check_findings, provider)
+            report(check_findings, provider, output_options)
 
             # Assertions
             check_findings_sorted = [finding_2, finding_1]
@@ -789,12 +894,11 @@ class TestOutputs:
 
         provider = MagicMock()
         provider.type = "gcp"
-        provider.output_options = output_options
 
         # Assertions
         with mock.patch("builtins.print") as mocked_print:
             # Call the report method
-            report(check_findings, provider)
+            report(check_findings, provider, output_options)
 
             # Assertions
             check_findings_sorted = [finding_2, finding_1]
@@ -832,12 +936,11 @@ class TestOutputs:
 
         provider = MagicMock()
         provider.type = "gcp"
-        provider.output_options = output_options
 
         # Assertions
         with mock.patch("builtins.print") as mocked_print:
             # Call the report method
-            report(check_findings, provider)
+            report(check_findings, provider, output_options)
 
             # Assertions
             check_findings_sorted = [finding_2, finding_1]
@@ -875,12 +978,11 @@ class TestOutputs:
 
         provider = MagicMock()
         provider.type = "kubernetes"
-        provider.output_options = output_options
 
         # Assertions
         with mock.patch("builtins.print") as mocked_print:
             # Call the report method
-            report(check_findings, provider)
+            report(check_findings, provider, output_options)
 
             # Assertions
             check_findings_sorted = [finding_2, finding_1]
@@ -918,12 +1020,11 @@ class TestOutputs:
 
         provider = MagicMock()
         provider.type = "kubernetes"
-        provider.output_options = output_options
 
         # Assertions
         with mock.patch("builtins.print") as mocked_print:
             # Call the report method
-            report(check_findings, provider)
+            report(check_findings, provider, output_options)
 
             # Assertions
             check_findings_sorted = [finding_2, finding_1]
@@ -961,12 +1062,11 @@ class TestOutputs:
 
         provider = MagicMock()
         provider.type = "kubernetes"
-        provider.output_options = output_options
 
         # Assertions
         with mock.patch("builtins.print") as mocked_print:
             # Call the report method
-            report(check_findings, provider)
+            report(check_findings, provider, output_options)
 
             # Assertions
             check_findings_sorted = [finding_2, finding_1]
@@ -1004,12 +1104,11 @@ class TestOutputs:
 
         provider = MagicMock()
         provider.type = "kubernetes"
-        provider.output_options = output_options
 
         # Assertions
         with mock.patch("builtins.print") as mocked_print:
             # Call the report method
-            report(check_findings, provider)
+            report(check_findings, provider, output_options)
 
             # Assertions
             check_findings_sorted = [finding_2, finding_1]
@@ -1033,10 +1132,9 @@ class TestOutputs:
 
         provider = MagicMock()
         provider.type = "azure"
-        provider.output_options = output_options
 
         with mock.patch("builtins.print") as mocked_print:
-            report(check_findings, provider)
+            report(check_findings, provider, output_options)
 
             # Assertions
             mocked_print.assert_any_call(

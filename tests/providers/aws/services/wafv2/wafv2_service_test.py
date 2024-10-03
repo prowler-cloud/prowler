@@ -33,7 +33,7 @@ class Test_WAFv2_Service:
 
     # Test WAFv2 Describe Web ACLs
     @mock_aws
-    def test__list_web_acls__(self):
+    def test_list_web_acls(self):
         wafv2 = client("wafv2", region_name=AWS_REGION_EU_WEST_1)
         waf = wafv2.create_web_acl(
             Scope="REGIONAL",
@@ -56,7 +56,7 @@ class Test_WAFv2_Service:
 
     # Test WAFv2 Describe Web ACLs Resources
     @mock_aws
-    def test__list_resources_for_web_acl__(self):
+    def test_list_resources_for_web_acl(self):
         wafv2 = client("wafv2", region_name=AWS_REGION_EU_WEST_1)
         conn = client("elbv2", region_name=AWS_REGION_EU_WEST_1)
         ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
@@ -104,7 +104,7 @@ class Test_WAFv2_Service:
 
     # Test WAFv2 describe Web user pools
     @mock_aws
-    def test__list_resources_for_web_user_pools__(self):
+    def test_list_resources_for_web_user_pools(self):
         wafv2 = client("wafv2", region_name=AWS_REGION_EU_WEST_1)
         cognito = client("cognito-idp", region_name=AWS_REGION_EU_WEST_1)
         waf = wafv2.create_web_acl(
@@ -126,3 +126,27 @@ class Test_WAFv2_Service:
         assert len(wafv2.web_acls) == 1
         assert len(wafv2.web_acls[0].user_pools) == 1
         assert user_pool["Arn"] in wafv2.web_acls[0].user_pools
+
+    @mock_aws
+    def test_list_tags(self):
+        wafv2 = client("wafv2", region_name=AWS_REGION_EU_WEST_1)
+        waf = wafv2.create_web_acl(
+            Scope="REGIONAL",
+            Name="my-web-acl",
+            DefaultAction={"Allow": {}},
+            VisibilityConfig={
+                "SampledRequestsEnabled": False,
+                "CloudWatchMetricsEnabled": False,
+                "MetricName": "idk",
+            },
+        )["Summary"]
+        wafv2.tag_resource(
+            ResourceARN=waf["ARN"], Tags=[{"Key": "Name", "Value": "my-web-acl"}]
+        )
+        # WAFv2 client for this test class
+        aws = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        wafv2 = WAFv2(aws)
+        assert len(wafv2.web_acls) == 1
+        assert len(wafv2.web_acls[0].tags) == 1
+        assert wafv2.web_acls[0].tags[0]["Key"] == "Name"
+        assert wafv2.web_acls[0].tags[0]["Value"] == "my-web-acl"

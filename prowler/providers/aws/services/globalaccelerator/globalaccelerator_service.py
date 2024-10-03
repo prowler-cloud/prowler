@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
@@ -5,7 +7,6 @@ from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################### GlobalAccelerator
 class GlobalAccelerator(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
@@ -17,9 +18,10 @@ class GlobalAccelerator(AWSService):
             # That is, for example, specify --region us-west-2 on AWS CLI commands.
             self.region = "us-west-2"
             self.client = self.session.client(self.service, self.region)
-            self.__list_accelerators__()
+            self._list_accelerators()
+            self.__threading_call__(self._list_tags, self.accelerators.values())
 
-    def __list_accelerators__(self):
+    def _list_accelerators(self):
         logger.info("GlobalAccelerator - Listing Accelerators...")
         try:
             list_accelerators_paginator = self.client.get_paginator("list_accelerators")
@@ -46,9 +48,23 @@ class GlobalAccelerator(AWSService):
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _list_tags(self, resource: any):
+        try:
+            resource.tags = (
+                self.regional_clients[resource.region]
+                .list_tags_for_resource(ResourceArn=resource.arn)
+                .get("Tags", [])
+            )
+
+        except Exception as error:
+            logger.error(
+                f"{resource.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class Accelerator(BaseModel):
     arn: str
     name: str
     region: str
     enabled: bool
+    tags: Optional[list]

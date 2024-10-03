@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:securityhub:region:account-id:hub/hub-id",
   "Severity": "medium",
-  "ResourceType": "AwsSecurityHubHub",
+  "ResourceType": "Other",
   "Description": "Check if Security Hub is enabled and its standard subscriptions.",
   "Risk": "AWS Security Hub gives you a comprehensive view of your security alerts and security posture across your AWS accounts.",
   "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-standards-enable-disable.html",

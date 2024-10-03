@@ -9,7 +9,7 @@ class iam_organization_essential_contacts_configured(Check):
         findings = []
         for org in essentialcontacts_client.organizations:
             report = Check_Report_GCP(self.metadata())
-            report.project_id = org.id
+            report.project_id = essentialcontacts_client.default_project_id
             report.resource_id = org.id
             report.resource_name = org.name
             report.location = essentialcontacts_client.region

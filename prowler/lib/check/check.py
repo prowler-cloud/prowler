@@ -6,7 +6,6 @@ import re
 import shutil
 import sys
 import traceback
-from pkgutil import walk_packages
 from types import ModuleType
 from typing import Any
 
@@ -15,74 +14,13 @@ from colorama import Fore, Style
 
 import prowler
 from prowler.config.config import orange_color
-from prowler.lib.check.compliance_models import load_compliance_framework
 from prowler.lib.check.custom_checks_metadata import update_check_metadata
-from prowler.lib.check.models import Check, CheckMetadata, load_check_metadata
+from prowler.lib.check.models import Check
+from prowler.lib.check.utils import recover_checks_from_provider
 from prowler.lib.logger import logger
 from prowler.lib.outputs.outputs import report
 from prowler.lib.utils.utils import open_file, parse_json_file, print_boxes
 from prowler.providers.common.models import Audit_Metadata
-
-
-# Load all checks metadata
-def bulk_load_checks_metadata(provider: str) -> dict[str, CheckMetadata]:
-    """
-    Load the metadata of all checks for a given provider reading the check's metadata files.
-    Args:
-        provider (str): The name of the provider.
-    Returns:
-        dict[str, CheckMetadata]: A dictionary containing the metadata of all checks, with the CheckID as the key.
-    """
-
-    bulk_check_metadata = {}
-    checks = recover_checks_from_provider(provider)
-    # Build list of check's metadata files
-    for check_info in checks:
-        # Build check path name
-        check_name = check_info[0]
-        check_path = check_info[1]
-        # Ignore fixer files
-        if check_name.endswith("_fixer"):
-            continue
-        # Append metadata file extension
-        metadata_file = f"{check_path}/{check_name}.metadata.json"
-        # Load metadata
-        check_metadata = load_check_metadata(metadata_file)
-        bulk_check_metadata[check_metadata.CheckID] = check_metadata
-
-    return bulk_check_metadata
-
-
-# Bulk load all compliance frameworks specification
-def bulk_load_compliance_frameworks(provider: str) -> dict:
-    """Bulk load all compliance frameworks specification into a dict"""
-    try:
-        bulk_compliance_frameworks = {}
-        available_compliance_framework_modules = list_compliance_modules()
-        for compliance_framework in available_compliance_framework_modules:
-            if provider in compliance_framework.name:
-                compliance_specification_dir_path = (
-                    f"{compliance_framework.module_finder.path}/{provider}"
-                )
-
-                # for compliance_framework in available_compliance_framework_modules:
-                for filename in os.listdir(compliance_specification_dir_path):
-                    file_path = os.path.join(
-                        compliance_specification_dir_path, filename
-                    )
-                    # Check if it is a file and ti size is greater than 0
-                    if os.path.isfile(file_path) and os.stat(file_path).st_size > 0:
-                        # Open Compliance file in JSON
-                        # cis_v1.4_aws.json --> cis_v1.4_aws
-                        compliance_framework_name = filename.split(".json")[0]
-                        # Store the compliance info
-                        bulk_compliance_frameworks[compliance_framework_name] = (
-                            load_compliance_framework(file_path)
-                        )
-    except Exception as e:
-        logger.error(f"{e.__class__.__name__}[{e.__traceback__.tb_lineno}] -- {e}")
-
-    return bulk_compliance_frameworks
 
 
 # Exclude checks to run
@@ -381,98 +319,10 @@ def parse_checks_from_compliance_framework(
     return checks_to_execute
 
 
-def recover_checks_from_provider(
-    provider: str, service: str = None, include_fixers: bool = False
-) -> list[tuple]:
-    """
-    Recover all checks from the selected provider and service
-
-    Returns a list of tuples with the following format (check_name, check_path)
-    """
-    try:
-        checks = []
-        modules = list_modules(provider, service)
-        for module_name in modules:
-            # Format: "prowler.providers.{provider}.services.{service}.{check_name}.{check_name}"
-            check_module_name = module_name.name
-            # We need to exclude common shared libraries in services
-            if (
-                check_module_name.count(".") == 6
-                and "lib" not in check_module_name
-                and (not check_module_name.endswith("_fixer") or include_fixers)
-            ):
-                check_path = module_name.module_finder.path
-                # Check name is the last part of the check_module_name
-                check_name = check_module_name.split(".")[-1]
-                check_info = (check_name, check_path)
-                checks.append(check_info)
-    except ModuleNotFoundError:
-        logger.critical(f"Service {service} was not found for the {provider} provider.")
-        sys.exit(1)
-    except Exception as e:
-        logger.critical(f"{e.__class__.__name__}[{e.__traceback__.tb_lineno}]: {e}")
-        sys.exit(1)
-    else:
-        return checks
-
-
-def list_compliance_modules():
-    """
-    list_compliance_modules returns the available compliance frameworks and returns their path
-    """
-    # This module path requires the full path including "prowler."
-    module_path = "prowler.compliance"
-    return walk_packages(
-        importlib.import_module(module_path).__path__,
-        importlib.import_module(module_path).__name__ + ".",
-    )
-
-
-# List all available modules in the selected provider and service
-def list_modules(provider: str, service: str):
-    # This module path requires the full path including "prowler."
-    module_path = f"prowler.providers.{provider}.services"
-    if service:
-        module_path += f".{service}"
-    return walk_packages(
-        importlib.import_module(module_path).__path__,
-        importlib.import_module(module_path).__name__ + ".",
-    )
-
-
 # Import an input check using its path
 def import_check(check_path: str) -> ModuleType:
     lib = importlib.import_module(f"{check_path}")
     return lib
-
-
-def run_check(check: Check, verbose: bool = False, only_logs: bool = False) -> list:
-    """
-    Run the check and return the findings
-    Args:
-        check (Check): check class
-        output_options (Any): output options
-    Returns:
-        list: list of findings
-    """
-    findings = []
-    if verbose:
-        print(
-            f"\nCheck ID: {check.CheckID} - {Fore.MAGENTA}{check.ServiceName}{Fore.YELLOW} [{check.Severity}]{Style.RESET_ALL}"
-        )
-    logger.debug(f"Executing check: {check.CheckID}")
-    try:
-        findings = check.execute()
-    except Exception as error:
-        if not only_logs:
-            print(
-                f"Something went wrong in {check.CheckID}, please use --log-level ERROR"
-            )
-        logger.error(
-            f"{check.CheckID} -- {error.__class__.__name__}[{traceback.extract_tb(error.__traceback__)[-1].lineno}]: {error}"
-        )
-    finally:
-        return findings
 
 
 def run_fixer(check_findings: list) -> int:
@@ -556,6 +406,7 @@ def execute_checks(
     global_provider: Any,
     custom_checks_metadata: Any,
     config_file: str,
+    output_options: Any,
 ) -> list:
     # List to store all the check's findings
     all_findings = []
@@ -591,18 +442,42 @@ def execute_checks(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    # Set verbose flag
+    verbose = False
+    if hasattr(output_options, "verbose"):
+        verbose = output_options.verbose
+    elif hasattr(output_options, "fixer"):
+        verbose = output_options.fixer
+
     # Execution with the --only-logs flag
-    if global_provider.output_options.only_logs:
+    if output_options.only_logs:
         for check_name in checks_to_execute:
             # Recover service from check name
             service = check_name.split("_")[0]
             try:
+                try:
+                    # Import check module
+                    check_module_path = f"prowler.providers.{global_provider.type}.services.{service}.{check_name}.{check_name}"
+                    lib = import_check(check_module_path)
+                    # Recover functions from check
+                    check_to_execute = getattr(lib, check_name)
+                    check = check_to_execute()
+                except ModuleNotFoundError:
+                    logger.error(
+                        f"Check '{check_name}' was not found for the {global_provider.type.upper()} provider"
+                    )
+                    continue
+                if verbose:
+                    print(
+                        f"\nCheck ID: {check.CheckID} - {Fore.MAGENTA}{check.ServiceName}{Fore.YELLOW} [{check.Severity}]{Style.RESET_ALL}"
+                    )
                 check_findings = execute(
-                    service,
-                    check_name,
+                    check,
                     global_provider,
                     custom_checks_metadata,
+                    output_options,
                 )
+                report(check_findings, global_provider, output_options)
                 all_findings.extend(check_findings)
 
                 # Update Audit Status
@@ -660,12 +535,31 @@ def execute_checks(
                     f"-> Scanning {orange_color}{service}{Style.RESET_ALL} service"
                 )
                 try:
+                    try:
+                        # Import check module
+                        check_module_path = f"prowler.providers.{global_provider.type}.services.{service}.{check_name}.{check_name}"
+                        lib = import_check(check_module_path)
+                        # Recover functions from check
+                        check_to_execute = getattr(lib, check_name)
+                        check = check_to_execute()
+                    except ModuleNotFoundError:
+                        logger.error(
+                            f"Check '{check_name}' was not found for the {global_provider.type.upper()} provider"
+                        )
+                        continue
+                    if verbose:
+                        print(
+                            f"\nCheck ID: {check.CheckID} - {Fore.MAGENTA}{check.ServiceName}{Fore.YELLOW} [{check.Severity}]{Style.RESET_ALL}"
+                        )
                     check_findings = execute(
-                        service,
-                        check_name,
+                        check,
                         global_provider,
                         custom_checks_metadata,
+                        output_options,
                     )
+
+                    report(check_findings, global_provider, output_options)
+
                     all_findings.extend(check_findings)
                     services_executed.add(service)
                     checks_executed.add(check_name)
@@ -688,51 +582,79 @@ def execute_checks(
                     )
                 bar()
             bar.title = f"-> {Fore.GREEN}Scan completed!{Style.RESET_ALL}"
+
+    # Custom report interface
+    if os.environ.get("PROWLER_REPORT_LIB_PATH"):
+        try:
+            logger.info("Using custom report interface ...")
+            lib = os.environ["PROWLER_REPORT_LIB_PATH"]
+            outputs_module = importlib.import_module(lib)
+            custom_report_interface = getattr(outputs_module, "report")
+
+            # TODO: review this call and see if we can remove the global_provider.output_options since it is contained in the global_provider
+            custom_report_interface(check_findings, output_options, global_provider)
+        except Exception:
+            sys.exit(1)
+
     return all_findings
 
 
 def execute(
-    service: str,
-    check_name: str,
+    check: Check,
     global_provider: Any,
     custom_checks_metadata: Any,
+    output_options: Any = None,
 ):
-    try:
-        # Import check module
-        check_module_path = f"prowler.providers.{global_provider.type}.services.{service}.{check_name}.{check_name}"
-        lib = import_check(check_module_path)
-        # Recover functions from check
-        check_to_execute = getattr(lib, check_name)
-        check_class = check_to_execute()
+    """
+    Execute the check and report the findings
 
+    Args:
+        service (str): service name
+        check_name (str): check name
+        global_provider (Any): provider object
+        custom_checks_metadata (Any): custom checks metadata
+        output_options (Any): output options, depending on the provider
+
+    Returns:
+        list: list of findings
+    """
+    try:
         # Update check metadata to reflect that in the outputs
         if custom_checks_metadata and custom_checks_metadata["Checks"].get(
-            check_class.CheckID
+            check.CheckID
         ):
-            check_class = update_check_metadata(
-                check_class, custom_checks_metadata["Checks"][check_class.CheckID]
+            check = update_check_metadata(
+                check, custom_checks_metadata["Checks"][check.CheckID]
             )
 
-        # Run check
-        verbose = (
-            global_provider.output_options.verbose
-            or global_provider.output_options.fixer
-        )
-        check_findings = run_check(
-            check_class, verbose, global_provider.output_options.only_logs
-        )
+        only_logs = False
+        if hasattr(output_options, "only_logs"):
+            only_logs = output_options.only_logs
+
+        # Execute the check
+        check_findings = []
+        logger.debug(f"Executing check: {check.CheckID}")
+        try:
+            check_findings = check.execute()
+        except Exception as error:
+            if not only_logs:
+                print(
+                    f"Something went wrong in {check.CheckID}, please use --log-level ERROR"
+                )
+            logger.error(
+                f"{check.CheckID} -- {error.__class__.__name__}[{traceback.extract_tb(error.__traceback__)[-1].lineno}]: {error}"
+            )
 
         # Exclude findings per status
-        if global_provider.output_options.status:
+        if hasattr(output_options, "status") and output_options.status:
             check_findings = [
                 finding
                 for finding in check_findings
-                if finding.status in global_provider.output_options.status
+                if finding.status in output_options.status
             ]
 
-        # Mutelist findings
+        # Before returning the findings, we need to apply the mute list logic
         if hasattr(global_provider, "mutelist") and global_provider.mutelist.mutelist:
-            # TODO: make this prettier
             is_finding_muted_args = {}
             if global_provider.type == "aws":
                 is_finding_muted_args["aws_account_id"] = (
@@ -747,27 +669,9 @@ def execute(
                     **is_finding_muted_args
                 )
 
-        # Refactor(Outputs)
-        # Report the check's findings
-        report(check_findings, global_provider)
-
-        # Refactor(Outputs)
-        if os.environ.get("PROWLER_REPORT_LIB_PATH"):
-            try:
-                logger.info("Using custom report interface ...")
-                lib = os.environ["PROWLER_REPORT_LIB_PATH"]
-                outputs_module = importlib.import_module(lib)
-                custom_report_interface = getattr(outputs_module, "report")
-
-                # TODO: review this call and see if we can remove the global_provider.output_options since it is contained in the global_provider
-                custom_report_interface(
-                    check_findings, global_provider.output_options, global_provider
-                )
-            except Exception:
-                sys.exit(1)
     except ModuleNotFoundError:
         logger.error(
-            f"Check '{check_name}' was not found for the {global_provider.type.upper()} provider"
+            f"Check '{check.CheckID}' was not found for the {global_provider.type.upper()} provider"
         )
         check_findings = []
     except Exception as error:
@@ -793,37 +697,6 @@ def update_audit_metadata(
 
         return audit_metadata
 
-    except Exception as error:
-        logger.error(
-            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-        )
-
-
-def recover_checks_from_service(service_list: list, provider: str) -> set:
-    """
-    Recover all checks from the selected provider and service
-
-    Returns a set of checks from the given services
-    """
-    try:
-        checks = set()
-        service_list = [
-            "awslambda" if service == "lambda" else service for service in service_list
-        ]
-        for service in service_list:
-            service_checks = recover_checks_from_provider(provider, service)
-            if not service_checks:
-                logger.error(f"Service '{service}' does not have checks.")
-
-            else:
-                for check in service_checks:
-                    # Recover check name and module name from import path
-                    # Format: "providers.{provider}.services.{service}.{check_name}.{check_name}"
-                    check_name = check[0].split(".")[-1]
-                    # If the service is present in the group list passed as parameters
-                    # if service_name in group_list: checks_from_arn.add(check_name)
-                    checks.add(check_name)
-        return checks
     except Exception as error:
         logger.error(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

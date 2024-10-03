@@ -41,6 +41,7 @@ class Test_codebuild_project_no_secrets_in_variables:
                 last_invoked_time=None,
                 buildspec=None,
                 environment_variables=[],
+                tags=[],
             )
         }
 
@@ -69,6 +70,7 @@ class Test_codebuild_project_no_secrets_in_variables:
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == "SensitiveProject"
             assert result[0].resource_arn == project_arn
+            assert result[0].resource_tags == []
 
     def test_project_with_no_plaintext_credentials(self):
         codebuild_client = mock.MagicMock
@@ -90,6 +92,7 @@ class Test_codebuild_project_no_secrets_in_variables:
                         "type": "PARAMETER_STORE",
                     }
                 ],
+                tags=[],
             )
         }
 
@@ -118,6 +121,7 @@ class Test_codebuild_project_no_secrets_in_variables:
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == "SensitiveProject"
             assert result[0].resource_arn == project_arn
+            assert result[0].resource_tags == []
 
     def test_project_with_plaintext_credentials_but_not_sensitive(self):
         codebuild_client = mock.MagicMock
@@ -139,6 +143,7 @@ class Test_codebuild_project_no_secrets_in_variables:
                         "type": "PLAINTEXT",
                     }
                 ],
+                tags=[],
             )
         }
 
@@ -167,6 +172,7 @@ class Test_codebuild_project_no_secrets_in_variables:
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == "SensitiveProject"
             assert result[0].resource_arn == project_arn
+            assert result[0].resource_tags == []
 
     def test_project_with_sensitive_plaintext_credentials(self):
         codebuild_client = mock.MagicMock
@@ -188,6 +194,7 @@ class Test_codebuild_project_no_secrets_in_variables:
                         "type": "PLAINTEXT",
                     }
                 ],
+                tags=[],
             )
         }
 
@@ -216,6 +223,7 @@ class Test_codebuild_project_no_secrets_in_variables:
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == "SensitiveProject"
             assert result[0].resource_arn == project_arn
+            assert result[0].resource_tags == []
 
     def test_project_with_sensitive_plaintext_credentials_exluded(self):
         codebuild_client = mock.MagicMock
@@ -237,6 +245,7 @@ class Test_codebuild_project_no_secrets_in_variables:
                         "type": "PLAINTEXT",
                     }
                 ],
+                tags=[],
             )
         }
 
@@ -267,6 +276,7 @@ class Test_codebuild_project_no_secrets_in_variables:
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == "SensitiveProject"
             assert result[0].resource_arn == project_arn
+            assert result[0].resource_tags == []
 
     def test_project_with_sensitive_plaintext_credentials_excluded_and_not(self):
         codebuild_client = mock.MagicMock()
@@ -293,6 +303,7 @@ class Test_codebuild_project_no_secrets_in_variables:
                         "type": "PARAMETER_STORE",
                     },
                 ],
+                tags=[],
             )
         }
 
@@ -323,6 +334,7 @@ class Test_codebuild_project_no_secrets_in_variables:
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == "SensitiveProject"
             assert result[0].resource_arn == project_arn
+            assert result[0].resource_tags == []
 
     def test_project_with_sensitive_plaintext_credentials_excluded_and_failed(self):
         codebuild_client = mock.MagicMock()
@@ -349,6 +361,7 @@ class Test_codebuild_project_no_secrets_in_variables:
                         "type": "PLAINTEXT",
                     },
                 ],
+                tags=[],
             )
         }
 
@@ -379,6 +392,7 @@ class Test_codebuild_project_no_secrets_in_variables:
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == "SensitiveProject"
             assert result[0].resource_arn == project_arn
+            assert result[0].resource_tags == []
 
     def test_project_with_multiple_sensitive_credentials(self):
         codebuild_client = mock.MagicMock()
@@ -405,6 +419,7 @@ class Test_codebuild_project_no_secrets_in_variables:
                         "type": "PLAINTEXT",
                     },
                 ],
+                tags=[],
             )
         }
 
@@ -433,3 +448,4 @@ class Test_codebuild_project_no_secrets_in_variables:
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == "SensitiveProject"
             assert result[0].resource_arn == project_arn
+            assert result[0].resource_tags == []

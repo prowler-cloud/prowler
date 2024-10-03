@@ -1,8 +1,8 @@
 from prowler.lib.check.compliance_models import (
     AWS_Well_Architected_Requirement_Attribute,
     CIS_Requirement_Attribute,
+    Compliance,
     Compliance_Requirement,
-    ComplianceBaseModel,
     ENS_Requirement_Attribute,
     ENS_Requirement_Attribute_Nivel,
     ENS_Requirement_Attribute_Tipos,
@@ -12,10 +12,11 @@ from prowler.lib.check.compliance_models import (
     Mitre_Requirement_Attribute_AWS,
     Mitre_Requirement_Attribute_Azure,
     Mitre_Requirement_Attribute_GCP,
+    KISA_ISMSP_Requirement_Attribute,
 )
 
 CIS_1_4_AWS_NAME = "cis_1.4_aws"
-CIS_1_4_AWS = ComplianceBaseModel(
+CIS_1_4_AWS = Compliance(
     Framework="CIS",
     Provider="AWS",
     Version="1.4",
@@ -62,7 +63,7 @@ CIS_1_4_AWS = ComplianceBaseModel(
     ],
 )
 CIS_2_0_AZURE_NAME = "cis_2.0_azure"
-CIS_2_0_AZURE = ComplianceBaseModel(
+CIS_2_0_AZURE = Compliance(
     Framework="CIS",
     Provider="Azure",
     Version="2.0",
@@ -111,7 +112,7 @@ CIS_2_0_AZURE = ComplianceBaseModel(
     ],
 )
 CIS_2_0_GCP_NAME = "cis_2.0_gcp"
-CIS_2_0_GCP = ComplianceBaseModel(
+CIS_2_0_GCP = Compliance(
     Framework="CIS",
     Provider="GCP",
     Version="2.0",
@@ -158,7 +159,7 @@ CIS_2_0_GCP = ComplianceBaseModel(
     ],
 )
 CIS_1_8_KUBERNETES_NAME = "cis_2.0_kubernetes"
-CIS_1_8_KUBERNETES = ComplianceBaseModel(
+CIS_1_8_KUBERNETES = Compliance(
     Framework="CIS",
     Provider="Kubernetes",
     Version="1.8",
@@ -207,7 +208,7 @@ CIS_1_8_KUBERNETES = ComplianceBaseModel(
     ],
 )
 CIS_1_5_AWS_NAME = "cis_1.5_aws"
-CIS_1_5_AWS = ComplianceBaseModel(
+CIS_1_5_AWS = Compliance(
     Framework="CIS",
     Provider="AWS",
     Version="1.5",
@@ -236,7 +237,7 @@ CIS_1_5_AWS = ComplianceBaseModel(
 )
 
 MITRE_ATTACK_AWS_NAME = "mitre_attack_aws"
-MITRE_ATTACK_AWS = ComplianceBaseModel(
+MITRE_ATTACK_AWS = Compliance(
     Framework="MITRE-ATTACK",
     Provider="AWS",
     Version="",
@@ -293,7 +294,7 @@ MITRE_ATTACK_AWS = ComplianceBaseModel(
     ],
 )
 MITRE_ATTACK_AZURE_NAME = "mitre_attack_azure"
-MITRE_ATTACK_AZURE = ComplianceBaseModel(
+MITRE_ATTACK_AZURE = Compliance(
     Framework="MITRE-ATTACK",
     Provider="Azure",
     Version="",
@@ -368,7 +369,7 @@ MITRE_ATTACK_AZURE = ComplianceBaseModel(
     ],
 )
 MITRE_ATTACK_GCP_NAME = "mitre_attack_gcp"
-MITRE_ATTACK_GCP = ComplianceBaseModel(
+MITRE_ATTACK_GCP = Compliance(
     Framework="MITRE-ATTACK",
     Provider="GCP",
     Version="",
@@ -422,7 +423,7 @@ MITRE_ATTACK_GCP = ComplianceBaseModel(
     ],
 )
 ENS_RD2022_AWS_NAME = "ens_rd2022_aws"
-ENS_RD2022_AWS = ComplianceBaseModel(
+ENS_RD2022_AWS = Compliance(
     Framework="ENS",
     Provider="AWS",
     Version="RD2022",
@@ -469,7 +470,7 @@ ENS_RD2022_AWS = ComplianceBaseModel(
     ],
 )
 NOT_PRESENT_COMPLIANCE_NAME = "not_present_compliance_name"
-NOT_PRESENT_COMPLIANCE = ComplianceBaseModel(
+NOT_PRESENT_COMPLIANCE = Compliance(
     Framework="NOT_EXISTENT",
     Provider="NOT_EXISTENT",
     Version="NOT_EXISTENT",
@@ -477,7 +478,7 @@ NOT_PRESENT_COMPLIANCE = ComplianceBaseModel(
     Requirements=[],
 )
 AWS_WELL_ARCHITECTED_NAME = "aws_well_architected_framework_security_pillar_aws"
-AWS_WELL_ARCHITECTED = ComplianceBaseModel(
+AWS_WELL_ARCHITECTED = Compliance(
     Framework="AWS-Well-Architected-Framework-Security-Pillar",
     Provider="AWS",
     Version="",
@@ -524,7 +525,7 @@ AWS_WELL_ARCHITECTED = ComplianceBaseModel(
     ],
 )
 AWISO27001_2013_AWS_NAME = "iso27001_2013_aws"
-ISO27001_2013_AWS = ComplianceBaseModel(
+ISO27001_2013_AWS = Compliance(
     Framework="ISO27001",
     Provider="AWS",
     Version="2013",
@@ -547,7 +548,7 @@ ISO27001_2013_AWS = ComplianceBaseModel(
     ],
 )
 ISO27001_2013_AWS_NAME = "iso27001_2013_aws"
-ISO27001_2013_AWS = ComplianceBaseModel(
+ISO27001_2013_AWS = Compliance(
     Framework="ISO27001",
     Provider="AWS",
     Version="2013",
@@ -584,7 +585,7 @@ ISO27001_2013_AWS = ComplianceBaseModel(
     ],
 )
 NIST_800_53_REVISION_4_AWS_NAME = "nist_800_53_revision_4_aws"
-NIST_800_53_REVISION_4_AWS = ComplianceBaseModel(
+NIST_800_53_REVISION_4_AWS = Compliance(
     Framework="NIST-800-53-Revision-4",
     Provider="AWS",
     Version="",
@@ -626,6 +627,76 @@ NIST_800_53_REVISION_4_AWS = ComplianceBaseModel(
                     Section="Access Control (AC)",
                     SubSection="Account Management (AC-2)",
                     Service="aws",
+                )
+            ],
+            Checks=[],
+        ),
+    ],
+)
+KISA_ISMSP_AWS_NAME = "kisa_isms-p_2023_aws"
+KISA_ISMSP_AWS = Compliance(
+    Framework="KISA-ISMS-P",
+    Provider="AWS",
+    Version="2023",
+    Description="The ISMS-P certification, established by KISA Korea Internet & Security Agency",
+    Requirements=[
+        Compliance_Requirement(
+            Id="2.5.3",
+            Name="User Authentication",
+            Description="User access to information systems",
+            Attributes=[
+                KISA_ISMSP_Requirement_Attribute(
+                    Domain="2. Protection Measure Requirements",
+                    Subdomain="2.5. Authentication and Authorization Management",
+                    Section="2.5.3 User Authentication",
+                    AuditChecklist=[
+                        "Is access to information systems and personal information controlled through secure authentication?",
+                        "Are login attempt limitations enforced?",
+                    ],
+                    RelatedRegulations=[
+                        "Personal Information Protection Act, Article 29",
+                        "Standards for Ensuring the Safety of Personal Information, Article 5",
+                    ],
+                    AuditEvidence=[
+                        "Login screen for information systems",
+                        "Login failure message screen",
+                    ],
+                    NonComplianceCases=[
+                        "Case 1: Insufficient authentication when accessing information systems externally.",
+                        "Case 2: No limitation on login failure attempts.",
+                    ],
+                )
+            ],
+            Checks=[
+                "cloudwatch_log_metric_filter_authentication_failures",
+                "cognito_user_pool_mfa_enabled",
+            ],
+        ),
+        Compliance_Requirement(
+            Id="2.5.4",
+            Name="User Authentication",
+            Description="User access to information systems",
+            Attributes=[
+                KISA_ISMSP_Requirement_Attribute(
+                    Domain="2. Protection Measure Requirements",
+                    Subdomain="2.5. Authentication and Authorization Management",
+                    Section="2.5.3 User Authentication",
+                    AuditChecklist=[
+                        "Is access to information systems and personal information controlled through secure authentication?",
+                        "Are login attempt limitations enforced?",
+                    ],
+                    RelatedRegulations=[
+                        "Personal Information Protection Act, Article 29",
+                        "Standards for Ensuring the Safety of Personal Information, Article 5",
+                    ],
+                    AuditEvidence=[
+                        "Login screen for information systems",
+                        "Login failure message screen",
+                    ],
+                    NonComplianceCases=[
+                        "Case 1: Insufficient authentication when accessing information systems externally.",
+                        "Case 2: No limitation on login failure attempts.",
+                    ],
                 )
             ],
             Checks=[],

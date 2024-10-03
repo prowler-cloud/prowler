@@ -21,26 +21,27 @@ class RDS(AWSService):
         self.db_cluster_parameters = {}
         self.db_cluster_snapshots = []
         self.db_event_subscriptions = []
-        self.__threading_call__(self.__describe_db_instances__)
-        self.__threading_call__(self.__describe_db_certificate__)
-        self.__threading_call__(self.__describe_db_parameters__)
-        self.__threading_call__(self.__describe_db_snapshots__)
-        self.__threading_call__(self.__describe_db_snapshot_attributes__)
-        self.__threading_call__(self.__describe_db_clusters__)
-        self.__threading_call__(self.__describe_db_cluster_parameters__)
-        self.__threading_call__(self.__describe_db_cluster_snapshots__)
-        self.__threading_call__(self.__describe_db_cluster_snapshot_attributes__)
-        self.__threading_call__(self.__describe_db_engine_versions__)
-        self.__threading_call__(self.__describe_db_event_subscriptions__)
+        self.__threading_call__(self._describe_db_instances)
+        self.__threading_call__(self._describe_db_certificate)
+        self.__threading_call__(self._describe_db_parameters)
+        self.__threading_call__(self._describe_db_snapshots)
+        self.__threading_call__(self._describe_db_snapshot_attributes)
+        self.__threading_call__(self._describe_db_clusters)
+        self.__threading_call__(self._describe_db_cluster_parameters)
+        self.__threading_call__(self._describe_db_cluster_snapshots)
+        self.__threading_call__(self._describe_db_cluster_snapshot_attributes)
+        self.__threading_call__(self._describe_db_engine_versions)
+        self.__threading_call__(self._describe_db_event_subscriptions)
+        self.__threading_call__(self._list_tags, self.db_event_subscriptions)
 
-    def __get_rds_arn_template__(self, region):
+    def _get_rds_arn_template(self, region):
         return (
             f"arn:{self.audited_partition}:rds:{region}:{self.audited_account}:account"
             if region
             else f"arn:{self.audited_partition}:rds:{self.region}:{self.audited_account}:account"
         )
 
-    def __describe_db_instances__(self, regional_client):
+    def _describe_db_instances(self, regional_client):
         logger.info("RDS - Describe Instances...")
         try:
             describe_db_instances_paginator = regional_client.get_paginator(
@@ -100,19 +101,18 @@ class RDS(AWSService):
                                 copy_tags_to_snapshot=instance.get(
                                     "CopyTagsToSnapshot"
                                 ),
+                                port=instance.get("Endpoint", {}).get("Port"),
+                                vpc_id=instance.get("DBSubnetGroup", {}).get("VpcId"),
                             )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_db_parameters__(self, regional_client):
+    def _describe_db_parameters(self, regional_client):
         logger.info("RDS - Describe DB Parameters...")
         try:
-            for (
-                instance_arn,
-                instance,
-            ) in self.db_instances.items():
+            for instance in self.db_instances.values():
                 if instance.region == regional_client.region:
                     for parameter_group in instance.parameter_groups:
                         describe_db_parameters_paginator = (
@@ -129,38 +129,41 @@ class RDS(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_db_certificate__(self, regional_client):
+    def _describe_db_certificate(self, regional_client):
         logger.info("RDS - Describe DB Certificate...")
         try:
-            for instance in self.db_instances:
+            for instance in self.db_instances.values():
                 if instance.region == regional_client.region:
                     describe_db_certificates_paginator = regional_client.get_paginator(
                         "describe_certificates"
                     )
-                    for page in describe_db_certificates_paginator.paginate(
-                        CertificateIdentifier=instance.ca_cert
-                    ):
-                        for certificate in page["Certificates"]:
-                            instance.cert.append(
-                                Certificate(
-                                    id=certificate["CertificateIdentifier"],
-                                    arn=certificate["CertificateArn"],
-                                    type=certificate["CertificateType"],
-                                    valid_from=certificate["ValidFrom"],
-                                    valid_till=certificate["ValidTill"],
-                                    customer_override=certificate["CustomerOverride"],
-                                    customer_override_valid_till=certificate.get(
-                                        "CustomerOverrideValidTill"
-                                    ),
+                    if instance.ca_cert:
+                        for page in describe_db_certificates_paginator.paginate(
+                            CertificateIdentifier=instance.ca_cert
+                        ):
+                            for certificate in page["Certificates"]:
+                                instance.cert.append(
+                                    Certificate(
+                                        id=certificate["CertificateIdentifier"],
+                                        arn=certificate["CertificateArn"],
+                                        type=certificate["CertificateType"],
+                                        valid_from=certificate["ValidFrom"],
+                                        valid_till=certificate["ValidTill"],
+                                        customer_override=certificate[
+                                            "CustomerOverride"
+                                        ],
+                                        customer_override_valid_till=certificate.get(
+                                            "CustomerOverrideValidTill"
+                                        ),
+                                    )
                                 )
-                            )
 
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_db_snapshots__(self, regional_client):
+    def _describe_db_snapshots(self, regional_client):
         logger.info("RDS - Describe Snapshots...")
         try:
             describe_db_snapshots_paginator = regional_client.get_paginator(
@@ -188,7 +191,7 @@ class RDS(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_db_snapshot_attributes__(self, regional_client):
+    def _describe_db_snapshot_attributes(self, regional_client):
         logger.info("RDS - Describe Snapshot Attributes...")
         for snapshot in self.db_snapshots:
             try:
@@ -210,7 +213,7 @@ class RDS(AWSService):
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
-    def __describe_db_clusters__(self, regional_client):
+    def _describe_db_clusters(self, regional_client):
         logger.info("RDS - Describe Clusters...")
         try:
             describe_db_clusters_paginator = regional_client.get_paginator(
@@ -261,6 +264,7 @@ class RDS(AWSService):
                                         copy_tags_to_snapshot=cluster.get(
                                             "CopyTagsToSnapshot"
                                         ),
+                                        port=cluster.get("Port"),
                                     )
                                     # We must use a unique value as the dict key to have unique keys
                                     self.db_clusters[db_cluster_arn] = db_cluster
@@ -277,7 +281,7 @@ class RDS(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_db_cluster_parameters__(self, regional_client):
+    def _describe_db_cluster_parameters(self, regional_client):
         logger.info("RDS - Describe DB Cluster Parameters...")
         try:
             for cluster in self.db_clusters.values():
@@ -326,7 +330,7 @@ class RDS(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_db_cluster_snapshots__(self, regional_client):
+    def _describe_db_cluster_snapshots(self, regional_client):
         logger.info("RDS - Describe Cluster Snapshots...")
         try:
             describe_db_snapshots_paginator = regional_client.get_paginator(
@@ -357,7 +361,7 @@ class RDS(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_db_cluster_snapshot_attributes__(self, regional_client):
+    def _describe_db_cluster_snapshot_attributes(self, regional_client):
         logger.info("RDS - Describe Cluster Snapshot Attributes...")
         try:
             for snapshot in self.db_cluster_snapshots:
@@ -382,7 +386,7 @@ class RDS(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_db_engine_versions__(self, regional_client):
+    def _describe_db_engine_versions(self, regional_client):
         logger.info("RDS - Describe Engine Versions...")
         try:
             describe_db_engine_versions_paginator = regional_client.get_paginator(
@@ -412,7 +416,7 @@ class RDS(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_db_event_subscriptions__(self, regional_client):
+    def _describe_db_event_subscriptions(self, regional_client):
         logger.info("RDS - Describe Event Subscriptions...")
         try:
             describe_event_subscriptions_paginator = regional_client.get_paginator(
@@ -460,11 +464,25 @@ class RDS(AWSService):
                         event_list=[],
                         enabled=False,
                         region=regional_client.region,
+                        tags=[],
                     )
                 )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _list_tags(self, resource: any):
+        try:
+            if getattr(resource, "region", "") and getattr(resource, "arn", ""):
+                resource.tags = (
+                    self.regional_clients[resource.region]
+                    .list_tags_for_resource(ResourceName=resource.arn)
+                    .get("TagList", [])
+                )
+        except Exception as error:
+            logger.error(
+                f"{resource.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
 
@@ -507,6 +525,8 @@ class DBInstance(BaseModel):
     ca_cert: Optional[str]
     cert: list[Certificate] = []
     copy_tags_to_snapshot: Optional[bool]
+    port: Optional[int]
+    vpc_id: Optional[str]
 
 
 class DBCluster(BaseModel):
@@ -531,6 +551,7 @@ class DBCluster(BaseModel):
     region: str
     tags: Optional[list] = []
     copy_tags_to_snapshot: Optional[bool]
+    port: Optional[int]
 
 
 class DBSnapshot(BaseModel):
@@ -572,3 +593,4 @@ class EventSubscription(BaseModel):
     event_list: list
     enabled: bool
     region: str
+    tags: Optional[list]

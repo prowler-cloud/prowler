@@ -7,6 +7,10 @@ from moto import mock_aws
 from prowler.providers.aws.services.elasticache.elasticache_service import (
     ReplicationGroup,
 )
+from tests.providers.aws.services.elasticache.elasticache_service_test import (
+    AUTO_MINOR_VERSION_UPGRADE,
+    AUTOMATIC_FAILOVER,
+)
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
@@ -23,7 +27,6 @@ REPLICATION_GROUP_MULTI_AZ = "enabled"
 REPLICATION_GROUP_TAGS = [
     {"Key": "environment", "Value": "test"},
 ]
-
 # Patch every AWS call using Boto3
 make_api_call = botocore.client.BaseClient._make_api_call
 
@@ -66,6 +69,10 @@ class Test_elasticache_redis_cluster_backup_enabled:
             transit_encryption=False,
             multi_az=REPLICATION_GROUP_MULTI_AZ,
             tags=REPLICATION_GROUP_TAGS,
+            auto_minor_version_upgrade=not AUTO_MINOR_VERSION_UPGRADE,
+            automatic_failover=AUTOMATIC_FAILOVER,
+            engine_version="6.0",
+            auth_token_enabled=False,
         )
 
         elasticache_client.audit_config = {"minimum_snapshot_retention_period": 7}
@@ -109,6 +116,10 @@ class Test_elasticache_redis_cluster_backup_enabled:
             transit_encryption=REPLICATION_GROUP_TRANSIT_ENCRYPTION,
             multi_az=REPLICATION_GROUP_MULTI_AZ,
             tags=REPLICATION_GROUP_TAGS,
+            auto_minor_version_upgrade=not AUTO_MINOR_VERSION_UPGRADE,
+            automatic_failover=AUTOMATIC_FAILOVER,
+            engine_version="6.0",
+            auth_token_enabled=False,
         )
 
         elasticache_client.audit_config = {"minimum_snapshot_retention_period": 7}
@@ -153,6 +164,10 @@ class Test_elasticache_redis_cluster_backup_enabled:
             transit_encryption=REPLICATION_GROUP_TRANSIT_ENCRYPTION,
             multi_az=REPLICATION_GROUP_MULTI_AZ,
             tags=REPLICATION_GROUP_TAGS,
+            auto_minor_version_upgrade=not AUTO_MINOR_VERSION_UPGRADE,
+            automatic_failover=AUTOMATIC_FAILOVER,
+            engine_version="6.0",
+            auth_token_enabled=False,
         )
 
         elasticache_client.audit_config = {"minimum_snapshot_retention_period": 1}
@@ -196,6 +211,10 @@ class Test_elasticache_redis_cluster_backup_enabled:
             transit_encryption=REPLICATION_GROUP_TRANSIT_ENCRYPTION,
             multi_az=REPLICATION_GROUP_MULTI_AZ,
             tags=REPLICATION_GROUP_TAGS,
+            auto_minor_version_upgrade=not AUTO_MINOR_VERSION_UPGRADE,
+            automatic_failover=AUTOMATIC_FAILOVER,
+            engine_version="6.0",
+            auth_token_enabled=False,
         )
 
         elasticache_client.audit_config = {"minimum_snapshot_retention_period": 3}

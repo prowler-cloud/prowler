@@ -1,8 +1,13 @@
+from unittest import mock
 from unittest.mock import patch
 
 import botocore
 
 from prowler.providers.aws.services.networkfirewall.networkfirewall_service import (
+    Firewall,
+    LogDestinationType,
+    LoggingConfiguration,
+    LogType,
     NetworkFirewall,
 )
 from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provider
@@ -63,7 +68,7 @@ def mock_generate_regional_clients(provider, service):
     new=mock_generate_regional_clients,
 )
 class Test_NetworkFirewall_Service:
-    def test__get_client__(self):
+    def test_get_client(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         networkfirewall = NetworkFirewall(aws_provider)
         assert (
@@ -76,25 +81,77 @@ class Test_NetworkFirewall_Service:
         networkfirewall = NetworkFirewall(aws_provider)
         assert networkfirewall.service == "network-firewall"
 
-    def test__list_firewalls__(self):
+    def test_list_firewalls(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         networkfirewall = NetworkFirewall(aws_provider)
         assert len(networkfirewall.network_firewalls) == 1
-        assert networkfirewall.network_firewalls[0].arn == FIREWALL_ARN
-        assert networkfirewall.network_firewalls[0].region == AWS_REGION_US_EAST_1
-        assert networkfirewall.network_firewalls[0].name == FIREWALL_NAME
+        assert (
+            networkfirewall.network_firewalls[FIREWALL_ARN].region
+            == AWS_REGION_US_EAST_1
+        )
+        assert networkfirewall.network_firewalls[FIREWALL_ARN].name == FIREWALL_NAME
 
-    def test__describe_firewall__(self):
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
-        networkfirewall = NetworkFirewall(aws_provider)
+    def test_describe_logging_configuration(self):
+        networkfirewall = mock.MagicMock
+        networkfirewall.provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        networkfirewall.region = AWS_REGION_US_EAST_1
+        networkfirewall.network_firewalls = {
+            FIREWALL_ARN: Firewall(
+                arn=FIREWALL_ARN,
+                name=FIREWALL_NAME,
+                region=AWS_REGION_US_EAST_1,
+                policy_arn=POLICY_ARN,
+                vpc_id=VPC_ID,
+                tags=[{"Key": "test_tag", "Value": "test_value"}],
+                encryption_type="CUSTOMER_KMS",
+                logging_configuration=[
+                    LoggingConfiguration(
+                        log_type=LogType.flow,
+                        log_destination_type=LogDestinationType.s3,
+                        log_destination={
+                            "bucket_name": "my-bucket",
+                        },
+                    )
+                ],
+            )
+        }
         assert len(networkfirewall.network_firewalls) == 1
-        assert networkfirewall.network_firewalls[0].arn == FIREWALL_ARN
-        assert networkfirewall.network_firewalls[0].region == AWS_REGION_US_EAST_1
-        assert networkfirewall.network_firewalls[0].name == FIREWALL_NAME
-        assert networkfirewall.network_firewalls[0].policy_arn == POLICY_ARN
-        assert networkfirewall.network_firewalls[0].vpc_id == VPC_ID
-        assert networkfirewall.network_firewalls[0].tags == [
+        assert (
+            networkfirewall.network_firewalls[FIREWALL_ARN].region
+            == AWS_REGION_US_EAST_1
+        )
+        assert networkfirewall.network_firewalls[FIREWALL_ARN].name == FIREWALL_NAME
+        assert networkfirewall.network_firewalls[FIREWALL_ARN].policy_arn == POLICY_ARN
+        assert networkfirewall.network_firewalls[FIREWALL_ARN].vpc_id == VPC_ID
+        assert networkfirewall.network_firewalls[FIREWALL_ARN].tags == [
             {"Key": "test_tag", "Value": "test_value"}
         ]
-        assert networkfirewall.network_firewalls[0].encryption_type == "CUSTOMER_KMS"
-        assert networkfirewall.network_firewalls[0].deletion_protection
+        assert networkfirewall.network_firewalls[
+            FIREWALL_ARN
+        ].logging_configuration == [
+            LoggingConfiguration(
+                log_type=LogType.flow,
+                log_destination_type=LogDestinationType.s3,
+                log_destination={"bucket_name": "my-bucket"},
+            )
+        ]
+
+    def test_describe_firewall(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        networkfirewall = NetworkFirewall(aws_provider)
+        assert len(networkfirewall.network_firewalls) == 1
+        assert (
+            networkfirewall.network_firewalls[FIREWALL_ARN].region
+            == AWS_REGION_US_EAST_1
+        )
+        assert networkfirewall.network_firewalls[FIREWALL_ARN].name == FIREWALL_NAME
+        assert networkfirewall.network_firewalls[FIREWALL_ARN].policy_arn == POLICY_ARN
+        assert networkfirewall.network_firewalls[FIREWALL_ARN].vpc_id == VPC_ID
+        assert networkfirewall.network_firewalls[FIREWALL_ARN].tags == [
+            {"Key": "test_tag", "Value": "test_value"}
+        ]
+        assert (
+            networkfirewall.network_firewalls[FIREWALL_ARN].encryption_type
+            == "CUSTOMER_KMS"
+        )
+        assert networkfirewall.network_firewalls[FIREWALL_ARN].deletion_protection

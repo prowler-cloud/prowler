@@ -2,9 +2,11 @@ import importlib
 import pkgutil
 import sys
 from abc import ABC, abstractmethod
+from argparse import Namespace
 from importlib import import_module
 from typing import Any, Optional
 
+from prowler.config.config import load_and_validate_config_file
 from prowler.lib.logger import logger
 from prowler.lib.mutelist.mutelist import Mutelist
 
@@ -35,7 +37,6 @@ class Provider(ABC):
         identity (property): The identity of the provider for auditing.
         session (property): The session of the provider for auditing.
         audit_config (property): The audit configuration of the provider.
-        output_options (property): The output configuration of the provider for auditing.
 
     Methods:
         print_credentials(): Displays the provider's credentials used for auditing in the command-line interface.
@@ -107,26 +108,6 @@ class Provider(ABC):
         """
         raise NotImplementedError()
 
-    @property
-    @abstractmethod
-    def output_options(self) -> str:
-        """
-        output_options method returns the provider's audit output configuration.
-
-        This method needs to be created in each provider.
-        """
-        raise NotImplementedError()
-
-    @output_options.setter
-    @abstractmethod
-    def output_options(self, value: str) -> Any:
-        """
-        output_options.setter sets the provider's audit output configuration.
-
-        This method needs to be created in each provider.
-        """
-        raise NotImplementedError()
-
     @abstractmethod
     def get_output_mapping(self) -> dict:
         """
@@ -169,7 +150,11 @@ class Provider(ABC):
         return Provider._global
 
     @staticmethod
-    def set_global_provider(arguments):
+    def set_global_provider(global_provider: "Provider") -> None:
+        Provider._global = global_provider
+
+    @staticmethod
+    def init_global_provider(arguments: Namespace) -> None:
         try:
             provider_class_path = (
                 f"{providers_path}.{arguments.provider}.{arguments.provider}_provider"
@@ -178,10 +163,16 @@ class Provider(ABC):
             provider_class = getattr(
                 import_module(provider_class_path), provider_class_name
             )
+            audit_config = load_and_validate_config_file(
+                arguments.provider, arguments.config_file
+            )
+            fixer_config = load_and_validate_config_file(
+                arguments.provider, arguments.fixer_config
+            )
 
             if not isinstance(Provider._global, provider_class):
                 if "aws" in provider_class_name.lower():
-                    global_provider = provider_class(
+                    provider_class(
                         arguments.aws_retries_max_attempts,
                         arguments.role,
                         arguments.session_duration,
@@ -194,11 +185,11 @@ class Provider(ABC):
                         arguments.scan_unused_services,
                         arguments.resource_tag,
                         arguments.resource_arn,
-                        arguments.config_file,
-                        arguments.fixer_config,
+                        audit_config,
+                        fixer_config,
                     )
                 elif "azure" in provider_class_name.lower():
-                    global_provider = provider_class(
+                    provider_class(
                         arguments.az_cli_auth,
                         arguments.sp_env_auth,
                         arguments.browser_auth,
@@ -206,29 +197,28 @@ class Provider(ABC):
                         arguments.tenant_id,
                         arguments.azure_region,
                         arguments.subscription_id,
-                        arguments.config_file,
-                        arguments.fixer_config,
+                        audit_config,
+                        fixer_config,
                     )
                 elif "gcp" in provider_class_name.lower():
-                    global_provider = provider_class(
+                    provider_class(
                         arguments.project_id,
                         arguments.excluded_project_id,
                         arguments.credentials_file,
                         arguments.impersonate_service_account,
                         arguments.list_project_id,
-                        arguments.config_file,
-                        arguments.fixer_config,
+                        audit_config,
+                        fixer_config,
                     )
                 elif "kubernetes" in provider_class_name.lower():
-                    global_provider = provider_class(
+                    provider_class(
                         arguments.kubeconfig_file,
                         arguments.context,
                         arguments.namespace,
-                        arguments.config_file,
-                        arguments.fixer_config,
+                        audit_config,
+                        fixer_config,
                     )
 
-            Provider._global = global_provider
         except TypeError as error:
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

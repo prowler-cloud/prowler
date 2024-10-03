@@ -7,20 +7,19 @@ from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################################ GuardDuty
 class GuardDuty(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.detectors = []
-        self.__threading_call__(self.__list_detectors__)
-        self.__get_detector__()
-        self.__list_findings__()
-        self.__list_members__()
-        self.__get_administrator_account__()
-        self.__list_tags_for_resource__()
+        self.__threading_call__(self._list_detectors)
+        self._get_detector()
+        self._list_findings()
+        self._list_members()
+        self._get_administrator_account()
+        self._list_tags_for_resource()
 
-    def __list_detectors__(self, regional_client):
+    def _list_detectors(self, regional_client):
         logger.info("GuardDuty - listing detectors...")
         try:
             detectors = False
@@ -51,7 +50,7 @@ class GuardDuty(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_detector__(self):
+    def _get_detector(self):
         logger.info("GuardDuty - getting detector info...")
         try:
             for detector in self.detectors:
@@ -66,6 +65,19 @@ class GuardDuty(AWSService):
                             and detector_info["Status"] == "ENABLED"
                         ):
                             detector.status = True
+
+                        data_sources = detector_info.get("DataSources", {})
+                        s3_logs = data_sources.get("S3Logs", {})
+                        if s3_logs.get("Status") == "ENABLED":
+                            detector.s3_protection = True
+
+                        for feat in detector_info.get("Features", []):
+                            if (
+                                feat.get("Name") == "RDS_LOGIN_EVENTS"
+                                and feat.get("Status", "DISABLED") == "ENABLED"
+                            ):
+                                detector.rds_protection = True
+
                 except Exception as error:
                     logger.error(
                         f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
@@ -75,7 +87,7 @@ class GuardDuty(AWSService):
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 
-    def __get_administrator_account__(self):
+    def _get_administrator_account(self):
         logger.info("GuardDuty - getting administrator account...")
         try:
             for detector in self.detectors:
@@ -105,7 +117,7 @@ class GuardDuty(AWSService):
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 
-    def __list_members__(self):
+    def _list_members(self):
         logger.info("GuardDuty - listing members...")
         try:
             for detector in self.detectors:
@@ -130,7 +142,7 @@ class GuardDuty(AWSService):
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 
-    def __list_findings__(self):
+    def _list_findings(self):
         logger.info("GuardDuty - listing findings...")
         try:
             for detector in self.detectors:
@@ -164,7 +176,7 @@ class GuardDuty(AWSService):
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 
-    def __list_tags_for_resource__(self):
+    def _list_tags_for_resource(self):
         logger.info("Guardduty - List Tags...")
         try:
             for detector in self.detectors:
@@ -190,3 +202,5 @@ class Detector(BaseModel):
     member_accounts: list = []
     administrator_account: str = None
     tags: Optional[list] = []
+    s3_protection: bool = False
+    rds_protection: bool = False

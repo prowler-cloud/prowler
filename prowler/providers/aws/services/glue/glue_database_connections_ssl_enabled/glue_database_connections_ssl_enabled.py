@@ -10,6 +10,7 @@ class glue_database_connections_ssl_enabled(Check):
             report.resource_id = conn.name
             report.resource_arn = conn.arn
             report.region = conn.region
+            report.resource_tags = conn.tags
             report.status = "FAIL"
             report.status_extended = (
                 f"Glue connection {conn.name} has SSL connection disabled."

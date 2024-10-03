@@ -35,12 +35,13 @@ class Test_cloudfront_distributions_logging_enabled:
     def test_one_distribution_logging_enabled(self):
         cloudfront_client = mock.MagicMock
         cloudfront_client.distributions = {
-            "DISTRIBUTION_ID": Distribution(
+            DISTRIBUTION_ID: Distribution(
                 arn=DISTRIBUTION_ARN,
                 id=DISTRIBUTION_ID,
                 region=REGION,
                 logging_enabled=True,
                 origins=[],
+                origin_failover=False,
             )
         }
 
@@ -69,7 +70,7 @@ class Test_cloudfront_distributions_logging_enabled:
     def test_one_distribution_logging_disabled_realtime_disabled(self):
         cloudfront_client = mock.MagicMock
         cloudfront_client.distributions = {
-            "DISTRIBUTION_ID": Distribution(
+            DISTRIBUTION_ID: Distribution(
                 arn=DISTRIBUTION_ARN,
                 id=DISTRIBUTION_ID,
                 region=REGION,
@@ -80,6 +81,7 @@ class Test_cloudfront_distributions_logging_enabled:
                     field_level_encryption_id="",
                 ),
                 origins=[],
+                origin_failover=False,
             )
         }
 
@@ -109,7 +111,7 @@ class Test_cloudfront_distributions_logging_enabled:
     def test_one_distribution_logging_disabled_realtime_enabled(self):
         cloudfront_client = mock.MagicMock
         cloudfront_client.distributions = {
-            "DISTRIBUTION_ID": Distribution(
+            DISTRIBUTION_ID: Distribution(
                 arn=DISTRIBUTION_ARN,
                 id=DISTRIBUTION_ID,
                 region=REGION,
@@ -120,6 +122,7 @@ class Test_cloudfront_distributions_logging_enabled:
                     field_level_encryption_id="",
                 ),
                 origins=[],
+                origin_failover=False,
             )
         }
 
@@ -149,7 +152,7 @@ class Test_cloudfront_distributions_logging_enabled:
     def test_one_distribution_logging_enabled_realtime_enabled(self):
         cloudfront_client = mock.MagicMock
         cloudfront_client.distributions = {
-            "DISTRIBUTION_ID": Distribution(
+            DISTRIBUTION_ID: Distribution(
                 arn=DISTRIBUTION_ARN,
                 id=DISTRIBUTION_ID,
                 region=REGION,
@@ -160,6 +163,7 @@ class Test_cloudfront_distributions_logging_enabled:
                     field_level_encryption_id="",
                 ),
                 origins=[],
+                origin_failover=False,
             )
         }
 

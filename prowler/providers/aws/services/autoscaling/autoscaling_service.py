@@ -5,17 +5,16 @@ from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################## AutoScaling
 class AutoScaling(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.launch_configurations = []
-        self.__threading_call__(self.__describe_launch_configurations__)
+        self.__threading_call__(self._describe_launch_configurations)
         self.groups = []
-        self.__threading_call__(self.__describe_auto_scaling_groups__)
+        self.__threading_call__(self._describe_auto_scaling_groups)
 
-    def __describe_launch_configurations__(self, regional_client):
+    def _describe_launch_configurations(self, regional_client):
         logger.info("AutoScaling - Describing Launch Configurations...")
         try:
             describe_launch_configurations_paginator = regional_client.get_paginator(
@@ -44,7 +43,7 @@ class AutoScaling(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_auto_scaling_groups__(self, regional_client):
+    def _describe_auto_scaling_groups(self, regional_client):
         logger.info("AutoScaling - Describing AutoScaling Groups...")
         try:
             describe_auto_scaling_groups_paginator = regional_client.get_paginator(
@@ -74,6 +73,49 @@ class AutoScaling(AWSService):
             )
 
 
+# Global list for service namespaces needed for Describe Scalable Targets
+SERVICE_NAMESPACES = ["dynamodb"]
+
+
+class ApplicationAutoScaling(AWSService):
+    def __init__(self, provider):
+        super().__init__("application-autoscaling", provider)
+        self.scalable_targets = []
+        self.__threading_call__(self._describe_scalable_targets)
+
+    def _describe_scalable_targets(self, regional_client):
+        logger.info("ApplicationAutoScaling - Describing Scalable Targets...")
+        try:
+            describe_scalable_targets_paginator = regional_client.get_paginator(
+                "describe_scalable_targets"
+            )
+            for service_namespace in SERVICE_NAMESPACES:
+                logger.info(f"Processing ServiceNamespace: {service_namespace}")
+                for page in describe_scalable_targets_paginator.paginate(
+                    ServiceNamespace=service_namespace
+                ):
+                    for target in page.get("ScalableTargets", []):
+                        if not self.audit_resources or (
+                            is_resource_filtered(
+                                target["ScalableTargetARN"],
+                                self.audit_resources,
+                            )
+                        ):
+                            self.scalable_targets.append(
+                                ScalableTarget(
+                                    arn=target.get("ScalableTargetARN", ""),
+                                    resource_id=target.get("ResourceId"),
+                                    service_namespace=target.get("ServiceNamespace"),
+                                    scalable_dimension=target.get("ScalableDimension"),
+                                    region=regional_client.region,
+                                )
+                            )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+
 class LaunchConfiguration(BaseModel):
     arn: str
     name: str
@@ -88,3 +130,11 @@ class Group(BaseModel):
     region: str
     availability_zones: list
     tags: list = []
+
+
+class ScalableTarget(BaseModel):
+    arn: str
+    resource_id: str
+    service_namespace: str
+    scalable_dimension: str
+    region: str

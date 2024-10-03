@@ -1,22 +1,24 @@
+from typing import Optional
+
 from pydantic import BaseModel
-from typing import List, Optional, Dict
+
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################## Database Migration Service
 class DMS(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.instances = []
         self.endpoints = {}
-        self.data_providers = []
-        self.__threading_call__(self.__describe_replication_instances__)
-        self.__threading_call__(self.__describe_endpoints__)
+        self.__threading_call__(self._describe_replication_instances)
+        self.__threading_call__(self._list_tags, self.instances)
+        self.__threading_call__(self._describe_endpoints)
+        self.__threading_call__(self._list_tags, self.endpoints.values())
 
-    def __describe_replication_instances__(self, regional_client):
+    def _describe_replication_instances(self, regional_client):
         logger.info("DMS - Describing DMS Replication Instances...")
         try:
             describe_replication_instances_paginator = regional_client.get_paginator(
@@ -52,7 +54,7 @@ class DMS(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_endpoints__(self, regional_client):
+    def _describe_endpoints(self, regional_client):
         logger.info("DMS - Describing DMS Endpoints...")
         try:
             describe_endpoints_paginator = regional_client.get_paginator(
@@ -64,52 +66,34 @@ class DMS(AWSService):
                     if not self.audit_resources or (
                         is_resource_filtered(arn, self.audit_resources)
                     ):
-                        self.endpoints[endpoint["EndpointIdentifier"]] = Endpoint(
+                        self.endpoints[arn] = Endpoint(
+                            arn=arn,
                             id=endpoint["EndpointIdentifier"],
-                            ssl_mode=endpoint.get("SslMode", False)
+                            region=regional_client.region,
+                            ssl_mode=endpoint.get("SslMode", False),
                         )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-
-    def _describe_data_providers_(self, regional_client):
-        logger.info("DMS - Describing DMS Data Providers...")
+    def _list_tags(self, resource: any):
         try:
-            describe_data_provider_paginator = regional_client.get_paginator(
-                "describe_data_providers"
-            )
-
-            for page in describe_data_provider_paginator.paginate():
-                for provider in page["DataProviders"]:
-                    name = provider['DataProviderName']
-                    if not self.audit_resources or (
-                        is_resource_filtered(name, self.audit_resources)
-                    ):
-                        settings = provider.get('Settings', {})
-                        for setting_key, setting_value in settings.items():
-                            if isinstance(setting_value, dict) and 'SslMode' in setting_value:
-                                settings[setting_key] = setting_value['SslMode']
-                            
-                        self.data_providers.append(DataProvider(
-                            name=DataProvider['DataProviderName'],
-                            settings=settings
-                        ))
-                            
+            resource.tags = self.regional_clients[
+                resource.region
+            ].list_tags_for_resource(ResourceArn=resource.arn)["TagList"]
         except Exception as error:
             logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{resource.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-
-class DataProvider(BaseModel):
-    name: str
-    settings: dict
 
 
 class Endpoint(BaseModel):
+    arn: str
     id: str
+    region: str
     ssl_mode: str
+    tags: Optional[list]
 
 
 class RepInstance(BaseModel):
@@ -122,3 +106,4 @@ class RepInstance(BaseModel):
     security_groups: list[str] = []
     multi_az: bool
     region: str
+    tags: Optional[list]
