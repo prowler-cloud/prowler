@@ -27,7 +27,7 @@ def mock_aks_get_clusters(_):
     "prowler.providers.azure.services.aks.aks_service.AKS._get_clusters",
     new=mock_aks_get_clusters,
 )
-class Test_AppInsights_Service:
+class Test_AKS_Service:
     def test_get_client(self):
         aks = AKS(set_mocked_azure_provider())
         assert (

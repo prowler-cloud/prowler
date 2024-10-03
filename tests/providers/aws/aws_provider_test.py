@@ -997,11 +997,11 @@ aws:
             ],
         )
         instance_id = instances["Instances"][0]["InstanceId"]
-        instance_arn = f"arn:aws:ec2:{AWS_REGION_EU_CENTRAL_1}::instance/{instance_id}"
+        instance_arn = f"arn:aws:ec2:{AWS_REGION_EU_CENTRAL_1}:{AWS_ACCOUNT_NUMBER}:ec2:instance/{instance_id}"
         image_id = ec2_client.create_image(Name="testami", InstanceId=instance_id)[
             "ImageId"
         ]
-        image_arn = f"arn:aws:ec2:{AWS_REGION_EU_CENTRAL_1}::image/{image_id}"
+        image_arn = f"arn:aws:ec2:{AWS_REGION_EU_CENTRAL_1}:{AWS_ACCOUNT_NUMBER}:ec2:image/{image_id}"
         ec2_client.create_tags(
             Resources=[image_id], Tags=[{"Key": "ami", "Value": "test"}]
         )
