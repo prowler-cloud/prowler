@@ -29,7 +29,7 @@ class Glue(AWSService):
         self.__threading_call__(self._list_tags, self.jobs)
         self.ml_transforms = {}
         self.__threading_call__(self._get_ml_transforms)
-        self.__threading_call__(self._get_tags, self.ml_transforms.values())
+        self.__threading_call__(self._list_tags, self.ml_transforms.values())
 
     def _get_data_catalog_arn_template(self, region):
         return f"arn:{self.audited_partition}:glue:{region}:{self.audited_account}:data-catalog"
@@ -244,20 +244,6 @@ class Glue(AWSService):
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-
-    def _get_tags(self, resource: any):
-        logger.info("Glue - Getting tags...")
-        try:
-            if getattr(resource, "arn", "") and getattr(resource, "region", ""):
-                resource.tags = [
-                    self.regional_clients[resource.region]
-                    .get_tags(ResourceArn=resource.arn)
-                    .get("Tags", [])
-                ]
-        except Exception as error:
-            logger.error(
-                f"{resource.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
 
