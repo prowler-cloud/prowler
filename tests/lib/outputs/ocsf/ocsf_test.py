@@ -2,6 +2,7 @@ import json
 from datetime import datetime
 from io import StringIO
 
+import requests
 from freezegun import freeze_time
 from mock import patch
 from py_ocsf_models.events.base_event import SeverityID, StatusID
@@ -97,6 +98,36 @@ class TestOCSF:
             "notes": findings[0].notes,
             "compliance": findings[0].compliance,
         }
+
+    def test_validate_ocsf(self):
+        mock_file = StringIO()
+        findings = [
+            generate_finding_output(
+                status="FAIL",
+                severity="low",
+                muted=False,
+                region=AWS_REGION_EU_WEST_1,
+                timestamp=datetime.now(),
+                resource_details="resource_details",
+                resource_name="resource_name",
+                resource_uid="resource-id",
+                status_extended="status extended",
+            )
+        ]
+
+        output = OCSF(findings)
+        output._file_descriptor = mock_file
+
+        with patch.object(mock_file, "close", return_value=None):
+            output.batch_write_data_to_file()
+
+        mock_file.seek(0)
+        content = mock_file.read()
+        json_data = json.loads(content)
+        url = "https://schema.ocsf.io/api/v2/validate"
+        headers = {"content-type": "application/json"}
+        response = requests.post(url, headers=headers, json=json_data[0])
+        assert response.json()["error_count"] == 0
 
     @freeze_time(datetime.now())
     def test_batch_write_data_to_file(self):
