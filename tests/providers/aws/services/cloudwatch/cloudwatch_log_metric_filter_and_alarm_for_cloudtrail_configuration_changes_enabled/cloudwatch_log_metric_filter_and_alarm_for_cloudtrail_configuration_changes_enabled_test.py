@@ -287,7 +287,7 @@ class Test_cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_c
             assert result[0].resource_id == "/log-group/test"
             assert (
                 result[0].resource_arn
-                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:metric-filter/test-filter"
+                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test"
             )
             assert result[0].region == AWS_REGION_US_EAST_1
 
@@ -382,7 +382,7 @@ class Test_cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_c
             assert result[0].resource_id == "/log-group/test"
             assert (
                 result[0].resource_arn
-                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:metric-filter/test-filter"
+                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test"
             )
             assert result[0].region == AWS_REGION_US_EAST_1
 
@@ -477,7 +477,7 @@ class Test_cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_c
             assert result[0].resource_id == "/log-group/test"
             assert (
                 result[0].resource_arn
-                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:metric-filter/test-filter"
+                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test"
             )
             assert result[0].region == AWS_REGION_US_EAST_1
 
@@ -572,6 +572,6 @@ class Test_cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_c
             assert result[0].resource_id == "/log-group/test"
             assert (
                 result[0].resource_arn
-                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:metric-filter/test-filter"
+                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test"
             )
             assert result[0].region == AWS_REGION_US_EAST_1

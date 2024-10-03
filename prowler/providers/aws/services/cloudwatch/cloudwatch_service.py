@@ -82,10 +82,10 @@ class Logs(AWSService):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.log_group_arn_template = f"arn:{self.audited_partition}:logs:{self.region}:{self.audited_account}:log-group"
-        self.metric_filters = []
         self.log_groups = []
-        self.__threading_call__(self._describe_metric_filters)
         self.__threading_call__(self._describe_log_groups)
+        self.metric_filters = []
+        self.__threading_call__(self._describe_metric_filters)
         if self.log_groups:
             if (
                 "cloudwatch_log_group_no_secrets_in_logs"
@@ -111,13 +111,21 @@ class Logs(AWSService):
                     ):
                         if self.metric_filters is None:
                             self.metric_filters = []
+
+                        log_group = None
+
+                        for lg in self.log_groups:
+                            if lg.name == filter["logGroupName"]:
+                                log_group = lg
+                                break
+
                         self.metric_filters.append(
                             MetricFilter(
                                 arn=arn,
                                 name=filter["filterName"],
                                 metric=filter["metricTransformations"][0]["metricName"],
                                 pattern=filter.get("filterPattern", ""),
-                                log_group=filter["logGroupName"],
+                                log_group=log_group if log_group else None,
                                 region=regional_client.region,
                             )
                         )
@@ -242,15 +250,6 @@ class MetricAlarm(BaseModel):
     tags: Optional[list] = []
 
 
-class MetricFilter(BaseModel):
-    arn: str
-    name: str
-    metric: str
-    pattern: str
-    log_group: str
-    region: str
-
-
 class LogGroup(BaseModel):
     arn: str
     name: str
@@ -262,6 +261,15 @@ class LogGroup(BaseModel):
         {}
     )  # Log stream name as the key, array of events as the value
     tags: Optional[list] = []
+
+
+class MetricFilter(BaseModel):
+    arn: str
+    name: str
+    metric: str
+    pattern: str
+    log_group: Optional[LogGroup]
+    region: str
 
 
 def convert_to_cloudwatch_timestamp_format(epoch_time):
