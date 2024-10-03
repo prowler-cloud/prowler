@@ -1,12 +1,31 @@
 from unittest import mock
 
+import botocore
 from boto3 import client
 from moto import mock_aws
 
-from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provider
+from tests.providers.aws.utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_US_EAST_1,
+    set_mocked_aws_provider,
+)
+
+orig = botocore.client.BaseClient._make_api_call
+
+
+def mock_make_api_call(self, operation_name, kwarg):
+    if operation_name == "ListSAMLProviderTags":
+        return {
+            "Tags": [
+                {"Key": "Name", "Value": "test"},
+                {"Key": "Owner", "Value": "test"},
+            ]
+        }
+    return orig(self, operation_name, kwarg)
 
 
 class Test_iam_check_saml_providers_sts:
+    @mock.patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     @mock_aws
     def test_iam_check_saml_providers_sts(self):
         iam_client = client("iam")
@@ -63,3 +82,17 @@ nTTxU4a7x1naFxzYXK1iQ1vMARKMjDb19QEJIEJKZlDK4uS7yMlf1nFS
                 check = iam_check_saml_providers_sts()
                 result = check.execute()
                 assert result[0].status == "PASS"
+                assert result[0].resource_id == saml_provider_name
+                assert (
+                    result[0].resource_arn
+                    == f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:saml-provider/{saml_provider_name}"
+                )
+                assert result[0].resource_tags == [
+                    {"Key": "Name", "Value": "test"},
+                    {"Key": "Owner", "Value": "test"},
+                ]
+                assert result[0].region == AWS_REGION_US_EAST_1
+                assert (
+                    result[0].status_extended
+                    == f"SAML Provider {saml_provider_name} has been found."
+                )
