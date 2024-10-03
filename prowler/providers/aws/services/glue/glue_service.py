@@ -25,10 +25,11 @@ class Glue(AWSService):
         self.security_configs = []
         self.__threading_call__(self._get_security_configurations)
         self.jobs = []
-        self.__threading_call__(self.__get_jobs__)
+        self.__threading_call__(self._get_jobs)
         self.__threading_call__(self._list_tags, self.jobs)
-        self.transforms = {}
-        self.__threading_call__(self.__get_ml_transorms__)
+        self.ml_transforms = {}
+        self.__threading_call__(self._get_ml_transforms)
+        self.__threading_call__(self._get_tags, self.ml_transforms.values())
 
     def _get_data_catalog_arn_template(self, region):
         return f"arn:{self.audited_partition}:glue:{region}:{self.audited_account}:data-catalog"
@@ -221,31 +222,42 @@ class Glue(AWSService):
                 f"{resource.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_ml_transforms__(self, regional_client):
-        logger.info("Glue - Checking ml_transforms encryption while at rest...")
+    def _get_ml_transforms(self, regional_client):
+        logger.info("Glue - Getting ML Transforms...")
         try:
-            paginator = regional_client.get_paginator("get_ml_transforms")
-            for page in paginator.paginate():
-                for transform in page["Transforms"]:
-                    crafted_arn = f"arn:{self.audited_partition}:glue:{regional_client.region}:{self.audited_account}:mlTransform/{transform['Name']}"
-                    if not self.audit_resources or is_resource_filtered(
-                        crafted_arn, self.audit_resources
-                    ):
-                        user_data_encryption = (
-                            transform.get("TransformEncryption", {})
-                            .get("MlUserDataEncryption", {})
-                            .get("MlUserDataEncryptionMode")
-                        )
-                        self.transforms[crafted_arn] = Transforms(
-                            id=transform["TransformId"],
-                            name=transform["Name"],
-                            user_data_encryption=user_data_encryption,
-                            region=regional_client.region,
-                        )
+            transforms = regional_client.get_ml_transforms()["Transforms"]
+            for transform in transforms:
+                ml_transform_arn = f"arn:{self.audited_partition}:glue:{regional_client.region}:{self.audited_account}:mlTransform/{transform['TransformId']}"
+                if not self.audit_resources or is_resource_filtered(
+                    ml_transform_arn, self.audit_resources
+                ):
+                    self.ml_transforms[ml_transform_arn] = MLTransform(
+                        arn=ml_transform_arn,
+                        id=transform["TransformId"],
+                        name=transform["Name"],
+                        user_data_encryption=transform.get("TransformEncryption", {})
+                        .get("MlUserDataEncryption", {})
+                        .get("MlUserDataEncryptionMode", "DISABLED"),
+                        region=regional_client.region,
+                    )
 
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _get_tags(self, resource: any):
+        logger.info("Glue - Getting tags...")
+        try:
+            if getattr(resource, "arn", "") and getattr(resource, "region", ""):
+                resource.tags = [
+                    self.regional_clients[resource.region]
+                    .get_tags(ResourceArn=resource.arn)
+                    .get("Tags", [])
+                ]
+        except Exception as error:
+            logger.error(
+                f"{resource.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
 
@@ -303,9 +315,10 @@ class SecurityConfig(BaseModel):
     region: str
 
 
-class Transforms(BaseModel):
+class MLTransform(BaseModel):
     arn: str
     id: str
     name: str
-    transform_encryption: str
+    user_data_encryption: str
     region: str
+    tags: Optional[list]
