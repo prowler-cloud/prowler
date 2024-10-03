@@ -149,3 +149,7 @@ class Test_EFS:
         )
         assert efs.filesystems[efs_arn].access_points[0].id == "fsap-123"
         assert efs.filesystems[efs_arn].access_points[0].root_directory_path == "/"
+        assert efs.filesystems[efs_arn].access_points[0].posix_user == {
+            "Uid": 1000,
+            "Gid": 1000,
+        }
