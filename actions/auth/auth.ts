@@ -1,16 +1,12 @@
 "use server";
 
-import { jwtDecode, JwtPayload } from "jwt-decode";
+import { jwtDecode } from "jwt-decode";
 import { AuthError } from "next-auth";
 import { z } from "zod";
 
 import { signIn, signOut } from "@/auth.config";
 import { parseStringify } from "@/lib";
-import { authFormSchema } from "@/types";
-
-interface CustomJwtPayload extends JwtPayload {
-  user_id: string;
-}
+import { authFormSchema, CustomJwtPayload } from "@/types";
 
 const formSchemaSignIn = authFormSchema("sign-in");
 // const formSchemaSignUp = authFormSchema("sign-up");
@@ -93,15 +89,14 @@ export const getToken = async (formData: z.infer<typeof formSchemaSignIn>) => {
     const userId = decodedToken.user_id;
 
     // Verify if the response contains the expected data
-    if (data && data.data && data.data.attributes) {
-      return {
-        email: formData.email,
-        accessToken,
-        refreshToken,
-        userId,
-        // Add here other user fields we need in the session
-      };
-    }
+
+    return {
+      email: formData.email,
+      accessToken,
+      refreshToken,
+      userId,
+      // Add here other user fields we need in the session
+    };
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error("Error en trying to get token:", error);

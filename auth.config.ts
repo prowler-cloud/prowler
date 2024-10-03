@@ -1,8 +1,55 @@
+import { jwtDecode } from "jwt-decode";
 import NextAuth, { type NextAuthConfig } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { z } from "zod";
 
 import { getToken } from "./actions/auth";
+import { CustomJwtPayload } from "./types";
+
+const refreshAccessToken = async (token: CustomJwtPayload) => {
+  const keyServer = process.env.API_BASE_URL;
+  const url = new URL(`${keyServer}/tokens/refresh`);
+
+  const bodyData = {
+    data: {
+      type: "TokenRefresh",
+      attributes: {
+        refresh: token.refreshToken,
+      },
+    },
+  };
+
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/vnd.api+json",
+        Accept: "application/vnd.api+json",
+      },
+      body: JSON.stringify(bodyData),
+    });
+    // console.log("response", response);
+    const newTokens = await response.json();
+
+    if (!response.ok) {
+      // TODO: handle error
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return {
+      ...token,
+      accessToken: newTokens.data.attributes.access,
+      refreshToken: newTokens.data.attributes.refresh,
+    };
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error("Error refreshing access token:", error);
+    return {
+      ...token,
+      error: "RefreshAccessTokenError",
+    };
+  }
+};
 
 export const authConfig = {
   session: {
@@ -57,10 +104,13 @@ export const authConfig = {
     },
 
     jwt: async ({ token, user, account }) => {
-      // console.log(`In jwt callback - Token is ${JSON.stringify(token)}`);
+      if (token?.accessToken) {
+        const decodedToken = jwtDecode<CustomJwtPayload>(token.accessToken);
+        console.log("decodedToken", decodedToken);
+
+        token.accessTokenExpires = decodedToken?.exp * 1000;
+      }
       if (user && account) {
-        // console.log(`In jwt callback - User is ${JSON.stringify(user)}`);
-        // console.log(`In jwt callback - Account is ${JSON.stringify(account)}`);
         // token.data = user;
         return {
           ...token,
@@ -69,11 +119,20 @@ export const authConfig = {
           user,
         };
       }
-      return token;
+
+      console.log(
+        "Access token expires",
+        token.accessTokenExpires,
+        new Date(Number(token.accessTokenExpires)),
+      );
+
+      if (Date.now() < token.accessTokenExpires) return token;
+
+      // Access token is expired, we need to refresh it
+      return refreshAccessToken(token);
     },
 
     session: async ({ session, token }) => {
-      console.log(`In session callback - Token is ${JSON.stringify(token)}`);
       // session.user = token.data as any;
       if (token) {
         session.accessToken = token.accessToken;
