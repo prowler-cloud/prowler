@@ -755,6 +755,7 @@ class IAM(AWSService):
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+            saml_providers = None
 
         return saml_providers
 
