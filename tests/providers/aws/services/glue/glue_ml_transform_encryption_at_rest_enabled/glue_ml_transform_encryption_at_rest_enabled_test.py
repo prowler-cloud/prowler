@@ -1,13 +1,12 @@
 from unittest.mock import MagicMock, patch
 
-from prowler.providers.aws.services.glue.glue_service import MLTransform
 from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, AWS_REGION_EU_WEST_1
 
 
 class Test_glue_ml_transform_encryption_at_rest_enabled:
     def test_no_ml_transfroms(self):
         glue_client = MagicMock()
-        glue_client.transforms = []
+        glue_client.transforms = {}
 
         with patch(
             "prowler.providers.aws.services.glue.glue_service.Glue",
@@ -29,6 +28,8 @@ class Test_glue_ml_transform_encryption_at_rest_enabled:
         glue_client = MagicMock()
         ml_transform_id = "transform1"
         ml_transform_arn = f"arn:aws:glue:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:mlTransform/{ml_transform_id}"
+
+        from prowler.providers.aws.services.glue.glue_service import MLTransform
 
         glue_client.ml_transforms = {
             ml_transform_arn: MLTransform(
@@ -67,14 +68,16 @@ class Test_glue_ml_transform_encryption_at_rest_enabled:
 
     def test_ml_transform_encryption_enabled(self):
         glue_client = MagicMock()
-        ml_transform_id = "transform1"
+        ml_transform_id = "transform2"
         ml_transform_arn = f"arn:aws:glue:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:mlTransform/{ml_transform_id}"
+
+        from prowler.providers.aws.services.glue.glue_service import MLTransform
 
         glue_client.ml_transforms = {
             ml_transform_arn: MLTransform(
                 arn=ml_transform_arn,
                 id=ml_transform_id,
-                name="ml-transform1",
+                name="ml-transform2",
                 user_data_encryption="SSE-KMS",
                 region=AWS_REGION_EU_WEST_1,
                 tags=[{"test_key": "test_value"}],
@@ -102,5 +105,5 @@ class Test_glue_ml_transform_encryption_at_rest_enabled:
             assert result[0].region == AWS_REGION_EU_WEST_1
             assert (
                 result[0].status_extended
-                == "Glue ML Transform ml-transform1 is encrypted at rest (SSE-KMS mode)."
+                == "Glue ML Transform ml-transform2 is encrypted at rest (SSE-KMS mode)."
             )
