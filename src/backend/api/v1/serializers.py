@@ -86,7 +86,7 @@ class TokenSerializer(serializers.Serializer):
         except Exception as e:
             raise serializers.ValidationError({"detail": str(e)})
 
-        return {"refresh": str(refresh), "access": str(access)}
+        return {"access": str(access), "refresh": str(refresh)}
 
 
 class TokenRefreshSerializer(serializers.Serializer):
@@ -215,7 +215,7 @@ class UserUpdateSerializer(BaseWriteSerializer):
 
 
 # Tasks
-class TaskBase(serializers.Serializer):
+class TaskBase(serializers.ModelSerializer):
     state_mapping = {
         "PENDING": StateChoices.SCHEDULED,
         "STARTED": StateChoices.EXECUTING,
@@ -225,8 +225,9 @@ class TaskBase(serializers.Serializer):
         "REVOKED": StateChoices.CANCELLED,
     }
 
-    class JSONAPIMeta:
-        resource_name = "Task"
+    class Meta:
+        fields = ["id"]
+        model = Task
 
     def map_state(self, task_result_state):
         return self.state_mapping.get(task_result_state, StateChoices.AVAILABLE)
@@ -241,27 +242,6 @@ class TaskBase(serializers.Serializer):
         task_result_state = (
             obj.task_runner_task.status if obj.task_runner_task else None
         )
-        return self.map_state(task_result_state)
-
-
-class DelayedTaskSerializer(TaskBase):
-    id = serializers.CharField()
-    state = serializers.SerializerMethodField(read_only=True)
-
-    class Meta:
-        fields = [
-            "id",
-            "state",
-        ]
-
-    @extend_schema_field(
-        {
-            "type": "string",
-            "enum": StateChoices.values,
-        }
-    )
-    def get_state(self, obj):
-        task_result_state = obj.status if obj else None
         return self.map_state(task_result_state)
 
 
@@ -444,6 +424,7 @@ class ScanSerializer(RLSSerializer):
             "scanner_args",
             "duration",
             "provider",
+            "task",
             "started_at",
             "completed_at",
             "scheduled_at",
@@ -455,7 +436,7 @@ class ScanCreateSerializer(RLSSerializer, BaseWriteSerializer):
     class Meta:
         model = Scan
         # TODO: add mutelist when implemented
-        fields = ["provider", "scanner_args", "name"]
+        fields = ["id", "provider", "scanner_args", "name"]
 
     def create(self, validated_data):
         provider = validated_data.get("provider")
@@ -488,9 +469,32 @@ class ScanUpdateSerializer(BaseWriteSerializer):
         }
 
 
+class ScanTaskSerializer(RLSSerializer):
+    trigger = serializers.ChoiceField(
+        choices=Scan.TriggerChoices.choices, read_only=True
+    )
+    state = StateEnumSerializerField(read_only=True)
+
+    class Meta:
+        model = Scan
+        fields = [
+            "id",
+            "name",
+            "trigger",
+            "state",
+            "unique_resource_count",
+            "progress",
+            "scanner_args",
+            "duration",
+            "started_at",
+            "completed_at",
+            "scheduled_at",
+        ]
+
+
 class ResourceTagSerializer(RLSSerializer):
     """
-    Serializer fore the ResourceTag model
+    Serializer for the ResourceTag model
     """
 
     class Meta:

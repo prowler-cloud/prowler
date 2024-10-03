@@ -420,6 +420,70 @@ class Migration(migrations.Migration):
                 name="unique_provider_uids",
             ),
         ),
+        migrations.CreateModel(
+            name="Task",
+            fields=[
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("inserted_at", models.DateTimeField(auto_now_add=True)),
+                (
+                    "task_runner_task",
+                    models.OneToOneField(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="task",
+                        related_query_name="task",
+                        to="django_celery_results.taskresult",
+                    ),
+                ),
+                (
+                    "tenant",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="api.tenant"
+                    ),
+                ),
+            ],
+            options={
+                "db_table": "tasks",
+                "abstract": False,
+            },
+        ),
+        migrations.AddConstraint(
+            model_name="task",
+            constraint=api.rls.RowLevelSecurityConstraint(
+                "tenant_id",
+                name="rls_on_task",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ),
+        migrations.AddIndex(
+            model_name="task",
+            index=models.Index(
+                fields=["id", "task_runner_task"],
+                name="tasks_id_trt_id_idx",
+            ),
+        ),
+        migrations.RunSQL(
+            f"""
+        ALTER TABLE {TASK_RUNNER_DB_TABLE} ENABLE ROW LEVEL SECURITY;
+        CREATE POLICY "{DB_PROWLER_USER}_{TASK_RUNNER_DB_TABLE}_select"
+        ON {TASK_RUNNER_DB_TABLE}
+        FOR SELECT
+        TO {DB_PROWLER_USER}
+        USING (
+            task_id::uuid in (SELECT id FROM tasks WHERE tenant_id = (NULLIF(current_setting('{POSTGRES_TENANT_VAR}', true), ''))::uuid)
+        );
+        GRANT SELECT ON TABLE {TASK_RUNNER_DB_TABLE} TO {DB_PROWLER_USER};
+        """
+        ),
         # Create and register ScanTriggerEnum type
         migrations.RunPython(
             ScanTriggerEnumMigration.create_enum_type,
@@ -489,6 +553,17 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 (
+                    "task",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="scans",
+                        related_query_name="scan",
+                        to="api.task",
+                        null=True,
+                        blank=True,
+                    ),
+                ),
+                (
                     "tenant",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE, to="api.tenant"
@@ -514,70 +589,6 @@ class Migration(migrations.Migration):
                 fields=["provider", "state", "trigger", "scheduled_at"],
                 name="scans_prov_state_trig_sche_idx",
             ),
-        ),
-        migrations.CreateModel(
-            name="Task",
-            fields=[
-                (
-                    "id",
-                    models.UUIDField(
-                        default=uuid.uuid4,
-                        editable=False,
-                        primary_key=True,
-                        serialize=False,
-                    ),
-                ),
-                ("inserted_at", models.DateTimeField(auto_now_add=True)),
-                (
-                    "task_runner_task",
-                    models.OneToOneField(
-                        blank=True,
-                        null=True,
-                        on_delete=django.db.models.deletion.CASCADE,
-                        related_name="task",
-                        related_query_name="task",
-                        to="django_celery_results.taskresult",
-                    ),
-                ),
-                (
-                    "tenant",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to="api.tenant"
-                    ),
-                ),
-            ],
-            options={
-                "db_table": "tasks",
-                "abstract": False,
-            },
-        ),
-        migrations.AddConstraint(
-            model_name="task",
-            constraint=api.rls.RowLevelSecurityConstraint(
-                "tenant_id",
-                name="rls_on_task",
-                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
-            ),
-        ),
-        migrations.AddIndex(
-            model_name="task",
-            index=models.Index(
-                fields=["id", "task_runner_task"],
-                name="tasks_id_trt_id_idx",
-            ),
-        ),
-        migrations.RunSQL(
-            f"""
-        ALTER TABLE {TASK_RUNNER_DB_TABLE} ENABLE ROW LEVEL SECURITY;
-        CREATE POLICY "{DB_PROWLER_USER}_{TASK_RUNNER_DB_TABLE}_select"
-        ON {TASK_RUNNER_DB_TABLE}
-        FOR SELECT
-        TO {DB_PROWLER_USER}
-        USING (
-            task_id::uuid in (SELECT id FROM tasks WHERE tenant_id = (NULLIF(current_setting('{POSTGRES_TENANT_VAR}', true), ''))::uuid)
-        );
-        GRANT SELECT ON TABLE {TASK_RUNNER_DB_TABLE} TO {DB_PROWLER_USER};
-        """
         ),
         # Resources
         migrations.RunSQL(
@@ -812,7 +823,7 @@ class Migration(migrations.Migration):
             constraint=api.rls.RowLevelSecurityConstraint(
                 "tenant_id",
                 name="rls_on_resourcetag",
-                statements=["SELECT"],
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
             ),
         ),
         migrations.AddConstraint(
@@ -827,13 +838,13 @@ class Migration(migrations.Migration):
             constraint=api.rls.RowLevelSecurityConstraint(
                 "tenant_id",
                 name="rls_on_resourcetagmapping",
-                statements=["SELECT"],
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
             ),
         ),
         migrations.AddConstraint(
             model_name="resource",
             constraint=models.UniqueConstraint(
-                fields=("tenant_id", "provider_id", "uid"),
+                fields=("tenant_id", "provider_id", "uid", "region"),
                 name="unique_resources_by_provider",
             ),
         ),
@@ -842,7 +853,7 @@ class Migration(migrations.Migration):
             constraint=api.rls.RowLevelSecurityConstraint(
                 "tenant_id",
                 name="rls_on_resource",
-                statements=["SELECT"],
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
             ),
         ),
         # Create and register ScanTypeEnum type
@@ -1084,7 +1095,7 @@ class Migration(migrations.Migration):
             constraint=api.rls.RowLevelSecurityConstraint(
                 "tenant_id",
                 name="rls_on_resourcefindingmapping",
-                statements=["SELECT"],
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
             ),
         ),
         PostgresAddDefaultPartition(
@@ -1097,7 +1108,7 @@ class Migration(migrations.Migration):
                 "tenant_id",
                 name="rls_on_resource_finding_mappings_default",
                 partition_name="default",
-                statements=["SELECT"],
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
             ),
         ),
         migrations.AlterModelOptions(

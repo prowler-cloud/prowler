@@ -926,13 +926,21 @@ class TestProviderViewSet:
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
+    @patch("api.v1.views.Task.objects.get")
     @patch("api.v1.views.delete_provider_task.delay")
     def test_providers_delete(
-        self, mock_delete_task, authenticated_client, providers_fixture
+        self,
+        mock_delete_task,
+        mock_task_get,
+        authenticated_client,
+        providers_fixture,
+        tasks_fixture,
     ):
+        prowler_task = tasks_fixture[0]
         task_mock = Mock()
-        task_mock.id = "12345"
+        task_mock.id = prowler_task.id
         mock_delete_task.return_value = task_mock
+        mock_task_get.return_value = prowler_task
 
         provider1, *_ = providers_fixture
         response = authenticated_client.delete(
@@ -951,17 +959,22 @@ class TestProviderViewSet:
         )
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
+    @patch("api.v1.views.Task.objects.get")
     @patch("api.v1.views.check_provider_connection_task.delay")
     def test_providers_connection(
         self,
         mock_provider_connection,
+        mock_task_get,
         authenticated_client,
         providers_fixture,
+        tasks_fixture,
     ):
+        prowler_task = tasks_fixture[0]
         task_mock = Mock()
-        task_mock.id = "12345"
+        task_mock.id = prowler_task.id
         task_mock.status = "PENDING"
         mock_provider_connection.return_value = task_mock
+        mock_task_get.return_value = prowler_task
 
         provider1, *_ = providers_fixture
         assert provider1.connected is None
@@ -1127,13 +1140,21 @@ class TestScanViewSet:
             ),
         ],
     )
+    @patch("api.v1.views.Task.objects.get")
+    @patch("api.v1.views.perform_scan_task.delay")
     def test_scans_create_valid(
         self,
+        mock_perform_scan_task,
+        mock_task_get,
         authenticated_client,
         scan_json_payload,
         expected_scanner_args,
         providers_fixture,
+        tasks_fixture,
     ):
+        prowler_task = tasks_fixture[0]
+        mock_perform_scan_task.return_value.id = prowler_task.id
+        mock_task_get.return_value = prowler_task
         *_, provider5 = providers_fixture
         # Provider5 has these scanner_args
         # scanner_args={"key1": "value1", "key2": {"key21": "value21"}}

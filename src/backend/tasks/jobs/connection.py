@@ -2,6 +2,9 @@ from datetime import datetime, timezone
 
 from celery.utils.log import get_task_logger
 from prowler.providers.aws.aws_provider import AwsProvider
+from prowler.providers.azure.azure_provider import AzureProvider
+from prowler.providers.gcp.gcp_provider import GcpProvider
+from prowler.providers.kubernetes.kubernetes_provider import KubernetesProvider
 
 from api.models import Provider
 
@@ -26,20 +29,26 @@ def check_provider_connection(provider_id: str):
     """
     provider_instance = Provider.objects.get(pk=provider_id)
     match provider_instance.provider:
+        # TODO Refactor when proper credentials are implemented
         case Provider.ProviderChoices.AWS.value:
-            # TODO Refactor when proper credentials are implemented
-            try:
-                connection_result = AwsProvider.test_connection(
-                    raise_on_exception=False
-                )
-            # TODO: Improve this exception handling when SDK exceptions are implemented
-            except Exception as e:
-                logger.warning(str(e))
-                raise e
+            prowler_provider = AwsProvider
+        case Provider.ProviderChoices.GCP.value:
+            prowler_provider = GcpProvider
+        case Provider.ProviderChoices.AZURE.value:
+            prowler_provider = AzureProvider
+        case Provider.ProviderChoices.KUBERNETES.value:
+            prowler_provider = KubernetesProvider
         case _:
             raise ValueError(
                 f"Provider type {provider_instance.provider} not supported"
             )
+    try:
+        connection_result = prowler_provider.test_connection(raise_on_exception=False)
+    except Exception as e:
+        logger.warning(
+            f"Unexpected exception checking {provider_instance.provider} provider connection: {str(e)}"
+        )
+        raise e
 
     provider_instance.connected = connection_result.is_connected
     provider_instance.connection_last_checked_at = datetime.now(tz=timezone.utc)

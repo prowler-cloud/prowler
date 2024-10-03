@@ -651,7 +651,7 @@ paths:
           content:
             application/vnd.api+json:
               schema:
-                $ref: '#/components/schemas/SerializerMetaclassResponse'
+                $ref: '#/components/schemas/OpenApiResponseResponse'
           description: ''
   /api/v1/providers/{id}/connection:
     post:
@@ -676,7 +676,7 @@ paths:
           content:
             application/vnd.api+json:
               schema:
-                $ref: '#/components/schemas/SerializerMetaclassResponse'
+                $ref: '#/components/schemas/OpenApiResponseResponse'
           description: ''
   /api/v1/resources:
     get:
@@ -1013,6 +1013,7 @@ paths:
             - scanner_args
             - duration
             - provider
+            - task
             - started_at
             - completed_at
             - scheduled_at
@@ -1181,11 +1182,11 @@ paths:
       security:
       - jwtAuth: []
       responses:
-        '201':
+        '202':
           content:
             application/vnd.api+json:
               schema:
-                $ref: '#/components/schemas/ScanCreateResponse'
+                $ref: '#/components/schemas/OpenApiResponseResponse'
           description: ''
   /api/v1/scans/{id}:
     get:
@@ -1208,6 +1209,7 @@ paths:
             - scanner_args
             - duration
             - provider
+            - task
             - started_at
             - completed_at
             - scheduled_at
@@ -1267,7 +1269,7 @@ paths:
           content:
             application/vnd.api+json:
               schema:
-                $ref: '#/components/schemas/SerializerMetaclassResponse'
+                $ref: '#/components/schemas/ScanUpdateResponse'
           description: ''
   /api/v1/tasks:
     get:
@@ -1415,7 +1417,7 @@ paths:
           content:
             application/vnd.api+json:
               schema:
-                $ref: '#/components/schemas/SerializerMetaclassResponse'
+                $ref: '#/components/schemas/OpenApiResponseResponse'
           description: ''
   /api/v1/tenants:
     get:
@@ -1781,7 +1783,8 @@ paths:
   /api/v1/tokens/refresh:
     post:
       operationId: tokens_refresh_create
-      description: Refresh an access token by providing a valid refresh token.
+      description: Refresh an access token by providing a valid refresh token. Former
+        refresh tokens are invalidated when a new one is issued.
       summary: Refresh a token
       tags:
       - Token
@@ -2111,35 +2114,6 @@ paths:
           description: ''
 components:
   schemas:
-    DelayedTask:
-      type: object
-      required:
-      - type
-      additionalProperties: false
-      properties:
-        type:
-          allOf:
-          - $ref: '#/components/schemas/TypeB52Enum'
-          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
-            member is used to describe resource objects that share common attributes
-            and relationships.
-        attributes:
-          type: object
-          properties:
-            id:
-              type: string
-            state:
-              type: string
-              enum:
-              - available
-              - scheduled
-              - executing
-              - completed
-              - failed
-              - cancelled
-              readOnly: true
-          required:
-          - id
     Finding:
       type: object
       required:
@@ -2376,6 +2350,13 @@ components:
       type: string
       enum:
       - Membership
+    OpenApiResponseResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Task'
+      required:
+      - data
     PaginatedFindingList:
       type: object
       properties:
@@ -2988,33 +2969,7 @@ components:
               - data
               description: The identifier of the related object.
               title: Resource Identifier
-          required:
-          - provider
-    ScanCreate:
-      type: object
-      required:
-      - type
-      additionalProperties: false
-      properties:
-        type:
-          allOf:
-          - $ref: '#/components/schemas/Type2bbEnum'
-          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
-            member is used to describe resource objects that share common attributes
-            and relationships.
-        attributes:
-          type: object
-          properties:
-            scanner_args: {}
-            name:
-              type: string
-              nullable: true
-              maxLength: 100
-              minLength: 3
-        relationships:
-          type: object
-          properties:
-            provider:
+            task:
               type: object
               properties:
                 data:
@@ -3026,7 +2981,7 @@ components:
                     type:
                       type: string
                       enum:
-                      - Provider
+                      - Task
                       title: Resource Type Name
                       description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
                         member is used to describe resource objects that share common
@@ -3038,6 +2993,7 @@ components:
               - data
               description: The identifier of the related object.
               title: Resource Identifier
+              nullable: true
           required:
           - provider
     ScanCreateRequest:
@@ -3096,18 +3052,42 @@ components:
               - provider
       required:
       - data
-    ScanCreateResponse:
-      type: object
-      properties:
-        data:
-          $ref: '#/components/schemas/ScanCreate'
-      required:
-      - data
     ScanResponse:
       type: object
       properties:
         data:
           $ref: '#/components/schemas/Scan'
+      required:
+      - data
+    ScanUpdate:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/Type2bbEnum'
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+        id:
+          type: string
+          format: uuid
+        attributes:
+          type: object
+          properties:
+            name:
+              type: string
+              nullable: true
+              maxLength: 100
+              minLength: 3
+    ScanUpdateResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/ScanUpdate'
       required:
       - data
     SerializerMetaclassResponse:
@@ -3121,18 +3101,14 @@ components:
       type: object
       required:
       - type
-      - id
       additionalProperties: false
       properties:
         type:
           allOf:
-          - $ref: '#/components/schemas/TypeB52Enum'
+          - $ref: '#/components/schemas/TaskTypeEnum'
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
-        id:
-          type: string
-          format: uuid
         attributes:
           type: object
           properties:
@@ -3170,6 +3146,10 @@ components:
           $ref: '#/components/schemas/Task'
       required:
       - data
+    TaskTypeEnum:
+      type: string
+      enum:
+      - Task
     Tenant:
       type: object
       required:
@@ -3466,10 +3446,6 @@ components:
       type: string
       enum:
       - User
-    TypeB52Enum:
-      type: string
-      enum:
-      - Task
     User:
       type: object
       required:

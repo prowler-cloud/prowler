@@ -7,7 +7,12 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_control
 from drf_spectacular.settings import spectacular_settings
 from drf_spectacular.utils import OpenApiTypes
-from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiParameter
+from drf_spectacular.utils import (
+    extend_schema,
+    extend_schema_view,
+    OpenApiParameter,
+    OpenApiResponse,
+)
 from drf_spectacular.views import SpectacularAPIView
 from rest_framework import status, permissions
 from rest_framework.decorators import action
@@ -42,14 +47,17 @@ from api.v1.serializers import (
     ProviderUpdateSerializer,
     TenantSerializer,
     TaskSerializer,
-    DelayedTaskSerializer,
     ScanSerializer,
     ScanCreateSerializer,
     ScanUpdateSerializer,
     ResourceSerializer,
     FindingSerializer,
 )
-from tasks.tasks import check_provider_connection_task, delete_provider_task
+from tasks.tasks import (
+    check_provider_connection_task,
+    delete_provider_task,
+    perform_scan_task,
+)
 
 CACHE_DECORATOR = cache_control(
     max_age=django_settings.CACHE_MAX_AGE,
@@ -390,7 +398,7 @@ class TenantMembersViewSet(BaseTenantViewset):
         tags=["Provider"],
         summary="Delete a provider",
         description="Remove a provider from the system by their ID.",
-        responses={202: DelayedTaskSerializer},
+        responses={202: OpenApiResponse(response=TaskSerializer)},
     ),
 )
 @method_decorator(CACHE_DECORATOR, name="list")
@@ -420,7 +428,7 @@ class ProviderViewSet(BaseRLSViewSet):
         elif self.action == "partial_update":
             return ProviderUpdateSerializer
         elif self.action in ["connection", "destroy"]:
-            return DelayedTaskSerializer
+            return TaskSerializer
         return super().get_serializer_class()
 
     def partial_update(self, request, *args, **kwargs):
@@ -443,7 +451,7 @@ class ProviderViewSet(BaseRLSViewSet):
         summary="Check connection",
         description="Try to verify connection. For instance, Role & Credentials are set correctly",
         request=None,
-        responses={202: DelayedTaskSerializer},
+        responses={202: OpenApiResponse(response=TaskSerializer)},
     )
     @action(detail=True, methods=["post"], url_name="connection")
     def connection(self, request, pk=None):
@@ -451,24 +459,30 @@ class ProviderViewSet(BaseRLSViewSet):
         task = check_provider_connection_task.delay(
             provider_id=pk, tenant_id=request.tenant_id
         )
-        serializer = DelayedTaskSerializer(task)
+        prowler_task = Task.objects.get(id=task.id)
+        serializer = TaskSerializer(prowler_task)
         return Response(
             data=serializer.data,
             status=status.HTTP_202_ACCEPTED,
             headers={
-                "Content-Location": reverse("task-detail", kwargs={"pk": task.id})
+                "Content-Location": reverse(
+                    "task-detail", kwargs={"pk": prowler_task.id}
+                )
             },
         )
 
     def destroy(self, request, *args, pk=None, **kwargs):
         get_object_or_404(Provider, pk=pk)
         task = delete_provider_task.delay(provider_id=pk, tenant_id=request.tenant_id)
-        serializer = DelayedTaskSerializer(task)
+        prowler_task = Task.objects.get(id=task.id)
+        serializer = TaskSerializer(prowler_task)
         return Response(
             data=serializer.data,
             status=status.HTTP_202_ACCEPTED,
             headers={
-                "Content-Location": reverse("task-detail", kwargs={"pk": task.id})
+                "Content-Location": reverse(
+                    "task-detail", kwargs={"pk": prowler_task.id}
+                )
             },
         )
 
@@ -482,6 +496,10 @@ class ProviderViewSet(BaseRLSViewSet):
         summary="Retrieve data from a specific scan",
         description="Fetch detailed information about a specific scan by its ID.",
     ),
+    partial_update=extend_schema(
+        summary="Partially update a scan",
+        description="Update certain fields of an existing scan without affecting other fields.",
+    ),
     create=extend_schema(
         summary="Trigger a manual scan",
         description=(
@@ -491,12 +509,8 @@ class ProviderViewSet(BaseRLSViewSet):
             "merged with the provider's defaults. This means that your provided settings will override "
             "the defaults only where they conflict, while the rest of the default settings will remain intact."
         ),
-    ),
-    partial_update=extend_schema(
-        summary="Partially update a scan",
-        description="Update certain fields of an existing scan without affecting other fields.",
-        request=ScanUpdateSerializer,
-        responses={200: ScanSerializer},
+        request=ScanCreateSerializer,
+        responses={202: OpenApiResponse(response=TaskSerializer)},
     ),
 )
 @method_decorator(CACHE_DECORATOR, name="list")
@@ -521,24 +535,12 @@ class ScanViewSet(BaseRLSViewSet):
 
     def get_serializer_class(self):
         if self.action == "create":
+            if hasattr(self, "response_serializer_class"):
+                return self.response_serializer_class
             return ScanCreateSerializer
         elif self.action == "partial_update":
             return ScanUpdateSerializer
         return super().get_serializer_class()
-
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        scan = serializer.save()
-
-        # TODO: Run scan through task and return task info here
-        return Response(
-            data=serializer.data,
-            status=status.HTTP_202_ACCEPTED,
-            headers={
-                "Content-Location": reverse("scan-detail", kwargs={"pk": scan.id})
-            },
-        )
 
     def partial_update(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -555,6 +557,35 @@ class ScanViewSet(BaseRLSViewSet):
         )
         return Response(data=read_serializer.data, status=status.HTTP_200_OK)
 
+    def create(self, request, *args, **kwargs):
+        input_serializer = self.get_serializer(data=request.data)
+        input_serializer.is_valid(raise_exception=True)
+        scan = input_serializer.save()
+
+        task = perform_scan_task.delay(
+            tenant_id=request.tenant_id,
+            scan_id=str(scan.id),
+            provider_id=str(scan.provider_id),
+            checks_to_execute=scan.scanner_args.get("checks_to_execute", []),
+        )
+
+        scan.task_id = task.id
+        scan.save(update_fields=["task_id"])
+
+        prowler_task = Task.objects.get(id=task.id)
+        self.response_serializer_class = TaskSerializer
+        output_serializer = self.get_serializer(prowler_task)
+
+        return Response(
+            data=output_serializer.data,
+            status=status.HTTP_202_ACCEPTED,
+            headers={
+                "Content-Location": reverse(
+                    "task-detail", kwargs={"pk": prowler_task.id}
+                )
+            },
+        )
+
 
 @extend_schema_view(
     list=extend_schema(
@@ -569,7 +600,7 @@ class ScanViewSet(BaseRLSViewSet):
         tags=["Task"],
         summary="Revoke a task",
         description="Try to revoke a task using its ID. Only tasks that are not yet in progress can be revoked.",
-        responses={202: DelayedTaskSerializer},
+        responses={202: OpenApiResponse(response=TaskSerializer)},
     ),
 )
 class TaskViewSet(BaseRLSViewSet):
@@ -602,7 +633,8 @@ class TaskViewSet(BaseRLSViewSet):
 
         task_instance = AsyncResult(pk)
         task_instance.revoke()
-        serializer = DelayedTaskSerializer(task_instance)
+        task.refresh_from_db()
+        serializer = TaskSerializer(task)
         return Response(
             data=serializer.data,
             status=status.HTTP_202_ACCEPTED,

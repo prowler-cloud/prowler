@@ -216,56 +216,6 @@ class Provider(RowLevelSecurityProtectedModel):
         ]
 
 
-class Scan(RowLevelSecurityProtectedModel):
-    class TriggerChoices(models.TextChoices):
-        SCHEDULED = "scheduled", _("Scheduled")
-        MANUAL = "manual", _("Manual")
-
-    id = models.UUIDField(primary_key=True, default=uuid7, editable=False)
-    name = models.CharField(
-        blank=True, null=True, max_length=100, validators=[MinLengthValidator(3)]
-    )
-    provider = models.ForeignKey(
-        Provider,
-        on_delete=models.CASCADE,
-        related_name="scans",
-        related_query_name="scan",
-    )
-    trigger = ScanTriggerEnumField(
-        choices=TriggerChoices.choices,
-    )
-    state = StateEnumField(choices=StateChoices.choices, default=StateChoices.AVAILABLE)
-    unique_resource_count = models.IntegerField(default=0)
-    progress = models.IntegerField(default=0)
-    scanner_args = models.JSONField(default=dict)
-    duration = models.IntegerField(null=True, blank=True)
-    scheduled_at = models.DateTimeField(null=True, blank=True)
-    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
-    updated_at = models.DateTimeField(auto_now=True, editable=False)
-    started_at = models.DateTimeField(null=True, blank=True)
-    completed_at = models.DateTimeField(null=True, blank=True)
-    # TODO: task foreign key
-    # TODO: mutelist foreign key
-
-    class Meta(RowLevelSecurityProtectedModel.Meta):
-        db_table = "scans"
-
-        constraints = [
-            RowLevelSecurityConstraint(
-                field="tenant_id",
-                name="rls_on_%(class)s",
-                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
-            ),
-        ]
-
-        indexes = [
-            models.Index(
-                fields=["provider", "state", "trigger", "scheduled_at"],
-                name="scans_prov_state_trig_sche_idx",
-            ),
-        ]
-
-
 class Task(RowLevelSecurityProtectedModel):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
@@ -293,6 +243,63 @@ class Task(RowLevelSecurityProtectedModel):
             models.Index(
                 fields=["id", "task_runner_task"],
                 name="tasks_id_trt_id_idx",
+            ),
+        ]
+
+
+class Scan(RowLevelSecurityProtectedModel):
+    class TriggerChoices(models.TextChoices):
+        SCHEDULED = "scheduled", _("Scheduled")
+        MANUAL = "manual", _("Manual")
+
+    id = models.UUIDField(primary_key=True, default=uuid7, editable=False)
+    name = models.CharField(
+        blank=True, null=True, max_length=100, validators=[MinLengthValidator(3)]
+    )
+    provider = models.ForeignKey(
+        Provider,
+        on_delete=models.CASCADE,
+        related_name="scans",
+        related_query_name="scan",
+    )
+    task = models.ForeignKey(
+        Task,
+        on_delete=models.CASCADE,
+        related_name="scans",
+        related_query_name="scan",
+        null=True,
+        blank=True,
+    )
+    trigger = ScanTriggerEnumField(
+        choices=TriggerChoices.choices,
+    )
+    state = StateEnumField(choices=StateChoices.choices, default=StateChoices.AVAILABLE)
+    unique_resource_count = models.IntegerField(default=0)
+    progress = models.IntegerField(default=0)
+    scanner_args = models.JSONField(default=dict)
+    duration = models.IntegerField(null=True, blank=True)
+    scheduled_at = models.DateTimeField(null=True, blank=True)
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+    started_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    # TODO: mutelist foreign key
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "scans"
+
+        constraints = [
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]
+
+        indexes = [
+            models.Index(
+                fields=["provider", "state", "trigger", "scheduled_at"],
+                name="scans_prov_state_trig_sche_idx",
             ),
         ]
 
@@ -329,7 +336,7 @@ class ResourceTag(RowLevelSecurityProtectedModel):
             RowLevelSecurityConstraint(
                 field="tenant_id",
                 name="rls_on_%(class)s",
-                statements=["SELECT"],
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
             ),
         ]
 
@@ -409,13 +416,13 @@ class Resource(RowLevelSecurityProtectedModel):
 
         constraints = [
             models.UniqueConstraint(
-                fields=("tenant_id", "provider_id", "uid"),
+                fields=("tenant_id", "provider_id", "uid", "region"),
                 name="unique_resources_by_provider",
             ),
             RowLevelSecurityConstraint(
                 field="tenant_id",
                 name="rls_on_%(class)s",
-                statements=["SELECT"],
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
             ),
         ]
 
@@ -444,7 +451,7 @@ class ResourceTagMapping(RowLevelSecurityProtectedModel):
             RowLevelSecurityConstraint(
                 field="tenant_id",
                 name="rls_on_%(class)s",
-                statements=["SELECT"],
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
             ),
         ]
 
@@ -485,9 +492,11 @@ class Finding(PostgresPartitionedModel, RowLevelSecurityProtectedModel):
     impact_extended = models.TextField(blank=True, null=True)
 
     raw_result = models.JSONField(default=dict)
+    # TODO: review usability
     tags = models.JSONField(default=dict, null=True, blank=True)
 
     check_id = models.CharField(max_length=100, blank=False, null=False)
+    # TODO: review usability
     check_metadata = models.JSONField(default=dict, null=False)
 
     # Relationships
@@ -591,6 +600,6 @@ class ResourceFindingMapping(PostgresPartitionedModel, RowLevelSecurityProtected
             RowLevelSecurityConstraint(
                 field="tenant_id",
                 name="rls_on_%(class)s",
-                statements=["SELECT"],
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
             ),
         ]

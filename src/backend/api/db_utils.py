@@ -2,7 +2,7 @@ from contextlib import contextmanager
 
 from django.conf import settings
 from django.contrib.auth.models import BaseUserManager
-from django.db import models
+from django.db import models, transaction, connection
 from psycopg2 import connect as psycopg2_connect
 from psycopg2.extensions import new_type, register_type, register_adapter, AsIs
 
@@ -38,6 +38,14 @@ def psycopg_connection(database_alias: str):
     finally:
         if psycopg2_connection is not None:
             psycopg2_connection.close()
+
+
+@contextmanager
+def tenant_transaction(tenant_id: str):
+    with transaction.atomic():
+        with connection.cursor() as cursor:
+            cursor.execute(f"SELECT set_config('api.tenant_id', '{tenant_id}', TRUE);")
+            yield cursor
 
 
 class CustomUserManager(BaseUserManager):

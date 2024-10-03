@@ -45,6 +45,10 @@ class NDJSONFormatter(logging.Formatter):
         }
 
         # Add REST API extra fields
+        if hasattr(record, "user_id"):
+            log_record["user_id"] = record.user_id
+        if hasattr(record, "tenant_id"):
+            log_record["tenant_id"] = record.tenant_id
         if hasattr(record, "method"):
             log_record["method"] = record.method
         if hasattr(record, "path"):
@@ -55,8 +59,6 @@ class NDJSONFormatter(logging.Formatter):
             log_record["duration"] = record.duration
         if hasattr(record, "status_code"):
             log_record["status_code"] = record.status_code
-        if hasattr(record, "tenant_id"):
-            log_record["tenant_id"] = record.tenant_id
 
         if record.exc_info:
             log_record["exc_info"] = self.formatException(record.exc_info)
@@ -82,13 +84,15 @@ class HumanReadableFormatter(logging.Formatter):
             f"function={record.funcName}",
             f"process={record.process}",
             f"thread={record.thread}",
-            f"transaction-id={record.transaction_id if hasattr(record, "transaction_id") else None}]",
+            f"transaction-id={record.transaction_id if hasattr(record, 'transaction_id') else None}]",
             f"{record.getMessage()}",
         ]
 
         # Add REST API extra fields
+        if hasattr(record, "user_id"):
+            log_components.append(f"({record.user_id})")
         if hasattr(record, "tenant_id"):
-            log_components.append(f"({record.tenant_id})")
+            log_components.append(f"[{record.tenant_id}]")
         if hasattr(record, "method"):
             log_components.append(f'"{record.method} {record.path}"')
         if hasattr(record, "query_params"):

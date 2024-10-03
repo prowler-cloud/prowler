@@ -1,22 +1,16 @@
 import logging
 import time
 
-from django.http import HttpRequest
-
 from config.custom_logging import BackendLogger
 
 
-def extract_tenant_id(request: HttpRequest) -> str | None:
-    """
-    Extract the tenant ID from the request headers.
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-
-    Returns:
-        str: The tenant ID if present in the headers, otherwise None.
-    """
-    return request.headers.get("X-Tenant-ID")
+def extract_auth_info(request) -> dict:
+    if not hasattr(request, "auth") or request.auth is not None:
+        tenant_id = request.auth.get("tenant_id", "N/A")
+        user_id = request.auth.get("user_id", "N/A")
+    else:
+        tenant_id, user_id = "N/A", "N/A"
+    return {"tenant_id": tenant_id, "user_id": user_id}
 
 
 class APILoggingMiddleware:
@@ -38,15 +32,17 @@ class APILoggingMiddleware:
 
         response = self.get_response(request)
         duration = time.time() - request_start_time
+        auth_info = extract_auth_info(request)
         self.logger.info(
             "",
             extra={
+                "user_id": auth_info["user_id"],
+                "tenant_id": auth_info["tenant_id"],
                 "method": request.method,
                 "path": request.path,
                 "query_params": request.GET.dict(),
                 "status_code": response.status_code,
                 "duration": duration,
-                "tenant_id": extract_tenant_id(request),
             },
         )
 
