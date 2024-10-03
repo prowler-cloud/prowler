@@ -33,5 +33,7 @@ def check_cloudwatch_log_metric_filter(
                     report.status = "PASS"
                     report.status_extended = f"CloudWatch log group {metric_filter.log_group.name} found with metric filter {metric_filter.name} and alarms set."
                     break
+            if report.status == "PASS":
+                break
 
     return report

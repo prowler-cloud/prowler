@@ -113,7 +113,6 @@ class Logs(AWSService):
                             self.metric_filters = []
 
                         log_group = None
-
                         for lg in self.log_groups:
                             if lg.name == filter["logGroupName"]:
                                 log_group = lg
@@ -125,7 +124,7 @@ class Logs(AWSService):
                                 name=filter["filterName"],
                                 metric=filter["metricTransformations"][0]["metricName"],
                                 pattern=filter.get("filterPattern", ""),
-                                log_group=log_group if log_group else None,
+                                log_group=log_group,
                                 region=regional_client.region,
                             )
                         )
