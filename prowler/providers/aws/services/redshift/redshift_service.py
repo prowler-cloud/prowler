@@ -40,6 +40,9 @@ class Redshift(AWSService):
                             region=regional_client.region,
                             tags=cluster.get("Tags"),
                             master_username=cluster.get("MasterUsername", ""),
+                            enhanced_vpc_routing=cluster.get(
+                                "EnhancedVpcRouting", False
+                            ),
                         )
                         self.clusters.append(cluster_to_append)
         except Exception as error:
@@ -98,3 +101,4 @@ class Cluster(BaseModel):
     bucket: str = None
     cluster_snapshots: bool = False
     tags: Optional[list] = []
+    enhanced_vpc_routing: bool = False

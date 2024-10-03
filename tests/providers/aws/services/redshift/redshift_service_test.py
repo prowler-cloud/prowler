@@ -94,6 +94,7 @@ class Test_Redshift_Service:
             Tags=[
                 {"Key": "test", "Value": "test"},
             ],
+            EnhancedVpcRouting=True,
         )
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         redshift = Redshift(aws_provider)
@@ -115,6 +116,7 @@ class Test_Redshift_Service:
         ]
         assert redshift.clusters[0].encrypted
         assert redshift.clusters[0].master_username == "user"
+        assert redshift.clusters[0].enhanced_vpc_routing
 
     @mock_aws
     def test_describe_logging_status(self):
