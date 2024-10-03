@@ -78,7 +78,7 @@ class Test_redshift_cluster_non_default_database_name:
                 assert len(result) == 1
                 assert result[0].status == "FAIL"
                 assert result[0].status_extended == (
-                    f"Redshift Cluster {CLUSTER_ID} has the default database username."
+                    f"Redshift Cluster {CLUSTER_ID} has the default database name: dev."
                 )
                 assert result[0].resource_id == CLUSTER_ID
                 assert result[0].resource_arn == CLUSTER_ARN
@@ -124,7 +124,7 @@ class Test_redshift_cluster_non_default_database_name:
                 assert len(result) == 1
                 assert result[0].status == "PASS"
                 assert result[0].status_extended == (
-                    f"Redshift Cluster {CLUSTER_ID} does not have the default database username."
+                    f"Redshift Cluster {CLUSTER_ID} does not have the default database name."
                 )
                 assert result[0].resource_id == CLUSTER_ID
                 assert result[0].resource_arn == CLUSTER_ARN

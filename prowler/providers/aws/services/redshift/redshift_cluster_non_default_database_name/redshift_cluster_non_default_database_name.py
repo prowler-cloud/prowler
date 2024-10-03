@@ -12,12 +12,10 @@ class redshift_cluster_non_default_database_name(Check):
             report.resource_arn = cluster.arn
             report.resource_tags = cluster.tags
             report.status = "PASS"
-            report.status_extended = f"Redshift Cluster {cluster.id} does not have the default database username."
+            report.status_extended = f"Redshift Cluster {cluster.id} does not have the default database name."
             if cluster.database_name == "dev":
                 report.status = "FAIL"
-                report.status_extended = (
-                    f"Redshift Cluster {cluster.id} has the default database username."
-                )
+                report.status_extended = f"Redshift Cluster {cluster.id} has the default database name: {cluster.database_name}."
 
             findings.append(report)
 
