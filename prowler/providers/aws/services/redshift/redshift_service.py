@@ -40,6 +40,7 @@ class Redshift(AWSService):
                             region=regional_client.region,
                             tags=cluster.get("Tags"),
                             master_username=cluster.get("MasterUsername", ""),
+                            database_name=cluster.get("DBName", ""),
                         )
                         self.clusters.append(cluster_to_append)
         except Exception as error:
@@ -92,6 +93,7 @@ class Cluster(BaseModel):
     public_access: bool = False
     encrypted: bool = False
     master_username: str = None
+    database_name: str = None
     endpoint_address: str = None
     allow_version_upgrade: bool = False
     logging_enabled: bool = False
