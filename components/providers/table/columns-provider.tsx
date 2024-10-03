@@ -42,7 +42,7 @@ export const ColumnsProvider: ColumnDef<ProviderProps>[] = [
   {
     accessorKey: "uid",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={"Id"} param="provider_id" />
+      <DataTableColumnHeader column={column} title={"Id"} param="uid" />
     ),
     cell: ({ row }) => {
       const {

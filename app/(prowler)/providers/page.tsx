@@ -43,7 +43,7 @@ const SSRDataTable = async ({
   searchParams: SearchParamsProps;
 }) => {
   const page = parseInt(searchParams.page?.toString() || "1", 10);
-  const sort = searchParams.sort?.toString() || "";
+  const sort = searchParams.sort?.toString() || "-inserted_at";
 
   // Extract all filter parameters
   const filters = Object.fromEntries(
