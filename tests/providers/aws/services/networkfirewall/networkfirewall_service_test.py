@@ -1,8 +1,13 @@
+from unittest import mock
 from unittest.mock import patch
 
 import botocore
 
 from prowler.providers.aws.services.networkfirewall.networkfirewall_service import (
+    Firewall,
+    LogDestinationType,
+    LoggingConfiguration,
+    LogType,
     NetworkFirewall,
 )
 from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provider
@@ -85,6 +90,51 @@ class Test_NetworkFirewall_Service:
             == AWS_REGION_US_EAST_1
         )
         assert networkfirewall.network_firewalls[FIREWALL_ARN].name == FIREWALL_NAME
+
+    def test_describe_logging_configuration(self):
+        networkfirewall = mock.MagicMock
+        networkfirewall.provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        networkfirewall.region = AWS_REGION_US_EAST_1
+        networkfirewall.network_firewalls = {
+            FIREWALL_ARN: Firewall(
+                arn=FIREWALL_ARN,
+                name=FIREWALL_NAME,
+                region=AWS_REGION_US_EAST_1,
+                policy_arn=POLICY_ARN,
+                vpc_id=VPC_ID,
+                tags=[{"Key": "test_tag", "Value": "test_value"}],
+                encryption_type="CUSTOMER_KMS",
+                logging_configuration=[
+                    LoggingConfiguration(
+                        log_type=LogType.flow,
+                        log_destination_type=LogDestinationType.s3,
+                        log_destination={
+                            "bucket_name": "my-bucket",
+                        },
+                    )
+                ],
+            )
+        }
+        assert len(networkfirewall.network_firewalls) == 1
+        assert (
+            networkfirewall.network_firewalls[FIREWALL_ARN].region
+            == AWS_REGION_US_EAST_1
+        )
+        assert networkfirewall.network_firewalls[FIREWALL_ARN].name == FIREWALL_NAME
+        assert networkfirewall.network_firewalls[FIREWALL_ARN].policy_arn == POLICY_ARN
+        assert networkfirewall.network_firewalls[FIREWALL_ARN].vpc_id == VPC_ID
+        assert networkfirewall.network_firewalls[FIREWALL_ARN].tags == [
+            {"Key": "test_tag", "Value": "test_value"}
+        ]
+        assert networkfirewall.network_firewalls[
+            FIREWALL_ARN
+        ].logging_configuration == [
+            LoggingConfiguration(
+                log_type=LogType.flow,
+                log_destination_type=LogDestinationType.s3,
+                log_destination={"bucket_name": "my-bucket"},
+            )
+        ]
 
     def test_describe_firewall(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])

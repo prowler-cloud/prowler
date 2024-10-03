@@ -35,23 +35,18 @@ class Redshift(AWSService):
                                 for sg in cluster.get("VpcSecurityGroups")
                                 if sg["Status"] == "active"
                             ],
+                            endpoint_address=cluster.get("Endpoint", {}).get(
+                                "Address", ""
+                            ),
+                            public_access=cluster.get("PubliclyAccessible", False),
+                            allow_version_upgrade=cluster.get(
+                                "AllowVersionUpgrade", False
+                            ),
+                            encrypted=cluster.get("Encrypted", False),
                             region=regional_client.region,
                             tags=cluster.get("Tags"),
+                            master_username=cluster.get("MasterUsername", ""),
                         )
-                        if (
-                            "PubliclyAccessible" in cluster
-                            and cluster["PubliclyAccessible"]
-                        ):
-                            cluster_to_append.public_access = True
-                        if "Endpoint" in cluster and "Address" in cluster["Endpoint"]:
-                            cluster_to_append.endpoint_address = cluster["Endpoint"][
-                                "Address"
-                            ]
-                        if (
-                            "AllowVersionUpgrade" in cluster
-                            and cluster["AllowVersionUpgrade"]
-                        ):
-                            cluster_to_append.allow_version_upgrade = True
                         self.clusters.append(cluster_to_append)
         except Exception as error:
             logger.error(
@@ -103,9 +98,11 @@ class Cluster(BaseModel):
     vpc_id: str = None
     vpc_security_groups: list = []
     public_access: bool = False
+    encrypted: bool = False
+    master_username: str = None
     endpoint_address: str = None
     allow_version_upgrade: bool = False
     logging_enabled: bool = False
     bucket: str = None
-    cluster_snapshots: bool = None
+    cluster_snapshots: bool = False
     tags: Optional[list] = []

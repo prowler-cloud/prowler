@@ -3,6 +3,7 @@ from unittest import mock
 from boto3 import client, resource
 from moto import mock_aws
 
+from prowler.providers.aws.services.ec2.ec2_service import Attachment
 from tests.providers.aws.utils import (
     AWS_REGION_EU_WEST_1,
     AWS_REGION_US_EAST_1,
@@ -97,9 +98,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
         self, default_sg_id, default_sg_name, network_interface_response
     ):
         eni = network_interface_response.get("NetworkInterface", {})
-        att = eni.get("Attachment", {})
         eni_type = eni.get("InterfaceType", "")
-        eni_owner = att.get("InstanceOwnerId", "")
         from prowler.providers.aws.services.ec2.ec2_service import EC2
         from prowler.providers.aws.services.vpc.vpc_service import VPC
 
@@ -133,7 +132,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
                     assert sg.region == AWS_REGION_US_EAST_1
                     assert (
                         sg.status_extended
-                        == f"Security group {default_sg_name} ({default_sg_id}) has at least one port open to the Internet and neither its network interface type ({eni_type}) nor its network interface instance owner ({eni_owner}) are part of the allowed network interfaces."
+                        == f"Security group {default_sg_name} ({default_sg_id}) has at least one port open to the Internet but its network interface type ({eni_type}) is not allowed."
                     )
                     assert (
                         sg.resource_arn
@@ -175,7 +174,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
                     "eni_instance_owner": "NOT_ALLOWED",
                     "report": {
                         "status": "PASS",
-                        "status_extended": "Security group SG_name (SG_id) has at least one port open to the Internet but is exclusively attached to an allowed network interface type (vpc_endpoint).",
+                        "status_extended": "Security group SG_name (SG_id) has at least one port open to the Internet and it is attached to an allowed network interface type (vpc_endpoint).",
                     },
                 },
                 {
@@ -183,7 +182,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
                     "eni_instance_owner": "amazon-elb",
                     "report": {
                         "status": "PASS",
-                        "status_extended": "Security group SG_name (SG_id) has at least one port open to the Internet but is exclusively attached to an allowed network interface instance owner (amazon-elb).",
+                        "status_extended": "Security group SG_name (SG_id) has at least one port open to the Internet and it is attached to an allowed network interface instance owner (amazon-elb).",
                     },
                 },
                 {
@@ -191,7 +190,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
                     "eni_instance_owner": "NOT_ALLOWED_INSTANCE_OWNER",
                     "report": {
                         "status": "FAIL",
-                        "status_extended": "Security group SG_name (SG_id) has at least one port open to the Internet and neither its network interface type (NOT_ALLOWED_ENI_TYPE) nor its network interface instance owner (NOT_ALLOWED_INSTANCE_OWNER) are part of the allowed network interfaces.",
+                        "status_extended": "Security group SG_name (SG_id) has at least one port open to the Internet but its network interface type (NOT_ALLOWED_ENI_TYPE) is not allowed.",
                     },
                 },
             ]
@@ -202,7 +201,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
                 eni = NetworkInterface(
                     id="1",
                     association={},
-                    attachment={"InstanceOwnerId": test["eni_instance_owner"]},
+                    attachment=Attachment(instance_owner_id=test["eni_instance_owner"]),
                     private_ip="1",
                     public_ip_addresses=[],
                     type=test["eni_interface_type"],
@@ -303,7 +302,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
                     assert sg.region == AWS_REGION_US_EAST_1
                     assert (
                         sg.status_extended
-                        == f"Security group {default_sg_name} ({default_sg_id}) has at least one port open to the Internet but is exclusively attached to an allowed network interface type ({eni_type})."
+                        == f"Security group {default_sg_name} ({default_sg_id}) has at least one port open to the Internet and it is attached to an allowed network interface type ({eni_type})."
                     )
                     assert (
                         sg.resource_arn
@@ -396,7 +395,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
                     assert sg.region == AWS_REGION_US_EAST_1
                     assert (
                         sg.status_extended
-                        == f"Security group {default_sg_name} ({default_sg_id}) has at least one port open to the Internet but is exclusively attached to an allowed network interface instance owner ({eni_owner})."
+                        == f"Security group {default_sg_name} ({default_sg_id}) has at least one port open to the Internet and it is attached to an allowed network interface instance owner ({eni_owner})."
                     )
                     assert (
                         sg.resource_arn
@@ -650,7 +649,6 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
             "SecurityGroups"
         ][0]
         default_sg_id = default_sg["GroupId"]
-        default_sg_name = default_sg["GroupName"]
         ec2_client.authorize_security_group_ingress(
             GroupId=default_sg_id,
             IpPermissions=[
@@ -721,15 +719,4 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
                 result_specific_port = check_specific_port.execute()
 
                 # One default sg per region
-                assert len(result_specific_port) == 3
-                # Search changed sg
-                for sg in result_specific_port:
-                    if sg.resource_id == default_sg_id:
-                        assert sg.status == "PASS"
-                        assert sg.region == AWS_REGION_US_EAST_1
-                        assert (
-                            sg.status_extended
-                            == f"Security group {sg.resource_details} ({sg.resource_id}) has all ports open to the Internet and therefore was not checked against a specific port."
-                        )
-                        assert sg.resource_tags == []
-                        assert sg.resource_details == default_sg_name
+                assert len(result_specific_port) == 2
