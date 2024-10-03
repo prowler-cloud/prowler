@@ -1,5 +1,6 @@
 from unittest.mock import MagicMock, patch
 
+from prowler.providers.aws.services.glue.glue_service import MLTransform
 from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, AWS_REGION_EU_WEST_1
 
 
@@ -24,10 +25,21 @@ class Test_glue_ml_transform_encryption_at_rest_enabled:
 
             assert len(result) == 0
 
-    def test_ml_transforms_disabled(self):
+    def test_ml_transform_encryption_disabled(self):
         glue_client = MagicMock()
         ml_transform_id = "transform1"
         ml_transform_arn = f"arn:aws:glue:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:mlTransform/{ml_transform_id}"
+
+        glue_client.ml_transforms = {
+            ml_transform_arn: MLTransform(
+                arn=ml_transform_arn,
+                id=ml_transform_id,
+                name="ml-transform1",
+                user_data_encryption="DISABLED",
+                region=AWS_REGION_EU_WEST_1,
+                tags=[{"test_key": "test_value"}],
+            )
+        }
 
         with patch(
             "prowler.providers.aws.services.glue.glue_service.Glue",
@@ -39,18 +51,6 @@ class Test_glue_ml_transform_encryption_at_rest_enabled:
             from prowler.providers.aws.services.glue.glue_ml_transform_encryption_at_rest_enabled.glue_ml_transform_encryption_at_rest_enabled import (
                 glue_ml_transform_encryption_at_rest_enabled,
             )
-            from prowler.providers.aws.services.glue.glue_service import MLTransform
-
-            glue_client.ml_transforms = {
-                ml_transform_arn: MLTransform(
-                    arn=ml_transform_arn,
-                    id=ml_transform_id,
-                    name="ml-transform1",
-                    transform_encryption="DISABLED",
-                    region=AWS_REGION_EU_WEST_1,
-                    tags=[{"test_key": "test_value"}],
-                )
-            }
 
             check = glue_ml_transform_encryption_at_rest_enabled()
             result = check.execute()
@@ -65,10 +65,21 @@ class Test_glue_ml_transform_encryption_at_rest_enabled:
                 == "Glue ML Transform ml-transform1 is not encrypted at rest."
             )
 
-    def test_ml_transforms_enabled(self):
+    def test_ml_transform_encryption_enabled(self):
         glue_client = MagicMock()
         ml_transform_id = "transform1"
         ml_transform_arn = f"arn:aws:glue:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:mlTransform/{ml_transform_id}"
+
+        glue_client.ml_transforms = {
+            ml_transform_arn: MLTransform(
+                arn=ml_transform_arn,
+                id=ml_transform_id,
+                name="ml-transform1",
+                user_data_encryption="SSE-KMS",
+                region=AWS_REGION_EU_WEST_1,
+                tags=[{"test_key": "test_value"}],
+            )
+        }
 
         with patch(
             "prowler.providers.aws.services.glue.glue_service.Glue",
@@ -80,18 +91,6 @@ class Test_glue_ml_transform_encryption_at_rest_enabled:
             from prowler.providers.aws.services.glue.glue_ml_transform_encryption_at_rest_enabled.glue_ml_transform_encryption_at_rest_enabled import (
                 glue_ml_transform_encryption_at_rest_enabled,
             )
-            from prowler.providers.aws.services.glue.glue_service import MLTransform
-
-            glue_client.ml_transforms = {
-                ml_transform_arn: MLTransform(
-                    arn=ml_transform_arn,
-                    id=ml_transform_id,
-                    name="ml-transform1",
-                    transform_encryption="SSE-KMS",
-                    region=AWS_REGION_EU_WEST_1,
-                    tags=[{"test_key": "test_value"}],
-                )
-            }
 
             check = glue_ml_transform_encryption_at_rest_enabled()
             result = check.execute()
