@@ -751,11 +751,16 @@ class IAM(AWSService):
                     saml_providers[provider["Arn"]] = SAMLProvider(
                         name=provider["Arn"].split("/")[-1], arn=provider["Arn"]
                     )
+        except ClientError as error:
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            if error.response["Error"]["Code"] == "AccessDenied":
+                saml_providers = None
         except Exception as error:
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            saml_providers = None
 
         return saml_providers
 
