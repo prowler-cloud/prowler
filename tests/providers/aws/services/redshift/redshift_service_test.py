@@ -115,6 +115,7 @@ class Test_Redshift_Service:
         ]
         assert redshift.clusters[0].encrypted
         assert redshift.clusters[0].master_username == "user"
+        assert redshift.clusters[0].database_name == "test"
 
     @mock_aws
     def test_describe_logging_status(self):
