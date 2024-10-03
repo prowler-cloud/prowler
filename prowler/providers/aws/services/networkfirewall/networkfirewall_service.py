@@ -1,5 +1,4 @@
 from enum import Enum
-
 from typing import Optional
 
 from pydantic import BaseModel
@@ -65,13 +64,14 @@ class NetworkFirewall(AWSService):
             network_firewall.deletion_protection = describe_firewall.get(
                 "DeleteProtection", False
             )
-            subnet_list = describe_firewall.get("SubnetMappings", [])
-            if subnet_list != []:
-                for subnet in subnet_list:
+            for subnet in describe_firewall.get("SubnetMappings", []):
+                if subnet.get("SubnetId"):
                     network_firewall.subnet_mappings.append(
                         Subnet(
                             subnet_id=subnet.get("SubnetId"),
-                            ip_addr_type=subnet.get("IPAddressType"),
+                            ip_addr_type=subnet.get(
+                                "IPAddressType", IPAddressType.IPV4
+                            ),
                         )
                     )
         except Exception as error:
