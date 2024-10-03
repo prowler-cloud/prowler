@@ -5,8 +5,8 @@ from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, AWS_REGION_EU_WEST_1
 
 class Test_glue_ml_transform_encryption_at_rest_enabled:
     def test_no_ml_transfroms(self):
-        glue_client = MagicMock()
-        glue_client.transforms = {}
+        glue_client = MagicMock
+        glue_client.ml_transforms = {}
 
         with patch(
             "prowler.providers.aws.services.glue.glue_service.Glue",
@@ -25,7 +25,7 @@ class Test_glue_ml_transform_encryption_at_rest_enabled:
             assert len(result) == 0
 
     def test_ml_transform_encryption_disabled(self):
-        glue_client = MagicMock()
+        glue_client = MagicMock
         ml_transform_id = "transform1"
         ml_transform_arn = f"arn:aws:glue:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:mlTransform/{ml_transform_id}"
 
@@ -67,7 +67,7 @@ class Test_glue_ml_transform_encryption_at_rest_enabled:
             )
 
     def test_ml_transform_encryption_enabled(self):
-        glue_client = MagicMock()
+        glue_client = MagicMock
         ml_transform_id = "transform2"
         ml_transform_arn = f"arn:aws:glue:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:mlTransform/{ml_transform_id}"
 
