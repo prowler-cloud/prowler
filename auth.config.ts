@@ -12,37 +12,7 @@ export const authConfig = {
     signIn: "/sign-in",
     newUser: "/sign-up",
   },
-  callbacks: {
-    authorized({ auth, request: { nextUrl } }) {
-      const isLoggedIn = !!auth?.user;
-      const isOnDashboard = nextUrl.pathname.startsWith("/");
-      const isSignUpPage = nextUrl.pathname === "/sign-up";
 
-      // Allow access to sign-up page
-      if (isSignUpPage) return true;
-
-      if (isOnDashboard) {
-        if (isLoggedIn) return true;
-        return false; // Redirect users who are not logged in to the login page
-      } else if (isLoggedIn) {
-        return Response.redirect(new URL("/", nextUrl));
-      }
-      return true;
-    },
-
-    jwt({ token, user }) {
-      if (user) {
-        token.data = user;
-      }
-      return token;
-    },
-
-    session({ session, token }) {
-      session.user = token.data as any;
-      console.log("session", session);
-      return session;
-    },
-  },
   providers: [
     Credentials({
       name: "credentials",
@@ -68,6 +38,51 @@ export const authConfig = {
       },
     }),
   ],
+  callbacks: {
+    authorized({ auth, request: { nextUrl } }) {
+      const isLoggedIn = !!auth?.user;
+      const isOnDashboard = nextUrl.pathname.startsWith("/");
+      const isSignUpPage = nextUrl.pathname === "/sign-up";
+
+      // Allow access to sign-up page
+      if (isSignUpPage) return true;
+
+      if (isOnDashboard) {
+        if (isLoggedIn) return true;
+        return false; // Redirect users who are not logged in to the login page
+      } else if (isLoggedIn) {
+        return Response.redirect(new URL("/", nextUrl));
+      }
+      return true;
+    },
+
+    jwt: async ({ token, user, account }) => {
+      // console.log(`In jwt callback - Token is ${JSON.stringify(token)}`);
+      if (user && account) {
+        // console.log(`In jwt callback - User is ${JSON.stringify(user)}`);
+        // console.log(`In jwt callback - Account is ${JSON.stringify(account)}`);
+        // token.data = user;
+        return {
+          ...token,
+          accessToken: user.accessToken,
+          refreshToken: user.refreshToken,
+          user,
+        };
+      }
+      return token;
+    },
+
+    session: async ({ session, token }) => {
+      console.log(`In session callback - Token is ${JSON.stringify(token)}`);
+      // session.user = token.data as any;
+      if (token) {
+        session.accessToken = token.accessToken;
+        session.refreshToken = token.refreshToken;
+      }
+      // console.log("session", session);
+      return session;
+    },
+  },
 } satisfies NextAuthConfig;
 
 export const { signIn, signOut, auth, handlers } = NextAuth(authConfig);

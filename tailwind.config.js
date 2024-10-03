@@ -41,6 +41,9 @@ module.exports = {
             yellow: "#ffdf16",
           },
           dark: {
+            DEFAULT: "#0E1117",
+            700: "#151B23",
+            400: "#262C36",
             title: "#E2E8F0",
             text: "#94a3b8" /* primary default for dark mode */,
           },
