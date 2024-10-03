@@ -71,9 +71,9 @@ from prowler.providers.aws.lib.s3.s3 import S3
 from prowler.providers.aws.lib.security_hub.security_hub import SecurityHub
 from prowler.providers.aws.models import AWSOutputOptions
 from prowler.providers.azure.models import AzureOutputOptions
-from prowler.providers.common.inventory import run_prowler_inventory
 from prowler.providers.common.provider import Provider
 from prowler.providers.common.quick_inventory import run_provider_quick_inventory
+from prowler.providers.common.scan_inventory import run_prowler_scan_inventory
 from prowler.providers.gcp.models import GCPOutputOptions
 from prowler.providers.kubernetes.models import KubernetesOutputOptions
 
@@ -691,7 +691,7 @@ def prowler():
 
     # Run the quick inventory for the provider if available
     if hasattr(args, "scan_inventory") and args.scan_inventory:
-        run_prowler_inventory(checks_to_execute, args.provider)
+        run_prowler_scan_inventory(checks_to_execute, args.provider)
         sys.exit()
 
     # If there are failed findings exit code 3, except if -z is input

@@ -10,9 +10,8 @@ from pydantic import BaseModel
 from prowler.config.config import orange_color
 
 
-def run_prowler_inventory(checks_to_execute, provider):
+def run_prowler_scan_inventory(checks_to_execute, provider):
     output_folder_path = f"./output/inventory/{provider}"
-    meta_json_file = {}
 
     os.makedirs(output_folder_path, exist_ok=True)
 
@@ -89,15 +88,8 @@ def run_prowler_inventory(checks_to_execute, provider):
 
                 client_path = getattr(lib, f"{service_client}")
 
-                if not meta_json_file.get(f"{service}"):
-                    meta_json_file[f"{service}"] = []
-
                 # Convert to JSON
                 output_file = service_client.split("_client")[0]
-
-                meta_json_file[f"{service}"].append(
-                    f"./{service}/{output_file}_output.json"
-                )
 
                 with open(
                     f"{service_output_folder}/{output_file}_output.json", "w+"
