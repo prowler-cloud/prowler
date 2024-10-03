@@ -127,7 +127,7 @@ class Logs(AWSService):
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
                 if not self.metric_filters:
-                    self.metric_filters = []
+                    self.metric_filters = None
             else:
                 logger.error(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
