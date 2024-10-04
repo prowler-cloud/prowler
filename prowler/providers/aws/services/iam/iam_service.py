@@ -47,7 +47,6 @@ def is_service_role(role):
     return False
 
 
-################## IAM
 class IAM(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
@@ -89,13 +88,21 @@ class IAM(AWSService):
         self._list_inline_role_policies()
         self.saml_providers = self._list_saml_providers()
         self.server_certificates = self._list_server_certificates()
-        self._list_tags_for_resource()
         self.access_keys_metadata = {}
         self._get_access_keys_metadata()
         self.last_accessed_services = {}
         self._get_last_accessed_services()
         self.user_temporary_credentials_usage = {}
         self._get_user_temporary_credentials_usage()
+        # List missing tags
+        self.__threading_call__(self._list_tags, self.users)
+        self.__threading_call__(self._list_tags, self.roles)
+        self.__threading_call__(
+            self._list_tags,
+            [policy for policy in self.policies if policy.type == "Custom"],
+        )
+        self.__threading_call__(self._list_tags, self.server_certificates)
+        self.__threading_call__(self._list_tags, self.saml_providers.values())
 
     def _get_client(self):
         return self.client
@@ -733,17 +740,31 @@ class IAM(AWSService):
 
     def _list_saml_providers(self):
         logger.info("IAM - List SAML Providers...")
+        saml_providers = {}
         try:
-            saml_providers = self.client.list_saml_providers()["SAMLProviderList"]
+            saml_providers_list = self.client.list_saml_providers()["SAMLProviderList"]
+
+            for provider in saml_providers_list:
+                if not self.audit_resources or (
+                    is_resource_filtered(provider["Arn"], self.audit_resources)
+                ):
+                    saml_providers[provider["Arn"]] = SAMLProvider(
+                        name=provider["Arn"].split("/")[-1], arn=provider["Arn"]
+                    )
+        except ClientError as error:
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            if error.response["Error"]["Code"] == "AccessDenied":
+                saml_providers = None
         except Exception as error:
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            saml_providers = None
-        finally:
-            return saml_providers
 
-    def _list_server_certificates(self):
+        return saml_providers
+
+    def _list_server_certificates(self) -> list:
         logger.info("IAM - List Server Certificates...")
         try:
             server_certificates = []
@@ -768,71 +789,30 @@ class IAM(AWSService):
         finally:
             return server_certificates
 
-    def _list_tags_for_resource(self):
+    def _list_tags(self, resource: any):
         logger.info("IAM - List Tags...")
         try:
-            if self.roles:
-                for role in self.roles:
-                    try:
-                        response = self.client.list_role_tags(RoleName=role.name)[
-                            "Tags"
-                        ]
-                        role.tags = response
-                    except ClientError as error:
-                        if error.response["Error"]["Code"] == "NoSuchEntity":
-                            role.tags = []
-                        else:
-                            logger.error(
-                                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                            )
-                    except Exception as error:
-                        logger.error(
-                            f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                        )
-
-        except Exception as error:
-            logger.error(
-                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-
-        try:
-            for user in self.users:
-                try:
-                    response = self.client.list_user_tags(UserName=user.name)["Tags"]
-                    user.tags = response
-                except ClientError as error:
-                    if error.response["Error"]["Code"] == "NoSuchEntity":
-                        user.tags = []
-                    else:
-                        logger.error(
-                            f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                        )
-
-        except Exception as error:
-            logger.error(
-                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-
-        try:
-            for policy in self.policies:
-                try:
-                    if policy.type != "Inline":
-                        response = self.client.list_policy_tags(PolicyArn=policy.arn)[
-                            "Tags"
-                        ]
-                        policy.tags = response
-                except ClientError as error:
-                    if error.response["Error"]["Code"] == "NoSuchEntity":
-                        policy.tags = []
-                    else:
-                        logger.error(
-                            f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                        )
-                except Exception as error:
-                    logger.error(
-                        f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                    )
-
+            if isinstance(resource, Role):
+                resource.tags = self.client.list_role_tags(RoleName=resource.name).get(
+                    "Tags", []
+                )
+            elif isinstance(resource, User):
+                resource.tags = self.client.list_user_tags(UserName=resource.name).get(
+                    "Tags", []
+                )
+            elif isinstance(resource, Policy):
+                if resource.type == "Custom":
+                    resource.tags = self.client.list_policy_tags(
+                        PolicyArn=resource.arn
+                    ).get("Tags", [])
+            elif isinstance(resource, Certificate):
+                resource.tags = self.client.list_server_certificate_tags(
+                    ServerCertificateName=resource.name
+                ).get("Tags", [])
+            elif isinstance(resource, SAMLProvider):
+                resource.tags = self.client.list_saml_provider_tags(
+                    SAMLProviderArn=resource.arn
+                ).get("Tags", [])
         except Exception as error:
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -952,7 +932,7 @@ class User(BaseModel):
     console_access: Optional[bool]
     attached_policies: list[dict] = []
     inline_policies: list[str] = []
-    tags: Optional[list] = []
+    tags: Optional[list]
 
 
 class Role(BaseModel):
@@ -962,7 +942,7 @@ class Role(BaseModel):
     is_service_role: bool
     attached_policies: list[dict] = []
     inline_policies: list[str] = []
-    tags: Optional[list] = []
+    tags: Optional[list]
 
 
 class Group(BaseModel):
@@ -991,6 +971,7 @@ class Certificate(BaseModel):
     id: str
     arn: str
     expiration: datetime
+    tags: Optional[list]
 
 
 class Policy(BaseModel):
@@ -1002,3 +983,9 @@ class Policy(BaseModel):
     attached: bool
     document: Optional[dict]
     tags: Optional[list] = []
+
+
+class SAMLProvider(BaseModel):
+    name: str
+    arn: str
+    tags: Optional[list]
