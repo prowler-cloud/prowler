@@ -55,8 +55,9 @@ class GuardDuty(AWSService):
         try:
             try:
                 if detector.id and detector.enabled_in_account:
-                    regional_client = self.regional_clients[detector.region]
-                    detector_info = regional_client.get_detector(DetectorId=detector.id)
+                    detector_info = self.regional_clients[detector.region].get_detector(
+                        DetectorId=detector.id
+                    )
                     if (
                         "Status" in detector_info
                         and detector_info["Status"] == "ENABLED"
@@ -64,9 +65,19 @@ class GuardDuty(AWSService):
                         detector.status = True
 
                     data_sources = detector_info.get("DataSources", {})
+
                     s3_logs = data_sources.get("S3Logs", {})
-                    if s3_logs.get("Status") == "ENABLED":
+                    if s3_logs.get("Status", "DISABLED") == "ENABLED":
                         detector.s3_protection = True
+
+                    detector.eks_audit_log_protection = (
+                        True
+                        if data_sources.get("Kubernetes", {})
+                        .get("AuditLogs", {})
+                        .get("Status", "DISABLED")
+                        == "ENABLED"
+                        else False
+                    )
 
                     for feat in detector_info.get("Features", []):
                         if (
@@ -201,3 +212,4 @@ class Detector(BaseModel):
     tags: Optional[list] = []
     s3_protection: bool = False
     rds_protection: bool = False
+    eks_audit_log_protection: Optional[bool]
