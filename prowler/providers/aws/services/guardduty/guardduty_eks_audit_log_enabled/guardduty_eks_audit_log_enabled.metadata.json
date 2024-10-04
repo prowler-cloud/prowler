@@ -7,10 +7,10 @@
   ],
   "ServiceName": "guardduty",
   "SubServiceName": "",
-  "ResourceIdTemplate": "",
+  "ResourceIdTemplate": "arn:aws:guardduty:region:account-id/detector-id",
   "Severity": "high",
   "ResourceType": "AwsEksCluster",
-  "Description": "This control checks whether GuardDuty EKS Audit Log Monitoring is enabled. For a standalone account, the control fails if GuardDuty EKS Audit Log Monitoring is disabled in the account. In a multi-account environment, the control fails if the delegated GuardDuty administrator account and all member accounts don't have EKS Audit Log Monitoring enabled.",
+  "Description": "Checks whether GuardDuty EKS Audit Log Monitoring is enabled as source in a detector.",
   "Risk": "Without GuardDuty EKS Audit Log Monitoring enabled, you may not be able to detect potentially suspicious activities in your Amazon Elastic Kubernetes Service (Amazon EKS) clusters.",
   "RelatedUrl": "https://docs.aws.amazon.com/guardduty/latest/ug/kubernetes-protection.html",
   "Remediation": {
@@ -21,8 +21,8 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Enable GuardDuty EKS Audit Log Monitoring in your account. In a multi-account environment, the delegated GuardDuty administrator must enable EKS Audit Log Monitoring for all member accounts.",
-      "Url": "https://docs.aws.amazon.com/guardduty/latest/ug/eks-protection-enable-standalone-account.html"
+      "Text": "Enable GuardDuty EKS Audit Log Monitoring to detect potentially suspicious activities in your Amazon Elastic Kubernetes Service (Amazon EKS) clusters.",
+      "Url": "https://docs.aws.amazon.com/securityhub/latest/userguide/guardduty-controls.html#guardduty-5"
     }
   },
   "Categories": [
