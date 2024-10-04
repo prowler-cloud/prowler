@@ -217,7 +217,7 @@ class UserUpdateSerializer(BaseWriteSerializer):
 # Tasks
 class TaskBase(serializers.ModelSerializer):
     state_mapping = {
-        "PENDING": StateChoices.SCHEDULED,
+        "PENDING": StateChoices.AVAILABLE,
         "STARTED": StateChoices.EXECUTING,
         "PROGRESS": StateChoices.EXECUTING,
         "SUCCESS": StateChoices.COMPLETED,

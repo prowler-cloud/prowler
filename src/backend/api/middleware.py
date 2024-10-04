@@ -5,7 +5,7 @@ from config.custom_logging import BackendLogger
 
 
 def extract_auth_info(request) -> dict:
-    if not hasattr(request, "auth") or request.auth is not None:
+    if getattr(request, "auth", None) is not None:
         tenant_id = request.auth.get("tenant_id", "N/A")
         user_id = request.auth.get("user_id", "N/A")
     else:
