@@ -189,6 +189,8 @@ def is_policy_public(
                                 ".amazonaws.com" in principal.get("Service", "")
                                 or "*" in principal.get("Service", "")
                             )
+                            and "secretsmanager.amazonaws.com"
+                            not in principal.get("Service", "")
                         )
                     )
                 )
