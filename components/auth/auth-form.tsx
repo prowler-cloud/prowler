@@ -20,8 +20,8 @@ import { authFormSchema } from "@/types";
 
 import { NotificationIcon, ProwlerExtended } from "../icons";
 import { ThemeSwitch } from "../ThemeSwitch";
-import { CustomInput } from "../ui/custom";
-import { AuthButton } from "./AuthButton";
+import { CustomButton, CustomInput } from "../ui/custom";
+// import { AuthButton } from "./AuthButton";
 
 export const AuthForm = ({ type }: { type: string }) => {
   const formSchema = authFormSchema(type);
@@ -39,7 +39,11 @@ export const AuthForm = ({ type }: { type: string }) => {
     },
   });
 
+  const isLoading = form.formState.isSubmitting;
+
   const [state, dispatch] = useFormState(authenticate, undefined);
+
+  console.log(isLoading, state);
 
   useEffect(() => {
     if (state?.message === "Success") {
@@ -185,7 +189,26 @@ export const AuthForm = ({ type }: { type: string }) => {
               </div>
             )}
 
-            <AuthButton type={type} />
+            {isLoading && <p>Loading...</p>}
+
+            <CustomButton
+              type="submit"
+              ariaLabel={type === "sign-in" ? "Log In" : "Sign Up"}
+              ariaDisabled={isLoading}
+              className="w-full"
+              variant="solid"
+              color="action"
+              size="md"
+              radius="md"
+              isLoading={isLoading}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <span>Loading</span>
+              ) : (
+                <span>{type === "sign-in" ? "Log In" : "Sign Up"}</span>
+              )}
+            </CustomButton>
           </form>
         </Form>
 

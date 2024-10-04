@@ -1,2 +1,1 @@
-export * from "./AuthButton";
-export * from "./AuthForm";
+export * from "./auth-form";
