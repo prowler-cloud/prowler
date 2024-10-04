@@ -37,9 +37,8 @@ class NetworkFirewall(AWSService):
                             network_firewall["FirewallArn"], self.audit_resources
                         )
                     ):
-                        self.network_firewalls[
-                            network_firewall.get("FirewallArn", "")
-                        ] = Firewall(
+                        arn = network_firewall.get("FirewallArn", "")
+                        self.network_firewalls[arn] = Firewall(
                             arn=network_firewall.get("FirewallArn"),
                             region=regional_client.region,
                             name=network_firewall.get("FirewallName"),
@@ -95,6 +94,9 @@ class NetworkFirewall(AWSService):
                 group.get("ResourceArn", "")
                 for group in firewall_policy.get("StatefulRuleGroupReferences", [])
             ]
+            network_firewall.default_stateless_frag_actions = firewall_policy.get(
+                "StatelessFragmentDefaultActions", []
+            )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
@@ -184,6 +186,7 @@ class Firewall(BaseModel):
     tags: list = []
     encryption_type: str = None
     deletion_protection: bool = False
+    default_stateless_frag_actions: list = []
     subnet_mappings: list[Subnet] = []
     logging_configuration: Optional[list[LoggingConfiguration]]
     stateless_rule_groups: list[str] = []
