@@ -83,7 +83,8 @@ class GuardDuty(AWSService):
                         True
                         if data_sources.get("MalwareProtection", {})
                         .get("ScanEc2InstanceWithFindings", {})
-                        .get("EbsVolumes", "DISABLED")
+                        .get("EbsVolumes", {})
+                        .get("Status", "DISABLED")
                         == "ENABLED"
                         else False
                     )
