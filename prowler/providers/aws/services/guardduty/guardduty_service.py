@@ -90,10 +90,15 @@ class GuardDuty(AWSService):
 
                     for feat in detector_info.get("Features", []):
                         if (
-                            feat.get("Name") == "RDS_LOGIN_EVENTS"
+                            feat.get("Name", "") == "RDS_LOGIN_EVENTS"
                             and feat.get("Status", "DISABLED") == "ENABLED"
                         ):
                             detector.rds_protection = True
+                        elif (
+                            feat.get("Name", "") == "LAMBDA_NETWORK_LOGS"
+                            and feat.get("Status", "DISABLED") == "ENABLED"
+                        ):
+                            detector.lambda_protection = True
 
             except Exception as error:
                 logger.error(
@@ -223,3 +228,4 @@ class Detector(BaseModel):
     rds_protection: bool = False
     eks_audit_log_protection: bool = False
     malware_protection: bool = False
+    lambda_protection: bool = False
