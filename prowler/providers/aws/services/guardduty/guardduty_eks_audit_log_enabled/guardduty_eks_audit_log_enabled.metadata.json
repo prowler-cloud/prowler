@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:guardduty:region:account-id/detector-id",
   "Severity": "high",
-  "ResourceType": "AwsEksCluster",
+  "ResourceType": "AwsGuardDutyDetector",
   "Description": "Checks whether GuardDuty EKS Audit Log Monitoring is enabled as source in a detector.",
   "Risk": "Without GuardDuty EKS Audit Log Monitoring enabled, you may not be able to detect potentially suspicious activities in your Amazon Elastic Kubernetes Service (Amazon EKS) clusters.",
   "RelatedUrl": "https://docs.aws.amazon.com/guardduty/latest/ug/kubernetes-protection.html",
