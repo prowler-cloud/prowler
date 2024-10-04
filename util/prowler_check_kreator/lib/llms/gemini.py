@@ -72,9 +72,12 @@ class Gemini:
     def _prepare_check_prompt(self, check_name: str, check_reference: str) -> list:
         """Prepare the prompt for generating the check."""
 
-        class_name = re.search(
+        match = re.search(
             r"class\s+([A-Za-z_][A-Za-z0-9_]*)\s*\((.*?)\)\s*:", check_reference
-        ).group(1)
+        )
+        if not match:
+            raise ValueError("No valid class definition found in the test reference.")
+        class_name = match.group(1)
 
         prompt_parts = [
             f"Your task is to create a new security check called '{check_name}' for Prowler (a Cloud Security tool).",
@@ -85,6 +88,26 @@ class Gemini:
             f"{class_name}:",
             check_reference,
             f"{check_name}:",
+        ]
+        return prompt_parts
+
+    def _prepare_test_prompt(self, check_name: str, test_reference: str) -> list:
+        """Prepare the prompt for generating the test."""
+
+        match = re.search(r"class\s+(Test_[A-Za-z_][A-Za-z0-9_]*)\s*:", test_reference)
+        if not match:
+            raise ValueError("No valid class definition found in the test reference.")
+        class_name = match.group(1)
+
+        prompt_parts = [
+            f"Your task is to create a new test for the security check '{check_name}' in Prowler (a Cloud Security tool).",
+            "The test must have one or more methods that start with the word 'test'.",
+            "The test methods must use the assert statement to check the results of the check.",
+            "I need the answer only with Python formatted text.",
+            "Use the following test as inspiration to create the new test: ",
+            f"{class_name}:",
+            test_reference,
+            f"Test_{check_name}:",
         ]
         return prompt_parts
 
@@ -129,16 +152,33 @@ class Gemini:
 
     def generate_check(self, check_name: str, check_reference: str) -> str:
         """Fill the check with Gemini AI."""
-        if not check_reference:
-            return ""
+        check = ""
 
-        prompt_parts = self._prepare_check_prompt(check_name, check_reference)
-        return (
-            self._generate_content(prompt_parts)
-            .replace("python", "")
-            .replace("```", "")
-            .strip()
-        )
+        if check_reference:
+            prompt_parts = self._prepare_check_prompt(check_name, check_reference)
+            check = (
+                self._generate_content(prompt_parts)
+                .replace("python", "")
+                .replace("```", "")
+                .strip()
+            )
+
+        return check
+
+    def generate_test(self, check_name: str, test_reference):
+        """Fill the test with Gemini AI."""
+        test = ""
+
+        if test_reference:
+            prompt_parts = self._prepare_test_prompt(check_name, test_reference)
+            test = (
+                self._generate_content(prompt_parts)
+                .replace("python", "")
+                .replace("```", "")
+                .strip()
+            )
+
+        return test
 
     def generate_metadata(self, metadata: dict, context: str) -> dict:
         """Fill the metadata with Gemini AI."""

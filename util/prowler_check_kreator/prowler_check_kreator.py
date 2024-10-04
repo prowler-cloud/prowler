@@ -113,6 +113,8 @@ class ProwlerCheckKreator:
         else:
             raise ValueError("Invalid model selected")
 
+        self._check_reference_name = ""
+
     def kreate_check(self) -> None:
         """Create a new check in Prowler"""
 
@@ -241,6 +243,7 @@ class ProwlerCheckKreator:
         )
 
         if user_input and self._check_exists(user_input):
+            self._check_reference_name = user_input
             # Load the file referenced by the user
             with open(
                 os.path.join(
@@ -308,7 +311,7 @@ class ProwlerCheckKreator:
             .lower()
         )
 
-        if user_input == "yes":
+        if user_input.lower().strip() == "yes":
             # Ask for some context to the user to generate the metadata, the context input finishes with a blank line
 
             print(
@@ -344,9 +347,39 @@ class ProwlerCheckKreator:
             self._check_name,
         )
 
-        test_template = load_test_template(
+        test_content = load_test_template(
             self._provider, self._service_name, self._check_name
         )
+
+        # Ask if want that Gemini to fill the test taking as reference the other check tests
+        if self._check_reference_name:
+            user_input = (
+                input(
+                    "Do you want to ask Gemini to fill the test now (based on check provided as reference in the check creation)? Type 'yes'/'no' and press enter: "
+                )
+                .strip()
+                .lower()
+            )
+
+            if user_input.lower().strip() == "yes":
+                # Load the file referenced by the user
+                with open(
+                    os.path.join(
+                        self._prowler_folder,
+                        "tests/providers/",
+                        self._provider,
+                        "services/",
+                        self._service_name,
+                        self._check_reference_name,
+                        f"{self._check_reference_name}_test.py",
+                    ),
+                    "r",
+                ) as f:
+                    test_content = f.read()
+
+                test_template = self._model.generate_test(
+                    self._check_name, test_content
+                )
 
         with open(os.path.join(test_folder, f"{self._check_name}_test.py"), "w") as f:
             f.write(test_template)
