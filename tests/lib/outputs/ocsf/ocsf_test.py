@@ -2,6 +2,7 @@ import json
 from datetime import datetime
 from io import StringIO
 
+import requests
 from freezegun import freeze_time
 from mock import patch
 from py_ocsf_models.events.base_event import SeverityID, StatusID
@@ -45,12 +46,18 @@ class TestOCSF:
         assert isinstance(output_data, DetectionFinding)
         assert output_data.activity_id == ActivityID.Create.value
         assert output_data.activity_name == ActivityID.Create.name
-        assert output_data.finding_info.created_time == findings[0].timestamp
+        assert output_data.message == findings[0].status_extended
+        assert output_data.finding_info.created_time == int(
+            findings[0].timestamp.timestamp()
+        )
+        assert output_data.finding_info.created_time_dt == findings[0].timestamp
         assert output_data.finding_info.desc == findings[0].description
         assert output_data.finding_info.title == findings[0].check_title
         assert output_data.finding_info.uid == findings[0].finding_uid
         assert output_data.finding_info.product_uid == "prowler"
-        assert output_data.event_time == findings[0].timestamp
+        assert output_data.finding_info.types == ["test-type"]
+        assert output_data.time == int(findings[0].timestamp.timestamp())
+        assert output_data.time_dt == findings[0].timestamp
         assert (
             output_data.remediation.desc == findings[0].remediation_recommendation_text
         )
@@ -71,14 +78,19 @@ class TestOCSF:
         assert output_data.resources[0].data == {
             "details": findings[0].resource_details
         }
+        assert output_data.metadata.profiles == ["cloud", "datetime"]
+        assert output_data.metadata.tenant_uid == "test-organization-id"
         assert output_data.metadata.event_code == findings[0].check_id
         assert output_data.metadata.product.name == "Prowler"
         assert output_data.metadata.product.vendor_name == "Prowler"
+        assert output_data.metadata.product.uid == "prowler"
         assert output_data.metadata.product.version == prowler_version
         assert output_data.type_uid == DetectionFindingTypeID.Create
-        assert output_data.type_name == DetectionFindingTypeID.Create.name
+        assert (
+            output_data.type_name
+            == f"Detection Finding: {DetectionFindingTypeID.Create.name}"
+        )
         assert output_data.unmapped == {
-            "check_type": findings[0].check_type,
             "related_url": findings[0].related_url,
             "categories": findings[0].categories,
             "depends_on": findings[0].depends_on,
@@ -86,6 +98,36 @@ class TestOCSF:
             "notes": findings[0].notes,
             "compliance": findings[0].compliance,
         }
+
+    def test_validate_ocsf(self):
+        mock_file = StringIO()
+        findings = [
+            generate_finding_output(
+                status="FAIL",
+                severity="low",
+                muted=False,
+                region=AWS_REGION_EU_WEST_1,
+                timestamp=datetime.now(),
+                resource_details="resource_details",
+                resource_name="resource_name",
+                resource_uid="resource-id",
+                status_extended="status extended",
+            )
+        ]
+
+        output = OCSF(findings)
+        output._file_descriptor = mock_file
+
+        with patch.object(mock_file, "close", return_value=None):
+            output.batch_write_data_to_file()
+
+        mock_file.seek(0)
+        content = mock_file.read()
+        json_data = json.loads(content)
+        url = "https://schema.ocsf.io/api/v2/validate"
+        headers = {"content-type": "application/json"}
+        response = requests.post(url, headers=headers, json=json_data[0])
+        assert response.json()["error_count"] == 0
 
     @freeze_time(datetime.now())
     def test_batch_write_data_to_file(self):
@@ -106,14 +148,18 @@ class TestOCSF:
 
         expected_json_output = [
             {
+                "message": "status extended",
                 "metadata": {
                     "event_code": "test-check-id",
                     "product": {
                         "name": "Prowler",
+                        "uid": "prowler",
                         "vendor_name": "Prowler",
                         "version": prowler_version,
                     },
-                    "version": "1.2.0",
+                    "version": "1.3.0",
+                    "profiles": ["cloud", "datetime"],
+                    "tenant_uid": "test-organization-id",
                 },
                 "severity_id": 2,
                 "severity": "Low",
@@ -122,7 +168,6 @@ class TestOCSF:
                 "status_detail": "status extended",
                 "status_id": 1,
                 "unmapped": {
-                    "check_type": "test-type",
                     "related_url": "test-url",
                     "categories": "test-category",
                     "depends_on": "test-dependency",
@@ -133,11 +178,13 @@ class TestOCSF:
                 "activity_name": "Create",
                 "activity_id": 1,
                 "finding_info": {
-                    "created_time": datetime.now().isoformat(),
+                    "created_time": int(datetime.now().timestamp()),
+                    "created_time_dt": datetime.now().isoformat(),
                     "desc": "check description",
                     "product_uid": "prowler",
                     "title": "test-check-id",
                     "uid": "test-unique-finding",
+                    "types": ["test-type"],
                 },
                 "resources": [
                     {
@@ -153,12 +200,12 @@ class TestOCSF:
                 ],
                 "category_name": "Findings",
                 "category_uid": 2,
-                "class_name": "DetectionFinding",
+                "class_name": "Detection Finding",
                 "class_uid": 2004,
                 "cloud": {
                     "account": {
                         "name": "123456789012",
-                        "type": "AWS_Account",
+                        "type": "AWS Account",
                         "type_id": 10,
                         "uid": "123456789012",
                         "labels": ["test-tag:test-value"],
@@ -170,11 +217,12 @@ class TestOCSF:
                     "provider": "aws",
                     "region": "eu-west-1",
                 },
-                "event_time": datetime.now().isoformat(),
+                "time": int(datetime.now().timestamp()),
+                "time_dt": datetime.now().isoformat(),
                 "remediation": {"desc": "", "references": []},
                 "risk_details": "test-risk",
                 "type_uid": 200401,
-                "type_name": "Create",
+                "type_name": "Detection Finding: Create",
             }
         ]
 
@@ -186,7 +234,6 @@ class TestOCSF:
 
         mock_file.seek(0)
         content = mock_file.read()
-
         assert json.loads(content) == expected_json_output
 
     def test_batch_write_data_to_file_without_findings(self):
@@ -211,14 +258,18 @@ class TestOCSF:
         finding_information = finding_ocsf.finding_info
 
         assert isinstance(finding_information, FindingInformation)
-        assert finding_information.created_time == finding_output.timestamp
+        assert finding_information.created_time == int(
+            finding_output.timestamp.timestamp()
+        )
+        assert finding_information.created_time_dt == finding_output.timestamp
         assert finding_information.desc == finding_output.description
         assert finding_information.title == finding_output.check_title
         assert finding_information.uid == finding_output.finding_uid
         assert finding_information.product_uid == "prowler"
 
         # Event time
-        assert finding_ocsf.event_time == finding_output.timestamp
+        assert finding_ocsf.time == int(finding_output.timestamp.timestamp())
+        assert finding_ocsf.time_dt == finding_output.timestamp
 
         # Remediation
         remediation = finding_ocsf.remediation
@@ -241,7 +292,6 @@ class TestOCSF:
 
         # Unmapped Data
         assert finding_ocsf.unmapped == {
-            "check_type": finding_output.check_type,
             "related_url": finding_output.related_url,
             "categories": finding_output.categories,
             "depends_on": finding_output.depends_on,
@@ -281,7 +331,10 @@ class TestOCSF:
 
         # Type
         assert finding_ocsf.type_uid == DetectionFindingTypeID.Create
-        assert finding_ocsf.type_name == DetectionFindingTypeID.Create.name
+        assert (
+            finding_ocsf.type_name
+            == f"Detection Finding: {DetectionFindingTypeID.Create.name}"
+        )
 
         # Cloud
         cloud = finding_ocsf.cloud
@@ -293,7 +346,7 @@ class TestOCSF:
         assert isinstance(cloud_account, Account)
         assert cloud_account.name == finding_output.account_name
         assert cloud_account.type_id == TypeID.AWS_Account
-        assert cloud_account.type == TypeID.AWS_Account.name
+        assert cloud_account.type == TypeID.AWS_Account.name.replace("_", " ")
         assert cloud_account.uid == finding_output.account_uid
         assert cloud_account.labels == ["test-tag:test-value"]
 
@@ -314,8 +367,10 @@ class TestOCSF:
         finding_ocsf = OCSF([finding_output])
         finding_ocsf = finding_ocsf.data[0]
 
-        assert finding_ocsf.container.name == finding_output.resource_name
-        assert finding_ocsf.container.uid == finding_output.resource_uid
+        assert finding_ocsf.metadata.profiles == ["container", "datetime"]
+        assert finding_ocsf.resources[0].namespace == finding_output.region.replace(
+            "namespace: ", ""
+        )
 
     def test_finding_output_cloud_fail_low_not_muted(self):
         finding_output = generate_finding_output(
@@ -340,8 +395,8 @@ class TestOCSF:
         finding_ocsf = finding_ocsf.data[0]
 
         # Status
-        assert finding_ocsf.status_id == StatusID.Other.value
-        assert finding_ocsf.status == StatusID.Other.name
+        assert finding_ocsf.status_id == StatusID.New.value
+        assert finding_ocsf.status == StatusID.New.name
         assert finding_ocsf.status_code == finding_output.status
         assert finding_ocsf.status_detail == finding_output.status_extended
 
@@ -365,38 +420,12 @@ class TestOCSF:
         provider = "None"
         assert OCSF.get_account_type_id_by_provider(provider) == TypeID.Other
 
-    # Returns StatusID.New when status is "FAIL" and muted is False
-    def test_new_when_status_fail_and_not_muted(self):
-        status = "FAIL"
+    # Returns StatusID.New when muted is False
+    def test_new_when_not_muted(self):
         muted = False
-        assert OCSF.get_finding_status_id(status, muted) == StatusID.New
+        assert OCSF.get_finding_status_id(muted) == StatusID.New
 
-    # Returns StatusID.Suppressed when status is "FAIL" and muted is True
-    def test_suppressed_when_status_fail_and_muted(self):
-        status = "FAIL"
+    # Returns StatusID.Suppressed when muted is True
+    def test_suppressed_when_muted(self):
         muted = True
-        assert OCSF.get_finding_status_id(status, muted) == StatusID.Suppressed
-
-    # Returns StatusID.Other when status is PASS and muted is False
-    def test_other_when_status_whatever_and_not_muted(self):
-        status = "PASS"
-        muted = False
-        assert OCSF.get_finding_status_id(status, muted) == StatusID.Other
-
-    # Returns StatusID.Suppresed when status is PASS and muted is True
-    def test_other_when_status_whatever_and_muted(self):
-        status = "PASS"
-        muted = True
-        assert OCSF.get_finding_status_id(status, muted) == StatusID.Suppressed
-
-    # Returns StatusID.Suppressed when muted is True and status is not "FAIL"
-    def test_suppressed_when_status_pass_and_muted(self):
-        status = "PASS"
-        muted = True
-        assert OCSF.get_finding_status_id(status, muted) == StatusID.Suppressed
-
-    # Returns StatusID.Other when muted is False and status is not "FAIL"
-    def test_other_when_status_pass_and_not_muted(self):
-        status = "PASS"
-        muted = False
-        assert OCSF.get_finding_status_id(status, muted) == StatusID.Other
+        assert OCSF.get_finding_status_id(muted) == StatusID.Suppressed
