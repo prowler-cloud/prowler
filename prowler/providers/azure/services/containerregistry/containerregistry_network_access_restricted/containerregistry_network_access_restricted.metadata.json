@@ -1,6 +1,6 @@
 {
   "Provider": "azure",
-  "CheckID": "container_registry_network_access_restricted",
+  "CheckID": "containerregistry_network_access_restricted",
   "CheckTitle": "Restrict public network access to the Container Registry",
   "CheckType": [],
   "ServiceName": "containerregistry",
