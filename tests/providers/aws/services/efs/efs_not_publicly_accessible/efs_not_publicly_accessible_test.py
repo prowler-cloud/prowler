@@ -143,7 +143,7 @@ class Test_efs_not_publicly_accessible:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"EFS {file_system["FileSystemId"]} has a policy which does not allow access to any client within the VPC."
+                == f"EFS {file_system['FileSystemId']} has a policy which does not allow access to any client within the VPC."
             )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == file_system["FileSystemId"]
@@ -180,7 +180,7 @@ class Test_efs_not_publicly_accessible:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"EFS {file_system["FileSystemId"]} has a policy which does not allow access to any client within the VPC."
+                == f"EFS {file_system['FileSystemId']} has a policy which does not allow access to any client within the VPC."
             )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == file_system["FileSystemId"]
@@ -217,7 +217,7 @@ class Test_efs_not_publicly_accessible:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"EFS {file_system["FileSystemId"]} has a policy which does not allow access to any client within the VPC."
+                == f"EFS {file_system['FileSystemId']} has a policy which does not allow access to any client within the VPC."
             )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == file_system["FileSystemId"]
@@ -254,7 +254,7 @@ class Test_efs_not_publicly_accessible:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"EFS {file_system["FileSystemId"]} has a policy which allows access to any client within the VPC."
+                == f"EFS {file_system['FileSystemId']} has a policy which allows access to any client within the VPC."
             )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == file_system["FileSystemId"]
@@ -290,7 +290,7 @@ class Test_efs_not_publicly_accessible:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"EFS {file_system["FileSystemId"]} doesn't have any policy which means it grants full access to any client within the VPC."
+                == f"EFS {file_system['FileSystemId']} doesn't have any policy which means it grants full access to any client within the VPC."
             )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == file_system["FileSystemId"]
