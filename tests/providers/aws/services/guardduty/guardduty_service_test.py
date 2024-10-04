@@ -111,7 +111,10 @@ class Test_GuardDuty_Service:
         guardduty_client = client("guardduty", region_name=AWS_REGION_EU_WEST_1)
         response = guardduty_client.create_detector(
             Enable=True,
-            DataSources={"S3Logs": {"Enable": True}},
+            DataSources={
+                "S3Logs": {"Enable": True},
+                "Kubernetes": {"AuditLogs": {"Enable": True}},
+            },
         )
 
         aws_provider = set_mocked_aws_provider()
@@ -129,6 +132,7 @@ class Test_GuardDuty_Service:
         assert guardduty.detectors[0].administrator_account == "123456789013"
         assert guardduty.detectors[0].s3_protection
         assert not guardduty.detectors[0].rds_protection
+        assert guardduty.detectors[0].eks_audit_log_protection
         assert guardduty.detectors[0].region == AWS_REGION_EU_WEST_1
         assert guardduty.detectors[0].tags == [{"test": "test"}]
 
