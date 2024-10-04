@@ -157,11 +157,22 @@ class Gemini:
             .strip()
         )
 
-        filled_metadata["SubServiceName"] = ""
+        # Add the removed fields back in the same order
+
         filled_metadata["Remediation"]["Code"]["NativeIaC"] = ""
         filled_metadata["Remediation"]["Code"]["Other"] = ""
         filled_metadata["Remediation"]["Code"]["Terraform"] = ""
-        filled_metadata["DependsOn"] = []
-        filled_metadata["RelatedTo"] = []
 
-        return filled_metadata
+        # Insert key SubServiceName after ServiceName key and RelatedTo and DependsOn just before Notes key
+
+        ordered_filled_metadata = {}
+
+        for key, value in filled_metadata.items():
+            ordered_filled_metadata[key] = value
+            if key == "ServiceName":
+                ordered_filled_metadata["SubServiceName"] = ""
+            if key == "Notes":
+                ordered_filled_metadata["DependsOn"] = []
+                ordered_filled_metadata["RelatedTo"] = []
+
+        return ordered_filled_metadata
