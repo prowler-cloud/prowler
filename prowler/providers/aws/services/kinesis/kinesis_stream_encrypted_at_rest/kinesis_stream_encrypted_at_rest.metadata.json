@@ -16,9 +16,9 @@
   "Remediation": {
     "Code": {
       "CLI": "aws kinesis start-stream-encryption --stream-name <your-stream-name> --encryption-type KMS --key-id <your-kms-key-id>",
-      "NativeIaC": "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_105/",
+      "NativeIaC": "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_22/#cloudformation",
       "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/kinesis-controls.html#kinesis-1",
-      "Terraform": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Firehose/delivery-stream-encrypted-with-kms-customer-master-keys.html"
+      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_22/#terraform"
     },
     "Recommendation": {
       "Text": "Enable server-side encryption for Kinesis streams using AWS KMS keys to ensure that all data is encrypted before it is stored, protecting data at rest and reducing the risk of unauthorized access.",
