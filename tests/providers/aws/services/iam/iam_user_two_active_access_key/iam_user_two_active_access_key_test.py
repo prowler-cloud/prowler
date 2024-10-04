@@ -23,6 +23,7 @@ class Test_iam_user_two_active_access_key:
         iam_client = client("iam")
         user = "test1"
         user_arn = iam_client.create_user(UserName=user)["User"]["Arn"]
+        iam_client.tag_user(UserName=user, Tags=[{"Key": "Name", "Value": user}])
         # Create Access Key 1
         iam_client.create_access_key(UserName=user)
         # Create Access Key 2
@@ -57,6 +58,7 @@ class Test_iam_user_two_active_access_key:
             assert search(
                 f"User {user} has 2 active access keys.", result[0].status_extended
             )
+            assert result[0].resource_tags == [{"Key": "Name", "Value": user}]
 
     @mock_aws
     def test_iam_user_one_active_access_key(self):
@@ -64,6 +66,7 @@ class Test_iam_user_two_active_access_key:
         iam_client = client("iam")
         user = "test1"
         user_arn = iam_client.create_user(UserName=user)["User"]["Arn"]
+        iam_client.tag_user(UserName=user, Tags=[{"Key": "Name", "Value": user}])
         # Create Access Key 1
         iam_client.create_access_key(UserName=user)
 
@@ -94,6 +97,7 @@ class Test_iam_user_two_active_access_key:
                 f"User {user} does not have 2 active access keys.",
                 result[0].status_extended,
             )
+            assert result[0].resource_tags == [{"Key": "Name", "Value": user}]
 
     @mock_aws
     def test_iam_user_without_active_access_key(self):
@@ -101,6 +105,7 @@ class Test_iam_user_two_active_access_key:
         iam_client = client("iam")
         user = "test1"
         user_arn = iam_client.create_user(UserName=user)["User"]["Arn"]
+        iam_client.tag_user(UserName=user, Tags=[{"Key": "Name", "Value": user}])
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
@@ -129,6 +134,7 @@ class Test_iam_user_two_active_access_key:
                 f"User {user} does not have 2 active access keys.",
                 result[0].status_extended,
             )
+            assert result[0].resource_tags == [{"Key": "Name", "Value": user}]
 
     @mock_aws
     def test_iam_no_users(self):

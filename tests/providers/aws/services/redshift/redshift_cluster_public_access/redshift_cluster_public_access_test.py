@@ -17,6 +17,9 @@ class Test_redshift_cluster_public_access:
         with mock.patch(
             "prowler.providers.aws.services.redshift.redshift_service.Redshift",
             redshift_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.redshift.redshift_client.redshift_client",
+            redshift_client,
         ):
             from prowler.providers.aws.services.redshift.redshift_cluster_public_access.redshift_cluster_public_access import (
                 redshift_cluster_public_access,
@@ -40,6 +43,9 @@ class Test_redshift_cluster_public_access:
         )
         with mock.patch(
             "prowler.providers.aws.services.redshift.redshift_service.Redshift",
+            redshift_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.redshift.redshift_client.redshift_client",
             redshift_client,
         ):
             from prowler.providers.aws.services.redshift.redshift_cluster_public_access.redshift_cluster_public_access import (
@@ -71,6 +77,9 @@ class Test_redshift_cluster_public_access:
         with mock.patch(
             "prowler.providers.aws.services.redshift.redshift_service.Redshift",
             redshift_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.redshift.redshift_client.redshift_client",
+            redshift_client,
         ):
             from prowler.providers.aws.services.redshift.redshift_cluster_public_access.redshift_cluster_public_access import (
                 redshift_cluster_public_access,
@@ -99,6 +108,9 @@ class Test_redshift_cluster_public_access:
         )
         with mock.patch(
             "prowler.providers.aws.services.redshift.redshift_service.Redshift",
+            redshift_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.redshift.redshift_client.redshift_client",
             redshift_client,
         ):
             from prowler.providers.aws.services.redshift.redshift_cluster_public_access.redshift_cluster_public_access import (

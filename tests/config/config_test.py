@@ -93,6 +93,8 @@ config_aws = {
         8080,
         8088,
     ],
+    "fargate_linux_latest_version": "1.4.0",
+    "fargate_windows_latest_version": "1.0.0",
     "trusted_account_ids": [],
     "log_group_retention_days": 365,
     "max_idle_disconnect_timeout_in_seconds": 600,
