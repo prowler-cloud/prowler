@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "networkfirewall_default_stateless_action_drop_forward",
+  "CheckID": "networkfirewall_policy_default_action_fragmented_packets",
   "CheckTitle": "Default action for fragmented packets is set to drop or forward.",
   "CheckType": [
     "Software and Configuration Checks/Industry and Regulatory Standards/NIST 800-53 Controls"

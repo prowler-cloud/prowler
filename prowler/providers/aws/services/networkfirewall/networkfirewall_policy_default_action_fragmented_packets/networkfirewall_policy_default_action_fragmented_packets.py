@@ -4,7 +4,7 @@ from prowler.providers.aws.services.networkfirewall.networkfirewall_client impor
 )
 
 
-class networkfirewall_default_stateless_action_drop_forward(Check):
+class networkfirewall_policy_default_action_fragmented_packets(Check):
     def execute(self):
         findings = []
         for arn, firewall in networkfirewall_client.network_firewalls.items():
@@ -14,12 +14,14 @@ class networkfirewall_default_stateless_action_drop_forward(Check):
             report.resource_arn = arn
             report.resource_tags = firewall.tags
             report.status = "FAIL"
-            report.status_extended = f"Network Firewall {firewall.name} default stateless action is not set to drop or forward."
+            report.status_extended = f"Network Firewall {firewall.name} policy does not drop or forward fragmented packets by default."
 
-            for action in firewall.default_stateless_frag_actions:
-                if action == "aws:drop" or action == "aws:forward_to_sfe":
-                    report.status = "PASS"
-                    report.status_extended = f"Network Firewall {firewall.name} default stateless action is set to drop or forward."
+            if (
+                "aws:drop" in firewall.default_stateless_frag_actions
+                or "aws:forward_to_sfe" in firewall.default_stateless_frag_actions
+            ):
+                report.status = "PASS"
+                report.status_extended = f"Network Firewall {firewall.name} policy does drop or forward fragmented packets by default."
 
             findings.append(report)
 

@@ -12,7 +12,7 @@ VPC_ID_UNPROTECTED = "vpc-12345678901234568"
 POLICY_ARN = "arn:aws:network-firewall:us-east-1:123456789012:firewall-policy/my-policy"
 
 
-class Test_networkfirewall_default_stateless_action_drop_forward:
+class Test_networkfirewall_policy_default_action_fragmented_packets:
     def test_no_networkfirewall(self):
         networkfirewall_client = mock.MagicMock
         networkfirewall_client.provider = set_mocked_aws_provider(
@@ -28,15 +28,15 @@ class Test_networkfirewall_default_stateless_action_drop_forward:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.networkfirewall.networkfirewall_default_stateless_action_drop_forward.networkfirewall_default_stateless_action_drop_forward.networkfirewall_client",
+                "prowler.providers.aws.services.networkfirewall.networkfirewall_policy_default_action_fragmented_packets.networkfirewall_policy_default_action_fragmented_packets.networkfirewall_client",
                 new=networkfirewall_client,
             ):
                 # Test Check
-                from prowler.providers.aws.services.networkfirewall.networkfirewall_default_stateless_action_drop_forward.networkfirewall_default_stateless_action_drop_forward import (
-                    networkfirewall_default_stateless_action_drop_forward,
+                from prowler.providers.aws.services.networkfirewall.networkfirewall_policy_default_action_fragmented_packets.networkfirewall_policy_default_action_fragmented_packets import (
+                    networkfirewall_policy_default_action_fragmented_packets,
                 )
 
-                check = networkfirewall_default_stateless_action_drop_forward()
+                check = networkfirewall_policy_default_action_fragmented_packets()
                 result = check.execute()
 
                 assert len(result) == 0
@@ -67,22 +67,22 @@ class Test_networkfirewall_default_stateless_action_drop_forward:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.networkfirewall.networkfirewall_default_stateless_action_drop_forward.networkfirewall_default_stateless_action_drop_forward.networkfirewall_client",
+                "prowler.providers.aws.services.networkfirewall.networkfirewall_policy_default_action_fragmented_packets.networkfirewall_policy_default_action_fragmented_packets.networkfirewall_client",
                 new=networkfirewall_client,
             ):
                 # Test Check
-                from prowler.providers.aws.services.networkfirewall.networkfirewall_default_stateless_action_drop_forward.networkfirewall_default_stateless_action_drop_forward import (
-                    networkfirewall_default_stateless_action_drop_forward,
+                from prowler.providers.aws.services.networkfirewall.networkfirewall_policy_default_action_fragmented_packets.networkfirewall_policy_default_action_fragmented_packets import (
+                    networkfirewall_policy_default_action_fragmented_packets,
                 )
 
-                check = networkfirewall_default_stateless_action_drop_forward()
+                check = networkfirewall_policy_default_action_fragmented_packets()
                 result = check.execute()
 
                 assert len(result) == 1
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == f"Network Firewall {FIREWALL_NAME} default stateless action is set to drop or forward."
+                    == f"Network Firewall {FIREWALL_NAME} policy does drop or forward fragmented packets by default."
                 )
                 assert result[0].region == AWS_REGION_US_EAST_1
                 assert result[0].resource_id == FIREWALL_NAME
@@ -116,22 +116,22 @@ class Test_networkfirewall_default_stateless_action_drop_forward:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.networkfirewall.networkfirewall_default_stateless_action_drop_forward.networkfirewall_default_stateless_action_drop_forward.networkfirewall_client",
+                "prowler.providers.aws.services.networkfirewall.networkfirewall_policy_default_action_fragmented_packets.networkfirewall_policy_default_action_fragmented_packets.networkfirewall_client",
                 new=networkfirewall_client,
             ):
                 # Test Check
-                from prowler.providers.aws.services.networkfirewall.networkfirewall_default_stateless_action_drop_forward.networkfirewall_default_stateless_action_drop_forward import (
-                    networkfirewall_default_stateless_action_drop_forward,
+                from prowler.providers.aws.services.networkfirewall.networkfirewall_policy_default_action_fragmented_packets.networkfirewall_policy_default_action_fragmented_packets import (
+                    networkfirewall_policy_default_action_fragmented_packets,
                 )
 
-                check = networkfirewall_default_stateless_action_drop_forward()
+                check = networkfirewall_policy_default_action_fragmented_packets()
                 result = check.execute()
 
                 assert len(result) == 1
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == f"Network Firewall {FIREWALL_NAME} default stateless action is set to drop or forward."
+                    == f"Network Firewall {FIREWALL_NAME} policy does drop or forward fragmented packets by default."
                 )
                 assert result[0].region == AWS_REGION_US_EAST_1
                 assert result[0].resource_id == FIREWALL_NAME
@@ -165,22 +165,22 @@ class Test_networkfirewall_default_stateless_action_drop_forward:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.networkfirewall.networkfirewall_default_stateless_action_drop_forward.networkfirewall_default_stateless_action_drop_forward.networkfirewall_client",
+                "prowler.providers.aws.services.networkfirewall.networkfirewall_policy_default_action_fragmented_packets.networkfirewall_policy_default_action_fragmented_packets.networkfirewall_client",
                 new=networkfirewall_client,
             ):
                 # Test Check
-                from prowler.providers.aws.services.networkfirewall.networkfirewall_default_stateless_action_drop_forward.networkfirewall_default_stateless_action_drop_forward import (
-                    networkfirewall_default_stateless_action_drop_forward,
+                from prowler.providers.aws.services.networkfirewall.networkfirewall_policy_default_action_fragmented_packets.networkfirewall_policy_default_action_fragmented_packets import (
+                    networkfirewall_policy_default_action_fragmented_packets,
                 )
 
-                check = networkfirewall_default_stateless_action_drop_forward()
+                check = networkfirewall_policy_default_action_fragmented_packets()
                 result = check.execute()
 
                 assert len(result) == 1
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == f"Network Firewall {FIREWALL_NAME} default stateless action is not set to drop or forward."
+                    == f"Network Firewall {FIREWALL_NAME} policy does not drop or forward fragmented packets by default."
                 )
                 assert result[0].region == AWS_REGION_US_EAST_1
                 assert result[0].resource_id == FIREWALL_NAME
