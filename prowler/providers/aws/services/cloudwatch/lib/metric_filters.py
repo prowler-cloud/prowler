@@ -26,7 +26,7 @@ def check_cloudwatch_log_metric_filter(
             report.resource_id = metric_filter.log_group.name
             report.resource_arn = metric_filter.log_group.arn
             report.region = metric_filter.log_group.region
-            report.resource_tags = metric_filter.log_group.tags
+            report.resource_tags = getattr(metric_filter.log_group, "tags", [])
             report.status = "FAIL"
             report.status_extended = f"CloudWatch log group {metric_filter.log_group.name} found with metric filter {metric_filter.name} but no alarms associated."
             # 3. Check if there is an alarm for the metric
