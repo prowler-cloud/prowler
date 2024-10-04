@@ -100,6 +100,16 @@ def mock_make_api_call(self, operation_name, kwarg):
                 },
             ],
         }
+    elif operation_name == "GetMLTransforms":
+        return {
+            "Transforms": [
+                {
+                    "Name": "ml-transform1",
+                    "TransformId": "transform1",
+                    "UserDefinedEncryption": "DISABLED",
+                }
+            ]
+        }
     elif operation_name == "GetTags":
         return {
             "Tags": {
@@ -233,6 +243,20 @@ class Test_Glue_Service:
             "--enable-job-insights": "false",
         }
         assert glue.jobs[0].region == AWS_REGION_US_EAST_1
+
+    @mock_aws
+    def test_get_ml_transforms(self):
+        aws_provider = set_mocked_aws_provider()
+        glue = Glue(aws_provider)
+        arn_transform = f"arn:aws:glue:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:mlTransform/transform1"
+
+        assert len(glue.ml_transforms) == 1
+        assert arn_transform in glue.ml_transforms
+        assert glue.ml_transforms[arn_transform].arn == arn_transform
+        assert glue.ml_transforms[arn_transform].id == "transform1"
+        assert glue.ml_transforms[arn_transform].name == "ml-transform1"
+        assert glue.ml_transforms[arn_transform].user_data_encryption == "DISABLED"
+        assert glue.ml_transforms[arn_transform].region == AWS_REGION_US_EAST_1
 
     @mock_aws
     def test_get_tags(self):
