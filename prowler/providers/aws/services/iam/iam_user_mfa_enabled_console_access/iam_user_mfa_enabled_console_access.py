@@ -13,6 +13,11 @@ class iam_user_mfa_enabled_console_access(Check):
                 report.resource_id = user["user"]
                 report.resource_arn = user["arn"]
                 report.region = iam_client.region
+                # Search user in iam_client.users to get tags
+                for iam_user in iam_client.users:
+                    if iam_user.arn == user["arn"]:
+                        report.resource_tags = iam_user.tags
+                        break
                 # check if the user has password enabled
                 if user["password_enabled"] == "true":
                     if user["mfa_active"] == "false":
