@@ -13,9 +13,9 @@ class guardduty_eks_audit_log_enabled(Check):
                 report.resource_arn = detector.arn
                 report.resource_tags = detector.tags
                 report.status = "FAIL"
-                report.status_extended = f"GuardDuty detector {detector.id} does not have EKS Audit Log Protection enabled."
+                report.status_extended = f"GuardDuty detector {detector.id} does not have EKS Audit Log Monitoring enabled."
                 if detector.eks_audit_log_protection:
                     report.status = "PASS"
-                    report.status_extended = f"GuardDuty detector {detector.id} has EKS Audit Log Protection enabled."
+                    report.status_extended = f"GuardDuty detector {detector.id} has EKS Audit Log Monitoring enabled."
                 findings.append(report)
         return findings

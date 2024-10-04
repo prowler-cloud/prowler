@@ -212,4 +212,4 @@ class Detector(BaseModel):
     tags: Optional[list] = []
     s3_protection: bool = False
     rds_protection: bool = False
-    eks_audit_log_protection: Optional[bool]
+    eks_audit_log_protection: bool = False

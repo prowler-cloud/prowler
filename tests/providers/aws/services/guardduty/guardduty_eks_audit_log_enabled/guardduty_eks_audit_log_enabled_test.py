@@ -91,7 +91,7 @@ class Test_guardduty_eks_audit_log_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"GuardDuty detector {detector_id} has EKS Audit Log Protection enabled."
+                == f"GuardDuty detector {detector_id} has EKS Audit Log Monitoring enabled."
             )
             assert result[0].resource_id == detector_id
             assert result[0].region == AWS_REGION_EU_WEST_1
@@ -132,7 +132,7 @@ class Test_guardduty_eks_audit_log_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"GuardDuty detector {detector_id} does not have EKS Audit Log Protection enabled."
+                == f"GuardDuty detector {detector_id} does not have EKS Audit Log Monitoring enabled."
             )
             assert result[0].resource_id == detector_id
             assert result[0].region == AWS_REGION_EU_WEST_1
