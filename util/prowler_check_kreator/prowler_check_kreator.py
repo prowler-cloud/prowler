@@ -309,18 +309,21 @@ class ProwlerCheckKreator:
         )
 
         if user_input == "yes":
-            # Ask for some context to fill the metadata
+            # Ask for some context to the user to generate the metadata, the context input finishes with a blank line
 
-            context_sources = {"TrendMicro": "", "SecurityHub": "", "Other": ""}
-
-            for source in context_sources:
-                context_sources[source] = input(
-                    f"Please provide some context from {source} (leave empty if none): "
-                )
-
-            filled_metadata = self._model.generate_metadata(
-                metadata_template, context_sources
+            print(
+                "Please provide some context to fill the metadata (end with an empty line):"
             )
+            context_lines = []
+            while True:
+                line = input()
+                if line:
+                    context_lines.append(line)
+                else:
+                    break
+            context = "\n".join(context_lines)
+
+            filled_metadata = self._model.generate_metadata(metadata_template, context)
         else:
             filled_metadata = metadata_template
 

@@ -88,10 +88,9 @@ class Gemini:
         ]
         return prompt_parts
 
-    def _prepare_metadata_prompt(self, metadata: dict, context_sources: dict) -> list:
+    def _prepare_metadata_prompt(self, metadata: dict, context: str) -> list:
         """Prepare the prompt for generating the metadata."""
-        # Remove empty context sources and unnecessary fields
-        context_sources = {k: v for k, v in context_sources.items() if v}
+
         metadata.pop("SubServiceName", None)
         metadata["Remediation"]["Code"].pop("NativeIaC", None)
         metadata["Remediation"]["Code"].pop("Other", None)
@@ -116,7 +115,7 @@ class Gemini:
             "The metadata is a JSON object with the following fields: ",
             json.dumps(metadata, indent=2),
             "Use the following context sources as inspiration to fill the metadata: ",
-            json.dumps(context_sources, indent=2),
+            context,
             "The field CheckType should be filled following the format: 'namespace/category/classifier', where namespace, category, and classifier are the values from the following dict: ",
             json.dumps(get_metadata_valid_check_type(metadata["Provider"]), indent=2),
             "One example of a valid CheckType value is: 'Software and Configuration Checks/Vulnerabilities/CVE'. If you don't have a valid value for CheckType, you can leave it empty.",
@@ -141,12 +140,12 @@ class Gemini:
             .strip()
         )
 
-    def generate_metadata(self, metadata: dict, context_sources: dict) -> dict:
+    def generate_metadata(self, metadata: dict, context: str) -> dict:
         """Fill the metadata with Gemini AI."""
         if not metadata:
             return {}
 
-        prompt_parts = self._prepare_metadata_prompt(metadata, context_sources)
+        prompt_parts = self._prepare_metadata_prompt(metadata, context)
         filled_metadata_json = self._generate_content(prompt_parts)
 
         # Parse the generated JSON and re-add the removed fields
