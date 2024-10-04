@@ -1,6 +1,7 @@
 from celery.result import AsyncResult
 from django.conf import settings as django_settings
 from django.contrib.postgres.search import SearchQuery
+from django.db import transaction
 from django.db.models import F, Q
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -456,9 +457,10 @@ class ProviderViewSet(BaseRLSViewSet):
     @action(detail=True, methods=["post"], url_name="connection")
     def connection(self, request, pk=None):
         get_object_or_404(Provider, pk=pk)
-        task = check_provider_connection_task.delay(
-            provider_id=pk, tenant_id=request.tenant_id
-        )
+        with transaction.atomic():
+            task = check_provider_connection_task.delay(
+                provider_id=pk, tenant_id=request.tenant_id
+            )
         prowler_task = Task.objects.get(id=task.id)
         serializer = TaskSerializer(prowler_task)
         return Response(
@@ -473,7 +475,10 @@ class ProviderViewSet(BaseRLSViewSet):
 
     def destroy(self, request, *args, pk=None, **kwargs):
         get_object_or_404(Provider, pk=pk)
-        task = delete_provider_task.delay(provider_id=pk, tenant_id=request.tenant_id)
+        with transaction.atomic():
+            task = delete_provider_task.delay(
+                provider_id=pk, tenant_id=request.tenant_id
+            )
         prowler_task = Task.objects.get(id=task.id)
         serializer = TaskSerializer(prowler_task)
         return Response(
@@ -560,14 +565,15 @@ class ScanViewSet(BaseRLSViewSet):
     def create(self, request, *args, **kwargs):
         input_serializer = self.get_serializer(data=request.data)
         input_serializer.is_valid(raise_exception=True)
-        scan = input_serializer.save()
-
-        task = perform_scan_task.delay(
-            tenant_id=request.tenant_id,
-            scan_id=str(scan.id),
-            provider_id=str(scan.provider_id),
-            checks_to_execute=scan.scanner_args.get("checks_to_execute", []),
-        )
+        with transaction.atomic():
+            scan = input_serializer.save()
+        with transaction.atomic():
+            task = perform_scan_task.delay(
+                tenant_id=request.tenant_id,
+                scan_id=str(scan.id),
+                provider_id=str(scan.provider_id),
+                checks_to_execute=scan.scanner_args.get("checks_to_execute", []),
+            )
 
         scan.task_id = task.id
         scan.save(update_fields=["task_id"])

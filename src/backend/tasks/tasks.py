@@ -43,7 +43,7 @@ def delete_provider_task(provider_id: str):
     return delete_instance(model=Provider, pk=provider_id)
 
 
-@shared_task(base=RLSTask, name="scan-perform")
+@shared_task(base=RLSTask, name="scan-perform", queue="scans")
 def perform_scan_task(
     tenant_id: str, scan_id: str, provider_id: str, checks_to_execute: list[str] = None
 ):

@@ -21,7 +21,6 @@ from api.models import (
     StateChoices,
 )
 from api.v1.serializers import ScanTaskSerializer
-from config.celery import TaskTimeoutError
 
 logger = get_task_logger(__name__)
 
@@ -79,13 +78,7 @@ def perform_prowler_scan(
         provider_instance = Provider.objects.get(pk=provider_id)
         start_time = time.time()
         unique_resources = set()
-        # Prevent race conditions
-        while not Scan.objects.filter(id=scan_id).exists():
-            if time.time() - start_time > 10:
-                raise TaskTimeoutError(
-                    f"Could not find scan with given id {scan_id} within 10 seconds"
-                )
-            time.sleep(0.1)
+
         scan_instance = Scan.objects.get(pk=scan_id)
         scan_instance.state = StateChoices.EXECUTING
         scan_instance.started_at = datetime.now(tz=timezone.utc)
