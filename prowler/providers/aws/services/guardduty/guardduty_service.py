@@ -13,7 +13,7 @@ class GuardDuty(AWSService):
         super().__init__(__class__.__name__, provider)
         self.detectors = []
         self.__threading_call__(self._list_detectors)
-        self._get_detector()
+        self.__threading_call__(self._get_detector, self.detectors)
         self._list_findings()
         self._list_members()
         self._get_administrator_account()
@@ -50,38 +50,35 @@ class GuardDuty(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def _get_detector(self):
+    def _get_detector(self, detector):
         logger.info("GuardDuty - getting detector info...")
         try:
-            for detector in self.detectors:
-                try:
-                    if detector.id and detector.enabled_in_account:
-                        regional_client = self.regional_clients[detector.region]
-                        detector_info = regional_client.get_detector(
-                            DetectorId=detector.id
-                        )
+            try:
+                if detector.id and detector.enabled_in_account:
+                    regional_client = self.regional_clients[detector.region]
+                    detector_info = regional_client.get_detector(DetectorId=detector.id)
+                    if (
+                        "Status" in detector_info
+                        and detector_info["Status"] == "ENABLED"
+                    ):
+                        detector.status = True
+
+                    data_sources = detector_info.get("DataSources", {})
+                    s3_logs = data_sources.get("S3Logs", {})
+                    if s3_logs.get("Status") == "ENABLED":
+                        detector.s3_protection = True
+
+                    for feat in detector_info.get("Features", []):
                         if (
-                            "Status" in detector_info
-                            and detector_info["Status"] == "ENABLED"
+                            feat.get("Name") == "RDS_LOGIN_EVENTS"
+                            and feat.get("Status", "DISABLED") == "ENABLED"
                         ):
-                            detector.status = True
+                            detector.rds_protection = True
 
-                        data_sources = detector_info.get("DataSources", {})
-                        s3_logs = data_sources.get("S3Logs", {})
-                        if s3_logs.get("Status") == "ENABLED":
-                            detector.s3_protection = True
-
-                        for feat in detector_info.get("Features", []):
-                            if (
-                                feat.get("Name") == "RDS_LOGIN_EVENTS"
-                                and feat.get("Status", "DISABLED") == "ENABLED"
-                            ):
-                                detector.rds_protection = True
-
-                except Exception as error:
-                    logger.error(
-                        f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
-                    )
+            except Exception as error:
+                logger.error(
+                    f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
+                )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
