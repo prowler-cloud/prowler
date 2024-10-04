@@ -149,7 +149,7 @@ class Test_efs_not_publicly_accessible:
             assert result[0].resource_id == file_system["FileSystemId"]
             assert (
                 result[0].resource_arn
-                == f"arn:aws:elasticfilesystem:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:file-system/{file_system["FileSystemId"]}"
+                == f"arn:aws:elasticfilesystem:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:file-system/{file_system['FileSystemId']}"
             )
             assert result[0].resource_tags == []
 
