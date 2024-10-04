@@ -15,7 +15,7 @@
   "RelatedUrl": "https://docs.aws.amazon.com/guardduty/latest/ug/kubernetes-protection.html",
   "Remediation": {
     "Code": {
-      "CLI": "aws guardduty update-detector --detector-id <detector-id> --data-sources '{\"Kubernetes\": {\"AuditLogs\": {\"Enabled\": true}}}'",
+      "CLI": "aws guardduty update-detector --detector-id <detector-id> --data-sources Kubernetes={AuditLogs={Enable=true}}",
       "NativeIaC": "",
       "Other": "",
       "Terraform": ""
