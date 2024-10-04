@@ -79,6 +79,15 @@ class GuardDuty(AWSService):
                         else False
                     )
 
+                    detector.malware_protection = (
+                        True
+                        if data_sources.get("MalwareProtection", {})
+                        .get("ScanEc2InstanceWithFindings", {})
+                        .get("EbsVolumes", "DISABLED")
+                        == "ENABLED"
+                        else False
+                    )
+
                     for feat in detector_info.get("Features", []):
                         if (
                             feat.get("Name") == "RDS_LOGIN_EVENTS"
@@ -213,3 +222,4 @@ class Detector(BaseModel):
     s3_protection: bool = False
     rds_protection: bool = False
     eks_audit_log_protection: bool = False
+    malware_protection: bool = False
