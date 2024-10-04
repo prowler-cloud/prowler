@@ -54,6 +54,8 @@ const refreshAccessToken = async (token: CustomJwtPayload) => {
 export const authConfig = {
   session: {
     strategy: "jwt",
+    // The session will be valid for 24 hours
+    maxAge: 24 * 60 * 60,
   },
   pages: {
     signIn: "/sign-in",
