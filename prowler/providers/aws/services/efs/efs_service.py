@@ -137,6 +137,7 @@ class EFS(AWSService):
                                 root_directory_path=access_point["RootDirectory"][
                                     "Path"
                                 ],
+                                posix_user=access_point.get("PosixUser", {}),
                             )
                         )
         except Exception as error:
@@ -155,6 +156,7 @@ class AccessPoint(BaseModel):
     id: str
     file_system_id: str
     root_directory_path: str
+    posix_user: dict = {}
 
 
 class FileSystem(BaseModel):
