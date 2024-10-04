@@ -15,7 +15,7 @@
   "RelatedUrl": "https://docs.aws.amazon.com/guardduty/latest/ug/s3_detection.html",
   "Remediation": {
     "Code": {
-      "CLI": "aws guardduty update-detector --detector-id <detector-id> --data-sources '{\"S3Logs\": {\"Enable\": true}}'",
+      "CLI": "aws guardduty update-detector --detector-id <detector-id> --data-sources S3Logs={Enable=true}}'",
       "NativeIaC": "",
       "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/guardduty-controls.html#guardduty-10",
       "Terraform": ""
