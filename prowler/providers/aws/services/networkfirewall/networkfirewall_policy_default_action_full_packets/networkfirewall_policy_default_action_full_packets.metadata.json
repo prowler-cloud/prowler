@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
   "CheckID": "networkfirewall_policy_default_action_full_packets",
-  "CheckTitle": "NetworkFirewall firewall policy default action for fragmented packets is set to drop or forward.",
+  "CheckTitle": "NetworkFirewall firewall policy default action for full packets is set to drop or forward.",
   "CheckType": [
     "Software and Configuration Checks/Industry and Regulatory Standards/NIST 800-53 Controls"
   ],
