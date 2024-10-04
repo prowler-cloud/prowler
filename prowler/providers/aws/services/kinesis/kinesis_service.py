@@ -14,6 +14,7 @@ class Kinesis(AWSService):
         super().__init__(__class__.__name__, provider)
         self.streams = {}
         self.__threading_call__(self._list_streams)
+        self.__threading_call__(self._describe_stream, self.streams.values())
         self.__threading_call__(self._list_tags_for_stream, self.streams.values())
 
     def _list_streams(self, regional_client):
@@ -37,6 +38,22 @@ class Kinesis(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _describe_stream(self, stream):
+        logger.info(f"Kinesis - Describing Stream {stream.name}...")
+        try:
+            stream_description = (
+                self.regional_clients[stream.region]
+                .describe_stream(StreamName=stream.name)
+                .get("StreamDescription", {})
+            )
+            stream.encrypted_at_rest = EncryptionType(
+                stream_description.get("EncryptionType", "NONE")
+            )
+        except Exception as error:
+            logger.error(
+                f"{stream.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
     def _list_tags_for_stream(self, stream):
         logger.info(f"Kinesis - Listing tags for Stream {stream.name}...")
         try:
@@ -49,6 +66,13 @@ class Kinesis(AWSService):
             logger.error(
                 f"{stream.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+
+
+class EncryptionType(Enum):
+    """Enum for Kinesis Stream Encryption Type"""
+
+    NONE = "NONE"
+    KMS = "KMS"
 
 
 class StreamStatus(Enum):
