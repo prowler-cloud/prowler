@@ -96,6 +96,7 @@ class NetworkFirewall(AWSService):
             ]
             network_firewall.default_stateless_actions = firewall_policy.get(
                 "StatelessDefaultActions", []
+            )
             network_firewall.default_stateless_frag_actions = firewall_policy.get(
                 "StatelessFragmentDefaultActions", []
             )
