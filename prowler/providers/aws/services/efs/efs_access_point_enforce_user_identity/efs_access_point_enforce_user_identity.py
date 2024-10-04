@@ -14,7 +14,7 @@ class efs_access_point_enforce_user_identity(Check):
                 report.resource_tags = fs.tags
                 report.status = "PASS"
                 report.status_extended = (
-                    f"EFS {fs.id} has all access point with defined POSIX user."
+                    f"EFS {fs.id} has all access points with defined POSIX user."
                 )
 
                 access_points = []

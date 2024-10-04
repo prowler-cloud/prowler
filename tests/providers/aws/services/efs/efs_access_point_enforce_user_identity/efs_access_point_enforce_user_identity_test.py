@@ -128,7 +128,7 @@ class Test_efs_access_point_enforce_user_identity:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"EFS {file_system['FileSystemId']} has all access point with defined POSIX user."
+                == f"EFS {file_system['FileSystemId']} has all access points with defined POSIX user."
             )
             assert result[0].resource_id == file_system["FileSystemId"]
             assert (
