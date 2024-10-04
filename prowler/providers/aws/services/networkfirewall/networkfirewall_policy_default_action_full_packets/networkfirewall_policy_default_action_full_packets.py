@@ -4,7 +4,7 @@ from prowler.providers.aws.services.networkfirewall.networkfirewall_client impor
 )
 
 
-class networkfirewall_policy_default_action_drop_forward(Check):
+class networkfirewall_policy_default_action_full_packets(Check):
     def execute(self):
         findings = []
         for arn, firewall in networkfirewall_client.network_firewalls.items():
@@ -16,10 +16,12 @@ class networkfirewall_policy_default_action_drop_forward(Check):
             report.status = "FAIL"
             report.status_extended = f"Network Firewall {firewall.name} policy does not drop or forward full packets by default."
 
-            for action in firewall.default_stateless_actions:
-                if action == "aws:drop" or action == "aws:forward_to_sfe":
-                    report.status = "PASS"
-                    report.status_extended = f"Network Firewall {firewall.name} policy does drop or forward full packets by default."
+            if (
+                "aws:drop" in firewall.default_stateless_actions
+                or "aws:forward_to_sfe" in firewall.default_stateless_actions
+            ):
+                report.status = "PASS"
+                report.status_extended = f"Network Firewall {firewall.name} policy does drop or forward full packets by default."
 
             findings.append(report)
 

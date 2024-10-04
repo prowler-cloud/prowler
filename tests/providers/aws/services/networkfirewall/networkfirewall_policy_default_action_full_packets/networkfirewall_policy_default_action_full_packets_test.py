@@ -12,7 +12,7 @@ VPC_ID_UNPROTECTED = "vpc-12345678901234568"
 POLICY_ARN = "arn:aws:network-firewall:us-east-1:123456789012:firewall-policy/my-policy"
 
 
-class Test_networkfirewall_policy_default_action_drop_forward:
+class Test_networkfirewall_policy_default_action_full_packets:
     def test_no_networkfirewall(self):
         networkfirewall_client = mock.MagicMock
         networkfirewall_client.provider = set_mocked_aws_provider(
@@ -28,15 +28,15 @@ class Test_networkfirewall_policy_default_action_drop_forward:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.networkfirewall.networkfirewall_policy_default_action_drop_forward.networkfirewall_policy_default_action_drop_forward.networkfirewall_client",
+                "prowler.providers.aws.services.networkfirewall.networkfirewall_policy_default_action_full_packets.networkfirewall_policy_default_action_full_packets.networkfirewall_client",
                 new=networkfirewall_client,
             ):
                 # Test Check
-                from prowler.providers.aws.services.networkfirewall.networkfirewall_policy_default_action_drop_forward.networkfirewall_policy_default_action_drop_forward import (
-                    networkfirewall_policy_default_action_drop_forward,
+                from prowler.providers.aws.services.networkfirewall.networkfirewall_policy_default_action_full_packets.networkfirewall_policy_default_action_full_packets import (
+                    networkfirewall_policy_default_action_full_packets,
                 )
 
-                check = networkfirewall_policy_default_action_drop_forward()
+                check = networkfirewall_policy_default_action_full_packets()
                 result = check.execute()
 
                 assert len(result) == 0
@@ -67,15 +67,15 @@ class Test_networkfirewall_policy_default_action_drop_forward:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.networkfirewall.networkfirewall_policy_default_action_drop_forward.networkfirewall_policy_default_action_drop_forward.networkfirewall_client",
+                "prowler.providers.aws.services.networkfirewall.networkfirewall_policy_default_action_full_packets.networkfirewall_policy_default_action_full_packets.networkfirewall_client",
                 new=networkfirewall_client,
             ):
                 # Test Check
-                from prowler.providers.aws.services.networkfirewall.networkfirewall_policy_default_action_drop_forward.networkfirewall_policy_default_action_drop_forward import (
-                    networkfirewall_policy_default_action_drop_forward,
+                from prowler.providers.aws.services.networkfirewall.networkfirewall_policy_default_action_full_packets.networkfirewall_policy_default_action_full_packets import (
+                    networkfirewall_policy_default_action_full_packets,
                 )
 
-                check = networkfirewall_policy_default_action_drop_forward()
+                check = networkfirewall_policy_default_action_full_packets()
                 result = check.execute()
 
                 assert len(result) == 1
@@ -116,15 +116,15 @@ class Test_networkfirewall_policy_default_action_drop_forward:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.networkfirewall.networkfirewall_policy_default_action_drop_forward.networkfirewall_policy_default_action_drop_forward.networkfirewall_client",
+                "prowler.providers.aws.services.networkfirewall.networkfirewall_policy_default_action_full_packets.networkfirewall_policy_default_action_full_packets.networkfirewall_client",
                 new=networkfirewall_client,
             ):
                 # Test Check
-                from prowler.providers.aws.services.networkfirewall.networkfirewall_policy_default_action_drop_forward.networkfirewall_policy_default_action_drop_forward import (
-                    networkfirewall_policy_default_action_drop_forward,
+                from prowler.providers.aws.services.networkfirewall.networkfirewall_policy_default_action_full_packets.networkfirewall_policy_default_action_full_packets import (
+                    networkfirewall_policy_default_action_full_packets,
                 )
 
-                check = networkfirewall_policy_default_action_drop_forward()
+                check = networkfirewall_policy_default_action_full_packets()
                 result = check.execute()
 
                 assert len(result) == 1
@@ -164,15 +164,15 @@ class Test_networkfirewall_policy_default_action_drop_forward:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.networkfirewall.networkfirewall_policy_default_action_drop_forward.networkfirewall_policy_default_action_drop_forward.networkfirewall_client",
+                "prowler.providers.aws.services.networkfirewall.networkfirewall_policy_default_action_full_packets.networkfirewall_policy_default_action_full_packets.networkfirewall_client",
                 new=networkfirewall_client,
             ):
                 # Test Check
-                from prowler.providers.aws.services.networkfirewall.networkfirewall_policy_default_action_drop_forward.networkfirewall_policy_default_action_drop_forward import (
-                    networkfirewall_policy_default_action_drop_forward,
+                from prowler.providers.aws.services.networkfirewall.networkfirewall_policy_default_action_full_packets.networkfirewall_policy_default_action_full_packets import (
+                    networkfirewall_policy_default_action_full_packets,
                 )
 
-                check = networkfirewall_policy_default_action_drop_forward()
+                check = networkfirewall_policy_default_action_full_packets()
                 result = check.execute()
 
                 assert len(result) == 1
