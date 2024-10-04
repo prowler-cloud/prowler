@@ -1416,9 +1416,6 @@ class TestResourceViewSet:
         response = authenticated_client.get(reverse("resource-list"))
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == len(resources_fixture)
-        assert (
-            response.json()["data"][0]["attributes"]["uid"] == resources_fixture[0].uid
-        )
 
     @pytest.mark.parametrize(
         "filter_name, filter_value, expected_count",

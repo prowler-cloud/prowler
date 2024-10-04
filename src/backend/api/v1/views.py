@@ -248,7 +248,7 @@ class TenantViewSet(BaseTenantViewset):
     http_method_names = ["get", "post", "patch", "delete"]
     filterset_class = TenantFilter
     search_fields = ["name"]
-    ordering = ["inserted_at"]
+    ordering = ["-inserted_at"]
     ordering_fields = ["name", "inserted_at", "updated_at"]
 
     def get_queryset(self):
@@ -410,7 +410,7 @@ class ProviderViewSet(BaseRLSViewSet):
     http_method_names = ["get", "post", "patch", "delete"]
     filterset_class = ProviderFilter
     search_fields = ["provider", "uid", "alias"]
-    ordering = ["inserted_at"]
+    ordering = ["-inserted_at"]
     ordering_fields = [
         "provider",
         "uid",
@@ -525,7 +525,7 @@ class ScanViewSet(BaseRLSViewSet):
     serializer_class = ScanSerializer
     http_method_names = ["get", "post", "patch"]
     filterset_class = ScanFilter
-    ordering = ["inserted_at"]
+    ordering = ["-inserted_at"]
     ordering_fields = [
         "name",
         "trigger",
@@ -615,7 +615,7 @@ class TaskViewSet(BaseRLSViewSet):
     http_method_names = ["get", "delete"]
     filterset_class = TaskFilter
     search_fields = ["name"]
-    ordering = ["inserted_at"]
+    ordering = ["-inserted_at"]
     ordering_fields = ["inserted_at", "completed_at", "name", "state"]
 
     def get_queryset(self):
@@ -653,11 +653,13 @@ class TaskViewSet(BaseRLSViewSet):
 @extend_schema_view(
     list=extend_schema(
         summary="List all resources",
-        description="Retrieve a list of all resources with options for filtering by various criteria. Resources are objects that are discovered by Prowler. They can be anything from a single host to a whole VPC.",
+        description="Retrieve a list of all resources with options for filtering by various criteria. Resources are "
+        "objects that are discovered by Prowler. They can be anything from a single host to a whole VPC.",
     ),
     retrieve=extend_schema(
         summary="Retrieve data for a resource",
-        description="Fetch detailed information about a specific resource by their ID. A Resource is an object that is discovered by Prowler. It can be anything from a single host to a whole VPC.",
+        description="Fetch detailed information about a specific resource by their ID. A Resource is an object that "
+        "is discovered by Prowler. It can be anything from a single host to a whole VPC.",
     ),
 )
 @method_decorator(CACHE_DECORATOR, name="list")
@@ -667,7 +669,7 @@ class ResourceViewSet(BaseRLSViewSet):
     serializer_class = ResourceSerializer
     http_method_names = ["get"]
     filterset_class = ResourceFilter
-    ordering = ["inserted_at"]
+    ordering = ["-inserted_at"]
     ordering_fields = [
         "provider_uid",
         "uid",
