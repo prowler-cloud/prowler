@@ -94,6 +94,9 @@ class NetworkFirewall(AWSService):
                 group.get("ResourceArn", "")
                 for group in firewall_policy.get("StatefulRuleGroupReferences", [])
             ]
+            network_firewall.default_stateless_actions = firewall_policy.get(
+                "StatelessDefaultActions", []
+            )
             network_firewall.default_stateless_frag_actions = firewall_policy.get(
                 "StatelessFragmentDefaultActions", []
             )
@@ -186,6 +189,7 @@ class Firewall(BaseModel):
     tags: list = []
     encryption_type: str = None
     deletion_protection: bool = False
+    default_stateless_actions: list = []
     default_stateless_frag_actions: list = []
     subnet_mappings: list[Subnet] = []
     logging_configuration: Optional[list[LoggingConfiguration]]
