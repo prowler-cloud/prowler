@@ -20,6 +20,7 @@ class EFS(AWSService):
             self._describe_file_system_policies, self.filesystems.values()
         )
         self.__threading_call__(self._describe_mount_targets, self.filesystems.values())
+        self.__threading_call__(self._describe_access_points, self.filesystems.values())
 
     def _describe_file_systems(self, regional_client):
         logger.info("EFS - Describing file systems...")
@@ -113,11 +114,47 @@ class EFS(AWSService):
                 f"{client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _describe_access_points(self, filesystem):
+        logger.info("EFS - Describing access points...")
+        try:
+            client = self.regional_clients[filesystem.region]
+            describe_access_point_paginator = client.get_paginator(
+                "describe_access_points"
+            )
+            for page in describe_access_point_paginator.paginate(
+                FileSystemId=filesystem.id
+            ):
+                for access_point in page["AccessPoints"]:
+                    access_point_id = access_point["AccessPointId"]
+                    access_point_arn = access_point["AccessPointArn"]
+                    if not self.audit_resources or (
+                        is_resource_filtered(access_point_arn, self.audit_resources)
+                    ):
+                        self.filesystems[filesystem.arn].access_points.append(
+                            AccessPoint(
+                                id=access_point_id,
+                                file_system_id=access_point["FileSystemId"],
+                                root_directory_path=access_point["RootDirectory"][
+                                    "Path"
+                                ],
+                            )
+                        )
+        except Exception as error:
+            logger.error(
+                f"{client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class MountTarget(BaseModel):
     id: str
     file_system_id: str
     subnet_id: str
+
+
+class AccessPoint(BaseModel):
+    id: str
+    file_system_id: str
+    root_directory_path: str
 
 
 class FileSystem(BaseModel):
@@ -128,4 +165,5 @@ class FileSystem(BaseModel):
     backup_policy: Optional[str] = "DISABLED"
     encrypted: bool
     mount_targets: list[MountTarget] = []
+    access_points: list[AccessPoint] = []
     tags: Optional[list] = []
