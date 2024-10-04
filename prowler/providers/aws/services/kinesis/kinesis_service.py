@@ -57,11 +57,12 @@ class Kinesis(AWSService):
     def _list_tags_for_stream(self, stream):
         logger.info(f"Kinesis - Listing tags for Stream {stream.name}...")
         try:
-            stream.tags = (
+            tags = (
                 self.regional_clients[stream.region]
                 .list_tags_for_stream(StreamName=stream.name)
                 .get("Tags", [])
             )
+            stream.tags = tags
         except Exception as error:
             logger.error(
                 f"{stream.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -92,3 +93,4 @@ class Stream(BaseModel):
     name: str
     status: StreamStatus
     tags: Optional[list]
+    encrypted_at_rest: EncryptionType = EncryptionType.NONE
