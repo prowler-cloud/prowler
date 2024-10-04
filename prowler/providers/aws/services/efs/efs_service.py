@@ -39,8 +39,6 @@ class EFS(AWSService):
                             id=efs_id,
                             arn=efs_arn,
                             region=regional_client.region,
-                            policy=None,
-                            backup_policy=None,
                             encrypted=efs["Encrypted"],
                             tags=efs.get("Tags"),
                         )
@@ -57,18 +55,32 @@ class EFS(AWSService):
                 filesystem.backup_policy = client.describe_backup_policy(
                     FileSystemId=filesystem.id
                 )["BackupPolicy"]["Status"]
-            except ClientError as e:
-                if e.response["Error"]["Code"] == "PolicyNotFound":
+            except ClientError as error:
+                if error.response["Error"]["Code"] == "PolicyNotFound":
                     filesystem.backup_policy = "DISABLED"
+                    logger.warning(
+                        f"{client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+                else:
+                    logger.error(
+                        f"{client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
             try:
                 fs_policy = client.describe_file_system_policy(
                     FileSystemId=filesystem.id
                 )
                 if "Policy" in fs_policy:
                     filesystem.policy = json.loads(fs_policy["Policy"])
-            except ClientError as e:
-                if e.response["Error"]["Code"] == "PolicyNotFound":
+            except ClientError as error:
+                if error.response["Error"]["Code"] == "PolicyNotFound":
                     filesystem.policy = {}
+                    logger.warning(
+                        f"{client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+                else:
+                    logger.error(
+                        f"{client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
         except Exception as error:
             logger.error(
                 f"{client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -149,8 +161,8 @@ class FileSystem(BaseModel):
     id: str
     arn: str
     region: str
-    policy: Optional[dict]
-    backup_policy: Optional[str]
+    policy: Optional[dict] = {}
+    backup_policy: Optional[str] = "DISABLED"
     encrypted: bool
     mount_targets: list[MountTarget] = []
     access_points: list[AccessPoint] = []

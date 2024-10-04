@@ -15,6 +15,8 @@ class Test_iam_rotate_access_key_90_days_test:
         user = "test-user"
         arn = iam_client.create_user(UserName=user)["User"]["Arn"]
 
+        iam_client.tag_user(UserName=user, Tags=[{"Key": "test-tag", "Value": "test"}])
+
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
@@ -43,6 +45,7 @@ class Test_iam_rotate_access_key_90_days_test:
             assert result[0].resource_id == user
             assert result[0].resource_arn == arn
             assert result[0].region == AWS_REGION_US_EAST_1
+            assert result[0].resource_tags == [{"Key": "test-tag", "Value": "test"}]
 
     @mock_aws
     def test_user_access_key_1_not_rotated(self):
@@ -52,6 +55,8 @@ class Test_iam_rotate_access_key_90_days_test:
         iam_client = client("iam")
         user = "test-user"
         arn = iam_client.create_user(UserName=user)["User"]["Arn"]
+
+        iam_client.tag_user(UserName=user, Tags=[{"Key": "test-tag", "Value": "test"}])
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
@@ -84,6 +89,7 @@ class Test_iam_rotate_access_key_90_days_test:
             assert result[0].resource_id == user
             assert result[0].resource_arn == arn
             assert result[0].region == AWS_REGION_US_EAST_1
+            assert result[0].resource_tags == [{"Key": "test-tag", "Value": "test"}]
 
     @mock_aws
     def test_user_access_key_2_not_rotated(self):
@@ -93,6 +99,8 @@ class Test_iam_rotate_access_key_90_days_test:
         iam_client = client("iam")
         user = "test-user"
         arn = iam_client.create_user(UserName=user)["User"]["Arn"]
+
+        iam_client.tag_user(UserName=user, Tags=[{"Key": "test-tag", "Value": "test"}])
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
@@ -125,6 +133,7 @@ class Test_iam_rotate_access_key_90_days_test:
             assert result[0].resource_id == user
             assert result[0].resource_arn == arn
             assert result[0].region == AWS_REGION_US_EAST_1
+            assert result[0].resource_tags == [{"Key": "test-tag", "Value": "test"}]
 
     @mock_aws
     def test_user_both_access_keys_not_rotated(self):
@@ -134,6 +143,8 @@ class Test_iam_rotate_access_key_90_days_test:
         iam_client = client("iam")
         user = "test-user"
         arn = iam_client.create_user(UserName=user)["User"]["Arn"]
+
+        iam_client.tag_user(UserName=user, Tags=[{"Key": "test-tag", "Value": "test"}])
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
@@ -171,6 +182,7 @@ class Test_iam_rotate_access_key_90_days_test:
             assert result[0].resource_id == user
             assert result[0].resource_arn == arn
             assert result[0].region == AWS_REGION_US_EAST_1
+            assert result[0].resource_tags == [{"Key": "test-tag", "Value": "test"}]
             assert result[1].status == "FAIL"
             assert (
                 result[1].status_extended
@@ -179,6 +191,7 @@ class Test_iam_rotate_access_key_90_days_test:
             assert result[1].resource_id == user
             assert result[1].resource_arn == arn
             assert result[1].region == AWS_REGION_US_EAST_1
+            assert result[1].resource_tags == [{"Key": "test-tag", "Value": "test"}]
 
     @mock_aws
     def test_user_both_access_keys_rotated(self):
@@ -188,6 +201,8 @@ class Test_iam_rotate_access_key_90_days_test:
         iam_client = client("iam")
         user = "test-user"
         arn = iam_client.create_user(UserName=user)["User"]["Arn"]
+
+        iam_client.tag_user(UserName=user, Tags=[{"Key": "test-tag", "Value": "test"}])
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
@@ -226,3 +241,4 @@ class Test_iam_rotate_access_key_90_days_test:
                 assert result[0].resource_id == user
                 assert result[0].resource_arn == arn
                 assert result[0].region == AWS_REGION_US_EAST_1
+                assert result[0].resource_tags == [{"Key": "test-tag", "Value": "test"}]
