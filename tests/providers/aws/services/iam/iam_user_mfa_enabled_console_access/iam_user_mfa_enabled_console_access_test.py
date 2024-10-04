@@ -70,6 +70,8 @@ class Test_iam_user_mfa_enabled_console_access_test:
         user = "test-user"
         arn = iam_client.create_user(UserName=user)["User"]["Arn"]
 
+        iam_client.tag_user(UserName=user, Tags=[{"Key": "Name", "Value": "test-user"}])
+
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
@@ -96,12 +98,15 @@ class Test_iam_user_mfa_enabled_console_access_test:
             )
             assert result[0].resource_id == user
             assert result[0].resource_arn == arn
+            assert result[0].resource_tags == [{"Key": "Name", "Value": "test-user"}]
 
     @mock_aws
     def test_user_password_console_and_mfa_enabled(self):
         iam_client = client("iam")
         user = "test-user"
         arn = iam_client.create_user(UserName=user)["User"]["Arn"]
+
+        iam_client.tag_user(UserName=user, Tags=[{"Key": "Name", "Value": "test-user"}])
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
@@ -130,12 +135,15 @@ class Test_iam_user_mfa_enabled_console_access_test:
             )
             assert result[0].resource_id == user
             assert result[0].resource_arn == arn
+            assert result[0].resource_tags == [{"Key": "Name", "Value": "test-user"}]
 
     @mock_aws
     def test_user_password_console_enabled_and_mfa_not_enabled(self):
         iam_client = client("iam")
         user = "test-user"
         arn = iam_client.create_user(UserName=user)["User"]["Arn"]
+
+        iam_client.tag_user(UserName=user, Tags=[{"Key": "Name", "Value": "test-user"}])
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
@@ -164,3 +172,4 @@ class Test_iam_user_mfa_enabled_console_access_test:
             )
             assert result[0].resource_id == user
             assert result[0].resource_arn == arn
+            assert result[0].resource_tags == [{"Key": "Name", "Value": "test-user"}]
