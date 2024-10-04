@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, AWS_REGION_EU_WEST_1
 
 
-class Test_glue_ml_transform_encryption_at_rest_enabled:
+class Test_glue_ml_transform_encrypted_at_rest:
     def test_no_ml_transfroms(self):
         glue_client = MagicMock
         glue_client.ml_transforms = {}
@@ -15,11 +15,11 @@ class Test_glue_ml_transform_encryption_at_rest_enabled:
             "prowler.providers.aws.services.glue.glue_client.glue_client",
             new=glue_client,
         ):
-            from prowler.providers.aws.services.glue.glue_ml_transform_encryption_at_rest_enabled.glue_ml_transform_encryption_at_rest_enabled import (
-                glue_ml_transform_encryption_at_rest_enabled,
+            from prowler.providers.aws.services.glue.glue_ml_transform_encrypted_at_rest.glue_ml_transform_encrypted_at_rest import (
+                glue_ml_transform_encrypted_at_rest,
             )
 
-            check = glue_ml_transform_encryption_at_rest_enabled()
+            check = glue_ml_transform_encrypted_at_rest()
             result = check.execute()
 
             assert len(result) == 0
@@ -49,11 +49,11 @@ class Test_glue_ml_transform_encryption_at_rest_enabled:
             "prowler.providers.aws.services.glue.glue_client.glue_client",
             new=glue_client,
         ):
-            from prowler.providers.aws.services.glue.glue_ml_transform_encryption_at_rest_enabled.glue_ml_transform_encryption_at_rest_enabled import (
-                glue_ml_transform_encryption_at_rest_enabled,
+            from prowler.providers.aws.services.glue.glue_ml_transform_encrypted_at_rest.glue_ml_transform_encrypted_at_rest import (
+                glue_ml_transform_encrypted_at_rest,
             )
 
-            check = glue_ml_transform_encryption_at_rest_enabled()
+            check = glue_ml_transform_encrypted_at_rest()
             result = check.execute()
 
             assert len(result) == 1
@@ -91,11 +91,11 @@ class Test_glue_ml_transform_encryption_at_rest_enabled:
             "prowler.providers.aws.services.glue.glue_client.glue_client",
             new=glue_client,
         ):
-            from prowler.providers.aws.services.glue.glue_ml_transform_encryption_at_rest_enabled.glue_ml_transform_encryption_at_rest_enabled import (
-                glue_ml_transform_encryption_at_rest_enabled,
+            from prowler.providers.aws.services.glue.glue_ml_transform_encrypted_at_rest.glue_ml_transform_encrypted_at_rest import (
+                glue_ml_transform_encrypted_at_rest,
             )
 
-            check = glue_ml_transform_encryption_at_rest_enabled()
+            check = glue_ml_transform_encrypted_at_rest()
             result = check.execute()
 
             assert len(result) == 1
@@ -105,5 +105,5 @@ class Test_glue_ml_transform_encryption_at_rest_enabled:
             assert result[0].region == AWS_REGION_EU_WEST_1
             assert (
                 result[0].status_extended
-                == "Glue ML Transform ml-transform2 is encrypted at rest (SSE-KMS mode)."
+                == "Glue ML Transform ml-transform2 is encrypted at rest."
             )

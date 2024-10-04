@@ -2,7 +2,7 @@ from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.glue.glue_client import glue_client
 
 
-class glue_ml_transform_encryption_at_rest_enabled(Check):
+class glue_ml_transform_encrypted_at_rest(Check):
     def execute(self):
         findings = []
 
@@ -13,7 +13,9 @@ class glue_ml_transform_encryption_at_rest_enabled(Check):
             report.region = ml_transform.region
             report.resource_tags = ml_transform.tags
             report.status = "PASS"
-            report.status_extended = f"Glue ML Transform {ml_transform.name} is encrypted at rest (SSE-KMS mode)."
+            report.status_extended = (
+                f"Glue ML Transform {ml_transform.name} is encrypted at rest."
+            )
 
             if ml_transform.user_data_encryption == "DISABLED":
                 report.status = "FAIL"
