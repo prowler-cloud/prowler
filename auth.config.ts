@@ -1,22 +1,16 @@
-import { jwtDecode } from "jwt-decode";
-import NextAuth, { type NextAuthConfig } from "next-auth";
-import { DefaultSession } from "next-auth";
+import { jwtDecode, JwtDecodeOptions, JwtPayload } from "jwt-decode";
+import NextAuth, { type NextAuthConfig, User } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { z } from "zod";
 
 import { getToken } from "./actions/auth";
-import { CustomJwtPayload } from "./types";
-import { UserAttributes } from "./types/users";
 
-declare module "next-auth" {
-  interface Session extends DefaultSession {
-    accessToken: string;
-    refreshToken: string;
-    user: UserAttributes;
-  }
+interface CustomJwtPayload extends JwtPayload {
+  user_id: string;
+  tenant_id: string;
 }
 
-const refreshAccessToken = async (token: CustomJwtPayload) => {
+const refreshAccessToken = async (token: JwtDecodeOptions) => {
   const keyServer = process.env.API_BASE_URL;
   const url = new URL(`${keyServer}/tokens/refresh`);
 
@@ -42,7 +36,6 @@ const refreshAccessToken = async (token: CustomJwtPayload) => {
     const newTokens = await response.json();
 
     if (!response.ok) {
-      // TODO: handle error
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
@@ -115,53 +108,68 @@ export const authConfig = {
     },
 
     jwt: async ({ token, account, user }) => {
-      // console.log(`In the jwt token - is ${JSON.stringify(token)}`);
+      // eslint-disable-next-line no-console
+      console.log(`In the jwt token - is ${JSON.stringify(token)}`);
       if (token?.accessToken) {
-        const decodedToken = jwtDecode(token.accessToken);
+        const decodedToken = jwtDecode(
+          token.accessToken as string,
+        ) as CustomJwtPayload;
+        // eslint-disable-next-line no-console
         console.log("decodedToken", decodedToken);
-
-        token.accessTokenExpires = decodedToken?.exp * 1000;
+        token.accessTokenExpires = (decodedToken.exp as number) * 1000;
+        token.user_id = decodedToken.user_id;
+        token.tenant_id = decodedToken.tenant_id;
       }
 
+      const userInfo = {
+        name: "Leandro",
+        companyName: "Bitnami",
+        email: "john@doe.com",
+        date_joined: "2024-02-02",
+      };
+
       if (account && user) {
-        // token.data = user;
         return {
           ...token,
-          accessToken: user.accessToken,
-          refreshToken: user.refreshToken,
-          user: {
-            id: "123",
-            tenantId: "123",
-            name: "John",
-            companyName: "Doe",
-            email: "john@doe.com",
-            date_joined: "2024-02-02",
-          },
+          userId: token.user_id,
+          tenantId: token.tenant_id,
+          accessToken: (user as User & { accessToken: JwtPayload }).accessToken,
+          refreshToken: (user as User & { refreshToken: JwtPayload })
+            .refreshToken,
+          user: userInfo,
         };
       }
 
+      // eslint-disable-next-line no-console
       console.log(
         "Access token expires",
         token.accessTokenExpires,
         new Date(Number(token.accessTokenExpires)),
       );
 
-      if (Date.now() < token.accessTokenExpires) return token;
+      // If the access token is not expired, return the token
+      if (
+        typeof token.accessTokenExpires === "number" &&
+        Date.now() < token.accessTokenExpires
+      )
+        return token;
 
-      // Access token is expired, we need to refresh it
-      return refreshAccessToken(token);
+      // If the access token is expired, try to refresh it
+      return refreshAccessToken(token as unknown as JwtDecodeOptions);
     },
 
     session: async ({ session, token }) => {
       // session.user = token.data;
 
       if (token) {
+        session.userId = token?.user_id as string;
+        session.tenantId = token?.tenant_id as string;
         session.accessToken = token?.accessToken as string;
         session.refreshToken = token?.refreshToken as string;
-        session.user = token.user;
+        session.user = token.user as any;
       }
 
-      // console.log("session", session);
+      console.log("session", session);
       return session;
     },
   },
