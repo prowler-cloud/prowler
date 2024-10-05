@@ -1,4 +1,3 @@
-import { JwtPayload } from "jwt-decode";
 import { SVGProps } from "react";
 
 export type IconSvgProps = SVGProps<SVGSVGElement> & {
@@ -31,10 +30,6 @@ export interface SearchParamsProps {
   [key: string]: string | string[] | undefined;
 }
 
-export interface CustomJwtPayload extends JwtPayload {
-  user_id: string;
-  tenant_id: string;
-}
 export interface ProviderProps {
   id: string;
   type: "providers";

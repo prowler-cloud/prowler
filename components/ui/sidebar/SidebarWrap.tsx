@@ -6,7 +6,7 @@ import clsx from "clsx";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
-import React, { useCallback } from "react";
+import React, { Suspense, useCallback } from "react";
 import { useMediaQuery } from "usehooks-ts";
 
 import { logOut } from "@/actions/auth";
@@ -72,22 +72,20 @@ export const SidebarWrap = () => {
       <Spacer y={8} />
 
       <Link href={"/profile"}>
-        <UserAvatar
-          userName={session?.user?.name ?? "Guest"}
-          position={session?.user?.companyName ?? "Company Name"}
-          isCompact={isCompact}
-        />{" "}
+        <Suspense fallback={<p>Loading...</p>}>
+          <UserAvatar
+            userName={session?.user?.name ?? "Guest"}
+            position={session?.user?.companyName ?? "Company Name"}
+            isCompact={isCompact}
+          />
+        </Suspense>
       </Link>
 
       <ScrollShadow hideScrollBar className="-mr-6 h-full max-h-full py-6 pr-6">
         <Sidebar
           defaultSelectedKey="overview"
           isCompact={isCompact}
-          items={
-            session?.user?.role === "admin"
-              ? sectionItemsWithTeams
-              : sectionItems
-          }
+          items={sectionItemsWithTeams}
           selectedKeys={[currentPath]}
         />
       </ScrollShadow>

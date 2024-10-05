@@ -12,7 +12,7 @@ declare module "next-auth" {
     user: {
       name: string;
       email: string;
-      company?: string;
+      companyName?: string;
       dateJoined: string;
     } & DefaultSession["user"];
     userId: string;

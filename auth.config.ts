@@ -1,58 +1,59 @@
-import { jwtDecode, JwtDecodeOptions, JwtPayload } from "jwt-decode";
+import { jwtDecode, JwtPayload } from "jwt-decode";
 import NextAuth, { type NextAuthConfig, User } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { z } from "zod";
 
-import { getToken } from "./actions/auth";
+import { getToken, getUserByMe } from "./actions/auth";
 
 interface CustomJwtPayload extends JwtPayload {
   user_id: string;
   tenant_id: string;
 }
 
-const refreshAccessToken = async (token: JwtDecodeOptions) => {
-  const keyServer = process.env.API_BASE_URL;
-  const url = new URL(`${keyServer}/tokens/refresh`);
+// const refreshAccessToken = async (token: JwtPayload) => {
+//   // console.log("tokenDESDE EL REFRESH", token.refreshToken);
+//   const keyServer = process.env.API_BASE_URL;
+//   const url = new URL(`${keyServer}/tokens/refresh`);
 
-  const bodyData = {
-    data: {
-      type: "TokenRefresh",
-      attributes: {
-        refresh: token.refreshToken,
-      },
-    },
-  };
+//   const bodyData = {
+//     data: {
+//       type: "TokenRefresh",
+//       attributes: {
+//         refresh: (token as any).refreshToken,
+//       },
+//     },
+//   };
 
-  try {
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/vnd.api+json",
-        Accept: "application/vnd.api+json",
-      },
-      body: JSON.stringify(bodyData),
-    });
-    // console.log("response", response);
-    const newTokens = await response.json();
+//   try {
+//     const response = await fetch(url, {
+//       method: "POST",
+//       headers: {
+//         "Content-Type": "application/vnd.api+json",
+//         Accept: "application/vnd.api+json",
+//       },
+//       body: JSON.stringify(bodyData),
+//     });
+//     // console.log("response", response);
+//     const newTokens = await response.json();
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
+//     if (!response.ok) {
+//       throw new Error(`HTTP error! status: ${response.status}`);
+//     }
 
-    return {
-      ...token,
-      accessToken: newTokens.data.attributes.access,
-      refreshToken: newTokens.data.attributes.refresh,
-    };
-  } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error("Error refreshing access token:", error);
-    return {
-      ...token,
-      error: "RefreshAccessTokenError",
-    };
-  }
-};
+//     return {
+//       ...token,
+//       accessToken: newTokens.data.attributes.access,
+//       refreshToken: newTokens.data.attributes.refresh,
+//     };
+//   } catch (error) {
+//     // eslint-disable-next-line no-console
+//     console.error("Error refreshing access token:", error);
+//     return {
+//       ...token,
+//       error: "RefreshAccessTokenError",
+//     };
+//   }
+// };
 
 export const authConfig = {
   session: {
@@ -84,8 +85,21 @@ export const authConfig = {
 
         const tokenResponse = await getToken(parsedCredentials.data);
         if (!tokenResponse) return null;
-        // const user = await getUserById(isUserValid.userId);
-        return tokenResponse;
+
+        const userMeResponse = await getUserByMe(tokenResponse.accessToken);
+
+        const user = {
+          name: userMeResponse.name,
+          email: userMeResponse.email,
+          company: userMeResponse?.company,
+          dateJoined: userMeResponse.dateJoined,
+        };
+
+        return {
+          ...user,
+          accessToken: tokenResponse.accessToken,
+          refreshToken: tokenResponse.refreshToken,
+        };
       },
     }),
   ],
@@ -109,23 +123,23 @@ export const authConfig = {
 
     jwt: async ({ token, account, user }) => {
       // eslint-disable-next-line no-console
-      console.log(`In the jwt token - is ${JSON.stringify(token)}`);
+      // console.log(`In the jwt token - is ${JSON.stringify(token)}`);
       if (token?.accessToken) {
         const decodedToken = jwtDecode(
           token.accessToken as string,
         ) as CustomJwtPayload;
         // eslint-disable-next-line no-console
-        console.log("decodedToken", decodedToken);
+        // console.log("decodedToken", decodedToken);
         token.accessTokenExpires = (decodedToken.exp as number) * 1000;
         token.user_id = decodedToken.user_id;
         token.tenant_id = decodedToken.tenant_id;
       }
 
       const userInfo = {
-        name: "Leandro",
-        companyName: "Bitnami",
-        email: "john@doe.com",
-        date_joined: "2024-02-02",
+        name: user?.name,
+        companyName: user?.company,
+        email: user?.email,
+        dateJoined: user?.dateJoined,
       };
 
       if (account && user) {
@@ -151,11 +165,15 @@ export const authConfig = {
       if (
         typeof token.accessTokenExpires === "number" &&
         Date.now() < token.accessTokenExpires
-      )
+      ) {
+        console.log("TOKEN IS VALID");
         return token;
-
+      } else {
+        console.log("TOKEN IS EXPIRED");
+      }
+      return token;
       // If the access token is expired, try to refresh it
-      return refreshAccessToken(token as unknown as JwtDecodeOptions);
+      // return refreshAccessToken(token as unknown as JwtDecodeOptions);
     },
 
     session: async ({ session, token }) => {
@@ -169,7 +187,7 @@ export const authConfig = {
         session.user = token.user as any;
       }
 
-      console.log("session", session);
+      // console.log("session", session);
       return session;
     },
   },

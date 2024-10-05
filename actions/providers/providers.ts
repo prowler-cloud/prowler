@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+import { auth } from "@/auth.config";
 import { parseStringify } from "@/lib";
 
 export const getProviders = async ({
@@ -11,10 +12,12 @@ export const getProviders = async ({
   sort = "",
   filters = {},
 }) => {
+  const session = await auth();
+
   if (isNaN(Number(page)) || page < 1) redirect("/providers");
 
   const keyServer = process.env.API_BASE_URL;
-  const url = new URL(`${keyServer}/providers?sort=-inserted_at`);
+  const url = new URL(`${keyServer}/providers`);
 
   if (page) url.searchParams.append("page[number]", page.toString());
   if (query) url.searchParams.append("filter[search]", query);
@@ -31,6 +34,7 @@ export const getProviders = async ({
     const providers = await fetch(url.toString(), {
       headers: {
         Accept: "application/vnd.api+json",
+        Authorization: `Bearer ${session?.accessToken}`,
       },
     });
     const data = await providers.json();
@@ -44,6 +48,7 @@ export const getProviders = async ({
 };
 
 export const getProvider = async (formData: FormData) => {
+  // const session = await auth();
   const providerId = formData.get("id");
 
   const keyServer = process.env.API_BASE_URL;
@@ -66,6 +71,7 @@ export const getProvider = async (formData: FormData) => {
 };
 
 export const updateProvider = async (formData: FormData) => {
+  // const session = await auth();
   const keyServer = process.env.API_BASE_URL;
 
   const providerId = formData.get("providerId");
@@ -102,6 +108,7 @@ export const updateProvider = async (formData: FormData) => {
 };
 
 export const addProvider = async (formData: FormData) => {
+  const session = await auth();
   const keyServer = process.env.API_BASE_URL;
 
   const providerType = formData.get("providerType");
@@ -116,6 +123,7 @@ export const addProvider = async (formData: FormData) => {
       headers: {
         "Content-Type": "application/vnd.api+json",
         Accept: "application/vnd.api+json",
+        Authorization: `Bearer ${session?.accessToken}`,
       },
       body: JSON.stringify({
         data: {
@@ -140,6 +148,7 @@ export const addProvider = async (formData: FormData) => {
 };
 
 export const checkConnectionProvider = async (formData: FormData) => {
+  // const session = await auth();
   const keyServer = process.env.API_BASE_URL;
 
   const providerId = formData.get("id");
@@ -164,6 +173,7 @@ export const checkConnectionProvider = async (formData: FormData) => {
 };
 
 export const deleteProvider = async (formData: FormData) => {
+  // const session = await auth();
   const keyServer = process.env.API_BASE_URL;
 
   const providerId = formData.get("id");
