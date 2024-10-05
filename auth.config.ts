@@ -10,50 +10,47 @@ interface CustomJwtPayload extends JwtPayload {
   tenant_id: string;
 }
 
-// const refreshAccessToken = async (token: JwtPayload) => {
-//   // console.log("tokenDESDE EL REFRESH", token.refreshToken);
-//   const keyServer = process.env.API_BASE_URL;
-//   const url = new URL(`${keyServer}/tokens/refresh`);
+const refreshAccessToken = async (token: JwtPayload) => {
+  const keyServer = process.env.API_BASE_URL;
+  const url = new URL(`${keyServer}/tokens/refresh`);
 
-//   const bodyData = {
-//     data: {
-//       type: "TokenRefresh",
-//       attributes: {
-//         refresh: (token as any).refreshToken,
-//       },
-//     },
-//   };
+  const bodyData = {
+    data: {
+      type: "TokenRefresh",
+      attributes: {
+        refresh: (token as any).refreshToken,
+      },
+    },
+  };
 
-//   try {
-//     const response = await fetch(url, {
-//       method: "POST",
-//       headers: {
-//         "Content-Type": "application/vnd.api+json",
-//         Accept: "application/vnd.api+json",
-//       },
-//       body: JSON.stringify(bodyData),
-//     });
-//     // console.log("response", response);
-//     const newTokens = await response.json();
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/vnd.api+json",
+        Accept: "application/vnd.api+json",
+      },
+      body: JSON.stringify(bodyData),
+    });
+    const newTokens = await response.json();
 
-//     if (!response.ok) {
-//       throw new Error(`HTTP error! status: ${response.status}`);
-//     }
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
 
-//     return {
-//       ...token,
-//       accessToken: newTokens.data.attributes.access,
-//       refreshToken: newTokens.data.attributes.refresh,
-//     };
-//   } catch (error) {
-//     // eslint-disable-next-line no-console
-//     console.error("Error refreshing access token:", error);
-//     return {
-//       ...token,
-//       error: "RefreshAccessTokenError",
-//     };
-//   }
-// };
+    return {
+      ...token,
+      accessToken: newTokens.data.attributes.access,
+      refreshToken: newTokens.data.attributes.refresh,
+    };
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error("Error refreshing access token:", error);
+    return {
+      error: "RefreshAccessTokenError",
+    };
+  }
+};
 
 export const authConfig = {
   session: {
@@ -122,14 +119,12 @@ export const authConfig = {
     },
 
     jwt: async ({ token, account, user }) => {
-      // eslint-disable-next-line no-console
-      // console.log(`In the jwt token - is ${JSON.stringify(token)}`);
       if (token?.accessToken) {
         const decodedToken = jwtDecode(
           token.accessToken as string,
         ) as CustomJwtPayload;
         // eslint-disable-next-line no-console
-        // console.log("decodedToken", decodedToken);
+        console.log("decodedToken", decodedToken);
         token.accessTokenExpires = (decodedToken.exp as number) * 1000;
         token.user_id = decodedToken.user_id;
         token.tenant_id = decodedToken.tenant_id;
@@ -165,20 +160,14 @@ export const authConfig = {
       if (
         typeof token.accessTokenExpires === "number" &&
         Date.now() < token.accessTokenExpires
-      ) {
-        console.log("TOKEN IS VALID");
+      )
         return token;
-      } else {
-        console.log("TOKEN IS EXPIRED");
-      }
-      return token;
+
       // If the access token is expired, try to refresh it
-      // return refreshAccessToken(token as unknown as JwtDecodeOptions);
+      return refreshAccessToken(token as JwtPayload);
     },
 
     session: async ({ session, token }) => {
-      // session.user = token.data;
-
       if (token) {
         session.userId = token?.user_id as string;
         session.tenantId = token?.tenant_id as string;
