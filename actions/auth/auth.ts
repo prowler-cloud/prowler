@@ -1,12 +1,10 @@
 "use server";
 
-import { jwtDecode } from "jwt-decode";
 import { AuthError } from "next-auth";
 import { z } from "zod";
 
 import { signIn, signOut } from "@/auth.config";
-import { parseStringify } from "@/lib";
-import { authFormSchema, CustomJwtPayload } from "@/types";
+import { authFormSchema } from "@/types";
 
 const formSchemaSignIn = authFormSchema("sign-in");
 // const formSchemaSignUp = authFormSchema("sign-up");
@@ -76,30 +74,18 @@ export const getToken = async (formData: z.infer<typeof formSchemaSignIn>) => {
       body: JSON.stringify(bodyData),
     });
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    const data = await response.json();
-    const parsedData = parseStringify(data);
+    if (!response.ok) return null;
 
-    const accessToken = parsedData.data.attributes.access;
-    const refreshToken = parsedData.data.attributes.refresh;
-
-    const decodedToken = jwtDecode<CustomJwtPayload>(accessToken);
-    const userId = decodedToken.user_id;
-
-    // Verify if the response contains the expected data
-
+    const parsedResponse = await response.json();
+    // return parsedResponse;
+    const accessToken = parsedResponse.data.attributes.access;
+    const refreshToken = parsedResponse.data.attributes.refresh;
     return {
-      email: formData.email,
       accessToken,
       refreshToken,
-      userId,
-      // Add here other user fields we need in the session
     };
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error("Error en trying to get token:", error);
+    throw new Error("Error in trying to get token");
   }
 };
 

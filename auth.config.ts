@@ -1,10 +1,20 @@
 import { jwtDecode } from "jwt-decode";
 import NextAuth, { type NextAuthConfig } from "next-auth";
+import { DefaultSession } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { z } from "zod";
 
 import { getToken } from "./actions/auth";
 import { CustomJwtPayload } from "./types";
+import { UserAttributes } from "./types/users";
+
+declare module "next-auth" {
+  interface Session extends DefaultSession {
+    accessToken: string;
+    refreshToken: string;
+    user: UserAttributes;
+  }
+}
 
 const refreshAccessToken = async (token: CustomJwtPayload) => {
   const keyServer = process.env.API_BASE_URL;
@@ -79,11 +89,10 @@ export const authConfig = {
 
         if (!parsedCredentials.success) return null;
 
-        const user = await getToken(parsedCredentials.data);
-
-        if (!user) return null;
-
-        return user;
+        const tokenResponse = await getToken(parsedCredentials.data);
+        if (!tokenResponse) return null;
+        // const user = await getUserById(isUserValid.userId);
+        return tokenResponse;
       },
     }),
   ],
@@ -105,20 +114,29 @@ export const authConfig = {
       return true;
     },
 
-    jwt: async ({ token, user, account }) => {
+    jwt: async ({ token, account, user }) => {
+      // console.log(`In the jwt token - is ${JSON.stringify(token)}`);
       if (token?.accessToken) {
-        const decodedToken = jwtDecode<CustomJwtPayload>(token.accessToken);
+        const decodedToken = jwtDecode(token.accessToken);
         console.log("decodedToken", decodedToken);
 
         token.accessTokenExpires = decodedToken?.exp * 1000;
       }
-      if (user && account) {
+
+      if (account && user) {
         // token.data = user;
         return {
           ...token,
           accessToken: user.accessToken,
           refreshToken: user.refreshToken,
-          user,
+          user: {
+            id: "123",
+            tenantId: "123",
+            name: "John",
+            companyName: "Doe",
+            email: "john@doe.com",
+            date_joined: "2024-02-02",
+          },
         };
       }
 
@@ -135,11 +153,14 @@ export const authConfig = {
     },
 
     session: async ({ session, token }) => {
-      // session.user = token.data as any;
+      // session.user = token.data;
+
       if (token) {
-        session.accessToken = token.accessToken;
-        session.refreshToken = token.refreshToken;
+        session.accessToken = token?.accessToken as string;
+        session.refreshToken = token?.refreshToken as string;
+        session.user = token.user;
       }
+
       // console.log("session", session);
       return session;
     },
