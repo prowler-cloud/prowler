@@ -4,11 +4,9 @@ export const authFormSchema = (type: string) =>
   z
     .object({
       // Sign Up
-      companyName:
-        type === "sign-in"
-          ? z.string().optional()
-          : z.string().min(3).optional(),
-      firstName:
+      company:
+        type === "sign-in" ? z.string().optional() : z.string().optional(),
+      name:
         type === "sign-in"
           ? z.string().optional()
           : z
@@ -20,20 +18,19 @@ export const authFormSchema = (type: string) =>
       confirmPassword:
         type === "sign-in"
           ? z.string().optional()
-          : z.string().min(3, {
+          : z.string().min(12, {
               message: "It must contain at least 12 characters.",
             }),
       termsAndConditions:
         type === "sign-in"
-          ? z.enum(["true"]).optional()
-          : z.enum(["true"], {
-              errorMap: () => ({
-                message: "You must accept the terms and conditions.",
-              }),
+          ? z.boolean().optional()
+          : z.boolean().refine((value) => value === true, {
+              message: "You must accept the terms and conditions.",
             }),
+
       // Fields for Sign In and Sign Up
       email: z.string().email(),
-      password: z.string().min(3, {
+      password: z.string().min(12, {
         message: "It must contain at least 12 characters.",
       }),
     })

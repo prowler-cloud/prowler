@@ -18,7 +18,7 @@ import {
 } from "../../icons/prowler/ProwlerIcons";
 import { ThemeSwitch } from "../../ThemeSwitch";
 import Sidebar from "./Sidebar";
-import { sectionItems, sectionItemsWithTeams } from "./SidebarItems";
+import { sectionItemsWithTeams } from "./SidebarItems";
 import { UserAvatar } from "./UserAvatar";
 
 export const SidebarWrap = () => {
@@ -74,8 +74,8 @@ export const SidebarWrap = () => {
       <Link href={"/profile"}>
         <Suspense fallback={<p>Loading...</p>}>
           <UserAvatar
-            userName={session?.user?.name ?? "Guest"}
-            position={session?.user?.companyName ?? "Company Name"}
+            userName={session?.user.name ?? "Guest"}
+            position={session?.user.companyName ?? "Company Name"}
             isCompact={isCompact}
           />
         </Suspense>

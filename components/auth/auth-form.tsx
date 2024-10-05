@@ -9,18 +9,19 @@ import { useFormState } from "react-dom";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-import { authenticate } from "@/actions/auth";
+import { authenticate, createNewUser } from "@/actions/auth";
 import {
   Form,
   FormControl,
   FormField,
   FormMessage,
 } from "@/components/ui/form";
-import { authFormSchema } from "@/types";
+import { ApiError, authFormSchema } from "@/types";
 
 import { NotificationIcon, ProwlerExtended } from "../icons";
 import { ThemeSwitch } from "../ThemeSwitch";
 import { CustomButton, CustomInput } from "../ui/custom";
+import { useToast } from "../ui/toast";
 
 export const AuthForm = ({ type }: { type: string }) => {
   const formSchema = authFormSchema(type);
@@ -31,16 +32,19 @@ export const AuthForm = ({ type }: { type: string }) => {
       email: "",
       password: "",
       ...(type === "sign-up" && {
-        firstName: "",
-        companyName: "",
+        name: "",
+        company: "",
+        termsAndConditions: false,
         confirmPassword: "",
       }),
     },
   });
 
-  const isLoading = form.formState.isSubmitting;
-
   const [state, dispatch] = useFormState(authenticate, undefined);
+
+  const { toast } = useToast();
+
+  const isLoading = form.formState.isSubmitting;
 
   useEffect(() => {
     if (state?.message === "Success") {
@@ -49,20 +53,53 @@ export const AuthForm = ({ type }: { type: string }) => {
   }, [state]);
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
-    try {
-      // Sign-up logic will be here.
-      if (type === "sign-in") {
-        dispatch({
-          email: data.email.toLowerCase(),
-          password: data.password,
+    if (type === "sign-in") {
+      dispatch({
+        email: data.email.toLowerCase(),
+        password: data.password,
+      });
+    }
+    if (type === "sign-up") {
+      const newUser = await createNewUser(data);
+
+      if (newUser?.errors && newUser.errors.length > 0) {
+        newUser.errors.forEach((error: ApiError) => {
+          const errorMessage = error.detail;
+
+          switch (error.source.pointer) {
+            case "/data/attributes/name":
+              form.setError("name", { type: "server", message: errorMessage });
+              break;
+            case "/data/attributes/email":
+              form.setError("email", { type: "server", message: errorMessage });
+              break;
+            case "/data/attributes/password":
+              form.setError("password", {
+                type: "server",
+                message: errorMessage,
+              });
+              break;
+            default:
+              toast({
+                variant: "destructive",
+                title: "Oops! Something went wrong",
+                description: errorMessage,
+              });
+          }
+        });
+      } else {
+        toast({
+          title: "Success!",
+          description: "The user was registered successfully.",
+        });
+        form.reset({
+          name: "",
+          company: "",
+          email: "",
+          password: "",
+          termsAndConditions: false,
         });
       }
-      if (type === "sign-up") {
-        // const newUser = await signUp(data);
-      }
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error(error);
     }
   };
 
@@ -107,18 +144,20 @@ export const AuthForm = ({ type }: { type: string }) => {
               <>
                 <CustomInput
                   control={form.control}
-                  name="firstName"
+                  name="name"
                   type="text"
                   label="Name"
                   placeholder="Enter your name"
+                  isInvalid={!!form.formState.errors.name}
                 />
                 <CustomInput
                   control={form.control}
-                  name="companyName"
+                  name="company"
                   type="text"
                   label="Company Name"
                   placeholder="Enter your company name"
                   isRequired={false}
+                  isInvalid={!!form.formState.errors.company}
                 />
               </>
             )}
@@ -128,9 +167,15 @@ export const AuthForm = ({ type }: { type: string }) => {
               type="email"
               label="Email"
               placeholder="Enter your email"
+              isInvalid={!!form.formState.errors.email}
             />
 
-            <CustomInput control={form.control} name="password" password />
+            <CustomInput
+              control={form.control}
+              name="password"
+              password
+              isInvalid={!!form.formState.errors.password}
+            />
 
             {type === "sign-in" && (
               <div className="flex items-center justify-between px-1 py-2">
@@ -143,40 +188,40 @@ export const AuthForm = ({ type }: { type: string }) => {
               </div>
             )}
             {type === "sign-up" && (
-              <FormField
-                control={form.control}
-                name="termsAndConditions"
-                render={({ field }) => (
-                  <>
-                    <CustomInput
-                      control={form.control}
-                      name="confirmPassword"
-                      confirmPassword
-                    />
-                    <FormControl>
-                      <Checkbox
-                        isRequired
-                        className="py-4"
-                        size="sm"
-                        checked={field.value === "true"}
-                        onChange={(e) =>
-                          field.onChange(e.target.checked ? "true" : "false")
-                        }
-                      >
-                        I agree with the&nbsp;
-                        <Link href="#" size="sm">
-                          Terms
-                        </Link>
-                        &nbsp; and&nbsp;
-                        <Link href="#" size="sm">
-                          Privacy Policy
-                        </Link>
-                      </Checkbox>
-                    </FormControl>
-                    <FormMessage className="text-system-error dark:text-system-error" />
-                  </>
-                )}
-              />
+              <>
+                <CustomInput
+                  control={form.control}
+                  name="confirmPassword"
+                  confirmPassword
+                />
+                <FormField
+                  control={form.control}
+                  name="termsAndConditions"
+                  render={({ field }) => (
+                    <>
+                      <FormControl>
+                        <Checkbox
+                          isRequired
+                          className="py-4"
+                          size="sm"
+                          checked={field.value}
+                          onChange={(e) => field.onChange(e.target.checked)}
+                        >
+                          I agree with the&nbsp;
+                          <Link href="#" size="sm">
+                            Terms
+                          </Link>
+                          &nbsp; and&nbsp;
+                          <Link href="#" size="sm">
+                            Privacy Policy
+                          </Link>
+                        </Checkbox>
+                      </FormControl>
+                      <FormMessage className="text-system-error dark:text-system-error" />
+                    </>
+                  )}
+                />
+              </>
             )}
 
             {state?.message === "Credentials error" && (
@@ -185,8 +230,6 @@ export const AuthForm = ({ type }: { type: string }) => {
                 <p className="text-s">No user found</p>
               </div>
             )}
-
-            {isLoading && <p>Loading...</p>}
 
             <CustomButton
               type="submit"

@@ -30,6 +30,15 @@ export interface SearchParamsProps {
   [key: string]: string | string[] | undefined;
 }
 
+export interface ApiError {
+  detail: string;
+  status: string;
+  source: {
+    pointer: string;
+  };
+  code: string;
+}
+
 export interface ProviderProps {
   id: string;
   type: "providers";

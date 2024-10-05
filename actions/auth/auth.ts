@@ -7,7 +7,7 @@ import { signIn, signOut } from "@/auth.config";
 import { authFormSchema } from "@/types";
 
 const formSchemaSignIn = authFormSchema("sign-in");
-// const formSchemaSignUp = authFormSchema("sign-up");
+const formSchemaSignUp = authFormSchema("sign-up");
 
 const defaultValues: z.infer<typeof formSchemaSignIn> = {
   email: "",
@@ -49,6 +49,46 @@ export async function authenticate(
     }
   }
 }
+
+export const createNewUser = async (
+  formData: z.infer<typeof formSchemaSignUp>,
+) => {
+  const keyServer = process.env.API_BASE_URL;
+  const url = new URL(`${keyServer}/users`);
+
+  const bodyData = {
+    data: {
+      type: "User",
+      attributes: {
+        name: formData.name,
+        company_name: formData.company,
+        email: formData.email,
+        password: formData.password,
+      },
+    },
+  };
+
+  try {
+    const response = await fetch(url.toString(), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/vnd.api+json",
+        Accept: "application/vnd.api+json",
+      },
+      body: JSON.stringify(bodyData),
+    });
+
+    const parsedResponse = await response.json();
+
+    if (!response.ok) {
+      return parsedResponse;
+    }
+
+    return parsedResponse;
+  } catch (error) {
+    return { errors: [{ detail: "Network error or server is unreachable" }] };
+  }
+};
 
 export const getToken = async (formData: z.infer<typeof formSchemaSignIn>) => {
   const keyServer = process.env.API_BASE_URL;

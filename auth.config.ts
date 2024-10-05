@@ -74,7 +74,7 @@ export const authConfig = {
         const parsedCredentials = z
           .object({
             email: z.string().email(),
-            password: z.string().min(6),
+            password: z.string().min(12),
           })
           .safeParse(credentials);
 
