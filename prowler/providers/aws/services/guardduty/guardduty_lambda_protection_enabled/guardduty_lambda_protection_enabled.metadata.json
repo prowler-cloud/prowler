@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
   "CheckID": "guardduty_lambda_protection_enabled",
-  "CheckTitle": "GuardDuty Lambda Protection Enabled",
+  "CheckTitle": "Check if GuardDuty Lambda Protection is enabled.",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices"
   ],
@@ -17,12 +17,12 @@
     "Code": {
       "CLI": "aws guardduty update-detector --detector-id <detector-id> --features Name=LAMBDA_NETWORK_LOGS,Status=ENABLED",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/guardduty-controls.html#guardduty-6",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Enable Lambda Protection for your GuardDuty detector.",
-      "Url": "https://docs.aws.amazon.com/securityhub/latest/userguide/guardduty-controls.html#guardduty-6"
+      "Text": "Enable Lambda Protection in your GuardDuty detector to start monitoring Lambda Network Activity in your account.",
+      "Url": "https://docs.aws.amazon.com/guardduty/latest/ug/configure-lambda-protection-standalone-acc.html"
     }
   },
   "Categories": [],
