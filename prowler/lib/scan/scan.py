@@ -19,7 +19,7 @@ class Scan:
     _service_checks_completed: dict[str, set[str]]
     _progress: float = 0.0
     _findings: list = []
-    _duration: float = 0.0
+    _duration: int = 0
 
     def __init__(self, provider: Provider, checks_to_execute: list[str]):
         """
@@ -64,7 +64,7 @@ class Scan:
         )
 
     @property
-    def duration(self) -> float:
+    def duration(self) -> int:
         return self._duration
 
     @property
@@ -167,7 +167,7 @@ class Scan:
                         f"{check_name} - {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
             # Update the scan duration when all checks are completed
-            self._duration = (datetime.datetime.now() - start_time).total_seconds()
+            self._duration = int((datetime.datetime.now() - start_time).total_seconds())
         except Exception as error:
             logger.error(
                 f"{check_name} - {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
