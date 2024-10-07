@@ -1,3 +1,4 @@
+import datetime
 from typing import Generator
 
 from prowler.lib.check.check import execute, import_check, update_audit_metadata
@@ -18,6 +19,7 @@ class Scan:
     _service_checks_completed: dict[str, set[str]]
     _progress: float = 0.0
     _findings: list = []
+    _duration: float = 0.0
 
     def __init__(self, provider: Provider, checks_to_execute: list[str]):
         """
@@ -62,6 +64,10 @@ class Scan:
         )
 
     @property
+    def duration(self) -> float:
+        return self._duration
+
+    @property
     def findings(self) -> list:
         return self._findings
 
@@ -94,6 +100,8 @@ class Scan:
                 completed_checks=0,
                 audit_progress=0,
             )
+
+            start_time = datetime.datetime.now()
 
             for check_name in checks_to_execute:
                 try:
@@ -149,7 +157,6 @@ class Scan:
                     ]
 
                     yield self.progress, findings
-
                 # If check does not exists in the provider or is from another provider
                 except ModuleNotFoundError:
                     logger.error(
@@ -159,6 +166,8 @@ class Scan:
                     logger.error(
                         f"{check_name} - {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
+            # Update the scan duration when all checks are completed
+            self._duration = (datetime.datetime.now() - start_time).total_seconds()
         except Exception as error:
             logger.error(
                 f"{check_name} - {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
