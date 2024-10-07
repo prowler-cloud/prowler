@@ -12,14 +12,12 @@ class wafv2_cloudwatch_metrics_enabled(Check):
             report.resource_arn = web_acl.arn
             report.resource_tags = web_acl.tags
             report.status = "FAIL"
-            report.status_extended = (
-                f"WAFv2 Web ACL {web_acl.id} does not have CloudWatch Metrics enabled."
-            )
+            report.status_extended = f"AWS WAFv2 Web ACL {web_acl.id} does not have CloudWatch Metrics enabled."
 
             if web_acl.cloudwatch_metrics_enabled:
                 report.status = "PASS"
                 report.status_extended = (
-                    f"WAFv2 Web ACL {web_acl.id} has CloudWatch Metrics enabled."
+                    f"AWS WAFv2 Web ACL {web_acl.id} has CloudWatch Metrics enabled."
                 )
 
             findings.append(report)

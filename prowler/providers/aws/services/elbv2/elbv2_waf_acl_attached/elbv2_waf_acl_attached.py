@@ -18,7 +18,7 @@ class elbv2_waf_acl_attached(Check):
                 report.status_extended = (
                     f"ELBv2 ALB {lb.name} is not protected by WAF Web ACL."
                 )
-                for acl in wafv2_client.web_acls:
+                for acl in wafv2_client.web_acls.values():
                     if lb_arn in acl.albs:
                         report.status = "PASS"
                         report.status_extended = f"ELBv2 ALB {lb.name} is protected by WAFv2 Web ACL {acl.name}."
