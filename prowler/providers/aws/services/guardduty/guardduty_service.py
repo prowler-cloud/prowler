@@ -53,53 +53,44 @@ class GuardDuty(AWSService):
     def _get_detector(self, detector):
         logger.info("GuardDuty - getting detector info...")
         try:
-            try:
-                if detector.id and detector.enabled_in_account:
-                    detector_info = self.regional_clients[detector.region].get_detector(
-                        DetectorId=detector.id
-                    )
-                    if (
-                        "Status" in detector_info
-                        and detector_info["Status"] == "ENABLED"
-                    ):
-                        detector.status = True
-
-                    data_sources = detector_info.get("DataSources", {})
-
-                    s3_logs = data_sources.get("S3Logs", {})
-                    if s3_logs.get("Status", "DISABLED") == "ENABLED":
-                        detector.s3_protection = True
-
-                    detector.eks_audit_log_protection = (
-                        True
-                        if data_sources.get("Kubernetes", {})
-                        .get("AuditLogs", {})
-                        .get("Status", "DISABLED")
-                        == "ENABLED"
-                        else False
-                    )
-
-                    detector.malware_protection = (
-                        True
-                        if data_sources.get("MalwareProtection", {})
-                        .get("ScanEc2InstanceWithFindings", {})
-                        .get("EbsVolumes", {})
-                        .get("Status", "DISABLED")
-                        == "ENABLED"
-                        else False
-                    )
-
-                    for feat in detector_info.get("Features", []):
-                        if (
-                            feat.get("Name") == "RDS_LOGIN_EVENTS"
-                            and feat.get("Status", "DISABLED") == "ENABLED"
-                        ):
-                            detector.rds_protection = True
-
-            except Exception as error:
-                logger.error(
-                    f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
+            if detector.id and detector.enabled_in_account:
+                detector_info = self.regional_clients[detector.region].get_detector(
+                    DetectorId=detector.id
                 )
+                if "Status" in detector_info and detector_info["Status"] == "ENABLED":
+                    detector.status = True
+
+                data_sources = detector_info.get("DataSources", {})
+
+                s3_logs = data_sources.get("S3Logs", {})
+                if s3_logs.get("Status", "DISABLED") == "ENABLED":
+                    detector.s3_protection = True
+
+                detector.eks_audit_log_protection = (
+                    True
+                    if data_sources.get("Kubernetes", {})
+                    .get("AuditLogs", {})
+                    .get("Status", "DISABLED")
+                    == "ENABLED"
+                    else False
+                )
+
+                detector.malware_protection = (
+                    True
+                    if data_sources.get("MalwareProtection", {})
+                    .get("ScanEc2InstanceWithFindings", {})
+                    .get("EbsVolumes", {})
+                    .get("Status", "DISABLED")
+                    == "ENABLED"
+                    else False
+                )
+
+                for feat in detector_info.get("Features", []):
+                    if (
+                        feat.get("Name") == "RDS_LOGIN_EVENTS"
+                        and feat.get("Status", "DISABLED") == "ENABLED"
+                    ):
+                        detector.rds_protection = True
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
