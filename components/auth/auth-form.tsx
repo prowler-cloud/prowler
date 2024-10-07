@@ -63,6 +63,10 @@ export const AuthForm = ({ type }: { type: string }) => {
     if (type === "sign-up") {
       const newUser = await createNewUser(data);
 
+      if (!newUser.errors) {
+        router.push("/sign-in");
+      }
+
       if (newUser?.errors && newUser.errors.length > 0) {
         newUser.errors.forEach((error: ApiError) => {
           const errorMessage = error.detail;
@@ -109,8 +113,8 @@ export const AuthForm = ({ type }: { type: string }) => {
       {/* Auth Form */}
       <div className="relative flex w-full items-center justify-center bg-background lg:w-1/2">
         {/* Prowler Logo */}
-        <div className="absolute top-1/2 z-10 flex w-full flex-col items-center">
-          <ProwlerExtended className="w-[500px]" />
+        <div className="absolute top-[10%] z-10 flex h-fit w-fit flex-col items-center lg:hidden">
+          <ProwlerExtended width={300} />
         </div>
 
         <div className="flex w-full max-w-sm flex-col gap-4 rounded-large bg-content1 px-8 pb-10 pt-6 shadow-small">
