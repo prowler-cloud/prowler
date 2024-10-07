@@ -1,6 +1,7 @@
 from typing import Generator
 
 from prowler.lib.check.check import execute, import_check, update_audit_metadata
+from prowler.lib.check.utils import recover_checks_from_provider
 from prowler.lib.logger import logger
 from prowler.lib.outputs.finding import Finding
 from prowler.providers.common.models import Audit_Metadata
@@ -19,7 +20,7 @@ class Scan:
     _progress: float = 0.0
     _findings: list = []
 
-    def __init__(self, provider: Provider, checks_to_execute: list[str]):
+    def __init__(self, provider: Provider, checks_to_execute: list[str] = []):
         """
         Scan is the class that executes the checks and yields the progress and the findings.
 
@@ -29,11 +30,19 @@ class Scan:
         """
         self._provider = provider
         # Remove duplicated checks and sort them
-        self._checks_to_execute = sorted(list(set(checks_to_execute)))
+        self._checks_to_execute = (
+            sorted(list(set(checks_to_execute)))
+            if checks_to_execute
+            else sorted(
+                [check[0] for check in recover_checks_from_provider(provider.type)]
+            )
+        )
 
-        self._number_of_checks_to_execute = len(checks_to_execute)
+        self._number_of_checks_to_execute = len(self._checks_to_execute)
 
-        service_checks_to_execute = get_service_checks_to_execute(checks_to_execute)
+        service_checks_to_execute = get_service_checks_to_execute(
+            self._checks_to_execute
+        )
         service_checks_completed = dict()
 
         self._service_checks_to_execute = service_checks_to_execute
