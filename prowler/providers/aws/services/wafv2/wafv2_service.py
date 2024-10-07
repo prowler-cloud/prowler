@@ -16,6 +16,7 @@ class WAFv2(AWSService):
         self.__threading_call__(self._list_web_acls)
         self.__threading_call__(self._list_resources_for_web_acl)
         self.__threading_call__(self._get_logging_configuration)
+        self.__threading_call__(self._get_web_acl, self.web_acls.values())
         self.__threading_call__(self._list_tags, self.web_acls)
 
     def _list_web_acls(self, regional_client):
@@ -86,6 +87,23 @@ class WAFv2(AWSService):
                         f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
 
+    def _get_web_acl(self, web_acl: str):
+        logger.info("WAFv2 - Getting Web ACL...")
+        try:
+            get_web_acl_regional = self.regional_clients[web_acl.region].get_web_acl(
+                Name=web_acl.name, Scope="REGIONAL", Id=web_acl.id
+            )
+            web_acl.cloudwatch_metrics_enabled = (
+                get_web_acl_regional.get("WebACL", {})
+                .get("VisibilityConfig", {})
+                .get("CloudWatchMetricsEnabled", False)
+            )
+
+        except Exception as error:
+            logger.error(
+                f"{web_acl.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
     def _list_tags(self, resource: any):
         logger.info("WAFv2 - Listing tags...")
         try:
@@ -109,4 +127,5 @@ class WebAclv2(BaseModel):
     user_pools: list[str]
     region: str
     logging_enabled: bool = False
+    cloudwatch_metrics_enabled: bool = False
     tags: Optional[list]
