@@ -8,11 +8,13 @@ def check_cloudwatch_log_metric_filter(
     trails: list,
     metric_filters: list,
     metric_alarms: list,
-    report: Check_Report_AWS,
+    metadata: dict,
 ):
+    report = None
     # 1. Iterate for CloudWatch Log Group in CloudTrail trails
     log_groups = []
-    if trails is not None:
+    if trails is not None and metric_filters is not None and metric_alarms is not None:
+        report = Check_Report_AWS(metadata)
         for trail in trails.values():
             if trail.log_group_arn:
                 log_groups.append(trail.log_group_arn.split(":")[6])
@@ -24,7 +26,7 @@ def check_cloudwatch_log_metric_filter(
             report.resource_id = metric_filter.log_group.name
             report.resource_arn = metric_filter.log_group.arn
             report.region = metric_filter.log_group.region
-            report.resource_tags = metric_filter.log_group.tags
+            report.resource_tags = getattr(metric_filter.log_group, "tags", [])
             report.status = "FAIL"
             report.status_extended = f"CloudWatch log group {metric_filter.log_group.name} found with metric filter {metric_filter.name} but no alarms associated."
             # 3. Check if there is an alarm for the metric
