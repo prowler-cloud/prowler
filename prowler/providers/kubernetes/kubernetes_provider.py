@@ -6,7 +6,10 @@ from kubernetes.config.config_exception import ConfigException
 from requests.exceptions import Timeout
 
 from kubernetes import client, config
-from prowler.config.config import get_default_mute_file_path
+from prowler.config.config import (
+    get_default_mute_file_path,
+    load_and_validate_config_file,
+)
 from prowler.lib.logger import logger
 from prowler.lib.utils.utils import print_boxes
 from prowler.providers.common.models import Audit_Metadata, Connection
@@ -99,6 +102,12 @@ class KubernetesProvider(Provider):
     @property
     def audit_config(self):
         return self._audit_config
+
+    @audit_config.setter
+    def audit_config(self, audit_config_path):
+        self._audit_config = load_and_validate_config_file(
+            "kubernetes", audit_config_path
+        )
 
     @property
     def fixer_config(self):

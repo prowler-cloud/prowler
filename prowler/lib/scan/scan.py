@@ -18,14 +18,23 @@ class Scan:
     _service_checks_completed: dict[str, set[str]]
     _progress: float = 0.0
     _findings: list = []
+    _mutelist_file: str = None
+    _config_file: str = None
 
-    def __init__(self, provider: Provider, checks_to_execute: list[str]):
+    def __init__(
+        self,
+        provider: Provider,
+        checks_to_execute: list[str],
+        mutelist_file: str = None,
+        config_file: str = None,
+    ):
         """
         Scan is the class that executes the checks and yields the progress and the findings.
 
         Params:
             provider: Provider -> The provider to scan
             checks_to_execute: list[str] -> The checks to execute
+            mutelist_file: str -> The mutelist file (default: None)
         """
         self._provider = provider
         # Remove duplicated checks and sort them
@@ -38,6 +47,16 @@ class Scan:
 
         self._service_checks_to_execute = service_checks_to_execute
         self._service_checks_completed = service_checks_completed
+
+        # Set the mutelist file if it exists
+        if mutelist_file:
+            self._mutelist_file = mutelist_file
+            self._provider.mutelist = mutelist_file
+
+        # Set the config file if it exists
+        if config_file:
+            self._config_file = config_file
+            self._provider.config_file = config_file
 
     @property
     def checks_to_execute(self) -> set[str]:
@@ -64,6 +83,14 @@ class Scan:
     @property
     def findings(self) -> list:
         return self._findings
+
+    @property
+    def mutelist_file(self) -> str:
+        return self._mutelist_file
+
+    @property
+    def config_file(self) -> str:
+        return self._config_file
 
     def scan(
         self,
