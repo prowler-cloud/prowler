@@ -14,7 +14,6 @@ from colorama import Fore, Style
 
 import prowler
 from prowler.config.config import orange_color
-from prowler.lib.check.custom_checks_metadata import update_check_metadata
 from prowler.lib.check.models import Check
 from prowler.lib.check.utils import recover_checks_from_provider
 from prowler.lib.logger import logger
@@ -404,7 +403,6 @@ def run_fixer(check_findings: list) -> int:
 def execute_checks(
     checks_to_execute: list,
     global_provider: Any,
-    custom_checks_metadata: Any,
     config_file: str,
     output_options: Any,
 ) -> list:
@@ -474,7 +472,6 @@ def execute_checks(
                 check_findings = execute(
                     check,
                     global_provider,
-                    custom_checks_metadata,
                     output_options,
                 )
                 report(check_findings, global_provider, output_options)
@@ -554,7 +551,6 @@ def execute_checks(
                     check_findings = execute(
                         check,
                         global_provider,
-                        custom_checks_metadata,
                         output_options,
                     )
 
@@ -602,7 +598,6 @@ def execute_checks(
 def execute(
     check: Check,
     global_provider: Any,
-    custom_checks_metadata: Any,
     output_options: Any = None,
 ):
     """
@@ -619,14 +614,6 @@ def execute(
         list: list of findings
     """
     try:
-        # Update check metadata to reflect that in the outputs
-        if custom_checks_metadata and custom_checks_metadata["Checks"].get(
-            check.CheckID
-        ):
-            check = update_check_metadata(
-                check, custom_checks_metadata["Checks"][check.CheckID]
-            )
-
         only_logs = False
         if hasattr(output_options, "only_logs"):
             only_logs = output_options.only_logs

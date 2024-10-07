@@ -1,6 +1,7 @@
 from typing import Generator
 
 from prowler.lib.check.check import execute, import_check, update_audit_metadata
+from prowler.lib.check.custom_checks_metadata import update_check_metadata
 from prowler.lib.logger import logger
 from prowler.lib.outputs.finding import Finding
 from prowler.providers.common.models import Audit_Metadata
@@ -111,11 +112,18 @@ class Scan:
                             f"Check '{check_name}' was not found for the {self._provider.type.upper()} provider"
                         )
                         continue
+
+                    # Update check metadata to reflect that in the outputs
+                    if custom_checks_metadata and custom_checks_metadata["Checks"].get(
+                        check.CheckID
+                    ):
+                        check = update_check_metadata(
+                            check, custom_checks_metadata["Checks"][check.CheckID]
+                        )
                     # Execute the check
                     check_findings = execute(
                         check,
                         self._provider,
-                        custom_checks_metadata,
                         output_options=None,
                     )
 
