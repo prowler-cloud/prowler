@@ -292,14 +292,14 @@ export const AuthForm = ({ type }: { type: string }) => {
         className="relative hidden w-1/2 flex-col-reverse rounded-medium p-10 shadow-small lg:flex"
         style={{
           backgroundImage:
-            "url(https://media.licdn.com/dms/image/v2/D5622AQFnGdly6BE-Qw/feedshare-shrink_1280/feedshare-shrink_1280/0/1725548764361?e=1730937600&v=beta&t=A2VLwDFbjWqOgzCtsF58GkasH-eUC9uqP9rY2UI9B9A)",
+            "url(https://nextuipro.nyc3.cdn.digitaloceanspaces.com/components-images/white-building.jpg)",
           backgroundSize: "cover",
           backgroundPosition: "center",
         }}
       >
         <div className="flex flex-col items-end gap-4">
           <p className="w-full text-right text-2xl text-black/60">
-            <span className="font-normal">Open Source Security Platform</span>
+            <span className="font-normal">Open Cloud Security Platform </span>
           </p>
         </div>
       </div>
