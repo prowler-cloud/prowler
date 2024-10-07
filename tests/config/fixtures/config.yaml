@@ -133,7 +133,7 @@ aws:
 
   # AWS CloudTrail Configuration
   # aws.cloudtrail_threat_detection_privilege_escalation
-  threat_detection_privilege_escalation_threshold: 0.1 # Percentage of actions found to decide if it is an privilege_escalation attack event, by default is 0.1 (10%)
+  threat_detection_privilege_escalation_threshold: 0.2 # Percentage of actions found to decide if it is an privilege_escalation attack event, by default is 0.2 (20%)
   threat_detection_privilege_escalation_minutes: 1440 # Past minutes to search from now for privilege_escalation attacks, by default is 1440 minutes (24 hours)
   threat_detection_privilege_escalation_actions:
     [
@@ -190,7 +190,7 @@ aws:
       "UpdateLoginProfile",
     ]
   # aws.cloudtrail_threat_detection_enumeration
-  threat_detection_enumeration_threshold: 0.1 # Percentage of actions found to decide if it is an enumeration attack event, by default is 0.1 (10%)
+  threat_detection_enumeration_threshold: 0.3 # Percentage of actions found to decide if it is an enumeration attack event, by default is 0.3 (30%)
   threat_detection_enumeration_minutes: 1440 # Past minutes to search from now for enumeration attacks, by default is 1440 minutes (24 hours)
   threat_detection_enumeration_actions:
     [
