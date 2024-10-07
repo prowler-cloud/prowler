@@ -162,7 +162,7 @@ class Test_awslambda_function_no_secrets_in_code:
         lambda_client.functions = {LAMBDA_FUNCTION_ARN: create_lambda_function()}
 
         lambda_client._get_function_code = mock_get_function_codewith_metadata_api
-        lambda_client.audit_config = {"secrets_ignore_patterns": ["169.254.169.254"]}
+        lambda_client.audit_config = {"secrets_ignore_patterns": []}
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
