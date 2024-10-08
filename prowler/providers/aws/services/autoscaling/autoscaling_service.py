@@ -57,6 +57,10 @@ class AutoScaling(AWSService):
                             self.audit_resources,
                         )
                     ):
+                        instance_types = []
+                        for instance in group.get("Instances", []):
+                            instance_types.append(instance["InstanceType"])
+
                         self.groups.append(
                             Group(
                                 arn=group.get("AutoScalingGroupARN"),
@@ -64,6 +68,7 @@ class AutoScaling(AWSService):
                                 region=regional_client.region,
                                 availability_zones=group.get("AvailabilityZones"),
                                 tags=group.get("Tags"),
+                                instance_types=instance_types,
                             )
                         )
 
@@ -130,6 +135,7 @@ class Group(BaseModel):
     region: str
     availability_zones: list
     tags: list = []
+    instance_types: list = []
 
 
 class ScalableTarget(BaseModel):
