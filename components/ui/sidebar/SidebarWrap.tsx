@@ -95,7 +95,7 @@ export const SidebarWrap = () => {
           "items-center": isCompact,
         })}
       >
-        <Tooltip
+        {/* <Tooltip
           content="Feedback & Support"
           isDisabled={!isCompact}
           placement="right"
@@ -133,7 +133,7 @@ export const SidebarWrap = () => {
               "Feedback & Support"
             )}
           </Button>
-        </Tooltip>
+        </Tooltip> */}
 
         <Tooltip
           content="Documentation"
@@ -179,7 +179,7 @@ export const SidebarWrap = () => {
           </Link>
         </Tooltip>
 
-        <Tooltip
+        {/* <Tooltip
           content="Product Updates"
           isDisabled={!isCompact}
           placement="right"
@@ -216,7 +216,7 @@ export const SidebarWrap = () => {
               "Product Updates"
             )}
           </Button>
-        </Tooltip>
+        </Tooltip> */}
 
         <Tooltip content="Log Out" isDisabled={!isCompact} placement="right">
           <Button
