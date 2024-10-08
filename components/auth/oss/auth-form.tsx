@@ -116,7 +116,7 @@ export const AuthForm = ({ type }: { type: string }) => {
         {/* Background Pattern */}
         <div className="absolute h-full w-full bg-[radial-gradient(#94a3b8_1px,transparent_1px)] [background-size:16px_16px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_10%,transparent_80%)]"></div>
 
-        <div className="dark:bg-prowler-black-900/90 relative z-10 flex w-full max-w-sm flex-col gap-4 rounded-large bg-white/90 px-8 py-10 shadow-small md:max-w-md">
+        <div className="relative z-10 flex w-full max-w-sm flex-col gap-4 rounded-large bg-white/90 px-8 py-10 shadow-small dark:bg-prowler-black-900/90 md:max-w-md">
           {/* Prowler Logo */}
           <div className="absolute -top-[100px] left-1/2 z-10 flex h-fit w-fit -translate-x-1/2">
             <ProwlerExtended width={300} />

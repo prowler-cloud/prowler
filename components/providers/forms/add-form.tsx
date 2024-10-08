@@ -67,7 +67,10 @@ export const AddForm = ({
         onSubmit={form.handleSubmit(onSubmitClient)}
         className="flex flex-col space-y-4"
       >
-        <RadioGroupProvider control={form.control} />
+        <RadioGroupProvider
+          control={form.control}
+          isInvalid={!!form.formState.errors.providerType}
+        />
         <CustomInput
           control={form.control}
           name="providerId"

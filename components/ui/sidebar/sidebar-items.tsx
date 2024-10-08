@@ -1,8 +1,8 @@
 import { Icon } from "@iconify/react";
 import { Chip } from "@nextui-org/react";
 
-import { SidebarItem, SidebarItemType } from "./Sidebar";
-import { TeamAvatar } from "./TeamAvatar";
+import { SidebarItem, SidebarItemType } from "./sidebar-tmp";
+import { TeamAvatar } from "./team-avatar";
 
 /**
  * Please check the https://nextui.org/docs/guide/routing to have a seamless router integration
@@ -120,6 +120,12 @@ export const sectionItems: SidebarItem[] = [
     title: "Scan",
     items: [
       {
+        key: "scanners",
+        href: "#",
+        icon: "lucide:scan-search",
+        title: "Scanners",
+      },
+      {
         key: "findings",
         href: "/findings",
         title: "Findings",
@@ -141,12 +147,6 @@ export const sectionItems: SidebarItem[] = [
             title: "Transactions Log",
           },
         ],
-      },
-      {
-        key: "tasks",
-        href: "#",
-        icon: "solar:checklist-minimalistic-outline",
-        title: "Tasks",
       },
     ],
   },
@@ -205,6 +205,12 @@ export const sectionItemsWithTeams: SidebarItem[] = [
         href: "/users",
         title: "Users",
         icon: "ci:users",
+      },
+      {
+        key: "tasks",
+        href: "#",
+        icon: "solar:checklist-minimalistic-outline",
+        title: "Tasks",
       },
       // {
       //   key: "memberships",

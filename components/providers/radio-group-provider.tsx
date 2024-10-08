@@ -22,7 +22,7 @@ export const CustomRadio: React.FC<CustomRadioProps> = (props) => {
   const {
     Component,
     children,
-    description,
+    // description,
     getBaseProps,
     getWrapperProps,
     getInputProps,
@@ -37,7 +37,7 @@ export const CustomRadio: React.FC<CustomRadioProps> = (props) => {
       className={cn(
         "group inline-flex flex-row-reverse items-center justify-between tap-highlight-transparent hover:opacity-70 active:opacity-50",
         "max-w-full cursor-pointer gap-4 rounded-lg border-2 border-default p-4",
-        "data-[selected=true]:border-primary",
+        "data-[selected=true]:border-primar w-full",
       )}
     >
       <VisuallyHidden>
@@ -48,11 +48,11 @@ export const CustomRadio: React.FC<CustomRadioProps> = (props) => {
       </span>
       <div {...getLabelWrapperProps()}>
         {children && <span {...getLabelProps()}>{children}</span>}
-        {description && (
+        {/* {description && (
           <span className="text-small text-foreground opacity-70">
             {description}
           </span>
-        )}
+        )} */}
       </div>
     </Component>
   );
@@ -60,10 +60,12 @@ export const CustomRadio: React.FC<CustomRadioProps> = (props) => {
 
 interface RadioGroupProviderProps {
   control: Control<z.infer<typeof addProviderFormSchema>>;
+  isInvalid: boolean;
 }
 
 export const RadioGroupProvider: React.FC<RadioGroupProviderProps> = ({
   control,
+  isInvalid,
 }) => {
   return (
     <Controller
@@ -71,31 +73,38 @@ export const RadioGroupProvider: React.FC<RadioGroupProviderProps> = ({
       control={control}
       render={({ field }) => (
         <>
-          <RadioGroup label="Select one provider" {...field}>
-            <CustomRadio description="Amazon Web Services" value="aws">
-              <div className="flex items-center">
-                <AWSProviderBadge size={26} />
-                <span className="ml-2">AWS</span>
-              </div>
-            </CustomRadio>
-            <CustomRadio description="Google Cloud Platform" value="gcp">
-              <div className="flex items-center">
-                <GCPProviderBadge size={26} />
-                <span className="ml-2">GCP</span>
-              </div>
-            </CustomRadio>
-            <CustomRadio description="Microsoft Azure" value="azure">
-              <div className="flex items-center">
-                <AzureProviderBadge size={26} />
-                <span className="ml-2">Azure</span>
-              </div>
-            </CustomRadio>
-            <CustomRadio description="Kubernetes" value="kubernetes">
-              <div className="flex items-center">
-                <KS8ProviderBadge size={26} />
-                <span className="ml-2">Kubernetes</span>
-              </div>
-            </CustomRadio>
+          <RadioGroup
+            className="flex flex-wrap"
+            label="Select one provider"
+            isInvalid={isInvalid}
+            {...field}
+          >
+            <div className="grid grid-cols-2 gap-4">
+              <CustomRadio description="Amazon Web Services" value="aws">
+                <div className="flex items-center">
+                  <AWSProviderBadge size={26} />
+                  <span className="ml-2">AWS</span>
+                </div>
+              </CustomRadio>
+              <CustomRadio description="Google Cloud Platform" value="gcp">
+                <div className="flex items-center">
+                  <GCPProviderBadge size={26} />
+                  <span className="ml-2">GCP</span>
+                </div>
+              </CustomRadio>
+              <CustomRadio description="Microsoft Azure" value="azure">
+                <div className="flex items-center">
+                  <AzureProviderBadge size={26} />
+                  <span className="ml-2">Azure</span>
+                </div>
+              </CustomRadio>
+              <CustomRadio description="Kubernetes" value="kubernetes">
+                <div className="flex items-center">
+                  <KS8ProviderBadge size={26} />
+                  <span className="ml-2">Kubernetes</span>
+                </div>
+              </CustomRadio>
+            </div>
           </RadioGroup>
           <FormMessage className="text-system-error dark:text-system-error" />
         </>

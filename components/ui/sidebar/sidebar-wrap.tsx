@@ -17,9 +17,9 @@ import {
   ProwlerShort,
 } from "../../icons/prowler/ProwlerIcons";
 import { ThemeSwitch } from "../../ThemeSwitch";
-import Sidebar from "./Sidebar";
-import { sectionItemsWithTeams } from "./SidebarItems";
-import { UserAvatar } from "./UserAvatar";
+import Sidebar from "./sidebar-tmp";
+import { sectionItemsWithTeams } from "./sidebar-items";
+import { UserAvatar } from "./user-avatar";
 
 export const SidebarWrap = () => {
   const pathname = usePathname();
