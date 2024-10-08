@@ -132,6 +132,7 @@ class TestScan:
             "cognito_user_pool_waf_acl_attached",
             "config_recorder_all_regions_enabled",
         }
+        mock_provider.type = "aws"
         scan = Scan(mock_provider, checks_to_execute)
 
         assert scan.provider == mock_provider
@@ -203,6 +204,72 @@ class TestScan:
         assert scan.progress == 0
         assert scan.get_completed_services() == set()
         assert scan.get_completed_checks() == set()
+        assert "/prowler/prowler/config/aws_mutelist.yaml" in scan.mutelist_file
+        assert "/prowler/prowler/config/config.yaml" in scan.config_file
+
+    def test_init_with_mutelist(mock_provider):
+        checks_to_execute = {
+            "accessanalyzer_enabled",
+            "accessanalyzer_enabled_without_findings",
+            "backup_plans_exist",
+            "backup_reportplans_exist",
+        }
+        mock_provider.type = "aws"
+        scan = Scan(
+            provider=mock_provider,
+            checks_to_execute=checks_to_execute,
+            mutelist_file="mutelist.yaml",
+        )
+
+        assert scan.provider == mock_provider
+        # Check that the checks to execute are sorted and without duplicates
+        assert scan.checks_to_execute == [
+            "accessanalyzer_enabled",
+            "accessanalyzer_enabled_without_findings",
+            "backup_plans_exist",
+            "backup_reportplans_exist",
+        ]
+        assert scan.service_checks_to_execute == get_service_checks_to_execute(
+            checks_to_execute
+        )
+        assert scan.service_checks_completed == {}
+        assert scan.progress == 0
+        assert scan.get_completed_services() == set()
+        assert scan.get_completed_checks() == set()
+        assert scan.mutelist_file == "mutelist.yaml"
+        assert "/prowler/prowler/config/config.yaml" in scan.config_file
+
+    def test_init_with_config_file(mock_provider):
+        checks_to_execute = {
+            "accessanalyzer_enabled",
+            "accessanalyzer_enabled_without_findings",
+            "backup_plans_exist",
+            "backup_reportplans_exist",
+        }
+        mock_provider.type = "aws"
+        scan = Scan(
+            provider=mock_provider,
+            checks_to_execute=checks_to_execute,
+            config_file="config.yaml",
+        )
+
+        assert scan.provider == mock_provider
+        # Check that the checks to execute are sorted and without duplicates
+        assert scan.checks_to_execute == [
+            "accessanalyzer_enabled",
+            "accessanalyzer_enabled_without_findings",
+            "backup_plans_exist",
+            "backup_reportplans_exist",
+        ]
+        assert scan.service_checks_to_execute == get_service_checks_to_execute(
+            checks_to_execute
+        )
+        assert scan.service_checks_completed == {}
+        assert scan.progress == 0
+        assert scan.get_completed_services() == set()
+        assert scan.get_completed_checks() == set()
+        assert "/prowler/prowler/config/aws_mutelist.yaml" in scan.mutelist_file
+        assert scan.config_file == "config.yaml"
 
     @patch("importlib.import_module")
     def test_scan(

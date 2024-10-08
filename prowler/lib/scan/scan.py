@@ -55,7 +55,8 @@ class Scan:
             self._provider.mutelist = mutelist_file
         else:
             # Set the default mutelist file if it does not exist
-            self._provider.mutelist = get_default_mute_file_path(self._provider.type)
+            self._mutelist_file = get_default_mute_file_path(self._provider.type)
+            self._provider.mutelist = self._mutelist_file
 
         # Set the config file if it exists
         if config_file:
@@ -63,7 +64,8 @@ class Scan:
             self._provider.audit_config = config_file
         else:
             # Set the default config file if it does not exist
-            self._provider.audit_config = default_config_file_path
+            self._config_file = default_config_file_path
+            self._provider.audit_config = self._config_file
 
     @property
     def checks_to_execute(self) -> set[str]:
