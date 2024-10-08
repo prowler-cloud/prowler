@@ -127,58 +127,19 @@ class Test_ElasticBeanstalk_Service:
         )
         # ElasticBeanstalk Class
         elasticbeanstalk = ElasticBeanstalk(set_mocked_aws_provider())
-
         assert (
-            elasticbeanstalk.environments[environment["EnvironmentArn"]].health_option[
-                "Namespace"
-            ]
-            == "aws:elasticbeanstalk:healthreporting:system"
-        )
-        assert (
-            elasticbeanstalk.environments[environment["EnvironmentArn"]].health_option[
-                "OptionName"
-            ]
-            == "SystemType"
-        )
-        assert (
-            elasticbeanstalk.environments[environment["EnvironmentArn"]].health_option[
-                "Value"
-            ]
+            elasticbeanstalk.environments[environment["EnvironmentArn"]].health_option
             == "enhanced"
         )
         assert (
             elasticbeanstalk.environments[
                 environment["EnvironmentArn"]
-            ].managed_actions_option["Namespace"]
-            == "aws:elasticbeanstalk:managedactions"
-        )
-        assert (
-            elasticbeanstalk.environments[
-                environment["EnvironmentArn"]
-            ].managed_actions_option["OptionName"]
-            == "ManagedActionsEnabled"
-        )
-        assert (
-            elasticbeanstalk.environments[
-                environment["EnvironmentArn"]
-            ].managed_actions_option["Value"]
+            ].managed_actions_option
             == "true"
         )
         assert (
             elasticbeanstalk.environments[
                 environment["EnvironmentArn"]
-            ].cloudwatch_option["Namespace"]
-            == "aws:elasticbeanstalk:cloudwatch:logs"
-        )
-        assert (
-            elasticbeanstalk.environments[
-                environment["EnvironmentArn"]
-            ].cloudwatch_option["OptionName"]
-            == "StreamLogs"
-        )
-        assert (
-            elasticbeanstalk.environments[
-                environment["EnvironmentArn"]
-            ].cloudwatch_option["Value"]
+            ].cloudwatch_option
             == "true"
         )

@@ -101,7 +101,7 @@ class Environment(BaseModel):
     arn: str
     region: str
     application_name: str
-    health_option: str
-    managed_actions_option: str
-    cloudwatch_option: str
+    health_option: Optional[str]
+    managed_actions_option: Optional[str]
+    cloudwatch_option: Optional[str]
     tags: Optional[list] = []
