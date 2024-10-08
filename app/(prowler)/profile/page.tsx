@@ -15,7 +15,7 @@ export default async function Profile() {
   }
 
   // const user = await getUserByMe();
-  // console.log("user", user);
+
   return (
     <>
       <Header title="User Profile" icon="ci:users" />
