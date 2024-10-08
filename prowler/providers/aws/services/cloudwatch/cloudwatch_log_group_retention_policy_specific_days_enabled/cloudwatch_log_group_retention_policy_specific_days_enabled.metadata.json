@@ -9,7 +9,7 @@
   "SubServiceName": "logs",
   "ResourceIdTemplate": "arn:partition:cloudwatch:region:account-id:certificate/resource-id",
   "Severity": "medium",
-  "ResourceType": "AwsLogsLogGroup",
+  "ResourceType": "Other",
   "Description": "Check if CloudWatch Log Groups have a retention policy of specific days.",
   "Risk": "If log groups have a low retention policy of less than specific days, crucial logs and data can be lost.",
   "RelatedUrl": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/AWS_Logs.html",

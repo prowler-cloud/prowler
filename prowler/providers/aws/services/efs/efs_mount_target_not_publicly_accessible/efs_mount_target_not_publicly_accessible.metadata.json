@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:elasticfilesystem:{region}:{account-id}:file-system/{filesystem-id}",
   "Severity": "medium",
-  "ResourceType": "AwsEfsFileSystem",
+  "ResourceType": "Other",
   "Description": "This control checks whether an Amazon EFS mount target is associated with a public subnet since it can be accessed from the internet.",
   "Risk": "Mount targets in public subnets may expose your EFS to unauthorized access or attacks.",
   "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/efs-mount-target-public-accessible.html",
