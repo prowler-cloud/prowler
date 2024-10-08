@@ -194,7 +194,7 @@ def is_policy_public(
                         and "secretsmanager.amazonaws.com"
                         not in principal.get(
                             "Service", ""
-                        )  # AWS ensures that the Lambda function called by SecretsManager is executed in the same AWS account
+                        )  # AWS ensures that resources called by SecretsManager are executed in the same AWS account
                     )
                 )
             ) and (
@@ -281,7 +281,7 @@ def is_condition_block_restrictive(
             "aws:sourcearn",
             "aws:sourcevpc",
             "aws:sourcevpce",
-            "lambda:eventsourcetoken",
+            "lambda:eventsourcetoken",  # For Alexa Home functions, a token that the invoker must supply.
         ],
         "StringLike": [
             "aws:sourceaccount",
@@ -339,6 +339,7 @@ def is_condition_block_restrictive(
                                 in condition_statement[condition_operator][value]
                             ):
                                 is_condition_valid = True
+
     return is_condition_valid
 
 
