@@ -2,7 +2,7 @@ from unittest import mock
 from unittest.mock import MagicMock
 from uuid import uuid4
 
-from azure.mgmt.containerregistry import models
+from azure.mgmt.containerregistry.models import NetworkRuleSet
 
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
@@ -10,7 +10,7 @@ from tests.providers.azure.azure_fixtures import (
 )
 
 
-class TestContainerRegistryNetworkAcessRestricted:
+class TestContainerRegistryNotPublicyAccessible:
     def test_no_container_registries(self):
         containerregistry_client = MagicMock()
         containerregistry_client.registries = {}
@@ -19,14 +19,14 @@ class TestContainerRegistryNetworkAcessRestricted:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
-            "prowler.providers.azure.services.containerregistry.containerregistry_network_access_restricted.containerregistry_network_access_restricted.containerregistry_client",
+            "prowler.providers.azure.services.containerregistry.containerregistry_not_publicly_accessible.containerregistry_not_publicly_accessible.containerregistry_client",
             new=containerregistry_client,
         ):
-            from prowler.providers.azure.services.containerregistry.containerregistry_network_access_restricted.containerregistry_network_access_restricted import (
-                containerregistry_network_access_restricted,
+            from prowler.providers.azure.services.containerregistry.containerregistry_not_publicly_accessible.containerregistry_not_publicly_accessible import (
+                containerregistry_not_publicly_accessible,
             )
 
-            check = containerregistry_network_access_restricted()
+            check = containerregistry_not_publicly_accessible()
             result = check.execute()
             assert len(result) == 0
 
@@ -38,11 +38,11 @@ class TestContainerRegistryNetworkAcessRestricted:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
-            "prowler.providers.azure.services.containerregistry.containerregistry_network_access_restricted.containerregistry_network_access_restricted.containerregistry_client",
+            "prowler.providers.azure.services.containerregistry.containerregistry_not_publicly_accessible.containerregistry_not_publicly_accessible.containerregistry_client",
             new=containerregistry_client,
         ):
-            from prowler.providers.azure.services.containerregistry.containerregistry_network_access_restricted.containerregistry_network_access_restricted import (
-                containerregistry_network_access_restricted,
+            from prowler.providers.azure.services.containerregistry.containerregistry_not_publicly_accessible.containerregistry_not_publicly_accessible import (
+                containerregistry_not_publicly_accessible,
             )
             from prowler.providers.azure.services.containerregistry.containerregistry_service import (
                 ContainerRegistryInfo,
@@ -59,7 +59,7 @@ class TestContainerRegistryNetworkAcessRestricted:
                         login_server="mock_login_server.azurecr.io",
                         public_network_access="Enabled",
                         admin_user_enabled=True,
-                        network_rule_set=models.NetworkRuleSet(default_action="Allow"),
+                        network_rule_set=NetworkRuleSet(default_action="Allow"),
                         monitor_diagnostic_settings=[
                             {
                                 "id": "id1/id1",
@@ -82,7 +82,7 @@ class TestContainerRegistryNetworkAcessRestricted:
                 }
             }
 
-            check = containerregistry_network_access_restricted()
+            check = containerregistry_not_publicly_accessible()
 
             result = check.execute()
             assert len(result) == 1
@@ -109,11 +109,11 @@ class TestContainerRegistryNetworkAcessRestricted:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
-            "prowler.providers.azure.services.containerregistry.containerregistry_network_access_restricted.containerregistry_network_access_restricted.containerregistry_client",
+            "prowler.providers.azure.services.containerregistry.containerregistry_not_publicly_accessible.containerregistry_not_publicly_accessible.containerregistry_client",
             new=containerregistry_client,
         ):
-            from prowler.providers.azure.services.containerregistry.containerregistry_network_access_restricted.containerregistry_network_access_restricted import (
-                containerregistry_network_access_restricted,
+            from prowler.providers.azure.services.containerregistry.containerregistry_not_publicly_accessible.containerregistry_not_publicly_accessible import (
+                containerregistry_not_publicly_accessible,
             )
             from prowler.providers.azure.services.containerregistry.containerregistry_service import (
                 ContainerRegistryInfo,
@@ -132,7 +132,7 @@ class TestContainerRegistryNetworkAcessRestricted:
                         login_server="mock_login_server.azurecr.io",
                         public_network_access="Enabled",
                         admin_user_enabled=False,
-                        network_rule_set=models.NetworkRuleSet(default_action="Deny"),
+                        network_rule_set=NetworkRuleSet(default_action="Deny"),
                         monitor_diagnostic_settings=[
                             {
                                 "id": "id1/id1",
@@ -155,7 +155,7 @@ class TestContainerRegistryNetworkAcessRestricted:
                 }
             }
 
-            check = containerregistry_network_access_restricted()
+            check = containerregistry_not_publicly_accessible()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"

@@ -1,6 +1,6 @@
 {
   "Provider": "azure",
-  "CheckID": "containerregistry_network_access_restricted",
+  "CheckID": "containerregistry_not_publicly_accessible",
   "CheckTitle": "Restrict public network access to the Container Registry",
   "CheckType": [],
   "ServiceName": "containerregistry",
@@ -8,7 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "ContainerRegistry",
-  "Description": "Ensure that public network access to the Azure Container Registry is restricted to enhance security. This prevents unauthorized access and improves the overall security posture of the container registry.",
+  "Description": "Ensure that public network access to the Azure Container Registry is restricted.",
   "Risk": "Public accessibility exposes the Container Registry to potential attacks, unauthorized usage, and data breaches. Restricting access minimizes the surface area for attacks and ensures that only authorized networks can access the registry.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/azure/container-registry/container-registry-access-selected-networks",
   "Remediation": {

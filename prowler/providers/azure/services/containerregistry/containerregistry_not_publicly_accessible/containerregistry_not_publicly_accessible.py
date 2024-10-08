@@ -4,26 +4,26 @@ from prowler.providers.azure.services.containerregistry.containerregistry_client
 )
 
 
-class containerregistry_network_access_restricted(Check):
+class containerregistry_not_publicly_accessible(Check):
     def execute(self) -> list[Check_Report_Azure]:
         findings = []
 
         for subscription, registries in containerregistry_client.registries.items():
-            for registry_id, ContainerRegistryInfo in registries.items():
+            for registry_id, container_registry_info in registries.items():
                 report = Check_Report_Azure(self.metadata())
                 report.subscription = subscription
-                report.resource_name = ContainerRegistryInfo.name
+                report.resource_name = container_registry_info.name
                 report.resource_id = registry_id
-                report.location = ContainerRegistryInfo.location
+                report.location = container_registry_info.location
                 report.status = "FAIL"
-                report.status_extended = f"Container Registry {ContainerRegistryInfo.name} from subscription {subscription} allows unrestricted network access."
+                report.status_extended = f"Container Registry {container_registry_info.name} from subscription {subscription} allows unrestricted network access."
 
                 if (
-                    ContainerRegistryInfo.network_rule_set.default_action.lower()
+                    container_registry_info.network_rule_set.default_action.lower()
                     == "deny"
                 ):
                     report.status = "PASS"
-                    report.status_extended = f"Container Registry {ContainerRegistryInfo.name} from subscription {subscription} does not allow unrestricted network access."
+                    report.status_extended = f"Container Registry {container_registry_info.name} from subscription {subscription} does not allow unrestricted network access."
 
                 findings.append(report)
 

@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
-from azure.mgmt.containerregistry import ContainerRegistryManagementClient, models
+from azure.mgmt.containerregistry import ContainerRegistryManagementClient
+from azure.mgmt.containerregistry.models import NetworkRuleSet
 
 from prowler.lib.logger import logger
 from prowler.providers.azure.azure_provider import AzureProvider
@@ -88,5 +89,5 @@ class ContainerRegistryInfo:
     login_server: str
     public_network_access: str
     admin_user_enabled: bool
-    network_rule_set: models.NetworkRuleSet
+    network_rule_set: NetworkRuleSet
     monitor_diagnostic_settings: list[DiagnosticSetting]
