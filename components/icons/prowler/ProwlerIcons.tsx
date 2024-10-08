@@ -4,7 +4,7 @@ import { IconSvgProps } from "../../../types/index";
 
 export const ProwlerExtended: React.FC<IconSvgProps> = ({
   size,
-  width = 164,
+  width = 216,
   height,
   ...props
 }) => {

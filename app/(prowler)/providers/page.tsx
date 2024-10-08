@@ -2,7 +2,7 @@ import { Spacer } from "@nextui-org/react";
 import { Suspense } from "react";
 
 import { getProviders } from "@/actions/providers";
-import { FilterControls, filtersProviders } from "@/components/filters";
+import { FilterControls, filterProviders } from "@/components/filters";
 import { AddProvider } from "@/components/providers";
 import {
   ColumnsProvider,
@@ -24,7 +24,7 @@ export default async function Providers({
       <Header title="Providers" icon="fluent:cloud-sync-24-regular" />
 
       <Spacer y={4} />
-      <FilterControls search providers customFilters={filtersProviders} />
+      <FilterControls search providers customFilters={filterProviders} />
       <Spacer y={4} />
 
       <AddProvider />
@@ -43,7 +43,7 @@ const SSRDataTable = async ({
   searchParams: SearchParamsProps;
 }) => {
   const page = parseInt(searchParams.page?.toString() || "1", 10);
-  const sort = searchParams.sort?.toString() || "-inserted_at";
+  const sort = searchParams.sort?.toString();
 
   // Extract all filter parameters
   const filters = Object.fromEntries(

@@ -10,6 +10,7 @@ import React, { Suspense, useCallback } from "react";
 import { useMediaQuery } from "usehooks-ts";
 
 import { logOut } from "@/actions/auth";
+import { AddIcon } from "@/components/icons";
 import { useUIStore } from "@/store";
 
 import {
@@ -17,9 +18,10 @@ import {
   ProwlerShort,
 } from "../../icons/prowler/ProwlerIcons";
 import { ThemeSwitch } from "../../ThemeSwitch";
-import Sidebar from "./Sidebar";
-import { sectionItemsWithTeams } from "./SidebarItems";
-import { UserAvatar } from "./UserAvatar";
+import { CustomButton } from "../custom";
+import Sidebar from "./sidebar";
+import { sectionItemsWithTeams } from "./sidebar-items";
+import { UserAvatar } from "./user-avatar";
 
 export const SidebarWrap = () => {
   const pathname = usePathname();
@@ -50,9 +52,12 @@ export const SidebarWrap = () => {
       )}
     >
       <div
-        className={clsx("flex items-center justify-center gap-3 px-3", {
-          "gap-0": isCompact,
-        })}
+        className={clsx(
+          "flex w-full flex-col items-center justify-center gap-y-4 px-3",
+          {
+            "gap-0": isCompact,
+          },
+        )}
       >
         <div
           className={clsx({
@@ -64,24 +69,43 @@ export const SidebarWrap = () => {
         <div
           className={clsx({
             hidden: isCompact,
+            "!mt-0": !isCompact,
           })}
         >
           <ProwlerExtended />
         </div>
+        <Link href={"/profile"}>
+          <Suspense fallback={<p>Loading...</p>}>
+            <UserAvatar
+              userName={session?.user.name ?? "Guest"}
+              position={session?.user.companyName ?? "Company Name"}
+              isCompact={isCompact}
+            />
+          </Suspense>
+        </Link>
+
+        <div
+          className={clsx({
+            hidden: isCompact,
+            "w-full": !isCompact,
+          })}
+        >
+          <Link href={"/scan"}>
+            <CustomButton
+              className="w-full"
+              ariaLabel="Launch Scan"
+              variant="solid"
+              color="action"
+              size="md"
+              endContent={<AddIcon size={20} />}
+            >
+              Launch Scan
+            </CustomButton>
+          </Link>
+        </div>
       </div>
-      <Spacer y={8} />
 
-      <Link href={"/profile"}>
-        <Suspense fallback={<p>Loading...</p>}>
-          <UserAvatar
-            userName={session?.user.name ?? "Guest"}
-            position={session?.user.companyName ?? "Company Name"}
-            isCompact={isCompact}
-          />
-        </Suspense>
-      </Link>
-
-      <ScrollShadow hideScrollBar className="-mr-6 h-full max-h-full py-6 pr-6">
+      <ScrollShadow hideScrollBar className="-mr-6 h-full max-h-full py-4 pr-6">
         <Sidebar
           defaultSelectedKey="overview"
           isCompact={isCompact}
