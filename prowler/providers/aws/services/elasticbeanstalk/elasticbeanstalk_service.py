@@ -17,6 +17,7 @@ class ElasticBeanstalk(AWSService):
         self.__threading_call__(
             self._describe_configuration_settings, self.environments.values()
         )
+        self.__threading_call__(self._list_tags_for_resource)
 
     def _describe_environments(self, regional_client):
         logger.info("ElasticBeanstalk - Describing environments...")
