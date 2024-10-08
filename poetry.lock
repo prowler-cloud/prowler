@@ -5064,8 +5064,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-<<<<<<< HEAD
-content-hash = "dc828306f5e9f20d48ce7ad55ea41ec08e2e84f07e3757366670ac78a29e7896"
-=======
-content-hash = "0b367fa80501022efe43dc1beaa7f3da278fb64ffaddece72a0e88b09a0e53a2"
->>>>>>> b70335702 (chore(secrets): use `master` branch of Yelp/detect-secrets (#5298))
+content-hash = "edaed8972a6e8dc5f6a5b58e4dd92df8a9985a03f0a45f086e5ae953e830d180"
