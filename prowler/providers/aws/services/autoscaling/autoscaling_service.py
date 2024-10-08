@@ -64,6 +64,7 @@ class AutoScaling(AWSService):
                                 region=regional_client.region,
                                 availability_zones=group.get("AvailabilityZones"),
                                 tags=group.get("Tags"),
+                                health_check_type=group.get("HealthCheckType", ""),
                             )
                         )
 
@@ -130,6 +131,7 @@ class Group(BaseModel):
     region: str
     availability_zones: list
     tags: list = []
+    health_check_type: str
 
 
 class ScalableTarget(BaseModel):

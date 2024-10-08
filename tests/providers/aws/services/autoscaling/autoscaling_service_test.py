@@ -110,6 +110,7 @@ class Test_AutoScaling_Service:
                     "Value": "value_test",
                 },
             ],
+            HealthCheckType="ELB",
         )
 
         # AutoScaling client for this test class
@@ -130,6 +131,7 @@ class Test_AutoScaling_Service:
                 "Value": "value_test",
             }
         ]
+        assert autoscaling.groups[0].health_check_type == "ELB"
 
     # Test Application AutoScaling Describe Scalable Targets
     @mock_aws
