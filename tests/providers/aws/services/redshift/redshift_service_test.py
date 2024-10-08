@@ -106,6 +106,7 @@ class Test_Redshift_Service:
             MasterUsername="user",
             MasterUserPassword="password",
             PubliclyAccessible=True,
+            Encrypted=True,
             Tags=[
                 {"Key": "test", "Value": "test"},
             ],
@@ -130,6 +131,9 @@ class Test_Redshift_Service:
             {"Key": "test", "Value": "test"},
         ]
         assert redshift.clusters[0].parameter_group_name == "default.redshift-1.0"
+        assert redshift.clusters[0].encrypted
+        assert redshift.clusters[0].master_username == "user"
+        assert redshift.clusters[0].database_name == "test"
 
     @mock_aws
     def test_describe_logging_status(self):

@@ -30,27 +30,19 @@ class Redshift(AWSService):
                         cluster_to_append = Cluster(
                             arn=arn,
                             id=cluster["ClusterIdentifier"],
+                            endpoint_address=cluster.get("Endpoint", {}).get(
+                                "Address", ""
+                            ),
+                            public_access=cluster.get("PubliclyAccessible", False),
+                            allow_version_upgrade=cluster.get(
+                                "AllowVersionUpgrade", False
+                            ),
+                            encrypted=cluster.get("Encrypted", False),
                             region=regional_client.region,
                             tags=cluster.get("Tags"),
+                            master_username=cluster.get("MasterUsername", ""),
+                            database_name=cluster.get("DBName", ""),
                         )
-                        if (
-                            "PubliclyAccessible" in cluster
-                            and cluster["PubliclyAccessible"]
-                        ):
-                            cluster_to_append.public_access = True
-                        if "Endpoint" in cluster and "Address" in cluster["Endpoint"]:
-                            cluster_to_append.endpoint_address = cluster["Endpoint"][
-                                "Address"
-                            ]
-                        if (
-                            "AllowVersionUpgrade" in cluster
-                            and cluster["AllowVersionUpgrade"]
-                        ):
-                            cluster_to_append.allow_version_upgrade = True
-                        if "ClusterParameterGroups" in cluster:
-                            cluster_to_append.parameter_group_name = cluster[
-                                "ClusterParameterGroups"
-                            ][0]["ParameterGroupName"]
                         self.clusters.append(cluster_to_append)
         except Exception as error:
             logger.error(
@@ -117,12 +109,15 @@ class Cluster(BaseModel):
     id: str
     arn: str
     region: str
-    public_access: bool = None
+    public_access: bool = False
+    encrypted: bool = False
+    master_username: str = None
+    database_name: str = None
     endpoint_address: str = None
-    allow_version_upgrade: bool = None
-    logging_enabled: bool = None
+    allow_version_upgrade: bool = False
+    logging_enabled: bool = False
     bucket: str = None
-    cluster_snapshots: bool = None
+    cluster_snapshots: bool = False
     tags: Optional[list] = []
     parameter_group_name: str = None
     require_ssl: bool = False

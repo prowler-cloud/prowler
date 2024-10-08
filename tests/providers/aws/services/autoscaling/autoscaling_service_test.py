@@ -4,7 +4,10 @@ from boto3 import client
 from moto import mock_aws
 
 from prowler.config.config import encoding_format_utf_8
-from prowler.providers.aws.services.autoscaling.autoscaling_service import AutoScaling
+from prowler.providers.aws.services.autoscaling.autoscaling_service import (
+    ApplicationAutoScaling,
+    AutoScaling,
+)
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
@@ -127,3 +130,42 @@ class Test_AutoScaling_Service:
                 "Value": "value_test",
             }
         ]
+
+    # Test Application AutoScaling Describe Scalable Targets
+    @mock_aws
+    def test_application_auto_scaling_scalable_targets(self):
+        dynamodb_client = client("dynamodb", region_name=AWS_REGION_US_EAST_1)
+        table = dynamodb_client.create_table(
+            TableName="test1",
+            AttributeDefinitions=[
+                {"AttributeName": "client", "AttributeType": "S"},
+                {"AttributeName": "app", "AttributeType": "S"},
+            ],
+            KeySchema=[
+                {"AttributeName": "client", "KeyType": "HASH"},
+                {"AttributeName": "app", "KeyType": "RANGE"},
+            ],
+            BillingMode="PROVISIONED",
+            ProvisionedThroughput={"ReadCapacityUnits": 5, "WriteCapacityUnits": 5},
+        )["TableDescription"]
+
+        autoscaling_client = client(
+            "application-autoscaling", region_name=AWS_REGION_US_EAST_1
+        )
+        autoscaling_client.register_scalable_target(
+            ServiceNamespace="dynamodb",
+            ResourceId=f"table/{table['TableName']}",
+            ScalableDimension="dynamodb:table:ReadCapacityUnits",
+            MinCapacity=1,
+            MaxCapacity=10,
+        )
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        autoscaling = ApplicationAutoScaling(aws_provider)
+        assert len(autoscaling.scalable_targets) == 1
+        assert autoscaling.scalable_targets[0].service_namespace == "dynamodb"
+        assert autoscaling.scalable_targets[0].resource_id == "table/test1"
+        assert (
+            autoscaling.scalable_targets[0].scalable_dimension
+            == "dynamodb:table:ReadCapacityUnits"
+        )
