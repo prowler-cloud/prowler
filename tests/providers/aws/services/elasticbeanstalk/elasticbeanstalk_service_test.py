@@ -9,7 +9,6 @@ from prowler.providers.aws.services.elasticbeanstalk.elasticbeanstalk_service im
 )
 from tests.providers.aws.utils import AWS_REGION_EU_WEST_1, set_mocked_aws_provider
 
-# Mocking Access Analyzer Calls
 make_api_call = botocore.client.BaseClient._make_api_call
 
 
