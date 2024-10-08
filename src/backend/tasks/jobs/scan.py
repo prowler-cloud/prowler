@@ -25,17 +25,37 @@ from api.v1.serializers import ScanTaskSerializer
 logger = get_task_logger(__name__)
 
 
-def store_finding(
+def _create_finding_delta(
+    last_status: FindingStatus | None | str, new_status: FindingStatus | None
+) -> Finding.DeltaChoices:
+    if last_status is None:
+        return Finding.DeltaChoices.NEW
+    return Finding.DeltaChoices.CHANGED if last_status != new_status else None
+
+
+def _store_finding(
     finding: ProwlerFinding,
     tenant_id: str,
     scan_instance: Scan,
     resource_instance: Resource,
 ) -> Finding:
+    finding_uid = finding.finding_uid
+    status = FindingStatus[finding.status.value] if finding.status is not None else None
+    with tenant_transaction(tenant_id):
+        most_recent_finding = (
+            Finding.objects.filter(uid=finding_uid)
+            .order_by("-id")
+            .values("status")
+            .first()
+        )
+        last_status = most_recent_finding["status"] if most_recent_finding else None
+    delta = _create_finding_delta(last_status, status)
     with tenant_transaction(tenant_id):
         finding_instance = Finding.objects.create(
             tenant_id=tenant_id,
-            delta=Finding.DeltaChoices.NEW,
-            status=FindingStatus[finding.status.value],
+            uid=finding_uid,
+            delta=delta,
+            status=status,
             status_extended=finding.status_extended,
             severity=finding.severity.value,
             impact=finding.severity.value,
@@ -47,7 +67,7 @@ def store_finding(
     return finding_instance
 
 
-def store_resources(
+def _store_resources(
     finding: ProwlerFinding, tenant_id: str, provider_instance: Provider
 ) -> tuple[Resource, tuple[str, str]]:
     with tenant_transaction(tenant_id):
@@ -113,10 +133,10 @@ def perform_prowler_scan(
         )
         for progress, findings in prowler_scan.scan():
             for finding in findings:
-                resource_instance, resource_uid_tuple = store_resources(
+                resource_instance, resource_uid_tuple = _store_resources(
                     finding, tenant_id, provider_instance
                 )
-                store_finding(finding, tenant_id, scan_instance, resource_instance)
+                _store_finding(finding, tenant_id, scan_instance, resource_instance)
                 unique_resources.add(resource_uid_tuple)
             with tenant_transaction(tenant_id):
                 scan_instance.progress = progress

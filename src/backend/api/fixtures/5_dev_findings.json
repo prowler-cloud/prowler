@@ -5,6 +5,7 @@
     "fields": {
       "tenant": "12646005-9067-4d2a-a098-8bb378604362",
       "scan": "0191e280-9d2f-71c8-9b18-487a23ba185e",
+      "uid": "prowler-aws-accessanalyzer_enabled-123456789012-eu-west-1-11111111",
       "status": "FAIL",
       "status_extended": "test status extended",
       "impact": "low",
@@ -68,6 +69,7 @@
     "pk": "01920bdb-faf8-7fbd-9aa4-ae144d4b4b91",
     "fields": {
       "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "uid": "prowler-aws-workspaces_vpc_2private_1public_subnets_nat-123456789012-eu-west-1-11111112",
       "scan": "01920573-aa9c-73c9-bcda-f2e35c9b19d2",
       "status": "PASS",
       "status_extended": "test status extended",
@@ -130,6 +132,7 @@
     "pk": "01920bdf-8150-7630-a385-62a80cdc75b5",
     "fields": {
       "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "uid": "prowler-aws-accessanalyzer_enabled-123456789012-eu-west-1-11111113",
       "scan": "01920573-ea5b-77fd-a93f-1ed2ae12f728",
       "status": "FAIL",
       "status_extended": "test status extended",
@@ -194,6 +197,7 @@
     "pk": "01920be0-8320-75ce-a9a2-f927821769fa",
     "fields": {
       "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "uid": "prowler-aws-workspaces_vpc_2private_1public_subnets_nat-123456789012-eu-west-1-11111115",
       "scan": "01920573-ea5b-77fd-a93f-1ed2ae12f728",
       "status": "PASS",
       "status_extended": "test status extended",

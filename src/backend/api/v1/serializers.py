@@ -601,6 +601,7 @@ class FindingSerializer(RLSSerializer):
         model = Finding
         fields = [
             "id",
+            "uid",
             "delta",
             "status",
             "status_extended",

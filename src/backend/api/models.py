@@ -477,6 +477,7 @@ class Finding(PostgresPartitionedModel, RowLevelSecurityProtectedModel):
     inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 
+    uid = models.CharField(max_length=150)
     delta = FindingDeltaEnumField(
         choices=DeltaChoices.choices,
         blank=True,
@@ -539,6 +540,7 @@ class Finding(PostgresPartitionedModel, RowLevelSecurityProtectedModel):
         ]
 
         indexes = [
+            models.Index(fields=["uid"], name="findings_uid_idx"),
             models.Index(
                 fields=[
                     "scan_id",

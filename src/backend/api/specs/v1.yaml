@@ -22,6 +22,7 @@ paths:
           items:
             type: string
             enum:
+            - uid
             - delta
             - status
             - status_extended
@@ -360,6 +361,19 @@ paths:
         explode: false
         style: form
       - in: query
+        name: filter[uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[uid__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
         name: filter[updated_at]
         schema:
           type: string
@@ -444,6 +458,7 @@ paths:
           items:
             type: string
             enum:
+            - uid
             - delta
             - status
             - status_extended
@@ -2381,6 +2396,9 @@ components:
         attributes:
           type: object
           properties:
+            uid:
+              type: string
+              maxLength: 150
             delta:
               enum:
               - new
@@ -2434,6 +2452,7 @@ components:
               format: date-time
               readOnly: true
           required:
+          - uid
           - status
           - severity
           - check_id

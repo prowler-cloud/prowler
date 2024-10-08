@@ -4,7 +4,7 @@ from unittest.mock import patch, MagicMock, PropertyMock
 import pytest
 
 from api.models import StateChoices, StatusChoices, Severity, Finding, Resource
-from tasks.jobs.scan import perform_prowler_scan
+from tasks.jobs.scan import perform_prowler_scan, _create_finding_delta
 
 
 @pytest.mark.django_db
@@ -40,6 +40,7 @@ class TestPerformScan:
         mock_aws_provider_instance.test_connection.return_value = connection_status_mock
 
         finding = MagicMock()
+        finding.finding_uid = "this_is_a_test_finding_id"
         finding.status = StatusChoices.PASS
         finding.status_extended = "test status extended"
         finding.severity = Severity.medium
@@ -65,6 +66,7 @@ class TestPerformScan:
         assert scan.started_at is not None
         assert scan.unique_resource_count == 1
         assert scan.progress == 100
+        assert scan_finding.uid == finding.finding_uid
         assert scan_finding.status == finding.status
         assert scan_finding.status_extended == finding.status_extended
         assert scan_finding.severity == finding.severity
@@ -109,3 +111,16 @@ class TestPerformScan:
 
         scan.refresh_from_db()
         assert scan.state == StateChoices.FAILED
+
+    @pytest.mark.parametrize(
+        "last_status, new_status, expected_delta",
+        [
+            (None, None, Finding.DeltaChoices.NEW),
+            (None, StatusChoices.PASS, Finding.DeltaChoices.NEW),
+            (StatusChoices.PASS, StatusChoices.PASS, None),
+            (StatusChoices.PASS, StatusChoices.FAIL, Finding.DeltaChoices.CHANGED),
+            (StatusChoices.FAIL, StatusChoices.PASS, Finding.DeltaChoices.CHANGED),
+        ],
+    )
+    def test_create_finding_delta(self, last_status, new_status, expected_delta):
+        assert _create_finding_delta(last_status, new_status) == expected_delta

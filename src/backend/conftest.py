@@ -290,6 +290,7 @@ def findings_fixture(scans_fixture, resources_fixture):
 
     finding1 = Finding.objects.create(
         tenant_id=scan.tenant_id,
+        uid="test_finding_uid_1",
         scan=scan,
         delta=None,
         status=Status.FAIL,
@@ -314,6 +315,7 @@ def findings_fixture(scans_fixture, resources_fixture):
 
     finding2 = Finding.objects.create(
         tenant_id=scan.tenant_id,
+        uid="test_finding_uid_2",
         scan=scan,
         delta="new",
         status=Status.FAIL,

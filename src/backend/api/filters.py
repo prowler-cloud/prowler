@@ -246,6 +246,7 @@ class FindingFilter(FilterSet):
 
     updated_at = DateFilter(field_name="updated_at", lookup_expr="date")
 
+    uid = CharFilter(field_name="uid")
     delta = ChoiceFilter(choices=Finding.DeltaChoices.choices)
     status = ChoiceFilter(choices=StatusChoices.choices)
     severity = ChoiceFilter(choices=SeverityChoices)
@@ -294,6 +295,7 @@ class FindingFilter(FilterSet):
     class Meta:
         model = Finding
         fields = {
+            "uid": ["exact", "in"],
             "scan": ["exact", "in"],
             "delta": ["exact", "in"],
             "status": ["exact", "in"],

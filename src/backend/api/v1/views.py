@@ -717,7 +717,9 @@ class ResourceViewSet(BaseRLSViewSet):
     list=extend_schema(
         tags=["Finding"],
         summary="List all findings",
-        description="Retrieve a list of all findings with options for filtering by various criteria. If no `scan` or `inserted_at` filter is provided, a default filter will be applied that will return all findings for the current day.",
+        description="Retrieve a list of all findings with options for filtering by various criteria. "
+        "If no `scan` or `inserted_at` filter is provided, a default filter will be applied that will "
+        "return all findings for the current day.",
     ),
     retrieve=extend_schema(
         tags=["Finding"],

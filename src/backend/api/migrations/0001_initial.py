@@ -883,6 +883,7 @@ class Migration(migrations.Migration):
                 ),
                 ("inserted_at", models.DateTimeField(auto_now_add=True)),
                 ("updated_at", models.DateTimeField(auto_now=True)),
+                ("uid", models.CharField(max_length=150)),
                 (
                     "delta",
                     api.db_utils.FindingDeltaEnumField(
@@ -992,6 +993,13 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
+        ),
+        migrations.AddIndex(
+            model_name="finding",
+            index=models.Index(
+                fields=["uid"],
+                name="findings_uid_idx",
+            ),
         ),
         migrations.AddIndex(
             model_name="finding",
