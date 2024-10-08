@@ -33,7 +33,10 @@ class GuardDuty(AWSService):
                     ):
                         self.detectors.append(
                             Detector(
-                                id=detector, arn=arn, region=regional_client.region
+                                id=detector,
+                                arn=arn,
+                                region=regional_client.region,
+                                enabled_in_account=True,
                             )
                         )
             if not detectors:
@@ -57,7 +60,7 @@ class GuardDuty(AWSService):
                 detector_info = self.regional_clients[detector.region].get_detector(
                     DetectorId=detector.id
                 )
-                if "Status" in detector_info and detector_info["Status"] == "ENABLED":
+                if detector_info.get("Status", "DISABLED") == "ENABLED":
                     detector.status = True
 
                 data_sources = detector_info.get("DataSources", {})
@@ -87,10 +90,16 @@ class GuardDuty(AWSService):
 
                 for feat in detector_info.get("Features", []):
                     if (
-                        feat.get("Name") == "RDS_LOGIN_EVENTS"
+                        feat.get("Name", "") == "RDS_LOGIN_EVENTS"
                         and feat.get("Status", "DISABLED") == "ENABLED"
                     ):
                         detector.rds_protection = True
+                    elif (
+                        feat.get("Name", "") == "LAMBDA_NETWORK_LOGS"
+                        and feat.get("Status", "DISABLED") == "ENABLED"
+                    ):
+                        detector.lambda_protection = True
+
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
@@ -205,7 +214,7 @@ class Detector(BaseModel):
     id: str
     arn: str
     region: str
-    enabled_in_account: bool = True
+    enabled_in_account: bool
     status: bool = None
     findings: list = []
     member_accounts: list = []
@@ -214,4 +223,5 @@ class Detector(BaseModel):
     s3_protection: bool = False
     rds_protection: bool = False
     eks_audit_log_protection: bool = False
+    lambda_protection: bool = False
     ec2_malware_protection: bool = False
