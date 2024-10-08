@@ -187,9 +187,14 @@ def is_policy_public(
                         or (  # Check if function can be invoked by other AWS services
                             (
                                 ".amazonaws.com" in principal.get("Service", "")
+                                or ".amazon.com" in principal.get("Service", "")
                                 or "*" in principal.get("Service", "")
                             )
                         )
+                        and "secretsmanager.amazonaws.com"
+                        not in principal.get(
+                            "Service", ""
+                        )  # AWS ensures that the Lambda function called by SecretsManager is executed in the same AWS account
                     )
                 )
             ) and (
@@ -276,6 +281,7 @@ def is_condition_block_restrictive(
             "aws:sourcearn",
             "aws:sourcevpc",
             "aws:sourcevpce",
+            "lambda:eventsourcetoken",
         ],
         "StringLike": [
             "aws:sourceaccount",
@@ -333,7 +339,6 @@ def is_condition_block_restrictive(
                                 in condition_statement[condition_operator][value]
                             ):
                                 is_condition_valid = True
-
     return is_condition_valid
 
 
