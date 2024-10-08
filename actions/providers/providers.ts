@@ -48,7 +48,7 @@ export const getProviders = async ({
 };
 
 export const getProvider = async (formData: FormData) => {
-  // const session = await auth();
+  const session = await auth();
   const providerId = formData.get("id");
 
   const keyServer = process.env.API_BASE_URL;
@@ -58,6 +58,7 @@ export const getProvider = async (formData: FormData) => {
     const providers = await fetch(url.toString(), {
       headers: {
         Accept: "application/vnd.api+json",
+        Authorization: `Bearer ${session?.accessToken}`,
       },
     });
     const data = await providers.json();
@@ -71,7 +72,7 @@ export const getProvider = async (formData: FormData) => {
 };
 
 export const updateProvider = async (formData: FormData) => {
-  // const session = await auth();
+  const session = await auth();
   const keyServer = process.env.API_BASE_URL;
 
   const providerId = formData.get("providerId");
@@ -85,6 +86,7 @@ export const updateProvider = async (formData: FormData) => {
       headers: {
         "Content-Type": "application/vnd.api+json",
         Accept: "application/vnd.api+json",
+        Authorization: `Bearer ${session?.accessToken}`,
       },
       body: JSON.stringify({
         data: {
@@ -173,7 +175,7 @@ export const checkConnectionProvider = async (formData: FormData) => {
 };
 
 export const deleteProvider = async (formData: FormData) => {
-  // const session = await auth();
+  const session = await auth();
   const keyServer = process.env.API_BASE_URL;
 
   const providerId = formData.get("id");
@@ -184,6 +186,7 @@ export const deleteProvider = async (formData: FormData) => {
       method: "DELETE",
       headers: {
         Accept: "application/vnd.api+json",
+        Authorization: `Bearer ${session?.accessToken}`,
       },
     });
     const data = await response.json();
@@ -196,7 +199,7 @@ export const deleteProvider = async (formData: FormData) => {
   }
 };
 
-export const getErrorMessage = (error: unknown): string => {
+export const getErrorMessage = async (error: unknown): Promise<string> => {
   let message: string;
 
   if (error instanceof Error) {

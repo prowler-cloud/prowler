@@ -124,7 +124,7 @@ export const authConfig = {
           token.accessToken as string,
         ) as CustomJwtPayload;
         // eslint-disable-next-line no-console
-        console.log("decodedToken", decodedToken);
+        // console.log("decodedToken", decodedToken);
         token.accessTokenExpires = (decodedToken.exp as number) * 1000;
         token.user_id = decodedToken.user_id;
         token.tenant_id = decodedToken.tenant_id;
@@ -150,11 +150,11 @@ export const authConfig = {
       }
 
       // eslint-disable-next-line no-console
-      console.log(
-        "Access token expires",
-        token.accessTokenExpires,
-        new Date(Number(token.accessTokenExpires)),
-      );
+      // console.log(
+      //   "Access token expires",
+      //   token.accessTokenExpires,
+      //   new Date(Number(token.accessTokenExpires)),
+      // );
 
       // If the access token is not expired, return the token
       if (

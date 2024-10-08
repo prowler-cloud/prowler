@@ -4,12 +4,16 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Icon } from "@iconify/react";
 import { Button, Checkbox, Divider, Link } from "@nextui-org/react";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useFormState } from "react-dom";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { authenticate, createNewUser } from "@/actions/auth";
+import { NotificationIcon, ProwlerExtended } from "@/components/icons";
+import { ThemeSwitch } from "@/components/ThemeSwitch";
+import { useToast } from "@/components/ui";
+import { CustomButton, CustomInput } from "@/components/ui/custom";
 import {
   Form,
   FormControl,
@@ -17,11 +21,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { ApiError, authFormSchema } from "@/types";
-
-import { NotificationIcon, ProwlerExtended } from "../icons";
-import { ThemeSwitch } from "../ThemeSwitch";
-import { CustomButton, CustomInput } from "../ui/custom";
-import { useToast } from "../ui/toast";
 
 export const AuthForm = ({ type }: { type: string }) => {
   const formSchema = authFormSchema(type);
@@ -42,10 +41,8 @@ export const AuthForm = ({ type }: { type: string }) => {
   });
 
   const [state, dispatch] = useFormState(authenticate, undefined);
-
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-
-  const isLoading = form.formState.isSubmitting;
 
   useEffect(() => {
     if (state?.message === "Success") {
@@ -55,13 +52,17 @@ export const AuthForm = ({ type }: { type: string }) => {
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     if (type === "sign-in") {
+      setIsLoading(true);
       dispatch({
         email: data.email.toLowerCase(),
         password: data.password,
       });
+      setIsLoading(false);
     }
     if (type === "sign-up") {
+      setIsLoading(true);
       const newUser = await createNewUser(data);
+      setIsLoading(false);
 
       if (!newUser.errors) {
         router.push("/sign-in");
@@ -111,13 +112,15 @@ export const AuthForm = ({ type }: { type: string }) => {
   return (
     <div className="relative flex h-screen w-screen">
       {/* Auth Form */}
-      <div className="relative flex w-full items-center justify-center bg-background lg:w-1/2">
-        {/* Prowler Logo */}
-        <div className="absolute top-[10%] z-10 flex h-fit w-fit flex-col items-center lg:hidden">
-          <ProwlerExtended width={300} />
-        </div>
+      <div className="relative flex w-full items-center justify-center bg-background lg:w-full">
+        {/* Background Pattern */}
+        <div className="absolute h-full w-full bg-[radial-gradient(#94a3b8_1px,transparent_1px)] [background-size:16px_16px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_10%,transparent_80%)]"></div>
 
-        <div className="flex w-full max-w-sm flex-col gap-4 rounded-large bg-content1 px-8 pb-10 pt-6 shadow-small">
+        <div className="dark:bg-prowler-black-900/90 relative z-10 flex w-full max-w-sm flex-col gap-4 rounded-large bg-white/90 px-8 py-10 shadow-small md:max-w-md">
+          {/* Prowler Logo */}
+          <div className="absolute -top-[100px] left-1/2 z-10 flex h-fit w-fit -translate-x-1/2">
+            <ProwlerExtended width={300} />
+          </div>
           <div className="flex items-center justify-between">
             <p className="pb-2 text-xl font-medium">
               {type === "sign-in" ? "Sign In" : "Sign Up"}
@@ -284,22 +287,6 @@ export const AuthForm = ({ type }: { type: string }) => {
               <Link href="/sign-in">Log In</Link>
             </p>
           )}
-        </div>
-      </div>
-
-      <div
-        className="relative hidden w-1/2 flex-col-reverse rounded-medium p-10 shadow-small lg:flex"
-        style={{
-          backgroundImage:
-            "url(https://nextuipro.nyc3.cdn.digitaloceanspaces.com/components-images/white-building.jpg)",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }}
-      >
-        <div className="flex flex-col items-end gap-4">
-          <p className="w-full text-right text-2xl text-black/60">
-            <span className="font-normal">Open Source Security Platform</span>
-          </p>
         </div>
       </div>
     </div>
