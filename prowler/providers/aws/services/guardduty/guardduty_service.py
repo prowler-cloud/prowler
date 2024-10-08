@@ -56,7 +56,6 @@ class GuardDuty(AWSService):
     def _get_detector(self):
         logger.info("GuardDuty - getting detector info...")
         try:
-<<<<<<< HEAD
             for detector in self.detectors:
                 try:
                     if detector.id and detector.enabled_in_account:
@@ -86,52 +85,6 @@ class GuardDuty(AWSService):
                     logger.error(
                         f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
                     )
-=======
-            if detector.id and detector.enabled_in_account:
-                detector_info = self.regional_clients[detector.region].get_detector(
-                    DetectorId=detector.id
-                )
-                if detector_info.get("Status", "DISABLED") == "ENABLED":
-                    detector.status = True
-
-                data_sources = detector_info.get("DataSources", {})
-
-                s3_logs = data_sources.get("S3Logs", {})
-                if s3_logs.get("Status", "DISABLED") == "ENABLED":
-                    detector.s3_protection = True
-
-                detector.eks_audit_log_protection = (
-                    True
-                    if data_sources.get("Kubernetes", {})
-                    .get("AuditLogs", {})
-                    .get("Status", "DISABLED")
-                    == "ENABLED"
-                    else False
-                )
-
-                detector.ec2_malware_protection = (
-                    True
-                    if data_sources.get("MalwareProtection", {})
-                    .get("ScanEc2InstanceWithFindings", {})
-                    .get("EbsVolumes", {})
-                    .get("Status", "DISABLED")
-                    == "ENABLED"
-                    else False
-                )
-
-                for feat in detector_info.get("Features", []):
-                    if (
-                        feat.get("Name", "") == "RDS_LOGIN_EVENTS"
-                        and feat.get("Status", "DISABLED") == "ENABLED"
-                    ):
-                        detector.rds_protection = True
-                    elif (
-                        feat.get("Name", "") == "LAMBDA_NETWORK_LOGS"
-                        and feat.get("Status", "DISABLED") == "ENABLED"
-                    ):
-                        detector.lambda_protection = True
-
->>>>>>> aa3263410 (chore(guardduty): mock failing tests using moto (#5334))
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
