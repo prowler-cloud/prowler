@@ -230,3 +230,42 @@ class Slack:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+
+    @staticmethod
+    def test_connection(token: str, channel: str) -> bool:
+        """
+        Test the Slack connection by validating the provided token and channel.
+
+        Args:
+            token (str): The Slack token to be tested.
+            channel (str): The Slack channel to be validated.
+
+        Returns:
+            bool: True if the connection and channel are valid, False otherwise.
+        """
+        try:
+            client = WebClient(token=token)
+            # Test if the token is valid
+            auth_response = client.auth_test()
+            if auth_response["ok"]:
+                # Test if the channel is accessible
+                channels_response = client.conversations_list(
+                    types="public_channel", limit=1000
+                )
+                if channels_response["ok"]:
+                    for ch in channels_response["channels"]:
+                        if ch["name"] == channel or ch["id"] == channel:
+                            return True
+                private_channels_response = client.conversations_list(
+                    types="private_channel", limit=1000
+                )
+                if private_channels_response["ok"]:
+                    for ch in private_channels_response["channels"]:
+                        if ch["name"] == channel or ch["id"] == channel:
+                            return True
+
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return False
