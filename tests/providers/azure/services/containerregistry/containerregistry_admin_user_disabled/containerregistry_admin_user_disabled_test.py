@@ -57,7 +57,7 @@ class TestContainerRegistryAdminUserDisabled:
                         login_server="mock_login_server.azurecr.io",
                         public_network_access="Enabled",
                         admin_user_enabled=True,
-                        network_rule_set="",
+                        network_rule_set=None,
                         monitor_diagnostic_settings=[],
                     )
                 }
@@ -113,7 +113,7 @@ class TestContainerRegistryAdminUserDisabled:
                         login_server="mock_login_server.azurecr.io",
                         public_network_access="Enabled",
                         admin_user_enabled=False,
-                        network_rule_set="",
+                        network_rule_set=None,
                         monitor_diagnostic_settings=[],
                     )
                 }

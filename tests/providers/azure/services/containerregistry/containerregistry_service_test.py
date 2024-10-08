@@ -34,7 +34,7 @@ class TestContainerRegistryService:
                         login_server="mock_login_server.azurecr.io",
                         public_network_access="Enabled",
                         admin_user_enabled=True,
-                        network_rule_set="",
+                        network_rule_set=None,
                         monitor_diagnostic_settings=[
                             {
                                 "id": "id1/id1",
