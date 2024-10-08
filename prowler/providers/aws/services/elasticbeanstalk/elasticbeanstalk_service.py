@@ -7,7 +7,7 @@ from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################## EMR
+################## ElasticBeanstalk
 class ElasticBeanstalk(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
@@ -58,17 +58,36 @@ class ElasticBeanstalk(AWSService):
                     option["Namespace"] == "aws:elasticbeanstalk:healthreporting:system"
                     and option["OptionName"] == "SystemType"
                 ):
-                    environment.health_option = option
+                    environment.health_option = option.get("Value", "basic")
                 elif (
                     option["Namespace"] == "aws:elasticbeanstalk:managedactions"
                     and option["OptionName"] == "ManagedActionsEnabled"
                 ):
-                    environment.managed_actions_option = option
+                    environment.managed_actions_option = option.get("Value", "false")
                 elif (
                     option["Namespace"] == "aws:elasticbeanstalk:cloudwatch:logs"
                     and option["OptionName"] == "StreamLogs"
                 ):
-                    environment.cloudwatch_option = option
+                    environment.cloudwatch_option = option.get("Value", "false")
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _list_tags_for_resource(self):
+        logger.info("ElasticBeanstalk -  List Tags...")
+        try:
+            for environment_arn, environment in self.environments.items():
+                try:
+                    regional_client = self.regional_clients[environment.region]
+                    response = regional_client.list_tags_for_resource(
+                        ResourceArn=environment_arn
+                    )["TagList"]
+                    environment.tags = response
+                except Exception as error:
+                    logger.error(
+                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -81,7 +100,7 @@ class Environment(BaseModel):
     arn: str
     region: str
     application_name: str
-    health_option: Optional[dict]
-    managed_actions_option: Optional[dict]
-    cloudwatch_option: Optional[dict]
+    health_option: str
+    managed_actions_option: str
+    cloudwatch_option: str
     tags: Optional[list] = []
