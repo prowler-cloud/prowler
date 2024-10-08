@@ -64,7 +64,6 @@ class cloudtrail_threat_detection_enumeration(Check):
             aws_identity_type = aws_identity[1]
             aws_identity_arn = aws_identity[0]
             if len(actions) / len(enumeration_actions) > threshold:
-                print(actions)
                 found_potential_enumeration = True
                 report = Check_Report_AWS(self.metadata())
                 report.region = cloudtrail_client.region
