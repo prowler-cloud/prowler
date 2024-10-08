@@ -1,5 +1,5 @@
 from re import search
-from unittest import mock
+from unittest.mock import MagicMock, patch
 
 from prowler.providers.aws.services.glue.glue_service import Connection
 from tests.providers.aws.utils import AWS_REGION_US_EAST_1
@@ -7,12 +7,15 @@ from tests.providers.aws.utils import AWS_REGION_US_EAST_1
 
 class Test_glue_database_connections_ssl_enabled:
     def test_glue_no_conns(self):
-        glue_client = mock.MagicMock
+        glue_client = MagicMock
         glue_client.connections = []
 
-        with mock.patch(
+        with patch(
             "prowler.providers.aws.services.glue.glue_service.Glue",
-            glue_client,
+            new=glue_client,
+        ), patch(
+            "prowler.providers.aws.services.glue.glue_client.glue_client",
+            new=glue_client,
         ):
             # Test Check
             from prowler.providers.aws.services.glue.glue_database_connections_ssl_enabled.glue_database_connections_ssl_enabled import (
@@ -25,7 +28,7 @@ class Test_glue_database_connections_ssl_enabled:
             assert len(result) == 0
 
     def test_glue_table_no_SSL(self):
-        glue_client = mock.MagicMock
+        glue_client = MagicMock
         glue_client.connections = [
             Connection(
                 name="test",
@@ -42,9 +45,12 @@ class Test_glue_database_connections_ssl_enabled:
             )
         ]
 
-        with mock.patch(
+        with patch(
             "prowler.providers.aws.services.glue.glue_service.Glue",
-            glue_client,
+            new=glue_client,
+        ), patch(
+            "prowler.providers.aws.services.glue.glue_client.glue_client",
+            new=glue_client,
         ):
             # Test Check
             from prowler.providers.aws.services.glue.glue_database_connections_ssl_enabled.glue_database_connections_ssl_enabled import (
@@ -65,7 +71,7 @@ class Test_glue_database_connections_ssl_enabled:
             assert result[0].resource_tags == [{"test": "test"}]
 
     def test_glue_table_with_SSL(self):
-        glue_client = mock.MagicMock
+        glue_client = MagicMock
         glue_client.connections = [
             Connection(
                 name="test",
@@ -83,9 +89,12 @@ class Test_glue_database_connections_ssl_enabled:
             )
         ]
 
-        with mock.patch(
+        with patch(
             "prowler.providers.aws.services.glue.glue_service.Glue",
-            glue_client,
+            new=glue_client,
+        ), patch(
+            "prowler.providers.aws.services.glue.glue_client.glue_client",
+            new=glue_client,
         ):
             # Test Check
             from prowler.providers.aws.services.glue.glue_database_connections_ssl_enabled.glue_database_connections_ssl_enabled import (

@@ -37,9 +37,8 @@ class NetworkFirewall(AWSService):
                             network_firewall["FirewallArn"], self.audit_resources
                         )
                     ):
-                        self.network_firewalls[
-                            network_firewall.get("FirewallArn", "")
-                        ] = Firewall(
+                        arn = network_firewall.get("FirewallArn", "")
+                        self.network_firewalls[arn] = Firewall(
                             arn=network_firewall.get("FirewallArn"),
                             region=regional_client.region,
                             name=network_firewall.get("FirewallName"),
@@ -64,6 +63,16 @@ class NetworkFirewall(AWSService):
             network_firewall.deletion_protection = describe_firewall.get(
                 "DeleteProtection", False
             )
+            for subnet in describe_firewall.get("SubnetMappings", []):
+                if subnet.get("SubnetId"):
+                    network_firewall.subnet_mappings.append(
+                        Subnet(
+                            subnet_id=subnet.get("SubnetId"),
+                            ip_addr_type=subnet.get(
+                                "IPAddressType", IPAddressType.IPV4
+                            ),
+                        )
+                    )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
@@ -85,6 +94,12 @@ class NetworkFirewall(AWSService):
                 group.get("ResourceArn", "")
                 for group in firewall_policy.get("StatefulRuleGroupReferences", [])
             ]
+            network_firewall.default_stateless_actions = firewall_policy.get(
+                "StatelessDefaultActions", []
+            )
+            network_firewall.default_stateless_frag_actions = firewall_policy.get(
+                "StatelessFragmentDefaultActions", []
+            )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
@@ -148,6 +163,21 @@ class LoggingConfiguration(BaseModel):
     log_destination: dict = {}
 
 
+class IPAddressType(Enum):
+    """Enum for IP Address Type"""
+
+    IPV4 = "IPV4"
+    IPV6 = "IPV6"
+    DUALSTACK = "DUALSTACK"
+
+
+class Subnet(BaseModel):
+    """Subnet model for SubnetMappings"""
+
+    subnet_id: str
+    ip_addr_type: IPAddressType
+
+
 class Firewall(BaseModel):
     """Firewall Model for Network Firewall"""
 
@@ -159,6 +189,9 @@ class Firewall(BaseModel):
     tags: list = []
     encryption_type: str = None
     deletion_protection: bool = False
+    default_stateless_actions: list = []
+    default_stateless_frag_actions: list = []
+    subnet_mappings: list[Subnet] = []
     logging_configuration: Optional[list[LoggingConfiguration]]
     stateless_rule_groups: list[str] = []
     stateful_rule_groups: list[str] = []

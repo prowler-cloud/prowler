@@ -27,6 +27,9 @@ class Glue(AWSService):
         self.jobs = []
         self.__threading_call__(self._get_jobs)
         self.__threading_call__(self._list_tags, self.jobs)
+        self.ml_transforms = {}
+        self.__threading_call__(self._get_ml_transforms)
+        self.__threading_call__(self._list_tags, self.ml_transforms.values())
 
     def _get_data_catalog_arn_template(self, region):
         return f"arn:{self.audited_partition}:glue:{region}:{self.audited_account}:data-catalog"
@@ -219,6 +222,30 @@ class Glue(AWSService):
                 f"{resource.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _get_ml_transforms(self, regional_client):
+        logger.info("Glue - Getting ML Transforms...")
+        try:
+            transforms = regional_client.get_ml_transforms()["Transforms"]
+            for transform in transforms:
+                ml_transform_arn = f"arn:{self.audited_partition}:glue:{regional_client.region}:{self.audited_account}:mlTransform/{transform['TransformId']}"
+                if not self.audit_resources or is_resource_filtered(
+                    ml_transform_arn, self.audit_resources
+                ):
+                    self.ml_transforms[ml_transform_arn] = MLTransform(
+                        arn=ml_transform_arn,
+                        id=transform["TransformId"],
+                        name=transform["Name"],
+                        user_data_encryption=transform.get("TransformEncryption", {})
+                        .get("MlUserDataEncryption", {})
+                        .get("MlUserDataEncryptionMode", "DISABLED"),
+                        region=regional_client.region,
+                    )
+
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class Connection(BaseModel):
     name: str
@@ -272,3 +299,12 @@ class SecurityConfig(BaseModel):
     jb_encryption: str
     jb_key_arn: Optional[str]
     region: str
+
+
+class MLTransform(BaseModel):
+    arn: str
+    id: str
+    name: str
+    user_data_encryption: str
+    region: str
+    tags: Optional[list]
