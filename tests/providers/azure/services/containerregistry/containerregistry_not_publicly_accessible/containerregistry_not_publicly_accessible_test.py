@@ -10,7 +10,7 @@ from tests.providers.azure.azure_fixtures import (
 )
 
 
-class TestContainerRegistryNotPublicyAccessible:
+class Test_containerregistry_not_publicly_accessible:
     def test_no_container_registries(self):
         containerregistry_client = MagicMock()
         containerregistry_client.registries = {}
