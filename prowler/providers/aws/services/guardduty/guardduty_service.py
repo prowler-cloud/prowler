@@ -33,7 +33,10 @@ class GuardDuty(AWSService):
                     ):
                         self.detectors.append(
                             Detector(
-                                id=detector, arn=arn, region=regional_client.region
+                                id=detector,
+                                arn=arn,
+                                region=regional_client.region,
+                                enabled_in_account=True,
                             )
                         )
             if not detectors:
@@ -196,7 +199,7 @@ class Detector(BaseModel):
     id: str
     arn: str
     region: str
-    enabled_in_account: bool = True
+    enabled_in_account: bool
     status: bool = None
     findings: list = []
     member_accounts: list = []
