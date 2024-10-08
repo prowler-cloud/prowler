@@ -39,7 +39,7 @@ def mock_make_api_call(self, operation_name, kwarg):
     return make_api_call(self, operation_name, kwarg)
 
 
-class Test_redshift_cluster_encrypted_in_transit:
+class Test_redshift_cluster_in_transit_encryption_enabled:
     def test_no_clusters(self):
         from prowler.providers.aws.services.redshift.redshift_service import Redshift
 
@@ -50,14 +50,14 @@ class Test_redshift_cluster_encrypted_in_transit:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.redshift.redshift_cluster_encrypted_in_transit.redshift_cluster_encrypted_in_transit.redshift_client",
+                "prowler.providers.aws.services.redshift.redshift_cluster_in_transit_encryption_enabled.redshift_cluster_in_transit_encryption_enabled.redshift_client",
                 new=Redshift(aws_provider),
             ):
-                from prowler.providers.aws.services.redshift.redshift_cluster_encrypted_in_transit.redshift_cluster_encrypted_in_transit import (
-                    redshift_cluster_encrypted_in_transit,
+                from prowler.providers.aws.services.redshift.redshift_cluster_in_transit_encryption_enabled.redshift_cluster_in_transit_encryption_enabled import (
+                    redshift_cluster_in_transit_encryption_enabled,
                 )
 
-                check = redshift_cluster_encrypted_in_transit()
+                check = redshift_cluster_in_transit_encryption_enabled()
                 result = check.execute()
 
                 assert len(result) == 0
@@ -88,14 +88,14 @@ class Test_redshift_cluster_encrypted_in_transit:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.redshift.redshift_cluster_encrypted_in_transit.redshift_cluster_encrypted_in_transit.redshift_client",
+                "prowler.providers.aws.services.redshift.redshift_cluster_in_transit_encryption_enabled.redshift_cluster_in_transit_encryption_enabled.redshift_client",
                 new=Redshift(aws_provider),
             ):
-                from prowler.providers.aws.services.redshift.redshift_cluster_encrypted_in_transit.redshift_cluster_encrypted_in_transit import (
-                    redshift_cluster_encrypted_in_transit,
+                from prowler.providers.aws.services.redshift.redshift_cluster_in_transit_encryption_enabled.redshift_cluster_in_transit_encryption_enabled import (
+                    redshift_cluster_in_transit_encryption_enabled,
                 )
 
-                check = redshift_cluster_encrypted_in_transit()
+                check = redshift_cluster_in_transit_encryption_enabled()
                 result = check.execute()
 
                 assert len(result) == 1
@@ -139,14 +139,14 @@ class Test_redshift_cluster_encrypted_in_transit:
                 return_value=aws_provider,
             ):
                 with mock.patch(
-                    "prowler.providers.aws.services.redshift.redshift_cluster_encrypted_in_transit.redshift_cluster_encrypted_in_transit.redshift_client",
+                    "prowler.providers.aws.services.redshift.redshift_cluster_in_transit_encryption_enabled.redshift_cluster_in_transit_encryption_enabled.redshift_client",
                     new=Redshift(aws_provider),
                 ):
-                    from prowler.providers.aws.services.redshift.redshift_cluster_encrypted_in_transit.redshift_cluster_encrypted_in_transit import (
-                        redshift_cluster_encrypted_in_transit,
+                    from prowler.providers.aws.services.redshift.redshift_cluster_in_transit_encryption_enabled.redshift_cluster_in_transit_encryption_enabled import (
+                        redshift_cluster_in_transit_encryption_enabled,
                     )
 
-                    check = redshift_cluster_encrypted_in_transit()
+                    check = redshift_cluster_in_transit_encryption_enabled()
                     result = check.execute()
 
                     assert len(result) == 1

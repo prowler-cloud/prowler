@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "redshift_cluster_encrypted_in_transit",
+  "CheckID": "redshift_cluster_in_transit_encryption_enabled",
   "CheckTitle": "Check if connections to Amazon Redshift clusters are encrypted in transit.",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices"
