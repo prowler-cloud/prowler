@@ -120,8 +120,8 @@ export const sectionItems: SidebarItem[] = [
     title: "Scan",
     items: [
       {
-        key: "scanners",
-        href: "#",
+        key: "scan",
+        href: "/scan",
         icon: "lucide:scan-search",
         title: "Scanners",
       },
@@ -130,23 +130,6 @@ export const sectionItems: SidebarItem[] = [
         href: "/findings",
         title: "Findings",
         icon: "ph:list-checks-duotone",
-        items: [
-          {
-            key: "shareholders",
-            href: "#",
-            title: "Shareholders",
-          },
-          {
-            key: "note_holders",
-            href: "#",
-            title: "Note Holders",
-          },
-          {
-            key: "transactions_log",
-            href: "#",
-            title: "Transactions Log",
-          },
-        ],
       },
     ],
   },
