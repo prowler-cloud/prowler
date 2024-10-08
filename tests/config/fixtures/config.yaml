@@ -335,7 +335,6 @@ aws:
 
   # AWS Secrets Configuration
   # Patterns to ignore in the secrets checks
-  # The Metadata API is ignored by default
   secrets_ignore_patterns: []
 
 # Azure Configuration
