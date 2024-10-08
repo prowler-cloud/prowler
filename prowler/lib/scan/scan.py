@@ -1,5 +1,6 @@
 from typing import Generator
 
+from prowler.config.config import default_config_file_path, get_default_mute_file_path
 from prowler.lib.check.check import execute, import_check, update_audit_metadata
 from prowler.lib.logger import logger
 from prowler.lib.outputs.finding import Finding
@@ -52,11 +53,17 @@ class Scan:
         if mutelist_file:
             self._mutelist_file = mutelist_file
             self._provider.mutelist = mutelist_file
+        else:
+            # Set the default mutelist file if it does not exist
+            self._provider.mutelist = get_default_mute_file_path(self._provider.type)
 
         # Set the config file if it exists
         if config_file:
             self._config_file = config_file
-            self._provider.config_file = config_file
+            self._provider.audit_config = config_file
+        else:
+            # Set the default config file if it does not exist
+            self._provider.audit_config = default_config_file_path
 
     @property
     def checks_to_execute(self) -> set[str]:
