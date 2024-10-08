@@ -1,7 +1,7 @@
 import { Icon } from "@iconify/react";
 import { Chip } from "@nextui-org/react";
 
-import { SidebarItem, SidebarItemType } from "./sidebar-tmp";
+import { SidebarItem, SidebarItemType } from "./sidebar";
 import { TeamAvatar } from "./team-avatar";
 
 /**

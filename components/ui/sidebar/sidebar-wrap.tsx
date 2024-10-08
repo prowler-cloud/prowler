@@ -17,7 +17,7 @@ import {
   ProwlerShort,
 } from "../../icons/prowler/ProwlerIcons";
 import { ThemeSwitch } from "../../ThemeSwitch";
-import Sidebar from "./sidebar-tmp";
+import Sidebar from "./sidebar";
 import { sectionItemsWithTeams } from "./sidebar-items";
 import { UserAvatar } from "./user-avatar";
 
