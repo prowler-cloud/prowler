@@ -147,3 +147,14 @@ class S3:
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
             )
         return uploaded_objects
+
+    @staticmethod
+    def test_connection(self) -> bool:
+        try:
+            self._session.list_buckets()
+            return True
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            return False
