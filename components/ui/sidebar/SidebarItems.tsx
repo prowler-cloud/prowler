@@ -92,7 +92,7 @@ export const items: SidebarItem[] = [
 export const sectionItems: SidebarItem[] = [
   {
     key: "dashboards",
-    title: "Dashboards",
+    title: "Dashboard",
     items: [
       {
         key: "overview",
@@ -113,48 +113,6 @@ export const sectionItems: SidebarItem[] = [
       //     />
       //   ),
       // },
-      // {
-      //   key: "tasks",
-      //   href: "#",
-      //   icon: "solar:checklist-minimalistic-outline",
-      //   title: "Tasks",
-      //   endContent: (
-      //     <Icon
-      //       className="text-default-400"
-      //       icon="solar:add-circle-line-duotone"
-      //       width={24}
-      //     />
-      //   ),
-      // },
-      {
-        key: "compliance",
-        href: "/compliance",
-        icon: "fluent-mdl2:compliance-audit",
-        title: "Compliance",
-        endContent: (
-          <Chip size="sm" variant="flat">
-            New
-          </Chip>
-        ),
-      },
-      {
-        key: "services",
-        href: "/services",
-        icon: "material-symbols:linked-services-outline",
-        title: "Services",
-      },
-      {
-        key: "categories",
-        href: "/categories",
-        icon: "material-symbols:folder-open-outline",
-        title: "Categories",
-      },
-      {
-        key: "workloads",
-        href: "/workloads",
-        icon: "lucide:tags",
-        title: "Workloads",
-      },
     ],
   },
   {
@@ -184,34 +142,53 @@ export const sectionItems: SidebarItem[] = [
           },
         ],
       },
+      {
+        key: "tasks",
+        href: "#",
+        icon: "solar:checklist-minimalistic-outline",
+        title: "Tasks",
+      },
     ],
   },
   {
-    key: "accounts",
-    title: "Accounts",
+    key: "analytics",
+    title: "Analytics",
+    items: [
+      {
+        key: "compliance",
+        href: "/compliance",
+        icon: "fluent-mdl2:compliance-audit",
+        title: "Compliance",
+        endContent: (
+          <Chip size="sm" variant="flat">
+            New
+          </Chip>
+        ),
+      },
+      {
+        key: "services",
+        href: "/services",
+        icon: "material-symbols:linked-services-outline",
+        title: "Services",
+      },
+    ],
+  },
+
+  {
+    key: "settings",
+    title: "Settings",
     items: [
       {
         key: "providers",
         href: "/providers",
         icon: "fluent:cloud-sync-24-regular",
         title: "Providers",
-        endContent: (
-          <Chip size="sm" variant="flat">
-            3
-          </Chip>
-        ),
       },
       {
         key: "integrations",
         href: "/integrations",
         icon: "tabler:puzzle",
         title: "Integrations",
-      },
-      {
-        key: "settings",
-        href: "/settings",
-        icon: "solar:settings-outline",
-        title: "Settings",
       },
     ],
   },
@@ -220,8 +197,8 @@ export const sectionItems: SidebarItem[] = [
 export const sectionItemsWithTeams: SidebarItem[] = [
   ...sectionItems,
   {
-    key: "team",
-    title: "Team",
+    key: "memberships",
+    title: "Membership",
     items: [
       {
         key: "users",
@@ -229,12 +206,12 @@ export const sectionItemsWithTeams: SidebarItem[] = [
         title: "Users",
         icon: "ci:users",
       },
-      {
-        key: "roles",
-        href: "#",
-        title: "Roles",
-        startContent: <TeamAvatar name="Roles page" />,
-      },
+      // {
+      //   key: "memberships",
+      //   href: "#",
+      //   title: "Memberships",
+      //   startContent: <TeamAvatar name="Memberships" />,
+      // },
     ],
   },
 ];

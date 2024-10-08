@@ -19,7 +19,7 @@ export const CustomBox = ({
     <Card fullWidth {...props}>
       {(preTitle || subTitle || title) && (
         <>
-          <CardHeader className="flex-col items-start px-3 pb-3 pt-4">
+          <CardHeader className="flex-col items-start px-3 py-2">
             {preTitle && (
               <p className="text-tiny font-bold uppercase">{preTitle}</p>
             )}
