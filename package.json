@@ -24,6 +24,8 @@
     "date-fns": "^3.6.0",
     "framer-motion": "~11.1.1",
     "intl-messageformat": "^10.5.0",
+    "jose": "^5.9.3",
+    "jwt-decode": "^4.0.0",
     "lucide-react": "^0.417.0",
     "next": "^14.2.12",
     "next-auth": "^5.0.0-beta.20",

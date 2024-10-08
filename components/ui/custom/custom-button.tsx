@@ -8,7 +8,7 @@ export const buttonClasses = {
   base: "px-4 inline-flex items-center justify-center relative z-0 text-center whitespace-nowrap",
   primary: "bg-default-100 hover:bg-default-200 text-default-800",
   secondary: "bg-prowler-grey-light dark:bg-prowler-grey-medium text-white",
-  action: "text-white bg-prowler-blue-smoky dark:bg-prowler-grey-medium",
+  action: "text-white bg-prowler-grey-medium dark:bg-prowler-grey-medium",
   dashed:
     "border border-default border-dashed bg-transparent  justify-center whitespace-nowrap font-medium shadow-sm hover:border-solid hover:bg-default-100 active:bg-default-200 active:border-solid",
   transparent: "border-0 border-transparent bg-transparent",
@@ -19,6 +19,7 @@ export const buttonClasses = {
 interface ButtonProps {
   type?: "button" | "submit" | "reset";
   ariaLabel: string;
+  ariaDisabled?: boolean;
   className?: string;
   variant?:
     | "solid"
@@ -52,6 +53,7 @@ interface ButtonProps {
 export const CustomButton = ({
   type = "button",
   ariaLabel,
+  ariaDisabled,
   className,
   variant = "solid",
   color = "primary",
@@ -69,6 +71,7 @@ export const CustomButton = ({
   <Button
     type={type}
     aria-label={ariaLabel}
+    aria-disabled={ariaDisabled}
     onPress={onPress}
     variant={variant as NextUIVariants}
     color={color as NextUIColors}
@@ -89,7 +92,16 @@ export const CustomButton = ({
     endContent={endContent}
     size={size}
     radius={radius}
-    spinner={<CircularProgress aria-label="Loading..." size="sm" />}
+    spinner={
+      <CircularProgress
+        classNames={{
+          svg: "w-6 h-6 drop-shadow-md",
+          indicator: "stroke-white",
+          track: "stroke-white/10",
+        }}
+        aria-label="Loading..."
+      />
+    }
     isLoading={isLoading}
     isIconOnly={isIconOnly}
     {...props}

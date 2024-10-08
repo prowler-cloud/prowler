@@ -20,33 +20,34 @@ module.exports = {
     extend: {
       colors: {
         prowler: {
-          blue: {
+          theme: {
             midnight: "#030921",
             pale: "#f3fcff",
-            smoky: "#7b8390",
-          },
-          grey: {
-            medium: "#353a4d",
-            light: "#868994",
-          },
-          green: {
-            DEFAULT: "#9FD655",
-            medium: "#09BF3D",
-          },
-          theme: {
             green: "#6af400",
             purple: "#5001d0",
             coral: "#ff5356",
             orange: "#f69000",
             yellow: "#ffdf16",
           },
-          dark: {
-            title: "#E2E8F0",
-            text: "#94a3b8" /* primary default for dark mode */,
+          blue: {
+            800: "#1e293bff",
           },
-          light: {
-            title: "#1e293bff",
-            text: "#64748b" /* primary default for light mode */,
+          grey: {
+            medium: "#353a4d",
+            light: "#868994",
+            600: "#64748b",
+          },
+          green: {
+            DEFAULT: "#9FD655",
+            medium: "#09BF3D",
+          },
+          black: {
+            DEFAULT: "#000",
+            900: "#18181A",
+          },
+          white: {
+            DEFAULT: "#FFF",
+            900: "#18181A",
           },
         },
         system: {
@@ -82,6 +83,7 @@ module.exports = {
           },
         },
         danger: "#E11D48",
+        action: "#353a4d",
       },
       fontFamily: {
         sans: ["var(--font-sans)"],

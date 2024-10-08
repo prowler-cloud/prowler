@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
 import { getUsers } from "@/actions/users";
-import { auth } from "@/auth.config";
+// import { auth } from "@/auth.config";
 import { Header } from "@/components/ui";
 import {
   AddUserModal,
@@ -18,11 +18,6 @@ export default async function Users({
 }: {
   searchParams: SearchParamsProps;
 }) {
-  const session = await auth();
-  if (session?.user?.role !== "admin") {
-    redirect("/");
-  }
-
   const searchParamsKey = JSON.stringify(searchParams || {});
 
   return (

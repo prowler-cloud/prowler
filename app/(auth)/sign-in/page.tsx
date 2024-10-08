@@ -1,6 +1,4 @@
-import React from "react";
-
-import { AuthForm } from "@/components/auth";
+import { AuthForm } from "@/components/auth/oss";
 
 const SignIn = () => {
   return <AuthForm type="sign-in" />;
