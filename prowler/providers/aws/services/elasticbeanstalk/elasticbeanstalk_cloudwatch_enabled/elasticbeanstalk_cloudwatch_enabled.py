@@ -17,8 +17,8 @@ class elasticbeanstalk_cloudwatch_enabled(Check):
             report.status_extended = f"Elastic Beanstalk environment {environment.name} is sending logs to CloudWatch Logs."
 
             if (
-                environment.cloudwatch_option is None
-                or environment.cloudwatch_option != "true"
+                environment.cloudwatch_stream_logs is None
+                or environment.cloudwatch_stream_logs != "true"
             ):
                 report.status = "FAIL"
                 report.status_extended = f"Elastic Beanstalk environment {environment.name} is not sending logs to CloudWatch Logs."
