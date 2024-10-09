@@ -19,7 +19,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "To restrict public network access to your Azure Container Registry: 1. Navigate to your Container Registry in the Azure Portal. 2. Under 'Networking', configure the 'Public network access' settings to 'Disabled'. 3. Set up virtual network service endpoints or private endpoints as needed for secure access. 4. Review and adjust IP access rules as necessary.",
+      "Text": "To restrict public network access to your Azure Container Registry: 1. Navigate to your Container Registry in the Azure Portal. 2. Under 'Settings'->'Networking', configure the 'Public network access' settings to 'Disabled'. 3. Set up virtual network service endpoints or private endpoints as needed for secure access. 4. Review and adjust IP access rules as necessary.",
       "Url": "https://learn.microsoft.com/en-us/azure/container-registry/container-registry-access-selected-networks"
     }
   },
