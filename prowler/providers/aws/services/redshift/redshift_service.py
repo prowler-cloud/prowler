@@ -41,6 +41,9 @@ class Redshift(AWSService):
                             region=regional_client.region,
                             tags=cluster.get("Tags"),
                             master_username=cluster.get("MasterUsername", ""),
+                            enhanced_vpc_routing=cluster.get(
+                                "EnhancedVpcRouting", False
+                            ),
                             database_name=cluster.get("DBName", ""),
                             parameter_group_name=cluster.get(
                                 "ClusterParameterGroups", [{}]
@@ -119,5 +122,6 @@ class Cluster(BaseModel):
     bucket: str = None
     cluster_snapshots: bool = False
     tags: Optional[list] = []
+    enhanced_vpc_routing: bool = False
     parameter_group_name: str = None
     require_ssl: bool = False
