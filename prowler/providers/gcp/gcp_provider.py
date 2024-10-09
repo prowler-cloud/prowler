@@ -10,6 +10,7 @@ from googleapiclient import discovery
 from googleapiclient.errors import HttpError
 
 from prowler.config.config import (
+    default_config_file_path,
     get_default_mute_file_path,
     load_and_validate_config_file,
 )
@@ -47,8 +48,9 @@ class GcpProvider(Provider):
         credentials_file: str = None,
         impersonate_service_account: str = None,
         list_project_ids: bool = False,
-        audit_config: dict = {},
+        config_file: str = None,
         fixer_config: dict = {},
+        mutelist_path: str = None,
     ):
         """
         GCP Provider constructor
@@ -130,8 +132,19 @@ class GcpProvider(Provider):
 
         # TODO: move this to the providers, pending for AWS, GCP, AZURE and K8s
         # Audit Config
-        self._audit_config = audit_config
+        if not config_file:
+            config_file = default_config_file_path
+
+        self._audit_config = load_and_validate_config_file(self._type, config_file)
+
+        # Fixer Config
         self._fixer_config = fixer_config
+
+        # Set default mutelist path if none is set
+        if not mutelist_path:
+            mutelist_path = get_default_mute_file_path(self.type)
+
+        self._mutelist = GCPMutelist(mutelist_path)
 
         Provider.set_global_provider(self)
 
@@ -171,12 +184,6 @@ class GcpProvider(Provider):
     def audit_config(self):
         return self._audit_config
 
-    @audit_config.setter
-    def audit_config(self, audit_config_path):
-        self._audit_config = load_and_validate_config_file(
-            self._type, audit_config_path
-        )
-
     @property
     def fixer_config(self):
         return self._fixer_config
@@ -187,17 +194,6 @@ class GcpProvider(Provider):
         mutelist method returns the provider's mutelist.
         """
         return self._mutelist
-
-    @mutelist.setter
-    def mutelist(self, mutelist_path):
-        """
-        mutelist.setter sets the provider's mutelist.
-        """
-        # Set default mutelist path if none is set
-        if not mutelist_path:
-            mutelist_path = get_default_mute_file_path(self.type)
-
-        self._mutelist = GCPMutelist(mutelist_path)
 
     @property
     def get_output_mapping(self):

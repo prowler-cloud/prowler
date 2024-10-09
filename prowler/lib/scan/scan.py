@@ -1,6 +1,5 @@
 from typing import Generator
 
-from prowler.config.config import default_config_file_path, get_default_mute_file_path
 from prowler.lib.check.check import execute, import_check, update_audit_metadata
 from prowler.lib.logger import logger
 from prowler.lib.outputs.finding import Finding
@@ -24,8 +23,6 @@ class Scan:
         self,
         provider: Provider,
         checks_to_execute: list[str],
-        mutelist_file: str = None,
-        config_file: str = None,
     ):
         """
         Scan is the class that executes the checks and yields the progress and the findings.
@@ -46,20 +43,6 @@ class Scan:
 
         self._service_checks_to_execute = service_checks_to_execute
         self._service_checks_completed = service_checks_completed
-
-        # Set the mutelist file if it exists
-        if mutelist_file:
-            self._provider.mutelist = mutelist_file
-        else:
-            # Set the default mutelist file if it does not exist
-            self._provider.mutelist = get_default_mute_file_path(self._provider.type)
-
-        # Set the config file if it exists
-        if config_file:
-            self._provider.audit_config = config_file
-        else:
-            # Set the default config file if it does not exist
-            self._provider.audit_config = default_config_file_path
 
     @property
     def checks_to_execute(self) -> set[str]:

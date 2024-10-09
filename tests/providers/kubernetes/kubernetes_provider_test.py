@@ -49,9 +49,6 @@ class TestKubernetesProvider:
             arguments.context = None
             arguments.only_logs = False
             arguments.namespace = None
-            audit_config = load_and_validate_config_file(
-                "kubernetes", default_config_file_path
-            )
             fixer_config = load_and_validate_config_file(
                 "kubernetes", default_fixer_config_file_path
             )
@@ -61,7 +58,7 @@ class TestKubernetesProvider:
                 arguments.kubeconfig_file,
                 arguments.context,
                 arguments.namespace,
-                audit_config=audit_config,
+                config_file=default_config_file_path,
                 fixer_config=fixer_config,
             )
             assert isinstance(kubernetes_provider.session, KubernetesSession)

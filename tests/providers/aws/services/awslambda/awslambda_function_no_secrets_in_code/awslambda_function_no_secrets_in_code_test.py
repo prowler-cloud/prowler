@@ -183,6 +183,7 @@ class Test_awslambda_function_no_secrets_in_code:
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == LAMBDA_FUNCTION_NAME
             assert result[0].resource_arn == LAMBDA_FUNCTION_ARN
+            print(result[0].status_extended)
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended

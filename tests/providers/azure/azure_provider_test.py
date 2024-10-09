@@ -32,7 +32,6 @@ class TestAzureProvider:
         browser_auth = None
         managed_identity_auth = None
 
-        audit_config = load_and_validate_config_file("azure", default_config_file_path)
         fixer_config = load_and_validate_config_file(
             "azure", default_fixer_config_file_path
         )
@@ -53,7 +52,7 @@ class TestAzureProvider:
                 tenant_id,
                 azure_region,
                 subscription_id,
-                audit_config=audit_config,
+                config_file=default_config_file_path,
                 fixer_config=fixer_config,
             )
 

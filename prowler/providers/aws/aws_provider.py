@@ -15,6 +15,7 @@ from tzlocal import get_localzone
 
 from prowler.config.config import (
     aws_services_json_file,
+    default_config_file_path,
     get_default_mute_file_path,
     load_and_validate_config_file,
 )
@@ -71,6 +72,7 @@ class AwsProvider(Provider):
     _audit_config: dict
     _scan_unused_services: bool = False
     _enabled_regions: set = set()
+    _mutelist: AWSMutelist
     # TODO: this is not optional, enforce for all providers
     audit_metadata: Audit_Metadata
 
@@ -88,8 +90,9 @@ class AwsProvider(Provider):
         scan_unused_services: bool = None,
         resource_tags: list[str] = [],
         resource_arn: list[str] = [],
-        audit_config: dict = {},
+        config_file: str = None,
         fixer_config: dict = {},
+        mutelist_path: str = None,
     ):
         """
         Initializes the AWS provider.
@@ -107,8 +110,9 @@ class AwsProvider(Provider):
             - scan_unused_services: A boolean indicating whether to scan unused services.
             - resource_tags: A list of tags to filter the resources to audit.
             - resource_arn: A list of ARNs of the resources to audit.
-            - audit_config: The audit configuration.
+            - config_file: The path to the configuration file.
             - fixer_config: The fixer configuration.
+            - mutelist_path: The path to the mutelist file.
 
         Raises:
             - ArgumentTypeError: If the input MFA ARN is invalid.
@@ -268,9 +272,22 @@ class AwsProvider(Provider):
         self._scan_unused_services = scan_unused_services
 
         # Audit Config
-        self._audit_config = audit_config
+        if not config_file:
+            config_file = default_config_file_path
+
+        self._audit_config = load_and_validate_config_file(self._type, config_file)
         # Fixer Config
         self._fixer_config = fixer_config
+
+        # Mutelist
+        if not mutelist_path:
+            mutelist_path = get_default_mute_file_path(self.type)
+
+        self._mutelist = AWSMutelist(
+            mutelist_path=mutelist_path,
+            session=self._session.current_session,
+            aws_account_id=self._identity.account,
+        )
 
         Provider.set_global_provider(self)
 
@@ -302,12 +319,6 @@ class AwsProvider(Provider):
     def audit_config(self):
         return self._audit_config
 
-    @audit_config.setter
-    def audit_config(self, audit_config_path):
-        self._audit_config = load_and_validate_config_file(
-            self._type, audit_config_path
-        )
-
     @property
     def fixer_config(self):
         return self._fixer_config
@@ -318,23 +329,6 @@ class AwsProvider(Provider):
         mutelist method returns the provider's mutelist.
         """
         return self._mutelist
-
-    # TODO: this is going to be called from another place soon, since the provider
-    # shouldn't hold the mutelist
-    @mutelist.setter
-    def mutelist(self, mutelist_path):
-        """
-        mutelist.setter sets the provider's mutelist.
-        """
-        # Set default mutelist path if none is set
-        if not mutelist_path:
-            mutelist_path = get_default_mute_file_path(self.type)
-
-        self._mutelist = AWSMutelist(
-            mutelist_path=mutelist_path,
-            session=self._session.current_session,
-            aws_account_id=self._identity.account,
-        )
 
     @property
     def get_output_mapping(self):

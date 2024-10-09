@@ -10,7 +10,11 @@ from azure.mgmt.subscription import SubscriptionClient
 from colorama import Fore, Style
 from msgraph import GraphServiceClient
 
-from prowler.config.config import get_default_mute_file_path
+from prowler.config.config import (
+    default_config_file_path,
+    get_default_mute_file_path,
+    load_and_validate_config_file,
+)
 from prowler.lib.logger import logger
 from prowler.lib.utils.utils import print_boxes
 from prowler.providers.azure.exceptions.exceptions import (
@@ -89,8 +93,9 @@ class AzureProvider(Provider):
         tenant_id: str = None,
         region: str = "AzureCloud",
         subscription_ids: list = [],
-        audit_config: dict = {},
+        config_file: str = None,
         fixer_config: dict = {},
+        mutelist_path: str = None,
     ):
         """
         Initializes the Azure provider.
@@ -103,8 +108,9 @@ class AzureProvider(Provider):
             tenant_id (str): The Azure Active Directory tenant ID.
             region (str): The Azure region.
             subscription_ids (list): List of subscription IDs.
-            audit_config (dict): The audit configuration for the Azure provider.
+            config_file (str): The path to the configuration file.
             fixer_config (dict): The fixer configuration.
+            mutelist_path (str): The path to the mutelist file.
 
         Returns:
             None
@@ -150,9 +156,19 @@ class AzureProvider(Provider):
         self._locations = self.get_locations(self.session)
 
         # Audit Config
-        self._audit_config = audit_config
+        if not config_file:
+            config_file = default_config_file_path
+
+        self._audit_config = load_and_validate_config_file(self.type, config_file)
+
         # Fixer Config
         self._fixer_config = fixer_config
+
+        # Mutelist
+        if not mutelist_path:
+            mutelist_path = get_default_mute_file_path(self.type)
+
+        self._mutelist = AzureMutelist(mutelist_path)
 
         Provider.set_global_provider(self)
 
@@ -195,17 +211,6 @@ class AzureProvider(Provider):
     def mutelist(self) -> AzureMutelist:
         """Mutelist object associated with this Azure provider."""
         return self._mutelist
-
-    @mutelist.setter
-    def mutelist(self, mutelist_path):
-        """
-        mutelist.setter sets the provider's mutelist.
-        """
-        # Set default mutelist path if none is set
-        if not mutelist_path:
-            mutelist_path = get_default_mute_file_path(self.type)
-
-        self._mutelist = AzureMutelist(mutelist_path)
 
     @property
     def get_output_mapping(self):
