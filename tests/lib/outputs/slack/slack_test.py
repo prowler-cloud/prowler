@@ -2,6 +2,7 @@ from unittest import mock
 
 from prowler.config.config import aws_logo, azure_logo, gcp_logo
 from prowler.lib.outputs.slack.slack import Slack
+from prowler.providers.common.models import Connection
 from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, set_mocked_aws_provider
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
@@ -504,18 +505,30 @@ class TestSlackIntegration:
 
         mocked_web_client = mock.MagicMock()
         mocked_web_client.auth_test = mock.Mock(return_value=mocked_auth_response)
+
+        def mock_conversations_list(types, limit, cursor=None):
+            if types == "public_channel":
+                return mocked_public_channel_response
+            elif types == "private_channel":
+                return mocked_private_channel_response
+            else:
+                return {"ok": True, "channels": []}  # Default for non-existing channels
+
         mocked_web_client.conversations_list = mock.Mock(
-            side_effect=[
-                mocked_public_channel_response,
-                mocked_private_channel_response,
-            ]
+            side_effect=mock_conversations_list
         )
 
         with mock.patch(
             "prowler.lib.outputs.slack.slack.WebClient", return_value=mocked_web_client
         ):
-            assert Slack.test_connection(token=SLACK_TOKEN, channel="public-channel")
-            assert Slack.test_connection(token=SLACK_TOKEN, channel="private-channel")
-            assert not Slack.test_connection(
-                token=SLACK_TOKEN, channel="non-existing-channel"
-            )
+            assert Slack.test_connection(
+                token=SLACK_TOKEN, channel="public-channel"
+            ) == Connection(is_connected=True)
+            assert Slack.test_connection(
+                token=SLACK_TOKEN, channel="private-channel"
+            ) == Connection(is_connected=True)
+            assert Slack.test_connection(
+                token=SLACK_TOKEN,
+                channel="non-existing-channel",
+                raise_on_exception=False,
+            ) == Connection(is_connected=False)
