@@ -128,18 +128,38 @@ class Test_ElasticBeanstalk_Service:
         # ElasticBeanstalk Class
         elasticbeanstalk = ElasticBeanstalk(set_mocked_aws_provider())
         assert (
-            elasticbeanstalk.environments[environment["EnvironmentArn"]].health_option
+            elasticbeanstalk.environments[
+                environment["EnvironmentArn"]
+            ].health_reporting
             == "enhanced"
         )
         assert (
             elasticbeanstalk.environments[
                 environment["EnvironmentArn"]
-            ].managed_actions_option
+            ].managed_platform_updates
             == "true"
         )
         assert (
             elasticbeanstalk.environments[
                 environment["EnvironmentArn"]
-            ].cloudwatch_option
+            ].cloudwatch_stream_logs
             == "true"
         )
+
+    @mock_aws
+    def test_list_tags_for_resource(self):
+        # Create ElasticBeanstalk app and env
+        elasticbeanstalk_client = client(
+            "elasticbeanstalk", region_name=AWS_REGION_EU_WEST_1
+        )
+        elasticbeanstalk_client.create_application(ApplicationName="test-app")
+        environment = elasticbeanstalk_client.create_environment(
+            ApplicationName="test-app",
+            EnvironmentName="test-env",
+            Tags=[{"Key": "test-key", "Value": "test-value"}],
+        )
+        # ElasticBeanstalk Class
+        elasticbeanstalk = ElasticBeanstalk(set_mocked_aws_provider())
+        assert elasticbeanstalk.environments[environment["EnvironmentArn"]].tags == [
+            {"Key": "test-key", "Value": "test-value"}
+        ]
