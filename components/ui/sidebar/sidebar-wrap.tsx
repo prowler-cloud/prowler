@@ -44,7 +44,7 @@ export const SidebarWrap = () => {
   return (
     <div
       className={clsx(
-        "relative flex h-screen flex-col !border-r-small border-divider transition-width",
+        "relative flex h-screen flex-col rounded-r-3xl !border-r-small border-divider transition-width",
         {
           "w-72 p-6": !isCompact,
           "w-16 items-center px-2 py-6": isCompact,
