@@ -1,6 +1,8 @@
+import datetime
 from typing import Generator
 
 from prowler.lib.check.check import execute, import_check, update_audit_metadata
+from prowler.lib.check.utils import recover_checks_from_provider
 from prowler.lib.logger import logger
 from prowler.lib.outputs.finding import Finding
 from prowler.providers.common.models import Audit_Metadata
@@ -18,12 +20,9 @@ class Scan:
     _service_checks_completed: dict[str, set[str]]
     _progress: float = 0.0
     _findings: list = []
-
-    def __init__(
-        self,
-        provider: Provider,
-        checks_to_execute: list[str],
-    ):
+    _duration: int = 0
+      
+    def __init__(self, provider: Provider, checks_to_execute: list[str] = None):
         """
         Scan is the class that executes the checks and yields the progress and the findings.
 
@@ -34,11 +33,31 @@ class Scan:
         """
         self._provider = provider
         # Remove duplicated checks and sort them
-        self._checks_to_execute = sorted(list(set(checks_to_execute)))
+        self._checks_to_execute = (
+            sorted(list(set(checks_to_execute)))
+            if checks_to_execute
+            else sorted(
+                [check[0] for check in recover_checks_from_provider(provider.type)]
+            )
+        )
 
-        self._number_of_checks_to_execute = len(checks_to_execute)
+        # TODO This should be done depending on the scan args (future feature)
+        # Discard threat detection checks
+        if "cloudtrail_threat_detection_enumeration" in self._checks_to_execute:
+            self._checks_to_execute.remove("cloudtrail_threat_detection_enumeration")
+        if (
+            "cloudtrail_threat_detection_privilege_escalation"
+            in self._checks_to_execute
+        ):
+            self._checks_to_execute.remove(
+                "cloudtrail_threat_detection_privilege_escalation"
+            )
 
-        service_checks_to_execute = get_service_checks_to_execute(checks_to_execute)
+        self._number_of_checks_to_execute = len(self._checks_to_execute)
+
+        service_checks_to_execute = get_service_checks_to_execute(
+            self._checks_to_execute
+        )
         service_checks_completed = dict()
 
         self._service_checks_to_execute = service_checks_to_execute
@@ -65,6 +84,10 @@ class Scan:
         return (
             self._number_of_checks_completed / self._number_of_checks_to_execute * 100
         )
+
+    @property
+    def duration(self) -> int:
+        return self._duration
 
     @property
     def findings(self) -> list:
@@ -99,6 +122,8 @@ class Scan:
                 completed_checks=0,
                 audit_progress=0,
             )
+
+            start_time = datetime.datetime.now()
 
             for check_name in checks_to_execute:
                 try:
@@ -154,7 +179,6 @@ class Scan:
                     ]
 
                     yield self.progress, findings
-
                 # If check does not exists in the provider or is from another provider
                 except ModuleNotFoundError:
                     logger.error(
@@ -164,6 +188,8 @@ class Scan:
                     logger.error(
                         f"{check_name} - {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
+            # Update the scan duration when all checks are completed
+            self._duration = int((datetime.datetime.now() - start_time).total_seconds())
         except Exception as error:
             logger.error(
                 f"{check_name} - {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
