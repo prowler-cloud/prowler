@@ -8,7 +8,7 @@ export const buttonClasses = {
   base: "px-4 inline-flex items-center justify-center relative z-0 text-center whitespace-nowrap",
   primary: "bg-default-100 hover:bg-default-200 text-default-800",
   secondary: "bg-prowler-grey-light dark:bg-prowler-grey-medium text-white",
-  action: "text-white bg-prowler-grey-medium dark:bg-prowler-grey-medium",
+  action: "bg-prowler-theme-green font-bold text-prowler-theme-midnight",
   dashed:
     "border border-default border-dashed bg-transparent  justify-center whitespace-nowrap font-medium shadow-sm hover:border-solid hover:bg-default-100 active:bg-default-200 active:border-solid",
   transparent: "border-0 border-transparent bg-transparent",

@@ -83,7 +83,7 @@ module.exports = {
           },
         },
         danger: "#E11D48",
-        action: "#353a4d",
+        action: "#6af400",
       },
       fontFamily: {
         sans: ["var(--font-sans)"],

@@ -163,9 +163,7 @@ const Sidebar = React.forwardRef<HTMLElement, SidebarProps>(
                   }}
                   title={
                     item.icon ? (
-                      <div
-                        className={"flex h-11 items-center gap-2 px-2 py-1.5"}
-                      >
+                      <div className={"flex items-center gap-2 px-2 py-1.5"}>
                         <Icon
                           className={clsx(
                             "text-default-500 group-data-[selected=true]:text-foreground",
@@ -282,7 +280,7 @@ const Sidebar = React.forwardRef<HTMLElement, SidebarProps>(
         itemClasses={{
           ...itemClasses,
           base: clsx(
-            "px-3 min-h-11 rounded-large h-[44px] data-[selected=true]:bg-default-100",
+            "px-3 rounded-large data-[selected=true]:bg-default-100",
             itemClasses?.base,
           ),
           title: clsx(
