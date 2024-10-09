@@ -10,10 +10,7 @@ from azure.mgmt.subscription import SubscriptionClient
 from colorama import Fore, Style
 from msgraph import GraphServiceClient
 
-from prowler.config.config import (
-    get_default_mute_file_path,
-    load_and_validate_config_file,
-)
+from prowler.config.config import get_default_mute_file_path
 from prowler.lib.logger import logger
 from prowler.lib.utils.utils import print_boxes
 from prowler.providers.azure.exceptions.exceptions import (
@@ -187,13 +184,7 @@ class AzureProvider(Provider):
     @property
     def audit_config(self):
         """Returns the audit configuration for the Azure provider."""
-        return self._
-
-    @audit_config.setter
-    def audit_config(self, audit_config_path):
-        self._audit_config = load_and_validate_config_file(
-            self._type, audit_config_path
-        )
+        return self._audit_config
 
     @property
     def fixer_config(self):
