@@ -61,13 +61,12 @@ class SNS(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def _list_tags_for_resource(self, resource: any):
+    def _list_tags_for_resource(self, resource):
         logger.info("SNS - Listing Tags...")
         try:
-            if getattr(resource, "region", "") and getattr(resource, "arn", ""):
-                resource.tags = self.regional_clients[
-                    resource.region
-                ].list_tags_for_resource(ResourceArn=resource.arn)["Tags"]
+            resource.tags = self.regional_clients[
+                resource.region
+            ].list_tags_for_resource(ResourceArn=resource.arn)["Tags"]
         except ClientError as error:
             if error.response["Error"]["Code"] == "ResourceNotFoundException":
                 logger.warning(
