@@ -170,5 +170,21 @@ module.exports = {
       },
     },
   },
-  plugins: [require("tailwindcss-animate"), nextui()],
+  plugins: [
+    require("tailwindcss-animate"),
+    nextui({
+      themes: {
+        dark: {
+          colors: {
+            primary: {
+              DEFAULT: "#6af400",
+              foreground: "#000000",
+            },
+            focus: "#6af400",
+            background: "#030921",
+          },
+        },
+      },
+    }),
+  ],
 };

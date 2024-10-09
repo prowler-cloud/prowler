@@ -39,7 +39,7 @@ export default function RootLayout({
       <body
         suppressHydrationWarning
         className={cn(
-          "min-h-screen bg-background font-sans antialiased dark:bg-prowler-theme-midnight",
+          "min-h-screen bg-background font-sans antialiased",
           fontSans.variable,
         )}
       >
