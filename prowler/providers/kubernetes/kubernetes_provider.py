@@ -106,7 +106,7 @@ class KubernetesProvider(Provider):
     @audit_config.setter
     def audit_config(self, audit_config_path):
         self._audit_config = load_and_validate_config_file(
-            "kubernetes", audit_config_path
+            self._type, audit_config_path
         )
 
     @property

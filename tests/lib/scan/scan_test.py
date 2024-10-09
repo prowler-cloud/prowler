@@ -204,8 +204,8 @@ class TestScan:
         assert scan.progress == 0
         assert scan.get_completed_services() == set()
         assert scan.get_completed_checks() == set()
-        assert "/prowler/prowler/config/aws_mutelist.yaml" in scan.mutelist_file
-        assert "/prowler/prowler/config/config.yaml" in scan.config_file
+        assert "/prowler/prowler/config/aws_mutelist.yaml" in mock_provider.mutelist
+        assert "/prowler/prowler/config/config.yaml" in mock_provider.audit_config
 
     def test_init_with_mutelist(mock_provider):
         checks_to_execute = {
@@ -236,8 +236,8 @@ class TestScan:
         assert scan.progress == 0
         assert scan.get_completed_services() == set()
         assert scan.get_completed_checks() == set()
-        assert scan.mutelist_file == "mutelist.yaml"
-        assert "/prowler/prowler/config/config.yaml" in scan.config_file
+        assert mock_provider.mutelist == "mutelist.yaml"
+        assert "/prowler/prowler/config/config.yaml" in mock_provider.audit_config
 
     def test_init_with_config_file(mock_provider):
         checks_to_execute = {
@@ -268,8 +268,8 @@ class TestScan:
         assert scan.progress == 0
         assert scan.get_completed_services() == set()
         assert scan.get_completed_checks() == set()
-        assert "/prowler/prowler/config/aws_mutelist.yaml" in scan.mutelist_file
-        assert scan.config_file == "config.yaml"
+        assert "/prowler/prowler/config/aws_mutelist.yaml" in mock_provider.mutelist
+        assert mock_provider.audit_config == "config.yaml"
 
     @patch("importlib.import_module")
     def test_scan(
