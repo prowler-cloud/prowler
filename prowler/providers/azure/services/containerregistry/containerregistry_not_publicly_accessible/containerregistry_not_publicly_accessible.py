@@ -19,7 +19,9 @@ class containerregistry_not_publicly_accessible(Check):
                 report.status_extended = f"Container Registry {container_registry_info.name} from subscription {subscription} allows unrestricted network access."
 
                 if (
-                    container_registry_info.network_rule_set.default_action.lower()
+                    getattr(
+                        container_registry_info.network_rule_set, "default_action", ""
+                    ).lower()
                     == "deny"
                 ):
                     report.status = "PASS"
