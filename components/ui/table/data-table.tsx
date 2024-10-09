@@ -14,6 +14,7 @@ import {
 import { useState } from "react";
 
 import {
+  DataTableFilterCustom,
   Table,
   TableBody,
   TableCell,
@@ -22,18 +23,20 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { DataTablePagination } from "@/components/ui/table/data-table-pagination";
-import { MetaDataProps } from "@/types";
+import { FilterOption, MetaDataProps } from "@/types";
 
 interface DataTableProviderProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   metadata?: MetaDataProps;
+  customFilters?: FilterOption[];
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
   metadata,
+  customFilters,
 }: DataTableProviderProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -55,6 +58,9 @@ export function DataTable<TData, TValue>({
 
   return (
     <>
+      <div className="mb-6">
+        <DataTableFilterCustom filters={customFilters || []} />
+      </div>
       <div className="relative z-0 flex w-full flex-col justify-between gap-4 overflow-auto rounded-large bg-content1 p-4 shadow-small">
         <Table>
           <TableHeader>

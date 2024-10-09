@@ -24,7 +24,7 @@ export default async function Providers({
       <Header title="Providers" icon="fluent:cloud-sync-24-regular" />
 
       <Spacer y={4} />
-      <FilterControls search providers customFilters={filterProviders} />
+      <FilterControls search providers />
       <Spacer y={4} />
 
       <AddProvider />
@@ -60,6 +60,7 @@ const SSRDataTable = async ({
       columns={ColumnProviders}
       data={providersData?.data || []}
       metadata={providersData?.meta}
+      customFilters={filterProviders}
     />
   );
 };
