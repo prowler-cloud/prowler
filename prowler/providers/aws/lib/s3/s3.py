@@ -148,6 +148,7 @@ class S3:
             )
         return uploaded_objects
 
+    # The problem of this method is that s3:ListAllMyBuckets is required to list the buckets
     @staticmethod
     def test_connection(self) -> bool:
         try:
