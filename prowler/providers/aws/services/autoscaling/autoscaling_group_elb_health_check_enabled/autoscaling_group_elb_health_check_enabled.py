@@ -4,7 +4,7 @@ from prowler.providers.aws.services.autoscaling.autoscaling_client import (
 )
 
 
-class autoscaling_group_health_check_elb_enabled(Check):
+class autoscaling_group_elb_health_check_enabled(Check):
     def execute(self):
         findings = []
         for group in autoscaling_client.groups:
@@ -15,10 +15,12 @@ class autoscaling_group_health_check_elb_enabled(Check):
                 report.resource_arn = group.arn
                 report.resource_tags = group.tags
                 report.status = "FAIL"
-                report.status_extended = f"Autoscaling group {group.name} does not have health check ELB enabled. Current health check type is {group.health_check_type}."
+                report.status_extended = f"Autoscaling group {group.name} is associated with a load balancer but does not have ELB health checks enabled, instead it has {group.health_check_type} health checks."
                 if "ELB" in group.health_check_type:
                     report.status = "PASS"
-                    report.status_extended = f"Autoscaling group {group.name} has health check {group.health_check_type} enabled."
+                    report.status_extended = (
+                        f"Autoscaling group {group.name} has ELB health checks enabled."
+                    )
 
                 findings.append(report)
 

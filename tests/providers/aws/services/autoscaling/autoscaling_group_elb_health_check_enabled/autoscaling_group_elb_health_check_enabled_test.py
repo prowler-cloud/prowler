@@ -6,7 +6,7 @@ from moto import mock_aws
 from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provider
 
 
-class Test_autoscaling_group_health_check_elb_enabled:
+class Test_autoscaling_group_elb_health_check_enabled:
     @mock_aws
     def test_no_autoscaling(self):
         autoscaling_client = client("autoscaling", region_name=AWS_REGION_US_EAST_1)
@@ -22,15 +22,15 @@ class Test_autoscaling_group_health_check_elb_enabled:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.autoscaling.autoscaling_group_health_check_elb_enabled.autoscaling_group_health_check_elb_enabled.autoscaling_client",
+            "prowler.providers.aws.services.autoscaling.autoscaling_group_elb_health_check_enabled.autoscaling_group_elb_health_check_enabled.autoscaling_client",
             new=AutoScaling(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.autoscaling.autoscaling_group_health_check_elb_enabled.autoscaling_group_health_check_elb_enabled import (
-                autoscaling_group_health_check_elb_enabled,
+            from prowler.providers.aws.services.autoscaling.autoscaling_group_elb_health_check_enabled.autoscaling_group_elb_health_check_enabled import (
+                autoscaling_group_elb_health_check_enabled,
             )
 
-            check = autoscaling_group_health_check_elb_enabled()
+            check = autoscaling_group_elb_health_check_enabled()
             result = check.execute()
 
             assert len(result) == 0
@@ -92,22 +92,22 @@ class Test_autoscaling_group_health_check_elb_enabled:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.autoscaling.autoscaling_group_health_check_elb_enabled.autoscaling_group_health_check_elb_enabled.autoscaling_client",
+            "prowler.providers.aws.services.autoscaling.autoscaling_group_elb_health_check_enabled.autoscaling_group_elb_health_check_enabled.autoscaling_client",
             new=AutoScaling(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.autoscaling.autoscaling_group_health_check_elb_enabled.autoscaling_group_health_check_elb_enabled import (
-                autoscaling_group_health_check_elb_enabled,
+            from prowler.providers.aws.services.autoscaling.autoscaling_group_elb_health_check_enabled.autoscaling_group_elb_health_check_enabled import (
+                autoscaling_group_elb_health_check_enabled,
             )
 
-            check = autoscaling_group_health_check_elb_enabled()
+            check = autoscaling_group_elb_health_check_enabled()
             result = check.execute()
 
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Autoscaling group {autoscaling_group_name} has health check ELB enabled."
+                == f"Autoscaling group {autoscaling_group_name} has ELB health checks enabled."
             )
             assert result[0].resource_id == autoscaling_group_name
             assert result[0].resource_arn == autoscaling_group_arn
@@ -171,22 +171,22 @@ class Test_autoscaling_group_health_check_elb_enabled:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.autoscaling.autoscaling_group_health_check_elb_enabled.autoscaling_group_health_check_elb_enabled.autoscaling_client",
+            "prowler.providers.aws.services.autoscaling.autoscaling_group_elb_health_check_enabled.autoscaling_group_elb_health_check_enabled.autoscaling_client",
             new=AutoScaling(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.autoscaling.autoscaling_group_health_check_elb_enabled.autoscaling_group_health_check_elb_enabled import (
-                autoscaling_group_health_check_elb_enabled,
+            from prowler.providers.aws.services.autoscaling.autoscaling_group_elb_health_check_enabled.autoscaling_group_elb_health_check_enabled import (
+                autoscaling_group_elb_health_check_enabled,
             )
 
-            check = autoscaling_group_health_check_elb_enabled()
+            check = autoscaling_group_elb_health_check_enabled()
             result = check.execute()
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Autoscaling group {autoscaling_group_name} does not have health check ELB enabled. Current health check type is EC2."
+                == f"Autoscaling group {autoscaling_group_name} is associated with a load balancer but does not have ELB health checks enabled, instead it has EC2 health checks."
             )
             assert result[0].resource_id == autoscaling_group_name
             assert result[0].resource_tags == []
@@ -249,22 +249,22 @@ class Test_autoscaling_group_health_check_elb_enabled:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.autoscaling.autoscaling_group_health_check_elb_enabled.autoscaling_group_health_check_elb_enabled.autoscaling_client",
+            "prowler.providers.aws.services.autoscaling.autoscaling_group_elb_health_check_enabled.autoscaling_group_elb_health_check_enabled.autoscaling_client",
             new=AutoScaling(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.autoscaling.autoscaling_group_health_check_elb_enabled.autoscaling_group_health_check_elb_enabled import (
-                autoscaling_group_health_check_elb_enabled,
+            from prowler.providers.aws.services.autoscaling.autoscaling_group_elb_health_check_enabled.autoscaling_group_elb_health_check_enabled import (
+                autoscaling_group_elb_health_check_enabled,
             )
 
-            check = autoscaling_group_health_check_elb_enabled()
+            check = autoscaling_group_elb_health_check_enabled()
             result = check.execute()
 
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Autoscaling group {autoscaling_group_name} has health check EC2,ELB enabled."
+                == f"Autoscaling group {autoscaling_group_name} has ELB health checks enabled."
             )
             assert result[0].resource_id == autoscaling_group_name
             assert result[0].resource_tags == []
@@ -322,15 +322,15 @@ class Test_autoscaling_group_health_check_elb_enabled:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.autoscaling.autoscaling_group_health_check_elb_enabled.autoscaling_group_health_check_elb_enabled.autoscaling_client",
+            "prowler.providers.aws.services.autoscaling.autoscaling_group_elb_health_check_enabled.autoscaling_group_elb_health_check_enabled.autoscaling_client",
             new=AutoScaling(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.autoscaling.autoscaling_group_health_check_elb_enabled.autoscaling_group_health_check_elb_enabled import (
-                autoscaling_group_health_check_elb_enabled,
+            from prowler.providers.aws.services.autoscaling.autoscaling_group_elb_health_check_enabled.autoscaling_group_elb_health_check_enabled import (
+                autoscaling_group_elb_health_check_enabled,
             )
 
-            check = autoscaling_group_health_check_elb_enabled()
+            check = autoscaling_group_elb_health_check_enabled()
             result = check.execute()
 
             assert len(result) == 0
@@ -368,15 +368,15 @@ class Test_autoscaling_group_health_check_elb_enabled:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.autoscaling.autoscaling_group_health_check_elb_enabled.autoscaling_group_health_check_elb_enabled.autoscaling_client",
+            "prowler.providers.aws.services.autoscaling.autoscaling_group_elb_health_check_enabled.autoscaling_group_elb_health_check_enabled.autoscaling_client",
             new=AutoScaling(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.autoscaling.autoscaling_group_health_check_elb_enabled.autoscaling_group_health_check_elb_enabled import (
-                autoscaling_group_health_check_elb_enabled,
+            from prowler.providers.aws.services.autoscaling.autoscaling_group_elb_health_check_enabled.autoscaling_group_elb_health_check_enabled import (
+                autoscaling_group_elb_health_check_enabled,
             )
 
-            check = autoscaling_group_health_check_elb_enabled()
+            check = autoscaling_group_elb_health_check_enabled()
             result = check.execute()
 
             assert len(result) == 0
@@ -413,15 +413,15 @@ class Test_autoscaling_group_health_check_elb_enabled:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.autoscaling.autoscaling_group_health_check_elb_enabled.autoscaling_group_health_check_elb_enabled.autoscaling_client",
+            "prowler.providers.aws.services.autoscaling.autoscaling_group_elb_health_check_enabled.autoscaling_group_elb_health_check_enabled.autoscaling_client",
             new=AutoScaling(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.autoscaling.autoscaling_group_health_check_elb_enabled.autoscaling_group_health_check_elb_enabled import (
-                autoscaling_group_health_check_elb_enabled,
+            from prowler.providers.aws.services.autoscaling.autoscaling_group_elb_health_check_enabled.autoscaling_group_elb_health_check_enabled import (
+                autoscaling_group_elb_health_check_enabled,
             )
 
-            check = autoscaling_group_health_check_elb_enabled()
+            check = autoscaling_group_elb_health_check_enabled()
             result = check.execute()
 
             assert len(result) == 0

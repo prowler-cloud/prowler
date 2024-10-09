@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "autoscaling_group_health_check_elb_enabled",
+  "CheckID": "autoscaling_group_elb_health_check_enabled",
   "CheckTitle": "Check if Auto Scaling groups associated with a load balancer use ELB health checks.",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices"
