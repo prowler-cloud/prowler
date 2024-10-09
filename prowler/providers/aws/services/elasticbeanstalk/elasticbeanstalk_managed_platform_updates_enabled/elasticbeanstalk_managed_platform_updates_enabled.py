@@ -16,10 +16,7 @@ class elasticbeanstalk_managed_platform_updates_enabled(Check):
             report.status = "PASS"
             report.status_extended = f"Elastic Beanstalk environment {environment.name} has automated managed platform updates enabled."
 
-            if (
-                environment.managed_platform_updates is None
-                or environment.managed_platform_updates != "true"
-            ):
+            if environment.managed_platform_updates != "true":
                 report.status = "FAIL"
                 report.status_extended = f"Elastic Beanstalk environment {environment.name} does not have automated managed platform updates enabled."
 
