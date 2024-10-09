@@ -40,21 +40,24 @@ class cloudtrail_threat_detection_enumeration(Check):
                 ):
                     event_log = json.loads(event_log["CloudTrailEvent"])
                     if (
-                        event_log["userIdentity"]["arn"],
-                        event_log["userIdentity"]["type"],
-                    ) not in potential_enumeration:
+                        "arn" in event_log["userIdentity"]
+                    ):  # Ignore event logs without ARN since they are AWS services
+                        if (
+                            event_log["userIdentity"]["arn"],
+                            event_log["userIdentity"]["type"],
+                        ) not in potential_enumeration:
+                            potential_enumeration[
+                                (
+                                    event_log["userIdentity"]["arn"],
+                                    event_log["userIdentity"]["type"],
+                                )
+                            ] = set()
                         potential_enumeration[
                             (
                                 event_log["userIdentity"]["arn"],
                                 event_log["userIdentity"]["type"],
                             )
-                        ] = set()
-                    potential_enumeration[
-                        (
-                            event_log["userIdentity"]["arn"],
-                            event_log["userIdentity"]["type"],
-                        )
-                    ].add(event_name)
+                        ].add(event_name)
 
         for aws_identity, actions in potential_enumeration.items():
             identity_threshold = round(len(actions) / len(enumeration_actions), 2)

@@ -12,7 +12,7 @@ waf_arn = f"arn:aws:wafv2:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:regional/w
 class Test_wafv2_webacl_logging_enabled:
     def test_no_web_acls(self):
         wafv2_client = mock.MagicMock
-        wafv2_client.web_acls = []
+        wafv2_client.web_acls = {}
         with mock.patch(
             "prowler.providers.aws.services.wafv2.wafv2_service.WAFv2",
             new=wafv2_client,
@@ -30,10 +30,9 @@ class Test_wafv2_webacl_logging_enabled:
 
     def test_wafv2_wb_acl_with_logging(self):
         wafv2_client = mock.MagicMock
-        wafv2_client.web_acls = []
         wafv2_client.enabled = True
-        wafv2_client.web_acls.append(
-            WebAclv2(
+        wafv2_client.web_acls = {
+            waf_arn: WebAclv2(
                 arn=waf_arn,
                 name=waf_name,
                 id=waf_id,
@@ -43,7 +42,7 @@ class Test_wafv2_webacl_logging_enabled:
                 logging_enabled=True,
                 tags=[{"Key": "Name", "Value": waf_name}],
             )
-        )
+        }
         with mock.patch(
             "prowler.providers.aws.services.wafv2.wafv2_service.WAFv2",
             new=wafv2_client,
@@ -70,10 +69,10 @@ class Test_wafv2_webacl_logging_enabled:
 
     def test_wafv2_wb_acl_without_logging(self):
         wafv2_client = mock.MagicMock
-        wafv2_client.web_acls = []
+        wafv2_client.web_acls = {}
         wafv2_client.enabled = True
-        wafv2_client.web_acls.append(
-            WebAclv2(
+        wafv2_client.web_acls = {
+            waf_arn: WebAclv2(
                 arn=waf_arn,
                 name=waf_name,
                 id=waf_id,
@@ -83,7 +82,7 @@ class Test_wafv2_webacl_logging_enabled:
                 logging_enabled=False,
                 tags=[{"Key": "Name", "Value": waf_name}],
             )
-        )
+        }
         with mock.patch(
             "prowler.providers.aws.services.wafv2.wafv2_service.WAFv2",
             new=wafv2_client,

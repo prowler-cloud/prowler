@@ -226,7 +226,7 @@ class Test_elbv2_waf_acl_attached:
                     elbv2_waf_acl_attached,
                 )
 
-                service_client.web_acls[0].albs.append(lb["LoadBalancerArn"])
+                service_client.web_acls[waf["ARN"]].albs.append(lb["LoadBalancerArn"])
 
                 check = elbv2_waf_acl_attached()
                 result = check.execute()
