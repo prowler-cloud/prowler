@@ -5,7 +5,7 @@ from prowler.providers.aws.services.efs.efs_client import efs_client
 class efs_encryption_at_rest_enabled(Check):
     def execute(self):
         findings = []
-        for fs in efs_client.filesystems:
+        for fs in efs_client.filesystems.values():
             report = Check_Report_AWS(self.metadata())
             report.region = fs.region
             report.resource_id = fs.id

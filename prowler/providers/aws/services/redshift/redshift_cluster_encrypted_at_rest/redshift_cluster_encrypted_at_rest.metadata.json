@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "redshift_cluster_encrypted_at_rest",
+  "CheckTitle": "Check if Redshift clusters are encrypted at rest.",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "redshift",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:redshift:region:account-id:cluster/cluster-name",
+  "Severity": "medium",
+  "ResourceType": "AwsRedshiftCluster",
+  "Description": "This control checks whether Amazon Redshift clusters are encrypted at rest. The control fails if a Redshift cluster isn't encrypted at rest.",
+  "Risk": "Without encryption at rest, sensitive data stored in Redshift clusters is vulnerable to unauthorized access, which could lead to data breaches and regulatory non-compliance.",
+  "RelatedUrl": "https://docs.aws.amazon.com/redshift/latest/mgmt/working-with-db-encryption.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws redshift modify-cluster --cluster-identifier <cluster-id> --encrypted --kms-key-id <key-id>",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/redshift-controls.html#redshift-10",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable encryption at rest for your Redshift clusters using KMS to protect sensitive data from unauthorized access.",
+      "Url": "https://docs.aws.amazon.com/redshift/latest/mgmt/changing-cluster-encryption.html"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

@@ -15,7 +15,7 @@
   "RelatedUrl": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/guard-duty-rds-protection.html",
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "aws guardduty update-detector --detector-id <detector-id> --features Name=RDS_LOGIN_EVENTS,Status=ENABLED",
       "NativeIaC": "",
       "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/guardduty-controls.html#guardduty-9",
       "Terraform": ""

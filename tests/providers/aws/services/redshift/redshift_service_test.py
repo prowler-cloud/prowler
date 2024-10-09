@@ -43,6 +43,22 @@ def mock_make_api_call(self, operation_name, kwarg):
                 },
             ]
         }
+    if operation_name == "DescribeClusterParameters":
+        return {
+            "Parameters": [
+                {
+                    "ParameterName": "require_ssl",
+                    "ParameterValue": "true",
+                    "Description": "Require SSL for connections",
+                    "Source": "user",
+                    "DataType": "boolean",
+                    "AllowedValues": "true, false",
+                    "IsModifiable": True,
+                    "MinimumEngineVersion": "1.0",
+                },
+            ]
+        }
+
     return make_api_call(self, operation_name, kwarg)
 
 
@@ -90,9 +106,11 @@ class Test_Redshift_Service:
             MasterUsername="user",
             MasterUserPassword="password",
             PubliclyAccessible=True,
+            Encrypted=True,
             Tags=[
                 {"Key": "test", "Value": "test"},
             ],
+            ClusterParameterGroupName="default.redshift-1.0",
         )
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         redshift = Redshift(aws_provider)
@@ -112,6 +130,10 @@ class Test_Redshift_Service:
         assert redshift.clusters[0].tags == [
             {"Key": "test", "Value": "test"},
         ]
+        assert redshift.clusters[0].parameter_group_name == "default.redshift-1.0"
+        assert redshift.clusters[0].encrypted
+        assert redshift.clusters[0].master_username == "user"
+        assert redshift.clusters[0].database_name == "test"
 
     @mock_aws
     def test_describe_logging_status(self):
@@ -173,3 +195,39 @@ class Test_Redshift_Service:
         assert redshift.clusters[0].logging_enabled
         assert redshift.clusters[0].bucket == test_bucket_name
         assert redshift.clusters[0].cluster_snapshots
+
+    @mock_aws
+    def test_describe_cluster_parameter_groups(self):
+        redshift_client = client("redshift", region_name=AWS_REGION_EU_WEST_1)
+        response = redshift_client.create_cluster(
+            DBName="test",
+            ClusterIdentifier=cluster_id,
+            ClusterType="single-node",
+            NodeType="ds2.xlarge",
+            MasterUsername="user",
+            MasterUserPassword="password",
+            PubliclyAccessible=True,
+            Tags=[
+                {"Key": "test", "Value": "test"},
+            ],
+        )
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        redshift = Redshift(aws_provider)
+
+        assert len(redshift.clusters) == 1
+        assert redshift.clusters[0].id == cluster_id
+        assert redshift.clusters[0].region == AWS_REGION_EU_WEST_1
+        assert redshift.clusters[0].public_access
+        assert (
+            redshift.clusters[0].endpoint_address
+            == response["Cluster"]["Endpoint"]["Address"]
+        )
+        assert (
+            redshift.clusters[0].allow_version_upgrade
+            == response["Cluster"]["AllowVersionUpgrade"]
+        )
+        assert redshift.clusters[0].tags == [
+            {"Key": "test", "Value": "test"},
+        ]
+        assert redshift.clusters[0].parameter_group_name == "default.redshift-1.0"
+        assert redshift.clusters[0].require_ssl is True

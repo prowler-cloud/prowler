@@ -12,7 +12,7 @@ def mock_make_api_call(self, operation_name, kwarg):
     if operation_name == "ListTaskDefinitions":
         return {
             "taskDefinitionArns": [
-                "arn:aws:ecs:eu-west-1:123456789012:task-definition/test_ecs_task:1"
+                "arn:aws:ecs:eu-west-1:123456789012:task-definition/test_cluster_1/test_ecs_task:1"
             ]
         }
     if operation_name == "DescribeTaskDefinition":
@@ -44,7 +44,6 @@ def mock_make_api_call(self, operation_name, kwarg):
                 {
                     "serviceArn": "arn:aws:ecs:eu-west-1:123456789012:service/test_cluster_1/test_ecs_service",
                     "serviceName": "test_ecs_service",
-                    "launchType": "EC2",
                     "networkConfiguration": {
                         "awsvpcConfiguration": {
                             "subnets": ["subnet-12345678"],
@@ -52,6 +51,9 @@ def mock_make_api_call(self, operation_name, kwarg):
                             "assignPublicIp": "ENABLED",
                         }
                     },
+                    "launchType": "FARGATE",
+                    "platformVersion": "1.4.0",
+                    "platformFamily": "Linux",
                 }
             ]
         }
@@ -69,6 +71,9 @@ def mock_make_api_call(self, operation_name, kwarg):
                     "clusterName": "test_cluster_1",
                     "status": "ACTIVE",
                     "tags": [{"key": "Name", "value": "test_cluster_1"}],
+                    "settings": [
+                        {"name": "containerInsights", "value": "enabled"},
+                    ],
                     "registeredContainerInstancesCount": 5,
                     "runningTasksCount": 10,
                     "pendingTasksCount": 1,
@@ -117,7 +122,7 @@ class Test_ECS_Service:
         aws_provider = set_mocked_aws_provider()
         ecs = ECS(aws_provider)
 
-        task_arn = "arn:aws:ecs:eu-west-1:123456789012:task-definition/test_ecs_task:1"
+        task_arn = "arn:aws:ecs:eu-west-1:123456789012:task-definition/test_cluster_1/test_ecs_task:1"
 
         assert len(ecs.task_definitions) == 1
         assert ecs.task_definitions[task_arn].name == "test_ecs_task"
@@ -131,7 +136,7 @@ class Test_ECS_Service:
         aws_provider = set_mocked_aws_provider()
         ecs = ECS(aws_provider)
 
-        task_arn = "arn:aws:ecs:eu-west-1:123456789012:task-definition/test_ecs_task:1"
+        task_arn = "arn:aws:ecs:eu-west-1:123456789012:task-definition/test_cluster_1/test_ecs_task:1"
 
         assert len(ecs.task_definitions) == 1
         assert ecs.task_definitions[task_arn].name == "test_ecs_task"
@@ -195,6 +200,9 @@ class Test_ECS_Service:
         assert ecs.clusters[cluster_arn1].tags == [
             {"key": "Name", "value": "test_cluster_1"}
         ]
+        assert ecs.clusters[cluster_arn1].settings == [
+            {"name": "containerInsights", "value": "enabled"}
+        ]
 
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     # Test describe ECS services
@@ -212,3 +220,6 @@ class Test_ECS_Service:
         assert ecs.services[service_arn].region == AWS_REGION_EU_WEST_1
         assert ecs.services[service_arn].assign_public_ip
         assert ecs.services[service_arn].tags == []
+        assert ecs.services[service_arn].launch_type == "FARGATE"
+        assert ecs.services[service_arn].platform_version == "1.4.0"
+        assert ecs.services[service_arn].platform_family == "Linux"
