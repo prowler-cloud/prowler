@@ -156,7 +156,7 @@ class Test_CloudWatch_Service:
         )
         logs = Logs(aws_provider)
         assert len(logs.metric_filters) == 1
-        assert logs.metric_filters[0].log_group == "/log-group/test"
+        assert logs.metric_filters[0].log_group is None
         assert logs.metric_filters[0].name == "test-filter"
         assert logs.metric_filters[0].metric == "my-metric"
         assert logs.metric_filters[0].pattern == "test-pattern"

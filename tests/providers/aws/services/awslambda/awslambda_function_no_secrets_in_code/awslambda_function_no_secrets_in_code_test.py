@@ -28,6 +28,12 @@ def lambda_handler(event, context):
         print("custom log event")
         return event
 """
+LAMBDA_FUNCTION_CODE_WITH_METADATA_API = """
+def lambda_handler(event, context):
+        metadata_api = "169.254.169.254"
+        print("custom log event")
+        return event
+"""
 
 
 def create_lambda_function() -> Function:
@@ -56,6 +62,12 @@ def mock_get_function_codewith_secrets():
 def mock_get_function_codewithout_secrets():
     yield create_lambda_function(), get_lambda_code_with_secrets(
         LAMBDA_FUNCTION_CODE_WITHOUT_SECRETS
+    )
+
+
+def mock_get_function_codewith_metadata_api():
+    yield create_lambda_function(), get_lambda_code_with_secrets(
+        LAMBDA_FUNCTION_CODE_WITH_METADATA_API
     )
 
 
@@ -117,6 +129,39 @@ class Test_awslambda_function_no_secrets_in_code:
         lambda_client.functions = {LAMBDA_FUNCTION_ARN: create_lambda_function()}
 
         lambda_client._get_function_code = mock_get_function_codewithout_secrets
+        lambda_client.audit_config = {"secrets_ignore_patterns": []}
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_aws_provider(),
+        ), mock.patch(
+            "prowler.providers.aws.services.awslambda.awslambda_function_no_secrets_in_code.awslambda_function_no_secrets_in_code.awslambda_client",
+            new=lambda_client,
+        ):
+            # Test Check
+            from prowler.providers.aws.services.awslambda.awslambda_function_no_secrets_in_code.awslambda_function_no_secrets_in_code import (
+                awslambda_function_no_secrets_in_code,
+            )
+
+            check = awslambda_function_no_secrets_in_code()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].region == AWS_REGION_US_EAST_1
+            assert result[0].resource_id == LAMBDA_FUNCTION_NAME
+            assert result[0].resource_arn == LAMBDA_FUNCTION_ARN
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == f"No secrets found in Lambda function {LAMBDA_FUNCTION_NAME} code."
+            )
+            assert result[0].resource_tags == []
+
+    def test_function_code_with_metadata_api(self):
+        lambda_client = mock.MagicMock
+        lambda_client.functions = {LAMBDA_FUNCTION_ARN: create_lambda_function()}
+
+        lambda_client._get_function_code = mock_get_function_codewith_metadata_api
         lambda_client.audit_config = {"secrets_ignore_patterns": []}
 
         with mock.patch(

@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "redshift_cluster_non_default_database_name",
+  "CheckTitle": "Check if Redshift clusters are using the default database name.",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "redshift",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:redshift:region:account-id:cluster/cluster-name",
+  "Severity": "medium",
+  "ResourceType": "AwsRedshiftCluster",
+  "Description": "This control checks whether an Amazon Redshift cluster has changed the database name from its default value. The control fails if the database name is set to 'dev'.",
+  "Risk": "Using the default database name 'dev' increases the risk of unintended access, as it is publicly known and could be used in IAM policy conditions to inadvertently allow access.",
+  "RelatedUrl": "https://docs.aws.amazon.com/redshift/latest/gsg/getting-started.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws redshift create-cluster --cluster-identifier <cluster-id> --db-name <new-db-name>",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/redshift-controls.html#redshift-9",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Create a new Redshift cluster with a unique database name to replace the default 'dev' database name.",
+      "Url": "https://docs.aws.amazon.com/redshift/latest/gsg/getting-started.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

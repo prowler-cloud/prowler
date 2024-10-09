@@ -8,7 +8,6 @@ from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################################ ECS
 class ECS(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
@@ -120,6 +119,9 @@ class ECS(AWSService):
                             .get("assignPublicIp", "DISABLED")
                             == "ENABLED"
                         ),
+                        launch_type=service_desc.get("launchType", ""),
+                        platform_version=service_desc.get("platformVersion", ""),
+                        platform_family=service_desc.get("platformFamily", ""),
                         tags=service_desc.get("tags", []),
                     )
                     cluster.services[service_arn] = service_obj
@@ -158,6 +160,7 @@ class ECS(AWSService):
                     "TAGS",
                 ],
             )
+            cluster.settings = response["clusters"][0].get("settings", [])
             cluster.tags = response["clusters"][0].get("tags", [])
         except Exception as error:
             logger.error(
@@ -194,6 +197,9 @@ class Service(BaseModel):
     name: str
     arn: str
     region: str
+    launch_type: str = ""
+    platform_version: Optional[str]
+    platform_family: Optional[str]
     assign_public_ip: Optional[bool]
     tags: Optional[list] = []
 
@@ -203,4 +209,5 @@ class Cluster(BaseModel):
     arn: str
     region: str
     services: dict = {}
+    settings: Optional[list] = []
     tags: Optional[list] = []

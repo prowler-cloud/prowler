@@ -62,7 +62,7 @@ def mock_vm_get_disks(_):
     "prowler.providers.azure.services.vm.vm_service.VirtualMachines._get_disks",
     new=mock_vm_get_disks,
 )
-class Test_AppInsights_Service:
+class Test_VirtualMachines_Service:
     def test_get_client(self):
         app_insights = VirtualMachines(set_mocked_azure_provider())
         assert (

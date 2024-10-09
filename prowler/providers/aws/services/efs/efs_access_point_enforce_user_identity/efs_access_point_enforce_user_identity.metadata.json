@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "efs_access_point_enforce_user_identity",
+  "CheckTitle": "EFS access points should enforce a user identity",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "efs",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:elasticfilesystem:{region}:{account-id}:access-point/{access-point-id}",
+  "Severity": "medium",
+  "ResourceType": "AwsEfsAccessPoint",
+  "Description": "This control checks whether Amazon EFS access points are configured to enforce a user identity. This control fails if a POSIX user identity is not defined while creating the EFS access point.",
+  "Risk": "Without enforcing a user identity, access to the file system can become less controlled, leading to potential unauthorized access or modifications.",
+  "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/efs-access-point-enforce-user-identity.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws efs create-access-point --file-system-id <file-system-id> --posix-user Uid=<uid>,Gid=<gid>",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/efs-controls.html#efs-4",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Create or update the EFS access point to enforce a user identity using POSIX attributes for Uid and Gid.",
+      "Url": "https://docs.aws.amazon.com/efs/latest/ug/enforce-identity-access-points.html"
+    }
+  },
+  "Categories": [
+    "trustboundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

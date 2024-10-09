@@ -57,6 +57,11 @@ aws:
         8088,
     ]
 
+  # AWS ECS Configuration
+  # aws.ecs_service_fargate_latest_platform_version
+  fargate_linux_latest_version: "1.4.0"
+  fargate_windows_latest_version: "1.0.0"
+
   # AWS VPC Configuration (vpc_endpoint_connections_trust_boundaries, vpc_endpoint_services_allowed_principals_trust_boundaries)
   # AWS SSM Configuration (aws.ssm_documents_set_as_public)
   # Single account environment: No action required. The AWS account number will be automatically added by the checks.
@@ -330,8 +335,8 @@ aws:
   elbv2_min_azs: 2
 
 
-  # Known secrets to ignore on detection
-  # this will include a list of regex patterns to ignore on detection
+  # AWS Secrets Configuration
+  # Patterns to ignore in the secrets checks
   secrets_ignore_patterns: []
 
 # Azure Configuration

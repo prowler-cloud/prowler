@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "glue_ml_transform_encrypted_at_rest",
+  "CheckTitle": "Check if Glue ML Transform Encryption at Rest is Enabled",
+  "CheckType": [],
+  "ServiceName": "glue",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:glue:region:account-id:mlTransform/transform-id",
+  "Severity": "medium",
+  "ResourceType": "Other",
+  "Description": "This control checks whether an AWS Glue machine learning transform is encrypted at rest. The control fails if the machine learning transform isn't encrypted at rest.",
+  "Risk": "Data at rest refers to data that's stored in persistent, non-volatile storage for any duration. Encrypting data at rest helps you protect its confidentiality, which reduces the risk that an unauthorized user can access it.",
+  "RelatedUrl": "https://docs.aws.amazon.com/glue/latest/dg/encryption-at-rest.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws glue update-ml-transform --transform-id <transform-id> --encryption-at-rest {\"Enabled\":true,\"KmsKey\":\"<kms-key-arn>\"}",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/glue-controls.html#glue-3",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable encryption at rest for Glue ML Transforms using AWS KMS keys.",
+      "Url": "https://docs.aws.amazon.com/glue/latest/dg/encryption-at-rest.html"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

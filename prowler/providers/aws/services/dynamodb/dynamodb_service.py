@@ -11,7 +11,6 @@ from prowler.providers.aws.lib.service.service import AWSService
 
 class DynamoDB(AWSService):
     def __init__(self, provider):
-        # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.tables = {}
         self.__threading_call__(self._list_tables)
@@ -49,6 +48,9 @@ class DynamoDB(AWSService):
                 properties = regional_client.describe_table(TableName=table.name)[
                     "Table"
                 ]
+                table.billing_mode = properties.get("BillingModeSummary", {}).get(
+                    "BillingMode", "PROVISIONED"
+                )
                 if "SSEDescription" in properties:
                     if "SSEType" in properties["SSEDescription"]:
                         table.encryption_type = properties["SSEDescription"]["SSEType"]
@@ -152,7 +154,6 @@ class DynamoDB(AWSService):
 
 class DAX(AWSService):
     def __init__(self, provider):
-        # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.clusters = []
         self.__threading_call__(self._describe_clusters)
@@ -217,6 +218,7 @@ class DAX(AWSService):
 
 class Table(BaseModel):
     name: str
+    billing_mode: str = "PROVISIONED"
     encryption_type: Optional[str]
     kms_arn: Optional[str]
     pitr: bool = False
