@@ -351,8 +351,8 @@ aws:
   # Minimum number of Availability Zones that an ELBv2 must be in
   elbv2_min_azs: 2
 
-  # Known secrets to ignore on detection
-  # this will include a list of regex patterns to ignore on detection
+  # AWS Secrets Configuration
+  # Patterns to ignore in the secrets checks
   secrets_ignore_patterns: []
 
 # Azure Configuration
