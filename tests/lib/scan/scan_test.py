@@ -201,6 +201,7 @@ class TestScan:
         )
         assert scan.service_checks_completed == {}
         assert scan.progress == 0
+        assert scan.duration == 0
         assert scan.get_completed_services() == set()
         assert scan.get_completed_checks() == set()
 
@@ -235,6 +236,8 @@ class TestScan:
         assert results[0][1] == mock_execute.side_effect()
         assert results[0][0] == 100.0
         assert scan.progress == 100.0
+        # Since the scan is mocked, the duration will always be 0 for now
+        assert scan.duration == 0
         assert scan._number_of_checks_completed == 1
         assert scan.service_checks_completed == {
             "accessanalyzer": {"accessanalyzer_enabled"},
