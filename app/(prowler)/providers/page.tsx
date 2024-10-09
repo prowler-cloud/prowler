@@ -5,11 +5,11 @@ import { getProviders } from "@/actions/providers";
 import { FilterControls, filterProviders } from "@/components/filters";
 import { AddProvider } from "@/components/providers";
 import {
-  ColumnsProvider,
-  DataTableProvider,
-  SkeletonTableProvider,
+  ColumnProviders,
+  SkeletonTableProviders,
 } from "@/components/providers/table";
 import { Header } from "@/components/ui";
+import { DataTable } from "@/components/ui/table";
 import { SearchParamsProps } from "@/types";
 
 export default async function Providers({
@@ -30,7 +30,7 @@ export default async function Providers({
       <AddProvider />
       <Spacer y={4} />
 
-      <Suspense key={searchParamsKey} fallback={<SkeletonTableProvider />}>
+      <Suspense key={searchParamsKey} fallback={<SkeletonTableProviders />}>
         <SSRDataTable searchParams={searchParams} />
       </Suspense>
     </>
@@ -56,8 +56,8 @@ const SSRDataTable = async ({
   const providersData = await getProviders({ query, page, sort, filters });
 
   return (
-    <DataTableProvider
-      columns={ColumnsProvider}
+    <DataTable
+      columns={ColumnProviders}
       data={providersData?.data || []}
       metadata={providersData?.meta}
     />

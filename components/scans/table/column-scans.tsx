@@ -3,20 +3,21 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { add } from "date-fns";
 
-import { StatusBadge } from "@/components/ui/table";
+import {
+  DateWithTime,
+  ProviderInfo,
+  SnippetIdProvider,
+} from "@/components/providers";
+import { DataTableColumnHeader, StatusBadge } from "@/components/ui/table";
 import { ProviderProps } from "@/types";
 
-import { DateWithTime } from "../date-with-time";
-import { ProviderInfo } from "../provider-info";
-import { SnippetIdProvider } from "../snippet-id-provider";
-import { DataTableColumnHeader } from "./data-table-column-header";
 import { DataTableRowActions } from "./data-table-row-actions";
 
 const getProviderData = (row: { original: ProviderProps }) => {
   return row.original;
 };
 
-export const ColumnsProvider: ColumnDef<ProviderProps>[] = [
+export const ColumnScans: ColumnDef<ProviderProps>[] = [
   {
     header: " ",
     cell: ({ row }) => <p className="text-medium">{row.index + 1}</p>,

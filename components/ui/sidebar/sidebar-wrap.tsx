@@ -51,28 +51,30 @@ export const SidebarWrap = () => {
         },
       )}
     >
-      <div
-        className={clsx(
-          "flex w-full flex-col items-center justify-center gap-y-4 px-3",
-          {
-            "gap-0": isCompact,
-          },
-        )}
-      >
+      <div className="flex flex-col gap-y-8">
         <div
-          className={clsx({
-            hidden: !isCompact,
-          })}
+          className={clsx(
+            "flex w-full flex-col items-center justify-center gap-y-8 px-3",
+            {
+              "gap-0": isCompact,
+            },
+          )}
         >
-          <ProwlerShort />
-        </div>
-        <div
-          className={clsx({
-            hidden: isCompact,
-            "!mt-0": !isCompact,
-          })}
-        >
-          <ProwlerExtended />
+          <div
+            className={clsx({
+              hidden: !isCompact,
+            })}
+          >
+            <ProwlerShort />
+          </div>
+          <div
+            className={clsx({
+              hidden: isCompact,
+              "!mt-0": !isCompact,
+            })}
+          >
+            <ProwlerExtended />
+          </div>
         </div>
         <Link href={"/profile"}>
           <Suspense fallback={<p>Loading...</p>}>
@@ -83,14 +85,14 @@ export const SidebarWrap = () => {
             />
           </Suspense>
         </Link>
-
         <div
           className={clsx({
             hidden: isCompact,
             "w-full": !isCompact,
           })}
         >
-          <Link href={"/scan"}>
+          {/* TODO: Create a custom-link component and use it here */}
+          <Link href={"/scans"}>
             <CustomButton
               className="w-full"
               ariaLabel="Launch Scan"
