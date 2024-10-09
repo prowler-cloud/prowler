@@ -133,7 +133,7 @@ def detect_secrets_scan(
                 {"name": "SoftlayerDetector"},
                 {"name": "SquareOAuthDetector"},
                 {"name": "StripeDetector"},
-                # {"name": "TelegramBotTokenDetector"}, https://github.com/Yelp/detect-secrets/pull/878
+                {"name": "TelegramBotTokenDetector"},
                 {"name": "TwilioKeyDetector"},
             ],
             "filters_used": [
