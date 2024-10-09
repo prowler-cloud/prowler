@@ -116,14 +116,14 @@ export const sectionItems: SidebarItem[] = [
     ],
   },
   {
-    key: "scan",
-    title: "Scan",
+    key: "scans",
+    title: "Scans",
     items: [
       {
-        key: "scan",
-        href: "/scan",
+        key: "scans",
+        href: "/scans",
         icon: "lucide:scan-search",
-        title: "Scanners",
+        title: "Scans",
       },
       {
         key: "findings",

@@ -1,34 +1,27 @@
 import { Spacer } from "@nextui-org/react";
-import { Suspense } from "react";
 
+// import { Suspense } from "react";
 // import { getProviders } from "@/actions/providers";
 import { FilterControls, filterScans } from "@/components/filters";
-import {
-  // ColumnsProvider,
-  // DataTableProvider,
-  SkeletonTableProvider,
-} from "@/components/providers/table";
+// import { ColumnScans, SkeletonTableScans } from "@/components/scans/table";
 import { Header } from "@/components/ui";
-import { SearchParamsProps } from "@/types";
+// import { DataTable } from "@/components/ui/table";
+// import { SearchParamsProps } from "@/types";
 
-export default async function Scan({
-  searchParams,
-}: {
-  searchParams: SearchParamsProps;
-}) {
-  const searchParamsKey = JSON.stringify(searchParams || {});
+export default async function Scans() {
+  // const searchParamsKey = JSON.stringify(searchParams || {});
 
   return (
     <>
-      <Header title="Scanners" icon="lucide:scan-search" />
+      <Header title="Scans" icon="lucide:scan-search" />
 
       <Spacer y={4} />
       <FilterControls search date providers customFilters={filterScans} />
       <Spacer y={4} />
 
-      <Suspense key={searchParamsKey} fallback={<SkeletonTableProvider />}>
-        {/* <SSRDataTable searchParams={searchParams} /> */}
-      </Suspense>
+      {/* <Suspense key={searchParamsKey} fallback={<SkeletonTableScans />}>
+        <SSRDataTable searchParams={searchParams} />
+      </Suspense> */}
     </>
   );
 }
@@ -52,8 +45,8 @@ export default async function Scan({
 //   const providersData = await getProviders({ query, page, sort, filters });
 
 //   return (
-//     <DataTableProvider
-//       columns={ColumnsProvider}
+//     <DataTable
+//       columns={ColumnScans}
 //       data={providersData?.data || []}
 //       metadata={providersData?.meta}
 //     />

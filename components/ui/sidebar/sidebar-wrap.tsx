@@ -91,7 +91,8 @@ export const SidebarWrap = () => {
             "w-full": !isCompact,
           })}
         >
-          <Link href={"/scan"}>
+          {/* TODO: Create a custom-link component and use it here */}
+          <Link href={"/scans"}>
             <CustomButton
               className="w-full"
               ariaLabel="Launch Scan"

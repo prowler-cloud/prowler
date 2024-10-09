@@ -1,7 +1,7 @@
 import { Card, Skeleton } from "@nextui-org/react";
 import React from "react";
 
-export const SkeletonTableProviders = () => {
+export const SkeletonTableScans = () => {
   return (
     <Card className="h-full w-full space-y-5 p-4" radius="sm">
       {/* Table headers */}

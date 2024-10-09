@@ -21,9 +21,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { DataTablePagination } from "@/components/ui/table/data-table-pagination";
 import { MetaDataProps } from "@/types";
-
-import { DataTablePagination } from "./data-table-pagination";
 
 interface DataTableProviderProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -31,7 +30,7 @@ interface DataTableProviderProps<TData, TValue> {
   metadata?: MetaDataProps;
 }
 
-export function DataTableProvider<TData, TValue>({
+export function DataTable<TData, TValue>({
   columns,
   data,
   metadata,
