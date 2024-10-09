@@ -90,16 +90,48 @@ class Test_AutoScaling_Service:
     def test_describe_auto_scaling_groups(self):
         # Generate AutoScaling Client
         autoscaling_client = client("autoscaling", region_name=AWS_REGION_US_EAST_1)
-        autoscaling_client.create_launch_configuration(
-            LaunchConfigurationName="test",
-            ImageId="ami-12c6146b",
-            InstanceType="t1.micro",
-            KeyName="the_keys",
-            SecurityGroups=["default", "default2"],
+        ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
+        launch_template = ec2_client.create_launch_template(
+            LaunchTemplateName="test",
+            LaunchTemplateData={
+                "ImageId": "ami-12c6146b",
+                "InstanceType": "t1.micro",
+                "KeyName": "the_keys",
+                "SecurityGroups": ["default", "default2"],
+            },
         )
-        _ = autoscaling_client.create_auto_scaling_group(
+        launch_template_id = launch_template["LaunchTemplate"]["LaunchTemplateId"]
+        autoscaling_client.create_auto_scaling_group(
             AutoScalingGroupName="my-autoscaling-group",
-            LaunchConfigurationName="test",
+            LaunchTemplate={"LaunchTemplateName": "test", "Version": "$Latest"},
+            MinSize=0,
+            MaxSize=0,
+            DesiredCapacity=0,
+            AvailabilityZones=["us-east-1a", "us-east-1b"],
+            Tags=[
+                {
+                    "Key": "tag_test",
+                    "Value": "value_test",
+                },
+            ],
+        )
+
+        autoscaling_client.create_auto_scaling_group(
+            AutoScalingGroupName="my-autoscaling-group-2",
+            MixedInstancesPolicy={
+                "LaunchTemplate": {
+                    "LaunchTemplateSpecification": {
+                        "LaunchTemplateName": "test",
+                        "Version": "$Latest",
+                    },
+                    "Overrides": [
+                        {
+                            "InstanceType": "t2.micro",
+                            "WeightedCapacity": "1",
+                        },
+                    ],
+                },
+            },
             MinSize=0,
             MaxSize=0,
             DesiredCapacity=0,
@@ -115,7 +147,7 @@ class Test_AutoScaling_Service:
         # AutoScaling client for this test class
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         autoscaling = AutoScaling(aws_provider)
-        assert len(autoscaling.groups) == 1
+        assert len(autoscaling.groups) == 2
         # create_auto_scaling_group doesn't return the ARN, can't check it
         # assert autoscaling.groups[0].arn ==
         assert autoscaling.groups[0].name == "my-autoscaling-group"
@@ -130,6 +162,24 @@ class Test_AutoScaling_Service:
                 "Value": "value_test",
             }
         ]
+        assert autoscaling.groups[0].launch_template == {
+            "LaunchTemplateId": launch_template_id,
+            "LaunchTemplateName": "test",
+            "Version": "$Latest",
+        }
+        assert autoscaling.groups[1].mixed_instances_policy_launch_template == {
+            "LaunchTemplateSpecification": {
+                "LaunchTemplateId": launch_template_id,
+                "LaunchTemplateName": "test",
+                "Version": "$Latest",
+            },
+            "Overrides": [
+                {
+                    "InstanceType": "t2.micro",
+                    "WeightedCapacity": "1",
+                },
+            ],
+        }
 
     # Test Application AutoScaling Describe Scalable Targets
     @mock_aws
