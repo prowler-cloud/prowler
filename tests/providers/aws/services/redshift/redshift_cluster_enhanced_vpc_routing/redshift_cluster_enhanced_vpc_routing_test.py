@@ -79,7 +79,7 @@ class Test_redshift_cluster_enhanced_vpc_routing:
                 assert len(result) == 1
                 assert result[0].status == "FAIL"
                 assert result[0].status_extended == (
-                    f"Redshift Cluster {CLUSTER_ID} does not have enhanced vpc routing enabled."
+                    f"Redshift Cluster {CLUSTER_ID} does not have Enhanced VPC Routing security feature enabled."
                 )
                 assert result[0].resource_id == CLUSTER_ID
                 assert result[0].resource_arn == CLUSTER_ARN
@@ -126,7 +126,7 @@ class Test_redshift_cluster_enhanced_vpc_routing:
                 assert len(result) == 1
                 assert result[0].status == "PASS"
                 assert result[0].status_extended == (
-                    f"Redshift Cluster {CLUSTER_ID} has enhanced vpc routing enabled."
+                    f"Redshift Cluster {CLUSTER_ID} has Enhanced VPC Routing security feature enabled."
                 )
                 assert result[0].resource_id == CLUSTER_ID
                 assert result[0].resource_arn == CLUSTER_ARN

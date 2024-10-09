@@ -25,7 +25,9 @@
       "Url": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Redshift/enable-enhanced-vpc-routing.html"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "trustboundaries"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

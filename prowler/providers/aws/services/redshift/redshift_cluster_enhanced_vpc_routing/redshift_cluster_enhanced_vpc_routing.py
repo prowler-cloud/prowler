@@ -12,12 +12,10 @@ class redshift_cluster_enhanced_vpc_routing(Check):
             report.resource_arn = cluster.arn
             report.resource_tags = cluster.tags
             report.status = "FAIL"
-            report.status_extended = f"Redshift Cluster {cluster.id} does not have enhanced vpc routing enabled."
+            report.status_extended = f"Redshift Cluster {cluster.id} does not have Enhanced VPC Routing security feature enabled."
             if cluster.enhanced_vpc_routing:
                 report.status = "PASS"
-                report.status_extended = (
-                    f"Redshift Cluster {cluster.id} has enhanced vpc routing enabled."
-                )
+                report.status_extended = f"Redshift Cluster {cluster.id} has Enhanced VPC Routing security feature enabled."
 
             findings.append(report)
 
