@@ -20,7 +20,7 @@ class Scan:
     _progress: float = 0.0
     _findings: list = []
 
-    def __init__(self, provider: Provider, checks_to_execute: list[str] = []):
+    def __init__(self, provider: Provider, checks_to_execute: list[str] = None):
         """
         Scan is the class that executes the checks and yields the progress and the findings.
 
