@@ -506,7 +506,7 @@ class TestSlackIntegration:
         mocked_web_client = mock.MagicMock()
         mocked_web_client.auth_test = mock.Mock(return_value=mocked_auth_response)
 
-        def mock_conversations_list(types, limit, cursor=None):
+        def mock_conversations_list(types, **kwargs):
             if types == "public_channel":
                 return mocked_public_channel_response
             elif types == "private_channel":
