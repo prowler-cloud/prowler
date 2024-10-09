@@ -22,7 +22,7 @@
     },
     "Recommendation": {
       "Text": "Configure your Auto Scaling groups to use ELB health checks to improve the monitoring and availability of your applications.",
-      "Url": "https://docs.aws.amazon.com/autoscaling/ec2/userguide/as-add-elb-healthcheck.html#as-add-elb-healthcheck-console"
+      "Url": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/AutoScaling/auto-scaling-group-health-check.html"
     }
   },
   "Categories": [],
