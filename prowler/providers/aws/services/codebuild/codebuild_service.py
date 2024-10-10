@@ -93,6 +93,12 @@ class Codebuild(AWSService):
                 EnvironmentVariable(**var) for var in env_vars
             ]
             project.buildspec = project_info.get("source", {}).get("buildspec", "")
+            s3_logs = project_info.get("logsConfig", {}).get("s3Logs", {})
+            project.s3_logs = s3Logs(
+                status=s3_logs.get("status", "DISABLED"),
+                bucket_location=s3_logs.get("location", ""),
+                encrypted=(not s3_logs.get("encryptionDisabled", False)),
+            )
             project.tags = project_info.get("tags", [])
         except Exception as error:
             logger.error(
@@ -115,6 +121,12 @@ class EnvironmentVariable(BaseModel):
     type: str
 
 
+class s3Logs(BaseModel):
+    status: str
+    bucket_location: str
+    encrypted: bool
+
+
 class Project(BaseModel):
     name: str
     arn: str
@@ -125,4 +137,5 @@ class Project(BaseModel):
     source: Optional[Source]
     secondary_sources: Optional[list[Source]] = []
     environment_variables: Optional[List[EnvironmentVariable]]
+    s3_logs: Optional[s3Logs]
     tags: Optional[list]
