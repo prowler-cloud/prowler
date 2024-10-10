@@ -7,6 +7,7 @@ from prowler.providers.aws.services.codebuild.codebuild_service import (
     Build,
     Codebuild,
     Project,
+    s3Logs,
 )
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
@@ -51,6 +52,13 @@ def mock_make_api_call(self, operation_name, kwarg):
                             "buildspec": "",
                         }
                     ],
+                    "logsConfig": {
+                        "s3Logs": {
+                            "status": "ENABLED",
+                            "location": "test-bucket",
+                            "encryptionDisabled": False,
+                        }
+                    },
                     "tags": [{"key": "Name", "value": project_name}],
                 }
             ]
@@ -93,5 +101,9 @@ class Test_Codebuild_Service:
             secondary_bitbucket_url
             in codebuild.projects[project_arn].secondary_sources[0].location
         )
+        assert isinstance(codebuild.projects[project_arn].s3_logs, s3Logs)
+        assert codebuild.projects[project_arn].s3_logs.status == "ENABLED"
+        assert codebuild.projects[project_arn].s3_logs.bucket_location == "test-bucket"
+        assert codebuild.projects[project_arn].s3_logs.encrypted
         assert codebuild.projects[project_arn].tags[0]["key"] == "Name"
         assert codebuild.projects[project_arn].tags[0]["value"] == project_name
