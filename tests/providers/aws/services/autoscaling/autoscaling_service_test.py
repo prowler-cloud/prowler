@@ -69,6 +69,11 @@ class Test_AutoScaling_Service:
             InstanceType="t1.micro",
             KeyName="the_keys",
             SecurityGroups=["default", "default2"],
+            MetadataOptions={
+                "HttpTokens": "required",
+                "HttpPutResponseHopLimit": 123,
+                "HttpEndpoint": "enabled",
+            },
         )
         # AutoScaling client for this test class
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
@@ -84,6 +89,8 @@ class Test_AutoScaling_Service:
         assert autoscaling.launch_configurations[0].image_id == "ami-12c6146b"
         assert autoscaling.launch_configurations[1].image_id == "ami-12c6146b"
         assert autoscaling.launch_configurations[1].name == "tester2"
+        assert autoscaling.launch_configurations[1].http_tokens == "required"
+        assert autoscaling.launch_configurations[1].http_endpoint == "enabled"
 
     # Test Describe Auto Scaling Groups
     @mock_aws
