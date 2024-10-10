@@ -58,6 +58,9 @@ class Test_codebuild_project_s3_logs_encrypted:
                     "encryptionDisabled": False,
                 }
             },
+            tags=[
+                {"key": "Name", "value": "test"},
+            ],
         )["project"]["arn"]
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
@@ -86,7 +89,7 @@ class Test_codebuild_project_s3_logs_encrypted:
             )
             assert result[0].resource_id == project_name
             assert result[0].resource_arn == project_arn
-            assert result[0].resource_tags == []
+            assert result[0].resource_tags == [{"key": "Name", "value": "test"}]
             assert result[0].region == AWS_REGION_EU_WEST_1
 
     @mock_aws
@@ -118,6 +121,9 @@ class Test_codebuild_project_s3_logs_encrypted:
                     "encryptionDisabled": True,
                 }
             },
+            tags=[
+                {"key": "Name", "value": "test"},
+            ],
         )["project"]["arn"]
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
@@ -146,5 +152,5 @@ class Test_codebuild_project_s3_logs_encrypted:
             )
             assert result[0].resource_id == project_name
             assert result[0].resource_arn == project_arn
-            assert result[0].resource_tags == []
+            assert result[0].resource_tags == [{"key": "Name", "value": "test"}]
             assert result[0].region == AWS_REGION_EU_WEST_1
