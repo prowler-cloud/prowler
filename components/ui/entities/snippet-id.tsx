@@ -10,7 +10,7 @@ interface SnippetIdProps {
 export const SnippetId: React.FC<SnippetIdProps> = ({ entityId, ...props }) => {
   return (
     <Snippet
-      className="flex items-center py-0"
+      className="flex h-6 items-center py-0"
       color="default"
       size="sm"
       variant="flat"
@@ -22,7 +22,7 @@ export const SnippetId: React.FC<SnippetIdProps> = ({ entityId, ...props }) => {
     >
       <p className="flex items-center space-x-2">
         <IdIcon size={18} />
-        <span className="no-scrollbar max-w-16 overflow-x-scroll text-sm">
+        <span className="no-scrollbar text-md w-28 overflow-hidden overflow-x-scroll text-ellipsis whitespace-nowrap text-sm font-semibold">
           {entityId}
         </span>
       </p>

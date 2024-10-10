@@ -7,6 +7,7 @@ import {
   KS8ProviderBadge,
 } from "../../icons/providers-badge";
 import { SnippetId } from "./snippet-id";
+import { SnippetLabel } from "./snippet-label";
 
 interface EntityInfoProps {
   connected?: boolean | null;
@@ -36,16 +37,12 @@ export const EntityInfoShort: React.FC<EntityInfoProps> = ({
   };
 
   return (
-    <div className="max-w-full">
-      <div className="flex items-center justify-between space-x-4">
-        <div className="flex items-center space-x-4">
-          <div className="flex-shrink-0">{getProviderLogo()}</div>
-          <div className="flex flex-col">
-            <span className="text-md max-w-24 overflow-hidden text-ellipsis font-semibold lg:max-w-36">
-              {entityAlias}
-            </span>
-            <SnippetId className="h-5 max-w-44" entityId={entityId ?? ""} />
-          </div>
+    <div className="flex w-full items-center justify-between space-x-4">
+      <div className="flex items-center gap-x-4">
+        <div className="flex-shrink-0">{getProviderLogo()}</div>
+        <div className="flex flex-col">
+          <SnippetLabel label={entityAlias ?? ""} />
+          <SnippetId entityId={entityId ?? ""} />
         </div>
       </div>
     </div>
