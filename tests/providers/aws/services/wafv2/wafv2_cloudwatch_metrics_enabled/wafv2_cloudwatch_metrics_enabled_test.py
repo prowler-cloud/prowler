@@ -183,12 +183,12 @@ class Test_wafv2_cloudwatch_metrics_enabled:
             check = wafv2_cloudwatch_metrics_enabled()
             result = check.execute()
 
-            expected_status_extended = f"AWS WAFv2 Web ACL {waf["Id"]} does not have CloudWatch Metrics enabled in all rule groups and rules. Non compliant resources are:"
-            expected_status_extended += " Rules: rule-off."
-
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert result[0].status_extended == expected_status_extended
+            assert (
+                result[0].status_extended
+                == f"AWS WAFv2 Web ACL {waf["Id"]} does not have CloudWatch Metrics enabled in all rule groups and rules. Non compliant resources are: Rules: rule-off."
+            )
             assert result[0].resource_id == waf["Id"]
             assert result[0].resource_arn == waf["ARN"]
             assert result[0].region == AWS_REGION_US_EAST_1
