@@ -2,6 +2,7 @@ import os
 import pathlib
 from datetime import datetime
 from re import fullmatch
+from typing import Optional
 
 from boto3 import client
 from boto3.session import Session
@@ -24,6 +25,7 @@ from prowler.providers.aws.config import (
     ROLE_SESSION_NAME,
 )
 from prowler.providers.aws.exceptions.exceptions import (
+    AWSAccessKeyIDInvalid,
     AWSArgumentTypeValidationError,
     AWSAssumeRoleError,
     AWSClientError,
@@ -35,6 +37,7 @@ from prowler.providers.aws.exceptions.exceptions import (
     AWSIAMRoleARNServiceNotIAMnorSTS,
     AWSNoCredentialsError,
     AWSProfileNotFoundError,
+    AWSSecretAccessKeyInvalid,
     AWSSetUpSessionError,
 )
 from prowler.providers.aws.lib.arn.arn import parse_iam_credentials_arn
@@ -86,6 +89,9 @@ class AwsProvider(Provider):
         resource_arn: list[str] = [],
         audit_config: dict = {},
         fixer_config: dict = {},
+        aws_access_key_id: str = None,
+        aws_secret_access_key: str = None,
+        aws_session_token: Optional[str] = None,
     ):
         """
         Initializes the AWS provider.
@@ -105,6 +111,9 @@ class AwsProvider(Provider):
             - resource_arn: A list of ARNs of the resources to audit.
             - audit_config: The audit configuration.
             - fixer_config: The fixer configuration.
+            - aws_access_key_id: The AWS access key ID.
+            - aws_secret_access_key: The AWS secret access key.
+            - aws_session_token: The AWS session token, optional.
 
         Raises:
             - ArgumentTypeError: If the input MFA ARN is invalid.
@@ -119,7 +128,13 @@ class AwsProvider(Provider):
         logger.info("Generating original session ...")
 
         # Configure the initial AWS Session using the local credentials: profile or environment variables
-        aws_session = self.setup_session(mfa, profile)
+        aws_session = self.setup_session(
+            mfa=mfa,
+            profile=profile,
+            aws_access_key_id=aws_access_key_id,
+            aws_secret_access_key=aws_secret_access_key,
+            aws_session_token=aws_session_token,
+        )
         session_config = self.set_session_config(retries_max_attempts)
         # Current session and the original session points to the same session object until we get a new one, if needed
         self._session = AWSSession(
@@ -423,17 +438,29 @@ class AwsProvider(Provider):
     def setup_session(
         mfa: bool = False,
         profile: str = None,
+        aws_access_key_id: str = None,
+        aws_secret_access_key: str = None,
+        aws_session_token: Optional[str] = None,
     ) -> Session:
         try:
-            logger.info("Creating original session ...")
+            logger.debug("Creating original session ...")
+
+            session_arguments = {
+                "profile_name": profile,
+                "aws_access_key_id": aws_access_key_id,
+                "aws_secret_access_key": aws_secret_access_key,
+                "aws_session_token": aws_session_token,
+            }
+
             if mfa:
+                sts_client = client("sts", **session_arguments)
+
                 mfa_info = AwsProvider.input_role_mfa_token_and_code()
                 # TODO: validate MFA ARN here
                 get_session_token_arguments = {
                     "SerialNumber": mfa_info.arn,
                     "TokenCode": mfa_info.totp,
                 }
-                sts_client = client("sts")
                 session_credentials = sts_client.get_session_token(
                     **get_session_token_arguments
                 )
@@ -445,12 +472,11 @@ class AwsProvider(Provider):
                     aws_session_token=session_credentials["Credentials"][
                         "SessionToken"
                     ],
+                    # Do we really need the profile name here? I think not since we are getting a session token with either the profile or the static credentials
                     profile_name=profile,
                 )
             else:
-                return Session(
-                    profile_name=profile,
-                )
+                return Session(**session_arguments)
         except Exception as error:
             logger.critical(
                 f"AWSSetUpSessionError[{error.__traceback__.tb_lineno}]: {error}"
@@ -939,6 +965,26 @@ class AwsProvider(Provider):
                 arn=ARN(caller_identity.get("Arn")),
                 region=aws_region,
             )
+        except ClientError as client_error:
+            logger.error(
+                f"{client_error.__class__.__name__}[{client_error.__traceback__.tb_lineno}]: {client_error}"
+            )
+            if client_error.response["Error"]["Code"] == "InvalidClientTokenId":
+                raise AWSAccessKeyIDInvalid(
+                    original_exception=client_error,
+                    file=pathlib.Path(__file__).name,
+                )
+            elif client_error.response["Error"]["Code"] == "SignatureDoesNotMatch":
+                raise AWSSecretAccessKeyInvalid(
+                    original_exception=client_error,
+                    file=pathlib.Path(__file__).name,
+                )
+            else:
+                raise AWSClientError(
+                    original_exception=client_error,
+                    file=pathlib.Path(__file__).name,
+                )
+
         except Exception as error:
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -955,6 +1001,9 @@ class AwsProvider(Provider):
         external_id: str = None,
         mfa_enabled: bool = False,
         raise_on_exception: bool = True,
+        aws_access_key_id: str = None,
+        aws_secret_access_key: str = None,
+        aws_session_token: Optional[str] = None,
     ) -> Connection:
         """
         Test the connection to AWS with one of the Boto3 credentials methods.
@@ -968,6 +1017,9 @@ class AwsProvider(Provider):
             external_id (str): The external ID to use when assuming the role.
             mfa_enabled (bool): Whether MFA (Multi-Factor Authentication) is enabled.
             raise_on_exception (bool): Whether to raise an exception if an error occurs.
+            aws_access_key_id (str): The AWS access key ID to use for the session.
+            aws_secret_access_key (str): The AWS secret access key to use for the session.
+            aws_session_token (str): The AWS session token to use for the session. Optional.
 
         Returns:
             Connection: An object tha contains the result of the test connection operation.
@@ -994,9 +1046,17 @@ class AwsProvider(Provider):
             Connection(is_connected=False, Error=ProfileNotFound('The config profile (not-found) could not be found'))
             >>> AwsProvider.test_connection(raise_on_exception=False))
             Connection(is_connected=False, Error=NoCredentialsError('Unable to locate credentials'))
+            >>> AwsProvider.test_connection(aws_access_key_id="XXXXXXXX", aws_secret_access_key="XXXXXXXX", raise_on_exception=False))
+            Connection(is_connected=True, Error=None))
         """
         try:
-            session = AwsProvider.setup_session(mfa_enabled, profile)
+            session = AwsProvider.setup_session(
+                mfa=mfa_enabled,
+                profile=profile,
+                aws_access_key_id=aws_access_key_id,
+                aws_secret_access_key=aws_secret_access_key,
+                aws_session_token=aws_session_token,
+            )
 
             if role_arn:
                 session_duration = validate_session_duration(session_duration)
@@ -1021,8 +1081,7 @@ class AwsProvider(Provider):
                     profile_name=profile,
                 )
 
-            sts_client = AwsProvider.create_sts_session(session, aws_region)
-            _ = sts_client.get_caller_identity()
+            _ = AwsProvider.validate_credentials(session, aws_region)
             return Connection(
                 is_connected=True,
             )
@@ -1112,6 +1171,18 @@ class AwsProvider(Provider):
                     original_exception=no_credentials_error,
                 ) from no_credentials_error
             return Connection(error=no_credentials_error)
+
+        except AWSAccessKeyIDInvalid as access_key_id_invalid_error:
+            logger.error(str(access_key_id_invalid_error))
+            if raise_on_exception:
+                raise access_key_id_invalid_error
+            return Connection(error=access_key_id_invalid_error)
+
+        except AWSSecretAccessKeyInvalid as secret_access_key_invalid_error:
+            logger.error(str(secret_access_key_invalid_error))
+            if raise_on_exception:
+                raise secret_access_key_invalid_error
+            return Connection(error=secret_access_key_invalid_error)
 
         except Exception as error:
             logger.critical(

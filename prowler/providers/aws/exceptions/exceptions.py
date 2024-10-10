@@ -57,6 +57,14 @@ class AWSBaseException(ProwlerException):
             "message": "AWS assume role error",
             "remediation": "Check the AWS assume role configuration and ensure it is properly set up, please visit https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/aws/role-assumption/ and https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_terms-and-concepts.html#iam-term-role-session-name",
         },
+        (1915, "AWSAccessKeyIDInvalid"): {
+            "message": "AWS Access Key ID or Session Token is invalid",
+            "remediation": "Check your AWS Access Key ID or Session Token and ensure it is valid.",
+        },
+        (1916, "AWSSecretAccessKeyInvalid"): {
+            "message": "AWS Secret Access Key is invalid",
+            "remediation": "Check your AWS Secret Access Key and signing method and ensure it is valid.",
+        },
     }
 
     def __init__(self, code, file=None, original_exception=None, message=None):
@@ -174,4 +182,18 @@ class AWSAssumeRoleError(AWSBaseException):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             1914, file=file, original_exception=original_exception, message=message
+        )
+
+
+class AWSAccessKeyIDInvalid(AWSBaseException):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            1915, file=file, original_exception=original_exception, message=message
+        )
+
+
+class AWSSecretAccessKeyInvalid(AWSBaseException):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            1916, file=file, original_exception=original_exception, message=message
         )
