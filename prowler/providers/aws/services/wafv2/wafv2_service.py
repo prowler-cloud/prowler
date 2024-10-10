@@ -16,6 +16,8 @@ class WAFv2(AWSService):
         self.web_acls = {}
         self._list_web_acls_global()
         self.__threading_call__(self._list_web_acls_regional)
+        self.__threading_call__(self._list_rule_groups, self.web_acls.values())
+        self.__threading_call__(self._get_rule_group, self.web_acls.values())
         self.__threading_call__(self._get_web_acl, self.web_acls.values())
         self.__threading_call__(
             self._list_resources_for_web_acl, self.web_acls.values()
@@ -66,6 +68,51 @@ class WAFv2(AWSService):
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _list_rule_groups(self, acl):
+        logger.info("WAFv2 - Listing Rule Groups...")
+        try:
+            rule_groups = (
+                self.regional_clients[acl.region]
+                .list_rule_groups(Scope=acl.scope.value)
+                .get("RuleGroups", [])
+            )
+            for rule_group in rule_groups:
+                name = rule_group.get("Name", "")
+                id = rule_group.get("Id", "")
+                arn = rule_group.get("ARN", "")
+                acl.rule_groups.append(
+                    RuleGroup(name=name, id=id, arn=arn, scope=acl.scope)
+                )
+
+        except Exception as error:
+            logger.error(
+                f"{acl.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _get_rule_group(self, acl):
+        logger.info("WAFv2 - Getting Rule Group...")
+        try:
+            for rule_group in acl.rule_groups:
+                get_rule_group = (
+                    self.regional_clients[acl.region]
+                    .get_rule_group(
+                        Name=rule_group.name,
+                        Id=rule_group.id,
+                        Scope=rule_group.scope.value,
+                        ARN=rule_group.arn,
+                    )
+                    .get("RuleGroup", {})
+                )
+
+                rule_group.cloudwatch_metrics_enabled = get_rule_group.get(
+                    "VisibilityConfig", {}
+                ).get("CloudWatchMetricsEnabled", False)
+
+        except Exception as error:
+            logger.error(
+                f"{acl.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
     def _get_logging_configuration(self, acl):
@@ -119,14 +166,14 @@ class WAFv2(AWSService):
                 f"{acl.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def _get_web_acl(self, web_acl: str):
+    def _get_web_acl(self, acl: str):
         logger.info("WAFv2 - Getting Web ACL...")
         try:
-            scope = web_acl.scope.value
-            get_web_acl = self.regional_clients[web_acl.region].get_web_acl(
-                Name=web_acl.name, Scope=scope, Id=web_acl.id
+            scope = acl.scope.value
+            get_web_acl = self.regional_clients[acl.region].get_web_acl(
+                Name=acl.name, Scope=scope, Id=acl.id
             )
-            # Pre-process rule groups
+            # Pre-Process Firewall Manager Rule Groups
             try:
                 pre_rule_groups = get_web_acl.get("WebACL", {}).get(
                     "PreProcessFirewallManagerRuleGroups", []
@@ -136,16 +183,18 @@ class WAFv2(AWSService):
                     metrics_enabled = group.get("VisibilityConfig", {}).get(
                         "CloudWatchMetricsEnabled", False
                     )
-                    web_acl.pre_process_firewall_rule_groups.append(
-                        RuleGroup(name=name, cloudwatch_metrics_enabled=metrics_enabled)
+                    acl.pre_process_firewall_rule_groups.append(
+                        FirewallManagerRuleGroup(
+                            name=name, cloudwatch_metrics_enabled=metrics_enabled
+                        )
                     )
 
             except Exception as error:
                 logger.warning(
-                    f"{web_acl.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    f"{acl.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
-            # Post-process rule groups
+            # Post-Process Firewall Manager Rule Groups
             try:
                 post_rule_groups = get_web_acl.get("WebACL", {}).get(
                     "PostProcessFirewallManagerRuleGroups", []
@@ -155,13 +204,15 @@ class WAFv2(AWSService):
                     metrics_enabled = group.get("VisibilityConfig", {}).get(
                         "CloudWatchMetricsEnabled", False
                     )
-                    web_acl.post_process_firewall_rule_groups.append(
-                        RuleGroup(name=name, cloudwatch_metrics_enabled=metrics_enabled)
+                    acl.post_process_firewall_rule_groups.append(
+                        FirewallManagerRuleGroup(
+                            name=name, cloudwatch_metrics_enabled=metrics_enabled
+                        )
                     )
 
             except Exception as error:
                 logger.warning(
-                    f"{web_acl.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    f"{acl.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
             # Rules
@@ -172,17 +223,17 @@ class WAFv2(AWSService):
                     metrics_enabled = rule.get("VisibilityConfig", {}).get(
                         "CloudWatchMetricsEnabled", False
                     )
-                    web_acl.rules.append(
+                    acl.rules.append(
                         Rule(name=name, cloudwatch_metrics_enabled=metrics_enabled)
                     )
             except Exception as error:
                 logger.warning(
-                    f"{web_acl.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    f"{acl.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
         except Exception as error:
             logger.error(
-                f"{web_acl.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{acl.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
     def _list_tags(self, resource: any):
@@ -215,6 +266,16 @@ class Rule(BaseModel):
 
 
 class RuleGroup(BaseModel):
+    """Model representing a rule group for the Web ACL."""
+
+    name: str
+    id: str
+    arn: str
+    scope: Scope = Scope.REGIONAL
+    cloudwatch_metrics_enabled: bool = False
+
+
+class FirewallManagerRuleGroup(BaseModel):
     """Model representing a rule group for the Web ACL."""
 
     name: str

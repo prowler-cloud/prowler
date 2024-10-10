@@ -202,8 +202,129 @@ def mock_make_api_call(self, operation_name, kwarg):
                     },
                 }
             }
+    if operation_name == "ListRuleGroups":
+        if kwarg["Scope"] == "CLOUDFRONT":
+            return {
+                "RuleGroups": [
+                    {
+                        "Name": "test-rg-on",
+                    }
+                ]
+            }
+    if operation_name == "GetRuleGroup":
+        if kwarg["Name"] == "test-rg-on":
+            return {
+                "RuleGroup": {
+                    "Name": "test-rg-on",
+                    "Id": "rule-group-test",
+                    "ARN": f"arn:aws:wafv2:{AWS_REGION_US_EAST_1}:123456789012:regional/rulegroup/test-rg-on",
+                    "Rules": [
+                        {
+                            "Name": "test-rule-group",
+                            "Priority": 1,
+                            "Statement": {
+                                "ByteMatchStatement": {
+                                    "SearchString": "test",
+                                    "FieldToMatch": {"UriPath": {}},
+                                    "TextTransformations": [
+                                        {"Type": "NONE", "Priority": 0}
+                                    ],
+                                    "PositionalConstraint": "CONTAINS",
+                                }
+                            },
+                            "VisibilityConfig": {
+                                "SampledRequestsEnabled": True,
+                                "CloudWatchMetricsEnabled": True,
+                                "MetricName": "web-acl-test-metric",
+                            },
+                        }
+                    ],
+                    "VisibilityConfig": {
+                        "SampledRequestsEnabled": True,
+                        "CloudWatchMetricsEnabled": True,
+                        "MetricName": "web-acl-test-metric",
+                    },
+                }
+            }
+        elif kwarg["Name"] == "test-rg-off":
+            return {
+                "RuleGroup": {
+                    "Name": "test-rule-group",
+                    "Rules": [
+                        {
+                            "Name": "rule-off",
+                            "Priority": 1,
+                            "Statement": {
+                                "ByteMatchStatement": {
+                                    "SearchString": "test",
+                                    "FieldToMatch": {"UriPath": {}},
+                                    "TextTransformations": [
+                                        {"Type": "NONE", "Priority": 0}
+                                    ],
+                                    "PositionalConstraint": "CONTAINS",
+                                }
+                            },
+                            "VisibilityConfig": {
+                                "SampledRequestsEnabled": True,
+                                "CloudWatchMetricsEnabled": False,
+                                "MetricName": "web-acl-test-metric",
+                            },
+                        }
+                    ],
+                }
+            }
 
     # If we don't want to patch the API call
+    return orig(self, operation_name, kwarg)
+
+
+def mock_make_api_call_2(self, operation_name, kwarg):
+    if operation_name == "ListResourcesForWebACL":
+        return {"ResourceArns": []}
+    if operation_name == "ListRuleGroups":
+        if kwarg["Scope"] == "CLOUDFRONT":
+            return {
+                "RuleGroups": [
+                    {
+                        "Name": "test-rg-off",
+                    }
+                ]
+            }
+    if operation_name == "GetRuleGroup":
+        if kwarg["Name"] == "test-rg-off":
+            return {
+                "RuleGroup": {
+                    "Name": "test-rg-off",
+                    "Id": "rule-group-test",
+                    "ARN": f"arn:aws:wafv2:{AWS_REGION_US_EAST_1}:123456789012:regional/rulegroup/test-rg-on",
+                    "Rules": [
+                        {
+                            "Name": "test-rule-group",
+                            "Priority": 1,
+                            "Statement": {
+                                "ByteMatchStatement": {
+                                    "SearchString": "test",
+                                    "FieldToMatch": {"UriPath": {}},
+                                    "TextTransformations": [
+                                        {"Type": "NONE", "Priority": 0}
+                                    ],
+                                    "PositionalConstraint": "CONTAINS",
+                                }
+                            },
+                            "VisibilityConfig": {
+                                "SampledRequestsEnabled": True,
+                                "CloudWatchMetricsEnabled": False,
+                                "MetricName": "web-acl-test-metric",
+                            },
+                        }
+                    ],
+                    "VisibilityConfig": {
+                        "SampledRequestsEnabled": True,
+                        "CloudWatchMetricsEnabled": False,
+                        "MetricName": "web-acl-test-metric",
+                    },
+                }
+            }
     return orig(self, operation_name, kwarg)
 
 
@@ -232,7 +353,7 @@ class Test_wafv2_cloudwatch_metrics_enabled:
             assert len(result) == 0
 
     @mock_aws
-    def test_no_web_acl_rules(self):
+    def test_no_web_acl_rules_or_rule_groups(self):
         wafv2_client = client("wafv2", region_name=AWS_REGION_US_EAST_1)
         wafv2_client.create_web_acl(
             Name="web-acl-test",
@@ -386,8 +507,102 @@ class Test_wafv2_cloudwatch_metrics_enabled:
             check = wafv2_cloudwatch_metrics_enabled()
             result = check.execute()
 
-            expected_status_extended = f"AWS WAFv2 Web ACL {waf["Id"]} does not have CloudWatch Metrics enabled in all rule groups and rules.\n\t\t\tNon compliant reources are:"
+            expected_status_extended = f"AWS WAFv2 Web ACL {waf["Id"]} does not have CloudWatch Metrics enabled in all rule groups and rules.\n\t\t\tNon compliant resources are:"
             expected_status_extended += "\n\t\t\t\t· Rules: rule-off."
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert result[0].status_extended == expected_status_extended
+            assert result[0].resource_id == waf["Id"]
+            assert result[0].resource_arn == waf["ARN"]
+            assert result[0].region == AWS_REGION_US_EAST_1
+            assert result[0].resource_tags == [{"Key": "Name", "Value": "web-acl-test"}]
+
+    @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
+    @mock_aws
+    def test_web_acl_metric_in_rule_groups(self):
+        wafv2_client = client("wafv2", region_name=AWS_REGION_US_EAST_1)
+        waf = wafv2_client.create_web_acl(
+            Name="test-rg-on",
+            Scope="CLOUDFRONT",
+            DefaultAction={"Allow": {}},
+            VisibilityConfig={
+                "SampledRequestsEnabled": True,
+                "CloudWatchMetricsEnabled": False,
+                "MetricName": "web-acl-test-metric",
+            },
+            Tags=[{"Key": "Name", "Value": "web-acl-test"}],
+        )
+        waf = waf["Summary"]
+
+        from prowler.providers.aws.services.wafv2.wafv2_service import WAFv2
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.wafv2.wafv2_cloudwatch_metrics_enabled.wafv2_cloudwatch_metrics_enabled.wafv2_client",
+            new=WAFv2(aws_provider),
+        ):
+            # Test Check
+            from prowler.providers.aws.services.wafv2.wafv2_cloudwatch_metrics_enabled.wafv2_cloudwatch_metrics_enabled import (
+                wafv2_cloudwatch_metrics_enabled,
+            )
+
+            check = wafv2_cloudwatch_metrics_enabled()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == f"AWS WAFv2 Web ACL {waf["Id"]} does have CloudWatch Metrics enabled in all rule groups and rules."
+            )
+            assert result[0].resource_id == waf["Id"]
+            assert result[0].resource_arn == waf["ARN"]
+            assert result[0].region == AWS_REGION_US_EAST_1
+            assert result[0].resource_tags == [{"Key": "Name", "Value": "web-acl-test"}]
+
+    @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
+    @mock_aws
+    def test_no_metric_in_rule_groups(self):
+        wafv2_client = client("wafv2", region_name=AWS_REGION_US_EAST_1)
+        waf = wafv2_client.create_web_acl(
+            Name="test-rg-off",
+            Scope="CLOUDFRONT",
+            DefaultAction={"Allow": {}},
+            VisibilityConfig={
+                "SampledRequestsEnabled": True,
+                "CloudWatchMetricsEnabled": False,
+                "MetricName": "web-acl-test-metric",
+            },
+            Tags=[{"Key": "Name", "Value": "web-acl-test"}],
+        )
+        waf = waf["Summary"]
+
+        from prowler.providers.aws.services.wafv2.wafv2_service import WAFv2
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.wafv2.wafv2_cloudwatch_metrics_enabled.wafv2_cloudwatch_metrics_enabled.wafv2_client",
+            new=WAFv2(aws_provider),
+        ):
+            # Test Check
+            from prowler.providers.aws.services.wafv2.wafv2_cloudwatch_metrics_enabled.wafv2_cloudwatch_metrics_enabled import (
+                wafv2_cloudwatch_metrics_enabled,
+            )
+
+            check = wafv2_cloudwatch_metrics_enabled()
+            result = check.execute()
+
+            expected_status_extended = f"AWS WAFv2 Web ACL {waf["Id"]} does not have CloudWatch Metrics enabled in all rule groups and rules.\n\t\t\tNon compliant resources are:"
+            expected_status_extended += "\n\t\t\t\t· Rule Groups: test-rg-off."
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -480,9 +695,9 @@ class Test_wafv2_cloudwatch_metrics_enabled:
             check = wafv2_cloudwatch_metrics_enabled()
             result = check.execute()
 
-            expected_status_extended = f"AWS WAFv2 Web ACL {waf["Id"]} does not have CloudWatch Metrics enabled in all rule groups and rules.\n\t\t\tNon compliant reources are:"
+            expected_status_extended = f"AWS WAFv2 Web ACL {waf["Id"]} does not have CloudWatch Metrics enabled in all rule groups and rules.\n\t\t\tNon compliant resources are:"
             expected_status_extended += (
-                "\n\t\t\t\t· Pre-Process Rule Groups: pre-rg-off."
+                "\n\t\t\t\t· Pre-Process Firewall Rule Groups: pre-rg-off."
             )
 
             assert len(result) == 1
@@ -576,9 +791,9 @@ class Test_wafv2_cloudwatch_metrics_enabled:
             check = wafv2_cloudwatch_metrics_enabled()
             result = check.execute()
 
-            expected_status_extended = f"AWS WAFv2 Web ACL {waf["Id"]} does not have CloudWatch Metrics enabled in all rule groups and rules.\n\t\t\tNon compliant reources are:"
+            expected_status_extended = f"AWS WAFv2 Web ACL {waf["Id"]} does not have CloudWatch Metrics enabled in all rule groups and rules.\n\t\t\tNon compliant resources are:"
             expected_status_extended += (
-                "\n\t\t\t\t· Post-Process Rule Groups: post-rg-off."
+                "\n\t\t\t\t· Post-Process Firewall Rule Groups: post-rg-off."
             )
 
             assert len(result) == 1
