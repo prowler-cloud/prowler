@@ -34,6 +34,7 @@ from prowler.providers.aws.exceptions.exceptions import (
     AWSIAMRoleARNPartitionEmpty,
     AWSIAMRoleARNRegionNotEmtpy,
     AWSIAMRoleARNServiceNotIAMnorSTS,
+    AWSInvalidAccountCredentials,
     AWSNoCredentialsError,
     AWSProfileNotFoundError,
     AWSSecretAccessKeyInvalid,
@@ -1005,6 +1006,7 @@ class AwsProvider(Provider):
         aws_access_key_id: str = None,
         aws_secret_access_key: str = None,
         aws_session_token: Optional[str] = None,
+        provider_id: Optional[str] = None,
     ) -> Connection:
         """
         Test the connection to AWS with one of the Boto3 credentials methods.
@@ -1021,6 +1023,7 @@ class AwsProvider(Provider):
             aws_access_key_id (str): The AWS access key ID to use for the session.
             aws_secret_access_key (str): The AWS secret access key to use for the session.
             aws_session_token (str): The AWS session token to use for the session. Optional.
+            provider_id (str): The AWS account ID to validate that the provided credentials belongs to it.
 
         Returns:
             Connection: An object tha contains the result of the test connection operation.
@@ -1048,6 +1051,8 @@ class AwsProvider(Provider):
             >>> AwsProvider.test_connection(raise_on_exception=False))
             Connection(is_connected=False, Error=NoCredentialsError('Unable to locate credentials'))
             >>> AwsProvider.test_connection(aws_access_key_id="XXXXXXXX", aws_secret_access_key="XXXXXXXX", raise_on_exception=False))
+            Connection(is_connected=True, Error=None))
+            >>> AwsProvider.test_connection(aws_access_key_id="XXXXXXXX", aws_secret_access_key="XXXXXXXX", provider_id="111122223333", raise_on_exception=False))
             Connection(is_connected=True, Error=None))
         """
         try:
@@ -1082,7 +1087,11 @@ class AwsProvider(Provider):
                     profile_name=profile,
                 )
 
-            _ = AwsProvider.validate_credentials(session, aws_region)
+            caller_identity = AwsProvider.validate_credentials(session, aws_region)
+            # Do an extra validation if the AWS account ID is provided
+            if provider_id and caller_identity.account != provider_id:
+                raise AWSInvalidAccountCredentials(file=pathlib.Path(__file__).name)
+
             return Connection(
                 is_connected=True,
             )
@@ -1184,6 +1193,12 @@ class AwsProvider(Provider):
             if raise_on_exception:
                 raise secret_access_key_invalid_error
             return Connection(error=secret_access_key_invalid_error)
+
+        except AWSInvalidAccountCredentials as invalid_account_credentials_error:
+            logger.error(str(invalid_account_credentials_error))
+            if raise_on_exception:
+                raise invalid_account_credentials_error
+            return Connection(error=invalid_account_credentials_error)
 
         except Exception as error:
             logger.critical(
