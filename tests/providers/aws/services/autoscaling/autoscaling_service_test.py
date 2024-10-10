@@ -62,6 +62,7 @@ class Test_AutoScaling_Service:
             KeyName="the_keys",
             SecurityGroups=["default", "default2"],
             UserData="DB_PASSWORD=foobar123",
+            AssociatePublicIpAddress=True,
         )
         autoscaling_client.create_launch_configuration(
             LaunchConfigurationName="tester2",
@@ -82,6 +83,7 @@ class Test_AutoScaling_Service:
             == "DB_PASSWORD=foobar123"
         )
         assert autoscaling.launch_configurations[0].image_id == "ami-12c6146b"
+        assert autoscaling.launch_configurations[0].public_ip
         assert autoscaling.launch_configurations[1].image_id == "ami-12c6146b"
         assert autoscaling.launch_configurations[1].name == "tester2"
 
@@ -158,6 +160,7 @@ class Test_AutoScaling_Service:
         assert autoscaling.groups[0].target_groups == [
             target_group["TargetGroups"][0]["TargetGroupArn"]
         ]
+        assert autoscaling.groups[0].launch_configuration_name == "test"
 
     # Test Application AutoScaling Describe Scalable Targets
     @mock_aws
