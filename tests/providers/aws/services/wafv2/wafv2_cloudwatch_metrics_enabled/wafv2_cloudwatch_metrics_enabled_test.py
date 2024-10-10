@@ -122,7 +122,7 @@ class Test_wafv2_cloudwatch_metrics_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"AWS WAFv2 Web ACL {waf["Id"]} does have CloudWatch Metrics enabled in all rule groups and rules."
+                == f"AWS WAFv2 Web ACL {waf['Id']} does have CloudWatch Metrics enabled in all rule groups and rules."
             )
             assert result[0].resource_id == waf["Id"]
             assert result[0].resource_arn == waf["ARN"]
@@ -187,7 +187,7 @@ class Test_wafv2_cloudwatch_metrics_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"AWS WAFv2 Web ACL {waf["Id"]} does not have CloudWatch Metrics enabled in all rule groups and rules. Non compliant resources are: Rules: rule-off."
+                == f"AWS WAFv2 Web ACL {waf['Id']} does not have CloudWatch Metrics enabled in all rule groups and rules. Non compliant resources are: Rules: rule-off."
             )
             assert result[0].resource_id == waf["Id"]
             assert result[0].resource_arn == waf["ARN"]
@@ -249,7 +249,7 @@ class Test_wafv2_cloudwatch_metrics_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"AWS WAFv2 Web ACL {waf["Id"]} does have CloudWatch Metrics enabled in all rule groups and rules."
+                == f"AWS WAFv2 Web ACL {waf['Id']} does have CloudWatch Metrics enabled in all rule groups and rules."
             )
             assert result[0].resource_id == waf["Id"]
             assert result[0].resource_arn == waf["ARN"]
@@ -311,7 +311,7 @@ class Test_wafv2_cloudwatch_metrics_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"AWS WAFv2 Web ACL {waf["Id"]} does not have CloudWatch Metrics enabled in all rule groups and rules. Non compliant resources are: Rule Groups: rule-group-off."
+                == f"AWS WAFv2 Web ACL {waf['Id']} does not have CloudWatch Metrics enabled in all rule groups and rules. Non compliant resources are: Rule Groups: rule-group-off."
             )
             assert result[0].resource_id == waf["Id"]
             assert result[0].resource_arn == waf["ARN"]
