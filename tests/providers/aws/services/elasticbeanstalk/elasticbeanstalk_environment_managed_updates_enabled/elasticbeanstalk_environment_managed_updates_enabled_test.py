@@ -50,7 +50,7 @@ def mock_make_api_call_v2(self, operation_name, kwarg):
     return make_api_call(self, operation_name, kwarg)
 
 
-class Test_elasticbeanstalk_managed_platform_updates_enabled:
+class Test_elasticbeanstalk_environment_managed_updates_enabled:
     @mock_aws
     def test_elasticbeanstalk_no_environments(self):
         elasticbeanstalk_client = client(
@@ -64,14 +64,14 @@ class Test_elasticbeanstalk_managed_platform_updates_enabled:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.elasticbeanstalk.elasticbeanstalk_managed_platform_updates_enabled.elasticbeanstalk_managed_platform_updates_enabled.elasticbeanstalk_client",
+            "prowler.providers.aws.services.elasticbeanstalk.elasticbeanstalk_environment_managed_updates_enabled.elasticbeanstalk_environment_managed_updates_enabled.elasticbeanstalk_client",
             new=ElasticBeanstalk(aws_provider),
         ):
-            from prowler.providers.aws.services.elasticbeanstalk.elasticbeanstalk_managed_platform_updates_enabled.elasticbeanstalk_managed_platform_updates_enabled import (
-                elasticbeanstalk_managed_platform_updates_enabled,
+            from prowler.providers.aws.services.elasticbeanstalk.elasticbeanstalk_environment_managed_updates_enabled.elasticbeanstalk_environment_managed_updates_enabled import (
+                elasticbeanstalk_environment_managed_updates_enabled,
             )
 
-            check = elasticbeanstalk_managed_platform_updates_enabled()
+            check = elasticbeanstalk_environment_managed_updates_enabled()
             result = check.execute()
             assert len(result) == 0
 
@@ -93,20 +93,20 @@ class Test_elasticbeanstalk_managed_platform_updates_enabled:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.elasticbeanstalk.elasticbeanstalk_managed_platform_updates_enabled.elasticbeanstalk_managed_platform_updates_enabled.elasticbeanstalk_client",
+            "prowler.providers.aws.services.elasticbeanstalk.elasticbeanstalk_environment_managed_updates_enabled.elasticbeanstalk_environment_managed_updates_enabled.elasticbeanstalk_client",
             new=ElasticBeanstalk(aws_provider),
         ):
-            from prowler.providers.aws.services.elasticbeanstalk.elasticbeanstalk_managed_platform_updates_enabled.elasticbeanstalk_managed_platform_updates_enabled import (
-                elasticbeanstalk_managed_platform_updates_enabled,
+            from prowler.providers.aws.services.elasticbeanstalk.elasticbeanstalk_environment_managed_updates_enabled.elasticbeanstalk_environment_managed_updates_enabled import (
+                elasticbeanstalk_environment_managed_updates_enabled,
             )
 
-            check = elasticbeanstalk_managed_platform_updates_enabled()
+            check = elasticbeanstalk_environment_managed_updates_enabled()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "Elastic Beanstalk environment test-env has automated managed platform updates enabled."
+                == "Elastic Beanstalk environment test-env has managed platform updates enabled."
             )
             assert result[0].resource_id == environment["EnvironmentName"]
             assert result[0].resource_arn == environment["EnvironmentArn"]
@@ -130,20 +130,20 @@ class Test_elasticbeanstalk_managed_platform_updates_enabled:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.elasticbeanstalk.elasticbeanstalk_managed_platform_updates_enabled.elasticbeanstalk_managed_platform_updates_enabled.elasticbeanstalk_client",
+            "prowler.providers.aws.services.elasticbeanstalk.elasticbeanstalk_environment_managed_updates_enabled.elasticbeanstalk_environment_managed_updates_enabled.elasticbeanstalk_client",
             new=ElasticBeanstalk(aws_provider),
         ):
-            from prowler.providers.aws.services.elasticbeanstalk.elasticbeanstalk_managed_platform_updates_enabled.elasticbeanstalk_managed_platform_updates_enabled import (
-                elasticbeanstalk_managed_platform_updates_enabled,
+            from prowler.providers.aws.services.elasticbeanstalk.elasticbeanstalk_environment_managed_updates_enabled.elasticbeanstalk_environment_managed_updates_enabled import (
+                elasticbeanstalk_environment_managed_updates_enabled,
             )
 
-            check = elasticbeanstalk_managed_platform_updates_enabled()
+            check = elasticbeanstalk_environment_managed_updates_enabled()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Elastic Beanstalk environment test-env does not have automated managed platform updates enabled."
+                == "Elastic Beanstalk environment test-env does not have managed platform updates enabled."
             )
             assert result[0].resource_id == environment["EnvironmentName"]
             assert result[0].resource_arn == environment["EnvironmentArn"]

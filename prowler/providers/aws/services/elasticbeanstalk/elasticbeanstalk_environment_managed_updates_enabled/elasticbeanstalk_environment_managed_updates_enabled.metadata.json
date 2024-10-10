@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "elasticbeanstalk_managed_platform_updates_enabled",
+  "CheckID": "elasticbeanstalk_environment_managed_updates_enabled",
   "CheckTitle": "Elastic Beanstalk managed platform updates should be enabled",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices"

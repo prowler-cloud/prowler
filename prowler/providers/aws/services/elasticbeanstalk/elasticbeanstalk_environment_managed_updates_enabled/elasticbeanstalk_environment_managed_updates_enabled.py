@@ -4,7 +4,7 @@ from prowler.providers.aws.services.elasticbeanstalk.elasticbeanstalk_client imp
 )
 
 
-class elasticbeanstalk_managed_platform_updates_enabled(Check):
+class elasticbeanstalk_environment_managed_updates_enabled(Check):
     def execute(self):
         findings = []
         for environment in elasticbeanstalk_client.environments.values():
@@ -14,14 +14,11 @@ class elasticbeanstalk_managed_platform_updates_enabled(Check):
             report.resource_arn = environment.arn
             report.resource_tags = environment.tags
             report.status = "PASS"
-            report.status_extended = f"Elastic Beanstalk environment {environment.name} has automated managed platform updates enabled."
+            report.status_extended = f"Elastic Beanstalk environment {environment.name} has managed platform updates enabled."
 
-            if (
-                environment.managed_platform_updates is None
-                or environment.managed_platform_updates != "true"
-            ):
+            if environment.managed_platform_updates != "true":
                 report.status = "FAIL"
-                report.status_extended = f"Elastic Beanstalk environment {environment.name} does not have automated managed platform updates enabled."
+                report.status_extended = f"Elastic Beanstalk environment {environment.name} does not have managed platform updates enabled."
 
             findings.append(report)
 
