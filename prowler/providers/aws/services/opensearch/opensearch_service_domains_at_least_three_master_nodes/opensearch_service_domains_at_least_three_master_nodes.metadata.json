@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "opensearch_service_domains_at_least_three_master_nodes",
+  "CheckTitle": "Elasticsearch domains should be configured with at least three dedicated master nodes",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "elasticsearch",
+  "SubServiceName": "domain",
+  "ResourceIdTemplate": "arn:aws:es:{region}:{account-id}:domain/{domain-name}",
+  "Severity": "medium",
+  "ResourceType": "AwsElasticsearchDomain",
+  "Description": "This control checks whether Elasticsearch domains are configured with at least three dedicated primary nodes. This control fails if the domain does not use dedicated primary nodes. Using more than three primary nodes may not provide significant additional availability benefits, while incurring extra costs.",
+  "Risk": "Without at least three dedicated master nodes, the Elasticsearch domain's fault-tolerance and ability to handle cluster management operations during node failures may be compromised, leading to potential data unavailability.",
+  "RelatedUrl": "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/what-is.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws opensearch update-domain-config --domain-name <domain-name> --cluster-config DedicatedMasterEnabled=true,MasterInstanceCount=3",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/es-controls.html#es-7",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure Elasticsearch domains with at least three dedicated master nodes for high availability and cluster fault tolerance.",
+      "Url": "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/managedomains-configuration-changes.html"
+    }
+  },
+  "Categories": [
+    "redundancy"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
