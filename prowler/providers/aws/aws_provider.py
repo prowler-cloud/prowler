@@ -1005,7 +1005,7 @@ class AwsProvider(Provider):
         aws_access_key_id: str = None,
         aws_secret_access_key: str = None,
         aws_session_token: Optional[str] = None,
-        aws_account_id: Optional[str] = None,
+        provider_id: Optional[str] = None,
     ) -> Connection:
         """
         Test the connection to AWS with one of the Boto3 credentials methods.
@@ -1022,7 +1022,7 @@ class AwsProvider(Provider):
             aws_access_key_id (str): The AWS access key ID to use for the session.
             aws_secret_access_key (str): The AWS secret access key to use for the session.
             aws_session_token (str): The AWS session token to use for the session. Optional.
-            aws_account_id (str): The AWS account ID to validate that the provided credentials belongs to it.
+            provider_id (str): The AWS account ID to validate that the provided credentials belongs to it.
 
         Returns:
             Connection: An object tha contains the result of the test connection operation.
@@ -1050,6 +1050,8 @@ class AwsProvider(Provider):
             >>> AwsProvider.test_connection(raise_on_exception=False))
             Connection(is_connected=False, Error=NoCredentialsError('Unable to locate credentials'))
             >>> AwsProvider.test_connection(aws_access_key_id="XXXXXXXX", aws_secret_access_key="XXXXXXXX", raise_on_exception=False))
+            Connection(is_connected=True, Error=None))
+            >>> AwsProvider.test_connection(aws_access_key_id="XXXXXXXX", aws_secret_access_key="XXXXXXXX", provider_id="111122223333", raise_on_exception=False))
             Connection(is_connected=True, Error=None))
         """
         try:
@@ -1086,7 +1088,7 @@ class AwsProvider(Provider):
 
             caller_identity = AwsProvider.validate_credentials(session, aws_region)
             # Do an extra validation if the AWS account ID is provided
-            if aws_account_id and caller_identity.account != aws_account_id:
+            if provider_id and caller_identity.account != provider_id:
                 raise AWSInvalidAccountCredentials(file=pathlib.Path(__file__).name)
 
             return Connection(

@@ -1408,7 +1408,7 @@ aws:
             "aws_access_key_id": session_token["Credentials"]["AccessKeyId"],
             "aws_secret_access_key": session_token["Credentials"]["SecretAccessKey"],
             "aws_session_token": session_token["Credentials"]["SessionToken"],
-            "aws_account_id": AWS_ACCOUNT_NUMBER,
+            "provider_id": AWS_ACCOUNT_NUMBER,
         }
 
         connection = AwsProvider.test_connection(**session_credentials)
@@ -1426,7 +1426,7 @@ aws:
             "aws_access_key_id": session_token["Credentials"]["AccessKeyId"],
             "aws_secret_access_key": session_token["Credentials"]["SecretAccessKey"],
             "aws_session_token": session_token["Credentials"]["SessionToken"],
-            "aws_account_id": "111122223333",
+            "provider_id": "111122223333",
         }
 
         with raises(AWSIAMRoleARNInvalidResourceType) as exception:
@@ -1447,7 +1447,7 @@ aws:
             "aws_access_key_id": session_token["Credentials"]["AccessKeyId"],
             "aws_secret_access_key": session_token["Credentials"]["SecretAccessKey"],
             "aws_session_token": session_token["Credentials"]["SessionToken"],
-            "aws_account_id": "111122223333",
+            "provider_id": "111122223333",
         }
 
         connection = AwsProvider.test_connection(
