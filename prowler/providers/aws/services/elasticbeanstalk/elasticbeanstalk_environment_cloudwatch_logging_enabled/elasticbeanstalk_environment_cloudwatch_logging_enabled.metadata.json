@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
-  "CheckID": "elasticbeanstalk_cloudwatch_enabled",
-  "CheckTitle": "Elastic Beanstalk should stream logs to CloudWatch",
+  "CheckID": "elasticbeanstalk_environment_cloudwatch_logging_enabled",
+  "CheckTitle": "Elastic Beanstalk environment should stream logs to CloudWatch",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices"
   ],

@@ -4,7 +4,7 @@ from prowler.providers.aws.services.elasticbeanstalk.elasticbeanstalk_client imp
 )
 
 
-class elasticbeanstalk_cloudwatch_enabled(Check):
+class elasticbeanstalk_environment_cloudwatch_logging_enabled(Check):
     def execute(self):
         findings = []
         for environment in elasticbeanstalk_client.environments.values():
@@ -16,10 +16,7 @@ class elasticbeanstalk_cloudwatch_enabled(Check):
             report.status = "PASS"
             report.status_extended = f"Elastic Beanstalk environment {environment.name} is sending logs to CloudWatch Logs."
 
-            if (
-                environment.cloudwatch_stream_logs is None
-                or environment.cloudwatch_stream_logs != "true"
-            ):
+            if environment.cloudwatch_stream_logs != "true":
                 report.status = "FAIL"
                 report.status_extended = f"Elastic Beanstalk environment {environment.name} is not sending logs to CloudWatch Logs."
 

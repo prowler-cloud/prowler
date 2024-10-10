@@ -46,7 +46,7 @@ def mock_make_api_call(self, operation_name, kwarg):
     return make_api_call(self, operation_name, kwarg)
 
 
-class Test_elasticbeanstalk_cloudwatch_enabled:
+class Test_elasticbeanstalk_environment_cloudwatch_logging_enabled:
     @mock_aws
     def test_elasticbeanstalk_no_environments(self):
         elasticbeanstalk_client = client(
@@ -60,14 +60,14 @@ class Test_elasticbeanstalk_cloudwatch_enabled:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.elasticbeanstalk.elasticbeanstalk_cloudwatch_enabled.elasticbeanstalk_cloudwatch_enabled.elasticbeanstalk_client",
+            "prowler.providers.aws.services.elasticbeanstalk.elasticbeanstalk_environment_cloudwatch_logging_enabled.elasticbeanstalk_environment_cloudwatch_logging_enabled.elasticbeanstalk_client",
             new=ElasticBeanstalk(aws_provider),
         ):
-            from prowler.providers.aws.services.elasticbeanstalk.elasticbeanstalk_cloudwatch_enabled.elasticbeanstalk_cloudwatch_enabled import (
-                elasticbeanstalk_cloudwatch_enabled,
+            from prowler.providers.aws.services.elasticbeanstalk.elasticbeanstalk_environment_cloudwatch_logging_enabled.elasticbeanstalk_environment_cloudwatch_logging_enabled import (
+                elasticbeanstalk_environment_cloudwatch_logging_enabled,
             )
 
-            check = elasticbeanstalk_cloudwatch_enabled()
+            check = elasticbeanstalk_environment_cloudwatch_logging_enabled()
             result = check.execute()
             assert len(result) == 0
 
@@ -89,14 +89,14 @@ class Test_elasticbeanstalk_cloudwatch_enabled:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.elasticbeanstalk.elasticbeanstalk_cloudwatch_enabled.elasticbeanstalk_cloudwatch_enabled.elasticbeanstalk_client",
+            "prowler.providers.aws.services.elasticbeanstalk.elasticbeanstalk_environment_cloudwatch_logging_enabled.elasticbeanstalk_environment_cloudwatch_logging_enabled.elasticbeanstalk_client",
             new=ElasticBeanstalk(aws_provider),
         ):
-            from prowler.providers.aws.services.elasticbeanstalk.elasticbeanstalk_cloudwatch_enabled.elasticbeanstalk_cloudwatch_enabled import (
-                elasticbeanstalk_cloudwatch_enabled,
+            from prowler.providers.aws.services.elasticbeanstalk.elasticbeanstalk_environment_cloudwatch_logging_enabled.elasticbeanstalk_environment_cloudwatch_logging_enabled import (
+                elasticbeanstalk_environment_cloudwatch_logging_enabled,
             )
 
-            check = elasticbeanstalk_cloudwatch_enabled()
+            check = elasticbeanstalk_environment_cloudwatch_logging_enabled()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
@@ -126,14 +126,14 @@ class Test_elasticbeanstalk_cloudwatch_enabled:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.elasticbeanstalk.elasticbeanstalk_cloudwatch_enabled.elasticbeanstalk_cloudwatch_enabled.elasticbeanstalk_client",
+            "prowler.providers.aws.services.elasticbeanstalk.elasticbeanstalk_environment_cloudwatch_logging_enabled.elasticbeanstalk_environment_cloudwatch_logging_enabled.elasticbeanstalk_client",
             new=ElasticBeanstalk(aws_provider),
         ):
-            from prowler.providers.aws.services.elasticbeanstalk.elasticbeanstalk_cloudwatch_enabled.elasticbeanstalk_cloudwatch_enabled import (
-                elasticbeanstalk_cloudwatch_enabled,
+            from prowler.providers.aws.services.elasticbeanstalk.elasticbeanstalk_environment_cloudwatch_logging_enabled.elasticbeanstalk_environment_cloudwatch_logging_enabled import (
+                elasticbeanstalk_environment_cloudwatch_logging_enabled,
             )
 
-            check = elasticbeanstalk_cloudwatch_enabled()
+            check = elasticbeanstalk_environment_cloudwatch_logging_enabled()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
