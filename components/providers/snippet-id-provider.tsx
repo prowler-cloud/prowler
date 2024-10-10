@@ -5,9 +5,11 @@ import { CopyIcon, DoneIcon, IdIcon } from "../icons";
 
 interface SnippetIdProviderProps {
   providerId: string;
+  [key: string]: any;
 }
 export const SnippetIdProvider: React.FC<SnippetIdProviderProps> = ({
   providerId,
+  ...props
 }) => {
   return (
     <Snippet
@@ -19,6 +21,7 @@ export const SnippetIdProvider: React.FC<SnippetIdProviderProps> = ({
       hideSymbol
       copyIcon={<CopyIcon size={16} />}
       checkIcon={<DoneIcon size={16} />}
+      {...props}
     >
       <p className="flex items-center space-x-2">
         <IdIcon size={16} />

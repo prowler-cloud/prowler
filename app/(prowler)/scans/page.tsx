@@ -2,11 +2,7 @@ import { Spacer } from "@nextui-org/react";
 import { Suspense } from "react";
 
 import { getProviders } from "@/actions/providers";
-import {
-  FilterControls,
-  filterProviders,
-  filterScans,
-} from "@/components/filters";
+import { FilterControls, filterScans } from "@/components/filters";
 import { ColumnScans, SkeletonTableScans } from "@/components/scans/table";
 import { Header } from "@/components/ui";
 import { DataTable } from "@/components/ui/table";
@@ -27,13 +23,13 @@ export default async function Scans({
       <FilterControls search date providers />
       <Spacer y={4} />
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <div className="w-full">
+      <div className="grid grid-cols-12 items-end gap-4">
+        <div className="col-span-12 lg:col-span-4">
           <Suspense key={searchParamsKey} fallback={<SkeletonTableScans />}>
             <SSRDataTableProviders searchParams={searchParams} />
           </Suspense>
         </div>
-        <div className="w-full">
+        <div className="col-span-12 lg:col-span-8">
           <Suspense key={searchParamsKey} fallback={<SkeletonTableScans />}>
             <SSRDataTableScans searchParams={searchParams} />
           </Suspense>
@@ -66,7 +62,7 @@ const SSRDataTableProviders = async ({
       columns={ColumnScans}
       data={providersData?.data || []}
       metadata={providersData?.meta}
-      customFilters={filterProviders}
+      // customFilters={filterProviders}
     />
   );
 };

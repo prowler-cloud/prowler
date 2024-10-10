@@ -58,9 +58,11 @@ export function DataTable<TData, TValue>({
 
   return (
     <>
-      <div className="mb-6">
-        <DataTableFilterCustom filters={customFilters || []} />
-      </div>
+      {customFilters && (
+        <div className="mb-6">
+          <DataTableFilterCustom filters={customFilters || []} />
+        </div>
+      )}
       <div className="relative z-0 flex w-full flex-col justify-between gap-4 overflow-auto rounded-large bg-content1 p-4 shadow-small">
         <Table>
           <TableHeader>
