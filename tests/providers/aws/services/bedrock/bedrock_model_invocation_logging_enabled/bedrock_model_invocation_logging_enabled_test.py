@@ -28,7 +28,6 @@ class Test_bedrock_model_invocation_logging_enabled:
             "prowler.providers.aws.services.bedrock.bedrock_model_invocation_logging_enabled.bedrock_model_invocation_logging_enabled.bedrock_client",
             new=Bedrock(aws_provider),
         ):
-            # Test Check
             from prowler.providers.aws.services.bedrock.bedrock_model_invocation_logging_enabled.bedrock_model_invocation_logging_enabled import (
                 bedrock_model_invocation_logging_enabled,
             )
