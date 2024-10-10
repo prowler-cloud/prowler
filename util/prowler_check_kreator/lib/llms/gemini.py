@@ -5,6 +5,7 @@ import re
 import google.generativeai as genai
 
 from util.prowler_check_kreator.lib.metadata_types import (
+    get_metadata_placeholder_resource_type,
     get_metadata_valid_check_type,
     get_metadata_valid_resource_type,
 )
@@ -142,7 +143,7 @@ class Gemini:
             "The field CheckType should be filled following the format: 'namespace/category/classifier', where namespace, category, and classifier are the values from the following dict: ",
             json.dumps(get_metadata_valid_check_type(metadata["Provider"]), indent=2),
             "One example of a valid CheckType value is: 'Software and Configuration Checks/Vulnerabilities/CVE'. If you don't have a valid value for CheckType, you can leave it empty.",
-            "The field ResourceType must be one of the following values:",
+            f"The field ResourceType must be one of the following values (if there is not a valid value, you can put '{get_metadata_placeholder_resource_type(metadata["Provider"])}'): ",
             ", ".join(get_metadata_valid_resource_type(metadata["Provider"])),
             "If you don't have a valid value for ResourceType, you can leave it empty.",
             f"The field Category must be one or more of the following values: {', '.join(valid_prowler_categories)}.",
@@ -198,7 +199,6 @@ class Gemini:
         )
 
         # Add the removed fields back in the same order
-
         filled_metadata["Remediation"]["Code"]["NativeIaC"] = ""
         filled_metadata["Remediation"]["Code"]["Other"] = ""
         filled_metadata["Remediation"]["Code"]["Terraform"] = ""
@@ -214,5 +214,13 @@ class Gemini:
             if key == "Notes":
                 ordered_filled_metadata["DependsOn"] = []
                 ordered_filled_metadata["RelatedTo"] = []
+
+        # Check that resource type is valid
+        if filled_metadata["ResourceType"]:
+            valid_resource_types = get_metadata_valid_resource_type(
+                filled_metadata["Provider"]
+            )
+            if filled_metadata["ResourceType"] not in valid_resource_types:
+                ordered_filled_metadata["ResourceType"] = "Other"
 
         return ordered_filled_metadata

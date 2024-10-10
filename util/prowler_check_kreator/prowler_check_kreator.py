@@ -236,7 +236,7 @@ class ProwlerCheckKreator:
 
         user_input = (
             input(
-                "WARNING: This still in beta. The check generated may not have sense or you will have to add some parameters to the service\nDo you want to ask Gemini to fill the check now? If yes, type the reference check name and press enter. If not, press enter: "
+                "WARNING: This still in beta. The check generated may not have sense or you will have to add some parameters to the service\nDo you want to ask Gemini to fill the check now? If yes, type the reference check name and press enter. If not, press enter (it will be created with a standard template): "
             )
             .strip()
             .lower()
@@ -355,7 +355,7 @@ class ProwlerCheckKreator:
         if self._check_reference_name:
             user_input = (
                 input(
-                    "Do you want to ask Gemini to fill the test now (based on check provided as reference in the check creation)? Type 'yes'/'no' and press enter: "
+                    "Do you want to ask Gemini to fill the test now (based on check provided as reference in the check creation)? Type 'yes'/'no' and press enter (if not, it will be created with a standard template): "
                 )
                 .strip()
                 .lower()

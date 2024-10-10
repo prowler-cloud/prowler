@@ -221,3 +221,17 @@ def get_metadata_valid_resource_type(provider: str = "aws") -> set:
         }
 
     return valid_resource_types
+
+
+def get_metadata_placeholder_resource_type(provider: str = "aws") -> str:
+    """Get the placeholder for the resource type for the provider
+
+    Keyword arguments:
+    provider -- The provider of the service
+    """
+    placeholder = ""
+
+    if provider == "aws":
+        placeholder = "Other"
+
+    return placeholder
