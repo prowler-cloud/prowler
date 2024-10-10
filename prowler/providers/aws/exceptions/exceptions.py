@@ -185,14 +185,14 @@ class AWSAssumeRoleError(AWSBaseException):
         )
 
 
-class AWSAccessKeyIDInvalid(AWSBaseException):
+class AWSAccessKeyIDInvalid(AWSCredentialsError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             1915, file=file, original_exception=original_exception, message=message
         )
 
 
-class AWSSecretAccessKeyInvalid(AWSBaseException):
+class AWSSecretAccessKeyInvalid(AWSCredentialsError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             1916, file=file, original_exception=original_exception, message=message
