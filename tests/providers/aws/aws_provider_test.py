@@ -1429,7 +1429,7 @@ aws:
             "provider_id": "111122223333",
         }
 
-        with raises(AWSIAMRoleARNInvalidResourceType) as exception:
+        with raises(AWSInvalidAccountCredentials) as exception:
             AwsProvider.test_connection(**session_credentials)
 
         assert exception.type == AWSInvalidAccountCredentials
