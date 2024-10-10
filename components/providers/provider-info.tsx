@@ -1,6 +1,6 @@
 import React from "react";
 
-import { ConnectionIcon } from "../icons";
+import { ConnectionFalse, ConnectionPending, ConnectionTrue } from "../icons";
 import {
   AWSProviderBadge,
   AzureProviderBadge,
@@ -23,24 +23,24 @@ export const ProviderInfo: React.FC<ProviderInfoProps> = ({
     switch (connected) {
       case true:
         return (
-          <div className="flex items-center justify-center rounded-medium border border-system-success bg-system-success-lighter p-1">
-            <ConnectionIcon className="text-system-success" size={24} />
+          <div className="flex items-center justify-center rounded-medium border-2 border-system-success bg-system-success-lighter p-1">
+            <ConnectionTrue className="text-system-success" size={24} />
           </div>
         );
       case false:
         return (
-          <div className="flex items-center justify-center rounded-medium border border-danger bg-system-error-lighter p-1">
-            <ConnectionIcon className="text-danger" size={24} />
+          <div className="flex items-center justify-center rounded-medium border-2 border-danger bg-system-error-lighter p-1">
+            <ConnectionFalse className="text-danger" size={24} />
           </div>
         );
       case null:
         return (
           <div className="bg-info-lighter border-info-lighter flex items-center justify-center rounded-medium border p-1">
-            <ConnectionIcon className="text-info" size={24} />
+            <ConnectionPending className="text-info" size={24} />
           </div>
         );
       default:
-        return <ConnectionIcon size={24} />;
+        return <ConnectionPending size={24} />;
     }
   };
 

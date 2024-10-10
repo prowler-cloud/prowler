@@ -575,6 +575,89 @@ export const ConnectionIcon: React.FC<IconSvgProps> = ({
   );
 };
 
+export const ConnectionTrue: React.FC<IconSvgProps> = ({
+  size = 24,
+  width,
+  height,
+  ...props
+}) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    stroke="currentColor"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    strokeWidth="1.5"
+    height={size || height || 24}
+    viewBox="0 0 24 24"
+    width={size || width || 24}
+    {...props}
+  >
+    <path
+      d="M12 20h.012M8.25 17c2-2 5.5-2 7.5 0m2.75-3c-3.768-3.333-9-3.333-13 0M2 11c3.158-2.667 6.579-4 10-4m3 .5s1 0 2 2c0 0 2.477-3.9 5-5.5"
+      color="currentColor"
+    />
+  </svg>
+);
+
+export const ConnectionFalse: React.FC<IconSvgProps> = ({
+  size = 24,
+  width,
+  height,
+  ...props
+}) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    stroke="currentColor"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    strokeWidth="1.5"
+    height={size || height || 24}
+    viewBox="0 0 24 24"
+    width={size || width || 24}
+    {...props}
+  >
+    <path
+      d="M12 18h.012M8.25 15c2-2 5.5-2 7.5 0m2.75-3a11 11 0 0 0-.231-.199M5.5 12c2.564-2.136 5.634-2.904 8.5-2.301M2 9c3.466-2.927 7.248-4.247 11-3.962M22 5l-6 6m6 0-6-6"
+      color="currentColor"
+    />
+  </svg>
+);
+
+export const ConnectionPending: React.FC<IconSvgProps> = ({
+  size = 24,
+  width,
+  height,
+  ...props
+}) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.05"
+    height={size || height || 24}
+    viewBox="0 0 24 24"
+    width={size || width || 24}
+    {...props}
+  >
+    <g fill="none" stroke="currentColor" strokeWidth="1.05">
+      <circle cx="12" cy="18" r="2" />
+      <path strokeOpacity=".2" d="M7.757 13.757a6 6 0 0 1 8.486 0" />
+      <path
+        strokeOpacity=".2"
+        d="M4.929 10.93c3.905-3.905 10.237-3.905 14.142 0"
+        opacity=".8"
+      />
+      <path
+        strokeOpacity=".2"
+        d="M2.101 8.1c5.467-5.468 14.331-5.468 19.798 0"
+        opacity=".8"
+      />
+    </g>
+  </svg>
+);
+
 export const SuccessIcon: React.FC<IconSvgProps> = ({
   size = 24,
   width,
