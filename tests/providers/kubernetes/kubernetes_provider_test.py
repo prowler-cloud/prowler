@@ -78,118 +78,107 @@ class TestKubernetesProvider:
 
             assert kubernetes_provider.audit_config == KUBERNETES_CONFIG
 
-    # @patch("kubernetes.client.RbacAuthorizationV1Api")
-    # @patch("kubernetes.config.list_kube_config_contexts")
-    # @patch("kubernetes.config.load_incluster_config")
-    # @patch("kubernetes.config.load_kube_config")
-    # def test_get_context_user_roles(
-    #     self,
-    #     mock_list_kube_config_contexts,
-    #     mock_rbac_api,
-    # ):
-    #     mock_list_kube_config_contexts.return_value = (
-    #         [
-    #             {
-    #                 "name": "context_name",
-    #                 "context": {"cluster": "test-cluster", "user": "test-user"},
-    #             }
-    #         ],
-    #         0,
-    #     )
+    @patch(
+        "prowler.providers.kubernetes.kubernetes_provider.client.CoreV1Api.list_namespace"
+    )
+    @patch("kubernetes.config.list_kube_config_contexts")
+    @patch("kubernetes.config.load_kube_config_from_dict")
+    def test_kubernetes_test_connection_with_kubeconfig_content(
+        self,
+        mock_load_kube_config_from_dict,
+        mock_list_kube_config_contexts,
+        mock_list_namespace,
+    ):
+        mock_load_kube_config_from_dict.return_value = None
+        mock_list_kube_config_contexts.return_value = (
+            [
+                {
+                    "name": "example-context",
+                    "context": {
+                        "cluster": "example-cluster",
+                        "user": "example-user",
+                    },
+                }
+            ],
+            None,
+        )
+        mock_list_namespace.return_value.items = [
+            client.V1Namespace(metadata=client.V1ObjectMeta(name="namespace-1")),
+        ]
 
-    #     # Mock the RbacAuthorizationV1Api methods
-    #     cluster_role_binding = MagicMock()
-    #     role_binding = MagicMock()
-    #     cluster_role_binding.list_cluster_role_binding.return_value = MagicMock(
-    #         items=[]
-    #     )
-    #     role_binding.list_role_binding_for_all_namespaces.return_value = MagicMock(
-    #         items=[]
-    #     )
+        kubeconfig_content = {
+            "apiVersion": "v1",
+            "clusters": [
+                {
+                    "cluster": {
+                        "server": "https://kubernetes.example.com",
+                    },
+                    "name": "example-cluster",
+                }
+            ],
+            "contexts": [
+                {
+                    "context": {
+                        "cluster": "example-cluster",
+                        "user": "example-user",
+                    },
+                    "name": "example-context",
+                }
+            ],
+            "current-context": "example-context",
+            "kind": "Config",
+            "preferences": {},
+            "users": [
+                {
+                    "name": "example-user",
+                    "user": {
+                        "token": "EXAMPLE_TOKEN",
+                    },
+                }
+            ],
+        }
 
-    #     mock_rbac_api.return_value = MagicMock(
-    #         list_cluster_role_binding=cluster_role_binding.list_cluster_role_binding,
-    #         list_role_binding_for_all_namespaces=role_binding.list_role_binding_for_all_namespaces,
-    #     )
+        connection = KubernetesProvider.test_connection(
+            kubeconfig_file=None,
+            kubeconfig_content=kubeconfig_content,
+            input_context="example-context",
+            raise_on_exception=False,
+        )
 
-    #     args = Namespace(kubeconfig_file=None, context=None, only_logs=False)
-    #     provider = KubernetesProvider(args)
+        assert connection.is_connected
+        assert connection.error is None
 
-    #     roles = provider.get_context_user_roles()
+    @patch(
+        "prowler.providers.kubernetes.kubernetes_provider.client.CoreV1Api.list_namespace"
+    )
+    @patch("kubernetes.config.list_kube_config_contexts")
+    @patch("kubernetes.config.load_kube_config")
+    def test_kubernetes_test_connection_with_kubeconfig_file(
+        self, mock_load_kube_config, mock_list_kube_config_contexts, mock_list_namespace
+    ):
+        mock_load_kube_config.return_value = None
+        mock_list_kube_config_contexts.return_value = (
+            [
+                {
+                    "name": "test-context",
+                    "context": {
+                        "cluster": "test-cluster",
+                        "user": "test-user",
+                    },
+                }
+            ],
+            None,
+        )
+        mock_list_namespace.return_value.items = [
+            client.V1Namespace(metadata=client.V1ObjectMeta(name="namespace-1")),
+        ]
 
-    #     assert isinstance(roles, list)
+        connection = KubernetesProvider.test_connection(
+            kubeconfig_file="dummy_kubeconfig_path",
+            kubeconfig_content={},
+            input_context="test-context",
+            raise_on_exception=False,
+        )
 
-    # @patch("kubernetes.client.RbacAuthorizationV1Api")
-    # @patch("kubernetes.client.ApiClient")
-    # @patch("kubernetes.config.load_kube_config")
-    # @patch("kubernetes.config.load_incluster_config")
-    # @patch("kubernetes.config.list_kube_config_contexts")
-    # @patch("sys.stdout", new_callable=MagicMock)
-    # def test_print_credentials(
-    #     self,
-    #     mock_list_kube_config_contexts,
-    # ):
-    #     mock_list_kube_config_contexts.return_value = (
-    #         [
-    #             {
-    #                 "name": "context_name",
-    #                 "context": {"cluster": "test-cluster", "user": "test-user"},
-    #             }
-    #         ],
-    #         0,
-    #     )
-
-    #     args = Namespace(kubeconfig_file=None, context=None, only_logs=False)
-    #     provider = KubernetesProvider(args)
-    #     provider.context = {
-    #         "context": {"cluster": "test-cluster", "user": "test-user"},
-    #         "namespace": "default",
-    #     }
-    #     provider.get_context_user_roles = MagicMock(return_value=["ClusterRole: admin"])
-
-    #     # Capture print output
-    #     captured_output = io.StringIO()
-    #     sys.stdout = captured_output
-
-    #     provider.print_credentials()
-
-    #     # Reset standard output
-    #     sys.stdout = sys.__stdout__
-
-    #     output = captured_output.getvalue()
-    #     assert "[test-cluster]" in output
-    #     assert "[test-user]" in output
-    #     assert "[default]" in output
-    #     assert "[ClusterRole: admin]" in output
-
-    # @patch("kubernetes.client.RbacAuthorizationV1Api")
-    # @patch("kubernetes.config.list_kube_config_contexts")
-    # @patch("kubernetes.config.load_incluster_config")
-    # @patch("kubernetes.config.load_kube_config")
-    # def test_search_and_save_roles(
-    #     self,
-    #     mock_list_kube_config_contexts,
-    #     mock_rbac_api,
-    # ):
-    #     mock_list_kube_config_contexts.return_value = (
-    #         [
-    #             {
-    #                 "name": "context_name",
-    #                 "context": {"cluster": "test-cluster", "user": "test-user"},
-    #             }
-    #         ],
-    #         0,
-    #     )
-    #     mock_rbac_api.return_value.list_cluster_role_binding.return_value = MagicMock(
-    #         items=[]
-    #     )
-    #     mock_rbac_api.return_value.list_role_binding_for_all_namespaces.return_value = (
-    #         MagicMock(items=[])
-    #     )
-
-    #     args = Namespace(kubeconfig_file=None, context=None, only_logs=False)
-    #     provider = KubernetesProvider(args)
-    #     provider.context = {"context": {"user": "test-user"}}
-
-    #     roles = provider.search_and_save_roles([], [], "test-user", "ClusterRole")
-    #     assert isinstance(roles, list)
+        assert connection.is_connected
+        assert connection.error is None
