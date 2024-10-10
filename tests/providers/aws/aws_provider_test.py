@@ -1435,7 +1435,7 @@ aws:
         assert exception.type == AWSInvalidAccountCredentials
         assert (
             exception.value.args[0]
-            == "[1917] The AWS credentials provided belongs to a different account"
+            == "[1917] The provided AWS credentials belong to a different account"
         )
 
     @mock_aws
@@ -1459,7 +1459,7 @@ aws:
         assert isinstance(connection.error, AWSInvalidAccountCredentials)
         assert (
             connection.error.message
-            == "The AWS credentials provided belongs to a different account"
+            == "The provided AWS credentials belong to a different account"
         )
         assert connection.error.code == 1917
 
