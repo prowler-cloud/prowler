@@ -4,7 +4,6 @@ from datetime import datetime
 from re import fullmatch
 from typing import Optional
 
-from boto3 import client
 from boto3.session import Session
 from botocore.config import Config
 from botocore.credentials import RefreshableCredentials
@@ -446,16 +445,20 @@ class AwsProvider(Provider):
         try:
             logger.debug("Creating original session ...")
 
-            session_arguments = {
-                "profile_name": profile,
-                "aws_access_key_id": aws_access_key_id,
-                "aws_secret_access_key": aws_secret_access_key,
-                "aws_session_token": aws_session_token,
-            }
+            session_arguments = {}
+            if profile:
+                session_arguments["profile_name"] = profile
+            elif aws_access_key_id and aws_secret_access_key:
+                session_arguments["aws_access_key_id"] = aws_access_key_id
+                session_arguments["aws_secret_access_key"] = aws_secret_access_key
+                if aws_session_token:
+                    session_arguments["aws_session_token"] = aws_session_token
 
             if mfa:
-                sts_client = client("sts", **session_arguments)
+                session = Session(**session_arguments)
+                sts_client = session.client("sts")
 
+                # TODO: pass values from the input
                 mfa_info = AwsProvider.input_role_mfa_token_and_code()
                 # TODO: validate MFA ARN here
                 get_session_token_arguments = {
@@ -473,8 +476,6 @@ class AwsProvider(Provider):
                     aws_session_token=session_credentials["Credentials"][
                         "SessionToken"
                     ],
-                    # Do we really need the profile name here? I think not since we are getting a session token with either the profile or the static credentials
-                    profile_name=profile,
                 )
             else:
                 return Session(**session_arguments)
