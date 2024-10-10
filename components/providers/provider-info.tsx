@@ -60,13 +60,15 @@ export const ProviderInfo: React.FC<ProviderInfoProps> = ({
   };
 
   return (
-    <div className="max-w-96">
+    <div className="max-w-48">
       <div className="flex items-center justify-between space-x-4">
         <div className="flex items-center space-x-4">
           <div className="flex-shrink-0">{getProviderLogo()}</div>
           <div className="flex-shrink-0">{getIcon()}</div>
           <div className="flex flex-col">
-            <span className="text-md font-semibold">{providerAlias}</span>
+            <span className="text-md max-w-24 overflow-hidden text-ellipsis font-semibold lg:max-w-36">
+              {providerAlias}
+            </span>
             {/* <CustomLoader size="small" /> */}
           </div>
         </div>

@@ -41,8 +41,13 @@ export const ProviderInfoShort: React.FC<ProviderInfoProps> = ({
         <div className="flex items-center space-x-4">
           <div className="flex-shrink-0">{getProviderLogo()}</div>
           <div className="flex flex-col">
-            <span className="text-md font-semibold">{providerAlias}</span>
-            <SnippetIdProvider className="h-5" providerId={providerId} />
+            <span className="text-md max-w-24 overflow-hidden text-ellipsis font-semibold lg:max-w-36">
+              {providerAlias}
+            </span>
+            <SnippetIdProvider
+              className="h-5 max-w-44"
+              providerId={providerId}
+            />
           </div>
         </div>
       </div>

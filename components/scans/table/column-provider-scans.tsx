@@ -11,7 +11,7 @@ const getProviderData = (row: { original: ProviderProps }) => {
   return row.original;
 };
 
-export const ColumnScans: ColumnDef<ProviderProps>[] = [
+export const ColumnProviderScans: ColumnDef<ProviderProps>[] = [
   {
     accessorKey: "provider",
     header: "Provider",

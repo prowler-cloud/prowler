@@ -3,7 +3,11 @@ import { Suspense } from "react";
 
 import { getProviders } from "@/actions/providers";
 import { FilterControls, filterScans } from "@/components/filters";
-import { ColumnScans, SkeletonTableScans } from "@/components/scans/table";
+import {
+  ColumnGetScans,
+  ColumnProviderScans,
+  SkeletonTableScans,
+} from "@/components/scans/table";
 import { Header } from "@/components/ui";
 import { DataTable } from "@/components/ui/table";
 import { SearchParamsProps } from "@/types";
@@ -23,8 +27,8 @@ export default async function Scans({
       <FilterControls search date providers />
       <Spacer y={4} />
 
-      <div className="grid grid-cols-12 items-end gap-4">
-        <div className="col-span-12 lg:col-span-4">
+      <div className="grid grid-cols-12 items-start gap-4">
+        <div className="col-span-12 lg:col-span-4 lg:mt-14">
           <Suspense key={searchParamsKey} fallback={<SkeletonTableScans />}>
             <SSRDataTableProviders searchParams={searchParams} />
           </Suspense>
@@ -59,10 +63,9 @@ const SSRDataTableProviders = async ({
 
   return (
     <DataTable
-      columns={ColumnScans}
+      columns={ColumnProviderScans}
       data={providersData?.data || []}
       metadata={providersData?.meta}
-      // customFilters={filterProviders}
     />
   );
 };
@@ -87,7 +90,7 @@ const SSRDataTableScans = async ({
 
   return (
     <DataTable
-      columns={ColumnScans}
+      columns={ColumnGetScans}
       data={providersData?.data || []}
       metadata={providersData?.meta}
       customFilters={filterScans}
