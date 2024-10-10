@@ -136,7 +136,11 @@ class Test_OpenSearchService_Service:
         domain = opensearch_client.create_domain(
             DomainName=test_domain_name,
             EncryptionAtRestOptions={"Enabled": True},
-            ClusterConfig={"InstanceCount": 1, "ZoneAwarenessEnabled": True},
+            ClusterConfig={
+                "InstanceCount": 1,
+                "ZoneAwarenessEnabled": True,
+                "DedicatedMasterCount": 1,
+            },
             NodeToNodeEncryptionOptions={"Enabled": True},
             AdvancedSecurityOptions={
                 "Enabled": True,
@@ -179,6 +183,7 @@ class Test_OpenSearchService_Service:
         )
         assert opensearch.opensearch_domains[domain_arn].instance_count == 1
         assert opensearch.opensearch_domains[domain_arn].zone_awareness_enabled
+        assert opensearch.opensearch_domains[domain_arn].dedicated_master_count == 1
         assert opensearch.opensearch_domains[domain_arn].tags == [
             {"Key": "test", "Value": "test"},
         ]
