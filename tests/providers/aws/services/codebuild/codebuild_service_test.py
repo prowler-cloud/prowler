@@ -5,6 +5,7 @@ import botocore
 
 from prowler.providers.aws.services.codebuild.codebuild_service import (
     Build,
+    CloudWatchLogs,
     Codebuild,
     Project,
     s3Logs,
@@ -53,11 +54,16 @@ def mock_make_api_call(self, operation_name, kwarg):
                         }
                     ],
                     "logsConfig": {
+                        "cloudWatchLogs": {
+                            "status": "ENABLED",
+                            "groupName": project_name,
+                            "streamName": project_name,
+                        },
                         "s3Logs": {
                             "status": "ENABLED",
                             "location": "test-bucket",
                             "encryptionDisabled": False,
-                        }
+                        },
                     },
                     "tags": [{"key": "Name", "value": project_name}],
                 }
@@ -105,5 +111,15 @@ class Test_Codebuild_Service:
         assert codebuild.projects[project_arn].s3_logs.enabled
         assert codebuild.projects[project_arn].s3_logs.bucket_location == "test-bucket"
         assert codebuild.projects[project_arn].s3_logs.encrypted
+        assert isinstance(
+            codebuild.projects[project_arn].cloudwatch_logs, CloudWatchLogs
+        )
+        assert codebuild.projects[project_arn].cloudwatch_logs.enabled
+        assert (
+            codebuild.projects[project_arn].cloudwatch_logs.group_name == project_name
+        )
+        assert (
+            codebuild.projects[project_arn].cloudwatch_logs.stream_name == project_name
+        )
         assert codebuild.projects[project_arn].tags[0]["key"] == "Name"
         assert codebuild.projects[project_arn].tags[0]["value"] == project_name
