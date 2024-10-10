@@ -261,6 +261,72 @@ class TestAWSProvider:
         assert aws_provider.session.current_session.region_name == AWS_REGION_US_EAST_1
 
     @mock_aws
+    def test_aws_provider_with_static_credentials(self):
+        # Create a mock IAM user
+        iam_client = client("iam", region_name=AWS_REGION_EU_WEST_1)
+        username = "test-user"
+        iam_user = iam_client.create_user(UserName=username)["User"]
+        # Create a mock IAM access keys
+        access_key = iam_client.create_access_key(UserName=iam_user["UserName"])[
+            "AccessKey"
+        ]
+
+        credentials = {
+            "aws_access_key_id": access_key["AccessKeyId"],
+            "aws_secret_access_key": access_key["SecretAccessKey"],
+        }
+
+        aws_provider = AwsProvider(**credentials)
+        assert aws_provider.type == "aws"
+        # Session
+        assert aws_provider.session.current_session.region_name == AWS_REGION_US_EAST_1
+        assert aws_provider.session.current_session.profile_name == "default"
+        assert aws_provider.session.original_session.region_name == AWS_REGION_US_EAST_1
+        assert aws_provider.session.original_session.profile_name == "default"
+
+        # Identity
+        assert aws_provider.identity.account == AWS_ACCOUNT_NUMBER
+        assert aws_provider.identity.account_arn == AWS_ACCOUNT_ARN
+        assert (
+            aws_provider.identity.identity_arn
+            == f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:user/{username}"
+        )
+        assert aws_provider.identity.partition == AWS_COMMERCIAL_PARTITION
+        assert aws_provider.identity.profile is None
+        assert aws_provider.identity.profile_region == AWS_REGION_US_EAST_1
+
+    @mock_aws
+    def test_aws_provider_with_session_credentials(self):
+        sts_client = client("sts", region_name=AWS_REGION_EU_WEST_1)
+        session_token = sts_client.get_session_token()
+
+        session_credentials = {
+            "aws_access_key_id": session_token["Credentials"]["AccessKeyId"],
+            "aws_secret_access_key": session_token["Credentials"]["SecretAccessKey"],
+            "aws_session_token": session_token["Credentials"]["SessionToken"],
+        }
+
+        aws_provider = AwsProvider(**session_credentials)
+        assert aws_provider.type == "aws"
+        # Session
+        assert aws_provider.session.current_session.region_name == AWS_REGION_US_EAST_1
+        assert aws_provider.session.current_session.profile_name == "default"
+        assert aws_provider.session.original_session.region_name == AWS_REGION_US_EAST_1
+        assert aws_provider.session.original_session.profile_name == "default"
+
+        # Identity
+        assert aws_provider.identity.account == AWS_ACCOUNT_NUMBER
+        assert aws_provider.identity.account_arn == AWS_ACCOUNT_ARN
+        # moto is the default user created by moto
+        assert (
+            aws_provider.identity.identity_arn
+            == f"arn:aws:sts::{AWS_ACCOUNT_NUMBER}:user/moto"
+        )
+        assert aws_provider.identity.partition == AWS_COMMERCIAL_PARTITION
+        assert aws_provider.identity.profile is None
+        assert aws_provider.identity.profile_region == AWS_REGION_US_EAST_1
+
+    @mock_aws
     def test_aws_provider_organizations_delegated_administrator(self):
         organizations_client = client("organizations", region_name=AWS_REGION_EU_WEST_1)
         organization = organizations_client.create_organization()["Organization"]
@@ -1292,6 +1358,45 @@ aws:
             exception.value.args[0]
             == "[1912] AWS IAM Role ARN resource type is invalid"
         )
+
+    @mock_aws
+    def test_test_connection_with_static_credentials(self):
+        # Create a mock IAM user
+        iam_client = client("iam", region_name=AWS_REGION_EU_WEST_1)
+        username = "test-user"
+        iam_user = iam_client.create_user(UserName=username)["User"]
+        # Create a mock IAM access keys
+        access_key = iam_client.create_access_key(UserName=iam_user["UserName"])[
+            "AccessKey"
+        ]
+
+        credentials = {
+            "aws_access_key_id": access_key["AccessKeyId"],
+            "aws_secret_access_key": access_key["SecretAccessKey"],
+        }
+
+        connection = AwsProvider.test_connection(**credentials)
+
+        assert isinstance(connection, Connection)
+        assert connection.is_connected
+        assert connection.error is None
+
+    @mock_aws
+    def test_test_connection_with_session_credentials(self):
+        sts_client = client("sts", region_name=AWS_REGION_EU_WEST_1)
+        session_token = sts_client.get_session_token()
+
+        session_credentials = {
+            "aws_access_key_id": session_token["Credentials"]["AccessKeyId"],
+            "aws_secret_access_key": session_token["Credentials"]["SecretAccessKey"],
+            "aws_session_token": session_token["Credentials"]["SessionToken"],
+        }
+
+        connection = AwsProvider.test_connection(**session_credentials)
+
+        assert isinstance(connection, Connection)
+        assert connection.is_connected
+        assert connection.error is None
 
     @mock_aws
     def test_create_sts_session(self):
