@@ -15,7 +15,7 @@
     "Code": {
       "CLI": "aws codebuild update-project --name <project-name> --logs-config \"cloudWatchLogs={status=ENABLED},s3Logs={status=ENABLED\"}",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/codebuild-controls.html#codebuild-4",
       "Terraform": ""
     },
     "Recommendation": {
