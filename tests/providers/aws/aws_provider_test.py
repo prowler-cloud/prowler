@@ -29,6 +29,7 @@ from prowler.providers.aws.config import (
 from prowler.providers.aws.exceptions.exceptions import (
     AWSArgumentTypeValidationError,
     AWSIAMRoleARNInvalidResourceType,
+    AWSInvalidAccountCredentials,
     AWSNoCredentialsError,
 )
 from prowler.providers.aws.lib.arn.models import ARN
@@ -1397,6 +1398,70 @@ aws:
         assert isinstance(connection, Connection)
         assert connection.is_connected
         assert connection.error is None
+
+    @mock_aws
+    def test_test_connection_with_own_account(self):
+        sts_client = client("sts", region_name=AWS_REGION_EU_WEST_1)
+        session_token = sts_client.get_session_token()
+
+        session_credentials = {
+            "aws_access_key_id": session_token["Credentials"]["AccessKeyId"],
+            "aws_secret_access_key": session_token["Credentials"]["SecretAccessKey"],
+            "aws_session_token": session_token["Credentials"]["SessionToken"],
+            "aws_account_id": AWS_ACCOUNT_NUMBER,
+        }
+
+        connection = AwsProvider.test_connection(**session_credentials)
+
+        assert isinstance(connection, Connection)
+        assert connection.is_connected
+        assert connection.error is None
+
+    @mock_aws
+    def test_test_connection_with_different_account(self):
+        sts_client = client("sts", region_name=AWS_REGION_EU_WEST_1)
+        session_token = sts_client.get_session_token()
+
+        session_credentials = {
+            "aws_access_key_id": session_token["Credentials"]["AccessKeyId"],
+            "aws_secret_access_key": session_token["Credentials"]["SecretAccessKey"],
+            "aws_session_token": session_token["Credentials"]["SessionToken"],
+            "aws_account_id": "111122223333",
+        }
+
+        with raises(AWSIAMRoleARNInvalidResourceType) as exception:
+            AwsProvider.test_connection(**session_credentials)
+
+        assert exception.type == AWSInvalidAccountCredentials
+        assert (
+            exception.value.args[0]
+            == "[1917] The AWS credentials provided belongs to a different account"
+        )
+
+    @mock_aws
+    def test_test_connection_with_different_account_dont_raise(self):
+        sts_client = client("sts", region_name=AWS_REGION_EU_WEST_1)
+        session_token = sts_client.get_session_token()
+
+        session_credentials = {
+            "aws_access_key_id": session_token["Credentials"]["AccessKeyId"],
+            "aws_secret_access_key": session_token["Credentials"]["SecretAccessKey"],
+            "aws_session_token": session_token["Credentials"]["SessionToken"],
+            "aws_account_id": "111122223333",
+        }
+
+        connection = AwsProvider.test_connection(
+            **session_credentials, raise_on_exception=False
+        )
+
+        assert isinstance(connection, Connection)
+        assert not connection.is_connected
+        assert isinstance(connection.error, AWSInvalidAccountCredentials)
+        assert (
+            connection.error.message
+            == "The AWS credentials provided belongs to a different account"
+        )
+        assert connection.error.code == 1917
 
     @mock_aws
     def test_create_sts_session(self):

@@ -65,6 +65,10 @@ class AWSBaseException(ProwlerException):
             "message": "AWS Secret Access Key is invalid",
             "remediation": "Check your AWS Secret Access Key and signing method and ensure it is valid.",
         },
+        (1917, "AWSInvalidAccountCredentials"): {
+            "message": "The AWS credentials provided belongs to a different account",
+            "remediation": "Check your AWS credentials and review if belongs to the account you want to use.",
+        },
     }
 
     def __init__(self, code, file=None, original_exception=None, message=None):
@@ -196,4 +200,11 @@ class AWSSecretAccessKeyInvalid(AWSBaseException):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             1916, file=file, original_exception=original_exception, message=message
+        )
+
+
+class AWSInvalidAccountCredentials(AWSBaseException):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            1917, file=file, original_exception=original_exception, message=message
         )
