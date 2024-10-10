@@ -12,7 +12,7 @@ const getScanData = (row: { original: ScanProps }) => {
   return row.original;
 };
 
-export const ColumnGetScans: ColumnDef<ScanProps>[] = [
+export const ColumnGetScansSchedule: ColumnDef<ScanProps>[] = [
   {
     accessorKey: "name",
     header: ({ column }) => (
@@ -23,18 +23,6 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
         attributes: { name },
       } = getScanData(row);
       return <EntityInfoShort entityAlias={name} entityId={row.original.id} />;
-    },
-  },
-  {
-    accessorKey: "trigger",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={"Type"} param="trigger" />
-    ),
-    cell: ({ row }) => {
-      const {
-        attributes: { trigger },
-      } = getScanData(row);
-      return <p>{trigger}</p>;
     },
   },
 
@@ -48,22 +36,6 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
         attributes: { state },
       } = getScanData(row);
       return <StatusBadge status={state} />;
-    },
-  },
-  {
-    accessorKey: "scheduled_at",
-    header: ({ column }) => (
-      <DataTableColumnHeader
-        column={column}
-        title={"Scheduled at"}
-        param="scheduled_at"
-      />
-    ),
-    cell: ({ row }) => {
-      const {
-        attributes: { scheduled_at },
-      } = getScanData(row);
-      return <DateWithTime dateTime={scheduled_at} />;
     },
   },
   {
@@ -83,11 +55,11 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
     },
   },
   {
-    accessorKey: "completed_at",
+    accessorKey: "lastScan",
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
-        title={"Completed at"}
+        title={"Completed At"}
         param="completed_at"
       />
     ),
@@ -96,16 +68,6 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
         attributes: { completed_at },
       } = getScanData(row);
       return <DateWithTime dateTime={completed_at} />;
-    },
-  },
-  {
-    accessorKey: "scanner_args",
-    header: "Scanner Args",
-    cell: ({ row }) => {
-      const {
-        attributes: { scanner_args },
-      } = getScanData(row);
-      return <p className="font-medium">{scanner_args?.only_logs}</p>;
     },
   },
   {

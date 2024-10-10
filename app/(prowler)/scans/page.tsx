@@ -3,9 +3,14 @@ import { Suspense } from "react";
 
 import { getProviders } from "@/actions/providers";
 import { getScans } from "@/actions/scans";
-import { FilterControls, filterScans } from "@/components/filters";
+import {
+  FilterControls,
+  filterProviders,
+  filterScans,
+} from "@/components/filters";
 import {
   ColumnGetScans,
+  ColumnGetScansSchedule,
   ColumnProviderScans,
   SkeletonTableScans,
 } from "@/components/scans/table";
@@ -26,15 +31,20 @@ export default async function Scans({
 
       <Spacer y={4} />
       <FilterControls search date providers />
-      <Spacer y={4} />
+      <Spacer y={8} />
 
-      <div className="grid grid-cols-12 items-start gap-4">
-        <div className="col-span-12 lg:col-span-4 lg:mt-14">
+      <div className="grid grid-cols-12 items-start gap-6">
+        <div className="col-span-12 lg:col-span-4">
           <Suspense key={searchParamsKey} fallback={<SkeletonTableScans />}>
             <SSRDataTableProviders searchParams={searchParams} />
           </Suspense>
         </div>
         <div className="col-span-12 lg:col-span-8">
+          <Suspense key={searchParamsKey} fallback={<SkeletonTableScans />}>
+            <SSRDataTableScansSchedule searchParams={searchParams} />
+          </Suspense>
+        </div>
+        <div className="col-span-12">
           <Suspense key={searchParamsKey} fallback={<SkeletonTableScans />}>
             <SSRDataTableScans searchParams={searchParams} />
           </Suspense>
@@ -67,6 +77,35 @@ const SSRDataTableProviders = async ({
       columns={ColumnProviderScans}
       data={providersData?.data || []}
       metadata={providersData?.meta}
+      customFilters={filterProviders}
+    />
+  );
+};
+
+const SSRDataTableScansSchedule = async ({
+  searchParams,
+}: {
+  searchParams: SearchParamsProps;
+}) => {
+  const page = parseInt(searchParams.page?.toString() || "1", 10);
+  const sort = searchParams.sort?.toString();
+
+  // Extract all filter parameters
+  const filters = Object.fromEntries(
+    Object.entries(searchParams).filter(([key]) => key.startsWith("filter[")),
+  );
+
+  // Extract query from filters
+  const query = (filters["filter[search]"] as string) || "";
+
+  const scansData = await getScans({ query, page, sort, filters });
+
+  return (
+    <DataTable
+      columns={ColumnGetScansSchedule}
+      data={scansData?.data || []}
+      metadata={scansData?.meta}
+      customFilters={filterScans}
     />
   );
 };
