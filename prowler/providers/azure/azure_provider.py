@@ -4,7 +4,7 @@ from argparse import ArgumentTypeError
 from os import getenv
 
 import requests
-from azure.core.exceptions import HttpResponseError
+from azure.core.exceptions import ClientAuthenticationError, HttpResponseError
 from azure.identity import (
     ClientSecretCredential,
     DefaultAzureCredential,
@@ -126,6 +126,7 @@ class AzureProvider(Provider):
             AzureInteractiveBrowserCredentialError: If there is an error in retrieving the Azure credentials using browser authentication.
             AzureConfigCredentialsError: If there is an error in configuring the Azure credentials from a dictionary.
             AzureGetTokenIdentityError: If there is an error in getting the token from the Azure identity.
+            AzureHTTPResponseError: If there is an HTTP response error.
         """
         logger.info("Setting Azure provider ...")
 
@@ -525,6 +526,8 @@ class AzureProvider(Provider):
             True
             >>> AzureProvider.test_connection(sp_env_auth=False, browser_auth=True, tenant_id=None)
             False, ArgumentTypeError: Azure Tenant ID is required only for browser authentication mode
+            >>> AzureProvider.test_connection(tenant_id="XXXXXXXXXX", client_id="XXXXXXXXXX", client_secret="XXXXXXXXXX")
+            True
         """
         try:
             AzureProvider.validate_arguments(
@@ -699,13 +702,22 @@ class AzureProvider(Provider):
                         if getattr(domain_result.value[0], "id"):
                             identity.tenant_domain = domain_result.value[0].id
 
-                except Exception as error:
-                    logger.critical(
+                except HttpResponseError as error:
+                    logger.error(
                         f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
                     )
+                    raise AzureHTTPResponseError(
+                        file=os.path.basename(__file__),
+                        original_exception=error,
+                    )
+                except ClientAuthenticationError as error:
                     raise AzureGetTokenIdentityError(
                         file=os.path.basename(__file__),
                         original_exception=error,
+                    )
+                except Exception as error:
+                    logger.error(
+                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
                     )
                 # since that exception is not considered as critical, we keep filling another identity fields
                 if sp_env_auth or client_id:
