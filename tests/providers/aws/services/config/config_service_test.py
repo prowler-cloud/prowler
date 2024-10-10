@@ -75,6 +75,6 @@ class Test_Config_Service:
         assert len(config.recorders) == 2
         # Check the active one
         # Search for the recorder just created
-        for recorder in config.recorders:
+        for recorder in config.recorders.values():
             if recorder.name == "default":
                 assert recorder.recording is True
