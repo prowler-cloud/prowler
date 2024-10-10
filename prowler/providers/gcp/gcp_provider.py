@@ -3,7 +3,7 @@ import re
 import sys
 
 from colorama import Fore, Style
-from google.auth import default, impersonated_credentials
+from google.auth import default, impersonated_credentials, load_credentials_from_dict
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from googleapiclient import discovery
@@ -18,8 +18,10 @@ from prowler.providers.gcp.exceptions.exceptions import (
     GCPCloudResourceManagerAPINotUsedError,
     GCPGetProjectError,
     GCPHTTPError,
+    GCPLoadCredentialsFromDictError,
     GCPNoAccesibleProjectsError,
     GCPSetUpSessionError,
+    GCPStaticCredentialsError,
     GCPTestConnectionError,
 )
 from prowler.providers.gcp.lib.mutelist.mutelist import GCPMutelist
@@ -46,6 +48,9 @@ class GcpProvider(Provider):
         list_project_ids: bool = False,
         audit_config: dict = {},
         fixer_config: dict = {},
+        client_id: str = None,
+        client_secret: str = None,
+        refresh_token: str = None,
     ):
         """
         GCP Provider constructor
@@ -58,12 +63,21 @@ class GcpProvider(Provider):
             list_project_ids: bool
             audit_config: dict
             fixer_config: dict
+            client_id: str
+            client_secret: str
+            refresh_token: str
         """
         logger.info("Instantiating GCP Provider ...")
         self._impersonated_service_account = impersonate_service_account
+        # Set the GCP credentials using the provided client_id, client_secret and refresh_token
+        gcp_credentials = None
+        if any([client_id, client_secret, refresh_token]):
+            gcp_credentials = self.validate_static_arguments(
+                client_id, client_secret, refresh_token
+            )
 
         self._session, self._default_project_id = self.setup_session(
-            credentials_file, self._impersonated_service_account
+            credentials_file, self._impersonated_service_account, gcp_credentials
         )
 
         self._project_ids = []
@@ -212,7 +226,9 @@ class GcpProvider(Provider):
         }
 
     @staticmethod
-    def setup_session(credentials_file: str, service_account: str) -> tuple:
+    def setup_session(
+        credentials_file: str, service_account: str, gcp_credentials: dict = None
+    ) -> tuple:
         """
         Setup the GCP session with the provided credentials file or service account to impersonate
         Args:
@@ -223,6 +239,22 @@ class GcpProvider(Provider):
         """
         try:
             scopes = ["https://www.googleapis.com/auth/cloud-platform"]
+
+            if gcp_credentials:
+                logger.info(f"Using GCP credentials: {gcp_credentials}")
+                logger.info("GCP provider: Setting credentials from dict...")
+                try:
+                    credentials, default_project_id = load_credentials_from_dict(
+                        info=gcp_credentials
+                    )
+                    return credentials, default_project_id
+                except Exception as error:
+                    logger.critical(
+                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+                    raise GCPLoadCredentialsFromDictError(
+                        file=__file__, original_exception=error
+                    )
 
             if credentials_file:
                 logger.info(f"Using credentials file: {credentials_file}")
@@ -261,6 +293,9 @@ class GcpProvider(Provider):
         credentials_file: str = None,
         service_account: str = None,
         raise_on_exception: bool = True,
+        client_id: str = None,
+        client_secret: str = None,
+        refresh_token: str = None,
     ) -> Connection:
         """
         Test the connection to GCP with the provided credentials file or service account to impersonate.
@@ -274,13 +309,27 @@ class GcpProvider(Provider):
             Connection object with is_connected set to True if the connection is successful, or error set to the exception if the connection fails
         """
         try:
-            session, _ = GcpProvider.setup_session(credentials_file, service_account)
+            # Set the GCP credentials using the provided client_id, client_secret and refresh_token
+            gcp_credentials = None
+            if any([client_id, client_secret, refresh_token]):
+                gcp_credentials = GcpProvider.validate_static_arguments(
+                    client_id, client_secret, refresh_token
+                )
+
+            session, _ = GcpProvider.setup_session(
+                credentials_file, service_account, gcp_credentials
+            )
             service = discovery.build("cloudresourcemanager", "v1", credentials=session)
             request = service.projects().list()
             request.execute()
             return Connection(is_connected=True)
 
         # Errors from setup_session
+        except GCPLoadCredentialsFromDictError as load_credentials_error:
+            logger.critical(str(load_credentials_error))
+            if raise_on_exception:
+                raise load_credentials_error
+            return Connection(error=load_credentials_error)
         except GCPSetUpSessionError as setup_session_error:
             logger.critical(str(setup_session_error))
             if raise_on_exception:
@@ -447,3 +496,35 @@ class GcpProvider(Provider):
                 project_to_match,
             )
         ) or input_project == project_to_match
+
+    @staticmethod
+    def validate_static_arguments(
+        client_id: str = None, client_secret: str = None, refresh_token: str = None
+    ) -> dict:
+        """
+        Validate the static arguments client_id, client_secret and refresh_token
+
+        Args:
+            client_id: str
+            client_secret: str
+            refresh_token: str
+
+        Returns:
+            dict
+
+        Raises:
+            GCPStaticCredentialsError if any of the static arguments is missing
+        """
+
+        if not client_id or not client_secret or not refresh_token:
+            raise GCPStaticCredentialsError(
+                file=__file__,
+                message="client_id, client_secret and refresh_token are required.",
+            )
+
+        return {
+            "client_id": client_id,
+            "client_secret": client_secret,
+            "refresh_token": refresh_token,
+            "type": "authorized_user",
+        }

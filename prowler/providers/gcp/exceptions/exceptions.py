@@ -29,6 +29,14 @@ class GCPBaseException(ProwlerException):
             "message": "Error testing connection to GCP",
             "remediation": "Check the connection and ensure it is properly set up.",
         },
+        (1931, "GCPLoadCredentialsFromDictError"): {
+            "message": "Error loading credentials from dictionary",
+            "remediation": "Check the credentials and ensure they are properly set up. client_id, client_secret and refresh_token are required.",
+        },
+        (1932, "GCPStaticCredentialsError"): {
+            "message": "Error loading static credentials",
+            "remediation": "Check the credentials and ensure they are properly set up. client_id, client_secret and refresh_token are required.",
+        },
     }
 
     def __init__(self, code, file=None, original_exception=None, message=None):
@@ -84,4 +92,18 @@ class GCPTestConnectionError(GCPBaseException):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             1930, file=file, original_exception=original_exception, message=message
+        )
+
+
+class GCPLoadCredentialsFromDictError(GCPBaseException):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            1931, file=file, original_exception=original_exception, message=message
+        )
+
+
+class GCPStaticCredentialsError(GCPBaseException):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            1932, file=file, original_exception=original_exception, message=message
         )
