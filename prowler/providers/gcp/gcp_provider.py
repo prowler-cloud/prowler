@@ -241,7 +241,7 @@ class GcpProvider(Provider):
             scopes = ["https://www.googleapis.com/auth/cloud-platform"]
 
             if gcp_credentials:
-                logger.info(f"Using GCP credentials: {gcp_credentials}")
+                logger.info("Using GCP static credentials")
                 logger.info("GCP provider: Setting credentials from dict...")
                 try:
                     credentials, default_project_id = load_credentials_from_dict(
