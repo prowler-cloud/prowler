@@ -3,12 +3,11 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { add } from "date-fns";
 
+import { DateWithTime, SnippetId } from "@/components/ui/entities";
 import { DataTableColumnHeader, StatusBadge } from "@/components/ui/table";
 import { ProviderProps } from "@/types";
 
-import { DateWithTime } from "../date-with-time";
 import { ProviderInfo } from "../provider-info";
-import { SnippetIdProvider } from "../snippet-id-provider";
 import { DataTableRowActions } from "./data-table-row-actions";
 
 const getProviderData = (row: { original: ProviderProps }) => {
@@ -47,7 +46,7 @@ export const ColumnProviders: ColumnDef<ProviderProps>[] = [
       const {
         attributes: { uid },
       } = getProviderData(row);
-      return <SnippetIdProvider providerId={uid} />;
+      return <SnippetId className="h-6 max-w-44" entityId={uid} />;
     },
   },
   {

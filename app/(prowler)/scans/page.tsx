@@ -2,6 +2,7 @@ import { Spacer } from "@nextui-org/react";
 import { Suspense } from "react";
 
 import { getProviders } from "@/actions/providers";
+import { getScans } from "@/actions/scans";
 import { FilterControls, filterScans } from "@/components/filters";
 import {
   ColumnGetScans,
@@ -86,13 +87,13 @@ const SSRDataTableScans = async ({
   // Extract query from filters
   const query = (filters["filter[search]"] as string) || "";
 
-  const providersData = await getProviders({ query, page, sort, filters });
+  const scansData = await getScans({ query, page, sort, filters });
 
   return (
     <DataTable
       columns={ColumnGetScans}
-      data={providersData?.data || []}
-      metadata={providersData?.meta}
+      data={scansData?.data || []}
+      metadata={scansData?.meta}
       customFilters={filterScans}
     />
   );

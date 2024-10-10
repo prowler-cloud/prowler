@@ -5,23 +5,23 @@ import {
   AzureProviderBadge,
   GCPProviderBadge,
   KS8ProviderBadge,
-} from "../icons/providers-badge";
-import { SnippetIdProvider } from "./snippet-id-provider";
+} from "../../icons/providers-badge";
+import { SnippetId } from "./snippet-id";
 
-interface ProviderInfoProps {
-  connected: boolean | null;
-  provider: "aws" | "azure" | "gcp" | "kubernetes";
-  providerAlias: string;
-  providerId: string;
+interface EntityInfoProps {
+  connected?: boolean | null;
+  cloudProvider?: "aws" | "azure" | "gcp" | "kubernetes";
+  entityAlias?: string;
+  entityId?: string;
 }
 
-export const ProviderInfoShort: React.FC<ProviderInfoProps> = ({
-  provider,
-  providerAlias,
-  providerId,
+export const EntityInfoShort: React.FC<EntityInfoProps> = ({
+  cloudProvider,
+  entityAlias,
+  entityId,
 }) => {
   const getProviderLogo = () => {
-    switch (provider) {
+    switch (cloudProvider) {
       case "aws":
         return <AWSProviderBadge width={35} height={35} />;
       case "azure":
@@ -42,12 +42,9 @@ export const ProviderInfoShort: React.FC<ProviderInfoProps> = ({
           <div className="flex-shrink-0">{getProviderLogo()}</div>
           <div className="flex flex-col">
             <span className="text-md max-w-24 overflow-hidden text-ellipsis font-semibold lg:max-w-36">
-              {providerAlias}
+              {entityAlias}
             </span>
-            <SnippetIdProvider
-              className="h-5 max-w-44"
-              providerId={providerId}
-            />
+            <SnippetId className="h-5 max-w-44" entityId={entityId ?? ""} />
           </div>
         </div>
       </div>

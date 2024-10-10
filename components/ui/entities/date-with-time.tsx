@@ -2,7 +2,7 @@ import { format, parseISO } from "date-fns";
 import React from "react";
 
 interface DateWithTimeProps {
-  dateTime: string; // e.g., "2024-07-17T09:55:14.191475Z"
+  dateTime: string | null; // e.g., "2024-07-17T09:55:14.191475Z"
   showTime?: boolean;
 }
 
@@ -10,6 +10,7 @@ export const DateWithTime: React.FC<DateWithTimeProps> = ({
   dateTime,
   showTime = true,
 }) => {
+  if (!dateTime) return <span>--</span>;
   const date = parseISO(dateTime);
   const formattedDate = format(date, "MMM dd, yyyy");
   const formattedTime = format(date, "p 'UTC'");

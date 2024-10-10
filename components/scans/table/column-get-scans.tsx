@@ -3,61 +3,40 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { add } from "date-fns";
 
-import {
-  DateWithTime,
-  ProviderInfo,
-  SnippetIdProvider,
-} from "@/components/providers";
+import { DateWithTime, EntityInfoShort } from "@/components/ui/entities";
 import { DataTableColumnHeader, StatusBadge } from "@/components/ui/table";
-import { ProviderProps } from "@/types";
+import { ScanProps } from "@/types";
 
 import { DataTableRowActions } from "./data-table-row-actions";
 
-const getProviderData = (row: { original: ProviderProps }) => {
+const getScanData = (row: { original: ScanProps }) => {
   return row.original;
 };
 
-export const ColumnGetScans: ColumnDef<ProviderProps>[] = [
+export const ColumnGetScans: ColumnDef<ScanProps>[] = [
   {
-    header: " ",
-    cell: ({ row }) => <p className="text-medium">{row.index + 1}</p>,
-  },
-  {
-    accessorKey: "account",
+    accessorKey: "name",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={"Account"} param="alias" />
+      <DataTableColumnHeader column={column} title={"Name"} param="name" />
     ),
     cell: ({ row }) => {
       const {
-        attributes: { connection, provider, alias },
-      } = getProviderData(row);
-      return (
-        <ProviderInfo
-          connected={connection.connected}
-          provider={provider}
-          providerAlias={alias}
-        />
-      );
+        attributes: { name },
+      } = getScanData(row);
+      return <EntityInfoShort entityAlias={name} entityId={row.original.id} />;
     },
   },
-  {
-    accessorKey: "uid",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={"Id"} param="uid" />
-    ),
-    cell: ({ row }) => {
-      const {
-        attributes: { uid },
-      } = getProviderData(row);
-      return <SnippetIdProvider providerId={uid} />;
-    },
-  },
+
   {
     accessorKey: "status",
-    header: "Scan Status",
-    cell: () => {
-      // Temporarily overwriting the value until the API is functional.
-      return <StatusBadge status={"completed"} />;
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={"Status"} param="state" />
+    ),
+    cell: ({ row }) => {
+      const {
+        attributes: { state },
+      } = getScanData(row);
+      return <StatusBadge status={state} />;
     },
   },
   {
@@ -65,15 +44,15 @@ export const ColumnGetScans: ColumnDef<ProviderProps>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
-        title={"Last Scan"}
-        param="updated_at"
+        title={"Completed At"}
+        param="completed_at"
       />
     ),
     cell: ({ row }) => {
       const {
-        attributes: { updated_at },
-      } = getProviderData(row);
-      return <DateWithTime dateTime={updated_at} />;
+        attributes: { completed_at },
+      } = getScanData(row);
+      return <DateWithTime dateTime={completed_at} />;
     },
   },
   {
@@ -81,36 +60,40 @@ export const ColumnGetScans: ColumnDef<ProviderProps>[] = [
     header: "Next Scan",
     cell: ({ row }) => {
       const {
-        attributes: { updated_at },
-      } = getProviderData(row);
-      const nextDay = add(new Date(updated_at), {
+        attributes: { scheduled_at, completed_at },
+      } = getScanData(row);
+      const nextDay = add(new Date(completed_at), {
         hours: 24,
       });
-      return <DateWithTime dateTime={nextDay.toISOString()} />;
+      if (scheduled_at === null)
+        return <DateWithTime dateTime={nextDay.toISOString()} />;
+      return <DateWithTime dateTime={scheduled_at} />;
     },
   },
   {
     accessorKey: "resources",
     header: "Resources",
-    cell: () => {
-      // Temporarily overwriting the value until the API is functional.
-      return <p className="font-medium">{288}</p>;
+    cell: ({ row }) => {
+      const {
+        attributes: { unique_resource_count },
+      } = getScanData(row);
+      return <p className="font-medium">{unique_resource_count}</p>;
     },
   },
   {
-    accessorKey: "added",
+    accessorKey: "started_at",
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
-        title={"Added"}
-        param="inserted_at"
+        title={"Started At"}
+        param="started_at"
       />
     ),
     cell: ({ row }) => {
       const {
-        attributes: { inserted_at },
-      } = getProviderData(row);
-      return <DateWithTime dateTime={inserted_at} showTime={false} />;
+        attributes: { started_at },
+      } = getScanData(row);
+      return <DateWithTime dateTime={started_at} />;
     },
   },
   {

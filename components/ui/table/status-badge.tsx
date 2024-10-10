@@ -2,27 +2,23 @@ import { Chip } from "@nextui-org/react";
 import React from "react";
 
 type Status =
+  | "available"
+  | "scheduled"
+  | "executing"
   | "completed"
-  | "pending"
-  | "cancelled"
-  | "fail"
-  | "success"
-  | "muted"
-  | "active"
-  | "inactive";
+  | "failed"
+  | "cancelled";
 
 const statusColorMap: Record<
   Status,
   "danger" | "warning" | "success" | "default"
 > = {
+  available: "default",
+  scheduled: "warning",
+  executing: "default",
   completed: "success",
-  pending: "warning",
+  failed: "danger",
   cancelled: "danger",
-  fail: "danger",
-  success: "success",
-  muted: "default",
-  active: "success",
-  inactive: "default",
 };
 
 export const StatusBadge = ({ status }: { status: Status }) => {

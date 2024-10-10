@@ -2,8 +2,7 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 
-import { DateWithTime } from "@/components/providers";
-import { StatusBadge } from "@/components/ui/table";
+import { DateWithTime } from "@/components/ui/entities";
 import { UserActions } from "@/components/users";
 import { UserProps } from "@/types";
 
@@ -44,14 +43,7 @@ export const ColumnsUser: ColumnDef<UserProps>[] = [
       return <DateWithTime dateTime={dateAdded} showTime={false} />;
     },
   },
-  {
-    accessorKey: "status",
-    header: "Status",
-    cell: ({ row }) => {
-      const { status } = getUserData(row);
-      return <StatusBadge status={status} />;
-    },
-  },
+
   {
     accessorKey: "actions",
     header: () => <div className="text-right">Actions</div>,

@@ -1,16 +1,13 @@
 import { Snippet } from "@nextui-org/react";
 import React from "react";
 
-import { CopyIcon, DoneIcon, IdIcon } from "../icons";
+import { CopyIcon, DoneIcon, IdIcon } from "@/components/icons";
 
-interface SnippetIdProviderProps {
-  providerId: string;
+interface SnippetIdProps {
+  entityId: string;
   [key: string]: any;
 }
-export const SnippetIdProvider: React.FC<SnippetIdProviderProps> = ({
-  providerId,
-  ...props
-}) => {
+export const SnippetId: React.FC<SnippetIdProps> = ({ entityId, ...props }) => {
   return (
     <Snippet
       className="flex items-center py-0"
@@ -26,7 +23,7 @@ export const SnippetIdProvider: React.FC<SnippetIdProviderProps> = ({
       <p className="flex items-center space-x-2">
         <IdIcon size={16} />
         <span className="no-scrollbar max-w-16 overflow-x-scroll text-sm">
-          {providerId}
+          {entityId}
         </span>
       </p>
     </Snippet>
