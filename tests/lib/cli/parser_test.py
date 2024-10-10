@@ -25,6 +25,7 @@ def mock_get_available_providers():
     return ["aws", "azure", "gcp", "kubernetes"]
 
 
+@pytest.mark.arg_parser
 class Test_Parser:
     def setup_method(self):
         # We need this to mock the get_available_providers function call
