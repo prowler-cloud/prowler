@@ -101,6 +101,18 @@ class Codebuild(AWSService):
                 bucket_location=s3_logs.get("location", ""),
                 encrypted=(not s3_logs.get("encryptionDisabled", False)),
             )
+            cloudwatch_logs = project_info.get("logsConfig", {}).get(
+                "cloudWatchLogs", {}
+            )
+            project.cloudwatch_logs = CloudWatchLogs(
+                enabled=(
+                    True
+                    if cloudwatch_logs.get("status", "DISABLED") == "ENABLED"
+                    else False
+                ),
+                group_name=cloudwatch_logs.get("groupName", ""),
+                stream_name=cloudwatch_logs.get("streamName", ""),
+            )
             project.tags = project_info.get("tags", [])
         except Exception as error:
             logger.error(
@@ -129,6 +141,12 @@ class s3Logs(BaseModel):
     encrypted: bool
 
 
+class CloudWatchLogs(BaseModel):
+    enabled: bool
+    group_name: str
+    stream_name: str
+
+
 class Project(BaseModel):
     name: str
     arn: str
@@ -140,4 +158,5 @@ class Project(BaseModel):
     secondary_sources: Optional[list[Source]] = []
     environment_variables: Optional[List[EnvironmentVariable]]
     s3_logs: Optional[s3Logs]
+    cloudwatch_logs: Optional[CloudWatchLogs]
     tags: Optional[list]
