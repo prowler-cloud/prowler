@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "opensearch_service_domains_at_least_three_nodes_and_zoneawareness_enabled",
+  "CheckTitle": "Elasticsearch/Opensearch domains should have at least three data nodes",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "opensearch",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service:{region}:{account-id}:domain/{domain-name}",
+  "Severity": "medium",
+  "ResourceType": "AwsElasticsearchDomain",
+  "Description": "This control checks whether Elasticsearch/Opensearch domains are configured with at least three data nodes and zoneAwarenessEnabled is true.",
+  "Risk": "Without at least three data nodes, the Elasticsearch/Opensearch domain may not be fault-tolerant, leading to a higher risk of data loss or unavailability in case of node failure.",
+  "RelatedUrl": "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/what-is.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws opensearch update-domain-config --domain-name <domain-name> --cluster-config InstanceCount=3,ZoneAwarenessEnabled=true",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/es-controls.html#es-6",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Modify the Elasticsearch/Opensearch domain to ensure at least three data nodes and enable zone awareness for high availability.",
+      "Url": "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/managedomains-configuration-changes.html"
+    }
+  },
+  "Categories": [
+    "redundancy"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
