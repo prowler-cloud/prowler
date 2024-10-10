@@ -95,7 +95,9 @@ class Codebuild(AWSService):
             project.buildspec = project_info.get("source", {}).get("buildspec", "")
             s3_logs = project_info.get("logsConfig", {}).get("s3Logs", {})
             project.s3_logs = s3Logs(
-                status=s3_logs.get("status", "DISABLED"),
+                enabled=(
+                    True if s3_logs.get("status", "DISABLED") == "ENABLED" else False
+                ),
                 bucket_location=s3_logs.get("location", ""),
                 encrypted=(not s3_logs.get("encryptionDisabled", False)),
             )
@@ -122,7 +124,7 @@ class EnvironmentVariable(BaseModel):
 
 
 class s3Logs(BaseModel):
-    status: str
+    enabled: bool
     bucket_location: str
     encrypted: bool
 

@@ -102,7 +102,7 @@ class Test_Codebuild_Service:
             in codebuild.projects[project_arn].secondary_sources[0].location
         )
         assert isinstance(codebuild.projects[project_arn].s3_logs, s3Logs)
-        assert codebuild.projects[project_arn].s3_logs.status == "ENABLED"
+        assert codebuild.projects[project_arn].s3_logs.enabled
         assert codebuild.projects[project_arn].s3_logs.bucket_location == "test-bucket"
         assert codebuild.projects[project_arn].s3_logs.encrypted
         assert codebuild.projects[project_arn].tags[0]["key"] == "Name"
