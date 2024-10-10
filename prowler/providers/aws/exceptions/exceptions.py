@@ -66,8 +66,8 @@ class AWSBaseException(ProwlerException):
             "remediation": "Check your AWS Secret Access Key and signing method and ensure it is valid.",
         },
         (1917, "AWSInvalidAccountCredentials"): {
-            "message": "The AWS credentials provided belongs to a different account",
-            "remediation": "Check your AWS credentials and review if belongs to the account you want to use.",
+            "message": "The provided AWS credentials belong to a different account",
+            "remediation": "Check the provided AWS credentials and review if belong to the account you want to use.",
         },
     }
 
