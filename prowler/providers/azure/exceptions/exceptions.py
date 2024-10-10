@@ -49,6 +49,14 @@ class AzureBaseException(ProwlerException):
             "message": "Error in HTTP response from Azure",
             "remediation": "",
         },
+        (1925, "AzureConfigCredentialsError"): {
+            "message": "Error trying to configure Azure credentials from dictionary",
+            "remediation": "Check the dictionary and ensure it is properly set up for Azure credentials. TENANT_ID, CLIENT_ID and CLIENT_SECRET are required.",
+        },
+        (1926, "AzureGetTokenIdentityError"): {
+            "message": "Error trying to get token from Azure Identity",
+            "remediation": "Check the Azure Identity and ensure it is properly set up.",
+        },
     }
 
     def __init__(self, code, file=None, original_exception=None, message=None):
@@ -146,4 +154,18 @@ class AzureHTTPResponseError(AzureBaseException):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             1924, file=file, original_exception=original_exception, message=message
+        )
+
+
+class AzureConfigCredentialsError(AzureCredentialsError):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            1925, file=file, original_exception=original_exception, message=message
+        )
+
+
+class AzureGetTokenIdentityError(AzureBaseException):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            1926, file=file, original_exception=original_exception, message=message
         )

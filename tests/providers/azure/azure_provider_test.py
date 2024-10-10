@@ -31,6 +31,8 @@ class TestAzureProvider:
         sp_env_auth = None
         browser_auth = None
         managed_identity_auth = None
+        client_id = None
+        client_secret = None
 
         audit_config = load_and_validate_config_file("azure", default_config_file_path)
         fixer_config = load_and_validate_config_file(
@@ -55,6 +57,8 @@ class TestAzureProvider:
                 subscription_id,
                 audit_config=audit_config,
                 fixer_config=fixer_config,
+                client_id=client_id,
+                client_secret=client_secret,
             )
 
             assert azure_provider.region_config == AzureRegionConfig(
@@ -224,6 +228,43 @@ class TestAzureProvider:
                 tenant_id=str(uuid4()),
                 region="AzureCloud",
                 raise_on_exception=False,
+            )
+
+            assert isinstance(test_connection, Connection)
+            assert test_connection.is_connected
+            assert test_connection.error is None
+
+    def test_test_connection_tenant_id_client_id_client_secret(self):
+        with patch(
+            "prowler.providers.azure.azure_provider.DefaultAzureCredential"
+        ) as mock_default_credential, patch(
+            "prowler.providers.azure.azure_provider.AzureProvider.setup_session"
+        ) as mock_setup_session, patch(
+            "prowler.providers.azure.azure_provider.SubscriptionClient"
+        ) as mock_resource_client:
+
+            # Mock the return value of DefaultAzureCredential
+            mock_credentials = MagicMock()
+            mock_credentials.get_token.return_value = AccessToken(
+                token="fake_token", expires_on=9999999999
+            )
+            mock_default_credential.return_value = mock_credentials
+
+            # Mock setup_session to return a mocked session object
+            mock_session = MagicMock()
+            mock_setup_session.return_value = mock_session
+
+            # Mock ResourceManagementClient to avoid real API calls
+            mock_client = MagicMock()
+            mock_resource_client.return_value = mock_client
+
+            test_connection = AzureProvider.test_connection(
+                browser_auth=False,
+                tenant_id=str(uuid4()),
+                region="AzureCloud",
+                raise_on_exception=False,
+                client_id=str(uuid4()),
+                client_secret=str(uuid4()),
             )
 
             assert isinstance(test_connection, Connection)

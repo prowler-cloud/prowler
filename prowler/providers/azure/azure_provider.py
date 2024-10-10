@@ -5,7 +5,11 @@ from os import getenv
 
 import requests
 from azure.core.exceptions import HttpResponseError
-from azure.identity import DefaultAzureCredential, InteractiveBrowserCredential
+from azure.identity import (
+    ClientSecretCredential,
+    DefaultAzureCredential,
+    InteractiveBrowserCredential,
+)
 from azure.mgmt.subscription import SubscriptionClient
 from colorama import Fore, Style
 from msgraph import GraphServiceClient
@@ -16,8 +20,10 @@ from prowler.lib.utils.utils import print_boxes
 from prowler.providers.azure.exceptions.exceptions import (
     AzureArgumentTypeValidationError,
     AzureBrowserAuthNoTenantIDError,
+    AzureConfigCredentialsError,
     AzureDefaultAzureCredentialError,
     AzureEnvironmentVariableError,
+    AzureGetTokenIdentityError,
     AzureHTTPResponseError,
     AzureInteractiveBrowserCredentialError,
     AzureNoAuthenticationMethodError,
@@ -91,6 +97,8 @@ class AzureProvider(Provider):
         subscription_ids: list = [],
         audit_config: dict = {},
         fixer_config: dict = {},
+        client_id: str = None,
+        client_secret: str = None,
     ):
         """
         Initializes the Azure provider.
@@ -105,6 +113,8 @@ class AzureProvider(Provider):
             subscription_ids (list): List of subscription IDs.
             audit_config (dict): The audit configuration for the Azure provider.
             fixer_config (dict): The fixer configuration.
+            client_id (str): The Azure client ID.
+            client_secret (str): The Azure client secret.
 
         Returns:
             None
@@ -114,6 +124,8 @@ class AzureProvider(Provider):
             AzureSetUpRegionConfigError: If there is an error in setting up the region configuration.
             AzureDefaultAzureCredentialError: If there is an error in retrieving the Azure credentials.
             AzureInteractiveBrowserCredentialError: If there is an error in retrieving the Azure credentials using browser authentication.
+            AzureConfigCredentialsError: If there is an error in configuring the Azure credentials from a dictionary.
+            AzureGetTokenIdentityError: If there is an error in getting the token from the Azure identity.
         """
         logger.info("Setting Azure provider ...")
 
@@ -121,11 +133,24 @@ class AzureProvider(Provider):
 
         # Validate the authentication arguments
         self.validate_arguments(
-            az_cli_auth, sp_env_auth, browser_auth, managed_identity_auth, tenant_id
+            az_cli_auth,
+            sp_env_auth,
+            browser_auth,
+            managed_identity_auth,
+            tenant_id,
+            client_id,
+            client_secret,
         )
 
         logger.info("Checking if region is different than default one")
         self._region_config = self.setup_region_config(region)
+
+        # Get the dict from the static credentials
+        azure_config = None
+        if tenant_id and client_id and client_secret:
+            azure_config = self.get_statics_credentials(
+                tenant_id, client_id, client_secret
+            )
 
         # Set up the Azure session
         self._session = self.setup_session(
@@ -134,6 +159,7 @@ class AzureProvider(Provider):
             browser_auth,
             managed_identity_auth,
             tenant_id,
+            azure_config,
             self._region_config,
         )
 
@@ -144,6 +170,7 @@ class AzureProvider(Provider):
             browser_auth,
             managed_identity_auth,
             subscription_ids,
+            client_id,
         )
 
         # TODO: should we keep this here or within the identity?
@@ -236,6 +263,8 @@ class AzureProvider(Provider):
         browser_auth: bool,
         managed_identity_auth: bool,
         tenant_id: str,
+        client_id: str,
+        client_secret: str,
     ):
         """
         Validates the authentication arguments for the Azure provider.
@@ -246,30 +275,40 @@ class AzureProvider(Provider):
             browser_auth (bool): Flag indicating whether browser authentication is enabled.
             managed_identity_auth (bool): Flag indicating whether managed identity authentication is enabled.
             tenant_id (str): The Azure Tenant ID.
+            client_id (str): The Azure Client ID.
+            client_secret (str): The Azure Client Secret.
 
         Raises:
             AzureBrowserAuthNoTenantIDError: If browser authentication is enabled but the tenant ID is not found.
         """
-        if not browser_auth and tenant_id:
-            raise AzureTenantIDNoBrowserAuthError(
-                file=os.path.basename(__file__),
-                message="Azure Tenant ID (--tenant-id) is required for browser authentication mode",
-            )
-        elif (
-            not az_cli_auth
-            and not sp_env_auth
-            and not browser_auth
-            and not managed_identity_auth
-        ):
-            raise AzureNoAuthenticationMethodError(
-                file=os.path.basename(__file__),
-                message="Azure provider requires at least one authentication method set: [--az-cli-auth | --sp-env-auth | --browser-auth | --managed-identity-auth]",
-            )
-        elif browser_auth and not tenant_id:
-            raise AzureBrowserAuthNoTenantIDError(
-                file=os.path.basename(__file__),
-                message="Azure Tenant ID (--tenant-id) is required for browser authentication mode",
-            )
+
+        if not client_id and not client_secret:
+            if not browser_auth and tenant_id:
+                raise AzureTenantIDNoBrowserAuthError(
+                    file=os.path.basename(__file__),
+                    message="Azure Tenant ID (--tenant-id) is required for browser authentication mode",
+                )
+            elif (
+                not az_cli_auth
+                and not sp_env_auth
+                and not browser_auth
+                and not managed_identity_auth
+            ):
+                raise AzureNoAuthenticationMethodError(
+                    file=os.path.basename(__file__),
+                    message="Azure provider requires at least one authentication method set: [--az-cli-auth | --sp-env-auth | --browser-auth | --managed-identity-auth]",
+                )
+            elif browser_auth and not tenant_id:
+                raise AzureBrowserAuthNoTenantIDError(
+                    file=os.path.basename(__file__),
+                    message="Azure Tenant ID (--tenant-id) is required for browser authentication mode",
+                )
+        else:
+            if not tenant_id:
+                raise AzureTenantIDNoBrowserAuthError(
+                    file=os.path.basename(__file__),
+                    message="Azure tenant ID is required for service principal authentication mode used with client_id and client_secret",
+                )
 
     @staticmethod
     def setup_region_config(region):
@@ -346,6 +385,7 @@ class AzureProvider(Provider):
         browser_auth: bool,
         managed_identity_auth: bool,
         tenant_id: str,
+        azure_config: dict,
         region_config: AzureRegionConfig,
     ):
         """Returns the Azure credentials object.
@@ -358,6 +398,10 @@ class AzureProvider(Provider):
             browser_auth (bool): Flag indicating whether to use interactive browser authentication.
             managed_identity_auth (bool): Flag indicating whether to use managed identity authentication.
             tenant_id (str): The Azure Active Directory tenant ID.
+            azure_config (dict): The Azure configuration object. It contains the following keys:
+                - tenant_id: The Azure Active Directory tenant ID.
+                - client_id: The Azure client ID.
+                - client_secret: The Azure client secret
             region_config (AzureRegionConfig): The region configuration object.
 
         Returns:
@@ -378,21 +422,40 @@ class AzureProvider(Provider):
                     )
                     raise environment_credentials_error
             try:
-                # Since the input vars come as True when it is wanted to be used, we need to inverse it since
-                # DefaultAzureCredential sets the auth method excluding the others
-                credentials = DefaultAzureCredential(
-                    exclude_environment_credential=not sp_env_auth,
-                    exclude_cli_credential=not az_cli_auth,
-                    exclude_managed_identity_credential=not managed_identity_auth,
-                    # Azure Auth using Visual Studio is not supported
-                    exclude_visual_studio_code_credential=True,
-                    # Azure Auth using Shared Token Cache is not supported
-                    exclude_shared_token_cache_credential=True,
-                    # Azure Auth using PowerShell is not supported
-                    exclude_powershell_credential=True,
-                    # set Authority of a Microsoft Entra endpoint
-                    authority=region_config.authority,
-                )
+                if azure_config:
+                    try:
+                        credentials = ClientSecretCredential(
+                            tenant_id=azure_config["tenant_id"],
+                            client_id=azure_config["client_id"],
+                            client_secret=azure_config["client_secret"],
+                        )
+                        return credentials
+                    except Exception as error:
+                        logger.critical(
+                            "Failed to retrieve azure credentials from static configuration"
+                        )
+                        logger.critical(
+                            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+                        )
+                        raise AzureConfigCredentialsError(
+                            file=os.path.basename(__file__), original_exception=error
+                        )
+                else:
+                    # Since the input vars come as True when it is wanted to be used, we need to inverse it since
+                    # DefaultAzureCredential sets the auth method excluding the others
+                    credentials = DefaultAzureCredential(
+                        exclude_environment_credential=not sp_env_auth,
+                        exclude_cli_credential=not az_cli_auth,
+                        exclude_managed_identity_credential=not managed_identity_auth,
+                        # Azure Auth using Visual Studio is not supported
+                        exclude_visual_studio_code_credential=True,
+                        # Azure Auth using Shared Token Cache is not supported
+                        exclude_shared_token_cache_credential=True,
+                        # Azure Auth using PowerShell is not supported
+                        exclude_powershell_credential=True,
+                        # set Authority of a Microsoft Entra endpoint
+                        authority=region_config.authority,
+                    )
             except Exception as error:
                 logger.critical("Failed to retrieve azure credentials")
                 logger.critical(
@@ -426,6 +489,8 @@ class AzureProvider(Provider):
         tenant_id=None,
         region="AzureCloud",
         raise_on_exception=True,
+        client_id=None,
+        client_secret=None,
     ) -> Connection:
         """Test connection to Azure subscription.
 
@@ -439,6 +504,8 @@ class AzureProvider(Provider):
             tenant_id (str): The Azure Active Directory tenant ID.
             region (str): The Azure region.
             raise_on_exception (bool): Flag indicating whether to raise an exception if the connection fails.
+            client_id (str): The Azure client ID.
+            client_secret (str): The Azure client secret.
 
         Returns:
             bool: True if the connection is successful, False otherwise.
@@ -450,6 +517,7 @@ class AzureProvider(Provider):
             AzureDefaultAzureCredentialError: If there is an error in retrieving the Azure credentials.
             AzureInteractiveBrowserCredentialError: If there is an error in retrieving the Azure credentials using browser authentication.
             AzureHTTPResponseError: If there is an HTTP response error.
+            AzureConfigCredentialsError: If there is an error in configuring the Azure credentials from a dictionary.
 
 
         Examples:
@@ -460,9 +528,23 @@ class AzureProvider(Provider):
         """
         try:
             AzureProvider.validate_arguments(
-                az_cli_auth, sp_env_auth, browser_auth, managed_identity_auth, tenant_id
+                az_cli_auth,
+                sp_env_auth,
+                browser_auth,
+                managed_identity_auth,
+                tenant_id,
+                client_id,
+                client_secret,
             )
             region_config = AzureProvider.setup_region_config(region)
+
+            # Get the dict from the static credentials
+            azure_config = None
+            if tenant_id and client_id and client_secret:
+                azure_config = AzureProvider.get_statics_credentials(
+                    tenant_id, client_id, client_secret
+                )
+
             # Set up the Azure session
             credentials = AzureProvider.setup_session(
                 az_cli_auth,
@@ -470,6 +552,7 @@ class AzureProvider(Provider):
                 browser_auth,
                 managed_identity_auth,
                 tenant_id,
+                azure_config,
                 region_config,
             )
             # Create a SubscriptionClient
@@ -521,6 +604,11 @@ class AzureProvider(Provider):
             if raise_on_exception:
                 raise interactive_browser_error
             return Connection(error=interactive_browser_error)
+        except AzureConfigCredentialsError as config_credentials_error:
+            logger.error(str(config_credentials_error))
+            if raise_on_exception:
+                raise config_credentials_error
+            return Connection(error=config_credentials_error)
         # Exceptions from SubscriptionClient
         except HttpResponseError as http_response_error:
             logger.error(
@@ -573,6 +661,7 @@ class AzureProvider(Provider):
         browser_auth,
         managed_identity_auth,
         subscription_ids,
+        client_id,
     ):
         """
         Sets up the identity for the Azure provider.
@@ -595,7 +684,7 @@ class AzureProvider(Provider):
         # the identity can access AAD and retrieve the tenant domain name.
         # With cli also should be possible but right now it does not work, azure python package issue is coming
         # At the time of writting this with az cli creds is not working, despite that is included
-        if sp_env_auth or browser_auth or az_cli_auth:
+        if sp_env_auth or browser_auth or az_cli_auth or client_id:
 
             async def get_azure_identity():
                 # Trying to recover tenant domain info
@@ -611,11 +700,15 @@ class AzureProvider(Provider):
                             identity.tenant_domain = domain_result.value[0].id
 
                 except Exception as error:
-                    logger.error(
+                    logger.critical(
                         f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
                     )
+                    raise AzureGetTokenIdentityError(
+                        file=os.path.basename(__file__),
+                        original_exception=error,
+                    )
                 # since that exception is not considered as critical, we keep filling another identity fields
-                if sp_env_auth:
+                if sp_env_auth or client_id:
                     # The id of the sp can be retrieved from environment variables
                     identity.identity_id = getenv("AZURE_CLIENT_ID")
                     identity.identity_type = "Service Principal"
@@ -730,3 +823,25 @@ class AzureProvider(Provider):
                     for location in data["value"]:
                         locations[display_name].append(location["name"])
         return locations
+
+    @staticmethod
+    def get_statics_credentials(
+        tenant_id: str = None, client_id: str = None, client_secret: str = None
+    ) -> dict:
+        """
+        Converts the static credentials to a dictionary.
+
+        Args:
+            tenant_id (str): The Azure tenant ID.
+            client_id (str): The Azure client ID.
+            client_secret (str): The Azure client secret.
+
+        Returns:
+            dict: A dictionary containing the static credentials.
+        """
+
+        return {
+            "tenant_id": tenant_id,
+            "client_id": client_id,
+            "client_secret": client_secret,
+        }
