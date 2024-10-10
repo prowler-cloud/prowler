@@ -46,7 +46,7 @@ export const ColumnProviders: ColumnDef<ProviderProps>[] = [
       const {
         attributes: { uid },
       } = getProviderData(row);
-      return <SnippetId className="h-6 max-w-44" entityId={uid} />;
+      return <SnippetId className="h-7 max-w-48" entityId={uid} />;
     },
   },
   {

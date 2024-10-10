@@ -22,7 +22,7 @@ export const SnippetId: React.FC<SnippetIdProps> = ({ entityId, ...props }) => {
     >
       <p className="flex items-center space-x-2">
         <IdIcon size={18} />
-        <span className="no-scrollbar text-md w-28 overflow-hidden overflow-x-scroll text-ellipsis whitespace-nowrap text-sm font-semibold">
+        <span className="no-scrollbar text-md w-28 overflow-hidden overflow-x-scroll text-ellipsis whitespace-nowrap text-sm">
           {entityId}
         </span>
       </p>
