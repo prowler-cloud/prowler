@@ -225,3 +225,15 @@ class StatusEnum(EnumType):
 class StatusEnumField(PostgresEnumField):
     def __init__(self, *args, **kwargs):
         super().__init__("status", *args, **kwargs)
+
+
+# Postgres enum definition for Provider secrets type
+
+
+class ProviderSecretTypeEnum(EnumType):
+    enum_type_name = "provider_secret_type"
+
+
+class ProviderSecretTypeEnumField(PostgresEnumField):
+    def __init__(self, *args, **kwargs):
+        super().__init__("provider_secret_type", *args, **kwargs)

@@ -1297,15 +1297,13 @@ wrapt = ">=1.10,<2"
 dev = ["PyTest", "PyTest-Cov", "bump2version (<1)", "sphinx (<2)", "tox"]
 
 [[package]]
-name = "detect-secrets"
+name = "detect_secrets"
 version = "1.5.0"
 description = "Tool for detecting secrets in the codebase"
 optional = false
 python-versions = "*"
-files = [
-    {file = "detect_secrets-1.5.0-py3-none-any.whl", hash = "sha256:e24e7b9b5a35048c313e983f76c4bd09dad89f045ff059e354f9943bf45aa060"},
-    {file = "detect_secrets-1.5.0.tar.gz", hash = "sha256:6bb46dcc553c10df51475641bb30fd69d25645cc12339e46c824c1e0c388898a"},
-]
+files = []
+develop = false
 
 [package.dependencies]
 pyyaml = "*"
@@ -1314,6 +1312,12 @@ requests = "*"
 [package.extras]
 gibberish = ["gibberish-detector"]
 word-list = ["pyahocorasick"]
+
+[package.source]
+type = "git"
+url = "https://github.com/Yelp/detect-secrets.git"
+reference = "master"
+resolved_reference = "462720710ec337300fab2b4f2290949c7ee141eb"
 
 [[package]]
 name = "dill"
@@ -3258,7 +3262,7 @@ colorama = "0.4.6"
 cryptography = "43.0.1"
 dash = "2.18.1"
 dash-bootstrap-components = "1.6.0"
-detect-secrets = "1.5.0"
+detect-secrets = {git = "https://github.com/Yelp/detect-secrets.git", rev = "master"}
 google-api-python-client = "2.147.0"
 google-auth-httplib2 = ">=0.1,<0.3"
 jsonschema = "4.23.0"
@@ -3281,7 +3285,7 @@ tzlocal = "5.2"
 type = "git"
 url = "https://github.com/prowler-cloud/prowler.git"
 reference = "master"
-resolved_reference = "30bc971f4b289cf4c53ddd10fa7cfba425c32a98"
+resolved_reference = "03a26ec507b2b93b6787be4b0516950d6ab3c092"
 
 [[package]]
 name = "psutil"

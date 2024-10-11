@@ -1,5 +1,5 @@
 import json
-from unittest.mock import patch, MagicMock, PropertyMock
+from unittest.mock import patch, MagicMock
 
 import pytest
 
@@ -10,12 +10,12 @@ from tasks.jobs.scan import perform_prowler_scan, _create_finding_delta
 @pytest.mark.django_db
 class TestPerformScan:
     @patch("tasks.jobs.scan.ProwlerScan")
-    @patch("tasks.jobs.scan.AwsProvider")
+    @patch("tasks.jobs.scan.initialize_prowler_provider")
     @patch("api.db_utils.tenant_transaction")
     def test_perform_prowler_scan_success(
         self,
         mock_tenant_transaction,
-        mock_aws_provider,
+        mock_prowler_provider,
         mock_prowler_scan,
         tenants_fixture,
         scans_fixture,
@@ -32,12 +32,6 @@ class TestPerformScan:
         scan_id = str(scan.id)
         provider_id = str(provider.id)
         checks_to_execute = ["check1", "check2"]
-
-        connection_status_mock = MagicMock()
-        type(connection_status_mock).is_connected = PropertyMock(return_value=True)
-        mock_aws_provider.test_connection.return_value = connection_status_mock
-        mock_aws_provider_instance = mock_aws_provider.return_value
-        mock_aws_provider_instance.test_connection.return_value = connection_status_mock
 
         finding = MagicMock()
         finding.finding_uid = "this_is_a_test_finding_id"
@@ -80,12 +74,12 @@ class TestPerformScan:
         assert scan_resource.type == finding.resource_type
 
     @patch("tasks.jobs.scan.ProwlerScan")
-    @patch("tasks.jobs.scan.AwsProvider")
+    @patch("tasks.jobs.scan.initialize_prowler_provider", side_effect=Exception)
     @patch("api.db_utils.tenant_transaction")
     def test_perform_prowler_scan_no_connection(
         self,
         mock_tenant_transaction,
-        mock_aws_provider,
+        mock_prowler_provider,
         mock_prowler_scan,
         tenants_fixture,
         scans_fixture,
@@ -99,12 +93,6 @@ class TestPerformScan:
         scan_id = str(scan.id)
         provider_id = str(provider.id)
         checks_to_execute = ["check1", "check2"]
-
-        connection_status_mock = MagicMock()
-        type(connection_status_mock).is_connected = PropertyMock(return_value=False)
-        mock_aws_provider.test_connection.return_value = connection_status_mock
-        mock_aws_provider_instance = mock_aws_provider.return_value
-        mock_aws_provider_instance.test_connection.return_value = connection_status_mock
 
         with pytest.raises(ValueError):
             perform_prowler_scan(tenant_id, scan_id, provider_id, checks_to_execute)

@@ -9,16 +9,16 @@
       "name": "test scan 1",
       "state": "completed",
       "unique_resource_count": 1,
-      "duration": 10,
+      "duration": 5,
       "scanner_args": {
-        "key1": "value1",
-        "key2": {
-          "key21": "value21"
-        }
+        "checks_to_execute": [
+          "accessanalyzer_enabled"
+        ]
       },
-      "scheduled_at": "2024-09-01T17:20:27.050Z",
       "inserted_at": "2024-09-01T17:24:27.050Z",
-      "updated_at": "2024-09-01T17:24:27.050Z"
+      "started_at": "2024-09-01T17:24:27.050Z",
+      "updated_at": "2024-09-01T17:24:27.050Z",
+      "completed_at": "2024-09-01T17:24:37.050Z"
     }
   },
   {
@@ -31,16 +31,38 @@
       "name": "test aws scan 2",
       "state": "completed",
       "unique_resource_count": 1,
+      "duration": 20,
+      "scanner_args": {
+        "checks_to_execute": [
+          "accessanalyzer_enabled"
+        ]
+      },
+      "inserted_at": "2024-09-02T17:24:27.050Z",
+      "started_at": "2024-09-02T17:24:27.050Z",
+      "updated_at": "2024-09-02T17:24:27.050Z",
+      "completed_at": "2024-09-01T17:24:37.050Z"
+    }
+  },
+  {
+    "model": "api.scan",
+    "pk": "01920573-ea5b-77fd-a93f-1ed2ae12f728",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "provider": "baa7b895-8bac-4f47-b010-4226d132856e",
+      "trigger": "manual",
+      "name": "test gcp scan",
+      "state": "completed",
+      "unique_resource_count": 10,
       "duration": 10,
       "scanner_args": {
-        "key1": "value1",
-        "key2": {
-          "key21": "value21"
-        }
+        "checks_to_execute": [
+          "cloudsql_instance_automated_backups"
+        ]
       },
-      "scheduled_at": "2024-09-02T17:20:27.050Z",
-      "inserted_at": "2024-09-02T17:24:27.050Z",
-      "updated_at": "2024-09-02T17:24:27.050Z"
+      "inserted_at": "2024-09-02T19:24:27.050Z",
+      "started_at": "2024-09-02T19:24:27.050Z",
+      "updated_at": "2024-09-02T19:24:27.050Z",
+      "completed_at": "2024-09-01T17:24:37.050Z"
     }
   },
   {
@@ -53,14 +75,93 @@
       "name": "test aws scan",
       "state": "completed",
       "unique_resource_count": 1,
-      "duration": 10,
+      "duration": 35,
       "scanner_args": {
-        "key1": "value1",
-        "key2": {
-          "key21": "value21"
-        }
+        "checks_to_execute": [
+          "accessanalyzer_enabled"
+        ]
       },
-      "scheduled_at": "2024-09-02T19:20:27.050Z",
+      "inserted_at": "2024-09-02T19:24:27.050Z",
+      "started_at": "2024-09-02T19:24:27.050Z",
+      "updated_at": "2024-09-02T19:24:27.050Z",
+      "completed_at": "2024-09-01T17:24:37.050Z"
+    }
+  },
+  {
+    "model": "api.scan",
+    "pk": "c281c924-23f3-4fcc-ac63-73a22154b7de",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "provider": "b85601a8-4b45-4194-8135-03fb980ef428",
+      "trigger": "scheduled",
+      "name": "test scheduled aws scan",
+      "state": "available",
+      "scanner_args": {
+        "checks_to_execute": [
+          "cloudformation_stack_outputs_find_secrets"
+        ]
+      },
+      "scheduled_at": "2030-09-02T19:20:27.050Z",
+      "inserted_at": "2024-09-02T19:24:27.050Z",
+      "updated_at": "2024-09-02T19:24:27.050Z"
+    }
+  },
+  {
+    "model": "api.scan",
+    "pk": "25c8907c-b26e-4ec0-966b-a1f53a39d8e6",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "provider": "b85601a8-4b45-4194-8135-03fb980ef428",
+      "trigger": "scheduled",
+      "name": "test scheduled aws scan 2",
+      "state": "available",
+      "scanner_args": {
+        "checks_to_execute": [
+          "accessanalyzer_enabled",
+          "cloudformation_stack_outputs_find_secrets"
+        ]
+      },
+      "scheduled_at": "2030-08-02T19:20:27.050Z",
+      "inserted_at": "2024-09-02T19:24:27.050Z",
+      "updated_at": "2024-09-02T19:24:27.050Z"
+    }
+  },
+  {
+    "model": "api.scan",
+    "pk": "25c8907c-b26e-4ec0-966b-a1f53a39d8e6",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "provider": "baa7b895-8bac-4f47-b010-4226d132856e",
+      "trigger": "scheduled",
+      "name": "test scheduled gcp scan",
+      "state": "available",
+      "scanner_args": {
+        "checks_to_execute": [
+          "cloudsql_instance_automated_backups",
+          "iam_audit_logs_enabled"
+        ]
+      },
+      "scheduled_at": "2030-07-02T19:20:27.050Z",
+      "inserted_at": "2024-09-02T19:24:27.050Z",
+      "updated_at": "2024-09-02T19:24:27.050Z"
+    }
+  },
+  {
+    "model": "api.scan",
+    "pk": "25c8907c-b26e-4ec0-966b-a1f53a39d8e6",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "provider": "1b59e032-3eb6-4694-93a5-df84cd9b3ce2",
+      "trigger": "scheduled",
+      "name": "test scheduled azure scan",
+      "state": "available",
+      "scanner_args": {
+        "checks_to_execute": [
+          "aks_cluster_rbac_enabled",
+          "defender_additional_email_configured_with_a_security_contact"
+        ]
+      },
+      "scheduled_at": "2030-08-05T19:20:27.050Z",
       "inserted_at": "2024-09-02T19:24:27.050Z",
       "updated_at": "2024-09-02T19:24:27.050Z"
     }

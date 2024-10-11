@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 from unittest.mock import Mock, patch, ANY
 
@@ -5,7 +6,7 @@ import pytest
 from django.urls import reverse
 from rest_framework import status
 
-from api.models import User, Membership, Provider, Scan
+from api.models import User, Membership, Provider, Scan, ProviderSecret
 from api.rls import Tenant
 from conftest import (
     API_JSON_CONTENT_TYPE,
@@ -1070,6 +1071,298 @@ class TestProviderViewSet:
     def test_providers_sort_invalid(self, authenticated_client):
         response = authenticated_client.get(
             reverse("provider-list"), {"sort": "invalid"}
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+
+@pytest.mark.django_db
+class TestProviderSecretViewSet:
+    def test_provider_secrets_list(self, authenticated_client, provider_secret_fixture):
+        response = authenticated_client.get(reverse("providersecret-list"))
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == len(provider_secret_fixture)
+
+    def test_provider_secrets_retrieve(
+        self, authenticated_client, provider_secret_fixture
+    ):
+        provider_secret1, *_ = provider_secret_fixture
+        response = authenticated_client.get(
+            reverse("providersecret-detail", kwargs={"pk": provider_secret1.id}),
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["data"]["attributes"]["name"] == provider_secret1.name
+        assert (
+            response.json()["data"]["attributes"]["secret_type"]
+            == provider_secret1.secret_type
+        )
+
+    def test_provider_secrets_invalid_retrieve(self, authenticated_client):
+        response = authenticated_client.get(
+            reverse(
+                "providersecret-detail",
+                kwargs={"pk": "f498b103-c760-4785-9a3e-e23fafbb7b02"},
+            )
+        )
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_provider_secrets_create_valid(
+        self, authenticated_client, providers_fixture
+    ):
+        provider, *_ = providers_fixture
+        data = {
+            "data": {
+                "type": "ProviderSecret",
+                "attributes": {
+                    "name": "My Secret",
+                    "secret_type": "static",
+                    "secret": {
+                        "aws_access_key_id": "value",
+                        "aws_secret_access_key": "value",
+                        "aws_session_token": "value",
+                    },
+                },
+                "relationships": {
+                    "provider": {"data": {"type": "Provider", "id": str(provider.id)}}
+                },
+            }
+        }
+        response = authenticated_client.post(
+            reverse("providersecret-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+        assert ProviderSecret.objects.count() == 1
+        assert ProviderSecret.objects.get().name == data["data"]["attributes"]["name"]
+        assert (
+            ProviderSecret.objects.get().secret_type
+            == data["data"]["attributes"]["secret_type"]
+        )
+        assert (
+            str(ProviderSecret.objects.get().provider.id)
+            == data["data"]["relationships"]["provider"]["data"]["id"]
+        )
+
+    @pytest.mark.parametrize(
+        "attributes, error_code, error_pointer",
+        (
+            [
+                (
+                    {
+                        "name": "testing",
+                        "secret_type": "static",
+                        "secret": {"invalid": "test"},
+                    },
+                    "required",
+                    "secret/aws_access_key_id",
+                ),
+                (
+                    {
+                        "name": "testing",
+                        "secret_type": "invalid",
+                        "secret": {"invalid": "test"},
+                    },
+                    "invalid_choice",
+                    "secret_type",
+                ),
+                (
+                    {
+                        "name": "a" * 151,
+                        "secret_type": "static",
+                        "secret": {
+                            "aws_access_key_id": "value",
+                            "aws_secret_access_key": "value",
+                            "aws_session_token": "value",
+                        },
+                    },
+                    "max_length",
+                    "name",
+                ),
+            ]
+        ),
+    )
+    def test_provider_secrets_invalid_create(
+        self,
+        providers_fixture,
+        authenticated_client,
+        attributes,
+        error_code,
+        error_pointer,
+    ):
+        provider, *_ = providers_fixture
+        data = {
+            "data": {
+                "type": "ProviderSecret",
+                "attributes": attributes,
+                "relationships": {
+                    "provider": {"data": {"type": "Provider", "id": str(provider.id)}}
+                },
+            }
+        }
+        response = authenticated_client.post(
+            reverse("providersecret-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()["errors"][0]["code"] == error_code
+        assert (
+            response.json()["errors"][0]["source"]["pointer"]
+            == f"/data/attributes/{error_pointer}"
+        )
+
+    def test_provider_secrets_partial_update(
+        self, authenticated_client, provider_secret_fixture
+    ):
+        provider_secret, *_ = provider_secret_fixture
+        data = {
+            "data": {
+                "type": "ProviderSecret",
+                "id": str(provider_secret.id),
+                "attributes": {
+                    "name": "new_name",
+                    "secret": {
+                        "aws_access_key_id": "new_value",
+                        "aws_secret_access_key": "new_value",
+                        "aws_session_token": "new_value",
+                    },
+                },
+                "relationships": {
+                    "provider": {
+                        "data": {
+                            "type": "Provider",
+                            "id": str(provider_secret.provider.id),
+                        }
+                    }
+                },
+            }
+        }
+        response = authenticated_client.patch(
+            reverse("providersecret-detail", kwargs={"pk": provider_secret.id}),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_200_OK
+        provider_secret.refresh_from_db()
+        assert provider_secret.name == "new_name"
+        for value in provider_secret.secret.values():
+            assert value == "new_value"
+
+    def test_provider_secrets_partial_update_invalid_content_type(
+        self, authenticated_client, provider_secret_fixture
+    ):
+        provider_secret, *_ = provider_secret_fixture
+        response = authenticated_client.patch(
+            reverse("providersecret-detail", kwargs={"pk": provider_secret.id}),
+            data={},
+        )
+        assert response.status_code == status.HTTP_415_UNSUPPORTED_MEDIA_TYPE
+
+    def test_provider_secrets_partial_update_invalid_content(
+        self, authenticated_client, provider_secret_fixture
+    ):
+        provider_secret, *_ = provider_secret_fixture
+        data = {
+            "data": {
+                "type": "ProviderSecret",
+                "id": str(provider_secret.id),
+                "attributes": {"invalid_secret": "value"},
+                "relationships": {
+                    "provider": {
+                        "data": {
+                            "type": "Provider",
+                            "id": str(provider_secret.provider.id),
+                        }
+                    }
+                },
+            }
+        }
+        response = authenticated_client.patch(
+            reverse("providersecret-detail", kwargs={"pk": provider_secret.id}),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_provider_secrets_delete(
+        self,
+        authenticated_client,
+        provider_secret_fixture,
+    ):
+        provider_secret, *_ = provider_secret_fixture
+        response = authenticated_client.delete(
+            reverse("providersecret-detail", kwargs={"pk": provider_secret.id})
+        )
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+
+    def test_provider_secrets_delete_invalid(self, authenticated_client):
+        response = authenticated_client.delete(
+            reverse(
+                "providersecret-detail",
+                kwargs={"pk": "e67d0283-440f-48d1-b5f8-38d0763474f4"},
+            )
+        )
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    @pytest.mark.parametrize(
+        "filter_name, filter_value, expected_count",
+        (
+            [
+                ("name", "aws_testing_1", 1),
+                ("name.icontains", "aws", 2),
+            ]
+        ),
+    )
+    def test_provider_secrets_filters(
+        self,
+        authenticated_client,
+        provider_secret_fixture,
+        filter_name,
+        filter_value,
+        expected_count,
+    ):
+        response = authenticated_client.get(
+            reverse("providersecret-list"),
+            {f"filter[{filter_name}]": filter_value},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == expected_count
+
+    @pytest.mark.parametrize(
+        "filter_name",
+        (
+            [
+                "invalid",
+            ]
+        ),
+    )
+    def test_provider_secrets_filters_invalid(self, authenticated_client, filter_name):
+        response = authenticated_client.get(
+            reverse("providersecret-list"),
+            {f"filter[{filter_name}]": "whatever"},
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    @pytest.mark.parametrize(
+        "sort_field",
+        (
+            [
+                "name",
+                "inserted_at",
+                "updated_at",
+            ]
+        ),
+    )
+    def test_provider_secrets_sort(self, authenticated_client, sort_field):
+        response = authenticated_client.get(
+            reverse("providersecret-list"), {"sort": sort_field}
+        )
+        assert response.status_code == status.HTTP_200_OK
+
+    def test_provider_secrets_sort_invalid(self, authenticated_client):
+        response = authenticated_client.get(
+            reverse("providersecret-list"), {"sort": "invalid"}
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 

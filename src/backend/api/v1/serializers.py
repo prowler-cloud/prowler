@@ -24,6 +24,7 @@ from api.models import (
     StatusChoices,
     Finding,
     ResourceFindingMapping,
+    ProviderSecret,
 )
 from api.rls import Tenant
 from api.utils import merge_dicts
@@ -57,17 +58,15 @@ class TokenSerializer(serializers.Serializer):
         # Authenticate user
         user = authenticate(username=email, password=password)
         if user is None:
-            raise serializers.ValidationError("Invalid credentials")
+            raise ValidationError("Invalid credentials")
 
         if tenant_id:
             if not user.is_member_of_tenant(tenant_id):
-                raise serializers.ValidationError(
-                    "Tenant does not exist or user is not a member."
-                )
+                raise ValidationError("Tenant does not exist or user is not a member.")
         else:
             first_membership = user.memberships.order_by("date_joined").first()
             if first_membership is None:
-                raise serializers.ValidationError("User has no memberships.")
+                raise ValidationError("User has no memberships.")
             tenant_id = str(first_membership.tenant_id)
 
         # Generate tokens
@@ -77,14 +76,14 @@ class TokenSerializer(serializers.Serializer):
             access = refresh.access_token
         except InvalidKeyError:
             # Handle invalid key error
-            raise serializers.ValidationError(
+            raise ValidationError(
                 {
                     "detail": "Token generation failed due to invalid key configuration. Provide valid "
                     "DJANGO_TOKEN_SIGNING_KEY and DJANGO_TOKEN_VERIFYING_KEY in the environment."
                 }
             )
         except Exception as e:
-            raise serializers.ValidationError({"detail": str(e)})
+            raise ValidationError({"detail": str(e)})
 
         return {"access": str(access), "refresh": str(refresh)}
 
@@ -120,7 +119,7 @@ class TokenRefreshSerializer(serializers.Serializer):
 
             return {"access": str(access_token), "refresh": str(refresh)}
         except TokenError:
-            raise serializers.ValidationError({"refresh": "Invalid or expired token"})
+            raise ValidationError({"refresh": "Invalid or expired token"})
 
 
 # Base
@@ -361,6 +360,7 @@ class ProviderSerializer(RLSSerializer):
             "alias",
             "connection",
             "scanner_args",
+            "secret",
             "url",
         ]
 
@@ -628,3 +628,177 @@ class FindingSerializer(RLSSerializer):
     def get_resources(self, obj):
         mappings = ResourceFindingMapping.objects.filter(finding=obj)
         return Resource.objects.filter(id__in={m.resource_id for m in mappings})
+
+
+# Provider secrets
+class BaseWriteProviderSecretSerializer(BaseWriteSerializer):
+    @staticmethod
+    def validate_secret_based_on_provider(provider_type: str, secret: dict):
+        if provider_type == Provider.ProviderChoices.AWS.value:
+            serializer = AwsProviderSecret(data=secret)
+        elif provider_type == Provider.ProviderChoices.AZURE.value:
+            serializer = AzureProviderSecret(data=secret)
+        elif provider_type == Provider.ProviderChoices.GCP.value:
+            serializer = GCPProviderSecret(data=secret)
+        else:
+            raise serializers.ValidationError(
+                {"provider": f"Provider type not supported {provider_type}"}
+            )
+        try:
+            serializer.is_valid(raise_exception=True)
+        except ValidationError as validation_error:
+            # Customize the error message
+            details = validation_error.detail.copy()
+            for key, value in details.items():
+                validation_error.detail[f"secret/{key}"] = value
+                del validation_error.detail[key]
+            raise validation_error
+
+
+class AwsProviderSecret(serializers.Serializer):
+    aws_access_key_id = serializers.CharField()
+    aws_secret_access_key = serializers.CharField()
+    aws_session_token = serializers.CharField(required=False)
+
+    class Meta:
+        resource_name = "ProviderSecret"
+
+
+class AzureProviderSecret(serializers.Serializer):
+    client_id = serializers.CharField()
+    client_secret = serializers.CharField()
+    tenant_id = serializers.CharField()
+
+    class Meta:
+        resource_name = "ProviderSecret"
+
+
+class GCPProviderSecret(serializers.Serializer):
+    client_id = serializers.CharField()
+    client_secret = serializers.CharField()
+    refresh_token = serializers.CharField()
+
+    class Meta:
+        resource_name = "ProviderSecret"
+
+
+@extend_schema_field(
+    {
+        "oneOf": [
+            {
+                "type": "object",
+                "title": "AWS static credentials",
+                "properties": {
+                    "aws_access_key_id": {"type": "string"},
+                    "aws_secret_access_key": {"type": "string"},
+                    "aws_session_token": {"type": "string"},
+                },
+                "required": ["aws_access_key_id", "aws_secret_access_key"],
+            },
+            {
+                "type": "object",
+                "title": "Azure static credentials",
+                "properties": {
+                    "client_id": {"type": "string"},
+                    "client_secret": {"type": "string"},
+                    "tenant_id": {"type": "string", "description": "Azure tenant ID"},
+                },
+                "required": [
+                    "client_id",
+                    "client_secret",
+                    "tenant_id",
+                ],
+            },
+            {
+                "type": "object",
+                "title": "GCP static credentials",
+                "properties": {
+                    "client_id": {"type": "string"},
+                    "client_secret": {"type": "string"},
+                    "refresh_token": {"type": "string"},
+                },
+                "required": [
+                    "client_id",
+                    "client_secret",
+                    "refresh_token",
+                ],
+            },
+        ]
+    }
+)
+class ProviderSecretField(serializers.JSONField):
+    pass
+
+
+class ProviderSecretSerializer(RLSSerializer):
+    """
+    Serializer for the ProviderSecret model.
+    """
+
+    class Meta:
+        model = ProviderSecret
+        fields = [
+            "id",
+            "inserted_at",
+            "updated_at",
+            "name",
+            "secret_type",
+            "provider",
+            "url",
+        ]
+
+
+class ProviderSecretCreateSerializer(RLSSerializer, BaseWriteProviderSecretSerializer):
+    secret = ProviderSecretField(write_only=True)
+
+    class Meta:
+        model = ProviderSecret
+        fields = [
+            "inserted_at",
+            "updated_at",
+            "name",
+            "secret_type",
+            "secret",
+            "provider",
+        ]
+        extra_kwargs = {
+            "inserted_at": {"read_only": True},
+            "updated_at": {"read_only": True},
+        }
+
+    def validate(self, attrs):
+        provider = attrs.get("provider")
+        secret = attrs.get("secret")
+
+        validated_attrs = super().validate(attrs)
+        self.validate_secret_based_on_provider(provider.provider, secret)
+        return validated_attrs
+
+
+class ProviderSecretUpdateSerializer(BaseWriteProviderSecretSerializer):
+    secret = serializers.JSONField(write_only=True)
+
+    class Meta:
+        model = ProviderSecret
+        fields = [
+            "inserted_at",
+            "updated_at",
+            "name",
+            "secret_type",
+            "secret",
+            "provider",
+        ]
+        extra_kwargs = {
+            "inserted_at": {"read_only": True},
+            "updated_at": {"read_only": True},
+            "provider": {"read_only": True},
+            "secret_type": {"read_only": True},
+        }
+
+    def validate(self, attrs):
+        provider = self.instance.provider
+        secret = attrs.get("secret")
+
+        validated_attrs = super().validate(attrs)
+        self.validate_secret_based_on_provider(provider.provider, secret)
+        return validated_attrs

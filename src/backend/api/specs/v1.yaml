@@ -525,6 +525,7 @@ paths:
             - alias
             - connection
             - scanner_args
+            - secret
             - url
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
@@ -734,6 +735,7 @@ paths:
             - alias
             - connection
             - scanner_args
+            - secret
             - url
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
@@ -840,6 +842,215 @@ paths:
               schema:
                 $ref: '#/components/schemas/OpenApiResponseResponse'
           description: ''
+  /api/v1/providers/secrets:
+    get:
+      operationId: providers_secrets_list
+      description: Retrieve a list of all secrets with options for filtering by various
+        criteria.
+      summary: List all secrets
+      parameters:
+      - in: query
+        name: fields[ProviderSecret]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - inserted_at
+            - updated_at
+            - name
+            - provider
+            - url
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[inserted_at]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[name]
+        schema:
+          type: string
+      - in: query
+        name: filter[name__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider]
+        schema:
+          type: string
+          format: uuid
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: filter[updated_at]
+        schema:
+          type: string
+          format: date
+      - name: page[number]
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page[size]
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - name
+            - -name
+            - inserted_at
+            - -inserted_at
+            - updated_at
+            - -updated_at
+        explode: false
+      tags:
+      - Provider
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/PaginatedProviderSecretList'
+          description: ''
+    post:
+      operationId: providers_secrets_create
+      description: Add a new secret to the system by providing the required secret
+        details.
+      summary: Create a new secret
+      tags:
+      - Provider
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/ProviderSecretCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ProviderSecretCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProviderSecretCreateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ProviderSecretCreateResponse'
+          description: ''
+  /api/v1/providers/secrets/{id}:
+    get:
+      operationId: providers_secrets_retrieve
+      description: Fetch detailed information about a specific secret by their ID.
+      summary: Retrieve data from a secret
+      parameters:
+      - in: query
+        name: fields[ProviderSecret]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - inserted_at
+            - updated_at
+            - name
+            - provider
+            - url
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Provider
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ProviderSecretResponse'
+          description: ''
+    patch:
+      operationId: providers_secrets_partial_update
+      description: Update certain fields of an existing secret's information without
+        affecting other fields.
+      summary: Partially update a secret
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Provider
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/PatchedProviderSecretUpdateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedProviderSecretUpdateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedProviderSecretUpdateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ProviderSecretUpdateResponse'
+          description: ''
+    delete:
+      operationId: providers_secrets_destroy
+      description: Remove a secret from the system by their ID.
+      summary: Delete a secret
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Provider
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/v1/resources:
     get:
       operationId: resources_list
@@ -2651,6 +2862,15 @@ components:
             $ref: '#/components/schemas/Provider'
       required:
       - data
+    PaginatedProviderSecretList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProviderSecret'
+      required:
+      - data
     PaginatedResourceList:
       type: object
       properties:
@@ -2685,6 +2905,74 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Tenant'
+      required:
+      - data
+    PatchedProviderSecretUpdateRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          - id
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - ProviderSecret
+            id: {}
+            attributes:
+              type: object
+              properties:
+                inserted_at:
+                  type: string
+                  format: date-time
+                  readOnly: true
+                updated_at:
+                  type: string
+                  format: date-time
+                  readOnly: true
+                name:
+                  type: string
+                  nullable: true
+                  maxLength: 100
+                  minLength: 3
+                secret:
+                  writeOnly: true
+              required:
+              - secret
+            relationships:
+              type: object
+              properties:
+                provider:
+                  type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        type:
+                          type: string
+                          enum:
+                          - Provider
+                          title: Resource Type Name
+                          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                            member is used to describe resource objects that share
+                            common attributes and relationships.
+                      required:
+                      - id
+                      - type
+                  required:
+                  - data
+                  description: The identifier of the related object.
+                  title: Resource Identifier
+                  readOnly: true
       required:
       - data
     PatchedProviderUpdateRequest:
@@ -2915,6 +3203,35 @@ components:
           required:
           - provider
           - uid
+        relationships:
+          type: object
+          properties:
+            secret:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    type:
+                      type: string
+                      enum:
+                      - ProviderSecret
+                      title: Resource Type Name
+                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                        member is used to describe resource objects that share common
+                        attributes and relationships.
+                  required:
+                  - id
+                  - type
+              required:
+              - data
+              description: The identifier of the related object.
+              title: Resource Identifier
+          required:
+          - secret
     ProviderCreate:
       type: object
       required:
@@ -3013,6 +3330,370 @@ components:
       properties:
         data:
           $ref: '#/components/schemas/Provider'
+      required:
+      - data
+    ProviderSecret:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/Type374Enum'
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+        id:
+          type: string
+          format: uuid
+        attributes:
+          type: object
+          properties:
+            inserted_at:
+              type: string
+              format: date-time
+              readOnly: true
+            updated_at:
+              type: string
+              format: date-time
+              readOnly: true
+            name:
+              type: string
+              nullable: true
+              maxLength: 100
+              minLength: 3
+        relationships:
+          type: object
+          properties:
+            provider:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    type:
+                      type: string
+                      enum:
+                      - Provider
+                      title: Resource Type Name
+                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                        member is used to describe resource objects that share common
+                        attributes and relationships.
+                  required:
+                  - id
+                  - type
+              required:
+              - data
+              description: The identifier of the related object.
+              title: Resource Identifier
+          required:
+          - provider
+    ProviderSecretCreate:
+      type: object
+      required:
+      - type
+      additionalProperties: false
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/Type374Enum'
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+        attributes:
+          type: object
+          properties:
+            inserted_at:
+              type: string
+              format: date-time
+              readOnly: true
+            updated_at:
+              type: string
+              format: date-time
+              readOnly: true
+            name:
+              type: string
+              nullable: true
+              maxLength: 100
+              minLength: 3
+            secret_type:
+              enum:
+              - static
+              type: string
+              description: '* `static` - Key-value pairs'
+            secret:
+              oneOf:
+              - type: object
+                title: AWS static credentials
+                properties:
+                  aws_access_key_id:
+                    type: string
+                  aws_secret_access_key:
+                    type: string
+                  aws_session_token:
+                    type: string
+                required:
+                - aws_access_key_id
+                - aws_secret_access_key
+              - type: object
+                title: Azure static credentials
+                properties:
+                  client_id:
+                    type: string
+                  client_secret:
+                    type: string
+                  tenant_id:
+                    type: string
+                    description: Azure tenant ID
+                required:
+                - client_id
+                - client_secret
+                - tenant_id
+              - type: object
+                title: GCP static credentials
+                properties:
+                  client_id:
+                    type: string
+                  client_secret:
+                    type: string
+                  refresh_token:
+                    type: string
+                required:
+                - client_id
+                - client_secret
+                - refresh_token
+              writeOnly: true
+          required:
+          - secret_type
+          - secret
+        relationships:
+          type: object
+          properties:
+            provider:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    type:
+                      type: string
+                      enum:
+                      - Provider
+                      title: Resource Type Name
+                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                        member is used to describe resource objects that share common
+                        attributes and relationships.
+                  required:
+                  - id
+                  - type
+              required:
+              - data
+              description: The identifier of the related object.
+              title: Resource Identifier
+          required:
+          - provider
+    ProviderSecretCreateRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - ProviderSecret
+            attributes:
+              type: object
+              properties:
+                inserted_at:
+                  type: string
+                  format: date-time
+                  readOnly: true
+                updated_at:
+                  type: string
+                  format: date-time
+                  readOnly: true
+                name:
+                  type: string
+                  nullable: true
+                  maxLength: 100
+                  minLength: 3
+                secret_type:
+                  enum:
+                  - static
+                  type: string
+                  description: '* `static` - Key-value pairs'
+                secret:
+                  oneOf:
+                  - type: object
+                    title: AWS static credentials
+                    properties:
+                      aws_access_key_id:
+                        type: string
+                      aws_secret_access_key:
+                        type: string
+                      aws_session_token:
+                        type: string
+                    required:
+                    - aws_access_key_id
+                    - aws_secret_access_key
+                  - type: object
+                    title: Azure static credentials
+                    properties:
+                      client_id:
+                        type: string
+                      client_secret:
+                        type: string
+                      tenant_id:
+                        type: string
+                        description: Azure tenant ID
+                    required:
+                    - client_id
+                    - client_secret
+                    - tenant_id
+                  - type: object
+                    title: GCP static credentials
+                    properties:
+                      client_id:
+                        type: string
+                      client_secret:
+                        type: string
+                      refresh_token:
+                        type: string
+                    required:
+                    - client_id
+                    - client_secret
+                    - refresh_token
+                  writeOnly: true
+              required:
+              - secret_type
+              - secret
+            relationships:
+              type: object
+              properties:
+                provider:
+                  type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        type:
+                          type: string
+                          enum:
+                          - Provider
+                          title: Resource Type Name
+                          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                            member is used to describe resource objects that share
+                            common attributes and relationships.
+                      required:
+                      - id
+                      - type
+                  required:
+                  - data
+                  description: The identifier of the related object.
+                  title: Resource Identifier
+              required:
+              - provider
+      required:
+      - data
+    ProviderSecretCreateResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/ProviderSecretCreate'
+      required:
+      - data
+    ProviderSecretResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/ProviderSecret'
+      required:
+      - data
+    ProviderSecretUpdate:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/Type374Enum'
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+        id: {}
+        attributes:
+          type: object
+          properties:
+            inserted_at:
+              type: string
+              format: date-time
+              readOnly: true
+            updated_at:
+              type: string
+              format: date-time
+              readOnly: true
+            name:
+              type: string
+              nullable: true
+              maxLength: 100
+              minLength: 3
+            secret:
+              writeOnly: true
+          required:
+          - secret
+        relationships:
+          type: object
+          properties:
+            provider:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    type:
+                      type: string
+                      enum:
+                      - Provider
+                      title: Resource Type Name
+                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                        member is used to describe resource objects that share common
+                        attributes and relationships.
+                  required:
+                  - id
+                  - type
+              required:
+              - data
+              description: The identifier of the related object.
+              title: Resource Identifier
+              readOnly: true
+    ProviderSecretUpdateResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/ProviderSecretUpdate'
       required:
       - data
     Resource:
@@ -3705,6 +4386,10 @@ components:
       type: string
       enum:
       - Scan
+    Type374Enum:
+      type: string
+      enum:
+      - ProviderSecret
     Type4e8Enum:
       type: string
       enum:

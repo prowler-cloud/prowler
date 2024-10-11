@@ -1,6 +1,9 @@
+import json
 import re
 from uuid import uuid4, UUID
 
+from cryptography.fernet import Fernet
+from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser
 from django.contrib.postgres.indexes import GinIndex
 from django.contrib.postgres.search import SearchVector, SearchVectorField
@@ -23,6 +26,7 @@ from api.db_utils import (
     SeverityEnumField,
     StatusEnumField,
     CustomUserManager,
+    ProviderSecretTypeEnumField,
 )
 from api.exceptions import ModelValidationError
 from api.rls import (
@@ -33,6 +37,8 @@ from api.rls import (
     RowLevelSecurityConstraint,
     BaseSecurityConstraint,
 )
+
+fernet = Fernet(settings.SECRETS_ENCRYPTION_KEY.encode())
 
 # Convert Prowler Severity enum to Django TextChoices
 SeverityChoices = enum_to_choices(Severity)
@@ -605,3 +611,50 @@ class ResourceFindingMapping(PostgresPartitionedModel, RowLevelSecurityProtected
                 statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
             ),
         ]
+
+
+class ProviderSecret(RowLevelSecurityProtectedModel):
+    class TypeChoices(models.TextChoices):
+        STATIC = "static", _("Key-value pairs")
+
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+    name = models.CharField(
+        blank=True, null=True, max_length=100, validators=[MinLengthValidator(3)]
+    )
+    secret_type = ProviderSecretTypeEnumField(choices=TypeChoices.choices)
+    _secret = models.BinaryField(db_column="secret")
+    provider = models.OneToOneField(
+        Provider,
+        on_delete=models.CASCADE,
+        related_name="secret",
+        related_query_name="secret",
+    )
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "provider_secrets"
+
+        constraints = [
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]
+
+    @property
+    def secret(self):
+        if isinstance(self._secret, memoryview):
+            encrypted_bytes = self._secret.tobytes()
+        elif isinstance(self._secret, str):
+            encrypted_bytes = self._secret.encode()
+        else:
+            encrypted_bytes = self._secret
+        decrypted_data = fernet.decrypt(encrypted_bytes)
+        return json.loads(decrypted_data.decode())
+
+    @secret.setter
+    def secret(self, value):
+        encrypted_data = fernet.encrypt(json.dumps(value).encode())
+        self._secret = encrypted_data

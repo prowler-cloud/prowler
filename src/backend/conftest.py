@@ -21,6 +21,7 @@ from api.models import (
     StateChoices,
     Task,
     Membership,
+    ProviderSecret,
 )
 from api.rls import Tenant
 from api.v1.serializers import TokenSerializer
@@ -158,6 +159,20 @@ def providers_fixture(tenants_fixture):
     )
 
     return provider1, provider2, provider3, provider4, provider5
+
+
+@pytest.fixture
+def provider_secret_fixture(providers_fixture):
+    return tuple(
+        ProviderSecret.objects.create(
+            tenant_id=provider.tenant_id,
+            provider=provider,
+            secret_type=ProviderSecret.TypeChoices.STATIC,
+            secret={"key": "value"},
+            name=provider.alias,
+        )
+        for provider in providers_fixture
+    )
 
 
 @pytest.fixture

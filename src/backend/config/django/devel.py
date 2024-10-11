@@ -36,3 +36,5 @@ REST_FRAMEWORK["DEFAULT_FILTER_BACKENDS"] = tuple(  # noqa: F405
     for filter_backend in REST_FRAMEWORK["DEFAULT_FILTER_BACKENDS"]  # noqa: F405
     if "DjangoFilterBackend" not in filter_backend
 ) + ("api.filters.CustomDjangoFilterBackend",)
+
+SECRETS_ENCRYPTION_KEY = "ZMiYVo7m4Fbe2eXXPyrwxdJss2WSalXSv3xHBcJkPl0="

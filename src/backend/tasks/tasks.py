@@ -22,7 +22,7 @@ def check_provider_connection_task(provider_id: str):
             - 'connected' (bool): Indicates whether the provider is successfully connected.
             - 'error' (str or None): The error message if the connection failed, otherwise `None`.
     """
-    return check_provider_connection(provider_id)
+    return check_provider_connection(provider_id=provider_id)
 
 
 @shared_task(base=RLSTask, name="provider-deletion")

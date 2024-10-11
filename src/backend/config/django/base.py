@@ -160,6 +160,8 @@ SIMPLE_JWT = {
     "TOKEN_REFRESH_SERIALIZER": "api.serializers.TokenRefreshSerializer",
 }
 
+SECRETS_ENCRYPTION_KEY = env.str("DJANGO_SECRETS_ENCRYPTION_KEY", "")
+
 # Internationalization
 # https://docs.djangoproject.com/en/5.0/topics/i18n/
 

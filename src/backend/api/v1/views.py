@@ -22,7 +22,6 @@ from rest_framework.generics import get_object_or_404, GenericAPIView
 from rest_framework_json_api.views import Response
 from rest_framework_simplejwt.exceptions import InvalidToken
 from rest_framework_simplejwt.exceptions import TokenError
-
 from api.base_views import BaseTenantViewset, BaseRLSViewSet, BaseViewSet
 from api.filters import (
     ProviderFilter,
@@ -32,8 +31,18 @@ from api.filters import (
     TaskFilter,
     ResourceFilter,
     FindingFilter,
+    ProviderSecretFilter,
 )
-from api.models import User, Membership, Provider, Scan, Task, Resource, Finding
+from api.models import (
+    User,
+    Membership,
+    Provider,
+    Scan,
+    Task,
+    Resource,
+    Finding,
+    ProviderSecret,
+)
 from api.rls import Tenant
 from api.uuid_utils import datetime_to_uuid7
 from api.v1.serializers import (
@@ -53,6 +62,9 @@ from api.v1.serializers import (
     ScanUpdateSerializer,
     ResourceSerializer,
     FindingSerializer,
+    ProviderSecretSerializer,
+    ProviderSecretUpdateSerializer,
+    ProviderSecretCreateSerializer,
 )
 from tasks.tasks import (
     check_provider_connection_task,
@@ -784,3 +796,56 @@ class FindingViewSet(BaseRLSViewSet):
             ).distinct()
 
         return queryset
+
+
+@extend_schema_view(
+    list=extend_schema(
+        tags=["Provider"],
+        summary="List all secrets",
+        description="Retrieve a list of all secrets with options for filtering by various criteria.",
+    ),
+    retrieve=extend_schema(
+        tags=["Provider"],
+        summary="Retrieve data from a secret",
+        description="Fetch detailed information about a specific secret by their ID.",
+    ),
+    create=extend_schema(
+        tags=["Provider"],
+        summary="Create a new secret",
+        description="Add a new secret to the system by providing the required secret details.",
+    ),
+    partial_update=extend_schema(
+        tags=["Provider"],
+        summary="Partially update a secret",
+        description="Update certain fields of an existing secret's information without affecting other fields.",
+    ),
+    destroy=extend_schema(
+        tags=["Provider"],
+        summary="Delete a secret",
+        description="Remove a secret from the system by their ID.",
+    ),
+)
+@method_decorator(CACHE_DECORATOR, name="list")
+@method_decorator(CACHE_DECORATOR, name="retrieve")
+class ProviderSecretViewSet(BaseRLSViewSet):
+    queryset = ProviderSecret.objects.all()
+    serializer_class = ProviderSecretSerializer
+    filterset_class = ProviderSecretFilter
+    http_method_names = ["get", "post", "patch", "delete"]
+    search_fields = ["name"]
+    ordering = ["-inserted_at"]
+    ordering_fields = [
+        "name",
+        "inserted_at",
+        "updated_at",
+    ]
+
+    def get_queryset(self):
+        return ProviderSecret.objects.all()
+
+    def get_serializer_class(self):
+        if self.action == "create":
+            return ProviderSecretCreateSerializer
+        elif self.action == "partial_update":
+            return ProviderSecretUpdateSerializer
+        return super().get_serializer_class()

@@ -27,6 +27,8 @@ from api.db_utils import (
     MemberRoleEnum,
     ProviderEnum,
     ProviderEnumField,
+    ProviderSecretTypeEnum,
+    ProviderSecretTypeEnumField,
     ScanTriggerEnum,
     StateEnumField,
     StateEnum,
@@ -46,6 +48,7 @@ from api.models import (
     StatusChoices,
     SeverityChoices,
     Membership,
+    ProviderSecret,
 )
 
 DB_NAME = settings.DATABASES["default"]["NAME"]
@@ -85,6 +88,13 @@ StatusEnumMigration = PostgresEnumMigration(
 SeverityEnumMigration = PostgresEnumMigration(
     enum_name="severity",
     enum_values=tuple(severity[0] for severity in SeverityChoices),
+)
+
+ProviderSecretTypeEnumMigration = PostgresEnumMigration(
+    enum_name="provider_secret_type",
+    enum_values=tuple(
+        secret_type[0] for secret_type in ProviderSecret.TypeChoices.choices
+    ),
 )
 
 
@@ -1122,5 +1132,69 @@ class Migration(migrations.Migration):
         migrations.AlterModelOptions(
             name="finding",
             options={},
+        ),
+        migrations.RunPython(
+            ProviderSecretTypeEnumMigration.create_enum_type,
+            reverse_code=ProviderSecretTypeEnumMigration.drop_enum_type,
+        ),
+        migrations.RunPython(partial(register_enum, enum_class=ProviderSecretTypeEnum)),
+        migrations.CreateModel(
+            name="ProviderSecret",
+            fields=[
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("inserted_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "name",
+                    models.CharField(
+                        blank=True,
+                        max_length=100,
+                        null=True,
+                        validators=[django.core.validators.MinLengthValidator(3)],
+                    ),
+                ),
+                (
+                    "secret_type",
+                    ProviderSecretTypeEnumField(
+                        choices=ProviderSecret.TypeChoices.choices
+                    ),
+                ),
+                ("_secret", models.BinaryField(db_column="secret")),
+                (
+                    "tenant",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="api.tenant"
+                    ),
+                ),
+                (
+                    "provider",
+                    models.OneToOneField(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="secret",
+                        related_query_name="secret",
+                        to="api.provider",
+                    ),
+                ),
+            ],
+            options={
+                "db_table": "provider_secrets",
+                "abstract": False,
+            },
+        ),
+        migrations.AddConstraint(
+            model_name="providersecret",
+            constraint=api.rls.RowLevelSecurityConstraint(
+                "tenant_id",
+                name="rls_on_providersecret",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
         ),
     ]

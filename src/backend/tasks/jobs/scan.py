@@ -5,10 +5,6 @@ from datetime import datetime, timezone
 from celery.utils.log import get_task_logger
 from prowler.lib.outputs.finding import Finding as ProwlerFinding
 from prowler.lib.scan.scan import Scan as ProwlerScan
-from prowler.providers.aws.aws_provider import AwsProvider
-from prowler.providers.azure.azure_provider import AzureProvider
-from prowler.providers.gcp.gcp_provider import GcpProvider
-from prowler.providers.kubernetes.kubernetes_provider import KubernetesProvider
 
 from api.db_utils import tenant_transaction
 from api.models import (
@@ -20,6 +16,7 @@ from api.models import (
     StatusChoices as FindingStatus,
     StateChoices,
 )
+from api.utils import initialize_prowler_provider
 from api.v1.serializers import ScanTaskSerializer
 
 logger = get_task_logger(__name__)
@@ -28,6 +25,19 @@ logger = get_task_logger(__name__)
 def _create_finding_delta(
     last_status: FindingStatus | None | str, new_status: FindingStatus | None
 ) -> Finding.DeltaChoices:
+    """
+    Determine the delta status of a finding based on its previous and current status.
+
+    Args:
+        last_status (FindingStatus | None | str): The previous status of the finding. Can be None or a string representation.
+        new_status (FindingStatus | None): The current status of the finding.
+
+    Returns:
+        Finding.DeltaChoices: The delta status indicating if the finding is new, changed, or unchanged.
+            - Returns `Finding.DeltaChoices.NEW` if `last_status` is None.
+            - Returns `Finding.DeltaChoices.CHANGED` if `last_status` and `new_status` are different.
+            - Returns `None` if the status hasn't changed.
+    """
     if last_status is None:
         return Finding.DeltaChoices.NEW
     return Finding.DeltaChoices.CHANGED if last_status != new_status else None
@@ -39,6 +49,19 @@ def _store_finding(
     scan_instance: Scan,
     resource_instance: Resource,
 ) -> Finding:
+    """
+    Store a finding in the database, calculate its delta status, and associate it with a resource and scan.
+
+    Args:
+        finding (ProwlerFinding): The finding object obtained from the Prowler scan.
+        tenant_id (str): The ID of the tenant owning the finding.
+        scan_instance (Scan): The scan instance associated with the finding.
+        resource_instance (Resource): The resource instance associated with the finding.
+
+    Returns:
+        Finding: The newly created or updated Finding instance.
+
+    """
     finding_uid = finding.finding_uid
     status = FindingStatus[finding.status.value] if finding.status is not None else None
     with tenant_transaction(tenant_id):
@@ -70,6 +93,20 @@ def _store_finding(
 def _store_resources(
     finding: ProwlerFinding, tenant_id: str, provider_instance: Provider
 ) -> tuple[Resource, tuple[str, str]]:
+    """
+    Store resource information from a finding, including tags, in the database.
+
+    Args:
+        finding (ProwlerFinding): The finding object containing resource information.
+        tenant_id (str): The ID of the tenant owning the resource.
+        provider_instance (Provider): The provider instance associated with the resource.
+
+    Returns:
+        tuple:
+            - Resource: The resource instance created or retrieved from the database.
+            - tuple[str, str]: A tuple containing the resource UID and region.
+
+    """
     with tenant_transaction(tenant_id):
         resource_instance, _ = Resource.objects.get_or_create(
             tenant_id=tenant_id,
@@ -93,6 +130,22 @@ def _store_resources(
 def perform_prowler_scan(
     tenant_id: str, scan_id: str, provider_id: str, checks_to_execute: list[str] = None
 ):
+    """
+    Perform a scan using Prowler and store the findings and resources in the database.
+
+    Args:
+        tenant_id (str): The ID of the tenant for which the scan is performed.
+        scan_id (str): The ID of the scan instance.
+        provider_id (str): The ID of the provider to scan.
+        checks_to_execute (list[str], optional): A list of specific checks to execute. Defaults to None.
+
+    Returns:
+        dict: Serialized data of the completed scan instance.
+
+    Raises:
+        ValueError: If the provider cannot be connected.
+
+    """
     with tenant_transaction(tenant_id):
         exception = None
         provider_instance = Provider.objects.get(pk=provider_id)
@@ -104,32 +157,23 @@ def perform_prowler_scan(
         scan_instance.started_at = datetime.now(tz=timezone.utc)
         scan_instance.save()
     try:
-        match provider_instance.provider:
-            case Provider.ProviderChoices.AWS.value:
-                prowler_provider = AwsProvider
-            case Provider.ProviderChoices.GCP.value:
-                prowler_provider = GcpProvider
-            case Provider.ProviderChoices.AZURE.value:
-                prowler_provider = AzureProvider
-            case Provider.ProviderChoices.KUBERNETES.value:
-                prowler_provider = KubernetesProvider
-            case _:
-                raise ValueError(
-                    f"Provider type {provider_instance.provider} not supported"
-                )
         with tenant_transaction(tenant_id):
-            connection_status = prowler_provider.test_connection(
-                raise_on_exception=False
-            )
-            provider_instance.connected = connection_status.is_connected
-            provider_instance.connection_last_checked_at = datetime.now(tz=timezone.utc)
-            provider_instance.save()
-
-        if connection_status.is_connected is False:
-            raise ValueError(f"Provider {provider_instance.provider} is not connected")
+            try:
+                prowler_provider = initialize_prowler_provider(provider_instance)
+                provider_instance.connected = True
+            except Exception as e:
+                provider_instance.connected = False
+                raise ValueError(
+                    f"Provider {provider_instance.provider} is not connected: {e}"
+                )
+            finally:
+                provider_instance.connection_last_checked_at = datetime.now(
+                    tz=timezone.utc
+                )
+                provider_instance.save()
 
         prowler_scan = ProwlerScan(
-            provider=prowler_provider(), checks_to_execute=checks_to_execute or []
+            provider=prowler_provider, checks_to_execute=checks_to_execute
         )
         for progress, findings in prowler_scan.scan():
             for finding in findings:

@@ -28,7 +28,7 @@ start_prod_server() {
 
 start_worker() {
   echo "Starting the worker..."
-  poetry run python -m celery -A config.celery worker -l "${DJANGO_LOGGING_LEVEL:-info}" -Q default,scans -E
+  poetry run python -m celery -A config.celery worker -l "${DJANGO_LOGGING_LEVEL:-info}" -Q celery,scans -E
 }
 
 case "$1" in

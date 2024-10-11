@@ -32,6 +32,7 @@ from api.models import (
     Finding,
     SeverityChoices,
     StatusChoices,
+    ProviderSecret,
 )
 from api.rls import Tenant
 from api.uuid_utils import (
@@ -385,3 +386,15 @@ class FindingFilter(FilterSet):
         if isinstance(value, date):
             dt = datetime.combine(value, datetime.min.time(), tzinfo=timezone.utc)
         return dt
+
+
+class ProviderSecretFilter(FilterSet):
+    inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
+    updated_at = DateFilter(field_name="updated_at", lookup_expr="date")
+    provider = UUIDFilter(field_name="provider__id", lookup_expr="exact")
+
+    class Meta:
+        model = ProviderSecret
+        fields = {
+            "name": ["exact", "icontains"],
+        }
