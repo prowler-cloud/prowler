@@ -9,7 +9,6 @@ import {
   DropdownTrigger,
 } from "@nextui-org/react";
 import {
-  AddNoteBulkIcon,
   DeleteDocumentBulkIcon,
   EditDocumentBulkIcon,
 } from "@nextui-org/shared-icons";
@@ -20,7 +19,8 @@ import { useState } from "react";
 import { VerticalDotsIcon } from "@/components/icons";
 import { CustomAlertModal } from "@/components/ui/custom";
 
-// import { EditForm } from "../forms";
+import { EditScanForm } from "../../forms";
+
 // import { DeleteForm } from "../forms/delete-form";
 
 interface DataTableRowActionsProps<ProviderProps> {
@@ -34,28 +34,27 @@ export function DataTableRowActions<ProviderProps>({
 }: DataTableRowActionsProps<ProviderProps>) {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const providerId = (row.original as { id: string }).id;
-  // const providerAlias = (row.original as any).attributes?.alias;
+  const scanId = (row.original as { id: string }).id;
+  const scanName = (row.original as any).attributes?.name;
   return (
     <>
       <CustomAlertModal
         isOpen={isEditOpen}
         onOpenChange={setIsEditOpen}
-        title="Edit Provider"
-        description={"Edit the provider details"}
+        title="Edit Scan"
+        description={"Edit the scan details"}
       >
-        <p>Hello</p>
-        {/* <EditForm
-          providerId={providerId}
-          providerAlias={providerAlias}
+        <EditScanForm
+          scanId={scanId}
+          scanName={scanName}
           setIsOpen={setIsEditOpen}
-        /> */}
+        />
       </CustomAlertModal>
       <CustomAlertModal
         isOpen={isDeleteOpen}
         onOpenChange={setIsDeleteOpen}
         title="Are you absolutely sure?"
-        description="This action cannot be undone. This will permanently delete your provider account and remove your data from the server."
+        description="This action cannot be undone. This will permanently delete your scan."
       >
         <p>Hello</p>
         {/* <DeleteForm providerId={providerId} setIsOpen={setIsDeleteOpen} /> */}
@@ -76,22 +75,13 @@ export function DataTableRowActions<ProviderProps>({
           >
             <DropdownSection title="Actions">
               <DropdownItem
-                key="new"
-                description="Check the connection to the provider"
-                textValue="Check Connection"
-                startContent={<AddNoteBulkIcon className={iconClasses} />}
-              >
-                <p>action here + {providerId}</p>
-                {/* <CheckConnectionProvider id={providerId} /> */}
-              </DropdownItem>
-              <DropdownItem
                 key="edit"
-                description="Allows you to edit the provider"
-                textValue="Edit Provider"
+                description="Allows you to edit the scan"
+                textValue="Edit Scan"
                 startContent={<EditDocumentBulkIcon className={iconClasses} />}
                 onClick={() => setIsEditOpen(true)}
               >
-                Edit Provider
+                Edit Scan
               </DropdownItem>
             </DropdownSection>
             <DropdownSection title="Danger zone">
@@ -99,8 +89,8 @@ export function DataTableRowActions<ProviderProps>({
                 key="delete"
                 className="text-danger"
                 color="danger"
-                description="Delete the provider permanently"
-                textValue="Delete Provider"
+                description="Delete the scan permanently"
+                textValue="Delete Scan"
                 startContent={
                   <DeleteDocumentBulkIcon
                     className={clsx(iconClasses, "!text-danger")}
@@ -108,7 +98,7 @@ export function DataTableRowActions<ProviderProps>({
                 }
                 onClick={() => setIsDeleteOpen(true)}
               >
-                Delete Provider
+                Delete Scan
               </DropdownItem>
             </DropdownSection>
           </DropdownMenu>

@@ -42,7 +42,8 @@ export const getScans = async ({
     revalidatePath("/scans");
     return parsedData;
   } catch (error) {
-    console.error("Error fetching providers:", error);
+    // eslint-disable-next-line no-console
+    console.error("Error fetching scans:", error);
     return undefined;
   }
 };
@@ -80,6 +81,44 @@ export const scanOnDemand = async (formData: FormData) => {
                 id: providerId,
               },
             },
+          },
+        },
+      }),
+    });
+    const data = await response.json();
+    revalidatePath("/scans");
+    return parseStringify(data);
+  } catch (error) {
+    console.error(error);
+    return {
+      error: getErrorMessage(error),
+    };
+  }
+};
+
+export const updateScan = async (formData: FormData) => {
+  const session = await auth();
+  const keyServer = process.env.API_BASE_URL;
+
+  const scanId = formData.get("scanId");
+  const scanName = formData.get("scanName");
+
+  const url = new URL(`${keyServer}/scans/${scanId}`);
+
+  try {
+    const response = await fetch(url.toString(), {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/vnd.api+json",
+        Accept: "application/vnd.api+json",
+        Authorization: `Bearer ${session?.accessToken}`,
+      },
+      body: JSON.stringify({
+        data: {
+          type: "Scan",
+          id: scanId,
+          attributes: {
+            name: scanName,
           },
         },
       }),

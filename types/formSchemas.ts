@@ -1,5 +1,19 @@
 import { z } from "zod";
 
+export const editScanFormSchema = (currentName: string) =>
+  z.object({
+    scanName: z
+      .string()
+      .refine((val) => val === "" || val.length >= 3, {
+        message: "The alias must be empty or have at least 3 characters.",
+      })
+      .refine((val) => val !== currentName, {
+        message: "The new name must be different from the current one.",
+      })
+      .optional(),
+    scanId: z.string(),
+  });
+
 export const onDemandScanFormSchema = () =>
   z.object({
     providerId: z.string(),

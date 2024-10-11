@@ -9,11 +9,11 @@ import {
   filterScans,
 } from "@/components/filters";
 import {
-  ColumnGetScans,
   ColumnGetScansSchedule,
   SkeletonTableScans,
 } from "@/components/scans/table";
 import { ColumnProviderScans } from "@/components/scans/table/provider-scans";
+import { ColumnGetScans } from "@/components/scans/table/scans";
 import { Header } from "@/components/ui";
 import { DataTable } from "@/components/ui/table";
 import { SearchParamsProps } from "@/types";

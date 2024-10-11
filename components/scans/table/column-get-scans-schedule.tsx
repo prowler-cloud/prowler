@@ -6,7 +6,7 @@ import { DateWithTime, EntityInfoShort } from "@/components/ui/entities";
 import { DataTableColumnHeader, StatusBadge } from "@/components/ui/table";
 import { ScanProps } from "@/types";
 
-import { DataTableRowActions } from "./data-table-row-actions";
+import { DataTableRowActions } from "./scans/data-table-row-actions";
 
 const getScanData = (row: { original: ScanProps }) => {
   return row.original;

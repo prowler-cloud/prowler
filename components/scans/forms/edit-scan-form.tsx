@@ -5,29 +5,29 @@ import { Dispatch, SetStateAction } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
-import { updateProvider } from "@/actions/providers";
+import { updateScan } from "@/actions/scans";
 import { SaveIcon } from "@/components/icons";
 import { useToast } from "@/components/ui";
 import { CustomButton, CustomInput } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
-import { editProviderFormSchema } from "@/types";
+import { editScanFormSchema } from "@/types";
 
-export const EditForm = ({
-  providerId,
-  providerAlias,
+export const EditScanForm = ({
+  scanId,
+  scanName,
   setIsOpen,
 }: {
-  providerId: string;
-  providerAlias?: string;
+  scanId: string;
+  scanName: string;
   setIsOpen: Dispatch<SetStateAction<boolean>>;
 }) => {
-  const formSchema = editProviderFormSchema(providerAlias ?? "");
+  const formSchema = editScanFormSchema(scanName);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      providerId: providerId,
-      alias: providerAlias,
+      scanId: scanId,
+      scanName: scanName,
     },
   });
 
@@ -42,7 +42,7 @@ export const EditForm = ({
       ([key, value]) => value !== undefined && formData.append(key, value),
     );
 
-    const data = await updateProvider(formData);
+    const data = await updateScan(formData);
 
     if (data?.errors && data.errors.length > 0) {
       const error = data.errors[0];
@@ -56,7 +56,7 @@ export const EditForm = ({
     } else {
       toast({
         title: "Success!",
-        description: "The provider was updated successfully.",
+        description: "The scan was updated successfully.",
       });
       setIsOpen(false); // Close the modal on success
     }
@@ -69,22 +69,22 @@ export const EditForm = ({
         className="flex flex-col space-y-4"
       >
         <div className="text-md">
-          Current alias: <span className="font-bold">{providerAlias}</span>
+          Current name: <span className="font-bold">{scanName}</span>
         </div>
         <div>
           <CustomInput
             control={form.control}
-            name="alias"
+            name="scanName"
             type="text"
-            label="Alias"
+            label="Name"
             labelPlacement="outside"
-            placeholder={providerAlias}
+            placeholder={scanName}
             variant="bordered"
             isRequired={false}
-            isInvalid={!!form.formState.errors.alias}
+            isInvalid={!!form.formState.errors.scanName}
           />
         </div>
-        <input type="hidden" name="providerId" value={providerId} />
+        <input type="hidden" name="scanId" value={scanId} />
 
         <div className="flex w-full justify-center sm:space-x-6">
           <CustomButton
