@@ -182,3 +182,42 @@ class TestKubernetesProvider:
 
         assert connection.is_connected
         assert connection.error is None
+
+    @patch(
+        "prowler.providers.kubernetes.kubernetes_provider.client.CoreV1Api.list_namespaced_pod"
+    )
+    @patch("kubernetes.config.list_kube_config_contexts")
+    @patch("kubernetes.config.load_kube_config")
+    def test_kubernetes_test_connection_with_namespace_input(
+        self,
+        mock_load_kube_config,
+        mock_list_kube_config_contexts,
+        mock_list_namespaced_pod,
+    ):
+        mock_load_kube_config.return_value = None
+        mock_list_kube_config_contexts.return_value = (
+            [
+                {
+                    "name": "test-context",
+                    "context": {
+                        "cluster": "test-cluster",
+                        "user": "test-user",
+                    },
+                }
+            ],
+            None,
+        )
+        mock_list_namespaced_pod.return_value.items = [
+            client.V1Pod(metadata=client.V1ObjectMeta(name="pod-1")),
+        ]
+
+        connection = KubernetesProvider.test_connection(
+            kubeconfig_file="dummy_kubeconfig_path",
+            kubeconfig_content={},
+            namespace="test-namespace",
+            input_context="test-context",
+            raise_on_exception=False,
+        )
+
+        assert connection.is_connected
+        assert connection.error is None

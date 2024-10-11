@@ -207,6 +207,7 @@ class KubernetesProvider(Provider):
     def test_connection(
         kubeconfig_file: str = "~/.kube/config",
         kubeconfig_content: dict = None,
+        namespace: str = None,
         input_context: str = "",
         raise_on_exception: bool = True,
     ) -> Connection:
@@ -216,6 +217,7 @@ class KubernetesProvider(Provider):
         Args:
             kubeconfig_file (str): Path to the kubeconfig file.
             kubeconfig_content (dict): Content of the kubeconfig file.
+            namespace (str): Namespace name.
             input_context (str): Context name.
             raise_on_exception (bool): Whether to raise an exception on error.
         Returns:
@@ -225,7 +227,12 @@ class KubernetesProvider(Provider):
             KubernetesProvider.setup_session(
                 kubeconfig_file, kubeconfig_content, input_context
             )
-            client.CoreV1Api().list_namespace(timeout_seconds=2, _request_timeout=2)
+            if namespace:
+                client.CoreV1Api().list_namespaced_pod(
+                    namespace, timeout_seconds=2, _request_timeout=2
+                )
+            else:
+                client.CoreV1Api().list_namespace(timeout_seconds=2, _request_timeout=2)
             return Connection(is_connected=True)
         except KubernetesSetUpSessionError as setup_session_error:
             logger.critical(
