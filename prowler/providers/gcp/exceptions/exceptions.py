@@ -37,7 +37,7 @@ class GCPBaseException(ProwlerException):
             "message": "Error loading static credentials",
             "remediation": "Check the credentials and ensure they are properly set up. client_id, client_secret and refresh_token are required.",
         },
-        (1933, "GCPNotValidProviderIdError"): {
+        (1933, "GCPInvalidAccountCredentials"): {
             "message": "Provider does not match with the expected project_id",
             "remediation": "Check the provider and ensure it matches the expected project_id.",
         },
@@ -120,7 +120,7 @@ class GCPStaticCredentialsError(GCPCredentialsError):
         )
 
 
-class GCPNotValidProviderIdError(GCPBaseException):
+class GCPInvalidAccountCredentials(GCPBaseException):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             1933, file=file, original_exception=original_exception, message=message

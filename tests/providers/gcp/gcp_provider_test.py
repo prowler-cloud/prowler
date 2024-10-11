@@ -11,7 +11,11 @@ from prowler.config.config import (
     default_fixer_config_file_path,
     load_and_validate_config_file,
 )
-from prowler.providers.gcp.exceptions.exceptions import GCPTestConnectionError
+from prowler.providers.common.models import Connection
+from prowler.providers.gcp.exceptions.exceptions import (
+    GCPInvalidAccountCredentials,
+    GCPTestConnectionError,
+)
 from prowler.providers.gcp.gcp_provider import GcpProvider
 from prowler.providers.gcp.models import GCPIdentityInfo, GCPProject
 
@@ -538,3 +542,54 @@ class TestGCPProvider:
                 )
             assert e.type == GCPTestConnectionError
             assert "Test exception" in e.value.args[0]
+
+    def test_test_connection_valid_project_id(self):
+        project_id = "test-project-id"
+        mocked_service = MagicMock()
+
+        mocked_service.projects.get.return_value = MagicMock(
+            execute=MagicMock(return_value={"projectId": project_id})
+        )
+
+        with patch(
+            "prowler.providers.gcp.gcp_provider.GcpProvider.setup_session",
+            return_value=(None, project_id),
+        ), patch(
+            "prowler.providers.gcp.gcp_provider.discovery.build",
+            return_value=mocked_service,
+        ):
+            output = GcpProvider.test_connection(
+                client_id="test-client-id",
+                client_secret="test-client-secret",
+                refresh_token="test-refresh-token",
+                provider_id=project_id,
+            )
+            assert Connection(is_connected=True, error=None) == output
+
+    def test_test_connection_invalid_project_id(self):
+        project_id = "test-project-id"
+        mocked_service = MagicMock()
+
+        mocked_service.projects.get.return_value = MagicMock(
+            execute=MagicMock(return_value={"projectId": project_id})
+        )
+
+        with patch(
+            "prowler.providers.gcp.gcp_provider.GcpProvider.setup_session",
+            return_value=(None, project_id),
+        ), patch(
+            "prowler.providers.gcp.gcp_provider.discovery.build",
+            return_value=mocked_service,
+        ):
+            with pytest.raises(Exception) as e:
+                GcpProvider.test_connection(
+                    client_id="test-client-id",
+                    client_secret="test-client-secret",
+                    refresh_token="test-refresh-token",
+                    provider_id="test-provider-id-invalid",
+                )
+            assert e.type == GCPInvalidAccountCredentials
+            assert (
+                "The provider ID does not match with the expected project_id"
+                in e.value.args[0]
+            )

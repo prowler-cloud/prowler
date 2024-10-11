@@ -19,9 +19,9 @@ from prowler.providers.gcp.exceptions.exceptions import (
     GCPCloudResourceManagerAPINotUsedError,
     GCPGetProjectError,
     GCPHTTPError,
+    GCPInvalidAccountCredentials,
     GCPLoadCredentialsFromDictError,
     GCPNoAccesibleProjectsError,
-    GCPNotValidProviderIdError,
     GCPSetUpSessionError,
     GCPStaticCredentialsError,
     GCPTestConnectionError,
@@ -367,7 +367,7 @@ class GcpProvider(Provider):
                 raise http_error
             return Connection(error=http_error)
         # Exceptions from validating Provider ID
-        except GCPNotValidProviderIdError as not_valid_provider_id_error:
+        except GCPInvalidAccountCredentials as not_valid_provider_id_error:
             logger.critical(str(not_valid_provider_id_error))
             if raise_on_exception:
                 raise not_valid_provider_id_error
@@ -563,13 +563,13 @@ class GcpProvider(Provider):
             bool
 
         Raises:
-            GCPNotValidProviderIdError if the provider ID does not match with the expected project_id
+            GCPInvalidAccountCredentials if the provider ID does not match with the expected project_id
         """
 
         available_projects = GcpProvider.get_projects(credentials=credentials)
 
         if provider_id not in available_projects:
-            raise GCPNotValidProviderIdError(
+            raise GCPInvalidAccountCredentials(
                 file=__file__,
                 message="The provider ID does not match with the expected project_id.",
             )
