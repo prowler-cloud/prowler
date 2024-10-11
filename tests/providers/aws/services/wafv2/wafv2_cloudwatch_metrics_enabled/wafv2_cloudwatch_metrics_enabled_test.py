@@ -96,8 +96,7 @@ class Test_wafv2_cloudwatch_metrics_enabled:
                 "MetricName": "web-acl-test-metric",
             },
             Tags=[{"Key": "Name", "Value": "web-acl-test"}],
-        )
-        waf = waf["Summary"]
+        )["Summary"]
         waf_id = waf["Id"]
 
         from prowler.providers.aws.services.wafv2.wafv2_service import WAFv2
@@ -162,8 +161,7 @@ class Test_wafv2_cloudwatch_metrics_enabled:
                 "MetricName": "web-acl-test-metric",
             },
             Tags=[{"Key": "Name", "Value": "web-acl-test"}],
-        )
-        waf = waf["Summary"]
+        )["Summary"]
         waf_id = waf["Id"]
 
         from prowler.providers.aws.services.wafv2.wafv2_service import WAFv2
@@ -225,8 +223,7 @@ class Test_wafv2_cloudwatch_metrics_enabled:
                     },
                 }
             ],
-        )
-        waf = waf["Summary"]
+        )["Summary"]
         waf_id = waf["Id"]
 
         from prowler.providers.aws.services.wafv2.wafv2_service import WAFv2
@@ -288,8 +285,7 @@ class Test_wafv2_cloudwatch_metrics_enabled:
                     },
                 }
             ],
-        )
-        waf = waf["Summary"]
+        )["Summary"]
         waf_id = waf["Id"]
 
         from prowler.providers.aws.services.wafv2.wafv2_service import WAFv2
