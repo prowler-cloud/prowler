@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "wafv2_webacl_has_rule_or_rule_group",
+  "CheckID": "wafv2_webacl_has_rules_or_rule_groups",
   "CheckTitle": "Check if AWS WAFv2 WebACL has at least one rule or rule group.",
   "CheckType": [
     "Software and Configuration Checks/Industry and Regulatory Standards/NIST 800-53 Controls"

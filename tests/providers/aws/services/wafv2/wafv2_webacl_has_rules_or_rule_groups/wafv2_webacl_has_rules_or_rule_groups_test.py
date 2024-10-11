@@ -9,7 +9,7 @@ waf_name = "waf-example"
 waf_arn = f"arn:aws:wafv2:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:regional/webacl/{waf_name}/{waf_id}"
 
 
-class Test_wafv2_webacl_has_rule_or_rule_group:
+class Test_wafv2_webacl_has_rules_or_rule_groups:
     def test_no_web_acls(self):
         wafv2_client = mock.MagicMock
         wafv2_client.web_acls = {}
@@ -20,11 +20,11 @@ class Test_wafv2_webacl_has_rule_or_rule_group:
             "prowler.providers.aws.services.wafv2.wafv2_client.wafv2_client",
             new=wafv2_client,
         ):
-            from prowler.providers.aws.services.wafv2.wafv2_webacl_has_rule_or_rule_group.wafv2_webacl_has_rule_or_rule_group import (
-                wafv2_webacl_has_rule_or_rule_group,
+            from prowler.providers.aws.services.wafv2.wafv2_webacl_has_rules_or_rule_groups.wafv2_webacl_has_rules_or_rule_groups import (
+                wafv2_webacl_has_rules_or_rule_groups,
             )
 
-            check = wafv2_webacl_has_rule_or_rule_group()
+            check = wafv2_webacl_has_rules_or_rule_groups()
             result = check.execute()
             assert len(result) == 0
 
@@ -51,11 +51,11 @@ class Test_wafv2_webacl_has_rule_or_rule_group:
             "prowler.providers.aws.services.wafv2.wafv2_client.wafv2_client",
             new=wafv2_client,
         ):
-            from prowler.providers.aws.services.wafv2.wafv2_webacl_has_rule_or_rule_group.wafv2_webacl_has_rule_or_rule_group import (
-                wafv2_webacl_has_rule_or_rule_group,
+            from prowler.providers.aws.services.wafv2.wafv2_webacl_has_rules_or_rule_groups.wafv2_webacl_has_rules_or_rule_groups import (
+                wafv2_webacl_has_rules_or_rule_groups,
             )
 
-            check = wafv2_webacl_has_rule_or_rule_group()
+            check = wafv2_webacl_has_rules_or_rule_groups()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
@@ -91,11 +91,11 @@ class Test_wafv2_webacl_has_rule_or_rule_group:
             "prowler.providers.aws.services.wafv2.wafv2_client.wafv2_client",
             new=wafv2_client,
         ):
-            from prowler.providers.aws.services.wafv2.wafv2_webacl_has_rule_or_rule_group.wafv2_webacl_has_rule_or_rule_group import (
-                wafv2_webacl_has_rule_or_rule_group,
+            from prowler.providers.aws.services.wafv2.wafv2_webacl_has_rules_or_rule_groups.wafv2_webacl_has_rules_or_rule_groups import (
+                wafv2_webacl_has_rules_or_rule_groups,
             )
 
-            check = wafv2_webacl_has_rule_or_rule_group()
+            check = wafv2_webacl_has_rules_or_rule_groups()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
@@ -131,11 +131,11 @@ class Test_wafv2_webacl_has_rule_or_rule_group:
             "prowler.providers.aws.services.wafv2.wafv2_client.wafv2_client",
             new=wafv2_client,
         ):
-            from prowler.providers.aws.services.wafv2.wafv2_webacl_has_rule_or_rule_group.wafv2_webacl_has_rule_or_rule_group import (
-                wafv2_webacl_has_rule_or_rule_group,
+            from prowler.providers.aws.services.wafv2.wafv2_webacl_has_rules_or_rule_groups.wafv2_webacl_has_rules_or_rule_groups import (
+                wafv2_webacl_has_rules_or_rule_groups,
             )
 
-            check = wafv2_webacl_has_rule_or_rule_group()
+            check = wafv2_webacl_has_rules_or_rule_groups()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"

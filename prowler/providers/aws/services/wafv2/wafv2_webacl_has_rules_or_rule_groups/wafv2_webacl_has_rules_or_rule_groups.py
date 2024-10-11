@@ -2,7 +2,7 @@ from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.wafv2.wafv2_client import wafv2_client
 
 
-class wafv2_webacl_has_rule_or_rule_group(Check):
+class wafv2_webacl_has_rules_or_rule_groups(Check):
     def execute(self):
         findings = []
         for web_acl in wafv2_client.web_acls.values():
