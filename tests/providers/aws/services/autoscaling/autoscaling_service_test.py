@@ -100,8 +100,27 @@ class Test_AutoScaling_Service:
                 "SecurityGroups": ["default", "default2"],
             },
         )
-        launch_template_id = launch_template["LaunchTemplate"]["LaunchTemplateId"]
-        autoscaling_client.create_auto_scaling_group(
+
+        ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
+        vpc_id = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]["VpcId"]
+
+        elastic_load_balancer = client("elbv2", region_name=AWS_REGION_US_EAST_1)
+        target_group = elastic_load_balancer.create_target_group(
+            Name="my-target-group",
+            Protocol="HTTP",
+            Port=80,
+            VpcId=vpc_id,
+            HealthCheckProtocol="HTTP",
+            HealthCheckPort="80",
+            HealthCheckPath="/",
+            HealthCheckIntervalSeconds=30,
+            HealthCheckTimeoutSeconds=5,
+            HealthyThresholdCount=5,
+            UnhealthyThresholdCount=2,
+            Matcher={"HttpCode": "200"},
+        )
+
+        _ = autoscaling_client.create_auto_scaling_group(
             AutoScalingGroupName="my-autoscaling-group",
             LaunchTemplate={"LaunchTemplateName": "test", "Version": "$Latest"},
             MinSize=0,
@@ -142,6 +161,9 @@ class Test_AutoScaling_Service:
                     "Value": "value_test",
                 },
             ],
+            HealthCheckType="ELB",
+            LoadBalancerNames=["my-load-balancer"],
+            TargetGroupARNs=[target_group["TargetGroups"][0]["TargetGroupArn"]],
         )
 
         # AutoScaling client for this test class
@@ -180,6 +202,11 @@ class Test_AutoScaling_Service:
                 },
             ],
         }
+        assert autoscaling.groups[0].health_check_type == "ELB"
+        assert autoscaling.groups[0].load_balancers == ["my-load-balancer"]
+        assert autoscaling.groups[0].target_groups == [
+            target_group["TargetGroups"][0]["TargetGroupArn"]
+        ]
 
     # Test Application AutoScaling Describe Scalable Targets
     @mock_aws

@@ -68,6 +68,9 @@ class AutoScaling(AWSService):
                                 mixed_instances_policy_launch_template=group.get(
                                     "MixedInstancesPolicy", {}
                                 ).get("LaunchTemplate", {}),
+                                health_check_type=group.get("HealthCheckType", ""),
+                                load_balancers=group.get("LoadBalancerNames", []),
+                                target_groups=group.get("TargetGroupARNs", []),
                             )
                         )
 
@@ -136,6 +139,9 @@ class Group(BaseModel):
     tags: list = []
     launch_template: dict = {}
     mixed_instances_policy_launch_template: dict = {}
+    health_check_type: str
+    load_balancers: list = []
+    target_groups: list = []
 
 
 class ScalableTarget(BaseModel):

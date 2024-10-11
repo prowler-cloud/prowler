@@ -1,3 +1,5 @@
+from importlib.machinery import FileFinder
+from pkgutil import ModuleInfo
 from unittest import mock
 
 import pytest
@@ -67,6 +69,23 @@ def mock_generate_output():
     ) as mock_gen_output:
         mock_gen_output.side_effect = lambda provider, finding, output_options: finding
         yield mock_gen_output
+
+
+@pytest.fixture
+def mock_list_modules():
+    with mock.patch(
+        "prowler.lib.check.utils.list_modules", autospec=True
+    ) as mock_list_mod:
+        mock_list_mod.return_value = [
+            ModuleInfo(
+                module_finder=FileFinder(
+                    "/prowler/providers/aws/services/accessanalyzer/accessanalyzer_enabled"
+                ),
+                name="prowler.providers.aws.services.accessanalyzer.accessanalyzer_enabled.accessanalyzer_enabled",
+                ispkg=False,
+            )
+        ]
+        yield mock_list_mod
 
 
 class TestScan:
@@ -201,6 +220,23 @@ class TestScan:
         )
         assert scan.service_checks_completed == {}
         assert scan.progress == 0
+        assert scan.duration == 0
+        assert scan.get_completed_services() == set()
+        assert scan.get_completed_checks() == set()
+
+    def test_init_with_no_checks(mock_provider, mock_list_modules):
+        checks_to_execute = set()
+        mock_provider.type = "aws"
+
+        scan = Scan(mock_provider, checks_to_execute)
+
+        assert scan.provider == mock_provider
+        assert scan.checks_to_execute == ["accessanalyzer_enabled"]
+        assert scan.service_checks_to_execute == get_service_checks_to_execute(
+            ["accessanalyzer_enabled"]
+        )
+        assert scan.service_checks_completed == {}
+        assert scan.progress == 0
         assert scan.get_completed_services() == set()
         assert scan.get_completed_checks() == set()
 
@@ -235,6 +271,8 @@ class TestScan:
         assert results[0][1] == mock_execute.side_effect()
         assert results[0][0] == 100.0
         assert scan.progress == 100.0
+        # Since the scan is mocked, the duration will always be 0 for now
+        assert scan.duration == 0
         assert scan._number_of_checks_completed == 1
         assert scan.service_checks_completed == {
             "accessanalyzer": {"accessanalyzer_enabled"},
