@@ -15,6 +15,7 @@ class Bedrock(AWSService):
         self.__threading_call__(self._get_model_invocation_logging_configuration)
         self.__threading_call__(self._list_guardrails)
         self.__threading_call__(self._get_guardrail, self.guardrails.values())
+        self.__threading_call__(self._list_tags_for_resource, self.guardrails.values())
 
     def _get_model_invocation_logging_configuration(self, regional_client):
         logger.info("Bedrock - Getting Model Invocation Logging Configuration...")
@@ -77,6 +78,19 @@ class Bedrock(AWSService):
                 f"{guardrail.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _list_tags_for_resource(self, guardrail):
+        logger.info("Bedrock - Listing Tags for Resource...")
+        try:
+            guardrail.tags = (
+                self.regional_clients[guardrail.region]
+                .list_tags_for_resource(resourceARN=guardrail.arn)
+                .get("tags", [])
+            )
+        except Exception as error:
+            logger.error(
+                f"{guardrail.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class LoggingConfiguration(BaseModel):
     enabled: bool = False
@@ -89,5 +103,6 @@ class Guardrail(BaseModel):
     name: str
     arn: str
     region: str
+    tags: Optional[list] = []
     sensitive_information_filter: bool = False
-    prompt_attack_filter_strength: str = None
+    prompt_attack_filter_strength: Optional[str]

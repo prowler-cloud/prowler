@@ -10,6 +10,7 @@ class bedrock_guardrail_sensitive_information_filter_enabled(Check):
             report.region = guardrail.region
             report.resource_id = guardrail.id
             report.resource_arn = guardrail.arn
+            report.resource_tags = guardrail.tags
             report.status = "PASS"
             report.status_extended = f"Bedrock Guardrail {guardrail.name} block or mask sensitive information."
             if not guardrail.sensitive_information_filter:
