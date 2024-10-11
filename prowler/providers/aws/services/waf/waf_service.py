@@ -5,12 +5,11 @@ from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################### WAF
 class WAF(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
         super().__init__("waf-regional", provider)
-        self.web_acls = []
+        self.web_acls = {}
         self.__threading_call__(self._list_web_acls)
         self.__threading_call__(self._list_resources_for_web_acl)
 
@@ -21,13 +20,13 @@ class WAF(AWSService):
                 if not self.audit_resources or (
                     is_resource_filtered(waf["WebACLId"], self.audit_resources)
                 ):
-                    self.web_acls.append(
-                        WebAcl(
-                            name=waf["Name"],
-                            id=waf["WebACLId"],
-                            albs=[],
-                            region=regional_client.region,
-                        )
+                    arn = f"arn:aws:waf-regional:{regional_client.region}:{self.audited_account}:webacl/{waf['WebACLId']}"
+                    self.web_acls[arn] = WebAcl(
+                        arn=arn,
+                        name=waf["Name"],
+                        id=waf["WebACLId"],
+                        albs=[],
+                        region=regional_client.region,
                     )
         except Exception as error:
             logger.error(
@@ -37,7 +36,7 @@ class WAF(AWSService):
     def _list_resources_for_web_acl(self, regional_client):
         logger.info("WAF - Describing resources...")
         try:
-            for acl in self.web_acls:
+            for acl in self.web_acls.values():
                 if acl.region == regional_client.region:
                     for resource in regional_client.list_resources_for_web_acl(
                         WebACLId=acl.id, ResourceType="APPLICATION_LOAD_BALANCER"
@@ -51,6 +50,7 @@ class WAF(AWSService):
 
 
 class WebAcl(BaseModel):
+    arn: str
     name: str
     id: str
     albs: list[str]
