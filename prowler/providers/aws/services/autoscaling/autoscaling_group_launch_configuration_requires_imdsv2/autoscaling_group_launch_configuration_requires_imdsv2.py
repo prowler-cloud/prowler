@@ -17,13 +17,9 @@ class autoscaling_group_launch_configuration_requires_imdsv2(Check):
             report.status_extended = (
                 f"Autoscaling group {group.name} has IMDSv2 disabled or not required."
             )
-            launch_configuration = next(
-                (
-                    lc
-                    for lc in autoscaling_client.launch_configurations
-                    if lc.name == group.launch_configuration_name
-                ),
-                None,
+
+            launch_configuration = autoscaling_client.launch_configurations.get(
+                group.launch_configuration_name
             )
 
             if launch_configuration:

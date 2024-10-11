@@ -79,18 +79,19 @@ class Test_AutoScaling_Service:
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         autoscaling = AutoScaling(aws_provider)
         assert len(autoscaling.launch_configurations) == 2
-        assert autoscaling.launch_configurations[0].name == "tester1"
+        launch_configurations = autoscaling.launch_configurations
+        assert "tester1" in launch_configurations
         assert (
-            b64decode(autoscaling.launch_configurations[0].user_data).decode(
+            b64decode(launch_configurations["tester1"].user_data).decode(
                 encoding_format_utf_8
             )
             == "DB_PASSWORD=foobar123"
         )
-        assert autoscaling.launch_configurations[0].image_id == "ami-12c6146b"
-        assert autoscaling.launch_configurations[1].image_id == "ami-12c6146b"
-        assert autoscaling.launch_configurations[1].name == "tester2"
-        assert autoscaling.launch_configurations[1].http_tokens == "required"
-        assert autoscaling.launch_configurations[1].http_endpoint == "enabled"
+        assert launch_configurations["tester1"].image_id == "ami-12c6146b"
+        assert "tester2" in launch_configurations
+        assert launch_configurations["tester2"].image_id == "ami-12c6146b"
+        assert launch_configurations["tester2"].http_tokens == "required"
+        assert launch_configurations["tester2"].http_endpoint == "enabled"
 
     # Test Describe Auto Scaling Groups
     @mock_aws
