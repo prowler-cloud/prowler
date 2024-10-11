@@ -11,7 +11,7 @@ from tests.providers.aws.utils import (
 )
 
 
-class Test_bedrock_model_invocation_logs_encrypted:
+class Test_bedrock_model_invocation_logs_encryption_enabled:
     @mock_aws
     def test_no_logging(self):
         from prowler.providers.aws.services.bedrock.bedrock_service import Bedrock
@@ -24,20 +24,20 @@ class Test_bedrock_model_invocation_logs_encrypted:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.bedrock.bedrock_model_invocation_logs_encrypted.bedrock_model_invocation_logs_encrypted.bedrock_client",
+            "prowler.providers.aws.services.bedrock.bedrock_model_invocation_logs_encryption_enabled.bedrock_model_invocation_logs_encryption_enabled.bedrock_client",
             new=Bedrock(aws_provider),
         ), mock.patch(
-            "prowler.providers.aws.services.bedrock.bedrock_model_invocation_logs_encrypted.bedrock_model_invocation_logs_encrypted.logs_client",
+            "prowler.providers.aws.services.bedrock.bedrock_model_invocation_logs_encryption_enabled.bedrock_model_invocation_logs_encryption_enabled.logs_client",
             new=Logs(aws_provider),
         ), mock.patch(
-            "prowler.providers.aws.services.bedrock.bedrock_model_invocation_logs_encrypted.bedrock_model_invocation_logs_encrypted.s3_client",
+            "prowler.providers.aws.services.bedrock.bedrock_model_invocation_logs_encryption_enabled.bedrock_model_invocation_logs_encryption_enabled.s3_client",
             new=S3(aws_provider),
         ):
-            from prowler.providers.aws.services.bedrock.bedrock_model_invocation_logs_encrypted.bedrock_model_invocation_logs_encrypted import (
-                bedrock_model_invocation_logs_encrypted,
+            from prowler.providers.aws.services.bedrock.bedrock_model_invocation_logs_encryption_enabled.bedrock_model_invocation_logs_encryption_enabled import (
+                bedrock_model_invocation_logs_encryption_enabled,
             )
 
-            check = bedrock_model_invocation_logs_encrypted()
+            check = bedrock_model_invocation_logs_encryption_enabled()
             result = check.execute()
 
             assert len(result) == 0
@@ -74,20 +74,20 @@ class Test_bedrock_model_invocation_logs_encrypted:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.bedrock.bedrock_model_invocation_logs_encrypted.bedrock_model_invocation_logs_encrypted.bedrock_client",
+            "prowler.providers.aws.services.bedrock.bedrock_model_invocation_logs_encryption_enabled.bedrock_model_invocation_logs_encryption_enabled.bedrock_client",
             new=Bedrock(aws_provider),
         ), mock.patch(
-            "prowler.providers.aws.services.bedrock.bedrock_model_invocation_logs_encrypted.bedrock_model_invocation_logs_encrypted.logs_client",
+            "prowler.providers.aws.services.bedrock.bedrock_model_invocation_logs_encryption_enabled.bedrock_model_invocation_logs_encryption_enabled.logs_client",
             new=Logs(aws_provider),
         ), mock.patch(
-            "prowler.providers.aws.services.bedrock.bedrock_model_invocation_logs_encrypted.bedrock_model_invocation_logs_encrypted.s3_client",
+            "prowler.providers.aws.services.bedrock.bedrock_model_invocation_logs_encryption_enabled.bedrock_model_invocation_logs_encryption_enabled.s3_client",
             new=S3(aws_provider),
         ):
-            from prowler.providers.aws.services.bedrock.bedrock_model_invocation_logs_encrypted.bedrock_model_invocation_logs_encrypted import (
-                bedrock_model_invocation_logs_encrypted,
+            from prowler.providers.aws.services.bedrock.bedrock_model_invocation_logs_encryption_enabled.bedrock_model_invocation_logs_encryption_enabled import (
+                bedrock_model_invocation_logs_encryption_enabled,
             )
 
-            check = bedrock_model_invocation_logs_encrypted()
+            check = bedrock_model_invocation_logs_encryption_enabled()
             result = check.execute()
 
             assert len(result) == 1
@@ -124,20 +124,20 @@ class Test_bedrock_model_invocation_logs_encrypted:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.bedrock.bedrock_model_invocation_logs_encrypted.bedrock_model_invocation_logs_encrypted.bedrock_client",
+            "prowler.providers.aws.services.bedrock.bedrock_model_invocation_logs_encryption_enabled.bedrock_model_invocation_logs_encryption_enabled.bedrock_client",
             new=Bedrock(aws_provider),
         ), mock.patch(
-            "prowler.providers.aws.services.bedrock.bedrock_model_invocation_logs_encrypted.bedrock_model_invocation_logs_encrypted.logs_client",
+            "prowler.providers.aws.services.bedrock.bedrock_model_invocation_logs_encryption_enabled.bedrock_model_invocation_logs_encryption_enabled.logs_client",
             new=Logs(aws_provider),
         ), mock.patch(
-            "prowler.providers.aws.services.bedrock.bedrock_model_invocation_logs_encrypted.bedrock_model_invocation_logs_encrypted.s3_client",
+            "prowler.providers.aws.services.bedrock.bedrock_model_invocation_logs_encryption_enabled.bedrock_model_invocation_logs_encryption_enabled.s3_client",
             new=S3(aws_provider),
         ):
-            from prowler.providers.aws.services.bedrock.bedrock_model_invocation_logs_encrypted.bedrock_model_invocation_logs_encrypted import (
-                bedrock_model_invocation_logs_encrypted,
+            from prowler.providers.aws.services.bedrock.bedrock_model_invocation_logs_encryption_enabled.bedrock_model_invocation_logs_encryption_enabled import (
+                bedrock_model_invocation_logs_encryption_enabled,
             )
 
-            check = bedrock_model_invocation_logs_encrypted()
+            check = bedrock_model_invocation_logs_encryption_enabled()
             result = check.execute()
 
             assert len(result) == 1
@@ -175,21 +175,21 @@ class Test_bedrock_model_invocation_logs_encrypted:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.bedrock.bedrock_model_invocation_logs_encrypted.bedrock_model_invocation_logs_encrypted.bedrock_client",
+            "prowler.providers.aws.services.bedrock.bedrock_model_invocation_logs_encryption_enabled.bedrock_model_invocation_logs_encryption_enabled.bedrock_client",
             new=Bedrock(aws_provider),
         ), mock.patch(
-            "prowler.providers.aws.services.bedrock.bedrock_model_invocation_logs_encrypted.bedrock_model_invocation_logs_encrypted.logs_client",
+            "prowler.providers.aws.services.bedrock.bedrock_model_invocation_logs_encryption_enabled.bedrock_model_invocation_logs_encryption_enabled.logs_client",
             new=Logs(aws_provider),
         ), mock.patch(
-            "prowler.providers.aws.services.bedrock.bedrock_model_invocation_logs_encrypted.bedrock_model_invocation_logs_encrypted.s3_client",
+            "prowler.providers.aws.services.bedrock.bedrock_model_invocation_logs_encryption_enabled.bedrock_model_invocation_logs_encryption_enabled.s3_client",
             new=S3(aws_provider),
         ):
 
-            from prowler.providers.aws.services.bedrock.bedrock_model_invocation_logs_encrypted.bedrock_model_invocation_logs_encrypted import (
-                bedrock_model_invocation_logs_encrypted,
+            from prowler.providers.aws.services.bedrock.bedrock_model_invocation_logs_encryption_enabled.bedrock_model_invocation_logs_encryption_enabled import (
+                bedrock_model_invocation_logs_encryption_enabled,
             )
 
-            check = bedrock_model_invocation_logs_encrypted()
+            check = bedrock_model_invocation_logs_encryption_enabled()
             result = check.execute()
 
             assert len(result) == 1
@@ -248,20 +248,20 @@ class Test_bedrock_model_invocation_logs_encrypted:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.bedrock.bedrock_model_invocation_logs_encrypted.bedrock_model_invocation_logs_encrypted.bedrock_client",
+            "prowler.providers.aws.services.bedrock.bedrock_model_invocation_logs_encryption_enabled.bedrock_model_invocation_logs_encryption_enabled.bedrock_client",
             new=Bedrock(aws_provider),
         ), mock.patch(
-            "prowler.providers.aws.services.bedrock.bedrock_model_invocation_logs_encrypted.bedrock_model_invocation_logs_encrypted.logs_client",
+            "prowler.providers.aws.services.bedrock.bedrock_model_invocation_logs_encryption_enabled.bedrock_model_invocation_logs_encryption_enabled.logs_client",
             new=Logs(aws_provider),
         ), mock.patch(
-            "prowler.providers.aws.services.bedrock.bedrock_model_invocation_logs_encrypted.bedrock_model_invocation_logs_encrypted.s3_client",
+            "prowler.providers.aws.services.bedrock.bedrock_model_invocation_logs_encryption_enabled.bedrock_model_invocation_logs_encryption_enabled.s3_client",
             new=S3(aws_provider),
         ):
-            from prowler.providers.aws.services.bedrock.bedrock_model_invocation_logs_encrypted.bedrock_model_invocation_logs_encrypted import (
-                bedrock_model_invocation_logs_encrypted,
+            from prowler.providers.aws.services.bedrock.bedrock_model_invocation_logs_encryption_enabled.bedrock_model_invocation_logs_encryption_enabled import (
+                bedrock_model_invocation_logs_encryption_enabled,
             )
 
-            check = bedrock_model_invocation_logs_encrypted()
+            check = bedrock_model_invocation_logs_encryption_enabled()
             result = check.execute()
 
             assert len(result) == 1
@@ -311,20 +311,20 @@ class Test_bedrock_model_invocation_logs_encrypted:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.bedrock.bedrock_model_invocation_logs_encrypted.bedrock_model_invocation_logs_encrypted.bedrock_client",
+            "prowler.providers.aws.services.bedrock.bedrock_model_invocation_logs_encryption_enabled.bedrock_model_invocation_logs_encryption_enabled.bedrock_client",
             new=Bedrock(aws_provider),
         ), mock.patch(
-            "prowler.providers.aws.services.bedrock.bedrock_model_invocation_logs_encrypted.bedrock_model_invocation_logs_encrypted.logs_client",
+            "prowler.providers.aws.services.bedrock.bedrock_model_invocation_logs_encryption_enabled.bedrock_model_invocation_logs_encryption_enabled.logs_client",
             new=Logs(aws_provider),
         ), mock.patch(
-            "prowler.providers.aws.services.bedrock.bedrock_model_invocation_logs_encrypted.bedrock_model_invocation_logs_encrypted.s3_client",
+            "prowler.providers.aws.services.bedrock.bedrock_model_invocation_logs_encryption_enabled.bedrock_model_invocation_logs_encryption_enabled.s3_client",
             new=S3(aws_provider),
         ):
-            from prowler.providers.aws.services.bedrock.bedrock_model_invocation_logs_encrypted.bedrock_model_invocation_logs_encrypted import (
-                bedrock_model_invocation_logs_encrypted,
+            from prowler.providers.aws.services.bedrock.bedrock_model_invocation_logs_encryption_enabled.bedrock_model_invocation_logs_encryption_enabled import (
+                bedrock_model_invocation_logs_encryption_enabled,
             )
 
-            check = bedrock_model_invocation_logs_encrypted()
+            check = bedrock_model_invocation_logs_encryption_enabled()
             result = check.execute()
 
             assert len(result) == 1
@@ -362,21 +362,21 @@ class Test_bedrock_model_invocation_logs_encrypted:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.bedrock.bedrock_model_invocation_logs_encrypted.bedrock_model_invocation_logs_encrypted.bedrock_client",
+            "prowler.providers.aws.services.bedrock.bedrock_model_invocation_logs_encryption_enabled.bedrock_model_invocation_logs_encryption_enabled.bedrock_client",
             new=Bedrock(aws_provider),
         ), mock.patch(
-            "prowler.providers.aws.services.bedrock.bedrock_model_invocation_logs_encrypted.bedrock_model_invocation_logs_encrypted.logs_client",
+            "prowler.providers.aws.services.bedrock.bedrock_model_invocation_logs_encryption_enabled.bedrock_model_invocation_logs_encryption_enabled.logs_client",
             new=Logs(aws_provider),
         ), mock.patch(
-            "prowler.providers.aws.services.bedrock.bedrock_model_invocation_logs_encrypted.bedrock_model_invocation_logs_encrypted.s3_client",
+            "prowler.providers.aws.services.bedrock.bedrock_model_invocation_logs_encryption_enabled.bedrock_model_invocation_logs_encryption_enabled.s3_client",
             new=S3(aws_provider),
         ):
 
-            from prowler.providers.aws.services.bedrock.bedrock_model_invocation_logs_encrypted.bedrock_model_invocation_logs_encrypted import (
-                bedrock_model_invocation_logs_encrypted,
+            from prowler.providers.aws.services.bedrock.bedrock_model_invocation_logs_encryption_enabled.bedrock_model_invocation_logs_encryption_enabled import (
+                bedrock_model_invocation_logs_encryption_enabled,
             )
 
-            check = bedrock_model_invocation_logs_encrypted()
+            check = bedrock_model_invocation_logs_encryption_enabled()
             result = check.execute()
 
             assert len(result) == 1

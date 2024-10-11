@@ -4,7 +4,7 @@ from prowler.providers.aws.services.cloudwatch.logs_client import logs_client
 from prowler.providers.aws.services.s3.s3_client import s3_client
 
 
-class bedrock_model_invocation_logs_encrypted(Check):
+class bedrock_model_invocation_logs_encryption_enabled(Check):
     def execute(self):
         findings = []
         for region, logging in bedrock_client.logging_configurations.items():

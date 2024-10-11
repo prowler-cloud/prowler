@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "bedrock_model_invocation_logs_encrypted",
+  "CheckID": "bedrock_model_invocation_logs_encryption_enabled",
   "CheckTitle": "Ensure that Amazon Bedrock model invocation logs are encrypted with KMS.",
   "CheckType": [],
   "ServiceName": "bedrock",
