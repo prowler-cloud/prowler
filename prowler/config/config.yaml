@@ -101,7 +101,7 @@ aws:
       "nodejs14.x",
       "nodejs16.x",
       "dotnet5.0",
-      "dotnet7.0",
+      "dotnet7",
       "dotnetcore1.0",
       "dotnetcore2.0",
       "dotnetcore2.1",
