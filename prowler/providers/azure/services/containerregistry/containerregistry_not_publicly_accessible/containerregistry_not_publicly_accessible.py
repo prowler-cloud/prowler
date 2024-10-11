@@ -4,7 +4,7 @@ from prowler.providers.azure.services.containerregistry.containerregistry_client
 )
 
 
-class containerregistry_uses_private_link(Check):
+class containerregistry_not_publicly_accessible(Check):
     def execute(self) -> list[Check_Report_Azure]:
         findings = []
 
@@ -16,11 +16,16 @@ class containerregistry_uses_private_link(Check):
                 report.resource_id = registry_id
                 report.location = container_registry_info.location
                 report.status = "FAIL"
-                report.status_extended = f"Container Registry {container_registry_info.name} from subscription {subscription} does not use a private link."
+                report.status_extended = f"Container Registry {container_registry_info.name} from subscription {subscription} allows unrestricted network access."
 
-                if container_registry_info.private_endpoint_connections:
+                if (
+                    getattr(
+                        container_registry_info.network_rule_set, "default_action", ""
+                    ).lower()
+                    == "deny"
+                ):
                     report.status = "PASS"
-                    report.status_extended = f"Container Registry {container_registry_info.name} from subscription {subscription} uses a private link."
+                    report.status_extended = f"Container Registry {container_registry_info.name} from subscription {subscription} does not allow unrestricted network access."
 
                 findings.append(report)
 

@@ -2,13 +2,15 @@ from unittest import mock
 from unittest.mock import MagicMock
 from uuid import uuid4
 
+from azure.mgmt.containerregistry.models import NetworkRuleSet
+
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
     set_mocked_azure_provider,
 )
 
 
-class TestContainerRegistryAdminUserDisabled:
+class Test_containerregistry_not_publicly_accessible:
     def test_no_container_registries(self):
         containerregistry_client = MagicMock()
         containerregistry_client.registries = {}
@@ -17,18 +19,18 @@ class TestContainerRegistryAdminUserDisabled:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
-            "prowler.providers.azure.services.containerregistry.containerregistry_admin_user_disabled.containerregistry_admin_user_disabled.containerregistry_client",
+            "prowler.providers.azure.services.containerregistry.containerregistry_not_publicly_accessible.containerregistry_not_publicly_accessible.containerregistry_client",
             new=containerregistry_client,
         ):
-            from prowler.providers.azure.services.containerregistry.containerregistry_admin_user_disabled.containerregistry_admin_user_disabled import (
-                containerregistry_admin_user_disabled,
+            from prowler.providers.azure.services.containerregistry.containerregistry_not_publicly_accessible.containerregistry_not_publicly_accessible import (
+                containerregistry_not_publicly_accessible,
             )
 
-            check = containerregistry_admin_user_disabled()
+            check = containerregistry_not_publicly_accessible()
             result = check.execute()
             assert len(result) == 0
 
-    def test_container_registry_admin_user_enabled(self):
+    def test_container_registry_network_access_unrestricted(self):
         containerregistry_client = MagicMock()
         registry_id = str(uuid4())
 
@@ -36,11 +38,11 @@ class TestContainerRegistryAdminUserDisabled:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
-            "prowler.providers.azure.services.containerregistry.containerregistry_admin_user_disabled.containerregistry_admin_user_disabled.containerregistry_client",
+            "prowler.providers.azure.services.containerregistry.containerregistry_not_publicly_accessible.containerregistry_not_publicly_accessible.containerregistry_client",
             new=containerregistry_client,
         ):
-            from prowler.providers.azure.services.containerregistry.containerregistry_admin_user_disabled.containerregistry_admin_user_disabled import (
-                containerregistry_admin_user_disabled,
+            from prowler.providers.azure.services.containerregistry.containerregistry_not_publicly_accessible.containerregistry_not_publicly_accessible import (
+                containerregistry_not_publicly_accessible,
             )
             from prowler.providers.azure.services.containerregistry.containerregistry_service import (
                 ContainerRegistryInfo,
@@ -57,20 +59,37 @@ class TestContainerRegistryAdminUserDisabled:
                         login_server="mock_login_server.azurecr.io",
                         public_network_access="Enabled",
                         admin_user_enabled=True,
-                        network_rule_set=None,
-                        monitor_diagnostic_settings=[],
+                        network_rule_set=NetworkRuleSet(default_action="Allow"),
+                        monitor_diagnostic_settings=[
+                            {
+                                "id": "id1/id1",
+                                "logs": [
+                                    {
+                                        "category": "ContainerLogs",
+                                        "enabled": True,
+                                    },
+                                    {
+                                        "category": "AdminLogs",
+                                        "enabled": False,
+                                    },
+                                ],
+                                "storage_account_name": "mock_storage_account",
+                                "storage_account_id": "mock_storage_account_id",
+                                "name": "mock_diagnostic_setting",
+                            }
+                        ],
                     )
                 }
             }
 
-            check = containerregistry_admin_user_disabled()
+            check = containerregistry_not_publicly_accessible()
 
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Container Registry mock_registry from subscription {AZURE_SUBSCRIPTION_ID} has its admin user enabled."
+                == f"Container Registry {containerregistry_client.registries[AZURE_SUBSCRIPTION_ID][registry_id].name} from subscription {AZURE_SUBSCRIPTION_ID} allows unrestricted network access."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == "mock_registry"
@@ -82,7 +101,7 @@ class TestContainerRegistryAdminUserDisabled:
             )
             assert result[0].location == "westeurope"
 
-    def test_container_registry_admin_user_disabled(self):
+    def test_container_registry_network_access_restricted(self):
         containerregistry_client = mock.MagicMock()
         containerregistry_client.registries = {}
 
@@ -90,11 +109,11 @@ class TestContainerRegistryAdminUserDisabled:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
-            "prowler.providers.azure.services.containerregistry.containerregistry_admin_user_disabled.containerregistry_admin_user_disabled.containerregistry_client",
+            "prowler.providers.azure.services.containerregistry.containerregistry_not_publicly_accessible.containerregistry_not_publicly_accessible.containerregistry_client",
             new=containerregistry_client,
         ):
-            from prowler.providers.azure.services.containerregistry.containerregistry_admin_user_disabled.containerregistry_admin_user_disabled import (
-                containerregistry_admin_user_disabled,
+            from prowler.providers.azure.services.containerregistry.containerregistry_not_publicly_accessible.containerregistry_not_publicly_accessible import (
+                containerregistry_not_publicly_accessible,
             )
             from prowler.providers.azure.services.containerregistry.containerregistry_service import (
                 ContainerRegistryInfo,
@@ -113,20 +132,36 @@ class TestContainerRegistryAdminUserDisabled:
                         login_server="mock_login_server.azurecr.io",
                         public_network_access="Enabled",
                         admin_user_enabled=False,
-                        network_rule_set=None,
-                        monitor_diagnostic_settings=[],
+                        network_rule_set=NetworkRuleSet(default_action="Deny"),
+                        monitor_diagnostic_settings=[
+                            {
+                                "id": "id1/id1",
+                                "logs": [
+                                    {
+                                        "category": "ContainerLogs",
+                                        "enabled": True,
+                                    },
+                                    {
+                                        "category": "AdminLogs",
+                                        "enabled": False,
+                                    },
+                                ],
+                                "storage_account_name": "mock_storage_account",
+                                "storage_account_id": "mock_storage_account_id",
+                                "name": "mock_diagnostic_setting",
+                            }
+                        ],
                     )
                 }
             }
 
-            check = containerregistry_admin_user_disabled()
-
+            check = containerregistry_not_publicly_accessible()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Container Registry mock_registry from subscription {AZURE_SUBSCRIPTION_ID} has its admin user disabled."
+                == f"Container Registry {containerregistry_client.registries[AZURE_SUBSCRIPTION_ID][registry_id].name} from subscription {AZURE_SUBSCRIPTION_ID} does not allow unrestricted network access."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == "mock_registry"
