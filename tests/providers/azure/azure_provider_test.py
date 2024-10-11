@@ -241,18 +241,27 @@ class TestAzureProvider:
             "prowler.providers.azure.azure_provider.AzureProvider.setup_session"
         ) as mock_setup_session, patch(
             "prowler.providers.azure.azure_provider.SubscriptionClient"
-        ) as mock_resource_client:
+        ) as mock_resource_client, patch(
+            "prowler.providers.azure.azure_provider.AzureProvider.validate_static_credentials"
+        ) as mock_validate_static_credentials:
 
             # Mock the return value of DefaultAzureCredential
             mock_credentials = MagicMock()
             mock_credentials.get_token.return_value = AccessToken(
                 token="fake_token", expires_on=9999999999
             )
-            mock_default_credential.return_value = mock_credentials
+            mock_default_credential.return_value = {
+                "client_id": str(uuid4()),
+                "client_secret": str(uuid4()),
+                "tenant_id": str(uuid4()),
+            }
 
             # Mock setup_session to return a mocked session object
             mock_session = MagicMock()
             mock_setup_session.return_value = mock_session
+
+            # Mock ValidateStaticCredentials to avoid real API calls
+            mock_validate_static_credentials.return_value = None
 
             # Mock ResourceManagementClient to avoid real API calls
             mock_client = MagicMock()
