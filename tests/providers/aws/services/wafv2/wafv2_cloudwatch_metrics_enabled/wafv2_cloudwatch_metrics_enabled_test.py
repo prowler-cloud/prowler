@@ -98,6 +98,7 @@ class Test_wafv2_cloudwatch_metrics_enabled:
             Tags=[{"Key": "Name", "Value": "web-acl-test"}],
         )
         waf = waf["Summary"]
+        waf_id = waf["Id"]
 
         from prowler.providers.aws.services.wafv2.wafv2_service import WAFv2
 
@@ -122,9 +123,9 @@ class Test_wafv2_cloudwatch_metrics_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"AWS WAFv2 Web ACL {waf['Id']} does have CloudWatch Metrics enabled in all rule groups and rules."
+                == f"AWS WAFv2 Web ACL {waf_id} does have CloudWatch Metrics enabled in all rule groups and rules."
             )
-            assert result[0].resource_id == waf["Id"]
+            assert result[0].resource_id == waf_id
             assert result[0].resource_arn == waf["ARN"]
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == [{"Key": "Name", "Value": "web-acl-test"}]
@@ -163,6 +164,7 @@ class Test_wafv2_cloudwatch_metrics_enabled:
             Tags=[{"Key": "Name", "Value": "web-acl-test"}],
         )
         waf = waf["Summary"]
+        waf_id = waf["Id"]
 
         from prowler.providers.aws.services.wafv2.wafv2_service import WAFv2
 
@@ -187,9 +189,9 @@ class Test_wafv2_cloudwatch_metrics_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"AWS WAFv2 Web ACL {waf['Id']} does not have CloudWatch Metrics enabled in all rule groups and rules. Non compliant resources are: Rules: rule-off."
+                == f"AWS WAFv2 Web ACL {waf_id} does not have CloudWatch Metrics enabled in all rule groups and rules. Non compliant resources are: Rules: rule-off."
             )
-            assert result[0].resource_id == waf["Id"]
+            assert result[0].resource_id == waf_id
             assert result[0].resource_arn == waf["ARN"]
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == [{"Key": "Name", "Value": "web-acl-test"}]
@@ -225,6 +227,7 @@ class Test_wafv2_cloudwatch_metrics_enabled:
             ],
         )
         waf = waf["Summary"]
+        waf_id = waf["Id"]
 
         from prowler.providers.aws.services.wafv2.wafv2_service import WAFv2
 
@@ -249,9 +252,9 @@ class Test_wafv2_cloudwatch_metrics_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"AWS WAFv2 Web ACL {waf['Id']} does have CloudWatch Metrics enabled in all rule groups and rules."
+                == f"AWS WAFv2 Web ACL {waf_id} does have CloudWatch Metrics enabled in all rule groups and rules."
             )
-            assert result[0].resource_id == waf["Id"]
+            assert result[0].resource_id == waf_id
             assert result[0].resource_arn == waf["ARN"]
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == [{"Key": "Name", "Value": "web-acl-test"}]
@@ -287,6 +290,7 @@ class Test_wafv2_cloudwatch_metrics_enabled:
             ],
         )
         waf = waf["Summary"]
+        waf_id = waf["Id"]
 
         from prowler.providers.aws.services.wafv2.wafv2_service import WAFv2
 
@@ -311,9 +315,9 @@ class Test_wafv2_cloudwatch_metrics_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"AWS WAFv2 Web ACL {waf['Id']} does not have CloudWatch Metrics enabled in all rule groups and rules. Non compliant resources are: Rule Groups: rule-group-off."
+                == f"AWS WAFv2 Web ACL {waf_id} does not have CloudWatch Metrics enabled in all rule groups and rules. Non compliant resources are: Rule Groups: rule-group-off."
             )
-            assert result[0].resource_id == waf["Id"]
+            assert result[0].resource_id == waf_id
             assert result[0].resource_arn == waf["ARN"]
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == [{"Key": "Name", "Value": "web-acl-test"}]
