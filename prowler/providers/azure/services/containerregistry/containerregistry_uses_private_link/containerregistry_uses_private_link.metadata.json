@@ -13,7 +13,7 @@
   "RelatedUrl": "https://learn.microsoft.com/en-us/azure/private-link/private-link-overview",
   "Remediation": {
     "Code": {
-      "CLI": "az network private-endpoint create  --connection-name <ConnectionName> --resource-group <ResourceGroupName> --name <Name> --private-connection-resource-id <PrivateConnectionResourceId> --subnet <SubnetName>",
+      "CLI": "az network private-endpoint create  --connection-name <ConnectionName> --resource-group <ResourceGroupName> --name <Name> --private-connection-resource-id <RegistryId> --vnet-name <VnetName> --subnet <SubnetName> --group-ids registry",
       "NativeIaC": "",
       "Other": "",
       "Terraform": ""
