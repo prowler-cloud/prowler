@@ -4,7 +4,7 @@ from prowler.providers.aws.services.elasticbeanstalk.elasticbeanstalk_client imp
 )
 
 
-class elasticbeanstalk_enhanced_health_reporting_enabled(Check):
+class elasticbeanstalk_environment_enhanced_health_reporting(Check):
     def execute(self):
         findings = []
         for environment in elasticbeanstalk_client.environments.values():
@@ -16,10 +16,7 @@ class elasticbeanstalk_enhanced_health_reporting_enabled(Check):
             report.status = "PASS"
             report.status_extended = f"Elastic Beanstalk environment {environment.name} has enhanced health reporting enabled."
 
-            if (
-                environment.health_reporting is None
-                or environment.health_reporting != "enhanced"
-            ):
+            if environment.health_reporting != "enhanced":
                 report.status = "FAIL"
                 report.status_extended = f"Elastic Beanstalk environment {environment.name} does not have enhanced health reporting enabled."
 

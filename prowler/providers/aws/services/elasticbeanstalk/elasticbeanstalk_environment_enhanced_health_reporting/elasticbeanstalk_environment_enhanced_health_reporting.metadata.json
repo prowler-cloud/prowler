@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "elasticbeanstalk_enhanced_health_reporting_enabled",
+  "CheckID": "elasticbeanstalk_environment_enhanced_health_reporting",
   "CheckTitle": "Elastic Beanstalk environments should have enhanced health reporting enabled",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices"
