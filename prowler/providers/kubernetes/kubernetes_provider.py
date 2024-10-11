@@ -42,7 +42,7 @@ class KubernetesProvider(Provider):
         namespace: list = None,
         audit_config: dict = {},
         fixer_config: dict = {},
-        kubeconfig_content: dict = {},
+        kubeconfig_content: dict = None,
     ):
         """
         Initializes the KubernetesProvider instance.
@@ -143,7 +143,7 @@ class KubernetesProvider(Provider):
     @staticmethod
     def setup_session(
         kubeconfig_file: str = None,
-        kubeconfig_content: dict = {},
+        kubeconfig_content: dict = None,
         input_context: str = None,
     ) -> KubernetesSession:
         """
@@ -199,14 +199,14 @@ class KubernetesProvider(Provider):
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            raise KubernetesError(
+            raise KubernetesSetUpSessionError(
                 original_exception=error, file=os.path.abspath(__file__)
             )
 
     @staticmethod
     def test_connection(
         kubeconfig_file: str = "~/.kube/config",
-        kubeconfig_content: dict = {},
+        kubeconfig_content: dict = None,
         input_context: str = "",
         raise_on_exception: bool = True,
     ) -> Connection:
@@ -227,6 +227,13 @@ class KubernetesProvider(Provider):
             )
             client.CoreV1Api().list_namespace(timeout_seconds=2, _request_timeout=2)
             return Connection(is_connected=True)
+        except KubernetesSetUpSessionError as setup_session_error:
+            logger.critical(
+                f"KubernetesSetUpSessionError[{setup_session_error.__traceback__.tb_lineno}]: {setup_session_error}"
+            )
+            if raise_on_exception:
+                raise setup_session_error
+            return Connection(error=setup_session_error)
         except ApiException as api_error:
             logger.critical(
                 f"ApiException[{api_error.__traceback__.tb_lineno}]: {api_error}"
