@@ -20,7 +20,7 @@ class WAF(AWSService):
                 if not self.audit_resources or (
                     is_resource_filtered(waf["WebACLId"], self.audit_resources)
                 ):
-                    arn = f"arn:aws:waf-regional:{regional_client.region}:{self.audited_account}:webacl/{waf["WebACLId"]}"
+                    arn = f"arn:aws:waf-regional:{regional_client.region}:{self.audited_account}:webacl/{waf['WebACLId']}"
                     self.web_acls[arn] = WebAcl(
                         arn=arn,
                         name=waf["Name"],
