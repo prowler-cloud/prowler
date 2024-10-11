@@ -11,9 +11,9 @@ import {
 import {
   ColumnGetScans,
   ColumnGetScansSchedule,
-  ColumnProviderScans,
   SkeletonTableScans,
 } from "@/components/scans/table";
+import { ColumnProviderScans } from "@/components/scans/table/provider-scans";
 import { Header } from "@/components/ui";
 import { DataTable } from "@/components/ui/table";
 import { SearchParamsProps } from "@/types";
@@ -33,7 +33,7 @@ export default async function Scans({
       <FilterControls search date providers />
       <Spacer y={8} />
 
-      <div className="grid grid-cols-12 items-start gap-6">
+      <div className="grid grid-cols-12 items-start gap-4">
         <div className="col-span-12 lg:col-span-4">
           <Suspense key={searchParamsKey} fallback={<SkeletonTableScans />}>
             <SSRDataTableProviders searchParams={searchParams} />
