@@ -77,7 +77,6 @@ export function DataTableRowActions<ProviderProps>({
               <DropdownItem
                 key="new"
                 description="Check the connection to the provider"
-                shortcut="⌘N"
                 textValue="Check Connection"
                 startContent={<AddNoteBulkIcon className={iconClasses} />}
               >
@@ -86,7 +85,6 @@ export function DataTableRowActions<ProviderProps>({
               <DropdownItem
                 key="edit"
                 description="Allows you to edit the provider"
-                shortcut="⌘⇧E"
                 textValue="Edit Provider"
                 startContent={<EditDocumentBulkIcon className={iconClasses} />}
                 onClick={() => setIsEditOpen(true)}
@@ -101,7 +99,6 @@ export function DataTableRowActions<ProviderProps>({
                 color="danger"
                 description="Delete the provider permanently"
                 textValue="Delete Provider"
-                shortcut="⌘⇧D"
                 startContent={
                   <DeleteDocumentBulkIcon
                     className={clsx(iconClasses, "!text-danger")}

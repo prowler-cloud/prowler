@@ -12,19 +12,21 @@ export const SnippetLabel: React.FC<SnippetLabelProps> = ({
   ...props
 }) => {
   return (
-    <Snippet
-      className="m-0 flex items-center bg-transparent py-0"
-      color="default"
-      size="sm"
-      radius="lg"
-      hideSymbol
-      copyIcon={<CopyIcon size={16} />}
-      checkIcon={<DoneIcon size={16} />}
-      {...props}
-    >
-      <p className="no-scrollbar text-md mb-1 w-32 overflow-hidden overflow-x-scroll text-ellipsis whitespace-nowrap text-sm font-semibold">
-        {label}
-      </p>
-    </Snippet>
+    label !== "" && (
+      <Snippet
+        className="m-0 flex items-center bg-transparent py-0"
+        color="default"
+        size="sm"
+        radius="lg"
+        hideSymbol
+        copyIcon={<CopyIcon size={16} />}
+        checkIcon={<DoneIcon size={16} />}
+        {...props}
+      >
+        <p className="no-scrollbar text-md mb-1 w-32 overflow-hidden overflow-x-scroll text-ellipsis whitespace-nowrap text-sm font-semibold">
+          {label}
+        </p>
+      </Snippet>
+    )
   );
 };

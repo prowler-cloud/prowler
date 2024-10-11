@@ -1,5 +1,22 @@
 import { z } from "zod";
 
+export const onDemandScanFormSchema = () =>
+  z.object({
+    providerId: z.string(),
+    scanName: z.string().optional(),
+    scannerArgs: z
+      .object({
+        checksToExecute: z.array(z.string()),
+      })
+      .optional(),
+  });
+
+export const scheduleScanFormSchema = () =>
+  z.object({
+    providerId: z.string(),
+    scheduleDate: z.string(),
+  });
+
 export const addProviderFormSchema = z.object({
   providerType: z.string(),
   providerAlias: z.string(),

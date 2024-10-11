@@ -1,27 +1,20 @@
 "use client";
 
 import {
-  Button,
   Dropdown,
   DropdownItem,
   DropdownMenu,
   DropdownSection,
   DropdownTrigger,
 } from "@nextui-org/react";
-import {
-  AddNoteBulkIcon,
-  DeleteDocumentBulkIcon,
-  EditDocumentBulkIcon,
-} from "@nextui-org/shared-icons";
 import { Row } from "@tanstack/react-table";
-import clsx from "clsx";
+import { CalendarClockIcon, RocketIcon } from "lucide-react";
 import { useState } from "react";
 
 import { AddIcon } from "@/components/icons";
 import { CustomAlertModal, CustomButton } from "@/components/ui/custom";
 
-// import { EditForm } from "../forms";
-// import { DeleteForm } from "../forms/delete-form";
+import { ScanOnDemandForm, ScheduleForm } from "../../forms";
 
 interface DataTableRowActionsProps<ProviderProps> {
   row: Row<ProviderProps>;
@@ -32,34 +25,41 @@ const iconClasses =
 export function DataTableRowActions<ProviderProps>({
   row,
 }: DataTableRowActionsProps<ProviderProps>) {
-  const [isEditOpen, setIsEditOpen] = useState(false);
-  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isScanOnDemandOpen, setIsScanOnDemandOpen] = useState(false);
+  const [isScanScheduleOpen, setIsScanScheduleOpen] = useState(false);
+
   const providerId = (row.original as { id: string }).id;
+  const scanName = (row.original as any).attributes?.name;
   return (
     <>
-      {/* <CustomAlertModal
-        isOpen={isEditOpen}
-        onOpenChange={setIsEditOpen}
-        title="Edit Provider"
-        description={"Edit the provider details"}
+      <CustomAlertModal
+        isOpen={isScanOnDemandOpen}
+        onOpenChange={setIsScanOnDemandOpen}
+        title="Start Scan On Demand"
+        description={"Start a scan on demand for this provider"}
       >
-        <EditForm
+        <ScanOnDemandForm
           providerId={providerId}
-          providerAlias={providerAlias}
-          setIsOpen={setIsEditOpen}
+          scanName={scanName}
+          setIsOpen={setIsScanOnDemandOpen}
         />
-      </CustomAlertModal> */}
-      {/* <CustomAlertModal
-        isOpen={isDeleteOpen}
-        onOpenChange={setIsDeleteOpen}
-        title="Are you absolutely sure?"
-        description="This action cannot be undone. This will permanently delete your provider account and remove your data from the server."
+      </CustomAlertModal>
+
+      <CustomAlertModal
+        isOpen={isScanScheduleOpen}
+        onOpenChange={setIsScanScheduleOpen}
+        title="Schedule Scan"
+        description={"Schedule a scan for this provider"}
       >
-        <DeleteForm providerId={providerId} setIsOpen={setIsDeleteOpen} />
-      </CustomAlertModal> */}
+        <ScheduleForm
+          providerId={providerId}
+          scheduleDate={""}
+          setIsOpen={setIsScanScheduleOpen}
+        />
+      </CustomAlertModal>
 
       <div className="relative flex items-center justify-end gap-2">
-        <Dropdown className="shadow-xl" placement="bottom">
+        <Dropdown className="shadow-xl" placement="bottom-start">
           <DropdownTrigger>
             <CustomButton
               className="w-full"
@@ -71,53 +71,35 @@ export function DataTableRowActions<ProviderProps>({
             >
               Start
             </CustomButton>
-            {/* <Button radius="full" size="sm" variant="light">
-              bueno
-            </Button> */}
           </DropdownTrigger>
           <DropdownMenu
             closeOnSelect
-            aria-label="Actions"
+            aria-label="Launch Scan"
             color="default"
             variant="flat"
           >
-            <DropdownSection title="Actions">
+            <DropdownSection title="Start Scan On Demand">
               <DropdownItem
-                key="new"
-                description="Check the connection to the provider"
-                shortcut="⌘N"
-                textValue="Check Connection"
-                startContent={<AddNoteBulkIcon className={iconClasses} />}
+                key="scanNow"
+                color="primary"
+                description="Allows you to start a scan on demand"
+                textValue="Start now"
+                startContent={<RocketIcon className={iconClasses} />}
+                onClick={() => setIsScanOnDemandOpen(true)}
               >
-                {/* <CheckConnectionProvider id={providerId} /> */}
-              </DropdownItem>
-              <DropdownItem
-                key="edit"
-                description="Allows you to edit the provider"
-                shortcut="⌘⇧E"
-                textValue="Edit Provider"
-                startContent={<EditDocumentBulkIcon className={iconClasses} />}
-                onClick={() => setIsEditOpen(true)}
-              >
-                Edit Provider
+                Start now
               </DropdownItem>
             </DropdownSection>
-            <DropdownSection title="Danger zone">
+            <DropdownSection title="Schedule Scan">
               <DropdownItem
-                key="delete"
-                className="text-danger"
-                color="danger"
-                description="Delete the provider permanently"
-                textValue="Delete Provider"
-                shortcut="⌘⇧D"
-                startContent={
-                  <DeleteDocumentBulkIcon
-                    className={clsx(iconClasses, "!text-danger")}
-                  />
-                }
-                onClick={() => setIsDeleteOpen(true)}
+                key="schedule"
+                color="primary"
+                description="Schedule a scan for this provider"
+                textValue="Schedule Scan"
+                startContent={<CalendarClockIcon className={iconClasses} />}
+                onClick={() => setIsScanScheduleOpen(true)}
               >
-                Delete Provider
+                Schedule Scan
               </DropdownItem>
             </DropdownSection>
           </DropdownMenu>
