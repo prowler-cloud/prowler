@@ -9,11 +9,11 @@ import {
   DropdownTrigger,
 } from "@nextui-org/react";
 import {
-  DeleteDocumentBulkIcon,
+  // DeleteDocumentBulkIcon,
   EditDocumentBulkIcon,
 } from "@nextui-org/shared-icons";
 import { Row } from "@tanstack/react-table";
-import clsx from "clsx";
+// import clsx from "clsx";
 import { useState } from "react";
 
 import { VerticalDotsIcon } from "@/components/icons";
@@ -21,19 +21,17 @@ import { CustomAlertModal } from "@/components/ui/custom";
 
 import { EditScanForm } from "../../forms";
 
-// import { DeleteForm } from "../forms/delete-form";
-
-interface DataTableRowActionsProps<ProviderProps> {
-  row: Row<ProviderProps>;
+interface DataTableRowActionsProps<ScanProps> {
+  row: Row<ScanProps>;
 }
 const iconClasses =
   "text-2xl text-default-500 pointer-events-none flex-shrink-0";
 
-export function DataTableRowActions<ProviderProps>({
+export function DataTableRowActions<ScanProps>({
   row,
-}: DataTableRowActionsProps<ProviderProps>) {
+}: DataTableRowActionsProps<ScanProps>) {
   const [isEditOpen, setIsEditOpen] = useState(false);
-  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  // const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const scanId = (row.original as { id: string }).id;
   const scanName = (row.original as any).attributes?.name;
   return (
@@ -50,15 +48,16 @@ export function DataTableRowActions<ProviderProps>({
           setIsOpen={setIsEditOpen}
         />
       </CustomAlertModal>
-      <CustomAlertModal
+
+      {/* <CustomAlertModal
         isOpen={isDeleteOpen}
         onOpenChange={setIsDeleteOpen}
         title="Are you absolutely sure?"
         description="This action cannot be undone. This will permanently delete your scan."
-      >
-        <p>Hello</p>
-        {/* <DeleteForm providerId={providerId} setIsOpen={setIsDeleteOpen} /> */}
-      </CustomAlertModal>
+      > */}
+      {/* <p>Hello</p> */}
+      {/* <DeleteForm providerId={providerId} setIsOpen={setIsDeleteOpen} /> */}
+      {/* </CustomAlertModal> */}
 
       <div className="relative flex items-center justify-end gap-2">
         <Dropdown className="shadow-xl" placement="bottom">
@@ -84,7 +83,7 @@ export function DataTableRowActions<ProviderProps>({
                 Edit Scan
               </DropdownItem>
             </DropdownSection>
-            <DropdownSection title="Danger zone">
+            {/* <DropdownSection title="Danger zone">
               <DropdownItem
                 key="delete"
                 className="text-danger"
@@ -100,7 +99,7 @@ export function DataTableRowActions<ProviderProps>({
               >
                 Delete Scan
               </DropdownItem>
-            </DropdownSection>
+            </DropdownSection> */}
           </DropdownMenu>
         </Dropdown>
       </div>
