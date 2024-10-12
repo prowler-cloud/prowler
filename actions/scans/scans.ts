@@ -48,6 +48,30 @@ export const getScans = async ({
   }
 };
 
+export const getScan = async (scanId: string) => {
+  const session = await auth();
+
+  const keyServer = process.env.API_BASE_URL;
+  const url = new URL(`${keyServer}/scans/${scanId}`);
+
+  try {
+    const scan = await fetch(url.toString(), {
+      headers: {
+        Accept: "application/vnd.api+json",
+        Authorization: `Bearer ${session?.accessToken}`,
+      },
+    });
+    const data = await scan.json();
+    const parsedData = parseStringify(data);
+
+    return parsedData;
+  } catch (error) {
+    return {
+      error: getErrorMessage(error),
+    };
+  }
+};
+
 export const scanOnDemand = async (formData: FormData) => {
   const session = await auth();
   const keyServer = process.env.API_BASE_URL;
