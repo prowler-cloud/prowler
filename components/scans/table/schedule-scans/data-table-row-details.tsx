@@ -35,5 +35,3 @@ export const DataTableRowDetails = ({ entityId }: { entityId: string }) => {
 
   return <ScanDetail scanDetails={scanDetails} />;
 };
-
-// Remove the SSRDataRowDetails component as it's no longer needed

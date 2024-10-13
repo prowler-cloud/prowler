@@ -23,10 +23,10 @@ export function TriggerSheet({
   return (
     <Sheet>
       <SheetTrigger>{triggerComponent}</SheetTrigger>
-      <SheetContent className="w-[600px]">
+      <SheetContent className="max-w-[95vw] pt-10 md:max-w-[55vw]">
         <SheetHeader>
-          <SheetTitle>{title}</SheetTitle>
-          <SheetDescription>{description}</SheetDescription>
+          <SheetTitle className="sr-only">{title}</SheetTitle>
+          <SheetDescription className="sr-only">{description}</SheetDescription>
         </SheetHeader>
         {children}
       </SheetContent>

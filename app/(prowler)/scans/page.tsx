@@ -8,12 +8,10 @@ import {
   filterProviders,
   filterScans,
 } from "@/components/filters";
-import {
-  ColumnGetScansSchedule,
-  SkeletonTableScans,
-} from "@/components/scans/table";
+import { SkeletonTableScans } from "@/components/scans/table";
 import { ColumnProviderScans } from "@/components/scans/table/provider-scans";
 import { ColumnGetScans } from "@/components/scans/table/scans";
+import { ColumnGetScansSchedule } from "@/components/scans/table/schedule-scans";
 import { Header } from "@/components/ui";
 import { DataTable } from "@/components/ui/table";
 import { SearchParamsProps } from "@/types";

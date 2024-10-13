@@ -5,14 +5,11 @@ import { ColumnDef } from "@tanstack/react-table";
 import { PlusIcon } from "@/components/icons";
 import { DateWithTime, EntityInfoShort } from "@/components/ui/entities";
 import { TriggerSheet } from "@/components/ui/sheet";
-import {
-  DataTableColumnHeader,
-  DataTableRowDetails,
-  StatusBadge,
-} from "@/components/ui/table";
+import { DataTableColumnHeader, StatusBadge } from "@/components/ui/table";
 import { ScanProps } from "@/types";
 
-import { DataTableRowActions } from "./scans/data-table-row-actions";
+import { DataTableRowActions } from "../scans/data-table-row-actions";
+import { DataTableRowDetails } from ".";
 
 const getScanData = (row: { original: ScanProps }) => {
   return row.original;
