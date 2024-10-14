@@ -15,6 +15,7 @@ from prowler.providers.kubernetes.exceptions.exceptions import (
     KubernetesAPIError,
     KubernetesCloudResourceManagerAPINotUsedError,
     KubernetesError,
+    KubernetesInvalidProviderIdError,
     KubernetesSetUpSessionError,
     KubernetesTimeoutError,
 )
@@ -160,9 +161,17 @@ class KubernetesProvider(Provider):
         logger.info(f"Using kubeconfig file: {kubeconfig_file}")
         try:
             if kubeconfig_content:
-                config.load_kube_config_from_dict(
-                    kubeconfig_content, context=input_context
-                )
+                try:
+                    config.load_kube_config_from_dict(
+                        kubeconfig_content, context=input_context
+                    )
+                except ConfigException as error:
+                    logger.critical(
+                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+                    raise KubernetesInvalidProviderIdError(
+                        original_exception=error, file=os.path.abspath(__file__)
+                    )
             else:
                 try:
                     config.load_kube_config(
@@ -176,17 +185,25 @@ class KubernetesProvider(Provider):
                 except ConfigException:
                     # If the kubeconfig file is not found, try to use the in-cluster config
                     logger.info("Using in-cluster config")
-                    config.load_incluster_config()
-                    context = {
-                        "name": "In-Cluster",
-                        "context": {
-                            "cluster": "in-cluster",  # Placeholder, as the real cluster name is not available
-                            "user": "service-account-name",  # Also a placeholder
-                        },
-                    }
-                    return KubernetesSession(
-                        api_client=client.ApiClient(), context=context
-                    )
+                    try:
+                        config.load_incluster_config()
+                        context = {
+                            "name": "In-Cluster",
+                            "context": {
+                                "cluster": "in-cluster",  # Placeholder, as the real cluster name is not available
+                                "user": "service-account-name",  # Also a placeholder
+                            },
+                        }
+                        return KubernetesSession(
+                            api_client=client.ApiClient(), context=context
+                        )
+                    except ConfigException as error:
+                        logger.critical(
+                            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+                        raise KubernetesInvalidProviderIdError(
+                            original_exception=error, file=os.path.abspath(__file__)
+                        )
             if input_context:
                 contexts = config.list_kube_config_contexts()[0]
                 for context_item in contexts:
@@ -208,7 +225,7 @@ class KubernetesProvider(Provider):
         kubeconfig_file: str = "~/.kube/config",
         kubeconfig_content: dict = None,
         namespace: str = None,
-        input_context: str = "",
+        provider_id: str = None,
         raise_on_exception: bool = True,
     ) -> Connection:
         """
@@ -218,14 +235,14 @@ class KubernetesProvider(Provider):
             kubeconfig_file (str): Path to the kubeconfig file.
             kubeconfig_content (dict): Content of the kubeconfig file.
             namespace (str): Namespace name.
-            input_context (str): Context name.
+            provider_id (str): Provider ID to use, in this case, the Kubernetes context.
             raise_on_exception (bool): Whether to raise an exception on error.
         Returns:
             Connection: A Connection object.
         """
         try:
             KubernetesProvider.setup_session(
-                kubeconfig_file, kubeconfig_content, input_context
+                kubeconfig_file, kubeconfig_content, provider_id
             )
             if namespace:
                 client.CoreV1Api().list_namespaced_pod(
@@ -234,6 +251,13 @@ class KubernetesProvider(Provider):
             else:
                 client.CoreV1Api().list_namespace(timeout_seconds=2, _request_timeout=2)
             return Connection(is_connected=True)
+        except KubernetesInvalidProviderIdError as invalid_provider_id_error:
+            logger.critical(
+                f"KubernetesInvalidProviderIdError[{invalid_provider_id_error.__traceback__.tb_lineno}]: {invalid_provider_id_error}"
+            )
+            if raise_on_exception:
+                raise invalid_provider_id_error
+            return Connection(error=invalid_provider_id_error)
         except KubernetesSetUpSessionError as setup_session_error:
             logger.critical(
                 f"KubernetesSetUpSessionError[{setup_session_error.__traceback__.tb_lineno}]: {setup_session_error}"

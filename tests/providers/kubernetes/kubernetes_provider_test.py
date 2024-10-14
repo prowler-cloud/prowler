@@ -7,6 +7,9 @@ from prowler.config.config import (
     default_fixer_config_file_path,
     load_and_validate_config_file,
 )
+from prowler.providers.kubernetes.exceptions.exceptions import (
+    KubernetesSetUpSessionError,
+)
 from prowler.providers.kubernetes.kubernetes_provider import KubernetesProvider
 from prowler.providers.kubernetes.models import (
     KubernetesIdentityInfo,
@@ -141,7 +144,7 @@ class TestKubernetesProvider:
         connection = KubernetesProvider.test_connection(
             kubeconfig_file=None,
             kubeconfig_content=kubeconfig_content,
-            input_context="example-context",
+            provider_id="example-context",
             raise_on_exception=False,
         )
 
@@ -176,7 +179,7 @@ class TestKubernetesProvider:
         connection = KubernetesProvider.test_connection(
             kubeconfig_file="dummy_kubeconfig_path",
             kubeconfig_content={},
-            input_context="test-context",
+            provider_id="test-context",
             raise_on_exception=False,
         )
 
@@ -212,10 +215,151 @@ class TestKubernetesProvider:
         ]
 
         connection = KubernetesProvider.test_connection(
-            kubeconfig_file="dummy_kubeconfig_path",
+            kubeconfig_file="",
             kubeconfig_content={},
             namespace="test-namespace",
-            input_context="test-context",
+            provider_id="test-context",
+            raise_on_exception=False,
+        )
+
+        assert connection.is_connected
+        assert connection.error is None
+
+    @patch(
+        "prowler.providers.kubernetes.kubernetes_provider.client.CoreV1Api.list_namespace"
+    )
+    @patch("kubernetes.config.list_kube_config_contexts")
+    @patch("kubernetes.config.load_kube_config_from_dict")
+    def test_kubernetes_test_connection_with_kubeconfig_content_invalid_provider_id(
+        self,
+        mock_load_kube_config_from_dict,
+        mock_list_kube_config_contexts,
+        mock_list_namespace,
+    ):
+        mock_load_kube_config_from_dict.return_value = None
+        mock_list_kube_config_contexts.return_value = (
+            [
+                {
+                    "name": "example-context",
+                    "context": {
+                        "cluster": "example-cluster",
+                        "user": "example-user",
+                    },
+                }
+            ],
+            None,
+        )
+        mock_list_namespace.return_value.items = [
+            client.V1Namespace(metadata=client.V1ObjectMeta(name="namespace-1")),
+        ]
+
+        kubeconfig_content = {
+            "apiVersion": "v1",
+            "clusters": [
+                {
+                    "cluster": {
+                        "server": "https://kubernetes.example.com",
+                    },
+                    "name": "example-cluster",
+                }
+            ],
+            "contexts": [
+                {
+                    "context": {
+                        "cluster": "example-cluster",
+                        "user": "example-user",
+                    },
+                    "name": "example-context",
+                }
+            ],
+            "current-context": "example-context",
+            "kind": "Config",
+            "preferences": {},
+            "users": [
+                {
+                    "name": "example-user",
+                    "user": {
+                        "token": "EXAMPLE_TOKEN",
+                    },
+                }
+            ],
+        }
+
+        connection = KubernetesProvider.test_connection(
+            kubeconfig_file=None,
+            kubeconfig_content=kubeconfig_content,
+            provider_id="example-context-invalid",
+            raise_on_exception=False,
+        )
+
+        assert not connection.is_connected
+        assert connection.error is not None
+        assert isinstance(connection.error, KubernetesSetUpSessionError)
+
+    @patch(
+        "prowler.providers.kubernetes.kubernetes_provider.client.CoreV1Api.list_namespace"
+    )
+    @patch("kubernetes.config.list_kube_config_contexts")
+    @patch("kubernetes.config.load_kube_config_from_dict")
+    def test_kubernetes_test_connection_with_kubeconfig_content_valid_provider_id(
+        self,
+        mock_load_kube_config_from_dict,
+        mock_list_kube_config_contexts,
+        mock_list_namespace,
+    ):
+        mock_load_kube_config_from_dict.return_value = None
+        mock_list_kube_config_contexts.return_value = (
+            [
+                {
+                    "name": "example-context",
+                    "context": {
+                        "cluster": "example-cluster",
+                        "user": "example-user",
+                    },
+                }
+            ],
+            None,
+        )
+        mock_list_namespace.return_value.items = [
+            client.V1Namespace(metadata=client.V1ObjectMeta(name="namespace-1")),
+        ]
+
+        kubeconfig_content = {
+            "apiVersion": "v1",
+            "clusters": [
+                {
+                    "cluster": {
+                        "server": "https://kubernetes.example.com",
+                    },
+                    "name": "example-cluster",
+                }
+            ],
+            "contexts": [
+                {
+                    "context": {
+                        "cluster": "example-cluster",
+                        "user": "example-user",
+                    },
+                    "name": "example-context",
+                }
+            ],
+            "current-context": "example-context",
+            "kind": "Config",
+            "preferences": {},
+            "users": [
+                {
+                    "name": "example-user",
+                    "user": {
+                        "token": "EXAMPLE_TOKEN",
+                    },
+                }
+            ],
+        }
+
+        connection = KubernetesProvider.test_connection(
+            kubeconfig_file=None,
+            kubeconfig_content=kubeconfig_content,
+            provider_id="example-context",
             raise_on_exception=False,
         )
 

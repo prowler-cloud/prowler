@@ -25,6 +25,10 @@ class KubernetesBaseException(ProwlerException):
             "message": "An error occurred in the Kubernetes provider.",
             "remediation": "Check the provider code and configuration to identify the issue. For more information on troubleshooting Kubernetes providers, refer to the Kubernetes documentation: https://kubernetes.io/docs/reference/",
         },
+        (1936, "KubernetesInvalidProviderIdError"): {
+            "message": "The provider ID is invalid.",
+            "remediation": "Check the provider ID and ensure it is correctly formatted. Refer to the Kubernetes documentation for guidance on provider IDs: https://kubernetes.io/docs/reference/access-authn-authz/rbac/",
+        },
     }
 
     def __init__(
@@ -70,3 +74,8 @@ class KubernetesAPIError(KubernetesBaseException):
 class KubernetesTimeoutError(KubernetesBaseException):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(1934, file, original_exception, message)
+
+
+class KubernetesInvalidProviderIdError(KubernetesBaseException):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(1936, file, original_exception, message)
