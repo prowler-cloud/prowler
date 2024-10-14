@@ -18,25 +18,19 @@ class autoscaling_group_launch_configuration_requires_imdsv2(Check):
                 f"Autoscaling group {group.name} has IMDSv2 disabled or not required."
             )
 
-            launch_configuration = None
-
-            for arn, lc in autoscaling_client.launch_configurations.items():
-                if lc.name == group.launch_configuration_name:
-                    launch_configuration = lc
-                    break
-
-            if launch_configuration:
-                if (
-                    launch_configuration.http_endpoint == "enabled"
-                    and launch_configuration.http_tokens == "required"
-                ):
-                    report.status = "PASS"
-                    report.status_extended = f"Autoscaling group {group.name} has IMDSv2 enabled and required."
-                elif launch_configuration.http_endpoint == "disabled":
-                    report.status = "PASS"
-                    report.status_extended = (
-                        f"Autoscaling group {group.name} has metadata service disabled."
-                    )
+            for (
+                launch_configuration
+            ) in autoscaling_client.launch_configurations.values():
+                if launch_configuration.name == group.launch_configuration_name:
+                    if (
+                        launch_configuration.http_endpoint == "enabled"
+                        and launch_configuration.http_tokens == "required"
+                    ):
+                        report.status = "PASS"
+                        report.status_extended = f"Autoscaling group {group.name} has IMDSv2 enabled and required."
+                    elif launch_configuration.http_endpoint == "disabled":
+                        report.status = "PASS"
+                        report.status_extended = f"Autoscaling group {group.name} has metadata service disabled."
 
             findings.append(report)
 

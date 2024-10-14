@@ -16,16 +16,10 @@ class autoscaling_group_launch_configuration_no_public_ip(Check):
             report.status = "PASS"
             report.status_extended = f"Autoscaling group {group.name} does not have an associated launch configuration assigning a public IP address."
 
-            launch_configuration = None
-
-            for arn, lc in autoscaling_client.launch_configurations.items():
-                if lc.name == group.launch_configuration_name:
-                    launch_configuration = lc
-                    break
-
-            if launch_configuration and launch_configuration.public_ip:
-                report.status = "FAIL"
-                report.status_extended = f"Autoscaling group {group.name} has an associated launch configuration assigning a public IP address."
+            for lc in autoscaling_client.launch_configurations.values():
+                if lc.name == group.launch_configuration_name and lc.public_ip:
+                    report.status = "FAIL"
+                    report.status_extended = f"Autoscaling group {group.name} has an associated launch configuration assigning a public IP address."
 
             findings.append(report)
 
