@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 import botocore
 
-from prowler.providers.aws.services.waf.waf_service import WAF
+from prowler.providers.aws.services.waf.waf_service import WAF, WAFRegional
 from tests.providers.aws.utils import AWS_REGION_EU_WEST_1, set_mocked_aws_provider
 
 # Mocking WAF-Regional Calls
@@ -43,12 +43,13 @@ def mock_generate_regional_clients(provider, service):
     new=mock_generate_regional_clients,
 )
 class Test_WAF_Service:
+
     # Test WAF Service
     def test_service(self):
         # WAF client for this test class
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         waf = WAF(aws_provider)
-        assert waf.service == "waf-regional"
+        assert waf.service == "waf"
 
     # Test WAF Client
     def test_client(self):
@@ -56,7 +57,7 @@ class Test_WAF_Service:
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         waf = WAF(aws_provider)
         for regional_client in waf.regional_clients.values():
-            assert regional_client.__class__.__name__ == "WAFRegional"
+            assert regional_client.__class__.__name__ == "WAF"
 
     # Test WAF Session
     def test__get_session__(self):
@@ -70,18 +71,51 @@ class Test_WAF_Service:
         # WAF client for this test class
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         waf = WAF(aws_provider)
-        waf_arn = "arn:aws:waf-regional:eu-west-1:123456789012:webacl/my-web-acl-id"
+        waf_arn = "arn:aws:waf:eu-west-1:123456789012:webacl/my-web-acl-id"
         assert len(waf.web_acls) == 1
         assert waf.web_acls[waf_arn].name == "my-web-acl"
         assert waf.web_acls[waf_arn].region == AWS_REGION_EU_WEST_1
         assert waf.web_acls[waf_arn].id == "my-web-acl-id"
 
-    # Test WAF Describe Web ACLs Resources
+    # Test WAFRegional Describe Web ACLs Resources
     def test_list_resources_for_web_acl(self):
         # WAF client for this test class
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
-        waf = WAF(aws_provider)
+        waf = WAFRegional(aws_provider)
         waf_arn = "arn:aws:waf-regional:eu-west-1:123456789012:webacl/my-web-acl-id"
         assert len(waf.web_acls) == 1
         assert len(waf.web_acls[waf_arn].albs) == 1
         assert "alb-arn" in waf.web_acls[waf_arn].albs
+
+    # Test WAFRegional Service
+    def test_service_regional(self):
+        # WAF client for this test class
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        waf = WAFRegional(aws_provider)
+        assert waf.service == "waf-regional"
+
+    # Test WAFRegional Client
+    def test_client_regional(self):
+        # WAF client for this test class
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        waf = WAFRegional(aws_provider)
+        for regional_client in waf.regional_clients.values():
+            assert regional_client.__class__.__name__ == "WAFRegional"
+
+    # Test WAFRegional Session
+    def test__get_session___regional(self):
+        # WAF client for this test class
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        waf = WAFRegional(aws_provider)
+        assert waf.session.__class__.__name__ == "Session"
+
+    # Test WAFRegional Describe Web ACLs
+    def test_list_web_acls_waf_regional(self):
+        # WAF client for this test class
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        waf = WAFRegional(aws_provider)
+        waf_arn = "arn:aws:waf-regional:eu-west-1:123456789012:webacl/my-web-acl-id"
+        assert len(waf.web_acls) == 1
+        assert waf.web_acls[waf_arn].name == "my-web-acl"
+        assert waf.web_acls[waf_arn].region == AWS_REGION_EU_WEST_1
+        assert waf.web_acls[waf_arn].id == "my-web-acl-id"
