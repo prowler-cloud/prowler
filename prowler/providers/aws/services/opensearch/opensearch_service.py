@@ -82,17 +82,12 @@ class OpenSearchService(AWSService):
             regional_client = self.regional_clients[domain.region]
             describe_domain = regional_client.describe_domain(DomainName=domain.name)
             domain.arn = describe_domain["DomainStatus"]["ARN"]
-            if "Endpoints" in describe_domain["DomainStatus"]:
-                if "vpc" in describe_domain["DomainStatus"]["Endpoints"]:
-                    domain.vpc_endpoints = [
-                        vpc
-                        for vpc in describe_domain["DomainStatus"]["Endpoints"].values()
-                    ]
-                )
+            if "vpc" in describe_domain["DomainStatus"].get("Endpoints", {}):
+                domain.vpc_endpoints = [
+                    vpc for vpc in describe_domain["DomainStatus"]["Endpoints"].values()
+                ]
             domain.vpc_id = (
-                describe_domain["DomainStatus"]
-                .get("VPCOptions", {})
-                .get("VPCId", "")
+                describe_domain["DomainStatus"].get("VPCOptions", {}).get("VPCId", "")
             )
             domain.cognito_options = describe_domain["DomainStatus"][
                 "CognitoOptions"
