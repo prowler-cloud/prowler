@@ -69,7 +69,9 @@ class IAM(AWSService):
         self._list_attached_role_policies()
         self._list_mfa_devices()
         self.password_policy = self._get_password_policy()
-        support_policy_arn = f"arn:{self.audited_partition}:iam::aws:policy/aws-service-role/AWSSupportServiceRolePolicy"
+        support_policy_arn = (
+            f"arn:{self.audited_partition}:iam::aws:policy/AWSSupportAccess"
+        )
         self.entities_role_attached_to_support_policy = (
             self._list_entities_role_for_policy(support_policy_arn)
         )
