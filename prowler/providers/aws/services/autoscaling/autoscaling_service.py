@@ -28,11 +28,11 @@ class AutoScaling(AWSService):
                             self.audit_resources,
                         )
                     ):
-                        name = configuration["LaunchConfigurationName"]
+                        arn = configuration["LaunchConfigurationARN"]
 
-                        self.launch_configurations[name] = LaunchConfiguration(
-                            arn=configuration["LaunchConfigurationARN"],
-                            name=name,
+                        self.launch_configurations[arn] = LaunchConfiguration(
+                            arn=arn,
+                            name=configuration["LaunchConfigurationName"],
                             user_data=configuration["UserData"],
                             image_id=configuration["ImageId"],
                             region=regional_client.region,
@@ -41,6 +41,9 @@ class AutoScaling(AWSService):
                             ),
                             http_endpoint=configuration.get("MetadataOptions", {}).get(
                                 "HttpEndpoint", ""
+                            ),
+                            public_ip=configuration.get(
+                                "AssociatePublicIpAddress", False
                             ),
                         )
 
@@ -70,6 +73,12 @@ class AutoScaling(AWSService):
                                 region=regional_client.region,
                                 availability_zones=group.get("AvailabilityZones"),
                                 tags=group.get("Tags"),
+                                launch_template=group.get("LaunchTemplate", {}),
+                                mixed_instances_policy_launch_template=group.get(
+                                    "MixedInstancesPolicy", {}
+                                )
+                                .get("LaunchTemplate", {})
+                                .get("LaunchTemplateSpecification", {}),
                                 health_check_type=group.get("HealthCheckType", ""),
                                 load_balancers=group.get("LoadBalancerNames", []),
                                 target_groups=group.get("TargetGroupARNs", []),
@@ -136,6 +145,7 @@ class LaunchConfiguration(BaseModel):
     region: str
     http_tokens: str
     http_endpoint: str
+    public_ip: bool
 
 
 class Group(BaseModel):
@@ -144,6 +154,8 @@ class Group(BaseModel):
     region: str
     availability_zones: list
     tags: list = []
+    launch_template: dict = {}
+    mixed_instances_policy_launch_template: dict = {}
     health_check_type: str
     load_balancers: list = []
     target_groups: list = []

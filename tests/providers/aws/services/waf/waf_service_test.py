@@ -70,16 +70,18 @@ class Test_WAF_Service:
         # WAF client for this test class
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         waf = WAF(aws_provider)
+        waf_arn = "arn:aws:waf-regional:eu-west-1:123456789012:webacl/my-web-acl-id"
         assert len(waf.web_acls) == 1
-        assert waf.web_acls[0].name == "my-web-acl"
-        assert waf.web_acls[0].region == AWS_REGION_EU_WEST_1
-        assert waf.web_acls[0].id == "my-web-acl-id"
+        assert waf.web_acls[waf_arn].name == "my-web-acl"
+        assert waf.web_acls[waf_arn].region == AWS_REGION_EU_WEST_1
+        assert waf.web_acls[waf_arn].id == "my-web-acl-id"
 
     # Test WAF Describe Web ACLs Resources
     def test_list_resources_for_web_acl(self):
         # WAF client for this test class
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         waf = WAF(aws_provider)
+        waf_arn = "arn:aws:waf-regional:eu-west-1:123456789012:webacl/my-web-acl-id"
         assert len(waf.web_acls) == 1
-        assert len(waf.web_acls[0].albs) == 1
-        assert "alb-arn" in waf.web_acls[0].albs
+        assert len(waf.web_acls[waf_arn].albs) == 1
+        assert "alb-arn" in waf.web_acls[waf_arn].albs

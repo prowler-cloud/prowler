@@ -85,7 +85,7 @@ repos:
         # For running trufflehog in docker, use the following entry instead:
         # entry: bash -c 'docker run -v "$(pwd):/workdir" -i --rm trufflesecurity/trufflehog:latest git file:///workdir --only-verified --fail'
         language: system
-        stages: ["commit", "push"]
+        stages: ["pre-commit", "pre-push"]
 
       - id: bandit
         name: bandit
