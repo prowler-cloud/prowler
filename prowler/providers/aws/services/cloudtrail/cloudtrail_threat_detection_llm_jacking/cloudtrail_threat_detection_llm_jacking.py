@@ -6,21 +6,20 @@ from prowler.providers.aws.services.cloudtrail.cloudtrail_client import (
 )
 
 
-class cloudtrail_threat_detection_privilege_escalation(Check):
+class cloudtrail_threat_detection_llm_jacking(Check):
     def execute(self):
         findings = []
         threshold = cloudtrail_client.audit_config.get(
-            "threat_detection_privilege_escalation_threshold", 0.2
+            "threat_detection_llm_jacking_threshold", 0.4
         )
         threat_detection_minutes = cloudtrail_client.audit_config.get(
-            "threat_detection_privilege_escalation_minutes", 1440
+            "threat_detection_llm_jacking_minutes", 1440
         )
-        privilege_escalation_actions = cloudtrail_client.audit_config.get(
-            "threat_detection_privilege_escalation_actions", []
+        llm_jacking_actions = cloudtrail_client.audit_config.get(
+            "threat_detection_llm_jacking_actions", []
         )
-
-        potential_privilege_escalation = {}
-        found_potential_privilege_escalation = False
+        potential_llm_jacking = {}
+        found_potential_llm_jacking = False
         multiregion_trail = None
         # Check if any trail is multi-region so we only need to check once
         for trail in cloudtrail_client.trails.values():
@@ -33,7 +32,7 @@ class cloudtrail_threat_detection_privilege_escalation(Check):
             else [multiregion_trail]
         )
         for trail in trails_to_scan:
-            for event_name in privilege_escalation_actions:
+            for event_name in llm_jacking_actions:
                 for event_log in cloudtrail_client._lookup_events(
                     trail=trail,
                     event_name=event_name,
@@ -46,27 +45,26 @@ class cloudtrail_threat_detection_privilege_escalation(Check):
                         if (
                             event_log["userIdentity"]["arn"],
                             event_log["userIdentity"]["type"],
-                        ) not in potential_privilege_escalation:
-                            potential_privilege_escalation[
+                        ) not in potential_llm_jacking:
+                            potential_llm_jacking[
                                 (
                                     event_log["userIdentity"]["arn"],
                                     event_log["userIdentity"]["type"],
                                 )
                             ] = set()
-                        potential_privilege_escalation[
+                        potential_llm_jacking[
                             (
                                 event_log["userIdentity"]["arn"],
                                 event_log["userIdentity"]["type"],
                             )
                         ].add(event_name)
-        for aws_identity, actions in potential_privilege_escalation.items():
-            identity_threshold = round(
-                len(actions) / len(privilege_escalation_actions), 2
-            )
+
+        for aws_identity, actions in potential_llm_jacking.items():
+            identity_threshold = round(len(actions) / len(llm_jacking_actions), 2)
             aws_identity_type = aws_identity[1]
             aws_identity_arn = aws_identity[0]
-            if len(actions) / len(privilege_escalation_actions) > threshold:
-                found_potential_privilege_escalation = True
+            if len(actions) / len(llm_jacking_actions) > threshold:
+                found_potential_llm_jacking = True
                 report = Check_Report_AWS(self.metadata())
                 report.region = cloudtrail_client.region
                 report.resource_id = cloudtrail_client.audited_account
@@ -74,9 +72,9 @@ class cloudtrail_threat_detection_privilege_escalation(Check):
                     cloudtrail_client.region
                 )
                 report.status = "FAIL"
-                report.status_extended = f"Potential privilege escalation attack detected from AWS {aws_identity_type} {aws_identity_arn.split('/')[-1]} with an threshold of {identity_threshold}."
+                report.status_extended = f"Potential LLM Jacking attack detected from AWS {aws_identity_type} {aws_identity_arn.split('/')[-1]} with an threshold of {identity_threshold}."
                 findings.append(report)
-        if not found_potential_privilege_escalation:
+        if not found_potential_llm_jacking:
             report = Check_Report_AWS(self.metadata())
             report.region = cloudtrail_client.region
             report.resource_id = cloudtrail_client.audited_account
@@ -84,8 +82,6 @@ class cloudtrail_threat_detection_privilege_escalation(Check):
                 cloudtrail_client.region
             )
             report.status = "PASS"
-            report.status_extended = (
-                "No potential privilege escalation attack detected."
-            )
+            report.status_extended = "No potential LLM Jacking attack detected."
             findings.append(report)
         return findings
