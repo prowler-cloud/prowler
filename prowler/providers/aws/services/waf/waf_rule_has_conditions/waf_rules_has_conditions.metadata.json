@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "waf_rule_has_conditions",
+  "CheckTitle": "AWS WAF Classic Regional Rules Should Have at Least One Condition.",
+  "CheckType": [
+    "Software and Configuration Checks/Industry and Regulatory Standards/NIST 800-53 Controls"
+  ],
+  "ServiceName": "waf",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:waf-regional:region:account-id:rule/rule-id",
+  "Severity": "medium",
+  "ResourceType": "AwsWafRegionalRule",
+  "Description": "Ensure that every AWS WAF Classic Regional Rule contains at least one condition.",
+  "Risk": "An AWS WAF Classic Regional rule without any conditions cannot inspect or filter traffic, potentially allowing malicious requests to pass unchecked.",
+  "RelatedUrl": "https://docs.aws.amazon.com/waf/latest/developerguide/aws-managed-rule-groups-list.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws waf-regional update-rule --rule-id <rule-id> --change-token <change-token> --updates <updates>",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/waf-controls.html#waf-2",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure that every AWS WAF Classic Regional rule has at least one condition to properly inspect and manage web traffic.",
+      "Url": "https://docs.aws.amazon.com/waf/latest/developerguide/classic-web-acl-rules-editing.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
