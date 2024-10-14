@@ -58,7 +58,7 @@ class Test_elbv2_waf_acl_attached:
                 set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
             ),
         ), mock.patch(
-            "prowler.providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached.waf_client",
+            "prowler.providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached.wafregional_client",
             new=WAFRegional(
                 set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
             ),
@@ -131,7 +131,7 @@ class Test_elbv2_waf_acl_attached:
                 set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
             ),
         ), mock.patch(
-            "prowler.providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached.waf_client",
+            "prowler.providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached.wafregional_client",
             new=WAFRegional(
                 set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
             ),
@@ -214,7 +214,7 @@ class Test_elbv2_waf_acl_attached:
             ),
         ) as service_client:
             with mock.patch(
-                "prowler.providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached.waf_client",
+                "prowler.providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached.wafregional_client",
                 new=WAFRegional(
                     set_mocked_aws_provider(
                         [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
