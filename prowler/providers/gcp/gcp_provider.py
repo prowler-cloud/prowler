@@ -554,10 +554,11 @@ class GcpProvider(Provider):
     @staticmethod
     def validate_project_id(provider_id: str, credentials: str = None) -> bool:
         """
-        Validate the provider ID
+        Validate the provider ID given the credentials, checking if the provider ID matches with the expected project_id using the method get_projects
 
         Args:
             provider_id: str
+            credentials: str
 
         Returns:
             bool
