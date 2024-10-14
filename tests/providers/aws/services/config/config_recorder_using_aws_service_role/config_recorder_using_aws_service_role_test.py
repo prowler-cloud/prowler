@@ -11,7 +11,7 @@ from tests.providers.aws.utils import (
 )
 
 
-class Test_config_recorder_using_aws_service_role_config:
+class Test_config_recorder_using_aws_service_role:
     @mock_aws
     def test_config_no_recorders(self):
         from prowler.providers.aws.services.config.config_service import Config
@@ -24,15 +24,15 @@ class Test_config_recorder_using_aws_service_role_config:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.config.config_recorder_using_aws_service_role_config.config_recorder_using_aws_service_role_config.config_client",
+            "prowler.providers.aws.services.config.config_recorder_using_aws_service_role.config_recorder_using_aws_service_role.config_client",
             new=Config(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.config.config_recorder_using_aws_service_role_config.config_recorder_using_aws_service_role_config import (
-                config_recorder_using_aws_service_role_config,
+            from prowler.providers.aws.services.config.config_recorder_using_aws_service_role.config_recorder_using_aws_service_role import (
+                config_recorder_using_aws_service_role,
             )
 
-            check = config_recorder_using_aws_service_role_config()
+            check = config_recorder_using_aws_service_role()
             results = check.execute()
 
             assert len(results) == 0
@@ -53,15 +53,15 @@ class Test_config_recorder_using_aws_service_role_config:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.config.config_recorder_using_aws_service_role_config.config_recorder_using_aws_service_role_config.config_client",
+            "prowler.providers.aws.services.config.config_recorder_using_aws_service_role.config_recorder_using_aws_service_role.config_client",
             new=Config(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.config.config_recorder_using_aws_service_role_config.config_recorder_using_aws_service_role_config import (
-                config_recorder_using_aws_service_role_config,
+            from prowler.providers.aws.services.config.config_recorder_using_aws_service_role.config_recorder_using_aws_service_role import (
+                config_recorder_using_aws_service_role,
             )
 
-            check = config_recorder_using_aws_service_role_config()
+            check = config_recorder_using_aws_service_role()
             result = check.execute()
             assert len(result) == 0
 
@@ -89,15 +89,15 @@ class Test_config_recorder_using_aws_service_role_config:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.config.config_recorder_using_aws_service_role_config.config_recorder_using_aws_service_role_config.config_client",
+            "prowler.providers.aws.services.config.config_recorder_using_aws_service_role.config_recorder_using_aws_service_role.config_client",
             new=Config(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.config.config_recorder_using_aws_service_role_config.config_recorder_using_aws_service_role_config import (
-                config_recorder_using_aws_service_role_config,
+            from prowler.providers.aws.services.config.config_recorder_using_aws_service_role.config_recorder_using_aws_service_role import (
+                config_recorder_using_aws_service_role,
             )
 
-            check = config_recorder_using_aws_service_role_config()
+            check = config_recorder_using_aws_service_role()
             result = check.execute()
             assert len(result) == 1
             # Search for the recorder just created
@@ -138,15 +138,15 @@ class Test_config_recorder_using_aws_service_role_config:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.config.config_recorder_using_aws_service_role_config.config_recorder_using_aws_service_role_config.config_client",
+            "prowler.providers.aws.services.config.config_recorder_using_aws_service_role.config_recorder_using_aws_service_role.config_client",
             new=Config(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.config.config_recorder_using_aws_service_role_config.config_recorder_using_aws_service_role_config import (
-                config_recorder_using_aws_service_role_config,
+            from prowler.providers.aws.services.config.config_recorder_using_aws_service_role.config_recorder_using_aws_service_role import (
+                config_recorder_using_aws_service_role,
             )
 
-            check = config_recorder_using_aws_service_role_config()
+            check = config_recorder_using_aws_service_role()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"

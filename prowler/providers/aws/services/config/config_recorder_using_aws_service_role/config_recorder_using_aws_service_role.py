@@ -4,7 +4,7 @@ from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.config.config_client import config_client
 
 
-class config_recorder_using_aws_service_role_config(Check):
+class config_recorder_using_aws_service_role(Check):
     def execute(self):
         service_role_arn_pattern = re.compile(
             r"arn:.*:iam::\d{12}:role/aws-service-role/config.amazonaws.com/AWSServiceRoleForConfig"

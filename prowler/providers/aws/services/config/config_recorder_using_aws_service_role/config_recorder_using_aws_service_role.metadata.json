@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "config_recorder_using_aws_service_role_config",
+  "CheckID": "config_recorder_using_aws_service_role",
   "CheckTitle": "Ensure Config Recorder is using service-linked AWS Config role",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices/AWS Foundational Security Best Practices"
