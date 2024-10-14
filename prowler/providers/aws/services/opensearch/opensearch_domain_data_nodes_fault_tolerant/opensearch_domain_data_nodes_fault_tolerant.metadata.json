@@ -1,15 +1,15 @@
 {
   "Provider": "aws",
   "CheckID": "opensearch_domain_data_nodes_fault_tolerant",
-  "CheckTitle": "OpenSearch Domain should have at least three data nodes",
+  "CheckTitle": "OpenSearch Domain should have at least three data nodes and have multiple Availability Zones",
   "CheckType": [],
   "ServiceName": "opensearch",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:es:region:account-id:domain/resource-id",
   "Severity": "medium",
   "ResourceType": "AwsOpenSearchServiceDomain",
-  "Description": "An OpenSearch domain requires at least three data nodes for high availability and fault-tolerance. Deploying an OpenSearch domain with at least three data nodes ensures cluster operations if a node fails.",
-  "Risk": "A single point of failure exists in the OpenSearch domain, which can lead to data loss or service disruption.",
+  "Description": "An OpenSearch domain requires at least three data nodes and should be distributed across multiple Availability Zones to ensure high availability and fault tolerance.",
+  "Risk": "Without at least three data nodes and distribution across multiple Availability Zones, the OpenSearch domain risks service disruptions and data loss during failures.",
   "RelatedUrl": "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/createupdatedomains.html#createdomains",
   "Remediation": {
     "Code": {
@@ -20,7 +20,7 @@
     },
     "Recommendation": {
       "Text": "Configure the OpenSearch domain with at least three data nodes to ensure high availability and fault tolerance.",
-      "Url": "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/createupdatedomains.html#createdomains"
+      "Url": "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/managedomains-multiaz.html"
     }
   },
   "Categories": [

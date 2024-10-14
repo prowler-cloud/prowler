@@ -146,6 +146,11 @@ class OpenSearchService(AWSService):
                     .get("ClusterConfig", {})
                     .get("InstanceCount", 0)
                 )
+                domain.zone_awareness = (
+                    describe_domain["DomainStatus"]
+                    .get("ClusterConfig", {})
+                    .get("ZoneAwarenessEnabled", False)
+                )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -191,4 +196,5 @@ class OpenSearchDomain(BaseModel):
     dedicated_master_enabled: Optional[bool]
     dedicated_master_count: Optional[int]
     data_nodes_count: Optional[int]
+    zone_awareness: Optional[bool]
     tags: Optional[list] = []

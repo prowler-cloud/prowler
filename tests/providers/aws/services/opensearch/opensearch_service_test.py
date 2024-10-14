@@ -71,6 +71,7 @@ def mock_make_api_call(self, operation_name, kwarg):
                     "DedicatedMasterEnabled": True,
                     "DedicatedMasterCount": 1,
                     "InstanceCount": 3,
+                    "ZoneAwarenessEnabled": True,
                 },
                 "CognitoOptions": {"Enabled": True},
                 "EncryptionAtRestOptions": {"Enabled": True},
@@ -180,6 +181,7 @@ class Test_OpenSearchService_Service:
         assert opensearch.opensearch_domains[0].dedicated_master_enabled
         assert opensearch.opensearch_domains[0].dedicated_master_count == 1
         assert opensearch.opensearch_domains[0].data_nodes_count == 3
+        assert opensearch.opensearch_domains[0].zone_awareness
         assert opensearch.opensearch_domains[0].tags == [
             {"Key": "test", "Value": "test"},
         ]

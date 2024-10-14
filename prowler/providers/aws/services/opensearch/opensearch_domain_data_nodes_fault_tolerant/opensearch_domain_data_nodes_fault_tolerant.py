@@ -14,11 +14,17 @@ class opensearch_domain_data_nodes_fault_tolerant(Check):
             report.region = domain.region
             report.resource_tags = domain.tags
             report.status = "PASS"
-            report.status_extended = f"Opensearch domain {domain.name} has {domain.data_nodes_count} data nodes."
+            report.status_extended = f"Opensearch domain {domain.name} has {domain.data_nodes_count} data nodes and zone awareness enabled."
 
-            if domain.data_nodes_count < 3:
+            if domain.data_nodes_count < 3 and not domain.zone_awareness:
+                report.status = "FAIL"
+                report.status_extended = f"Opensearch domain {domain.name} does not have at least 3 data nodes and does not have zone awareness enabled, which is recommended for fault tolerance."
+            elif domain.data_nodes_count < 3:
                 report.status = "FAIL"
                 report.status_extended = f"Opensearch domain {domain.name} does not have at least 3 data nodes, which is recommended for fault tolerance."
+            elif not domain.zone_awareness:
+                report.status = "FAIL"
+                report.status_extended = f"Opensearch domain {domain.name} does not have zone awareness enabled, which is recommended for fault tolerance."
 
             findings.append(report)
 
