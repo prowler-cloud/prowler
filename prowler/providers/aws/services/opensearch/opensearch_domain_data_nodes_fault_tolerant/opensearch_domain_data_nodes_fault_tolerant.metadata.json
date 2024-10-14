@@ -13,7 +13,7 @@
   "RelatedUrl": "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/createupdatedomains.html#createdomains",
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "aws es update-elasticsearch-domain-config --region <region> --domain-name <name> --elasticsearch-cluster-config InstanceCount=3,ZoneAwarenessEnabled=true",
       "NativeIaC": "",
       "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/opensearch-controls.html#opensearch-6",
       "Terraform": ""
