@@ -44,9 +44,13 @@ class Macie(AWSService):
     def _get_automated_discovery_configuration(self, session):
         logger.info("Macie - Get Automated Discovery Configuration...")
         try:
-            regional_client = self.regional_clients[session.region]
-            response = regional_client.get_automated_discovery_configuration()
-            session.automated_discovery_status = response["status"]
+            if session.status == "ENABLED":
+                regional_client = self.regional_clients[session.region]
+                session.automated_discovery_status = (
+                    regional_client.get_automated_discovery_configuration().get(
+                        "status", "DISABLED"
+                    )
+                )
 
         except Exception as error:
             logger.error(
@@ -56,5 +60,5 @@ class Macie(AWSService):
 
 class Session(BaseModel):
     status: str
-    automated_discovery_status: str = None
+    automated_discovery_status: str = "DISABLED"
     region: str

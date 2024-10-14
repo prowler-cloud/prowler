@@ -91,7 +91,7 @@ class Test_macie_automated_sensitive_data_discovery_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Macie does not have automated sensitive data discovery enabled in account: {AWS_ACCOUNT_NUMBER}."
+                == "Macie is enabled but it does not have automated sensitive data discovery."
             )
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
             assert (
@@ -140,7 +140,7 @@ class Test_macie_automated_sensitive_data_discovery_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Macie has automated sensitive data discovery enabled in account: {AWS_ACCOUNT_NUMBER}."
+                == "Macie has automated sensitive data discovery enabled."
             )
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
             assert (

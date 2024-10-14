@@ -14,11 +14,13 @@ class macie_automated_sensitive_data_discovery_enabled(Check):
                 )
                 report.resource_id = macie_client.audited_account
                 report.status = "FAIL"
-                report.status_extended = f"Macie does not have automated sensitive data discovery enabled in account: {macie_client.audited_account}."
+                report.status_extended = "Macie is enabled but it does not have automated sensitive data discovery."
 
                 if session.automated_discovery_status == "ENABLED":
                     report.status = "PASS"
-                    report.status_extended = f"Macie has automated sensitive data discovery enabled in account: {macie_client.audited_account}."
+                    report.status_extended = (
+                        "Macie has automated sensitive data discovery enabled."
+                    )
 
                 findings.append(report)
 
