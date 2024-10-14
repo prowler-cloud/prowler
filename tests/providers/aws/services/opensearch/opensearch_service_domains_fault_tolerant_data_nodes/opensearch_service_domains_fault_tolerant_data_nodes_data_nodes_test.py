@@ -10,7 +10,7 @@ from tests.providers.aws.utils import (
 )
 
 
-class Test_opensearch_service_domains_cloudwatch_logging_enabled:
+class Test_opensearch_service_domains_fault_tolerant_data_nodes:
     @mock_aws
     def test_no_domains(self):
         client("opensearch", region_name=AWS_REGION_US_EAST_1)
@@ -25,29 +25,25 @@ class Test_opensearch_service_domains_cloudwatch_logging_enabled:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=mocked_aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.opensearch.opensearch_service_domains_cloudwatch_logging_enabled.opensearch_service_domains_cloudwatch_logging_enabled.opensearch_client",
+            "prowler.providers.aws.services.opensearch.opensearch_service_domains_fault_tolerant_data_nodes.opensearch_service_domains_fault_tolerant_data_nodes.opensearch_client",
             new=OpenSearchService(mocked_aws_provider),
         ):
-            from prowler.providers.aws.services.opensearch.opensearch_service_domains_cloudwatch_logging_enabled.opensearch_service_domains_cloudwatch_logging_enabled import (
-                opensearch_service_domains_cloudwatch_logging_enabled,
+            from prowler.providers.aws.services.opensearch.opensearch_service_domains_fault_tolerant_data_nodes.opensearch_service_domains_fault_tolerant_data_nodes import (
+                opensearch_service_domains_fault_tolerant_data_nodes,
             )
 
-            check = opensearch_service_domains_cloudwatch_logging_enabled()
+            check = opensearch_service_domains_fault_tolerant_data_nodes()
             result = check.execute()
             assert len(result) == 0
 
     @mock_aws
-    def test_no_logging_enabled(self):
+    def test_instance_count_less_than_three_zoneawareness_enabled(self):
         opensearch_client = client("opensearch", region_name=AWS_REGION_US_EAST_1)
         domain = opensearch_client.create_domain(
-            DomainName="test-domain-no-logging",
-            LogPublishingOptions={
-                "AUDIT_LOGS": {
-                    "CloudWatchLogsLogGroupArn": "arn:aws:logs:us-east-1:123456789012:log-group:search-logs:*",
-                    "Enabled": True,
-                },
-            },
+            DomainName="test-domain",
+            ClusterConfig={"ZoneAwarenessEnabled": True, "InstanceCount": 2},
         )
+
         from prowler.providers.aws.services.opensearch.opensearch_service import (
             OpenSearchService,
         )
@@ -58,20 +54,20 @@ class Test_opensearch_service_domains_cloudwatch_logging_enabled:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=mocked_aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.opensearch.opensearch_service_domains_cloudwatch_logging_enabled.opensearch_service_domains_cloudwatch_logging_enabled.opensearch_client",
+            "prowler.providers.aws.services.opensearch.opensearch_service_domains_fault_tolerant_data_nodes.opensearch_service_domains_fault_tolerant_data_nodes.opensearch_client",
             new=OpenSearchService(mocked_aws_provider),
         ):
-            from prowler.providers.aws.services.opensearch.opensearch_service_domains_cloudwatch_logging_enabled.opensearch_service_domains_cloudwatch_logging_enabled import (
-                opensearch_service_domains_cloudwatch_logging_enabled,
+            from prowler.providers.aws.services.opensearch.opensearch_service_domains_fault_tolerant_data_nodes.opensearch_service_domains_fault_tolerant_data_nodes import (
+                opensearch_service_domains_fault_tolerant_data_nodes,
             )
 
-            check = opensearch_service_domains_cloudwatch_logging_enabled()
+            check = opensearch_service_domains_fault_tolerant_data_nodes()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Opensearch domain test-domain-no-logging SEARCH_SLOW_LOGS and INDEX_SLOW_LOGS disabled."
+                == "Opensearch domain test-domain is not fault tolerant as it has cross-zone replication (Zone Awareness) enabled, but only 2 data nodes."
             )
             assert result[0].resource_id == domain["DomainStatus"]["DomainName"]
             assert (
@@ -80,17 +76,13 @@ class Test_opensearch_service_domains_cloudwatch_logging_enabled:
             )
 
     @mock_aws
-    def test_logging_SEARCH_SLOW_LOGS_enabled(self):
+    def test_instance_count_more_than_three_zoneawareness_not_enabled(self):
         opensearch_client = client("opensearch", region_name=AWS_REGION_US_EAST_1)
         domain = opensearch_client.create_domain(
-            DomainName="test-domain-no-index-logging",
-            LogPublishingOptions={
-                "SEARCH_SLOW_LOGS": {
-                    "CloudWatchLogsLogGroupArn": "arn:aws:logs:us-east-1:123456789012:log-group:search-logs:*",
-                    "Enabled": True,
-                },
-            },
+            DomainName="test-domain",
+            ClusterConfig={"ZoneAwarenessEnabled": False, "InstanceCount": 3},
         )
+
         from prowler.providers.aws.services.opensearch.opensearch_service import (
             OpenSearchService,
         )
@@ -101,20 +93,20 @@ class Test_opensearch_service_domains_cloudwatch_logging_enabled:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=mocked_aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.opensearch.opensearch_service_domains_cloudwatch_logging_enabled.opensearch_service_domains_cloudwatch_logging_enabled.opensearch_client",
+            "prowler.providers.aws.services.opensearch.opensearch_service_domains_fault_tolerant_data_nodes.opensearch_service_domains_fault_tolerant_data_nodes.opensearch_client",
             new=OpenSearchService(mocked_aws_provider),
         ):
-            from prowler.providers.aws.services.opensearch.opensearch_service_domains_cloudwatch_logging_enabled.opensearch_service_domains_cloudwatch_logging_enabled import (
-                opensearch_service_domains_cloudwatch_logging_enabled,
+            from prowler.providers.aws.services.opensearch.opensearch_service_domains_fault_tolerant_data_nodes.opensearch_service_domains_fault_tolerant_data_nodes import (
+                opensearch_service_domains_fault_tolerant_data_nodes,
             )
 
-            check = opensearch_service_domains_cloudwatch_logging_enabled()
+            check = opensearch_service_domains_fault_tolerant_data_nodes()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Opensearch domain test-domain-no-index-logging SEARCH_SLOW_LOGS enabled but INDEX_SLOW_LOGS disabled."
+                == "Opensearch domain test-domain is not fault tolerant as it has 3 data nodes, but cross-zone replication (Zone Awareness) is not enabled."
             )
             assert result[0].resource_id == domain["DomainStatus"]["DomainName"]
             assert (
@@ -123,17 +115,13 @@ class Test_opensearch_service_domains_cloudwatch_logging_enabled:
             )
 
     @mock_aws
-    def test_logging_INDEX_SLOW_LOGS_enabled(self):
+    def test_instance_count_less_than_three_zoneawareness_not_enabled(self):
         opensearch_client = client("opensearch", region_name=AWS_REGION_US_EAST_1)
         domain = opensearch_client.create_domain(
-            DomainName="test-domain-no-search-logging",
-            LogPublishingOptions={
-                "INDEX_SLOW_LOGS": {
-                    "CloudWatchLogsLogGroupArn": "arn:aws:logs:us-east-1:123456789012:log-group:search-logs:*",
-                    "Enabled": True,
-                },
-            },
+            DomainName="test-domain",
+            ClusterConfig={"ZoneAwarenessEnabled": False, "InstanceCount": 2},
         )
+
         from prowler.providers.aws.services.opensearch.opensearch_service import (
             OpenSearchService,
         )
@@ -144,20 +132,20 @@ class Test_opensearch_service_domains_cloudwatch_logging_enabled:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=mocked_aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.opensearch.opensearch_service_domains_cloudwatch_logging_enabled.opensearch_service_domains_cloudwatch_logging_enabled.opensearch_client",
+            "prowler.providers.aws.services.opensearch.opensearch_service_domains_fault_tolerant_data_nodes.opensearch_service_domains_fault_tolerant_data_nodes.opensearch_client",
             new=OpenSearchService(mocked_aws_provider),
         ):
-            from prowler.providers.aws.services.opensearch.opensearch_service_domains_cloudwatch_logging_enabled.opensearch_service_domains_cloudwatch_logging_enabled import (
-                opensearch_service_domains_cloudwatch_logging_enabled,
+            from prowler.providers.aws.services.opensearch.opensearch_service_domains_fault_tolerant_data_nodes.opensearch_service_domains_fault_tolerant_data_nodes import (
+                opensearch_service_domains_fault_tolerant_data_nodes,
             )
 
-            check = opensearch_service_domains_cloudwatch_logging_enabled()
+            check = opensearch_service_domains_fault_tolerant_data_nodes()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Opensearch domain test-domain-no-search-logging INDEX_SLOW_LOGS enabled but SEARCH_SLOW_LOGS disabled."
+                == "Opensearch domain test-domain is not fault tolerant as it has less than 3 data nodes and cross-zone replication (Zone Awareness) is not enabled."
             )
             assert result[0].resource_id == domain["DomainStatus"]["DomainName"]
             assert (
@@ -166,21 +154,13 @@ class Test_opensearch_service_domains_cloudwatch_logging_enabled:
             )
 
     @mock_aws
-    def test_logging_INDEX_SLOW_LOGS_and_SEARCH_SLOW_LOGS_enabled(self):
+    def test_logging_instance_count_more_than_three_zoneawareness_enabled(self):
         opensearch_client = client("opensearch", region_name=AWS_REGION_US_EAST_1)
         domain = opensearch_client.create_domain(
-            DomainName="test-domain-logging",
-            LogPublishingOptions={
-                "SEARCH_SLOW_LOGS": {
-                    "CloudWatchLogsLogGroupArn": "arn:aws:logs:us-east-1:123456789012:log-group:search-logs:*",
-                    "Enabled": True,
-                },
-                "INDEX_SLOW_LOGS": {
-                    "CloudWatchLogsLogGroupArn": "arn:aws:logs:us-east-1:123456789012:log-group:search-logs:*",
-                    "Enabled": True,
-                },
-            },
+            DomainName="test-domain",
+            ClusterConfig={"ZoneAwarenessEnabled": True, "InstanceCount": 3},
         )
+
         from prowler.providers.aws.services.opensearch.opensearch_service import (
             OpenSearchService,
         )
@@ -191,20 +171,20 @@ class Test_opensearch_service_domains_cloudwatch_logging_enabled:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=mocked_aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.opensearch.opensearch_service_domains_cloudwatch_logging_enabled.opensearch_service_domains_cloudwatch_logging_enabled.opensearch_client",
+            "prowler.providers.aws.services.opensearch.opensearch_service_domains_fault_tolerant_data_nodes.opensearch_service_domains_fault_tolerant_data_nodes.opensearch_client",
             new=OpenSearchService(mocked_aws_provider),
         ):
-            from prowler.providers.aws.services.opensearch.opensearch_service_domains_cloudwatch_logging_enabled.opensearch_service_domains_cloudwatch_logging_enabled import (
-                opensearch_service_domains_cloudwatch_logging_enabled,
+            from prowler.providers.aws.services.opensearch.opensearch_service_domains_fault_tolerant_data_nodes.opensearch_service_domains_fault_tolerant_data_nodes import (
+                opensearch_service_domains_fault_tolerant_data_nodes,
             )
 
-            check = opensearch_service_domains_cloudwatch_logging_enabled()
+            check = opensearch_service_domains_fault_tolerant_data_nodes()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "Opensearch domain test-domain-logging SEARCH_SLOW_LOGS and INDEX_SLOW_LOGS enabled."
+                == "Opensearch domain test-domain is fault tolerant with 3 data nodes and cross-zone replication (Zone Awareness) enabled."
             )
             assert result[0].resource_id == domain["DomainStatus"]["DomainName"]
             assert (
