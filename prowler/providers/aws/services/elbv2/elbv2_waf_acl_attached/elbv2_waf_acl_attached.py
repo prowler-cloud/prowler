@@ -1,6 +1,6 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.elbv2.elbv2_client import elbv2_client
-from prowler.providers.aws.services.waf.waf_client import waf_client
+from prowler.providers.aws.services.waf.wafregional_client import wafregional_client
 from prowler.providers.aws.services.wafv2.wafv2_client import wafv2_client
 
 
@@ -22,7 +22,7 @@ class elbv2_waf_acl_attached(Check):
                     if lb_arn in acl.albs:
                         report.status = "PASS"
                         report.status_extended = f"ELBv2 ALB {lb.name} is protected by WAFv2 Web ACL {acl.name}."
-                for acl in waf_client.web_acls.values():
+                for acl in wafregional_client.web_acls.values():
                     if lb_arn in acl.albs:
                         report.status = "PASS"
                         report.status_extended = f"ELBv2 ALB {lb.name} is protected by WAFv1 Web ACL {acl.name}."
