@@ -10,7 +10,7 @@ from tests.providers.aws.utils import (
 )
 
 
-class Test_opensearch_service_domains_at_least_three_nodes_and_zoneawareness_enabled:
+class Test_opensearch_service_domains_fault_tolerant:
     @mock_aws
     def test_no_domains(self):
         client("opensearch", region_name=AWS_REGION_US_EAST_1)
@@ -25,16 +25,14 @@ class Test_opensearch_service_domains_at_least_three_nodes_and_zoneawareness_ena
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=mocked_aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.opensearch.opensearch_service_domains_at_least_three_nodes_and_zoneawareness_enabled.opensearch_service_domains_at_least_three_nodes_and_zoneawareness_enabled.opensearch_client",
+            "prowler.providers.aws.services.opensearch.opensearch_service_domains_fault_tolerant.opensearch_service_domains_fault_tolerant.opensearch_client",
             new=OpenSearchService(mocked_aws_provider),
         ):
-            from prowler.providers.aws.services.opensearch.opensearch_service_domains_at_least_three_nodes_and_zoneawareness_enabled.opensearch_service_domains_at_least_three_nodes_and_zoneawareness_enabled import (
-                opensearch_service_domains_at_least_three_nodes_and_zoneawareness_enabled,
+            from prowler.providers.aws.services.opensearch.opensearch_service_domains_fault_tolerant.opensearch_service_domains_fault_tolerant import (
+                opensearch_service_domains_fault_tolerant,
             )
 
-            check = (
-                opensearch_service_domains_at_least_three_nodes_and_zoneawareness_enabled()
-            )
+            check = opensearch_service_domains_fault_tolerant()
             result = check.execute()
             assert len(result) == 0
 
@@ -56,22 +54,20 @@ class Test_opensearch_service_domains_at_least_three_nodes_and_zoneawareness_ena
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=mocked_aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.opensearch.opensearch_service_domains_at_least_three_nodes_and_zoneawareness_enabled.opensearch_service_domains_at_least_three_nodes_and_zoneawareness_enabled.opensearch_client",
+            "prowler.providers.aws.services.opensearch.opensearch_service_domains_fault_tolerant.opensearch_service_domains_fault_tolerant.opensearch_client",
             new=OpenSearchService(mocked_aws_provider),
         ):
-            from prowler.providers.aws.services.opensearch.opensearch_service_domains_at_least_three_nodes_and_zoneawareness_enabled.opensearch_service_domains_at_least_three_nodes_and_zoneawareness_enabled import (
-                opensearch_service_domains_at_least_three_nodes_and_zoneawareness_enabled,
+            from prowler.providers.aws.services.opensearch.opensearch_service_domains_fault_tolerant.opensearch_service_domains_fault_tolerant import (
+                opensearch_service_domains_fault_tolerant,
             )
 
-            check = (
-                opensearch_service_domains_at_least_three_nodes_and_zoneawareness_enabled()
-            )
+            check = opensearch_service_domains_fault_tolerant()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Opensearch domain test-domain has zone awareness enabled, but only 2 data nodes."
+                == "Opensearch domain test-domain is not fault tolerant as it has cross-zone replication (Zone Awareness) enabled, but only 2 data nodes."
             )
             assert result[0].resource_id == domain["DomainStatus"]["DomainName"]
             assert (
@@ -97,22 +93,20 @@ class Test_opensearch_service_domains_at_least_three_nodes_and_zoneawareness_ena
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=mocked_aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.opensearch.opensearch_service_domains_at_least_three_nodes_and_zoneawareness_enabled.opensearch_service_domains_at_least_three_nodes_and_zoneawareness_enabled.opensearch_client",
+            "prowler.providers.aws.services.opensearch.opensearch_service_domains_fault_tolerant.opensearch_service_domains_fault_tolerant.opensearch_client",
             new=OpenSearchService(mocked_aws_provider),
         ):
-            from prowler.providers.aws.services.opensearch.opensearch_service_domains_at_least_three_nodes_and_zoneawareness_enabled.opensearch_service_domains_at_least_three_nodes_and_zoneawareness_enabled import (
-                opensearch_service_domains_at_least_three_nodes_and_zoneawareness_enabled,
+            from prowler.providers.aws.services.opensearch.opensearch_service_domains_fault_tolerant.opensearch_service_domains_fault_tolerant import (
+                opensearch_service_domains_fault_tolerant,
             )
 
-            check = (
-                opensearch_service_domains_at_least_three_nodes_and_zoneawareness_enabled()
-            )
+            check = opensearch_service_domains_fault_tolerant()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Opensearch domain test-domain has 3 data nodes, but zone awareness is not enabled."
+                == "Opensearch domain test-domain is not fault tolerant as it has 3 data nodes, but cross-zone replication (Zone Awareness) is not enabled."
             )
             assert result[0].resource_id == domain["DomainStatus"]["DomainName"]
             assert (
@@ -138,22 +132,20 @@ class Test_opensearch_service_domains_at_least_three_nodes_and_zoneawareness_ena
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=mocked_aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.opensearch.opensearch_service_domains_at_least_three_nodes_and_zoneawareness_enabled.opensearch_service_domains_at_least_three_nodes_and_zoneawareness_enabled.opensearch_client",
+            "prowler.providers.aws.services.opensearch.opensearch_service_domains_fault_tolerant.opensearch_service_domains_fault_tolerant.opensearch_client",
             new=OpenSearchService(mocked_aws_provider),
         ):
-            from prowler.providers.aws.services.opensearch.opensearch_service_domains_at_least_three_nodes_and_zoneawareness_enabled.opensearch_service_domains_at_least_three_nodes_and_zoneawareness_enabled import (
-                opensearch_service_domains_at_least_three_nodes_and_zoneawareness_enabled,
+            from prowler.providers.aws.services.opensearch.opensearch_service_domains_fault_tolerant.opensearch_service_domains_fault_tolerant import (
+                opensearch_service_domains_fault_tolerant,
             )
 
-            check = (
-                opensearch_service_domains_at_least_three_nodes_and_zoneawareness_enabled()
-            )
+            check = opensearch_service_domains_fault_tolerant()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Opensearch domain test-domain does not meet the requirements: it has less than 3 data nodes and zone awareness is not enabled."
+                == "Opensearch domain test-domain is not fault tolerant as it has less than 3 data nodes and cross-zone replication (Zone Awareness) is not enabled."
             )
             assert result[0].resource_id == domain["DomainStatus"]["DomainName"]
             assert (
@@ -179,22 +171,20 @@ class Test_opensearch_service_domains_at_least_three_nodes_and_zoneawareness_ena
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=mocked_aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.opensearch.opensearch_service_domains_at_least_three_nodes_and_zoneawareness_enabled.opensearch_service_domains_at_least_three_nodes_and_zoneawareness_enabled.opensearch_client",
+            "prowler.providers.aws.services.opensearch.opensearch_service_domains_fault_tolerant.opensearch_service_domains_fault_tolerant.opensearch_client",
             new=OpenSearchService(mocked_aws_provider),
         ):
-            from prowler.providers.aws.services.opensearch.opensearch_service_domains_at_least_three_nodes_and_zoneawareness_enabled.opensearch_service_domains_at_least_three_nodes_and_zoneawareness_enabled import (
-                opensearch_service_domains_at_least_three_nodes_and_zoneawareness_enabled,
+            from prowler.providers.aws.services.opensearch.opensearch_service_domains_fault_tolerant.opensearch_service_domains_fault_tolerant import (
+                opensearch_service_domains_fault_tolerant,
             )
 
-            check = (
-                opensearch_service_domains_at_least_three_nodes_and_zoneawareness_enabled()
-            )
+            check = opensearch_service_domains_fault_tolerant()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "Opensearch domain test-domain has 3 data nodes and zone awareness enabled."
+                == "Opensearch domain test-domain is fault tolerant with 3 data nodes and cross-zone replication (Zone Awareness) enabled."
             )
             assert result[0].resource_id == domain["DomainStatus"]["DomainName"]
             assert (
