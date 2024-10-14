@@ -10,9 +10,12 @@ class WAF(AWSService):
         # Call AWSService's __init__
         super().__init__("waf-regional", provider)
         self.web_acls = {}
+        self.rules = {}
         self.__threading_call__(self._list_web_acls)
         self.__threading_call__(self._list_resources_for_web_acl)
         self.__threading_call__(self._get_web_acl, self.web_acls.values())
+        self.__threading_call__(self._list_rules)
+        self.__threading_call__(self._get_rule, self.rules.values())
 
     def _list_web_acls(self, regional_client):
         logger.info("WAF - Listing Regional Web ACLs...")
@@ -63,9 +66,48 @@ class WAF(AWSService):
         except KeyError:
             logger.error(f"Web ACL {acl.name} not found in {acl.region}.")
 
+    def _list_rules(self, regional_client):
+        logger.info("WAF - Listing Regional Rules...")
+        try:
+            for rule in regional_client.list_rules().get("Rules", []):
+                arn = f"arn:aws:waf-regional:{regional_client.region}:{self.audited_account}:rule/{rule['RuleId']}"
+                self.rules[arn] = Rule(
+                    arn=arn,
+                    id=rule.get("RuleId", ""),
+                    region=regional_client.region,
+                    name=rule.get("Name", ""),
+                )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _get_rule(self, rule):
+        logger.info(f"WAF - Getting Rule {rule.name}...")
+        try:
+            get_rule = self.regional_clients[rule.region].get_rule(RuleId=rule.id)
+            for predicate in get_rule.get("Rule", {}).get("Predicates", []):
+                rule.predicates.append(
+                    Predicate(
+                        negated=predicate.get("Negated", False),
+                        data_id=predicate.get("DataId", ""),
+                    )
+                )
+        except KeyError:
+            logger.error(f"Rule {rule.name} not found in {rule.region}.")
+
+
+class Predicate(BaseModel):
+    negated: bool
+    data_id: str
+
 
 class Rule(BaseModel):
+    arn: str
     id: str
+    region: str
+    name: str
+    predicates: list[str] = []
 
 
 class WebAcl(BaseModel):

@@ -85,3 +85,7 @@ class Test_WAF_Service:
         assert len(waf.web_acls) == 1
         assert len(waf.web_acls[waf_arn].albs) == 1
         assert "alb-arn" in waf.web_acls[waf_arn].albs
+
+    # Test WAF Get Web ACL
+    def test_get_web_acl(self):
+        pass
