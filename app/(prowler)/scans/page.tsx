@@ -34,10 +34,10 @@ export default async function Scans({
       <div className="grid grid-cols-12 items-start gap-4">
         <div className="col-span-12 lg:col-span-4">
           <Suspense key={searchParamsKey} fallback={<SkeletonTableScans />}>
-            <SSRDataTableProviders searchParams={searchParams} />
+            <SSRDataTableProviders />
           </Suspense>
         </div>
-        <div className="col-span-12 lg:col-span-8">
+        <div className="col-span-12 lg:col-span-6">
           <Suspense key={searchParamsKey} fallback={<SkeletonTableScans />}>
             <SSRDataTableScansSchedule searchParams={searchParams} />
           </Suspense>
@@ -52,23 +52,19 @@ export default async function Scans({
   );
 }
 
-const SSRDataTableProviders = async ({
-  searchParams,
-}: {
-  searchParams: SearchParamsProps;
-}) => {
-  const page = parseInt(searchParams.page?.toString() || "1", 10);
-  const sort = searchParams.sort?.toString();
+const SSRDataTableProviders = async () => {
+  // const page = parseInt(searchParams.page?.toString() || "1", 10);
+  // const sort = searchParams.sort?.toString();
 
   // Extract all filter parameters
-  const filters = Object.fromEntries(
-    Object.entries(searchParams).filter(([key]) => key.startsWith("filter[")),
-  );
+  // const filters = Object.fromEntries(
+  //   Object.entries(searchParams).filter(([key]) => key.startsWith("filter[")),
+  // );
 
   // Extract query from filters
-  const query = (filters["filter[search]"] as string) || "";
+  // const query = (filters["filter[search]"] as string) || "";
 
-  const providersData = await getProviders({ query, page, sort, filters });
+  const providersData = await getProviders({ page: 1 });
 
   return (
     <DataTable

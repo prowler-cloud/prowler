@@ -46,7 +46,7 @@ interface CustomButtonProps {
   size?: "sm" | "md" | "lg";
   radius?: "none" | "sm" | "md" | "lg" | "full";
   dashed?: boolean;
-  disabled?: boolean;
+  isDisabled?: boolean;
   isLoading?: boolean;
   isIconOnly?: boolean;
   ref?: React.RefObject<HTMLButtonElement>;
@@ -70,7 +70,7 @@ export const CustomButton = React.forwardRef<
       endContent,
       size = "md",
       radius = "sm",
-      disabled = false,
+      isDisabled = false,
       isLoading = false,
       isIconOnly,
       ...props
@@ -92,8 +92,8 @@ export const CustomButton = React.forwardRef<
           [buttonClasses.action]: color === "action",
           [buttonClasses.dashed]: variant === "dashed",
           [buttonClasses.transparent]: color === "transparent",
-          [buttonClasses.disabled]: disabled,
-          [buttonClasses.hover]: color !== "transparent" && !disabled,
+          [buttonClasses.disabled]: isDisabled,
+          [buttonClasses.hover]: color !== "transparent" && !isDisabled,
         },
         className,
       )}
@@ -112,6 +112,7 @@ export const CustomButton = React.forwardRef<
         />
       }
       ref={ref}
+      isDisabled={isDisabled}
       isLoading={isLoading}
       isIconOnly={isIconOnly}
       {...props}

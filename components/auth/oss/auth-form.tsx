@@ -234,7 +234,7 @@ export const AuthForm = ({ type }: { type: string }) => {
                 size="md"
                 radius="md"
                 isLoading={isLoading}
-                disabled={isLoading}
+                isDisabled={isLoading}
               >
                 {isLoading ? (
                   <span>Loading</span>

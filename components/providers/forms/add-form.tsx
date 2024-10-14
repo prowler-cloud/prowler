@@ -103,7 +103,7 @@ export const AddForm = ({
             size="lg"
             radius="lg"
             onPress={() => setIsOpen(false)}
-            disabled={isLoading}
+            isDisabled={isLoading}
           >
             <span>Cancel</span>
           </CustomButton>

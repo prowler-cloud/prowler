@@ -102,14 +102,14 @@ export const ScanOnDemandForm = ({
             size="lg"
             radius="lg"
             onPress={() => setIsOpen(false)}
-            disabled={isLoading}
+            isDisabled={isLoading}
           >
             <span>Cancel</span>
           </CustomButton>
 
           <CustomButton
             type="submit"
-            ariaLabel="Save"
+            ariaLabel="Start scan now"
             className="w-full"
             variant="solid"
             color="action"

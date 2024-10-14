@@ -88,7 +88,7 @@ export const ScheduleForm = ({
             size="lg"
             radius="lg"
             onPress={() => setIsOpen(false)}
-            disabled={isLoading}
+            isDisabled={isLoading}
           >
             <span>Cancel</span>
           </CustomButton>
@@ -102,6 +102,7 @@ export const ScheduleForm = ({
             size="lg"
             isLoading={isLoading}
             startContent={!isLoading && <SaveIcon size={24} />}
+            isDisabled={true}
           >
             {isLoading ? <>Loading</> : <span>Schedule</span>}
           </CustomButton>
