@@ -71,13 +71,18 @@ export const AuthForm = ({ type }: { type: string }) => {
       if (newUser?.errors && newUser.errors.length > 0) {
         newUser.errors.forEach((error: ApiError) => {
           const errorMessage = error.detail;
-
           switch (error.source.pointer) {
             case "/data/attributes/name":
               form.setError("name", { type: "server", message: errorMessage });
               break;
             case "/data/attributes/email":
               form.setError("email", { type: "server", message: errorMessage });
+              break;
+            case "/data/attributes/company_name":
+              form.setError("company", {
+                type: "server",
+                message: errorMessage,
+              });
               break;
             case "/data/attributes/password":
               form.setError("password", {
