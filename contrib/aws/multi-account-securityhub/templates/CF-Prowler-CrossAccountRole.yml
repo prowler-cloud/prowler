@@ -73,6 +73,7 @@ Resources:
                   - ds:Describe*
                   - ds:Get*
                   - ds:List*
+                  - dynamodb:Describe*
                   - dynamodb:GetResourcePolicy
                   - ec2:GetEbsEncryptionByDefault
                   - ec2:GetSnapshotBlockPublicAccessState
@@ -87,6 +88,7 @@ Resources:
                   - logs:FilterLogEvents
                   - lightsail:GetRelationalDatabases
                   - macie2:GetMacieSession
+                  - rds:Describe*
                   - s3:GetAccountPublicAccessBlock
                   - shield:DescribeProtection
                   - shield:GetSubscriptionState
