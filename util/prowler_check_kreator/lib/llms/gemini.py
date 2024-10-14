@@ -208,12 +208,12 @@ class Gemini:
         ordered_filled_metadata = {}
 
         for key, value in filled_metadata.items():
-            ordered_filled_metadata[key] = value
-            if key == "ServiceName":
-                ordered_filled_metadata["SubServiceName"] = ""
             if key == "Notes":
                 ordered_filled_metadata["DependsOn"] = []
                 ordered_filled_metadata["RelatedTo"] = []
+            ordered_filled_metadata[key] = value
+            if key == "ServiceName":
+                ordered_filled_metadata["SubServiceName"] = ""
 
         # Check that resource type is valid
         if filled_metadata["ResourceType"]:
