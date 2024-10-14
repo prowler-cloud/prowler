@@ -13,10 +13,6 @@ from tests.providers.aws.utils import (
 class Test_macie_automated_sensitive_data_discovery_enabled:
     @mock_aws
     def test_macie_disabled(self):
-        s3_client = mock.MagicMock
-        s3_client.provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
-        s3_client.buckets = {}
-        s3_client.regions_with_buckets = []
 
         macie_client = mock.MagicMock
         macie_client.provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
@@ -43,9 +39,6 @@ class Test_macie_automated_sensitive_data_discovery_enabled:
         ), mock.patch(
             "prowler.providers.aws.services.macie.macie_automated_sensitive_data_discovery_enabled.macie_automated_sensitive_data_discovery_enabled.macie_client",
             new=macie_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.macie.macie_automated_sensitive_data_discovery_enabled.macie_automated_sensitive_data_discovery_enabled.s3_client",
-            new=s3_client,
         ):
             # Test Check
             from prowler.providers.aws.services.macie.macie_automated_sensitive_data_discovery_enabled.macie_automated_sensitive_data_discovery_enabled import (
@@ -59,10 +52,6 @@ class Test_macie_automated_sensitive_data_discovery_enabled:
 
     @mock_aws
     def test_macie_enabled_automated_discovery_disabled(self):
-        s3_client = mock.MagicMock
-        s3_client.provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
-        s3_client.buckets = {}
-        s3_client.regions_with_buckets = []
 
         macie_client = mock.MagicMock
         macie_client.provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
@@ -89,9 +78,6 @@ class Test_macie_automated_sensitive_data_discovery_enabled:
         ), mock.patch(
             "prowler.providers.aws.services.macie.macie_automated_sensitive_data_discovery_enabled.macie_automated_sensitive_data_discovery_enabled.macie_client",
             new=macie_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.macie.macie_automated_sensitive_data_discovery_enabled.macie_automated_sensitive_data_discovery_enabled.s3_client",
-            new=s3_client,
         ):
             # Test Check
             from prowler.providers.aws.services.macie.macie_automated_sensitive_data_discovery_enabled.macie_automated_sensitive_data_discovery_enabled import (
@@ -115,10 +101,6 @@ class Test_macie_automated_sensitive_data_discovery_enabled:
 
     @mock_aws
     def test_macie_enabled_automated_discovery_enabled(self):
-        s3_client = mock.MagicMock
-        s3_client.provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
-        s3_client.buckets = {}
-        s3_client.regions_with_buckets = []
 
         macie_client = mock.MagicMock
         macie_client.provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
@@ -145,9 +127,6 @@ class Test_macie_automated_sensitive_data_discovery_enabled:
         ), mock.patch(
             "prowler.providers.aws.services.macie.macie_automated_sensitive_data_discovery_enabled.macie_automated_sensitive_data_discovery_enabled.macie_client",
             new=macie_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.macie.macie_automated_sensitive_data_discovery_enabled.macie_automated_sensitive_data_discovery_enabled.s3_client",
-            new=s3_client,
         ):
             # Test Check
             from prowler.providers.aws.services.macie.macie_automated_sensitive_data_discovery_enabled.macie_automated_sensitive_data_discovery_enabled import (
