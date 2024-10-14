@@ -1946,6 +1946,23 @@ class Test_Policy:
         }
         assert not is_policy_public(policy)
 
+    def test_is_policy_public_ip(
+        self,
+    ):
+        policy = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Principal": {"AWS": "*"},
+                    "Action": ["*"],
+                    "Condition": {"IpAddress": {"aws:SourceIp": ["0.0.0.0/0"]}},
+                    "Resource": "*",
+                }
+            ],
+        }
+        assert is_policy_public(policy)
+
     def test_check_admin_access(self):
         policy = {
             "Version": "2012-10-17",
