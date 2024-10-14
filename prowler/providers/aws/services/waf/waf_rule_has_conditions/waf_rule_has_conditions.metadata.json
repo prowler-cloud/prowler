@@ -12,7 +12,7 @@
   "ResourceType": "AwsWafRegionalRule",
   "Description": "Ensure that every AWS WAF Classic Regional Rule contains at least one condition.",
   "Risk": "An AWS WAF Classic Regional rule without any conditions cannot inspect or filter traffic, potentially allowing malicious requests to pass unchecked.",
-  "RelatedUrl": "https://docs.aws.amazon.com/waf/latest/developerguide/aws-managed-rule-groups-list.html",
+  "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/waf-regional-rule-not-empty.html",
   "Remediation": {
     "Code": {
       "CLI": "aws waf-regional update-rule --rule-id <rule-id> --change-token <change-token> --updates <updates>",
