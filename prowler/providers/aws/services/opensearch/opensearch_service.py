@@ -8,7 +8,6 @@ from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################################ OpenSearch
 class OpenSearchService(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
@@ -123,13 +122,25 @@ class OpenSearchService(AWSService):
                     .get("SAMLOptions", {})
                     .get("Enabled", False)
                 )
-                domain.update_available = describe_domain["DomainStatus"][
-                    "ServiceSoftwareOptions"
-                ]["UpdateAvailable"]
+                domain.update_available = (
+                    describe_domain["DomainStatus"]
+                    .get("ServiceSoftwareOptions", {})
+                    .get("UpdateAvailable", False)
+                )
                 domain.version = describe_domain["DomainStatus"]["EngineVersion"]
                 domain.advanced_settings_enabled = describe_domain["DomainStatus"][
                     "AdvancedSecurityOptions"
-                ]["Enabled"]
+                ].get("Enabled", False)
+                domain.dedicated_master_enabled = (
+                    describe_domain["DomainStatus"]
+                    .get("ClusterConfig", {})
+                    .get("DedicatedMasterEnabled", False)
+                )
+                domain.dedicated_master_count = (
+                    describe_domain["DomainStatus"]
+                    .get("ClusterConfig", {})
+                    .get("DedicatedMasterCount", 0)
+                )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -171,5 +182,7 @@ class OpenSearchDomain(BaseModel):
     saml_enabled: bool = None
     update_available: bool = None
     version: str = None
-    tags: Optional[list] = []
     advanced_settings_enabled: bool = None
+    dedicated_master_enabled: Optional[bool]
+    dedicated_master_count: Optional[int]
+    tags: Optional[list] = []
