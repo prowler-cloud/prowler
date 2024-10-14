@@ -7,7 +7,7 @@
   ],
   "ServiceName": "waf",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:wafv2:region:account-id:regional/webacl/web-acl-name/web-acl-id",
+  "ResourceIdTemplate": "arn:aws:waf-regional:region:account-id:webacl/web-acl-id",
   "Severity": "medium",
   "ResourceType": "AwsWafRegionalWebAcl",
   "Description": "Ensure that every AWS WAF Classic Regional WebACL contains at least one rule or rule group.",

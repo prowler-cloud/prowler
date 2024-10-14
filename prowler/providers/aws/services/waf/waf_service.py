@@ -12,6 +12,7 @@ class WAF(AWSService):
         self.web_acls = {}
         self.__threading_call__(self._list_web_acls)
         self.__threading_call__(self._list_resources_for_web_acl)
+        self.__threading_call__(self._get_web_acl, self.web_acls.values())
 
     def _list_web_acls(self, regional_client):
         logger.info("WAF - Listing Regional Web ACLs...")
@@ -48,6 +49,24 @@ class WAF(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _get_web_acl(self, acl):
+        logger.info(f"WAF - Getting Web ACL {acl.name}...")
+        try:
+            get_web_acl = self.regional_clients[acl.region].get_web_acl(WebACLId=acl.id)
+            for rule in get_web_acl.get("WebACL", {}).get("Rules", []):
+                rule_id = rule.get("RuleGroupId", "")
+                if rule.get("Type", "") == "GROUP":
+                    acl.rule_groups.append(Rule(id=rule_id))
+                else:
+                    acl.rules.append(Rule(id=rule_id))
+                logger.info(f"Rule: {rule['Name']} - Priority: {rule['Priority']}")
+        except KeyError:
+            logger.error(f"Web ACL {acl.name} not found in {acl.region}.")
+
+
+class Rule(BaseModel):
+    id: str
+
 
 class WebAcl(BaseModel):
     arn: str
@@ -55,3 +74,5 @@ class WebAcl(BaseModel):
     id: str
     albs: list[str]
     region: str
+    rules: list[Rule] = []
+    rule_groups: list[Rule] = []
