@@ -71,7 +71,7 @@ class Test_opensearch_service_domains_internal_user_database_enabled:
             assert result[0].resource_id == domain["DomainStatus"]["DomainName"]
             assert (
                 result[0].resource_arn
-                == f"arn:aws:es:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:domain/{domain["DomainStatus"]["DomainName"]}"
+                == f"arn:aws:es:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:domain/{domain['DomainStatus']['DomainName']}"
             )
 
     @mock_aws
@@ -109,5 +109,5 @@ class Test_opensearch_service_domains_internal_user_database_enabled:
             assert result[0].resource_id == domain["DomainStatus"]["DomainName"]
             assert (
                 result[0].resource_arn
-                == f"arn:aws:es:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:domain/{domain["DomainStatus"]["DomainName"]}"
+                == f"arn:aws:es:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:domain/{domain['DomainStatus']['DomainName']}"
             )

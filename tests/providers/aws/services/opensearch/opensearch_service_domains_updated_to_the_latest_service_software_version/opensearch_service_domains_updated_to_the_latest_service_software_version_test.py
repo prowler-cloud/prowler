@@ -151,10 +151,10 @@ class Test_opensearch_service_domains_updated_to_the_latest_service_software_ver
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Opensearch domain test-domain-no-updates with version {domain["DomainStatus"]["EngineVersion"]} does not have internal updates available."
+                == f"Opensearch domain test-domain-no-updates with version {domain['DomainStatus']['EngineVersion']} does not have internal updates available."
             )
             assert result[0].resource_id == domain["DomainStatus"]["DomainName"]
             assert (
                 result[0].resource_arn
-                == f"arn:aws:es:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:domain/{domain["DomainStatus"]["DomainName"]}"
+                == f"arn:aws:es:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:domain/{domain['DomainStatus']['DomainName']}"
             )
