@@ -90,12 +90,15 @@ class Test_AutoScaling_Service:
     def test_describe_auto_scaling_groups(self):
         # Generate AutoScaling Client
         autoscaling_client = client("autoscaling", region_name=AWS_REGION_US_EAST_1)
-        autoscaling_client.create_launch_configuration(
-            LaunchConfigurationName="test",
-            ImageId="ami-12c6146b",
-            InstanceType="t1.micro",
-            KeyName="the_keys",
-            SecurityGroups=["default", "default2"],
+        ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
+        ec2_client.create_launch_template(
+            LaunchTemplateName="test",
+            LaunchTemplateData={
+                "ImageId": "ami-12c6146b",
+                "InstanceType": "t1.micro",
+                "KeyName": "the_keys",
+                "SecurityGroups": ["default", "default2"],
+            },
         )
 
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
@@ -117,9 +120,37 @@ class Test_AutoScaling_Service:
             Matcher={"HttpCode": "200"},
         )
 
-        _ = autoscaling_client.create_auto_scaling_group(
+        autoscaling_client.create_auto_scaling_group(
             AutoScalingGroupName="my-autoscaling-group",
-            LaunchConfigurationName="test",
+            LaunchTemplate={"LaunchTemplateName": "test", "Version": "$Latest"},
+            MinSize=0,
+            MaxSize=0,
+            DesiredCapacity=0,
+            AvailabilityZones=["us-east-1a", "us-east-1b"],
+            Tags=[
+                {
+                    "Key": "tag_test",
+                    "Value": "value_test",
+                },
+            ],
+        )
+
+        autoscaling_client.create_auto_scaling_group(
+            AutoScalingGroupName="my-autoscaling-group-2",
+            MixedInstancesPolicy={
+                "LaunchTemplate": {
+                    "LaunchTemplateSpecification": {
+                        "LaunchTemplateName": "test",
+                        "Version": "$Latest",
+                    },
+                    "Overrides": [
+                        {
+                            "InstanceType": "t2.micro",
+                            "WeightedCapacity": "1",
+                        },
+                    ],
+                },
+            },
             MinSize=0,
             MaxSize=0,
             DesiredCapacity=0,
@@ -138,9 +169,13 @@ class Test_AutoScaling_Service:
         # AutoScaling client for this test class
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         autoscaling = AutoScaling(aws_provider)
-        assert len(autoscaling.groups) == 1
-        # create_auto_scaling_group doesn't return the ARN, can't check it
-        # assert autoscaling.groups[0].arn ==
+        assert len(autoscaling.groups) == 2
+        assert (
+            autoscaling.groups[0].arn
+            == autoscaling_client.describe_auto_scaling_groups(
+                AutoScalingGroupNames=["my-autoscaling-group"]
+            )["AutoScalingGroups"][0]["AutoScalingGroupARN"]
+        )
         assert autoscaling.groups[0].name == "my-autoscaling-group"
         assert autoscaling.groups[0].region == AWS_REGION_US_EAST_1
         assert autoscaling.groups[0].availability_zones == ["us-east-1a", "us-east-1b"]
@@ -153,9 +188,16 @@ class Test_AutoScaling_Service:
                 "Value": "value_test",
             }
         ]
-        assert autoscaling.groups[0].health_check_type == "ELB"
-        assert autoscaling.groups[0].load_balancers == ["my-load-balancer"]
-        assert autoscaling.groups[0].target_groups == [
+        assert autoscaling.groups[0].launch_template["LaunchTemplateName"] == "test"
+        assert (
+            autoscaling.groups[1].mixed_instances_policy_launch_template[
+                "LaunchTemplateName"
+            ]
+            == "test"
+        )
+        assert autoscaling.groups[1].health_check_type == "ELB"
+        assert autoscaling.groups[1].load_balancers == ["my-load-balancer"]
+        assert autoscaling.groups[1].target_groups == [
             target_group["TargetGroups"][0]["TargetGroupArn"]
         ]
 
