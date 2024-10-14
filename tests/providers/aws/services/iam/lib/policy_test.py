@@ -1929,6 +1929,23 @@ class Test_Policy:
         }
         assert not is_policy_public(policy)
 
+    def test_is_policy_private_org_s3_bucket(
+        self,
+    ):
+        policy = {
+            "Statement": [
+                {
+                    "Sid": "test",
+                    "Effect": "Allow",
+                    "Principal": {"Service": "personalize.amazonaws.com"},
+                    "Action": "*",
+                    "Resource": "*",
+                    "Condition": {"StringLike": {"aws:SourceOrgID": "o-123456"}},
+                }
+            ]
+        }
+        assert not is_policy_public(policy)
+
     def test_check_admin_access(self):
         policy = {
             "Version": "2012-10-17",
