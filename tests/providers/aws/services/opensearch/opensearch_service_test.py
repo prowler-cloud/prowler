@@ -67,6 +67,10 @@ def mock_make_api_call(self, operation_name, kwarg):
                 "VPCOptions": {
                     "VPCId": "test-vpc-id",
                 },
+                "ClusterConfig": {
+                    "DedicatedMasterEnabled": True,
+                    "DedicatedMasterCount": 1,
+                },
                 "CognitoOptions": {"Enabled": True},
                 "EncryptionAtRestOptions": {"Enabled": True},
                 "NodeToNodeEncryptionOptions": {"Enabled": True},
@@ -80,6 +84,7 @@ def mock_make_api_call(self, operation_name, kwarg):
                 "ServiceSoftwareOptions": {"UpdateAvailable": True},
                 "DomainEndpointOptions": {"EnforceHTTPS": True},
                 "AdvancedSecurityOptions": {
+                    "Enabled": True,
                     "InternalUserDatabaseEnabled": True,
                     "SAMLOptions": {"Enabled": True},
                 },
@@ -171,6 +176,8 @@ class Test_OpenSearchService_Service:
         assert opensearch.opensearch_domains[0].saml_enabled
         assert opensearch.opensearch_domains[0].update_available
         assert opensearch.opensearch_domains[0].version == "opensearch-version1"
+        assert opensearch.opensearch_domains[0].dedicated_master_enabled
+        assert opensearch.opensearch_domains[0].dedicated_master_count == 1
         assert opensearch.opensearch_domains[0].tags == [
             {"Key": "test", "Value": "test"},
         ]
