@@ -71,7 +71,7 @@ class Bedrock(AWSService):
             for filter in guardrail_info.get("contentPolicy", {}).get("filters", []):
                 if filter.get("type") == "PROMPT_ATTACK":
                     guardrail.prompt_attack_filter_strength = filter.get(
-                        "inputStrength", None
+                        "inputStrength", "NONE"
                     )
         except Exception as error:
             logger.error(

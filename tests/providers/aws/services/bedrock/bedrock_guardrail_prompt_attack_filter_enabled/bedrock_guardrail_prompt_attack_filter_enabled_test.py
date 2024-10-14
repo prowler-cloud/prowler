@@ -17,7 +17,7 @@ GUARDRAIL_ARN = (
 )
 
 
-def mock_make_api_call(self, operation_name, kwarg):
+def mock_make_api_call_high_filter(self, operation_name, kwarg):
     if operation_name == "ListGuardrails":
         return {
             "guardrails": [
@@ -50,7 +50,7 @@ def mock_make_api_call(self, operation_name, kwarg):
     return make_api_call(self, operation_name, kwarg)
 
 
-def mock_make_api_call_v2(self, operation_name, kwarg):
+def mock_make_api_call_no_filter(self, operation_name, kwarg):
     if operation_name == "ListGuardrails":
         return {
             "guardrails": [
@@ -75,7 +75,7 @@ def mock_make_api_call_v2(self, operation_name, kwarg):
     return make_api_call(self, operation_name, kwarg)
 
 
-def mock_make_api_call_v3(self, operation_name, kwarg):
+def mock_make_api_call_low_filter(self, operation_name, kwarg):
     if operation_name == "ListGuardrails":
         return {
             "guardrails": [
@@ -133,7 +133,9 @@ class Test_bedrock_guardrail_prompt_attack_filter_enabled:
 
             assert len(result) == 0
 
-    @mock.patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
+    @mock.patch(
+        "botocore.client.BaseClient._make_api_call", new=mock_make_api_call_high_filter
+    )
     @mock_aws
     def test_guardrail_high_filter(self):
         from prowler.providers.aws.services.bedrock.bedrock_service import Bedrock
@@ -165,7 +167,9 @@ class Test_bedrock_guardrail_prompt_attack_filter_enabled:
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []
 
-    @mock.patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call_v2)
+    @mock.patch(
+        "botocore.client.BaseClient._make_api_call", new=mock_make_api_call_no_filter
+    )
     @mock_aws
     def test_guardrail_no_filter(self):
         from prowler.providers.aws.services.bedrock.bedrock_service import Bedrock
@@ -197,7 +201,9 @@ class Test_bedrock_guardrail_prompt_attack_filter_enabled:
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []
 
-    @mock.patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call_v3)
+    @mock.patch(
+        "botocore.client.BaseClient._make_api_call", new=mock_make_api_call_low_filter
+    )
     @mock_aws
     def test_guardrail_low_filter(self):
         from prowler.providers.aws.services.bedrock.bedrock_service import Bedrock
