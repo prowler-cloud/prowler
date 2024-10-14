@@ -35,6 +35,9 @@ class AutoScaling(AWSService):
                                 user_data=configuration["UserData"],
                                 image_id=configuration["ImageId"],
                                 region=regional_client.region,
+                                public_ip=configuration.get(
+                                    "AssociatePublicIpAddress", False
+                                ),
                             )
                         )
 
@@ -73,6 +76,9 @@ class AutoScaling(AWSService):
                                 health_check_type=group.get("HealthCheckType", ""),
                                 load_balancers=group.get("LoadBalancerNames", []),
                                 target_groups=group.get("TargetGroupARNs", []),
+                                launch_configuration_name=group.get(
+                                    "LaunchConfigurationName", ""
+                                ),
                             )
                         )
 
@@ -131,6 +137,7 @@ class LaunchConfiguration(BaseModel):
     user_data: str
     image_id: str
     region: str
+    public_ip: bool
 
 
 class Group(BaseModel):
@@ -144,6 +151,7 @@ class Group(BaseModel):
     health_check_type: str
     load_balancers: list = []
     target_groups: list = []
+    launch_configuration_name: str
 
 
 class ScalableTarget(BaseModel):
