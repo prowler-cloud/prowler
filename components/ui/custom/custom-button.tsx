@@ -1,6 +1,7 @@
 import { Button, CircularProgress } from "@nextui-org/react";
 import type { PressEvent } from "@react-types/shared";
 import clsx from "clsx";
+import React from "react";
 
 import { NextUIColors, NextUIVariants } from "@/types";
 
@@ -16,7 +17,7 @@ export const buttonClasses = {
   hover: "hover:shadow-md",
 };
 
-interface ButtonProps {
+interface CustomButtonProps {
   type?: "button" | "submit" | "reset";
   ariaLabel: string;
   ariaDisabled?: boolean;
@@ -45,67 +46,80 @@ interface ButtonProps {
   size?: "sm" | "md" | "lg";
   radius?: "none" | "sm" | "md" | "lg" | "full";
   dashed?: boolean;
-  disabled?: boolean;
+  isDisabled?: boolean;
   isLoading?: boolean;
   isIconOnly?: boolean;
+  ref?: React.RefObject<HTMLButtonElement>;
 }
 
-export const CustomButton = ({
-  type = "button",
-  ariaLabel,
-  ariaDisabled,
-  className,
-  variant = "solid",
-  color = "primary",
-  onPress,
-  children,
-  startContent,
-  endContent,
-  size = "md",
-  radius = "sm",
-  disabled = false,
-  isLoading = false,
-  isIconOnly,
-  ...props
-}: ButtonProps) => (
-  <Button
-    type={type}
-    aria-label={ariaLabel}
-    aria-disabled={ariaDisabled}
-    onPress={onPress}
-    variant={variant as NextUIVariants}
-    color={color as NextUIColors}
-    className={clsx(
-      buttonClasses.base,
-      {
-        [buttonClasses.primary]: color === "primary",
-        [buttonClasses.secondary]: color === "secondary",
-        [buttonClasses.action]: color === "action",
-        [buttonClasses.dashed]: variant === "dashed",
-        [buttonClasses.transparent]: color === "transparent",
-        [buttonClasses.disabled]: disabled,
-        [buttonClasses.hover]: color !== "transparent" && !disabled,
-      },
+export const CustomButton = React.forwardRef<
+  HTMLButtonElement,
+  CustomButtonProps
+>(
+  (
+    {
+      type = "button",
+      ariaLabel,
+      ariaDisabled,
       className,
-    )}
-    startContent={startContent}
-    endContent={endContent}
-    size={size}
-    radius={radius}
-    spinner={
-      <CircularProgress
-        classNames={{
-          svg: "w-6 h-6 drop-shadow-md",
-          indicator: "stroke-white",
-          track: "stroke-white/10",
-        }}
-        aria-label="Loading..."
-      />
-    }
-    isLoading={isLoading}
-    isIconOnly={isIconOnly}
-    {...props}
-  >
-    {children}
-  </Button>
+      variant = "solid",
+      color = "primary",
+      onPress,
+      children,
+      startContent,
+      endContent,
+      size = "md",
+      radius = "sm",
+      isDisabled = false,
+      isLoading = false,
+      isIconOnly,
+      ...props
+    },
+    ref,
+  ) => (
+    <Button
+      type={type}
+      aria-label={ariaLabel}
+      aria-disabled={ariaDisabled}
+      onPress={onPress}
+      variant={variant as NextUIVariants}
+      color={color as NextUIColors}
+      className={clsx(
+        buttonClasses.base,
+        {
+          [buttonClasses.primary]: color === "primary",
+          [buttonClasses.secondary]: color === "secondary",
+          [buttonClasses.action]: color === "action",
+          [buttonClasses.dashed]: variant === "dashed",
+          [buttonClasses.transparent]: color === "transparent",
+          [buttonClasses.disabled]: isDisabled,
+          [buttonClasses.hover]: color !== "transparent" && !isDisabled,
+        },
+        className,
+      )}
+      startContent={startContent}
+      endContent={endContent}
+      size={size}
+      radius={radius}
+      spinner={
+        <CircularProgress
+          classNames={{
+            svg: "w-6 h-6 drop-shadow-md",
+            indicator: "stroke-white",
+            track: "stroke-white/10",
+          }}
+          aria-label="Loading..."
+        />
+      }
+      ref={ref}
+      isDisabled={isDisabled}
+      isLoading={isLoading}
+      isIconOnly={isIconOnly}
+      {...props}
+    >
+      {children}
+    </Button>
+  ),
 );
+
+CustomButton.displayName = "CustomButton";

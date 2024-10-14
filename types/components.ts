@@ -66,6 +66,47 @@ export interface ProviderProps {
   };
 }
 
+export interface ScanProps {
+  type: "Scan";
+  id: string;
+  attributes: {
+    name: string;
+    trigger: "scheduled" | "manual";
+    state:
+      | "available"
+      | "scheduled"
+      | "executing"
+      | "completed"
+      | "failed"
+      | "cancelled";
+    unique_resource_count: number;
+    progress: number;
+    scanner_args: {
+      only_logs?: boolean;
+      excluded_checks?: string[];
+      aws_retries_max_attempts?: number;
+    } | null;
+    duration: number;
+    started_at: string;
+    completed_at: string;
+    scheduled_at: string;
+  };
+  relationships: {
+    provider: {
+      data: {
+        id: string;
+        type: "Provider";
+      };
+    };
+    task: {
+      data: {
+        id: string;
+        type: "Task";
+      };
+    };
+  };
+}
+
 export interface FindingProps {
   id: string;
   attributes: {

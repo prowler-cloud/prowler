@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { auth } from "@/auth.config";
-import { parseStringify } from "@/lib";
+import { getErrorMessage, parseStringify } from "@/lib";
 
 export const getProviders = async ({
   page = 1,
@@ -197,19 +197,4 @@ export const deleteProvider = async (formData: FormData) => {
       error: getErrorMessage(error),
     };
   }
-};
-
-export const getErrorMessage = async (error: unknown): Promise<string> => {
-  let message: string;
-
-  if (error instanceof Error) {
-    message = error.message;
-  } else if (error && typeof error === "object" && "message" in error) {
-    message = String(error.message);
-  } else if (typeof error === "string") {
-    message = error;
-  } else {
-    message = "Oops! Something went wrong.";
-  }
-  return message;
 };

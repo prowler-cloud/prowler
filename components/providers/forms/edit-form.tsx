@@ -77,7 +77,7 @@ export const EditForm = ({
             name="alias"
             type="text"
             label="Alias"
-            labelPlacement="inside"
+            labelPlacement="outside"
             placeholder={providerAlias}
             variant="bordered"
             isRequired={false}
@@ -95,7 +95,7 @@ export const EditForm = ({
             size="lg"
             radius="lg"
             onPress={() => setIsOpen(false)}
-            disabled={isLoading}
+            isDisabled={isLoading}
           >
             <span>Cancel</span>
           </CustomButton>

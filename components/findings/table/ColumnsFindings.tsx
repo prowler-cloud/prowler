@@ -10,7 +10,7 @@ import {
 import { ColumnDef } from "@tanstack/react-table";
 
 import { VerticalDotsIcon } from "@/components/icons";
-import { SeverityBadge, StatusBadge } from "@/components/ui/table";
+import { SeverityBadge } from "@/components/ui/table";
 import { FindingProps } from "@/types";
 
 const getFindingsAttributes = (row: { original: FindingProps }) => {
@@ -34,14 +34,7 @@ export const ColumnsFindings: ColumnDef<FindingProps>[] = [
       return <SeverityBadge severity={severity} />;
     },
   },
-  {
-    accessorKey: "status",
-    header: "Status",
-    cell: ({ row }) => {
-      const { status } = getFindingsAttributes(row);
-      return <StatusBadge status={status} />;
-    },
-  },
+
   {
     accessorKey: "region",
     header: "Region",

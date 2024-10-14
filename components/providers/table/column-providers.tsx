@@ -1,14 +1,12 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { add } from "date-fns";
 
+import { DateWithTime, SnippetId } from "@/components/ui/entities";
 import { DataTableColumnHeader, StatusBadge } from "@/components/ui/table";
 import { ProviderProps } from "@/types";
 
-import { DateWithTime } from "../date-with-time";
 import { ProviderInfo } from "../provider-info";
-import { SnippetIdProvider } from "../snippet-id-provider";
 import { DataTableRowActions } from "./data-table-row-actions";
 
 const getProviderData = (row: { original: ProviderProps }) => {
@@ -16,10 +14,10 @@ const getProviderData = (row: { original: ProviderProps }) => {
 };
 
 export const ColumnProviders: ColumnDef<ProviderProps>[] = [
-  {
-    header: " ",
-    cell: ({ row }) => <p className="text-medium">{row.index + 1}</p>,
-  },
+  // {
+  //   header: " ",
+  //   cell: ({ row }) => <p className="text-medium">{row.index + 1}</p>,
+  // },
   {
     accessorKey: "account",
     header: ({ column }) => (
@@ -47,7 +45,7 @@ export const ColumnProviders: ColumnDef<ProviderProps>[] = [
       const {
         attributes: { uid },
       } = getProviderData(row);
-      return <SnippetIdProvider providerId={uid} />;
+      return <SnippetId className="h-7 max-w-48" entityId={uid} />;
     },
   },
   {
@@ -72,27 +70,6 @@ export const ColumnProviders: ColumnDef<ProviderProps>[] = [
         attributes: { updated_at },
       } = getProviderData(row);
       return <DateWithTime dateTime={updated_at} />;
-    },
-  },
-  {
-    accessorKey: "nextScan",
-    header: "Next Scan",
-    cell: ({ row }) => {
-      const {
-        attributes: { updated_at },
-      } = getProviderData(row);
-      const nextDay = add(new Date(updated_at), {
-        hours: 24,
-      });
-      return <DateWithTime dateTime={nextDay.toISOString()} />;
-    },
-  },
-  {
-    accessorKey: "resources",
-    header: "Resources",
-    cell: () => {
-      // Temporarily overwriting the value until the API is functional.
-      return <p className="font-medium">{288}</p>;
     },
   },
   {

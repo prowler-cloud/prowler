@@ -6,8 +6,8 @@ import React, { useCallback, useEffect, useState } from "react";
 import { FilterControlsProps } from "@/types";
 
 import { CrossIcon } from "../icons";
-import { DataTableFilterCustom } from "../providers/table";
 import { CustomButton } from "../ui/custom";
+import { DataTableFilterCustom } from "../ui/table";
 import { CustomCheckboxMutedFindings } from "./custo-checkbox-muted-findings";
 import { CustomAccountSelection } from "./custom-account-selection";
 import { CustomDatePicker } from "./custom-date-picker";
@@ -22,7 +22,7 @@ export const FilterControls: React.FC<FilterControlsProps> = ({
   regions = false,
   accounts = false,
   mutedFindings = false,
-  customFilters = [],
+  customFilters,
 }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -69,7 +69,7 @@ export const FilterControls: React.FC<FilterControlsProps> = ({
           </CustomButton>
         )}
       </div>
-      <DataTableFilterCustom filters={customFilters} />
+      {customFilters && <DataTableFilterCustom filters={customFilters} />}
     </div>
   );
 };

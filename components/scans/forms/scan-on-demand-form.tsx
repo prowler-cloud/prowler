@@ -1,32 +1,36 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { RocketIcon } from "lucide-react";
 import { Dispatch, SetStateAction } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
-import { addProvider } from "@/actions/providers";
-import { SaveIcon } from "@/components/icons";
+import { scanOnDemand } from "@/actions/scans";
 import { useToast } from "@/components/ui";
 import { CustomButton, CustomInput } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
-import { addProviderFormSchema } from "@/types";
+import { onDemandScanFormSchema } from "@/types";
 
-import { RadioGroupProvider } from "../radio-group-provider";
-
-export const AddForm = ({
+export const ScanOnDemandForm = ({
+  providerId,
+  scanName,
+  scannerArgs,
   setIsOpen,
 }: {
+  providerId: string;
+  scanName?: string;
+  scannerArgs?: { checksToExecute: string[] };
   setIsOpen: Dispatch<SetStateAction<boolean>>;
 }) => {
-  const formSchema = addProviderFormSchema;
+  const formSchema = onDemandScanFormSchema();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      providerType: "",
-      providerId: "",
-      providerAlias: "",
+      providerId: providerId,
+      scanName: scanName,
+      scannerArgs: scannerArgs,
     },
   });
 
@@ -37,11 +41,17 @@ export const AddForm = ({
   const onSubmitClient = async (values: z.infer<typeof formSchema>) => {
     const formData = new FormData();
 
+    // Loop through form values and add to formData, converting objects to JSON strings
     Object.entries(values).forEach(
-      ([key, value]) => value !== undefined && formData.append(key, value),
+      ([key, value]) =>
+        value !== undefined &&
+        formData.append(
+          key,
+          typeof value === "object" ? JSON.stringify(value) : value,
+        ),
     );
 
-    const data = await addProvider(formData);
+    const data = await scanOnDemand(formData);
 
     if (data?.errors && data.errors.length > 0) {
       const error = data.errors[0];
@@ -55,9 +65,9 @@ export const AddForm = ({
     } else {
       toast({
         title: "Success!",
-        description: "The provider was updated successfully.",
+        description: "The scan was launched successfully.",
       });
-      setIsOpen(false); // Close the modal on success
+      setIsOpen(false);
     }
   };
 
@@ -67,32 +77,21 @@ export const AddForm = ({
         onSubmit={form.handleSubmit(onSubmitClient)}
         className="flex flex-col space-y-4"
       >
-        <RadioGroupProvider
-          control={form.control}
-          isInvalid={!!form.formState.errors.providerType}
-        />
-        <CustomInput
-          control={form.control}
-          name="providerId"
-          type="text"
-          label="Provider ID"
-          labelPlacement="inside"
-          placeholder={"Enter the provider ID"}
-          variant="bordered"
-          isRequired
-          isInvalid={!!form.formState.errors.providerId}
-        />
-        <CustomInput
-          control={form.control}
-          name="providerAlias"
-          type="text"
-          label="Alias"
-          labelPlacement="inside"
-          placeholder={"Enter the provider alias"}
-          variant="bordered"
-          isRequired={false}
-          isInvalid={!!form.formState.errors.providerAlias}
-        />
+        <input type="hidden" name="providerId" value={providerId} />
+
+        <div>
+          <CustomInput
+            control={form.control}
+            name="scanName"
+            type="text"
+            label="Scan Name"
+            labelPlacement="outside"
+            placeholder={scanName}
+            variant="bordered"
+            isRequired={false}
+            isInvalid={!!form.formState.errors.scanName}
+          />
+        </div>
 
         <div className="flex w-full justify-center sm:space-x-6">
           <CustomButton
@@ -110,15 +109,15 @@ export const AddForm = ({
 
           <CustomButton
             type="submit"
-            ariaLabel="Confirm"
+            ariaLabel="Start scan now"
             className="w-full"
             variant="solid"
             color="action"
             size="lg"
             isLoading={isLoading}
-            startContent={!isLoading && <SaveIcon size={24} />}
+            startContent={!isLoading && <RocketIcon size={24} />}
           >
-            {isLoading ? <>Loading</> : <span>Confirm</span>}
+            {isLoading ? <>Loading</> : <span>Start now</span>}
           </CustomButton>
         </div>
       </form>

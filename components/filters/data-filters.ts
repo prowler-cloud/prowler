@@ -9,8 +9,20 @@ export const filterProviders = [
 
 export const filterScans = [
   {
+    key: "state",
+    labelCheckboxGroup: "State",
+    values: [
+      "available",
+      "scheduled",
+      "executing",
+      "completed",
+      "failed",
+      "cancelled",
+    ],
+  },
+  {
     key: "trigger",
-    labelCheckboxGroup: "Scan Schedule",
+    labelCheckboxGroup: "Schedule",
     values: ["scheduled", "manual"],
   },
   // Add more filter categories as needed

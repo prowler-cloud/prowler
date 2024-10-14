@@ -5,28 +5,29 @@ import { Dispatch, SetStateAction } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
-import { addProvider } from "@/actions/providers";
+import { updateScan } from "@/actions/scans";
 import { SaveIcon } from "@/components/icons";
 import { useToast } from "@/components/ui";
 import { CustomButton, CustomInput } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
-import { addProviderFormSchema } from "@/types";
+import { editScanFormSchema } from "@/types";
 
-import { RadioGroupProvider } from "../radio-group-provider";
-
-export const AddForm = ({
+export const EditScanForm = ({
+  scanId,
+  scanName,
   setIsOpen,
 }: {
+  scanId: string;
+  scanName: string;
   setIsOpen: Dispatch<SetStateAction<boolean>>;
 }) => {
-  const formSchema = addProviderFormSchema;
+  const formSchema = editScanFormSchema(scanName);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      providerType: "",
-      providerId: "",
-      providerAlias: "",
+      scanId: scanId,
+      scanName: scanName,
     },
   });
 
@@ -41,7 +42,7 @@ export const AddForm = ({
       ([key, value]) => value !== undefined && formData.append(key, value),
     );
 
-    const data = await addProvider(formData);
+    const data = await updateScan(formData);
 
     if (data?.errors && data.errors.length > 0) {
       const error = data.errors[0];
@@ -55,7 +56,7 @@ export const AddForm = ({
     } else {
       toast({
         title: "Success!",
-        description: "The provider was updated successfully.",
+        description: "The scan was updated successfully.",
       });
       setIsOpen(false); // Close the modal on success
     }
@@ -67,32 +68,23 @@ export const AddForm = ({
         onSubmit={form.handleSubmit(onSubmitClient)}
         className="flex flex-col space-y-4"
       >
-        <RadioGroupProvider
-          control={form.control}
-          isInvalid={!!form.formState.errors.providerType}
-        />
-        <CustomInput
-          control={form.control}
-          name="providerId"
-          type="text"
-          label="Provider ID"
-          labelPlacement="inside"
-          placeholder={"Enter the provider ID"}
-          variant="bordered"
-          isRequired
-          isInvalid={!!form.formState.errors.providerId}
-        />
-        <CustomInput
-          control={form.control}
-          name="providerAlias"
-          type="text"
-          label="Alias"
-          labelPlacement="inside"
-          placeholder={"Enter the provider alias"}
-          variant="bordered"
-          isRequired={false}
-          isInvalid={!!form.formState.errors.providerAlias}
-        />
+        <div className="text-md">
+          Current name: <span className="font-bold">{scanName}</span>
+        </div>
+        <div>
+          <CustomInput
+            control={form.control}
+            name="scanName"
+            type="text"
+            label="Name"
+            labelPlacement="outside"
+            placeholder={scanName}
+            variant="bordered"
+            isRequired={false}
+            isInvalid={!!form.formState.errors.scanName}
+          />
+        </div>
+        <input type="hidden" name="scanId" value={scanId} />
 
         <div className="flex w-full justify-center sm:space-x-6">
           <CustomButton
@@ -110,7 +102,7 @@ export const AddForm = ({
 
           <CustomButton
             type="submit"
-            ariaLabel="Confirm"
+            ariaLabel="Save"
             className="w-full"
             variant="solid"
             color="action"
@@ -118,7 +110,7 @@ export const AddForm = ({
             isLoading={isLoading}
             startContent={!isLoading && <SaveIcon size={24} />}
           >
-            {isLoading ? <>Loading</> : <span>Confirm</span>}
+            {isLoading ? <>Loading</> : <span>Save</span>}
           </CustomButton>
         </div>
       </form>

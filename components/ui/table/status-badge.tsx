@@ -2,38 +2,42 @@ import { Chip } from "@nextui-org/react";
 import React from "react";
 
 type Status =
+  | "available"
+  | "scheduled"
+  | "executing"
   | "completed"
-  | "pending"
-  | "cancelled"
-  | "fail"
-  | "success"
-  | "muted"
-  | "active"
-  | "inactive";
+  | "failed"
+  | "cancelled";
 
 const statusColorMap: Record<
   Status,
   "danger" | "warning" | "success" | "default"
 > = {
+  available: "default",
+  scheduled: "warning",
+  executing: "default",
   completed: "success",
-  pending: "warning",
+  failed: "danger",
   cancelled: "danger",
-  fail: "danger",
-  success: "success",
-  muted: "default",
-  active: "success",
-  inactive: "default",
 };
 
-export const StatusBadge = ({ status }: { status: Status }) => {
+export const StatusBadge = ({
+  status,
+  size = "sm",
+  ...props
+}: {
+  status: Status;
+  size?: "sm" | "md" | "lg";
+}) => {
   const color = statusColorMap[status as keyof typeof statusColorMap];
 
   return (
     <Chip
       className="gap-1 border-none capitalize text-default-600"
-      size="sm"
+      size={size}
       variant="flat"
       color={color}
+      {...props}
     >
       {status}
     </Chip>
